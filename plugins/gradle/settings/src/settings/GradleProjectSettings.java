@@ -23,13 +23,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
-import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.util.GradleEnvironment;
+import org.jetbrains.plugins.gradle.util.GradleProjectSettingsHelper;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * {@link GradleProjectSettings} holds settings for the linked gradle project.
@@ -239,9 +238,13 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     return getTestRunner(module.getProject(), ExternalSystemApiUtil.getExternalRootProjectPath(module));
   }
 
+  /**
+   * @deprecated Use {@link org.jetbrains.plugins.gradle.service.GradleInstallationManager#guessGradleVersion(
+   * org.jetbrains.plugins.gradle.settings.GradleProjectSettings)} instead.
+   */
+  @Deprecated
   public @NotNull GradleVersion resolveGradleVersion() {
-    GradleVersion version = GradleInstallationManager.guessGradleVersion(this);
-    return Optional.ofNullable(version).orElseGet(GradleVersion::current);
+    return GradleProjectSettingsHelper.guessGradleVersion(this);
   }
 
   public @NotNull GradleProjectSettings withQualifiedModuleNames() {

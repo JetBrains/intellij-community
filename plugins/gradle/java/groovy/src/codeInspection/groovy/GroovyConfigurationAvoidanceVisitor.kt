@@ -3,16 +3,18 @@ package com.intellij.gradle.java.groovy.codeInspection.groovy
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.gradle.java.groovy.codeInspection.fix.GradleTaskToRegisterFix
+import com.intellij.gradle.java.groovy.codeInspection.fix.GradleWithTypeFix
+import com.intellij.gradle.java.groovy.codeInspection.fix.isReturnTypeValueUsed
+import com.intellij.gradle.java.groovy.service.resolve.getLinkedGradleProjectPath
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.InheritanceUtil.isInheritor
 import com.intellij.util.asSafely
+import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
-import com.intellij.gradle.java.groovy.codeInspection.fix.GradleTaskToRegisterFix
-import com.intellij.gradle.java.groovy.codeInspection.fix.GradleWithTypeFix
-import com.intellij.gradle.java.groovy.codeInspection.fix.isReturnTypeValueUsed
-import com.intellij.gradle.java.groovy.service.resolve.getLinkedGradleProjectPath
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_DOMAIN_OBJECT_COLLECTION
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_NAMED_DOMAIN_OBJECT_COLLECTION
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
@@ -56,8 +58,9 @@ class GroovyConfigurationAvoidanceVisitor(val holder: ProblemsHolder) : GroovyEl
 
 private fun lazyApiAvailable(call: PsiElement): Boolean {
   val linkedProjectPath = call.getLinkedGradleProjectPath() ?: return false
-  val gradleVersion = GradleSettings.getInstance(call.project).getLinkedProjectSettings(linkedProjectPath)?.resolveGradleVersion()
-                      ?: return false
+  val gradleProjectSettings = GradleSettings.getInstance(call.project).getLinkedProjectSettings(linkedProjectPath)
+                              ?: return false
+  val gradleVersion = GradleInstallationManager.guessGradleVersion(gradleProjectSettings) ?: GradleVersion.current()
   return GradleVersionUtil.isGradleAtLeast(gradleVersion, "4.9")
 }
 

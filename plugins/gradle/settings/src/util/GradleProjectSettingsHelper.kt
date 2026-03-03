@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.util
 
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.io.FileUtilRt
@@ -12,9 +11,11 @@ import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import java.io.IOException
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Objects
+import java.util.Properties
 import java.util.regex.Pattern
 import kotlin.io.path.isDirectory
 
@@ -24,8 +25,6 @@ import kotlin.io.path.isDirectory
  */
 @Deprecated("Use [GradleInstallationManager.guessGradleVersion] instead")
 internal object GradleProjectSettingsHelper {
-
-  private val LOG = logger<GradleProjectSettingsHelper>()
 
   private val GRADLE_JAR_FILE_PATTERN: Pattern =
     Pattern.compile(System.getProperty("gradle.pattern.core.jar", "gradle-(core-)?(\\d.*)\\.jar"))
@@ -46,38 +45,35 @@ internal object GradleProjectSettingsHelper {
         val gradleHome = findGradleHome(settings) ?: return null
         getGradleVersion(gradleHome)
       }
-      DistributionType.DEFAULT_WRAPPED -> {
-        val gradleHome = findGradleHome(settings) ?: return null
-        val gradleVersion = getGradleVersion(gradleHome)
-        if (gradleVersion != null) {
-          return gradleVersion
+      DistributionType.DEFAULT_WRAPPED, DistributionType.WRAPPED -> {
+        val gradleHome = findGradleHome(settings)
+        if (gradleHome != null) {
+          val gradleVersion = getGradleVersion(gradleHome)
+          if (gradleVersion != null) {
+            return gradleVersion
+          }
         }
         val externalProjectPath = settings.externalProjectPath ?: return null
         val path = findDefaultWrapperPropertiesFile(Path.of(externalProjectPath))
         if (path != null) {
-          parseDistributionVersion(path)
+          val properties = readGradleProperties(path) ?: return null
+          val distribution = properties["distributionUrl"] ?: return null
+          return parseDistributionVersion(distribution.toString())
         }
         null
       }
-      else -> null
     }
   }
 
   private fun findGradleHome(settings: GradleProjectSettings): Path? {
-    return when (settings.distributionType) {
-      DistributionType.LOCAL -> settings.gradleHomePath
-      DistributionType.WRAPPED -> {
-        val projectPath = settings.externalProjectPath ?: return null
-        val project = findProject(settings) ?: return null
-        val localSettings = GradleLocalSettings.getInstance(project)
-        val gradleHome = localSettings.getGradleHome(projectPath) ?: return null
-        Path.of(gradleHome)
-      }
-      else -> {
-        LOG.warn("Unexpected GradleProjectSettings#distributionType")
-        null
-      }
+    if (settings.gradleHomePath != null) {
+      return settings.gradleHomePath
     }
+    val projectPath = settings.externalProjectPath ?: return null
+    val project = findProject(settings)
+    val localSettings = GradleLocalSettings.getInstance(project)
+    val gradleHome = localSettings.getGradleHome(projectPath) ?: return null
+    return Path.of(gradleHome)
   }
 
   private fun findDefaultWrapperPropertiesFile(root: Path?): Path? {
@@ -113,8 +109,22 @@ internal object GradleProjectSettingsHelper {
     }
   }
 
-  private fun parseDistributionVersion(pathPath: Path): GradleVersion? {
-    var path = pathPath.toString()
+  private fun readGradleProperties(propertiesFile: Path): Properties? {
+    return try {
+      Files.newBufferedReader(propertiesFile, StandardCharsets.ISO_8859_1)
+        .use { reader ->
+          val props = Properties()
+          props.load(reader)
+          props
+        }
+    }
+    catch (_: Exception) {
+      null
+    }
+  }
+
+  private fun parseDistributionVersion(string: String): GradleVersion? {
+    var path = string
     path = StringUtil.substringAfterLast(path, "/") ?: return null
     path = StringUtil.substringAfterLast(path, "gradle-") ?: return null
     val i = path.lastIndexOf('-')
@@ -158,13 +168,13 @@ internal object GradleProjectSettingsHelper {
     }
   }
 
-  private fun findProject(settings: GradleProjectSettings): Project? {
+  private fun findProject(settings: GradleProjectSettings): Project {
     for (project in ProjectManager.getInstance().getOpenProjects()) {
       val linkedProjectSettings = GradleSettings.getInstance(project).getLinkedProjectSettings(settings.externalProjectPath)
       if (linkedProjectSettings === settings) {
         return project
       }
     }
-    return null
+    return ProjectManager.getInstance().getDefaultProject()
   }
 }

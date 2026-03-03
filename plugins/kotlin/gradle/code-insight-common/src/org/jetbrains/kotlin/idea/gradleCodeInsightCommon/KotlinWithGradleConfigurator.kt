@@ -62,6 +62,7 @@ import org.jetbrains.kotlin.idea.statistics.KotlinProjectConfigurationError.CONF
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinGradleCompatibilityStore
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 
 abstract class KotlinWithGradleConfigurator : BaseKotlinProjectConfigurator() {
@@ -140,9 +141,9 @@ abstract class KotlinWithGradleConfigurator : BaseKotlinProjectConfigurator() {
 
         if (module.hasKotlinPluginEnabled() || baseModule.getBuildScriptPsiFile() == null) return null
 
-        val gradleVersion = project.guessProjectDir()?.path?.let {
-            val linkedSettings = GradleSettings.getInstance(project).getLinkedProjectSettings(it)
-            linkedSettings?.resolveGradleVersion()
+        val gradleVersion = project.guessProjectDir()?.path?.let { projectDir ->
+            GradleSettings.getInstance(project).getLinkedProjectSettings(projectDir)
+                ?.let { GradleInstallationManager.guessGradleVersion(it) ?: GradleVersion.current() }
         } ?: return null
 
         val hierarchy = project.buildKotlinModuleHierarchy()

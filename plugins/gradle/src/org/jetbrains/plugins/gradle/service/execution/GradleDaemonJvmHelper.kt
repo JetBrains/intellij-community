@@ -12,6 +12,7 @@ import org.gradle.internal.buildconfiguration.DaemonJvmPropertiesConfigurator
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFile
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper.AUTO_JAVA_HOME
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
@@ -46,7 +47,7 @@ object GradleDaemonJvmHelper {
 
   @JvmStatic
   fun isProjectUsingDaemonJvmCriteria(projectSettings: GradleProjectSettings): Boolean {
-    val gradleVersion = projectSettings.resolveGradleVersion()
+    val gradleVersion = GradleInstallationManager.guessGradleVersion(projectSettings) ?: GradleVersion.current()
     val externalProjectPath = Path.of(projectSettings.externalProjectPath)
     return isProjectUsingDaemonJvmCriteria(externalProjectPath, gradleVersion)
   }

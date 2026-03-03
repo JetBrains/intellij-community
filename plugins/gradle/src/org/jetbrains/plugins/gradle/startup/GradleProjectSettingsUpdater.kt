@@ -23,8 +23,10 @@ import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.util.lang.JavaVersion
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.await
+import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.GradleManager
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
 import org.jetbrains.plugins.gradle.service.project.GradleNotification
 import org.jetbrains.plugins.gradle.service.project.GradleNotificationIdsHolder
@@ -58,7 +60,7 @@ internal class GradleProjectSettingsUpdater(private val cs: CoroutineScope) : Ex
 
     private fun fixupUnknownSdk(project: Project, projectSettings: GradleProjectSettings): CompletableFuture<UpdatedSdkStatus> {
       val gradleJvm = projectSettings.gradleJvm ?: return NOT_UPDATED_STATUS
-      val gradleVersion = projectSettings.resolveGradleVersion()
+      val gradleVersion = GradleInstallationManager.guessGradleVersion(projectSettings) ?: GradleVersion.current()
 
       val future = CompletableFuture<UpdatedSdkStatus>()
       projectSettings.gradleJvm = null
