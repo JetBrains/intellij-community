@@ -39,6 +39,8 @@ import static com.intellij.reference.SoftReference.dereference;
 
 public final class SmartPointerManagerImpl extends SmartPointerManagerEx {
   private static final Logger LOG = Logger.getInstance(SmartPointerManagerImpl.class);
+  private static final Key<Reference<SmartPsiElementPointerImpl<?>>> CACHED_SMART_POINTER_KEY = Key.create("CACHED_SMART_POINTER_KEY");
+
   private final Project myProject;
   private final PsiDocumentManagerEx myPsiDocManager;
   private final Key<WeakReference<SmartPointerTracker>> LIGHT_TRACKER_KEY;
@@ -67,8 +69,6 @@ public final class SmartPointerManagerImpl extends SmartPointerManagerEx {
     SmartPointerTracker pointers = getTracker(file);
     if (pointers != null) pointers.fastenBelts(this);
   }
-
-  private static final Key<Reference<SmartPsiElementPointerImpl<?>>> CACHED_SMART_POINTER_KEY = Key.create("CACHED_SMART_POINTER_KEY");
 
   @Override
   public @NotNull <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element) {
