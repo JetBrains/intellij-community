@@ -11,6 +11,8 @@ import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.application.impl.ModalityStateEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -95,7 +97,7 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
 
 
   private val isActive: Boolean = !ApplicationManager.getApplication().isHeadlessEnvironment
-  private var smokeAndMirrorsCounter: Int = 0
+  private var smokeAndMirrorsModalities: MutableList<ModalityStateEx> = mutableListOf()
 
   private val taskFlow = MutableSharedFlow<FreezeCheckerTask?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -274,27 +276,43 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
   override fun smokeAndMirrors(name: @NonNls String): AccessToken {
     LOG.trace("Entered smokeAndMirrors phase: $name")
     ThreadingAssertions.assertEventDispatchThread()
-    smokeAndMirrorsCounter++
+
+    val smokedModalityState = LaterInvocator.getCurrentModalityState()
+    smokeAndMirrorsModalities += smokedModalityState
 
     return AccessToken.create {
       LOG.trace("Exited smokeAndMirrors phase: $name")
       ThreadingAssertions.assertEventDispatchThread()
-      smokeAndMirrorsCounter--
+
+      val removed = smokeAndMirrorsModalities.removeLast()
+      LOG.assertTrue(removed === smokedModalityState, "Modality state mismatch: $removed != $smokedModalityState")
     }
   }
 
   @ApiStatus.Internal
   override fun edtEventStarted() {
     if (!isActive) return
-    if (smokeAndMirrorsCounter > 0) return
+    if (shouldSkipCurrentEdtEvent()) {
+      return
+    }
     stopCurrentTaskAndReEmit(FreezeCheckerTask(System.nanoTime()))
   }
 
   @ApiStatus.Internal
   override fun edtEventFinished() {
     if (!isActive) return
-    if (smokeAndMirrorsCounter > 0) return
+    if (shouldSkipCurrentEdtEvent()) {
+      return
+    }
     stopCurrentTaskAndReEmit(null)
+  }
+
+  private fun shouldSkipCurrentEdtEvent(): Boolean {
+    if (smokeAndMirrorsModalities.isEmpty()) return false
+
+    // we do not want to report DialogWrapper opened inside 'smokeAndMirrors' frame as a UI freeze
+    val currentModality = LaterInvocator.getCurrentModalityState()
+    return currentModality.accepts(smokeAndMirrorsModalities.last())
   }
 
   private fun stopCurrentTaskAndReEmit(task: FreezeCheckerTask?) {
