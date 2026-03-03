@@ -15,6 +15,7 @@ private const val END_OF_FILE = "*** End of File"
 private val HEREDOC_PREFIXES = setOf("<<EOF", "<<'EOF'", "<<\"EOF\"")
 private val CONTROL_CHAR_REGEX = Regex("[\\u0000-\\u001F\\u007F]")
 private val ESCAPED_CONTROL_REGEX = Regex("\\\\[nrt]")
+private val UNIFIED_DIFF_HEADER_REGEX = Regex("^@@+\\s*-\\d+(?:,\\d+)?\\s+\\+\\d+(?:,\\d+)?\\s*@@+$")
 
 internal sealed interface PatchOperation {
   val path: String
@@ -122,7 +123,7 @@ internal object PatchApplyEngine {
             var header: String? = null
             if (isHunkHeaderLine(lines[index])) {
               val trimmed = lines[index].trim()
-              val headerText = if (trimmed.length > 2) trimmed.substring(2).trim() else ""
+              val headerText = stripUnifiedDiffHeader(trimmed)
               header = headerText.ifEmpty { null }
               index += 1
             }
@@ -358,6 +359,11 @@ private fun unwrapHeredocLines(lines: List<String>): List<String> {
   val last = lines.last().trim()
   if (first !in HEREDOC_PREFIXES || !last.endsWith("EOF")) return lines
   return lines.subList(1, lines.size - 1)
+}
+
+private fun stripUnifiedDiffHeader(trimmed: String): String {
+  if (UNIFIED_DIFF_HEADER_REGEX.matches(trimmed)) return ""
+  return if (trimmed.length > 2) trimmed.substring(2).trim() else ""
 }
 
 private fun findMarkerIndex(lines: List<String>, marker: String, start: Int = 0): Int {

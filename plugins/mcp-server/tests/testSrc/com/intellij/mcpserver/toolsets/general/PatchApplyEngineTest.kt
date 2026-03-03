@@ -70,6 +70,67 @@ class PatchApplyEngineTest {
   }
 
   @Test
+  fun `parsePatch strips unified-diff line numbers from hunk header`() {
+    val patch = buildPatch(
+      "*** Begin Patch",
+      "*** Update File: sample.txt",
+      "@@@ -48,6 +48,7 @@@",
+      " alpha",
+      "-beta",
+      "+gamma",
+      "*** End Patch",
+    )
+
+    val operations = PatchApplyEngine.parsePatch(patch)
+
+    assertThat(operations).hasSize(1)
+    val update = operations.single() as UpdatePatchOperation
+    assertThat(update.hunks).hasSize(1)
+    assertThat(update.hunks.single().header).isNull()
+  }
+
+  @Test
+  fun `parsePatch preserves non-coordinate hunk header text`() {
+    val patch = buildPatch(
+      "*** Begin Patch",
+      "*** Update File: sample.txt",
+      "@@ def sample()",
+      " alpha",
+      "-beta",
+      "+gamma",
+      "*** End Patch",
+    )
+
+    val operations = PatchApplyEngine.parsePatch(patch)
+
+    assertThat(operations).hasSize(1)
+    val update = operations.single() as UpdatePatchOperation
+    assertThat(update.hunks).hasSize(1)
+    assertThat(update.hunks.single().header).isEqualTo("def sample()")
+  }
+
+  @Test
+  fun `applyHunks works with unified-diff style hunk headers`() {
+    val patch = buildPatch(
+      "*** Begin Patch",
+      "*** Update File: sample.txt",
+      "@@ -1,3 +1,4 @@",
+      " alpha",
+      "-beta",
+      "+BETA",
+      " gamma",
+      "+delta",
+      "*** End Patch",
+    )
+
+    val operations = PatchApplyEngine.parsePatch(patch)
+    val update = operations.single() as UpdatePatchOperation
+    val result = PatchApplyEngine.applyHunks("alpha\nbeta\ngamma\n", update.hunks)
+
+    assertThat(result).isEqualTo("alpha\nBETA\ngamma\ndelta\n")
+  }
+
+  @Test
   fun `applyHunks matches lines with trailing whitespace differences`() {
     val result = PatchApplyEngine.applyHunks(
       "alpha   \nbeta\n",

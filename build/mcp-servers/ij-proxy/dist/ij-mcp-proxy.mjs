@@ -22768,7 +22768,7 @@ function isLineBreakChar(code) {
 }
 
 // proxy-tools/handlers/apply-patch.ts
-var BEGIN_MARKER = "*** Begin Patch", END_MARKER = "*** End Patch", ADD_PREFIX = "*** Add File: ", UPDATE_PREFIX = "*** Update File: ", DELETE_PREFIX = "*** Delete File: ", MOVE_PREFIX = "*** Move to: ", END_OF_FILE = "*** End of File", HEREDOC_PREFIXES = /* @__PURE__ */ new Set(["<<EOF", "<<'EOF'", '<<"EOF"']), TRUNCATION_ERROR = "file content truncated while reading";
+var BEGIN_MARKER = "*** Begin Patch", END_MARKER = "*** End Patch", ADD_PREFIX = "*** Add File: ", UPDATE_PREFIX = "*** Update File: ", DELETE_PREFIX = "*** Delete File: ", MOVE_PREFIX = "*** Move to: ", END_OF_FILE = "*** End of File", HEREDOC_PREFIXES = /* @__PURE__ */ new Set(["<<EOF", "<<'EOF'", '<<"EOF"']), TRUNCATION_ERROR = "file content truncated while reading", UNIFIED_DIFF_HEADER_REGEX = /^@@+\s*-\d+(?:,\d+)?\s+\+\d+(?:,\d+)?\s*@@+$/;
 async function handleApplyPatchTool(args, projectPath, callUpstreamTool) {
   let patchText = extractPatchText(args), operations = parsePatch(patchText), touched = 0;
   for (let op of operations) {
@@ -22862,6 +22862,11 @@ function unwrapHeredocLines(lines) {
     return lines;
   return lines.slice(1, -1);
 }
+function stripUnifiedDiffHeader(trimmed) {
+  if (UNIFIED_DIFF_HEADER_REGEX.test(trimmed))
+    return "";
+  return trimmed.length > 2 ? trimmed.slice(2).trim() : "";
+}
 function parsePatch(text) {
   let lines = unwrapHeredocLines(splitLines2(text.trim())), startIndex = lines.findIndex((line) => line.trim() === BEGIN_MARKER);
   if (startIndex === -1)
@@ -22918,7 +22923,7 @@ function parsePatch(text) {
         }
         let header = null;
         if (isHunkHeaderLine(lines[i])) {
-          let trimmed = lines[i].trim(), headerText = trimmed.length > 2 ? trimmed.slice(2).trim() : "";
+          let trimmed = lines[i].trim(), headerText = stripUnifiedDiffHeader(trimmed);
           header = headerText === "" ? null : headerText, i += 1;
         } else if (hunks.length === 0) {
           if (!isDiffLine(lines[i]))

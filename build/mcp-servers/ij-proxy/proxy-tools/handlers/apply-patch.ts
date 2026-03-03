@@ -17,6 +17,7 @@ const MOVE_PREFIX = '*** Move to: '
 const END_OF_FILE = '*** End of File'
 const HEREDOC_PREFIXES = new Set(["<<EOF", "<<'EOF'", '<<"EOF"'])
 const TRUNCATION_ERROR = 'file content truncated while reading'
+const UNIFIED_DIFF_HEADER_REGEX = /^@@+\s*-\d+(?:,\d+)?\s+\+\d+(?:,\d+)?\s*@@+$/
 
 interface ApplyPatchArgsObject {
   input?: unknown
@@ -189,6 +190,11 @@ function unwrapHeredocLines(lines: string[]): string[] {
   return lines.slice(1, -1)
 }
 
+function stripUnifiedDiffHeader(trimmed: string): string {
+  if (UNIFIED_DIFF_HEADER_REGEX.test(trimmed)) return ''
+  return trimmed.length > 2 ? trimmed.slice(2).trim() : ''
+}
+
 function parsePatch(text: string): PatchOperation[] {
   const lines = unwrapHeredocLines(splitLines(text.trim()))
   const startIndex = lines.findIndex((line) => line.trim() === BEGIN_MARKER)
@@ -261,7 +267,7 @@ function parsePatch(text: string): PatchOperation[] {
         let header: string | null = null
         if (isHunkHeaderLine(lines[i])) {
           const trimmed = lines[i].trim()
-          const headerText = trimmed.length > 2 ? trimmed.slice(2).trim() : ''
+          const headerText = stripUnifiedDiffHeader(trimmed)
           header = headerText === '' ? null : headerText
           i += 1
         } else if (hunks.length === 0) {

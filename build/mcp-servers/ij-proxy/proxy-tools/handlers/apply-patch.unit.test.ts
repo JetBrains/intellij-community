@@ -61,6 +61,83 @@ describe('apply_patch handler (unit)', () => {
     })
   })
 
+  it('updates file when hunk header uses unified-diff coordinates', async () => {
+    const {callUpstreamTool, calls} = createMockToolCaller({
+      get_file_text_by_path: () => ({text: 'alpha\nbeta\n'}),
+      create_new_file: () => ({text: 'ok'})
+    })
+
+    const patch = buildPatch([
+      '*** Begin Patch',
+      '*** Update File: file.txt',
+      '@@@ -1,2 +1,2 @@@',
+      ' alpha',
+      '-beta',
+      '+BETA',
+      '*** End Patch'
+    ])
+
+    const result = await handleApplyPatchTool({patch}, projectPath, callUpstreamTool)
+
+    strictEqual(result, 'Applied patch to 1 file.')
+    const writeCall = calls.find((call) => call.name === 'create_new_file')
+    strictEqual(writeCall.args.pathInProject, 'file.txt')
+    strictEqual(writeCall.args.overwrite, true)
+    strictEqual(writeCall.args.text, 'alpha\nBETA\n')
+  })
+
+  it('applies hunks with @@ -N +N unified-diff style headers', async () => {
+    const {callUpstreamTool, calls} = createMockToolCaller({
+      get_file_text_by_path: () => ({text: 'alpha\nbeta\ngamma\n'}),
+      create_new_file: () => ({text: 'ok'})
+    })
+
+    const patch = buildPatch([
+      '*** Begin Patch',
+      '*** Update File: file.txt',
+      '@@ -1,3 +1,4 @@',
+      ' alpha',
+      '-beta',
+      '+BETA',
+      ' gamma',
+      '+delta',
+      '*** End Patch'
+    ])
+
+    const result = await handleApplyPatchTool({patch}, projectPath, callUpstreamTool)
+
+    strictEqual(result, 'Applied patch to 1 file.')
+    const writeCall = calls.find((call) => call.name === 'create_new_file')
+    strictEqual(writeCall.args.pathInProject, 'file.txt')
+    strictEqual(writeCall.args.overwrite, true)
+    strictEqual(writeCall.args.text, 'alpha\nBETA\ngamma\ndelta\n')
+  })
+
+  it('preserves textual @@ header behavior', async () => {
+    const {callUpstreamTool, calls} = createMockToolCaller({
+      get_file_text_by_path: () => ({text: 'def sample()\nalpha\nbeta\n'}),
+      create_new_file: () => ({text: 'ok'})
+    })
+
+    const patch = buildPatch([
+      '*** Begin Patch',
+      '*** Update File: file.txt',
+      '@@ def sample()',
+      ' alpha',
+      '-beta',
+      '+BETA',
+      '*** End Patch'
+    ])
+
+    const result = await handleApplyPatchTool({patch}, projectPath, callUpstreamTool)
+
+    strictEqual(result, 'Applied patch to 1 file.')
+    const writeCall = calls.find((call) => call.name === 'create_new_file')
+    strictEqual(writeCall.args.pathInProject, 'file.txt')
+    strictEqual(writeCall.args.overwrite, true)
+    strictEqual(writeCall.args.text, 'def sample()\nalpha\nBETA\n')
+  })
+
   it('fuzz: updates a single line and writes back', async () => {
     const rng = createSeededRng(5150)
 
