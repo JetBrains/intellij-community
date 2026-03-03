@@ -54,8 +54,7 @@ Preserve IDE-serialized .iml files in canonical form. Do not:
 <!-- /IF_TOOL:CODEX -->
 <!-- IF_TOOL:CLAUDE -->
 - Read: `read_file`
-- Edit: `edit`
-- Write: `write`
+- Edit/Write: `apply_patch`
 - **Search symbols (preferred):** `search_symbol`
 - Find files (glob): `search_file`
 - Search text: `search_text`

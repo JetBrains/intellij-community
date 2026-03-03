@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import {rejects, strictEqual} from 'node:assert/strict'
-import {realpathSync} from 'node:fs'
 import path from 'node:path'
 import {describe, it} from 'bun:test'
 import {SUITE_TIMEOUT_MS, withProxy} from '../../test-utils'
@@ -9,59 +8,11 @@ import {handleWriteTool} from './write'
 import {createMockToolCaller, createSeededRng, randInt, randString} from './test-helpers'
 
 describe('ij MCP proxy write', {timeout: SUITE_TIMEOUT_MS}, () => {
-  it('writes content via create_new_file', async () => {
-    const calls = []
-    await withProxy({
-      proxyEnv: {JETBRAINS_MCP_TOOL_MODE: 'cc'},
-      onToolCall({name, args}) {
-        calls.push({name, args})
-        return {text: 'ok'}
-      }
-    }, async ({proxyClient, testDir}) => {
-      await proxyClient.send('tools/list')
-      const response = await proxyClient.send('tools/call', {
-        name: 'write',
-        arguments: {
-          file_path: 'output.txt',
-          content: 'alpha'
-        }
-      })
-
-      const resolvedRoot = realpathSync(testDir)
-      strictEqual(response.result.content[0].text, `Wrote ${path.resolve(resolvedRoot, 'output.txt')}`)
-      strictEqual(calls.length, 1)
-
-      const call = calls[0]
-      strictEqual(call.name, 'create_new_file')
-      strictEqual(call.args.pathInProject, 'output.txt')
-      strictEqual(call.args.text, 'alpha')
-      strictEqual(call.args.overwrite, true)
-      strictEqual(realpathSync(call.args.project_path), realpathSync(testDir))
-    })
-  })
-
-  it('normalizes CRLF content before writing', async () => {
-    const calls = []
-    await withProxy({
-      proxyEnv: {JETBRAINS_MCP_TOOL_MODE: 'cc'},
-      onToolCall({name, args}) {
-        calls.push({name, args})
-        return {text: 'ok'}
-      }
-    }, async ({proxyClient}) => {
-      await proxyClient.send('tools/list')
-      await proxyClient.send('tools/call', {
-        name: 'write',
-        arguments: {
-          file_path: 'output.txt',
-          content: 'alpha\r\nbeta\rgamma\r\n'
-        }
-      })
-
-      strictEqual(calls.length, 1)
-      const call = calls[0]
-      strictEqual(call.name, 'create_new_file')
-      strictEqual(call.args.text, 'alpha\nbeta\ngamma\n')
+  it('does not expose write', async () => {
+    await withProxy({}, async ({proxyClient}) => {
+      const listResponse = await proxyClient.send('tools/list')
+      const names = listResponse.result.tools.map((tool) => tool.name)
+      strictEqual(names.includes('write'), false)
     })
   })
 })
