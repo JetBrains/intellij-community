@@ -85,7 +85,7 @@ public final class SmartPointerManagerImpl extends SmartPointerManagerEx {
 
   @Override
   public @NotNull <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element,
-                                                                                                PsiFile containingFile,
+                                                                                                @Nullable PsiFile containingFile,
                                                                                                 boolean forInjected) {
     ensureValid(element, containingFile);
     SmartPointerTracker.processQueue();

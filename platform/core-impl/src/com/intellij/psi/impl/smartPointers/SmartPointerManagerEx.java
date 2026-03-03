@@ -47,7 +47,7 @@ public abstract class SmartPointerManagerEx extends SmartPointerManager implemen
    * @return a smart pointer to the specified PSI element
    */
   public abstract @NotNull <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element,
-                                                                                                         PsiFile containingFile,
+                                                                                                         @Nullable PsiFile containingFile,
                                                                                                          boolean forInjected);
 
   /**
