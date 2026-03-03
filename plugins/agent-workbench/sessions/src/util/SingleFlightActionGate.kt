@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.util
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.platform.ide.progress.TaskCancellation
@@ -21,6 +22,10 @@ internal data class SingleFlightProgressRequest(
   val cancellation: TaskCancellation = TaskCancellation.cancellable(),
   val visibleInStatusBar: Boolean = true,
 )
+
+private class SingleFlightActionGateLog
+
+private val LOG = logger<SingleFlightActionGateLog>()
 
 /**
  * Prevents duplicate execution of semantically same actions keyed by action key.
@@ -46,6 +51,12 @@ internal class SingleFlightActionGate {
     val state: KeyState
     synchronized(lock) {
       state = states.getOrPut(key) { KeyState() }
+      // Policy is owned by the first in-flight launch for a key; mismatches are suspicious and logged once.
+      val activePolicy = state.activePolicy
+      if (state.running && activePolicy != null && activePolicy != policy && !state.policyMismatchLogged) {
+        state.policyMismatchLogged = true
+        LOG.warn("SingleFlightActionGate policy mismatch for key '$key': active=$activePolicy, requested=$policy")
+      }
       when (policy) {
         SingleFlightPolicy.DROP -> {
           if (state.running) {
@@ -68,6 +79,8 @@ internal class SingleFlightActionGate {
       }
 
       state.running = true
+      state.activePolicy = policy
+      state.policyMismatchLogged = false
     }
 
     return scope.launch {
@@ -123,6 +136,8 @@ internal class SingleFlightActionGate {
 
   private class KeyState {
     var running: Boolean = false
+    var activePolicy: SingleFlightPolicy? = null
+    var policyMismatchLogged: Boolean = false
     var latestBlock: (suspend () -> Unit)? = null
     val queuedBlocks: ArrayDeque<suspend () -> Unit> = ArrayDeque()
   }

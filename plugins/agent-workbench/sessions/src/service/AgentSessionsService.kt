@@ -95,6 +95,11 @@ private const val PENDING_LAUNCH_MODE_YOLO = "yolo"
 private const val MAX_STARTUP_COMMAND_BYTES = 24 * 1024
 private val CODEX_ARCHIVE_REFRESH_DELAY = 1.seconds
 
+internal enum class OpenThreadLaunchOrigin(val keySuffix: String) {
+  USER_OPEN(""),
+  PROMPT_LAUNCH(":prompt-launch"),
+}
+
 internal interface AgentSessionsChatOpenExecutor {
   suspend fun openChat(
     normalizedPath: String,
@@ -338,13 +343,16 @@ internal class AgentSessionsService private constructor(
     startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec? = null,
     initialComposedMessage: String? = null,
     initialMessageToken: String? = null,
+    singleFlightPolicy: SingleFlightPolicy = SingleFlightPolicy.DROP,
+    launchOrigin: OpenThreadLaunchOrigin = OpenThreadLaunchOrigin.USER_OPEN,
   ) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
     markClaudeQuotaHintEligible(thread.provider)
     launchDropAction(
-      key = buildOpenThreadActionKey(path = normalizedPath, thread = thread),
+      key = buildOpenThreadActionKey(path = normalizedPath, thread = thread, launchOrigin = launchOrigin),
       droppedActionMessage = "Dropped duplicate open thread action for $normalizedPath:${thread.provider}:${thread.id}",
       progress = dedicatedFrameOpenProgressRequest(currentProject),
+      policy = singleFlightPolicy,
     ) {
       val worktreeBranch = stateStore.findWorktreeBranch(normalizedPath)
       val originBranch = thread.originBranch
@@ -496,15 +504,15 @@ internal class AgentSessionsService private constructor(
               prompt = message,
             )
           }
-        val initialMessageForChat = if (startupLaunchSpecOverride != null) null else initialComposedMessage
-        val initialMessageTokenForChat = if (startupLaunchSpecOverride != null) null else initialMessageToken
 
         openChatThread(
           path = normalizedPath,
           thread = targetThread,
           startupLaunchSpecOverride = startupLaunchSpecOverride,
-          initialComposedMessage = initialMessageForChat,
-          initialMessageToken = initialMessageTokenForChat,
+          initialComposedMessage = initialComposedMessage,
+          initialMessageToken = initialMessageToken,
+          singleFlightPolicy = SingleFlightPolicy.RESTART_LATEST,
+          launchOrigin = OpenThreadLaunchOrigin.PROMPT_LAUNCH,
         )
       }
       AgentPromptLaunchResult.SUCCESS
@@ -775,13 +783,14 @@ private data class ArchivedChatCleanupTarget(
   private fun launchDropAction(
     key: String,
     droppedActionMessage: String,
+    policy: SingleFlightPolicy = SingleFlightPolicy.DROP,
     progress: SingleFlightProgressRequest? = null,
     block: suspend () -> Unit,
   ) {
     actionGate.launch(
       scope = serviceScope,
       key = key,
-      policy = SingleFlightPolicy.DROP,
+      policy = policy,
       progress = progress,
       onDrop = { LOG.debug(droppedActionMessage) },
       block = block,
@@ -921,8 +930,12 @@ private fun estimateCommandSizeBytes(command: List<String>): Int {
   return command.sumOf { part -> part.toByteArray().size + 1 }
 }
 
-private fun buildOpenThreadActionKey(path: String, thread: AgentSessionThread): String {
-  return "$OPEN_THREAD_ACTION_KEY_PREFIX:$path:${thread.provider}:${thread.id}"
+private fun buildOpenThreadActionKey(
+  path: String,
+  thread: AgentSessionThread,
+  launchOrigin: OpenThreadLaunchOrigin = OpenThreadLaunchOrigin.USER_OPEN,
+): String {
+  return "$OPEN_THREAD_ACTION_KEY_PREFIX:$path:${thread.provider}:${thread.id}${launchOrigin.keySuffix}"
 }
 
 private fun buildOpenSubAgentActionKey(path: String, thread: AgentSessionThread, subAgent: AgentSubAgent): String {
