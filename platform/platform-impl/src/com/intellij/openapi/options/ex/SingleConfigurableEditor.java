@@ -155,7 +155,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
       }
     }
     catch (ConfigurationException e) {
-      if (!processException(e) && e.getMessage() != null) {
+      if (!processException(e, true) && e.getMessage() != null) {
         if (myProject != null) {
           Messages.showMessageDialog(myProject, e.getMessage(), e.getTitle(), Messages.getErrorIcon());
         }
@@ -170,7 +170,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
   }
 
   @ApiStatus.Internal
-  protected boolean processException(ConfigurationException configurationException) {
+  protected boolean processException(ConfigurationException configurationException, boolean isOkAction) {
     return false;
   }
 
@@ -220,11 +220,13 @@ public class SingleConfigurableEditor extends DialogWrapper {
         }
       }
       catch (ConfigurationException e) {
-        if (myProject != null) {
-          Messages.showMessageDialog(myProject, e.getMessage(), e.getTitle(), Messages.getErrorIcon());
-        }
-        else {
-          Messages.showMessageDialog(getRootPane(), e.getMessage(), e.getTitle(), Messages.getErrorIcon());
+        if (!processException(e, false)) {
+          if (myProject != null) {
+            Messages.showMessageDialog(myProject, e.getMessage(), e.getTitle(), Messages.getErrorIcon());
+          }
+          else {
+            Messages.showMessageDialog(getRootPane(), e.getMessage(), e.getTitle(), Messages.getErrorIcon());
+          }
         }
       }
     }
