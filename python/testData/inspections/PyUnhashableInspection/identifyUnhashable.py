@@ -29,7 +29,7 @@ d[frozenset([1, 2])] = 0
 d[object()] = 0
 
 d[(1, (2, 3))] = 0
-d[<error descr="Cannot use unhashable type '(int, (int, list))' as a dict key">(1, (2, []))</error>] = 0
+d[<error descr="Cannot use unhashable type '(Literal[1], (Literal[2], list))' as a dict key">(1, (2, []))</error>] = 0
 
 unhashable_union: int | list = 5
 d[<error descr="Cannot use unhashable type 'int | list' as a dict key">unhashable_union</error>] = 0

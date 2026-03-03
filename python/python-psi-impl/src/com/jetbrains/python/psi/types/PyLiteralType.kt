@@ -35,6 +35,7 @@ import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiFacadeImpl
+import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyTypeUtil.getEffectiveBound
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
@@ -309,7 +310,7 @@ class PyLiteralType private constructor(cls: PyClass, private val value: PyLiter
           return PyLiteralStringType.create(expression)
         }
       }
-      return getLiteralType(expression, context)
+      return expression.getLiteralType(context)
     }
 
     private fun literalType(expression: PyExpression, context: TypeEvalContext, index: Boolean, useFqn: Boolean): PyLiteralType? {

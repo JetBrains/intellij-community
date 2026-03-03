@@ -434,7 +434,12 @@ object PyTypeChecker {
           context
         )
       }
-      context.mySubstitutions.putTypeVarTuple(expected as PyTypeVarTupleType, safeActual, KeyImpl)
+      val normalizedActual =
+        if (safeActual is PyUnpackedTupleType)
+          // TODO: consider how widening should work with more complex types like: `tuple[Sequence[Literal[1]]`
+          PyUnpackedTupleTypeImpl(safeActual.elementTypes.map { PyLiteralType.upcastLiteralToClass(it) }, safeActual.isUnbound)
+        else safeActual
+      context.mySubstitutions.putTypeVarTuple(expected as PyTypeVarTupleType, normalizedActual, KeyImpl)
     }
     return true
   }
@@ -2128,7 +2133,7 @@ object PyTypeChecker {
     fun putTypeVar(typeVar: PyTypeVarType, substitute: Ref<PyType?>?, @Suppress("unused") key: Key, ifAbsent: Boolean = false) {
       val safeSubstitute: Ref<PyType?>? = substitute?.let { Ref(PyNumericTowerUtil.enrich(Ref.deref(it))) }
       if (ifAbsent) myTypeVars.putIfAbsent(typeVar, safeSubstitute)
-      else myTypeVars[typeVar] = safeSubstitute 
+      else myTypeVars[typeVar] = safeSubstitute
     }
 
     @ApiStatus.Internal

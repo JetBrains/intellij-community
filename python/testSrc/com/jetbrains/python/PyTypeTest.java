@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.google.common.collect.ImmutableList;
@@ -52,7 +52,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testTupleType() {
-    doTest("str",
+    doTest("Literal['a']",
            "t = ('a', 2)\n" +
            "expr = t[0]");
     doTest("List[bool]",
@@ -68,7 +68,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testTupleAssignmentType() {
-    doTest("str",
+    doTest("Literal['a']",
            "t = ('a', 2)\n" +
            "(expr, q) = t");
   }
@@ -106,7 +106,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testUnionOfTuples() {
-    doTest("Union[Tuple[int, str], Tuple[str, int]]",
+    doTest("Union[Tuple[Literal[1], Literal['a']], Tuple[Literal['a'], Literal[1]]]",
            """
              def x(b):
                if b:
@@ -298,7 +298,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testIsInstance2() {
-    doTest("str",
+    doTest("Literal[\"\"]",
            """
              x = ""
              if isinstance(x, (1, "")):
@@ -1002,7 +1002,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-9334
   public void testIterateOverListOfNestedTuples() {
-    doTest("str",
+    doTest("Literal['foo']",
            """
              def f():
                  for i, (expr, v) in [(0, ('foo', []))]:
@@ -1047,7 +1047,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-10967
   public void testDefaultTupleParameterMember() {
-    doTest("int",
+    doTest("Literal[1]",
            """
              def foo(xs=(1, 2)):
                expr, foo = xs
@@ -1071,7 +1071,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testTupleFromTuple() {
-    doTest("Tuple[str, int, int]",
+    doTest("Tuple[Literal['1'], Literal[2], Literal[3]]",
            "expr = tuple(('1', 2, 3))");
   }
 
@@ -1128,7 +1128,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testTupleIterationType() {
-    doTest("Union[int, str]",
+    doTest("Literal[1, 'a']",
            """
              xs = (1, 'a')
              for expr in xs:
@@ -1138,35 +1138,35 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-12801
   public void testTupleConcatenation() {
-    doTest("Tuple[int, bool, str]",
+    doTest("Tuple[Literal[1], Literal[True], Literal['spam']]",
            "expr = (1,) + (True, 'spam') + ()");
   }
 
   public void testTupleMultiplication() {
-    doTest("Tuple[int, bool, int, bool]",
+    doTest("Tuple[Literal[1], Literal[False], Literal[1], Literal[False]]",
            "expr = (1, False) * 2");
   }
 
 
   public void testTupleDestructuring() {
-    doTest("str",
+    doTest("Literal['val']",
            "_, expr = (1, 'val') ");
   }
 
   public void testParensTupleDestructuring() {
-    doTest("str",
+    doTest("Literal['val']",
            "(_, expr) = (1, 'val') ");
   }
 
   // PY-19825
   public void testSubTupleDestructuring() {
-    doTest("str",
+    doTest("Literal['val']",
            "(a, (_, expr)) = (1, (2,'val')) ");
   }
 
   // PY-19825
   public void testSubTupleIndirectDestructuring() {
-    doTest("str",
+    doTest("Literal['val']",
            "xs = (2,'val')\n" +
            "(a, (_, expr)) = (1, xs) ");
   }
@@ -1174,7 +1174,7 @@ public class PyTypeTest extends PyTestCase {
   // PY-38928
   public void testIterateListOfTuples() {
     doTest(
-      "str",
+      "Literal['foo']",
       """
         for ((_, expr)) in [(1, 'foo')]:
             pass
@@ -1670,9 +1670,11 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testHeterogeneousTupleLiteral() {
-    doTest("Tuple[str, int, int]", "expr = ('1', 1, 1)");
+    doTest("Tuple[Literal['1'], Literal[1], Literal[1]]", "expr = ('1', 1, 1)");
 
-    doTest("Tuple[str, int, int, int, int, int, int, int, int, int, int]", "expr = ('1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)");
+    doTest(
+      "Tuple[Literal['1'], Literal[1], Literal[1], Literal[1], Literal[1], Literal[1], Literal[1], Literal[1], Literal[1], Literal[1], Literal[1]]",
+      "expr = ('1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)");
   }
 
   // PY-20818
@@ -2712,14 +2714,14 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testUnpackingToNestedTargetsInSquareBracketsInAssignments() {
-    doTest("int",
+    doTest("Literal[42]",
            """
              [_, [[expr], _]] = "foo", ((42,), "bar")
              """);
   }
 
   public void testUnpackingToNestedTargetsInSquareBracketsInForLoops() {
-    doTest("str",
+    doTest("Literal[\"foo\"]",
            """
              xs = [(1, ("foo",))]
              for [_, [expr]] in xs:
@@ -2728,7 +2730,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testUnpackingToNestedTargetsInSquareBracketsInComprehensions() {
-    doTest("str",
+    doTest("Literal[\"foo\"]",
            """
              xs = [(1, ("foo",))]
              ys = [expr for [_, [expr]] in xs]

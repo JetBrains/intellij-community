@@ -19,7 +19,10 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.psi.PsiElement
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyConditionalExpression
 import com.jetbrains.python.psi.PyPsiFacade
+import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser
 import com.jetbrains.python.psi.types.PyTypeChecker.convertToType
@@ -399,3 +402,7 @@ val PyType?.isUnknown: Boolean get() {
 
   return if (PyAnyType.isEnabled) this is PyAnyType.Unknown else this == null
 }
+
+@ApiStatus.Internal
+fun PyExpression.getLiteralType(context: TypeEvalContext): PyType? =
+  PyLiteralType.getLiteralType(this, context)
