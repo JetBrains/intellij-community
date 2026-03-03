@@ -2,21 +2,27 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.ide.browsers.actions.WebPreviewFileType
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Companion.JS_FUNCTION_NAME
-import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Request.Companion.html
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.jcef.JBCefApp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
 import java.net.URI
@@ -46,12 +52,46 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
 
     @JvmStatic
     fun openEditor(project: Project, @DialogTitle title: String, request: Request, fileType: FileType): FileEditor? {
-      logger<HTMLEditorProvider>().info(if (request.url == null) "HTML (${request.html!!.length} chars)" else "URL=${request.url}")
-      val file = LightVirtualFile(title, fileType, "")
-      REQUEST_KEY.set(file, request)
+      val file = getSyntheticFileToOpen(request, title, fileType)
       return FileEditorManager.getInstance(project)
         .openFile(file, true)
         .find { it is HTMLFileEditor }
+    }
+
+    private fun getSyntheticFileToOpen(request: Request, @DialogTitle title: String, fileType: FileType): VirtualFile {
+      logger<HTMLEditorProvider>().info(if (request.url == null) "HTML (${request.html!!.length} chars)" else "URL=${request.url}")
+      val file = LightVirtualFile(title, fileType, "")
+      REQUEST_KEY.set(file, request)
+      return file
+    }
+
+    /**
+     * Opens an HTML page in the editor in a suspending way
+     */
+    @ApiStatus.Experimental
+    suspend fun openEditorAsync(project: Project, @DialogTitle title: String, request: Request): FileEditor? {
+      val file = getSyntheticFileToOpen(request, title, WebPreviewFileType.INSTANCE)
+      val fileEditorManager = FileEditorManager.getInstance(project)
+      val fileEditors = if (fileEditorManager is FileEditorManagerEx) {
+        fileEditorManager.openFile(file, FileEditorOpenOptions(requestFocus = true, waitForCompositeOpen = false))
+          .allEditorsWithProviders
+          .map { it.fileEditor }
+      } else {
+        withContext(Dispatchers.EDT) {
+          FileEditorManager.getInstance(project).openFile(file, true).toList()
+        }
+      }
+      return fileEditors.find { it is HTMLFileEditor }
+    }
+
+    /**
+     * Sends a request for opening an HTML page some time later. Does not block EDT.
+     * This is intended for usage in Java and non-suspend Kotlin.
+     */
+    @ApiStatus.Experimental
+    @JvmStatic
+    fun openEditorWithoutBlocking(project: Project, @DialogTitle title: String, request: Request) {
+      project.service<CoreUiCoroutineScopeHolder>().coroutineScope.launch { openEditorAsync(project, title, request) }
     }
   }
 

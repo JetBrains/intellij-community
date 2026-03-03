@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Companion.openEditor
+import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Companion.openEditorAsync
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.JsQueryHandler
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Request.Companion.html
 import com.intellij.openapi.project.Project
@@ -286,7 +287,7 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
       val disposable = Disposer.newDisposable(project)
       val startPageId = WhatsNewMultipageStartIdProvider.getInstance(project).getIdIfSupported(multipageIds)
       val request = getRequest(startPageId, dataContext)
-      val editor = writeIntentReadAction { openEditor(project, title, request) }
+      val editor = openEditorAsync(project, title, request)
 
       editor?.let {
         project.serviceAsync<FileEditorManager>().addTopComponent(it, ReactionsPanel.createPanel(PLACE, reactionChecker))
