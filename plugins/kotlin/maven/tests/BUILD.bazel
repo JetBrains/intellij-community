@@ -92,6 +92,7 @@ jvm_library(
     "//java/java-runtime:rt",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
     "@lib//:kotlinc-analysis-api",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/maven",
   ],
   runtime_deps = [":tests"]
 )
