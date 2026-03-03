@@ -1,0 +1,38 @@
+### auto-generated section `build intellij.searchEverywhereLucene.performanceTesting` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "searchEverywhereLucene-performanceTesting_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "searchEverywhereLucene-performanceTesting",
+  module_name = "intellij.searchEverywhereLucene.performanceTesting",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":searchEverywhereLucene-performanceTesting_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/performanceTesting/core:performanceTesting",
+    "//plugins/search-everywhere-lucene/backend",
+    "//platform/core-api:core",
+    "//platform/platform-impl:ide-impl",
+  ]
+)
+
+jvm_library(
+  name = "searchEverywhereLucene-performanceTesting_test_lib",
+  module_name = "intellij.searchEverywhereLucene.performanceTesting",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":searchEverywhereLucene-performanceTesting",
+    "//plugins/performanceTesting/core:performanceTesting_test_lib",
+    "//plugins/search-everywhere-lucene/backend:backend_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.searchEverywhereLucene.performanceTesting` end

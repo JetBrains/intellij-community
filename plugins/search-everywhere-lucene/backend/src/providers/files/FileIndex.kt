@@ -16,6 +16,7 @@ import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.searchEverywhereLucene.backend.LuceneIndex
 import com.intellij.searchEverywhereLucene.backend.SearchEverywhereLucenePluginDisposable
 import com.intellij.searchEverywhereLucene.common.SearchEverywhereLuceneProviderIdUtils
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -49,6 +50,7 @@ import kotlin.time.Duration.Companion.seconds
 internal class FileIndex(val project: Project, coroutineScope: CoroutineScope) : Disposable {
   private val luceneIndex = LuceneIndex(project,SearchEverywhereLuceneProviderIdUtils.LUCENE_FILES,LOG)
   private val scheduledIndexingOps = Channel<LuceneFileIndexOperation>(capacity = Channel.UNLIMITED)
+  val initialIndexingCompleted = CompletableDeferred<Unit>()
 
   init {
     Disposer.register(SearchEverywhereLucenePluginDisposable.getInstance(project),this)
@@ -119,6 +121,7 @@ internal class FileIndex(val project: Project, coroutineScope: CoroutineScope) :
           }
           LOG.debug {"Registered all ${files.size} files for the next lucene index commit." }
         }
+        initialIndexingCompleted.complete(Unit)
       }
 
       is LuceneFileIndexOperation.ReindexFiles -> {
@@ -178,6 +181,8 @@ internal class FileIndex(val project: Project, coroutineScope: CoroutineScope) :
       }
     }
   }
+
+  suspend fun awaitInitialIndexing() = initialIndexingCompleted.await()
 
   fun scheduleIndexingOp(op: LuceneFileIndexOperation) {
     // Since the channel is unbounded, the sending must succeed.

@@ -1478,6 +1478,7 @@ plugins/search-everywhere-lucene
 plugins/search-everywhere-lucene/backend
 plugins/search-everywhere-lucene/common
 plugins/search-everywhere-lucene/frontend
+plugins/search-everywhere-lucene/test-commands
 plugins/search-everywhere-ml
 plugins/search-everywhere-ml/ranking/core
 plugins/search-everywhere-ml/ranking/ext
