@@ -11,21 +11,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.merge
 
-internal const val ENABLE_GIT_STATUS_TOOL_REGISTRY_KEY: String = "mcp.server.tools.enable.git.status"
-internal const val ENABLE_APPLY_PATCH_TOOL_REGISTRY_KEY: String = "mcp.server.tools.enable.apply.patch"
-private const val GIT_STATUS_TOOL_NAME: String = "git_status"
-private const val APPLY_PATCH_TOOL_NAME: String = "apply_patch"
-
 /**
  * Mapping of fully qualified tool names to their corresponding registry keys.
  *
  * When the registry key value is `false`, the tool is disabled.
  * When the registry key value is `true`, the tool is enabled.
  */
-private val TOOL_REGISTRY_KEYS: Map<String, String> = mapOf(
-  GIT_STATUS_TOOL_NAME to ENABLE_GIT_STATUS_TOOL_REGISTRY_KEY,
-  APPLY_PATCH_TOOL_NAME to ENABLE_APPLY_PATCH_TOOL_REGISTRY_KEY,
-)
+private val TOOL_REGISTRY_KEYS: Map<String, String> = mapOf()
 
 /**
  * Filters individual MCP tools based on specific boolean registry keys.

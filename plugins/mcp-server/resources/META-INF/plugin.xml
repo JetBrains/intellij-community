@@ -86,12 +86,6 @@
                  description="Filter for MCP tools, like -*,+com.intellij.mcpserver.toolsets.general.*,-*.get_file_text_by_path"
                  key="mcp.server.tools.filter"/>
     <registryKey defaultValue="false"
-                 description="Enable exposing git_status MCP tool"
-                 key="mcp.server.tools.enable.git.status"/>
-    <registryKey defaultValue="false"
-                 description="Enable exposing apply_patch MCP tool"
-                 key="mcp.server.tools.enable.apply.patch"/>
-    <registryKey defaultValue="false"
                  description="Show advanced filter options UI in MCP tool filter settings"
                  key="mcp.server.show.advanced.filter.options.ui"/>
 

@@ -4,11 +4,9 @@ package com.intellij.mcpserver.toolsets
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.mcpserver.McpToolsetTestBase
-import com.intellij.mcpserver.impl.ENABLE_GIT_STATUS_TOOL_REGISTRY_KEY
 import com.intellij.mcpserver.toolsets.vcs.VcsToolset
 import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.testFramework.junit5.RegistryKey
 import io.kotest.common.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -23,7 +21,6 @@ import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.writeText
 
-@RegistryKey(key = ENABLE_GIT_STATUS_TOOL_REGISTRY_KEY, value = "true")
 class VcsToolsetTest : McpToolsetTestBase() {
   @Test
   fun git_status_returns_empty_when_no_git_roots() = runBlocking {
