@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl.scopes
 
 import com.intellij.openapi.roots.impl.RootDescriptor
@@ -138,7 +138,7 @@ internal class MultiverseRootContainer(
         for ((root, descriptor) in entrySet) {
           val priority = descriptor.orderIndex + maxPriority
           curMax = maxOf(curMax, priority)
-          result.putIfAbsent(root, ScopeRootDescriptor(root, descriptor.orderEntry, priority))
+          result.putIfAbsent(root, ScopeRootDescriptor(descriptor.orderEntry, priority))
         }
 
         maxPriority = maxOf(maxPriority, curMax)

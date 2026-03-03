@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.module.impl.scopes
 
@@ -154,7 +154,7 @@ class ModuleWithDependenciesScope internal constructor(
       var i = 1
       val map = HashMap<VirtualFile, ScopeRootDescriptor>(entries.size)
       for (root in entries) {
-        map[root.root] = ScopeRootDescriptor(root.root, root.orderEntry, i++)
+        map[root.root] = ScopeRootDescriptor(root.orderEntry, i++)
       }
       return map
     }
