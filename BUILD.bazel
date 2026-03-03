@@ -690,6 +690,8 @@ jvm_library(
     "//plugins/agent-workbench/sessions:sessions_test_lib",
     "//platform/polySymbols:polySymbols-tests",
     "//platform/polySymbols:polySymbols-tests_test_lib",
+    "//plugins/gradle/native/tooling:gradle-native-tooling-tests",
+    "//plugins/gradle/native/tooling:gradle-native-tooling-tests_test_lib",
     "//images:images-tests",
     "//images:images-tests_test_lib",
     "//RegExpSupport:regexp-tests",
