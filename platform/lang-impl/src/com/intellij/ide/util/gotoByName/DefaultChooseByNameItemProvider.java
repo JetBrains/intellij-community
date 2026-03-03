@@ -220,9 +220,9 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
           collector.consume(result);
           return true;
         }
-        if (base instanceof MatchResultCustomizerModel customizerModel) {
+        if (base.getModel() instanceof MatchResultCustomizerModel customizerModel) {
           for (final var altName : customizerModel.getAltNames(name)) {
-            final var altResult = matches(base, namePattern, nameMatcher, qualifiedNamePattern, qualifiedNameMatcher, altName);
+            final var altResult = matches(base, namePattern, nameMatcher, qualifiedNamePattern, qualifiedNameMatcher, altName, name);
             if (altResult != null) {
               collector.consume(altResult);
               return true;
@@ -441,7 +441,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
                                                  @NotNull String namePattern,
                                                  @NotNull MinusculeMatcher nameMatcher,
                                                  @Nullable String name) {
-    return matches(base, namePattern, nameMatcher, null, null, name);
+    return matches(base, namePattern, nameMatcher, null, null, name, null);
   }
 
   protected static @Nullable MatchResult matches(@NotNull ChooseByNameViewModel base,
@@ -450,6 +450,17 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
                                                  @Nullable String qualifiedNamePattern,
                                                  @Nullable MinusculeMatcher qualifiedNameMatcher,
                                                  @Nullable String name) {
+    return matches(base, namePattern, nameMatcher, qualifiedNamePattern, qualifiedNameMatcher, name, null);
+  }
+
+  @ApiStatus.Internal
+  protected static @Nullable MatchResult matches(@NotNull ChooseByNameViewModel base,
+                                                 @NotNull String namePattern,
+                                                 @NotNull MinusculeMatcher nameMatcher,
+                                                 @Nullable String qualifiedNamePattern,
+                                                 @Nullable MinusculeMatcher qualifiedNameMatcher,
+                                                 @Nullable String name,
+                                                 @Nullable String nameForMatch) {
     if (name == null) {
       return null;
     }
@@ -468,17 +479,21 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
         return null; // no matches appears valid result for "bad" pattern
       }
     }
-    final var qualifiedMatch = qualifiedNameMatcher != null ? matchName(qualifiedNameMatcher, name) : null;
-    final var defaultMatch = qualifiedMatch != null ? qualifiedMatch : matchName(nameMatcher, name);
+    final var qualifiedMatch = qualifiedNameMatcher != null ? matchName(qualifiedNameMatcher, name, nameForMatch) : null;
+    final var defaultMatch = qualifiedMatch != null ? qualifiedMatch : matchName(nameMatcher, name, nameForMatch);
     //if (LOG.isDebugEnabled() && defaultMatch != null) {
     //  LOG.debug("default result weight for name [" + name + "] = " + defaultMatch.matchingDegree);
     //}
     return defaultMatch;
   }
 
-  private static @Nullable MatchResult matchName(@NotNull MinusculeMatcher matcher, @NotNull String name) {
+  private static @Nullable MatchResult matchName(@NotNull MinusculeMatcher matcher, @NotNull String name, @Nullable String nameForMatch) {
     @Nullable List<@NotNull MatchedFragment> fragments = matcher.match(name);
-    return fragments != null ? new MatchResult(name, matcher.matchingDegree(name, false, fragments), MinusculeMatcher.isStartMatch(fragments)) : null;
+    return fragments != null ? new MatchResult(nameForMatch != null ? nameForMatch : name, matcher.matchingDegree(name, false, fragments), MinusculeMatcher.isStartMatch(fragments)) : null;
+  }
+
+  private static @Nullable MatchResult matchName(@NotNull MinusculeMatcher matcher, @NotNull String name) {
+    return matchName(matcher, name, null);
   }
 
   protected static @NotNull MinusculeMatcher buildPatternMatcher(@NotNull String pattern, boolean preferStartMatches) {
