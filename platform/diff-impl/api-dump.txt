@@ -312,15 +312,6 @@ f:com.intellij.diff.editor.SimpleDiffVirtualFile
 - createProcessor(com.intellij.openapi.project.Project):com.intellij.diff.impl.DiffRequestProcessor
 - getName():java.lang.String
 - f:getRequest():com.intellij.diff.requests.DiffRequest
-c:com.intellij.diff.impl.AssignmentTracker
-- sf:Companion:com.intellij.diff.impl.AssignmentTracker$Companion
-- <init>():V
-- f:onAssigned(Z):V
-- onEachAssignment():V
-- onEachUnassignment():V
-- onFirstAssignment():V
-- onLastUnassignment():V
-f:com.intellij.diff.impl.AssignmentTracker$Companion
 c:com.intellij.diff.impl.CacheDiffRequestChainProcessor
 - com.intellij.diff.impl.CacheDiffRequestProcessor$Simple
 - <init>(com.intellij.openapi.project.Project,com.intellij.diff.chains.DiffRequestChain):V

@@ -263,6 +263,17 @@ c:com.intellij.diff.contents.EmptyContent
 com.intellij.diff.contents.FileContent
 - com.intellij.diff.contents.DiffContent
 - a:getFile():com.intellij.openapi.vfs.VirtualFile
+c:com.intellij.diff.impl.AssignmentTracker
+- sf:Companion:com.intellij.diff.impl.AssignmentTracker$Companion
+- <init>():V
+- f:onAssigned(Z):V
+- sf:onContentsAssigned(java.util.List,Z):V
+- onEachAssignment():V
+- onEachUnassignment():V
+- onFirstAssignment():V
+- onLastUnassignment():V
+f:com.intellij.diff.impl.AssignmentTracker$Companion
+- f:onContentsAssigned(java.util.List,Z):V
 a:com.intellij.diff.merge.BinaryMergeRequest
 - com.intellij.diff.merge.ThreesideMergeRequest
 - <init>():V

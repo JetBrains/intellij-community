@@ -8,6 +8,7 @@ import com.intellij.diff.DiffVcsDataKeys
 import com.intellij.diff.chains.DiffRequestProducerException
 import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.contents.DocumentContent
+import com.intellij.diff.impl.AssignmentTracker
 import com.intellij.diff.impl.DiffEditorTitleDetails
 import com.intellij.diff.impl.getCustomizers
 import com.intellij.diff.requests.DiffRequest
@@ -332,6 +333,8 @@ class MergedProducer(private val project: Project,
 private class StagedDiffRequest(contents: List<DiffContent>, titles: List<String>, @Nls title: String? = null) :
   SimpleDiffRequest(title, contents, titles) {
 
+  private val assignmentTracker = SaveIndexFilesAssignmentTracker()
+
   constructor(content1: DiffContent, content2: DiffContent, @Nls title1: String, @Nls title2: String, @Nls title: String? = null) :
     this(listOf(content1, content2), listOf(title1, title2), title)
 
@@ -341,7 +344,14 @@ private class StagedDiffRequest(contents: List<DiffContent>, titles: List<String
 
   override fun onAssigned(isAssigned: Boolean) {
     super.onAssigned(isAssigned)
-    if (!isAssigned) {
+    assignmentTracker.onAssigned(isAssigned)
+  }
+
+  /**
+   * Write in-memory staging area changes into the .git/index file.
+   */
+  private inner class SaveIndexFilesAssignmentTracker : AssignmentTracker() {
+    override fun onEachUnassignment() {
       for (content in contents) {
         if (content is DocumentContent) {
           val file = FileDocumentManager.getInstance().getFile(content.document)

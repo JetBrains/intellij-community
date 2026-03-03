@@ -3,6 +3,7 @@ package com.intellij.diff.requests;
 
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.impl.AssignmentTracker;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,9 +72,7 @@ public class SimpleDiffRequest extends ContentDiffRequest {
 
   @Override
   public void onAssigned(boolean isAssigned) {
-    for (DiffContent content : myContents) {
-      content.onAssigned(isAssigned);
-    }
+    AssignmentTracker.onContentsAssigned(myContents, isAssigned);
   }
 
   @Override
