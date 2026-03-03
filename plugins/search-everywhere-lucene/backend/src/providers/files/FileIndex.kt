@@ -142,7 +142,12 @@ internal class FileIndex(val project: Project, coroutineScope: CoroutineScope) :
 
           virtualFiles.forEach { virtualFile ->
             if (!fileIndex.isInProject(virtualFile)) return@forEach
-            check(virtualFile.isValid) { "The file at ${virtualFile.presentableUrl} is not Valid! We assume file events only returns valid files" }
+
+            if (!virtualFile.isValid) {
+              LOG.info("Skipping indexing ${virtualFile.url}, because it is not valid. Scheduling for deletion instead. We assume the files scheduled for reindex are valid files.")
+              urlsToDelete.add(getTerm(virtualFile.url))
+              return@forEach
+            }
             if (!virtualFile.isDirectory) {
               filesToReindex.add(virtualFile)
             } else {
