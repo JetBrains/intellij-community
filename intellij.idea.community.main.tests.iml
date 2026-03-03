@@ -112,5 +112,6 @@
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.frontend.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.ui.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.relaxng.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.vcs.git.coverage" scope="TEST" />
   </component>
 </module>
