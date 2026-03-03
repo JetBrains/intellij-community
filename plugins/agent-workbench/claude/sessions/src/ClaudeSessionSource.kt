@@ -15,6 +15,11 @@ import java.util.concurrent.ConcurrentHashMap
 class ClaudeSessionSource(
   private val backend: ClaudeSessionBackend = createDefaultClaudeSessionBackend(),
 ) : BaseAgentSessionSource(provider = AgentSessionProvider.CLAUDE) {
+  /**
+   * Tracks the last-seen `updatedAt` for threads the user has opened.
+   * Absent key = never opened → READY (not UNREAD).
+   * Present key = opened at least once; if `thread.updatedAt > storedValue` → UNREAD.
+   */
   private val readTracker = ConcurrentHashMap<String, Long>()
   private val readStateUpdates = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
   @Volatile private var activeThreadId: String? = null
@@ -28,23 +33,24 @@ class ClaudeSessionSource(
   }
 
   override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> {
-    val backendThreads = backend.listThreads(path = path, openProject = openProject)
+    val threads = backend.listThreads(path = path, openProject = openProject)
     val currentActiveId = activeThreadId
-    for (thread in backendThreads) {
-      if (thread.id == currentActiveId || readTracker[thread.id] == MARKED_AS_READ) {
-        readTracker[thread.id] = thread.updatedAt
+    if (currentActiveId != null) {
+      for (thread in threads) {
+        if (thread.id == currentActiveId) {
+          readTracker.merge(thread.id, thread.updatedAt, ::maxOf)
+          break
+        }
       }
     }
-    return backendThreads.map { it.toAgentSessionThread(readTracker) }
+    return threads.map { it.toAgentSessionThread(readTracker) }
   }
 
   override fun markThreadAsRead(threadId: String, updatedAt: Long) {
-    readTracker[threadId] = MARKED_AS_READ
+    readTracker.merge(threadId, updatedAt, ::maxOf)
     readStateUpdates.tryEmit(Unit)
   }
 }
-
-private const val MARKED_AS_READ = Long.MAX_VALUE
 
 private fun ClaudeBackendThread.toAgentSessionThread(readTracker: Map<String, Long>): AgentSessionThread {
   return AgentSessionThread(

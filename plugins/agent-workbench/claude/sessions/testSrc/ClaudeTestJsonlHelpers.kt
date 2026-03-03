@@ -18,6 +18,10 @@ internal fun claudeAssistantLine(timestamp: String, sessionId: String, cwd: Stri
   return """{"type":"assistant","sessionId":"$sessionId","cwd":"$cwd","isSidechain":false,"timestamp":"$timestamp","message":{"role":"assistant","content":[{"type":"text","text":"$content"}]}}"""
 }
 
+internal fun claudeAssistantToolUseLine(timestamp: String, sessionId: String, cwd: String, content: String): String {
+  return """{"type":"assistant","sessionId":"$sessionId","cwd":"$cwd","isSidechain":false,"timestamp":"$timestamp","message":{"role":"assistant","content":[{"type":"text","text":"$content"},{"type":"tool_use","id":"tu_1","name":"edit","input":{}}]}}"""
+}
+
 internal fun claudeProgressLine(timestamp: String, sessionId: String, cwd: String): String {
   return """{"type":"progress","sessionId":"$sessionId","cwd":"$cwd","isSidechain":false,"timestamp":"$timestamp"}"""
 }

@@ -91,8 +91,9 @@ internal class ClaudeThreadIndex(
     val threads = ArrayList<ClaudeBackendThread>()
 
     synchronized(cacheLock) {
-      for (entry in state.cachedFilesByPath.values) {
-        val parsed = entry.parsedThread ?: continue
+      val cachedFilesByPath = state.cachedFilesByPath
+      for (pathKey in allJsonlFiles.keys) {
+        val parsed = cachedFilesByPath[pathKey]?.parsedThread ?: continue
         threads.add(
           ClaudeBackendThread(
             id = parsed.id,

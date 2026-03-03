@@ -6,9 +6,13 @@ import com.intellij.agent.workbench.claude.common.ClaudeSessionsStore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
+import java.util.stream.Stream
 
 class ClaudeSessionsStoreTest {
   @TempDir
@@ -82,6 +86,32 @@ class ClaudeSessionsStoreTest {
   }
 
   @Test
+  fun parsesSessionWhenConversationStartsAfterThreeMetadataEvents() {
+    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-metadata-prefix")
+    Files.createDirectories(projectDir)
+    val transcript = projectDir.resolve("metadata-prefix-session.jsonl")
+    Files.writeString(
+      transcript,
+      """
+      {"type":"queue-operation","timestamp":"2026-02-08T00:59:57.000Z"}
+      {"type":"progress","timestamp":"2026-02-08T00:59:58.000Z"}
+      {"type":"system","timestamp":"2026-02-08T00:59:59.000Z"}
+      {"type":"user","sessionId":"metadata-prefix-session","cwd":"/work/project-metadata-prefix","isSidechain":false,"timestamp":"2026-02-08T01:00:00.000Z","message":{"role":"user","content":"Continue from metadata prefix"}}
+      {"type":"assistant","sessionId":"metadata-prefix-session","cwd":"/work/project-metadata-prefix","isSidechain":false,"timestamp":"2026-02-08T01:00:01.000Z","message":{"role":"assistant","content":[{"type":"text","text":"done"}]}}
+      """.trimIndent()
+    )
+
+    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
+
+    val thread = store.parseJsonlFile(transcript)
+
+    assertThat(thread).isNotNull
+    assertThat(thread!!.id).isEqualTo("metadata-prefix-session")
+    assertThat(thread.title).contains("Continue from metadata prefix")
+    assertThat(thread.activity).isEqualTo(ClaudeSessionActivity.READY)
+  }
+
+  @Test
   fun ignoresSnapshotOnlyJsonlArtifacts() {
     val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-c")
     Files.createDirectories(projectDir)
@@ -125,67 +155,20 @@ class ClaudeSessionsStoreTest {
     assertThat(thread.updatedAt).isEqualTo(Instant.parse("2026-02-08T01:00:02.000Z").toEpochMilli())
   }
 
-  @Test
-  fun derivesReadyActivityWhenLastConversationEventIsAssistant() {
-    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-unread")
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("activityStateMachineCases")
+  fun activityStateMachine(name: String, events: List<String>, expected: ClaudeSessionActivity) {
+    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project")
     Files.createDirectories(projectDir)
-    val transcript = projectDir.resolve("unread-session.jsonl")
-    Files.writeString(
-      transcript,
-      """
-      {"type":"user","sessionId":"unread-session","cwd":"/work/project-unread","isSidechain":false,"timestamp":"2026-02-08T01:00:00.000Z","message":{"role":"user","content":"Do something"}}
-      {"type":"assistant","sessionId":"unread-session","cwd":"/work/project-unread","isSidechain":false,"timestamp":"2026-02-08T01:00:02.000Z","message":{"role":"assistant","content":[{"type":"text","text":"done"}]}}
-      """.trimIndent()
-    )
+    val transcript = projectDir.resolve("activity-test.jsonl")
+    Files.write(transcript, events)
 
     val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
 
     val thread = store.parseJsonlFile(transcript)
 
     assertThat(thread).isNotNull
-    assertThat(thread!!.activity).isEqualTo(ClaudeSessionActivity.READY)
-  }
-
-  @Test
-  fun derivesProcessingActivityWhenLastEventIsProgress() {
-    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-processing")
-    Files.createDirectories(projectDir)
-    val transcript = projectDir.resolve("processing-session.jsonl")
-    Files.writeString(
-      transcript,
-      """
-      {"type":"user","sessionId":"processing-session","cwd":"/work/project-processing","isSidechain":false,"timestamp":"2026-02-08T01:00:00.000Z","message":{"role":"user","content":"Do something"}}
-      {"type":"assistant","sessionId":"processing-session","cwd":"/work/project-processing","isSidechain":false,"timestamp":"2026-02-08T01:00:01.000Z","message":{"role":"assistant","content":[{"type":"text","text":"working"}]}}
-      {"type":"progress","sessionId":"processing-session","cwd":"/work/project-processing","isSidechain":false,"timestamp":"2026-02-08T01:00:02.000Z"}
-      """.trimIndent()
-    )
-
-    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
-
-    val thread = store.parseJsonlFile(transcript)
-
-    assertThat(thread).isNotNull
-    assertThat(thread!!.activity).isEqualTo(ClaudeSessionActivity.PROCESSING)
-  }
-
-  @Test
-  fun derivesReadyActivityWhenLastConversationEventIsUser() {
-    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-ready")
-    Files.createDirectories(projectDir)
-    val transcript = projectDir.resolve("ready-session.jsonl")
-    Files.writeString(
-      transcript,
-      """
-      {"type":"user","sessionId":"ready-session","cwd":"/work/project-ready","isSidechain":false,"timestamp":"2026-02-08T01:00:00.000Z","message":{"role":"user","content":"Do something"}}
-      """.trimIndent()
-    )
-
-    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
-
-    val thread = store.parseJsonlFile(transcript)
-
-    assertThat(thread).isNotNull
-    assertThat(thread!!.activity).isEqualTo(ClaudeSessionActivity.READY)
+    assertThat(thread!!.activity).isEqualTo(expected)
   }
 
   @Test
@@ -228,85 +211,17 @@ class ClaudeSessionsStoreTest {
   }
 
   @Test
-  fun systemEventTypeDefaultsToReadyActivity() {
-    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-system")
-    Files.createDirectories(projectDir)
-    val transcript = projectDir.resolve("system-session.jsonl")
-    Files.writeString(
-      transcript,
-      """
-      {"type":"user","sessionId":"system-session","cwd":"/work/project-system","isSidechain":false,"timestamp":"2026-02-08T01:00:00.000Z","message":{"role":"user","content":"Hello"}}
-      {"type":"system","sessionId":"system-session","cwd":"/work/project-system","isSidechain":false,"timestamp":"2026-02-08T01:00:01.000Z"}
-      """.trimIndent(),
-    )
-
-    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
-
-    val thread = store.parseJsonlFile(transcript)
-
-    assertThat(thread).isNotNull
-    assertThat(thread!!.activity).isEqualTo(ClaudeSessionActivity.READY)
-  }
-
-  @Test
-  fun queueOperationEventTypeDefaultsToReadyActivity() {
-    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-queue")
-    Files.createDirectories(projectDir)
-    val transcript = projectDir.resolve("queue-session.jsonl")
-    Files.writeString(
-      transcript,
-      """
-      {"type":"user","sessionId":"queue-session","cwd":"/work/project-queue","isSidechain":false,"timestamp":"2026-02-08T01:00:00.000Z","message":{"role":"user","content":"Hello"}}
-      {"type":"queue-operation","sessionId":"queue-session","cwd":"/work/project-queue","isSidechain":false,"timestamp":"2026-02-08T01:00:01.000Z"}
-      """.trimIndent(),
-    )
-
-    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
-
-    val thread = store.parseJsonlFile(transcript)
-
-    assertThat(thread).isNotNull
-    assertThat(thread!!.activity).isEqualTo(ClaudeSessionActivity.READY)
-  }
-
-  @Test
-  fun parseJsonlFileReturnsActivityWithoutProjectPathFiltering() {
-    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-any-path")
-    Files.createDirectories(projectDir)
-    val transcript = projectDir.resolve("direct-parse.jsonl")
-    Files.writeString(
-      transcript,
-      """
-      {"type":"user","sessionId":"direct-parse","cwd":"/any/path","isSidechain":false,"timestamp":"2026-02-08T01:00:00.000Z","message":{"role":"user","content":"Hello"}}
-      {"type":"assistant","sessionId":"direct-parse","cwd":"/any/path","isSidechain":false,"timestamp":"2026-02-08T01:00:01.000Z","message":{"role":"assistant","content":[{"type":"text","text":"Hi"}]}}
-      {"type":"progress","sessionId":"direct-parse","cwd":"/any/path","isSidechain":false,"timestamp":"2026-02-08T01:00:02.000Z"}
-      """.trimIndent()
-    )
-
-    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
-
-    val thread = store.parseJsonlFile(transcript)
-
-    assertThat(thread).isNotNull
-    assertThat(thread!!.id).isEqualTo("direct-parse")
-    assertThat(thread.activity).isEqualTo(ClaudeSessionActivity.PROCESSING)
-    assertThat(thread.title).contains("Hello")
-  }
-
-  @Test
   fun parseJsonlFileTailScansForActivity() {
     val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-any-path")
     Files.createDirectories(projectDir)
     val transcript = projectDir.resolve("large-session.jsonl")
 
-    // Build a file with more than 3 events (head scan cap) so the tail scan picks up the last event.
     val lines = mutableListOf<String>()
     lines.add("""{"type":"user","sessionId":"large-session","cwd":"/any/path","isSidechain":false,"timestamp":"2026-02-08T01:00:00.000Z","message":{"role":"user","content":"Start task"}}""")
     for (i in 1..5) {
-      val ts = "2026-02-08T01:%02d:%02d.000Z".format(i / 60, i % 60)
-      lines.add("""{"type":"assistant","sessionId":"large-session","cwd":"/any/path","isSidechain":false,"timestamp":"$ts","message":{"role":"assistant","content":[{"type":"text","text":"step $i"}]}}""")
+      val ts = "2026-02-08T01:00:%02d.000Z".format(i)
+      lines.add("""{"type":"assistant","sessionId":"large-session","cwd":"/any/path","isSidechain":false,"timestamp":"$ts","message":{"role":"assistant","content":[{"type":"text","text":"step $i"},{"type":"tool_use","id":"tu_$i","name":"edit","input":{}}]}}""")
     }
-    // The tail event that determines final activity: progress → PROCESSING.
     lines.add("""{"type":"progress","sessionId":"large-session","cwd":"/any/path","isSidechain":false,"timestamp":"2026-02-08T05:00:00.000Z"}""")
 
     Files.write(transcript, lines)
@@ -319,6 +234,31 @@ class ClaudeSessionsStoreTest {
     assertThat(thread!!.id).isEqualTo("large-session")
     assertThat(thread.activity).isEqualTo(ClaudeSessionActivity.PROCESSING)
     assertThat(thread.title).contains("Start task")
+  }
+
+  @Test
+  fun parseJsonlFileParsesOversizedFinalEventFromFullLastLine() {
+    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-any-path")
+    Files.createDirectories(projectDir)
+    val transcript = projectDir.resolve("oversized-tail-session.jsonl")
+    val hugePayload = "x".repeat(6000)
+    Files.writeString(
+      transcript,
+      """
+      {"type":"user","sessionId":"oversized-tail-session","cwd":"/any/path","isSidechain":false,"timestamp":"2026-02-08T01:00:00.000Z","message":{"role":"user","content":"Start task"}}
+      {"type":"assistant","sessionId":"oversized-tail-session","cwd":"/any/path","isSidechain":false,"timestamp":"2026-02-08T01:00:01.000Z","message":{"role":"assistant","content":[{"type":"text","text":"step 1"},{"type":"tool_use","id":"tu_1","name":"edit","input":{}}]}}
+      {"type":"assistant","sessionId":"oversized-tail-session","cwd":"/any/path","isSidechain":false,"timestamp":"2026-02-08T01:00:02.000Z","message":{"role":"assistant","content":[{"type":"text","text":"step 2"},{"type":"tool_use","id":"tu_2","name":"edit","input":{}}]}}
+      {"type":"progress","sessionId":"oversized-tail-session","cwd":"/any/path","isSidechain":false,"timestamp":"2026-02-08T06:00:00.000Z","payload":"$hugePayload"}
+      """.trimIndent()
+    )
+
+    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
+
+    val thread = store.parseJsonlFile(transcript)
+
+    assertThat(thread).isNotNull
+    assertThat(thread!!.activity).isEqualTo(ClaudeSessionActivity.PROCESSING)
+    assertThat(thread.updatedAt).isEqualTo(Instant.parse("2026-02-08T06:00:00.000Z").toEpochMilli())
   }
 
   @Test
@@ -339,5 +279,46 @@ class ClaudeSessionsStoreTest {
     val thread = store.parseJsonlFile(transcript)
 
     assertThat(thread).isNull()
+  }
+
+  companion object {
+    private const val S = "test-session"
+    private const val C = "/work/project"
+
+    private fun user(ts: String, content: String = "Hello"): String =
+      claudeUserLine(ts, S, C, content)
+
+    private fun assistant(ts: String, content: String = "Hi"): String =
+      claudeAssistantLine(ts, S, C, content)
+
+    private fun assistantToolUse(ts: String, content: String = "editing"): String =
+      claudeAssistantToolUseLine(ts, S, C, content)
+
+    private fun progress(ts: String): String =
+      claudeProgressLine(ts, S, C)
+
+    private fun systemEvent(ts: String): String =
+      """{"type":"system","sessionId":"$S","cwd":"$C","isSidechain":false,"timestamp":"$ts"}"""
+
+    private fun queueOp(ts: String): String =
+      """{"type":"queue-operation","sessionId":"$S","cwd":"$C","isSidechain":false,"timestamp":"$ts"}"""
+
+    private fun toolResult(ts: String): String =
+      """{"type":"user","sessionId":"$S","cwd":"$C","isSidechain":false,"timestamp":"$ts","message":{"role":"user","content":[{"tool_use_id":"tu_1","type":"tool_result","content":"ok"}]}}"""
+
+    @JvmStatic
+    fun activityStateMachineCases(): Stream<Arguments> = Stream.of(
+      Arguments.of("user → READY", listOf(user("2026-02-08T01:00:00.000Z")), ClaudeSessionActivity.READY),
+      Arguments.of("user → assistant(text) → READY", listOf(user("2026-02-08T01:00:00.000Z"), assistant("2026-02-08T01:00:01.000Z")), ClaudeSessionActivity.READY),
+      Arguments.of("user → assistant(tool_use) → PROCESSING", listOf(user("2026-02-08T01:00:00.000Z"), assistantToolUse("2026-02-08T01:00:01.000Z")), ClaudeSessionActivity.PROCESSING),
+      Arguments.of("user → progress → PROCESSING", listOf(user("2026-02-08T01:00:00.000Z"), progress("2026-02-08T01:00:01.000Z"), progress("2026-02-08T01:00:02.000Z")), ClaudeSessionActivity.PROCESSING),
+      Arguments.of("user → assistant(text) → progress → READY", listOf(user("2026-02-08T01:00:00.000Z"), assistant("2026-02-08T01:00:01.000Z"), progress("2026-02-08T01:00:02.000Z")), ClaudeSessionActivity.READY),
+      Arguments.of("user → assistant(tool_use) → progress → PROCESSING", listOf(user("2026-02-08T01:00:00.000Z"), assistantToolUse("2026-02-08T01:00:01.000Z"), progress("2026-02-08T01:00:02.000Z"), progress("2026-02-08T01:00:03.000Z")), ClaudeSessionActivity.PROCESSING),
+      Arguments.of("full tool cycle → READY", listOf(user("2026-02-08T01:00:00.000Z"), assistantToolUse("2026-02-08T01:00:01.000Z"), progress("2026-02-08T01:00:02.000Z"), toolResult("2026-02-08T01:00:03.000Z"), assistant("2026-02-08T01:00:04.000Z")), ClaudeSessionActivity.READY),
+      Arguments.of("full tool cycle + trailing system → READY", listOf(user("2026-02-08T01:00:00.000Z"), assistantToolUse("2026-02-08T01:00:01.000Z"), progress("2026-02-08T01:00:02.000Z"), toolResult("2026-02-08T01:00:03.000Z"), assistant("2026-02-08T01:00:04.000Z"), progress("2026-02-08T01:00:05.000Z"), systemEvent("2026-02-08T01:00:06.000Z")), ClaudeSessionActivity.READY),
+      Arguments.of("multi-turn re-ask → PROCESSING", listOf(user("2026-02-08T01:00:00.000Z"), assistantToolUse("2026-02-08T01:00:01.000Z"), toolResult("2026-02-08T01:00:02.000Z"), assistant("2026-02-08T01:00:03.000Z"), user("2026-02-08T01:00:04.000Z", "follow up"), progress("2026-02-08T01:00:05.000Z")), ClaudeSessionActivity.PROCESSING),
+      Arguments.of("trailing system → READY", listOf(user("2026-02-08T01:00:00.000Z"), systemEvent("2026-02-08T01:00:01.000Z")), ClaudeSessionActivity.READY),
+      Arguments.of("trailing queue-operation → READY", listOf(user("2026-02-08T01:00:00.000Z"), queueOp("2026-02-08T01:00:01.000Z")), ClaudeSessionActivity.READY),
+    )
   }
 }

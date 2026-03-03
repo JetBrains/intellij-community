@@ -5,8 +5,9 @@ import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -14,7 +15,7 @@ import kotlin.time.Duration.Companion.seconds
 
 class ClaudeSessionSourceTest {
   @Test
-  fun allThreadsAreReadyOnFirstLoad() {
+  fun allThreadsAreReadyOnInitialLoad() {
     val threads = listOf(
       ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 1000L),
       ClaudeBackendThread(id = "s2", title = "Session 2", updatedAt = 2000L),
@@ -34,21 +35,16 @@ class ClaudeSessionSourceTest {
     var currentThreads = listOf(
       ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 1000L),
     )
-    val backend = object : ClaudeSessionBackend {
-      override suspend fun listThreads(path: String, openProject: Project?): List<ClaudeBackendThread> = currentThreads
-    }
-    val source = ClaudeSessionSource(backend = backend)
+    val source = ClaudeSessionSource(backend = dynamicBackend { currentThreads })
 
     runBlocking(Dispatchers.Default) {
-      val initial = source.listThreadsFromClosedProject(path = "/any")
-      assertThat(initial.single().activity).isEqualTo(AgentThreadActivity.READY)
+      assertThat(source.listThreadsFromClosedProject(path = "/any").single().activity)
+        .isEqualTo(AgentThreadActivity.READY)
 
       // updatedAt increases but thread was never opened → stays READY.
-      currentThreads = listOf(
-        ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L),
-      )
-      val refreshed = source.listThreadsFromClosedProject(path = "/any")
-      assertThat(refreshed.single().activity).isEqualTo(AgentThreadActivity.READY)
+      currentThreads = listOf(ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L))
+      assertThat(source.listThreadsFromClosedProject(path = "/any").single().activity)
+        .isEqualTo(AgentThreadActivity.READY)
     }
   }
 
@@ -57,25 +53,20 @@ class ClaudeSessionSourceTest {
     var currentThreads = listOf(
       ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 1000L),
     )
-    val backend = object : ClaudeSessionBackend {
-      override suspend fun listThreads(path: String, openProject: Project?): List<ClaudeBackendThread> = currentThreads
-    }
-    val source = ClaudeSessionSource(backend = backend)
+    val source = ClaudeSessionSource(backend = dynamicBackend { currentThreads })
 
     runBlocking(Dispatchers.Default) {
       source.listThreadsFromClosedProject(path = "/any")
 
-      // User opens the thread → starts tracking.
+      // User opens the thread.
       source.markThreadAsRead("s1", 1000L)
-      val afterOpen = source.listThreadsFromClosedProject(path = "/any")
-      assertThat(afterOpen.single().activity).isEqualTo(AgentThreadActivity.READY)
+      assertThat(source.listThreadsFromClosedProject(path = "/any").single().activity)
+        .isEqualTo(AgentThreadActivity.READY)
 
-      // Thread updates while user is elsewhere → UNREAD.
-      currentThreads = listOf(
-        ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L),
-      )
-      val refreshed = source.listThreadsFromClosedProject(path = "/any")
-      assertThat(refreshed.single().activity).isEqualTo(AgentThreadActivity.UNREAD)
+      // Agent replies while user is elsewhere → UNREAD.
+      currentThreads = listOf(ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L))
+      assertThat(source.listThreadsFromClosedProject(path = "/any").single().activity)
+        .isEqualTo(AgentThreadActivity.UNREAD)
     }
   }
 
@@ -84,53 +75,41 @@ class ClaudeSessionSourceTest {
     var currentThreads = listOf(
       ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 1000L),
     )
-    val backend = object : ClaudeSessionBackend {
-      override suspend fun listThreads(path: String, openProject: Project?): List<ClaudeBackendThread> = currentThreads
-    }
-    val source = ClaudeSessionSource(backend = backend)
+    val source = ClaudeSessionSource(backend = dynamicBackend { currentThreads })
 
     runBlocking(Dispatchers.Default) {
       source.listThreadsFromClosedProject(path = "/any")
-
-      // Open → track. Refresh consumes the sentinel at updatedAt=1000.
       source.markThreadAsRead("s1", 1000L)
-      val afterRead = source.listThreadsFromClosedProject(path = "/any")
-      assertThat(afterRead.single().activity).isEqualTo(AgentThreadActivity.READY)
 
-      // Backend updates while user is elsewhere → UNREAD.
-      currentThreads = listOf(
-        ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L),
-      )
-      val unread = source.listThreadsFromClosedProject(path = "/any")
-      assertThat(unread.single().activity).isEqualTo(AgentThreadActivity.UNREAD)
+      // Agent replies → UNREAD.
+      currentThreads = listOf(ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L))
+      assertThat(source.listThreadsFromClosedProject(path = "/any").single().activity)
+        .isEqualTo(AgentThreadActivity.UNREAD)
 
-      // Mark as read again → READY.
+      // User returns → mark as read → READY.
       source.markThreadAsRead("s1", 2000L)
-      val readAgain = source.listThreadsFromClosedProject(path = "/any")
-      assertThat(readAgain.single().activity).isEqualTo(AgentThreadActivity.READY)
+      assertThat(source.listThreadsFromClosedProject(path = "/any").single().activity)
+        .isEqualTo(AgentThreadActivity.READY)
     }
   }
 
   @Test
-  fun processingTakesPriorityOverUnread() {
+  fun processingAlwaysWinsOverUnread() {
     var currentThreads = listOf(
-      ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 1000L, activity = ClaudeSessionActivity.PROCESSING),
+      ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 1000L),
     )
-    val backend = object : ClaudeSessionBackend {
-      override suspend fun listThreads(path: String, openProject: Project?): List<ClaudeBackendThread> = currentThreads
-    }
-    val source = ClaudeSessionSource(backend = backend)
+    val source = ClaudeSessionSource(backend = dynamicBackend { currentThreads })
 
     runBlocking(Dispatchers.Default) {
       source.listThreadsFromClosedProject(path = "/any")
       source.markThreadAsRead("s1", 1000L)
 
-      // Even with increased updatedAt, PROCESSING wins.
+      // Backend says PROCESSING with increased updatedAt → PROCESSING wins.
       currentThreads = listOf(
         ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L, activity = ClaudeSessionActivity.PROCESSING),
       )
-      val result = source.listThreadsFromClosedProject(path = "/any")
-      assertThat(result.single().activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(source.listThreadsFromClosedProject(path = "/any").single().activity)
+        .isEqualTo(AgentThreadActivity.PROCESSING)
     }
   }
 
@@ -139,41 +118,59 @@ class ClaudeSessionSourceTest {
     var currentThreads = listOf(
       ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 1000L),
     )
-    val backend = object : ClaudeSessionBackend {
-      override suspend fun listThreads(path: String, openProject: Project?): List<ClaudeBackendThread> = currentThreads
-    }
-    val source = ClaudeSessionSource(backend = backend)
+    val source = ClaudeSessionSource(backend = dynamicBackend { currentThreads })
 
     runBlocking(Dispatchers.Default) {
       source.listThreadsFromClosedProject(path = "/any")
 
-      // New content: updatedAt increases to 2000.
-      currentThreads = listOf(
-        ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L),
-      )
-
-      // User opens thread and sees the new content — marks as read at 2000.
+      // User reads at updatedAt=2000.
       source.markThreadAsRead("s1", 2000L)
+
+      // A stale markAsRead at 1000 must not downgrade the tracker.
+      source.markThreadAsRead("s1", 1000L)
+
+      currentThreads = listOf(ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L))
+      assertThat(source.listThreadsFromClosedProject(path = "/any").single().activity)
+        .isEqualTo(AgentThreadActivity.READY)
+    }
+  }
+
+  @Test
+  fun activeThreadAutoAdvancesTrackerOnRefresh() {
+    var currentThreads = listOf(
+      ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 1000L),
+    )
+    val source = ClaudeSessionSource(backend = dynamicBackend { currentThreads })
+
+    runBlocking(Dispatchers.Default) {
+      source.listThreadsFromClosedProject(path = "/any")
+      source.markThreadAsRead("s1", 1000L)
+
+      // User is viewing thread s1 (tab focused).
+      source.setActiveThreadId("s1")
+
+      // Agent replies → updatedAt increases. Active thread: tracker auto-advances → READY.
+      currentThreads = listOf(ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L))
       assertThat(source.listThreadsFromClosedProject(path = "/any").single().activity)
         .isEqualTo(AgentThreadActivity.READY)
 
-      // A second open with a stale snapshot (updatedAt=1000) must not downgrade the tracker.
-      source.markThreadAsRead("s1", 1000L)
-      val result = source.listThreadsFromClosedProject(path = "/any")
-      assertThat(result.single().activity).isEqualTo(AgentThreadActivity.READY)
+      // User switches away → clear active. Agent replies → updatedAt increases → UNREAD.
+      source.setActiveThreadId(null)
+      currentThreads = listOf(ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 3000L))
+      assertThat(source.listThreadsFromClosedProject(path = "/any").single().activity)
+        .isEqualTo(AgentThreadActivity.UNREAD)
     }
   }
 
   @Test
   fun updatesFlowMergesBackendAndReadState() {
-    val backendUpdates = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(replay = 1)
+    val backendUpdates = MutableSharedFlow<Unit>(replay = 1)
     val backend = object : ClaudeSessionBackend {
       override suspend fun listThreads(path: String, openProject: Project?): List<ClaudeBackendThread> = emptyList()
       override val updates get() = backendUpdates
     }
     val source = ClaudeSessionSource(backend = backend)
 
-    // With replay=1 on the backend, emission before subscription is delivered.
     backendUpdates.tryEmit(Unit)
 
     runBlocking(Dispatchers.Default) {
@@ -182,98 +179,17 @@ class ClaudeSessionSourceTest {
     }
   }
 
-  @Test
-  fun activeThreadIsAutoAdvancedDuringRefresh() {
-    var currentThreads = listOf(
-      ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 1000L),
-    )
-    val backend = object : ClaudeSessionBackend {
-      override suspend fun listThreads(path: String, openProject: Project?): List<ClaudeBackendThread> = currentThreads
-    }
-    val source = ClaudeSessionSource(backend = backend)
 
-    runBlocking(Dispatchers.Default) {
-      source.listThreadsFromClosedProject(path = "/any")
-      source.markThreadAsRead("s1", 1000L)
-
-      // User is viewing thread s1.
-      source.setActiveThreadId("s1")
-
-      // User types → updatedAt increases. Active thread: tracker auto-advances → READY.
-      currentThreads = listOf(ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L))
-      val whileActive = source.listThreadsFromClosedProject(path = "/any")
-      assertThat(whileActive.single().activity).isEqualTo(AgentThreadActivity.READY)
-
-      // User switches away → clear active. Agent replies → updatedAt increases → UNREAD.
-      source.setActiveThreadId(null)
-      currentThreads = listOf(ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 3000L))
-      val afterSwitch = source.listThreadsFromClosedProject(path = "/any")
-      assertThat(afterSwitch.single().activity).isEqualTo(AgentThreadActivity.UNREAD)
-    }
-  }
-
-  @Test
-  fun setActiveBeforeMarkReadPreventsStaleUnread() {
-    var currentThreads = listOf(
-      ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 1000L),
-    )
-    val backend = object : ClaudeSessionBackend {
-      override suspend fun listThreads(path: String, openProject: Project?): List<ClaudeBackendThread> = currentThreads
-    }
-    val source = ClaudeSessionSource(backend = backend)
-
-    runBlocking(Dispatchers.Default) {
-      source.listThreadsFromClosedProject(path = "/any")
-
-      // Simulate openChatThread: setActive then markAsRead with the snapshot's updatedAt (1000).
-      source.setActiveThreadId("s1")
-      source.markThreadAsRead("s1", 1000L)
-
-      // Backend now reports a newer updatedAt (agent replied while chat was opening).
-      currentThreads = listOf(
-        ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L),
-      )
-
-      // Because the thread is active, the refresh should auto-advance the tracker → READY, not UNREAD.
-      val result = source.listThreadsFromClosedProject(path = "/any")
-      assertThat(result.single().activity).isEqualTo(AgentThreadActivity.READY)
-    }
-  }
-
-  @Test
-  fun markAsReadCatchesUpEvenWhenActiveThreadIsCleared() {
-    var currentThreads = listOf(
-      ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 1000L),
-    )
-    val backend = object : ClaudeSessionBackend {
-      override suspend fun listThreads(path: String, openProject: Project?): List<ClaudeBackendThread> = currentThreads
-    }
-    val source = ClaudeSessionSource(backend = backend)
-
-    runBlocking(Dispatchers.Default) {
-      source.listThreadsFromClosedProject(path = "/any")
-
-      // Simulate openChatThread: set active + mark as read.
-      source.setActiveThreadId("s1")
-      source.markThreadAsRead("s1", 1000L)
-
-      // Backend advanced while the chat tab was opening asynchronously.
-      currentThreads = listOf(
-        ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L),
-      )
-
-      // Simulate the debounced refresh overriding activeThreadId (chat tab not visible yet).
-      source.setActiveThreadId(null)
-
-      // markThreadAsRead should still guarantee READY via the catch-up sentinel.
-      val result = source.listThreadsFromClosedProject(path = "/any")
-      assertThat(result.single().activity).isEqualTo(AgentThreadActivity.READY)
-    }
-  }
 }
 
 private fun staticBackend(threads: List<ClaudeBackendThread>): ClaudeSessionBackend {
   return object : ClaudeSessionBackend {
     override suspend fun listThreads(path: String, openProject: Project?): List<ClaudeBackendThread> = threads
+  }
+}
+
+private fun dynamicBackend(provider: () -> List<ClaudeBackendThread>): ClaudeSessionBackend {
+  return object : ClaudeSessionBackend {
+    override suspend fun listThreads(path: String, openProject: Project?): List<ClaudeBackendThread> = provider()
   }
 }
