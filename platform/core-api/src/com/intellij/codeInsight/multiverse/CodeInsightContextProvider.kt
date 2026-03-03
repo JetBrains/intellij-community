@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.multiverse
 
 import com.intellij.openapi.project.Project
@@ -10,6 +10,8 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * Extension point (`com.intellij.multiverse.codeInsightContextProvider`) for registering [CodeInsightContext]s
+ *
+ * @see CodeInsightContextManager.registerTestOnlyCodeInsightContextProvider for testing
  */
 @ApiStatus.OverrideOnly
 interface CodeInsightContextProvider {

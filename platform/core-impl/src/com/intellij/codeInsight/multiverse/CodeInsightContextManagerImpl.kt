@@ -230,6 +230,16 @@ class CodeInsightContextManagerImpl(
     fileViewProvider.putUserData(codeInsightContextKey, effectiveContext)
   }
 
+  @TestOnly
+  override fun registerTestOnlyCodeInsightContextProvider(provider: CodeInsightContextProvider, disposable: Disposable) {
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      throw IllegalStateException("This method is only available in tests")
+    }
+
+    EP_NAME.point.registerExtension(provider, disposable)
+  }
+
+
   private class InvalidationBulkFileListener : BulkFileListenerBackgroundable {
     override fun before(events: List<VFileEvent>) {
       val moveEvents = events.filterIsInstance<VFileMoveEvent>().ifEmpty { return }
