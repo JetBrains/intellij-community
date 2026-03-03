@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.search.impl.VirtualFileEnumeration
 import com.intellij.psi.search.impl.VirtualFileEnumerationAware
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.indexing.IndexingBundle
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
@@ -152,7 +153,7 @@ class ModuleWithDependenciesScope internal constructor(
       val entries = en.getRootEntries()
 
       var i = 1
-      val map = HashMap<VirtualFile, ScopeRootDescriptor>(entries.size)
+      val map = CollectionFactory.createSmallMemoryFootprintMap<VirtualFile, ScopeRootDescriptor>(entries.size)
       for (root in entries) {
         map[root.root] = ScopeRootDescriptor(root.orderEntry, i++)
       }
