@@ -60,7 +60,7 @@ public class JUnitTestRunLineMarkerTest extends LineMarkerTestCase {
           public void test<caret>Foo() {
           }
       }""");
-    List<GutterMark> marks = myFixture.findGuttersAtCaret();
+    List<GutterMark> marks = myFixture.findGuttersAtCaret().stream().filter(m -> m.getTooltipText().equals("Run Test")).toList();
     assertEquals(1, marks.size());
   }
 
@@ -83,6 +83,24 @@ public class JUnitTestRunLineMarkerTest extends LineMarkerTestCase {
           }
       }""");
     List<GutterMark> marks = myFixture.findGuttersAtCaret();
+    assertEquals(1, marks.size());
+  }
+
+  public void testAbstractMethodOverriddenWithTest() {
+    myFixture.addClass("""
+      import org.junit.jupiter.api.Test;
+      public class InheritedTest extends AbstractTestClass {
+          @Override
+          @Test
+          void testFromBase() {}
+      }
+      """);
+    myFixture.configureByText("AbstractTestClass.java", """
+      public abstract class AbstractTestClass {
+          abstract void test<caret>FromBase();
+      }
+      """);
+    List<GutterMark> marks = myFixture.findGuttersAtCaret().stream().filter(m -> m.getTooltipText().equals("Run Test")).toList();
     assertEquals(1, marks.size());
   }
 

@@ -174,8 +174,8 @@ public final class JUnitUtil {
     if (isTestAnnotated(psiMethod, true)) return !psiMethod.hasModifierProperty(PsiModifier.STATIC);
     if (AnnotationUtil.isAnnotated(psiMethod, CONFIGURATIONS_ANNOTATION_NAME, 0)) return false;
     if (aClass != null && MetaAnnotationUtil.isMetaAnnotatedInHierarchy(aClass, Collections.singletonList(CUSTOM_TESTABLE_ANNOTATION))) return true;
+    if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) return hasInheritedTest(aClass, psiMethod);
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
-    if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
     if (checkClass && checkRunWith) {
       PsiAnnotation annotation = getRunWithAnnotation(aClass);
       if (annotation != null) {
@@ -221,7 +221,7 @@ public final class JUnitUtil {
         return true;
       }
     }
-    else if (JavaPsiFacade.getInstance(psiClass.getProject()).findClass(CUSTOM_TESTABLE_ANNOTATION, psiClass.getResolveScope()) != null && 
+    else if (JavaPsiFacade.getInstance(psiClass.getProject()).findClass(CUSTOM_TESTABLE_ANNOTATION, psiClass.getResolveScope()) != null &&
              MetaAnnotationUtil.isMetaAnnotatedInHierarchy(psiClass, CUSTOM_TESTABLE_ANNOTATION_LIST) ||
              hasTestableMetaAnnotation(psiClass)) {
       //no jupiter engine in the classpath
@@ -370,32 +370,38 @@ public final class JUnitUtil {
     if (!PsiClassUtil.isRunnableClass(psiClass, false, checkAbstract)) return false;
 
     return CachedValuesManager.getCachedValue(psiClass, () -> {
-      boolean hasAnnotation = AnnotationUtil.isAnnotated(psiClass, "org.junit.jupiter.api.extension.ExtendWith", 0);
-      if (!hasAnnotation) {
-        for (final PsiMethod method : psiClass.getAllMethods()) {
-          ProgressManager.checkCanceled();
-          if (!method.hasModifierProperty(PsiModifier.PRIVATE) &&
-              !method.hasModifierProperty(PsiModifier.STATIC) &&
-              !method.hasModifierProperty(PsiModifier.ABSTRACT) &&
-              MetaAnnotationUtil.isMetaAnnotated(method, CUSTOM_TESTABLE_ANNOTATION_LIST)) {
-            hasAnnotation = true;
-            break;
-          }
+      if (AnnotationUtil.isAnnotated(psiClass, "org.junit.jupiter.api.extension.ExtendWith", 0)) {
+        return CachedValueProvider.Result.create(true, PsiModificationTracker.MODIFICATION_COUNT);
+      }
+      for (final PsiMethod method : psiClass.getAllMethods()) {
+        ProgressManager.checkCanceled();
+        if (!method.hasModifierProperty(PsiModifier.PRIVATE) &&
+            !method.hasModifierProperty(PsiModifier.STATIC) &&
+            !method.hasModifierProperty(PsiModifier.ABSTRACT) &&
+            MetaAnnotationUtil.isMetaAnnotated(method, CUSTOM_TESTABLE_ANNOTATION_LIST)) {
+          return CachedValueProvider.Result.create(true, PsiModificationTracker.MODIFICATION_COUNT);
+        }
+        if (method.hasModifierProperty(PsiModifier.ABSTRACT) && hasInheritedTest(psiClass, method)) {
+          return CachedValueProvider.Result.create(true, PsiModificationTracker.MODIFICATION_COUNT);
         }
       }
-
-      if (!hasAnnotation) {
-        for (PsiClass aClass : psiClass.getAllInnerClasses()) {
-          if (!aClass.hasModifierProperty(PsiModifier.PRIVATE) &&
-              !aClass.hasModifierProperty(PsiModifier.STATIC) &&
-              MetaAnnotationUtil.isMetaAnnotated(aClass, Collections.singleton(JUNIT5_NESTED))) {
-            hasAnnotation = true;
-            break;
-          }
+      for (PsiClass aClass : psiClass.getAllInnerClasses()) {
+        if (!aClass.hasModifierProperty(PsiModifier.PRIVATE) &&
+            !aClass.hasModifierProperty(PsiModifier.STATIC) &&
+            MetaAnnotationUtil.isMetaAnnotated(aClass, Collections.singleton(JUNIT5_NESTED))) {
+          return CachedValueProvider.Result.create(true, PsiModificationTracker.MODIFICATION_COUNT);
         }
       }
-      return CachedValueProvider.Result.create(hasAnnotation, PsiModificationTracker.MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(false, PsiModificationTracker.MODIFICATION_COUNT);
     });
+  }
+
+  private static boolean hasInheritedTest(@Nullable PsiClass psiClass, @NotNull PsiMethod method) {
+    if (psiClass == null) return false;
+    return ClassInheritorsSearch.search(psiClass)
+      .filtering(subClass -> !subClass.hasModifierProperty(PsiModifier.ABSTRACT))
+      .anyMatch(subClass -> ContainerUtil.exists(subClass.findMethodsBySignature(method, false),
+                                                 override -> isTestAnnotated(override)));
   }
 
   public static boolean isJUnit5(@NotNull PsiElement element) {
