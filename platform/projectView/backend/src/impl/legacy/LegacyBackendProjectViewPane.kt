@@ -47,9 +47,9 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
-import com.intellij.platform.projectView.pane.ProjectViewPaneUpdateFileNestingRequest
-import com.intellij.platform.projectView.pane.ProjectViewPaneUpdateOptionValueRequest
-import com.intellij.platform.projectView.pane.ProjectViewPaneUpdateSortKeyRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneChangeFileNestingRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneChangeOptionValueRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneChangeSortKeyRequest
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.SuperRoot
 import com.intellij.platform.projectView.pane.projectViewPaneId
@@ -245,9 +245,9 @@ private class AbstractProjectViewPaneStateManager(
               when (request) {
                 is ProjectViewPaneLoadChildrenRequest -> loadChildren(request.nodeId)
                 is ProjectViewPaneNavigateRequest -> navigate(request.nodeId)
-                is ProjectViewPaneUpdateOptionValueRequest -> updateOptionValue(request.option, request.newValue)
-                is ProjectViewPaneUpdateSortKeyRequest -> updateSortKey(request.sortKey)
-                is ProjectViewPaneUpdateFileNestingRequest -> updateFileNesting(request.isFileNestingOn, request.activeRules)
+                is ProjectViewPaneChangeOptionValueRequest -> changeOptionValue(request.option, request.newValue)
+                is ProjectViewPaneChangeSortKeyRequest -> changeSortKey(request.sortKey)
+                is ProjectViewPaneChangeFileNestingRequest -> changeFileNesting(request.isFileNestingOn, request.activeRules)
               }
             }
           }
@@ -476,19 +476,19 @@ private class AbstractProjectViewPaneStateManager(
     return nodeByModelNode[node]
   }
 
-  private fun updateOptionValue(option: ProjectViewOption, newValue: Boolean) {
+  private fun changeOptionValue(option: ProjectViewOption, newValue: Boolean) {
     val legacyOption = legacyProjectViewOption(project, option)
     legacyOption.isSelected = newValue
     updateActionStates()
   }
 
-  private fun updateSortKey(sortKey: NodeSortKey) {
+  private fun changeSortKey(sortKey: NodeSortKey) {
     val impl = ProjectViewImpl.getInstance(project) as ProjectViewImpl
     impl.setSortKey(id, sortKey)
     updateActionStates()
   }
 
-  private fun updateFileNesting(isOn: Boolean, rules: List<NestingRuleState>) {
+  private fun changeFileNesting(isOn: Boolean, rules: List<NestingRuleState>) {
     val impl = ProjectViewImpl.getInstance(project) as ProjectViewImpl
     impl.setUseFileNestingRules(isOn)
     ProjectViewFileNestingService.getInstance().setRules(rules.map { it.toNestingRule() })

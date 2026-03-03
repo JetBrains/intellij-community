@@ -40,7 +40,7 @@ internal class ConfigureFilesNestingAction : DumbAwareAction(), ActionRemoteBeha
       return view.currentProjectViewPane?.isFileNestingEnabled ?: false
     }
 
-    return ProjectViewActionSupport.getInstance(project).getFileNestingState()?.isFileNestingAvailable == true
+    return ProjectViewActionSupport.getInstance(project).getActionState()?.fileNestingState?.isFileNestingAvailable == true
   }
 
   override fun actionPerformed(event: AnActionEvent) {
@@ -58,7 +58,7 @@ internal class ConfigureFilesNestingAction : DumbAwareAction(), ActionRemoteBeha
     }
 
     val projectViewActionSupport = ProjectViewActionSupport.getInstance(project)
-    val model = FileNestingModel(projectViewActionSupport.getFileNestingState() ?: return)
+    val model = FileNestingModel(projectViewActionSupport.getActionState()?.fileNestingState ?: return)
     val dialog = FileNestingInProjectViewDialog(project, model)
     dialog.reset(model.isFileNestingOn)
     if (dialog.showAndGet()) {

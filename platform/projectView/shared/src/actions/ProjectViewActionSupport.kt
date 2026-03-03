@@ -12,13 +12,9 @@ interface ProjectViewActionSupport {
     @JvmStatic fun getInstance(project: Project): ProjectViewActionSupport = ProjectViewToolWindowService.getInstance(project).getActionSupport()
   }
 
-  fun getOptionState(option: ProjectViewOption): ProjectViewOptionState?
+  fun getActionState(): ProjectViewActionState?
 
-  fun getSortKeyState(): ProjectViewSortKeyState?
-
-  fun getFileNestingState(): FileNestingState?
-
-  fun requestOptionValueUpdate(option: ProjectViewOption, newValue: Boolean)
+  fun requestOptionValueChange(option: ProjectViewOption, newValue: Boolean)
 
   fun requestSortKeyChange(sortKey: NodeSortKey)
 

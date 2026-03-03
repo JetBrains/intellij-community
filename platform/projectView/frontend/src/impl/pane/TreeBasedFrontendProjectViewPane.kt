@@ -17,13 +17,11 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
-import com.intellij.platform.projectView.actions.FileNestingState
 import com.intellij.platform.projectView.actions.NestingRuleState
 import com.intellij.platform.projectView.actions.ProjectViewActionState
+import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.actions.ProjectViewOption
 import com.intellij.platform.projectView.actions.ProjectViewOptionMenuUpdater
-import com.intellij.platform.projectView.actions.ProjectViewOptionState
-import com.intellij.platform.projectView.actions.ProjectViewSortKeyState
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
 import com.intellij.platform.projectView.pane.ProjectViewActionStateEvent
@@ -39,12 +37,11 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
-import com.intellij.platform.projectView.pane.ProjectViewPaneUpdateFileNestingRequest
-import com.intellij.platform.projectView.pane.ProjectViewPaneUpdateOptionValueRequest
-import com.intellij.platform.projectView.pane.ProjectViewPaneUpdateSortKeyRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneChangeFileNestingRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneChangeOptionValueRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneChangeSortKeyRequest
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.SuperRootModel
-import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.pom.Navigatable
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.treeStructure.Tree
@@ -237,25 +234,21 @@ internal abstract class TreeBasedFrontendProjectViewPane(
   private inner class ActionSupport : ProjectViewActionSupport {
     private val actionState = AtomicReference<ProjectViewActionState?>(null)
 
-    override fun getOptionState(option: ProjectViewOption): ProjectViewOptionState? = actionState.load()?.optionStates?.get(option)
+    override fun getActionState(): ProjectViewActionState? = actionState.load()
 
-    override fun getSortKeyState(): ProjectViewSortKeyState? = actionState.load()?.sortKeyState
-
-    override fun getFileNestingState(): FileNestingState? = actionState.load()?.fileNestingState
-
-    override fun requestOptionValueUpdate(option: ProjectViewOption, newValue: Boolean) {
-      sendRequest(ProjectViewPaneUpdateOptionValueRequest(option, newValue))
+    override fun requestOptionValueChange(option: ProjectViewOption, newValue: Boolean) {
+      sendRequest(ProjectViewPaneChangeOptionValueRequest(option, newValue))
     }
 
     override fun requestSortKeyChange(sortKey: NodeSortKey) {
-      sendRequest(ProjectViewPaneUpdateSortKeyRequest(sortKey))
+      sendRequest(ProjectViewPaneChangeSortKeyRequest(sortKey))
     }
 
     override fun requestFileNestingChange(
       fileNestingOn: Boolean,
       activeRules: List<NestingRuleState>,
     ) {
-      sendRequest(ProjectViewPaneUpdateFileNestingRequest(fileNestingOn, activeRules))
+      sendRequest(ProjectViewPaneChangeFileNestingRequest(fileNestingOn, activeRules))
     }
 
     fun updateActionState(actionState: ProjectViewActionState) {

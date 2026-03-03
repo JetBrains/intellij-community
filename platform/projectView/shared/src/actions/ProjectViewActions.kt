@@ -134,7 +134,7 @@ internal abstract class SortKeyAction(
   }
 
   private fun getSortKeyState(e: AnActionEvent): ProjectViewSortKeyState? {
-    return ProjectViewActionSupport.getInstance(e.project ?: return null).getSortKeyState()
+    return ProjectViewActionSupport.getInstance(e.project ?: return null).getActionState()?.sortKeyState
   }
 }
 
@@ -201,13 +201,13 @@ private class FrontendOption(private val event: AnActionEvent, private val optio
   override fun isAlwaysVisible(): Boolean = getOptionState()?.isAlwaysVisible == true
 
   private fun getOptionState(): ProjectViewOptionState? {
-    val result = service()?.getOptionState(option)
+    val result = service()?.getActionState()?.optionStates?.get(option)
     LOG.trace { "FrontendOption.getOptionState($option): $result" }
     return result
   }
 
   override fun setSelected(selected: Boolean) {
-    service()?.requestOptionValueUpdate(option, selected)
+    service()?.requestOptionValueChange(option, selected)
     val project = event.project
     val menu = event.getActionMenu()
     if (project != null && menu != null) {

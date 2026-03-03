@@ -26,20 +26,20 @@ data class ProjectViewPaneNavigateRequest(
 
 @ApiStatus.Internal
 @Serializable
-data class ProjectViewPaneUpdateOptionValueRequest(
+data class ProjectViewPaneChangeOptionValueRequest(
   val option: ProjectViewOption,
   val newValue: Boolean,
 ) : ProjectViewPaneRequest()
 
 @ApiStatus.Internal
 @Serializable
-data class ProjectViewPaneUpdateSortKeyRequest(
+data class ProjectViewPaneChangeSortKeyRequest(
   val sortKey: NodeSortKey,
 ) : ProjectViewPaneRequest()
 
 @ApiStatus.Internal
 @Serializable
-data class ProjectViewPaneUpdateFileNestingRequest(
+data class ProjectViewPaneChangeFileNestingRequest(
   val isFileNestingOn: Boolean,
   val activeRules: List<NestingRuleState>,
 ) : ProjectViewPaneRequest()
