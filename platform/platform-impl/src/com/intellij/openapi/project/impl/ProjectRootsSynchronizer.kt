@@ -16,12 +16,11 @@ import org.jetbrains.annotations.VisibleForTesting
 @Internal
 class ProjectRootsSynchronizer : ProjectActivity {
   companion object {
+    /**
+     * Registers project roots from [ProjectRootPersistentStateComponent] to the workspace model
+     */
     @VisibleForTesting
     suspend fun doRegister(project: Project) {
-      if (!Registry.`is`("ide.create.project.root.entity")) {
-        return
-      }
-
       val projectRootsComponent = project.serviceAsync<ProjectRootPersistentStateComponent>()
       val roots = projectRootsComponent.projectRootUrls
       val virtualFileUrlManager = project.serviceAsync<WorkspaceModel>().getVirtualFileUrlManager()
@@ -32,9 +31,11 @@ class ProjectRootsSynchronizer : ProjectActivity {
   }
 
   override suspend fun execute(project: Project) {
-    doRegister(project)
-    return
+    if (!Registry.`is`("ide.create.project.root.entity")) {
+      return
+    }
 
+    doRegister(project)
     launchListener(project)
   }
 
