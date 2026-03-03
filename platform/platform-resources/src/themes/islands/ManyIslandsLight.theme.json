@@ -935,6 +935,7 @@
     "StatusBar": {
       "background": "container-main-window-bg",
       "borderColor": "transparent",
+      "topBorderWidth": 0,
       "Widget": {
         "foreground": "text-muted",
         "hoverForeground": "text-default",
@@ -1106,7 +1107,7 @@
         "background": "container-main-window-bg",
         "hoverBackground": "toolbar-bg-hovered",
         "pressedBackground": "toolbar-bg-pressed",
-        "insets": "5,5,5,5"
+        "insets": "7,5,5,5"
       },
       "Dropdown": {
         "foreground": "text-default",
