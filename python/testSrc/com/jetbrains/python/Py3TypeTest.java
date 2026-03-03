@@ -3646,7 +3646,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-64474
   public void testTupleElementAccessedWithNegativeIndex() {
-    doTest("bool",
+    doTest("Literal[True]",
            """
              xs = (1, True, "foo")
              expr = xs[-2]
@@ -5148,6 +5148,13 @@ public class Py3TypeTest extends PyTestCase {
       def f(edges: list[list[list[int]]]):
                        [edge, [edge_2, [node_a]]] = edges
                        expr = edge
+      """);
+  }
+
+  @TestFor(issues = "PY-57621")
+  public void testTupleWithLiteralValues() {
+    doTest("tuple[Literal[1]]", """
+      expr = (1,)
       """);
   }
 

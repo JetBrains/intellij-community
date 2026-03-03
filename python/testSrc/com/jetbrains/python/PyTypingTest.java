@@ -6158,6 +6158,19 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  @TestFor(issues="PY-57621")
+  public void testEnumTuple() {
+    doTest("tuple[int, str]", """
+      from enum import Enum
+      
+      class Color(Enum):
+        RED = 1, "red"
+        BLUE = 2, "blue"
+      
+      expr = Color.BLUE.value
+      """);
+  }
+
   // PY-76149
   public void testDataclassTransformConstructorSignatureWithFieldsAnnotatedWithDescriptor() {
     doTestExpressionUnderCaret("(id: int, name: str) -> MyClass", """

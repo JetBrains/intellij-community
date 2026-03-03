@@ -436,7 +436,12 @@ object PyTypeChecker {
           context
         )
       }
-      context.mySubstitutions.putTypeVarTuple(expected as PyTypeVarTupleType, actual, KeyImpl)
+      val normalizedActual =
+        if (actual is PyUnpackedTupleType)
+          // TODO: consider how widening should work with more complex types like: `tuple[Sequence[Literal[1]]`
+          PyUnpackedTupleTypeImpl(actual.elementTypes.map { PyLiteralType.upcastLiteralToClass(it) }, actual.isUnbound)
+        else actual
+      context.mySubstitutions.putTypeVarTuple(expected as PyTypeVarTupleType, normalizedActual, KeyImpl)
     }
     return true
   }

@@ -1,1 +1,3 @@
-var: [tuple[int, int]] = (1, 2)
+from typing import Literal
+
+var: [tuple[Literal[1], Literal[2]]] = (1, 2)

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections;
 
 import com.intellij.openapi.util.RecursionManager;
@@ -1874,8 +1874,8 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    foo(1, bar, args=(0, 'foo'))
                    foo(1, baz, args=(0, 'foo', 1.0, False))
                    
-                   foo(1, bar, <warning descr="Expected type 'tuple[int, str]' (matched generic type 'tuple[*Ts]'), got 'tuple[str, int]' instead">args=('foo', 0)</warning>)
-                   foo(1, baz, <warning descr="Expected type 'tuple[int, str, float, bool]' (matched generic type 'tuple[*Ts]'), got 'tuple[str, int, float, bool]' instead">args=('foo', 0, 1.0, False)</warning>)
+                   foo(1, bar, <warning descr="Expected type 'tuple[int, str]' (matched generic type 'tuple[*Ts]'), got 'tuple[Literal['foo'], Literal[0]]' instead">args=('foo', 0)</warning>)
+                   foo(1, baz, <warning descr="Expected type 'tuple[int, str, float, bool]' (matched generic type 'tuple[*Ts]'), got 'tuple[Literal['foo'], Literal[0], float, Literal[False]]' instead">args=('foo', 0, 1.0, False)</warning>)
                    """);
   }
 
@@ -2044,10 +2044,26 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    def foo(*args: Tuple[*Ts]): ...
                    
                    foo((0,), (1,))
-                   foo((0,), <warning descr="Expected type 'tuple[int]' (matched generic type 'tuple[*Ts]'), got 'tuple[int, int]' instead">(1, 2)</warning>)
+                   foo((0,), <warning descr="Expected type 'tuple[int]' (matched generic type 'tuple[*Ts]'), got 'tuple[Literal[1], Literal[2]]' instead">(1, 2)</warning>)
                    # Should fail according to https://typing.python.org/en/latest/spec/generics.html#type-variable-tuple-equality
-                   foo((0,), <warning descr="Expected type 'tuple[int]' (matched generic type 'tuple[*Ts]'), got 'tuple[str]' instead">('1',)</warning>)
+                   foo((0,), <warning descr="Expected type 'tuple[int]' (matched generic type 'tuple[*Ts]'), got 'tuple[Literal['1']]' instead">('1',)</warning>)
                    """);
+  }
+
+  public void testTypeVarTupleWidening() {
+    fixme("widen more literal types in type var tuples", AssertionError.class, "Expected type 'tuple[tuple[Literal[0]]]'", () -> {
+      doTestByText("""
+                     from typing import Literal, Sequence
+                     
+                     def foo[*Ts](*args: tuple[*Ts]): ...
+                     
+                     # nested tuples
+                     foo(((0,),), ((1,),))
+                     def main(ones: Sequence[Literal[1]], twos: Sequence[Literal[2]]):
+                         # should this widen to `Sequence[int]` or should it show an error?
+                         foo((ones,), (twos,))
+                     """);
+    });
   }
 
   // PY-53105

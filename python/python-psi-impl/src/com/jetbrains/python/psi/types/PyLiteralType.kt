@@ -257,7 +257,7 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
           return PyLiteralStringType.create(expression)
         }
       }
-      return getLiteralType(expression, context)
+      return expression.getLiteralType(context)
     }
 
     private fun literalType(expression: PyExpression, context: TypeEvalContext, index: Boolean): PyLiteralType? {

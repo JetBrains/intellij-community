@@ -244,6 +244,13 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
       if (value == null) return null;
 
       PyType type = context.getType(value);
+      if (type instanceof PyTupleType tupleType) {
+        // until heterogeneous enums are supported, we must widen tuple types
+        type = PyTupleType.create(
+          tupleType.getDeclarationElement(),
+          ContainerUtil.map(tupleType.getElementTypes(), t -> PyLiteralType.upcastLiteralToClass(t))
+        );
+      }
       return getEnumAttributeInfo(enumClass, type, context);
     }
     else {
