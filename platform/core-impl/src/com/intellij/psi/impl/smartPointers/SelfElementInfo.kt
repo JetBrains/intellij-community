@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers
 
+import com.intellij.codeInsight.multiverse.withAllowedIrrelevantContexts
 import com.intellij.lang.Language
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.Document
@@ -189,7 +190,9 @@ open class SelfElementInfo internal constructor(
         tracker?.revalidate(vfile, project)
 
         val context = fileHolder().context ?: return@runReadActionBlocking null
-        val file = PsiManager.getInstance(project).findFile(vfile, context) ?: return@runReadActionBlocking null
+        val file = withAllowedIrrelevantContexts {
+          PsiManager.getInstance(project).findFile(vfile, context)
+        } ?: return@runReadActionBlocking null
         val effectiveLanguage = if (language === Language.ANY) file.viewProvider.baseLanguage else language
         return@runReadActionBlocking file.viewProvider.getPsi(effectiveLanguage)
       }

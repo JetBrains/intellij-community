@@ -7,4 +7,11 @@ import com.intellij.psi.FileViewProvider
 
 internal interface NewFileViewProviderFactory {
   fun createNewFileViewProvider(file: VirtualFile, context: CodeInsightContext): FileViewProvider
+
+  /**
+   * Used by validity reanimation. Suppresses the irrelevant-context assertion enforced in
+   * [com.intellij.psi.impl.file.impl.FileManagerImpl.createFileViewProvider] because the recreated
+   * provider is transient and used only for equivalence comparison; it is not installed as PSI.
+   */
+  fun createNewFileViewProviderForValidityCheck(file: VirtualFile, context: CodeInsightContext): FileViewProvider
 }

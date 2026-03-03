@@ -12,6 +12,7 @@ import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.EditorLockFreeTyping;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -21,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -344,6 +346,11 @@ public final class FileManagerImpl implements FileManagerEx {
                                                           @NotNull CodeInsightContext context,
                                                           boolean eventSystemEnabled) {
     FileType fileType = vFile.getFileType();
+
+    if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManagerEx.isInStressTest()) {
+      CodeInsightContextUtil.ensureContextRelevant(vFile, context, myManager.getProject());
+    }
+
     Language language = LanguageUtil.getLanguageForPsi(myManager.getProject(), vFile, fileType);
     FileViewProviderFactory factory = language == null
                                       ? FileTypeFileViewProviders.INSTANCE.forFileType(fileType)
@@ -616,9 +623,11 @@ public final class FileManagerImpl implements FileManagerEx {
   @RequiresWriteLock
   @Override
   public void updatePsiAfterVfsMoveOrDelete() {
-    removeInvalidDirs(); // note: important to update directories the map first - findFile uses findDirectory!
-
-    new InvalidFileProcessor(this, myVFileToViewProviderMap).processInvalidFilesAfterVfsMoveOrDelete();
+    CodeInsightContextUtil.runWithAllowedIrrelevantContexts(() -> {
+      // note: important to update directories the map first - findFile uses findDirectory!
+      removeInvalidDirs();
+      new InvalidFileProcessor(this, myVFileToViewProviderMap).processInvalidFilesAfterVfsMoveOrDelete();
+    });
   }
 
   public static boolean areViewProvidersEquivalent(@NotNull FileViewProvider view1, @NotNull FileViewProvider view2) {
@@ -700,6 +709,16 @@ public final class FileManagerImpl implements FileManagerEx {
     @Override
     public @NotNull FileViewProvider createNewFileViewProvider(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
       return createFileViewProvider(file, context, !LightVirtualFile.shouldSkipEventSystem(file));
+    }
+
+    @Override
+    public @NotNull FileViewProvider createNewFileViewProviderForValidityCheck(@NotNull VirtualFile file,
+                                                                               @NotNull CodeInsightContext context) {
+      Ref<FileViewProvider> result = new Ref<>();
+      CodeInsightContextUtil.runWithAllowedIrrelevantContexts(() -> {
+        result.set(createFileViewProvider(file, context, !LightVirtualFile.shouldSkipEventSystem(file)));
+      });
+      return result.get();
     }
   }
 }

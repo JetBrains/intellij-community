@@ -56,22 +56,49 @@ fun List<FileViewProvider>.isEventSystemEnabled(): Boolean {
 }
 
 /**
- * @return true if `context` is still relevant for the `file`. It's relevant if [)][CodeInsightContextManager.getCodeInsightContexts]
- * contain `context` or if `context` is `default` or `any`.
+ * Ensures that `context` is still relevant for the `file`.
+ * It's relevant if [CodeInsightContextManager.getCodeInsightContexts] contain `context` or if `context` is `default` or `any`.
  */
 @RequiresReadLock
-fun isContextRelevant(file: VirtualFile, context: CodeInsightContext, project: Project): Boolean {
-  if (!isSharedSourceSupportEnabled(project)) {
-    return true
-  }
+fun ensureContextRelevant(file: VirtualFile, context: CodeInsightContext, project: Project) {
+  if (!isSharedSourceSupportEnabled(project)) return
+  if (areIrrelevantContextsAllowed()) return
+  if (context === anyContext() || file is LightVirtualFile) return
 
-  if (context === anyContext() || file is LightVirtualFile) {
-    return true
-  }
+  val contextManager = CodeInsightContextManager.getInstance(project)
+  val contexts = contextManager.getCodeInsightContexts(file)
+  if (context in contexts) return
 
-  val contexts = CodeInsightContextManager.getInstance(project).getCodeInsightContexts(file)
-  return contexts.contains(context)
+  log.error("context $context is not relevant for file $file. Existing contexts:\n  ${contexts.joinToString("\n  ")}")
 }
 
-private val log = fileLogger()
+/**
+ * Suppresses the [ensureContextRelevant] assertion for the duration of [action] on the current thread.
+ * Intended for internal plumbing that intentionally tolerates stale contexts (validity reanimation,
+ * smart-pointer restoration during a move, etc.). Re-entrant.
+ */
+@ApiStatus.Internal
+fun <T> withAllowedIrrelevantContexts(action: () -> T): T {
+  irrelevantContextsDepth.set(irrelevantContextsDepth.get() + 1)
+  try {
+    return action()
+  }
+  finally {
+    irrelevantContextsDepth.set(irrelevantContextsDepth.get() - 1)
+  }
+}
 
+/**
+ * Java-friendly overload of [withAllowedIrrelevantContexts] for void actions.
+ */
+@ApiStatus.Internal
+fun runWithAllowedIrrelevantContexts(action: Runnable) {
+  withAllowedIrrelevantContexts { action.run() }
+}
+
+@ApiStatus.Internal
+fun areIrrelevantContextsAllowed(): Boolean = irrelevantContextsDepth.get() > 0
+
+private val irrelevantContextsDepth: ThreadLocal<Int> = ThreadLocal.withInitial { 0 }
+
+private val log = fileLogger()

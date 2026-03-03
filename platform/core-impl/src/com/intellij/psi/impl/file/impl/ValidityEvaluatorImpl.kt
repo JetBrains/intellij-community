@@ -31,7 +31,7 @@ internal class ValidityEvaluatorImpl(
     tempProviders.put(virtualFile, null)
 
     try {
-      val recreated = newFileViewProviderFactory.createNewFileViewProvider(virtualFile, context)
+      val recreated = newFileViewProviderFactory.createNewFileViewProviderForValidityCheck(virtualFile, context)
       tempProviders.put(virtualFile, recreated)
 
       return FileManagerImpl.areViewProvidersEquivalent(provider, recreated) &&
