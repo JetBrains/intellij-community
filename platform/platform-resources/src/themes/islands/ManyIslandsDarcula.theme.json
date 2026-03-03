@@ -112,12 +112,14 @@
       "inactiveBackground": "BackgroundLight",
       "borderColor": "BorderTransparent",
       "Dropdown.transparentHoverBackground": "#FFFFFF12",
-      "Button.arc.compact": 8
+      "Button.arc.compact": 8,
+      "Icon.insets": "7,5,5,5"
     },
 
     "StatusBar": {
       "background": "BackgroundLight",
       "borderColor": "BorderTransparent",
+      "topBorderWidth": 0,
       "Breadcrumbs.foreground": "#9da0a8",
       "Widget.foreground": "#9da0a8",
       "Breadcrumbs.hoverBackground": "#FFFFFF18",
