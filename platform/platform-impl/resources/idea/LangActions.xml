@@ -545,6 +545,8 @@
       <reference ref="ProjectViewPopupMenu"/>
     </group>
 
+    <reference ref="ProjectView.RelatedActions"/>
+
     <reference ref="Structure.ViewOptions"/>
     <reference ref="StructureViewToolbar"/>
     <reference ref="StructureViewFloatingToolbar"/>

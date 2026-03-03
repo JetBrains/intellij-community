@@ -556,6 +556,14 @@
       <reference ref="MethodHierarchy"/>
       <reference ref="CallHierarchy"/>
     </group>
+    <group id="ProjectView.RelatedActions">
+      <action id="ViewInplaceComments" class="com.intellij.ide.actions.ViewInplaceCommentsAction"/>
+      <action id="ProjectView.CustomizeTrees"
+              class="com.intellij.ide.projectView.impl.CustomizeTreesAction"/>
+      <action id="ScopeView.EditScopes"
+              class="com.intellij.ide.scopeView.EditScopesAction"
+              icon="AllIcons.Ide.LocalScope"/>
+    </group>
     <group id="Structure.ViewOptions" searchable="false" popup="true" icon="AllIcons.Actions.GroupBy"/>
     <group id="StructureViewToolbar"/>
     <group id="StructureViewFloatingToolbar" popup="true"/>

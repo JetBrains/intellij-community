@@ -56,7 +56,7 @@
                 class="com.intellij.platform.projectView.actions.ShowScratchesAndConsoles">
           <override-text place="ToolwindowPopup"/>
         </action>
-        <action id="ViewInplaceComments" class="com.intellij.ide.actions.ViewInplaceCommentsAction"/>
+        <reference ref="ViewInplaceComments"/>
         <separator/>
         <action id="ProjectView.FlattenModules"
                 class="com.intellij.platform.projectView.actions.FlattenModules"
@@ -75,8 +75,7 @@
         <action id="ProjectView.FileNesting"
                 class="com.intellij.platform.projectView.actions.ConfigureFilesNestingAction"/>
         <separator/>
-        <action id="ProjectView.CustomizeTrees"
-                class="com.intellij.ide.projectView.impl.CustomizeTreesAction"/>
+        <reference ref="ProjectView.CustomizeTrees"/>
       </group>
       <group id="ProjectView.ToolWindow.Sort.Actions" popup="true">
         <action id="ProjectView.ManualOrder"
@@ -103,9 +102,7 @@
         <action id="ProjectView.FoldersAlwaysOnTop"
                 class="com.intellij.platform.projectView.actions.FoldersAlwaysOnTop"/>
       </group>
-      <action id="ScopeView.EditScopes"
-              class="com.intellij.ide.scopeView.EditScopesAction"
-              icon="AllIcons.Ide.LocalScope"/>
+      <reference ref="ScopeView.EditScopes"/>
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
