@@ -48,6 +48,13 @@ public class SvnPropertiesDiffRequest extends ContentDiffRequest {
     return myContents;
   }
 
+  @Override
+  public void onAssigned(boolean isAssigned) {
+    for (DiffContent content : myContents) {
+      content.onAssigned(isAssigned);
+    }
+  }
+
   public static class PropertyContent extends DiffContentBase {
     private final @NotNull List<PropertyData> myProperties;
 
