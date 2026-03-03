@@ -12,6 +12,9 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object TerminalCommandUsageStatistics {
 
+  private const val THIRD_PARTY = "third.party"
+  private val thirdPartyCommand = CommandData(THIRD_PARTY, null)
+
   private val emptyCommand = CommandData("<empty>", null)
   private val whitespacesCommand = CommandData("<whitespaces>", null)
   private val relativePathCommand = CommandData("<relative path>", null)
@@ -39,25 +42,30 @@ object TerminalCommandUsageStatistics {
    * Parses the provided [userCommandLine] and returns [CommandData] if command line contains known command or pattern,
    * that we are able to log in the statistics. Returns null otherwise.
    */
-  fun getLoggableCommandData(userCommandLine: String): CommandData? {
+  fun getLoggableCommandData(userCommandLine: String): CommandData {
     if (userCommandLine.isEmpty()) {
       return emptyCommand
     }
     if (userCommandLine.isBlank()) {
       return whitespacesCommand
     }
+
     val userCommand = ParametersListUtil.parse(userCommandLine)
     toKnownCommand(userCommand)?.let {
       return it
     }
-    val executable = userCommand.getOrNull(0) ?: return null
+
+    val executable = userCommand.getOrNull(0) ?: return thirdPartyCommand
     if (isRelativePath(executable) && executable.length > 2) {
-      if (PathUtil.toSystemIndependentName(executable).startsWith("./gradlew")) {
-        return toKnownCommand(listOf("gradle"))
+      return if (PathUtil.toSystemIndependentName(executable).startsWith("./gradlew")) {
+        toKnownCommand(listOf("gradle")) ?: thirdPartyCommand
       }
-      return relativePathCommand
+      else relativePathCommand
     }
-    return if (OSAgnosticPathUtil.isAbsolute(executable) && executable.length > 3) absolutePathCommand else null
+    return if (OSAgnosticPathUtil.isAbsolute(executable) && executable.length > 3) {
+      absolutePathCommand
+    }
+    else thirdPartyCommand
   }
 
   private fun isRelativePath(executable: String): Boolean {
@@ -71,8 +79,14 @@ object TerminalCommandUsageStatistics {
     if (executable !in knownCommandsData.commands) {
       return null
     }
-    val subCommand = userCommand.getOrNull(1)?.takeIf { it in knownCommandsData.subCommands }
-    return CommandData(executable, subCommand)
+    val subCommand = userCommand.getOrNull(1)
+    return if (subCommand != null && subCommand in knownCommandsData.subCommands) {
+      CommandData(executable, subCommand)
+    }
+    else if (subCommand != null) {
+      CommandData(executable, THIRD_PARTY)
+    }
+    else CommandData(executable, null)
   }
 
   private fun buildKnownCommandsData(): KnownCommandsData {
