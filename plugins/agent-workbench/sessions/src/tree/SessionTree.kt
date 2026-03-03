@@ -27,12 +27,14 @@ internal data class SessionTreeModel(
   val rootIds: List<SessionTreeId>,
   val entriesById: Map<SessionTreeId, SessionTreeModelEntry>,
   val autoOpenProjects: List<SessionTreeId.Project>,
+  val duplicateProjectNames: Set<String> = emptySet(),
 ) {
   companion object {
     val EMPTY: SessionTreeModel = SessionTreeModel(
       rootIds = emptyList(),
       entriesById = emptyMap(),
       autoOpenProjects = emptyList(),
+      duplicateProjectNames = emptySet(),
     )
   }
 }
@@ -62,6 +64,11 @@ internal fun buildSessionTreeModel(
   treeUiState: SessionsTreeUiState,
 ): SessionTreeModel {
   val visibleProjectsResult = computeVisibleProjects(projects, visibleClosedProjectCount)
+  val duplicateProjectNames = visibleProjectsResult.visibleProjects
+    .groupingBy { it.name }
+    .eachCount()
+    .filterValues { it > 1 }
+    .keys
   val modelBuilder = SessionTreeModelBuilder(visibleThreadCounts)
   val baseModel = modelBuilder.build(visibleProjectsResult)
   val autoOpenProjects = visibleProjectsResult.visibleProjects
@@ -73,7 +80,7 @@ internal fun buildSessionTreeModel(
     }
     .filterNot { treeUiState.isProjectCollapsed(it.path) }
     .map { SessionTreeId.Project(it.path) }
-  return baseModel.copy(autoOpenProjects = autoOpenProjects)
+  return baseModel.copy(autoOpenProjects = autoOpenProjects, duplicateProjectNames = duplicateProjectNames)
 }
 
 internal fun diffSessionTreeModels(
@@ -88,7 +95,8 @@ internal fun diffSessionTreeModels(
     if (oldEntry.childIds != newEntry.childIds) {
       structureChangedIds += id
     }
-    if (sessionTreeNodePresentation(oldEntry.node) != sessionTreeNodePresentation(newEntry.node)) {
+    if (sessionTreeNodePresentation(oldEntry.node, oldModel.duplicateProjectNames)
+        != sessionTreeNodePresentation(newEntry.node, newModel.duplicateProjectNames)) {
       contentChangedIds += id
     }
   }
@@ -102,6 +110,7 @@ internal fun diffSessionTreeModels(
 
 private data class ProjectTreeRowPresentation(
   val name: @NlsSafe String,
+  val usePathAsName: Boolean,
   val isOpen: Boolean,
   val hasOpenWorktree: Boolean,
   val hasWorktrees: Boolean,
@@ -124,12 +133,13 @@ private data class MoreThreadsTreeRowPresentation(
   val hiddenCount: Int?,
 )
 
-internal fun sessionTreeNodePresentation(node: SessionTreeNode): Any {
+internal fun sessionTreeNodePresentation(node: SessionTreeNode, duplicateProjectNames: Set<String> = emptySet()): Any {
   return when (node) {
     is SessionTreeNode.Project -> {
       val hasWorktrees = node.project.worktrees.isNotEmpty()
       ProjectTreeRowPresentation(
         name = node.project.name,
+        usePathAsName = node.project.name in duplicateProjectNames,
         isOpen = node.project.isOpen,
         hasOpenWorktree = node.project.worktrees.any { it.isOpen },
         hasWorktrees = hasWorktrees,

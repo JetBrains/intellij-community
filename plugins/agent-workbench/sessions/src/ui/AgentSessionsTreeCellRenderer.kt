@@ -29,6 +29,7 @@ internal class SessionTreeCellRenderer(
   private val rowActionsProvider: (row: Int, node: SessionTreeNode, selected: Boolean) -> SessionTreeRowActionPresentation?,
   private val nodeResolver: (SessionTreeId) -> SessionTreeNode?,
   private val providerIconProvider: (AgentSessionProvider) -> Icon? = ::providerIcon,
+  private val duplicateProjectNamesProvider: () -> Set<String> = { emptySet() },
 ) : ColoredTreeCellRenderer() {
   private data class SharedTimeColumnWidthCacheKey(
     val fontHash: Int,
@@ -80,7 +81,12 @@ internal class SessionTreeCellRenderer(
         else {
           SimpleTextAttributes.REGULAR_ATTRIBUTES
         }
-        val projectName: @NlsSafe String = treeNode.project.name
+        val projectName: @NlsSafe String = if (treeNode.project.name in duplicateProjectNamesProvider()) {
+          treeNode.project.path
+        }
+        else {
+          treeNode.project.name
+        }
         append(projectName, titleAttributes)
         if (treeNode.project.worktrees.isNotEmpty()) {
           val branchLabel: @NlsSafe String = treeNode.project.branch ?: AgentSessionsBundle.message("toolwindow.worktree.detached")
