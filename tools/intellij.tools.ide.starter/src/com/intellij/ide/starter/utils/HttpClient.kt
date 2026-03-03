@@ -64,6 +64,10 @@ object HttpClient {
               throw HttpNotFound("Server returned 403 which we interpret as not found for cache-redirector urls: $url")
             }
 
+            if (response.statusLine.statusCode == 403) throw HttpForbidden("Server returned 403 Forbidden: $encodeUrl")
+
+            check(response.statusLine.statusCode == 200) { "Failed to download $url: $response" }
+
             if (!outPath.parent.exists()) {
               outPath.parent.createDirectories()
             }
@@ -105,6 +109,7 @@ object HttpClient {
   }
 
   class HttpNotFound(message: String, cause: Throwable? = null) : NoRetryException(message, cause)
+  class HttpForbidden(message: String, cause: Throwable? = null) : NoRetryException(message, cause)
 
   private fun getLock(path: Path): ReentrantLock = locks.getOrPut(path.toAbsolutePath().toString()) { ReentrantLock() }
 }

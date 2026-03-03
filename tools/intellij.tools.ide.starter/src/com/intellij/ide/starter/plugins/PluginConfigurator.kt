@@ -63,6 +63,9 @@ open class PluginConfigurator(val testContext: IDETestContext) {
     catch (t: HttpClient.HttpNotFound) {
       throw PluginNotFoundException("Plugin $urlToPluginZipFile couldn't be downloaded: ${t.message}", t)
     }
+    catch (t: HttpClient.HttpForbidden) {
+      throw PluginNotFoundException("Plugin $urlToPluginZipFile is not accessible: ${t.message}", t)
+    }
 
     FileSystem.unpack(pluginZip, testContext.paths.pluginsDir)
   }
@@ -95,7 +98,15 @@ open class PluginConfigurator(val testContext: IDETestContext) {
       is PluginWithExactVersion -> pluginsCacheDir.resolve(plugin.version).createDirectories().resolve(fileName)
     }
 
-    HttpClient.downloadIfMissing(plugin.downloadUrl(), downloadedPlugin, retries = 1)
+    try {
+      HttpClient.downloadIfMissing(plugin.downloadUrl(), downloadedPlugin, retries = 1)
+    }
+    catch (t: HttpClient.HttpNotFound) {
+      throw PluginNotFoundException("Plugin $pluginId couldn't be downloaded: ${t.message}", t)
+    }
+    catch (t: HttpClient.HttpForbidden) {
+      throw PluginNotFoundException("Plugin $pluginId is not accessible: ${t.message}", t)
+    }
     if (fileName.endsWith(".jar")) {
       Files.copy(downloadedPlugin, testContext.paths.pluginsDir.resolve(fileName))
     }
