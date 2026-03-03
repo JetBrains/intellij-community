@@ -369,6 +369,9 @@ private class ResizableOutlineHandler private constructor(
         AdjustmentDisabledReason.SINGLE_COMMIT_REVIEW -> {
           tooltipManager.showTooltip(component, point, OutlineTooltipManager.TooltipReason.SINGLE_COMMIT_REVIEW)
         }
+        AdjustmentDisabledReason.UNSUPPORTED_VERSION -> {
+          tooltipManager.showTooltip(component, point, OutlineTooltipManager.TooltipReason.UNSUPPORTED_VERSION)
+        }
         else -> {
           tooltipManager.showTooltip(component, point, OutlineTooltipManager.TooltipReason.MLC_EXPLANATION)
           setEditorCursor(resizeCursor)
@@ -438,13 +441,15 @@ private class OutlineTooltipManager(private val editor: Editor) {
   enum class TooltipReason {
     SUGGESTION,
     MLC_EXPLANATION,
-    SINGLE_COMMIT_REVIEW;
+    SINGLE_COMMIT_REVIEW,
+    UNSUPPORTED_VERSION;
 
     companion object {
       fun getTooltipMessage(tooltipReason: TooltipReason) = when (tooltipReason) {
         SUGGESTION -> CollaborationToolsBundle.message("review.comments.code.outline.tooltip.suggestion.disabling")
         MLC_EXPLANATION -> CollaborationToolsBundle.message("review.comments.code.outline.tooltip.explanation")
         SINGLE_COMMIT_REVIEW -> CollaborationToolsBundle.message("review.comments.code.outline.tooltip.commit.review.disabling")
+        UNSUPPORTED_VERSION -> CollaborationToolsBundle.message("review.comments.code.outline.tooltip.version.not.supported.disabling")
       }
     }
   }

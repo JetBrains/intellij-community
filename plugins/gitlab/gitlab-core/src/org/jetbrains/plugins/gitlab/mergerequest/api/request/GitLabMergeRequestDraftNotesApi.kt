@@ -37,11 +37,12 @@ suspend fun GitLabApi.Rest.updateDraftNote(
   noteId: String,
   position: GitLabMergeRequestDraftNoteRestDTO.Position,
   body: String,
+  isMultilinePositionSupported: Boolean,
 )
   : HttpResponse<out Unit> {
   val uri = getSpecificMergeRequestDraftNoteUri(projectId, mrIid, noteId).withQuery {
     "note" eq body
-    addDraftNotePositionParameters(position) // have to pass the existing position, otherwise it is reset to null
+    addDraftNotePositionParameters(position, isMultilinePositionSupported) // have to pass the existing position, otherwise it is reset to null
   }
   val request = request(uri).PUT(BodyPublishers.noBody()).build()
   return withErrorStats(GitLabApiRequestName.REST_UPDATE_DRAFT_NOTE) {
@@ -112,11 +113,12 @@ suspend fun GitLabApi.Rest.addDraftNote(
   mrIid: String,
   @SinceGitLab("16.3")
   positionOrNull: GitLabDiffPositionInput?,
+  canPostPositionLineRange: Boolean,
   body: String,
 ): HttpResponse<out GitLabMergeRequestDraftNoteRestDTO> {
   val uri = getMergeRequestDraftNotesUri(projectId, mrIid).withQuery {
     "note" eq body
-    positionOrNull?.let { addDiffPositionParameters(it) }
+    positionOrNull?.let { addDiffPositionParameters(it, canPostPositionLineRange) }
   }
   val request = request(uri).POST(BodyPublishers.noBody()).build()
   return withErrorStats(GitLabApiRequestName.REST_CREATE_DRAFT_NOTE) {
@@ -124,7 +126,10 @@ suspend fun GitLabApi.Rest.addDraftNote(
   }
 }
 
-private fun GitLabApiUriQueryBuilder.addDraftNotePositionParameters(position: GitLabMergeRequestDraftNoteRestDTO.Position) {
+private fun GitLabApiUriQueryBuilder.addDraftNotePositionParameters(
+  position: GitLabMergeRequestDraftNoteRestDTO.Position,
+  canPostPositionLineRange: Boolean
+) {
   // If there's no position info (just position type), don't pass it to GitLab.
   if (position.baseSha == null && position.headSha == null && position.startSha == null &&
       position.newPath == null && position.oldPath == null &&
@@ -142,7 +147,7 @@ private fun GitLabApiUriQueryBuilder.addDraftNotePositionParameters(position: Gi
     "new_line" eq position.newLine
     "position_type" eq position.positionType
     position.lineRange?.let { lineRange ->
-      addLineRangeParameters(lineRange)
+      addLineRangeParameters(lineRange, canPostPositionLineRange)
     }
   }
 }

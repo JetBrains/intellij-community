@@ -154,6 +154,7 @@ interface NewGitLabNoteViewModel :
 
 interface NewGitLabNoteViewModelWithAdjustablePosition : NewGitLabNoteViewModel {
   val position: StateFlow<GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition>
+  val isMultilinePositionSupported: Boolean
   fun updatePosition(newPosition: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition)
 }
 
@@ -216,6 +217,7 @@ private class NewDiffGitLabNoteViewModel(
   private val _position = MutableStateFlow(position)
   override val position = _position.asStateFlow()
   override val canSubmitAsDraft: Boolean = mergeRequest.canAddPositionalDraftNotes
+  override val isMultilinePositionSupported: Boolean = mergeRequest.canAddMultilinePositionalNotes
   override fun updatePosition(newPosition: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition) {
     _position.value = newPosition
   }
