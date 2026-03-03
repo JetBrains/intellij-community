@@ -953,7 +953,6 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/xdebugger-api:debugger",
-    "//libraries/xml-rpc",
     "//libraries/guava",
     "//platform/editor-ui-api:editor-ui",
     "//platform/util",
@@ -983,7 +982,6 @@ jvm_library(
     ":python-pydev",
     "//platform/core-api:core_test_lib",
     "//platform/xdebugger-api:debugger_test_lib",
-    "//libraries/xml-rpc:xml-rpc_test_lib",
     "//libraries/guava:guava_test_lib",
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/util:util_test_lib",
