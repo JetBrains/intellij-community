@@ -145,8 +145,9 @@ public fun SelectableLazyColumn(
     }
 
     LaunchedEffect(isFocused) {
+        if (!isFocused || selectionMode == SelectionMode.None) return@LaunchedEffect
         with(state) {
-            if (isFocused && lastActiveItemIndex == null && selectedKeys.isEmpty()) {
+            if (lastActiveItemIndex == null && selectedKeys.isEmpty()) {
                 keyActions.actions.onSelectFirstItem(keys, this)
             }
         }
