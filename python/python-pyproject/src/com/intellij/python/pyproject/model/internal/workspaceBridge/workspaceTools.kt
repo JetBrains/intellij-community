@@ -9,6 +9,8 @@ import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ContentRootEntityBuilder
 import com.intellij.platform.workspace.jps.entities.DependencyScope
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
 import com.intellij.platform.workspace.jps.entities.FacetEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleDependency
@@ -17,6 +19,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
 import com.intellij.platform.workspace.jps.entities.ModuleTypeId
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder
 import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
 import com.intellij.platform.workspace.jps.entities.exModuleOptions
 import com.intellij.platform.workspace.jps.entities.modifyContentRootEntity
@@ -26,10 +29,12 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.createEntityTreeCopy
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.toBuilder
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.project.stateStore
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.pyproject.PyProjectToml
@@ -67,31 +72,14 @@ internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfoWith
     val syncStorage = createProjectModel(entries, project).toBuilder()
     project.workspaceModel.update(PyProjectTomlBundle.message("action.PyProjectTomlSyncAction.description")) { projectStorage -> // Fake module entity is added by default if nothing was discovered
 
-      renameSameModule(syncStorage, projectStorage)
+      renameSameModuleAndMoveSources(syncStorage, projectStorage)
       relocateFacetAndSdk(syncStorage, projectStorage)
       projectStorage.replaceBySource({ it.isPythonEntity }, syncStorage)
-
-      // For some reason, WSM duplicates sources instead of merging them, so we remove duplicates
-      for (moduleEntity in projectStorage.entities(ModuleEntity::class.java).filter { it.entitySource.isPythonEntity }) {
-        for (contentRoot in moduleEntity.contentRoots) {
-          if (contentRoot.sourceRoots.size > 1) {
-            projectStorage.modifyContentRootEntity(contentRoot) {
-              removeSrcDuplicates()
-            }
-          }
-        }
-      }
-
     }
   }
 }
 
-private fun ContentRootEntityBuilder.removeSrcDuplicates() {
-  val newSourceRoots = sourceRoots.distinctBy { it.url }
-  sourceRoots = newSourceRoots
-}
-
-private fun renameSameModule(syncStorage: EntityStorage, projectStorage: MutableEntityStorage) {
+private fun renameSameModuleAndMoveSources(syncStorage: EntityStorage, projectStorage: MutableEntityStorage) {
   // TODO: fix O(N^2)
   for (syncModuleEntity in syncStorage.entities<ModuleEntity>()) {
     for (projectModuleEntity in projectStorage.entities<ModuleEntity>()) {
@@ -100,13 +88,19 @@ private fun renameSameModule(syncStorage: EntityStorage, projectStorage: Mutable
           name = syncModuleEntity.name
           entitySource = syncModuleEntity.entitySource
         }
+        for (projectRootEntity in projectModuleEntity.contentRoots.toList()) {
+          projectStorage.modifyContentRootEntity(projectRootEntity) {
+            entitySource = syncModuleEntity.entitySource
+          }
+        }
       }
     }
   }
 }
 
 private fun relocateFacetAndSdk(syncStorage: MutableEntityStorage, projectStorage: MutableEntityStorage) {
-  for (syncModuleEntity in syncStorage.entities<ModuleEntity>()) {
+  val projectContentRootsByUrl = projectStorage.entities<ContentRootEntity>().associateBy { it.url.url }
+  for (syncModuleEntity in syncStorage.entities<ModuleEntity>().toList()) {
     val projectModuleEntity = projectStorage.resolve(syncModuleEntity.symbolicId) ?: continue
     val projectFacetBuilders = projectModuleEntity.facets
       .map { it.createEntityTreeCopy() as FacetEntityBuilder }
@@ -117,13 +111,63 @@ private fun relocateFacetAndSdk(syncStorage: MutableEntityStorage, projectStorag
       sdkId = projectModuleEntity.sdkId
       facets += projectFacetBuilders
     }
-    for (entity in projectModuleEntity.contentRoots) {
-      projectStorage.modifyContentRootEntity(entity) {
-        this.entitySource = syncModuleEntity.entitySource
+    for (syncRootEntry in syncModuleEntity.contentRoots.toList()) {
+      val projectRootEntity = projectContentRootsByUrl[syncRootEntry.url.url] ?: continue
+      syncStorage.modifyContentRootEntity(syncRootEntry) {
+        for (fixer in rootFixers) {
+          fixer.addRoots(this, projectRootEntity)
+        }
       }
     }
   }
 }
+
+private abstract class RootFixer<E : WorkspaceEntity, B : WorkspaceEntity.Builder<E>> {
+  protected abstract fun getRoots(rootEntity: ContentRootEntity): List<E>
+  protected abstract fun getRoots(rootEntity: ContentRootEntityBuilder): List<B>
+  protected abstract fun setRoots(roots: List<B>, rootBuilder: ContentRootEntityBuilder)
+  protected abstract fun getVirtualUrl(entity: B): VirtualFileUrl
+
+  fun addRoots(to: ContentRootEntityBuilder, from: ContentRootEntity) {
+    val dstRoots = getRoots(to)
+
+    @Suppress("UNCHECKED_CAST")
+    val newRoots = (getRoots(from).map { it.createEntityTreeCopy() as B } + dstRoots).distinctBy { getVirtualUrl(it).url }
+    setRoots(newRoots, to)
+  }
+}
+
+private object SourceRootFixer : RootFixer<SourceRootEntity, SourceRootEntityBuilder>() {
+  override fun getRoots(rootEntity: ContentRootEntity): List<SourceRootEntity> = rootEntity.sourceRoots
+
+  override fun getRoots(rootEntity: ContentRootEntityBuilder): List<SourceRootEntityBuilder> = rootEntity.sourceRoots
+
+  override fun setRoots(
+    roots: List<SourceRootEntityBuilder>,
+    rootBuilder: ContentRootEntityBuilder,
+  ) {
+    rootBuilder.sourceRoots = roots
+  }
+
+  override fun getVirtualUrl(entity: SourceRootEntityBuilder): VirtualFileUrl = entity.url
+}
+
+private object ExcludeRootFixer : RootFixer<ExcludeUrlEntity, ExcludeUrlEntityBuilder>() {
+  override fun getRoots(rootEntity: ContentRootEntity): List<ExcludeUrlEntity> = rootEntity.excludedUrls
+
+  override fun getRoots(rootEntity: ContentRootEntityBuilder): List<ExcludeUrlEntityBuilder> = rootEntity.excludedUrls
+
+  override fun setRoots(
+    roots: List<ExcludeUrlEntityBuilder>,
+    rootBuilder: ContentRootEntityBuilder,
+  ) {
+    rootBuilder.excludedUrls = roots
+  }
+
+  override fun getVirtualUrl(entity: ExcludeUrlEntityBuilder): VirtualFileUrl = entity.url
+}
+
+private val rootFixers = arrayOf(ExcludeRootFixer, SourceRootFixer)
 
 /**
  * Return [entires_to_create_modules_from, dirs_to_exclude]
@@ -235,7 +279,7 @@ private suspend fun createProjectModel(
       }
       contentRoots = listOf(ContentRootEntity(pyProject.root.toVirtualFileUrl(virtualFileUrlManager), emptyList(), entitySource) {
         sourceRoots = pyProject.sourceRoots.map { srcRoot ->
-          SourceRootEntity(srcRoot.toVirtualFileUrl(virtualFileUrlManager), PYTHON_SOURCE_ROOT_TYPE, entitySource)
+          SourceRootEntity(srcRoot.toVirtualFileUrl(virtualFileUrlManager), JAVA_SOURCE_ROOT_TYPE, entitySource)
         }
       })
       val participatedTools: MutableMap<ToolId, ModuleId?> =
@@ -257,7 +301,7 @@ private suspend fun createProjectModel(
           ), entitySource
         )
       exModuleOptions = ExternalSystemModuleOptionsEntity(entitySource) {
-        externalSystem = PYTHON_SOURCE_ROOT_TYPE.name
+        externalSystem = PY_PROJECT_SYSTEM_ID.id
       }
     }
     moduleEntity.symbolicId
@@ -266,7 +310,8 @@ private suspend fun createProjectModel(
 }
 
 // For the time being mark them as java-sources to indicate that in the Project tool window
-private val PYTHON_SOURCE_ROOT_TYPE: SourceRootTypeId = SourceRootTypeId("java-source")
+// Any other type isn't blue
+private val JAVA_SOURCE_ROOT_TYPE: SourceRootTypeId = SourceRootTypeId("java-source")
 
 private data class PyProjectTomlBasedEntryImpl(
   val tomlFile: Path,
