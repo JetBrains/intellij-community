@@ -23,7 +23,11 @@ import org.jetbrains.icons.impl.DeferredIconResolver
 import org.jetbrains.icons.impl.intellij.custom.CustomIconLayerRegistration
 import org.jetbrains.icons.impl.intellij.custom.CustomLegacyIconSerializer
 import org.jetbrains.icons.impl.intellij.design.IntelliJIconDesigner
+import org.jetbrains.icons.impl.intellij.rendering.IntelliJIconRendererManager
 import org.jetbrains.icons.impl.intellij.rendering.SwingIcon
+import org.jetbrains.icons.impl.intellij.rendering.images.IntelliJImageResourceProvider
+import org.jetbrains.icons.rendering.IconRendererManager
+import org.jetbrains.icons.rendering.ImageResourceProvider
 import java.lang.ref.WeakReference
 import kotlin.getValue
 
@@ -90,6 +94,12 @@ class IntelliJIconManager : DefaultIconManager() {
   }
 
   companion object {
+    fun activate() {
+      org.jetbrains.icons.IconManager.activate(IntelliJIconManager())
+      IconRendererManager.activate(IntelliJIconRendererManager())
+      ImageResourceProvider.activate(IntelliJImageResourceProvider())
+    }
+
     internal fun getPluginAndModuleId(classLoader: ClassLoader): Pair<String, String?> {
       if (classLoader is PluginAwareClassLoader) {
         return classLoader.pluginId.idString to classLoader.moduleId

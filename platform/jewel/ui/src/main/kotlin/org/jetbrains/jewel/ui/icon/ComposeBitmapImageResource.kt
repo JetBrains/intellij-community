@@ -13,6 +13,7 @@ import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.ColorAlphaType
 import org.jetbrains.skia.ImageInfo
 import org.jetbrains.icons.impl.rendering.CachedGPUImageResourceHolder
+import org.jetbrains.icons.rendering.Dimensions
 import org.jetbrains.skia.ColorType
 import org.jetbrains.skia.impl.BufferUtil
 
@@ -51,35 +52,45 @@ internal fun BitmapImageResource.composeBitmap(): ImageBitmap {
     } ?: composeBitmapWithoutCaching().second
 }
 
-internal fun RescalableImageResource.composeBitmap(scale: ImageScale): ImageBitmap {
+internal fun RescalableImageResource.composeBitmap(scale: ImageScale): ImageBitmapView {
     val cache = (this as? GPUImageResourceHolder)
     val cached = cache?.getOrGenerateBitmap(SingleBitmapCache::class) { SingleBitmapCache() }
     if (cached != null) {
         return cached.getOrPut(this, scale)
     } else {
-        return scale(scale).composeBitmap()
+        return scale(scale).composeBitmap().toView()
     }
 }
+
+internal fun ImageBitmap.toView(): ImageBitmapView {
+    return ImageBitmapView(this, Dimensions(this.width, this.height))
+}
+
+internal class ImageBitmapView(
+    val imageBitmap: ImageBitmap,
+    val size: Dimensions
+)
 
 private class SingleBitmapCache {
     private var lastBitmap: CachedBitmap? = null
         
     private class CachedBitmap(
         val dimensions: Bounds,
-        val composeBitmap: ImageBitmap,
+        var composeBitmap: ImageBitmapView,
         val bitmap: Bitmap
     )
     
-    fun getOrPut(image: RescalableImageResource, scale: ImageScale): ImageBitmap {
+    fun getOrPut(image: RescalableImageResource, scale: ImageScale): ImageBitmapView {
         val last = lastBitmap
         val expectedDimensions = image.calculateExpectedDimensions(scale)
         if (last == null) {
             return createNewBitmap(image, scale, expectedDimensions)
         } else {
-            if (last.dimensions == expectedDimensions) {
+            if (last.composeBitmap.size == expectedDimensions) {
                 return last.composeBitmap
             } else if (last.dimensions.canFit(expectedDimensions)) {
                 last.bitmap.setPixelsFrom(image.scale(scale))
+                last.composeBitmap = last.composeBitmap.adjustTo(expectedDimensions)
                 return last.composeBitmap
             } else {
                 return createNewBitmap(image, scale, expectedDimensions)
@@ -87,16 +98,20 @@ private class SingleBitmapCache {
         }
     }
     
-    private fun createNewBitmap(image: RescalableImageResource, imageScale: ImageScale, dimensions: Bounds): ImageBitmap {
+    private fun createNewBitmap(image: RescalableImageResource, imageScale: ImageScale, dimensions: Bounds): ImageBitmapView {
         val (skia, compose) = image.scale(imageScale).composeBitmapWithoutCaching()
         val new = CachedBitmap(
             dimensions,
-            compose,
+            compose.toView(),
             skia
         )
         lastBitmap = new
         return new.composeBitmap
     }
+}
+
+private fun ImageBitmapView.adjustTo(dimensions: Dimensions): ImageBitmapView {
+    return ImageBitmapView(imageBitmap, dimensions)
 }
 
 private fun BitmapImageResource.composeBitmapWithoutCaching(): Pair<Bitmap, ImageBitmap> {

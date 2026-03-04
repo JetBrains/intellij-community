@@ -57,9 +57,7 @@ internal suspend fun initUi(initAwtToolkitJob: Job, isHeadless: Boolean, asyncSc
       IconManager.activate(iconManager)
     }
     span("new icon manager activation") {
-      org.jetbrains.icons.IconManager.activate(IntelliJIconManager())
-      IconRendererManager.activate(IntelliJIconRendererManager())
-      ImageResourceProvider.activate(IntelliJImageResourceProvider())
+      IntelliJIconManager.activate()
     }
   }
 

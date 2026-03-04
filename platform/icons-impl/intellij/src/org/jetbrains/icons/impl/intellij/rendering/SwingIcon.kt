@@ -7,6 +7,7 @@ import org.jetbrains.icons.rendering.IconRendererManager
 import org.jetbrains.icons.rendering.RenderingContext
 import org.jetbrains.icons.rendering.ScalingContext
 import org.jetbrains.icons.impl.rendering.layers.applyTo
+import org.jetbrains.icons.rendering.Dimensions
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -23,23 +24,34 @@ class SwingIcon(
     renderer.calculateExpectedDimensions(SwingScalingContext(1f))
   }
 
-  override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
+  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     val scaling = getScaling(g)
-    withLayer(scaling, c, g, x, y) { newGraphics ->
-      val swingApi = SwingPaintingApi(c, newGraphics, 0, 0, scaling = scaling)
+    val boundsSize = if (c != null) {
+      Dimensions(c.width, c.height)
+    } else Dimensions(dimensions.width, dimensions.height)
+    withLayer(scaling, boundsSize, g, x, y) { newGraphics ->
+      val swingApi = SwingPaintingApi(
+        c,
+        newGraphics,
+        0,
+        0,
+        scaling = scaling,
+        customWidth = boundsSize.width,
+        customHeight = boundsSize.height
+      )
       renderer.render(swingApi)
     }
   }
 
-  private fun withLayer(scaling: ScalingContext, c: Component, g: Graphics, x: Int, y: Int, painting: (Graphics2D) -> Unit) {
-    val w = scaling.applyTo(c.width - x)
-    val h = scaling.applyTo(c.height - y)
+  private fun withLayer(scaling: ScalingContext, boundsSize: Dimensions, g: Graphics, x: Int, y: Int, painting: (Graphics2D) -> Unit) {
+    val w = scaling.applyTo(boundsSize.width - x)
+    val h = scaling.applyTo(boundsSize.height - y)
     if (w < 0 || h < 0) return
     val img = BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB)
     val sublayer = img.createGraphics()
     try {
       painting(sublayer as Graphics2D)
-      g.drawImage(img, x, y, c.width, c.height, 0, 0, img.width, img.height, null)
+      g.drawImage(img, x, y, boundsSize.width, boundsSize.height, 0, 0, img.width, img.height, null)
     } finally {
       sublayer.dispose()
     }

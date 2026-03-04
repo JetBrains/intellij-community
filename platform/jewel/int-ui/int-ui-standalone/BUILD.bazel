@@ -59,6 +59,8 @@ jvm_library(
     "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
     "//platform/jewel/foundation:foundation_test_lib",
     "//libraries/jbr:jbr_test_lib",
+    "//platform/icons-api:icons-api_test_lib",
+    "//platform/icons-impl:icons-impl_test_lib",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

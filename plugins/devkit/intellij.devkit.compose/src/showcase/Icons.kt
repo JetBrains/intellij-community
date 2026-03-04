@@ -1,12 +1,21 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.compose.showcase
 
+import androidx.compose.animation.core.EaseInOut
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
@@ -53,6 +62,19 @@ import javax.swing.JPanel
 internal fun Icons(project: Project) {
   val icons = mutableListOf<ShowcaseIcon>()
   val missingIcon = remember { AllIcons.General.Error.toNewIcon(modifier = IconModifier.fillMaxSize()) }
+
+  val transition = rememberInfiniteTransition()
+  val iconSize by transition.animateFloat(
+    30f,
+    80f,
+    infiniteRepeatable(tween(durationMillis = 1000, easing = EaseInOut), repeatMode = RepeatMode.Reverse),
+  )
+
+  Box(Modifier.size(80.dp)) {
+    Icon(icon {
+      swingIcon(AllIcons.Actions.NewFolder, modifier = IconModifier.fillMaxSize())
+    }, "New Folder", modifier = Modifier.size(iconSize.dp))
+  }
 
   val duration = 50L
   val animatedIcon = remember {

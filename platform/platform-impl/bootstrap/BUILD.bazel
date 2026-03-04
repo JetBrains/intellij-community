@@ -94,6 +94,8 @@ jvm_library(
     "//platform/eel-impl:eel-impl_test_lib",
     "//platform/platform-impl/initial-config-import:initial-config-import_test_lib",
     "//platform/eel-provider:eel-provider_test_lib",
+    "//platform/icons-impl:icons-impl_test_lib",
+    "//platform/icons-impl/intellij:intellij_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.bootstrap` end

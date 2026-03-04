@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
  * Unlike the older API, to force evaluation or get the resolved icon, IconManager should be used.
  *
  * @see IconManager.deferredIcon
- * @see IconManager.forceEvaluation
+ * @see IconManager.forceEvaluationnnnn
  */
 @ApiStatus.Experimental
 interface DeferredIcon: Icon {

@@ -126,7 +126,7 @@ public class ComposePaintingApi(
       alpha: Float,
       colorFilter: ColorFilter?
     ) {
-        drawComposeImage(image.composeBitmap(), x, y, width, height, srcX, srcY, srcWidth, srcHeight, alpha, colorFilter)
+        drawComposeImage(image.composeBitmap().toView(), x, y, width, height, srcX, srcY, srcWidth, srcHeight, alpha, colorFilter)
     }
 
     private fun drawImage(
@@ -176,7 +176,7 @@ public class ComposePaintingApi(
     }
     
     private fun drawComposeImage(
-        image: ImageBitmap,
+        image: ImageBitmapView,
         x: Int,
         y: Int,
         width: Int?,
@@ -188,13 +188,14 @@ public class ComposePaintingApi(
         alpha: Float,
         colorFilter: ColorFilter? = null
     ) {
-        if (image.width == 0 || image.height == 0) return
-        val targetSize = IntSize(width ?: image.width, height ?: image.height)
+        if (image.imageBitmap.width == 0 || image.imageBitmap.height == 0) return
+        if (image.size.width == 0 || image.size.height == 0) return
+        val targetSize = IntSize(width ?: image.size.width, height ?: image.size.height)
         if (targetSize.width == 0 || targetSize.height == 0) return
         drawScope.drawImage(
-            image,
+            image.imageBitmap,
             IntOffset(srcX, srcY),
-            IntSize(srcWidth ?: image.width, srcHeight ?: image.height),
+            IntSize(srcWidth ?: image.size.width, srcHeight ?: image.size.height),
             dstOffset = IntOffset(x, y),
             dstSize = targetSize,
             alpha = alpha,

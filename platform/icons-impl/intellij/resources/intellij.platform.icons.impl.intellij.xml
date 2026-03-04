@@ -29,5 +29,9 @@
     <icons.customLayer implementation="org.jetbrains.icons.impl.intellij.rendering.SwingIconLayerRegistration"/>
     <icons.customLayerRendererProvider implementation="org.jetbrains.icons.impl.intellij.rendering.SwingIconLayerRendererProvider" />
     <icons.customLegacyIconSerializer implementation="org.jetbrains.icons.impl.intellij.serializers.CustomCachedImageIconSerializer"/>
+    <icons.imageResourceLoader
+      loader="org.jetbrains.icons.impl.intellij.rendering.images.ModuleImageResourceLoader"
+      location="org.jetbrains.icons.impl.intellij.ModuleImageResourceLocation"
+    />
   </extensions>
 </idea-plugin>

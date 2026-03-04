@@ -253,6 +253,8 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.util.ui")
     embeddedModule("intellij.platform.util.coroutines")
 
+    embeddedModule("intellij.platform.icons.impl.intellij")
+
     embeddedModule("intellij.platform.locking.impl")
 
     embeddedModule("intellij.platform.core")
@@ -342,8 +344,6 @@ object CoreModuleSets {
 
     // IDE implementation (depends on lang.core, so must come after)
     embeddedModule("intellij.platform.ide.impl")
-
-    embeddedModule("intellij.platform.icons.impl.intellij")
 
     // Additional dependencies specific to lang.impl and ide.impl
     embeddedModule("intellij.platform.ide.concurrency")

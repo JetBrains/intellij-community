@@ -13,4 +13,16 @@ jvm_library(
     "@lib//:jetbrains-annotations",
   ]
 )
+
+jvm_library(
+  name = "icons-api_test_lib",
+  module_name = "intellij.platform.icons.api",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":icons-api",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.icons.api` end

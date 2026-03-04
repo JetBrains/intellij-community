@@ -83,8 +83,11 @@ jvm_library(
     "//libraries/junit4",
     "//libraries/junit4:junit4_test_lib",
     "//platform/icons-api",
+    "//platform/icons-api:icons-api_test_lib",
     "//platform/icons-api/rendering",
+    "//platform/icons-api/rendering:rendering_test_lib",
     "//platform/icons-impl",
+    "//platform/icons-impl:icons-impl_test_lib",
     "//libraries/compose-foundation-desktop-junit",
     "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
   ],
@@ -96,7 +99,9 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
     "//platform/icons-api",
+    "//platform/icons-api:icons-api_test_lib",
     "//platform/icons-api/rendering",
+    "//platform/icons-api/rendering:rendering_test_lib",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

@@ -34,6 +34,7 @@ jvm_library(
     "//platform/core-api:core_test_lib",
     "//platform/util:util-ui_test_lib",
     "//libraries/hash4j:hash4j_test_lib",
+    "//platform/icons-api:icons-api_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.core.ui` end

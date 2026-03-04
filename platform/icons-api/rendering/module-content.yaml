@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.icons.api.rendering.jar
-  modules:
-  - name: intellij.platform.icons.api.rendering

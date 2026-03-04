@@ -79,7 +79,7 @@ open class DefaultLayerLayout(
     cutoutMargin: Float?,
     stroke: Color?
   ): DefaultLayerLayout {
-    return _root_ide_package_.org.jetbrains.icons.impl.rendering.layers.DefaultLayerLayout(
+    return DefaultLayerLayout(
         layerBounds,
         parentBounds,
         colorFilter,

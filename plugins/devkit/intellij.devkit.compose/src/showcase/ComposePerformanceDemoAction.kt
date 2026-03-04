@@ -43,6 +43,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import org.jetbrains.icons.modifiers.IconModifier
+import org.jetbrains.icons.modifiers.fillMaxSize
 import org.jetbrains.icons.swing.toNewIcon
 import org.jetbrains.jewel.bridge.compose
 import org.jetbrains.jewel.ui.component.Checkbox
@@ -251,7 +253,7 @@ private fun createIconsComponent(): JComponent {
             val icons = mutableListOf<org.jetbrains.icons.Icon>()
             for (nested in AllIcons::class.java.nestMembers) {
               val fields = nested.declaredFields.filter { it.type.name.contains("Icon") }
-              icons.addAll(fields.map { (it.get(null) as Icon).toNewIcon() })
+              icons.addAll(fields.map { (it.get(null) as Icon).toNewIcon(IconModifier.fillMaxSize()) })
             }
             icons
           }

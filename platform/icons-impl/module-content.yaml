@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.icons.impl.jar
-  modules:
-  - name: intellij.platform.icons.impl
