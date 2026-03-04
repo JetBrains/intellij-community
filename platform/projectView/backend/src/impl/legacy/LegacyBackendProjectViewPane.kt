@@ -50,6 +50,8 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeFileNestingRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeOptionValueRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeSortKeyRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneId
+import com.intellij.platform.projectView.pane.ProjectViewPaneSelectionChanged
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.SuperRoot
 import com.intellij.platform.projectView.pane.projectViewPaneId
@@ -132,7 +134,7 @@ private class LegacyBackendProjectViewPane(
   override suspend fun manage() {
     coroutineScope {
       launch(CoroutineName("Manage pane ${descriptor.id}")) {
-        legacyPaneManager.managePane()
+        legacyPaneManager.managePane(descriptor.id)
       }
       launch(CoroutineName("Manage request channel ${descriptor.id}")) {
         val targetChannel = legacyPaneManager.getRequestChannel()
@@ -172,7 +174,7 @@ private class AbstractProjectViewPaneStateManager(
       subIdFlow.value = value
     }
   
-  private val paneCount = MutableStateFlow(0)
+  private val activePanes = MutableStateFlow<Set<ProjectViewPaneId>>(emptySet())
 
   private val subIdFlow = MutableStateFlow<String?>(null)
   
@@ -191,12 +193,12 @@ private class AbstractProjectViewPaneStateManager(
   private lateinit var treeModel: AsyncTreeModel
   
   init {
-    coroutineScope.launch(CoroutineName("AbstractProjectViewPaneStateManager")) { 
-      paneCount.first { it > 0 }
+    coroutineScope.launch(CoroutineName("AbstractProjectViewPaneStateManager")) {
+      activePanes.first { it.isNotEmpty() }
       val manageStateJob = launch(CoroutineName("manageState")) {
         manageState()
       }
-      paneCount.first { it == 0 }
+      activePanes.first { it.isEmpty() }
       manageStateJob.cancel()
     }
   }
@@ -205,13 +207,13 @@ private class AbstractProjectViewPaneStateManager(
   
   fun getStateFlow(): Flow<ProjectViewPaneStateEvent> = stateBuilder.getStateFlow()
 
-  suspend fun managePane() {
-    paneCount.update { it + 1 }
+  suspend fun managePane(paneId: ProjectViewPaneId) {
+    activePanes.update { it + paneId }
     try {
       awaitCancellation()
     }
     finally {
-      paneCount.update { it - 1 }  
+      activePanes.update { it - paneId }
     }
   }
 
@@ -248,6 +250,7 @@ private class AbstractProjectViewPaneStateManager(
                 is ProjectViewPaneChangeOptionValueRequest -> changeOptionValue(request.option, request.newValue)
                 is ProjectViewPaneChangeSortKeyRequest -> changeSortKey(request.sortKey)
                 is ProjectViewPaneChangeFileNestingRequest -> changeFileNesting(request.isFileNestingOn, request.activeRules)
+                is ProjectViewPaneSelectionChanged -> changeSelectedPaneIfOneOfOurs(request.providerId, request.paneId)
               }
             }
           }
@@ -260,6 +263,17 @@ private class AbstractProjectViewPaneStateManager(
           Disposer.dispose(legacyPane)
         }
       }
+    }
+  }
+
+  private fun changeSelectedPaneIfOneOfOurs(
+    providerId: ProjectViewPaneProviderId,
+    paneId: ProjectViewPaneId,
+  ) {
+    if (providerId == LEGACY_PROVIDER_ID && paneId in activePanes.value) {
+      val impl = ProjectViewImpl.getInstance(project) as ProjectViewImpl
+      impl.changeView(id)
+      updateActionStates()
     }
   }
 
@@ -321,7 +335,6 @@ private class AbstractProjectViewPaneStateManager(
   }
 
   private fun loadInitialState() {
-    updateActionStates()
     LOG.trace("Adding the super root")
     addNode(null, 0, SuperRoot)
     LOG.trace("Loading the real root")
@@ -498,7 +511,6 @@ private class AbstractProjectViewPaneStateManager(
 
   private fun updateActionStates() {
     val impl = ProjectViewImpl.getInstance(project) as ProjectViewImpl
-    impl.changeView(id)
     val updatedOptionStates = ProjectViewOption.entries.associateWith { option ->
       val legacyOption = legacyProjectViewOption(project, option)
       ProjectViewOptionState(

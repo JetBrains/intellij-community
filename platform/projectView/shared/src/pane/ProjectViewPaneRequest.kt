@@ -13,6 +13,13 @@ sealed class ProjectViewPaneRequest
 
 @ApiStatus.Internal
 @Serializable
+data class ProjectViewPaneSelectionChanged(
+  val providerId: ProjectViewPaneProviderId,
+  val paneId: ProjectViewPaneId,
+) : ProjectViewPaneRequest()
+
+@ApiStatus.Internal
+@Serializable
 data class ProjectViewPaneLoadChildrenRequest(
   val nodeId: Long,
 ) : ProjectViewPaneRequest()

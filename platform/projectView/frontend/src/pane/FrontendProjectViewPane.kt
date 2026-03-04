@@ -38,6 +38,8 @@ interface FrontendProjectViewPane {
 
   val requestChannel: ReceiveChannel<ProjectViewPaneRequest>
 
+  var isCurrent: Boolean
+
   @RequiresEdt
   fun applyStateChange(event: ProjectViewPaneStateEvent)
   

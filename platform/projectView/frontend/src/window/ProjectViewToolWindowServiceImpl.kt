@@ -118,6 +118,8 @@ internal class ProjectViewToolWindowServiceImpl(
     newPane: FrontendProjectViewPane?,
   ) {
     LOG.debug { "The project view pane changed: ${oldPane?.id} -> ${newPane?.id}" }
+    oldPane?.isCurrent = false
+    newPane?.isCurrent = true
     updateToolbarActions()
   }
 

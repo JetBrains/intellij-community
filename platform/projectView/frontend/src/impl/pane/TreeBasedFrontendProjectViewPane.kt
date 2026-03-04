@@ -40,6 +40,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeFileNestingRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeOptionValueRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeSortKeyRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneSelectionChanged
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.SuperRootModel
 import com.intellij.pom.Navigatable
@@ -96,6 +97,14 @@ internal abstract class TreeBasedFrontendProjectViewPane(
 
   override val requestChannel: ReceiveChannel<ProjectViewPaneRequest>
     get() = _requestChannel
+
+  override var isCurrent: Boolean = false
+    set(value) {
+      field = value
+      if (isCurrent) {
+        sendRequest(ProjectViewPaneSelectionChanged(providerId, id))
+      }
+    }
 
   init {
     tree.addTreeExpansionListener(object : TreeExpansionListener {
