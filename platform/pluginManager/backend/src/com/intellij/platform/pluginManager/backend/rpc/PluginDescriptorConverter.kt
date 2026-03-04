@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.getTags
 import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController
 import com.intellij.ide.plugins.newui.PluginSource
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 
@@ -27,6 +28,8 @@ object PluginDescriptorConverter {
     with(pluginDto) {
       version = descriptor.version
       isBundled = descriptor.isBundled
+      isImplementationDetail = descriptor.isImplementationDetail
+      isEssential = ApplicationInfo.getInstance().isEssentialPlugin(descriptor.pluginId)
       isBundledUpdate = DefaultUiPluginManagerController.isBundledUpdate(descriptor)
       isDeleted = (descriptor as? IdeaPluginDescriptorImpl)?.isDeleted ?: false
       category = descriptor.category

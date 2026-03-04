@@ -100,6 +100,8 @@ c:com.intellij.openapi.diagnostic.IdeaLoggingEvent
 - a:getVendorUrl():java.lang.String
 - a:getVersion():java.lang.String
 - a:isBundled():Z
+- a:isEssential():Z
+- a:isImplementationDetail():Z
 com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 - com.intellij.openapi.fileEditor.FileEditorProvider
 - com.intellij.openapi.project.DumbAware

@@ -27,7 +27,6 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
@@ -497,9 +496,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
       info.append(DiagnosticBundle.message("error.list.message.blame.core", ApplicationNamesInfo.getInstance().productName))
     }
 
-    if (pluginId != null
-        && !ApplicationInfo.getInstance().isEssentialPlugin(pluginId)
-        && !isImplementationDetailPlugin(pluginId)) {
+    if (pluginInfo != null && !pluginInfo.isEssential && !pluginInfo.isImplementationDetail) {
       info.append(' ')
         .append("<a style=\"white-space: nowrap;\" href=\"$DISABLE_PLUGIN_URL\">")
         .append(DiagnosticBundle.message("error.list.disable.plugin"))

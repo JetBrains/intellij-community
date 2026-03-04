@@ -73,6 +73,8 @@ interface PluginUiModel {
 
   val isImplementationDetail: Boolean
 
+  val isEssential: Boolean
+
   var source: PluginSource?
 
   @get:NlsSafe
