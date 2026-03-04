@@ -102,10 +102,27 @@ class CheckerRunner(val text: TextContent) {
    * so that problems from the first checkers can override intersecting problems from others.
    */
   private fun doRun(checkers: List<TextChecker>, context: ProofreadingContext): Collection<TextProblem> {
+    // Spelling text checker optimization
+    // To get rid of expensive cancellable overhead,
+    // in case if cloud checking is disabled
+    if (checkers.size == 1 && checkers.first().isSpelling()) {
+      val checker = checkers.first()
+      return catching {
+        if (seemsCloudConnected() && checker is ExternalTextChecker) {
+          runBlockingCancellable {
+            checker.checkExternally(context)
+          }
+        }
+        else {
+          checker.check(context)
+        }
+      } ?: emptyList()
+    }
+
     return runBlockingCancellable {
       val deferred = checkers.map { checker ->
         when (checker) {
-          is ExternalTextChecker -> async { catchingSuspend { checker.checkExternally(context) } ?: emptyList() }
+          is ExternalTextChecker -> async { catching { checker.checkExternally(context) } ?: emptyList()}
           else -> async(start = CoroutineStart.LAZY) { catching { checker.check(context) } ?: emptyList() }
         }
       }
@@ -294,17 +311,8 @@ class CheckerRunner(val text: TextContent) {
     }
   }
 
-  private fun <T> catching(function: () -> T): T? {
-    try {
-      return function()
-    } catch (e: Throwable) {
-      if (e is CancellationException) throw e
-      thisLogger().error(e)
-      return null
-    }
-  }
 
-  private suspend fun <T> catchingSuspend(function: suspend () -> T): T? {
+  private inline fun <T> catching(function: () -> T): T? {
     try {
       return function()
     } catch (e: Throwable) {

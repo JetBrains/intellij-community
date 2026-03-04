@@ -23,7 +23,6 @@ import com.intellij.grazie.utils.isGrammar
 import com.intellij.grazie.utils.isSpelling
 import com.intellij.lang.Language
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.ui.CommitMessage
@@ -161,10 +160,13 @@ class GrazieInspection : LocalInspectionTool(), DumbAware, UnfairLocalInspection
 
     @JvmStatic
     fun skipCheckingTooLargeTexts(texts: Collection<TextContent>): Boolean {
-      if (texts.isEmpty()) return false
-      if (texts.sumOf { it.length } > MAX_TEXT_LENGTH_IN_PSI_ELEMENT) return true
+      val checkedDomains = checkedDomains()
+      val checkedTexts = texts.filter { it.domain in checkedDomains }
 
-      val file = texts.first().containingFile
+      if (checkedTexts.isEmpty()) return false
+      if (checkedTexts.sumOf { it.length } > MAX_TEXT_LENGTH_IN_PSI_ELEMENT) return true
+
+      val file = checkedTexts.first().containingFile
       if (file.textLength <= MAX_TEXT_LENGTH_IN_FILE) return false
 
       return CachedValuesManager.getCachedValue(file) {

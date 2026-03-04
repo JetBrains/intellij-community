@@ -41,11 +41,23 @@ private val spellingKey = Key.create<CachedResults>("grazie.text.spell.problems"
 
 internal class SpellingTextChecker: ExternalTextChecker() {
   override fun getRules(locale: Locale): Collection<Rule> = emptyList()
-  override suspend fun checkExternally(context: ProofreadingContext): Collection<TypoProblem> {
-    val configStamp = getConfigStamp(context.text.containingFile.project)
+
+  override fun check(context: ProofreadingContext): Collection<TypoProblem> =
+    doCheck(context) {
+      findLocalTypos(context, it)
+    }
+
+  override suspend fun checkExternally(context: ProofreadingContext): Collection<TypoProblem> =
+    doCheck(context) {
+      findTypos(context, it)
+    }
+
+  private inline fun doCheck(context: ProofreadingContext, action: (Project) -> List<TypoProblem>): List<TypoProblem> {
+    val project = context.text.containingFile.project
+    val configStamp = getConfigStamp(project)
     var cache = getCachedTypos(context.text, configStamp)
     if (cache == null) {
-      cache = findTypos(context)
+      cache = action(project)
         .filterNot { it.word.length < MINIMAL_TYPO_LENGTH }
         .filterNot { hasUnknownFragments(it) }
       context.text.putUserData(spellingKey, CachedResults(configStamp, cache))
@@ -98,14 +110,12 @@ internal class SpellingTextChecker: ExternalTextChecker() {
     }
   }
 
-  private suspend fun findTypos(context: ProofreadingContext): List<TypoProblem> {
-    val project = context.text.containingFile.project
-    val textSpeller = getTextSpeller(project) ?: return emptyList()
-    val localTypos = textSpeller.checkText(object : BombedCharSequence(context.text) {
-      override fun checkCanceled() {
-        ProgressManager.checkCanceled()
-      }
-    })
+  private fun findLocalTypos(context: ProofreadingContext, project: Project): List<TypoProblem> =
+    checkText(context, project)
+      .map { toProblem(context.text, it) }
+
+  private suspend fun findTypos(context: ProofreadingContext, project: Project): List<TypoProblem> {
+    val localTypos = checkText(context, project)
     return findTyposInCloud(context, localTypos, project)
   }
 
@@ -138,6 +148,15 @@ internal class SpellingTextChecker: ExternalTextChecker() {
           parts.map { part -> part.text }.toLinkedSet()
         }
       }
+  }
+
+  private fun checkText(context: ProofreadingContext, project: Project): List<Typo> {
+    val textSpeller = getTextSpeller(project) ?: return emptyList()
+    return textSpeller.checkText(object : BombedCharSequence(context.text) {
+      override fun checkCanceled() {
+        ProgressManager.checkCanceled()
+      }
+    })
   }
 
   private fun hasUnknownFragments(typo: TypoProblem): Boolean {
