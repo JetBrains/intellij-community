@@ -56,6 +56,10 @@ private class ProblematicPluginInfoBasedOnModel(val plugin: PluginUiModel) : Pro
     get() = plugin.pluginId
   override val isBundled: Boolean
     get() = plugin.isBundled
+  override val isImplementationDetail: Boolean
+    get() = plugin.isImplementationDetail
+  override val isEssential: Boolean
+    get() = plugin.isEssential
   override val allowsBundledUpdate: Boolean
     get() = plugin.allowBundledUpdate
   override val name: @NlsSafe String

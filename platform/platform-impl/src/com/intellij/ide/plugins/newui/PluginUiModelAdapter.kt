@@ -14,6 +14,7 @@ import com.intellij.ide.plugins.api.ReviewsPageContainer
 import com.intellij.ide.plugins.marketplace.ModuleDependency
 import com.intellij.ide.plugins.marketplace.PluginContentModule
 import com.intellij.ide.plugins.marketplace.PluginModule
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.util.IntellijInternalApi
@@ -80,6 +81,8 @@ class PluginUiModelAdapter(
     get() = pluginDescriptor.displayCategory
   override val isImplementationDetail: Boolean
     get() = pluginDescriptor.isImplementationDetail
+  override val isEssential: Boolean
+    get() = ApplicationInfo.getInstance().isEssentialPlugin(pluginId)
   override var forumUrl: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.forumUrl else null
     set(value) {

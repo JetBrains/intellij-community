@@ -2,6 +2,7 @@
 package com.intellij.openapi.diagnostic
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
@@ -14,6 +15,8 @@ import org.jetbrains.annotations.ApiStatus
 interface ProblematicPluginInfo {
   val pluginId: PluginId
   val isBundled: Boolean
+  val isImplementationDetail: Boolean
+  val isEssential: Boolean
   val allowsBundledUpdate: Boolean
   val name: @NlsSafe String
   val version: @NlsSafe String?
@@ -29,6 +32,10 @@ class ProblematicPluginInfoBasedOnDescriptor(val pluginDescriptor: IdeaPluginDes
     get() = pluginDescriptor.pluginId
   override val isBundled: Boolean
     get() = pluginDescriptor.isBundled
+  override val isImplementationDetail: Boolean
+    get() = pluginDescriptor.isImplementationDetail
+  override val isEssential: Boolean
+    get() = ApplicationInfo.getInstance().isEssentialPlugin(pluginId)
   override val allowsBundledUpdate: Boolean
     get() = pluginDescriptor.allowBundledUpdate()
   override val name: @NlsSafe String
