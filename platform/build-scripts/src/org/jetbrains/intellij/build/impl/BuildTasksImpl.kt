@@ -1173,6 +1173,10 @@ private suspend fun crossPlatformZip(
         // Linux and Windows: we don't add specific dist dirs for ARM, so, copy dist files explicitly
         // macOS: we don't copy dist files to avoid extra copy operation
         val content = distFile.content
+
+        // Skip OS-specific plugin-classpath.txt; not published in cross-platform SDK
+        if (distFile.relativePath == PLUGIN_CLASSPATH && distFile.os != null) continue
+
         if (zipFileUniqueGuard.putIfAbsent(distFile.relativePath, content) == null) {
           when (content) {
             is LocalDistFileContent -> out.entry(distFile.relativePath, content.file)
