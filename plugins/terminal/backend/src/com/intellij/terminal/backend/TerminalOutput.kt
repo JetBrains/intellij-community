@@ -245,14 +245,16 @@ internal fun createTerminalOutputFlow(
     }
   })
 
-  val workingDirectoryTrackingScope = coroutineScope.childScope("Working directory tracking")
-  addWorkingDirectoryListener(
-    services.ttyConnector,
-    shellIntegrationController,
-    workingDirectoryTrackingScope
-  ) { directory ->
-    textBuffer.withLock {
-      stateChangesTracker.updateState { it.copy(currentDirectory = directory) }
+  if (services.startupOptions.processType == TerminalProcessType.SHELL) {
+    val workingDirectoryTrackingScope = coroutineScope.childScope("Working directory tracking")
+    addWorkingDirectoryListener(
+      services.ttyConnector,
+      shellIntegrationController,
+      workingDirectoryTrackingScope
+    ) { directory ->
+      textBuffer.withLock {
+        stateChangesTracker.updateState { it.copy(currentDirectory = directory) }
+      }
     }
   }
 
