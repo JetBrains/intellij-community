@@ -28,9 +28,7 @@ import com.jetbrains.python.conda.loadLocalPythonCondaPath
 import com.jetbrains.python.conda.saveLocalPythonCondaPath
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.asPythonResult
-import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.getOrThrow
-import com.jetbrains.python.onFailure
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
@@ -44,7 +42,6 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
 import com.jetbrains.python.sdk.flavors.conda.addCondaPythonToTargetCommandLine
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
-import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
@@ -67,19 +64,25 @@ val condaLatestSupportedLanguage: LanguageLevel
     condaSupportedLanguages.maxWith(LanguageLevel.VERSION_COMPARATOR)
 
 
-/**
- * See `com.jetbrains.env.python.conda.PyCondaSdkTest`
- */
+@Deprecated("Use `createCondaSdkFromExistingEnvironment` instead")
 suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(
   condaIdentity: PyCondaEnvIdentity,
   existingSdks: List<Sdk>,
   project: Project?,
-): Sdk {
+): Sdk = createCondaSdkFromExistingEnvironment(condaIdentity, existingSdks, project).getOrThrow()
+
+
+/**
+ * See `com.jetbrains.env.python.conda.PyCondaSdkTest`
+ */
+suspend fun PyCondaCommand.createCondaSdkFromExistingEnvironment(
+  condaIdentity: PyCondaEnvIdentity,
+  existingSdks: List<Sdk>,
+  project: Project?,
+): PyResult<Sdk> {
   val condaEnv = PyCondaEnv(condaIdentity, fullCondaPathOnTarget)
   val flavorAndData = PyFlavorAndData(PyCondaFlavorData(condaEnv), CondaEnvSdkFlavor)
-  val interpreterPath = getCondaPythonBinaryPath(project, condaEnv, targetConfig).onFailure {
-    ShowingMessageErrorSync.emit(it, project)
-  }.getOrThrow()
+  val interpreterPath = getCondaPythonBinaryPath(project, condaEnv, targetConfig).getOr { return it }
 
   val (additionalData, customSdkSuggestedName) = when (targetConfig) {
     null -> PythonSdkAdditionalData(flavorAndData) to condaIdentity.userReadableName
@@ -106,7 +109,7 @@ suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(
   if (targetConfig == null) {
     saveLocalPythonCondaPath(Path.of(fullCondaPathOnTarget))
   }
-  return sdk
+  return PyResult.success(sdk)
 }
 
 private const val PRINT_SYS_EXECUTABLE_SCRIPT = "import sys; print(sys.executable)"
@@ -154,11 +157,11 @@ suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(
   project: Project,
 ): PyResult<Sdk> {
   PyCondaEnv.createEnv(this, newCondaEnvInfo).getOr { return it }
-  val sdk = createCondaSdkFromExistingEnv(
+  val sdk = createCondaSdkFromExistingEnvironment(
     condaIdentity = newCondaEnvInfo.toIdentity(),
     existingSdks = existingSdks,
     project = project,
-  )
+  ).getOr { return it }
   if (targetConfig == null) {
     saveLocalPythonCondaPath(Path.of(this@createCondaSdkAlongWithNewEnv.fullCondaPathOnTarget))
   }
@@ -182,7 +185,10 @@ suspend fun suggestCondaPath(filter: (FullPathOnTarget) -> Boolean = { true }): 
 /**
  * Detects conda binary in well-known locations on target
  */
-internal suspend fun suggestCondaPath(targetCommandExecutor: TargetCommandExecutor, filter: (FullPathOnTarget) -> Boolean = { true }): FullPathOnTarget? {
+internal suspend fun suggestCondaPath(
+  targetCommandExecutor: TargetCommandExecutor,
+  filter: (FullPathOnTarget) -> Boolean = { true },
+): FullPathOnTarget? {
   val targetPlatform = withContext(Dispatchers.IO) {
     targetCommandExecutor.targetPlatform.await()
   }
