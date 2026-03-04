@@ -21,7 +21,7 @@ import com.intellij.psi.PsiElement
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
  **/
 @Suppress("INAPPLICABLE_JVM_NAME")
-interface PolySymbolQueryExecutor : ModificationTracker {
+interface PolySymbolQueryExecutor {
 
   val location: PsiElement?
 
@@ -35,6 +35,12 @@ interface PolySymbolQueryExecutor : ModificationTracker {
   val resultsCustomizer: PolySymbolQueryResultsCustomizer
 
   var keepUnresolvedTopLevelReferences: Boolean
+
+  /**
+   * Returns a modification tracker that tracks changes in the query executor's dependencies,
+   * including all scopes, names provider, and results customizer.
+   */
+  val modificationTracker: ModificationTracker
 
   fun createPointer(): Pointer<PolySymbolQueryExecutor>
 
