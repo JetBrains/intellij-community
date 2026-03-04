@@ -2505,7 +2505,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
       return h1 == null || h2 == null ? Segment.BY_START_OFFSET_THEN_END_OFFSET.compare(o1, o2) : HighlightInfoUpdaterImpl.BY_OFFSETS_AND_HASH_ERRORS_FIRST.compare(h1, h2);
     });
   }
-  public static void setTraceDaemonLoggerLevel() {
+  public static void setDaemonLoggerTraceLevel() {
     Logger.getInstance("#com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil").setLevel(LogLevel.TRACE);
     Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl").setLevel(LogLevel.TRACE);
     Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator").setLevel(LogLevel.TRACE);
