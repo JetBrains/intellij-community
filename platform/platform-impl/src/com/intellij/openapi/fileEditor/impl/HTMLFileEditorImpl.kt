@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.CommonBundle
@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.editor.EditorBundle
-import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.ResourceHandler.Resource
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.ResourceHandler.ResourceRequest
@@ -75,17 +74,17 @@ private const val LOADING_KEY = 1
 private const val CONTENT_KEY = 0
 private const val URL_LOADING_TIMEOUT_MS = 10000
 
-internal class HTMLFileEditor(
+internal class HTMLFileEditorImpl(
   private val project: Project,
   private val file: LightVirtualFile,
   private val request: HTMLEditorProvider.Request,
-) : UserDataHolderBase(), FileEditor {
+) : UserDataHolderBase(), HTMLEditorProvider.HTMLFileEditor {
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this)
   private val contentPanel = JCEFHtmlPanel(true, null, null)
   private val timeoutJob = AtomicReference<Job>()
   private val initial = AtomicBoolean(true)
   private val navigating = AtomicBoolean(false)
-  private val htmlTabScope = service<CoreUiCoroutineScopeHolder>().coroutineScope.childScope("HTMLFileEditor[${file.name}]")
+  private val htmlTabScope = service<CoreUiCoroutineScopeHolder>().coroutineScope.childScope("HTMLFileEditorImpl[${file.name}]")
   private var jsRouter: CefMessageRouter? = null
   private var requestHandler: CefRequestHandler? = null
 
@@ -175,7 +174,7 @@ internal class HTMLFileEditor(
 
       requestHandler = object : CefRequestHandlerAdapter() {
         private val REQUEST_HANDLER = object : CefResourceRequestHandlerAdapter() {
-          override fun getResourceHandler(browser: CefBrowser?, frame: CefFrame?, request: CefRequest): CefResourceHandler? {
+          override fun getResourceHandler(browser: CefBrowser?, frame: CefFrame?, request: CefRequest): CefResourceHandler {
             return HTMLFileEditorResourceHandler(handler, coroutineScope)
           }
         }
@@ -342,4 +341,4 @@ internal class HTMLFileEditorResourceHandler(val handler: HTMLEditorProvider.Res
 
 private fun String.toURIOrNull() = runCatching { URI(this) }.getOrHandleException { logger.trace(it) }
 
-private val logger = logger<HTMLFileEditor>()
+private val logger = logger<HTMLFileEditorImpl>()
