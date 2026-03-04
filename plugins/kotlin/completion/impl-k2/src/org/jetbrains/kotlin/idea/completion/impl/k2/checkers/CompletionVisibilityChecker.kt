@@ -56,7 +56,18 @@ internal class CompletionVisibilityChecker(
             is PsiMember -> element.containingClass
             else -> null
         }
-        if (!element.hasModifier(JvmModifier.PUBLIC)) return false
+        if (element.hasModifier(JvmModifier.PRIVATE)) return false
+
+        // If it is a package private declaration, it might still be visible if it is in the same package
+        if (!element.hasModifier(JvmModifier.PUBLIC)) {
+            val containingFile = element.containingFile as? PsiJavaFile ?: return false
+            val declarationPackage = containingFile.packageName
+            val completionPackage = parameters.originalFile.packageFqName.asString()
+            if (declarationPackage != completionPackage) {
+                // We are package private, but we completing in a different package
+                return false
+            }
+        }
 
         return when (element) {
             is PsiClass -> containingClass == null || canJavaElementBeVisible(containingClass)
