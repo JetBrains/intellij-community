@@ -24,8 +24,10 @@ import org.jetbrains.jps.dependency.kotlin.KotlinSubclassesIndex;
 import org.jetbrains.jps.dependency.kotlin.LookupsIndex;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -282,7 +284,9 @@ public class StorageManager implements CloseableExt {
       }
       else {
         tempFile = Files.createTempFile(kotlinCriPath.getParent(), kotlinCriPath.getFileName().toString(), ".tmp");
-        Files.write(tempFile, KotlinCriUtilKt.prepareSerializedData(config.getGraph()));
+        try (var criOut = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(tempFile)))) {
+          KotlinCriUtilKt.exportCRIData(config.getGraph(), criOut);
+        }
         Files.move(tempFile, kotlinCriPath, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
       }
       moved = true;

@@ -3,66 +3,59 @@
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl
 
 import org.jetbrains.annotations.TestOnly
-import java.io.ByteArrayOutputStream
-import java.io.DataOutputStream
 import org.jetbrains.jps.dependency.BackDependencyIndex
 import org.jetbrains.jps.dependency.DependencyGraph
 import org.jetbrains.jps.dependency.ReferenceID
 import org.jetbrains.jps.dependency.java.JvmNodeReferenceID
 import org.jetbrains.jps.dependency.kotlin.KotlinSubclassesIndex
 import org.jetbrains.jps.dependency.kotlin.LookupsIndex
+import java.io.DataOutput
 
 const val VERSION = 4
 
-internal fun prepareSerializedData(graph: DependencyGraph): ByteArray {
-  val serializedDataResult = ByteArrayOutputStream().use { byteStream ->
-    DataOutputStream(byteStream).use { dataOut ->
-      dataOut.writeVersion()
+internal fun exportCRIData(graph: DependencyGraph, dataOut : DataOutput) {
+  dataOut.writeInt(VERSION)
 
-      // process subtypes
-      val subclassesIndex: BackDependencyIndex? = graph.getIndex(KotlinSubclassesIndex.NAME)
-      val subclassesFilteredKeys = subclassesIndex?.keys
-        ?.filter { key -> subclassesIndex.getDependencies(key).iterator().hasNext() }
-      val subclassesCount = subclassesFilteredKeys?.count() ?: 0
-      dataOut.writeInt(subclassesCount)
-      subclassesFilteredKeys
-        ?.sortedBy { it.toFqName() }
-        ?.forEach { key ->
-          val dependencies = subclassesIndex.getDependencies(key).map { it.toFqName() }.sorted()
-          dataOut.writeUTF(key.toFqName())
-          dataOut.writeInt(dependencies.size)
-          dependencies.forEach { dataOut.writeUTF(it) }
-        }
-
-      // process lookups
-      val lookupsIndex: BackDependencyIndex? = graph.getIndex(LookupsIndex.NAME)
-      val lookupsCount = lookupsIndex?.keys?.count() ?: 0
-      val fileIdToPathEntryAccumulator = mutableMapOf<String, Int>()
-      dataOut.writeInt(lookupsCount)
-      lookupsIndex?.keys
-        ?.sortedBy { it.toFqName() }
-        ?.forEach { key ->
-          val dependencies = lookupsIndex.getDependencies(key)
-            .mapNotNull { (it as? JvmNodeReferenceID)?.nodeName }
-            .sorted()
-          dataOut.writeUTF(key.toFqName())
-          dataOut.writeInt(dependencies.count())
-          dependencies
-            .map { dependency -> dependency.addFilePathIfNeeded(fileIdToPathEntryAccumulator) }
-            .forEach { indexedDependency ->
-              dataOut.writeInt(indexedDependency)
-            }
-        }
-
-      dataOut.writeInt(fileIdToPathEntryAccumulator.size)
-      fileIdToPathEntryAccumulator.toSortedMap().forEach { (path, fileId) ->
-        dataOut.writeInt(fileId)
-        dataOut.writeUTF(path)
-      }
+  // process subtypes
+  val subclassesIndex: BackDependencyIndex? = graph.getIndex(KotlinSubclassesIndex.NAME)
+  val subclassesFilteredKeys = subclassesIndex?.keys
+    ?.filter { key -> subclassesIndex.getDependencies(key).iterator().hasNext() }
+  val subclassesCount = subclassesFilteredKeys?.count() ?: 0
+  dataOut.writeInt(subclassesCount)
+  subclassesFilteredKeys
+    ?.sortedBy { it.toFqName() }
+    ?.forEach { key ->
+      val dependencies = subclassesIndex.getDependencies(key).map { it.toFqName() }.sorted()
+      dataOut.writeUTF(key.toFqName())
+      dataOut.writeInt(dependencies.size)
+      dependencies.forEach { dataOut.writeUTF(it) }
     }
-    byteStream.toByteArray()
+
+  // process lookups
+  val lookupsIndex: BackDependencyIndex? = graph.getIndex(LookupsIndex.NAME)
+  val lookupsCount = lookupsIndex?.keys?.count() ?: 0
+  val fileIdToPathEntryAccumulator = mutableMapOf<String, Int>()
+  dataOut.writeInt(lookupsCount)
+  lookupsIndex?.keys
+    ?.sortedBy { it.toFqName() }
+    ?.forEach { key ->
+      val dependencies = lookupsIndex.getDependencies(key)
+        .mapNotNull { (it as? JvmNodeReferenceID)?.nodeName }
+        .sorted()
+      dataOut.writeUTF(key.toFqName())
+      dataOut.writeInt(dependencies.count())
+      dependencies
+        .map { dependency -> dependency.addFilePathIfNeeded(fileIdToPathEntryAccumulator) }
+        .forEach { indexedDependency ->
+          dataOut.writeInt(indexedDependency)
+        }
+    }
+
+  dataOut.writeInt(fileIdToPathEntryAccumulator.size)
+  fileIdToPathEntryAccumulator.toSortedMap().forEach { (path, fileId) ->
+    dataOut.writeInt(fileId)
+    dataOut.writeUTF(path)
   }
-  return serializedDataResult
 }
 
 /**
@@ -116,5 +109,3 @@ private fun String.removeAnonymousSuffix(): String {
 private fun String.addFilePathIfNeeded(fileIdToPathEntryAccumulator: MutableMap<String, Int>): Int {
   return fileIdToPathEntryAccumulator.computeIfAbsent(this) { fileIdToPathEntryAccumulator.size + 1 }
 }
-
-private fun DataOutputStream.writeVersion() = writeInt(VERSION)
