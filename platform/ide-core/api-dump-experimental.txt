@@ -91,7 +91,7 @@ f:com.intellij.util.ui.UiScopeKt
 - bf:runBatched(kotlin.jvm.functions.Function2):com.intellij.util.ui.update.UpdateQueue
 - f:runLatest(java.util.function.Consumer):com.intellij.util.ui.update.UpdateQueue
 - bf:runLatest(kotlin.jvm.functions.Function2):com.intellij.util.ui.update.UpdateQueue
-- f:withComponentModality(kotlin.coroutines.CoroutineContext,javax.swing.JComponent):com.intellij.util.ui.update.DebouncedUpdates$Builder
+- f:withComponentModality(javax.swing.JComponent):com.intellij.util.ui.update.DebouncedUpdates$Builder
 - f:withContext(kotlin.coroutines.CoroutineContext):com.intellij.util.ui.update.DebouncedUpdates$Builder
 *f:com.intellij.util.ui.update.DebouncedUpdates$Builder$Companion
 f:com.intellij.util.ui.update.UiNotifyConnector$Companion

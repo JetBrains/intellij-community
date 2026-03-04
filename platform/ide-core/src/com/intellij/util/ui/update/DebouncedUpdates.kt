@@ -37,11 +37,13 @@ import kotlin.time.Duration.Companion.milliseconds
  *
  * Supports two lifetime modes:
  * - **forScope**: Tied to a [CoroutineScope] lifecycle
- * - **forComponent**: Tied to a [JComponent] visibility lifecycle (uses [launchOnShow])
+ * - **forComponent**: Tied to a [JComponent] visibility lifecycle
  *
  * Supports two execution modes:
- * - **runLatest**: Processes only the latest item (uses DROP_OLDEST and collectLatest - cancels previous execution if still running)
- * - **runBatched**: Processes all accumulated items together (uses debounceBatch)
+ * - **runLatest**: Processes only the latest queued item, cancelling previous execution if still running
+ * - **runBatched**: Collects and processes all items accumulated during the delay window
+ *
+ * Queues can be cancelled early using [UpdateQueue.cancelOnDispose] to tie them to a [Disposable] lifecycle.
  *
  * Example usage in Kotlin:
  * ```kotlin
@@ -50,6 +52,7 @@ import kotlin.time.Duration.Companion.milliseconds
  *   .withContext(Dispatchers.EDT)
  *   .restartTimerOnAdd(true)
  *   .runLatest { state -> updateUI(state) }
+ *   .cancelOnDispose(disposable)
  *
  * // Batched, component-bound
  * val queue2 = DebouncedUpdates.forComponent<Event>(component, "process-events", 100.milliseconds)
@@ -65,7 +68,8 @@ import kotlin.time.Duration.Companion.milliseconds
  * var queue1 = DebouncedUpdates.forScope(scope, "update-ui", 300)
  *   .withContext(Dispatchers.getEDT())
  *   .restartTimerOnAdd(true)
- *   .runLatestConsumer(state -> updateUI(state));
+ *   .runLatestConsumer(state -> updateUI(state))
+ *   .cancelOnDispose(disposable);
  *
  * // Batched, component-bound
  * var queue2 = DebouncedUpdates.forComponent(component, "process-events", 100)
@@ -176,14 +180,24 @@ object DebouncedUpdates {
     }
 
     /**
-     * Sets the coroutine context with modality state derived from the given component.
-     * The modality state is combined with the provided context.
+     * Adds the modality state derived from the given component to the current context.
+     * The modality state is combined with any previously set context.
      *
-     * @param context The coroutine context (e.g., Dispatchers.EDT)
+     * Call `withContext()` first to set the dispatcher (e.g., Dispatchers.EDT), then call this method
+     * to add the component's modality state.
+     *
+     * Example:
+     * ```kotlin
+     * DebouncedUpdates.forScope<State>(scope, "update", 300.milliseconds)
+     *   .withContext(Dispatchers.EDT)
+     *   .withComponentModality(myComponent)
+     *   .runLatest { ... }
+     * ```
+     *
      * @param component The component to derive modality state from
      */
-    fun withComponentModality(context: CoroutineContext, component: JComponent): Builder<T> {
-      this.context = context + ModalityState.stateForComponent(component).asContextElement()
+    fun withComponentModality(component: JComponent): Builder<T> {
+      this.context += ModalityState.stateForComponent(component).asContextElement()
       return this
     }
 
@@ -198,10 +212,22 @@ object DebouncedUpdates {
     }
 
     /**
-     * Creates a queue that processes only the latest item (DROP_OLDEST strategy).
+     * Creates a queue that processes only the latest queued item.
      *
-     * Uses `collectLatest` internally: if a new item arrives while the previous action is still executing,
-     * the previous execution will be cancelled before processing the new item.
+     * If multiple items are queued while waiting for the delay, only the most recent one is processed.
+     * If a new item arrives while the previous action is still executing, the previous execution
+     * is cancelled and the new item is processed instead.
+     *
+     * Example:
+     * ```kotlin
+     * val queue = DebouncedUpdates.forScope<State>(scope, "update", 100.milliseconds)
+     *   .runLatest { state -> updateUI(state) }
+     *
+     * queue.queue(state1)
+     * queue.queue(state2)  // state1 is dropped
+     * queue.queue(state3)  // state2 is dropped
+     * // After delay: only state3 is processed
+     * ```
      *
      * @param action The action to perform for each item
      * @return A queue that can be used to submit items via [UpdateQueue.queue]
@@ -215,11 +241,10 @@ object DebouncedUpdates {
     }
 
     /**
-     * Creates a queue that processes only the latest item (DROP_OLDEST strategy).
+     * Creates a queue that processes only the latest queued item.
      * Java-friendly overload accepting a [Consumer].
      *
-     * Uses `collectLatest` internally: if a new item arrives while the previous action is still executing,
-     * the previous execution will be cancelled before processing the new item.
+     * See [runLatest] for behavior details.
      *
      * @param action The action to perform for each item
      * @return A queue that can be used to submit items via [UpdateQueue.queue]
@@ -264,23 +289,7 @@ object DebouncedUpdates {
      * Creates a queue that batches all items during the delay window.
      * Java-friendly overload accepting a [Consumer].
      *
-     * Collects all items queued within the delay period and processes them together as a batch.
-     *
-     * Example:
-     * ```kotlin
-     * val queue = DebouncedUpdates.forScope<Int>(scope, "batch", 100.milliseconds)
-     *   .runBatched { items -> processBatch(items) }
-     *
-     * delay(40)
-     * queue.queue(1)
-     * delay(40)
-     * queue.queue(2)
-     * delay(120)  // First batch emitted: [1, 2]
-     * queue.queue(3)
-     * delay(120)  // Second batch emitted: [3]
-     * queue.queue(4)
-     * // Final batch emitted: [4]
-     * ```
+     * See [runBatched] for behavior details.
      *
      * @param action The action to perform for each batch of items
      * @return A queue that can be used to submit items via [UpdateQueue.queue]
@@ -299,8 +308,7 @@ sealed interface UpdateQueue<T> {
   /**
    * Queues an item for processing.
    *
-   * @throws IllegalArgumentException if the queue has been cancelled (e.g., scope was cancelled or component was removed)
-   * @throws IllegalStateException if the item cannot be sent to the channel (e.g., channel is closed)
+   * @throws IllegalArgumentException if the queue is closed (e.g., scope was cancelled, component was removed, or [cancelOnDispose] was triggered)
    */
   fun queue(item: T)
 
