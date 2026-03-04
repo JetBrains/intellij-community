@@ -34,12 +34,14 @@ import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -290,9 +292,35 @@ public final class ConvertToRecordFix implements LocalQuickFix {
           myMethodsToConstructorCandidates.entrySet().iterator().next().getValue().constructor().getParameterList().getParameters();
 
         if (instanceFields.size() != parameters.length) return false;
+        if (parameters.length > 0 && parameters[parameters.length - 1].isVarArgs()) return false;
       }
-
-
+      if (possibleCanonicalConstructorCount == 0) {
+        // We must not suggest conversion when a CUSTOM constructor's param is a strict supertype of the field's class.
+        // For example, if the field is List, and the constructor param is Collection.
+        //
+        // Why?
+        //
+        // After conversion, the new implicit canonical constructor (with field types) would become more specific
+        // and could silently "steal" call sites (due to how overload resolution works in Java).
+        //
+        // A possible solution could be adding explicit casts to constructor call sites to preserve semantics.
+        // The problem with this solution is that there may be downstream call sites that we can't see.
+        // This is why we simply do not suggest conversion in this case.
+        for (var constructorCandidate : myMethodsToConstructorCandidates.values()) {
+          if (constructorCandidate == null || constructorCandidate.kind() != RecordConstructorCandidate.Kind.CUSTOM) continue;
+          for (var entry : constructorCandidate.paramsToFields().entrySet()) {
+            PsiField field = entry.getValue();
+            if (field == null) continue;
+            PsiType paramType = entry.getKey().getType();
+            PsiType fieldType = field.getType();
+            PsiType paramTypeErased = TypeConversionUtil.erasure(paramType);
+            PsiType fieldTypeErased = TypeConversionUtil.erasure(fieldType);
+            if (!paramTypeErased.equals(fieldTypeErased) && TypeConversionUtil.isAssignable(paramTypeErased, fieldTypeErased)) {
+              return false;
+            }
+          }
+        }
+      }
       if (myFieldsToAccessorCandidates.size() == 0) return false;
       for (var entry : myFieldsToAccessorCandidates.entrySet()) {
         PsiField field = entry.getKey();
