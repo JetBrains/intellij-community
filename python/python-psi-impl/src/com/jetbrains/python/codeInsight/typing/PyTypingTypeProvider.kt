@@ -1153,25 +1153,19 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     @ApiStatus.Internal
     @JvmStatic
     fun getType(expression: PyExpression, context: TypeEvalContext, useFqn: Boolean): Ref<PyType?>? {
-      return staticWithCustomContext(
-        context,
-        useFqn
-      ) { customContext: Context? -> getType(expression, customContext!!) }
+      return staticWithCustomContext(context, useFqn) { getType(expression, it) }
     }
 
     @JvmStatic
     fun getType(expression: PyExpression, context: TypeEvalContext): Ref<PyType?>? {
-      return staticWithCustomContext(
-        context
-      ) { customContext: Context? -> getType(expression, customContext!!) }
+      return staticWithCustomContext(context) { getType(expression, it) }
     }
 
     @JvmStatic
     fun getTypeForTypeHint(expression: PyExpression, context: TypeEvalContext): Ref<PyType?>? {
-      return staticWithCustomContext(
-        context,
-        true
-      ) { getTypeForResolvedElement(expression, null, expression, it) }
+      return staticWithCustomContext(context, true) {
+        getTypeForResolvedElement(expression, null, expression, it)
+      }
     }
 
     private fun getType(expression: PyExpression, context: Context): Ref<PyType?>? {
