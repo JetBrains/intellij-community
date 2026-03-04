@@ -56,7 +56,6 @@ jvm_library(
     "//platform/external-system-impl:externalSystem-tests_test_lib",
     "//plugins/gradle/java",
     "//plugins/gradle:gradle-tests_test_lib",
-    "//plugins/gradle/gradle-dependency-updater:dependencyUpdater",
     "//plugins/maven",
     "//plugins/maven/testFramework",
     "//xml/xml-psi-api:psi",

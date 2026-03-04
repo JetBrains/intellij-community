@@ -1,0 +1,15 @@
+### auto-generated section `build intellij.platform.buildScripts.studioIcons` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "studio-icons",
+  module_name = "intellij.platform.buildScripts.studioIcons",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/build-scripts",
+    "//platform/build-scripts/icons:images-build",
+    "@lib//:kotlin-stdlib",
+  ]
+)
+### auto-generated section `build intellij.platform.buildScripts.studioIcons` end

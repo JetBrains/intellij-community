@@ -223,7 +223,6 @@ jvm_library(
     "//plugins/markdown/plugin:plugin-main",
     "//plugins/webp",
     "//plugins/emojipicker",
-    "//plugins/gradle/gradle-dependency-updater:dependencyUpdater",
     "//platform/settings-sync-core:settingsSync-core",
     "//plugins/settings-sync/jba:settingsSync",
     "//java/java-features-trainer:featuresTrainer",
@@ -246,7 +245,6 @@ jvm_library(
     "//platform/polySymbols",
     "//plugins/performanceTesting/core:performanceTesting",
     "//platform/smart-update",
-    "//plugins/gradle/intellij.gradle.analysis:analysis",
     "//plugins/htmltools:html-tools",
     "//platform/new-ui-onboarding",
     "//platform/new-users-onboarding",
@@ -410,15 +408,8 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
-    "//android/android:core",
     "//:main",
-    "//android/android-plugin:plugin",
-    "//android/layoutlib",
     "//plugins/kotlin:kotlin-plugin-community-main",
-    "//android/compose-designer",
-    "//android/compose-ide-plugin",
-    "//android/design-plugin",
-    "//android/android-navigator:navigator",
   ]
 )
 

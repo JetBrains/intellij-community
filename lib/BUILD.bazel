@@ -103,20 +103,6 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.android.tools.build/aapt2-proto-8.1.0-10154469.jar_copy",
-  src = "@com_android_tools_build-aapt2-proto-8_1_0-10154469_http//file",
-  out = "com.android.tools.build/aapt2-proto-8.1.0-10154469.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "aapt-proto",
-  jar = "@com_android_tools_build-aapt2-proto-8_1_0-10154469_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
   name = "ai.grazie/grazie-rule-engine-0.3.116.jar_copy",
   src = "@ai_grazie-grazie-rule-engine-0_3_116_http//file",
   out = "ai.grazie/grazie-rule-engine-0.3.116.jar",
@@ -154,466 +140,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.ibm.db2/jcc-11.5.7.0.jar_copy",
-  src = "@com_ibm_db2-jcc-11_5_7_0_http//file",
-  out = "com.ibm.db2/jcc-11.5.7.0.jar",
+  name = "org.antlr/antlr4-runtime-4.13.2.jar_copy",
+  src = "@org_antlr-antlr4-runtime-4_13_2_http//file",
+  out = "org.antlr/antlr4-runtime-4.13.2.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "android-adt-ui-ibm-db2-jcc",
-  jar = "@com_ibm_db2-jcc-11_5_7_0_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.intellij.deps.android.tools.base/backgroundtask_inspector_java_proto-232.1.23.0.jar_copy",
-  src = "@org_jetbrains_intellij_deps_android_tools_base-backgroundtask_inspector_java_proto-232_1_23_0_http//file",
-  out = "org.jetbrains.intellij.deps.android.tools.base/backgroundtask_inspector_java_proto-232.1.23.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-app-inspection-inspectors-backgroundtask-view-tests-background-inspector-proto",
-  jar = "@org_jetbrains_intellij_deps_android_tools_base-backgroundtask_inspector_java_proto-232_1_23_0_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.intellij.deps.android.tools.base/workmanager_inspector_proto-232.1.23.0.jar_copy",
-  src = "@org_jetbrains_intellij_deps_android_tools_base-workmanager_inspector_proto-232_1_23_0_http//file",
-  out = "org.jetbrains.intellij.deps.android.tools.base/workmanager_inspector_proto-232.1.23.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-app-inspection-inspectors-backgroundtask-view-tests-workmanager-inspector-proto",
-  jar = "@org_jetbrains_intellij_deps_android_tools_base-workmanager_inspector_proto-232_1_23_0_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.brotli/dec-0.1.2.jar_copy",
-  src = "@org_brotli-dec-0_1_2_http//file",
-  out = "org.brotli/dec-0.1.2.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-app-inspection-inspectors-network-model-brotli-dec",
-  jar = "@org_brotli-dec-0_1_2_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.kotlin/kotlin-metadata-jvm-2.2.20.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_2_20_http//file",
-  out = "org.jetbrains.kotlin/kotlin-metadata-jvm-2.2.20.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-core-kotlin-metadata-jvm",
-  jar = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_2_20_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_2_20-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.eclipse.elk/org.eclipse.elk.alg.layered-0.3.0.jar_copy",
-  src = "@org_eclipse_elk-org_eclipse_elk_alg_layered-0_3_0_http//file",
-  out = "org.eclipse.elk/org.eclipse.elk.alg.layered-0.3.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.eclipse.elk/org.eclipse.elk.core-0.3.0.jar_copy",
-  src = "@org_eclipse_elk-org_eclipse_elk_core-0_3_0_http//file",
-  out = "org.eclipse.elk/org.eclipse.elk.core-0.3.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.eclipse.elk/org.eclipse.elk.graph-0.3.0.jar_copy",
-  src = "@org_eclipse_elk-org_eclipse_elk_graph-0_3_0_http//file",
-  out = "org.eclipse.elk/org.eclipse.elk.graph-0.3.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.eclipse.emf/org.eclipse.emf.common-2.12.0.jar_copy",
-  src = "@org_eclipse_emf-org_eclipse_emf_common-2_12_0_http//file",
-  out = "org.eclipse.emf/org.eclipse.emf.common-2.12.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.eclipse.emf/org.eclipse.emf.ecore-2.12.0.jar_copy",
-  src = "@org_eclipse_emf-org_eclipse_emf_ecore-2_12_0_http//file",
-  out = "org.eclipse.emf/org.eclipse.emf.ecore-2.12.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.eclipse.elk/org.eclipse.elk.alg.common.compaction-0.3.0.jar_copy",
-  src = "@org_eclipse_elk-org_eclipse_elk_alg_common_compaction-0_3_0_http//file",
-  out = "org.eclipse.elk/org.eclipse.elk.alg.common.compaction-0.3.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "android-nav-editor-eclipse-layout-kernel",
-  exports = [
-    ":org_eclipse_elk-org_eclipse_elk_alg_layered-0_3_0_http_import",
-    ":org_eclipse_elk-org_eclipse_elk_core-0_3_0_http_import",
-    ":org_eclipse_elk-org_eclipse_elk_graph-0_3_0_http_import",
-    ":org_eclipse_emf-org_eclipse_emf_common-2_12_0_http_import",
-    ":org_eclipse_emf-org_eclipse_emf_ecore-2_12_0_http_import",
-    ":org_eclipse_elk-org_eclipse_elk_alg_common_compaction-0_3_0_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "org_eclipse_elk-org_eclipse_elk_alg_layered-0_3_0_http_import",
-  jar = "@org_eclipse_elk-org_eclipse_elk_alg_layered-0_3_0_http//file"
-)
-
-jvm_import(
-  name = "org_eclipse_elk-org_eclipse_elk_core-0_3_0_http_import",
-  jar = "@org_eclipse_elk-org_eclipse_elk_core-0_3_0_http//file"
-)
-
-jvm_import(
-  name = "org_eclipse_elk-org_eclipse_elk_graph-0_3_0_http_import",
-  jar = "@org_eclipse_elk-org_eclipse_elk_graph-0_3_0_http//file"
-)
-
-jvm_import(
-  name = "org_eclipse_emf-org_eclipse_emf_common-2_12_0_http_import",
-  jar = "@org_eclipse_emf-org_eclipse_emf_common-2_12_0_http//file"
-)
-
-jvm_import(
-  name = "org_eclipse_emf-org_eclipse_emf_ecore-2_12_0_http_import",
-  jar = "@org_eclipse_emf-org_eclipse_emf_ecore-2_12_0_http//file"
-)
-
-jvm_import(
-  name = "org_eclipse_elk-org_eclipse_elk_alg_common_compaction-0_3_0_http_import",
-  jar = "@org_eclipse_elk-org_eclipse_elk_alg_common_compaction-0_3_0_http//file"
-)
-
-copy_file(
-  name = "org.jetbrains.intellij.deps.android.tools.base/traceprocessor_protos-232.1.23.0.jar_copy",
-  src = "@org_jetbrains_intellij_deps_android_tools_base-traceprocessor_protos-232_1_23_0_http//file",
-  out = "org.jetbrains.intellij.deps.android.tools.base/traceprocessor_protos-232.1.23.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-profilers-ui-traceprocessor-protos",
-  jar = "@org_jetbrains_intellij_deps_android_tools_base-traceprocessor_protos-232_1_23_0_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.intellij.deps.android.tools.base/libserver-flag-test-proto-232.1.23.0.jar_copy",
-  src = "@org_jetbrains_intellij_deps_android_tools_base-libserver-flag-test-proto-232_1_23_0_http//file",
-  out = "org.jetbrains.intellij.deps.android.tools.base/libserver-flag-test-proto-232.1.23.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-server-flags-libserver-flag-test-proto",
-  jar = "@org_jetbrains_intellij_deps_android_tools_base-libserver-flag-test-proto-232_1_23_0_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.intellij.deps.android.tools.streaming.ffmpeg-bundle/ffmpeg-6.0-1.5.9-189.jar_copy",
-  src = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-6_0-1_5_9-189_http//file",
-  out = "org.jetbrains.intellij.deps.android.tools.streaming.ffmpeg-bundle/ffmpeg-6.0-1.5.9-189.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-ffmpeg",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-6_0-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.intellij.deps.android.tools.streaming.ffmpeg-bundle/javacpp-1.5.9-189.jar_copy",
-  src = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-1_5_9-189_http//file",
-  out = "org.jetbrains.intellij.deps.android.tools.streaming.ffmpeg-bundle/javacpp-1.5.9-189.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-ffmpeg-javacpp",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.intellij.deps.android.tools.streaming.ffmpeg-bundle/ffmpeg-linux-x86_64-6.0-1.5.9-189.jar_copy",
-  src = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-linux-x86_64-6_0-1_5_9-189_http//file",
-  out = "org.jetbrains.intellij.deps.android.tools.streaming.ffmpeg-bundle/ffmpeg-linux-x86_64-6.0-1.5.9-189.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-ffmpeg-linux-x64",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-linux-x86_64-6_0-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.intellij.deps.android.tools.streaming.ffmpeg-bundle/ffmpeg-macosx-arm64-6.0-1.5.9-189.jar_copy",
-  src = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-macosx-arm64-6_0-1_5_9-189_http//file",
-  out = "org.jetbrains.intellij.deps.android.tools.streaming.ffmpeg-bundle/ffmpeg-macosx-arm64-6.0-1.5.9-189.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-ffmpeg-macos-aarch64",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-macosx-arm64-6_0-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.intellij.deps.android.tools.streaming.ffmpeg-bundle/ffmpeg-macosx-x86_64-6.0-1.5.9-189.jar_copy",
-  src = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-macosx-x86_64-6_0-1_5_9-189_http//file",
-  out = "org.jetbrains.intellij.deps.android.tools.streaming.ffmpeg-bundle/ffmpeg-macosx-x86_64-6.0-1.5.9-189.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-ffmpeg-macos-x64",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-macosx-x86_64-6_0-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.intellij.deps.android.tools.streaming.ffmpeg-bundle/ffmpeg-windows-x86_64-6.0-1.5.9-189.jar_copy",
-  src = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-windows-x86_64-6_0-1_5_9-189_http//file",
-  out = "org.jetbrains.intellij.deps.android.tools.streaming.ffmpeg-bundle/ffmpeg-windows-x86_64-6.0-1.5.9-189.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-ffmpeg-windows-x64",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-windows-x86_64-6_0-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.intellij.deps.android.tools.streaming.ffmpeg-bundle/javacpp-linux-x86_64-1.5.9-189.jar_copy",
-  src = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-linux-x86_64-1_5_9-189_http//file",
-  out = "org.jetbrains.intellij.deps.android.tools.streaming.ffmpeg-bundle/javacpp-linux-x86_64-1.5.9-189.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-javacpp-linux-x64",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-linux-x86_64-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.intellij.deps.android.tools.streaming.ffmpeg-bundle/javacpp-macosx-arm64-1.5.9-189.jar_copy",
-  src = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-macosx-arm64-1_5_9-189_http//file",
-  out = "org.jetbrains.intellij.deps.android.tools.streaming.ffmpeg-bundle/javacpp-macosx-arm64-1.5.9-189.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-javacpp-macos-aarch64",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-macosx-arm64-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.intellij.deps.android.tools.streaming.ffmpeg-bundle/javacpp-macosx-x86_64-1.5.9-189.jar_copy",
-  src = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-macosx-x86_64-1_5_9-189_http//file",
-  out = "org.jetbrains.intellij.deps.android.tools.streaming.ffmpeg-bundle/javacpp-macosx-x86_64-1.5.9-189.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-javacpp-macos-x64",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-macosx-x86_64-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.intellij.deps.android.tools.streaming.ffmpeg-bundle/javacpp-windows-x86_64-1.5.9-189.jar_copy",
-  src = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-windows-x86_64-1_5_9-189_http//file",
-  out = "org.jetbrains.intellij.deps.android.tools.streaming.ffmpeg-bundle/javacpp-windows-x86_64-1.5.9-189.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-javacpp-windows-x64",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-windows-x86_64-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-test_util-ffmpeg",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-6_0-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-test_util-ffmpeg-javacpp",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-test_util-ffmpeg-linux-x64",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-linux-x86_64-6_0-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-test_util-ffmpeg-macos-aarch64",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-macosx-arm64-6_0-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-test_util-ffmpeg-macos-x64",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-macosx-x86_64-6_0-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-test_util-ffmpeg-windows-x64",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-windows-x86_64-6_0-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-test_util-javacpp-linux-x64",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-linux-x86_64-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-test_util-javacpp-macos-aarch64",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-macosx-arm64-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-test_util-javacpp-macos-x64",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-macosx-x86_64-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-test_util-javacpp-windows-x64",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-windows-x86_64-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-tests-ffmpeg",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-6_0-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-tests-ffmpeg-javacpp",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-tests-ffmpeg-linux-x64",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-linux-x86_64-6_0-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-tests-ffmpeg-macos-aarch64",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-macosx-arm64-6_0-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-tests-ffmpeg-macos-x64",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-macosx-x86_64-6_0-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-tests-ffmpeg-windows-x64",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-windows-x86_64-6_0-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-tests-javacpp-linux-x64",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-linux-x86_64-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-tests-javacpp-macos-aarch64",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-macosx-arm64-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-tests-javacpp-macos-x64",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-macosx-x86_64-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-streaming-tests-javacpp-windows-x64",
-  jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-windows-x86_64-1_5_9-189_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "com.android.tools.analytics-library/testing-31.5.0-alpha08.jar_copy",
-  src = "@com_android_tools_analytics-library-testing-31_5_0-alpha08_http//file",
-  out = "com.android.tools.analytics-library/testing-31.5.0-alpha08.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "android-tools-analytics-library-testing",
-  jar = "@com_android_tools_analytics-library-testing-31_5_0-alpha08_http//file",
+  name = "antlr4-runtime",
+  jar = "@org_antlr-antlr4-runtime-4_13_2_http//file",
+  source_jar = "@org_antlr-antlr4-runtime-4_13_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -1816,55 +1353,63 @@ jvm_import(
 )
 
 copy_file(
-  name = "nl.jqno.equalsverifier/equalsverifier-3.19.4.jar_copy",
-  src = "@nl_jqno_equalsverifier-equalsverifier-3_19_4_http//file",
-  out = "nl.jqno.equalsverifier/equalsverifier-3.19.4.jar",
+  name = "org.eclipse.lsp4j/org.eclipse.lsp4j-0.21.2.jar_copy",
+  src = "@org_eclipse_lsp4j-org_eclipse_lsp4j-0_21_2_http//file",
+  out = "org.eclipse.lsp4j/org.eclipse.lsp4j-0.21.2.jar",
   allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "eclipse-lsp4j",
+  jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j-0_21_2_http//file",
+  source_jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j-0_21_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.objenesis/objenesis-3.4.jar_copy",
-  src = "@org_objenesis-objenesis-3_4_http//file",
-  out = "org.objenesis/objenesis-3.4.jar",
+  name = "org.eclipse.lsp4j/org.eclipse.lsp4j.debug-0.21.2.jar_copy",
+  src = "@org_eclipse_lsp4j-org_eclipse_lsp4j_debug-0_21_2_http//file",
+  out = "org.eclipse.lsp4j/org.eclipse.lsp4j.debug-0.21.2.jar",
   allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "eclipse-lsp4j-debug",
+  jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_debug-0_21_2_http//file",
+  source_jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_debug-0_21_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "net.bytebuddy/byte-buddy-1.17.5.jar_copy",
-  src = "@net_bytebuddy-byte-buddy-1_17_5_http//file",
-  out = "net.bytebuddy/byte-buddy-1.17.5.jar",
+  name = "org.eclipse.lsp4j/org.eclipse.lsp4j.jsonrpc-0.21.2.jar_copy",
+  src = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc-0_21_2_http//file",
+  out = "org.eclipse.lsp4j/org.eclipse.lsp4j.jsonrpc-0.21.2.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "equalsverifier",
-  exports = [
-    ":nl_jqno_equalsverifier-equalsverifier-3_19_4_http_import",
-    ":org_objenesis-objenesis-3_4_http_import",
-    ":net_bytebuddy-byte-buddy-1_17_5_http_import",
-  ],
+jvm_import(
+  name = "eclipse-lsp4j-jsonrpc",
+  jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc-0_21_2_http//file",
+  source_jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc-0_21_2-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.eclipse.lsp4j/org.eclipse.lsp4j.jsonrpc.debug-0.21.2.jar_copy",
+  src = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc_debug-0_21_2_http//file",
+  out = "org.eclipse.lsp4j/org.eclipse.lsp4j.jsonrpc.debug-0.21.2.jar",
+  allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "nl_jqno_equalsverifier-equalsverifier-3_19_4_http_import",
-  jar = "@nl_jqno_equalsverifier-equalsverifier-3_19_4_http//file",
-  source_jar = "@nl_jqno_equalsverifier-equalsverifier-3_19_4-sources_http//file"
-)
-
-jvm_import(
-  name = "org_objenesis-objenesis-3_4_http_import",
-  jar = "@org_objenesis-objenesis-3_4_http//file",
-  source_jar = "@org_objenesis-objenesis-3_4-sources_http//file"
-)
-
-jvm_import(
-  name = "net_bytebuddy-byte-buddy-1_17_5_http_import",
-  jar = "@net_bytebuddy-byte-buddy-1_17_5_http//file",
-  source_jar = "@net_bytebuddy-byte-buddy-1_17_5-sources_http//file"
+  name = "eclipse-lsp4j-jsonrpc-debug",
+  jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc_debug-0_21_2_http//file",
+  source_jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc_debug-0_21_2-sources_http//file",
+  visibility = ["//visibility:public"]
 )
 
 copy_file(
@@ -3023,73 +2568,6 @@ jvm_import(
   name = "github-oshi-core",
   jar = "@com_github_oshi-oshi-core-6_9_2_http//file",
   source_jar = "@com_github_oshi-oshi-core-6_9_2-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "com.android.tools.smali/smali-baksmali-3.0.3.jar_copy",
-  src = "@com_android_tools_smali-smali-baksmali-3_0_3_http//file",
-  out = "com.android.tools.smali/smali-baksmali-3.0.3.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "com.android.tools.smali/smali-util-3.0.3.jar_copy",
-  src = "@com_android_tools_smali-smali-util-3_0_3_http//file",
-  out = "com.android.tools.smali/smali-util-3.0.3.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "google-baksmali",
-  exports = [
-    ":com_android_tools_smali-smali-baksmali-3_0_3_http_import",
-    ":com_android_tools_smali-smali-util-3_0_3_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "com_android_tools_smali-smali-baksmali-3_0_3_http_import",
-  jar = "@com_android_tools_smali-smali-baksmali-3_0_3_http//file",
-  source_jar = "@com_android_tools_smali-smali-baksmali-3_0_3-sources_http//file"
-)
-
-jvm_import(
-  name = "com_android_tools_smali-smali-util-3_0_3_http_import",
-  jar = "@com_android_tools_smali-smali-util-3_0_3_http//file",
-  source_jar = "@com_android_tools_smali-smali-util-3_0_3-sources_http//file"
-)
-
-copy_file(
-  name = "com.android.tools.smali/smali-dexlib2-3.0.3.jar_copy",
-  src = "@com_android_tools_smali-smali-dexlib2-3_0_3_http//file",
-  out = "com.android.tools.smali/smali-dexlib2-3.0.3.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "google-dexlib2",
-  jar = "@com_android_tools_smali-smali-dexlib2-3_0_3_http//file",
-  source_jar = "@com_android_tools_smali-smali-dexlib2-3_0_3-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "com.google.protobuf/protobuf-java-util-3.25.5.jar_copy",
-  src = "@com_google_protobuf-protobuf-java-util-3_25_5_http//file",
-  out = "com.google.protobuf/protobuf-java-util-3.25.5.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "google-protobuf-java-util",
-  jar = "@com_google_protobuf-protobuf-java-util-3_25_5_http//file",
-  source_jar = "@com_google_protobuf-protobuf-java-util-3_25_5-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -6169,21 +5647,6 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.google.guava/guava-testlib-33.0.0-jre.jar_copy",
-  src = "@com_google_guava-guava-testlib-33_0_0-jre_http//file",
-  out = "com.google.guava/guava-testlib-33.0.0-jre.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "guava-testlib",
-  jar = "@com_google_guava-guava-testlib-33_0_0-jre_http//file",
-  source_jar = "@com_google_guava-guava-testlib-33_0_0-jre-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
   name = "org.hamcrest/hamcrest-2.2.jar_copy",
   src = "@org_hamcrest-hamcrest-2_2_http//file",
   out = "org.hamcrest/hamcrest-2.2.jar",
@@ -7216,20 +6679,6 @@ java_library(
 )
 
 copy_file(
-  name = "com.squareup/javapoet-1.13.0.jar_copy",
-  src = "@com_squareup-javapoet-1_13_0_http//file",
-  out = "com.squareup/javapoet-1.13.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "javapoet",
-  jar = "@com_squareup-javapoet-1_13_0_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
   name = "com.sun.activation/javax.activation-1.2.0.jar_copy",
   src = "@com_sun_activation-javax_activation-1_2_0_http//file",
   out = "com.sun.activation/javax.activation-1.2.0.jar",
@@ -7263,13 +6712,6 @@ jvm_import(
   name = "javax-inject",
   jar = "@javax_inject-javax_inject-1_http//file",
   source_jar = "@javax_inject-javax_inject-1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "javax-inject-provided",
-  exports = [":javax-inject"],
-  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
@@ -8666,13 +8108,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "kotlin-gradle-plugin-idea-provided",
-  exports = [":kotlin-gradle-plugin-idea"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
 copy_file(
   name = "org.jetbrains.kotlin/kotlin-gradle-plugin-idea-proto-1.9.20-dev-8162.jar_copy",
   src = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-proto-1_9_20-dev-8162_http//file",
@@ -8898,13 +8333,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "kotlin-tooling-core-provided",
-  exports = [":kotlin-tooling-core"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
 copy_file(
   name = "org.jetbrains.kotlin/allopen-compiler-plugin-for-ide-2.4.0-dev-2631.jar_copy",
   src = "@org_jetbrains_kotlin-allopen-compiler-plugin-for-ide-2_4_0-dev-2631_http//file",
@@ -8957,13 +8385,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "kotlinc-analysis-api-fe10-provided",
-  exports = [":kotlinc-analysis-api-fe10"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
 copy_file(
   name = "org.jetbrains.kotlin/analysis-api-impl-base-for-ide-2.4.0-dev-2631.jar_copy",
   src = "@org_jetbrains_kotlin-analysis-api-impl-base-for-ide-2_4_0-dev-2631_http//file",
@@ -8976,13 +8397,6 @@ jvm_import(
   name = "kotlinc-analysis-api-impl-base",
   jar = "@org_jetbrains_kotlin-analysis-api-impl-base-for-ide-2_4_0-dev-2631_http//file",
   source_jar = "@org_jetbrains_kotlin-analysis-api-impl-base-for-ide-2_4_0-dev-2631-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "kotlinc-analysis-api-impl-base-provided",
-  exports = [":kotlinc-analysis-api-impl-base"],
-  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
@@ -9013,13 +8427,6 @@ jvm_import(
   name = "kotlinc-analysis-api-k2",
   jar = "@org_jetbrains_kotlin-analysis-api-k2-for-ide-2_4_0-dev-2631_http//file",
   source_jar = "@org_jetbrains_kotlin-analysis-api-k2-for-ide-2_4_0-dev-2631-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "kotlinc-analysis-api-k2-provided",
-  exports = [":kotlinc-analysis-api-k2"],
-  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
@@ -9157,13 +8564,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "kotlinc-kotlin-compiler-cli-provided",
-  exports = [":kotlinc-kotlin-compiler-cli"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
 copy_file(
   name = "org.jetbrains.kotlin/kotlin-compiler-common-for-ide-2.4.0-dev-2631.jar_copy",
   src = "@org_jetbrains_kotlin-kotlin-compiler-common-for-ide-2_4_0-dev-2631_http//file",
@@ -9245,13 +8645,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "kotlinc-kotlin-compiler-ir-provided",
-  exports = [":kotlinc-kotlin-compiler-ir"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
 copy_file(
   name = "org.jetbrains.kotlin/kotlin-compiler-tests-for-ide-2.4.0-dev-2631.jar_copy",
   src = "@org_jetbrains_kotlin-kotlin-compiler-tests-for-ide-2_4_0-dev-2631_http//file",
@@ -9264,13 +8657,6 @@ jvm_import(
   name = "kotlinc-kotlin-compiler-tests",
   jar = "@org_jetbrains_kotlin-kotlin-compiler-tests-for-ide-2_4_0-dev-2631_http//file",
   source_jar = "@org_jetbrains_kotlin-kotlin-compiler-tests-for-ide-2_4_0-dev-2631-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "kotlinc-kotlin-compiler-tests-provided",
-  exports = [":kotlinc-kotlin-compiler-tests"],
-  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
@@ -9319,13 +8705,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "kotlinc-kotlin-gradle-statistics-provided",
-  exports = [":kotlinc-kotlin-gradle-statistics"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
 copy_file(
   name = "org.jetbrains.kotlin/kotlin-jps-common-for-ide-2.4.0-dev-2631.jar_copy",
   src = "@org_jetbrains_kotlin-kotlin-jps-common-for-ide-2_4_0-dev-2631_http//file",
@@ -9360,13 +8739,6 @@ jvm_import(
   name = "kotlinc-kotlin-jps-plugin-classpath",
   jar = "@org_jetbrains_kotlin-kotlin-jps-plugin-classpath-2_3_10_http//file",
   source_jar = "@org_jetbrains_kotlin-kotlin-jps-plugin-classpath-2_3_10-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "kotlinc-kotlin-jps-plugin-classpath-provided",
-  exports = [":kotlinc-kotlin-jps-plugin-classpath"],
-  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
@@ -9445,13 +8817,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "kotlinc-kotlin-scripting-compiler-impl-provided",
-  exports = [":kotlinc-kotlin-scripting-compiler-impl"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
 copy_file(
   name = "org.jetbrains.kotlin/kotlin-scripting-dependencies-2.4.0-dev-2631.jar_copy",
   src = "@org_jetbrains_kotlin-kotlin-scripting-dependencies-2_4_0-dev-2631_http//file",
@@ -9516,13 +8881,6 @@ jvm_import(
   name = "kotlinc-lombok-compiler-plugin",
   jar = "@org_jetbrains_kotlin-lombok-compiler-plugin-for-ide-2_4_0-dev-2631_http//file",
   source_jar = "@org_jetbrains_kotlin-lombok-compiler-plugin-for-ide-2_4_0-dev-2631-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "kotlinc-lombok-compiler-plugin-provided",
-  exports = [":kotlinc-lombok-compiler-plugin"],
-  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
@@ -9804,30 +9162,56 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+copy_file(
+  name = "com.esotericsoftware.kryo/kryo-2.24.0.jar_copy",
+  src = "@com_esotericsoftware_kryo-kryo-2_24_0_http//file",
+  out = "com.esotericsoftware.kryo/kryo-2.24.0.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "com.esotericsoftware.minlog/minlog-1.2.jar_copy",
+  src = "@com_esotericsoftware_minlog-minlog-1_2_http//file",
+  out = "com.esotericsoftware.minlog/minlog-1.2.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
 java_library(
-  name = "ktor-client-cio",
+  name = "kryo",
   exports = [
-    ":io_ktor-ktor-client-cio-jvm-3_3_2_http_import",
-    ":io_ktor-ktor-client-core-jvm-3_3_2_http_import",
-    ":io_ktor-ktor-http-jvm-3_3_2_http_import",
-    ":io_ktor-ktor-events-jvm-3_3_2_http_import",
-    ":io_ktor-ktor-websocket-serialization-jvm-3_3_2_http_import",
-    ":io_ktor-ktor-serialization-jvm-3_3_2_http_import",
-    ":io_ktor-ktor-sse-jvm-3_3_2_http_import",
-    ":io_ktor-ktor-http-cio-jvm-3_3_2_http_import",
-    ":io_ktor-ktor-network-jvm-3_3_2_http_import",
-    ":io_ktor-ktor-io-jvm-3_3_2_http_import",
-    ":io_ktor-ktor-websockets-jvm-3_3_2_http_import",
-    ":io_ktor-ktor-utils-jvm-3_3_2_http_import",
-    ":io_ktor-ktor-network-tls-jvm-3_3_2_http_import",
+    ":com_esotericsoftware_kryo-kryo-2_24_0_http_import",
+    ":com_esotericsoftware_minlog-minlog-1_2_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "io_ktor-ktor-client-cio-jvm-3_3_2_http_import",
-  jar = "@io_ktor-ktor-client-cio-jvm-3_3_2_http//file",
-  source_jar = "@io_ktor-ktor-client-cio-jvm-3_3_2-sources_http//file"
+  name = "com_esotericsoftware_kryo-kryo-2_24_0_http_import",
+  jar = "@com_esotericsoftware_kryo-kryo-2_24_0_http//file",
+  source_jar = "@com_esotericsoftware_kryo-kryo-2_24_0-sources_http//file"
+)
+
+jvm_import(
+  name = "com_esotericsoftware_minlog-minlog-1_2_http_import",
+  jar = "@com_esotericsoftware_minlog-minlog-1_2_http//file",
+  source_jar = "@com_esotericsoftware_minlog-minlog-1_2-sources_http//file"
+)
+
+java_library(
+  name = "ktor-client-core",
+  exports = [
+    ":io_ktor-ktor-client-core-jvm-3_3_2_http_import",
+    ":io_ktor-ktor-http-jvm-3_3_2_http_import",
+    ":io_ktor-ktor-http-cio-jvm-3_3_2_http_import",
+    ":io_ktor-ktor-events-jvm-3_3_2_http_import",
+    ":io_ktor-ktor-websocket-serialization-jvm-3_3_2_http_import",
+    ":io_ktor-ktor-serialization-jvm-3_3_2_http_import",
+    ":io_ktor-ktor-websockets-jvm-3_3_2_http_import",
+    ":io_ktor-ktor-sse-jvm-3_3_2_http_import",
+  ],
+  visibility = ["//visibility:public"]
 )
 
 jvm_import(
@@ -9840,6 +9224,12 @@ jvm_import(
   name = "io_ktor-ktor-http-jvm-3_3_2_http_import",
   jar = "@io_ktor-ktor-http-jvm-3_3_2_http//file",
   source_jar = "@io_ktor-ktor-http-jvm-3_3_2-sources_http//file"
+)
+
+jvm_import(
+  name = "io_ktor-ktor-http-cio-jvm-3_3_2_http_import",
+  jar = "@io_ktor-ktor-http-cio-jvm-3_3_2_http//file",
+  source_jar = "@io_ktor-ktor-http-cio-jvm-3_3_2-sources_http//file"
 )
 
 jvm_import(
@@ -9861,60 +9251,15 @@ jvm_import(
 )
 
 jvm_import(
-  name = "io_ktor-ktor-sse-jvm-3_3_2_http_import",
-  jar = "@io_ktor-ktor-sse-jvm-3_3_2_http//file",
-  source_jar = "@io_ktor-ktor-sse-jvm-3_3_2-sources_http//file"
-)
-
-jvm_import(
-  name = "io_ktor-ktor-http-cio-jvm-3_3_2_http_import",
-  jar = "@io_ktor-ktor-http-cio-jvm-3_3_2_http//file",
-  source_jar = "@io_ktor-ktor-http-cio-jvm-3_3_2-sources_http//file"
-)
-
-jvm_import(
-  name = "io_ktor-ktor-network-jvm-3_3_2_http_import",
-  jar = "@io_ktor-ktor-network-jvm-3_3_2_http//file",
-  source_jar = "@io_ktor-ktor-network-jvm-3_3_2-sources_http//file"
-)
-
-jvm_import(
-  name = "io_ktor-ktor-io-jvm-3_3_2_http_import",
-  jar = "@io_ktor-ktor-io-jvm-3_3_2_http//file",
-  source_jar = "@io_ktor-ktor-io-jvm-3_3_2-sources_http//file"
-)
-
-jvm_import(
   name = "io_ktor-ktor-websockets-jvm-3_3_2_http_import",
   jar = "@io_ktor-ktor-websockets-jvm-3_3_2_http//file",
   source_jar = "@io_ktor-ktor-websockets-jvm-3_3_2-sources_http//file"
 )
 
 jvm_import(
-  name = "io_ktor-ktor-utils-jvm-3_3_2_http_import",
-  jar = "@io_ktor-ktor-utils-jvm-3_3_2_http//file",
-  source_jar = "@io_ktor-ktor-utils-jvm-3_3_2-sources_http//file"
-)
-
-jvm_import(
-  name = "io_ktor-ktor-network-tls-jvm-3_3_2_http_import",
-  jar = "@io_ktor-ktor-network-tls-jvm-3_3_2_http//file",
-  source_jar = "@io_ktor-ktor-network-tls-jvm-3_3_2-sources_http//file"
-)
-
-java_library(
-  name = "ktor-client-core",
-  exports = [
-    ":io_ktor-ktor-client-core-jvm-3_3_2_http_import",
-    ":io_ktor-ktor-http-jvm-3_3_2_http_import",
-    ":io_ktor-ktor-http-cio-jvm-3_3_2_http_import",
-    ":io_ktor-ktor-events-jvm-3_3_2_http_import",
-    ":io_ktor-ktor-websocket-serialization-jvm-3_3_2_http_import",
-    ":io_ktor-ktor-serialization-jvm-3_3_2_http_import",
-    ":io_ktor-ktor-websockets-jvm-3_3_2_http_import",
-    ":io_ktor-ktor-sse-jvm-3_3_2_http_import",
-  ],
-  visibility = ["//visibility:public"]
+  name = "io_ktor-ktor-sse-jvm-3_3_2_http_import",
+  jar = "@io_ktor-ktor-sse-jvm-3_3_2_http//file",
+  source_jar = "@io_ktor-ktor-sse-jvm-3_3_2-sources_http//file"
 )
 
 copy_file(
@@ -9957,6 +9302,24 @@ jvm_import(
   source_jar = "@io_ktor-ktor-client-mock-jvm-3_3_2-sources_http//file"
 )
 
+jvm_import(
+  name = "io_ktor-ktor-utils-jvm-3_3_2_http_import",
+  jar = "@io_ktor-ktor-utils-jvm-3_3_2_http//file",
+  source_jar = "@io_ktor-ktor-utils-jvm-3_3_2-sources_http//file"
+)
+
+jvm_import(
+  name = "io_ktor-ktor-io-jvm-3_3_2_http_import",
+  jar = "@io_ktor-ktor-io-jvm-3_3_2_http//file",
+  source_jar = "@io_ktor-ktor-io-jvm-3_3_2-sources_http//file"
+)
+
+jvm_import(
+  name = "io_ktor-ktor-network-jvm-3_3_2_http_import",
+  jar = "@io_ktor-ktor-network-jvm-3_3_2_http//file",
+  source_jar = "@io_ktor-ktor-network-jvm-3_3_2-sources_http//file"
+)
+
 java_library(
   name = "ktor-network-tls",
   exports = [
@@ -9964,6 +9327,12 @@ java_library(
     ":io_ktor-ktor-network-jvm-3_3_2_http_import",
   ],
   visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "io_ktor-ktor-network-tls-jvm-3_3_2_http_import",
+  jar = "@io_ktor-ktor-network-tls-jvm-3_3_2_http//file",
+  source_jar = "@io_ktor-ktor-network-tls-jvm-3_3_2-sources_http//file"
 )
 
 copy_file(
@@ -10059,35 +9428,6 @@ jvm_import(
   name = "ktor-server-sse-jvm",
   jar = "@io_ktor-ktor-server-sse-jvm-3_3_2_http//file",
   source_jar = "@io_ktor-ktor-server-sse-jvm-3_3_2-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "net.sf.kxml/kxml2-2.3.0.jar_copy",
-  src = "@net_sf_kxml-kxml2-2_3_0_http//file",
-  out = "net.sf.kxml/kxml2-2.3.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "kxml2",
-  jar = "@net_sf_kxml-kxml2-2_3_0_http//file",
-  source_jar = "@net_sf_kxml-kxml2-2_3_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "com.android.tools.layoutlib/layoutlib-16.0.1.jar_copy",
-  src = "@com_android_tools_layoutlib-layoutlib-16_0_1_http//file",
-  out = "com.android.tools.layoutlib/layoutlib-16.0.1.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "layoutlib",
-  jar = "@com_android_tools_layoutlib-layoutlib-16_0_1_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -17082,6 +16422,14 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+copy_file(
+  name = "org.objenesis/objenesis-3.4.jar_copy",
+  src = "@org_objenesis-objenesis-3_4_http//file",
+  out = "org.objenesis/objenesis-3.4.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
 jvm_import(
   name = "objenesis",
   jar = "@org_objenesis-objenesis-3_4_http//file",
@@ -19693,28 +19041,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "studio-platform-provided",
-  exports = [":studio-platform"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.intellij.deps/studio-test-platform-2025.2.1-alpha01-290.jar_copy",
-  src = "@org_jetbrains_intellij_deps-studio-test-platform-2025_2_1-alpha01-290_http//file",
-  out = "org.jetbrains.intellij.deps/studio-test-platform-2025.2.1-alpha01-290.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "studio-test-platform",
-  jar = "@org_jetbrains_intellij_deps-studio-test-platform-2025_2_1-alpha01-290_http//file",
-  source_jar = "@org_jetbrains_intellij_deps-studio-test-platform-2025_2_1-alpha01-290-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
 copy_file(
   name = "commons-discovery/commons-discovery-0.4.jar_copy",
   src = "@commons-discovery-commons-discovery-0_4_http//file",
@@ -20002,43 +19328,6 @@ jvm_import(
   jar = "@com_github_stephenc_monte-monte-screen-recorder-0_7_7_0_http//file",
   source_jar = "@com_github_stephenc_monte-monte-screen-recorder-0_7_7_0-sources_http//file",
   visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "com.google.truth/truth-0.42.jar_copy",
-  src = "@com_google_truth-truth-0_42_http//file",
-  out = "com.google.truth/truth-0.42.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "com.googlecode.java-diff-utils/diffutils-1.3.0.jar_copy",
-  src = "@com_googlecode_java-diff-utils-diffutils-1_3_0_http//file",
-  out = "com.googlecode.java-diff-utils/diffutils-1.3.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "truth",
-  exports = [
-    ":com_google_truth-truth-0_42_http_import",
-    ":com_googlecode_java-diff-utils-diffutils-1_3_0_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "com_google_truth-truth-0_42_http_import",
-  jar = "@com_google_truth-truth-0_42_http//file",
-  source_jar = "@com_google_truth-truth-0_42-sources_http//file"
-)
-
-jvm_import(
-  name = "com_googlecode_java-diff-utils-diffutils-1_3_0_http_import",
-  jar = "@com_googlecode_java-diff-utils-diffutils-1_3_0_http//file",
-  source_jar = "@com_googlecode_java-diff-utils-diffutils-1_3_0-sources_http//file"
 )
 
 copy_file(
@@ -20334,21 +19623,6 @@ jvm_import(
   name = "zstd-jni",
   jar = "@com_github_luben-zstd-jni-1_5_7-4_http//file",
   source_jar = "@com_github_luben-zstd-jni-1_5_7-4-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "com.google.zxing/core-3.5.1.jar_copy",
-  src = "@com_google_zxing-core-3_5_1_http//file",
-  out = "com.google.zxing/core-3.5.1.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "zxing-core",
-  jar = "@com_google_zxing-core-3_5_1_http//file",
-  source_jar = "@com_google_zxing-core-3_5_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 ### auto-generated section `maven libs` end

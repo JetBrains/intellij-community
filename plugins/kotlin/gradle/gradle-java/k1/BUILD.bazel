@@ -136,7 +136,6 @@ jvm_library(
     "//plugins/kotlin/run-configurations/jvm",
     "//plugins/groovy",
     "//plugins/groovy:groovy_test_lib",
-    "//android/gradle-dsl-kotlin",
     "//plugins/kotlin/completion/tests-shared:kotlin-completion-tests-shared_test_lib",
     "//plugins/kotlin/completion/tests-k1:kotlin-completion-tests-k1_test_lib",
     "@lib//:kotlin-gradle-plugin-idea",

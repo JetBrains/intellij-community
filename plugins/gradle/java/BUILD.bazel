@@ -146,8 +146,6 @@ jvm_library(
     "//plugins/properties/properties-psi-api:psi",
     "//plugins/toml",
     "//plugins/toml/core",
-    "//plugins/gradle/intellij.gradle.analysis:analysis",
-    "//android/gradle-dsl-toml",
     "//libraries/kotlinx/coroutines/core",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
