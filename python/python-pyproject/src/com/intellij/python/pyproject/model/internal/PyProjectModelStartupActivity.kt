@@ -5,7 +5,8 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.impl.NotificationFullContent
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.smartReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -16,6 +17,9 @@ import com.intellij.python.pyproject.model.PyProjectModelSettings
 import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.ASK
 import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.OFF
 import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.ON
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 
 private const val NOTIFICATION_GROUP_ID = "PyProject.toml"
@@ -31,11 +35,7 @@ internal suspend fun askUserIfPyProjectMustBeEnabled(project: Project) {
   val settings = PyProjectModelSettings.getInstance(project)
   if (!settings.showConfigurationNotification) return
 
-  val hasPyprojectToml = readAction {
-    !project.isDisposed && FilenameIndex.getVirtualFilesByName(PY_PROJECT_TOML, GlobalSearchScope.projectScope(project)).isNotEmpty()
-  }
-
-  if (hasPyprojectToml) {
+  if (hasPyprojectToml(project)) {
     showNotification(project, settings)
   }
   else {
@@ -43,31 +43,49 @@ internal suspend fun askUserIfPyProjectMustBeEnabled(project: Project) {
   }
 }
 
+/**
+ * Listens for `pyproject.toml` appearing in the project after startup.
+ *
+ * Subscribes to [DumbService.DUMB_MODE] and checks the filename index each time the IDE
+ * exits dumb mode (i.e., indexing completes).
+ *
+ * Uses [MutableSharedFlow] with `replay = 1` so that an event emitted before
+ * [collect][kotlinx.coroutines.flow.collect] starts is not lost.
+ * [DROP_LATEST][BufferOverflow.DROP_LATEST] silently drops overflow since all events
+ * are identical `Unit` signals.
+ */
 private fun listenForPyprojectToml(project: Project, settings: PyProjectModelSettings) {
   val disposable = Disposer.newDisposable("PyProjectModelStartupActivity")
   Disposer.register(settings, disposable)
 
+  val dumbModeExited = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
+
   project.messageBus.connect(disposable).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
     override fun exitDumbMode() {
+      dumbModeExited.tryEmit(Unit)
+    }
+  })
+
+  project.service<PyProjectScopeService>().scope.launch {
+    dumbModeExited.collect {
       if (!settings.showConfigurationNotification) {
         Disposer.dispose(disposable)
-        return
+        return@collect
       }
 
-      val hasAnyPyprojectToml = FilenameIndex.hasVirtualFileWithName(
-        PY_PROJECT_TOML,
-        true,
-        GlobalSearchScope.projectScope(project),
-        null
-      )
-
-      if (hasAnyPyprojectToml) {
+      if (hasPyprojectToml(project)) {
         Disposer.dispose(disposable)
         showNotification(project, settings)
       }
     }
-  })
+  }
 }
+
+private suspend fun hasPyprojectToml(project: Project): Boolean =
+  smartReadAction(project) {
+    !project.isDisposed &&
+    FilenameIndex.hasVirtualFileWithName(PY_PROJECT_TOML, true, GlobalSearchScope.projectScope(project), null)
+  }
 
 private fun showNotification(project: Project, settings: PyProjectModelSettings) {
   FullContentNotification(
