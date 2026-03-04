@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.projectView.impl
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.projectView.actions
 
 import com.intellij.ide.SelectInContext
 import com.intellij.ide.SelectInManager
@@ -7,6 +7,8 @@ import com.intellij.ide.SelectInTarget
 import com.intellij.ide.actions.SelectInContextImpl
 import com.intellij.ide.impl.ProjectViewSelectInGroupTarget
 import com.intellij.ide.projectView.ProjectView
+import com.intellij.ide.projectView.impl.ProjectViewImpl
+import com.intellij.ide.projectView.impl.SelectInProjectViewImpl
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -65,7 +67,7 @@ internal class SelectFileAction : DumbAwareAction(), ActionRemoteBehaviorSpecifi
       }
       return true
     }
-    val wasJustActivated = projectFrame?.wasJustActivatedByClick == true
+    val wasJustActivated = projectFrame.wasJustActivatedByClick
     if (wasJustActivated) {
       if (SELECT_IN_LOG.isDebugEnabled) {
         SELECT_IN_LOG.debug("Forcing use of the last focused editor because the IDE frame was activated " +

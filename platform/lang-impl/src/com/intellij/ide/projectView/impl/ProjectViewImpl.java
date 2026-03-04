@@ -2110,11 +2110,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  boolean isSelectOpenedFileEnabled() {
+  @ApiStatus.Internal
+  public boolean isSelectOpenedFileEnabled() {
     return !isAutoscrollFromSourceEnabled(currentViewId) || AdvancedSettings.getBoolean("project.view.do.not.autoscroll.to.libraries");
   }
 
-  void selectOpenedFileUsingLastFocusedEditor() {
+  @ApiStatus.Internal
+  public void selectOpenedFileUsingLastFocusedEditor() {
     // invokeLater is needed here to give FileEditorManagerImpl time to figure out which editor is the last focused one.
     // If the IDE frame has just became active because the Select Opened File button was clicked,
     // then the editor may temporarily get focus before the Project View is focused.
@@ -2126,7 +2128,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     });
   }
 
-  void selectOpenedFile() {
+  @ApiStatus.Internal
+  public void selectOpenedFile() {
     selectOpenedFile(null);
   }
 

@@ -14,6 +14,10 @@
     <remote.customDataContextSerializer implementation="com.intellij.platform.projectView.pane.ProjectViewSelectedNodeIdsDataContextSerializer" />
   </extensions>
   <actions>
+    <action id="SelectInProjectView" icon="AllIcons.General.Locate" class="com.intellij.platform.projectView.actions.SelectFileAction">
+      <synonym key="action.SelectOpenedFileInProjectView.text"/>
+      <add-to-group group-id="ProjectViewToolbar" anchor="before" relative-to-action="ExpandRecursively"/>
+    </action>
     <group id="ProjectView.ToolWindow.SecondaryActions">
       <group id="ProjectView.ToolWindow.Behavior.Actions" popup="true">
         <action id="ProjectView.OpenInPreviewTab"

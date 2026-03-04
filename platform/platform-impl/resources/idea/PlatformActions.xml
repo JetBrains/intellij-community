@@ -1216,13 +1216,11 @@
     <reference ref="SaveDocument"/>
 
     <reference ref="MarkNotificationsAsRead"/>
-    <reference ref="SelectInProjectView"/>
 
     <reference ref="ClearAllNotifications"/>
 
     <group id="ProjectViewToolbar">
       <separator/>
-      <reference ref="SelectInProjectView"/>
       <reference ref="ExpandRecursively"/>
       <reference ref="ExpandAll"/>
       <reference ref="CollapseAll"/>
