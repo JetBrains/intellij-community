@@ -31,6 +31,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/util/jdom",
     "//platform/lang-api:lang",
+    "//platform/lang-impl",
   ]
 )
 
@@ -54,6 +55,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel_test_lib",
     "//platform/util/jdom:jdom_test_lib",
     "//platform/lang-api:lang_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.projectView.frontend` end

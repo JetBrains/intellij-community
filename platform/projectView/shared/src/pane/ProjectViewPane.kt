@@ -36,9 +36,11 @@ sealed interface ProjectViewPaneId : Comparable<ProjectViewPaneId> {
 @ApiStatus.Internal
 @Serializable
 data class ProjectViewPaneDescriptor(
+  val providerId: ProjectViewPaneProviderId,
   val id: ProjectViewPaneId,
   val presentableName: @NonNls String,
   val order: Int,
+  val isDefault: Boolean,
 )
 
 @ApiStatus.Internal

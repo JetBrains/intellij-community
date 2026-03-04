@@ -111,22 +111,25 @@ private class LegacyBackendProjectViewPaneService(
     val stateManager = AbstractProjectViewPaneStateManager(project, coroutineScope.childScope("LegacyBackendProjectViewPane: $legacyPane"), legacyPane)
     val subIds = legacyPane.subIds
     if (subIds.isEmpty()) {
-      return listOf(LegacyBackendProjectViewPane(stateManager, null))
+      return listOf(LegacyBackendProjectViewPane(project, stateManager, null))
     }
     else {
-      return subIds.map { subId -> LegacyBackendProjectViewPane(stateManager, subId) }
+      return subIds.map { subId -> LegacyBackendProjectViewPane(project, stateManager, subId) }
     }
   }
 }
 
 private class LegacyBackendProjectViewPane(
+  project: Project,
   private val legacyPaneManager: AbstractProjectViewPaneStateManager,
   private val subId: String?,
 ) : BackendProjectViewPane {
   override val descriptor: ProjectViewPaneDescriptor = ProjectViewPaneDescriptor(
+    providerId = LEGACY_PROVIDER_ID,
     id = projectViewPaneId(if (subId == null) legacyPaneManager.id else "${legacyPaneManager.id}:$subId"),
     presentableName = if (subId == null) legacyPaneManager.legacyPane.title else legacyPaneManager.legacyPane.getPresentableSubIdName(subId),
     order = legacyPaneManager.legacyPane.weight,
+    isDefault = legacyPaneManager.legacyPane.isDefaultPane(project),
   )
 
   private val requestChannel = Channel<ProjectViewPaneRequest>(capacity = Channel.UNLIMITED)
