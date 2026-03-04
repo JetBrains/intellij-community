@@ -19,6 +19,8 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowContentUiType
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.platform.project.projectId
+import com.intellij.platform.projectView.actions.ProjectViewActionSupport
+import com.intellij.platform.projectView.frontend.actions.ProjectViewActionSupportImpl
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneProviderEP
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
@@ -26,8 +28,6 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
 import com.intellij.platform.projectView.pane.projectViewPaneId
 import com.intellij.platform.projectView.pane.projectViewPaneProviderId
 import com.intellij.platform.projectView.rpc.ProjectViewRpc
-import com.intellij.platform.projectView.actions.ProjectViewActionSupport
-import com.intellij.platform.projectView.frontend.actions.ProjectViewActionSupportImpl
 import com.intellij.platform.projectView.window.ProjectViewToolWindowService
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
@@ -59,7 +59,7 @@ internal class ProjectViewToolWindowServiceImpl(
 ) : ProjectViewToolWindowService, PersistentStateComponent<Element> {
   private val actionGroup: DefaultActionGroup by lazy { DefaultActionGroup() }
   private val stateInitJob = CompletableDeferred<Unit>()
-  private val state = ConcurrentHashMap<ProjectViewPaneProviderId, ConcurrentHashMap<ProjectViewPaneId, Element>>()
+  private val persistentState = ProjectViewToolWindowServiceState()
   private val currentPaneFlow = MutableStateFlow<FrontendProjectViewPane?>(null)
   private val currentPaneListener: ContentManagerListener = object : ContentManagerListener {
     override fun selectionChanged(event: ContentManagerEvent) {
@@ -140,7 +140,7 @@ internal class ProjectViewToolWindowServiceImpl(
       launch(Dispatchers.UI + CoroutineName("Manage TW content for PV pane ${pane.id}")) {
         pane.component.launchOnShow("Pane $providerId:${pane.id} service state saving/restoring") {
           try {
-            val paneState = state[providerId]?.get(pane.id)
+            val paneState = persistentState.getPaneState(providerId, pane.id)
             if (paneState != null) {
               pane.restoreStateFrom(paneState)
             }
@@ -152,7 +152,7 @@ internal class ProjectViewToolWindowServiceImpl(
             paneElement.setAttribute("provider", providerId.idString)
             paneElement.setAttribute("pane", pane.id.idString)
             pane.saveStateTo(paneElement)
-            state.computeIfAbsent(providerId) { ConcurrentHashMap() }[pane.id] = paneElement
+            persistentState.putPaneState(providerId, pane.id, paneElement)
             LOG.debug { "Saved the last state for ${pane.id}" }
           }
         }
@@ -240,13 +240,7 @@ internal class ProjectViewToolWindowServiceImpl(
   }
 
   override fun getState(): Element = Element("projectView").also { element ->
-    val panesElement = Element("panes")
-    for (providerState in state.values) {
-      for (paneState in providerState.values) {
-        panesElement.addContent(paneState.clone())
-      }
-    }
-    element.addContent(panesElement)
+    persistentState.writeStateTo(element)
   }
 
   override fun noStateLoaded() {
@@ -254,15 +248,41 @@ internal class ProjectViewToolWindowServiceImpl(
   }
 
   override fun loadState(state: Element) {
-    val panesElement = state.getChild("panes")
+    persistentState.readStateFrom(state)
+    stateInitJob.complete(Unit)
+  }
+}
+
+private class ProjectViewToolWindowServiceState {
+  private val paneState = ConcurrentHashMap<ProjectViewPaneProviderId, ConcurrentHashMap<ProjectViewPaneId, Element>>()
+
+  fun getPaneState(providerId: ProjectViewPaneProviderId, paneId: ProjectViewPaneId): Element? {
+    return paneState[providerId]?.get(paneId)
+  }
+
+  fun putPaneState(providerId: ProjectViewPaneProviderId, paneId: ProjectViewPaneId, state: Element) {
+    paneState.computeIfAbsent(providerId) { ConcurrentHashMap() }[paneId] = state
+  }
+
+  fun writeStateTo(element: Element) {
+    val panesElement = Element("panes")
+    for (providerState in paneState.values) {
+      for (paneState in providerState.values) {
+        panesElement.addContent(paneState.clone())
+      }
+    }
+    element.addContent(panesElement)
+  }
+
+  fun readStateFrom(element: Element) {
+    val panesElement = element.getChild("panes")
     for (paneElement in panesElement?.getChildren("pane") ?: emptyList()) {
       val providerIdString = paneElement.getAttribute("provider")?.value ?: continue
       val paneIdString = paneElement.getAttribute("pane")?.value ?: continue
       val providerId = projectViewPaneProviderId(providerIdString)
       val paneId = projectViewPaneId(paneIdString)
-      this.state.computeIfAbsent(providerId) { ConcurrentHashMap() }[paneId] = paneElement
+      paneState.computeIfAbsent(providerId) { ConcurrentHashMap() }[paneId] = paneElement
     }
-    stateInitJob.complete(Unit)
   }
 }
 
