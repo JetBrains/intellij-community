@@ -1580,7 +1580,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         if (resolvesToQualifiedNames(
             operand,
             context.typeContext, TYPE, PyNames.TYPE
-          )
+          ) || (operand is PyReferenceExpression && operand.asQualifiedName() == QualifiedName.fromDottedString("builtins.type"))
         ) {
           val indexExpr = resolved.indexExpression
           if (indexExpr != null) {
