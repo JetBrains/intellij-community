@@ -45,9 +45,6 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
 
     @Test
     fun testDependencyOnStdlibFromPlatformSourceSets() {
-        if (flakyKgpImportKT82895()) {
-            throw AssumptionViolatedException("KT-82895")
-        }
         doTest {
             hideStdlib = false
             onlyCheckers(OrderEntriesChecker)
@@ -196,9 +193,6 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
 
     @Test
     fun testNativeUnsupportedPlatform() {
-        if (flakyKgpImportKT82895()) {
-            throw AssumptionViolatedException("KT-82895")
-        }
         doTest {
             onlyCheckers(OrderEntriesChecker)
 
