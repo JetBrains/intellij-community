@@ -82,6 +82,7 @@ internal class GrazieYtReportAction(problem: TextProblem) : IntentionAndQuickFix
     val problemText = extractAndTrimText(editor) ?: return
     BrowserUtil.browse(generateReportURL(problemText))
   }
+  override fun startInWriteAction(): Boolean = false
   override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean =
     editor != null &&
     clazz in SUPPORTED_CLASSES &&
