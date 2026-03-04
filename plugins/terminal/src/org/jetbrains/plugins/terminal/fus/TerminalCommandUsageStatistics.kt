@@ -65,8 +65,9 @@ object TerminalCommandUsageStatistics {
 
     val executable = userCommand.getOrNull(0) ?: return thirdPartyCommand
     if (isRelativePath(executable) && executable.length > 2) {
-      return if (PathUtil.toSystemIndependentName(executable).startsWith("./gradlew")) {
-        toKnownCommand(listOf("gradle"), knownCommandsData) ?: thirdPartyCommand
+      return if (PathUtil.toSystemIndependentName(executable).endsWith("/gradlew")) {
+        val gradleCommand = listOf("gradle") + userCommand.drop(1)
+        toKnownCommand(gradleCommand, knownCommandsData) ?: thirdPartyCommand
       }
       else relativePathCommand
     }
