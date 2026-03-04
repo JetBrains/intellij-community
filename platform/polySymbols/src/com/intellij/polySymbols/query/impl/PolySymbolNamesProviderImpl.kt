@@ -24,7 +24,7 @@ import java.util.Locale
 class PolySymbolNamesProviderImpl(
   private val context: PolyContext,
   private val configuration: List<PolySymbolNameConversionRules>,
-  private val modificationTracker: ModificationTracker,
+  override val modificationTracker: ModificationTracker,
 ) : PolySymbolNamesProvider {
 
   private val canonicalNamesProviders: Map<PolySymbolKind, PolySymbolNameConverter>
@@ -64,9 +64,6 @@ class PolySymbolNamesProviderImpl(
     other is PolySymbolNamesProviderImpl
     && other.context == context
     && other.configuration == configuration
-
-  override fun getModificationCount(): Long =
-    modificationTracker.modificationCount
 
   override fun withRules(rules: List<PolySymbolNameConversionRules>): PolySymbolNamesProvider =
     PolySymbolNamesProviderImpl(context, rules + configuration, modificationTracker)

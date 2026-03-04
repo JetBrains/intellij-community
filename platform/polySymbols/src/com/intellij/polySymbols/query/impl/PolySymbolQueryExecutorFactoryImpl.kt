@@ -113,7 +113,10 @@ class PolySymbolQueryExecutorFactoryImpl(private val project: Project) : PolySym
       nameConversionRules.add(provider.getNameConversionRules())
       providers.add(provider.createPointer())
     }
-    return PolySymbolNamesProviderImpl(context, nameConversionRules, createModificationTracker(providers))
+    val trackers = providers.map { providerPointer ->
+      Pointer { providerPointer.dereference()?.modificationTracker }
+    }
+    return PolySymbolNamesProviderImpl(context, nameConversionRules, createModificationTracker(trackers))
   }
 
   private fun getCustomScope(context: PsiElement?): List<PolySymbolScope> =
