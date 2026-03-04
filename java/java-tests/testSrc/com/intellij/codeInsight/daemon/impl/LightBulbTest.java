@@ -43,6 +43,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -65,10 +66,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Point;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EventObject;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -120,6 +121,7 @@ public class LightBulbTest extends ProductionDaemonAnalyzerTestCase {
   }
 
   public void testBulbAppearsAfterType() {
+    @Language("JAVA")
     String text = "class S { ArrayList<caret>XXX x;}";
     configureByText(JavaFileType.INSTANCE, text);
 
@@ -154,6 +156,7 @@ public class LightBulbTest extends ProductionDaemonAnalyzerTestCase {
   }
 
   public void testBulbMustDisappearAfterPressEscape() {
+    @Language("JAVA")
     String text = "class S { ArrayList<caret>XXX x;}";
     configureByText(JavaFileType.INSTANCE, text);
 
@@ -223,7 +226,9 @@ public class LightBulbTest extends ProductionDaemonAnalyzerTestCase {
     };
     IntentionManager.getInstance().addAction(longLongUpdate);
     Disposer.register(getTestRootDisposable(), () -> IntentionManager.getInstance().unregisterIntention(longLongUpdate));
-    configureByText(JavaFileType.INSTANCE, "class X { <caret>  }");
+    @Language("JAVA")
+    String text = "class X { <caret>  }";
+    configureByText(JavaFileType.INSTANCE, text);
     DaemonRespondToChangesTest.makeEditorWindowVisible(new Point(0, 0), myEditor);
     myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR);
     assertTrue("updateCount:"+updateCount, updateCount.get() > 0);
@@ -245,7 +250,9 @@ public class LightBulbTest extends ProductionDaemonAnalyzerTestCase {
   }
 
   public void testLightBulbIsHiddenWhenFixRangeIsCollapsed() {
-    configureByText(JavaFileType.INSTANCE, "class S { void foo() { boolean <selection>var; if (va<caret>r</selection>) {}} }");
+    @Language("JAVA")
+    String text = "class S { void foo() { boolean <selection>var; if (va<caret>r</selection>) {}} }";
+    configureByText(JavaFileType.INSTANCE, text);
     ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
     UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
 
@@ -326,8 +333,8 @@ public class LightBulbTest extends ProductionDaemonAnalyzerTestCase {
   }
 
   public void testLightBulbMustShowForHighlightInfoGeneratedByDumbAwareHighlightingPassInDumbMode() {
-    List<TextEditorHighlightingPassFactory> collected = Collections.synchronizedList(new ArrayList<>());
-    List<TextEditorHighlightingPassFactory> applied = Collections.synchronizedList(new ArrayList<>());
+    Collection<TextEditorHighlightingPassFactory> collected = Collections.synchronizedSet(new HashSet<>());
+    Collection<TextEditorHighlightingPassFactory> applied = Collections.synchronizedSet(new HashSet<>());
     class MyDumbFix extends AbstractIntentionAction implements DumbAware {
       private static final String fixText = "myDumbFix13";
       @Override
@@ -347,7 +354,7 @@ public class LightBulbTest extends ProductionDaemonAnalyzerTestCase {
 
       class TestDumbAwareHighlightingPassesStartEvenInDumbModePass extends EditorBoundHighlightingPass implements DumbAware {
         TestDumbAwareHighlightingPassesStartEvenInDumbModePass(Editor editor, PsiFile psiFile) {
-          super(editor, psiFile, false);
+          super(editor, psiFile, true);
         }
 
         @Override
@@ -366,14 +373,16 @@ public class LightBulbTest extends ProductionDaemonAnalyzerTestCase {
     }
     TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(getProject());
     DumbFac dumbFac = new DumbFac();
-    registrar.registerTextEditorHighlightingPass(dumbFac, null, null, false, -1);
+    registrar.registerTextEditorHighlightingPass(dumbFac, null, null, true, -1);
 
     configureByText(PlainTextFileType.INSTANCE, "  ");
     ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
     UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
-
-    myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR);
+    LOG.debug("=============================");
+    HighlightInfo error = assertOneElement(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEquals(new TextRange(0, 1), TextRange.create(error));
+    assertNotNull(error.toString(), error.findRegisteredQuickFix((descriptor, _1) -> descriptor.getAction() instanceof MyDumbFix fix ? fix : null));
     assertSameElements(collected, dumbFac);
     assertSameElements(applied, dumbFac);
     collected.clear();
@@ -440,17 +449,18 @@ public class LightBulbTest extends ProductionDaemonAnalyzerTestCase {
 
   public void testLightBulbMustShowForLocalQuickFixGeneratedByDumbAwareAnnotatorInDumbMode() {
     DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaLanguage.INSTANCE, new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyDumbAnnotator()}, () -> {
-      configureByText(JavaFileType.INSTANCE, """
+      @Language("JAVA")
+      String text = """
         class X {
           // <caret>xxx
         }
-        """);
+        """;
+      configureByText(JavaFileType.INSTANCE, text);
       ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
       DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
       UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
 
-      HighlightInfo info = assertOneElement(
-        myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
+      HighlightInfo info = assertOneElement(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
       assertEquals(MyDumbAnnotator.ERR_MSG, info.getDescription());
       {
         IntentionHintComponent hintComponent = myDaemonCodeAnalyzer.getLastIntentionHint();
@@ -461,8 +471,7 @@ public class LightBulbTest extends ProductionDaemonAnalyzerTestCase {
       CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, getTestRootDisposable());
       DumbModeTestUtils.runInDumbModeSynchronously(myProject, () -> {
         myDaemonCodeAnalyzer.restart(getTestName(false));
-        HighlightInfo info2 = assertOneElement(
-          myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
+        HighlightInfo info2 = assertOneElement(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
         assertEquals(MyDumbAnnotator.ERR_MSG, info2.getDescription());
 
         {
