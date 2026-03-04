@@ -6,8 +6,8 @@ import com.intellij.lang.LanguageUtil
 import com.intellij.lang.injection.MultiHostInjector
 import com.intellij.lang.injection.MultiHostRegistrar
 import com.intellij.openapi.fileTypes.FileTypeManager
-import com.intellij.polySymbols.PolySymbol.InjectLanguageProperty
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbol.InjectLanguageProperty
 import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.polySymbols.utils.asSingleSymbol
@@ -39,7 +39,7 @@ class HtmlSymbolsTextInjector : MultiHostInjector {
                 .exclude(PolySymbolModifier.ABSTRACT)
                 .run()
                 .getLanguageToInject(),
-              PsiModificationTracker.MODIFICATION_COUNT, queryExecutor.modificationTracker
+              queryExecutor.modificationTracker.modificationTrackers + PsiModificationTracker.MODIFICATION_COUNT
             )
           }
         }
@@ -59,7 +59,7 @@ class HtmlSymbolsTextInjector : MultiHostInjector {
                 .exclude(PolySymbolModifier.ABSTRACT)
                 .run()
                 .getLanguageToInject(),
-              PsiModificationTracker.MODIFICATION_COUNT, queryExecutor.modificationTracker
+              queryExecutor.modificationTracker.modificationTrackers + PsiModificationTracker.MODIFICATION_COUNT
             )
           }
         }

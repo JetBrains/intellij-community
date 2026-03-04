@@ -8,6 +8,7 @@ import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.context.PolyContext
+import com.intellij.polySymbols.utils.CompositeModificationTracker
 import com.intellij.psi.PsiElement
 
 /**
@@ -40,7 +41,7 @@ interface PolySymbolQueryExecutor {
    * Returns a modification tracker that tracks changes in the query executor's dependencies,
    * including all scopes, names provider, and results customizer.
    */
-  val modificationTracker: ModificationTracker
+  val modificationTracker: CompositeModificationTracker
 
   fun createPointer(): Pointer<PolySymbolQueryExecutor>
 

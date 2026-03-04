@@ -32,6 +32,7 @@ import com.intellij.polySymbols.query.PolySymbolQueryResultsCustomizer
 import com.intellij.polySymbols.query.PolySymbolQueryStack
 import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.query.PolySymbolWithPattern
+import com.intellij.polySymbols.utils.CompositeModificationTracker
 import com.intellij.polySymbols.utils.asSingleSymbol
 import com.intellij.polySymbols.utils.hideFromCompletion
 import com.intellij.polySymbols.utils.nameSegments
@@ -375,11 +376,13 @@ class PolySymbolQueryExecutorImpl(
       result
     }
 
-
-  override val modificationTracker: ModificationTracker
-    get() = ModificationTracker {
-      rootScope.sumOf { it.modificationTracker.modificationCount } + namesProvider.modificationTracker.modificationCount + resultsCustomizer.modificationTracker.modificationCount
-    }
+  override val modificationTracker: CompositeModificationTracker by lazy {
+    CompositeModificationTracker(
+      rootScope.asSequence().map { it.modificationTracker }
+        .plus(namesProvider.modificationTracker)
+        .plus(resultsCustomizer.modificationTracker)
+    )
+  }
 
   @RequiresReadLock
   private fun <T, P : PolySymbolQueryParams> runQuery(
