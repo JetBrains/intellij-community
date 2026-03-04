@@ -22,17 +22,11 @@ interface CoordinatesResolution {
 value class ResolvedFile(val path: String)
 
 suspend fun CoordinatesResolution.resolve(layer: PluginLayer): ResolvedPluginLayer = coroutineScope {
+  val moduleCoordinates = layer.modulePath.map { async { resolveModule(it) } }
+  val resourceCoordinates = layer.resources.filterCoordinatesByPlatform().map { async { resolveResource(it) } }
   ResolvedPluginLayer(modules = layer.modules,
-                      modulePath = layer.modulePath.map { moduleCoords ->
-                        async {
-                          resolveModule(moduleCoords)
-                        }
-                      }.awaitAll().toSet(),
-                      resources = layer.resources.filterCoordinatesByPlatform().map {
-                        async {
-                          resolveResource(it)
-                        }
-                      }.awaitAll().toSet())
+                      modulePath = moduleCoordinates.awaitAll().toSet(),
+                      resources = resourceCoordinates.awaitAll().toSet())
 }
 
 suspend fun CoordinatesResolution.resolveParts(descriptor: PluginDescriptor): PluginParts {
