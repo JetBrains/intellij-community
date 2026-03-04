@@ -188,6 +188,7 @@ public abstract class FileBasedIndex {
                                                                @Nullable Condition<? super V> valueChecker,
                                                                @NotNull Processor<? super VirtualFile> processor);
 
+  @RequiresBackgroundThread(generateAssertion = false)
   public abstract <K, V> boolean processFilesContainingAnyKey(@NotNull ID<K, V> indexId,
                                                               @NotNull Collection<? extends K> dataKeys,
                                                               @NotNull GlobalSearchScope filter,
