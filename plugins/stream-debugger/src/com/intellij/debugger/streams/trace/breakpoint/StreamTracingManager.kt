@@ -1,10 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.trace.breakpoint
 
+import com.intellij.debugger.engine.DebugProcessAdapterImpl
+import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.DebugProcessListener
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.withDebugContext
 import com.intellij.debugger.impl.DebuggerContextImpl
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.debugger.streams.core.StreamDebuggerBundle
 import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.core.wrapper.StreamChain
@@ -15,6 +20,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.sun.jdi.InvocationException
 import com.sun.jdi.Value
+import com.sun.jdi.event.BreakpointEvent
 import com.sun.jdi.request.EventRequest
 import com.sun.jdi.request.MethodEntryRequest
 import com.sun.jdi.request.MethodExitRequest
@@ -38,13 +44,14 @@ internal class StreamTracingManager(
   private lateinit var terminalOperationBreakpoint: StreamCallRuntimeInfo
 
   private lateinit var instrumentationManager: StreamInstrumentationManager
+  private lateinit var breakpointResumer: DebugProcessListener
 
   private val evaluationFinished = CompletableDeferred<EvaluationContextImpl>()
 
   suspend fun evaluateChain(debuggerContext: DebuggerContextImpl, breakpointPositions: BreakpointResolveResult.Found, chain: StreamChain): EvaluationResult {
     val debugProcess = debuggerContext.debugProcess!!
 
-    withDebugContext(debuggerContext.managerThread!!) {
+    val error = withDebugContext(debuggerContext.managerThread!!) {
       val evaluationContextImpl = debuggerContext.createEvaluationContext()
                                   ?: return@withDebugContext EvaluationResult.Error(StreamDebuggerBundle.message("program.is.not.suspended"))
 
@@ -54,11 +61,24 @@ internal class StreamTracingManager(
         firstRequestor.enable()
       }
 
+      // It is enough to skip only BreakpointEvent because stream execution finishes with a StepRequest
+      breakpointResumer = SpuriousBreakpointResumer(debugProcess, evaluationContextImpl.suspendContext.thread)
+      debugProcess.addDebugProcessListener(breakpointResumer)
+
       debugProcess.suspendManager.resume(evaluationContextImpl.suspendContext)
+      null
+    }
+
+    if (error != null) {
+      return error
     }
 
     // Evaluation is finished when the execution returns from the terminal operation
-    val evalCtx = evaluationFinished.await()
+    val evalCtx = try {
+      evaluationFinished.await()
+    } finally {
+      debugProcess.removeDebugProcessListener(breakpointResumer)
+    }
 
     // Collect results from instrumentation
     val result = withDebugContext(evalCtx.suspendContext) {
@@ -210,3 +230,25 @@ private data class StreamCallRuntimeInfo(
   val methodEntryRequest: MethodEntryRequest,
   val methodExitRequest: MethodExitRequest,
 )
+
+/**
+ * We need to skip breakpoints that are triggered during stream execution for several reasons:
+ * - sometimes the runtime stops on lambdas even if the breakpoint is only on the line
+ * ```
+ * Stream.of(1, 2, 3).peek(x -> { <*> }).toArray();
+ * ```
+ * - the user may set a breakpoint inside a lambda or somewhere within the stream implementation
+ */
+private class SpuriousBreakpointResumer(
+  private val debugProcess: DebugProcessImpl,
+  private val streamThread: ThreadReferenceProxyImpl?,
+) : DebugProcessAdapterImpl() {
+  override fun paused(suspendContext: SuspendContextImpl) {
+    if (streamThread != null && suspendContext.thread != streamThread) return
+    val events = suspendContext.eventSet ?: return
+    if (events.all { it is BreakpointEvent }) {
+      LOG.info("Auto-resuming spurious user breakpoint during stream tracing")
+      debugProcess.suspendManager.resume(suspendContext)
+    }
+  }
+}
