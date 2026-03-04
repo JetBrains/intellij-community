@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.psi.KtParameterList
 import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtScriptInitializer
 import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.psi.createPrimaryConstructorIfAbsent
@@ -174,21 +175,32 @@ object CreateFromUsageUtil {
         }
     }
 
+    fun isTopLevelScriptContainer(element: PsiElement): Boolean {
+        return when (element) {
+            is KtFile -> element.isScript()
+            is KtBlockExpression -> (element.parent as? KtFile)?.isScript() == true
+            is KtScriptInitializer -> true
+            else -> false
+        }
+    }
+
     fun computeDefaultVisibilityAsJvmModifier(
       containingElement: PsiElement,
       isAbstract: Boolean,
       isExtension: Boolean,
       isConstructor: Boolean,
-      originalElement: PsiElement
+      originalElement: PsiElement,
+      containerIsScript: Boolean = isTopLevelScriptContainer(containingElement),
     ): JvmModifier? {
         return if (isAbstract) null
         else if ((containingElement is KtClassOrObject || containingElement is PsiClass)
             && (isExtension || !(containingElement is KtClass && containingElement.isInterface() || containingElement is PsiClass && containingElement.isInterface))
             && (containingElement.isAncestor(originalElement) || isExtension && containingElement.containingFile == originalElement.containingFile)
             && !isConstructor
+            && !containerIsScript
         ) JvmModifier.PRIVATE
         else if (isExtension) {
-            if (containingElement is KtFile && containingElement.isScript()) null else JvmModifier.PRIVATE
+            if (containerIsScript || containingElement is KtFile && containingElement.isScript()) null else JvmModifier.PRIVATE
         } else null
     }
 
