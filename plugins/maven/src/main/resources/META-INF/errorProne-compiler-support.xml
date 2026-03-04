@@ -1,5 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="org.jetbrains.idea.maven">
-    <compiler implementation="org.intellij.errorProne.MavenCompilerErrorProneExtension"/>
-  </extensions>
-</idea-plugin>
