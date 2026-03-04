@@ -97,6 +97,9 @@
   - name: intellij.idea.community.build.dependencies
   - name: intellij.maven.errorProne.compiler
   - name: intellij.maven
+- name: lib/modules/intellij.maven.performanceTesting.jar
+  contentModules:
+  - name: intellij.maven.performanceTesting
 - name: lib/modules/intellij.maven.profiler.jar
   contentModules:
   - name: intellij.maven.profiler

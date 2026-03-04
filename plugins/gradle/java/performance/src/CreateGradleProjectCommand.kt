@@ -24,8 +24,8 @@ import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapt
 import com.jetbrains.performancePlugin.commands.SetupProjectSdkUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.idea.maven.performancePlugin.CreateMavenProjectCommand.Companion.getNewProject
-import org.jetbrains.idea.maven.performancePlugin.CreateMavenProjectCommand.Companion.runNewProject
+import com.intellij.maven.performanceTesting.CreateMavenProjectCommand.Companion.getNewProject
+import com.intellij.maven.performanceTesting.CreateMavenProjectCommand.Companion.runNewProject
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.javaGradleData
 import org.jetbrains.plugins.gradle.util.GradleConstants

@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.performancePlugin
+package com.intellij.maven.performanceTesting
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction

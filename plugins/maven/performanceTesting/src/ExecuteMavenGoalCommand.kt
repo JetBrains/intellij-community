@@ -1,6 +1,10 @@
-package org.jetbrains.idea.maven.performancePlugin
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.maven.performanceTesting
 
 import com.intellij.execution.ExecutionManager
+import com.intellij.maven.performanceTesting.dto.MavenGoalConfigurationDto
+import com.intellij.maven.performanceTesting.utils.MavenCommandsExecutionListener
+import com.intellij.maven.performanceTesting.utils.MavenConfigurationUtils
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
@@ -11,18 +15,13 @@ import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.execution.MavenRunAnythingProvider
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
-import org.jetbrains.idea.maven.model.MavenConstants
-import org.jetbrains.idea.maven.performancePlugin.dto.MavenGoalConfigurationDto
-import org.jetbrains.idea.maven.performancePlugin.utils.MavenCommandsExecutionListener
-import org.jetbrains.idea.maven.performancePlugin.utils.MavenConfigurationUtils.createRunnerParams
-
 
 /**
  * The command executes a maven goals in module.
- * Argument is serialized [MavenGoalConfigurationDto] as json
+ * Argument is serialized [com.intellij.maven.performanceTesting.dto.MavenGoalConfigurationDto] as json
  * runAnything false - executes like double click form lifecycle
  * runAnything true - executes like double control and execute mvn [goals]
- * @see [MavenConstants.PHASES]
+ * @see [org.jetbrains.idea.maven.model.MavenConstants.PHASES]
  */
 class ExecuteMavenGoalCommand(text: String, line: Int) : PerformanceCommand(text, line) {
   companion object {
@@ -38,7 +37,7 @@ class ExecuteMavenGoalCommand(text: String, line: Int) : PerformanceCommand(text
   }
 
   private fun executeGoalsFromLifecycle(project: Project, settings: MavenGoalConfigurationDto) {
-    val params = createRunnerParams(project, settings)
+    val params = MavenConfigurationUtils.createRunnerParams(project, settings)
     MavenRunConfigurationType.runConfiguration(project, params, null)
   }
 

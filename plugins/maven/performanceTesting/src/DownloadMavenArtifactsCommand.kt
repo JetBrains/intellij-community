@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.performancePlugin
+package com.intellij.maven.performanceTesting
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service

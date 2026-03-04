@@ -76,11 +76,11 @@
 
   <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>
   <depends optional="true" config-file="errorProne-compiler-support.xml">Error-prone plugin</depends>
-  <depends optional="true" config-file="maven-performance-plugin-support.xml">com.jetbrains.performancePlugin</depends>
 
   <content namespace="jetbrains">
     <module name="intellij.maven.profiler"/>
     <module name="intellij.maven.proofreading"/>
+    <module name="intellij.maven.performanceTesting"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">

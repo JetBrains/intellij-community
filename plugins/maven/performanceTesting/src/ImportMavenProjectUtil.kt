@@ -1,6 +1,6 @@
 @file:JvmName("ImportMavenProjectUtil")
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.performancePlugin
+package com.intellij.maven.performanceTesting
 
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.progress.runBlockingMaybeCancellable

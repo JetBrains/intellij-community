@@ -1,4 +1,5 @@
-package org.jetbrains.idea.maven.performancePlugin;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.maven.performanceTesting;
 
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.commands.AbstractCommand;
@@ -13,7 +14,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
  * Example: %setUserSettingsFilePath /tmp/.m3/settings.xml
  */
 public class SetMavenSettingsXmlFilePathCommand extends AbstractCommand {
-  public static final String PREFIX = CMD_PREFIX + "setMavenSettingsXmlFilePath";
+  public static final String PREFIX = AbstractCommand.CMD_PREFIX + "setMavenSettingsXmlFilePath";
 
   public SetMavenSettingsXmlFilePathCommand(@NotNull String text, int line) {
     super(text, line);

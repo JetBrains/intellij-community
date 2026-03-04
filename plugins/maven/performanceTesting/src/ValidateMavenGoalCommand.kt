@@ -1,17 +1,17 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.performancePlugin
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.maven.performanceTesting
 
 import com.intellij.execution.RunManager
+import com.intellij.maven.performanceTesting.dto.MavenGoalConfigurationDto
+import com.intellij.maven.performanceTesting.utils.MavenConfigurationUtils
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
-import org.jetbrains.idea.maven.performancePlugin.dto.MavenGoalConfigurationDto
-import org.jetbrains.idea.maven.performancePlugin.utils.MavenConfigurationUtils.createRunnerParams
 
 /**
  * The command validates a maven goal's settings
- * Argument is serialized [MavenGoalConfigurationDto] as json
+ * Argument is serialized [com.intellij.maven.performanceTesting.dto.MavenGoalConfigurationDto] as json
  */
 class ValidateMavenGoalCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
@@ -28,7 +28,7 @@ class ValidateMavenGoalCommand(text: String, line: Int) : PerformanceCommandCoro
     val settings = deserializeOptionsFromJson(extractCommandArgument(PREFIX), MavenGoalConfigurationDto::class.java)
 
     val list = RunManager.getInstance(project).getConfigurationsList(MavenRunConfigurationType.getInstance())
-    val configurationMame = MavenRunConfigurationType.generateName(project, createRunnerParams(project, settings))
+    val configurationMame = MavenRunConfigurationType.generateName(project, MavenConfigurationUtils.createRunnerParams(project, settings))
     val configuration = list.firstOrNull { it.name == configurationMame }
     if (configuration == null) {
       throw IllegalArgumentException("There is no configuration with name $configurationMame")

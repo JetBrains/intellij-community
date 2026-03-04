@@ -1,17 +1,17 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.performancePlugin
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.maven.performanceTesting
 
+import com.intellij.maven.performanceTesting.dto.MavenArchetypeInfo
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import org.jetbrains.idea.maven.indices.MavenClassSearchResult
 import org.jetbrains.idea.maven.indices.MavenClassSearcher
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
-import org.jetbrains.idea.maven.performancePlugin.dto.MavenArchetypeInfo
 
 /**
  * The command validates if maven indexes have an artifact and if not you can call [MavenIndexUpdateCommand]
- * Argument is serialized [MavenArchetypeInfo] as json
- * Syntax: %checkIfMavenIndexesHaveArtefact serialized [MavenArchetypeInfo]
+ * Argument is serialized [com.intellij.maven.performanceTesting.dto.MavenArchetypeInfo] as json
+ * Syntax: %checkIfMavenIndexesHaveArtefact serialized [com.intellij.maven.performanceTesting.dto.MavenArchetypeInfo]
  */
 class CheckIfMavenIndexesHaveArtefactCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {

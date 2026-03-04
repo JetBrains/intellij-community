@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.performancePlugin
+package com.intellij.maven.performanceTesting
 
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.jetbrains.performancePlugin.commands.OpenFileCommand.Companion.findFile

@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.performancePlugin.dto
+package com.intellij.maven.performanceTesting.dto
 
 
 data class MavenArchetypeInfo(val groupId: String = "org.apache.maven.archetypes",

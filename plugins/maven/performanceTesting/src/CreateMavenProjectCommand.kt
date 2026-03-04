@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.performancePlugin
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.maven.performanceTesting
 
 import com.intellij.execution.ExecutionManager
 import com.intellij.ide.GeneralSettings
@@ -16,6 +16,8 @@ import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.language.BaseLanguageGeneratorNewProjectWizard
 import com.intellij.ide.wizard.language.LanguageGeneratorNewProjectWizard
+import com.intellij.maven.performanceTesting.dto.NewMavenProjectDto
+import com.intellij.maven.performanceTesting.utils.MavenCommandsExecutionListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
@@ -35,8 +37,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.await
-import org.jetbrains.idea.maven.performancePlugin.dto.NewMavenProjectDto
-import org.jetbrains.idea.maven.performancePlugin.utils.MavenCommandsExecutionListener
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizardData.Companion.javaMavenData
 import org.jetbrains.idea.maven.wizards.archetype.MavenArchetypeItem

@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.performancePlugin.dto
+package com.intellij.maven.performanceTesting.dto
 
 import java.nio.file.Path
 

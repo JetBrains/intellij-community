@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.performancePlugin.dto
+package com.intellij.maven.performanceTesting.dto
 
 data class NewMavenProjectDto(
   val projectName: String,
