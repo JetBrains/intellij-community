@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.AgentSubAgent
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionResumeLaunchSpec
@@ -13,8 +14,7 @@ internal data class AgentSessionChatOpenPayload(
   @JvmField val runtimeThreadId: String,
   @JvmField val threadTitle: String,
   @JvmField val subAgentId: String?,
-  @JvmField val initialComposedMessage: String? = null,
-  @JvmField val initialMessageToken: String? = null,
+  @JvmField val initialMessageDispatchPlan: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
 )
 
 internal fun resolveAgentSessionChatOpenPayload(
@@ -32,7 +32,6 @@ internal fun resolveAgentSessionChatOpenPayload(
     runtimeThreadId = runtimeThreadId,
     threadTitle = threadTitle,
     subAgentId = subAgent?.id,
-    initialComposedMessage = null,
-    initialMessageToken = null,
+    initialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
   )
 }

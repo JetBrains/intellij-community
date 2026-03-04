@@ -90,6 +90,7 @@ internal class AgentPromptProjectViewSelectionContextContributor : AgentPromptCo
         title = AgentPromptBundle.message("context.paths.title"),
         body = content,
         payload = payload,
+        itemId = "projectView.selection",
         source = "projectView",
         truncation = AgentPromptContextTruncation(
           originalChars = fullContent.length,

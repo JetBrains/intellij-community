@@ -5,6 +5,8 @@ import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSubAgent
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
@@ -71,6 +73,9 @@ class AgentSessionsServiceArchiveIntegrationTest {
       }
       override fun buildNewEntryLaunchSpec(): AgentSessionTerminalLaunchSpec {
         return AgentSessionTerminalLaunchSpec(command = listOf("claude"))
+      }
+      override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
+        return AgentInitialMessagePlan.composeDefault(request)
       }
       override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
         return AgentSessionLaunchSpec(
@@ -544,6 +549,10 @@ private fun testCodexBridge(
 
     override fun buildNewEntryLaunchSpec(): AgentSessionTerminalLaunchSpec {
       return AgentSessionTerminalLaunchSpec(command = listOf("codex"))
+    }
+
+    override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
+      return AgentInitialMessagePlan.composeDefault(request)
     }
 
     override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {

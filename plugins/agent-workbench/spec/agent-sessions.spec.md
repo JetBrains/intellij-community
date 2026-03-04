@@ -14,7 +14,7 @@ targets:
 # Agent Threads Tool Window
 
 Status: Draft
-Date: 2026-03-01
+Date: 2026-03-04
 
 ## Summary
 Define Agent Threads as a provider-agnostic, project-scoped browser implemented with native IntelliJ Swing tree APIs (`StructureTreeModel` + `AsyncTreeModel` + `Tree`).
@@ -165,7 +165,7 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../chat/testSrc/AgentChatTabSelectionServiceTest.kt
 
-- Codex thread discovery must default to app-server source; rollout discovery remains an explicit compatibility override defined in `spec/agent-sessions-codex-rollout-source.spec.md`.
+- Codex thread discovery and backend selection must always use app-server source; override values (including `rollout` and unknown values) must be ignored.
   [@test] ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
 
 - Branch mismatch between thread origin and current worktree branch must show warning confirmation before opening chat.
@@ -210,6 +210,7 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 - Open projects may use long-lived provider sessions where available.
 - Closed project/worktree loads may use path-scoped short-lived provider calls.
 - Aggregation normalizes provider differences (paging/count capability) into one state model.
+- Codex refresh hints are app-server-first (`thread/read` snapshots), with rollout parser hints used only for pending-rebind fallback and unread uplift.
 - Sessions service must not impose global CLI home overrides; provider clients own process environment rules.
 - UI-layer migration to Swing does not change backend/service contracts.
 

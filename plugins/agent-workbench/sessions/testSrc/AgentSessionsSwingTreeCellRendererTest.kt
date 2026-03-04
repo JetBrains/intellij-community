@@ -434,6 +434,45 @@ class AgentSessionsSwingTreeCellRendererTest {
     assertThat(tooltip).contains("<html>")
     assertThat(tooltip).contains("How much time need to compute A-C?")
     assertThat(tooltip).contains(AgentSessionsBundle.message("toolwindow.updated", "2w"))
+    assertThat(tooltip).contains(
+      AgentSessionsBundle.message(
+        "toolwindow.thread.status",
+        AgentSessionsBundle.message("toolwindow.thread.status.ready"),
+      )
+    )
+  }
+
+  @Test
+  fun threadTooltipContainsFriendlyStatusForEachActivity() {
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
+    val statusByActivity = mapOf(
+      AgentThreadActivity.READY to "toolwindow.thread.status.ready",
+      AgentThreadActivity.PROCESSING to "toolwindow.thread.status.in.progress",
+      AgentThreadActivity.REVIEWING to "toolwindow.thread.status.needs.review",
+      AgentThreadActivity.UNREAD to "toolwindow.thread.status.needs.input",
+    )
+
+    statusByActivity.forEach { (activity, statusKey) ->
+      val thread = AgentSessionThread(
+        provider = AgentSessionProvider.CODEX,
+        id = "thread-$activity",
+        title = "Status thread",
+        updatedAt = 14L * 24L * 60L * 60L * 1000L,
+        archived = false,
+        activity = activity,
+      )
+      val tooltip = buildSessionTreeThreadTooltipHtml(
+        treeNode = SessionTreeNode.Thread(project, thread),
+        now = 28L * 24L * 60L * 60L * 1000L,
+      )
+
+      assertThat(tooltip).contains(
+        AgentSessionsBundle.message(
+          "toolwindow.thread.status",
+          AgentSessionsBundle.message(statusKey),
+        )
+      )
+    }
   }
 
   @Test

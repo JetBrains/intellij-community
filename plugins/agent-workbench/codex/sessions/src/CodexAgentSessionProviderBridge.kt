@@ -8,6 +8,9 @@ import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
@@ -76,16 +79,30 @@ internal class CodexAgentSessionProviderBridge(
     return baseLaunchSpec.copy(command = baseLaunchSpec.command + listOf("--", prompt))
   }
 
-  override fun composeInitialMessage(request: AgentPromptInitialMessageRequest): String {
-    val message = super.composeInitialMessage(request)
-    if (!request.codexPlanModeEnabled) {
-      return message
+  override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
+    val basePlan = AgentInitialMessagePlan.composeDefault(request)
+    val normalizedMessage = basePlan.message ?: return basePlan
+    val message = if (request.codexPlanModeEnabled) {
+      ensurePlanModePrefix(normalizedMessage)
     }
-    return ensurePlanModePrefix(message)
-  }
-
-  override fun shouldUseStartupPromptCommand(request: AgentPromptInitialMessageRequest): Boolean {
-    return !request.codexPlanModeEnabled
+    else {
+      normalizedMessage
+    }
+    return AgentInitialMessagePlan(
+      message = message,
+      startupPolicy = if (request.codexPlanModeEnabled) {
+        AgentInitialMessageStartupPolicy.POST_START_ONLY
+      }
+      else {
+        AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND
+      },
+      timeoutPolicy = if (isPlanModeCommand(message)) {
+        AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS
+      }
+      else {
+        AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK
+      },
+    )
   }
 
   @Suppress("UNUSED_PARAMETER")
@@ -115,13 +132,18 @@ internal class CodexAgentSessionProviderBridge(
     if (normalized.isEmpty()) {
       return PLAN_MODE_COMMAND
     }
-    if (normalized.startsWith(PLAN_MODE_COMMAND)) {
-      val suffix = normalized.removePrefix(PLAN_MODE_COMMAND)
-      if (suffix.isEmpty() || suffix.first().isWhitespace()) {
-        return normalized
-      }
+    if (isPlanModeCommand(normalized)) {
+      return normalized
     }
     return "$PLAN_MODE_COMMAND $normalized"
+  }
+
+  private fun isPlanModeCommand(message: String): Boolean {
+    if (!message.startsWith(PLAN_MODE_COMMAND)) {
+      return false
+    }
+    val suffix = message.removePrefix(PLAN_MODE_COMMAND)
+    return suffix.isEmpty() || suffix.first().isWhitespace()
   }
 }
 

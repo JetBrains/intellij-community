@@ -7,8 +7,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import java.util.concurrent.ConcurrentHashMap
 import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
 
 internal object AgentChatRestoreNotificationService {
   private val LOG = logger<AgentChatRestoreNotificationService>()

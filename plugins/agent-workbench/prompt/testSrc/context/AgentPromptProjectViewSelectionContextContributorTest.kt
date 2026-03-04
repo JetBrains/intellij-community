@@ -35,6 +35,8 @@ class AgentPromptProjectViewSelectionContextContributorTest {
     val item = result.single()
     val payload = item.payload.objOrNull()!!
     assertThat(item.rendererId).isEqualTo(AgentPromptContextRendererIds.PATHS)
+    assertThat(item.itemId).isEqualTo("projectView.selection")
+    assertThat(item.parentItemId).isNull()
     assertThat(item.source).isEqualTo("projectView")
     assertThat(payload.number("selectedCount")).isEqualTo("7")
     assertThat(payload.number("includedCount")).isEqualTo("5")
@@ -56,6 +58,8 @@ class AgentPromptProjectViewSelectionContextContributorTest {
     val item = result.single()
     val payload = item.payload.objOrNull()!!
     assertThat(item.rendererId).isEqualTo(AgentPromptContextRendererIds.PATHS)
+    assertThat(item.itemId).isEqualTo("projectView.selection")
+    assertThat(item.parentItemId).isNull()
     assertThat(payload.number("selectedCount")).isEqualTo("1")
     assertThat(payload.number("includedCount")).isEqualTo("1")
     assertThat(item.truncation.reason).isEqualTo(AgentPromptContextTruncationReason.NONE)

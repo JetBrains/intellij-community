@@ -69,12 +69,16 @@ class AgentPromptEditorContextContributorTest {
         assertThat(snippetPayload.number("startLine")).isNotBlank()
         assertThat(snippetPayload.number("endLine")).isNotBlank()
         assertThat(snippetPayload.bool("selection")).isNotNull
+        assertThat(snippetItem.itemId).isEqualTo("editor.snippet")
+        assertThat(snippetItem.parentItemId).isEqualTo("editor.file")
         assertThat(snippetItem.source).isEqualTo("editor")
         assertThat(snippetItem.truncation.reason).isEqualTo(AgentPromptContextTruncationReason.NONE)
         assertThat(snippetItem.truncation.originalChars).isEqualTo(snippetItem.body.length)
         assertThat(snippetItem.truncation.includedChars).isEqualTo(snippetItem.body.length)
         val fileItem = result.first { it.rendererId == AgentPromptContextRendererIds.FILE }
         assertThat(fileItem.body).contains("Sample.kt")
+        assertThat(fileItem.itemId).isEqualTo("editor.file")
+        assertThat(fileItem.parentItemId).isNull()
         assertThat(fileItem.source).isEqualTo("editor")
       }
       finally {
@@ -97,32 +101,47 @@ class AgentPromptEditorContextContributorTest {
   @Test
   fun buildContextItemsOrdersFileSymbolThenSnippet() {
     val items = AgentPromptEditorContextSupport.buildContextItems(snapshot(symbolName = "main"))
+    val fileItem = items.first { it.rendererId == AgentPromptContextRendererIds.FILE }
+    val symbolItem = items.first { it.rendererId == AgentPromptContextRendererIds.SYMBOL }
+    val snippetItem = items.first { it.rendererId == AgentPromptContextRendererIds.SNIPPET }
 
     assertThat(items.map { it.rendererId }).containsExactly(
       AgentPromptContextRendererIds.FILE,
       AgentPromptContextRendererIds.SYMBOL,
       AgentPromptContextRendererIds.SNIPPET,
     )
+    assertThat(fileItem.itemId).isEqualTo("editor.file")
+    assertThat(fileItem.parentItemId).isNull()
+    assertThat(symbolItem.itemId).isEqualTo("editor.symbol")
+    assertThat(symbolItem.parentItemId).isEqualTo("editor.file")
+    assertThat(snippetItem.itemId).isEqualTo("editor.snippet")
+    assertThat(snippetItem.parentItemId).isEqualTo("editor.file")
   }
 
   @Test
   fun buildContextItemsSkipsAnonymousPlaceholderSymbol() {
     val items = AgentPromptEditorContextSupport.buildContextItems(snapshot(symbolName = "<anonymous>"))
+    val snippetItem = items.first { it.rendererId == AgentPromptContextRendererIds.SNIPPET }
 
     assertThat(items.map { it.rendererId }).containsExactly(
       AgentPromptContextRendererIds.FILE,
       AgentPromptContextRendererIds.SNIPPET,
     )
+    assertThat(snippetItem.itemId).isEqualTo("editor.snippet")
+    assertThat(snippetItem.parentItemId).isEqualTo("editor.file")
   }
 
   @Test
   fun buildContextItemsSkipsAngleBracketPlaceholderSymbol() {
     val items = AgentPromptEditorContextSupport.buildContextItems(snapshot(symbolName = "<lambda>"))
+    val snippetItem = items.first { it.rendererId == AgentPromptContextRendererIds.SNIPPET }
 
     assertThat(items.map { it.rendererId }).containsExactly(
       AgentPromptContextRendererIds.FILE,
       AgentPromptContextRendererIds.SNIPPET,
     )
+    assertThat(snippetItem.itemId).isEqualTo("editor.snippet")
+    assertThat(snippetItem.parentItemId).isEqualTo("editor.file")
   }
 
   @Test

@@ -64,6 +64,7 @@ internal class AgentPromptVcsLogSelectionContextContributor : AgentPromptContext
         title = AgentPromptVcsBundle.message("context.vcs.title"),
         body = content,
         payload = payload,
+        itemId = "vcsLog.revisions",
         source = "vcsLog",
         truncation = AgentPromptContextTruncation(
           originalChars = fullContent.length,
@@ -140,4 +141,3 @@ internal class AgentPromptVcsLogSelectionContextContributor : AgentPromptContext
     return unique.values.toList()
   }
 }
-

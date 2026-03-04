@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.ui
 
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.tree.SessionTreeNode
 import com.intellij.agent.workbench.sessions.tree.formatRelativeTimeShort
@@ -17,11 +18,12 @@ private val SESSION_TREE_TIME_LABEL_SAMPLES = listOf("59m", "23h", "7d", "4w", "
 internal const val SESSION_TREE_MORE_ROW_FRAGMENT_TAG = "agent.sessions.tree.more.row"
 
 internal data class SessionTreeThreadRowPresentation(
-  val statusColor: Color,
-  val title: @NlsSafe String,
-  val timeLabel: @NlsSafe String,
-  val branchMismatchMessage: @NlsSafe String?,
-  val accessibleStatusText: @NlsSafe String?,
+  @JvmField val statusColor: Color,
+  @JvmField val title: @NlsSafe String,
+  @JvmField val timeLabel: @NlsSafe String,
+  @JvmField val statusLabel: @NlsSafe String,
+  @JvmField val branchMismatchMessage: @NlsSafe String?,
+   val accessibleStatusText: @NlsSafe String?,
 )
 
 internal fun buildSessionTreeThreadRowPresentation(
@@ -32,6 +34,7 @@ internal fun buildSessionTreeThreadRowPresentation(
   val timeLabel = treeNode.thread.updatedAt.takeIf { it > 0 }?.let { timestamp ->
     formatRelativeTimeShort(timestamp, now)
   } ?: AgentSessionsBundle.message("toolwindow.time.unknown")
+  val statusLabel = threadActivityDisplayName(treeNode.thread.activity)
   val originBranch = treeNode.thread.originBranch
   val parentBranch = treeNode.parentWorktreeBranch
   val branchMismatchMessage = if (originBranch != null && parentBranch != null && originBranch != parentBranch) {
@@ -46,6 +49,7 @@ internal fun buildSessionTreeThreadRowPresentation(
     statusColor = activityColor,
     title = threadDisplayTitle(treeNode.thread),
     timeLabel = timeLabel,
+    statusLabel = statusLabel,
     branchMismatchMessage = branchMismatchMessage,
     accessibleStatusText = accessibleStatusText,
   )
@@ -59,13 +63,23 @@ internal fun buildSessionTreeThreadTooltipHtml(
   val presentation = buildSessionTreeThreadRowPresentation(treeNode = treeNode, now = now)
   val title = StringUtil.escapeXmlEntities(presentation.title)
   val updatedText = StringUtil.escapeXmlEntities(AgentSessionsBundle.message("toolwindow.updated", presentation.timeLabel))
+  val statusText = StringUtil.escapeXmlEntities(AgentSessionsBundle.message("toolwindow.thread.status", presentation.statusLabel))
 
   val escapedWidth = maxWidthPx?.coerceAtLeast(1)
   val bodyWidthStyle = escapedWidth?.let { " style='width:${it}px;'" } ?: ""
   val bodyOpen = "<body$bodyWidthStyle>"
   val bodyClose = "</body>"
 
-  return "<html>$bodyOpen$title<br>$updatedText$bodyClose</html>"
+  return "<html>$bodyOpen$title<br>$updatedText<br>$statusText$bodyClose</html>"
+}
+
+private fun threadActivityDisplayName(activity: AgentThreadActivity): @NlsSafe String {
+  return when (activity) {
+    AgentThreadActivity.READY -> AgentSessionsBundle.message("toolwindow.thread.status.ready")
+    AgentThreadActivity.PROCESSING -> AgentSessionsBundle.message("toolwindow.thread.status.in.progress")
+    AgentThreadActivity.REVIEWING -> AgentSessionsBundle.message("toolwindow.thread.status.needs.review")
+    AgentThreadActivity.UNREAD -> AgentSessionsBundle.message("toolwindow.thread.status.needs.input")
+  }
 }
 
 internal fun computeSessionTreeSharedTimeColumnWidth(fontMetrics: FontMetrics): Int {

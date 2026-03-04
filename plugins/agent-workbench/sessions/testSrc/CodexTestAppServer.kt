@@ -33,12 +33,19 @@ private data class ThreadEntry(
   val statusType: String,
   val statusActiveFlagsFieldName: String,
   val activeFlags: List<String>,
+  val readTurns: List<TurnEntry>,
   val gitBranch: String?,
   var updatedAt: Long?,
   var updatedAtField: String?,
   val createdAt: Long?,
   val createdAtField: String?,
   var archived: Boolean,
+)
+
+private data class TurnEntry(
+  val statusType: String,
+  val statusAsObject: Boolean,
+  val itemTypes: List<String>,
 )
 
 private data class Request(
@@ -52,6 +59,7 @@ private data class RequestParams(
   val archived: Boolean? = null,
   val cursor: String? = null,
   val limit: Int? = null,
+  val includeTurns: Boolean? = null,
   val cwd: String? = null,
   val sourceKinds: Set<String>? = null,
 )
@@ -64,6 +72,11 @@ internal object CodexTestAppServer {
   private const val ERROR_METHOD_ENV = "CODEX_TEST_ERROR_METHOD"
   private const val ERROR_MESSAGE_ENV = "CODEX_TEST_ERROR_MESSAGE"
   private const val REQUEST_LOG_ENV = "CODEX_TEST_REQUEST_LOG"
+  private const val NOTIFY_METHOD_ENV = "CODEX_TEST_NOTIFY_METHOD"
+  private const val NOTIFY_ON_METHOD_ENV = "CODEX_TEST_NOTIFY_ON_METHOD"
+  private const val NOTIFY_THREAD_ID_ENV = "CODEX_TEST_NOTIFY_THREAD_ID"
+  private const val NOTIFY_THREAD_ID_STYLE_ENV = "CODEX_TEST_NOTIFY_THREAD_ID_STYLE"
+  private const val NOTIFY_ID_ENV = "CODEX_TEST_NOTIFY_ID"
 
   @JvmStatic
   fun main(args: Array<String>) {
@@ -73,6 +86,11 @@ internal object CodexTestAppServer {
     val errorMethod = readEnv(ERROR_METHOD_ENV)
     val errorMessage = readEnv(ERROR_MESSAGE_ENV)
     val requestLogPath = readEnv(REQUEST_LOG_ENV)?.let(Path::of)
+    val notifyMethod = readEnv(NOTIFY_METHOD_ENV)
+    val notifyOnMethod = readEnv(NOTIFY_ON_METHOD_ENV)
+    val notifyThreadId = readEnv(NOTIFY_THREAD_ID_ENV)
+    val notifyThreadIdStyle = readEnv(NOTIFY_THREAD_ID_STYLE_ENV)
+    val notifyId = readEnv(NOTIFY_ID_ENV)
     readEnv(CWD_MARKER_ENV)?.let(::writeWorkingDirectoryMarker)
     val reader = BufferedReader(InputStreamReader(System.`in`, StandardCharsets.UTF_8))
     val writer = BufferedWriter(OutputStreamWriter(System.out, StandardCharsets.UTF_8))
@@ -115,6 +133,23 @@ internal object CodexTestAppServer {
             sourceKinds = request.params.sourceKinds,
           )
         })
+        "thread/read" -> writeResponse(writer, request.id, resultWriter = { generator ->
+          val thread = request.params.id
+            ?.let { requestedId -> threads.firstOrNull { entry -> entry.id == requestedId } }
+          generator.writeStartObject()
+          generator.writeFieldName("thread")
+          if (thread == null) {
+            writeEmptyObject(generator)
+          }
+          else {
+            writeThreadReadObject(
+              generator = generator,
+              thread = thread,
+              includeTurns = request.params.includeTurns ?: false,
+            )
+          }
+          generator.writeEndObject()
+        })
         "thread/archive" -> {
           updateArchive(request.params.id, threads, archive = true)
           writeResponse(writer, request.id, ::writeEmptyObject)
@@ -135,7 +170,36 @@ internal object CodexTestAppServer {
         "turn/interrupt" -> writeResponse(writer, request.id, ::writeEmptyObject)
         else -> writeResponse(writer, request.id, ::writeEmptyObject, errorMessage = "Unknown method: ${request.method}")
       }
+
+      maybeWriteNotification(
+        writer = writer,
+        request = request,
+        notifyMethod = notifyMethod,
+        notifyOnMethod = notifyOnMethod,
+        notifyThreadId = notifyThreadId,
+        notifyThreadIdStyle = notifyThreadIdStyle,
+        notifyId = notifyId,
+      )
     }
+  }
+
+  private fun maybeWriteNotification(
+    writer: BufferedWriter,
+    request: Request,
+    notifyMethod: String?,
+    notifyOnMethod: String?,
+    notifyThreadId: String?,
+    notifyThreadIdStyle: String?,
+    notifyId: String?,
+  ) {
+    val method = notifyMethod ?: return
+    val triggerMethod = notifyOnMethod?.takeIf { it.isNotBlank() }
+    if (triggerMethod != null && request.method != triggerMethod) {
+      return
+    }
+
+    val threadId = notifyThreadId ?: request.params.id
+    writeNotification(writer, method, threadId, notifyThreadIdStyle, notifyId)
   }
 
   private fun parseRequest(payload: String): Request? {
@@ -147,6 +211,7 @@ internal object CodexTestAppServer {
       var paramsArchived: Boolean? = null
       var paramsCursor: String? = null
       var paramsLimit: Int? = null
+      var paramsIncludeTurns: Boolean? = null
       var paramsCwd: String? = null
       var paramsSourceKinds: MutableSet<String>? = null
       forEachObjectField(parser) { fieldName ->
@@ -162,6 +227,7 @@ internal object CodexTestAppServer {
                   "archived" -> paramsArchived = readBooleanOrNull(parser)
                   "cursor" -> paramsCursor = readStringOrNull(parser)
                   "limit" -> paramsLimit = readLongOrNull(parser)?.toInt()
+                  "includeTurns", "include_turns" -> paramsIncludeTurns = readBooleanOrNull(parser)
                   "cwd" -> paramsCwd = readStringOrNull(parser)
                   "sourceKinds", "source_kinds" -> {
                     if (parser.currentToken == JsonToken.START_ARRAY) {
@@ -192,12 +258,13 @@ internal object CodexTestAppServer {
         requestMethod,
         RequestParams(
           id = paramsId,
-          archived = paramsArchived,
-          cursor = paramsCursor,
-          limit = paramsLimit,
-          cwd = paramsCwd,
-          sourceKinds = paramsSourceKinds,
-        )
+            archived = paramsArchived,
+            cursor = paramsCursor,
+            limit = paramsLimit,
+            includeTurns = paramsIncludeTurns,
+            cwd = paramsCwd,
+            sourceKinds = paramsSourceKinds,
+          )
       )
     }
   }
@@ -251,6 +318,7 @@ internal object CodexTestAppServer {
     var statusType = "idle"
     var statusActiveFlagsFieldName = "activeFlags"
     val activeFlags = ArrayList<String>()
+    val readTurns = ArrayList<TurnEntry>()
     var gitBranch: String? = null
     var updatedAt: Long? = null
     var updatedAtField: String? = null
@@ -278,6 +346,14 @@ internal object CodexTestAppServer {
         "activeFlags" -> {
           if (parser.currentToken == JsonToken.START_ARRAY) {
             parseStringArray(parser, activeFlags)
+          }
+          else {
+            parser.skipChildren()
+          }
+        }
+        "readTurns" -> {
+          if (parser.currentToken == JsonToken.START_ARRAY) {
+            parseReadTurnsArray(parser, readTurns)
           }
           else {
             parser.skipChildren()
@@ -322,6 +398,7 @@ internal object CodexTestAppServer {
       statusType = statusType,
       statusActiveFlagsFieldName = statusActiveFlagsFieldName,
       activeFlags = activeFlags,
+      readTurns = readTurns,
       gitBranch = gitBranch,
       updatedAt = updatedAt,
       updatedAtField = updatedAtField,
@@ -351,6 +428,49 @@ internal object CodexTestAppServer {
       generator.writeFieldName("result")
       resultWriter(generator)
     }
+    generator.writeEndObject()
+    generator.close()
+    writer.newLine()
+    writer.flush()
+  }
+
+  private fun writeNotification(
+    writer: BufferedWriter,
+    method: String,
+    threadId: String?,
+    threadIdStyle: String?,
+    notificationId: String?,
+  ) {
+    val generator = jsonFactory.createGenerator(writer)
+    generator.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
+    generator.writeStartObject()
+    if (notificationId != null) {
+      generator.writeStringField("id", notificationId)
+    }
+    generator.writeStringField("method", method)
+    generator.writeFieldName("params")
+    generator.writeStartObject()
+    when (threadIdStyle) {
+      "thread_id" -> {
+        if (threadId != null) {
+          generator.writeStringField("thread_id", threadId)
+        }
+      }
+      "thread", "thread_object" -> {
+        generator.writeFieldName("thread")
+        generator.writeStartObject()
+        if (threadId != null) {
+          generator.writeStringField("id", threadId)
+        }
+        generator.writeEndObject()
+      }
+      else -> {
+        if (threadId != null) {
+          generator.writeStringField("threadId", threadId)
+        }
+      }
+    }
+    generator.writeEndObject()
     generator.writeEndObject()
     generator.close()
     writer.newLine()
@@ -498,6 +618,48 @@ private fun writeThreadStatus(generator: JsonGenerator, thread: ThreadEntry) {
   generator.writeEndObject()
 }
 
+private fun writeThreadReadObject(generator: JsonGenerator, thread: ThreadEntry, includeTurns: Boolean) {
+  generator.writeStartObject()
+  generator.writeStringField("id", thread.id)
+  thread.updatedAt?.let { updatedAt ->
+    val field = thread.updatedAtField?.takeIf { it.isNotBlank() } ?: "updated_at"
+    generator.writeNumberField(field, updatedAt)
+  }
+  thread.createdAt?.let { createdAt ->
+    val field = thread.createdAtField?.takeIf { it.isNotBlank() } ?: "created_at"
+    generator.writeNumberField(field, createdAt)
+  }
+  generator.writeFieldName("status")
+  writeThreadStatus(generator, thread)
+  if (includeTurns) {
+    generator.writeFieldName("turns")
+    generator.writeStartArray()
+    thread.readTurns.forEach { turn ->
+      generator.writeStartObject()
+      generator.writeFieldName("status")
+      if (turn.statusAsObject) {
+        generator.writeStartObject()
+        generator.writeStringField("type", turn.statusType)
+        generator.writeEndObject()
+      }
+      else {
+        generator.writeString(turn.statusType)
+      }
+      generator.writeFieldName("items")
+      generator.writeStartArray()
+      turn.itemTypes.forEach { itemType ->
+        generator.writeStartObject()
+        generator.writeStringField("type", itemType)
+        generator.writeEndObject()
+      }
+      generator.writeEndArray()
+      generator.writeEndObject()
+    }
+    generator.writeEndArray()
+  }
+  generator.writeEndObject()
+}
+
 private fun startThread(threads: MutableList<ThreadEntry>): ThreadEntry {
   val now = System.currentTimeMillis()
   val id = "thread-start-$now"
@@ -518,6 +680,7 @@ private fun startThread(threads: MutableList<ThreadEntry>): ThreadEntry {
     statusType = "idle",
     statusActiveFlagsFieldName = "activeFlags",
     activeFlags = emptyList(),
+    readTurns = emptyList(),
     gitBranch = null,
     updatedAt = now,
     updatedAtField = "updated_at",
@@ -568,6 +731,51 @@ private fun writeWorkingDirectoryMarker(marker: String) {
     Files.writeString(markerPath, cwd, StandardCharsets.UTF_8)
   }
   catch (_: Throwable) {
+  }
+}
+
+private fun parseReadTurnsArray(parser: JsonParser, target: MutableCollection<TurnEntry>) {
+  while (true) {
+    val token = parser.nextToken() ?: return
+    if (token == JsonToken.END_ARRAY) {
+      return
+    }
+    if (token != JsonToken.START_OBJECT) {
+      parser.skipChildren()
+      continue
+    }
+
+    var statusType = "completed"
+    var statusAsObject = false
+    val itemTypes = ArrayList<String>()
+    forEachObjectField(parser) { fieldName ->
+      when (fieldName) {
+        "statusType" -> {
+          statusType = readStringOrNull(parser)?.takeIf { it.isNotBlank() } ?: statusType
+        }
+        "statusAsObject" -> {
+          statusAsObject = readBooleanOrNull(parser) ?: false
+        }
+        "itemTypes" -> {
+          if (parser.currentToken == JsonToken.START_ARRAY) {
+            parseStringArray(parser, itemTypes)
+          }
+          else {
+            parser.skipChildren()
+          }
+        }
+        else -> parser.skipChildren()
+      }
+      true
+    }
+
+    target.add(
+      TurnEntry(
+        statusType = statusType,
+        statusAsObject = statusAsObject,
+        itemTypes = itemTypes,
+      )
+    )
   }
 }
 

@@ -41,6 +41,12 @@ Define editor-driven prompt context behavior for both direct invocation and fall
   - `snippet` item last.
   [@test] ../../prompt/testSrc/context/AgentPromptEditorContextContributorTest.kt
 
+- Editor item relationship contract:
+  - `file` item uses `itemId=editor.file`,
+  - `symbol` item uses `itemId=editor.symbol` and `parentItemId=editor.file` when file item is present,
+  - `snippet` item uses `itemId=editor.snippet` and `parentItemId=editor.file` when file item is present.
+  [@test] ../../prompt/testSrc/context/AgentPromptEditorContextContributorTest.kt
+
 - Symbol filtering contract:
   - placeholder-like symbol names wrapped in angle brackets (for example `<anonymous>`, `<lambda>`) are not emitted as `symbol` context items,
   - symbol resolution continues PSI parent traversal until first concrete symbol name or root.

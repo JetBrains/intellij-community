@@ -12,7 +12,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
@@ -68,6 +72,11 @@ class CodexAppServerClient(
   private val workingDirectoryPath = workingDirectory
   private val idleShutdownTimeoutMs = idleShutdownTimeoutMs.coerceAtLeast(0)
   private val protocol = CodexAppServerProtocol()
+  private val notificationsFlow = MutableSharedFlow<CodexAppServerNotification>(
+    replay = 0,
+    extraBufferCapacity = 256,
+    onBufferOverflow = BufferOverflow.DROP_OLDEST,
+  )
 
   @Volatile
   private var process: Process? = null
@@ -118,6 +127,9 @@ class CodexAppServerClient(
     )
   }
 
+  val notifications: Flow<CodexAppServerNotification>
+    get() = notificationsFlow.asSharedFlow()
+
   suspend fun listThreads(archived: Boolean, cwdFilter: String? = null): List<CodexThread> {
     val threads = mutableListOf<CodexThread>()
     var cursor: String? = null
@@ -141,6 +153,25 @@ class CodexAppServerClient(
       cursor = nextCursor
     }
     return threads.sortedByDescending { it.updatedAt }
+  }
+
+  suspend fun readThreadActivitySnapshot(threadId: String): CodexThreadActivitySnapshot? {
+    val normalizedThreadId = threadId.trim()
+    if (normalizedThreadId.isEmpty()) {
+      return null
+    }
+
+    return request(
+      method = "thread/read",
+      paramsWriter = { generator ->
+        generator.writeStartObject()
+        generator.writeStringField("threadId", normalizedThreadId)
+        generator.writeBooleanField("includeTurns", true)
+        generator.writeEndObject()
+      },
+      resultParser = { parser -> protocol.parseThreadReadActivityResult(parser) },
+      defaultResult = null,
+    )
   }
 
   suspend fun createThread(
@@ -471,10 +502,22 @@ class CodexAppServerClient(
       return
     }
 
-    if (id == null) {
+    if (id != null) {
+      pending.remove(id)?.complete(payload)
       return
     }
-    pending.remove(id)?.complete(payload)
+
+    val notification = try {
+      protocol.parseNotification(payload)
+    }
+    catch (e: Throwable) {
+      LOG.warn("Failed to parse Codex app-server notification: $payload", e)
+      null
+    } ?: return
+
+    if (!notificationsFlow.tryEmit(notification)) {
+      LOG.debug { "Dropped Codex app-server notification due to backpressure: ${notification.method}" }
+    }
   }
 
   private fun handleProcessExit() {

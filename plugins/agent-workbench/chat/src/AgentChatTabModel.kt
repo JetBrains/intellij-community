@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 
 internal data class AgentChatTabIdentity(
   @JvmField val projectHash: String,
@@ -22,6 +23,7 @@ internal data class AgentChatTabRuntime(
   @JvmField val initialComposedMessage: String? = null,
   @JvmField val initialMessageToken: String? = null,
   @JvmField val initialMessageSent: Boolean = false,
+  @JvmField val initialMessageTimeoutPolicy: AgentInitialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK,
 )
 
 internal data class AgentChatTabSnapshot(
@@ -46,6 +48,7 @@ internal data class AgentChatTabSnapshot(
       initialComposedMessage: String? = null,
       initialMessageToken: String? = null,
       initialMessageSent: Boolean = false,
+      initialMessageTimeoutPolicy: AgentInitialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK,
     ): AgentChatTabSnapshot {
       val identity = AgentChatTabIdentity(
         projectHash = projectHash,
@@ -68,6 +71,7 @@ internal data class AgentChatTabSnapshot(
           initialComposedMessage = initialComposedMessage,
           initialMessageToken = initialMessageToken,
           initialMessageSent = initialMessageSent,
+          initialMessageTimeoutPolicy = initialMessageTimeoutPolicy,
         ),
       )
     }

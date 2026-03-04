@@ -11,6 +11,7 @@ import com.intellij.agent.workbench.chat.collectOpenAgentChatProjectPaths
 import com.intellij.agent.workbench.chat.collectOpenConcreteAgentChatThreadIdentitiesByPath
 import com.intellij.agent.workbench.chat.collectOpenPendingAgentChatProjectPaths
 import com.intellij.agent.workbench.chat.collectOpenPendingCodexTabsByPath
+import com.intellij.agent.workbench.chat.consumeRecentCodexTerminalOutputRefreshPaths
 import com.intellij.agent.workbench.chat.rebindOpenPendingCodexTabs
 import com.intellij.agent.workbench.chat.updateOpenAgentChatTabPresentation
 import com.intellij.agent.workbench.common.AgentThreadActivity
@@ -20,7 +21,9 @@ import com.intellij.agent.workbench.sessions.codex.CodexPendingTabMatcher
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
@@ -62,6 +65,7 @@ private const val PENDING_CODEX_MATCH_PRE_WINDOW_MS = 20_000L
 private const val PENDING_CODEX_MATCH_POST_WINDOW_MS = 120_000L
 private const val PENDING_CODEX_AMBIGUITY_NOTIFY_AFTER_POLLS = 2
 private const val PENDING_CODEX_AMBIGUITY_NOTIFY_COOLDOWN_MS = 5 * 60 * 1000L
+private const val CODEX_REFRESH_HINT_MAX_LISTED_THREAD_IDS_PER_PATH = 200
 
 internal class AgentSessionsLoadingCoordinator(
   private val serviceScope: CoroutineScope,
@@ -73,6 +77,7 @@ internal class AgentSessionsLoadingCoordinator(
   private val openAgentChatProjectPathsProvider: suspend () -> Set<String> = ::collectOpenAgentChatProjectPaths,
   private val openPendingAgentChatProjectPathsProvider: suspend () -> Set<String> = ::collectOpenPendingAgentChatProjectPaths,
   private val openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingCodexTabSnapshot>> = ::collectOpenPendingCodexTabsByPath,
+  private val consumeRecentCodexTerminalOutputPathsProvider: () -> Set<String> = ::consumeRecentCodexTerminalOutputRefreshPaths,
   private val openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> = ::collectOpenConcreteAgentChatThreadIdentitiesByPath,
   private val openAgentChatTabPresentationUpdater: suspend (
     Map<Pair<String, String>, String>,
@@ -90,9 +95,9 @@ internal class AgentSessionsLoadingCoordinator(
   private val onDemandMutex = Mutex()
   private val onDemandLoading = LinkedHashSet<String>()
   private val onDemandWorktreeLoading = LinkedHashSet<String>()
-  private val sourceRefreshJobs = LinkedHashMap<AgentSessionProvider, Job>()
+  private val sourceRefreshJobs = LinkedHashMap<AgentSessionProvider, PendingSourceRefreshJob>()
   private val sourceRefreshJobsLock = Any()
-  private val pendingSourceRefreshProviders = LinkedHashMap<AgentSessionProvider, Set<String>?>()
+  private val pendingSourceRefreshProviders = LinkedHashMap<AgentSessionProvider, QueuedSourceRefreshRequest>()
   private var sourceRefreshProcessorRunning = false
   private val sourceRefreshIdCounter = AtomicLong()
   private val sourceObserverJobs = LinkedHashMap<AgentSessionProvider, Job>()
@@ -129,13 +134,45 @@ internal class AgentSessionsLoadingCoordinator(
             emptySet()
           }
           if (pendingPaths.isEmpty()) {
+            val terminalOutputPaths = try {
+              consumeRecentCodexTerminalOutputPathsProvider()
+            }
+            catch (e: Throwable) {
+              if (e is CancellationException) throw e
+              LOG.warn("Failed to collect Codex terminal output refresh signals", e)
+              emptySet()
+            }
+            if (terminalOutputPaths.isEmpty()) {
+              continue
+            }
+
+            LOG.debug {
+              "Detected Codex terminal output refresh signals (paths=${terminalOutputPaths.size}); scheduling scoped provider refresh"
+            }
+            enqueueSourceRefresh(AgentSessionProvider.CODEX, scopedPaths = terminalOutputPaths)
+            continue
+          }
+
+          val terminalOutputPaths = try {
+            consumeRecentCodexTerminalOutputPathsProvider()
+          }
+          catch (e: Throwable) {
+            if (e is CancellationException) throw e
+            LOG.warn("Failed to collect Codex terminal output refresh signals", e)
+            emptySet()
+          }
+
+          val refreshPaths = LinkedHashSet<String>(pendingPaths.size + terminalOutputPaths.size)
+          refreshPaths.addAll(pendingPaths)
+          refreshPaths.addAll(terminalOutputPaths)
+          if (refreshPaths.isEmpty()) {
             continue
           }
 
           LOG.debug {
-            "Detected pending Codex chat tabs (paths=${pendingPaths.size}); scheduling scoped provider refresh"
+            "Detected pending/terminal-driven Codex refresh paths (pending=${pendingPaths.size}, terminal=${terminalOutputPaths.size}); scheduling scoped provider refresh"
           }
-          enqueueSourceRefresh(AgentSessionProvider.CODEX, scopedPaths = pendingPaths)
+          enqueueSourceRefresh(AgentSessionProvider.CODEX, scopedPaths = refreshPaths)
         }
       }
     }
@@ -488,8 +525,8 @@ internal class AgentSessionsLoadingCoordinator(
         LOG.debug { "Starting source updates observer for ${provider.value}" }
         val job = serviceScope.launch(Dispatchers.IO) {
           try {
-            source.updates.collect {
-              scheduleSourceRefresh(provider)
+            source.updateEvents.collect { sourceUpdate ->
+              scheduleSourceRefresh(provider, sourceUpdate)
             }
           }
           catch (e: Throwable) {
@@ -612,18 +649,22 @@ internal class AgentSessionsLoadingCoordinator(
     }
   }
 
-  private fun scheduleSourceRefresh(provider: AgentSessionProvider) {
+  private fun scheduleSourceRefresh(provider: AgentSessionProvider, sourceUpdate: AgentSessionSourceUpdate) {
     synchronized(sourceRefreshJobsLock) {
-      sourceRefreshJobs.remove(provider)?.cancel()
-      LOG.debug { "Scheduled debounced source refresh for ${provider.value}" }
+      val existingJob = sourceRefreshJobs.remove(provider)
+      existingJob?.job?.cancel()
+      val mergedUpdate = mergeSourceUpdateTypes(existingJob?.sourceUpdate, sourceUpdate)
+      LOG.debug {
+        "Scheduled debounced source refresh for ${provider.value} (sourceUpdate=${mergedUpdate.name.lowercase()})"
+      }
       val job = serviceScope.launch(Dispatchers.IO) {
         delay(SOURCE_UPDATE_DEBOUNCE_MS.milliseconds)
-        enqueueSourceRefresh(provider)
+        enqueueSourceRefresh(provider = provider, sourceUpdate = mergedUpdate)
       }
-      sourceRefreshJobs[provider] = job
+      sourceRefreshJobs[provider] = PendingSourceRefreshJob(job = job, sourceUpdate = mergedUpdate)
       job.invokeOnCompletion {
         synchronized(sourceRefreshJobsLock) {
-          if (sourceRefreshJobs[provider] === job) {
+          if (sourceRefreshJobs[provider]?.job === job) {
             sourceRefreshJobs.remove(provider)
           }
         }
@@ -631,7 +672,11 @@ internal class AgentSessionsLoadingCoordinator(
     }
   }
 
-  private fun enqueueSourceRefresh(provider: AgentSessionProvider, scopedPaths: Set<String>? = null) {
+  private fun enqueueSourceRefresh(
+    provider: AgentSessionProvider,
+    scopedPaths: Set<String>? = null,
+    sourceUpdate: AgentSessionSourceUpdate = AgentSessionSourceUpdate.THREADS_CHANGED,
+  ) {
     val normalizedScopedPaths = scopedPaths
       ?.asSequence()
       ?.map(::normalizeAgentWorkbenchPath)
@@ -642,7 +687,11 @@ internal class AgentSessionsLoadingCoordinator(
     var shouldStartProcessor = false
     var queueSize = 0
     synchronized(sourceRefreshJobsLock) {
-      enqueueSourceRefreshLocked(provider = provider, scopedPaths = normalizedScopedPaths)
+      enqueueSourceRefreshLocked(
+        provider = provider,
+        scopedPaths = normalizedScopedPaths,
+        sourceUpdate = sourceUpdate,
+      )
       if (!sourceRefreshProcessorRunning) {
         sourceRefreshProcessorRunning = true
         shouldStartProcessor = true
@@ -652,7 +701,8 @@ internal class AgentSessionsLoadingCoordinator(
 
     LOG.debug {
       val scopeDescription = normalizedScopedPaths?.let { "scopedPaths=${it.size}" } ?: "scopedPaths=all"
-      "Enqueued source refresh for ${provider.value} ($scopeDescription, queueSize=$queueSize, startProcessor=$shouldStartProcessor)"
+      "Enqueued source refresh for ${provider.value} " +
+      "($scopeDescription, sourceUpdate=${sourceUpdate.name.lowercase()}, queueSize=$queueSize, startProcessor=$shouldStartProcessor)"
     }
 
     if (shouldStartProcessor) {
@@ -662,13 +712,23 @@ internal class AgentSessionsLoadingCoordinator(
     }
   }
 
-  private fun enqueueSourceRefreshLocked(provider: AgentSessionProvider, scopedPaths: Set<String>?) {
-    if (!pendingSourceRefreshProviders.containsKey(provider)) {
-      pendingSourceRefreshProviders[provider] = scopedPaths
+  private fun enqueueSourceRefreshLocked(
+    provider: AgentSessionProvider,
+    scopedPaths: Set<String>?,
+    sourceUpdate: AgentSessionSourceUpdate,
+  ) {
+    val existingRequest = pendingSourceRefreshProviders[provider]
+    if (existingRequest == null) {
+      pendingSourceRefreshProviders[provider] = QueuedSourceRefreshRequest(
+        scopedPaths = scopedPaths,
+        sourceUpdate = sourceUpdate,
+      )
       return
     }
-    val existingScope = pendingSourceRefreshProviders[provider]
-    pendingSourceRefreshProviders[provider] = mergeSourceRefreshScopes(existingScope, scopedPaths)
+    pendingSourceRefreshProviders[provider] = QueuedSourceRefreshRequest(
+      scopedPaths = mergeSourceRefreshScopes(existingRequest.scopedPaths, scopedPaths),
+      sourceUpdate = mergeSourceUpdateTypes(existingRequest.sourceUpdate, sourceUpdate),
+    )
   }
 
   private fun mergeSourceRefreshScopes(existing: Set<String>?, incoming: Set<String>?): Set<String>? {
@@ -685,6 +745,19 @@ internal class AgentSessionsLoadingCoordinator(
     merged.addAll(existing)
     merged.addAll(incoming)
     return merged
+  }
+
+  private fun mergeSourceUpdateTypes(
+    existing: AgentSessionSourceUpdate?,
+    incoming: AgentSessionSourceUpdate,
+  ): AgentSessionSourceUpdate {
+    if (existing == null) {
+      return incoming
+    }
+    return when {
+      existing == AgentSessionSourceUpdate.THREADS_CHANGED || incoming == AgentSessionSourceUpdate.THREADS_CHANGED -> AgentSessionSourceUpdate.THREADS_CHANGED
+      else -> AgentSessionSourceUpdate.HINTS_CHANGED
+    }
   }
 
   private suspend fun processQueuedSourceRefreshes() {
@@ -705,12 +778,15 @@ internal class AgentSessionsLoadingCoordinator(
       }
 
       val provider = dequeued.first
-      val scopedPaths = dequeued.second
+      val request = dequeued.second
+      val scopedPaths = request.scopedPaths
+      val sourceUpdate = request.sourceUpdate
       val remainingQueueSize = dequeued.third
       val refreshId = sourceRefreshIdCounter.incrementAndGet()
       LOG.debug {
         val scopeDescription = scopedPaths?.let { "scopedPaths=${it.size}" } ?: "scopedPaths=all"
-        "Dequeued source refresh id=$refreshId provider=${provider.value} ($scopeDescription, remainingQueueSize=$remainingQueueSize)"
+        "Dequeued source refresh id=$refreshId provider=${provider.value} " +
+        "($scopeDescription, sourceUpdate=${sourceUpdate.name.lowercase()}, remainingQueueSize=$remainingQueueSize)"
       }
 
       val gateActive = try {
@@ -729,7 +805,11 @@ internal class AgentSessionsLoadingCoordinator(
       if (!gateActive) {
         var queueSizeAfterRequeue = 0
         synchronized(sourceRefreshJobsLock) {
-          enqueueSourceRefreshLocked(provider = provider, scopedPaths = scopedPaths)
+          enqueueSourceRefreshLocked(
+            provider = provider,
+            scopedPaths = scopedPaths,
+            sourceUpdate = sourceUpdate,
+          )
           queueSizeAfterRequeue = pendingSourceRefreshProviders.size
         }
         LOG.debug {
@@ -740,7 +820,12 @@ internal class AgentSessionsLoadingCoordinator(
       }
 
       try {
-        refreshLoadedProviderThreads(provider = provider, refreshId = refreshId, scopedPaths = scopedPaths)
+        refreshLoadedProviderThreads(
+          provider = provider,
+          refreshId = refreshId,
+          scopedPaths = scopedPaths,
+          sourceUpdate = sourceUpdate,
+        )
       }
       catch (e: Throwable) {
         if (e is CancellationException) throw e
@@ -749,9 +834,16 @@ internal class AgentSessionsLoadingCoordinator(
     }
   }
 
-  private suspend fun refreshLoadedProviderThreads(provider: AgentSessionProvider, refreshId: Long, scopedPaths: Set<String>?) {
+  private suspend fun refreshLoadedProviderThreads(
+    provider: AgentSessionProvider,
+    refreshId: Long,
+    scopedPaths: Set<String>?,
+    sourceUpdate: AgentSessionSourceUpdate,
+  ) {
     refreshMutex.withLock {
-      LOG.debug { "Starting provider refresh id=$refreshId provider=${provider.value}" }
+      LOG.debug {
+        "Starting provider refresh id=$refreshId provider=${provider.value} (sourceUpdate=${sourceUpdate.name.lowercase()})"
+      }
       val source = sessionSourcesProvider().firstOrNull { it.provider == provider } ?: return
       val stateSnapshot = stateStore.snapshot()
       val knownThreadIdsByPath = collectLoadedProviderThreadIdsByPath(stateSnapshot, provider)
@@ -812,6 +904,61 @@ internal class AgentSessionsLoadingCoordinator(
         }
       }
 
+      val pendingCodexTabsByPath = if (provider == AgentSessionProvider.CODEX) {
+        collectNormalizedPendingCodexTabsByPath()
+      }
+      else {
+        emptyMap()
+      }
+
+      val codexHintThreadIdsByPath = if (provider == AgentSessionProvider.CODEX) {
+        collectCodexRefreshHintThreadIdsByPath(
+          targetPaths = targetPaths,
+          outcomes = outcomes,
+          knownThreadIdsByPath = knownThreadIdsByPath,
+          pendingTabsByPath = pendingCodexTabsByPath,
+        )
+      }
+      else {
+        emptyMap()
+      }
+
+      val refreshHintPaths = if (provider == AgentSessionProvider.CODEX) {
+        targetPaths
+          .asSequence()
+          .filter { path ->
+            codexHintThreadIdsByPath.containsKey(path) || pendingCodexTabsByPath[path]?.isNotEmpty() == true
+          }
+          .toCollection(LinkedHashSet())
+      }
+      else {
+        emptySet()
+      }
+
+      val refreshHintsByPath = if (refreshHintPaths.isEmpty()) {
+        emptyMap()
+      }
+      else {
+        try {
+          source.prefetchRefreshHints(
+            paths = refreshHintPaths.toList(),
+            knownThreadIdsByPath = codexHintThreadIdsByPath.filterKeys { it in refreshHintPaths },
+          )
+        }
+        catch (e: Throwable) {
+          if (e is CancellationException) throw e
+          LOG.warn("Failed to fetch ${provider.value} refresh hints", e)
+          emptyMap()
+        }
+      }
+
+      if (provider == AgentSessionProvider.CODEX && refreshHintsByPath.isNotEmpty()) {
+        applyCodexActivityHints(
+          outcomes = outcomes,
+          refreshHintsByPath = refreshHintsByPath,
+        )
+      }
+
       val allowedNewThreadIdsByPath = if (provider == AgentSessionProvider.CODEX) {
         calculateNewProviderThreadIdsByPath(
           provider = provider,
@@ -828,6 +975,8 @@ internal class AgentSessionsLoadingCoordinator(
         outcomes = outcomes,
         refreshId = refreshId,
         allowedThreadIdsByPath = allowedNewThreadIdsByPath,
+        refreshHintsByPath = refreshHintsByPath,
+        pendingTabsByPath = pendingCodexTabsByPath,
       )
 
       syncOpenChatTabPresentation(provider = provider, outcomes = outcomes, refreshId = refreshId)
@@ -837,6 +986,7 @@ internal class AgentSessionsLoadingCoordinator(
           outcomes = outcomes,
           targetPaths = targetPaths,
           refreshId = refreshId,
+          pendingTabsByPath = pendingCodexTabsByPath,
         )
       }
       else {
@@ -902,6 +1052,8 @@ internal class AgentSessionsLoadingCoordinator(
     outcomes: Map<String, ProviderRefreshOutcome>,
     refreshId: Long,
     allowedThreadIdsByPath: Map<String, Set<String>>? = null,
+    refreshHintsByPath: Map<String, AgentSessionRefreshHints> = emptyMap(),
+    pendingTabsByPath: Map<String, List<AgentChatPendingCodexTabSnapshot>> = emptyMap(),
   ) {
     if (provider != AgentSessionProvider.CODEX) {
       return
@@ -917,18 +1069,32 @@ internal class AgentSessionsLoadingCoordinator(
       for (thread in threads) {
         if (thread.provider != provider) continue
         if (allowedThreadIds != null && thread.id !in allowedThreadIds) continue
-        val launchSpec = runCatching {
-          buildAgentSessionResumeLaunchSpec(thread.provider, thread.id)
-        }.getOrDefault(AgentSessionTerminalLaunchSpec(command = listOf(provider.value, "resume", thread.id)))
         candidatesByPath.getOrPut(path) { ArrayList() }.add(
-          AgentChatPendingTabRebindTarget(
-            threadIdentity = buildAgentSessionIdentity(thread.provider, thread.id),
+          buildPendingCodexRebindTarget(
+            provider = provider,
             threadId = thread.id,
-            shellCommand = launchSpec.command,
-            shellEnvVariables = launchSpec.envVariables,
-            threadTitle = thread.title,
-            threadActivity = thread.activity,
-            threadUpdatedAt = thread.updatedAt,
+            title = thread.title,
+            activity = thread.activity,
+            updatedAt = thread.updatedAt,
+          )
+        )
+      }
+    }
+
+    for ((path, refreshHints) in refreshHintsByPath) {
+      val rebindCandidates = refreshHints.rebindCandidates
+      if (rebindCandidates.isEmpty()) {
+        continue
+      }
+      val pathCandidates = candidatesByPath.getOrPut(path) { ArrayList(rebindCandidates.size) }
+      for (candidate in rebindCandidates) {
+        pathCandidates.add(
+          buildPendingCodexRebindTarget(
+            provider = provider,
+            threadId = candidate.threadId,
+            title = candidate.title,
+            activity = candidate.activity,
+            updatedAt = candidate.updatedAt,
           )
         )
       }
@@ -938,7 +1104,6 @@ internal class AgentSessionsLoadingCoordinator(
       return
     }
 
-    val pendingTabsByPath = openPendingCodexTabsProvider()
     if (pendingTabsByPath.isEmpty()) {
       clearPendingCodexAmbiguityState()
       return
@@ -1039,20 +1204,103 @@ internal class AgentSessionsLoadingCoordinator(
     return result
   }
 
-  private suspend fun mergePendingCodexThreadsFromOpenTabs(
-    outcomes: MutableMap<String, ProviderRefreshOutcome>,
+  private suspend fun collectCodexRefreshHintThreadIdsByPath(
     targetPaths: Set<String>,
-    refreshId: Long,
-  ): Set<String> {
+    outcomes: Map<String, ProviderRefreshOutcome>,
+    knownThreadIdsByPath: Map<String, Set<String>>,
+    pendingTabsByPath: Map<String, List<AgentChatPendingCodexTabSnapshot>>,
+  ): Map<String, Set<String>> {
+    if (targetPaths.isEmpty()) {
+      return emptyMap()
+    }
+
+    val hintThreadIdsByPath = LinkedHashMap<String, LinkedHashSet<String>>()
+    for (path in targetPaths) {
+      val ids = LinkedHashSet<String>()
+      ids.addAll(knownThreadIdsByPath[path].orEmpty())
+
+      outcomes[path]
+        ?.threads
+        .orEmpty()
+        .asSequence()
+        .filter { thread -> thread.provider == AgentSessionProvider.CODEX }
+        .sortedByDescending { thread -> thread.updatedAt }
+        .take(CODEX_REFRESH_HINT_MAX_LISTED_THREAD_IDS_PER_PATH)
+        .mapTo(ids) { thread -> thread.id }
+
+      pendingTabsByPath[path]
+        .orEmpty()
+        .forEach { pendingTab ->
+          val identity = parseAgentSessionIdentity(pendingTab.pendingThreadIdentity) ?: return@forEach
+          if (identity.provider != AgentSessionProvider.CODEX || isAgentSessionNewSessionId(identity.sessionId)) {
+            return@forEach
+          }
+          ids.add(identity.sessionId)
+        }
+
+      if (ids.isNotEmpty() || pendingTabsByPath[path]?.isNotEmpty() == true) {
+        hintThreadIdsByPath[path] = ids
+      }
+    }
+
+    val openConcreteThreadIdentitiesByPath = try {
+      openConcreteChatThreadIdentitiesByPathProvider()
+    }
+    catch (e: Throwable) {
+      if (e is CancellationException) throw e
+      LOG.warn("Failed to collect open concrete chat thread identities for Codex refresh hints", e)
+      emptyMap()
+    }
+
+    for ((path, threadIdentities) in openConcreteThreadIdentitiesByPath) {
+      val normalizedPath = normalizeAgentWorkbenchPath(path)
+      if (normalizedPath !in targetPaths) {
+        continue
+      }
+
+      val ids = hintThreadIdsByPath.getOrPut(normalizedPath) { LinkedHashSet() }
+      for (threadIdentity in threadIdentities) {
+        val identity = parseAgentSessionIdentity(threadIdentity) ?: continue
+        if (identity.provider != AgentSessionProvider.CODEX || isAgentSessionNewSessionId(identity.sessionId)) {
+          continue
+        }
+        ids.add(identity.sessionId)
+      }
+    }
+
+    return hintThreadIdsByPath.mapValues { (_, ids) -> ids.toCollection(LinkedHashSet()) }
+  }
+
+  private suspend fun collectNormalizedPendingCodexTabsByPath(): Map<String, List<AgentChatPendingCodexTabSnapshot>> {
     val pendingTabsByPath = try {
       openPendingCodexTabsProvider()
     }
     catch (e: Throwable) {
       if (e is CancellationException) throw e
-      LOG.warn("Failed to collect pending Codex tabs for provider refresh projection", e)
-      return emptySet()
+      LOG.warn("Failed to collect pending Codex tabs for provider refresh", e)
+      return emptyMap()
+    }
+    if (pendingTabsByPath.isEmpty()) {
+      return emptyMap()
     }
 
+    val normalized = LinkedHashMap<String, MutableList<AgentChatPendingCodexTabSnapshot>>(pendingTabsByPath.size)
+    for ((path, pendingTabs) in pendingTabsByPath) {
+      if (pendingTabs.isEmpty()) {
+        continue
+      }
+      val normalizedPath = normalizeAgentWorkbenchPath(path)
+      normalized.getOrPut(normalizedPath) { ArrayList(pendingTabs.size) }.addAll(pendingTabs)
+    }
+    return normalized
+  }
+
+  private fun mergePendingCodexThreadsFromOpenTabs(
+    outcomes: MutableMap<String, ProviderRefreshOutcome>,
+    targetPaths: Set<String>,
+    refreshId: Long,
+    pendingTabsByPath: Map<String, List<AgentChatPendingCodexTabSnapshot>>,
+  ): Set<String> {
     if (pendingTabsByPath.isEmpty() || outcomes.isEmpty()) {
       return emptySet()
     }
@@ -1153,6 +1401,49 @@ internal class AgentSessionsLoadingCoordinator(
   private fun clearPendingCodexAmbiguityState() {
     synchronized(pendingCodexAmbiguityLock) {
       pendingCodexAmbiguityStateByKey.clear()
+    }
+  }
+
+  private fun applyCodexActivityHints(
+    outcomes: MutableMap<String, ProviderRefreshOutcome>,
+    refreshHintsByPath: Map<String, AgentSessionRefreshHints>,
+  ) {
+    if (outcomes.isEmpty() || refreshHintsByPath.isEmpty()) {
+      return
+    }
+
+    val updatedOutcomes = LinkedHashMap<String, ProviderRefreshOutcome>()
+    for ((path, outcome) in outcomes) {
+      val threads = outcome.threads ?: continue
+      val activityByThreadId = refreshHintsByPath[path]?.activityByThreadId ?: continue
+      if (activityByThreadId.isEmpty()) {
+        continue
+      }
+
+      var changed = false
+      val updatedThreads = threads.map { thread ->
+        if (thread.provider != AgentSessionProvider.CODEX) {
+          return@map thread
+        }
+        val hintedActivity = activityByThreadId[thread.id] ?: return@map thread
+        if (hintedActivity == thread.activity) {
+          return@map thread
+        }
+        changed = true
+        thread.copy(activity = hintedActivity)
+      }
+
+      if (changed) {
+        updatedOutcomes[path] = outcome.copy(threads = updatedThreads)
+      }
+    }
+
+    if (updatedOutcomes.isEmpty()) {
+      return
+    }
+
+    for ((path, updatedOutcome) in updatedOutcomes) {
+      outcomes[path] = updatedOutcome
     }
   }
 
@@ -1414,6 +1705,27 @@ private fun collectLoadedProviderThreadIdsByPath(
   return result
 }
 
+private fun buildPendingCodexRebindTarget(
+  provider: AgentSessionProvider,
+  threadId: String,
+  title: String,
+  activity: AgentThreadActivity,
+  updatedAt: Long,
+): AgentChatPendingTabRebindTarget {
+  val launchSpec = runCatching {
+    buildAgentSessionResumeLaunchSpec(provider, threadId)
+  }.getOrDefault(AgentSessionTerminalLaunchSpec(command = listOf(provider.value, "resume", threadId)))
+  return AgentChatPendingTabRebindTarget(
+    threadIdentity = buildAgentSessionIdentity(provider, threadId),
+    threadId = threadId,
+    shellCommand = launchSpec.command,
+    shellEnvVariables = launchSpec.envVariables,
+    threadTitle = title,
+    threadActivity = activity,
+    threadUpdatedAt = updatedAt,
+  )
+}
+
 private fun resolveErrorMessage(provider: AgentSessionProvider, t: Throwable): String {
   return if (isCliMissingError(provider, t)) resolveCliMissingMessage(provider)
   else AgentSessionsBundle.message("toolwindow.error")
@@ -1530,6 +1842,16 @@ private fun List<AgentSessionThread>.toThreadPreviews(): List<AgentSessionThread
     )
   }
 }
+
+private data class PendingSourceRefreshJob(
+  @JvmField val job: Job,
+  @JvmField val sourceUpdate: AgentSessionSourceUpdate,
+)
+
+private data class QueuedSourceRefreshRequest(
+  @JvmField val scopedPaths: Set<String>?,
+  @JvmField val sourceUpdate: AgentSessionSourceUpdate,
+)
 
 private data class ProviderRefreshOutcome(
   @JvmField val threads: List<AgentSessionThread>? = null,

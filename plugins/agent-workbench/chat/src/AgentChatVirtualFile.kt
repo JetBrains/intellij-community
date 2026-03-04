@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -80,6 +81,9 @@ internal class AgentChatVirtualFile internal constructor(
   var initialMessageSent: Boolean = false
     private set
 
+  var initialMessageTimeoutPolicy: AgentInitialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK
+    private set
+
   private var initialMessageDispatchInFlight: AgentChatInitialMessageDispatch? = null
 
   @TestOnly
@@ -93,6 +97,7 @@ internal class AgentChatVirtualFile internal constructor(
     subAgentId: String?,
     threadActivity: AgentThreadActivity = AgentThreadActivity.READY,
     projectHash: String = "",
+    initialMessageTimeoutPolicy: AgentInitialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK,
   ) : this(
     fileSystem = createStandaloneAgentChatVirtualFileSystemForTest(),
     resolution = AgentChatTabResolution.Resolved(AgentChatTabSnapshot.create(
@@ -105,6 +110,7 @@ internal class AgentChatVirtualFile internal constructor(
       shellCommand = shellCommand,
       shellEnvVariables = shellEnvVariables,
       threadActivity = threadActivity,
+      initialMessageTimeoutPolicy = initialMessageTimeoutPolicy,
     ))
   )
 
@@ -201,18 +207,21 @@ internal class AgentChatVirtualFile internal constructor(
     initialComposedMessage: String?,
     initialMessageToken: String?,
     initialMessageSent: Boolean,
+    initialMessageTimeoutPolicy: AgentInitialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK,
   ): Boolean {
     val normalizedMessage = initialComposedMessage?.takeIf { it.isNotBlank() }
     if (
       this.initialComposedMessage == normalizedMessage &&
       this.initialMessageToken == initialMessageToken &&
-      this.initialMessageSent == initialMessageSent
+      this.initialMessageSent == initialMessageSent &&
+      this.initialMessageTimeoutPolicy == initialMessageTimeoutPolicy
     ) {
       return false
     }
     this.initialComposedMessage = normalizedMessage
     this.initialMessageToken = initialMessageToken
     this.initialMessageSent = initialMessageSent
+    this.initialMessageTimeoutPolicy = initialMessageTimeoutPolicy
     initialMessageDispatchInFlight = null
     return true
   }
@@ -220,6 +229,15 @@ internal class AgentChatVirtualFile internal constructor(
   @Synchronized
   fun hasPendingInitialMessageForDispatch(): Boolean {
     return !initialMessageSent && !initialComposedMessage.isNullOrBlank()
+  }
+
+  @Synchronized
+  fun shouldDelayInitialMessageOnReadinessTimeout(): Boolean {
+    if (initialMessageSent || initialMessageTimeoutPolicy != AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS) {
+      return false
+    }
+    val message = initialComposedMessage?.trim().orEmpty()
+    return message.isNotEmpty()
   }
 
   @Synchronized
@@ -301,7 +319,12 @@ internal class AgentChatVirtualFile internal constructor(
     if (updatePendingMetadata(pendingCreatedAtMs = null, pendingFirstInputAtMs = null, pendingLaunchMode = null)) {
       changed = true
     }
-    if (updateInitialMessageMetadata(initialComposedMessage = null, initialMessageToken = null, initialMessageSent = false)) {
+    if (updateInitialMessageMetadata(
+        initialComposedMessage = null,
+        initialMessageToken = null,
+        initialMessageSent = false,
+        initialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK,
+      )) {
       changed = true
     }
 
@@ -352,6 +375,7 @@ internal class AgentChatVirtualFile internal constructor(
       initialComposedMessage = snapshot.runtime.initialComposedMessage,
       initialMessageToken = snapshot.runtime.initialMessageToken,
       initialMessageSent = snapshot.runtime.initialMessageSent,
+      initialMessageTimeoutPolicy = snapshot.runtime.initialMessageTimeoutPolicy,
     )
   }
 
@@ -383,6 +407,7 @@ internal class AgentChatVirtualFile internal constructor(
         initialComposedMessage = initialComposedMessage,
         initialMessageToken = initialMessageToken,
         initialMessageSent = initialMessageSent,
+        initialMessageTimeoutPolicy = initialMessageTimeoutPolicy,
       ),
     )
   }

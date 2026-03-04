@@ -7,6 +7,8 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayload
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -77,16 +79,18 @@ class CodexAgentSessionProviderBridgeTest {
 
   @Test
   fun composeInitialMessageWithoutContext() {
-    val message = bridge.composeInitialMessage(
+    val plan = bridge.buildInitialMessagePlan(
       AgentPromptInitialMessageRequest(prompt = "  Refactor this  ")
     )
 
-    assertThat(message).isEqualTo("Refactor this")
+    assertThat(plan.message).isEqualTo("Refactor this")
+    assertThat(plan.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND)
+    assertThat(plan.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK)
   }
 
   @Test
   fun composeInitialMessagePrefixesPlanCommandWhenEnabled() {
-    val message = bridge.composeInitialMessage(
+    val message = messageFor(bridge,
       AgentPromptInitialMessageRequest(
         prompt = "Refactor this",
         codexPlanModeEnabled = true,
@@ -98,7 +102,7 @@ class CodexAgentSessionProviderBridgeTest {
 
   @Test
   fun composeInitialMessageDoesNotDoublePrefixPlanCommand() {
-    val message = bridge.composeInitialMessage(
+    val message = messageFor(bridge,
       AgentPromptInitialMessageRequest(
         prompt = " /plan Refactor this ",
         codexPlanModeEnabled = true,
@@ -109,26 +113,37 @@ class CodexAgentSessionProviderBridgeTest {
   }
 
   @Test
-  fun shouldUseStartupPromptCommandDependsOnPlanMode() {
-    assertThat(
-      bridge.shouldUseStartupPromptCommand(
-        AgentPromptInitialMessageRequest(prompt = "Refactor this")
-      )
-    ).isTrue()
+  fun initialMessagePlanPoliciesDependOnPlanModeAndCommand() {
+    val defaultPlan = bridge.buildInitialMessagePlan(
+      AgentPromptInitialMessageRequest(prompt = "Refactor this")
+    )
+    assertThat(defaultPlan.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND)
+    assertThat(defaultPlan.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK)
 
-    assertThat(
-      bridge.shouldUseStartupPromptCommand(
-        AgentPromptInitialMessageRequest(
-          prompt = "Refactor this",
-          codexPlanModeEnabled = true,
-        )
+    val planModePlan = bridge.buildInitialMessagePlan(
+      AgentPromptInitialMessageRequest(
+        prompt = "Refactor this",
+        codexPlanModeEnabled = true,
       )
-    ).isFalse()
+    )
+    assertThat(planModePlan.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.POST_START_ONLY)
+    assertThat(planModePlan.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS)
+
+    val plannerPlan = bridge.buildInitialMessagePlan(
+      AgentPromptInitialMessageRequest(prompt = "/planner follow-up")
+    )
+    assertThat(plannerPlan.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK)
+
+    val manualPlanCommand = bridge.buildInitialMessagePlan(
+      AgentPromptInitialMessageRequest(prompt = "/plan from manual input")
+    )
+    assertThat(manualPlanCommand.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND)
+    assertThat(manualPlanCommand.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS)
   }
 
   @Test
   fun composeInitialMessageUsesCompactContextBlock() {
-    val message = bridge.composeInitialMessage(
+    val message = messageFor(bridge,
       AgentPromptInitialMessageRequest(
         prompt = "Refactor this",
         contextItems = listOf(
@@ -164,7 +179,7 @@ class CodexAgentSessionProviderBridgeTest {
 
   @Test
   fun composeInitialMessageUsesSnippetLanguageWhenProvided() {
-    val message = bridge.composeInitialMessage(
+    val message = messageFor(bridge,
       AgentPromptInitialMessageRequest(
         prompt = "Refactor this",
         contextItems = listOf(
@@ -187,7 +202,7 @@ class CodexAgentSessionProviderBridgeTest {
 
   @Test
   fun composeInitialMessageOmitsSnippetLanguageForInvalidValue() {
-    val invalidLanguage = bridge.composeInitialMessage(
+    val invalidLanguage = messageFor(bridge,
       AgentPromptInitialMessageRequest(
         prompt = "Refactor this",
         contextItems = listOf(
@@ -216,7 +231,7 @@ class CodexAgentSessionProviderBridgeTest {
     val expectedPathFile = projectRoot.resolve("src/App.kt").normalize().toString()
     val expectedPathDir = projectRoot.resolve("src").normalize().toString()
 
-    val message = bridge.composeInitialMessage(
+    val message = messageFor(bridge,
       AgentPromptInitialMessageRequest(
         prompt = "Review context",
         projectPath = projectRoot.toString(),
@@ -260,7 +275,7 @@ class CodexAgentSessionProviderBridgeTest {
 
   @Test
   fun composeInitialMessageMarksUnresolvedRelativePathWithoutProjectRoot() {
-    val message = bridge.composeInitialMessage(
+    val message = messageFor(bridge,
       AgentPromptInitialMessageRequest(
         prompt = "Review context",
         contextItems = listOf(
@@ -280,4 +295,8 @@ class CodexAgentSessionProviderBridgeTest {
     assertThat(message).contains("file: src/Main.java [path-unresolved]")
   }
 
+}
+
+private fun messageFor(bridge: CodexAgentSessionProviderBridge, request: AgentPromptInitialMessageRequest): String {
+  return checkNotNull(bridge.buildInitialMessagePlan(request).message)
 }

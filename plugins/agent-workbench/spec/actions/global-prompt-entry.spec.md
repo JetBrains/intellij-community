@@ -106,6 +106,7 @@ Prompt-context collection and rendering contracts are specified separately in `s
 - Popup opens as a project-scoped launcher for both new and existing task targets.
 - Existing-task mode exposes provider-scoped thread list with loading/empty/error states.
 - Context chips are removable before submit.
+- Chip-removal hierarchy is provider-defined via context item relations (`itemId`/`parentItemId`); removing a parent chip may remove all descendant chips recursively.
 
 ## Data & Backend
 - Existing-task list comes from launcher `observeExistingThreads(...)` stream with background refresh.

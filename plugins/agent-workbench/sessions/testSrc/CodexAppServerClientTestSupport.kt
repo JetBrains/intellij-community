@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.sessions
 import com.fasterxml.jackson.core.JsonFactory
 import com.intellij.agent.workbench.codex.common.CodexAppServerClient
 import com.intellij.agent.workbench.codex.common.CodexThread
+import com.intellij.agent.workbench.codex.common.CodexThreadStatusKind
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.util.io.NioFiles
@@ -148,6 +149,25 @@ internal fun writeConfig(path: Path, threads: List<ThreadSpec>) {
           thread.activeFlags.forEach(generator::writeString)
           generator.writeEndArray()
         }
+        if (thread.readTurns.isNotEmpty()) {
+          generator.writeFieldName("readTurns")
+          generator.writeStartArray()
+          for (turn in thread.readTurns) {
+            generator.writeStartObject()
+            generator.writeStringField("statusType", turn.statusType)
+            if (turn.statusAsObject) {
+              generator.writeBooleanField("statusAsObject", true)
+            }
+            if (turn.itemTypes.isNotEmpty()) {
+              generator.writeFieldName("itemTypes")
+              generator.writeStartArray()
+              turn.itemTypes.forEach(generator::writeString)
+              generator.writeEndArray()
+            }
+            generator.writeEndObject()
+          }
+          generator.writeEndArray()
+        }
         thread.gitBranch?.let { generator.writeStringField("gitBranch", it) }
         thread.updatedAt?.let { updatedAt ->
           val field = thread.updatedAtField.takeIf { it.isNotBlank() } ?: "updated_at"
@@ -186,8 +206,15 @@ internal data class ThreadSpec(
   val statusType: String = "idle",
   val statusActiveFlagsFieldName: String = "activeFlags",
   val activeFlags: List<String> = emptyList(),
+  val readTurns: List<ThreadTurnSpec> = emptyList(),
   val gitBranch: String? = null,
   val archived: Boolean = false,
+)
+
+internal data class ThreadTurnSpec(
+  val statusType: String = "completed",
+  val statusAsObject: Boolean = false,
+  val itemTypes: List<String> = emptyList(),
 )
 
 internal fun createMockClient(
@@ -297,6 +324,24 @@ private suspend fun assertThreads(
   val comparator = Comparator.comparingLong<CodexThread> { it.updatedAt }.reversed()
   assertThat(active).describedAs("$backendName active sort").isSortedAccordingTo(comparator)
   assertThat(archived).describedAs("$backendName archived sort").isSortedAccordingTo(comparator)
+
+  val statusThreads = active + archived + firstPage.threads
+  if (backendName == "mock") {
+    assertThat(statusThreads)
+      .describedAs("$backendName status kinds")
+      .allSatisfy { thread ->
+        assertThat(thread.statusKind).isEqualTo(CodexThreadStatusKind.IDLE)
+        assertThat(thread.activeFlags).isEmpty()
+      }
+  }
+  else {
+    assertThat(statusThreads)
+      .describedAs("$backendName status fields")
+      .allSatisfy { thread ->
+        assertThat(thread.statusKind).isNotNull()
+        assertThat(thread.activeFlags).doesNotContainNull()
+      }
+  }
 
   if (expectedActiveIds != null) {
     assertThat(active.map { it.id })

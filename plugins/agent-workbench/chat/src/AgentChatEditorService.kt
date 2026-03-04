@@ -7,7 +7,8 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
@@ -24,6 +25,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicReference
 
 private class AgentChatEditorServiceLog
@@ -31,6 +33,55 @@ private class AgentChatEditorServiceLog
 private val LOG = logger<AgentChatEditorServiceLog>()
 private const val CODEX_PROVIDER_ID = "codex"
 private val fileEditorProviderOverrideForTests: AtomicReference<FileEditorProvider?> = AtomicReference(null)
+private const val TERMINAL_OUTPUT_SIGNAL_RETENTION_MS = 10_000L
+
+private object CodexTerminalOutputSignalStore {
+  private val lock = Any()
+  private val lastSignalByPath = LinkedHashMap<String, Long>()
+
+  fun mark(projectPath: String, timestampMs: Long = System.currentTimeMillis()) {
+    val normalizedPath = normalizeAgentWorkbenchPath(projectPath)
+    if (normalizedPath.isBlank()) {
+      return
+    }
+    synchronized(lock) {
+      lastSignalByPath[normalizedPath] = timestampMs
+      pruneStaleSignals(nowMs = timestampMs)
+    }
+  }
+
+  fun consumeRecent(nowMs: Long = System.currentTimeMillis()): Set<String> {
+    val result = LinkedHashSet<String>()
+    synchronized(lock) {
+      val iterator = lastSignalByPath.entries.iterator()
+      while (iterator.hasNext()) {
+        val entry = iterator.next()
+        if (entry.value < nowMs - TERMINAL_OUTPUT_SIGNAL_RETENTION_MS) {
+          iterator.remove()
+          continue
+        }
+        result.add(entry.key)
+        iterator.remove()
+      }
+    }
+    return result
+  }
+
+  fun clear() {
+    synchronized(lock) {
+      lastSignalByPath.clear()
+    }
+  }
+
+  private fun pruneStaleSignals(nowMs: Long) {
+    val iterator = lastSignalByPath.entries.iterator()
+    while (iterator.hasNext()) {
+      if (iterator.next().value < nowMs - TERMINAL_OUTPUT_SIGNAL_RETENTION_MS) {
+        iterator.remove()
+      }
+    }
+  }
+}
 
 data class AgentChatPendingTabRebindTarget(
   @JvmField val threadIdentity: String,
@@ -85,7 +136,6 @@ suspend fun openChat(
   threadIdentity: String,
   shellCommand: List<String>,
   shellEnvVariables: Map<String, String> = emptyMap(),
-  startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec? = null,
   threadId: String,
   threadTitle: String,
   subAgentId: String?,
@@ -93,9 +143,7 @@ suspend fun openChat(
   pendingCreatedAtMs: Long? = null,
   pendingFirstInputAtMs: Long? = null,
   pendingLaunchMode: String? = null,
-  initialComposedMessage: String? = null,
-  initialMessageToken: String? = null,
-  initialMessageSent: Boolean = false,
+  initialMessageDispatchPlan: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
 ) {
   val manager = FileEditorManagerEx.getInstanceExAsync(project)
 
@@ -109,10 +157,16 @@ suspend fun openChat(
   )
   val existing = findExistingChatByTabKey(manager.openFiles, tabKey.value)
                  ?: findExistingChat(manager.openFiles, threadIdentity, subAgentId)
-  val startupOverrideForNewTab = if (existing == null) startupLaunchSpecOverride else null
-  val snapshotInitialComposedMessage = if (startupOverrideForNewTab != null) null else initialComposedMessage
-  val snapshotInitialMessageToken = if (startupOverrideForNewTab != null) null else initialMessageToken
-  val snapshotInitialMessageSent = if (startupOverrideForNewTab != null) false else initialMessageSent
+  val startupOverrideForNewTab = if (existing == null) initialMessageDispatchPlan.startupLaunchSpecOverride else null
+  val snapshotInitialComposedMessage = if (startupOverrideForNewTab != null) null else initialMessageDispatchPlan.initialComposedMessage
+  val snapshotInitialMessageToken = if (startupOverrideForNewTab != null) null else initialMessageDispatchPlan.initialMessageToken
+  val snapshotInitialMessageSent = false
+  val snapshotInitialMessageTimeoutPolicy = if (startupOverrideForNewTab != null) {
+    AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK
+  }
+  else {
+    initialMessageDispatchPlan.initialMessageTimeoutPolicy
+  }
 
   val snapshot = AgentChatTabSnapshot.create(
     projectHash = project.locationHash,
@@ -130,6 +184,7 @@ suspend fun openChat(
     initialComposedMessage = snapshotInitialComposedMessage,
     initialMessageToken = snapshotInitialMessageToken,
     initialMessageSent = snapshotInitialMessageSent,
+    initialMessageTimeoutPolicy = snapshotInitialMessageTimeoutPolicy,
   )
   LOG.debug {
     "openChat(project=${project.name}, path=$projectPath, identity=$threadIdentity, " +
@@ -159,14 +214,15 @@ suspend fun openChat(
       false
     }
     val initialMessageUpdated = if (
-      initialComposedMessage != null ||
-      initialMessageToken != null ||
-      initialMessageSent
+      initialMessageDispatchPlan.initialComposedMessage != null ||
+      initialMessageDispatchPlan.initialMessageToken != null ||
+      initialMessageDispatchPlan.initialMessageTimeoutPolicy != AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK
     ) {
       existing.updateInitialMessageMetadata(
-        initialComposedMessage = initialComposedMessage,
-        initialMessageToken = initialMessageToken,
-        initialMessageSent = initialMessageSent,
+        initialComposedMessage = initialMessageDispatchPlan.initialComposedMessage,
+        initialMessageToken = initialMessageDispatchPlan.initialMessageToken,
+        initialMessageSent = false,
+        initialMessageTimeoutPolicy = initialMessageDispatchPlan.initialMessageTimeoutPolicy,
       )
     }
     else {
@@ -216,6 +272,29 @@ suspend fun collectOpenAgentChatProjectPaths(): Set<String> {
 
 suspend fun collectOpenPendingAgentChatProjectPaths(): Set<String> {
   return collectOpenAgentChatProjectPaths(includePendingOnly = true)
+}
+
+fun notifyCodexTerminalOutputForRefresh(projectPath: String) {
+  CodexTerminalOutputSignalStore.mark(projectPath)
+}
+
+fun consumeRecentCodexTerminalOutputRefreshPaths(): Set<String> {
+  return CodexTerminalOutputSignalStore.consumeRecent()
+}
+
+@TestOnly
+internal fun notifyCodexTerminalOutputForRefreshForTests(projectPath: String, timestampMs: Long) {
+  CodexTerminalOutputSignalStore.mark(projectPath, timestampMs)
+}
+
+@TestOnly
+internal fun consumeRecentCodexTerminalOutputRefreshPathsForTests(nowMs: Long): Set<String> {
+  return CodexTerminalOutputSignalStore.consumeRecent(nowMs)
+}
+
+@TestOnly
+internal fun clearCodexTerminalOutputRefreshSignalsForTests() {
+  CodexTerminalOutputSignalStore.clear()
 }
 
 suspend fun collectOpenPendingCodexTabsByPath(): Map<String, List<AgentChatPendingCodexTabSnapshot>> = withContext(Dispatchers.UI) {

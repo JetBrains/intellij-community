@@ -5,6 +5,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.SerializablePersistentStateComponent
 import com.intellij.openapi.components.Service
@@ -18,10 +19,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import kotlin.time.Duration.Companion.minutes
 
-private const val AGENT_CHAT_TABS_STATE_VERSION = 4
+private const val AGENT_CHAT_TABS_STATE_VERSION = 5
 private const val AGENT_CHAT_TABS_STATE_TTL_MILLIS = 30L * 24 * 60 * 60 * 1000
 private const val AGENT_CHAT_LEGACY_METADATA_DIR_NAME = "agent-workbench-chat-frame"
 private const val AGENT_CHAT_LEGACY_METADATA_TABS_DIR_NAME = "tabs"
@@ -32,6 +34,9 @@ private val LOG = logger<AgentChatTabsStateService>()
 @State(name = "AgentChatTabsState", storages = [Storage(StoragePathMacros.CACHE_FILE)])
 internal class AgentChatTabsStateService(scope: CoroutineScope?)
   : SerializablePersistentStateComponent<AgentChatTabsState>(AgentChatTabsState()) {
+
+  @Volatile
+  private var versionMismatchForcedForTests: Boolean = false
 
   init {
     scope?.launch {
@@ -49,7 +54,9 @@ internal class AgentChatTabsStateService(scope: CoroutineScope?)
   }
 
   fun load(tabKey: AgentChatTabKey): AgentChatTabSnapshot? {
-    ensureCurrentVersion()
+    if (hasVersionMismatch()) {
+      return null
+    }
     val entry = state.tabsByKey[tabKey.value] ?: return null
     if (isExpired(entry.updatedAt)) {
       delete(tabKey)
@@ -63,10 +70,9 @@ internal class AgentChatTabsStateService(scope: CoroutineScope?)
   }
 
   fun upsert(snapshot: AgentChatTabSnapshot) {
-    ensureCurrentVersion()
     val now = System.currentTimeMillis()
     updateState { current ->
-      val updatedTabs = current.tabsByKey.toMutableMap()
+      val updatedTabs = normalizeTabsForWrite(current).toMutableMap()
       updatedTabs.put(snapshot.tabKey.value, snapshot.toPersisted(now))
       current.copy(
         version = AGENT_CHAT_TABS_STATE_VERSION,
@@ -76,20 +82,24 @@ internal class AgentChatTabsStateService(scope: CoroutineScope?)
   }
 
   fun delete(tabKey: AgentChatTabKey): Boolean {
-    ensureCurrentVersion()
-    if (tabKey.value !in state.tabsByKey) {
-      return false
-    }
+    var deleted = false
 
     updateState { current ->
-      val updatedTabs = current.tabsByKey.toMutableMap()
+      val versionMismatch = hasVersionMismatch(current)
+      val baseTabs = normalizeTabsForWrite(current)
+      deleted = tabKey.value in baseTabs
+      if (!deleted && !versionMismatch) {
+        return@updateState current
+      }
+
+      val updatedTabs = baseTabs.toMutableMap()
       updatedTabs.remove(tabKey.value)
       current.copy(
         version = AGENT_CHAT_TABS_STATE_VERSION,
         tabsByKey = updatedTabs,
       )
     }
-    return true
+    return deleted
   }
 
   fun delete(tabKey: String): Boolean {
@@ -105,22 +115,25 @@ internal class AgentChatTabsStateService(scope: CoroutineScope?)
     threadIdentity: String,
     subAgentId: String? = null,
   ): AgentChatDeleteByThreadResult {
-    ensureCurrentVersion()
     val normalizedProjectPath = normalizeAgentWorkbenchPath(projectPath)
-    val keysToDelete = state.tabsByKey.entries
-      .filter { (_, tab) ->
-        normalizeAgentWorkbenchPath(tab.projectPath) == normalizedProjectPath &&
-        tab.threadIdentity == threadIdentity &&
-        (subAgentId == null || tab.subAgentId == subAgentId)
-      }
-      .map { (key, _) -> key }
-
-    if (keysToDelete.isEmpty()) {
-      return AgentChatDeleteByThreadResult(emptyList())
-    }
+    var keysToDelete = emptyList<String>()
 
     updateState { current ->
-      val updatedTabs = current.tabsByKey.toMutableMap()
+      val versionMismatch = hasVersionMismatch(current)
+      val baseTabs = normalizeTabsForWrite(current)
+      keysToDelete = baseTabs.entries
+        .filter { (_, tab) ->
+          normalizeAgentWorkbenchPath(tab.projectPath) == normalizedProjectPath &&
+          tab.threadIdentity == threadIdentity &&
+          (subAgentId == null || tab.subAgentId == subAgentId)
+        }
+        .map { (key, _) -> key }
+
+      if (keysToDelete.isEmpty() && !versionMismatch) {
+        return@updateState current
+      }
+
+      val updatedTabs = baseTabs.toMutableMap()
       keysToDelete.forEach(updatedTabs::remove)
       current.copy(
         version = AGENT_CHAT_TABS_STATE_VERSION,
@@ -131,7 +144,9 @@ internal class AgentChatTabsStateService(scope: CoroutineScope?)
   }
 
   fun pruneStale() {
-    ensureCurrentVersion()
+    if (hasVersionMismatch()) {
+      return
+    }
     val now = System.currentTimeMillis()
     val filtered = state.tabsByKey.filterValues { tab -> !isExpired(tab.updatedAt, now) }
     if (filtered.size == state.tabsByKey.size && state.version == AGENT_CHAT_TABS_STATE_VERSION) {
@@ -146,15 +161,23 @@ internal class AgentChatTabsStateService(scope: CoroutineScope?)
     }
   }
 
-  private fun ensureCurrentVersion() {
-    if (state.version == AGENT_CHAT_TABS_STATE_VERSION) {
-      return
+  fun hasVersionMismatch(): Boolean = hasVersionMismatch(state)
+
+  @TestOnly
+  internal fun forceVersionMismatchForTests(value: Boolean) {
+    versionMismatchForcedForTests = value
+  }
+
+  private fun hasVersionMismatch(current: AgentChatTabsState): Boolean {
+    return versionMismatchForcedForTests || current.version != AGENT_CHAT_TABS_STATE_VERSION
+  }
+
+  private fun normalizeTabsForWrite(current: AgentChatTabsState): Map<String, PersistedAgentChatTabState> {
+    return if (hasVersionMismatch(current)) {
+      emptyMap()
     }
-    updateState {
-      AgentChatTabsState(
-        version = AGENT_CHAT_TABS_STATE_VERSION,
-        tabsByKey = emptyMap(),
-      )
+    else {
+      current.tabsByKey
     }
   }
 }
@@ -186,6 +209,7 @@ internal data class PersistedAgentChatTabState(
   @JvmField val initialComposedMessage: String? = null,
   @JvmField val initialMessageToken: String? = null,
   @JvmField val initialMessageSent: Boolean = false,
+  @JvmField val initialMessageTimeoutPolicy: String = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK.name,
   @JvmField val updatedAt: Long,
 )
 
@@ -244,6 +268,7 @@ private fun PersistedAgentChatTabState.toSnapshot(tabKey: AgentChatTabKey): Agen
       initialComposedMessage = initialComposedMessage,
       initialMessageToken = initialMessageToken,
       initialMessageSent = initialMessageSent,
+      initialMessageTimeoutPolicy = parseInitialMessageTimeoutPolicy(initialMessageTimeoutPolicy),
     ),
   )
 }
@@ -265,6 +290,7 @@ private fun AgentChatTabSnapshot.toPersisted(updatedAt: Long): PersistedAgentCha
     initialComposedMessage = runtime.initialComposedMessage,
     initialMessageToken = runtime.initialMessageToken,
     initialMessageSent = runtime.initialMessageSent,
+    initialMessageTimeoutPolicy = runtime.initialMessageTimeoutPolicy.name,
     updatedAt = updatedAt,
   )
 }
@@ -280,4 +306,9 @@ private fun isPersistedPendingThreadIdentity(threadIdentity: String): Boolean {
 private fun parseThreadActivity(value: String): AgentThreadActivity {
   return runCatching { AgentThreadActivity.valueOf(value) }
     .getOrDefault(AgentThreadActivity.READY)
+}
+
+private fun parseInitialMessageTimeoutPolicy(value: String): AgentInitialMessageTimeoutPolicy {
+  return runCatching { AgentInitialMessageTimeoutPolicy.valueOf(value) }
+    .getOrDefault(AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK)
 }
