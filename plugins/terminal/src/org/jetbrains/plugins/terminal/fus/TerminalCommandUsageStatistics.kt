@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.execution.ParametersListUtil
 import org.jetbrains.annotations.ApiStatus
+import kotlin.math.min
 
 @ApiStatus.Internal
 object TerminalCommandUsageStatistics {
@@ -79,11 +80,20 @@ object TerminalCommandUsageStatistics {
     if (executable !in knownCommandsData.commands) {
       return null
     }
-    val subCommand = userCommand.getOrNull(1)
-    return if (subCommand != null && subCommand in knownCommandsData.subCommands) {
-      CommandData(executable, subCommand)
+
+    // Find the longest known subcommand that match the user command
+    val subCommandTokens = userCommand.drop(1)
+    val maxTokensCount = min(subCommandTokens.size, knownCommandsData.maxSubCommandTokens)
+    if (maxTokensCount > 0) {
+      for (subCommandLength in maxTokensCount downTo 1) {
+        val subCommand = subCommandTokens.subList(0, subCommandLength).joinToString(" ")
+        if (subCommand in knownCommandsData.subCommands) {
+          return CommandData(executable, subCommand)
+        }
+      }
     }
-    else if (subCommand != null) {
+
+    return if (subCommandTokens.isNotEmpty()) {
       CommandData(executable, THIRD_PARTY)
     }
     else CommandData(executable, null)
@@ -92,16 +102,19 @@ object TerminalCommandUsageStatistics {
   private fun buildKnownCommandsData(): KnownCommandsData {
     val commands = HashSet<String>()
     val subCommands = HashSet<String>()
+    var maxSubCommandTokens = 1
 
     val commandLines = AllowedItemsResourceWeakRefStorage(TerminalCommandUsageStatistics.javaClass, "known-commands.txt").items
     for (line in commandLines) {
       val command = line.substringBefore(' ')
       val subCommand = line.substring(command.length).trim().takeIf { it.isNotEmpty() }
+      val subCommandTokensCount = subCommand?.let { ParametersListUtil.parse(it).size } ?: 0
       commands.add(command)
       subCommand?.let { subCommands.add(it) }
+      maxSubCommandTokens = maxOf(maxSubCommandTokens, subCommandTokensCount)
     }
 
-    return KnownCommandsData(commands, subCommands)
+    return KnownCommandsData(commands, subCommands, maxSubCommandTokens)
   }
 
   class CommandData(val command: String, val subCommand: String?)
@@ -109,5 +122,6 @@ object TerminalCommandUsageStatistics {
   class KnownCommandsData(
     val commands: Set<String>,
     val subCommands: Set<String>,
+    val maxSubCommandTokens: Int,
   )
 }
