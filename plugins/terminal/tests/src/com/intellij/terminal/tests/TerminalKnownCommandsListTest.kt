@@ -3,6 +3,7 @@ package com.intellij.terminal.tests
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import org.jetbrains.plugins.terminal.fus.TerminalCommandUsageStatistics
 import org.junit.Test
+import java.util.Locale
 
 internal class TerminalKnownCommandsListTest {
   @Test
@@ -38,6 +39,21 @@ internal class TerminalKnownCommandsListTest {
     val actual = getKnownCommandsList()
     val regex = Regex(" +")
     val expected = actual.map { it.replace(regex, " ") }
+    assertListEquals(expected, actual)
+  }
+
+  @Test
+  fun `command names are lowercase`() {
+    val actual = getKnownCommandsList()
+    val expected = actual.map { line ->
+      val firstSpace = line.indexOf(' ')
+      if (firstSpace < 0) {
+        line.lowercase(Locale.ENGLISH)
+      }
+      else {
+        line.substring(0, firstSpace).lowercase(Locale.ENGLISH) + line.substring(firstSpace)
+      }
+    }
     assertListEquals(expected, actual)
   }
 
