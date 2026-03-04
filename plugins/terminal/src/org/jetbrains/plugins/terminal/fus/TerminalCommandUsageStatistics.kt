@@ -9,6 +9,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.execution.ParametersListUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.Locale
 import kotlin.math.min
 
 @ApiStatus.Internal
@@ -82,7 +83,8 @@ object TerminalCommandUsageStatistics {
   private fun toKnownCommand(userCommand: List<String>, knownCommandsData: KnownCommandsData): CommandData? {
     val executable: String = (userCommand.getOrNull(0) ?: return null).let {
       if (SystemInfo.isWindows) it.removeSuffix(".exe") else it
-    }
+    }.lowercase(Locale.ENGLISH)
+
     if (executable !in knownCommandsData.commands) {
       return null
     }

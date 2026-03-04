@@ -123,6 +123,23 @@ internal class TerminalLoggableCommandDataTest {
   }
 
   @Test
+  fun `command matching is case insensitive`() {
+    val knownCommandsData = KnownCommandsData(
+      commands = setOf("get-childitem"),
+      subCommands = emptySet(),
+      maxSubCommandTokens = 1,
+    )
+    val data = getLoggableCommandData("Get-ChildItem", knownCommandsData)
+    assertCommandData(data, "get-childitem", null)
+  }
+
+  @Test
+  fun `subcommand matching is case sensitive`() {
+    val data = getLoggableCommandData("git Commit", GIT_DATA)
+    assertCommandData(data, "git", "third.party")
+  }
+
+  @Test
   fun `unknown command`() {
     val data = getLoggableCommandData("unknown-cmd", GIT_DATA)
     assertCommandData(data, "third.party", null)
