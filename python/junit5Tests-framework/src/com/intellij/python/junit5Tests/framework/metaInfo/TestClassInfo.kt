@@ -4,6 +4,7 @@ package com.intellij.python.junit5Tests.framework.metaInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PluginPathManager
 import org.jetbrains.annotations.TestOnly
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -36,6 +37,7 @@ private fun getContentDir(tryAddingCommunity: Boolean, content: String): Path {
  * @property contentRootPath Specifies the path in the [repository] which will be used as $CONTENT_ROOT.
  */
 @TestOnly
+@ExtendWith(TestMetaInfoExtension::class)
 annotation class TestClassInfo(
   val repository: Repository = Repository.PY_COMMUNITY,
   val contentRootPath: String = "testSrc",
@@ -67,7 +69,7 @@ data class TestClassInfoData(val testDataPath: Path?) {
 }
 
 @TestOnly
-data class TestMethodInfoData(val testCaseFilePath: Path?)
+data class TestMethodInfoData(val testCaseRelativePath: Path?)
 
 
 internal fun <T : Annotation> getAnnotation(context: ExtensionContext?, clazz: Class<T>): T? {
