@@ -590,6 +590,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/RerunStaticFromGeneric/");
     }
 
+    @TestMetadata("RerunStaticFromInterface")
+    public void testRerunStaticFromInterface() throws Exception {
+        runTest("../testData/basic/multifile/RerunStaticFromInterface/");
+    }
+
     @TestMetadata("RerunStaticFromNested")
     public void testRerunStaticFromNested() throws Exception {
         runTest("../testData/basic/multifile/RerunStaticFromNested/");
