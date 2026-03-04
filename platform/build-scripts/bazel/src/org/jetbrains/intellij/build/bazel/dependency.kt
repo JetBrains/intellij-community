@@ -81,7 +81,14 @@ internal fun generateDeps(
     val isExported = dependencyExtension.isExported
 
     if (element is JpsModuleDependency) {
+      /* Android Studio (b/490117560): some module dependencies are unresolved in our setup (e.g. references to JetBrains/android).
       val dependencyModule = element.moduleReference.resolve()!!
+      */
+      val dependencyModule = element.moduleReference.resolve()
+      if (dependencyModule == null) {
+        System.err.println("Warning: ignoring unresolved reference to module ${element.moduleReference.moduleName}")
+        continue
+      }
       val dependencyModuleDescriptor = context.getKnownModuleDescriptorOrError(dependencyModule)
       val label = BazelLabel(
         label = context.getBazelDependencyLabel(module = dependencyModuleDescriptor, dependent = module),

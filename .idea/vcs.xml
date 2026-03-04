@@ -55,6 +55,6 @@
   </component>
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/../vendor/intellij/cidr" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/CIDR" vcs="Git" />
   </component>
 </project>

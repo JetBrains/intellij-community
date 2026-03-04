@@ -342,6 +342,9 @@ internal class JpsModuleToBazel {
                   require(normalize() == this) { "Path $this must be normalized" }
                   require(repoName.startsWith("@") || repoName.isEmpty()) { "Repo name $repoName must start with '@' or be empty" }
                   val relative = relativeTo(repoRoot)
+                  // Android Studio (b/490117560): handle build targets from our custom Kotlin compiler build,
+                  // which look a bit different from what this code path originally expected.
+                  if (relative.startsWith("kotlin-snapshot")) return "$repoName//:${relative.invariantSeparatorsPathString}"
                   return "$repoName//${if (relative.parent == null) "" else relative.parent.invariantSeparatorsPathString}:${relative.fileName}"
                 }
 

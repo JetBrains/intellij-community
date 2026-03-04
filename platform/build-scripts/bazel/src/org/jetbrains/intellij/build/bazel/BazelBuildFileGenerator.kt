@@ -167,8 +167,15 @@ internal class BazelBuildFileGenerator(
     for (element in module.dependenciesList.dependencies) {
       if (element is JpsModuleDependency) {
         val ref = element.moduleReference
+        /* Android Studio (b/490117560): some module dependencies are unresolved in our setup (e.g. references to JetBrains/android).
         val resolved = requireNotNull(ref.resolve()) {
           "Cannot resolve module ${ref.moduleName} (dependency of '${module.name}') in $projectDir/.idea/modules.xml"
+        }
+        */
+        val resolved = ref.resolve()
+        if (resolved == null) {
+          System.err.println("Warning: ignoring unresolved reference to module ${ref.moduleName}")
+          continue
         }
         getModuleDescriptor(resolved)
       }
@@ -515,6 +522,12 @@ internal class BazelBuildFileGenerator(
         }
 
         "//$relativeToUltimatePath"
+      }
+      // Android Studio (b/490117560): we model CIDR modules as Community modules to avoid triggering code paths that
+      // break with the studio-main repo layout. However, if a CIDR module depends on a true Community module,
+      // we still want it to use the @community prefix in order to minimize BUILD-file diffs from upstream.
+      dependent.relativePathFromProjectRoot.startsWith("CIDR") && !module.relativePathFromProjectRoot.startsWith("CIDR") -> {
+        "@community//$relativeToCommunityPath"
       }
       dependentIsCommunity -> "//$relativeToCommunityPath"
       else -> "@community//$relativeToCommunityPath"
