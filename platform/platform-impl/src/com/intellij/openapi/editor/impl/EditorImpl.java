@@ -2221,6 +2221,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myState.setScrollToCaret(scrollToCaret);
   }
 
+  /**
+   * @deprecated For internal editor implementation only.
+   * Use {@link EditorUtil#disposeWithEditor(Editor, Disposable)} instead.
+   */
+  @Deprecated
   public @NotNull Disposable getDisposable() {
     return myDisposable;
   }
