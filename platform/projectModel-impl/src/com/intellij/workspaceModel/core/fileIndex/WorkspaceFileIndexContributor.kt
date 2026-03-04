@@ -187,7 +187,6 @@ enum class WorkspaceFileKind {
 
 /**
  * A condition for excluding files from a root registered in [WorkspaceFileSetRegistrar.registerExclusionCondition].
- * Implementations must provide stable [equals] and [hashCode] to support incremental updates.
  */
 interface WorkspaceFileSetExclusionCondition {
   /**
@@ -195,14 +194,8 @@ interface WorkspaceFileSetExclusionCondition {
    */
   fun shouldExclude(file: VirtualFile): Boolean
 
-  /**
-   * Implementations must provide stable equality semantics for contributor updates.
-   */
   override fun equals(other: Any?): Boolean
 
-  /**
-   * Implementations must provide hashcode consistent with [equals].
-   */
   override fun hashCode(): Int
 }
 
