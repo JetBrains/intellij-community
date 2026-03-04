@@ -39,7 +39,7 @@ class HtmlSymbolsTextInjector : MultiHostInjector {
                 .exclude(PolySymbolModifier.ABSTRACT)
                 .run()
                 .getLanguageToInject(),
-              PsiModificationTracker.MODIFICATION_COUNT, queryExecutor
+              PsiModificationTracker.MODIFICATION_COUNT, queryExecutor.modificationTracker
             )
           }
         }
@@ -59,7 +59,7 @@ class HtmlSymbolsTextInjector : MultiHostInjector {
                 .exclude(PolySymbolModifier.ABSTRACT)
                 .run()
                 .getLanguageToInject(),
-              PsiModificationTracker.MODIFICATION_COUNT, queryExecutor
+              PsiModificationTracker.MODIFICATION_COUNT, queryExecutor.modificationTracker
             )
           }
         }

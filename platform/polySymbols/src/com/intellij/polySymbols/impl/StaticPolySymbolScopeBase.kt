@@ -246,11 +246,11 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin>
       symbolsCache.getOrPut(item) { item.withQueryExecutorContext(queryExecutor) }
 
     fun checkForModifications() {
-      if (queryExecutor.modificationCount != this.queryExecutorModificationCount) {
+      if (queryExecutor.modificationTracker.modificationCount != this.queryExecutorModificationCount) {
         synchronized(this) {
-          if (queryExecutor.modificationCount != this.queryExecutorModificationCount) {
+          if (queryExecutor.modificationTracker.modificationCount != this.queryExecutorModificationCount) {
             symbolsCache.clear()
-            this.queryExecutorModificationCount = queryExecutor.modificationCount
+            this.queryExecutorModificationCount = queryExecutor.modificationTracker.modificationCount
           }
         }
       }
