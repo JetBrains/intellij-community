@@ -19,6 +19,7 @@ import com.intellij.platform.searchEverywhere.SeItemsPreviewProvider
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeItemsProviderWithPossibleOperationDisposable
 import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SePossibleInternalCommandsHandling
 import com.intellij.platform.searchEverywhere.SePreviewInfo
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSearchScopesProvider
@@ -44,6 +45,16 @@ import java.util.UUID
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.incrementAndFetch
+
+private fun SeItemsProvider.shouldTreatQueryAsCommand(query: String): Boolean {
+  if (this !is SePossibleInternalCommandsHandling) return query.mightBeACommandQuery
+  return shouldTreatAsACommandQuery(query) ?: query.mightBeACommandQuery
+}
+
+private fun SeItemsProvider.shouldTreatQueryAsCommandWithArg(query: String): Boolean {
+  if (this !is SePossibleInternalCommandsHandling) return query.mightBeACommandWithArg
+  return shouldTreatAsACommandQueryWithArg(query) ?: query.mightBeACommandWithArg
+}
 
 private val String.mightBeACommandQuery get() = startsWith(SearchTopHitProvider.getTopHitAccelerator()) && !contains(" ")
 private val String.mightBeACommandWithArg get() = startsWith(SearchTopHitProvider.getTopHitAccelerator()) && contains(" ")
@@ -130,7 +141,7 @@ class SeLocalItemDataProvider(
 
   private fun getCommandItems(params: SeParams, supportedCommands: List<SeCommandInfo>): List<SeCommandItem> {
     val inputQuery = params.inputQuery
-    if (!inputQuery.mightBeACommandQuery) return emptyList()
+    if (!provider.shouldTreatQueryAsCommand(inputQuery)) return emptyList()
 
     val commandPrefix = SearchTopHitProvider.getTopHitAccelerator()
     val typedCommand = inputQuery.removePrefix(commandPrefix)
@@ -188,7 +199,7 @@ class SeLocalItemDataProvider(
   @ApiStatus.Internal
   @OptIn(ExperimentalAtomicApi::class)
   fun getRawItemsWithOperationLifetime(params: SeParams, operationDisposable: Disposable): Flow<SeItem> {
-    if (params.inputQuery.mightBeACommandWithArg && !provider.areCommandsSupported()) {
+    if (provider.shouldTreatQueryAsCommandWithArg(params.inputQuery) && !provider.areCommandsSupported()) {
       return emptyFlow()
     }
     return itemsRawChannelFlow(params, operationDisposable)
@@ -196,7 +207,7 @@ class SeLocalItemDataProvider(
 
   @OptIn(ExperimentalAtomicApi::class)
   fun getRawItems(params: SeParams): Flow<SeItem> {
-    if (params.inputQuery.mightBeACommandWithArg && !provider.areCommandsSupported()) {
+    if (provider.shouldTreatQueryAsCommandWithArg(params.inputQuery) && !provider.areCommandsSupported()) {
       return emptyFlow()
     }
 

@@ -34,4 +34,8 @@ interface SearchEverywhereContributorModule : Disposable.Default {
   fun anyElementFitsScope(scope: SearchScope?, element: Any?): Boolean = true
 
   fun createCustomModel(project: Project?, contributor: AbstractGotoSEContributor, operationDisposable: Disposable?): FilteringGotoByModel<LanguageRef>?
+
+  fun shouldTreatAsACommandQuery(string: String): Boolean?
+
+  fun shouldTreatAsACommandQueryWithArg(string: String): Boolean?
 }
