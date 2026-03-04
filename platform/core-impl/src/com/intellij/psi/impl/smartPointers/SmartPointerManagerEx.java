@@ -30,12 +30,34 @@ import java.util.List;
 @ApiStatus.Internal
 public abstract class SmartPointerManagerEx extends SmartPointerManager implements Disposable {
 
+  /**
+   * This method is called when the PSI tree of the given file is going to be modified.
+   *
+   * @param file the target file
+   */
   public abstract void fastenBelts(@NotNull VirtualFile file);
 
+  /**
+   * Creates a smart pointer to a PSI element.
+   *
+   * @param element        the target element
+   * @param containingFile the containing file
+   * @param forInjected    whether the range is for injected content
+   * @param <E>            type of target element
+   * @return a smart pointer to the specified PSI element
+   */
   public abstract @NotNull <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element,
                                                                                                          PsiFile containingFile,
                                                                                                          boolean forInjected);
 
+  /**
+   * Creates a smart pointer to a range within a file.
+   *
+   * @param file        the file containing the range
+   * @param range       the range to be pointed to
+   * @param forInjected whether the range is for injected content
+   * @return a smart pointer to the specified range
+   */
   public abstract @NotNull SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile file,
                                                                             @NotNull TextRange range,
                                                                             boolean forInjected);
