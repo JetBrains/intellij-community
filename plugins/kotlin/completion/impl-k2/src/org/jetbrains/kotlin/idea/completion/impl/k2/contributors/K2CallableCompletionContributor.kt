@@ -51,6 +51,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaBackingFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaJavaFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaKotlinPropertySymbol
@@ -293,7 +294,8 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
             if (!context.visibilityChecker.canBeVisible(it)) return@getKotlinCallableSymbolsByNameFilter false
             // We should not show class members when we do not have a receiver.
             val containingSymbol = it.symbol.containingSymbol
-            containingSymbol !is KaClassSymbol || containingSymbol.classKind.isObject
+            // non-static fields are defined either in the class body or the constructor
+            (containingSymbol !is KaClassSymbol || containingSymbol.classKind.isObject) && containingSymbol !is KaConstructorSymbol
         }
 
         val javaCallables = context.symbolFromIndexProvider

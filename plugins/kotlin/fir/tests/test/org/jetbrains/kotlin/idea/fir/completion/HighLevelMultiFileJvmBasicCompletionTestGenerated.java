@@ -570,6 +570,51 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/PropertyKeysWithPrefix/");
     }
 
+    @TestMetadata("RerunStaticFromAnnotation")
+    public void testRerunStaticFromAnnotation() throws Exception {
+        runTest("../../completion/testData/basic/multifile/RerunStaticFromAnnotation/");
+    }
+
+    @TestMetadata("RerunStaticFromClass")
+    public void testRerunStaticFromClass() throws Exception {
+        runTest("../../completion/testData/basic/multifile/RerunStaticFromClass/");
+    }
+
+    @TestMetadata("RerunStaticFromEnum")
+    public void testRerunStaticFromEnum() throws Exception {
+        runTest("../../completion/testData/basic/multifile/RerunStaticFromEnum/");
+    }
+
+    @TestMetadata("RerunStaticFromGeneric")
+    public void testRerunStaticFromGeneric() throws Exception {
+        runTest("../../completion/testData/basic/multifile/RerunStaticFromGeneric/");
+    }
+
+    @TestMetadata("RerunStaticFromNested")
+    public void testRerunStaticFromNested() throws Exception {
+        runTest("../../completion/testData/basic/multifile/RerunStaticFromNested/");
+    }
+
+    @TestMetadata("RerunStaticFromRecord")
+    public void testRerunStaticFromRecord() throws Exception {
+        runTest("../../completion/testData/basic/multifile/RerunStaticFromRecord/");
+    }
+
+    @TestMetadata("RerunStaticOtherPackage")
+    public void testRerunStaticOtherPackage() throws Exception {
+        runTest("../../completion/testData/basic/multifile/RerunStaticOtherPackage/");
+    }
+
+    @TestMetadata("RerunStaticPrivateOuter")
+    public void testRerunStaticPrivateOuter() throws Exception {
+        runTest("../../completion/testData/basic/multifile/RerunStaticPrivateOuter/");
+    }
+
+    @TestMetadata("RerunStaticSamePackage")
+    public void testRerunStaticSamePackage() throws Exception {
+        runTest("../../completion/testData/basic/multifile/RerunStaticSamePackage/");
+    }
+
     @TestMetadata("StaticMembersOfImportedClassFromJava")
     public void testStaticMembersOfImportedClassFromJava() throws Exception {
         runTest("../../completion/testData/basic/multifile/StaticMembersOfImportedClassFromJava/");
