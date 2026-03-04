@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.plugins.groovy;
+package com.intellij.maven.groovy;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;

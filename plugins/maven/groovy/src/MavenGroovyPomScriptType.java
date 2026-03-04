@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.plugins.groovy;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.maven.groovy;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -18,7 +18,9 @@ import com.intellij.psi.search.NonClasspathDirectoriesScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
+import icons.OpenapiIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.bundled.BundledGroovy;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyRunnableScriptType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -28,9 +30,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-
-import static icons.OpenapiIcons.RepositoryLibraryLogo;
-import static org.jetbrains.plugins.groovy.bundled.BundledGroovy.getBundledGroovyFile;
 
 /**
  * @author Vladislav.Soroka
@@ -45,7 +44,7 @@ public class MavenGroovyPomScriptType extends GroovyRunnableScriptType {
 
   @Override
   public @NotNull Icon getScriptIcon() {
-    return RepositoryLibraryLogo;
+    return OpenapiIcons.RepositoryLibraryLogo;
   }
 
   @Override
@@ -77,7 +76,7 @@ public class MavenGroovyPomScriptType extends GroovyRunnableScriptType {
   }
 
   public static List<VirtualFile> additionalScopeFiles() {
-    VirtualFile jarFile = VfsUtil.findFileByIoFile(getBundledGroovyFile().get(), false);
+    VirtualFile jarFile = VfsUtil.findFileByIoFile(BundledGroovy.getBundledGroovyFile().get(), false);
     if (jarFile != null) {
       VirtualFile jarRoot = JarFileSystem.getInstance().getRootByLocal(jarFile);
       if (jarRoot != null) {

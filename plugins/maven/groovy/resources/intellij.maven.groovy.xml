@@ -1,0 +1,52 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="org.intellij.groovy"/>
+    <plugin id="org.jetbrains.idea.maven"/>
+    <module name="intellij.java.ui"/>
+    <module name="intellij.repository.search.common"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.idea.maven.importing.groovy.foldersConfiguratorContributor"
+                    interface="com.intellij.maven.groovy.GroovyPluginConfigurator$PluginContributor"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="org.jetbrains.idea.maven">
+    <importing.workspaceConfigurator implementation="com.intellij.maven.groovy.GroovyPluginConfigurator"/>
+
+    <compiler implementation="com.intellij.maven.groovy.MavenCompilerGrEclipseExtension"/>
+
+    <pluginDescriptor mavenId="org.codehaus.groovy.maven:gmaven-plugin">
+      <param name="source" languageProvider="com.intellij.maven.groovy.MavenGroovyLanguageProvider"/>
+    </pluginDescriptor>
+
+    <pluginDescriptor mavenId="org.codehaus.gmaven:gmaven-plugin">
+      <param name="source" languageProvider="com.intellij.maven.groovy.MavenGroovyLanguageProvider"/>
+    </pluginDescriptor>
+
+    <pluginDescriptor mavenId="org.codehaus.gmaven:groovy-maven-plugin">
+      <param name="source" languageProvider="com.intellij.maven.groovy.MavenGroovyLanguageProvider"/>
+    </pluginDescriptor>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.intellij.groovy">
+    <membersContributor implementation="com.intellij.maven.groovy.MavenGroovyPomScriptMemberContributor"/>
+    <membersContributor implementation="com.intellij.maven.groovy.MavenGroovyPolyglotPomMemberContributor"/>
+    <scriptTypeDetector implementation="com.intellij.maven.groovy.MavenGroovyScriptTypeDetector"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <weigher key="completion" implementationClass="com.intellij.maven.groovy.MavenGroovyPomCompletionWeigher"
+             id="mavenGroovyWeigher" order="first"/>
+
+    <completion.contributor language="Groovy" id="mavenGroovyPom" order="last"
+                            implementationClass="com.intellij.maven.groovy.MavenGroovyPomCompletionContributor"/>
+
+    <fileTypeUsageSchemaDescriptor schema="Maven Groovy" implementationClass="com.intellij.maven.groovy.MavenGroovyScriptTypeDetector"/>
+
+    <newProjectWizard.groovy.buildSystem implementation="com.intellij.maven.groovy.wizard.MavenGroovyNewProjectWizard"/>
+
+  </extensions>
+</idea-plugin>

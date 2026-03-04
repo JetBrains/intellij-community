@@ -44,7 +44,6 @@
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" exported="" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.jgoodies.forms" />
     <orderEntry type="module" module-name="intellij.libraries.gson" />
-    <orderEntry type="module" module-name="intellij.groovy" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />

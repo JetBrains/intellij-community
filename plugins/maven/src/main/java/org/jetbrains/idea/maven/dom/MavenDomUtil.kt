@@ -45,7 +45,6 @@ import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_1_0
 import org.jetbrains.idea.maven.model.MavenCoordinate
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenResource
-import org.jetbrains.idea.maven.plugins.groovy.MavenGroovyPomCompletionContributor
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenDistribution
@@ -56,6 +55,9 @@ import org.jetbrains.idea.maven.utils.MavenUtil.isPomFileName
 import java.util.regex.Pattern
 
 object MavenDomUtil {
+  @JvmField
+  val POM_COMPLETION_ORIGINAL_FILE: Key<VirtualFile> = Key.create("POM_COMPLETION_ORIGINAL_FILE")
+
   private val FILTERED_RESOURCES_ROOTS_KEY = Key.create<Pair<Long?, MutableSet<VirtualFile?>?>?>("MavenDomUtil.FILTERED_RESOURCES_ROOTS")
 
   // see http://maven.apache.org/settings.html
@@ -240,8 +242,7 @@ object MavenDomUtil {
     psiFile = psiFile.getOriginalFile()
     var virtualFile = psiFile.getVirtualFile()
     if (virtualFile is LightVirtualFile) {
-      virtualFile = ObjectUtils.chooseNotNull<VirtualFile>(
-        psiFile.getUserData<VirtualFile?>(MavenGroovyPomCompletionContributor.ORIGINAL_POM_FILE), virtualFile)
+      virtualFile = ObjectUtils.chooseNotNull<VirtualFile>(psiFile.getUserData(POM_COMPLETION_ORIGINAL_FILE), virtualFile)
     }
     return virtualFile
   }

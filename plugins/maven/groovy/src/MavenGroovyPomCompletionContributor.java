@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.plugins.groovy;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.maven.groovy;
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.codeInsight.completion.CompletionContributor;
@@ -52,12 +52,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import static org.jetbrains.idea.maven.dom.MavenDomUtil.POM_COMPLETION_ORIGINAL_FILE;
+
 /**
  * @author Vladislav.Soroka
  */
 public final class MavenGroovyPomCompletionContributor extends CompletionContributor {
-  public static final Key<VirtualFile> ORIGINAL_POM_FILE = Key.create("ORIGINAL_POM_FILE");
-
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     final PsiElement position = parameters.getPosition();
@@ -82,7 +82,7 @@ public final class MavenGroovyPomCompletionContributor extends CompletionContrib
     }
 
     PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(MavenConstants.POM_XML, XMLLanguage.INSTANCE, buf);
-    psiFile.putUserData(ORIGINAL_POM_FILE, virtualFile);
+    psiFile.putUserData(POM_COMPLETION_ORIGINAL_FILE, virtualFile);
     List<Object> variants = new ArrayList<>();
 
 
