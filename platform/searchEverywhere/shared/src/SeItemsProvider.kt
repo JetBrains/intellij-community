@@ -76,7 +76,6 @@ interface SeItemsProvider : Disposable {
 }
 
 @ApiStatus.Internal
-@ApiStatus.Experimental
 interface SeItemsProviderWithPossibleOperationDisposable : SeItemsProvider {
   /**
    * See the comment for [com.intellij.platform.searchEverywhere.providers.SeLocalItemDataProvider.getRawItemsWithOperationLifetime]

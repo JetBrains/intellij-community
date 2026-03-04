@@ -14,6 +14,6 @@ import org.jetbrains.annotations.Nls
 @ApiStatus.Experimental
 @Serializable
 class SeParams(
-  @field:Nls val inputQuery: String,
+  val inputQuery: String,
   val filter: SeFilterState,
 )
