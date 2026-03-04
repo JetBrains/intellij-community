@@ -60,7 +60,7 @@ import kotlin.time.Duration.Companion.seconds
 internal class ProjectViewToolWindowServiceImpl(
   val project: Project,
 ) : ProjectViewToolWindowService, PersistentStateComponent<Element> {
-  private val actionGroup: DefaultActionGroup by lazy { DefaultActionGroup() }
+  private val menuActionGroup: DefaultActionGroup by lazy { DefaultActionGroup() }
   private val stateInitJob = CompletableDeferred<Unit>()
   private lateinit var defaultSelection: SelectedPaneState
   private val paneSelectJob = CompletableDeferred<Unit>()
@@ -83,7 +83,9 @@ internal class ProjectViewToolWindowServiceImpl(
   @RequiresEdt
   override fun setupToolWindow(toolWindow: ToolWindow) {
     toolWindow.setDefaultContentUiType(ToolWindowContentUiType.COMBO)
-    toolWindow.setAdditionalGearActions(actionGroup)
+    val action = ActionManager.getInstance().getAction("ProjectViewToolbar")
+    if (action != null) toolWindow.setTitleActions(listOf(action))
+    toolWindow.setAdditionalGearActions(menuActionGroup)
     toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
   }
 
@@ -132,14 +134,14 @@ internal class ProjectViewToolWindowServiceImpl(
     if (newPane != null) {
       persistentState.putSelectedPaneState(SelectedPaneState(newPane.providerId, newPane.id))
     }
-    updateToolbarActions()
+    updateMenuActions()
   }
 
-  private fun updateToolbarActions() {
-    actionGroup.removeAll()
+  private fun updateMenuActions() {
+    menuActionGroup.removeAll()
     val group = ActionManager.getInstance().getAction("ProjectView.ToolWindow.SecondaryActions") as DefaultActionGroup
     for (action in group.getChildActionsOrStubs()) {
-      actionGroup.addAction(action).setAsSecondary(true)
+      menuActionGroup.addAction(action).setAsSecondary(true)
     }
   }
 
