@@ -4289,5 +4289,32 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                        c: list[int] = second_edge
                    """);
   }
+
+  // PY-87575
+  public void testIterDefinedInMetaclass() {
+    myFixture.enableInspections(PyAssertTypeInspection.class);
+    doTestByText("""
+     from collections.abc import Iterator
+     from typing import assert_type
+     
+     # always has the the highest priority on type
+     class MyIterMeta(type):
+         def __iter__(self) -> Iterator[int]: ...
+     
+     class MyClass(metaclass=MyIterMeta): ...
+     
+     class MyRedefinedIter(MyClass):
+         def __iter__(self) -> Iterator[bool]: ...
+     
+     # str redefines __iter__
+     class MyFromStr(str, MyRedefinedIter): ...
+     
+     assert_type(iter(MyClass), Iterator[int])
+     assert_type(iter(MyRedefinedIter), Iterator[int])
+     assert_type(iter(MyFromStr), Iterator[int])
+     assert_type(iter(MyRedefinedIter()), Iterator[bool])
+     assert_type(iter(MyFromStr()), Iterator[str])
+     """);
+  }
 }
 

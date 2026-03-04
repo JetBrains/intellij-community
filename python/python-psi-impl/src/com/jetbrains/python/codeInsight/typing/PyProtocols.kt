@@ -93,6 +93,16 @@ fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, contex
         }
       }
       else -> {
+        if (subclass.isDefinition) {
+          val metaClassType = subclass.getMetaClassType(context, true)
+          if (metaClassType is PyClassType && PyNames.TYPE != metaClassType.name) {
+            val memberInMetaClass = metaClassType.findMember(name, resolveContext)
+            if (memberInMetaClass.isNotEmpty()) {
+              result.add(Pair(protocolMember, memberInMetaClass))
+              continue
+            }
+          }
+        }
         val subclassMembers = subclass.findMember(name, resolveContext)
         result.add(Pair(protocolMember, subclassMembers))
       }
