@@ -1,6 +1,7 @@
 package com.intellij.grazie.ide.inspection.grammar.quickfix
 
 import ai.grazie.nlp.langs.Language
+import com.intellij.CommonBundle
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.IntentionAndQuickFixAction
 import com.intellij.codeInspection.ProblemDescriptor
@@ -8,18 +9,21 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.cloud.GrazieCloudConnector.Companion.seemsCloudConnected
-import com.intellij.grazie.mlec.MlecChecker
+import com.intellij.grazie.mlec.MlecChecker.MlecProblem
 import com.intellij.grazie.spellcheck.TypoProblem
 import com.intellij.grazie.text.GrazieProblem
 import com.intellij.grazie.text.TextProblem
+import com.intellij.grazie.text.TreeRuleChecker.TreeProblem
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
@@ -33,7 +37,8 @@ import kotlin.math.abs
 private const val NEW_ISSUE_URL = "https://youtrack.jetbrains.com/newissue"
 private val SUPPORTED_LANGUAGES = setOf(Language.ENGLISH, Language.GERMAN)
 private val TRIM_REGEX = Regex("^(?:\\s*\\n)+|(?:\\s*\\n)+$")
-private val SUPPORTED_CLASSES = setOf(TypoProblem::class.java, GrazieProblem::class.java)
+private val SUPPORTED_CLASSES = setOf(TypoProblem::class.java, GrazieProblem::class.java, MlecProblem::class.java, TreeProblem::class.java)
+private const val AGREEMENT_KEY = "grazie.report.bug.yt.agreement.accepted"
 
 internal class GrazieYtReportAction(problem: TextProblem) : IntentionAndQuickFixAction(), Iconable {
   private val naturalLanguage: Language = problem.rule.language
@@ -62,7 +67,7 @@ internal class GrazieYtReportAction(problem: TextProblem) : IntentionAndQuickFix
   @get:Nls
   private val problemKind by lazy {
     if (problem.isSpellingProblem) GrazieBundle.message("grazie.report.bug.spelling.name")
-    else if (problem is MlecChecker.MlecProblem) problem.errorText
+    else if (problem is MlecProblem) problem.errorText
     else problem.rule.globalId
   }
   private val suggestions by lazy { problem.suggestions.map { it.presentableText } }
@@ -73,6 +78,7 @@ internal class GrazieYtReportAction(problem: TextProblem) : IntentionAndQuickFix
   override fun getFamilyName(): @IntentionFamilyName String = GrazieBundle.message("grazie.report.bug.action.name")
   override fun getIcon(flags: Int): Icon = AllIcons.ToolbarDecorator.AddYouTrack
   override fun applyFix(project: Project, file: PsiFile?, editor: Editor?) {
+    if (!ensureAgreement(project)) return
     val problemText = extractAndTrimText(editor) ?: return
     BrowserUtil.browse(generateReportURL(problemText))
   }
@@ -135,4 +141,23 @@ internal class GrazieYtReportAction(problem: TextProblem) : IntentionAndQuickFix
     val expandedRange = TextRange(document.getLineStartOffset(startLine), document.getLineEndOffset(endLine))
     return document.getText(expandedRange)
   }
+
+  private fun ensureAgreement(project: Project): Boolean {
+    if (agreement) return true
+
+    val hasAgreement = Messages.showYesNoDialog(
+      project,
+      GrazieBundle.message("grazie.report.bug.consent.message"),
+      GrazieBundle.message("grazie.report.bug.consent.title"),
+      CommonBundle.getOkButtonText(),
+      CommonBundle.getCancelButtonText(),
+      Messages.getWarningIcon()
+    ) == Messages.OK
+    agreement = hasAgreement
+    return hasAgreement
+  }
+
+  private var agreement: Boolean
+    get() = PropertiesComponent.getInstance().getBoolean(AGREEMENT_KEY, false)
+    set(value) = PropertiesComponent.getInstance().setValue(AGREEMENT_KEY, value)
 }
