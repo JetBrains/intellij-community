@@ -2,6 +2,7 @@
 package com.intellij.polySymbols.query
 
 import com.intellij.model.Pointer
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.StackOverflowPreventedException
 import com.intellij.polySymbols.PolySymbolModifier
@@ -245,7 +246,8 @@ class PolySymbolsCompletionQueryTest : PolySymbolsMockQueryExecutorTestBase() {
           else emptyList()
         }
 
-        override fun getModificationCount(): Long = 0
+        override val modificationTracker: ModificationTracker
+          get() = ModificationTracker.NEVER_CHANGED
       }, null, testRootDisposable)
     doTest("html/elements/", 0, "vue", "nested-pattern")
   }

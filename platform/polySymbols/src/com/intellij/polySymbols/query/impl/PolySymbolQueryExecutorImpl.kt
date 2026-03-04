@@ -378,7 +378,7 @@ class PolySymbolQueryExecutorImpl(
 
   override val modificationTracker: ModificationTracker
     get() = ModificationTracker {
-      rootScope.sumOf { it.modificationCount } + namesProvider.modificationCount + resultsCustomizer.modificationCount
+      rootScope.sumOf { it.modificationTracker.modificationCount } + namesProvider.modificationCount + resultsCustomizer.modificationCount
     }
 
   @RequiresReadLock

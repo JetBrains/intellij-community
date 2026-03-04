@@ -4,6 +4,7 @@
 package com.intellij.polySymbols.utils
 
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
@@ -95,8 +96,8 @@ abstract class PolySymbolIsolatedMappingScope<T : PsiElement>(
     return result
   }
 
-  final override fun getModificationCount(): Long =
-    PsiModificationTracker.getInstance(location.project).modificationCount
+  final override val modificationTracker: ModificationTracker
+    get() = PsiModificationTracker.getInstance(location.project)
 
   final override fun equals(other: Any?): Boolean =
     other === this

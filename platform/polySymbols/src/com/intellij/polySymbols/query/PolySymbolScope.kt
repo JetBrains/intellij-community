@@ -28,7 +28,12 @@ import com.intellij.polySymbols.utils.match
  * See also [Model Queries](https://plugins.jetbrains.com/docs/intellij/websymbols-implementation.html#model-queries) topic
  * to learn how queries are performed.
  */
-interface PolySymbolScope : ModificationTracker {
+interface PolySymbolScope {
+
+  /**
+   * Returns a modification tracker that tracks changes in this scope's contents.
+   */
+  val modificationTracker: ModificationTracker
 
   fun createPointer(): Pointer<out PolySymbolScope>
 

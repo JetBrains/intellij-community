@@ -2,6 +2,7 @@
 package com.intellij.polySymbols.impl
 
 import com.intellij.model.Pointer
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
@@ -39,8 +40,8 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin>
 
   abstract override fun createPointer(): Pointer<out StaticPolySymbolScopeBase<Root, Contribution, Origin>>
 
-  final override fun getModificationCount(): Long =
-    modCount
+  final override val modificationTracker: ModificationTracker
+    get() = ModificationTracker { modCount }
 
   final override fun getMatchingSymbols(
     qualifiedName: PolySymbolQualifiedName,

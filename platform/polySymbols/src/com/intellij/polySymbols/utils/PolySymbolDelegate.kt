@@ -5,6 +5,7 @@ import com.intellij.find.usages.api.SearchTarget
 import com.intellij.model.Pointer
 import com.intellij.navigation.NavigatableSymbol
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.polySymbols.PolySymbol
@@ -101,8 +102,8 @@ interface PolySymbolDelegate<T : PolySymbol> : PolySymbol, PolySymbolScope {
 
   override fun createPointer(): Pointer<out PolySymbolDelegate<T>>
 
-  override fun getModificationCount(): Long =
-    (delegate as? PolySymbolScope)?.modificationCount ?: 0
+  override val modificationTracker: ModificationTracker
+    get() = (delegate as? PolySymbolScope)?.modificationTracker ?: ModificationTracker.NEVER_CHANGED
 
   companion object {
 

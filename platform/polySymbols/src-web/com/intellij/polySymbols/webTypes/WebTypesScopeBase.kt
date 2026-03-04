@@ -6,6 +6,7 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.polySymbols.PolyContextKind
@@ -246,7 +247,7 @@ private class WebTypesSymbolNameConversionRulesProvider(
     }
   }
 
-  override fun getModificationCount(): Long = scope.modificationCount
+  override fun getModificationCount(): Long = scope.modificationTracker.modificationCount
 }
 
 private val EOL_PATTERN: Regex = Regex("\n|\r\n")
