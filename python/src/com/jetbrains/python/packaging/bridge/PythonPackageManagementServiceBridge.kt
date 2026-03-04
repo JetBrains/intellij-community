@@ -106,14 +106,14 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
 
 
   override fun fetchPackageVersions(packageName: String, consumer: CatchingConsumer<in List<String>, in Exception>) {
-    scope.launch {
+    scope.launch(Dispatchers.IO + ModalityState.current().asContextElement()) {
       val details = repositoryManager.getPackageDetails(packageName, null).getOrThrow()
       consumer.consume(details.availableVersions.sortedWith(PackageVersionComparator.VERSION_COMPARATOR.reversed()))
     }
   }
 
   override fun fetchPackageDetails(packageName: String, consumer: CatchingConsumer<in String, in Exception>) {
-    scope.launch {
+    scope.launch(Dispatchers.IO + ModalityState.current().asContextElement()) {
       val details = repositoryManager.getPackageDetails(packageName, null).getOrThrow()
       consumer.consume(buildDescription(details))
     }
@@ -124,7 +124,7 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
   }
 
   override fun fetchLatestVersion(pkg: InstalledPackage, consumer: CatchingConsumer<in String, in Exception>) {
-    scope.launch {
+    scope.launch(Dispatchers.IO + ModalityState.current().asContextElement()) {
       val latestVersion = repositoryManager.getLatestVersion(pkg.name, null)?.presentableText
       consumer.consume(latestVersion)
     }
