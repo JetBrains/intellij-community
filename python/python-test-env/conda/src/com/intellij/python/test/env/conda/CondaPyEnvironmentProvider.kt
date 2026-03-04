@@ -275,6 +275,6 @@ class CondaPyEnvironment(
     return PyCondaEnv(
       envIdentity = PyCondaEnvIdentity.UnnamedEnv(envPath.pathString, isBase = true),
       fullCondaPathOnTarget = condaExecutable.toString(),
-    ).createSdkFromThisEnv(null, emptyList())
+    ).createSdkFromThisEnv(null, emptyList()).getOrThrow()
   }
 }

@@ -15,6 +15,7 @@ import com.intellij.platform.eel.provider.utils.readWholeText
 import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.platform.eel.spawnProcess
 import com.intellij.python.community.junit5Tests.framework.conda.CondaEnv
+import com.jetbrains.python.getOrThrow
 import com.intellij.python.community.junit5Tests.framework.conda.PyEnvTestCaseWithConda
 import com.intellij.python.community.junit5Tests.framework.conda.createCondaEnv
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
@@ -122,7 +123,7 @@ class PyVirtualEnvTerminalCustomizerTest {
     val (pythonBinary, venvDirName) =
       if (useConda) {
         val envDir = venvPath.resolve("some_path_with_underscores")
-        val sdk = createCondaEnv(condaEnv, envDir).createSdkFromThisEnv(null, emptyList())
+        val sdk = createCondaEnv(condaEnv, envDir).createSdkFromThisEnv(null, emptyList()).getOrThrow()
         sdkToDelete = sdk
         sdk.persist()
         moduleFixture.get().pythonSdk = sdk

@@ -19,7 +19,7 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonScriptExecution
 import com.jetbrains.python.run.buildTargetedCommandLine
 import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
-import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
+import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnvironment
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
@@ -104,11 +104,11 @@ internal class PyCondaSdkTest {
     val nonBaseEnv = condaEnvs.firstOrNull { it.envIdentity is PyCondaEnvIdentity.NamedEnv } ?: createCondaEnv()
 
     for (condaEnv in arrayOf(nonBaseEnv, baseEnv)) {
-      val condaSdk = condaRule.condaCommand.createCondaSdkFromExistingEnv(
+      val condaSdk = condaRule.condaCommand.createCondaSdkFromExistingEnvironment(
         condaIdentity = condaEnv.envIdentity,
         existingSdks = emptyList(),
         project = projectRule.project,
-      )
+      ).getOrThrow()
       val request = LocalTargetEnvironmentRequest()
       val targetEnvironment = LocalTargetEnvironment(request)
 
@@ -134,11 +134,11 @@ internal class PyCondaSdkTest {
   @Test
   fun testExecuteCommandOnSdk(): Unit = timeoutRunBlocking(60.seconds) {
     val condaEnv = PyCondaEnv.getEnvs(condaRule.getCondaBinaryToExec()).getOrThrow().first()
-    val sdk = condaRule.condaCommand.createCondaSdkFromExistingEnv(
+    val sdk = condaRule.condaCommand.createCondaSdkFromExistingEnvironment(
       condaIdentity = condaEnv.envIdentity,
       existingSdks = emptyList(),
       project = projectRule.project,
-    )
+    ).getOrThrow()
     val request = LocalTargetEnvironmentRequest()
 
     repeat(10) { // To measure time to compare legacy and local
@@ -161,11 +161,11 @@ internal class PyCondaSdkTest {
   @Test
   fun testCreateFromExisting() =  timeoutRunBlocking(10.minutes) { 
     val env = PyCondaEnv.getEnvs(condaRule.getCondaBinaryToExec()).getOrThrow().first()
-    val sdk = condaRule.condaCommand.createCondaSdkFromExistingEnv(
+    val sdk = condaRule.condaCommand.createCondaSdkFromExistingEnvironment(
       condaIdentity = env.envIdentity,
       existingSdks = emptyList(),
       project = projectRule.project,
-    )
+    ).getOrThrow()
 
     Assert.assertEquals(sdk.getOrCreateAdditionalData().flavor, CondaEnvSdkFlavor)
     Assert.assertTrue(env.toString(), getPythonVersion(sdk, LocalTargetEnvironmentRequest())?.isNotBlank() == true)
