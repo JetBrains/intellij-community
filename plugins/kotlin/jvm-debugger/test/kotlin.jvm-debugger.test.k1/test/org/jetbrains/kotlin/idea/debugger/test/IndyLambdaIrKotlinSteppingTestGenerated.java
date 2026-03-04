@@ -1753,6 +1753,11 @@ public abstract class IndyLambdaIrKotlinSteppingTestGenerated extends AbstractIn
             runTest("../testData/stepping/custom/smartStepIntoEmptyConstructor.kt");
         }
 
+        @TestMetadata("smartStepIntoEnumEqualityFun.kt")
+        public void testSmartStepIntoEnumEqualityFun() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoEnumEqualityFun.kt");
+        }
+
         @TestMetadata("smartStepIntoFunWithContext.kt")
         public void testSmartStepIntoFunWithContext() throws Exception {
             runTest("../testData/stepping/custom/smartStepIntoFunWithContext.kt");
