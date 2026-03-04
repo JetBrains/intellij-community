@@ -228,11 +228,11 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin>
       }
 
     fun checkForModifications() {
-      if (namesProvider.modificationCount != this.namesProviderTimestamp) {
+      if (namesProvider.modificationTracker.modificationCount != this.namesProviderTimestamp) {
         synchronized(this) {
-          if (namesProvider.modificationCount != this.namesProviderTimestamp) {
+          if (namesProvider.modificationTracker.modificationCount != this.namesProviderTimestamp) {
             mapsCache.clear()
-            this.namesProviderTimestamp = namesProvider.modificationCount
+            this.namesProviderTimestamp = namesProvider.modificationTracker.modificationCount
           }
         }
       }

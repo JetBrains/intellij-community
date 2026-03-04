@@ -150,7 +150,7 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
         throw IllegalArgumentException(
           "CacheDependencies cannot be empty. Failed to initialize $javaClass. Add ModificationTracker.NEVER_CHANGED if cache should never be dropped.")
       }
-      dependencies.add(namesProvider)
+      dependencies.add(namesProvider.modificationTracker)
       CachedValueProvider.Result.create(map, dependencies.toList())
     }
 
@@ -164,7 +164,7 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
         throw IllegalArgumentException(
           "CacheDependencies cannot be empty. Failed to initialize $javaClass. Add ModificationTracker.NEVER_CHANGED if cache should never be dropped.")
       }
-      dependencies.add(namesProvider)
+      dependencies.add(namesProvider.modificationTracker)
       CachedValueProvider.Result.create(
         PartiallyInitializedSearchMap(namesProvider, support, this::provides),
         dependencies.toList()

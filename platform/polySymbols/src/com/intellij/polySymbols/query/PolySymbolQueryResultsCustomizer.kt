@@ -8,7 +8,9 @@ import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 
-interface PolySymbolQueryResultsCustomizer : ModificationTracker {
+interface PolySymbolQueryResultsCustomizer {
+
+  val modificationTracker: ModificationTracker
 
   fun createPointer(): Pointer<out PolySymbolQueryResultsCustomizer>
 

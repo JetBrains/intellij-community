@@ -233,6 +233,9 @@ private class WebTypesSymbolNameConversionRulesProvider(
     return nameConversionRulesCache.value[framework] ?: PolySymbolNameConversionRules.empty()
   }
 
+  override val modificationTracker: ModificationTracker
+    get() = scope.modificationTracker
+
   override fun createPointer(): Pointer<out PolySymbolNameConversionRulesProvider> {
     val framework = framework
     val scopePtr = scope.createPointer()
@@ -246,8 +249,6 @@ private class WebTypesSymbolNameConversionRulesProvider(
       }
     }
   }
-
-  override fun getModificationCount(): Long = scope.modificationTracker.modificationCount
 }
 
 private val EOL_PATTERN: Regex = Regex("\n|\r\n")
