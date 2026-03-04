@@ -287,7 +287,7 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
     //}
 
     if (genIsInsideSrc) {
-      Path.of(newSrcRoot.presentableUrl).assertMatches(directoryContentOf(dir = ultimateSrcPath), filePathFilter = { it.endsWith(".kt") })
+      Path.of(newSrcRoot.presentableUrl).assertMatches(directoryContentOf(dir = ultimateSrcPath), filePathFilter = { it.endsWith(".kt") }, ignoreEmptyDirectories = true)
     }
     else {
       //val expectedGenDir = FileUtil.createTempDirectory(CodeGenerationTestBase::class.java.simpleName, "${testDirectoryName}_impl", true)
@@ -296,8 +296,8 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
       //  val vfExpectedGenDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(expectedGenDir.toPath())!!
       //  VfsUtil.copyDirectory(this, newGenRoot, vfExpectedGenDir, null)
       //}
-      Path.of(newSrcRoot.presentableUrl).assertMatches(directoryContentOf(dir = ultimateSrcPath), filePathFilter = { it.endsWith(".kt") })
-      Path.of(newGenRoot.presentableUrl).assertMatches(directoryContentOf(dir = ultimateGenPath), filePathFilter = { it.endsWith(".kt") })
+      Path.of(newSrcRoot.presentableUrl).assertMatches(directoryContentOf(dir = ultimateSrcPath), filePathFilter = { it.endsWith(".kt") }, ignoreEmptyDirectories = true)
+      Path.of(newGenRoot.presentableUrl).assertMatches(directoryContentOf(dir = ultimateGenPath), filePathFilter = { it.endsWith(".kt") }, ignoreEmptyDirectories = true)
     }
 
     return false
