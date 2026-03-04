@@ -15,7 +15,6 @@ import com.intellij.webcore.packaging.InstalledPackage
 import com.intellij.webcore.packaging.PackageVersionComparator
 import com.intellij.webcore.packaging.RepoPackage
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
@@ -107,15 +106,19 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
 
   override fun fetchPackageVersions(packageName: String, consumer: CatchingConsumer<in List<String>, in Exception>) {
     scope.launch(Dispatchers.IO + ModalityState.current().asContextElement()) {
-      val details = repositoryManager.getPackageDetails(packageName, null).getOrThrow()
-      consumer.consume(details.availableVersions.sortedWith(PackageVersionComparator.VERSION_COMPARATOR.reversed()))
+      when (val result = repositoryManager.getPackageDetails(packageName, null)) {
+        is com.jetbrains.python.Result.Success -> consumer.consume(result.result.availableVersions.sortedWith(PackageVersionComparator.VERSION_COMPARATOR.reversed()))
+        is com.jetbrains.python.Result.Failure -> consumer.consume(Exception(result.error.message))
+      }
     }
   }
 
   override fun fetchPackageDetails(packageName: String, consumer: CatchingConsumer<in String, in Exception>) {
     scope.launch(Dispatchers.IO + ModalityState.current().asContextElement()) {
-      val details = repositoryManager.getPackageDetails(packageName, null).getOrThrow()
-      consumer.consume(buildDescription(details))
+      when (val result = repositoryManager.getPackageDetails(packageName, null)) {
+        is com.jetbrains.python.Result.Success -> consumer.consume(buildDescription(result.result))
+        is com.jetbrains.python.Result.Failure -> consumer.consume(Exception(result.error.message))
+      }
     }
   }
 
