@@ -2,9 +2,9 @@
 package com.intellij.devkit.workspaceModel.k2
 
 import com.intellij.devkit.workspaceModel.AbstractAllIntellijEntitiesGenerationTest
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 
-class AllIntellijEntitiesGenerationTest : AbstractAllIntellijEntitiesGenerationTest() {
-  override val pluginMode: KotlinPluginMode
-    get() = KotlinPluginMode.K2
-}
+@UseK2PluginMode
+@TestApplication
+class AllIntellijEntitiesGenerationTest : AbstractAllIntellijEntitiesGenerationTest()
