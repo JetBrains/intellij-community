@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers
 
+import com.intellij.psi.PsiElement
 import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -265,4 +266,13 @@ context(_: KaSession)
 internal fun KtFile.getAliasNameIfExists(fqName: FqName): Name? {
     // TODO: It's possible to optimize this by using a map for the aliases if it turns out to be a bottleneck.
     return findAliasByFqName(fqName)?.name?.let { Name.identifier(it) }
+}
+
+/**
+ * Copies the containing file of this element.
+ * File copy could be safely used for analysis and could be modified outside WA.
+ */
+internal fun PsiElement.copyContainingFile(): KtFile? {
+    val originalFile = containingFile as? KtFile ?: return null
+    return originalFile.copy() as? KtFile
 }

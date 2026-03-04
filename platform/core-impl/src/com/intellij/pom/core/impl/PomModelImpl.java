@@ -42,6 +42,7 @@ import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerEx;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.text.BlockSupport;
@@ -284,7 +285,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       PsiUtilCore.ensureValid(psiFile);
     }
 
-    boolean physical = changeScope.isPhysical();
+    boolean physical = shouldFirePhysicalPsiEvents(changeScope);
     if (synchronizer.toProcessPsiEvent()) {
       // fail-fast to prevent any psi modifications that would cause psi/document text mismatch
       if (isDocumentUncommitted(psiFile)) {
@@ -379,8 +380,11 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
   @ApiStatus.Internal
   public static boolean shouldFirePhysicalPsiEvents(@NotNull PsiElement scope) {
-    // injections are physical even in non-physical PSI :(
-    return scope.isPhysical();
+    if (!scope.isPhysical()) return false;
+
+    PsiFile file = scope.getContainingFile();
+    PsiElement hostElement = FileContextUtil.getFileContext(file);
+    return hostElement == null || hostElement.isPhysical();
   }
 
   private void sendAfterChildrenChangedEvent(@NotNull PsiFile scope, int oldLength) {

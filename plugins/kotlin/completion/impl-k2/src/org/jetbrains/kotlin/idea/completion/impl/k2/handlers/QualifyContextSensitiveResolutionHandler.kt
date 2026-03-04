@@ -22,10 +22,11 @@ import org.jetbrains.kotlin.idea.base.psi.prependDotQualifiedReceiver
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.serialization.names.KotlinFqNameSerializer
 import org.jetbrains.kotlin.idea.codeinsight.utils.getLeftMostReceiverExpression
+import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters.Corrected
 import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters.CorrectionType
-import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.copyContainingFile
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.withChainedInsertHandler
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
@@ -33,7 +34,6 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
@@ -101,10 +101,7 @@ private data class FqNameWithOffset(val fqName: FqName, val offset: Int)
 @OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun addQualifierIfNeeded(position: PsiElement): PsiElement? {
-    val fileCopy = position.containingFile.copy() as KtFile
-    // Do not modify physical files! (copies should not be physical but can be due to bugs)
-    // See: KTNB-1308
-    if (fileCopy.isPhysical) return null
+    val fileCopy = position.copyContainingFile() ?: return null
     val positionInCopy = PsiTreeUtil.findSameElementInCopy(position, fileCopy)
     val referenceExpr = positionInCopy.parent as? KtNameReferenceExpression ?: return null
     val offset = referenceExpr.startOffset
