@@ -14,6 +14,7 @@ import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.XBreakpoint
+import com.intellij.xdebugger.breakpoints.BreakpointFileProhibitionPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
@@ -133,12 +134,17 @@ object XBreakpointUtil {
     selectTypeByPositionColumn: Boolean = false,
   ): List<XLineBreakpointType<*>> {
     val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
+    val virtualFile = position.file
+    if (BreakpointFileProhibitionPolicy.isBreakpointProhibited(virtualFile)) {
+      return emptyList()
+    }
     val breakpointInfo = XBreakpointUIUtil.getAvailableLineBreakpointInfo(position, selectTypeByPositionColumn, editor,
                                                                           XDebuggerUtil.getInstance().lineBreakpointTypes.toList(),
-                                                                          { type, line -> breakpointManager.findBreakpointAtLine(type, position.file, line) },
+                                                                          { type, line -> breakpointManager.findBreakpointAtLine(type,
+                                                                                                                                 virtualFile, line) },
                                                                           { type -> type.priority },
                                                                           { callback -> callback() },
-                                                                          { type, line -> type.canPutAt(position.file, line, project) }
+                                                                          { type, line -> type.canPutAt(virtualFile, line, project) }
     )
     return breakpointInfo.first
   }

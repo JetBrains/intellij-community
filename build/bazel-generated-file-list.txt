@@ -851,6 +851,7 @@ platform/vcs-api
 platform/vcs-api/shared
 platform/vcs-api/vcs-api-core
 platform/vcs-impl
+platform/vcs-impl/debugger
 platform/vcs-impl/exec
 platform/vcs-impl/frontend
 platform/vcs-impl/lang

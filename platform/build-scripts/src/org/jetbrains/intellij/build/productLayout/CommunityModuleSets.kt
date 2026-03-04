@@ -218,6 +218,7 @@ object CommunityModuleSets {
   fun vcs(): ModuleSet = moduleSet("vcs") {
     module("intellij.platform.vcs.impl")
     module("intellij.platform.vcs.impl.exec")
+    module("intellij.platform.vcs.impl.debugger")
     module("intellij.platform.vcs.impl.lang")
     module("intellij.platform.vcs.impl.lang.actions")
     module("intellij.platform.vcs.log")

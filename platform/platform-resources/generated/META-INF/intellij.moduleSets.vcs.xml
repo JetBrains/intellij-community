@@ -18,6 +18,7 @@
     <!-- region direct modules -->
     <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.platform.vcs.impl.exec"/>
+    <module name="intellij.platform.vcs.impl.debugger"/>
     <module name="intellij.platform.vcs.impl.lang"/>
     <module name="intellij.platform.vcs.impl.lang.actions"/>
     <module name="intellij.platform.vcs.log"/>

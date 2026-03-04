@@ -24,6 +24,7 @@ import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
 import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
 import com.intellij.platform.project.projectId
 import com.intellij.util.ThreeState
+import com.intellij.xdebugger.breakpoints.BreakpointFileProhibitionPolicy
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointType.StandardPanels
@@ -101,6 +102,9 @@ private class FrontendXLineBreakpointType(
     if (FrontendApplicationInfo.getFrontendType() !is FrontendType.Monolith) return null
     val monolithType = XDebuggerEntityConverter.getBreakpointType(id) as? XLineBreakpointType<*> ?: return null
     val file = fileProvider() ?: return ThreeState.NO
+    if (BreakpointFileProhibitionPolicy.isBreakpointProhibited(file)) {
+      return ThreeState.NO
+    }
     val canPut = monolithType.canPutAt(file, line, project)
     return ThreeState.fromBoolean(canPut)
   }
