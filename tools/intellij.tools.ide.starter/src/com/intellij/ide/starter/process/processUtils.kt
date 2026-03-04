@@ -8,7 +8,6 @@ import com.intellij.ide.starter.process.ProcessKiller.killProcesses
 import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.runner.IDERunContext
-import com.intellij.tools.ide.util.common.NoRetryException
 import com.intellij.tools.ide.util.common.PrintFailuresMode
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.tools.ide.util.common.withRetry
@@ -26,6 +25,7 @@ import kotlin.io.path.isRegularFile
 import kotlin.io.path.readLines
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.measureTimedValue
 
 fun getProcessList(vararg substringToSearch: String): List<ProcessInfo> =
   getProcessList { p ->
@@ -139,8 +139,12 @@ private fun ProcessInfo.argumentsAreFromIdea(): Boolean {
     }
 }
 
-
-suspend fun getIdeProcessIdWithRetry(parentProcessInfo: ProcessInfo, runContext: IDERunContext): Long {
+/*
+  In most cases returns a real pid.
+  In case the parent process has exited too quickly, returns null.
+  In case we were trying to find the pid for some adequate time and failed, throws an exception.
+ */
+suspend fun getIdeProcessIdWithRetry(parentProcessInfo: ProcessInfo, runContext: IDERunContext): Long? {
   if (OS.CURRENT != OS.Linux) {
     return parentProcessInfo.pid
   }
@@ -151,13 +155,28 @@ suspend fun getIdeProcessIdWithRetry(parentProcessInfo: ProcessInfo, runContext:
   }
 
   logOutput("Guessing IDE process ID on Linux: \n${parentProcessInfo.description}")
-  val attemptsResult = withRetry(retries = 100,
-                                 delay = 3.seconds,
-                                 messageOnFailure = "Couldn't find appropriate IDE process id for pid ${parentProcessInfo.pid}",
-                                 printFailuresMode = PrintFailuresMode.ALL_FAILURES) {
-    getIdeProcessId(parentProcessInfo, runContext)
+
+  val attemptsResult = measureTimedValue {
+    withRetry(retries = 10,
+              delay = 3.seconds,
+              messageOnFailure = "Couldn't find appropriate IDE process id for pid ${parentProcessInfo.pid}",
+              printFailuresMode = PrintFailuresMode.ALL_FAILURES) {
+      getIdeProcessId(parentProcessInfo, runContext)
+    }
   }
-  return requireNotNull(attemptsResult) { "IDE process id must not be null" }
+
+  if (attemptsResult.value == null) {
+    if (attemptsResult.duration < 5.seconds && parentProcessInfo.processHandle?.isAlive != true) {
+      //the processes finished too fast for us to determine the pid
+      return null
+    }
+    else {
+      error("Couldn't find appropriate IDE process id for pid ${parentProcessInfo.pid} in ${attemptsResult.duration}. " +
+            "Means something is wrong with our diagnostics.")
+    }
+  }
+
+  return attemptsResult.value
 }
 
 
@@ -166,14 +185,16 @@ suspend fun getIdeProcessIdWithRetry(parentProcessInfo: ProcessInfo, runContext:
  * Thus, we must guess the IDE process ID for capturing the thread dumps.
  * In case of Dev Server, under xvfb-run the whole build process is happening so the waiting time can be long.
  */
-private fun getIdeProcessId(parentProcessInfo: ProcessInfo, runContext: IDERunContext): Long {
+private fun getIdeProcessId(parentProcessInfo: ProcessInfo, runContext: IDERunContext): Long? {
   if (OS.CURRENT != OS.Linux) {
     return parentProcessInfo.pid
   }
 
   if (parentProcessInfo.processHandle?.isAlive != true) {
-    throw NoRetryException("Couldn't guess IDE process: parent process is not alive", null)
+    logOutput("Couldn't guess IDE process: parent process is not alive")
+    return null
   }
+
   logOutput("Guessing IDE process ID on Linux (pid of the IDE process wrapper ${parentProcessInfo.pid})")
 
   val suitableChildren = SystemInfo().operatingSystem.getChildProcesses(

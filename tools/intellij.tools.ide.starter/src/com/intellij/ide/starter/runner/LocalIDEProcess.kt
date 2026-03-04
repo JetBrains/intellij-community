@@ -41,7 +41,7 @@ class LocalIDEProcess : IDEProcess {
 
       val stdout = getStdout()
       val stderr = getStderr()
-      var ideProcessId = 0L
+      var ideProcessId: Long? = null
       var isRunSuccessful = true
       val ciFailureDetails = FailureDetailsOnCI.instance.getLinkToCIArtifacts(this)?.let { "Link on CI artifacts ${it}" }
 
@@ -89,14 +89,20 @@ class LocalIDEProcess : IDEProcess {
               runInterruptible {
                 EventsBus.postAndWaitProcessing(IdeLaunchEvent(runContext = this, ideProcess = IDEProcessHandle(process.toHandle())))
               }
-              ideProcessId = getIdeProcessIdWithRetry(process.toProcessInfo(), runContext)
-              startCollectThreadDumpsLoop(logsDir, IDEProcessHandle(process.toHandle()), jdkHome, startConfig.workDir, ideProcessId, "ide")
+              getIdeProcessIdWithRetry(process.toProcessInfo(), runContext)?.let {
+                ideProcessId = it
+                startCollectThreadDumpsLoop(logsDir, IDEProcessHandle(process.toHandle()), jdkHome,
+                                            startConfig.workDir, it, "ide")
+              }
             },
             onBeforeKilled = { process, pid ->
               span.end()
               computeWithSpan("runIde post-processing before killed") {
                 logOutput("BeforeKilled: $processPresentableName")
-                captureDiagnosticOnKill(logsDir, jdkHome, startConfig, process, snapshotsDir, runContext = this)
+                (ideProcessId ?: getIdeProcessIdWithRetry(process.toProcessInfo(), runContext))?.let {
+                  ideProcessId = it
+                  captureDiagnosticOnKill(logsDir, jdkHome, startConfig, it, snapshotsDir, runContext = this)
+                }
                 EventsBus.postAndWaitProcessing(IdeBeforeKillEvent(this, process, pid))
                 if (testContext.profilerType != ProfilerType.NONE) {
                   EventsBus.postAndWaitProcessing(StopProfilerEvent(listOf()))
@@ -144,7 +150,7 @@ class LocalIDEProcess : IDEProcess {
             if (isRunSuccessful) {
               validateVMOptionsWereSet(this)
             }
-            testContext.collectJBRDiagnosticFiles(ideProcessId)
+            ideProcessId?.let { testContext.collectJBRDiagnosticFiles(it) }
 
             val link = FailureDetailsOnCI.instance.getLinkToCIArtifacts(this)
             TeamCityCIServer.addTestMetadata(testName = null, TeamCityCIServer.TeamCityMetadataType.LINK, flowId = null, name = "Link to Logs and artifacts", value = link.toString())

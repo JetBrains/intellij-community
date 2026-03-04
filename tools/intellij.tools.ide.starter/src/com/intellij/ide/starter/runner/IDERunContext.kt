@@ -13,11 +13,9 @@ import com.intellij.ide.starter.ide.isRemDevContext
 import com.intellij.ide.starter.models.IDEStartResult
 import com.intellij.ide.starter.models.VMOptions
 import com.intellij.ide.starter.path.IDEDataPaths
-import com.intellij.ide.starter.process.ProcessInfo.Companion.toProcessInfo
 import com.intellij.ide.starter.process.collectJavaThreadDumpSuspendable
 import com.intellij.ide.starter.process.collectMemoryDump
 import com.intellij.ide.starter.process.exec.ExecOutputRedirect
-import com.intellij.ide.starter.process.getIdeProcessIdWithRetry
 import com.intellij.ide.starter.profiler.ProfilerInjector
 import com.intellij.ide.starter.profiler.ProfilerType
 import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
@@ -248,7 +246,7 @@ data class IDERunContext(
     logsDir: Path,
     jdkHome: Path,
     startConfig: IDEStartConfig,
-    process: Process,
+    ideProcessId: Long,
     snapshotsDir: Path,
     runContext: IDERunContext,
   ) {
@@ -259,31 +257,20 @@ data class IDERunContext(
     }
     if (expectedKill) return
 
-    var ideProcessId: Long? = null
-    suspend fun getOrComputeIdeProcessId(): Long {
-      if (ideProcessId == null) {
-        ideProcessId = getIdeProcessIdWithRetry(
-          parentProcessInfo = process.toProcessInfo(),
-          runContext = runContext,
-        )
-      }
-      return ideProcessId
-    }
-
     if (collectNativeThreads) {
       val fileToStoreNativeThreads = logsDir.resolve("native-thread-dumps.txt")
-      startProfileNativeThreads(getOrComputeIdeProcessId().toString())
+      startProfileNativeThreads(ideProcessId.toString())
       delay(15.seconds)
-      stopProfileNativeThreads(getOrComputeIdeProcessId().toString(), fileToStoreNativeThreads.toAbsolutePath().toString())
+      stopProfileNativeThreads(ideProcessId.toString(), fileToStoreNativeThreads.toAbsolutePath().toString())
     }
     val dumpFile = logsDir.resolve("threadDump-before-kill-${System.currentTimeMillis()}.txt")
     val memoryDumpFile = snapshotsDir.resolve("memoryDump-before-kill-${System.currentTimeMillis()}.hprof.gz")
     catchAll {
-      collectJavaThreadDumpSuspendable(jdkHome, startConfig.workDir, getOrComputeIdeProcessId(), dumpFile)
+      collectJavaThreadDumpSuspendable(jdkHome, startConfig.workDir, ideProcessId, dumpFile)
     }
     catchAll {
       if (isLowMemorySignalPresent(logsDir)) {
-        collectMemoryDump(jdkHome, startConfig.workDir, getOrComputeIdeProcessId(), memoryDumpFile)
+        collectMemoryDump(jdkHome, startConfig.workDir, ideProcessId, memoryDumpFile)
       }
     }
   }
