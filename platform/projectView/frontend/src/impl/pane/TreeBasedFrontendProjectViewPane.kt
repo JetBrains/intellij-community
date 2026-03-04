@@ -3,6 +3,7 @@
 
 package com.intellij.platform.projectView.frontend.impl.pane
 
+import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.ide.util.treeView.DefaultTreeModelWithCachedPresentation
@@ -12,11 +13,13 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.projectView.actions.NestingRuleState
 import com.intellij.platform.projectView.actions.ProjectViewActionState
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
@@ -31,16 +34,16 @@ import com.intellij.platform.projectView.pane.ProjectViewChildrenRemoved
 import com.intellij.platform.projectView.pane.ProjectViewNodeAdded
 import com.intellij.platform.projectView.pane.ProjectViewNodeModel
 import com.intellij.platform.projectView.pane.ProjectViewNodeUpdated
+import com.intellij.platform.projectView.pane.ProjectViewPaneChangeFileNestingRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneChangeOptionValueRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneChangeSortKeyRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
-import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
-import com.intellij.platform.projectView.pane.ProjectViewPaneChangeFileNestingRequest
-import com.intellij.platform.projectView.pane.ProjectViewPaneChangeOptionValueRequest
-import com.intellij.platform.projectView.pane.ProjectViewPaneChangeSortKeyRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneSelectionChanged
+import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.SuperRootModel
 import com.intellij.pom.Navigatable
@@ -56,6 +59,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import org.jdom.Element
 import javax.swing.JComponent
+import javax.swing.JTree
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
 import javax.swing.tree.DefaultMutableTreeNode
@@ -72,6 +76,7 @@ internal abstract class TreeBasedFrontendProjectViewPane(
   }
   private val scrollPane = ScrollPaneFactory.createScrollPane(tree, true)
   private val contentPanel = ContentPanel(scrollPane)
+  private val treeExpander = ProjectViewTreeExpander(tree)
 
   private val optionSupport = ActionSupport()
   
@@ -218,6 +223,7 @@ internal abstract class TreeBasedFrontendProjectViewPane(
     sink[CommonDataKeys.NAVIGATABLE_ARRAY] = tree.selectionPaths?.mapNotNull { path ->
       (path?.lastPathComponent as? Node)?.projectViewNode?.toNavigatable()
     }?.toTypedArray()
+    sink[PlatformDataKeys.TREE_EXPANDER] = treeExpander
   }
 
   private fun ProjectViewNodeModel.toNavigatable(): Navigatable = NavigatableNode(this)
@@ -285,6 +291,20 @@ private class Node(
   }
 
   override fun getPathElementId(): String = (presentation as TreeNodePresentationImpl).mainText
+}
+
+private class ProjectViewTreeExpander(tree: Tree) : DefaultTreeExpander(tree) {
+  override fun isExpandAllVisible(): Boolean {
+    return Registry.`is`("ide.project.view.expand.all.action.visible") && !Registry.`is`("ide.project.view.replace.expand.all.with.expand.recursively")
+  }
+
+  override fun isExpandAllEnabled(): Boolean {
+    return super.isExpandAllEnabled() && !Registry.`is`("ide.project.view.replace.expand.all.with.expand.recursively")
+  }
+
+  override fun collapseAll(tree: JTree, strict: Boolean, keepSelectionLevel: Int) {
+    super.collapseAll(tree, false, keepSelectionLevel)
+  }
 }
 
 private val LOG = logger<TreeBasedFrontendProjectViewPane>()
