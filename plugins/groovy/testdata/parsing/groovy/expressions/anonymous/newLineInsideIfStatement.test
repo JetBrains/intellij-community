@@ -1,0 +1,33 @@
+if (new Object()
+{} != null) {}
+-----
+Groovy script
+  IF statement
+    PsiElement(if)('if')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Relational expression
+      NEW expression
+        PsiElement(new)('new')
+        PsiWhiteSpace(' ')
+        Anonymous class
+          Reference element
+            PsiElement(identifier)('Object')
+          Arguments
+            PsiElement(()('(')
+            PsiElement())(')')
+          PsiElement(new line)('\n')
+          Type definition body
+            PsiElement({)('{')
+            PsiElement(})('}')
+      PsiWhiteSpace(' ')
+      PsiElement(!=)('!=')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(null)('null')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Block statement
+      Open block
+        PsiElement({)('{')
+        PsiElement(})('}')

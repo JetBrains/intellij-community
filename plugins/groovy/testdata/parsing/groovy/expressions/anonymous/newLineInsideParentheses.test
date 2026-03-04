@@ -1,0 +1,20 @@
+(new Object()
+{})
+-----
+Groovy script
+  Parenthesized expression
+    PsiElement(()('(')
+    NEW expression
+      PsiElement(new)('new')
+      PsiWhiteSpace(' ')
+      Anonymous class
+        Reference element
+          PsiElement(identifier)('Object')
+        Arguments
+          PsiElement(()('(')
+          PsiElement())(')')
+        PsiElement(new line)('\n')
+        Type definition body
+          PsiElement({)('{')
+          PsiElement(})('}')
+    PsiElement())(')')
