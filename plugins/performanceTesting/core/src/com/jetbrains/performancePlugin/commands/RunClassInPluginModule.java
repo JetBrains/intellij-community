@@ -1,9 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.ContentModuleDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.ide.plugins.PluginModuleId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.commands.AbstractCommand;
@@ -25,13 +25,9 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * @deprecated Use {@link RunClassInPluginModule} to resolve the proper module classloader.
- */
-@Deprecated(forRemoval = false)
-public class RunClassInPlugin extends AbstractCommand {
-  public static final String PREFIX = CMD_PREFIX + "runClassInPlugin";
-  protected final String myPluginId;
+public class RunClassInPluginModule extends AbstractCommand {
+  public static final String PREFIX = CMD_PREFIX + "runClassInPluginModule";
+  protected final String myModuleId;
   protected final String myClazzName;
   protected final String myMethodName;
   protected final List<File> myClasspath;
@@ -41,7 +37,7 @@ public class RunClassInPlugin extends AbstractCommand {
     return args.next();
   }
 
-  public RunClassInPlugin(@NotNull String text, int line) {
+  public RunClassInPluginModule(@NotNull String text, int line) {
     super(text, line);
 
     Iterator<String> args = StringUtil.splitHonorQuotes(text, ' ').stream().map(StringUtil::unquoteString).iterator();
@@ -49,7 +45,7 @@ public class RunClassInPlugin extends AbstractCommand {
     //the command name
     nextArg(args, text);
 
-    myPluginId = nextArg(args, text);
+    myModuleId = nextArg(args, text);
     myClazzName = nextArg(args, text);
     myMethodName = nextArg(args, text);
     List<File> classpath = new ArrayList<>();
@@ -74,10 +70,12 @@ public class RunClassInPlugin extends AbstractCommand {
   }
 
   public void computePromise(@NotNull Project project) throws Exception {
-    IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginId.getId(myPluginId));
-    if (plugin == null) throw new RuntimeException("Failed to find plugin: " + myPluginId);
+    PluginModuleId moduleId = PluginModuleId.getId(myModuleId, PluginModuleId.JETBRAINS_NAMESPACE);
+    ContentModuleDescriptor module = PluginManagerCore.getPluginSet().findEnabledModule(moduleId);
+    if (module == null) throw new RuntimeException("Failed to find plugin module: " + myModuleId);
 
-    ClassLoader loader = plugin.getClassLoader();
+    ClassLoader loader = module.getPluginClassLoader();
+    if (loader == null) throw new RuntimeException("Classloader is null for module: " + myModuleId);
 
     URLClassLoader classLoader = new URLClassLoader(convertClasspathToURLs(), loader);
     runWithClassLoader(project, classLoader);
