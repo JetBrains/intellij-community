@@ -257,6 +257,100 @@ public class ExternalAnnotatedElementsSearcherTest extends JavaCodeInsightFixtur
     assertEquals("input", params.iterator().next().getName());
   }
 
+  public void testSearchExternallyAnnotatedNestedClass() {
+    PsiClass annClass = myFixture.addClass("""
+      package test;
+      public @interface MyAnnotation {}
+      """);
+
+    myFixture.addClass("""
+      package com.example;
+      public class Outer {
+        public static class Inner {}
+      }
+      """);
+
+    myFixture.addFileToProject("annotations.xml", """
+      <root>
+        <item name="com.example.Outer.Inner">
+          <annotation name="test.MyAnnotation"/>
+        </item>
+      </root>
+      """);
+
+    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+    Collection<PsiClass> result = AnnotatedElementsSearch.searchPsiClasses(annClass, scope).findAll();
+    assertSize(1, result);
+    assertEquals("Inner", result.iterator().next().getName());
+  }
+
+  public void testSearchExternallyAnnotatedNestedClassMethod() {
+    PsiClass annClass = myFixture.addClass("""
+      package test;
+      public @interface MyAnnotation {}
+      """);
+
+    myFixture.addClass("""
+      package com.example;
+      public class Outer {
+        public static class Inner {
+          public void innerMethod() {}
+        }
+      }
+      """);
+
+    myFixture.addFileToProject("annotations.xml", """
+      <root>
+        <item name="com.example.Outer.Inner void innerMethod()">
+          <annotation name="test.MyAnnotation"/>
+        </item>
+      </root>
+      """);
+
+    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+    Collection<PsiMethod> methods = AnnotatedElementsSearch.searchPsiMethods(annClass, scope).findAll();
+    assertSize(1, methods);
+    assertEquals("innerMethod", methods.iterator().next().getName());
+  }
+
+  public void testSearchExternallyAnnotatedDeeplyNestedClass() {
+    PsiClass annClass = myFixture.addClass("""
+      package test;
+      public @interface MyAnnotation {}
+      """);
+
+    myFixture.addClass("""
+      package com.example;
+      public class Outer {
+        public static class Middle {
+          public static class Deep {
+            public void deepMethod() {}
+          }
+        }
+      }
+      """);
+
+    myFixture.addFileToProject("annotations.xml", """
+      <root>
+        <item name="com.example.Outer.Middle.Deep">
+          <annotation name="test.MyAnnotation"/>
+        </item>
+        <item name="com.example.Outer.Middle.Deep void deepMethod()">
+          <annotation name="test.MyAnnotation"/>
+        </item>
+      </root>
+      """);
+
+    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+    Collection<PsiClass> classes = AnnotatedElementsSearch.searchPsiClasses(annClass, scope).findAll();
+    assertSize(1, classes);
+    assertEquals("Deep", classes.iterator().next().getName());
+
+    Collection<PsiMethod> methods = AnnotatedElementsSearch.searchPsiMethods(annClass, scope).findAll();
+    assertSize(1, methods);
+    assertEquals("deepMethod", methods.iterator().next().getName());
+  }
+
   public void testExternalAnnotationsManagerFindsAnnotations() {
     // This test uses a subdirectory (/extAnno) as the annotation root to verify that
     // ExternalAnnotationsManager correctly resolves annotation roots under subdirectories.

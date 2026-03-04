@@ -5,20 +5,14 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.ReadableExternalAnnotationsManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiParameter;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.ExternalAnnotationsIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
@@ -104,9 +98,8 @@ public final class ExternalAnnotatedElementsSearcher implements QueryExecutor<Ps
                                                                      @NotNull Project project,
                                                                      @NotNull GlobalSearchScope scope) {
     int spaceIdx = externalName.indexOf(' ');
-    // Inner classes use '$' in external names; JavaPsiFacade.findClass expects '.'
-    String classFQN = (spaceIdx < 0 ? externalName : externalName.substring(0, spaceIdx)).replace('$', '.');
-    PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(classFQN, scope);
+    String classFQN = spaceIdx < 0 ? externalName : externalName.substring(0, spaceIdx);
+    PsiClass psiClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), classFQN, null, false, scope);
     if (psiClass == null) return null;
 
     if (spaceIdx < 0) {
