@@ -28,7 +28,7 @@ internal class UvRunToolProvider : PyRunToolProvider {
       env += "VIRTUAL_ENV" to it
       env += "UV_PROJECT_ENVIRONMENT" to it
     }
-    return PyRunToolParameters(requireNotNull(uvExecutable) { "Unable to find uv executable." }, listOf("run"), env, dropOldExe = true)
+    return PyRunToolParameters(requireNotNull(uvExecutable) { "Unable to find uv executable." }, listOf("run"), env)
   }
 
   override val runToolData: PyRunToolData = PyRunToolData(
