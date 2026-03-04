@@ -529,7 +529,12 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
             }
           }
           case "Line" -> {
-            breakpoint = breakpointManager.addLineBreakpoint(document, commentLine + 1);
+            Integer lambdaOrdinal = comment.readIntValue("lambdaOrdinal");
+            breakpoint = breakpointManager.addLineBreakpoint(document, commentLine + 1, p -> {
+              if (lambdaOrdinal != null) {
+                p.setEncodedInlinePosition(JavaLineBreakpointProperties.encodeInlinePosition(lambdaOrdinal.intValue(), false));
+              }
+            });
             if (breakpoint != null) {
               systemPrintln("LineBreakpoint created at " + breakpointLocation);
             }
