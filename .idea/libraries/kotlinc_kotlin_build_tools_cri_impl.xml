@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-build-tools-cri-impl" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-build-tools-cri-impl:2.4.0-dev-4766">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-build-tools-cri-impl:2.4.0-dev-5206">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-cri-impl/2.4.0-dev-4766/kotlin-build-tools-cri-impl-2.4.0-dev-4766.jar">
-          <sha256sum>e3da26d72ab12c54e57dd1dc7f11398ba93f1d52091b1e3810f5354d8dbb758f</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-cri-impl/2.4.0-dev-5206/kotlin-build-tools-cri-impl-2.4.0-dev-5206.jar">
+          <sha256sum>d2268bfb61b738c52ce536e47d8d43bd4b9c1f90289498cc01d76bbdf55bcfe2</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-cri-impl/2.4.0-dev-4766/kotlin-build-tools-cri-impl-2.4.0-dev-4766.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-cri-impl/2.4.0-dev-5206/kotlin-build-tools-cri-impl-2.4.0-dev-5206.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-cri-impl/2.4.0-dev-4766/kotlin-build-tools-cri-impl-2.4.0-dev-4766-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-cri-impl/2.4.0-dev-5206/kotlin-build-tools-cri-impl-2.4.0-dev-5206-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
