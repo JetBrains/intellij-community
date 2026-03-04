@@ -6,8 +6,11 @@ import com.intellij.debugger.ui.HotSwapUI
 import com.intellij.lang.Language
 import com.intellij.lang.jvm.JvmMetaLanguage
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.xdebugger.hotswap.HotSwapProvider
 import com.intellij.xdebugger.hotswap.HotSwapSession
@@ -23,8 +26,7 @@ internal class JvmHotSwapProvider(private val debuggerSession: DebuggerSession) 
     coroutineScope: CoroutineScope,
     listener: SourceFileChangesListener,
   ): SourceFileChangesCollector<VirtualFile> {
-    val jvmExtensions = Language.findInstance(JvmMetaLanguage::class.java).getMatchingLanguages()
-      .mapNotNull { it.associatedFileType?.defaultExtension }
+    val jvmExtensions = listJvmFileExtensions()
     val filtersFromProviders = HotSwapSourceFileFilterProvider.findSourceFiltersForSession(debuggerSession)
     return SourceFileChangesCollectorImpl(
       coroutineScope, listener,
@@ -36,6 +38,15 @@ internal class JvmHotSwapProvider(private val debuggerSession: DebuggerSession) 
 
   override fun performHotSwap(session: HotSwapSession<VirtualFile>) {
     HotSwapUI.getInstance(session.project).compileAndReload(debuggerSession, *session.getChanges().toTypedArray())
+  }
+}
+
+private fun listJvmFileExtensions(): List<@NlsSafe String> {
+  val typeManager = FileTypeManager.getInstance()
+  return Language.findInstance(JvmMetaLanguage::class.java).getMatchingLanguages().flatMap { language ->
+    val fileType = language.associatedFileType ?: return@flatMap emptyList<String>()
+    val associatedExtensions = typeManager.getAssociations(fileType).mapNotNull { (it as? ExtensionFileNameMatcher)?.extension }
+    (associatedExtensions + fileType.defaultExtension).distinct()
   }
 }
 
