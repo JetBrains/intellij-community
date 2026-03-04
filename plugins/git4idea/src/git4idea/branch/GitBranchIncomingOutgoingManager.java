@@ -287,7 +287,7 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
       myLocalBranchesWithOutgoing.put(r, calculateBranchesWithOutgoing(r));
     }
 
-    if (shouldRequestRemoteInfo) {
+    if (shouldRequestRemoteInfo && !withIncoming.isEmpty()) {
       GitIncomingRemoteCheckStrategy remoteCheckStrategy = getIncomingRemoteCheckStrategy();
       requestRemoteInfo(remoteCheckStrategy, withIncoming);
     }
