@@ -309,9 +309,6 @@
 
     <lang.implementationTextSelectioner language="XML"
                                         implementationClass="com.intellij.codeInsight.hint.XmlImplementationTextSelectioner"/>
-    <defaultLiveTemplates file="liveTemplates/html_xml.xml"/>
-    <defaultLiveTemplates file="liveTemplates/zen_html.xml"/>
-    <defaultLiveTemplates file="liveTemplates/zen_xsl.xml"/>
     <productivityFeaturesProvider implementation="com.intellij.featureStatistics.XmlProductivityFeatureProvider"/>
 
     <elementSignatureProvider implementation="com.intellij.codeInsight.folding.impl.XmlElementSignatureProvider"/>
