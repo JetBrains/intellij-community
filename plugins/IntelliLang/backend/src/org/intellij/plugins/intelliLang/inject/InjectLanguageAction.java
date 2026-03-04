@@ -143,7 +143,8 @@ public final class InjectLanguageAction implements IntentionAction, LowPriorityA
     PsiLanguageInjectionHost host = findInjectionHost(editor, psiFile);
     if (host == null) return IntentionPreviewInfo.EMPTY;
     String text = StringUtil.shortenTextWithEllipsis(ElementManipulators.getValueText(host), 40, 10);
-    return new IntentionPreviewInfo.Html(IntelliLangBundle.message("intelliLang.inject.language.action.preview", text));
+    String escapedText = StringUtil.escapeXmlEntities(text);
+    return new IntentionPreviewInfo.Html(IntelliLangBundle.message("intelliLang.inject.language.action.preview", escapedText));
   }
 
   private static @Nullable PsiLanguageInjectionHost findInjectionHost(@NotNull Editor editor,
