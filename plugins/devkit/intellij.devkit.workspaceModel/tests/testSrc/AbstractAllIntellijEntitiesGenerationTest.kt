@@ -60,6 +60,8 @@ import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_E
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_ROOT_ENTITY_TYPE_ID
 import junit.framework.AssertionFailedError
 import kotlinx.coroutines.runBlocking
+import org.editorconfig.Utils
+import org.editorconfig.configmanagement.extended.EditorConfigCodeStyleSettingsModifier
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -92,6 +94,8 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
   @BeforeEach
   fun setUp(): Unit = runBlocking {
     IntelliJProjectUtil.markAsIntelliJPlatformProject(project, true)
+    EditorConfigCodeStyleSettingsModifier.Handler.setEnabledInTests(true)
+    Utils.isEnabledInTests = true
 
     CodeGeneratorVersions.checkApiInInterface = false
     CodeGeneratorVersions.checkApiInImpl = false
@@ -117,6 +121,11 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
       it.addEntity(module)
     }
     //@formatter:on
+
+    writeAction {
+      val ultimateEditorconfig = VfsUtil.findFile(Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy()).resolve(".editorconfig"), true)
+      VfsUtil.copyFile(this@AbstractAllIntellijEntitiesGenerationTest, ultimateEditorconfig!!, projectRoot)
+    }
 
     val module = project.modules.first()
     val model = readAction { ModuleRootManager.getInstance(module).getModifiableModel() }
