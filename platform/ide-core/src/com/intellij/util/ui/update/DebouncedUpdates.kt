@@ -43,6 +43,9 @@ import kotlin.time.Duration.Companion.milliseconds
  * - **runLatest**: Processes only the latest queued item, cancelling previous execution if still running
  * - **runBatched**: Collects and processes all items accumulated during the delay window
  *
+ * By default, queues use throttling behavior (timer starts once). Use [Builder.restartTimerOnAdd] to enable
+ * debouncing behavior (timer resets on each queued item).
+ *
  * Queues can be cancelled early using [UpdateQueue.cancelOnDispose] to tie them to a [Disposable] lifecycle.
  *
  * Example usage in Kotlin:
