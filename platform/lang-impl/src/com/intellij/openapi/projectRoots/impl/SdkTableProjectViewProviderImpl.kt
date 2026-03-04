@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
+import com.intellij.execution.target.TargetBasedSdkAdditionalData
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -73,6 +74,7 @@ private class ProjectJdkTableProjectView(val eelMachine: EelMachine, val delegat
   }
 
   private fun validateDescriptor(sdk: Sdk): Boolean {
+    if (sdk.sdkAdditionalData is TargetBasedSdkAdditionalData) return true
     return eelMachine.ownsSdk(sdk)
   }
 
