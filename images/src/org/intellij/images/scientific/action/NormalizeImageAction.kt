@@ -21,8 +21,12 @@ class NormalizeImageAction : DumbAwareToggleAction() {
 
   override fun update(e: AnActionEvent) {
     val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
-    val isScientificMode = imageFile != null && imageFile.getUserData(ScientificUtils.SCIENTIFIC_MODE_KEY) != null
-    val dataType = imageFile?.getUserData(ScientificUtils.DATA_TYPE_KEY) ?: ""
+    val isScientificMode = imageFile?.getUserData(ScientificUtils.SCIENTIFIC_MODE_KEY) != null
+    if (!isScientificMode) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    val dataType = imageFile.getUserData(ScientificUtils.DATA_TYPE_KEY) ?: ""
     val isBooleanArray = dataType.startsWith("bool")
     e.presentation.isEnabled = isScientificMode && !isBooleanArray
     val normalizationApplied = ImageTransformationData.getInstance(imageFile).isNormalized()
