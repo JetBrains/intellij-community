@@ -206,7 +206,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       return 1
     }
 
-    return min(maxThreads, MAX_SSH_CONNECTIONS)
+    return maxThreads.coerceAtMost(MAX_SSH_CONNECTIONS).coerceAtLeast(1)
   }
 
   private fun waitForFetchTasks(tasks: List<FetchTask>): List<SingleRemoteResult> {
