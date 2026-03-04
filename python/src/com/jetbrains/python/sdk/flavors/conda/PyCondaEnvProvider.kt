@@ -10,8 +10,7 @@ import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinOnTarget
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.ExecService
-import com.jetbrains.python.PyBundle
-import com.jetbrains.python.TraceContext
+import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.isFailure
 import com.jetbrains.python.isSuccess
@@ -43,7 +42,7 @@ class PyCondaEnvProvider(
     .expireAfterWrite(ttlAfterWrite.toJavaDuration())
     .buildAsync { binaryToExec ->
       runBlockingMaybeCancellable {
-        withContext(TraceContext(PyBundle.message("trace.context.py.conda.env.provider.cache.update"))) {
+        withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
           getEnvsInternal(binaryToExec)
         }
       }
