@@ -50,6 +50,20 @@ object CondaExecutor {
     ) { PyResult.success(Unit) }
   }
 
+  suspend fun runPythonInCondaEnv(
+    binaryToExec: BinaryToExec,
+    envIdentity: PyCondaEnvIdentity,
+    vararg pythonArgs: String,
+  ): PyResult<String> {
+    return runConda(
+      binaryToExec = binaryToExec,
+      args = listOf("run", "--no-capture-output"),
+      condaEnvIdentity = envIdentity,
+      argsAfterEnv = listOf("python") + pythonArgs,
+      transformer = ZeroCodeStdoutTransformer,
+    )
+  }
+
   suspend fun createUnnamedEnv(binaryToExec: BinaryToExec, envPrefix: String, pythonVersion: String): PyResult<Unit> {
     val args = listOf("create", "-y", "-p", envPrefix, "python=${pythonVersion}")
     return runConda(
@@ -94,7 +108,12 @@ object CondaExecutor {
     )
   }
 
-  suspend fun installPackages(binaryToExec: BinaryToExec, envIdentity: PyCondaEnvIdentity, packages: List<String>, options: List<String>): PyResult<Unit> {
+  suspend fun installPackages(
+    binaryToExec: BinaryToExec,
+    envIdentity: PyCondaEnvIdentity,
+    packages: List<String>,
+    options: List<String>,
+  ): PyResult<Unit> {
     return runConda(
       binaryToExec, listOf("install") + packages + listOf("-y") + options, envIdentity
     ) { PyResult.success(Unit) }
@@ -145,10 +164,11 @@ object CondaExecutor {
     condaEnvIdentity: PyCondaEnvIdentity?,
     timeout: Duration = 15.minutes,
     execService: ExecService = ExecService(),
+    argsAfterEnv: List<String> = emptyList(),
     transformer: ProcessOutputTransformer<T>,
   ): PyResult<T> {
     val envs = getFixedEnvs(binaryToExec).getOr { return it }
-    val runArgs = prepareCondaRunArgs(args, emptyList(), condaEnvIdentity).toTypedArray()
+    val runArgs = prepareCondaRunArgs(args, argsAfterEnv, condaEnvIdentity).toTypedArray()
     return runExecutableWithProgress(
       binaryToExec,
       timeout,
