@@ -71,8 +71,6 @@
     <action id="EscapeEntities" class="com.intellij.xml.actions.EscapeEntitiesAction">
       <add-to-group group-id="EditMenu" anchor="last"/>
     </action>
-
-    <action id="SurroundWithTagTemplate" class="com.intellij.xml.actions.XmlSurroundWithTagTemplateAction" icon="AllIcons.Nodes.Tag"/>
   </actions>
 
   <projectListeners>

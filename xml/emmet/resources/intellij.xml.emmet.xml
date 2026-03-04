@@ -62,5 +62,6 @@
         </action>
       </group>
     </group>
+    <action id="SurroundWithTagTemplate" class="com.intellij.xml.actions.XmlSurroundWithTagTemplateAction" icon="AllIcons.Nodes.Tag"/>
   </actions>
 </idea-plugin>
