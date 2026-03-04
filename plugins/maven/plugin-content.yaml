@@ -100,6 +100,9 @@
 - name: lib/modules/intellij.maven.profiler.jar
   contentModules:
   - name: intellij.maven.profiler
+- name: lib/modules/intellij.maven.proofreading.jar
+  contentModules:
+  - name: intellij.maven.proofreading
 - name: lib/plexus-archiver.jar
   library: plexus-archiver
   module: intellij.maven

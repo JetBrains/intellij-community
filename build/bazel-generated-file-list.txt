@@ -1422,6 +1422,7 @@ plugins/maven/maven3-server-common
 plugins/maven/maven3-server-impl
 plugins/maven/maven36-server-impl
 plugins/maven/maven40-server-impl
+plugins/maven/proofreading
 plugins/maven/src/test
 plugins/maven/testFramework
 plugins/mcp-server
