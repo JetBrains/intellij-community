@@ -104,7 +104,7 @@ button.move.up: <TYPO descr="Typo: In word 'Nach'">Nach</TYPO> &<TYPO descr="Typ
 button.move.down: <TYPO descr="Typo: In word 'Nach'">Nach</TYPO> &<TYPO descr="Typo: In word 'untne'">untne</TYPO>
 button.restore.selection: "{0} <TYPO descr="Typo: In word 'wiederherstelen'">wiederherstelen</TYPO>"
 button.restore.selected.groups: <TYPO descr="Typo: In word 'Ausgewählte'">Ausgewählte</TYPO> <TYPO descr="Typo: In word 'Gruppne'">Gruppne</TYPO> <TYPO descr="Typo: In word 'wiederherstellen'">wiederherstellen</TYPO>
-button.restore.last.state: <TYPO descr="Typo: In word 'Letzten'">Letzten</TYPO> <TYPO descr="Typo: In word 'Zustand'">Zustand</TYPO> <TYPO descr="Typo: In word 'wiederherstelen'">wiederherstelen</TYPO>
+button.restore.last.state: <TYPO descr="Typo: In word 'Letzten'">Letzten</TYPO> Zustand <TYPO descr="Typo: In word 'wiederherstelen'">wiederherstelen</TYPO>
 button.restore.defaults: Standards <TYPO descr="Typo: In word 'wiederherstelen'">wiederherstelen</TYPO>
 button.restore.all: &Alle Standards <TYPO descr="Typo: In word 'wiederherstelen'">wiederherstelen</TYPO>
 progress.deleting: <TYPO descr="Typo: In word 'Wird'">Wird</TYPO> <TYPO descr="Typo: In word 'gelöshct'">gelöshct</TYPO>
