@@ -651,7 +651,16 @@ object PyTypeChecker {
     val superClass = expected.pyClass
     val subClass = actual.pyClass
 
-    if (!subClass.isSubclass(superClass, context) && expected.isProtocol(context)) {
+    // For class definitions with custom metaclasses, always use protocol matching.
+    // Python's data model uses type(obj).__iter__ (metaclass method) for dunder protocols on class objects,
+    // so even if the class explicitly inherits from e.g., Iterable via a base class, the metaclass method takes priority.
+    val isDefinitionWithCustomMetaclass = actual.isDefinition && run {
+      val metaClassType = actual.getMetaClassType(context, true)
+      metaClassType is PyClassType && PyNames.TYPE != metaClassType.name
+    }
+
+    if (expected.isProtocol(context) &&
+        (!subClass.isSubclass(superClass, context) || isDefinitionWithCustomMetaclass)) {
       return Optional.of(matchProtocols(expected, actual, matchContext))
     }
 
@@ -691,9 +700,7 @@ object PyTypeChecker {
       if (ContainerUtil.isEmpty(subclassElementMembers)) {
         return false
       }
-
-      val rawProtocolElementType =
-        dropSelfIfNeeded(expected, protocolMember.type, matchContext.context)
+      val rawProtocolElementType = dropSelfInProtocolMember(protocolMember.type, matchContext.context)
 
       val protocolElementType = substitute(rawProtocolElementType, expectedSubstitutions, matchContext.context)
       val elementResult: Boolean =
@@ -710,7 +717,7 @@ object PyTypeChecker {
             return@any false
           }
 
-          var subclassElementType = dropSelfIfNeeded(actual, subclassElementMember.type, matchContext.context)
+          var subclassElementType = dropSelfInProtocolMember(subclassElementMember.type, matchContext.context)
           subclassElementType = substitute(subclassElementType, actualSubstitutions, matchContext.context)
           match(protocolElementType, subclassElementType, protocolContext).orElse(true)!!
         }
@@ -763,7 +770,7 @@ object PyTypeChecker {
       if (moduleElement != null) {
         val expectedProtocolMemberType =
           substitute(
-            dropSelfIfNeeded(expectedProtocol, pair.first.type, matchContext.context), substitutions,
+            dropSelfInProtocolMember( pair.first.type, matchContext.context), substitutions,
             matchContext.context
           )
         val actualModuleElementType = matchContext.context.getType(moduleElement)
@@ -777,15 +784,9 @@ object PyTypeChecker {
     return true
   }
 
-  private fun dropSelfIfNeeded(
-    classType: PyClassType,
-    elementType: PyType?,
-    context: TypeEvalContext,
-  ): PyType? {
+  private fun dropSelfInProtocolMember(elementType: PyType?, context: TypeEvalContext): PyType? {
     if (elementType is PyCallableType) {
-      if (PyUtil.isInitOrNewMethod(elementType.callable) || !classType.isDefinition) {
-        return elementType.dropSelf(context)
-      }
+      return elementType.dropSelf(context)
     }
     return elementType
   }
@@ -975,7 +976,7 @@ object PyTypeChecker {
       }
       return Optional.of(expectedOverloads.all { expectedCall ->
         actualOverloads.any { actualCall ->
-          match(dropSelfIfNeeded(expected, expectedCall, context), actualCall, matchContext).orElse(true)
+          match(dropSelfInProtocolMember(expectedCall, context), actualCall, matchContext).orElse(true)
         }
       })
     }

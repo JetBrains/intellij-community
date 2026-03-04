@@ -76,13 +76,26 @@ fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, contex
         }
       }
       else -> {
-        val subclassMembers = subclass.findMember(name, resolveContext)
-        result.add(Pair(protocolMember, subclassMembers))
+        result.add(Pair(protocolMember, subclass.findProtocolMember(name, context)))
       }
     }
   }
 
   return result
+}
+
+private fun PyClassType.findProtocolMember(name: String, context: TypeEvalContext): List<PyTypeMember> {
+  val resolveContext = PyResolveContext.defaultContext(context)
+  if (this.isDefinition) {
+    val metaClassType = this.getMetaClassType(context, true)
+    if (metaClassType != null) {
+      val memberInMetaClass = metaClassType.findMember(name, resolveContext)
+      if (memberInMetaClass.isNotEmpty()) {
+        return memberInMetaClass
+      }
+    }
+  }
+  return this.findMember(name, resolveContext)
 }
 
 fun PyClassLikeType.getProtocolMembers(context: TypeEvalContext): List<PyTypeMember> {
