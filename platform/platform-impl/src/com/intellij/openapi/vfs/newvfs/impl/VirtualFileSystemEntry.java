@@ -28,6 +28,7 @@ import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -499,12 +500,14 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return computePath("", "");
   }
 
+  @RequiresWriteLock
   @Override
   public void delete(Object requestor) throws IOException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     owningPersistentFS().deleteFile(requestor, this);
   }
 
+  @RequiresWriteLock
   @Override
   public void rename(Object requestor, @NotNull @NonNls String newName) throws IOException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
@@ -513,6 +516,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     owningPersistentFS().renameFile(requestor, this, newName);
   }
 
+  @RequiresWriteLock
   @Override
   public @NotNull VirtualFile createChildData(Object requestor, @NotNull String name) throws IOException {
     validateName(name);
@@ -544,6 +548,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return owningPersistentFS().getLength(this);
   }
 
+  @RequiresWriteLock
   @Override
   public @NotNull VirtualFile copy(Object requestor, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException {
     if (getFileSystem() != newParent.getFileSystem()) {
@@ -557,6 +562,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return EncodingRegistry.doActionAndRestoreEncoding(this, () -> owningPersistentFS().copyFile(requestor, this, newParent, copyName));
   }
 
+  @RequiresWriteLock
   @Override
   public void move(Object requestor, @NotNull VirtualFile newParent) throws IOException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
@@ -595,6 +601,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return id;
   }
 
+  @RequiresWriteLock
   @Override
   public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull String name) throws IOException {
     validateName(name);

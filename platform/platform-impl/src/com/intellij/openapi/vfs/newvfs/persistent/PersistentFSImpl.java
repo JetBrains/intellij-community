@@ -95,6 +95,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.Suppressions;
 import com.intellij.util.UriUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.MostlySingularMultiMap;
@@ -862,6 +863,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
+  @RequiresWriteLock
   public @NotNull VirtualFile copyFile(Object requestor,
                                        @NotNull VirtualFile file,
                                        @NotNull VirtualFile parent,
@@ -878,6 +880,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return child;
   }
 
+  @RequiresWriteLock
   @Override
   public @NotNull VirtualFile createChildDirectory(Object requestor,
                                                    @NotNull VirtualFile parent,
@@ -900,6 +903,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
+  @RequiresWriteLock
   public @NotNull VirtualFile createChildFile(Object requestor,
                                               @NotNull VirtualFile parent,
                                               @NotNull String childName) throws IOException {
@@ -937,6 +941,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
+  @RequiresWriteLock
   public void deleteFile(Object requestor, @NotNull VirtualFile file) throws IOException {
     ThreadingAssertions.assertWriteAccess();
 
@@ -947,6 +952,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
+  @RequiresWriteLock
   @Override
   public void renameFile(Object requestor,
                          @NotNull VirtualFile file,
@@ -1247,6 +1253,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return data == vfsData;
   }
 
+  @RequiresWriteLock
   @Override
   public void moveFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent) throws IOException {
     long modCount = newParent.getModificationCount();

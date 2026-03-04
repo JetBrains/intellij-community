@@ -238,6 +238,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @param newName   the new file name
    * @throws IOException if file failed to be renamed
    */
+  @RequiresWriteLock
   public void rename(Object requestor, @NotNull @NonNls String newName) throws IOException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (getName().equals(newName)) return;
@@ -425,6 +426,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return {@code VirtualFile} representing the created directory
    * @throws IOException if directory failed to be created
    */
+  @RequiresWriteLock
   public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull @NonNls String name) throws IOException {
     if (!isDirectory()) {
       throw new IOException(CoreBundle.message("directory.create.wrong.parent.error"));
@@ -455,6 +457,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return {@code VirtualFile} representing the created file
    * @throws IOException if file failed to be created
    */
+  @RequiresWriteLock
   public @NotNull VirtualFile createChildData(Object requestor, @NotNull @NonNls String name) throws IOException {
     if (!isDirectory()) {
       throw new IOException(CoreBundle.message("file.create.wrong.parent.error"));
@@ -484,6 +487,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *                  See {@link VirtualFileEvent#getRequestor}
    * @throws IOException if file failed to be deleted
    */
+  @RequiresWriteLock
   public void delete(Object requestor) throws IOException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     LOG.assertTrue(isValid(), "Deleting invalid file");
@@ -500,6 +504,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @param newParent the directory to move this file to
    * @throws IOException if file failed to be moved
    */
+  @RequiresWriteLock
   public void move(final Object requestor, final @NotNull VirtualFile newParent) throws IOException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
@@ -513,6 +518,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     });
   }
 
+  @RequiresWriteLock
   public @NotNull VirtualFile copy(final Object requestor, final @NotNull VirtualFile newParent, @NotNull @NonNls String copyName) throws IOException {
     if (getFileSystem() != newParent.getFileSystem()) {
       throw new IOException(CoreBundle.message("file.copy.error", newParent.getPresentableUrl()));
