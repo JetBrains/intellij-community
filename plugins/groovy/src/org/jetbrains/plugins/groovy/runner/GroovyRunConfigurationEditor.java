@@ -69,7 +69,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
                                                                  GridConstraints.SIZEPOLICY_CAN_GROW,
                                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK |
                                                                  GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-      myCommonJavaParametersPanel = new CommonJavaParametersPanel();
+      myCommonJavaParametersPanel = new CommonJavaParametersPanel(project);
       myMainPanel.add(myCommonJavaParametersPanel,
                       new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
@@ -87,7 +87,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0,
                                           false));
-      myJrePathEditor = new JrePathEditor();
+      myJrePathEditor = new JrePathEditor(project);
       myMainPanel.add(myJrePathEditor, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
