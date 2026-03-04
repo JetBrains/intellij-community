@@ -5,6 +5,7 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.ReadableExternalAnnotationsManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -23,8 +24,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * Extends {@link AnnotatedElementsSearch} to find elements annotated via external annotations ({@code annotations.xml}).
@@ -64,25 +63,18 @@ public final class ExternalAnnotatedElementsSearcher implements QueryExecutor<Ps
       }
     }.intersectWith(scope);
 
-    List<String> itemNames = ReadAction.computeBlocking(() -> {
-      return ExternalAnnotationsIndex.getItemsByAnnotation(annotationFQN, indexQueryScope);
-    });
-    for (String itemName : itemNames) {
-      PsiModifierListOwner element = ReadAction.computeBlocking(() -> {
+    return ReadAction.computeBlocking(() -> {
+      return ExternalAnnotationsIndex.processItemsByAnnotation(annotationFQN, indexQueryScope, itemName -> {
         PsiModifierListOwner resolved = resolveByExternalName(itemName, project, scope);
-        if (resolved == null) return null;
+        if (resolved == null) return true;
         // Skip elements already source/bytecode-annotated: AnnotatedElementsSearcher covers those,
         // and returning them again here would produce duplicates in the combined query result.
         PsiModifierList modList = resolved.getModifierList();
-        if (modList != null && modList.hasAnnotation(annotationFQN)) return null;
-        return resolved;
+        if (modList != null && modList.hasAnnotation(annotationFQN)) return true;
+        if (!AnnotatedElementsSearcher.isInstanceof(resolved, queryParameters.getTypes())) return true;
+        return consumer.process(resolved);
       });
-      if (element != null && AnnotatedElementsSearcher.isInstanceof(element, queryParameters.getTypes())) {
-        if (!consumer.process(element)) return false;
-      }
-    }
-
-    return true;
+    });
   }
 
   /**

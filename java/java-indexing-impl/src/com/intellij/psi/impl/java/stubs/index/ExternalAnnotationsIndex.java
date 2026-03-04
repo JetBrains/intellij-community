@@ -4,7 +4,6 @@ package com.intellij.psi.impl.java.stubs.index;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.util.ThreeState;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -24,6 +23,8 @@ import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import com.intellij.util.Processor;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -149,15 +150,33 @@ public final class ExternalAnnotationsIndex extends FileBasedIndexExtension<Stri
   }
 
   /**
-   * Returns the item external names annotated with the given annotation FQN.
-   * Each item name follows the format produced by {@link com.intellij.psi.util.PsiFormatUtil#getExternalName}.
+   * Retrieves a list of external items annotated with the specified annotation.
+   *
+   * @param annotationFQN the fully qualified name of the annotation to search for.
+   * @param scope the scope within which to search for the annotated items.
+   * @return a list of item names that are annotated with the specified annotation.
+   * @see #processItemsByAnnotation(String, GlobalSearchScope, Processor)
    */
-  public static @NotNull List<String> getItemsByAnnotation(@NotNull String annotationFQN, @NotNull GlobalSearchScope scope) {
+  public static List<String> getItemsByAnnotation(String annotationFQN, GlobalSearchScope scope) {
     List<String> items = new ArrayList<>();
-    FileBasedIndex.getInstance().processValues(NAME, annotationFQN, null, (file, value) -> {
-      items.addAll(value);
+    processItemsByAnnotation(annotationFQN, scope, item -> items.add(item));
+    return items;
+  }
+
+  /**
+   * Processes item external names annotated with the given annotation FQN.
+   *
+   * @return {@code false} if processing was stopped by the processor, {@code true} otherwise.
+   * @see #getItemsByAnnotation(String, GlobalSearchScope)
+   */
+  public static boolean processItemsByAnnotation(@NotNull String annotationFQN,
+                                                 @NotNull GlobalSearchScope scope,
+                                                 @NotNull Processor<? super @NotNull String> processor) {
+    return FileBasedIndex.getInstance().processValues(NAME, annotationFQN, null, (file, value) -> {
+      for (String item : value) {
+        if (!processor.process(item)) return false;
+      }
       return true;
     }, scope);
-    return items;
   }
 }
