@@ -31,8 +31,8 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.ParameterizedCachedValue
 import com.intellij.python.pyproject.model.api.ModuleCreateInfo
 import com.intellij.python.pyproject.model.api.getModuleInfo
+import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.TraceContext
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.allowCreationTargetOfThisType
 import com.jetbrains.python.sdk.ModuleOrProject.ModuleAndProject
@@ -203,7 +203,7 @@ private class ToolDetectionService(project: Project, val coroutineScope: Corouti
 
   private fun detectBestToolAsync(module: Module): CachedValueProvider.Result<Deferred<CreateSdkInfoWithTool?>> {
     val result = coroutineScope.async {
-      withContext(TraceContext(PyBundle.message("trace.context.python.tool.detection.service.detect.tools.for.module", module.name))) {
+      withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
         detectBestToolForModule(module)
       }
     }
