@@ -16,7 +16,6 @@ import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetPlatform
 import com.intellij.execution.target.TargetedCommandLine
 import com.intellij.execution.target.TargetedCommandLineBuilder
-import com.intellij.execution.target.getTargetPaths
 import com.intellij.execution.target.local.LocalTargetPtyOptions
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.TargetValue
@@ -137,7 +136,7 @@ private fun applyRunToolAsync(
   .onSuccess { originalExe: String? ->
     commandLineBuilder.exePath = TargetValue.fixed(runTool.exe)
     commandLineBuilder.addFixedParametersAt(0, runTool.args)
-    if (!runTool.dropOldExe && originalExe != null) {
+    if (originalExe != null) {
       commandLineBuilder.addParameterAt(runTool.args.size, originalExe)
     }
   }
