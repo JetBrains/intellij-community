@@ -62,122 +62,7 @@ internal object PatchApplyEngine {
     val endIndex = findMarkerIndex(lines, END_MARKER, startIndex + 1)
     if (endIndex < 0) mcpFail("patch must include *** End Patch")
 
-    val operations = mutableListOf<PatchOperation>()
-    var index = startIndex + 1
-    while (index < endIndex) {
-      val line = lines[index]
-      val headerLine = line.trimStart()
-
-      when {
-        headerLine.startsWith(ADD_PREFIX) -> {
-          val path = headerLine.removePrefix(ADD_PREFIX).trim()
-          if (path.isEmpty()) mcpFail("Add File requires a path")
-          ensureSafePatchPath(path, "Add File")
-
-          index += 1
-          val contentLines = mutableListOf<String>()
-          while (index < endIndex && !isPatchHeaderLine(lines[index])) {
-            val contentLine = lines[index]
-            if (!contentLine.startsWith('+')) mcpFail("Add File lines must start with +")
-            contentLines += contentLine.substring(1)
-            index += 1
-          }
-
-          val content = if (contentLines.isEmpty()) "" else contentLines.joinToString("\n", postfix = "\n")
-          operations += AddPatchOperation(path = path, content = content)
-        }
-
-        headerLine.startsWith(DELETE_PREFIX) -> {
-          val path = headerLine.removePrefix(DELETE_PREFIX).trim()
-          if (path.isEmpty()) mcpFail("Delete File requires a path")
-          ensureSafePatchPath(path, "Delete File")
-
-          operations += DeletePatchOperation(path)
-          index += 1
-        }
-
-        headerLine.startsWith(UPDATE_PREFIX) -> {
-          val path = headerLine.removePrefix(UPDATE_PREFIX).trim()
-          if (path.isEmpty()) mcpFail("Update File requires a path")
-          ensureSafePatchPath(path, "Update File")
-          index += 1
-
-          var moveTo: String? = null
-          if (index < endIndex && isPatchHeaderLine(lines[index])) {
-            val moveLine = lines[index].trimStart()
-            if (moveLine.startsWith(MOVE_PREFIX)) {
-              moveTo = moveLine.removePrefix(MOVE_PREFIX).trim()
-              if (moveTo.isEmpty()) mcpFail("Move to requires a path")
-              ensureSafePatchPath(moveTo, "Move to")
-              index += 1
-            }
-          }
-
-          val hunks = mutableListOf<PatchHunk>()
-          while (index < endIndex && !isPatchHeaderLine(lines[index])) {
-            if (lines[index].trim().isEmpty()) {
-              index += 1
-              continue
-            }
-
-            var header: String? = null
-            if (isHunkHeaderLine(lines[index])) {
-              val trimmed = lines[index].trim()
-              val headerText = stripUnifiedDiffHeader(trimmed)
-              header = headerText.ifEmpty { null }
-              index += 1
-            }
-            else if (hunks.isEmpty()) {
-              if (!isDiffLine(lines[index])) mcpFail("Expected @@ hunk header")
-            }
-            else {
-              mcpFail("Expected @@ hunk header")
-            }
-
-            val hunkLines = mutableListOf<PatchHunkLine>()
-            var isEndOfFile = false
-            while (index < endIndex && !isHunkHeaderLine(lines[index]) && !isPatchHeaderLine(lines[index])) {
-              val hunkLine = lines[index]
-              if (hunkLine == END_OF_FILE) {
-                isEndOfFile = true
-                index += 1
-                break
-              }
-
-              if (hunkLine.isEmpty()) {
-                hunkLines += PatchHunkLine(prefix = ' ', text = "")
-                index += 1
-                continue
-              }
-
-              val prefix = hunkLine.first()
-              if (!isDiffPrefix(prefix)) {
-                if (hunkLines.isEmpty()) mcpFail("Hunk lines must start with space, +, or -")
-                break
-              }
-
-              hunkLines += PatchHunkLine(prefix = prefix, text = hunkLine.substring(1))
-              index += 1
-            }
-
-            if (hunkLines.isEmpty()) mcpFail("Empty hunk in Update File")
-            hunks += PatchHunk(header = header, lines = hunkLines, isEndOfFile = isEndOfFile)
-          }
-
-          if (hunks.isEmpty()) mcpFail("Update File requires at least one hunk")
-          operations += UpdatePatchOperation(path = path, moveTo = moveTo, hunks = hunks)
-        }
-
-        line.trim().isEmpty() -> {
-          index += 1
-        }
-
-        else -> mcpFail("Unexpected patch line: $line")
-      }
-    }
-
-    if (operations.isEmpty()) mcpFail("patch did not contain any operations")
-    return operations
+    return PatchParser(lines, startIndex + 1, endIndex).parseOperations()
   }
 
   fun applyHunks(originalText: String, hunks: List<PatchHunk>): String {
@@ -219,9 +104,155 @@ internal object PatchApplyEngine {
 
 }
 
+private class PatchParser(
+  private val lines: List<String>,
+  startIndex: Int,
+  private val endIndex: Int,
+) {
+  private var index: Int = startIndex
+
+  fun parseOperations(): List<PatchOperation> {
+    val operations = mutableListOf<PatchOperation>()
+
+    while (index < endIndex) {
+      val line = lines[index]
+      val headerLine = line.trimStart()
+
+      when {
+        headerLine.startsWith(ADD_PREFIX) -> operations += parseAdd(headerLine)
+        headerLine.startsWith(DELETE_PREFIX) -> operations += parseDelete(headerLine)
+        headerLine.startsWith(UPDATE_PREFIX) -> operations += parseUpdate(headerLine)
+        line.trim().isEmpty() -> index += 1
+        else -> mcpFail("Unexpected patch line: $line")
+      }
+    }
+
+    if (operations.isEmpty()) mcpFail("patch did not contain any operations")
+    return operations
+  }
+
+  private fun parseAdd(headerLine: String): AddPatchOperation {
+    val path = headerLine.removePrefix(ADD_PREFIX).trim()
+    if (path.isEmpty()) mcpFail("Add File requires a path")
+    ensureSafePatchPath(path, "Add File")
+    index += 1
+
+    val content = StringBuilder()
+    var hasContent = false
+    while (index < endIndex && !isPatchHeaderLine(lines[index])) {
+      val contentLine = lines[index]
+      if (!contentLine.startsWith('+')) mcpFail("Add File lines must start with +")
+      content.append(contentLine, 1, contentLine.length)
+      content.append('\n')
+      hasContent = true
+      index += 1
+    }
+
+    return AddPatchOperation(path = path, content = if (hasContent) content.toString() else "")
+  }
+
+  private fun parseDelete(headerLine: String): DeletePatchOperation {
+    val path = headerLine.removePrefix(DELETE_PREFIX).trim()
+    if (path.isEmpty()) mcpFail("Delete File requires a path")
+    ensureSafePatchPath(path, "Delete File")
+    index += 1
+    return DeletePatchOperation(path)
+  }
+
+  private fun parseUpdate(headerLine: String): UpdatePatchOperation {
+    val path = headerLine.removePrefix(UPDATE_PREFIX).trim()
+    if (path.isEmpty()) mcpFail("Update File requires a path")
+    ensureSafePatchPath(path, "Update File")
+    index += 1
+
+    var moveTo: String? = null
+    if (index < endIndex && isPatchHeaderLine(lines[index])) {
+      val moveLine = lines[index].trimStart()
+      if (moveLine.startsWith(MOVE_PREFIX)) {
+        moveTo = moveLine.removePrefix(MOVE_PREFIX).trim()
+        if (moveTo.isEmpty()) mcpFail("Move to requires a path")
+        ensureSafePatchPath(moveTo, "Move to")
+        index += 1
+      }
+    }
+
+    val hunks = mutableListOf<PatchHunk>()
+    while (index < endIndex && !isPatchHeaderLine(lines[index])) {
+      if (lines[index].trim().isEmpty()) {
+        index += 1
+        continue
+      }
+
+      hunks += parseHunk(isFirstHunk = hunks.isEmpty())
+    }
+
+    if (hunks.isEmpty()) mcpFail("Update File requires at least one hunk")
+    return UpdatePatchOperation(path = path, moveTo = moveTo, hunks = hunks)
+  }
+
+  private fun parseHunk(isFirstHunk: Boolean): PatchHunk {
+    var header: String? = null
+    val line = lines[index]
+    if (isHunkHeaderLine(line)) {
+      val headerText = stripUnifiedDiffHeader(line.trim())
+      header = headerText.ifEmpty { null }
+      index += 1
+    }
+    else if (isFirstHunk) {
+      if (!isDiffLine(line)) mcpFail("Expected @@ hunk header")
+    }
+    else {
+      mcpFail("Expected @@ hunk header")
+    }
+
+    val hunkLines = mutableListOf<PatchHunkLine>()
+    var isEndOfFile = false
+    while (index < endIndex && !isHunkHeaderLine(lines[index]) && !isPatchHeaderLine(lines[index])) {
+      val hunkLine = lines[index]
+      if (hunkLine == END_OF_FILE) {
+        isEndOfFile = true
+        index += 1
+        break
+      }
+
+      if (hunkLine.isEmpty()) {
+        hunkLines += PatchHunkLine(prefix = ' ', text = "")
+        index += 1
+        continue
+      }
+
+      val prefix = hunkLine.first()
+      if (!isDiffPrefix(prefix)) {
+        if (hunkLines.isEmpty()) mcpFail("Hunk lines must start with space, +, or -")
+        break
+      }
+
+      hunkLines += PatchHunkLine(prefix = prefix, text = hunkLine.substring(1))
+      index += 1
+    }
+
+    if (hunkLines.isEmpty()) mcpFail("Empty hunk in Update File")
+    return PatchHunk(header = header, lines = hunkLines, isEndOfFile = isEndOfFile)
+  }
+}
+
 private fun buildHunkLines(lines: List<PatchHunkLine>): Pair<List<String>, List<String>> {
-  val oldLines = mutableListOf<String>()
-  val newLines = mutableListOf<String>()
+  var oldSize = 0
+  var newSize = 0
+  for (line in lines) {
+    when (line.prefix) {
+      ' ' -> {
+        oldSize += 1
+        newSize += 1
+      }
+
+      '-' -> oldSize += 1
+      '+' -> newSize += 1
+    }
+  }
+
+  val oldLines = ArrayList<String>(oldSize)
+  val newLines = ArrayList<String>(newSize)
 
   for (line in lines) {
     when (line.prefix) {
@@ -251,66 +282,154 @@ private fun findSequence(
   val searchStart = if (preferEnd) maxStart else maxOf(0, startIndex)
   if (searchStart > maxStart) return -1
 
-  searchExact(haystack, needle, searchStart, maxStart).takeIf { it >= 0 }?.let { return it }
-  searchWithTransform(haystack, needle, searchStart, maxStart, String::trimEnd).takeIf { it >= 0 }?.let { return it }
-  searchWithTransform(haystack, needle, searchStart, maxStart, String::trim).takeIf { it >= 0 }?.let { return it }
-  return searchWithTransform(haystack, needle, searchStart, maxStart, ::normalizeForMatch)
+  return SequenceFinder(haystack, needle).find(searchStart, maxStart)
 }
 
-private fun searchExact(
-  haystack: List<String>,
-  needle: List<String>,
-  searchStart: Int,
-  maxStart: Int,
-): Int {
-  val firstNeedleLine = needle.first()
-  for (haystackIndex in searchStart..maxStart) {
-    if (haystack[haystackIndex] != firstNeedleLine) continue
+private enum class MatchMode {
+  TRIM_END,
+  TRIM,
+  NORMALIZED,
+}
 
-    var isMatch = true
-    for (needleIndex in 1 until needle.size) {
-      if (haystack[haystackIndex + needleIndex] != needle[needleIndex]) {
-        isMatch = false
-        break
+private class SequenceFinder(
+  private val haystack: List<String>,
+  private val needle: List<String>,
+) {
+  private var trimEndNeedle: Array<String>? = null
+  private var trimNeedle: Array<String>? = null
+  private var normalizedNeedle: Array<String>? = null
+
+  private var trimEndHaystack: TransformedLineCache? = null
+  private var trimHaystack: TransformedLineCache? = null
+  private var normalizedHaystack: TransformedLineCache? = null
+
+  fun find(searchStart: Int, maxStart: Int): Int {
+    searchExact(searchStart, maxStart).takeIf { it >= 0 }?.let { return it }
+    searchWithMode(MatchMode.TRIM_END, searchStart, maxStart).takeIf { it >= 0 }?.let { return it }
+    searchWithMode(MatchMode.TRIM, searchStart, maxStart).takeIf { it >= 0 }?.let { return it }
+    return searchWithMode(MatchMode.NORMALIZED, searchStart, maxStart)
+  }
+
+  private fun searchExact(searchStart: Int, maxStart: Int): Int {
+    return searchKmp(
+      searchStart = searchStart,
+      searchEndInclusive = maxStart + needle.size - 1,
+      needleSize = needle.size,
+      haystackLine = { index -> haystack[index] },
+      needleLine = { index -> needle[index] },
+    )
+  }
+
+  private fun searchWithMode(mode: MatchMode, searchStart: Int, maxStart: Int): Int {
+    val transformedNeedle = transformedNeedle(mode)
+    val transformedHaystack = transformedHaystack(mode)
+    return searchKmp(
+      searchStart = searchStart,
+      searchEndInclusive = maxStart + transformedNeedle.size - 1,
+      needleSize = transformedNeedle.size,
+      haystackLine = transformedHaystack::line,
+      needleLine = transformedNeedle::get,
+    )
+  }
+
+  private fun transformedNeedle(mode: MatchMode): Array<String> {
+    return when (mode) {
+      MatchMode.TRIM_END -> trimEndNeedle ?: transformNeedle(mode).also { trimEndNeedle = it }
+      MatchMode.TRIM -> trimNeedle ?: transformNeedle(mode).also { trimNeedle = it }
+      MatchMode.NORMALIZED -> normalizedNeedle ?: transformNeedle(mode).also { normalizedNeedle = it }
+    }
+  }
+
+  private fun transformNeedle(mode: MatchMode): Array<String> {
+    val transformed = Array(needle.size) { "" }
+    for (index in needle.indices) {
+      transformed[index] = transformLine(needle[index], mode)
+    }
+    return transformed
+  }
+
+  private fun transformedHaystack(mode: MatchMode): TransformedLineCache {
+    return when (mode) {
+      MatchMode.TRIM_END -> trimEndHaystack ?: TransformedLineCache(haystack, mode).also { trimEndHaystack = it }
+      MatchMode.TRIM -> trimHaystack ?: TransformedLineCache(haystack, mode).also { trimHaystack = it }
+      MatchMode.NORMALIZED -> normalizedHaystack ?: TransformedLineCache(haystack, mode).also { normalizedHaystack = it }
+    }
+  }
+}
+
+private class TransformedLineCache(
+  private val source: List<String>,
+  private val mode: MatchMode,
+) {
+  private val cache = arrayOfNulls<String>(source.size)
+
+  fun line(index: Int): String {
+    val cached = cache[index]
+    if (cached != null) return cached
+
+    val transformed = transformLine(source[index], mode)
+    cache[index] = transformed
+    return transformed
+  }
+}
+
+private inline fun searchKmp(
+  searchStart: Int,
+  searchEndInclusive: Int,
+  needleSize: Int,
+  haystackLine: (Int) -> String,
+  needleLine: (Int) -> String,
+): Int {
+  if (needleSize == 1) {
+    val expected = needleLine(0)
+    for (haystackIndex in searchStart..searchEndInclusive) {
+      if (haystackLine(haystackIndex) == expected) return haystackIndex
+    }
+    return -1
+  }
+
+  val prefix = buildPrefixTable(needleSize, needleLine)
+  var matched = 0
+  for (haystackIndex in searchStart..searchEndInclusive) {
+    val value = haystackLine(haystackIndex)
+    while (matched > 0 && value != needleLine(matched)) {
+      matched = prefix[matched - 1]
+    }
+    if (value == needleLine(matched)) {
+      matched += 1
+      if (matched == needleSize) {
+        return haystackIndex - needleSize + 1
       }
     }
-    if (isMatch) return haystackIndex
   }
   return -1
 }
 
-private fun searchWithTransform(
-  haystack: List<String>,
-  needle: List<String>,
-  searchStart: Int,
-  maxStart: Int,
-  transform: (String) -> String,
-): Int {
-  val transformedNeedle = ArrayList<String>(needle.size)
-  for (needleLine in needle) {
-    transformedNeedle += transform(needleLine)
-  }
-  val firstNeedleLine = transformedNeedle.first()
-
-  val transformedHaystack = HashMap<Int, String>()
-  fun transformedHaystackLine(index: Int): String {
-    return transformedHaystack.getOrPut(index) { transform(haystack[index]) }
-  }
-
-  for (haystackIndex in searchStart..maxStart) {
-    if (transformedHaystackLine(haystackIndex) != firstNeedleLine) continue
-
-    var isMatch = true
-    for (needleIndex in 1 until transformedNeedle.size) {
-      if (transformedHaystackLine(haystackIndex + needleIndex) != transformedNeedle[needleIndex]) {
-        isMatch = false
-        break
-      }
+private inline fun buildPrefixTable(
+  needleSize: Int,
+  needleLine: (Int) -> String,
+): IntArray {
+  val prefix = IntArray(needleSize)
+  var matched = 0
+  for (index in 1 until needleSize) {
+    val value = needleLine(index)
+    while (matched > 0 && value != needleLine(matched)) {
+      matched = prefix[matched - 1]
     }
-    if (isMatch) return haystackIndex
+    if (value == needleLine(matched)) {
+      matched += 1
+      prefix[index] = matched
+    }
   }
+  return prefix
+}
 
-  return -1
+private fun transformLine(text: String, mode: MatchMode): String {
+  return when (mode) {
+    MatchMode.TRIM_END -> text.trimEnd()
+    MatchMode.TRIM -> text.trim()
+    MatchMode.NORMALIZED -> normalizeForMatch(text)
+  }
 }
 
 private fun normalizeForMatch(text: String): String {

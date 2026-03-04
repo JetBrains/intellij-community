@@ -110,6 +110,189 @@ class PatchApplyEngineTest {
   }
 
   @Test
+  fun `parsePatch requires end marker`() {
+    assertParseFails(
+      "patch must include *** End Patch",
+      "*** Begin Patch",
+      "*** Add File: notes.txt",
+      "+alpha",
+    )
+  }
+
+  @Test
+  fun `parsePatch rejects patch with no operations`() {
+    assertParseFails(
+      "patch did not contain any operations",
+      "*** Begin Patch",
+      "*** End Patch",
+    )
+  }
+
+  @Test
+  fun `parsePatch rejects unexpected top level line`() {
+    assertParseFails(
+      "Unexpected patch line",
+      "*** Begin Patch",
+      "oops",
+      "*** End Patch",
+    )
+  }
+
+  @Test
+  fun `parsePatch rejects add file without path`() {
+    assertParseFails(
+      "Add File requires a path",
+      "*** Begin Patch",
+      "*** Add File:   ",
+      "*** End Patch",
+    )
+  }
+
+  @Test
+  fun `parsePatch rejects add file body line without plus prefix`() {
+    assertParseFails(
+      "Add File lines must start with +",
+      "*** Begin Patch",
+      "*** Add File: notes.txt",
+      "alpha",
+      "*** End Patch",
+    )
+  }
+
+  @Test
+  fun `parsePatch rejects add file mixed body with later invalid line`() {
+    assertParseFails(
+      "Add File lines must start with +",
+      "*** Begin Patch",
+      "*** Add File: notes.txt",
+      "+alpha",
+      "beta",
+      "*** End Patch",
+    )
+  }
+
+  @Test
+  fun `parsePatch rejects delete file without path`() {
+    assertParseFails(
+      "Delete File requires a path",
+      "*** Begin Patch",
+      "*** Delete File:   ",
+      "*** End Patch",
+    )
+  }
+
+  @Test
+  fun `parsePatch rejects update file without path`() {
+    assertParseFails(
+      "Update File requires a path",
+      "*** Begin Patch",
+      "*** Update File:   ",
+      "*** End Patch",
+    )
+  }
+
+  @Test
+  fun `parsePatch rejects move target without path`() {
+    assertParseFails(
+      "Move to requires a path",
+      "*** Begin Patch",
+      "*** Update File: sample.txt",
+      "*** Move to:   ",
+      "*** End Patch",
+    )
+  }
+
+  @Test
+  fun `parsePatch rejects update without hunks`() {
+    assertParseFails(
+      "Update File requires at least one hunk",
+      "*** Begin Patch",
+      "*** Update File: sample.txt",
+      "*** End Patch",
+    )
+  }
+
+  @Test
+  fun `parsePatch rejects first hunk line without header or diff prefix`() {
+    assertParseFails(
+      "Expected @@ hunk header",
+      "*** Begin Patch",
+      "*** Update File: sample.txt",
+      "oops",
+      "*** End Patch",
+    )
+  }
+
+  @Test
+  fun `parsePatch rejects malformed second hunk without header`() {
+    assertParseFails(
+      "Expected @@ hunk header",
+      "*** Begin Patch",
+      "*** Update File: sample.txt",
+      " alpha",
+      "-beta",
+      "+gamma",
+      "oops",
+      "*** End Patch",
+    )
+  }
+
+  @Test
+  fun `parsePatch rejects invalid first line inside hunk`() {
+    assertParseFails(
+      "Hunk lines must start with space, +, or -",
+      "*** Begin Patch",
+      "*** Update File: sample.txt",
+      "@@",
+      "oops",
+      "*** End Patch",
+    )
+  }
+
+  @Test
+  fun `parsePatch rejects empty hunk after header`() {
+    assertParseFails(
+      "Empty hunk in Update File",
+      "*** Begin Patch",
+      "*** Update File: sample.txt",
+      "@@",
+      "*** End Patch",
+    )
+  }
+
+  @Test
+  fun `parsePatch rejects escaped control characters in add path`() {
+    assertParseFails(
+      "Add File path contains control characters or escape sequences",
+      "*** Begin Patch",
+      "*** Add File: bad\\npath.txt",
+      "+alpha",
+      "*** End Patch",
+    )
+  }
+
+  @Test
+  fun `parsePatch rejects escaped control characters in update path`() {
+    assertParseFails(
+      "Update File path contains control characters or escape sequences",
+      "*** Begin Patch",
+      "*** Update File: bad\\npath.txt",
+      "*** End Patch",
+    )
+  }
+
+  @Test
+  fun `parsePatch rejects escaped control characters in move path`() {
+    assertParseFails(
+      "Move to path contains control characters or escape sequences",
+      "*** Begin Patch",
+      "*** Update File: sample.txt",
+      "*** Move to: bad\\npath.txt",
+      "*** End Patch",
+    )
+  }
+
+  @Test
   fun `applyHunks works with unified-diff style hunk headers`() {
     val patch = buildPatch(
       "*** Begin Patch",
@@ -197,6 +380,86 @@ class PatchApplyEngineTest {
   }
 
   @Test
+  fun `applyHunks prefers exact matches before normalized fallback`() {
+    val result = PatchApplyEngine.applyHunks(
+      "first\nimport asyncio  # local import – avoids top‑level dep\nimport asyncio  # local import - avoids top-level dep\n",
+      listOf(
+        PatchHunk(
+          header = null,
+          lines = listOf(
+            PatchHunkLine('-', "import asyncio  # local import - avoids top-level dep"),
+            PatchHunkLine('+', "import asyncio  # EXACT"),
+          ),
+          isEndOfFile = false,
+        )
+      )
+    )
+
+    assertThat(result).isEqualTo("first\nimport asyncio  # local import – avoids top‑level dep\nimport asyncio  # EXACT\n")
+  }
+
+  @Test
+  fun `applyHunks falls back to searching from start for non eof hunks`() {
+    val result = PatchApplyEngine.applyHunks(
+      "one\ntwo\nthree\none\n",
+      listOf(
+        PatchHunk(
+          header = null,
+          lines = listOf(
+            PatchHunkLine('-', "one"),
+            PatchHunkLine('+', "ONE"),
+          ),
+          isEndOfFile = true,
+        ),
+        PatchHunk(
+          header = null,
+          lines = listOf(
+            PatchHunkLine('-', "two"),
+            PatchHunkLine('+', "TWO"),
+          ),
+          isEndOfFile = false,
+        ),
+      )
+    )
+
+    assertThat(result).isEqualTo("one\nTWO\nthree\nONE\n")
+  }
+
+  @Test
+  fun `applyHunks handles repeated large content deterministically`() {
+    val replacements = 80
+    val originalLines = 600
+    val hunks = (0 until replacements).map { index ->
+      PatchHunk(
+        header = null,
+        lines = listOf(
+          PatchHunkLine('-', "alpha"),
+          PatchHunkLine('+', "alpha-$index"),
+        ),
+        isEndOfFile = false,
+      )
+    }
+
+    val original = buildString {
+      repeat(originalLines) {
+        append("alpha\n")
+      }
+    }
+
+    val result = PatchApplyEngine.applyHunks(original, hunks)
+
+    val expected = buildString {
+      repeat(replacements) { index ->
+        append("alpha-$index\n")
+      }
+      repeat(originalLines - replacements) {
+        append("alpha\n")
+      }
+    }
+    assertThat(result).isEqualTo(expected)
+  }
+
+  @Test
   fun `applyHunks honors end of file marker`() {
     val result = PatchApplyEngine.applyHunks(
       "alpha\nbeta\n",
@@ -238,5 +501,12 @@ class PatchApplyEngineTest {
 
   private fun buildPatch(vararg lines: String): String {
     return lines.joinToString(separator = "\n", postfix = "\n")
+  }
+
+  private fun assertParseFails(messagePart: String, vararg lines: String) {
+    val patch = buildPatch(*lines)
+    assertThatThrownBy { PatchApplyEngine.parsePatch(patch) }
+      .isInstanceOf(McpExpectedError::class.java)
+      .hasMessageContaining(messagePart)
   }
 }
