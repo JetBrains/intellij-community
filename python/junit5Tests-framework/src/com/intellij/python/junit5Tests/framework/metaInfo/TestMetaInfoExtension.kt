@@ -95,7 +95,7 @@ internal class TestMetaInfoExtension : BeforeAllCallback, BeforeEachCallback, Ex
     }
 
     val data = TestMethodInfoData(
-      testCaseFilePath = testCaseFilePath
+      testCaseRelativePath = testCaseFilePath
     )
     context.setTestMethodInfo(data)
   }

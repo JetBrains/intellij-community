@@ -102,7 +102,7 @@ private class PyWithDefaultFixturesExtension : BeforeAllCallback, BeforeEachCall
    */
   override fun beforeEach(context: ExtensionContext) {
     val testMethodInfo = context.getTestMethodInfo()
-    val testCaseFilePath = testMethodInfo.testCaseFilePath ?: return
+    val testCaseFilePath = testMethodInfo.testCaseRelativePath ?: return
 
     val implicitFixtures = mutableListOf<LookupFixture>()
 
