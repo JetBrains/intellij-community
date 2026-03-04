@@ -21,6 +21,9 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessa
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchError
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchResult
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
@@ -106,18 +109,14 @@ internal interface AgentSessionsChatOpenExecutor {
     thread: AgentSessionThread,
     subAgent: AgentSubAgent?,
     launchSpecOverride: AgentSessionTerminalLaunchSpec?,
-    startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec?,
-    initialComposedMessage: String?,
-    initialMessageToken: String?,
+    initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
   )
 
   suspend fun openNewChat(
     normalizedPath: String,
     identity: String,
     launchSpec: AgentSessionTerminalLaunchSpec,
-    startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec?,
-    initialComposedMessage: String?,
-    initialMessageToken: String?,
+    initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
     preferredDedicatedFrame: Boolean?,
   )
 }
@@ -128,18 +127,14 @@ private object DefaultAgentSessionsChatOpenExecutor : AgentSessionsChatOpenExecu
     thread: AgentSessionThread,
     subAgent: AgentSubAgent?,
     launchSpecOverride: AgentSessionTerminalLaunchSpec?,
-    startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec?,
-    initialComposedMessage: String?,
-    initialMessageToken: String?,
+    initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
   ) {
     openAgentSessionChat(
       normalizedPath = normalizedPath,
       thread = thread,
       subAgent = subAgent,
       launchSpecOverride = launchSpecOverride,
-      startupLaunchSpecOverride = startupLaunchSpecOverride,
-      initialComposedMessage = initialComposedMessage,
-      initialMessageToken = initialMessageToken,
+      initialMessageDispatchPlan = initialMessageDispatchPlan,
     )
   }
 
@@ -147,18 +142,14 @@ private object DefaultAgentSessionsChatOpenExecutor : AgentSessionsChatOpenExecu
     normalizedPath: String,
     identity: String,
     launchSpec: AgentSessionTerminalLaunchSpec,
-    startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec?,
-    initialComposedMessage: String?,
-    initialMessageToken: String?,
+    initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
     preferredDedicatedFrame: Boolean?,
   ) {
     openAgentSessionNewChat(
       normalizedPath = normalizedPath,
       identity = identity,
       launchSpec = launchSpec,
-      startupLaunchSpecOverride = startupLaunchSpecOverride,
-      initialComposedMessage = initialComposedMessage,
-      initialMessageToken = initialMessageToken,
+      initialMessageDispatchPlan = initialMessageDispatchPlan,
       preferredDedicatedFrame = preferredDedicatedFrame,
     )
   }
@@ -340,9 +331,7 @@ internal class AgentSessionsService private constructor(
     path: String,
     thread: AgentSessionThread,
     currentProject: Project? = null,
-    startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec? = null,
-    initialComposedMessage: String? = null,
-    initialMessageToken: String? = null,
+    initialMessageDispatchPlan: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
     singleFlightPolicy: SingleFlightPolicy = SingleFlightPolicy.DROP,
     launchOrigin: OpenThreadLaunchOrigin = OpenThreadLaunchOrigin.USER_OPEN,
   ) {
@@ -367,9 +356,7 @@ internal class AgentSessionsService private constructor(
         thread = thread,
         subAgent = null,
         launchSpecOverride = null,
-        startupLaunchSpecOverride = startupLaunchSpecOverride,
-        initialComposedMessage = initialComposedMessage,
-        initialMessageToken = initialMessageToken,
+        initialMessageDispatchPlan = initialMessageDispatchPlan,
       )
     }
   }
@@ -387,9 +374,7 @@ internal class AgentSessionsService private constructor(
         thread = thread,
         subAgent = subAgent,
         launchSpecOverride = null,
-        startupLaunchSpecOverride = null,
-        initialComposedMessage = null,
-        initialMessageToken = null,
+        initialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
       )
     }
   }
@@ -427,31 +412,21 @@ internal class AgentSessionsService private constructor(
       val identity = createSpec.sessionId?.let { sessionId ->
         buildAgentSessionIdentity(provider, sessionId)
       } ?: buildAgentSessionNewIdentity(provider)
-      val initialComposedMessage = initialMessageRequest
-        ?.let(bridge::composeInitialMessage)
-        ?.trim()
-        ?.takeIf { it.isNotEmpty() }
-      val initialMessageToken = initialComposedMessage
-        ?.let { message -> buildInitialMessageToken(identity = identity, message = message) }
-      val startupLaunchSpecOverride = initialComposedMessage
-        ?.let { message ->
-          buildStartupLaunchSpecOverride(
-            bridge = bridge,
-            baseLaunchSpec = createSpec.launchSpec,
-            prompt = message,
-            initialMessageRequest = initialMessageRequest,
-          )
-        }
-      val initialMessageForChat = if (startupLaunchSpecOverride != null) null else initialComposedMessage
-      val initialMessageTokenForChat = if (startupLaunchSpecOverride != null) null else initialMessageToken
+      val initialMessagePlan = initialMessageRequest
+        ?.let(bridge::buildInitialMessagePlan)
+        ?: AgentInitialMessagePlan.EMPTY
+      val initialMessageDispatchPlan = buildInitialMessageDispatchPlan(
+        bridge = bridge,
+        baseLaunchSpec = createSpec.launchSpec,
+        identity = identity,
+        initialMessagePlan = initialMessagePlan,
+      )
 
       chatOpenExecutor.openNewChat(
         normalizedPath = normalizedPath,
         identity = identity,
         launchSpec = createSpec.launchSpec,
-        startupLaunchSpecOverride = startupLaunchSpecOverride,
-        initialComposedMessage = initialMessageForChat,
-        initialMessageToken = initialMessageTokenForChat,
+        initialMessageDispatchPlan = initialMessageDispatchPlan,
         preferredDedicatedFrame = preferredDedicatedFrame,
       )
       if (provider == AgentSessionProvider.CODEX) {
@@ -490,29 +465,19 @@ internal class AgentSessionsService private constructor(
           threadId = targetThreadId,
         ) ?: return AgentPromptLaunchResult.failure(AgentPromptLaunchError.TARGET_THREAD_NOT_FOUND)
 
-        val initialComposedMessage = bridge.composeInitialMessage(request.initialMessageRequest)
-          .trim()
-          .takeIf { message -> message.isNotEmpty() }
+        val initialMessagePlan = bridge.buildInitialMessagePlan(request.initialMessageRequest)
         val targetIdentity = buildAgentSessionIdentity(provider = request.provider, sessionId = targetThread.id)
-        val initialMessageToken = initialComposedMessage
-          ?.let { message -> buildInitialMessageToken(identity = targetIdentity, message = message) }
-        val startupLaunchSpecOverride = initialComposedMessage
-          ?.let { message ->
-            val resumeLaunchSpec = bridge.buildResumeLaunchSpec(targetThread.id)
-            buildStartupLaunchSpecOverride(
-              bridge = bridge,
-              baseLaunchSpec = resumeLaunchSpec,
-              prompt = message,
-              initialMessageRequest = request.initialMessageRequest,
-            )
-          }
+        val initialMessageDispatchPlan = buildInitialMessageDispatchPlan(
+          bridge = bridge,
+          baseLaunchSpec = bridge.buildResumeLaunchSpec(targetThread.id),
+          identity = targetIdentity,
+          initialMessagePlan = initialMessagePlan,
+        )
 
         openChatThread(
           path = normalizedPath,
           thread = targetThread,
-          startupLaunchSpecOverride = startupLaunchSpecOverride,
-          initialComposedMessage = initialComposedMessage,
-          initialMessageToken = initialMessageToken,
+          initialMessageDispatchPlan = initialMessageDispatchPlan,
           singleFlightPolicy = SingleFlightPolicy.RESTART_LATEST,
           launchOrigin = OpenThreadLaunchOrigin.PROMPT_LAUNCH,
         )
@@ -864,9 +829,7 @@ private suspend fun openAgentSessionChat(
   thread: AgentSessionThread,
   subAgent: AgentSubAgent?,
   launchSpecOverride: AgentSessionTerminalLaunchSpec? = null,
-  startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec? = null,
-  initialComposedMessage: String? = null,
-  initialMessageToken: String? = null,
+  initialMessageDispatchPlan: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
 ) {
   if (AgentChatOpenModeSettings.openInDedicatedFrame()) {
     openChatInDedicatedFrame(
@@ -874,9 +837,7 @@ private suspend fun openAgentSessionChat(
       thread = thread,
       subAgent = subAgent,
       launchSpecOverride = launchSpecOverride,
-      startupLaunchSpecOverride = startupLaunchSpecOverride,
-      initialComposedMessage = initialComposedMessage,
-      initialMessageToken = initialMessageToken,
+      initialMessageDispatchPlan = initialMessageDispatchPlan,
     )
     return
   }
@@ -887,9 +848,7 @@ private suspend fun openAgentSessionChat(
     thread = thread,
     subAgent = subAgent,
     launchSpecOverride = launchSpecOverride,
-    startupLaunchSpecOverride = startupLaunchSpecOverride,
-    initialComposedMessage = initialComposedMessage,
-    initialMessageToken = initialMessageToken,
+    initialMessageDispatchPlan = initialMessageDispatchPlan,
   )
 }
 
@@ -912,15 +871,34 @@ private fun buildInitialMessageToken(identity: String, message: String): String 
   return "$identity:${message.hashCode()}:${System.nanoTime()}"
 }
 
+private fun buildInitialMessageDispatchPlan(
+  bridge: AgentSessionProviderBridge,
+  baseLaunchSpec: AgentSessionTerminalLaunchSpec,
+  identity: String,
+  initialMessagePlan: AgentInitialMessagePlan,
+): AgentInitialMessageDispatchPlan {
+  val initialComposedMessage = initialMessagePlan.message ?: return AgentInitialMessageDispatchPlan.EMPTY
+  return AgentInitialMessageDispatchPlan(
+    startupLaunchSpecOverride = buildStartupLaunchSpecOverride(
+      bridge = bridge,
+      baseLaunchSpec = baseLaunchSpec,
+      initialMessagePlan = initialMessagePlan,
+    ),
+    initialComposedMessage = initialComposedMessage,
+    initialMessageToken = buildInitialMessageToken(identity = identity, message = initialComposedMessage),
+    initialMessageTimeoutPolicy = initialMessagePlan.timeoutPolicy,
+  )
+}
+
 private fun buildStartupLaunchSpecOverride(
   bridge: AgentSessionProviderBridge,
   baseLaunchSpec: AgentSessionTerminalLaunchSpec,
-  prompt: String,
-  initialMessageRequest: AgentPromptInitialMessageRequest,
+  initialMessagePlan: AgentInitialMessagePlan,
 ): AgentSessionTerminalLaunchSpec? {
-  if (!bridge.shouldUseStartupPromptCommand(initialMessageRequest)) {
+  if (initialMessagePlan.startupPolicy != AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND) {
     return null
   }
+  val prompt = initialMessagePlan.message ?: return null
   val startupLaunchSpec = bridge.buildLaunchSpecWithInitialPrompt(baseLaunchSpec = baseLaunchSpec, prompt = prompt) ?: return null
   val estimatedCommandSize = estimateCommandSizeBytes(startupLaunchSpec.command)
   if (estimatedCommandSize <= MAX_STARTUP_COMMAND_BYTES) {
@@ -993,9 +971,7 @@ private suspend fun openAgentSessionNewChat(
   normalizedPath: String,
   identity: String,
   launchSpec: AgentSessionTerminalLaunchSpec,
-  startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec?,
-  initialComposedMessage: String?,
-  initialMessageToken: String?,
+  initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
   preferredDedicatedFrame: Boolean?,
 ) {
   val title = AgentSessionsBundle.message("toolwindow.action.new.thread")
@@ -1005,10 +981,8 @@ private suspend fun openAgentSessionNewChat(
       normalizedPath = normalizedPath,
       identity = identity,
       launchSpec = launchSpec,
-      startupLaunchSpecOverride = startupLaunchSpecOverride,
       title = title,
-      initialComposedMessage = initialComposedMessage,
-      initialMessageToken = initialMessageToken,
+      initialMessageDispatchPlan = initialMessageDispatchPlan,
     )
     return
   }
@@ -1018,10 +992,8 @@ private suspend fun openAgentSessionNewChat(
     projectPath = normalizedPath,
     identity = identity,
     launchSpec = launchSpec,
-    startupLaunchSpecOverride = startupLaunchSpecOverride,
     title = title,
-    initialComposedMessage = initialComposedMessage,
-    initialMessageToken = initialMessageToken,
+    initialMessageDispatchPlan = initialMessageDispatchPlan,
   )
 }
 
@@ -1029,10 +1001,8 @@ private suspend fun openNewChatInDedicatedFrame(
   normalizedPath: String,
   identity: String,
   launchSpec: AgentSessionTerminalLaunchSpec,
-  startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec?,
   title: String,
-  initialComposedMessage: String?,
-  initialMessageToken: String?,
+  initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
 ) {
   val dedicatedProjectPath = AgentWorkbenchDedicatedFrameProjectManager.dedicatedProjectPath()
   val openProject = findOpenProject(dedicatedProjectPath)
@@ -1043,10 +1013,8 @@ private suspend fun openNewChatInDedicatedFrame(
       projectPath = normalizedPath,
       identity = identity,
       launchSpec = launchSpec,
-      startupLaunchSpecOverride = startupLaunchSpecOverride,
       title = title,
-      initialComposedMessage = initialComposedMessage,
-      initialMessageToken = initialMessageToken,
+      initialMessageDispatchPlan = initialMessageDispatchPlan,
     )
     return
   }
@@ -1069,10 +1037,8 @@ private suspend fun openNewChatInDedicatedFrame(
     projectPath = normalizedPath,
     identity = identity,
     launchSpec = launchSpec,
-    startupLaunchSpecOverride = startupLaunchSpecOverride,
     title = title,
-    initialComposedMessage = initialComposedMessage,
-    initialMessageToken = initialMessageToken,
+    initialMessageDispatchPlan = initialMessageDispatchPlan,
   )
 }
 
@@ -1081,10 +1047,8 @@ private suspend fun openNewChatInProject(
   projectPath: String,
   identity: String,
   launchSpec: AgentSessionTerminalLaunchSpec,
-  startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec?,
   title: String,
-  initialComposedMessage: String?,
-  initialMessageToken: String?,
+  initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
 ) {
   val threadId = resolveAgentSessionId(identity)
   val pendingMetadata = resolvePendingCodexMetadata(identity = identity, launchSpec = launchSpec)
@@ -1094,15 +1058,13 @@ private suspend fun openNewChatInProject(
     threadIdentity = identity,
     shellCommand = launchSpec.command,
     shellEnvVariables = launchSpec.envVariables,
-    startupLaunchSpecOverride = startupLaunchSpecOverride,
     threadId = threadId,
     threadTitle = title,
     subAgentId = null,
     threadActivity = AgentThreadActivity.READY,
     pendingCreatedAtMs = pendingMetadata?.createdAtMs,
     pendingLaunchMode = pendingMetadata?.launchMode,
-    initialComposedMessage = initialComposedMessage,
-    initialMessageToken = initialMessageToken,
+    initialMessageDispatchPlan = initialMessageDispatchPlan,
   )
   focusProjectWindow(project)
 }
@@ -1112,9 +1074,7 @@ private suspend fun openChatInDedicatedFrame(
   thread: AgentSessionThread,
   subAgent: AgentSubAgent?,
   launchSpecOverride: AgentSessionTerminalLaunchSpec?,
-  startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec? = null,
-  initialComposedMessage: String? = null,
-  initialMessageToken: String? = null,
+  initialMessageDispatchPlan: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
 ) {
   val dedicatedProjectPath = AgentWorkbenchDedicatedFrameProjectManager.dedicatedProjectPath()
   val openProject = findOpenProject(dedicatedProjectPath)
@@ -1126,9 +1086,7 @@ private suspend fun openChatInDedicatedFrame(
       thread = thread,
       subAgent = subAgent,
       launchSpecOverride = launchSpecOverride,
-      startupLaunchSpecOverride = startupLaunchSpecOverride,
-      initialComposedMessage = initialComposedMessage,
-      initialMessageToken = initialMessageToken,
+      initialMessageDispatchPlan = initialMessageDispatchPlan,
     )
     return
   }
@@ -1149,9 +1107,7 @@ private suspend fun openChatInDedicatedFrame(
     thread = thread,
     subAgent = subAgent,
     launchSpecOverride = launchSpecOverride,
-    startupLaunchSpecOverride = startupLaunchSpecOverride,
-    initialComposedMessage = initialComposedMessage,
-    initialMessageToken = initialMessageToken,
+    initialMessageDispatchPlan = initialMessageDispatchPlan,
   )
 }
 
@@ -1161,15 +1117,19 @@ private suspend fun openChatInProject(
   thread: AgentSessionThread,
   subAgent: AgentSubAgent?,
   launchSpecOverride: AgentSessionTerminalLaunchSpec?,
-  startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec? = null,
-  initialComposedMessage: String? = null,
-  initialMessageToken: String? = null,
+  initialMessageDispatchPlan: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
 ) {
   val chatOpenPayload = resolveAgentSessionChatOpenPayload(
     thread = thread,
     subAgent = subAgent,
     launchSpecOverride = launchSpecOverride,
   )
+  val effectiveInitialMessageDispatchPlan = if (initialMessageDispatchPlan != AgentInitialMessageDispatchPlan.EMPTY) {
+    initialMessageDispatchPlan
+  }
+  else {
+    chatOpenPayload.initialMessageDispatchPlan
+  }
   withContext(Dispatchers.EDT) {
     openChat(
       project = project,
@@ -1177,13 +1137,11 @@ private suspend fun openChatInProject(
       threadIdentity = chatOpenPayload.threadIdentity,
       shellCommand = chatOpenPayload.launchSpec.command,
       shellEnvVariables = chatOpenPayload.launchSpec.envVariables,
-      startupLaunchSpecOverride = startupLaunchSpecOverride,
       threadId = chatOpenPayload.runtimeThreadId,
       threadTitle = chatOpenPayload.threadTitle,
       subAgentId = chatOpenPayload.subAgentId,
       threadActivity = thread.activity,
-      initialComposedMessage = initialComposedMessage ?: chatOpenPayload.initialComposedMessage,
-      initialMessageToken = initialMessageToken ?: chatOpenPayload.initialMessageToken,
+      initialMessageDispatchPlan = effectiveInitialMessageDispatchPlan,
     )
     focusProjectWindowSync(project)
   }

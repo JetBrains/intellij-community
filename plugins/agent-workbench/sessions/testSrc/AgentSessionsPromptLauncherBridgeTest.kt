@@ -15,6 +15,10 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationDa
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchError
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptProjectPathCandidate
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
@@ -100,8 +104,8 @@ class AgentSessionsPromptLauncherBridgeTest {
               "composed:Refactor selected code",
             )
           assertThat(openRequest.startupLaunchSpecOverride?.envVariables).isEmpty()
-          assertThat(openRequest.initialComposedMessage).isNull()
-          assertThat(openRequest.initialMessageToken).isNull()
+          assertThat(openRequest.initialComposedMessage).isEqualTo("composed:Refactor selected code")
+          assertThat(openRequest.initialMessageToken).isNotNull()
         }
       }
     }
@@ -873,18 +877,17 @@ private class RecordingChatOpenExecutor(
     thread: AgentSessionThread,
     subAgent: AgentSubAgent?,
     launchSpecOverride: AgentSessionTerminalLaunchSpec?,
-    startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec?,
-    initialComposedMessage: String?,
-    initialMessageToken: String?,
+    initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
   ) {
     val request = OpenChatRequest(
       normalizedPath = normalizedPath,
       thread = thread,
       subAgent = subAgent,
       launchSpecOverride = launchSpecOverride,
-      startupLaunchSpecOverride = startupLaunchSpecOverride,
-      initialComposedMessage = initialComposedMessage,
-      initialMessageToken = initialMessageToken,
+      startupLaunchSpecOverride = initialMessageDispatchPlan.startupLaunchSpecOverride,
+      initialComposedMessage = initialMessageDispatchPlan.initialComposedMessage,
+      initialMessageToken = initialMessageDispatchPlan.initialMessageToken,
+      initialMessageTimeoutPolicy = initialMessageDispatchPlan.initialMessageTimeoutPolicy,
     )
     val callIndex = openChatCalls.incrementAndGet()
     openChatRequests.add(request)
@@ -896,9 +899,7 @@ private class RecordingChatOpenExecutor(
     normalizedPath: String,
     identity: String,
     launchSpec: AgentSessionTerminalLaunchSpec,
-    startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec?,
-    initialComposedMessage: String?,
-    initialMessageToken: String?,
+    initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
     preferredDedicatedFrame: Boolean?,
   ) {
     openNewChatCalls.incrementAndGet()
@@ -907,9 +908,10 @@ private class RecordingChatOpenExecutor(
         normalizedPath = normalizedPath,
         identity = identity,
         launchSpec = launchSpec,
-        startupLaunchSpecOverride = startupLaunchSpecOverride,
-        initialComposedMessage = initialComposedMessage,
-        initialMessageToken = initialMessageToken,
+        startupLaunchSpecOverride = initialMessageDispatchPlan.startupLaunchSpecOverride,
+        initialComposedMessage = initialMessageDispatchPlan.initialComposedMessage,
+        initialMessageToken = initialMessageDispatchPlan.initialMessageToken,
+        initialMessageTimeoutPolicy = initialMessageDispatchPlan.initialMessageTimeoutPolicy,
         preferredDedicatedFrame = preferredDedicatedFrame,
       )
     )
@@ -924,6 +926,7 @@ private data class OpenChatRequest(
   @JvmField val startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec?,
   @JvmField val initialComposedMessage: String?,
   @JvmField val initialMessageToken: String?,
+  @JvmField val initialMessageTimeoutPolicy: AgentInitialMessageTimeoutPolicy,
 )
 
 private data class OpenNewChatRequest(
@@ -933,6 +936,7 @@ private data class OpenNewChatRequest(
   @JvmField val startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec?,
   @JvmField val initialComposedMessage: String?,
   @JvmField val initialMessageToken: String?,
+  @JvmField val initialMessageTimeoutPolicy: AgentInitialMessageTimeoutPolicy,
   @JvmField val preferredDedicatedFrame: Boolean?,
 )
 
@@ -1009,6 +1013,7 @@ private class RecordingPromptLaunchProviderBridge(
   private val supportedModes: Set<AgentSessionLaunchMode>,
   private val startupPromptCommandSupported: Boolean = true,
   private val startupPromptCommandPolicyEnabled: Boolean = true,
+  private val timeoutPolicy: AgentInitialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK,
   private val startupPromptCommandEnvVariables: Map<String, String> = emptyMap(),
 ) : AgentSessionProviderBridge {
   val createCalls: AtomicInteger = AtomicInteger(0)
@@ -1086,15 +1091,20 @@ private class RecordingPromptLaunchProviderBridge(
     )
   }
 
-  override fun composeInitialMessage(request: AgentPromptInitialMessageRequest): String {
+  override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
     composeCalls.incrementAndGet()
     lastComposeRequest.set(request)
-    return "composed:${request.prompt.trim()}"
-  }
-
-  override fun shouldUseStartupPromptCommand(request: AgentPromptInitialMessageRequest): Boolean {
     shouldUseStartupPromptCommandCalls.incrementAndGet()
     lastShouldUseStartupPromptCommandRequest.set(request)
-    return startupPromptCommandPolicyEnabled
+    return AgentInitialMessagePlan(
+      message = "composed:${request.prompt.trim()}",
+      startupPolicy = if (startupPromptCommandPolicyEnabled) {
+        AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND
+      }
+      else {
+        AgentInitialMessageStartupPolicy.POST_START_ONLY
+      },
+      timeoutPolicy = timeoutPolicy,
+    )
   }
 }

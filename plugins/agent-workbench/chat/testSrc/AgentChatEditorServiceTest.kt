@@ -1,6 +1,7 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.service
@@ -38,6 +39,7 @@ class AgentChatEditorServiceTest {
 
   @BeforeEach
   fun setUp(): Unit = timeoutRunBlocking {
+    clearCodexTerminalOutputRefreshSignalsForTests()
     runInUi {
       fileEditorManagerFixture.get()
       FileEditorProvider.EP_FILE_EDITOR_PROVIDER.point.registerExtension(
@@ -539,6 +541,36 @@ class AgentChatEditorServiceTest {
   }
 
   @Test
+  fun testConsumeRecentCodexTerminalOutputRefreshPathsIncludesDelayedNonStaleSignals(): Unit = timeoutRunBlocking {
+    val outputPath = "/work/project-terminal-output-delayed"
+    notifyCodexTerminalOutputForRefreshForTests(outputPath, timestampMs = 1_000L)
+
+    val consumed = consumeRecentCodexTerminalOutputRefreshPathsForTests(nowMs = 4_500L)
+    assertThat(consumed).containsExactly(outputPath)
+  }
+
+  @Test
+  fun testConsumeRecentCodexTerminalOutputRefreshPathsIsOneShotPerPath(): Unit = timeoutRunBlocking {
+    val outputPath = "/work/project-terminal-output-one-shot"
+    notifyCodexTerminalOutputForRefreshForTests(outputPath, timestampMs = 2_000L)
+
+    val first = consumeRecentCodexTerminalOutputRefreshPathsForTests(nowMs = 2_500L)
+    val second = consumeRecentCodexTerminalOutputRefreshPathsForTests(nowMs = 2_500L)
+
+    assertThat(first).containsExactly(outputPath)
+    assertThat(second).isEmpty()
+  }
+
+  @Test
+  fun testConsumeRecentCodexTerminalOutputRefreshPathsDropsStaleSignals(): Unit = timeoutRunBlocking {
+    val stalePath = "/work/project-terminal-output-stale"
+    notifyCodexTerminalOutputForRefreshForTests(stalePath, timestampMs = 1_000L)
+
+    val consumed = consumeRecentCodexTerminalOutputRefreshPathsForTests(nowMs = 11_100L)
+    assertThat(consumed).isEmpty()
+  }
+
+  @Test
   fun testDifferentSessionIdentitiesDoNotReuseTab(): Unit = timeoutRunBlocking {
     openChatInModal(
       threadIdentity = "CODEX:session-1",
@@ -676,6 +708,71 @@ class AgentChatEditorServiceTest {
   }
 
   @Test
+  fun testResolveFromPathSkipsRestoreWhenVersionMismatch(): Unit = timeoutRunBlocking {
+    val tabsService = service<AgentChatTabsService>()
+    val stateService = service<AgentChatTabsStateService>()
+    val snapshot = AgentChatTabSnapshot.create(
+      projectHash = project.locationHash,
+      projectPath = projectPath,
+      threadIdentity = "CODEX:version-mismatch-restore",
+      threadId = "version-mismatch-restore",
+      threadTitle = "Version mismatch",
+      subAgentId = null,
+      shellCommand = codexCommand,
+    )
+    tabsService.upsert(snapshot)
+    try {
+      stateService.forceVersionMismatchForTests(true)
+      assertThat(tabsService.resolveFromPath(snapshot.tabKey.toPath())).isNull()
+
+      stateService.forceVersionMismatchForTests(false)
+      assertThat(tabsService.resolveFromPath(snapshot.tabKey.toPath())).isInstanceOf(AgentChatTabResolution.Resolved::class.java)
+    }
+    finally {
+      stateService.forceVersionMismatchForTests(false)
+      tabsService.forget(snapshot.tabKey)
+    }
+  }
+
+  @Test
+  fun testFirstWriteAfterVersionMismatchPurgesLegacyEntries(): Unit = timeoutRunBlocking {
+    val tabsService = service<AgentChatTabsService>()
+    val stateService = service<AgentChatTabsStateService>()
+    val legacySnapshot = AgentChatTabSnapshot.create(
+      projectHash = project.locationHash,
+      projectPath = projectPath,
+      threadIdentity = "CODEX:legacy-entry",
+      threadId = "legacy-entry",
+      threadTitle = "Legacy",
+      subAgentId = null,
+      shellCommand = codexCommand,
+    )
+    val newSnapshot = AgentChatTabSnapshot.create(
+      projectHash = project.locationHash,
+      projectPath = projectPath,
+      threadIdentity = "CODEX:new-entry",
+      threadId = "new-entry",
+      threadTitle = "New",
+      subAgentId = null,
+      shellCommand = codexCommand,
+    )
+    tabsService.upsert(legacySnapshot)
+    try {
+      stateService.forceVersionMismatchForTests(true)
+      tabsService.upsert(newSnapshot)
+
+      stateService.forceVersionMismatchForTests(false)
+      assertThat(tabsService.load(legacySnapshot.tabKey.value)).isNull()
+      assertThat(tabsService.load(newSnapshot.tabKey.value)).isNotNull
+    }
+    finally {
+      stateService.forceVersionMismatchForTests(false)
+      tabsService.forget(legacySnapshot.tabKey)
+      tabsService.forget(newSnapshot.tabKey)
+    }
+  }
+
+  @Test
   fun testTerminalInitializationFailureDeletesMetadata(): Unit = timeoutRunBlocking {
     val snapshot = AgentChatTabSnapshot.create(
       projectHash = project.locationHash,
@@ -720,23 +817,26 @@ class AgentChatEditorServiceTest {
     initialComposedMessage: String? = null,
     initialMessageToken: String? = null,
   ) {
+    val initialMessageDispatchPlan = AgentInitialMessageDispatchPlan(
+      startupLaunchSpecOverride = startupShellCommandOverride?.let { command ->
+        AgentSessionTerminalLaunchSpec(command = command, envVariables = startupShellEnvOverride.orEmpty())
+      },
+      initialComposedMessage = initialComposedMessage,
+      initialMessageToken = initialMessageToken,
+    )
     openChat(
       project = project,
       projectPath = projectPath,
       threadIdentity = threadIdentity,
       shellCommand = shellCommand,
       shellEnvVariables = shellEnvVariables,
-      startupLaunchSpecOverride = startupShellCommandOverride?.let { command ->
-        AgentSessionTerminalLaunchSpec(command = command, envVariables = startupShellEnvOverride.orEmpty())
-      },
       threadId = threadId,
       threadTitle = threadTitle,
       subAgentId = subAgentId,
       pendingCreatedAtMs = pendingCreatedAtMs,
       pendingFirstInputAtMs = pendingFirstInputAtMs,
       pendingLaunchMode = pendingLaunchMode,
-      initialComposedMessage = initialComposedMessage,
-      initialMessageToken = initialMessageToken,
+      initialMessageDispatchPlan = initialMessageDispatchPlan,
     )
     waitForCondition {
       openedChatFiles().any { file ->

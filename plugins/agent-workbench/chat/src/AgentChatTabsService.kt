@@ -22,6 +22,9 @@ internal class AgentChatTabsService {
     get() = service<AgentChatTabsStateService>()
 
   fun resolveFromPath(path: String): AgentChatTabResolution? {
+    if (stateService.hasVersionMismatch()) {
+      return null
+    }
     val tabKey = AgentChatTabKey.parsePath(path) ?: return null
     val snapshot = stateService.load(tabKey)
     if (snapshot != null) {

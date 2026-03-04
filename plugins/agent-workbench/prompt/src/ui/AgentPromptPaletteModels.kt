@@ -29,6 +29,12 @@ internal data class ContextEntry(
   val projectBasePath: String? = null,
   val id: String = item.rendererId + ":" + item.title + ":" + item.body.hashCode(),
 ) {
+  val logicalItemId: String?
+    get() = item.itemId
+
+  val logicalParentItemId: String?
+    get() = item.parentItemId
+
   private val chipRender = AgentPromptContextRenderers.find(item.rendererId)
     ?.renderChip(
       AgentPromptChipRenderInput(

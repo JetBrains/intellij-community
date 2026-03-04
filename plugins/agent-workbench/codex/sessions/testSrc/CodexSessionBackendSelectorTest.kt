@@ -3,7 +3,6 @@ package com.intellij.agent.workbench.codex.sessions
 
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackendSelector
 import com.intellij.agent.workbench.codex.sessions.backend.appserver.CodexAppServerSessionBackend
-import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutSessionBackend
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -23,10 +22,10 @@ class CodexSessionBackendSelectorTest {
   }
 
   @Test
-  fun usesRolloutWhenOverrideIsRollout() {
+  fun keepsUsingAppServerWhenOverrideIsRollout() {
     val backend = CodexSessionBackendSelector.select(backendOverride = "rollout")
 
-    assertThat(backend).isInstanceOf(CodexRolloutSessionBackend::class.java)
+    assertThat(backend).isInstanceOf(CodexAppServerSessionBackend::class.java)
   }
 
   @Test

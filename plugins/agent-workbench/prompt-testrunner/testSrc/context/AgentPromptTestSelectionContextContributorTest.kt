@@ -75,6 +75,8 @@ class AgentPromptTestSelectionContextContributorTest {
 
     assertThat(item.rendererId).isEqualTo(AgentPromptContextRendererIds.TEST_FAILURES)
     assertThat(item.title).isEqualTo(AgentPromptTestRunnerBundle.message("context.tests.title"))
+    assertThat(item.itemId).isEqualTo("testRunner.selection")
+    assertThat(item.parentItemId).isNull()
     assertThat(item.source).isEqualTo("testRunner")
     assertThat(item.body.lineSequence().toList()).containsExactly(
       "passed: Suite#testPassed",

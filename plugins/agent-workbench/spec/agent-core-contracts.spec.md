@@ -73,14 +73,22 @@ Define the single source of truth for cross-feature behavior that must stay cons
 - Provider bridge policy may explicitly disable startup prompt command usage for a launch request (for example Codex Plan mode), forcing post-start message send path.
   [@test] ../sessions/testSrc/AgentSessionsPromptLauncherBridgeTest.kt
 
+- Initial prompt handoff from Sessions to Chat must use one dispatch plan carrying:
+  - optional startup launch-spec override,
+  - optional post-start metadata (`initialComposedMessage`, `initialMessageToken`, `initialMessageTimeoutPolicy`).
+  [@test] ../sessions/testSrc/AgentSessionsPromptLauncherBridgeTest.kt
+  [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
+
 - Startup prompt command is transient and must not be persisted into chat tab runtime `shellCommand`.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
-- If startup command support is unavailable or exceeds command-size guard, fallback is post-start send-once initial message metadata.
+- If startup command support is unavailable, inapplicable for the open target (for example existing-tab reuse), or exceeds command-size guard, post-start send-once initial message metadata must be used.
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsPromptLauncherBridgeTest.kt
 
-- Post-start initial message fallback must be terminal-readiness-gated for all providers: dispatch only after terminal session reaches `Running` and startup output readiness heuristic, never before process readiness; if readiness signal is missing, fallback dispatch may proceed after bounded timeout.
+- Post-start initial message fallback must be terminal-readiness-gated for all providers: dispatch only after terminal session reaches `Running` and startup output readiness heuristic, never before process readiness.
+- If readiness signal is missing, timeout fallback dispatch may proceed after bounded timeout except for Codex plan-mode command messages (`/plan` command form), which must continue waiting for explicit readiness.
   [@test] ../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
 
 - Editor-tab popup contract for a selected Agent chat tab must expose exactly these actions with this placement:

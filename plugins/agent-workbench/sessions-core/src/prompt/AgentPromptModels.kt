@@ -11,6 +11,8 @@ data class AgentPromptContextItem(
   @JvmField val title: String?,
   @JvmField val body: String,
   @JvmField val payload: AgentPromptPayloadValue = AgentPromptPayloadValue.Obj.EMPTY,
+  @JvmField val itemId: String? = null,
+  @JvmField val parentItemId: String? = null,
   @JvmField val source: String = "unknown",
   @JvmField val phase: AgentPromptContextContributorPhase? = null,
   @JvmField val truncation: AgentPromptContextTruncation = AgentPromptContextTruncation.none(body.length),

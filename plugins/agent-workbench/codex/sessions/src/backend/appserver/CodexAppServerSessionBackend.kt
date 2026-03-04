@@ -3,13 +3,13 @@ package com.intellij.agent.workbench.codex.sessions.backend.appserver
 
 import com.intellij.agent.workbench.codex.common.CodexSubAgent
 import com.intellij.agent.workbench.codex.common.CodexThread
-import com.intellij.agent.workbench.codex.common.CodexThreadActiveFlag
 import com.intellij.agent.workbench.codex.common.CodexThreadSourceKind
-import com.intellij.agent.workbench.codex.common.CodexThreadStatusKind
 import com.intellij.agent.workbench.codex.common.normalizeRootPath
 import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
+import com.intellij.agent.workbench.codex.sessions.backend.resolveCodexSessionActivity
+import com.intellij.agent.workbench.codex.sessions.backend.toCodexActivitySignals
 import com.intellij.agent.workbench.codex.sessions.resolveProjectDirectoryFromPath
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
@@ -270,16 +270,7 @@ private fun CodexThread.toSubAgentName(): String {
 }
 
 private fun CodexThread.toSessionActivity(): CodexSessionActivity {
-  return when (statusKind) {
-    CodexThreadStatusKind.ACTIVE -> {
-      when {
-        CodexThreadActiveFlag.WAITING_ON_USER_INPUT in activeFlags -> CodexSessionActivity.UNREAD
-        CodexThreadActiveFlag.WAITING_ON_APPROVAL in activeFlags -> CodexSessionActivity.REVIEWING
-        else -> CodexSessionActivity.PROCESSING
-      }
-    }
-    else -> CodexSessionActivity.READY
-  }
+  return resolveCodexSessionActivity(toCodexActivitySignals())
 }
 
 private fun CodexThread.shouldBeGroupedAsSubAgentChild(): Boolean {

@@ -11,6 +11,8 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
@@ -440,6 +442,272 @@ class AgentSessionsLoadingCoordinatorTest {
   }
 
   @Test
+  fun providerUpdateUsesRefreshHintsForCodexRebindWithoutNewProviderIds() = runBlocking(Dispatchers.Default) {
+    val updates = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1)
+    val rebindInvocations = mutableListOf<PendingCodexRebindInvocation>()
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
+      updates = updates,
+      listFromClosedProject = { path ->
+        if (path != PROJECT_PATH) {
+          emptyList()
+        }
+        else {
+          listOf(
+            thread(id = "codex-existing", updatedAt = 500L, title = "Existing thread", provider = AgentSessionProvider.CODEX)
+          )
+        }
+      },
+      prefetchRefreshHintsProvider = { paths, knownThreadIdsByPath ->
+        if (PROJECT_PATH !in paths || PROJECT_PATH !in knownThreadIdsByPath) {
+          emptyMap()
+        }
+        else {
+          mapOf(
+            PROJECT_PATH to AgentSessionRefreshHints(
+              rebindCandidates = listOf(
+                AgentSessionRebindCandidate(
+                  threadId = "codex-hint",
+                  title = "Hint-discovered thread",
+                  updatedAt = 760L,
+                  activity = AgentThreadActivity.UNREAD,
+                )
+              ),
+            )
+          )
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      openChatPathsProvider = { setOf(PROJECT_PATH) },
+      openPendingCodexTabsProvider = {
+        mapOf(
+          PROJECT_PATH to listOf(
+            pendingCodexTab(
+              pendingThreadIdentity = "codex:new-hint",
+              pendingCreatedAtMs = 750L,
+            )
+          )
+        )
+      },
+      openChatPendingTabsBinder = { requestsByPath ->
+        requestsByPath.forEach { (path, requests) ->
+          requests.forEach { request ->
+            rebindInvocations.add(
+              PendingCodexRebindInvocation(
+                path = path,
+                pendingTabKey = request.pendingTabKey,
+                pendingThreadIdentity = request.pendingThreadIdentity,
+                target = request.target,
+              )
+            )
+          }
+        }
+        successfulPendingCodexRebindReport(requestsByPath)
+      },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(thread(id = "codex-existing", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+      updates.tryEmit(Unit)
+
+      waitForCondition {
+        rebindInvocations.isNotEmpty()
+      }
+
+      val invocation = rebindInvocations.single()
+      assertThat(invocation.path).isEqualTo(PROJECT_PATH)
+      assertThat(invocation.pendingTabKey).isEqualTo("pending-codex:new-hint")
+      assertThat(invocation.pendingThreadIdentity).isEqualTo("codex:new-hint")
+      assertThat(invocation.target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-hint"))
+      assertThat(invocation.target.threadId).isEqualTo("codex-hint")
+
+      val codexThreadIds = stateStore.snapshot().projects
+        .first { it.path == PROJECT_PATH }
+        .threads
+        .filter { it.provider == AgentSessionProvider.CODEX }
+        .map { it.id }
+      assertThat(codexThreadIds).containsExactlyInAnyOrder("codex-existing", "new-hint")
+      assertThat(codexThreadIds).doesNotContain("codex-hint")
+    }
+  }
+
+  @Test
+  fun providerUpdateAppliesCodexActivityHintsWhenAvailable() = runBlocking(Dispatchers.Default) {
+    val updates = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1)
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
+      updates = updates,
+      listFromClosedProject = { path ->
+        if (path != PROJECT_PATH) {
+          emptyList()
+        }
+        else {
+          listOf(
+            thread(
+              id = "codex-with-hint",
+              updatedAt = 500L,
+              title = "Thread with hint",
+              provider = AgentSessionProvider.CODEX,
+              activity = AgentThreadActivity.PROCESSING,
+            ),
+            thread(
+              id = "codex-without-hint",
+              updatedAt = 450L,
+              title = "Thread without hint",
+              provider = AgentSessionProvider.CODEX,
+              activity = AgentThreadActivity.UNREAD,
+            ),
+          )
+        }
+      },
+      prefetchRefreshHintsProvider = { paths, _ ->
+        if (PROJECT_PATH !in paths) {
+          emptyMap()
+        }
+        else {
+          mapOf(
+            PROJECT_PATH to AgentSessionRefreshHints(
+              activityByThreadId = mapOf(
+                "codex-with-hint" to AgentThreadActivity.REVIEWING,
+              )
+            )
+          )
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      openChatPathsProvider = { setOf(PROJECT_PATH) },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(
+              thread(id = "codex-with-hint", updatedAt = 100L, provider = AgentSessionProvider.CODEX),
+              thread(id = "codex-without-hint", updatedAt = 90L, provider = AgentSessionProvider.CODEX),
+            ),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+      updates.tryEmit(Unit)
+
+      waitForCondition {
+        val threadsById = stateStore.snapshot().projects
+          .firstOrNull { it.path == PROJECT_PATH }
+          ?.threads
+          ?.associateBy { it.id }
+          ?: return@waitForCondition false
+        threadsById["codex-with-hint"]?.activity == AgentThreadActivity.REVIEWING &&
+        threadsById["codex-without-hint"]?.activity == AgentThreadActivity.UNREAD
+      }
+    }
+  }
+
+  @Test
+  fun providerUpdatePassesListedCodexThreadIdsToRefreshHintsWhenBaselineIsEmpty() = runBlocking(Dispatchers.Default) {
+    val updates = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1)
+    val capturedKnownThreadIdsByPath = mutableListOf<Map<String, Set<String>>>()
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
+      updates = updates,
+      listFromClosedProject = { path ->
+        if (path != PROJECT_PATH) {
+          emptyList()
+        }
+        else {
+          listOf(
+            thread(
+              id = "codex-listed",
+              updatedAt = 610L,
+              title = "Listed Codex thread",
+              provider = AgentSessionProvider.CODEX,
+              activity = AgentThreadActivity.PROCESSING,
+            )
+          )
+        }
+      },
+      prefetchRefreshHintsProvider = { paths, knownThreadIdsByPath ->
+        if (PROJECT_PATH !in paths) {
+          emptyMap()
+        }
+        else {
+          capturedKnownThreadIdsByPath += knownThreadIdsByPath.mapValues { (_, ids) -> ids.toSet() }
+          mapOf(
+            PROJECT_PATH to AgentSessionRefreshHints(
+              activityByThreadId = mapOf(
+                "codex-listed" to AgentThreadActivity.UNREAD,
+              )
+            )
+          )
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      openChatPathsProvider = { setOf(PROJECT_PATH) },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = emptyList(),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+      updates.tryEmit(Unit)
+
+      waitForCondition {
+        stateStore.snapshot().projects
+          .firstOrNull { it.path == PROJECT_PATH }
+          ?.threads
+          ?.firstOrNull { it.id == "codex-listed" }
+          ?.activity == AgentThreadActivity.UNREAD
+      }
+
+      assertThat(capturedKnownThreadIdsByPath).isNotEmpty()
+      assertThat(capturedKnownThreadIdsByPath.last()[PROJECT_PATH]).containsExactly("codex-listed")
+    }
+  }
+
+  @Test
   fun providerUpdatePropagatesResumeEnvToPendingTabRebindTargets() {
     val updates = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1)
     val rebindInvocations = mutableListOf<PendingCodexRebindInvocation>()
@@ -851,6 +1119,82 @@ class AgentSessionsLoadingCoordinatorTest {
   }
 
   @Test
+  fun terminalOutputSignalsTriggerScopedCodexRefreshWithoutPendingTabs() = runBlocking(Dispatchers.Default) {
+    val outputPath = "/work/project-output"
+    val refreshedPaths = mutableListOf<String>()
+    val outputSignalConsumed = AtomicBoolean(false)
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = false,
+      listFromClosedProject = { path ->
+        synchronized(refreshedPaths) {
+          refreshedPaths.add(path)
+        }
+        when (path) {
+          outputPath -> listOf(thread(id = "codex-output", updatedAt = 700L, title = "Output thread", provider = AgentSessionProvider.CODEX))
+          PROJECT_PATH -> listOf(thread(id = "codex-loaded", updatedAt = 999L, title = "Loaded thread", provider = AgentSessionProvider.CODEX))
+          else -> emptyList()
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      openChatPathsProvider = { setOf(PROJECT_PATH, outputPath) },
+      openPendingChatPathsProvider = { emptySet() },
+      consumeRecentCodexTerminalOutputPathsProvider = {
+        if (outputSignalConsumed.compareAndSet(false, true)) {
+          setOf(outputPath)
+        }
+        else {
+          emptySet()
+        }
+      },
+      pendingCodexRebindPollIntervalMs = 50L,
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Loaded",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(thread(id = "codex-loaded", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+          ),
+          AgentProjectSessions(
+            path = outputPath,
+            name = "Output",
+            isOpen = true,
+            hasLoaded = false,
+            threads = emptyList(),
+          ),
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+
+      waitForCondition {
+        synchronized(refreshedPaths) {
+          refreshedPaths.contains(outputPath)
+        }
+      }
+
+      val refreshedPathsSnapshot = synchronized(refreshedPaths) {
+        refreshedPaths.toList()
+      }
+      assertThat(refreshedPathsSnapshot).containsOnly(outputPath)
+
+      val loadedProject = stateStore.snapshot().projects.first { it.path == PROJECT_PATH }
+      assertThat(
+        loadedProject.threads.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt
+      ).isEqualTo(100L)
+    }
+  }
+
+  @Test
   fun pendingCodexPollingProjectsPendingThreadsForUnloadedPath() = runBlocking(Dispatchers.Default) {
     val pendingPath = "/work/project-pending"
 
@@ -992,6 +1336,7 @@ private suspend fun withLoadingCoordinator(
   openChatPathsProvider: suspend () -> Set<String> = { emptySet() },
   openPendingChatPathsProvider: suspend () -> Set<String> = { emptySet() },
   openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingCodexTabSnapshot>> = { emptyMap() },
+  consumeRecentCodexTerminalOutputPathsProvider: () -> Set<String> = { emptySet() },
   openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> = { emptyMap() },
   openChatTabPresentationUpdater: suspend (
     Map<Pair<String, String>, String>,
@@ -1020,6 +1365,7 @@ private suspend fun withLoadingCoordinator(
       openAgentChatProjectPathsProvider = openChatPathsProvider,
       openPendingAgentChatProjectPathsProvider = openPendingChatPathsProvider,
       openPendingCodexTabsProvider = openPendingCodexTabsProvider,
+      consumeRecentCodexTerminalOutputPathsProvider = consumeRecentCodexTerminalOutputPathsProvider,
       openConcreteChatThreadIdentitiesByPathProvider = openConcreteChatThreadIdentitiesByPathProvider,
       openAgentChatTabPresentationUpdater = openChatTabPresentationUpdater,
       openAgentChatPendingTabsBinder = openChatPendingTabsBinder,

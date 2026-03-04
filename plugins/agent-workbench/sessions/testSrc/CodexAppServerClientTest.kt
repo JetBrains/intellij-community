@@ -8,8 +8,12 @@ import com.intellij.agent.workbench.codex.common.CodexThreadActiveFlag
 import com.intellij.agent.workbench.codex.common.CodexThreadSourceKind
 import com.intellij.agent.workbench.codex.common.CodexThreadStatusKind
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.Test
@@ -19,6 +23,7 @@ import org.junit.jupiter.params.provider.MethodSource
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class CodexAppServerClientTest {
   companion object {
@@ -265,6 +270,291 @@ class CodexAppServerClientTest {
       assertThat(byId.getValue("subagent-flat").statusKind).isEqualTo(CodexThreadStatusKind.ACTIVE)
       assertThat(byId.getValue("subagent-flat").activeFlags).containsExactly(CodexThreadActiveFlag.WAITING_ON_USER_INPUT)
       assertThat(byId.getValue("status-system-error").statusKind).isEqualTo(CodexThreadStatusKind.SYSTEM_ERROR)
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
+  fun readThreadActivitySnapshotParsesUnreadReviewAndInProgressSignals(): Unit = runBlocking(Dispatchers.Default) {
+    val project = tempDir.resolve("project-thread-read-activity")
+    Files.createDirectories(project)
+    val normalizedCwd = project.toString().replace('\\', '/').trimEnd('/')
+    val configPath = tempDir.resolve("codex-thread-read-activity.json")
+    writeConfig(
+      path = configPath,
+      threads = listOf(
+        ThreadSpec(
+          id = "thread-read-1",
+          title = "Thread read activity",
+          cwd = normalizedCwd,
+          sourceKind = "appServer",
+          statusType = "active",
+          activeFlags = listOf("waitingOnApproval"),
+          updatedAt = 1_700_000_030_000L,
+          archived = false,
+          readTurns = listOf(
+            ThreadTurnSpec(
+              statusType = "completed",
+              itemTypes = listOf("userMessage", "agentMessage", "enteredReviewMode"),
+            ),
+            ThreadTurnSpec(
+              statusType = "in_progress",
+              statusAsObject = true,
+              itemTypes = listOf("agentMessage"),
+            ),
+          ),
+        ),
+      )
+    )
+    val backendDir = tempDir.resolve("backend-thread-read-activity")
+    Files.createDirectories(backendDir)
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+    )
+    try {
+      val snapshot = client.readThreadActivitySnapshot("thread-read-1")
+      assertThat(snapshot).isNotNull
+      assertThat(snapshot!!.threadId).isEqualTo("thread-read-1")
+      assertThat(snapshot.statusKind).isEqualTo(CodexThreadStatusKind.ACTIVE)
+      assertThat(snapshot.activeFlags).containsExactly(CodexThreadActiveFlag.WAITING_ON_APPROVAL)
+      assertThat(snapshot.hasUnreadAssistantMessage).isTrue()
+      assertThat(snapshot.isReviewing).isTrue()
+      assertThat(snapshot.hasInProgressTurn).isTrue()
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
+  fun readThreadActivitySnapshotReturnsNullForUnknownThread() = runBlocking(Dispatchers.Default) {
+    val project = tempDir.resolve("project-thread-read-missing")
+    Files.createDirectories(project)
+    val configPath = tempDir.resolve("codex-thread-read-missing.json")
+    writeConfig(
+      path = configPath,
+      threads = listOf(
+        ThreadSpec(
+          id = "thread-existing",
+          title = "Existing",
+          cwd = project.toString(),
+          statusType = "idle",
+          updatedAt = 1_700_000_040_000L,
+          archived = false,
+        )
+      )
+    )
+    val backendDir = tempDir.resolve("backend-thread-read-missing")
+    Files.createDirectories(backendDir)
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+    )
+    try {
+      val snapshot = client.readThreadActivitySnapshot("thread-missing")
+      assertThat(snapshot).isNull()
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
+  fun appServerNotificationsAreExposedAsFlowEvents(): Unit = runBlocking(Dispatchers.Default) {
+    val project = tempDir.resolve("project-notifications")
+    Files.createDirectories(project)
+    val configPath = tempDir.resolve("codex-notifications.json")
+    writeConfig(
+      path = configPath,
+      threads = listOf(
+        ThreadSpec(
+          id = "thread-notify-1",
+          title = "Thread notify",
+          cwd = project.toString(),
+          statusType = "idle",
+          updatedAt = 1_700_000_050_000L,
+          archived = false,
+        )
+      )
+    )
+    val backendDir = tempDir.resolve("backend-notifications")
+    Files.createDirectories(backendDir)
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+      environmentOverrides = mapOf(
+        "CODEX_TEST_NOTIFY_METHOD" to "thread/status/changed",
+        "CODEX_TEST_NOTIFY_ON_METHOD" to "thread/read",
+        "CODEX_TEST_NOTIFY_THREAD_ID" to "thread-notify-1",
+      ),
+    )
+    try {
+      val notification = async {
+        withTimeout(2.seconds) {
+          client.notifications.first()
+        }
+      }
+
+      val snapshot = client.readThreadActivitySnapshot("thread-notify-1")
+      assertThat(snapshot).isNotNull
+
+      val event = notification.await()
+      assertThat(event.method).isEqualTo("thread/status/changed")
+      assertThat(event.threadId).isEqualTo("thread-notify-1")
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
+  fun appServerNotificationsParseThreadIdSnakeCaseField(): Unit = runBlocking(Dispatchers.Default) {
+    val project = tempDir.resolve("project-notifications-snake")
+    Files.createDirectories(project)
+    val configPath = tempDir.resolve("codex-notifications-snake.json")
+    writeConfig(
+      path = configPath,
+      threads = listOf(
+        ThreadSpec(
+          id = "thread-notify-snake",
+          title = "Thread notify snake",
+          cwd = project.toString(),
+          statusType = "idle",
+          updatedAt = 1_700_000_051_000L,
+          archived = false,
+        )
+      )
+    )
+    val backendDir = tempDir.resolve("backend-notifications-snake")
+    Files.createDirectories(backendDir)
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+      environmentOverrides = mapOf(
+        "CODEX_TEST_NOTIFY_METHOD" to "thread/status/changed",
+        "CODEX_TEST_NOTIFY_ON_METHOD" to "thread/read",
+        "CODEX_TEST_NOTIFY_THREAD_ID" to "thread-notify-snake",
+        "CODEX_TEST_NOTIFY_THREAD_ID_STYLE" to "thread_id",
+      ),
+    )
+    try {
+      val notification = async {
+        withTimeout(2.seconds) {
+          client.notifications.first()
+        }
+      }
+
+      val snapshot = client.readThreadActivitySnapshot("thread-notify-snake")
+      assertThat(snapshot).isNotNull
+
+      val event = notification.await()
+      assertThat(event.threadId).isEqualTo("thread-notify-snake")
+      assertThat(event.method).isEqualTo("thread/status/changed")
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
+  fun appServerNotificationsParseThreadIdFromNestedThreadObject(): Unit = runBlocking(Dispatchers.Default) {
+    val project = tempDir.resolve("project-notifications-thread-object")
+    Files.createDirectories(project)
+    val configPath = tempDir.resolve("codex-notifications-thread-object.json")
+    writeConfig(
+      path = configPath,
+      threads = listOf(
+        ThreadSpec(
+          id = "thread-notify-object",
+          title = "Thread notify object",
+          cwd = project.toString(),
+          statusType = "idle",
+          updatedAt = 1_700_000_052_000L,
+          archived = false,
+        )
+      )
+    )
+    val backendDir = tempDir.resolve("backend-notifications-thread-object")
+    Files.createDirectories(backendDir)
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+      environmentOverrides = mapOf(
+        "CODEX_TEST_NOTIFY_METHOD" to "thread/status/changed",
+        "CODEX_TEST_NOTIFY_ON_METHOD" to "thread/read",
+        "CODEX_TEST_NOTIFY_THREAD_ID" to "thread-notify-object",
+        "CODEX_TEST_NOTIFY_THREAD_ID_STYLE" to "thread_object",
+      ),
+    )
+    try {
+      val notification = async {
+        withTimeout(2.seconds) {
+          client.notifications.first()
+        }
+      }
+
+      val snapshot = client.readThreadActivitySnapshot("thread-notify-object")
+      assertThat(snapshot).isNotNull
+
+      val event = notification.await()
+      assertThat(event.threadId).isEqualTo("thread-notify-object")
+      assertThat(event.method).isEqualTo("thread/status/changed")
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
+  fun appServerNotificationsWithIdAreIgnored(): Unit = runBlocking(Dispatchers.Default) {
+    val project = tempDir.resolve("project-notifications-with-id")
+    Files.createDirectories(project)
+    val configPath = tempDir.resolve("codex-notifications-with-id.json")
+    writeConfig(
+      path = configPath,
+      threads = listOf(
+        ThreadSpec(
+          id = "thread-notify-with-id",
+          title = "Thread notify with id",
+          cwd = project.toString(),
+          statusType = "idle",
+          updatedAt = 1_700_000_053_000L,
+          archived = false,
+        )
+      )
+    )
+    val backendDir = tempDir.resolve("backend-notifications-with-id")
+    Files.createDirectories(backendDir)
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+      environmentOverrides = mapOf(
+        "CODEX_TEST_NOTIFY_METHOD" to "thread/status/changed",
+        "CODEX_TEST_NOTIFY_ON_METHOD" to "thread/read",
+        "CODEX_TEST_NOTIFY_THREAD_ID" to "thread-notify-with-id",
+        "CODEX_TEST_NOTIFY_ID" to "notification-id-1",
+      ),
+    )
+    try {
+      val notification = async {
+        withTimeoutOrNull(500.milliseconds) {
+          client.notifications.first()
+        }
+      }
+
+      val snapshot = client.readThreadActivitySnapshot("thread-notify-with-id")
+      assertThat(snapshot).isNotNull
+
+      assertThat(notification.await()).isNull()
     }
     finally {
       client.shutdown()

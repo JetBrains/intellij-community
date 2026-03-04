@@ -1,9 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.AgentSubAgent
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.model.WorktreeEntry
@@ -34,6 +36,10 @@ internal class ScriptedSessionSource(
   private val listFromOpenProject: suspend (path: String, project: Project) -> List<AgentSessionThread> = { _, _ -> emptyList() },
   private val listFromClosedProject: suspend (path: String) -> List<AgentSessionThread> = { _ -> emptyList() },
   private val prefetch: suspend (paths: List<String>) -> Map<String, List<AgentSessionThread>> = { emptyMap() },
+  private val prefetchRefreshHintsProvider: suspend (
+    paths: List<String>,
+    knownThreadIdsByPath: Map<String, Set<String>>,
+  ) -> Map<String, AgentSessionRefreshHints> = { _, _ -> emptyMap() },
 ) : AgentSessionSource {
   override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> {
     return listFromOpenProject(path, project)
@@ -46,6 +52,13 @@ internal class ScriptedSessionSource(
   override suspend fun prefetchThreads(paths: List<String>): Map<String, List<AgentSessionThread>> {
     return prefetch(paths)
   }
+
+  override suspend fun prefetchRefreshHints(
+    paths: List<String>,
+    knownThreadIdsByPath: Map<String, Set<String>>,
+  ): Map<String, AgentSessionRefreshHints> {
+    return prefetchRefreshHintsProvider(paths, knownThreadIdsByPath)
+  }
 }
 
 internal fun thread(
@@ -53,6 +66,7 @@ internal fun thread(
   updatedAt: Long,
   provider: AgentSessionProvider,
   title: String = id,
+  activity: AgentThreadActivity = AgentThreadActivity.READY,
   subAgents: List<AgentSubAgent> = emptyList(),
 ): AgentSessionThread {
   return AgentSessionThread(
@@ -61,6 +75,7 @@ internal fun thread(
     updatedAt = updatedAt,
     archived = false,
     provider = provider,
+    activity = activity,
     subAgents = subAgents,
   )
 }

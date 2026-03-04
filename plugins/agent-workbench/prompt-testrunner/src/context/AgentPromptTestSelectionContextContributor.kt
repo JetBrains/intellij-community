@@ -84,6 +84,7 @@ internal class AgentPromptTestSelectionContextContributor : AgentPromptContextCo
         title = AgentPromptTestRunnerBundle.message("context.tests.title"),
         body = content,
         payload = payload,
+        itemId = "testRunner.selection",
         source = "testRunner",
         truncation = AgentPromptContextTruncation(
           originalChars = fullContent.length,

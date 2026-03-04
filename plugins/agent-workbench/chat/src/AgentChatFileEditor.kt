@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.yield
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
@@ -165,14 +166,25 @@ internal class AgentChatFileEditor(
       if (state != TerminalViewSessionState.Running) {
         return@launch
       }
-      when (createdTab.awaitInitialMessageReadiness(
-        timeoutMs = INITIAL_MESSAGE_READINESS_TIMEOUT_MS,
-        idleMs = INITIAL_MESSAGE_OUTPUT_IDLE_MS,
-      )) {
-        AgentChatTerminalInputReadiness.READY,
-        AgentChatTerminalInputReadiness.TIMEOUT
-        -> sendInitialMessageIfReady(createdTab)
-        AgentChatTerminalInputReadiness.TERMINATED -> Unit
+      while (true) {
+        when (createdTab.awaitInitialMessageReadiness(
+          timeoutMs = INITIAL_MESSAGE_READINESS_TIMEOUT_MS,
+          idleMs = INITIAL_MESSAGE_OUTPUT_IDLE_MS,
+        )) {
+          AgentChatTerminalInputReadiness.READY -> {
+            sendInitialMessageIfReady(createdTab)
+            return@launch
+          }
+          AgentChatTerminalInputReadiness.TIMEOUT -> {
+            if (file.shouldDelayInitialMessageOnReadinessTimeout()) {
+              yield()
+              continue
+            }
+            sendInitialMessageIfReady(createdTab)
+            return@launch
+          }
+          AgentChatTerminalInputReadiness.TERMINATED -> return@launch
+        }
       }
     }.also { job ->
       job.invokeOnCompletion {
@@ -249,7 +261,11 @@ private object ToolWindowAgentChatTerminalTabs : AgentChatTerminalTabs {
       .shellCommand(startupLaunchSpec.command)
       .envVariables(startupLaunchSpec.envVariables)
       .createTab()
-    return ToolWindowAgentChatTerminalTab(terminalTab)
+    return ToolWindowAgentChatTerminalTab(
+      delegate = terminalTab,
+      projectPath = file.projectPath,
+      provider = file.provider,
+    )
   }
 
   override fun closeTab(project: Project, tab: AgentChatTerminalTab) {
@@ -274,6 +290,8 @@ internal fun closeTerminalToolWindowTab(
 
 private class ToolWindowAgentChatTerminalTab(
   val delegate: TerminalToolWindowTab,
+  private val projectPath: String,
+  private val provider: AgentSessionProvider?,
 ) : AgentChatTerminalTab {
   override val component: JComponent
     get() = delegate.content.component
@@ -321,6 +339,9 @@ private class ToolWindowAgentChatTerminalTab(
             }
             if (event.newText.any(::isMeaningfulTerminalOutputChar)) {
               sawMeaningfulOutput = true
+              if (provider == AgentSessionProvider.CODEX) {
+                notifyCodexTerminalOutputForRefresh(projectPath)
+              }
             }
             if (sawMeaningfulOutput) {
               rescheduleIdleCompletion()
@@ -333,6 +354,9 @@ private class ToolWindowAgentChatTerminalTab(
 
         if (hasAnyMeaningfulTerminalOutput(outputModels.regular) || hasAnyMeaningfulTerminalOutput(outputModels.alternative)) {
           sawMeaningfulOutput = true
+          if (provider == AgentSessionProvider.CODEX) {
+            notifyCodexTerminalOutputForRefresh(projectPath)
+          }
           rescheduleIdleCompletion()
         }
       }

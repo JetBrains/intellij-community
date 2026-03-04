@@ -2,17 +2,23 @@
 package com.intellij.agent.workbench.codex.sessions.backend.appserver
 
 import com.intellij.agent.workbench.codex.common.CodexAppServerClient
+import com.intellij.agent.workbench.codex.common.CodexAppServerNotification
 import com.intellij.agent.workbench.codex.common.CodexThread
+import com.intellij.agent.workbench.codex.common.CodexThreadActivitySnapshot
 import com.intellij.agent.workbench.codex.common.normalizeRootPath
 import com.intellij.agent.workbench.codex.sessions.registerShutdownOnCancellation
 import com.intellij.openapi.components.Service
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 
 @Service(Service.Level.APP)
 class SharedCodexAppServerService(serviceScope: CoroutineScope) {
   private val client = CodexAppServerClient(coroutineScope = serviceScope)
+
+  internal val notifications: Flow<CodexAppServerNotification>
+    get() = client.notifications
 
   init {
     registerShutdownOnCancellation(serviceScope) { client.shutdown() }
@@ -21,6 +27,10 @@ class SharedCodexAppServerService(serviceScope: CoroutineScope) {
   internal suspend fun listThreads(projectPath: Path): List<CodexThread> {
     val cwdFilter = normalizeRootPath(projectPath.invariantSeparatorsPathString)
     return client.listThreads(archived = false, cwdFilter = cwdFilter)
+  }
+
+  internal suspend fun readThreadActivitySnapshot(threadId: String): CodexThreadActivitySnapshot? {
+    return client.readThreadActivitySnapshot(threadId)
   }
 
   suspend fun createThread(cwd: String, yolo: Boolean): CodexThread {

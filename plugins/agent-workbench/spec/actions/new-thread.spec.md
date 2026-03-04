@@ -25,7 +25,7 @@ targets:
 # Agent Sessions New-Session Actions
 
 Status: Draft
-Date: 2026-02-27
+Date: 2026-03-04
 
 ## Summary
 Define project/worktree `New Thread` behavior across tree and editor-tab actions:
@@ -41,7 +41,7 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 - Keep provider and YOLO mode choices explicit and testable.
 - Keep tree and editor-tab new-thread controls consistent in labels, provider order, and mode sections.
 - Prevent duplicate creation from repeated clicks.
-- Keep Codex pending-thread creation flow compatible with rollout-default discovery.
+- Keep Codex pending-thread creation flow compatible with app-server discovery and rollout refresh-hints fallback.
 
 ## Non-goals
 - Aggregation/sorting/paging behavior.
@@ -100,7 +100,7 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
   - Note: rebind matching uses these timestamps for deterministic time windows.
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
 
-- App-server backend remains the default discovery source; rollout discovery remains an explicit compatibility override.
+- App-server backend remains the only Codex discovery source for listing; backend override values are ignored and rollout stays refresh-hints-only fallback.
   [@test] ../../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
 
 - Optional app-server mode must surface concrete thread id after first user input.
@@ -127,7 +127,7 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 - Editor tabs expose the same quick-provider + Add-popup language as tree new-thread actions.
 
 ## Data & Backend
-- Codex creation flow starts with pending identity and is resolved asynchronously on provider refresh.
+- Codex creation flow starts with pending identity and is resolved asynchronously from app-server listing plus refresh hints.
 - Concrete identity rebinding updates tab identity and command to resume form.
 
 ## Error Handling

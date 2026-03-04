@@ -70,6 +70,8 @@ class AgentPromptVcsLogSelectionContextContributorTest {
 
     assertThat(item.rendererId).isEqualTo(AgentPromptContextRendererIds.VCS_REVISIONS)
     assertThat(item.title).isEqualTo(AgentPromptVcsBundle.message("context.vcs.title"))
+    assertThat(item.itemId).isEqualTo("vcsLog.revisions")
+    assertThat(item.parentItemId).isNull()
     assertThat(item.source).isEqualTo("vcsLog")
     assertThat(item.body.lineSequence().toList()).containsExactly(firstHash, secondHash)
     assertThat(payload.number("selectedCount")).isEqualTo("2")
@@ -197,4 +199,3 @@ class AgentPromptVcsLogSelectionContextContributorTest {
     }
   }
 }
-

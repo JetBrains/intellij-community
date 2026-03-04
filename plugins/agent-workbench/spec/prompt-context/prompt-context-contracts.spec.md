@@ -76,6 +76,12 @@ Provider/source-specific context rules are defined in separate specs under `spec
   - path-like previews must shorten to project-relative under project root, else user-home-relative under home root.
   [@test] ../../prompt/testSrc/ui/AgentPromptContextEntryPathRenderingTest.kt
 
+- Hierarchical context item contract:
+  - `itemId` and `parentItemId` are optional relation fields on `AgentPromptContextItem`,
+  - `parentItemId` references another item's `itemId` within the same resolved context set,
+  - removal consumers may remove descendants recursively when a parent item is removed,
+  - missing or unknown parent links are treated as non-fatal and do not block context usage.
+
 - Canonical built-in renderer ids are:
   - `snippet`, `file`, `symbol`, `paths`, `vcsRevisions`, `testFailures`.
 
@@ -84,7 +90,7 @@ Provider/source-specific context rules are defined in separate specs under `spec
 - Envelope output should prefer stable identifiers and compact descriptors over verbose dumps.
 
 ## Data & Backend
-- Context item shape (`rendererId`, `title`, `body`, `payload`, `source`, `phase`, `truncation`) is the shared data contract across all contributors and renderers.
+- Context item shape (`rendererId`, `title`, `body`, `payload`, `itemId`, `parentItemId`, `source`, `phase`, `truncation`) is the shared data contract across all contributors and renderers.
 - Renderer registry is id-keyed; duplicate ids resolve to first registration.
 
 ## Error Handling

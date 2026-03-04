@@ -14,14 +14,14 @@ targets:
 # Codex Sessions Rollout Source
 
 Status: Draft
-Date: 2026-02-24
+Date: 2026-03-04
 
 ## Summary
-Define Codex thread-list behavior where discovery defaults to app-server `thread/list`, while rollout parsing remains available as explicit compatibility backend. This spec owns backend selection, app-server sub-agent mapping, rollout compatibility, and Codex activity derivation.
+Define Codex thread-list behavior where discovery and primary status projection come from app-server (`thread/list` + `thread/read`), while rollout parsing is used only as a refresh-hints fallback (pending-tab rebinding and unread uplift). This spec owns backend selection, app-server sub-agent mapping, rollout hint wiring, and Codex activity derivation.
 
 ## Goals
-- Keep Codex thread indicators aligned with rollout activity data.
-- Keep rollout implementation available as explicit compatibility backend.
+- Keep Codex thread indicators aligned with app-server status snapshots, with rollout fallback limited to missing-thread or unread uplift cases.
+- Keep rollout parser/index/watcher available as an internal hints pipeline (not as a thread-list backend).
 - Support archive and archive-undo unarchive operations for rollout-discovered threads through shared app-server write path.
 - Keep backend policy independent from new-thread UI contracts.
 
@@ -34,13 +34,13 @@ Define Codex thread-list behavior where discovery defaults to app-server `thread
 - Codex session listing must be implemented behind `CodexSessionBackend` interface.
   [@test] ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
 
-- `CodexAppServerSessionBackend` must be default backend; `CodexRolloutSessionBackend` must remain available as alternate backend.
+- `CodexAppServerSessionBackend` must be the only backend used by `CodexSessionSource` for thread listing.
   [@test] ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
 
-- Backend selection must switch to rollout only when `agent.workbench.codex.sessions.backend=rollout` is explicitly set.
+- Legacy backend override inputs (including `rollout`) must not switch listing away from app-server backend.
   [@test] ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
 
-- Unknown backend override values must log warning and fall back to app-server.
+- Unknown backend override values must keep app-server backend selected.
   [@test] ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
 
 - App-server backend must request `thread/list` with server-side `cwd` and `sourceKinds` filters so sub-agent sessions are included in listing results.
@@ -57,6 +57,15 @@ Define Codex thread-list behavior where discovery defaults to app-server `thread
 
 - Rollout backend scan scope must be limited to `~/.codex/sessions/**/rollout-*.jsonl`.
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+
+- Rollout hints must be consumed for pending-tab rebinding and Codex activity projection; rollout-discovered IDs must not create persisted thread rows.
+  [@test] ../sessions/testSrc/AgentSessionsLoadingCoordinatorTest.kt
+
+- App-server refresh hints must map `thread/read` snapshot status and flags to Codex activity states (`unread`, `reviewing`, `processing`, `ready`).
+  [@test] ../codex/sessions/testSrc/backend/appserver/CodexAppServerRefreshHintsProviderTest.kt
+
+- For Codex activity projection, app-server activity must remain primary for overlapping thread ids; rollout activity may apply only when app-server activity is missing or rollout reports `UNREAD`.
+  [@test] ../codex/sessions/testSrc/CodexSessionSourceRefreshHintsTest.kt
 
 - Rollout change detection must use `AgentWorkbenchDirectoryWatcher` stack; Java NIO `WatchService` must not be used.
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionsWatcherTest.kt
@@ -124,7 +133,7 @@ Define Codex thread-list behavior where discovery defaults to app-server `thread
   [@test] ../codex/sessions/testSrc/CodexSessionsPagingLogicTest.kt
 
 ## User Experience
-- Codex activity indicators should reflect recent rollout activity consistently.
+- Codex activity indicators should reflect app-server `thread/read` status, with rollout hints used only for missing-thread fallback and unread uplift.
 - Archive action remains available for Codex threads discovered from rollout source.
 - Archive undo should be available when Codex unarchive is supported by the active provider bridge.
 
@@ -132,7 +141,8 @@ Define Codex thread-list behavior where discovery defaults to app-server `thread
 - `updatedAt` derives from latest event timestamp with file mtime fallback.
 - `response_item` contributes to activity timing but not title source extraction.
 - Branch value comes from rollout session metadata when present; no branch fallback store is used.
-- Listing stays app-server-backed by default; write operations (`thread/start`, `thread/archive`, `thread/unarchive`, persistence calls) remain app-server RPC.
+- Listing stays app-server-backed; write operations (`thread/start`, `thread/archive`, `thread/unarchive`, persistence calls) remain app-server RPC.
+- Refresh hints merge app-server and rollout signals, with rollout able to fill missing activity or raise activity to unread.
 
 ## Error Handling
 - Invalid override values must not disable Codex listing; fallback to app-server must apply.
@@ -144,6 +154,8 @@ Define Codex thread-list behavior where discovery defaults to app-server `thread
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexRolloutSessionBackendFileWatchIntegrationTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexRolloutSessionsWatcherTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexSessionBackendSelectorTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.backend.appserver.CodexAppServerRefreshHintsProviderTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexSessionSourceRefreshHintsTest'`
 
 ## Open Questions / Risks
 - Cross-platform filesystem event differences can still produce edge-case rescan spikes under heavy write churn.

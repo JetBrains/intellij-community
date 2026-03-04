@@ -5,6 +5,8 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -49,7 +51,7 @@ class ClaudeAgentSessionProviderBridgeTest {
 
   @Test
   fun composeInitialMessageUsesCompactContextBlock() {
-    val message = bridge.composeInitialMessage(
+    val plan = bridge.buildInitialMessagePlan(
       AgentPromptInitialMessageRequest(
         prompt = "Summarize changes",
         contextItems = listOf(
@@ -62,7 +64,10 @@ class ClaudeAgentSessionProviderBridgeTest {
         ),
       )
     )
+    val message = checkNotNull(plan.message)
 
+    assertThat(plan.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND)
+    assertThat(plan.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK)
     assertThat(message).startsWith("Summarize changes\n\n### IDE Context")
     assertThat(message).contains("paths:")
     assertThat(message).contains("file: /tmp/demo.kt")
