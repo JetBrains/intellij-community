@@ -86,7 +86,7 @@ public final class ExternalAnnotationsIndex extends FileBasedIndexExtension<Stri
     return new BaseFileTypeInputFilter(FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION) {
       @Override
       public @NotNull ThreeState acceptFileType(@NotNull FileType fileType) {
-        return fileType == FileTypeRegistry.getInstance().getFileTypeByExtension("xml") ? ThreeState.UNSURE : ThreeState.NO;
+        return fileType.getName().equals("XML") ? ThreeState.UNSURE : ThreeState.NO;
       }
 
       @Override
