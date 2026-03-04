@@ -92,6 +92,26 @@ public class ExternalAnnotationsIndexTest extends JavaCodeInsightFixtureTestCase
     assertSameElements(items, "com.example.Foo java.lang.String bar()");
   }
 
+  public void testTypePathAnnotationsSkipped() {
+    myFixture.addFileToProject("annotations.xml", """
+      <root>
+        <item name="com.example.Foo java.lang.String[] bar()">
+          <annotation name="org.jetbrains.annotations.NotNull"/>
+          <annotation name="org.jetbrains.annotations.NotNull" typePath="/[]"/>
+        </item>
+        <item name="com.example.Bar java.util.List baz()">
+          <annotation name="org.jetbrains.annotations.NotNull" typePath="/0;"/>
+        </item>
+      </root>
+      """);
+
+    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+    List<String> items = ExternalAnnotationsIndex.getItemsByAnnotation("org.jetbrains.annotations.NotNull", scope);
+    // First item has an element-level @NotNull, so it should appear.
+    // Second item only has a type-level @NotNull (typePath), so it should NOT appear.
+    assertSameElements(items, "com.example.Foo java.lang.String[] bar()");
+  }
+
   public void testMultipleFilesAggregation() {
     myFixture.addFileToProject("pkg1/annotations.xml", """
       <root>

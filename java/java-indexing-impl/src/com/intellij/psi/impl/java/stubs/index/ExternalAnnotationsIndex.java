@@ -101,38 +101,46 @@ public final class ExternalAnnotationsIndex extends FileBasedIndexExtension<Stri
     return inputData -> {
       Map<String, List<String>> result = new HashMap<>();
       NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlBuilder() {
+        private String currentElement;
         private String currentItem;
-        private boolean expectItemName;
-        private boolean expectAnnotationName;
+        private String currentAnnotation;
 
         @Override
         public void startElement(@NonNls String name, @NonNls String nsPrefix, @NonNls String nsURI, String systemID, int lineNr) {
-          expectItemName = false;
-          expectAnnotationName = false;
+          currentElement = name;
           if ("item".equals(name)) {
-            expectItemName = true;
             currentItem = null;
           }
-          else if ("annotation".equals(name) && currentItem != null) {
-            expectAnnotationName = true;
+          else if ("annotation".equals(name)) {
+            currentAnnotation = null;
           }
         }
 
         @Override
         public void endElement(String name, String nsPrefix, String nsURI) {
-          if ("item".equals(name)) currentItem = null;
+          if ("annotation".equals(name)) {
+            if (currentItem != null && currentAnnotation != null) {
+              result.computeIfAbsent(currentAnnotation, k -> new ArrayList<>()).add(currentItem);
+            }
+          }
+          else if ("item".equals(name)) {
+            currentItem = null;
+          }
         }
 
         @Override
         public void addAttribute(@NonNls String key, String nsPrefix, String nsURI, String value, String type) {
-          if (!"name".equals(key) || value == null || value.isEmpty()) return;
-          if (expectItemName) {
+          if ("item".equals(currentElement) && "name".equals(key) && value != null && !value.isEmpty()) {
             currentItem = value;
-            expectItemName = false;
           }
-          else if (expectAnnotationName) {
-            result.computeIfAbsent(value, k -> new ArrayList<>()).add(currentItem);
-            expectAnnotationName = false;
+          else if ("annotation".equals(currentElement)) {
+            if ("name".equals(key) && value != null && !value.isEmpty()) {
+              currentAnnotation = value;
+            }
+            else if ("typePath".equals(key)) {
+              currentAnnotation = null;
+              currentElement = null;
+            }
           }
         }
       });
