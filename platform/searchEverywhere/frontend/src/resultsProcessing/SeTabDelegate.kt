@@ -32,6 +32,9 @@ import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeLocalItemDataProvider
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
+import com.intellij.platform.searchEverywhere.providers.areCommandsSupported
+import com.intellij.platform.searchEverywhere.providers.isExtendedInfoEnabled
+import com.intellij.platform.searchEverywhere.providers.isPreviewEnabled
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.intellij.platform.searchEverywhere.toProviderId
 import com.intellij.platform.searchEverywhere.utils.SeResultsCountBalancer
@@ -304,15 +307,15 @@ class SeTabDelegate(
     }
 
     suspend fun isPreviewEnabled(): Boolean {
-      return localProviders.values.any { it.isPreviewEnabled() } || frontendProvidersFacade?.isPreviewEnabled() == true
+      return localProviders.values.any { it.provider.isPreviewEnabled() } || frontendProvidersFacade?.isPreviewEnabled() == true
     }
 
     suspend fun isExtendedInfoEnabled(): Boolean {
-      return localProviders.values.any { it.isExtendedInfoEnabled() } || frontendProvidersFacade?.isExtendedInfoEnabled() == true
+      return localProviders.values.any { it.provider.isExtendedInfoEnabled() } || frontendProvidersFacade?.isExtendedInfoEnabled() == true
     }
 
     suspend fun isCommandsSupported(): Boolean {
-      return localProviders.values.any { it.isCommandsSupported() } || frontendProvidersFacade?.isCommandsSupported() == true
+      return localProviders.values.any { it.provider.areCommandsSupported() } || frontendProvidersFacade?.isCommandsSupported() == true
     }
   }
 

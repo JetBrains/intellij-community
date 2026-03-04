@@ -19,6 +19,7 @@ import com.intellij.platform.searchEverywhere.SeItemsPreviewProvider
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeItemsProviderWithPossibleOperationDisposable
 import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SePossibleInternalCommandsHandling
 import com.intellij.platform.searchEverywhere.SePreviewInfo
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSearchScopesProvider
@@ -44,6 +45,45 @@ import java.util.UUID
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.incrementAndFetch
+
+private fun SeItemsProvider.shouldTreatQueryAsCommand(query: String): Boolean {
+  if (this !is SePossibleInternalCommandsHandling) return query.mightBeACommandQuery
+  return shouldTreatAsACommandQuery(query) ?: query.mightBeACommandQuery
+}
+
+private fun SeItemsProvider.shouldTreatQueryAsCommandWithArg(query: String): Boolean {
+  if (this !is SePossibleInternalCommandsHandling) return query.mightBeACommandWithArg
+  return shouldTreatAsACommandQueryWithArg(query) ?: query.mightBeACommandWithArg
+}
+
+private val String.mightBeACommandQuery get() = startsWith(SearchTopHitProvider.getTopHitAccelerator()) && !contains(" ")
+private val String.mightBeACommandWithArg get() = startsWith(SearchTopHitProvider.getTopHitAccelerator()) && contains(" ")
+
+@ApiStatus.Internal
+fun SeItemsProvider.isPreviewEnabled(): Boolean {
+  return this is SeItemsPreviewProvider
+}
+
+@ApiStatus.Internal
+fun SeItemsProvider.isExtendedInfoEnabled(): Boolean {
+  return this is SeExtendedInfoProvider
+}
+
+@ApiStatus.Internal
+fun SeItemsProvider.areCommandsSupported(): Boolean {
+  if (this is SeAdaptedItemsProvider) {
+    return this.isCommandsSupported()
+  }
+  return this is SeCommandsProviderInterface
+}
+
+@ApiStatus.Internal
+fun SeItemsProvider.getSupportedCommands(): List<SeCommandInfo> {
+  if (this is SeAdaptedItemsProvider) {
+    return this.getSupportedCommands()
+  }
+  return (this as? SeCommandsProviderInterface)?.getSupportedCommands() ?: emptyList()
+}
 
 @ApiStatus.Internal
 class SeLocalItemDataProvider(
@@ -81,7 +121,7 @@ class SeLocalItemDataProvider(
     params: SeParams,
     counter: AtomicInt,
   ): Flow<SeItemData> = channelFlow {
-    val supportedCommands = getSupportedCommands()
+    val supportedCommands = provider.getSupportedCommands()
     val commandItems = getCommandItems(params, supportedCommands)
 
     for (item in commandItems) {
@@ -101,7 +141,7 @@ class SeLocalItemDataProvider(
 
   private fun getCommandItems(params: SeParams, supportedCommands: List<SeCommandInfo>): List<SeCommandItem> {
     val inputQuery = params.inputQuery
-    if (!inputQuery.isCommandQuery) return emptyList()
+    if (!provider.shouldTreatQueryAsCommand(inputQuery)) return emptyList()
 
     val commandPrefix = SearchTopHitProvider.getTopHitAccelerator()
     val typedCommand = inputQuery.removePrefix(commandPrefix)
@@ -159,7 +199,7 @@ class SeLocalItemDataProvider(
   @ApiStatus.Internal
   @OptIn(ExperimentalAtomicApi::class)
   fun getRawItemsWithOperationLifetime(params: SeParams, operationDisposable: Disposable): Flow<SeItem> {
-    if (params.inputQuery.isCommandWithArgs && !isCommandsSupported()) {
+    if (provider.shouldTreatQueryAsCommandWithArg(params.inputQuery) && !provider.areCommandsSupported()) {
       return emptyFlow()
     }
     return itemsRawChannelFlow(params, operationDisposable)
@@ -167,7 +207,7 @@ class SeLocalItemDataProvider(
 
   @OptIn(ExperimentalAtomicApi::class)
   fun getRawItems(params: SeParams): Flow<SeItem> {
-    if (params.inputQuery.isCommandWithArgs && !isCommandsSupported()) {
+    if (provider.shouldTreatQueryAsCommandWithArg(params.inputQuery) && !provider.areCommandsSupported()) {
       return emptyFlow()
     }
 
@@ -210,33 +250,8 @@ class SeLocalItemDataProvider(
     return (provider as? SeItemsPreviewProvider)?.getPreviewInfo(item, project)
   }
 
-  fun isPreviewEnabled(): Boolean {
-    return provider is SeItemsPreviewProvider
-  }
-
-  fun isExtendedInfoEnabled(): Boolean {
-    return provider is SeExtendedInfoProvider
-  }
-
-  fun isCommandsSupported(): Boolean {
-    if (provider is SeAdaptedItemsProvider) {
-      return provider.isCommandsSupported()
-    }
-    return provider is SeCommandsProviderInterface
-  }
-
-  fun getSupportedCommands(): List<SeCommandInfo> {
-    if (provider is SeAdaptedItemsProvider) {
-      return provider.getSupportedCommands()
-    }
-    return (provider as? SeCommandsProviderInterface)?.getSupportedCommands() ?: emptyList()
-  }
-
   override fun dispose() {
     SeLog.log(SeLog.LIFE_CYCLE, "$logLabel provider ${id.value} disposed")
     Disposer.dispose(provider)
   }
 }
-
-private val String.isCommandQuery get() = startsWith(SearchTopHitProvider.getTopHitAccelerator()) && !contains(" ")
-private val String.isCommandWithArgs get() = startsWith(SearchTopHitProvider.getTopHitAccelerator()) && contains(" ")
