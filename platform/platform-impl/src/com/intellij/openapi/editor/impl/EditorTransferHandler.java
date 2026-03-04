@@ -60,11 +60,23 @@ final class EditorTransferHandler extends TransferHandler {
     /* button = */ 0
   );
 
+  private JComponent exportComponent = null;
+  private int exportSelectionStart = -1;
+  private int exportSelectionEnd = -1;
+  private boolean exportCanRemove = true;
+
   @Override
   public boolean importData(@NotNull TransferSupport support) {
     return WriteIntentReadAction.compute((Computable<Boolean>)() -> {
-      return support.getComponent() instanceof JComponent jComp &&
-             EditorImpl.handleDrop(getEditor(jComp), support.getTransferable(), support.getDropAction());
+      if (!(support.getComponent() instanceof JComponent jComp)) {
+        return false;
+      }
+      EditorImpl editor = getEditor(jComp);
+      int pos = editor.getCaretModel().getOffset();
+      if (support.getDropAction() == TransferHandler.MOVE && jComp == exportComponent && pos >= exportSelectionStart && pos < exportSelectionEnd) {
+        exportCanRemove = false;
+      }
+      return EditorImpl.handleDrop(editor, support.getTransferable(), support.getDropAction());
     });
   }
 
@@ -105,6 +117,13 @@ final class EditorTransferHandler extends TransferHandler {
     if (s == null) return null;
     int selectionStart = editor.getSelectionModel().getSelectionStart();
     int selectionEnd = editor.getSelectionModel().getSelectionEnd();
+
+    // IJPL-235895 Drag-and-drop with mouse of code on its own spot makes the code disappear
+    exportComponent = c;
+    exportSelectionStart = selectionStart;
+    exportSelectionEnd = selectionEnd;
+    exportCanRemove = true;
+
     // IDEA-134214 drag & drop sometimes copies selection
     editor.setDraggedRange(editor.getDocument().createRangeMarker(selectionStart, selectionEnd));
     Transferable transferable = CopyAction.getSelection(editor);
@@ -114,6 +133,13 @@ final class EditorTransferHandler extends TransferHandler {
 
   @Override
   protected void exportDone(@NotNull JComponent source, @Nullable Transferable data, int action) {
+    boolean canRemove = exportCanRemove;
+
+    exportComponent = null;
+    exportSelectionStart = -1;
+    exportSelectionEnd = -1;
+    exportCanRemove = true;
+
     if (data == null) return;
 
     Component last = DnDManager.getInstance().getLastDropHandler();
@@ -129,7 +155,7 @@ final class EditorTransferHandler extends TransferHandler {
     }
 
     EditorImpl editor = getEditor(source);
-    if (action == MOVE && !editor.isViewer() && editor.getDraggedRange() != null) {
+    if (action == MOVE && canRemove && !editor.isViewer() && editor.getDraggedRange() != null) {
       ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> WriteIntentReadAction.run(() -> {
         removeDraggedOutFragment(editor);
       }));
