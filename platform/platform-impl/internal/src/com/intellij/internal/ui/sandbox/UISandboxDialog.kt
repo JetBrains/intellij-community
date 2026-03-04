@@ -48,6 +48,17 @@ import com.intellij.internal.ui.sandbox.dsl.validation.CrossValidationPanel
 import com.intellij.internal.ui.sandbox.dsl.validation.ValidationPanel
 import com.intellij.internal.ui.sandbox.dsl.validation.ValidationRefactoringPanel
 import com.intellij.internal.ui.sandbox.screenshots.CaptureScreenshotsPanel
+import com.intellij.internal.ui.sandbox.screenshots.builtInButton.BuiltInButtonAddValuePanel
+import com.intellij.internal.ui.sandbox.screenshots.builtInButton.BuiltInButtonBrowseButtonPanel
+import com.intellij.internal.ui.sandbox.screenshots.builtInButton.BuiltInButtonCopyPasteCorrectPanel
+import com.intellij.internal.ui.sandbox.screenshots.builtInButton.BuiltInButtonCopyPasteIncorrectPanel
+import com.intellij.internal.ui.sandbox.screenshots.builtInButton.BuiltInButtonExpandFieldPanel
+import com.intellij.internal.ui.sandbox.screenshots.builtInButton.BuiltInButtonExpandedFieldPanel
+import com.intellij.internal.ui.sandbox.screenshots.builtInButton.BuiltInButtonHelpInfoCorrectPanel
+import com.intellij.internal.ui.sandbox.screenshots.builtInButton.BuiltInButtonHelpInfoIncorrectPanel
+import com.intellij.internal.ui.sandbox.screenshots.builtInButton.BuiltInButtonListValuesPanel
+import com.intellij.internal.ui.sandbox.screenshots.builtInButton.BuiltInButtonWhenToUseCorrectPanel
+import com.intellij.internal.ui.sandbox.screenshots.builtInButton.BuiltInButtonWhenToUseIncorrectPanel
 import com.intellij.internal.ui.sandbox.screenshots.button.ButtonTypesPanel
 import com.intellij.internal.ui.sandbox.screenshots.checkbox.CheckboxTypesPanel
 import com.intellij.internal.ui.sandbox.screenshots.checkbox.LabelOnTheRightCorrectPanel
@@ -239,6 +250,24 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
           OneSelectedCheckboxPanel(true, "Show mnemonics in menu", 756 x 256, "images/ui/checkbox/checkbox_writing_4_correct.png"),
           OneSelectedCheckboxPanel(false, "Do not show mnemonics in menu", 756 x 256, "images/ui/checkbox/checkbox_writing_4_incorrect.png"),
         )),
+      )),
+    )),
+
+    Group("Built-In Button", children = listOf(
+      Group("When to use", children = listOf(
+        BuiltInButtonWhenToUseCorrectPanel(),
+        BuiltInButtonWhenToUseIncorrectPanel(),
+        BuiltInButtonBrowseButtonPanel(),
+        BuiltInButtonExpandFieldPanel(),
+        BuiltInButtonExpandedFieldPanel(),
+        BuiltInButtonListValuesPanel(),
+        BuiltInButtonAddValuePanel(),
+      )),
+      Group("When not to use", children = listOf(
+        BuiltInButtonCopyPasteCorrectPanel(),
+        BuiltInButtonCopyPasteIncorrectPanel(),
+        BuiltInButtonHelpInfoCorrectPanel(),
+        BuiltInButtonHelpInfoIncorrectPanel(),
       )),
     )),
   ))

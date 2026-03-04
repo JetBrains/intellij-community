@@ -15,7 +15,7 @@ import javax.swing.JComponent
 private val SCREENSHOT_BACKGROUND: Color = JBColor(0xF7F8FA, 0x2B2D30)
 
 internal abstract class UISandboxScreenshotPanel: UISandboxPanel {
-  override fun createContent(disposable: Disposable): JComponent {
+  final override fun createContent(disposable: Disposable): JComponent {
     return panel {
       row {
         cell(createContentForScreenshot(disposable).apply { isOpaque = false })
