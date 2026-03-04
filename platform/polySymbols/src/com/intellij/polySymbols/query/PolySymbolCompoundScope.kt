@@ -2,6 +2,7 @@
 package com.intellij.polySymbols.query
 
 import com.intellij.model.Pointer
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
@@ -63,6 +64,7 @@ abstract class PolySymbolCompoundScope : PolySymbolScope {
 
   abstract override fun createPointer(): Pointer<out PolySymbolCompoundScope>
 
-  final override fun getModificationCount(): Long = 0
+  final override val modificationTracker: ModificationTracker
+    get() = ModificationTracker.NEVER_CHANGED
 
 }

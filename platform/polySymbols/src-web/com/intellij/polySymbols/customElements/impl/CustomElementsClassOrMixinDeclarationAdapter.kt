@@ -2,6 +2,7 @@
 package com.intellij.polySymbols.customElements.impl
 
 import com.intellij.model.Pointer
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
@@ -74,7 +75,8 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
                 .toList()
                 .also { contributions -> _superContributions = contributions }
 
-    override fun getModificationCount(): Long = 0
+    override val modificationTracker: ModificationTracker
+      get() = ModificationTracker.NEVER_CHANGED
 
     override val origin: CustomElementsJsonOrigin
       get() = base.origin

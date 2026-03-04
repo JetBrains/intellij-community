@@ -92,8 +92,8 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
     ): List<PolySymbol>
   }
 
-  override fun getModificationCount(): Long =
-    PsiModificationTracker.getInstance(project).modificationCount
+  override val modificationTracker: ModificationTracker
+    get() = PsiModificationTracker.getInstance(project)
 
   override fun equals(other: Any?): Boolean =
     other === this

@@ -5,6 +5,7 @@ import com.intellij.documentation.mdn.MdnSymbolDocumentation
 import com.intellij.documentation.mdn.getDomEventDocumentation
 import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolModifier
@@ -113,7 +114,8 @@ class HtmlSymbolQueryScopeContributor : PolySymbolQueryScopeContributor {
 
     override fun hashCode(): Int = tag.hashCode()
 
-    override fun getModificationCount(): Long = 0
+    override val modificationTracker: ModificationTracker
+      get() = ModificationTracker.NEVER_CHANGED
 
     override fun createPointer(): Pointer<StandardHtmlSymbolScope> {
       val tag = SmartPointerManager.createPointer(this.tag)
