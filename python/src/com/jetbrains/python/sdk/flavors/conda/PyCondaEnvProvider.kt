@@ -108,7 +108,7 @@ class PyCondaEnvProvider(
   }
 
   private fun constructCondaEnv(envName: String?, envPath: String, base: Boolean, condaPath: FullPathOnTarget): PyCondaEnv {
-    val identity = if (envName != null) {
+    val identity = if (envName != null && !base) {
       PyCondaEnvIdentity.NamedEnv(envName)
     }
     else {
