@@ -11,3 +11,6 @@ fun test(b: Boolean) {
         }
     }
 }
+
+// This is a valid example of the applicability of an 'associateWith' conversion. We do not currently support it
+// because of the complexity of the implementation and the high number of potential false positive/false negative scenarios.

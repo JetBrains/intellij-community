@@ -5432,6 +5432,11 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
                 runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/nestedWithTypeInference6.kt");
             }
 
+            @TestMetadata("nestedWithTypeInferencePackage.kt")
+            public void testNestedWithTypeInferencePackage() throws Exception {
+                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/nestedWithTypeInferencePackage.kt");
+            }
+
             @TestMetadata("notPair.kt")
             public void testNotPair() throws Exception {
                 runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/notPair.kt");
