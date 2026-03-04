@@ -41,6 +41,17 @@ c:com.intellij.execution.actions.StopAction
 com.intellij.execution.configuration.CompatibilityAwareRunProfile
 - com.intellij.execution.configurations.RunProfile
 - a:mustBeStoppedToRun(com.intellij.execution.configurations.RunConfiguration):Z
+f:com.intellij.execution.configuration.EnvFilesDialog
+- <init>(javax.swing.JComponent,java.util.List,com.intellij.openapi.project.Project):V
+- b:<init>(javax.swing.JComponent,java.util.List,com.intellij.openapi.project.Project,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getProject():com.intellij.openapi.project.Project
+f:com.intellij.execution.configuration.EnvFilesDialogKt
+- sf:addEnvFile(java.awt.Component,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):V
+- bs:addEnvFile$default(java.awt.Component,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+c:com.intellij.execution.configuration.EnvironmentVariablesComponent
+- <init>(com.intellij.openapi.project.Project):V
+c:com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
+- <init>(com.intellij.openapi.project.Project):V
 com.intellij.execution.configuration.PersistentAwareRunConfiguration
 - com.intellij.execution.configurations.RunConfiguration
 - a:needsToBeMigrated():Z

@@ -408,7 +408,6 @@ f:com.intellij.execution.configuration.EmptyRunProfileState
 - execute(com.intellij.execution.Executor,com.intellij.execution.runners.ProgramRunner):com.intellij.execution.ExecutionResult
 f:com.intellij.execution.configuration.EnvFilesDialog
 - com.intellij.openapi.ui.DialogWrapper
-- <init>(javax.swing.JComponent,java.util.List):V
 - f:getPaths():java.util.List
 - getPreferredFocusedComponent():com.intellij.ui.components.JBList
 f:com.intellij.execution.configuration.EnvFilesDialogKt

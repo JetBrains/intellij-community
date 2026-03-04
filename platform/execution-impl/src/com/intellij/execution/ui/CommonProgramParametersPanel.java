@@ -124,7 +124,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
   }
 
   protected @NotNull EnvironmentVariablesComponent createEnvironmentVariablesComponent() {
-    return new EnvironmentVariablesComponent();
+    return new EnvironmentVariablesComponent(myProject);
   }
 
   /**
