@@ -10,6 +10,7 @@ import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsCha
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.components.JBScrollPane
 import kotlinx.coroutines.FlowPreview
 import java.awt.geom.Line2D
 
@@ -19,8 +20,6 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
     get() = editorCell.editor
   private val cellType
     get() = editorCell.intervalOrNull?.type
-  private val view
-    get() = editorCell.view
 
   private val isSelected
     get() = editorCell.isSelected.get()
@@ -62,23 +61,58 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
     cachedRightLine?.let {
       return it
     }
+    return calculateRightLine().also { cachedRightLine = it }
+  }
+
+  fun getLineFrameVerticalLineNoCache(): Line2D? {
+    if (state.get().isVisible.not())
+      return null
     return calculateRightLine()
   }
 
   private fun calculateRightLine(): Line2D.Double? {
-    val inlays = view?.input?.getBlockElementsInRange() ?: return null
-    val upperInlayBounds = inlays.firstOrNull {
-      it.properties.priority == editor.notebookAppearance.cellInputInlaysPriority && it.properties.isShownAbove
-    }?.bounds ?: return null
-    val lowerInlayBounds = inlays.lastOrNull {
-      it.properties.priority == editor.notebookAppearance.cellInputInlaysPriority && !it.properties.isShownAbove
-    }?.bounds ?: return null
+    val interval = editorCell.intervalOrNull ?: return null
+    val startOffset = interval.getCellStartOffset(editor)
+    val endOffset = interval.getCellEndOffset(editor)
+    val upperInlayBounds = editor.inlayModel.getBlockElementsInRange(startOffset, startOffset)
+      .asSequence()
+      .filter { it.properties.priority == editor.notebookAppearance.cellInputInlaysPriority && it.properties.isShownAbove }
+      .mapNotNull { it.bounds }
+      .maxByOrNull { it.x + it.width }
+    val lowerInlayBounds = editor.inlayModel.getBlockElementsInRange(endOffset, endOffset)
+      .asSequence()
+      .filter { it.properties.priority == editor.notebookAppearance.cellInputInlaysPriority && !it.properties.isShownAbove }
+      .mapNotNull { it.bounds }
+      .maxByOrNull { it.x + it.width }
 
-    val x = upperInlayBounds.x + upperInlayBounds.width - 0.5
-    val startY = (upperInlayBounds.y + upperInlayBounds.height - editor.notebookAppearance.cellBorderHeight / 2).toDouble() + 0.5
-    val endY = (lowerInlayBounds.y + lowerInlayBounds.height).toDouble() - 1
+    val xFromInlay = upperInlayBounds?.let { it.x + it.width - 0.5 }
+                     ?: lowerInlayBounds?.let { it.x + it.width - 0.5 }
+    val x = xFromInlay ?: calculateRightBorderXFromViewport()
 
-    return Line2D.Double(x, startY, x, endY).also { cachedRightLine = it }
+    if (upperInlayBounds != null && lowerInlayBounds != null) {
+      val startY = (upperInlayBounds.y + upperInlayBounds.height - editor.notebookAppearance.cellBorderHeight / 2).toDouble() + 0.5
+      val endY = (lowerInlayBounds.y + lowerInlayBounds.height).toDouble() - 1
+      return Line2D.Double(x, startY, x, endY)
+    }
+
+    val inputBounds = editorCell.view?.input?.calculateBounds() ?: return null
+    val startY = inputBounds.y.toDouble()
+    val endY = (inputBounds.y + inputBounds.height).toDouble() - 1
+    return Line2D.Double(x, startY, x, endY)
+  }
+
+  private fun calculateRightBorderXFromViewport(): Double {
+    val visibleArea = editor.scrollingModel.visibleArea
+    val scrollBarWidth = editor.scrollPane.verticalScrollBar.width
+    val flipProperty = editor.scrollPane.getClientProperty(JBScrollPane.Flip::class.java)
+    val leftShift = if (flipProperty === JBScrollPane.Flip.HORIZONTAL || flipProperty === JBScrollPane.Flip.BOTH) {
+      scrollBarWidth
+    }
+    else {
+      0
+    }
+    val visibleWidth = (visibleArea.width - scrollBarWidth).coerceAtLeast(0)
+    return visibleArea.x + leftShift + visibleWidth - 0.5
   }
 
   fun updateCellFrameShow() {

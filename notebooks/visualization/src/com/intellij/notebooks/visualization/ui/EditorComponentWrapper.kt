@@ -2,36 +2,28 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
-import com.intellij.notebooks.visualization.useG2D
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import java.awt.AWTEvent
 import java.awt.AWTEventMulticaster
 import java.awt.BorderLayout
-import java.awt.Color
 import java.awt.Component
-import java.awt.Graphics
-import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
 import java.awt.event.MouseMotionListener
 import java.awt.event.MouseWheelEvent
 import java.awt.event.MouseWheelListener
-import java.awt.geom.Line2D
 import javax.swing.JComponent
 import javax.swing.JLayer
 import javax.swing.JPanel
 import javax.swing.JViewport
 import javax.swing.plaf.LayerUI
-import kotlin.math.abs
 
 /**
  * Performs updating of underlying components within keepScrollingPositionWhile.
  * Transfers mouse move-click-wheel events to the listeners.
  */
 class EditorComponentWrapper private constructor(private val editor: EditorImpl) : JPanel(BorderLayout()) {
-
-  private val overlayLines = mutableListOf<Pair<Line2D, Color>>()
 
   // JLayer here is our frame borders around notebook cells + to transfer ALL mouse events over editor, to subscriber.
   private val layeredPane: JLayer<Component>
@@ -76,17 +68,6 @@ class EditorComponentWrapper private constructor(private val editor: EditorImpl)
       super.uninstallUI(c)
       val layer = c as JLayer<*>
       layer.layerEventMask = 0
-    }
-
-    override fun paint(g: Graphics, c: JComponent) {
-      super.paint(g, c)
-
-      g.useG2D { g2d ->
-        for ((line, color) in overlayLines) {
-          g2d.color = color
-          g2d.draw(line)
-        }
-      }
     }
 
     override fun processMouseEvent(e: MouseEvent, layer: JLayer<out Component>) {
@@ -137,34 +118,6 @@ class EditorComponentWrapper private constructor(private val editor: EditorImpl)
       super.validateTree()
       JupyterBoundsChangeHandler.get(editor).performPostponed()
     }
-  }
-
-  /** Helper function to create a Rectangle from Line2D to repaint the exact line area. */
-  private fun rectangleFromLine(line: Line2D): Rectangle = Rectangle(
-    line.x1.toInt().coerceAtMost(line.x2.toInt()),
-    line.y1.toInt().coerceAtMost(line.y2.toInt()),
-    abs(line.x2.toInt() - line.x1.toInt()) + 1,
-    abs(line.y2.toInt() - line.y1.toInt()) + 1
-  )
-
-  /** Used in drawing cell frame for selected and hovered. */
-  fun replaceOverlayLine(oldLine: Line2D?, line: Line2D, color: Color) {
-    val repaintRect = if (oldLine != null) {
-      val oldBounds = rectangleFromLine(oldLine)
-      val newBounds = rectangleFromLine(line)
-      oldBounds.union(newBounds)
-    }
-    else {
-      rectangleFromLine(line)
-    }
-    overlayLines.removeIf { it.first == oldLine }
-    overlayLines.add(line to color)
-    layeredPane.repaint(repaintRect)
-  }
-
-  fun removeOverlayLine(line: Line2D) {
-    overlayLines.removeIf { it.first == line }
-    layeredPane.repaint(rectangleFromLine(line))
   }
 
   companion object {

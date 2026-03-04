@@ -40,8 +40,6 @@ class DecoratedEditor private constructor(
     wrapEditorComponent(editorImpl)
   }
 
-  val editorLayerController: EditorLayerController = EditorLayerController(editorImpl)
-
   private fun wrapEditorComponent(editor: EditorImpl) {
     val nestedScrollingSupport = NestedScrollingSupportImpl()
 
