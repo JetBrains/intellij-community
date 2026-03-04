@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.execution.ParametersListUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import kotlin.math.min
 
 @ApiStatus.Internal
@@ -44,6 +45,11 @@ object TerminalCommandUsageStatistics {
    * that we are able to log in the statistics. Returns null otherwise.
    */
   fun getLoggableCommandData(userCommandLine: String): CommandData {
+    return getLoggableCommandData(userCommandLine, knownCommandsData)
+  }
+
+  @VisibleForTesting
+  fun getLoggableCommandData(userCommandLine: String, knownCommandsData: KnownCommandsData): CommandData {
     if (userCommandLine.isEmpty()) {
       return emptyCommand
     }
@@ -52,14 +58,14 @@ object TerminalCommandUsageStatistics {
     }
 
     val userCommand = ParametersListUtil.parse(userCommandLine)
-    toKnownCommand(userCommand)?.let {
+    toKnownCommand(userCommand, knownCommandsData)?.let {
       return it
     }
 
     val executable = userCommand.getOrNull(0) ?: return thirdPartyCommand
     if (isRelativePath(executable) && executable.length > 2) {
       return if (PathUtil.toSystemIndependentName(executable).startsWith("./gradlew")) {
-        toKnownCommand(listOf("gradle")) ?: thirdPartyCommand
+        toKnownCommand(listOf("gradle"), knownCommandsData) ?: thirdPartyCommand
       }
       else relativePathCommand
     }
@@ -73,7 +79,7 @@ object TerminalCommandUsageStatistics {
     return executable.startsWith("./") || SystemInfo.isWindows && executable.startsWith(".\\")
   }
 
-  private fun toKnownCommand(userCommand: List<String>): CommandData? {
+  private fun toKnownCommand(userCommand: List<String>, knownCommandsData: KnownCommandsData): CommandData? {
     val executable: String = (userCommand.getOrNull(0) ?: return null).let {
       if (SystemInfo.isWindows) it.removeSuffix(".exe") else it
     }
@@ -119,6 +125,7 @@ object TerminalCommandUsageStatistics {
 
   class CommandData(val command: String, val subCommand: String?)
 
+  @VisibleForTesting
   class KnownCommandsData(
     val commands: Set<String>,
     val subCommands: Set<String>,
