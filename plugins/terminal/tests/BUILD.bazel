@@ -14,6 +14,7 @@ jvm_library(
   runtime_deps = [
     "//platform/platform-impl:ide-impl",
     "//platform/testFramework",
+    "//java/java-runtime:rt",
     "//platform/configuration-store-impl:configurationStore-tests",
     "//plugins/terminal",
     "//plugins/terminal/backend",
@@ -55,6 +56,8 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//java/java-runtime:rt",
+    "//java/java-runtime:rt_test_lib",
     "//platform/configuration-store-impl:configurationStore-tests",
     "//platform/configuration-store-impl:configurationStore-tests_test_lib",
     "//plugins/terminal",
