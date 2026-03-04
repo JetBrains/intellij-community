@@ -57,8 +57,6 @@ object PyProjectSdkConfiguration {
       return@withContext true
     }
 
-    PyProjectTomlCollector.sdkCreatedFromNotification(sdk, createSdkInfoWithTool.toolId)
-
     setReadyToUseSdk(module.project, module, sdk)
     thisLogger().debug("Successfully configured sdk using ${createSdkInfoWithTool.toolId}")
     true

@@ -222,7 +222,7 @@ private suspend fun configureSdkForModuleAutomatically(module: Module, createEnv
       when (val info = moduleInfo.createSdkInfo) {
         is CreateSdkInfo.ExistingEnv -> {
           info.createAndSetToModule(module) { sdk ->
-            PyProjectTomlCollector.sdkCreatedAutomatically(sdk, moduleInfo.toolId)
+            PyProjectTomlCollector.sdkCreatedAutomatically(moduleInfo.moduleDir, moduleInfo.toolId)
           }
         }
         is CreateSdkInfo.WillCreateEnv -> {

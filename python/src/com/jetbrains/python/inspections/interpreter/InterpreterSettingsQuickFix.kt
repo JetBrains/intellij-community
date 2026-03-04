@@ -50,6 +50,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 /**
  * Executor that accepts at most one concurrent task.
@@ -178,10 +179,15 @@ internal class ConfigureInterpreterFix : InterpreterFix {
   }
 }
 
-private class UseProvidedInterpreterFix(private val myModule: Module, private val myCreateSdkInfo: CreateSdkInfoWithTool) : InterpreterFix {
+private class UseProvidedInterpreterFix(
+  private val myModule: Module,
+  private val myCreateSdkInfo: CreateSdkInfoWithTool,
+  private val modulePath: Path?,
+) : InterpreterFix {
   override fun createActionLink(module: Module, project: Project, psiFile: PsiFile, executor: BusyGuardExecutor): ActionLink {
     return ActionLink(myCreateSdkInfo.createSdkInfo.intentionName) {
       executor.execute {
+        PyProjectTomlCollector.sdkCreatedFromNotification(modulePath, myCreateSdkInfo.toolId)
         val lifetime = PyProjectSdkConfiguration.suppressTipAndInspectionsFor(myModule, myCreateSdkInfo.toolId.id)
         withBackgroundProgress(project, myCreateSdkInfo.createSdkInfo.intentionName, false) {
           lifetime.use { PyProjectSdkConfiguration.setSdkUsingCreateSdkInfo(myModule, myCreateSdkInfo) }
@@ -225,7 +231,7 @@ private suspend fun Module.getQuickFixBySdkSuggestion(i: ModuleCreateInfo?): Fin
             pythonSdk = sdk // SDK can't be null
             project.pySdkService.persistSdk(sdk)
             sdk.setAssociationToModule(this)
-            PyProjectTomlCollector.sdkCreatedAutomatically(sdk, i.toolId)
+            PyProjectTomlCollector.sdkCreatedAutomatically(i.moduleDir, i.toolId)
             FindQuickFixResult.SdkAppliedAutomatically(sdk)
           }
         }
@@ -233,7 +239,7 @@ private suspend fun Module.getQuickFixBySdkSuggestion(i: ModuleCreateInfo?): Fin
       is CreateSdkInfo.WillCreateEnv -> {
         logger.trace { "$this: Ask user as it is a heavy operation" }
         val tool = CreateSdkInfoWithTool(createSdkInfo, i.toolId)
-        FindQuickFixResult.ShowUserFix(UseProvidedInterpreterFix(this, tool))
+        FindQuickFixResult.ShowUserFix(UseProvidedInterpreterFix(this, tool, i.moduleDir))
       }
       is CreateSdkInfo.WillInstallTool -> {
         logger.trace { "$this: Tool installation will be suggested to the user" }

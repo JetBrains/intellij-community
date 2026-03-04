@@ -27,7 +27,9 @@ import org.toml.lang.psi.TomlArray
 import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlLiteral
 import org.toml.lang.psi.TomlTable
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
@@ -66,9 +68,10 @@ internal val TRACKED_DEPENDENCY_GROUPS = listOf(
 )
 internal const val DEPENDENCY_GROUP_OTHER = "other"
 
-private val GROUP = EventLogGroup("python.toml.stats", 4)
+private val GROUP = EventLogGroup("python.toml.stats", 6)
 private val PACKAGE_NAME_FIELD = EventFields.StringValidatedByDictionary("name", "python_packages.ndjson")
 private val TOOL_ID_FIELD = EventFields.String("toolId", PyProjectSdkConfigurationExtension.toolIds.map { it.id })
+private val CHECKBOX_VALUE = EventFields.Boolean("checked")
 
 internal val PYTHON_PYPROJECT_TOOLS = GROUP.registerEvent("python.pyproject.tools", PACKAGE_NAME_FIELD)
 
@@ -89,8 +92,8 @@ internal val PYTHON_WORKSPACE_SETUP_NOTIFICATION_CONFIGURE_CLICKED =
   GROUP.registerVarargEvent("python.workspace.setup.notification.configure.clicked")
 internal val PYTHON_WORKSPACE_SETUP_NOTIFICATION_DISMISS_CLICKED =
   GROUP.registerVarargEvent("python.workspace.setup.notification.dismiss.clicked")
-internal val PYTHON_PYPROJECT_BASED_MODEL_UNCHECKED: VarargEventId =
-  GROUP.registerVarargEvent("python.pyproject.based.model.unchecked")
+internal val PYTHON_PYPROJECT_BASED_MODEL_CHANGED: VarargEventId =
+  GROUP.registerVarargEvent("python.pyproject.based.model.changed", CHECKBOX_VALUE)
 
 internal val PYTHON_SDK_SETUP_AUTOMATICALLY: VarargEventId =
   GROUP.registerVarargEvent("python.sdk.setup.automatically", TOOL_ID_FIELD)
@@ -202,8 +205,10 @@ object PyProjectTomlCollector {
     PYTHON_WORKSPACE_SETUP_NOTIFICATION_DISMISS_CLICKED.log()
   }
 
-  fun pyProjectBasedModelUnchecked() {
-    PYTHON_PYPROJECT_BASED_MODEL_UNCHECKED.log()
+  fun pyProjectBasedModelModeChanged(value: Boolean) {
+    PYTHON_PYPROJECT_BASED_MODEL_CHANGED.log(
+      CHECKBOX_VALUE.with(value)
+    )
   }
 
   // Workaround for PY-88025, the caching should be removed once the race condition has been fixed. This cache is necessary so that the
@@ -211,30 +216,27 @@ object PyProjectTomlCollector {
   private val cache: Cache<String, Unit> =
     Caffeine.newBuilder()
       .expireAfterWrite(10.seconds.toJavaDuration())
-      .weakKeys()
       .build()
 
 
-  fun sdkCreatedAutomatically(sdk: Sdk, toolId: ToolId): Unit = whenNotCached(sdk) {
+  fun sdkCreatedAutomatically(sdkDir: Path?, toolId: ToolId): Unit = whenNotCached(sdkDir) {
     PYTHON_SDK_SETUP_AUTOMATICALLY.log(
       TOOL_ID_FIELD.with(toolId.id)
     )
   }
 
-  fun sdkCreatedFromNotification(sdk: Sdk, toolId: ToolId): Unit = whenNotCached(sdk) {
+  fun sdkCreatedFromNotification(sdkDir: Path?, toolId: ToolId): Unit = whenNotCached(sdkDir) {
     PYTHON_SDK_SETUP_FROM_NOTIFICATION.log(
       TOOL_ID_FIELD.with(toolId.id)
     )
   }
 
-  private fun whenNotCached(sdk: Sdk, callback: () -> Unit) {
-    val homePath = sdk.homePath
-
-    if (homePath == null || cache.getIfPresent(homePath) != null) {
+  private fun whenNotCached(sdkDir: Path?, callback: () -> Unit) {
+    if (sdkDir == null || cache.getIfPresent(sdkDir.pathString) != null) {
       return
     }
 
-    cache.put(homePath, Unit)
+    cache.put(sdkDir.pathString, Unit)
 
     callback()
   }

@@ -40,12 +40,12 @@ class PyProjectModelSettings(private val project: Project) :
       if (myState.usePyprojectToml != value) {
         myState.usePyprojectToml = value
         project.service<PyProjectAutoImportService>().apply {
+          PyProjectTomlCollector.pyProjectBasedModelModeChanged(value)
           if (value) {
             start()
           }
           else {
             stop()
-            PyProjectTomlCollector.pyProjectBasedModelUnchecked()
           }
         }
       }
