@@ -105,6 +105,12 @@ internal class TerminalLoggableCommandDataTest {
   }
 
   @Test
+  fun `home-related path`() {
+    val data = getLoggableCommandData("~/Documents/tool", EMPTY_DATA)
+    assertCommandData(data, "<absolute path>", null)
+  }
+
+  @Test
   fun `absolute path unix`() {
     val data = getLoggableCommandData("/usr/bin/tool", EMPTY_DATA)
     assertCommandData(data, "<absolute path>", null)

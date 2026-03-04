@@ -69,7 +69,7 @@ object TerminalCommandUsageStatistics {
       }
       else relativePathCommand
     }
-    return if (OSAgnosticPathUtil.isAbsolute(executable) && executable.length > 3) {
+    return if (OSAgnosticPathUtil.isAbsolute(OSAgnosticPathUtil.expandUserHome(executable)) && executable.length > 3) {
       absolutePathCommand
     }
     else thirdPartyCommand
