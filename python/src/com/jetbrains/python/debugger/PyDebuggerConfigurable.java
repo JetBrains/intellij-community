@@ -5,7 +5,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsSafe;
@@ -17,10 +19,15 @@ import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration;
+import com.intellij.ui.dsl.builder.SegmentedButton;
+import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PythonRuntimeService;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,6 +37,7 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Insets;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -56,6 +64,9 @@ public final class PyDebuggerConfigurable implements SearchableConfigurable, Con
   private final JPanel myDebuggerPortPanel;
   private final JBLabel myDebuggerEvaluationResponseTimeoutLabel;
   private final JBIntSpinner myDebuggerEvaluationResponseTimeout;
+  private SegmentedButtonComponent<PyDebuggerBackend> myBackendSelector;
+  private JPanel myBackendPanel;
+  private JLabel myBackendDescription;
 
   private enum PyQtBackend {
     AUTO(PyBundle.messagePointer("python.debugger.qt.backend.auto")),
@@ -91,6 +102,7 @@ public final class PyDebuggerConfigurable implements SearchableConfigurable, Con
 
   public PyDebuggerConfigurable(Project project) {
     myProject = project;
+    initBackendPanel(project);
     {
       warningIcon = new JBLabel(AllIcons.General.BalloonWarning);
       IdeTooltipManager.getInstance().setCustomTooltip(
@@ -130,7 +142,7 @@ public final class PyDebuggerConfigurable implements SearchableConfigurable, Con
       // >>> IMPORTANT!! <<<
       // DO NOT EDIT OR ADD ANY CODE HERE!
       myMainPanel = new JPanel();
-      myMainPanel.setLayout(new GridLayoutManager(4, 4, new Insets(0, 0, 0, 0), -1, -1));
+      myMainPanel.setLayout(new GridLayoutManager(6, 4, new Insets(0, 0, 0, 0), -1, -1));
       final JPanel panel1 = new JPanel();
       panel1.setLayout(new GridLayoutManager(7, 6, new Insets(0, 0, 0, 0), -1, -1));
       myMainPanel.add(panel1, new GridConstraints(0, 0, 1, 4, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
@@ -215,7 +227,10 @@ public final class PyDebuggerConfigurable implements SearchableConfigurable, Con
                                                                   GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
                                                                   null, null, null, 0, false));
       final Spacer spacer2 = new Spacer();
-      myMainPanel.add(spacer2, new GridConstraints(3, 1, 1, 3, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+      myMainPanel.add(myBackendDescription, new GridConstraints(4, 0, 1, 4, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                                GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                                GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myMainPanel.add(spacer2, new GridConstraints(5, 1, 1, 3, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
                                                    GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
       myAttachFilterLabel = new JBLabel();
       this.$$$loadLabelText$$$(myAttachFilterLabel, this.$$$getMessageFromBundle$$$("messages/PyBundle",
@@ -247,6 +262,9 @@ public final class PyDebuggerConfigurable implements SearchableConfigurable, Con
                       new GridConstraints(2, 2, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
                                           GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0,
                                           false));
+      myMainPanel.add(myBackendPanel, new GridConstraints(3, 0, 1, 4, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                          GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                          GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
       myAttachFilterLabel.setLabelFor(myAttachProcessFilter);
       myDebuggerEvaluationResponseTimeoutLabel.setLabelFor(myAttachProcessFilter);
     }
@@ -267,7 +285,48 @@ public final class PyDebuggerConfigurable implements SearchableConfigurable, Con
       }
     });
 
+    myBackendSelector.addChangeListener(e -> {
+      PyDebuggerBackend selected = myBackendSelector.getSelectedItem();
+      if (selected != null) {
+        myBackendDescription.setText(getBackendDescription(selected));
+      }
+    });
+
     myAttachFilterLabel.setText(PyBundle.message("debugger.attach.to.process.filter.names"));
+  }
+
+  private void applyBackend() {
+    PyDebuggerBackend newBackend = myBackendSelector.getSelectedItem() != null
+                                   ? myBackendSelector.getSelectedItem() : PyDebuggerBackend.PYDEVD;
+    PyDebuggerOptionsProvider.switchBackendWithRestart(myProject, newBackend);
+  }
+
+  private void initBackendPanel(@NotNull Project project) {
+    var projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
+    boolean debugpyDisabled = projectSdk != null &&
+                              PythonRuntimeService.getInstance().getLanguageLevelForSdk(projectSdk)
+                                .isOlderThan(LanguageLevel.PYTHON39);
+    myBackendSelector = new SegmentedButtonComponent<>(backend -> {
+      @NlsSafe String name = backend == PyDebuggerBackend.DEBUGPY ? "debugpy" : "pydevd";
+      boolean enabled = backend != PyDebuggerBackend.DEBUGPY || !debugpyDisabled;
+      String tooltip = backend == PyDebuggerBackend.DEBUGPY && debugpyDisabled
+                       ? PyBundle.message("debugger.backend.debugpy.disabled.tooltip") : null;
+      return SegmentedButton.Companion.createPresentation(name, tooltip, null, enabled);
+    });
+    myBackendSelector.setItems(PyDebuggerBackend.getEntries());
+    myBackendSelector.setSpacing(new IntelliJSpacingConfiguration());
+    myBackendPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+    myBackendPanel.add(new JBLabel(PyBundle.message("debugger.backend.switcher.label") + " "));
+    myBackendPanel.add(myBackendSelector);
+    //noinspection deprecation - no Java-friendly replacement (deprecated in favor of Kotlin UI DSL)
+    myBackendDescription = ComponentPanelBuilder.createCommentComponent(
+      getBackendDescription(PyDebuggerOptionsProvider.getInstance(project).getSelectedBackend()), true);
+  }
+
+  private static @Nls String getBackendDescription(@NotNull PyDebuggerBackend backend) {
+    return backend == PyDebuggerBackend.PYDEVD
+           ? PyBundle.message("debugger.backend.pydevd.description")
+           : PyBundle.message("debugger.backend.debugpy.description");
   }
 
   private static Method $$$cachedGetBundleMethod$$$ = null;
@@ -365,7 +424,8 @@ public final class PyDebuggerConfigurable implements SearchableConfigurable, Con
   @Override
   public boolean isModified() {
     PyDebuggerOptionsProvider settings = PyDebuggerOptionsProvider.getInstance(myProject);
-    return myAttachToSubprocess.isSelected() != settings.isAttachToSubprocess() ||
+    return myBackendSelector.getSelectedItem() != settings.getSelectedBackend() ||
+           myAttachToSubprocess.isSelected() != settings.isAttachToSubprocess() ||
            mySaveSignatures.isSelected() != settings.isSaveCallSignatures() ||
            mySupportGevent.isSelected() != settings.isSupportGeventDebugging() ||
            myDropIntoDebuggerOnFailedTests.isSelected() != settings.isDropIntoDebuggerOnFailedTest() ||
@@ -394,9 +454,10 @@ public final class PyDebuggerConfigurable implements SearchableConfigurable, Con
 
     settings.setRunDebuggerInServerMode(myRunDebuggerInServerMode.isSelected());
     settings.setDebuggerPort(myDebuggerPort.getNumber());
-
     settings.setAttachProcessFilter(myAttachProcessFilter.getText());
     settings.setEvaluationResponseTimeout(myDebuggerEvaluationResponseTimeout.getNumber());
+
+    applyBackend();
   }
 
   @Override
@@ -412,5 +473,6 @@ public final class PyDebuggerConfigurable implements SearchableConfigurable, Con
     myRunDebuggerInServerMode.setSelected(settings.isRunDebuggerInServerMode());
     myAttachProcessFilter.setText(settings.getAttachProcessFilter());
     myDebuggerEvaluationResponseTimeout.setNumber(settings.getEvaluationResponseTimeout());
+    myBackendSelector.setSelectedItem(PyDebuggerOptionsProvider.getInstance(myProject).getSelectedBackend());
   }
 }
