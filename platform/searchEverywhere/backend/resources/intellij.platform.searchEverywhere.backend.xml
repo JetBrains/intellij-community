@@ -31,6 +31,9 @@
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.text.SeTextItemsProviderFactory"/>
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.topHit.SeBackendTopHitItemsProviderFactory"/>
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.runConfigurations.SeRunConfigurationsProviderFactory"/>
+    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.filesFuzzy.SeFuzzyFileSearchProviderFactory"/>
+
+    <gotoFileFuzzyMatcherFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.filesFuzzy.SmithWatermanMatcherFactory"/>
 
     <searchEverywhere.legacyItemPresentationProvider implementation="com.intellij.platform.searchEverywhere.backend.providers.CalculatorItemPresentationProvider"/>
   </extensions>

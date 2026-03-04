@@ -46,36 +46,68 @@ jvm_library(
 
 jvm_library(
   name = "backend_test_lib",
-  module_name = "intellij.platform.searchEverywhere.backend",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":backend",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [":backend"],
+  deps = [
+    "//platform/searchEverywhere/shared:searchEverywhere",
     "//platform/searchEverywhere/shared:searchEverywhere_test_lib",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/kernel/shared:kernel",
     "//platform/kernel/shared:kernel_test_lib",
+    "//platform/kernel/rpc.backend",
     "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+    "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
+    "//platform/project/shared:project",
     "//platform/project/shared:project_test_lib",
+    "//platform/util",
     "//platform/util:util_test_lib",
+    "//platform/core-impl",
     "//platform/core-impl:core-impl_test_lib",
+    "//platform/platform-impl/rpc",
+    "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/usageView",
+    "//platform/usageView:usageView_test_lib",
+    "//platform/util/text-matching",
+    "//platform/util/text-matching:text-matching_test_lib",
+    "//platform/execution-impl",
+    "//platform/execution-impl:execution-impl_test_lib",
+    "//platform/usageView-impl",
+    "//platform/usageView-impl:usageView-impl_test_lib",
+    "//platform/refactoring",
+    "//platform/refactoring:refactoring_test_lib",
+    "//platform/indexing-api:indexing",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/scopes",
+    "//platform/scopes:scopes_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/platform-api:ide",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/ide-core",
+    "//platform/progress/shared:ide-progress",
+    "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
+    "//libraries/kotlin/test:libraries-kotlinTest",
+    "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
+    "@lib//:junit5",
+    "//libraries/mockito",
+    "//libraries/mockito:mockito_test_lib",
+  ],
+  runtime_deps = [
     "//platform/backend:backend_test_lib",
     "//platform/platform-impl/rpc:rpc_test_lib",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/util:util-ui_test_lib",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/usageView:usageView_test_lib",
-    "//platform/util/text-matching:text-matching_test_lib",
-    "//platform/execution-impl:execution-impl_test_lib",
-    "//platform/usageView-impl:usageView-impl_test_lib",
-    "//platform/refactoring:refactoring_test_lib",
-    "//platform/indexing-api:indexing_test_lib",
-    "//platform/scopes:scopes_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/platform-api:ide_test_lib",
     "//platform/ide-core:ide-core_test_lib",
     "//platform/progress/shared:ide-progress_test_lib",
-    "//platform/lang-api:lang_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.searchEverywhere.backend` end
@@ -85,3 +117,12 @@ exports_files([
   "intellij.platform.searchEverywhere.backend.iml",
 ], visibility = ["//visibility:public"])
 ### auto-generated section `iml intellij.platform.searchEverywhere.backend` end
+
+### auto-generated section `test intellij.platform.searchEverywhere.backend` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "backend_test",
+  runtime_deps = [":backend_test_lib"]
+)
+### auto-generated section `test intellij.platform.searchEverywhere.backend` end
