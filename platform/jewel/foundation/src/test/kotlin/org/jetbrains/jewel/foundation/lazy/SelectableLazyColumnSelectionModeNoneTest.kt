@@ -44,7 +44,7 @@ internal class SelectableLazyColumnSelectionModeNoneTest {
     }
 
     @Test
-    fun `clicking an item in SelectionMode-None mode does not produce any selection`() = runTest {
+    fun `clicking an item in SelectionMode None mode does not produce any selection`() = runTest {
         lateinit var state: SelectableLazyListState
         composeRule.setContent {
             state = rememberSelectableLazyListState()
@@ -64,7 +64,7 @@ internal class SelectableLazyColumnSelectionModeNoneTest {
     }
 
     @Test
-    fun `clicking an item in SelectionMode-None mode does not trigger onSelectedIndexesChange`() = runTest {
+    fun `clicking an item in SelectionMode None mode does not trigger onSelectedIndexesChange`() = runTest {
         val callbackInvocations = mutableListOf<List<Int>>()
         composeRule.setContent {
             val state = rememberSelectableLazyListState()
@@ -84,7 +84,7 @@ internal class SelectableLazyColumnSelectionModeNoneTest {
     }
 
     @Test
-    fun `focusing the list in SelectionMode-None mode does not auto-select the first item`() = runTest {
+    fun `focusing the list in SelectionMode None mode does not auto-select the first item`() = runTest {
         lateinit var state: SelectableLazyListState
         composeRule.setContent {
             state = rememberSelectableLazyListState()

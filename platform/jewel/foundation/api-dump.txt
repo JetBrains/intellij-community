@@ -233,6 +233,34 @@ c:org.jetbrains.jewel.foundation.lazy.DefaultSelectableOnKeyEvent
 - getKeybindings():org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings
 f:org.jetbrains.jewel.foundation.lazy.DefaultSelectableOnKeyEvent$Companion
 - org.jetbrains.jewel.foundation.lazy.DefaultSelectableOnKeyEvent
+f:org.jetbrains.jewel.foundation.lazy.MultiSelectionLazyListState
+- androidx.compose.foundation.gestures.ScrollableState
+- org.jetbrains.jewel.foundation.lazy.SelectableScope
+- sf:$stable:I
+- <init>(androidx.compose.foundation.lazy.LazyListState,java.util.Set):V
+- b:<init>(androidx.compose.foundation.lazy.LazyListState,java.util.Set,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- dispatchRawDelta(F):F
+- getCanScrollBackward():Z
+- getCanScrollForward():Z
+- f:getFirstVisibleItemIndex():I
+- f:getFirstVisibleItemScrollOffset():I
+- f:getInteractionSource():androidx.compose.foundation.interaction.InteractionSource
+- f:getLastActiveItemIndex():java.lang.Integer
+- getLastScrolledBackward():Z
+- getLastScrolledForward():Z
+- f:getLayoutInfo():androidx.compose.foundation.lazy.LazyListLayoutInfo
+- f:getLazyListState():androidx.compose.foundation.lazy.LazyListState
+- getScrollIndicatorState():androidx.compose.foundation.ScrollIndicatorState
+- getSelectedKeys():java.util.Set
+- f:getSelectionMode():org.jetbrains.jewel.foundation.lazy.SelectionMode
+- f:isKeyboardNavigating():Z
+- isScrollInProgress():Z
+- scroll(androidx.compose.foundation.MutatePriority,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- f:scrollToItem(I,Z,I,kotlin.coroutines.Continuation):java.lang.Object
+- bs:scrollToItem$default(org.jetbrains.jewel.foundation.lazy.MultiSelectionLazyListState,I,Z,I,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- f:setKeyboardNavigating(Z):V
+- f:setLastActiveItemIndex(java.lang.Integer):V
+- setSelectedKeys(java.util.Set):V
 org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings
 - a:isContiguousSelectionKeyPressed-5xRPYO0(I):Z
 - a:isContiguousSelectionKeyPressed-ZmokQxo(java.lang.Object):Z
@@ -269,8 +297,10 @@ org.jetbrains.jewel.foundation.lazy.SelectableColumnOnKeyEvent
 - onSelectNextItem(java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):V
 - onSelectPreviousItem(java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):V
 f:org.jetbrains.jewel.foundation.lazy.SelectableLazyColumnKt
+- sf:MultiSelectionLazyColumn(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.lazy.MultiSelectionLazyListState,androidx.compose.foundation.layout.PaddingValues,Z,kotlin.jvm.functions.Function1,androidx.compose.foundation.layout.Arrangement$Vertical,androidx.compose.ui.Alignment$Horizontal,androidx.compose.foundation.gestures.FlingBehavior,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I,I):V
 - sf:SelectableLazyColumn(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.lazy.SelectionMode,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,androidx.compose.foundation.layout.PaddingValues,Z,kotlin.jvm.functions.Function1,androidx.compose.foundation.layout.Arrangement$Vertical,androidx.compose.ui.Alignment$Horizontal,androidx.compose.foundation.gestures.FlingBehavior,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I,I):V
 - bsf:SelectableLazyColumn(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.lazy.SelectionMode,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,androidx.compose.foundation.layout.PaddingValues,Z,kotlin.jvm.functions.Function1,androidx.compose.foundation.layout.Arrangement$Vertical,androidx.compose.ui.Alignment$Horizontal,androidx.compose.foundation.gestures.FlingBehavior,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I,I):V
+- sf:SingleSelectionLazyColumn(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.lazy.SingleSelectionLazyListState,androidx.compose.foundation.layout.PaddingValues,Z,kotlin.jvm.functions.Function1,androidx.compose.foundation.layout.Arrangement$Vertical,androidx.compose.ui.Alignment$Horizontal,androidx.compose.foundation.gestures.FlingBehavior,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I,I):V
 org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope
 - androidx.compose.foundation.lazy.LazyItemScope
 - a:isActive():Z
@@ -307,7 +337,9 @@ f:org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
 - androidx.compose.foundation.gestures.ScrollableState
 - org.jetbrains.jewel.foundation.lazy.SelectableScope
 - sf:$stable:I
-- <init>(androidx.compose.foundation.lazy.LazyListState):V
+- b:<init>(androidx.compose.foundation.lazy.LazyListState):V
+- <init>(androidx.compose.foundation.lazy.LazyListState,org.jetbrains.jewel.foundation.lazy.SelectionMode,java.util.Set):V
+- b:<init>(androidx.compose.foundation.lazy.LazyListState,org.jetbrains.jewel.foundation.lazy.SelectionMode,java.util.Set,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - dispatchRawDelta(F):F
 - getCanScrollBackward():Z
 - getCanScrollForward():Z
@@ -321,6 +353,7 @@ f:org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
 - f:getLazyListState():androidx.compose.foundation.lazy.LazyListState
 - getScrollIndicatorState():androidx.compose.foundation.ScrollIndicatorState
 - getSelectedKeys():java.util.Set
+- f:getSelectionMode():org.jetbrains.jewel.foundation.lazy.SelectionMode
 - f:isKeyboardNavigating():Z
 - isScrollInProgress():Z
 - scroll(androidx.compose.foundation.MutatePriority,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
@@ -332,7 +365,10 @@ f:org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
 f:org.jetbrains.jewel.foundation.lazy.SelectableLazyListStateKt
 - sf:getVisibleItemsRange(androidx.compose.foundation.lazy.LazyListState):kotlin.ranges.IntRange
 - sf:getVisibleItemsRange(org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):kotlin.ranges.IntRange
-- sf:rememberSelectableLazyListState(I,I,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
+- sf:rememberMultiSelectionLazyListState(I,I,java.util.Set,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.lazy.MultiSelectionLazyListState
+- bsf:rememberSelectableLazyListState(I,I,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
+- sf:rememberSelectableLazyListState(I,I,org.jetbrains.jewel.foundation.lazy.SelectionMode,java.util.List,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
+- sf:rememberSingleSelectionLazyListState(I,I,java.lang.Object,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.lazy.SingleSelectionLazyListState
 org.jetbrains.jewel.foundation.lazy.SelectableScope
 - a:getSelectedKeys():java.util.Set
 - a:setSelectedKeys(java.util.Set):V
@@ -344,6 +380,34 @@ e:org.jetbrains.jewel.foundation.lazy.SelectionMode
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):org.jetbrains.jewel.foundation.lazy.SelectionMode
 - s:values():org.jetbrains.jewel.foundation.lazy.SelectionMode[]
+f:org.jetbrains.jewel.foundation.lazy.SingleSelectionLazyListState
+- androidx.compose.foundation.gestures.ScrollableState
+- org.jetbrains.jewel.foundation.lazy.SelectableScope
+- sf:$stable:I
+- <init>(androidx.compose.foundation.lazy.LazyListState,java.lang.Object):V
+- b:<init>(androidx.compose.foundation.lazy.LazyListState,java.lang.Object,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- dispatchRawDelta(F):F
+- getCanScrollBackward():Z
+- getCanScrollForward():Z
+- f:getFirstVisibleItemIndex():I
+- f:getFirstVisibleItemScrollOffset():I
+- f:getInteractionSource():androidx.compose.foundation.interaction.InteractionSource
+- f:getLastActiveItemIndex():java.lang.Integer
+- getLastScrolledBackward():Z
+- getLastScrolledForward():Z
+- f:getLayoutInfo():androidx.compose.foundation.lazy.LazyListLayoutInfo
+- f:getLazyListState():androidx.compose.foundation.lazy.LazyListState
+- getScrollIndicatorState():androidx.compose.foundation.ScrollIndicatorState
+- getSelectedKeys():java.util.Set
+- f:getSelectionMode():org.jetbrains.jewel.foundation.lazy.SelectionMode
+- f:isKeyboardNavigating():Z
+- isScrollInProgress():Z
+- scroll(androidx.compose.foundation.MutatePriority,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- f:scrollToItem(I,Z,I,kotlin.coroutines.Continuation):java.lang.Object
+- bs:scrollToItem$default(org.jetbrains.jewel.foundation.lazy.SingleSelectionLazyListState,I,Z,I,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- f:setKeyboardNavigating(Z):V
+- f:setLastActiveItemIndex(java.lang.Integer):V
+- setSelectedKeys(java.util.Set):V
 f:org.jetbrains.jewel.foundation.lazy.tree.BasicLazyTreeKt
 - sf:BasicLazyTree-X48TzrA(org.jetbrains.jewel.foundation.lazy.tree.Tree,J,J,J,F,androidx.compose.foundation.shape.CornerSize,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.layout.PaddingValues,F,F,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function3,androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.lazy.SelectionMode,org.jetbrains.jewel.foundation.lazy.tree.TreeState,J,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function4,androidx.compose.runtime.Composer,I,I,I,I):V
 - bsf:BasicLazyTree-orM9XXQ(org.jetbrains.jewel.foundation.lazy.tree.Tree,org.jetbrains.jewel.foundation.lazy.SelectionMode,kotlin.jvm.functions.Function1,J,J,J,F,androidx.compose.foundation.shape.CornerSize,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.layout.PaddingValues,F,F,org.jetbrains.jewel.foundation.lazy.tree.TreeState,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,J,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function4,androidx.compose.runtime.Composer,I,I,I,I):V
