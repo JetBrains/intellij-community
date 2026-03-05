@@ -7,7 +7,7 @@ targets:
   - ../sessions/src/AgentSessionCli.kt
   - ../sessions/src/AgentSessionModels.kt
   - ../chat/src/AgentChatEditorTabActionContext.kt
-  - ../sessions/src/AgentSessionsService.kt
+  - ../sessions/src/service/AgentSessionLaunchService.kt
   - ../sessions/src/AgentSessionsToolWindow.kt
   - ../sessions/src/SessionTree.kt
   - ../chat/src/*.kt
@@ -47,7 +47,7 @@ Define the single source of truth for cross-feature behavior that must stay cons
 
 - Project/worktree state keys (visibility, open-preview cache, dedup gates) must use normalized paths so `/path` and `/path/` resolve to the same entry.
   [@test] ../sessions/testSrc/AgentSessionsTreeUiStateServiceTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsServiceOnDemandIntegrationTest.kt
+  [@test] ../sessions/testSrc/AgentSessionRefreshOnDemandIntegrationTest.kt
 
 - Resume command mapping is canonical:
   - Codex: `codex resume <threadId>`
@@ -71,12 +71,12 @@ Define the single source of truth for cross-feature behavior that must stay cons
   [@test] ../claude/sessions/testSrc/ClaudeAgentSessionProviderBridgeTest.kt
 
 - Provider bridge policy may explicitly disable startup prompt command usage for a launch request (for example Codex Plan mode), forcing post-start message send path.
-  [@test] ../sessions/testSrc/AgentSessionsPromptLauncherBridgeTest.kt
+  [@test] ../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
 - Initial prompt handoff from Sessions to Chat must use one dispatch plan carrying:
   - optional startup launch-spec override,
   - optional post-start metadata (`initialComposedMessage`, `initialMessageToken`, `initialMessageTimeoutPolicy`).
-  [@test] ../sessions/testSrc/AgentSessionsPromptLauncherBridgeTest.kt
+  [@test] ../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
 - Startup prompt command is transient and must not be persisted into chat tab runtime `shellCommand`.
@@ -85,7 +85,7 @@ Define the single source of truth for cross-feature behavior that must stay cons
 
 - If startup command support is unavailable, inapplicable for the open target (for example existing-tab reuse), or exceeds command-size guard, post-start send-once initial message metadata must be used.
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsPromptLauncherBridgeTest.kt
+  [@test] ../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
 - Post-start initial message fallback must be terminal-readiness-gated for all providers: dispatch only after terminal session reaches `Running` and startup output readiness heuristic, never before process readiness.
 - If readiness signal is missing, timeout fallback dispatch may proceed after bounded timeout except for Codex plan-mode command messages (`/plan` command form), which must continue waiting for explicit readiness.
@@ -106,10 +106,10 @@ Define the single source of truth for cross-feature behavior that must stay cons
 
 - `Archive Thread` visibility/enablement must be gated by provider archive capability consistently for both tree-row and editor-tab entry points.
   [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsServiceArchiveIntegrationTest.kt
+  [@test] ../sessions/testSrc/AgentSessionArchiveServiceIntegrationTest.kt
 
 - Provider bridge unarchive capability is optional; unsupported providers must keep archive flow functional and must not block supported-provider unarchive restores.
-  [@test] ../sessions/testSrc/AgentSessionsServiceArchiveIntegrationTest.kt
+  [@test] ../sessions/testSrc/AgentSessionArchiveServiceIntegrationTest.kt
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
 
 - `Select in Agent Threads` must call `ensureThreadVisible(path, provider, threadId)` before activating the Agent Threads tool window.
@@ -119,7 +119,7 @@ Define the single source of truth for cross-feature behavior that must stay cons
 - Shared visibility primitives are canonical:
   - `showMoreThreads(path)` increments visible count by +3 in runtime state for the normalized path.
   - `ensureThreadVisible(path, provider, threadId)` increments runtime visibility in +3 steps until target thread is visible.
-  [@test] ../sessions/testSrc/AgentSessionsServiceOnDemandIntegrationTest.kt
+  [@test] ../sessions/testSrc/AgentSessionRefreshOnDemandIntegrationTest.kt
 
 ## User Experience
 - Users should see identical behavior regardless of whether actions are triggered from the tree or editor tabs.

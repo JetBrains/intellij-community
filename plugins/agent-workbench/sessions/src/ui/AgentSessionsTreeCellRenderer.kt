@@ -82,7 +82,8 @@ internal class SessionTreeCellRenderer(
           SimpleTextAttributes.REGULAR_ATTRIBUTES
         }
         val projectName: @NlsSafe String = if (treeNode.project.name in duplicateProjectNamesProvider()) {
-          treeNode.project.path
+          val projectPath: @NlsSafe String = treeNode.project.path
+          projectPath
         }
         else {
           treeNode.project.name
@@ -218,6 +219,7 @@ internal class SessionTreeCellRenderer(
       timeTextWidth = trailing.timeTextWidth,
       timeColumnWidth = trailing.timeColumnWidth,
     )
+
     g.color = trailingTextColor()
     g.drawString(trailing.timeLabel, horizontalLayout.timeX, baseline)
   }

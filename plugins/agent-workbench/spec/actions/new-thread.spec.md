@@ -5,7 +5,7 @@ targets:
   - ../../sessions/src/AgentSessionsToolWindow.kt
   - ../../sessions/src/SessionTree.kt
   - ../../sessions/src/AgentSessionsTreePopupActions.kt
-  - ../../sessions/src/AgentSessionsService.kt
+  - ../../sessions/src/service/AgentSessionLaunchService.kt
   - ../../sessions/src/AgentSessionCli.kt
   - ../../chat/src/AgentChatFileEditor.kt
   - ../../sessions/resources/intellij.agent.workbench.sessions.xml
@@ -18,7 +18,7 @@ targets:
   - ../../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
   - ../../sessions/testSrc/AgentSessionsGearActionsTest.kt
   - ../../sessions/testSrc/AgentSessionCliTest.kt
-  - ../../sessions/testSrc/AgentSessionsLoadingCoordinatorTest.kt
+  - ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
   - ../../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
 ---
 
@@ -80,14 +80,14 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 - Swing row popup implementation must use IntelliJ action-system popup infrastructure; no Compose popup code is allowed.
   [@test] ../../sessions/testSrc/AgentSessionsToolWindowFactorySwingTest.kt
 
-- Service entry point must be `AgentSessionsService.createNewSession(path, provider, mode, currentProject)`.
+- Service entry point must be `AgentSessionLaunchService.createNewSession(path, provider, mode, currentProject)`.
   [@test] ../../sessions/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
 
 - `createNewSession` must deduplicate in-flight actions by normalized `path + provider + mode` using single-flight `DROP` semantics.
-  [@test] ../../sessions/testSrc/AgentSessionsLoadingCoordinatorTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
 - `createNewSession` must set `lastUsedProvider` to selected provider before opening chat.
-  [@test] ../../sessions/testSrc/AgentSessionsLoadingCoordinatorTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
 - Command selection for new-thread launches must follow canonical mapping in `spec/agent-core-contracts.spec.md`.
   [@test] ../../sessions/testSrc/AgentSessionCliTest.kt
@@ -107,15 +107,15 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
   [@test] ../../sessions/testSrc/CodexAppServerClientTest.kt
 
 - Provider refresh must rebind pending Codex chat tabs only to newly discovered concrete thread ids for the path and switch shell command to canonical resume mapping.
-- Rebinding must skip when baseline thread ids are not known for that path.
+- Rebinding must skip when baseline thread ids are not known for that path, except for recent create-flow pending tabs that include `pendingCreatedAtMs` and `pendingLaunchMode` metadata (max age: 120s).
 - Matching must use strict path-local one-to-one assignment with timestamp windows; ambiguous candidates must not be rebound automatically.
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
-  [@test] ../../sessions/testSrc/AgentSessionsLoadingCoordinatorTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
 - When automatic pending-Codex matching is ambiguous or unmatched, users must be able to manually rebind from editor tab actions via `Bind Pending Codex Thread`.
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
-  [@test] ../../sessions/testSrc/AgentSessionsLoadingCoordinatorTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
 - `Codex (Full Auto)` semantics are defined by command mapping and require no additional warning text in this flow.
   [@test] ../../sessions/testSrc/AgentSessionCliTest.kt
@@ -140,7 +140,7 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsEditorTabActionsTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsGearActionsTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionCliTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsLoadingCoordinatorTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionRefreshCoordinatorTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexAgentSessionProviderBridgeTest'`
 
 ## Open Questions / Risks

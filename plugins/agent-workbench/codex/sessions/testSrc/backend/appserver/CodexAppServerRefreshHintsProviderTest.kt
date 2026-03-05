@@ -119,6 +119,32 @@ class CodexAppServerRefreshHintsProviderTest {
   }
 
   @Test
+  fun ignoresPendingThreadIdsWhenPrefetchingActivityHints(): Unit = runBlocking(Dispatchers.Default) {
+    val requestedThreadIds = mutableListOf<String>()
+    val provider = CodexAppServerRefreshHintsProvider(
+      readThreadActivitySnapshot = { threadId ->
+        requestedThreadIds += threadId
+        snapshot(
+          threadId = threadId,
+          statusKind = CodexThreadStatusKind.IDLE,
+        )
+      },
+      notifications = emptyFlow(),
+    )
+
+    val hintsByPath = provider.prefetchRefreshHints(
+      paths = listOf("/work/project"),
+      knownThreadIdsByPath = mapOf(
+        "/work/project" to linkedSetOf("new-123", "thread-real"),
+      ),
+    )
+
+    assertThat(requestedThreadIds).containsExactly("thread-real")
+    assertThat(hintsByPath.getValue("/work/project").activityByThreadId)
+      .containsExactlyEntriesOf(mapOf("thread-real" to AgentThreadActivity.READY))
+  }
+
+  @Test
   fun emitsUpdatesFromThreadStatusNotifications(): Unit = runBlocking(Dispatchers.Default) {
     val notifications = MutableSharedFlow<CodexAppServerNotification>(replay = 1, extraBufferCapacity = 16)
     val provider = CodexAppServerRefreshHintsProvider(

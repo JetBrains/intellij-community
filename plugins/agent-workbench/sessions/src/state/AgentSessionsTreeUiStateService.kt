@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.state
 
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadPreview
@@ -31,6 +32,12 @@ internal interface SessionsTreeUiState {
   fun setOpenProjectThreadPreviews(path: String, threads: List<AgentSessionThreadPreview>): Boolean
 
   fun retainOpenProjectThreadPreviews(paths: Set<String>): Boolean
+
+  fun getLastUsedProvider(): AgentSessionProvider?
+
+  fun setLastUsedProvider(provider: AgentSessionProvider)
+
+  fun markClaudeQuotaHintEligible()
 }
 
 internal const val DEFAULT_VISIBLE_CLOSED_PROJECT_COUNT: Int = 3
@@ -41,6 +48,7 @@ internal class InMemorySessionsTreeUiState : SessionsTreeUiState {
   private val collapsedProjectPaths = LinkedHashSet<String>()
   private val visibleThreadCountByProject = LinkedHashMap<String, Int>()
   private val openProjectThreadPreviewsByProject = LinkedHashMap<String, List<AgentSessionThreadPreview>>()
+  private var lastUsedProvider: AgentSessionProvider? = null
 
   override fun isProjectCollapsed(path: String): Boolean {
     return normalizeAgentWorkbenchPath(path) in collapsedProjectPaths
@@ -105,6 +113,18 @@ internal class InMemorySessionsTreeUiState : SessionsTreeUiState {
     }
     return changed
   }
+
+  override fun getLastUsedProvider(): AgentSessionProvider? {
+    return lastUsedProvider
+  }
+
+  override fun setLastUsedProvider(provider: AgentSessionProvider) {
+    lastUsedProvider = provider
+  }
+
+  override fun markClaudeQuotaHintEligible() {
+    // No-op for in-memory state used in tests that don't assert quota-hint persistence.
+  }
 }
 
 @Service(Service.Level.APP)
@@ -159,6 +179,9 @@ internal class AgentSessionsTreeUiStateService
         id = preview.id,
         title = threadDisplayTitle(threadId = preview.id, title = preview.title),
         updatedAt = preview.updatedAt,
+        activity = preview.activity
+          ?.let(::parseThreadActivity)
+          ?: AgentThreadActivity.READY,
         provider = preview.provider
           ?.let(AgentSessionProvider::fromOrNull)
           ?: AgentSessionProvider.CODEX,
@@ -174,6 +197,7 @@ internal class AgentSessionsTreeUiStateService
           id = thread.id,
           title = thread.title,
           updatedAt = thread.updatedAt,
+          activity = thread.activity.name,
           provider = thread.provider.value,
         )
       }
@@ -245,17 +269,17 @@ internal class AgentSessionsTreeUiStateService
     return true
   }
 
-  fun getLastUsedProvider(): AgentSessionProvider? {
+  override fun getLastUsedProvider(): AgentSessionProvider? {
     val id = state.lastUsedProvider ?: return null
     return AgentSessionProvider.fromOrNull(id)
   }
 
-  fun setLastUsedProvider(provider: AgentSessionProvider) {
+  override fun setLastUsedProvider(provider: AgentSessionProvider) {
     updateState { it.copy(lastUsedProvider = provider.value) }
     _lastUsedProviderFlow.value = provider
   }
 
-  fun markClaudeQuotaHintEligible() {
+  override fun markClaudeQuotaHintEligible() {
     if (state.claudeQuotaHintEligible) return
     updateState { it.copy(claudeQuotaHintEligible = true) }
     _claudeQuotaHintEligibleFlow.value = true
@@ -289,6 +313,7 @@ internal class AgentSessionsTreeUiStateService
     @JvmField val id: String,
     @JvmField val title: String,
     @JvmField val updatedAt: Long,
+    @JvmField val activity: String? = null,
     @JvmField val provider: String? = null,
   )
 }
@@ -304,4 +329,9 @@ private fun normalizeOpenProjectThreadPreviewList(threads: List<AgentSessionThre
     }
     .sortedByDescending { it.updatedAt }
     .take(OPEN_PROJECT_THREAD_CACHE_LIMIT)
+}
+
+private fun parseThreadActivity(value: String): AgentThreadActivity {
+  return runCatching { AgentThreadActivity.valueOf(value) }
+    .getOrDefault(AgentThreadActivity.READY)
 }

@@ -11,7 +11,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderActionModel
 import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderMenuModel
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries
-import com.intellij.agent.workbench.sessions.service.AgentSessionsService
+import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.ui.providerDisplayName
 import com.intellij.agent.workbench.sessions.ui.providerIcon
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -28,7 +28,7 @@ internal fun createNewThreadViaService(
   mode: AgentSessionLaunchMode,
   currentProject: Project,
 ) {
-  service<AgentSessionsService>().createNewSession(path, provider, mode, currentProject)
+  service<AgentSessionLaunchService>().createNewSession(path, provider, mode, currentProject)
 }
 
 internal fun buildNewThreadMenuModel(bridges: List<AgentSessionProviderBridge>): AgentSessionProviderMenuModel {

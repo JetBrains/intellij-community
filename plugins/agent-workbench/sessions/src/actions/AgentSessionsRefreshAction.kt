@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.actions
 
-import com.intellij.agent.workbench.sessions.service.AgentSessionsService
-
+import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
+import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
@@ -14,8 +14,8 @@ internal class AgentSessionsRefreshAction : DumbAwareAction {
 
   @Suppress("unused")
   constructor() {
-    refreshSessions = { service<AgentSessionsService>().refresh() }
-    isRefreshingProvider = { service<AgentSessionsService>().state.value.projects.any { it.isLoading } }
+    refreshSessions = { service<AgentSessionRefreshService>().refresh() }
+    isRefreshingProvider = { service<AgentSessionReadService>().isRefreshing() }
   }
 
   internal constructor(

@@ -6,10 +6,7 @@ package com.intellij.agent.workbench.sessions.service
 // @spec community/plugins/agent-workbench/spec/actions/new-thread.spec.md
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-entry.spec.md
 
-import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
-import com.intellij.agent.workbench.chat.closeAndForgetAgentChatsForThread
 import com.intellij.agent.workbench.chat.openChat
-import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.parseAgentWorkbenchPathOrNull
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
@@ -26,19 +23,13 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageP
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.frame.AGENT_SESSIONS_TOOL_WINDOW_ID
 import com.intellij.agent.workbench.sessions.frame.AGENT_WORKBENCH_DEDICATED_FRAME_TYPE_ID
 import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
-import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
-import com.intellij.agent.workbench.sessions.model.AgentSessionsState
-import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
-import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.state.AgentSessionsTreeUiStateService
-import com.intellij.agent.workbench.sessions.state.InMemorySessionsTreeUiState
 import com.intellij.agent.workbench.sessions.state.SessionsTreeUiState
 import com.intellij.agent.workbench.sessions.util.SingleFlightActionGate
 import com.intellij.agent.workbench.sessions.util.SingleFlightPolicy
@@ -46,16 +37,11 @@ import com.intellij.agent.workbench.sessions.util.SingleFlightProgressRequest
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionNewIdentity
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewIdentity
-import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.agent.workbench.sessions.util.parseAgentSessionIdentity
 import com.intellij.agent.workbench.sessions.util.resolveAgentSessionId
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtilService
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationGroupManager
-import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.Service
@@ -65,7 +51,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.project.currentOrDefaultProject
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.ui.DoNotAskOption
@@ -75,14 +60,11 @@ import com.intellij.project.ProjectStoreOwner
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
-import kotlin.time.Duration.Companion.seconds
 
-private val LOG = logger<AgentSessionsService>()
+private val LOG = logger<AgentSessionLaunchService>()
 
 private const val SUPPRESS_BRANCH_MISMATCH_DIALOG_KEY = "agent.workbench.suppress.branch.mismatch.dialog"
 private const val OPEN_PROJECT_ACTION_KEY_PREFIX = "project-open"
@@ -90,20 +72,16 @@ private const val OPEN_DEDICATED_FRAME_ACTION_KEY_PREFIX = "dedicated-frame-open
 private const val CREATE_SESSION_ACTION_KEY_PREFIX = "session-create"
 private const val OPEN_THREAD_ACTION_KEY_PREFIX = "thread-open"
 private const val OPEN_SUB_AGENT_ACTION_KEY_PREFIX = "subagent-open"
-private const val ARCHIVE_THREADS_ACTION_KEY_PREFIX = "threads-archive"
-private const val UNARCHIVE_THREADS_ACTION_KEY_PREFIX = "threads-unarchive"
-private const val AGENT_SESSIONS_NOTIFICATION_GROUP_ID = "Agent Workbench Sessions"
 private const val PENDING_LAUNCH_MODE_STANDARD = "standard"
 private const val PENDING_LAUNCH_MODE_YOLO = "yolo"
 private const val MAX_STARTUP_COMMAND_BYTES = 24 * 1024
-private val CODEX_ARCHIVE_REFRESH_DELAY = 1.seconds
 
 internal enum class OpenThreadLaunchOrigin(val keySuffix: String) {
   USER_OPEN(""),
   PROMPT_LAUNCH(":prompt-launch"),
 }
 
-internal interface AgentSessionsChatOpenExecutor {
+internal interface AgentSessionChatOpenExecutor {
   suspend fun openChat(
     normalizedPath: String,
     thread: AgentSessionThread,
@@ -121,7 +99,7 @@ internal interface AgentSessionsChatOpenExecutor {
   )
 }
 
-private object DefaultAgentSessionsChatOpenExecutor : AgentSessionsChatOpenExecutor {
+private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecutor {
   override suspend fun openChat(
     normalizedPath: String,
     thread: AgentSessionThread,
@@ -156,139 +134,23 @@ private object DefaultAgentSessionsChatOpenExecutor : AgentSessionsChatOpenExecu
 }
 
 @Service(Service.Level.APP)
-internal class AgentSessionsService private constructor(
+internal class AgentSessionLaunchService(
   private val serviceScope: CoroutineScope,
-  private val sessionSourcesProvider: () -> List<AgentSessionSource>,
-  private val projectEntriesProvider: suspend (AgentSessionsService) -> List<ProjectEntry>,
+  private val stateStore: AgentSessionsStateStore,
+  private val syncService: AgentSessionRefreshService,
   private val treeUiState: SessionsTreeUiState,
-  private val archiveChatCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit,
-  subscribeToProjectLifecycle: Boolean,
-  private val chatOpenExecutor: AgentSessionsChatOpenExecutor,
+  private val chatOpenExecutor: AgentSessionChatOpenExecutor = DefaultAgentSessionChatOpenExecutor,
 ) {
   @Suppress("unused")
   constructor(serviceScope: CoroutineScope) : this(
     serviceScope = serviceScope,
-    sessionSourcesProvider = AgentSessionProviderBridges::sessionSources,
-    projectEntriesProvider = { service -> service.projectCatalog.collectProjects() },
+    stateStore = service<AgentSessionsStateStore>(),
+    syncService = service<AgentSessionRefreshService>(),
     treeUiState = service<AgentSessionsTreeUiStateService>(),
-    archiveChatCleanup = { projectPath, threadIdentity, subAgentId ->
-      closeAndForgetAgentChatsForThread(projectPath = projectPath, threadIdentity = threadIdentity, subAgentId = subAgentId)
-    },
-    subscribeToProjectLifecycle = true,
-    chatOpenExecutor = DefaultAgentSessionsChatOpenExecutor,
-  )
-
-  internal constructor(
-    serviceScope: CoroutineScope,
-    sessionSourcesProvider: () -> List<AgentSessionSource>,
-    projectEntriesProvider: suspend () -> List<ProjectEntry>,
-    treeUiState: SessionsTreeUiState = InMemorySessionsTreeUiState(),
-    archiveChatCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit = { _, _, _ -> },
-    subscribeToProjectLifecycle: Boolean = false,
-    chatOpenExecutor: AgentSessionsChatOpenExecutor = DefaultAgentSessionsChatOpenExecutor,
-  ) : this(
-    serviceScope = serviceScope,
-    sessionSourcesProvider = sessionSourcesProvider,
-    projectEntriesProvider = { _ -> projectEntriesProvider() },
-    treeUiState = treeUiState,
-    archiveChatCleanup = archiveChatCleanup,
-    subscribeToProjectLifecycle = subscribeToProjectLifecycle,
-    chatOpenExecutor = chatOpenExecutor,
+    chatOpenExecutor = DefaultAgentSessionChatOpenExecutor,
   )
 
   private val actionGate = SingleFlightActionGate()
-  internal val projectCatalog = AgentSessionsProjectCatalog()
-  private val stateStore = AgentSessionsStateStore()
-  private val loadingCoordinator = AgentSessionsLoadingCoordinator(
-    serviceScope = serviceScope,
-    sessionSourcesProvider = sessionSourcesProvider,
-    projectEntriesProvider = { projectEntriesProvider(this@AgentSessionsService) },
-    treeUiState = treeUiState,
-    stateStore = stateStore,
-    isRefreshGateActive = ::isSourceRefreshGateActive,
-  )
-
-  val state: StateFlow<AgentSessionsState> = stateStore.state
-
-  init {
-    loadingCoordinator.observeSessionSourceUpdates()
-
-    if (subscribeToProjectLifecycle) {
-      ApplicationManager.getApplication().messageBus.connect(serviceScope)
-        .subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
-          @Deprecated("Deprecated in Java")
-          @Suppress("removal")
-          override fun projectOpened(project: Project) {
-            refreshCatalogAndLoadNewlyOpened()
-          }
-
-          override fun projectClosed(project: Project) {
-            refreshCatalogAndLoadNewlyOpened()
-          }
-        })
-    }
-  }
-
-  private suspend fun isSourceRefreshGateActive(): Boolean = withContext(Dispatchers.EDT) {
-    val stateSnapshot = stateStore.snapshot()
-    val hasLoadedPaths = stateSnapshot.projects.any { project ->
-      project.hasLoaded || project.worktrees.any { it.hasLoaded }
-    }
-
-    val openProjects = ProjectManager.getInstance().openProjects
-    if (openProjects.isEmpty()) {
-      val decision = stateSnapshot.projects.any { project ->
-        project.isOpen || project.hasLoaded || project.worktrees.any { it.isOpen || it.hasLoaded }
-      }
-      LOG.debug {
-        "Source refresh gate decision=$decision (openProjects=0, stateProjects=${stateSnapshot.projects.size}, hasLoadedPaths=$hasLoadedPaths)"
-      }
-      return@withContext decision
-    }
-
-    data class ProjectRefreshSignal(
-      val name: String,
-      val dedicated: Boolean,
-      val sessionsVisible: Boolean,
-      val chatActive: Boolean,
-    )
-
-    val signals = openProjects.map { project ->
-      ProjectRefreshSignal(
-        name = project.name,
-        dedicated = AgentWorkbenchDedicatedFrameProjectManager.isDedicatedProject(project),
-        sessionsVisible = isSessionsToolWindowVisible(project),
-        chatActive = isAgentChatActive(project),
-      )
-    }
-
-    val uiSignalActive = signals.any { signal ->
-      signal.sessionsVisible || signal.chatActive
-    }
-    val decision = uiSignalActive || hasLoadedPaths
-
-    LOG.debug {
-      val signalText = signals.joinToString(separator = ";") { signal ->
-        "${signal.name}[dedicated=${signal.dedicated},sessionsVisible=${signal.sessionsVisible},chatActive=${signal.chatActive}]"
-      }
-      "Source refresh gate decision=$decision (openProjects=${openProjects.size}, uiSignalActive=$uiSignalActive, hasLoadedPaths=$hasLoadedPaths, signals=$signalText)"
-    }
-
-    decision
-  }
-
-  fun refresh() {
-    loadingCoordinator.refresh()
-  }
-
-  internal fun refreshCatalogAndLoadNewlyOpened() {
-    loadingCoordinator.refreshCatalogAndLoadNewlyOpened()
-  }
-
-  internal fun refreshProviderForPath(path: String, provider: AgentSessionProvider) {
-    val normalizedPath = normalizeAgentWorkbenchPath(path)
-    loadingCoordinator.refreshProviderScope(provider = provider, scopedPaths = setOf(normalizedPath))
-  }
 
   fun openOrFocusProject(path: String) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
@@ -308,23 +170,6 @@ internal class AgentSessionsService private constructor(
     ) {
       openOrFocusDedicatedFrameInternal()
     }
-  }
-
-  fun showMoreProjects() {
-    stateStore.showMoreProjects()
-  }
-
-  fun showMoreThreads(path: String) {
-    stateStore.showMoreThreads(path)
-  }
-
-  fun ensureThreadVisible(path: String, provider: AgentSessionProvider, threadId: String) {
-    stateStore.ensureThreadVisible(path, provider, threadId)
-  }
-
-  fun canArchiveProvider(provider: AgentSessionProvider): Boolean {
-    val bridge = AgentSessionProviderBridges.find(provider) ?: return false
-    return bridge.supportsArchiveThread
   }
 
   fun openChatThread(
@@ -394,17 +239,17 @@ internal class AgentSessionsService private constructor(
       droppedActionMessage = "Dropped duplicate create session action for $normalizedPath:$provider:mode=$mode",
       progress = dedicatedFrameOpenProgressRequest(currentProject),
     ) {
-      service<AgentSessionsTreeUiStateService>().setLastUsedProvider(provider)
+      treeUiState.setLastUsedProvider(provider)
 
       val bridge = AgentSessionProviderBridges.find(provider)
       if (bridge == null) {
         logMissingProviderBridge(provider)
-        loadingCoordinator.appendProviderUnavailableWarning(normalizedPath, provider)
+        syncService.appendProviderUnavailableWarning(normalizedPath, provider)
         return@launchDropAction
       }
       if (mode !in bridge.supportedLaunchModes) {
         LOG.warn("Session provider bridge ${provider.value} does not support launch mode $mode")
-        loadingCoordinator.appendProviderUnavailableWarning(normalizedPath, provider)
+        syncService.appendProviderUnavailableWarning(normalizedPath, provider)
         return@launchDropAction
       }
 
@@ -430,7 +275,7 @@ internal class AgentSessionsService private constructor(
         preferredDedicatedFrame = preferredDedicatedFrame,
       )
       if (provider == AgentSessionProvider.CODEX) {
-        loadingCoordinator.refreshProviderScope(provider = provider, scopedPaths = setOf(normalizedPath))
+        syncService.refreshProviderForPath(path = normalizedPath, provider = provider)
       }
     }
   }
@@ -512,241 +357,6 @@ internal class AgentSessionsService private constructor(
     return null
   }
 
-  fun archiveThread(path: String, provider: AgentSessionProvider, threadId: String) {
-    archiveThreads(listOf(ArchiveThreadTarget(path = path, provider = provider, threadId = threadId)))
-  }
-
-  fun archiveThreads(targets: List<ArchiveThreadTarget>) {
-    val normalizedTargets = normalizeArchiveTargets(targets)
-    if (normalizedTargets.isEmpty()) {
-      return
-    }
-    launchDropAction(
-      key = buildArchiveThreadsActionKey(normalizedTargets),
-      droppedActionMessage = "Dropped duplicate archive threads action for ${normalizedTargets.size} targets",
-    ) {
-      val outcome = archiveTargetsInternal(normalizedTargets)
-      if (outcome.archivedTargets.isEmpty()) {
-        return@launchDropAction
-      }
-      if (outcome.requiresCodexRefreshDelay) {
-        delay(CODEX_ARCHIVE_REFRESH_DELAY)
-      }
-      refresh()
-      showArchiveNotification(outcome)
-    }
-  }
-
-  internal fun unarchiveThreads(targets: List<ArchiveThreadTarget>) {
-    val normalizedTargets = normalizeArchiveTargets(targets)
-    if (normalizedTargets.isEmpty()) {
-      return
-    }
-    launchDropAction(
-      key = buildUnarchiveThreadsActionKey(normalizedTargets),
-      droppedActionMessage = "Dropped duplicate unarchive threads action for ${normalizedTargets.size} targets",
-    ) {
-      var anyUnarchived = false
-      var requiresCodexRefreshDelay = false
-      normalizedTargets.forEach { target ->
-        val provider = target.provider
-        val bridge = AgentSessionProviderBridges.find(provider)
-        if (bridge == null) {
-          logMissingProviderBridge(provider)
-          return@forEach
-        }
-        if (!bridge.supportsUnarchiveThread) {
-          return@forEach
-        }
-
-        val unarchived = try {
-          bridge.unarchiveThread(path = target.path, threadId = target.threadId)
-        }
-        catch (t: Throwable) {
-          if (t is CancellationException) {
-            throw t
-          }
-          LOG.warn("Failed to unarchive thread ${provider}:${target.threadId}", t)
-          false
-        }
-        if (!unarchived) {
-          return@forEach
-        }
-
-        anyUnarchived = true
-        if (provider == AgentSessionProvider.CODEX) {
-          loadingCoordinator.unsuppressArchivedThread(path = target.path, provider = provider, threadId = target.threadId)
-          requiresCodexRefreshDelay = true
-        }
-      }
-      if (!anyUnarchived) {
-        return@launchDropAction
-      }
-      if (requiresCodexRefreshDelay) {
-        delay(CODEX_ARCHIVE_REFRESH_DELAY)
-      }
-      refresh()
-    }
-  }
-
-  private suspend fun archiveTargetsInternal(targets: List<ArchiveThreadTarget>): ArchiveBatchOutcome {
-    val archivedTargets = ArrayList<ArchiveThreadTarget>(targets.size)
-    val undoTargets = ArrayList<ArchiveThreadTarget>()
-    var requiresCodexRefreshDelay = false
-
-    targets.forEach { target ->
-      val provider = target.provider
-      val cleanupTarget = resolveArchivedChatCleanupTarget(
-        path = target.path,
-        provider = provider,
-        archivedThreadId = target.threadId,
-      )
-
-      if (provider == AgentSessionProvider.CODEX && isAgentSessionNewSessionId(target.threadId)) {
-        stateStore.removeThread(target.path, provider, target.threadId)
-        try {
-          archiveChatCleanup(target.path, cleanupTarget.threadIdentity, cleanupTarget.subAgentId)
-        }
-        catch (t: Throwable) {
-          if (t is CancellationException) {
-            throw t
-          }
-          LOG.warn("Failed to clean archived pending thread chat metadata for ${provider}:${target.threadId}", t)
-        }
-        archivedTargets.add(target)
-        return@forEach
-      }
-
-      val bridge = AgentSessionProviderBridges.find(provider)
-      if (bridge == null) {
-        logMissingProviderBridge(provider)
-        loadingCoordinator.appendProviderUnavailableWarning(target.path, provider)
-        return@forEach
-      }
-      if (!bridge.supportsArchiveThread) {
-        return@forEach
-      }
-
-      val archived = try {
-        bridge.archiveThread(path = target.path, threadId = target.threadId)
-      }
-      catch (t: Throwable) {
-        if (t is CancellationException) {
-          throw t
-        }
-        LOG.warn("Failed to archive thread ${provider}:${target.threadId}", t)
-        loadingCoordinator.appendProviderUnavailableWarning(target.path, provider)
-        return@forEach
-      }
-
-      if (!archived) {
-        loadingCoordinator.appendProviderUnavailableWarning(target.path, provider)
-        return@forEach
-      }
-
-      if (provider == AgentSessionProvider.CODEX) {
-        loadingCoordinator.suppressArchivedThread(path = target.path, provider = provider, threadId = target.threadId)
-        requiresCodexRefreshDelay = true
-      }
-      stateStore.removeThread(target.path, provider, target.threadId)
-
-      try {
-        archiveChatCleanup(target.path, cleanupTarget.threadIdentity, cleanupTarget.subAgentId)
-      }
-      catch (t: Throwable) {
-        if (t is CancellationException) {
-          throw t
-        }
-        // Archive is already successful at provider level; cleanup is best-effort and must not
-        // resurrect the thread in UI by short-circuiting state update/refresh.
-        LOG.warn("Failed to clean archived thread chat metadata for ${provider}:${target.threadId}", t)
-      }
-
-      archivedTargets.add(target)
-      if (bridge.supportsUnarchiveThread) {
-        undoTargets.add(target)
-      }
-    }
-
-    return ArchiveBatchOutcome(
-      archivedTargets = archivedTargets,
-      undoTargets = undoTargets,
-      requiresCodexRefreshDelay = requiresCodexRefreshDelay,
-    )
-  }
-
-  private fun normalizeArchiveTargets(targets: List<ArchiveThreadTarget>): List<ArchiveThreadTarget> {
-    val normalizedByKey = LinkedHashMap<String, ArchiveThreadTarget>()
-    targets.forEach { target ->
-      val normalizedPath = normalizeAgentWorkbenchPath(target.path)
-      val normalizedTarget = if (normalizedPath == target.path) target else target.copy(path = normalizedPath)
-      val key = archiveTargetKey(normalizedTarget)
-      normalizedByKey.putIfAbsent(key, normalizedTarget)
-    }
-    return normalizedByKey.values.toList()
-  }
-
-  private fun resolveArchivedChatCleanupTarget(
-    path: String,
-    provider: AgentSessionProvider,
-    archivedThreadId: String,
-  ): ArchivedChatCleanupTarget {
-    val parentThreadId = stateStore.findParentThreadIdForSubAgent(
-      path = path,
-      provider = provider,
-      subAgentId = archivedThreadId,
-    )
-    if (parentThreadId == null) {
-      return ArchivedChatCleanupTarget(
-        threadIdentity = buildAgentSessionIdentity(provider, archivedThreadId),
-        subAgentId = null,
-      )
-    }
-    return ArchivedChatCleanupTarget(
-      threadIdentity = buildAgentSessionIdentity(provider, parentThreadId),
-      subAgentId = archivedThreadId,
-    )
-  }
-
-  private fun showArchiveNotification(outcome: ArchiveBatchOutcome) {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      return
-    }
-    runCatching {
-      val notification = NotificationGroupManager.getInstance()
-        .getNotificationGroup(AGENT_SESSIONS_NOTIFICATION_GROUP_ID)
-        .createNotification(
-          AgentSessionsBundle.message("toolwindow.notification.archive.title"),
-          AgentSessionsBundle.message("toolwindow.notification.archive.body", outcome.archivedTargets.size),
-          NotificationType.INFORMATION,
-        )
-      if (outcome.undoTargets.isNotEmpty()) {
-        val undoTargets = outcome.undoTargets.toList()
-        notification.addAction(
-          NotificationAction.createSimpleExpiring(
-            AgentSessionsBundle.message("toolwindow.notification.archive.undo"),
-          ) {
-            unarchiveThreads(undoTargets)
-          }
-        )
-      }
-      notification.notify(null)
-    }.onFailure { error ->
-      LOG.warn("Failed to show Agent Threads archive notification", error)
-    }
-  }
-
-private data class ArchiveBatchOutcome(
-  @JvmField val archivedTargets: List<ArchiveThreadTarget>,
-  @JvmField val undoTargets: List<ArchiveThreadTarget>,
-  @JvmField val requiresCodexRefreshDelay: Boolean,
-)
-
-private data class ArchivedChatCleanupTarget(
-  @JvmField val threadIdentity: String,
-  @JvmField val subAgentId: String?,
-)
-
   private fun launchDropAction(
     key: String,
     droppedActionMessage: String,
@@ -764,12 +374,11 @@ private data class ArchivedChatCleanupTarget(
     )
   }
 
-  fun loadProjectThreadsOnDemand(path: String) {
-    loadingCoordinator.loadProjectThreadsOnDemand(path)
-  }
-
-  fun loadWorktreeThreadsOnDemand(projectPath: String, worktreePath: String) {
-    loadingCoordinator.loadWorktreeThreadsOnDemand(projectPath, worktreePath)
+  private fun markClaudeQuotaHintEligible(provider: AgentSessionProvider) {
+    if (provider != AgentSessionProvider.CLAUDE) {
+      return
+    }
+    treeUiState.markClaudeQuotaHintEligible()
   }
 }
 
@@ -777,19 +386,6 @@ private data class PendingCodexMetadata(
   @JvmField val createdAtMs: Long,
   @JvmField val launchMode: String,
 )
-
-private fun isSessionsToolWindowVisible(project: Project): Boolean {
-  return ToolWindowManager.getInstance(project)
-    .getToolWindow(AGENT_SESSIONS_TOOL_WINDOW_ID)
-    ?.isVisible == true
-}
-
-private fun isAgentChatActive(project: Project): Boolean {
-  return runCatching {
-    val selectionService = project.service<AgentChatTabSelectionService>()
-    selectionService.selectedChatTab.value != null || selectionService.hasOpenChatTabs()
-  }.getOrDefault(false)
-}
 
 private suspend fun openOrFocusProjectInternal(normalizedPath: String) {
   val project = openProject(normalizedPath) ?: return
@@ -856,13 +452,6 @@ private fun buildOpenProjectActionKey(path: String): String {
   return "$OPEN_PROJECT_ACTION_KEY_PREFIX:$path"
 }
 
-private fun markClaudeQuotaHintEligible(provider: AgentSessionProvider) {
-  if (provider != AgentSessionProvider.CLAUDE) {
-    return
-  }
-  service<AgentSessionsTreeUiStateService>().markClaudeQuotaHintEligible()
-}
-
 private fun buildCreateSessionActionKey(path: String, provider: AgentSessionProvider, mode: AgentSessionLaunchMode): String {
   return "$CREATE_SESSION_ACTION_KEY_PREFIX:$path:$provider:mode=$mode"
 }
@@ -924,20 +513,6 @@ private fun buildOpenThreadActionKey(
 
 private fun buildOpenSubAgentActionKey(path: String, thread: AgentSessionThread, subAgent: AgentSubAgent): String {
   return "$OPEN_SUB_AGENT_ACTION_KEY_PREFIX:$path:${thread.provider}:${thread.id}:${subAgent.id}"
-}
-
-private fun buildArchiveThreadsActionKey(targets: List<ArchiveThreadTarget>): String {
-  val targetsKey = targets.map(::archiveTargetKey).sorted().joinToString("|")
-  return "$ARCHIVE_THREADS_ACTION_KEY_PREFIX:$targetsKey"
-}
-
-private fun buildUnarchiveThreadsActionKey(targets: List<ArchiveThreadTarget>): String {
-  val targetsKey = targets.map(::archiveTargetKey).sorted().joinToString("|")
-  return "$UNARCHIVE_THREADS_ACTION_KEY_PREFIX:$targetsKey"
-}
-
-private fun archiveTargetKey(target: ArchiveThreadTarget): String {
-  return "${target.path}:${target.provider}:${target.threadId}"
 }
 
 private fun logMissingProviderBridge(provider: AgentSessionProvider) {
@@ -1061,7 +636,7 @@ private suspend fun openNewChatInProject(
     threadId = threadId,
     threadTitle = title,
     subAgentId = null,
-    threadActivity = AgentThreadActivity.READY,
+    threadActivity = com.intellij.agent.workbench.common.AgentThreadActivity.READY,
     pendingCreatedAtMs = pendingMetadata?.createdAtMs,
     pendingLaunchMode = pendingMetadata?.launchMode,
     initialMessageDispatchPlan = initialMessageDispatchPlan,
@@ -1234,55 +809,6 @@ private fun showBranchMismatchDialog(originBranch: String, currentBranch: String
     })
     .asWarning()
     .ask(null as Project?)
-}
-
-internal data class AgentSessionLoadResult(
-  @JvmField val threads: List<AgentSessionThread>,
-  @JvmField val errorMessage: String? = null,
-  val hasUnknownThreadCount: Boolean = false,
-  val providerWarnings: List<AgentSessionProviderWarning> = emptyList(),
-)
-
-internal data class AgentSessionSourceLoadResult(
-  val provider: AgentSessionProvider,
-  val result: Result<List<AgentSessionThread>>,
-  val hasUnknownTotal: Boolean = false,
-)
-
-internal fun mergeAgentSessionSourceLoadResults(
-  sourceResults: List<AgentSessionSourceLoadResult>,
-  resolveErrorMessage: (AgentSessionProvider, Throwable) -> String,
-  resolveWarningMessage: (AgentSessionProvider, Throwable) -> String = resolveErrorMessage,
-): AgentSessionLoadResult {
-  val mergedThreads = buildList {
-    sourceResults.forEach { sourceResult ->
-      addAll(sourceResult.result.getOrElse { emptyList() })
-    }
-  }.sortedByDescending { it.updatedAt }
-
-  val providerWarnings = sourceResults.mapNotNull { sourceResult ->
-    sourceResult.result.exceptionOrNull()?.let { throwable ->
-      AgentSessionProviderWarning(
-        provider = sourceResult.provider,
-        message = resolveWarningMessage(sourceResult.provider, throwable),
-      )
-    }
-  }
-  val hasUnknownThreadCount = sourceResults.any { it.hasUnknownTotal }
-
-  val firstError = sourceResults.firstNotNullOfOrNull { sourceResult ->
-    sourceResult.result.exceptionOrNull()?.let { throwable ->
-      resolveErrorMessage(sourceResult.provider, throwable)
-    }
-  }
-  val allSourcesFailed = sourceResults.isNotEmpty() && sourceResults.all { it.result.isFailure }
-  val errorMessage = if (allSourcesFailed) firstError else null
-  return AgentSessionLoadResult(
-    threads = mergedThreads,
-    errorMessage = errorMessage,
-    hasUnknownThreadCount = hasUnknownThreadCount,
-    providerWarnings = if (allSourcesFailed) emptyList() else providerWarnings,
-  )
 }
 
 private fun AgentSessionThread.matchesPromptTarget(provider: AgentSessionProvider, threadId: String): Boolean {

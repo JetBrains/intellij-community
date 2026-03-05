@@ -76,8 +76,8 @@ class AgentPromptContextEntryPathRenderingTest {
       projectBasePath = projectBasePath,
     )
 
-    assertThat(entry.displayText).isEqualTo("Paths: dir: subdir")
-    assertThat(entry.tooltipText).isEqualTo("paths:\ndir: $selectedDirectory")
+    assertThat(entry.displayText).isEqualTo("Paths: subdir")
+    assertThat(entry.tooltipText).isEqualTo("path: $selectedDirectory")
   }
 
   @Test
@@ -94,6 +94,18 @@ class AgentPromptContextEntryPathRenderingTest {
     )
 
     assertThat(entry.displayText).isEqualTo("Symbol: $absoluteContent")
+  }
+
+  @Test
+  fun snippetChipShowsTitleOnly() {
+    val entry = contextEntry(
+      rendererId = AgentPromptContextRendererIds.SNIPPET,
+      title = "Selection (1-5)",
+      body = "val x = foo.bar(baz)\nval y = 42",
+      projectBasePath = null,
+    )
+
+    assertThat(entry.displayText).isEqualTo("Selection (1-5)")
   }
 
   @Test

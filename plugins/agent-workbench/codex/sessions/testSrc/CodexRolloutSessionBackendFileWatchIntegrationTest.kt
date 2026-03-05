@@ -8,6 +8,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -133,11 +134,38 @@ class CodexRolloutSessionBackendFileWatchIntegrationTest {
       }
     }
   }
+
+  @Test
+  fun updatesCollectorCancelsPromptlyDuringWatcherStartup() {
+    runBlocking(Dispatchers.Default) {
+      val sessionsRoot = tempDir.resolve("sessions")
+      writeLargeSessionsTree(sessionsRoot)
+      val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
+      val updatesJob = launch {
+        backend.updates.collect { }
+      }
+
+      try {
+        delay(100.milliseconds)
+        withTimeout(WATCHER_CANCEL_TIMEOUT) {
+          updatesJob.cancelAndJoin()
+        }
+      }
+      finally {
+        if (updatesJob.isActive) {
+          updatesJob.cancelAndJoin()
+        }
+      }
+    }
+  }
 }
 
 private val FILE_WATCH_UPDATE_TIMEOUT = 8.seconds
+private val WATCHER_CANCEL_TIMEOUT = 5.seconds
 private val WATCHER_PRIME_ATTEMPT_TIMEOUT = 500.milliseconds
 private val WATCHER_PRIME_RETRY_DELAY = 100.milliseconds
+private const val WATCHER_STRESS_FILE_COUNT = 256
+private const val WATCHER_STRESS_FILE_SIZE_BYTES = 256 * 1024
 
 private suspend fun awaitWatcherUpdate(
   updates: Channel<Unit>,
@@ -218,4 +246,18 @@ private fun replaceRolloutAtomically(file: Path, lines: List<String>) {
     StandardCopyOption.REPLACE_EXISTING,
     StandardCopyOption.ATOMIC_MOVE,
   )
+}
+
+private fun writeLargeSessionsTree(
+  sessionsRoot: Path,
+  fileCount: Int = WATCHER_STRESS_FILE_COUNT,
+  fileSizeBytes: Int = WATCHER_STRESS_FILE_SIZE_BYTES,
+) {
+  val payload = ByteArray(fileSizeBytes) { index -> (index % 31).toByte() }
+  for (index in 0 until fileCount) {
+    val day = (index % 28 + 1).toString().padStart(2, '0')
+    val bucket = sessionsRoot.resolve("2026/03/$day")
+    Files.createDirectories(bucket)
+    Files.write(bucket.resolve("watcher-shutdown-$index.tmp"), payload)
+  }
 }

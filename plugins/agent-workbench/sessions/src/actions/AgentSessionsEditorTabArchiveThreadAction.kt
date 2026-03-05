@@ -5,16 +5,16 @@ import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.chat.resolveAgentChatEditorTabActionContext
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
-import com.intellij.agent.workbench.sessions.service.AgentSessionsService
+import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveService
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 
 internal class AgentSessionsEditorTabArchiveThreadAction @JvmOverloads constructor(
   private val canArchiveProvider: (AgentSessionProvider) -> Boolean = { provider ->
-    service<AgentSessionsService>().canArchiveProvider(provider)
+    service<AgentSessionArchiveService>().canArchiveProvider(provider)
   },
   private val archiveThreads: (List<ArchiveThreadTarget>) -> Unit = { targets ->
-    service<AgentSessionsService>().archiveThreads(targets)
+    service<AgentSessionArchiveService>().archiveThreads(targets)
   },
   resolveContext: (AnActionEvent) -> AgentChatEditorTabActionContext? = ::resolveAgentChatEditorTabActionContext,
 ) : AgentSessionsEditorTabActionBase(resolveContext) {

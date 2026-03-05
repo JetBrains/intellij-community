@@ -6,7 +6,6 @@ import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
-import com.intellij.agent.workbench.sessions.service.AgentSessionsService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsTreeUiStateService
 import com.intellij.agent.workbench.sessions.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.tree.SessionTreeModel
@@ -24,13 +23,14 @@ import kotlinx.coroutines.Dispatchers.Default
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.CompletableFuture
 import javax.swing.SwingUtilities
 
 internal class AgentSessionsTreeStateController(
-  private val service: AgentSessionsService,
+  private val sessionsStateFlow: StateFlow<AgentSessionsState>,
   private val chatSelectionService: AgentChatTabSelectionService,
   private val treeUiStateService: AgentSessionsTreeUiStateService,
   private val tree: Tree,
@@ -52,7 +52,7 @@ internal class AgentSessionsTreeStateController(
 
   fun start() {
     scope.launch {
-      service.state.collect { newState ->
+      sessionsStateFlow.collect { newState ->
         sessionsState = newState
         rebuildTree()
       }

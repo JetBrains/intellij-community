@@ -2,13 +2,15 @@
 package com.intellij.agent.workbench.sessions.core.prompt
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.util.SystemProperties
 import java.nio.file.FileSystems
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.math.max
 
-class AgentPromptSnippetContextRendererBridge : AgentPromptContextRendererBridge {
+internal class AgentPromptSnippetContextRendererBridge : AgentPromptContextRendererBridge {
   override val rendererId: String
     get() = AgentPromptContextRendererIds.SNIPPET
 
@@ -25,7 +27,6 @@ class AgentPromptSnippetContextRendererBridge : AgentPromptContextRendererBridge
       details += "lines=$startLine-$endLine"
     }
     selection?.let { details += "selection=$it" }
-    language?.let { details += "lang=$it" }
 
     val descriptor = buildString {
       append("snippet")
@@ -36,6 +37,10 @@ class AgentPromptSnippetContextRendererBridge : AgentPromptContextRendererBridge
       append(renderTruncationSuffix(item))
     }
     return descriptor + "\n" + appendCodeBlock(language = language, content = item.body)
+  }
+
+  override fun renderChip(input: AgentPromptChipRenderInput): AgentPromptChipRender {
+    return AgentPromptChipRender(text = input.item.title ?: "Snippet")
   }
 }
 
@@ -79,48 +84,53 @@ class AgentPromptPathsContextRendererBridge : AgentPromptContextRendererBridge {
 
   override fun renderEnvelope(input: AgentPromptEnvelopeRenderInput): String {
     val item = input.item
-    val lines = extractPathLines(item)
-      .map { line -> renderPathLine(line = line, projectPath = input.projectPath) }
-    return buildString {
-      append("paths:")
-      append(renderTruncationSuffix(item))
-      if (lines.isNotEmpty()) {
-        append('\n')
-        append(lines.joinToString(separator = "\n"))
+    val paths = extractPaths(item)
+      .map { absolutizePath(pathText = it, projectPath = input.projectPath) }
+    val truncation = renderTruncationSuffix(item)
+    return if (paths.size == 1) {
+      "path: ${paths[0]}$truncation"
+    }
+    else {
+      buildString {
+        append("paths:")
+        append(truncation)
+        if (paths.isNotEmpty()) {
+          append('\n')
+          append(paths.joinToString(separator = "\n"))
+        }
       }
     }
   }
 
   override fun renderChip(input: AgentPromptChipRenderInput): AgentPromptChipRender {
-    val first = extractPathLines(input.item).firstOrNull().orEmpty()
-    val preview = shortenPrefixedPathForChip(first, input.projectBasePath)
+    val first = extractPaths(input.item).firstOrNull().orEmpty()
+    val preview = shortenPathForChip(first, input.projectBasePath)
     return AgentPromptChipRender(text = composeChipText(input.item.title, preview))
   }
 
-  private fun extractPathLines(item: AgentPromptContextItem): List<String> {
+  private fun extractPaths(item: AgentPromptContextItem): List<String> {
     val payload = item.payload.objOrNull()
     val entries = payload?.array("entries")
       ?.mapNotNull { value ->
         val entry = value.objOrNull() ?: return@mapNotNull null
-        val kind = entry.string("kind")?.lowercase()
-        val path = entry.string("path")?.trim().orEmpty()
-        if (path.isEmpty()) {
-          return@mapNotNull null
-        }
-        when (kind) {
-          "file" -> "file: $path"
-          "dir", "directory" -> "dir: $path"
-          else -> path
-        }
+        entry.string("path")?.trim()?.takeIf { it.isNotEmpty() }
       }
       .orEmpty()
     if (entries.isNotEmpty()) {
       return entries
     }
+    // Body text may have "dir: " / "file: " prefix — strip it
     return item.body
       .lineSequence()
       .map { it.trim() }
       .filter { it.isNotEmpty() }
+      .map { line ->
+        when {
+          line.startsWith("file:", ignoreCase = true) -> line.substringAfter(':').trim()
+          line.startsWith("dir:", ignoreCase = true) -> line.substringAfter(':').trim()
+          else -> line
+        }
+      }
       .toList()
   }
 }
@@ -179,16 +189,6 @@ internal fun normalizeLanguage(raw: String?): String? {
   }
 }
 
-internal fun renderPathLine(line: String, projectPath: String?): String {
-  val parsed = parsePathLine(line)
-  val absolutePath = absolutizePath(pathText = parsed.pathText, projectPath = projectPath)
-  return when (parsed.prefix) {
-    "file" -> "file: $absolutePath"
-    "dir" -> "dir: $absolutePath"
-    else -> absolutePath
-  }
-}
-
 internal fun absolutizePath(pathText: String, projectPath: String?): String {
   val normalizedPath = pathText.trim()
   if (normalizedPath.isEmpty()) {
@@ -220,19 +220,6 @@ private fun resolveAbsolutePath(pathText: String, projectPath: String?): String?
   }
 }
 
-private data class ParsedPathLine(
-  @JvmField val prefix: String?,
-  @JvmField val pathText: String,
-)
-
-private fun parsePathLine(line: String): ParsedPathLine {
-  return when {
-    line.startsWith("file:", ignoreCase = true) -> ParsedPathLine(prefix = "file", pathText = line.substringAfter(':').trim())
-    line.startsWith("dir:", ignoreCase = true) -> ParsedPathLine(prefix = "dir", pathText = line.substringAfter(':').trim())
-    else -> ParsedPathLine(prefix = null, pathText = line)
-  }
-}
-
 internal fun composeChipText(title: String?, preview: String): String {
   val resolvedTitle = title?.takeIf { it.isNotBlank() } ?: "Context"
   val trimmedPreview = preview.trim()
@@ -243,28 +230,21 @@ internal fun composeChipText(title: String?, preview: String): String {
   return "$resolvedTitle: $shortPreview"
 }
 
-internal fun shortenPrefixedPathForChip(value: String, projectBasePath: String?): String {
-  val prefixes = arrayOf("file: ", "dir: ")
-  val prefix = prefixes.firstOrNull { value.startsWith(it) } ?: return value
-  val pathPart = value.removePrefix(prefix)
-  return prefix + shortenPathForChip(pathPart, projectBasePath)
-}
-
 internal fun shortenPathForChip(value: String, projectBasePath: String?): String {
-  if (!FileUtil.isAbsolute(value)) {
+  if (!OSAgnosticPathUtil.isAbsolute(value)) {
     return value
   }
 
-  val path = FileUtil.toSystemDependentName(value)
+  val path = FileUtilRt.toSystemDependentName(value)
   val projectPath = projectBasePath
     ?.takeIf { it.isNotBlank() }
-    ?.let(FileUtil::toSystemDependentName)
+    ?.let(FileUtilRt::toSystemDependentName)
   if (!projectPath.isNullOrBlank() && FileUtil.isAncestor(projectPath, path, false)) {
-    val relative = FileUtil.getRelativePath(projectPath, path, FileSystems.getDefault().separator[0])
+    val relative = FileUtilRt.getRelativePath(projectPath, path, FileSystems.getDefault().separator[0])
     return if (relative.isNullOrEmpty()) "." else relative
   }
 
-  val userHome = FileUtil.toSystemDependentName(SystemProperties.getUserHome())
+  val userHome = FileUtilRt.toSystemDependentName(SystemProperties.getUserHome())
   if (FileUtil.isAncestor(userHome, path, false)) {
     return if (FileUtil.pathsEqual(userHome, path)) {
       "~"

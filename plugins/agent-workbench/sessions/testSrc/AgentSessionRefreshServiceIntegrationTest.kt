@@ -1,10 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindOutcome
+import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindReport
+import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindRequest
+import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindStatus
+import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabSnapshot
+import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindTarget
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadPreview
 import com.intellij.agent.workbench.sessions.state.InMemorySessionsTreeUiState
+import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -15,7 +23,7 @@ import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicInteger
 
 @TestApplication
-class AgentSessionsServiceRefreshIntegrationTest {
+class AgentSessionRefreshServiceIntegrationTest {
   @Test
   fun refreshShowsCachedOpenProjectThreadsBeforeProviderLoadCompletes() = runBlocking(Dispatchers.Default) {
     val started = CompletableDeferred<Unit>()
@@ -561,4 +569,235 @@ class AgentSessionsServiceRefreshIntegrationTest {
       assertThat(project.threads.first().updatedAt).isEqualTo(300L)
     }
   }
+
+  @Test
+  fun providerUpdateBuildsPendingTabRebindTargetsForCodex() = runBlocking(Dispatchers.Default) {
+    val codexUpdates = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1)
+    var codexThreads = listOf(
+      thread(id = "codex-1", updatedAt = 100L, title = "Existing Codex thread", provider = AgentSessionProvider.CODEX)
+    )
+    val rebindInvocations = mutableListOf<ServicePendingCodexRebindInvocation>()
+
+    withService(
+      sessionSourcesProvider = {
+        listOf(
+          ScriptedSessionSource(
+            provider = AgentSessionProvider.CODEX,
+            supportsUpdates = true,
+            updates = codexUpdates,
+            listFromOpenProject = { path, _ ->
+              if (path == PROJECT_PATH) codexThreads else emptyList()
+            },
+            listFromClosedProject = { path ->
+              if (path == PROJECT_PATH) codexThreads else emptyList()
+            },
+          )
+        )
+      },
+      projectEntriesProvider = {
+        listOf(openProjectEntry(PROJECT_PATH, "Project A"))
+      },
+      openPendingCodexTabsProvider = {
+        mapOf(
+          PROJECT_PATH to listOf(
+            AgentChatPendingCodexTabSnapshot(
+              projectPath = PROJECT_PATH,
+              pendingTabKey = "pending-codex:new-1",
+              pendingThreadIdentity = "codex:new-1",
+              pendingCreatedAtMs = 200L,
+              pendingFirstInputAtMs = null,
+              pendingLaunchMode = null,
+            )
+          )
+        )
+      },
+      openConcreteChatThreadIdentitiesByPathProvider = { emptyMap() },
+      openAgentChatPendingTabsBinder = { requestsByPath ->
+        requestsByPath.forEach { (path, requests) ->
+          requests.forEach { request ->
+            rebindInvocations.add(
+              ServicePendingCodexRebindInvocation(
+                path = path,
+                pendingTabKey = request.pendingTabKey,
+                pendingThreadIdentity = request.pendingThreadIdentity,
+                target = request.target,
+              )
+            )
+          }
+        }
+        successfulPendingCodexRebindReport(requestsByPath)
+      },
+    ) { service ->
+      service.refresh()
+      waitForCondition {
+        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
+          ?.threads
+          ?.map { it.id } == listOf("codex-1")
+      }
+
+      codexThreads = listOf(
+        thread(id = "codex-2", updatedAt = 300L, title = "New Codex thread", provider = AgentSessionProvider.CODEX)
+      )
+      codexUpdates.emit(Unit)
+
+      waitForCondition {
+        rebindInvocations.isNotEmpty()
+      }
+
+      val invocation = rebindInvocations.single()
+      assertThat(invocation.path).isEqualTo(PROJECT_PATH)
+      assertThat(invocation.pendingTabKey).isEqualTo("pending-codex:new-1")
+      assertThat(invocation.pendingThreadIdentity).isEqualTo("codex:new-1")
+      val target = invocation.target
+      assertThat(target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-2"))
+      assertThat(target.threadId).isEqualTo("codex-2")
+      assertThat(target.shellCommand)
+        .containsExactly("codex", "-c", "check_for_update_on_startup=false", "resume", "codex-2")
+      assertThat(target.threadTitle).isEqualTo("New Codex thread")
+      assertThat(target.threadActivity).isEqualTo(AgentThreadActivity.READY)
+
+      waitForCondition {
+        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
+          ?.threads
+          ?.map { it.id } == listOf("codex-2")
+      }
+      assertThat(
+        service.state.value.projects.single { it.path == PROJECT_PATH }
+          .threads
+          .map { it.id }
+      ).containsExactly("codex-2")
+    }
+  }
+
+  @Test
+  fun providerUpdateDoesNotPassPendingNewThreadIdsToRefreshHints() = runBlocking(Dispatchers.Default) {
+    val codexUpdates = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1)
+    val capturedKnownThreadIdsByPath = mutableListOf<Map<String, Set<String>>>()
+
+    val listedThread = thread(
+      id = "codex-listed",
+      updatedAt = 320L,
+      title = "Listed Codex thread",
+      provider = AgentSessionProvider.CODEX,
+    )
+
+    withService(
+      sessionSourcesProvider = {
+        listOf(
+          ScriptedSessionSource(
+            provider = AgentSessionProvider.CODEX,
+            supportsUpdates = true,
+            updates = codexUpdates,
+            listFromOpenProject = { path, _ ->
+              if (path == PROJECT_PATH) listOf(listedThread) else emptyList()
+            },
+            listFromClosedProject = { path ->
+              if (path == PROJECT_PATH) listOf(listedThread) else emptyList()
+            },
+            prefetchRefreshHintsProvider = { paths, knownThreadIdsByPath ->
+              if (PROJECT_PATH !in paths) {
+                emptyMap()
+              }
+              else {
+                capturedKnownThreadIdsByPath += knownThreadIdsByPath.mapValues { (_, ids) -> ids.toSet() }
+                emptyMap()
+              }
+            },
+          )
+        )
+      },
+      projectEntriesProvider = {
+        listOf(openProjectEntry(PROJECT_PATH, "Project A"))
+      },
+      openPendingCodexTabsProvider = {
+        mapOf(
+          PROJECT_PATH to listOf(
+            AgentChatPendingCodexTabSnapshot(
+              projectPath = PROJECT_PATH,
+              pendingTabKey = "pending-codex:new-ea4cecdd-f115-410d-9c73-f652c21558a9",
+              pendingThreadIdentity = "codex:new-ea4cecdd-f115-410d-9c73-f652c21558a9",
+              pendingCreatedAtMs = 200L,
+              pendingFirstInputAtMs = null,
+              pendingLaunchMode = null,
+            )
+          )
+        )
+      },
+      openConcreteChatThreadIdentitiesByPathProvider = {
+        mapOf(
+          PROJECT_PATH to setOf(
+            "codex:new-ea4cecdd-f115-410d-9c73-f652c21558a9",
+            "codex:codex-open",
+          )
+        )
+      },
+    ) { service ->
+      service.refresh()
+
+      waitForCondition {
+        val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
+        project.threads.map { it.id } == listOf("codex-listed")
+      }
+
+      capturedKnownThreadIdsByPath.clear()
+
+      codexUpdates.emit(Unit)
+
+      waitForCondition {
+        val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
+        project.threads.map { it.id }.containsAll(
+          listOf(
+            "codex-listed",
+            "new-ea4cecdd-f115-410d-9c73-f652c21558a9",
+          )
+        )
+      }
+
+      waitForCondition {
+        capturedKnownThreadIdsByPath.isNotEmpty()
+      }
+
+      codexUpdates.emit(Unit)
+
+      waitForCondition {
+        capturedKnownThreadIdsByPath.size >= 2
+      }
+
+      assertThat(capturedKnownThreadIdsByPath.last()[PROJECT_PATH])
+        .containsExactlyInAnyOrder("codex-listed", "codex-open")
+    }
+  }
+}
+
+private data class ServicePendingCodexRebindInvocation(
+  val path: String,
+  val pendingTabKey: String,
+  val pendingThreadIdentity: String,
+  val target: AgentChatPendingTabRebindTarget,
+)
+
+private fun successfulPendingCodexRebindReport(
+  requestsByPath: Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
+): AgentChatPendingCodexTabRebindReport {
+  val outcomesByPath = LinkedHashMap<String, List<AgentChatPendingCodexTabRebindOutcome>>()
+  var requestedBindings = 0
+  for ((path, requests) in requestsByPath) {
+    requestedBindings += requests.size
+    outcomesByPath[path] = requests.map { request ->
+      AgentChatPendingCodexTabRebindOutcome(
+        projectPath = path,
+        request = request,
+        status = AgentChatPendingCodexTabRebindStatus.REBOUND,
+        reboundFiles = 1,
+      )
+    }
+  }
+
+  return AgentChatPendingCodexTabRebindReport(
+    requestedBindings = requestedBindings,
+    reboundBindings = requestedBindings,
+    reboundFiles = requestedBindings,
+    updatedPresentations = requestedBindings,
+    outcomesByPath = outcomesByPath,
+  )
 }

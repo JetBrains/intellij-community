@@ -23,7 +23,7 @@ internal data class SessionTreeThreadRowPresentation(
   @JvmField val timeLabel: @NlsSafe String,
   @JvmField val statusLabel: @NlsSafe String,
   @JvmField val branchMismatchMessage: @NlsSafe String?,
-   val accessibleStatusText: @NlsSafe String?,
+  val accessibleStatusText: @NlsSafe String?,
 )
 
 internal fun buildSessionTreeThreadRowPresentation(
@@ -44,7 +44,13 @@ internal fun buildSessionTreeThreadRowPresentation(
     null
   }
   val providerName = providerDisplayName(treeNode.thread.provider)
-  val accessibleStatusText = "$providerName, $timeLabel"
+  val accessibleStatusText = buildList {
+    add(providerName)
+    if (treeNode.thread.activity != AgentThreadActivity.READY) {
+      add(statusLabel)
+    }
+    add(timeLabel)
+  }.joinToString(separator = ", ")
   return SessionTreeThreadRowPresentation(
     statusColor = activityColor,
     title = threadDisplayTitle(treeNode.thread),

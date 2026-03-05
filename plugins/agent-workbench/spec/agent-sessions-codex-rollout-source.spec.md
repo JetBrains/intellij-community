@@ -6,7 +6,7 @@ targets:
   - ../codex/common/src/CodexAppServerClient.kt
   - ../sessions/src/CodexSessionsCompatibility.kt
   - ../sessions/src/AgentSessionModels.kt
-  - ../sessions/src/AgentSessionsService.kt
+  - ../sessions/src/service/AgentSessionRefreshCoordinator.kt
   - ../codex/sessions/testSrc/*.kt
   - ../sessions/testSrc/CodexAppServerClientTest.kt
 ---
@@ -53,13 +53,13 @@ Define Codex thread-list behavior where discovery and primary status projection 
   [@test] ../codex/sessions/testSrc/CodexAppServerSessionBackendTest.kt
 
 - Pending Codex chat tabs must trigger pending-only polling refresh to rebind pending identities when source update notifications are unavailable.
-  [@test] ../sessions/testSrc/AgentSessionsLoadingCoordinatorTest.kt
+  [@test] ../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
 - Rollout backend scan scope must be limited to `~/.codex/sessions/**/rollout-*.jsonl`.
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
 - Rollout hints must be consumed for pending-tab rebinding and Codex activity projection; rollout-discovered IDs must not create persisted thread rows.
-  [@test] ../sessions/testSrc/AgentSessionsLoadingCoordinatorTest.kt
+  [@test] ../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
 - App-server refresh hints must map `thread/read` snapshot status and flags to Codex activity states (`unread`, `reviewing`, `processing`, `ready`).
   [@test] ../codex/sessions/testSrc/backend/appserver/CodexAppServerRefreshHintsProviderTest.kt

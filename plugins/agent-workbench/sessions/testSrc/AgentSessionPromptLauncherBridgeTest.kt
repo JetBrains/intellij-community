@@ -27,8 +27,9 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminal
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
-import com.intellij.agent.workbench.sessions.service.AgentSessionsChatOpenExecutor
-import com.intellij.agent.workbench.sessions.service.AgentSessionsPromptLauncherBridge
+import com.intellij.agent.workbench.sessions.service.AgentSessionChatOpenExecutor
+import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
+import com.intellij.agent.workbench.sessions.service.AgentSessionPromptLauncherBridge
 import com.intellij.agent.workbench.sessions.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.tree.SessionTreeNode
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -49,7 +50,7 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.swing.Icon
 
 @TestApplication
-class AgentSessionsPromptLauncherBridgeTest {
+class AgentSessionPromptLauncherBridgeTest {
   @Test
   fun launchCreatesNewSessionForPromptRequest() {
     val providerBridge = RecordingPromptLaunchProviderBridge(
@@ -61,12 +62,12 @@ class AgentSessionsPromptLauncherBridgeTest {
       InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
     ) {
       runBlocking(Dispatchers.Default) {
-        withService(
+        withServiceAndLaunch(
           sessionSourcesProvider = { listOf(providerBridge.sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
           chatOpenExecutor = chatOpenExecutor,
-        ) { service ->
-          val bridge = AgentSessionsPromptLauncherBridge { service }
+        ) { service, launchService ->
+          val bridge = promptLauncherBridge(service, launchService)
           val request = promptLaunchRequest(projectPath = INVALID_PROMPT_PROJECT_PATH)
 
           val result = bridge.launch(request)
@@ -123,12 +124,12 @@ class AgentSessionsPromptLauncherBridgeTest {
       InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
     ) {
       runBlocking(Dispatchers.Default) {
-        withService(
+        withServiceAndLaunch(
           sessionSourcesProvider = { listOf(providerBridge.sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
           chatOpenExecutor = chatOpenExecutor,
-        ) { service ->
-          val bridge = AgentSessionsPromptLauncherBridge { service }
+        ) { service, launchService ->
+          val bridge = promptLauncherBridge(service, launchService)
           val result = bridge.launch(promptLaunchRequest(projectPath = INVALID_PROMPT_PROJECT_PATH))
 
           assertThat(result.launched).isTrue()
@@ -156,12 +157,12 @@ class AgentSessionsPromptLauncherBridgeTest {
       InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
     ) {
       runBlocking(Dispatchers.Default) {
-        withService(
+        withServiceAndLaunch(
           sessionSourcesProvider = { listOf(providerBridge.sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
           chatOpenExecutor = chatOpenExecutor,
-        ) { service ->
-          val bridge = AgentSessionsPromptLauncherBridge { service }
+        ) { service, launchService ->
+          val bridge = promptLauncherBridge(service, launchService)
           val result = bridge.launch(promptLaunchRequest(projectPath = INVALID_PROMPT_PROJECT_PATH))
 
           assertThat(result.launched).isTrue()
@@ -196,12 +197,12 @@ class AgentSessionsPromptLauncherBridgeTest {
       InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
     ) {
       runBlocking(Dispatchers.Default) {
-        withService(
+        withServiceAndLaunch(
           sessionSourcesProvider = { listOf(providerBridge.sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
           chatOpenExecutor = chatOpenExecutor,
-        ) { service ->
-          val bridge = AgentSessionsPromptLauncherBridge { service }
+        ) { service, launchService ->
+          val bridge = promptLauncherBridge(service, launchService)
           val request = promptLaunchRequest(projectPath = INVALID_PROMPT_PROJECT_PATH)
 
           val result = bridge.launch(request)
@@ -210,6 +211,10 @@ class AgentSessionsPromptLauncherBridgeTest {
           assertThat(result.error).isNull()
           waitForCondition {
             providerBridge.createCalls.get() == 1
+          }
+          waitForCondition {
+            providerBridge.composeCalls.get() == 1 &&
+            providerBridge.shouldUseStartupPromptCommandCalls.get() == 1
           }
           assertThat(providerBridge.composeCalls.get()).isEqualTo(1)
           assertThat(providerBridge.shouldUseStartupPromptCommandCalls.get()).isEqualTo(1)
@@ -239,7 +244,7 @@ class AgentSessionsPromptLauncherBridgeTest {
       InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
     ) {
       runBlocking(Dispatchers.Default) {
-        withService(
+        withServiceAndLaunch(
           sessionSourcesProvider = {
             listOf(
               ScriptedSessionSource(
@@ -257,14 +262,14 @@ class AgentSessionsPromptLauncherBridgeTest {
           },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
           chatOpenExecutor = chatOpenExecutor,
-        ) { service ->
+        ) { service, launchService ->
           service.refresh()
           waitForCondition {
             val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
             project.hasLoaded && project.threads.any { thread -> thread.id == "thread-existing" }
           }
 
-          val bridge = AgentSessionsPromptLauncherBridge { service }
+          val bridge = promptLauncherBridge(service, launchService)
           val request = promptLaunchRequest(targetThreadId = "thread-existing")
 
           val result = bridge.launch(request)
@@ -313,7 +318,7 @@ class AgentSessionsPromptLauncherBridgeTest {
       InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
     ) {
       runBlocking(Dispatchers.Default) {
-        withService(
+        withServiceAndLaunch(
           sessionSourcesProvider = {
             listOf(
               ScriptedSessionSource(
@@ -331,7 +336,7 @@ class AgentSessionsPromptLauncherBridgeTest {
           },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
           chatOpenExecutor = chatOpenExecutor,
-        ) { service ->
+        ) { service, launchService ->
           service.refresh()
           waitForCondition {
             val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
@@ -345,13 +350,13 @@ class AgentSessionsPromptLauncherBridgeTest {
               ?.firstOrNull { thread -> thread.id == "thread-existing" }
           )
 
-          service.openChatThread(path = PROJECT_PATH, thread = existingThread)
+          launchService.openChatThread(path = PROJECT_PATH, thread = existingThread)
           waitForCondition {
             firstOpenStarted.isCompleted
           }
           assertThat(chatOpenExecutor.openChatCalls.get()).isEqualTo(1)
 
-          val bridge = AgentSessionsPromptLauncherBridge { service }
+          val bridge = promptLauncherBridge(service, launchService)
           val request = promptLaunchRequest(targetThreadId = "thread-existing")
 
           try {
@@ -408,7 +413,7 @@ class AgentSessionsPromptLauncherBridgeTest {
       InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
     ) {
       runBlocking(Dispatchers.Default) {
-        withService(
+        withServiceAndLaunch(
           sessionSourcesProvider = {
             listOf(
               ScriptedSessionSource(
@@ -426,14 +431,14 @@ class AgentSessionsPromptLauncherBridgeTest {
           },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
           chatOpenExecutor = chatOpenExecutor,
-        ) { service ->
+        ) { service, launchService ->
           service.refresh()
           waitForCondition {
             val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
             project.hasLoaded && project.threads.any { thread -> thread.id == "thread-existing" }
           }
 
-          val bridge = AgentSessionsPromptLauncherBridge { service }
+          val bridge = promptLauncherBridge(service, launchService)
           val request = promptLaunchRequest(targetThreadId = "thread-existing")
 
           val result = bridge.launch(request)
@@ -473,7 +478,7 @@ class AgentSessionsPromptLauncherBridgeTest {
       InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
     ) {
       runBlocking(Dispatchers.Default) {
-        withService(
+        withServiceAndLaunch(
           sessionSourcesProvider = {
             listOf(
               ScriptedSessionSource(
@@ -491,13 +496,13 @@ class AgentSessionsPromptLauncherBridgeTest {
           },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
           chatOpenExecutor = chatOpenExecutor,
-        ) { service ->
+        ) { service, launchService ->
           service.refresh()
           waitForCondition {
             service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.hasLoaded == true
           }
 
-          val bridge = AgentSessionsPromptLauncherBridge { service }
+          val bridge = promptLauncherBridge(service, launchService)
           val result = bridge.launch(promptLaunchRequest(targetThreadId = "thread-missing"))
 
           assertThat(result.launched).isFalse()
@@ -518,12 +523,12 @@ class AgentSessionsPromptLauncherBridgeTest {
       InMemoryAgentSessionProviderRegistry(emptyList())
     ) {
       runBlocking(Dispatchers.Default) {
-        withService(
+        withServiceAndLaunch(
           sessionSourcesProvider = { emptyList() },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
           chatOpenExecutor = chatOpenExecutor,
-        ) { service ->
-          val bridge = AgentSessionsPromptLauncherBridge { service }
+        ) { service, launchService ->
+          val bridge = promptLauncherBridge(service, launchService)
           val result = bridge.launch(promptLaunchRequest(provider = AgentSessionProvider.CODEX))
 
           assertThat(result.launched).isFalse()
@@ -546,12 +551,12 @@ class AgentSessionsPromptLauncherBridgeTest {
       InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
     ) {
       runBlocking(Dispatchers.Default) {
-        withService(
+        withServiceAndLaunch(
           sessionSourcesProvider = { listOf(providerBridge.sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
           chatOpenExecutor = chatOpenExecutor,
-        ) { service ->
-          val bridge = AgentSessionsPromptLauncherBridge { service }
+        ) { service, launchService ->
+          val bridge = promptLauncherBridge(service, launchService)
           val result = bridge.launch(
             promptLaunchRequest(
               provider = AgentSessionProvider.CODEX,
@@ -571,7 +576,7 @@ class AgentSessionsPromptLauncherBridgeTest {
 
   @Test
   fun observeExistingThreadsFiltersProviderThreadsFromSharedState() = runBlocking(Dispatchers.Default) {
-    withService(
+    withServiceAndLaunch(
       sessionSourcesProvider = {
         listOf(
           ScriptedSessionSource(
@@ -600,13 +605,13 @@ class AgentSessionsPromptLauncherBridgeTest {
       projectEntriesProvider = {
         listOf(openProjectEntry(PROJECT_PATH, "Project A"))
       },
-    ) { service ->
+    ) { service, launchService ->
       service.refresh()
       waitForCondition {
         service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.hasLoaded == true
       }
 
-      val bridge = AgentSessionsPromptLauncherBridge { service }
+      val bridge = promptLauncherBridge(service, launchService)
       val snapshot = bridge.observeExistingThreads(
         projectPath = PROJECT_PATH,
         provider = AgentSessionProvider.CLAUDE,
@@ -621,7 +626,7 @@ class AgentSessionsPromptLauncherBridgeTest {
   @Test
   fun refreshExistingThreadsBootstrapsWhenPathIsMissing() = runBlocking(Dispatchers.Default) {
     val openLoads = AtomicInteger(0)
-    withService(
+    withServiceAndLaunch(
       sessionSourcesProvider = {
         listOf(
           ScriptedSessionSource(
@@ -641,10 +646,10 @@ class AgentSessionsPromptLauncherBridgeTest {
       projectEntriesProvider = {
         listOf(openProjectEntry(PROJECT_PATH, "Project A"))
       },
-    ) { service ->
+    ) { service, launchService ->
       assertThat(service.state.value.projects).isEmpty()
 
-      val bridge = AgentSessionsPromptLauncherBridge { service }
+      val bridge = promptLauncherBridge(service, launchService)
       bridge.refreshExistingThreads(projectPath = PROJECT_PATH, provider = AgentSessionProvider.CLAUDE)
 
       waitForCondition {
@@ -662,7 +667,7 @@ class AgentSessionsPromptLauncherBridgeTest {
     val claudeClosedLoads = AtomicInteger(0)
     var claudeClosedThreadId = "claude-closed-1"
 
-    withService(
+    withServiceAndLaunch(
       sessionSourcesProvider = {
         listOf(
           ScriptedSessionSource(
@@ -702,7 +707,7 @@ class AgentSessionsPromptLauncherBridgeTest {
       projectEntriesProvider = {
         listOf(openProjectEntry(PROJECT_PATH, "Project A"))
       },
-    ) { service ->
+    ) { service, launchService ->
       service.refresh()
       waitForCondition {
         val ids = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.threads?.map { thread -> thread.id } ?: return@waitForCondition false
@@ -710,7 +715,7 @@ class AgentSessionsPromptLauncherBridgeTest {
       }
 
       claudeClosedThreadId = "claude-closed-2"
-      val bridge = AgentSessionsPromptLauncherBridge { service }
+      val bridge = promptLauncherBridge(service, launchService)
       bridge.refreshExistingThreads(projectPath = PROJECT_PATH, provider = AgentSessionProvider.CLAUDE)
 
       waitForCondition {
@@ -725,7 +730,7 @@ class AgentSessionsPromptLauncherBridgeTest {
 
   @Test
   fun observeExistingThreadsMarksProviderWarningAsError() = runBlocking(Dispatchers.Default) {
-    withService(
+    withServiceAndLaunch(
       sessionSourcesProvider = {
         listOf(
           ScriptedSessionSource(
@@ -749,13 +754,13 @@ class AgentSessionsPromptLauncherBridgeTest {
       projectEntriesProvider = {
         listOf(openProjectEntry(PROJECT_PATH, "Project A"))
       },
-    ) { service ->
+    ) { service, launchService ->
       service.refresh()
       waitForCondition {
         service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.hasLoaded == true
       }
 
-      val bridge = AgentSessionsPromptLauncherBridge { service }
+      val bridge = promptLauncherBridge(service, launchService)
       val claudeSnapshot = bridge.observeExistingThreads(
         projectPath = PROJECT_PATH,
         provider = AgentSessionProvider.CLAUDE,
@@ -795,7 +800,7 @@ class AgentSessionsPromptLauncherBridgeTest {
         archiveTargets = emptyList(),
       ),
     )
-    val bridge = AgentSessionsPromptLauncherBridge {
+    val bridge = AgentSessionPromptLauncherBridge {
       throw UnsupportedOperationException("Not used in path resolution test")
     }
 
@@ -821,7 +826,7 @@ class AgentSessionsPromptLauncherBridgeTest {
         archiveTargets = emptyList(),
       ),
     )
-    val bridge = AgentSessionsPromptLauncherBridge {
+    val bridge = AgentSessionPromptLauncherBridge {
       throw UnsupportedOperationException("Not used in path resolution test")
     }
 
@@ -851,7 +856,7 @@ class AgentSessionsPromptLauncherBridgeTest {
         archiveTargets = emptyList(),
       ),
     )
-    val bridge = AgentSessionsPromptLauncherBridge {
+    val bridge = AgentSessionPromptLauncherBridge {
       throw UnsupportedOperationException("Not used in path resolution test")
     }
 
@@ -861,11 +866,23 @@ class AgentSessionsPromptLauncherBridgeTest {
   }
 }
 
+private fun promptLauncherBridge(
+  service: AgentSessionStateSyncTestFacade,
+  launchService: AgentSessionLaunchService,
+): AgentSessionPromptLauncherBridge {
+  return AgentSessionPromptLauncherBridge(
+    stateFlowProvider = { service.state },
+    refreshCatalogAndLoadNewlyOpened = { service.refreshCatalogAndLoadNewlyOpened() },
+    refreshProviderForPath = { path, provider -> service.refreshProviderForPath(path = path, provider = provider) },
+    launchServiceProvider = { launchService },
+  )
+}
+
 private const val INVALID_PROMPT_PROJECT_PATH: String = "invalid\u0000project"
 
 private class RecordingChatOpenExecutor(
   private val onOpenChat: (suspend (OpenChatRequest, Int) -> Unit)? = null,
-) : AgentSessionsChatOpenExecutor {
+) : AgentSessionChatOpenExecutor {
   val openChatCalls: AtomicInteger = AtomicInteger(0)
   val openNewChatCalls: AtomicInteger = AtomicInteger(0)
   val openChatRequests: CopyOnWriteArrayList<OpenChatRequest> = CopyOnWriteArrayList()
