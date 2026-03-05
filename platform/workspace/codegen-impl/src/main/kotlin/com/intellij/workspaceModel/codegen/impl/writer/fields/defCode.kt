@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.codegen.impl.writer.fields
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.impl.writer.QualifiedName
-import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.builderWithTypeParameter
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaBuilderFqnName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaFullName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.kotlinClassName
@@ -15,6 +15,16 @@ val ValueType<*>.javaType: QualifiedName
     ValueType.Boolean -> "Boolean".toQualifiedName()
     ValueType.Int -> "Int".toQualifiedName()
     ValueType.String -> "String".toQualifiedName()
+    ValueType.Char -> "Char".toQualifiedName()
+    ValueType.Long -> "Long".toQualifiedName()
+    ValueType.Float -> "Float".toQualifiedName()
+    ValueType.Double -> "Double".toQualifiedName()
+    ValueType.Short -> "Short".toQualifiedName()
+    ValueType.Byte -> "Byte".toQualifiedName()
+    ValueType.UByte -> "UByte".toQualifiedName()
+    ValueType.UShort -> "UShort".toQualifiedName()
+    ValueType.UInt -> "UInt".toQualifiedName()
+    ValueType.ULong -> "ULong".toQualifiedName()
     is ValueType.List<*> -> "List".toQualifiedName().appendSuffix("<${elementType.javaType}>")
     is ValueType.Set<*> -> "Set".toQualifiedName().appendSuffix("<${elementType.javaType}>")
     is ValueType.Map<*, *> -> "Map".toQualifiedName().appendSuffix("<${keyType.javaType}, ${valueType.javaType}>")
@@ -32,6 +42,16 @@ val ValueType<*>.javaBuilderTypeWithGeneric: QualifiedName
     ValueType.Boolean -> "Boolean".toQualifiedName()
     ValueType.Int -> "Int".toQualifiedName()
     ValueType.String -> "String".toQualifiedName()
+    ValueType.Char -> "Char".toQualifiedName()
+    ValueType.Long -> "Long".toQualifiedName()
+    ValueType.Float -> "Float".toQualifiedName()
+    ValueType.Double -> "Double".toQualifiedName()
+    ValueType.Short -> "Short".toQualifiedName()
+    ValueType.Byte -> "Byte".toQualifiedName()
+    ValueType.UByte -> "UByte".toQualifiedName()
+    ValueType.UShort -> "UShort".toQualifiedName()
+    ValueType.UInt -> "UInt".toQualifiedName()
+    ValueType.ULong -> "ULong".toQualifiedName()
     is ValueType.List<*> -> "List".toQualifiedName().appendSuffix("<${elementType.javaBuilderTypeWithGeneric}>")
     is ValueType.Set<*> -> "Set".toQualifiedName().appendSuffix("<${elementType.javaBuilderTypeWithGeneric}>")
     is ValueType.Map<*, *> -> "Map".toQualifiedName().appendSuffix("<${keyType.javaBuilderTypeWithGeneric}, ${valueType.javaBuilderTypeWithGeneric}>")
@@ -59,6 +79,16 @@ val ValueType<*>.entityType: QualifiedName
     ValueType.Boolean -> "Boolean".toQualifiedName()
     ValueType.Int -> "Int".toQualifiedName()
     ValueType.String -> "String".toQualifiedName()
+    ValueType.Char -> "Char".toQualifiedName()
+    ValueType.Long -> "Long".toQualifiedName()
+    ValueType.Float -> "Float".toQualifiedName()
+    ValueType.Double -> "Double".toQualifiedName()
+    ValueType.Short -> "Short".toQualifiedName()
+    ValueType.Byte -> "Byte".toQualifiedName()
+    ValueType.UByte -> "UByte".toQualifiedName()
+    ValueType.UShort -> "UShort".toQualifiedName()
+    ValueType.UInt -> "UInt".toQualifiedName()
+    ValueType.ULong -> "ULong".toQualifiedName()
     is ValueType.List<*> -> elementType.entityType
     is ValueType.Set<*> -> elementType.entityType
     is ValueType.Map<*, *> -> throw UnsupportedOperationException("$this type isn't supported")
