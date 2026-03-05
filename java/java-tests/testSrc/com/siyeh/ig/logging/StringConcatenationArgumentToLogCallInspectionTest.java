@@ -1,29 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.logging;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.openapi.project.Project;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 
 public class StringConcatenationArgumentToLogCallInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected LocalInspectionTool getInspection() {
     final StringConcatenationArgumentToLogCallInspection inspection = new StringConcatenationArgumentToLogCallInspection();
-    inspection.warnLevel = "WarnLevel".equals(getTestName(false))? 3 : 0; // debug level and lower
+    inspection.warnLevel = "WarnLevel".equals(getTestName(false)) ? 3 : 0; // debug level and lower
     return inspection;
-  }
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    HighlightDisplayKey displayKey = HighlightDisplayKey.find(getInspection().getShortName());
-    Project project = getProject();
-    InspectionProfileImpl currentProfile = ProjectInspectionProfileManager.getInstance(project).getCurrentProfile();
-    currentProfile.setErrorLevel(displayKey, HighlightDisplayLevel.WARNING, project);
   }
 
   @Override
