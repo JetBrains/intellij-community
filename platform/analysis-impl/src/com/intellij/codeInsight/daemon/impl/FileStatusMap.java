@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentMap;
  * It is mostly used to keep track of dirty regions. See {@link FileStatus} for the whole data.
  */
 public final class FileStatusMap implements Disposable {
-  private static final Logger LOG = Logger.getInstance(FileStatusMap.class);
+  static final Logger LOG = Logger.getInstance(FileStatusMap.class);
   public static final @NonNls String CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING = "PSI/document/model changes are not allowed during highlighting, " +
      "because it leads to the daemon unnecessary restarts. If you really do need to start write action " +
      "during the highlighting, you can pass `canChangeDocument=true` to the CodeInsightTestFixtureImpl#instantiateAndRun() " +
@@ -314,7 +314,9 @@ public final class FileStatusMap implements Disposable {
 
   @Override
   public String toString() {
-    return myFileStatusMapState.toString();
+    synchronized (myFileStatusMapState) {
+      return myFileStatusMapState.toString();
+    }
   }
 
   public @NotNull String toString(@NotNull Document document) {
