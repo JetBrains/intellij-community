@@ -180,10 +180,7 @@ private class ResizableOutlineHandler private constructor(
         val handler = ResizableOutlineHandler(editor, inlayModel, initialRange, canCreateComment)
         try {
           editor.gutterComponentEx.mousePosition.let {
-            handler.updateCursorAndTooltip(editor.gutterComponentEx, it)
-            // set cursor to gutterComponentEx directly to get immediate cursor change
-            // as setting it on the glass pane in `updateCursorAndTooltip()` doesn't work in this case
-            editor.gutterComponentEx.setCursor(handler.resizeCursor)
+            handler.updateCursorAndTooltip(editor.gutterComponentEx, it, true)
           }
 
           handler.dragState.collectScoped { dragState ->
@@ -347,7 +344,7 @@ private class ResizableOutlineHandler private constructor(
     }
   }
 
-  private fun updateCursorAndTooltip(component: Component? = null, point: Point? = null) {
+  private fun updateCursorAndTooltip(component: Component? = null, point: Point? = null, isInitial: Boolean = false) {
     if (component == null || point == null) {
       tooltipManager.hideTooltip()
       setEditorCursor(null)
@@ -360,22 +357,24 @@ private class ResizableOutlineHandler private constructor(
       return
     }
 
-    val onEdge = getEdgeAt(point) != null
-    if (onEdge) {
+    if (isInitial || isOnEdge(point)) {
       val adjustmentDisabledReason = inlayModel.adjustmentDisabledReason.value
       when (adjustmentDisabledReason) {
         AdjustmentDisabledReason.SUGGESTED_CHANGE -> {
           tooltipManager.showTooltip(component, point, OutlineTooltipManager.TooltipReason.SUGGESTION)
+          setEditorCursor(null, isInitial)
         }
         AdjustmentDisabledReason.SINGLE_COMMIT_REVIEW -> {
           tooltipManager.showTooltip(component, point, OutlineTooltipManager.TooltipReason.SINGLE_COMMIT_REVIEW)
+          setEditorCursor(null, isInitial)
         }
         AdjustmentDisabledReason.UNSUPPORTED_VERSION -> {
           tooltipManager.showTooltip(component, point, OutlineTooltipManager.TooltipReason.UNSUPPORTED_VERSION)
+          setEditorCursor(null, isInitial)
         }
         else -> {
           tooltipManager.showTooltip(component, point, OutlineTooltipManager.TooltipReason.MLC_EXPLANATION)
-          setEditorCursor(resizeCursor)
+          setEditorCursor(resizeCursor, isInitial)
         }
       }
     }
@@ -384,6 +383,8 @@ private class ResizableOutlineHandler private constructor(
       setEditorCursor(null)
     }
   }
+
+  private fun isOnEdge(point: Point): Boolean = getEdgeAt(point) != null
 
   private fun getEdgeAt(point: Point): LineRangeEdge? {
     val yBorders = editor.yRangeForLogicalLineRange(currentRange.start, currentRange.end)
@@ -397,8 +398,13 @@ private class ResizableOutlineHandler private constructor(
     return null
   }
 
-  private fun setEditorCursor(cursor: Cursor?) {
+  private fun setEditorCursor(cursor: Cursor?, isInitial: Boolean = false) {
     editor.setCustomCursor(this, cursor)
+    if (isInitial) {
+      // set cursor to gutterComponentEx directly to get immediate cursor change
+      // as setting it on the glass pane doesn't work in this case
+      editor.gutterComponentEx.setCursor(cursor)
+    }
     // setting cursor in the gutter on glass pane, to avoid cursor changes from other sources while dragging
     try {
       IdeGlassPaneUtil.find(editor.gutterComponentEx).setCursor(cursor, this)
