@@ -52,15 +52,15 @@ internal object ContentModuleDependencyValidator : PipelineNode {
  * reads packed loading mode directly from graph edges.
  */
 private fun validatePluginContentModulesForProduct(
-  productV: ProductNode,
+  product: ProductNode,
   pluginGraph: PluginGraph,
 ): List<ValidationError> = pluginGraph.query {
-  val productName = productV.name()
+  val productName = product.name()
 
   // 1. Get content modules from plugins bundled by THIS product (GC-free DSL).
   // Traverse Product → Plugin → Module, deduplicated.
   val contentModules = HashSet<ContentModuleNode>()
-  productV.bundles { plugin ->
+  product.bundles { plugin ->
     plugin.containsContent { module, _ ->
       contentModules.add(module)
     }
@@ -72,7 +72,7 @@ private fun validatePluginContentModulesForProduct(
 
   // 2. Find missing deps - query graph for criticality inline
   val missingDeps = collectMissingModuleDependencies(
-    productId = productV.id,
+    product = product,
     modulesToValidate = contentModules,
   )
 

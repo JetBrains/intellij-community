@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.python.community.junit5Tests.framework._test"/>
     <module name="intellij.libraries.junit5"/>
+    <module name="intellij.platform.execution"/>
     <module name="intellij.platform.testFramework.junit5"/>
     <module name="intellij.python.venv"/>
   </dependencies>

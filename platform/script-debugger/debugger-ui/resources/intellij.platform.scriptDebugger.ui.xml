@@ -1,9 +1,10 @@
 <idea-plugin visibility="public">
   <module value="com.intellij.modules.scriptDebugger.ui"/>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.scriptDebugger.backend"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 </idea-plugin>

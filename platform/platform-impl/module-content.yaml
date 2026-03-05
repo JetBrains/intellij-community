@@ -3,7 +3,6 @@
   - name: intellij.platform.buildData
   - name: intellij.platform.codeStyle.impl
   - name: intellij.platform.diagnostic.startUpPerformanceReporter
-  - name: intellij.platform.ide.core.plugins
   - name: intellij.platform.ide.impl
   - name: intellij.platform.ide.recentProjects
   - name: intellij.platform.ide.ui

@@ -11,6 +11,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
+import org.jetbrains.intellij.build.productLayout.debug
 import org.jetbrains.intellij.build.productLayout.generateProductXml
 import org.jetbrains.intellij.build.productLayout.model.error.FileDiff
 import org.jetbrains.intellij.build.productLayout.model.error.ValidationError
@@ -235,5 +236,10 @@ suspend fun generateAllModuleSetsWithProducts(
   commitChanges: Boolean = true,
   updateSuppressions: Boolean = false,
 ): GenerationResult {
+  val validationFilterValue = config.validationFilter?.sorted()?.joinToString(separator = ",") ?: "<all>"
+  debug("missingDeps") {
+    "generateAllModuleSetsWithProducts outputProvider=${config.outputProvider::class.java.name} " +
+    "commitChanges=$commitChanges updateSuppressions=$updateSuppressions validationFilter=$validationFilterValue"
+  }
   return GenerationPipeline.default().execute(config = config, commitChanges = commitChanges, updateSuppressions = updateSuppressions, validationFilter = config.validationFilter)
 }

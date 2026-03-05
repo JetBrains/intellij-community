@@ -1,10 +1,11 @@
 <idea-plugin visibility="public" package="com.intellij.platform.searchEverywhere">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.scopes"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensionPoints>
     <extensionPoint name="searchEverywhere.itemsProviderFactory"
                     interface="com.intellij.platform.searchEverywhere.SeItemsProviderFactory"

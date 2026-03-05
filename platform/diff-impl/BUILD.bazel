@@ -40,8 +40,7 @@ jvm_library(
     "//platform/util/diff",
     "//platform/util/jdom",
     "//libraries/kotlinx/serialization/core",
-  ],
-  exports = ["//platform/diff-api:diff"]
+  ]
 )
 
 jvm_library(
@@ -49,10 +48,6 @@ jvm_library(
   module_name = "intellij.platform.diff.impl",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  exports = [
-    "//platform/diff-api:diff",
-    "//platform/diff-api:diff_test_lib",
-  ],
   runtime_deps = [
     ":diff-impl",
     "//platform/analysis-api:analysis_test_lib",

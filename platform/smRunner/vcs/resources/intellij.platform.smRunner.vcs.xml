@@ -1,10 +1,11 @@
 <idea-plugin package="com.intellij.execution.vcs">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.vcs.impl"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <checkinHandlerFactory implementation="com.intellij.execution.vcs.RunConfigurationBeforeCommitHandlerFactory" id="tests"/>
   </extensions>

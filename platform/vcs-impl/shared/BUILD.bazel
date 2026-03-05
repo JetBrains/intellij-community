@@ -40,6 +40,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/diagnostic/telemetry",
     "//platform/core-impl",
+    "//platform/diff-api:diff",
   ]
 )
 
@@ -74,6 +75,7 @@ jvm_library(
     "//platform/ide-core-impl:ide-core-impl_test_lib",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "//platform/core-impl:core-impl_test_lib",
+    "//platform/diff-api:diff_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl.shared` end

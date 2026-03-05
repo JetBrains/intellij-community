@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.platform.debugger"/>
     <module name="intellij.platform.debugger.impl"/>
+    <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.execution.serviceView"/>
     <module name="intellij.platform.rpc"/>

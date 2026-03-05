@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.platform.testFramework.junit5.eel._test"/>
     <module name="intellij.python.community.execService"/>
+    <module name="intellij.platform.execution"/>
     <module name="intellij.python.processOutput.common"/>
   </dependencies>
   <!-- endregion -->

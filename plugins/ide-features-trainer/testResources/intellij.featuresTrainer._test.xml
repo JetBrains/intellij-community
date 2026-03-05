@@ -3,6 +3,7 @@
   <dependencies>
     <plugin id="training"/>
     <module name="intellij.libraries.assertj.core"/>
+    <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.indexing"/>

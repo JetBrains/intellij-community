@@ -3,6 +3,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.debugger.impl.ui"/>
+    <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.tasks"/>
     <module name="intellij.platform.vcs.impl"/>

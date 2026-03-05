@@ -542,6 +542,14 @@ private fun computeJpsDeps(
       allRealProductNames
     }
 
+    if (isPluginOnlySource) {
+      val productScopeSample = embeddedCheckProductNames.asSequence().sorted().take(5).joinToString(separator = ",")
+      debug("missingDeps") {
+        "computeJpsDeps source=${moduleName.value} includeTestScope=$includeTestScope pluginOnlySource=true " +
+        "embeddedCheckProducts=${embeddedCheckProductNames.size} sample=[$productScopeSample]"
+      }
+    }
+
     mod.backedBy { target ->
       target.dependsOn { dep ->
         val scope = dep.scope()
@@ -565,6 +573,9 @@ private fun computeJpsDeps(
                 isPluginOnlySource &&
                 shouldSkipEmbeddedPluginDependency(depModuleId, embeddedCheckProductNames)) {
               filteredEmbeddedModuleDeps.add(c.moduleName)
+              debug("missingDeps") {
+                "embeddedSkip source=${moduleName.value} dep=${c.moduleName.value} includeTestScope=$includeTestScope"
+              }
             }
             else {
               moduleDeps.add(c.moduleName)

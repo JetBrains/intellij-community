@@ -1,12 +1,13 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.junit5.pioneer"/>
     <module name="intellij.python.venv.tests._test"/>
     <module name="intellij.python.terminal"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.junit5"/>
     <module name="intellij.libraries.junit5.params"/>
+    <module name="intellij.platform.execution"/>
     <module name="intellij.python.test.env.junit5"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 </idea-plugin>
