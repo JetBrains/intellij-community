@@ -1,69 +1,40 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl
 
-import com.intellij.ide.impl.ProjectUtilCore
-import com.intellij.ide.plugins.DynamicPluginListener
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.trace
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.fileEditor.FileDocumentManagerListener
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
-import com.intellij.openapi.fileTypes.FileTypeEvent
-import com.intellij.openapi.fileTypes.FileTypeListener
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.AdditionalLibraryRootsListener
-import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater
-import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl
-import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.isTooLarge
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
-import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
 import com.intellij.project.stateStore
 import com.intellij.psi.ExternalChangeActionUtil
-import com.intellij.psi.LanguageSubstitutors
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiFileSystemItem
-import com.intellij.psi.PsiLargeFile
 import com.intellij.psi.PsiTreeChangeEvent
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import com.intellij.util.FileContentUtilCore
 import one.util.streamex.StreamEx
-import org.jetbrains.annotations.Nls
-import java.util.concurrent.atomic.AtomicBoolean
 
 private val LOG = logger<PsiVFSListener>()
 
 @Service(Service.Level.PROJECT)
-private class PsiVFSListener(private val project: Project) {
+internal class PsiVFSListener(private val project: Project) {
   private val myProjectRootManager: ProjectRootManager = ProjectRootManager.getInstance(project)
   private val manager = PsiManagerEx.getInstanceEx(project)
   private val fileManager = manager.fileManager as FileManagerEx
@@ -595,245 +566,5 @@ private class PsiVFSListener(private val project: Project) {
         propertyChanged(event)
       }
     }
-  }
-}
-
-/**
- * We use [WorkspaceModelChangeListener] in **addition** to [ModuleRootListener], because [ModuleRootListener] may generate events
- * not sourced by the workspace model (see Javadoc for [ModuleRootListener]).
- * If the same event should trigger both [WorkspaceModelChangeListener] event and [PsiVFSModuleRootListener], these listener invocations
- * will be nested and deduplicated inside [PsiVFSModuleRootListenerImpl], so eventually only one [PsiTreeChangeEvent] will be published.
- *
- * With this listener, we mostly want to invalidate psi caches when workspace model changes.
- */
-// @Suppress: Don't use flow instead of [WorkspaceModelChangeListener]. We need to invalidate caches in the same WA as the event.
-@Suppress("UsagesOfObsoleteApi")
-internal class PsiWsmListener(listenerProject: Project) : WorkspaceModelChangeListener {
-  private val service = listenerProject.service<PsiVFSModuleRootListenerImpl>()
-
-  init {
-    if (!Registry.`is`("psi.vfs.listener.over.wsm", true)) {
-      LOG.debug("PsiWsmListener is disabled by registry key")
-      throw ExtensionNotApplicableException.create()
-    }
-  }
-
-  private fun isNotEmptyChange(event: VersionedStorageChange): Boolean {
-    return (event as? VersionedStorageChangeInternal)?.getAllChanges()?.firstOrNull() != null
-  }
-
-  override fun beforeChanged(event: VersionedStorageChange) {
-    if (isNotEmptyChange(event)) {
-      service.beforeRootsChange(false)
-    }
-  }
-
-  override fun changed(event: VersionedStorageChange) {
-    if (isNotEmptyChange(event)) {
-      service.rootsChanged(false)
-    }
-  }
-}
-
-internal class PsiVFSModuleRootListener(listenerProject: Project) : ModuleRootListener {
-  private val service = listenerProject.service<PsiVFSModuleRootListenerImpl>()
-
-  override fun beforeRootsChange(event: ModuleRootEvent) {
-    service.beforeRootsChange(event.isCausedByFileTypesChange)
-  }
-
-  override fun rootsChanged(event: ModuleRootEvent) {
-    service.rootsChanged(event.isCausedByFileTypesChange)
-  }
-}
-
-@Service(Service.Level.PROJECT)
-private class PsiVFSModuleRootListenerImpl(private val listenerProject: Project) {
-  // accessed from within write action only
-  private var depthCounter = 0
-
-  fun beforeRootsChange(isCausedByFileTypesChange: Boolean) {
-    LOG.trace { "beforeRootsChanged call" }
-    if (isCausedByFileTypesChange) {
-      return
-    }
-
-    LOG.trace { "Event is not caused by file types change" }
-    ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction {
-      depthCounter++
-      LOG.trace { "depthCounter increased $depthCounter" }
-      if (depthCounter > 1) {
-        return@externalChangeAction
-      }
-
-      val psiManager = PsiManagerEx.getInstanceEx(listenerProject)
-      val treeEvent = PsiTreeChangeEventImpl(psiManager)
-      treeEvent.propertyName = PsiTreeChangeEvent.PROP_ROOTS
-      psiManager.beforePropertyChange(treeEvent)
-    })
-  }
-
-  fun rootsChanged(isCausedByFileTypesChange: Boolean) {
-    LOG.trace { "rootsChanged call" }
-    val psiManager = PsiManagerEx.getInstanceEx(listenerProject)
-    val fileManager = psiManager.fileManager as FileManagerEx
-    fileManager.dispatchPendingEvents()
-
-    if (isCausedByFileTypesChange) {
-      return
-    }
-
-    LOG.trace { "Event is not caused by file types change" }
-    ApplicationManager.getApplication().runWriteAction(
-      ExternalChangeActionUtil.externalChangeAction {
-        depthCounter--
-        LOG.trace { "depthCounter decreased $depthCounter" }
-        assert(depthCounter >= 0) { "unbalanced `beforeRootsChange`/`rootsChanged`: $depthCounter" }
-        if (depthCounter > 0) {
-          return@externalChangeAction
-        }
-
-        DebugUtil.performPsiModification<RuntimeException>(null) {
-          fileManager.possiblyInvalidatePhysicalPsi()
-        }
-
-        val treeEvent = PsiTreeChangeEventImpl(psiManager)
-        treeEvent.propertyName = PsiTreeChangeEvent.PROP_ROOTS
-        psiManager.propertyChanged(treeEvent)
-      }
-    )
-  }
-}
-
-private class MyFileDocumentManagerListener(private val project: Project) : FileDocumentManagerListener {
-  private val fileManager = PsiManagerEx.getInstanceEx(project).fileManager as FileManagerEx
-
-  override fun fileWithNoDocumentChanged(file: VirtualFile) {
-    val viewProviders = fileManager.findCachedViewProviders(file)
-    if (viewProviders.isEmpty()) {
-      project.service<PsiVFSListener>().handleVfsChangeWithoutPsi(file)
-    }
-    else {
-      ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction {
-        if (FileDocumentManagerImpl.recomputeFileTypeIfNecessary(file)) {
-          fileManager.forceReload(file)
-        }
-        else {
-          for (viewProvider in viewProviders) {
-            fileManager.reloadPsiAfterTextChange(viewProvider, file)
-          }
-        }
-      })
-    }
-  }
-
-  override fun fileContentReloaded(file: VirtualFile, document: Document) {
-    val psiFile = fileManager.findCachedViewProvider(file)
-    if (file.isValid && psiFile != null && file.isTooLarge() && psiFile !is PsiLargeFile) {
-      ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction {
-        fileManager.reloadPsiAfterTextChange(psiFile, file) }
-      )
-    }
-  }
-}
-
-private val globalListenerInstalled = AtomicBoolean(false)
-
-private fun installGlobalListener() {
-  if (!globalListenerInstalled.compareAndSet(false, true)) {
-    return
-  }
-
-  ApplicationManager.getApplication().messageBus.simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-    override fun before(events: List<VFileEvent>) {
-      for (project in ProjectUtilCore.getOpenProjects()) {
-        if (!project.isDisposed) {
-          project.service<PsiVFSListener>().before(events)
-        }
-      }
-    }
-
-    override fun after(events: List<VFileEvent>) {
-      val projects = ProjectUtilCore.getOpenProjects()
-      // let PushedFilePropertiesUpdater process all pending VFS events and update file properties before we issue PSI events
-      for (project in projects) {
-        val updater = PushedFilePropertiesUpdater.getInstance(project)
-        if (updater is PushedFilePropertiesUpdaterImpl) {
-          updater.processAfterVfsChanges(events)
-        }
-      }
-      for (project in projects) {
-        project.service<PsiVFSListener>().after(events)
-      }
-    }
-  })
-}
-
-internal class PsiVfsInitProjectActivity : InitProjectActivity {
-  override val isParallelExecution: Boolean
-    get() = true
-
-  private fun processFileTypesChanged(project: Project, clearViewProviders: Boolean = true) {
-    (PsiManagerEx.getInstanceEx(project).fileManagerEx).processFileTypesChanged(clearViewProviders)
-  }
-
-  override suspend fun run(project: Project) {
-    val connection = project.messageBus.simpleConnect()
-
-    @Suppress("UsagesOfObsoleteApi")
-    serviceAsync<LanguageSubstitutors>().point?.addChangeListener((project as ComponentManagerEx).getCoroutineScope()) {
-      processFileTypesChanged(project)
-    }
-
-    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, PsiVfsAdditionalLibraryRootListener(project))
-    connection.subscribe(FileTypeManager.TOPIC, object : FileTypeListener {
-      override fun fileTypesChanged(e: FileTypeEvent) {
-        processFileTypesChanged(project, clearViewProviders = e.removedFileType != null)
-      }
-    })
-    connection.subscribe(FileDocumentManagerListener.TOPIC, MyFileDocumentManagerListener(project))
-
-    connection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
-      override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
-        processFileTypesChanged(project)
-      }
-
-      override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-        processFileTypesChanged(project)
-      }
-    })
-
-    installGlobalListener()
-  }
-}
-
-private class PsiVfsAdditionalLibraryRootListener(project: Project) : AdditionalLibraryRootsListener {
-  private val psiManager = PsiManagerEx.getInstanceEx(project)
-  private val fileManager = psiManager.fileManager as FileManagerEx
-
-  override fun libraryRootsChanged(
-    presentableLibraryName: @Nls String?,
-    oldRoots: Collection<VirtualFile>,
-    newRoots: Collection<VirtualFile>,
-    libraryNameForDebug: String,
-  ) {
-    ApplicationManager.getApplication().runWriteAction(
-      ExternalChangeActionUtil.externalChangeAction {
-        var treeEvent = PsiTreeChangeEventImpl(psiManager)
-        treeEvent.propertyName = PsiTreeChangeEvent.PROP_ROOTS
-        psiManager.beforePropertyChange(treeEvent)
-        DebugUtil.performPsiModification<RuntimeException>(null) { fileManager.possiblyInvalidatePhysicalPsi() }
-
-        treeEvent = PsiTreeChangeEventImpl(psiManager)
-        treeEvent.propertyName = PsiTreeChangeEvent.PROP_ROOTS
-        psiManager.propertyChanged(treeEvent)
-      }
-    )
-  }
-}
-
-internal fun clearViewProvider(fileManagerEx: FileManagerEx, vFile: VirtualFile, why: String) {
-  DebugUtil.performPsiModification<RuntimeException>(why) {
-    fileManagerEx.setViewProvider(vFile, null)
   }
 }
