@@ -689,6 +689,7 @@ internal fun ProjectWizardJdkComboBox.bindEelDescriptor(eelDescriptorProperty: O
   // initial setup
   refreshJdks(eelDescriptorProperty.get())
   eelDescriptorProperty.afterChange { eelDescriptor ->
+    if (currentEelDescriptor == eelDescriptor) return@afterChange
     refreshJdks(eelDescriptor)
   }
 }
