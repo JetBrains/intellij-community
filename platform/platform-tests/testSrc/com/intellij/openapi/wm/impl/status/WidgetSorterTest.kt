@@ -74,6 +74,7 @@ class WidgetSorterTest {
 
   @Test
   fun `should handle complex dependencies from example`() {
+    // This is actual Widget configuration taken from running instance, below as `widgets`
     // [Widget(id=Position, order=ANY, position=RIGHT),
     //  Widget(id=LanguageServiceStatusBarWidget, order=after Position, after AIAssistant, before LineSeparator, position=RIGHT),
     //  Widget(id=LineSeparator, order=after Position, position=RIGHT),
