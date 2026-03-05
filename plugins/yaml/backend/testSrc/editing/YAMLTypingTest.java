@@ -76,6 +76,10 @@ public class YAMLTypingTest extends BasePlatformTestCase {
     doTestForSettings("\n", false, false);
   }
 
+  public void testRegressionIjpl64483() {
+    doTestForSettings("\n\n", false, true);
+  }
+
   public void testPreserveDedent() {
     doTest("\n");
   }
