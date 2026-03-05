@@ -20,7 +20,7 @@ internal class EditorTabPainterAdapter : TabPainterAdapter {
   override fun paintBackground(label: TabLabel, g: Graphics, tabs: JBTabsImpl) {
     val info = label.info
     val isSelected = info == tabs.selectedInfo
-    val isHovered = tabs.isHoveredTab(label)
+    val isHovered = tabs.isHoveredOrWithPopup(label)
 
     val rect = Rectangle(0, 0, label.width, label.height)
 

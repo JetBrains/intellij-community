@@ -718,7 +718,7 @@ private class EditorTabs(
   }
 
   private fun checkActive() {
-    val newActive = UIUtil.isFocusAncestor(this)
+    val newActive = UIUtil.isFocusAncestor(this) || activePopup != null
     if (newActive != isActive) {
       isActive = newActive
       resetScrollBarActivity()
@@ -805,7 +805,7 @@ private class EditorTabLabel(info: TabInfo, tabs: JBTabsImpl) : TabLabel(tabs, i
 
   override fun getIconAlpha(): Float = if (paintDimmed()) JBUI.CurrentTheme.EditorTabs.unselectedAlpha() else 1f
 
-  private fun paintDimmed() = ExperimentalUI.isNewUI() && tabs.selectedInfo != info && !tabs.isHoveredTab(this)
+  private fun paintDimmed() = ExperimentalUI.isNewUI() && tabs.selectedInfo != info && !tabs.isHoveredOrWithPopup(this)
 }
 
 internal fun isSingletonEditorInWindow(editors: List<FileEditor>): Boolean {

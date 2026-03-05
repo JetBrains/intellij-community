@@ -796,7 +796,10 @@ open class JBTabsImpl internal constructor(
 
   fun isHoveredTab(label: TabLabel?): Boolean = label != null && label === tabLabelAtMouse
 
-  open fun isActiveTabs(info: TabInfo?): Boolean = UIUtil.isFocusAncestor(this)
+  /** Returns true if a label is either hovered or its context menu is showing */
+  fun isHoveredOrWithPopup(label: TabLabel?): Boolean = label != null && (label === tabLabelAtMouse || popupInfo === label.info)
+
+  open fun isActiveTabs(info: TabInfo?): Boolean = UIUtil.isFocusAncestor(this) || activePopup != null
 
   override val isEditorTabs: Boolean
     get() = false

@@ -1204,7 +1204,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
       }
     }
 
-    val hovered = tabs.isHoveredTab(label)
+    val hovered = tabs.isHoveredOrWithPopup(label)
     val isGradient = isIslandsGradientEnabled && !CustomWindowHeaderUtil.isCompactHeader() && isColorfulToolbar(frame)
     val rect = Rectangle(label.width, label.height)
 
@@ -1226,7 +1226,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
     else if (lastIndex > 1 && index < lastIndex) {
       val nextTab = tabs.getTabAt(index + 1)
 
-      if (nextTab != tabs.selectedInfo && !tabs.isHoveredTab(tabs.getTabLabel(nextTab))) {
+      if (nextTab != tabs.selectedInfo && !tabs.isHoveredOrWithPopup(tabs.getTabLabel(nextTab))) {
         val gg = if (isGradient) IdeBackgroundUtil.getOriginalGraphics(g) else g
         val border = JBUI.scale(1).toDouble()
         val width = label.width - border

@@ -47,7 +47,7 @@ internal class IslandsTabPainterAdapter(isDefault: Boolean, debugger: Boolean, v
     val info = label.info
     val selected = info == tabs.selectedInfo
     val active = tabs.isActiveTabs(info)
-    val hovered = tabs.isHoveredTab(label)
+    val hovered = tabs.isHoveredOrWithPopup(label)
 
     val tabLabelWidth = calcTabLabelWidth(label)
     val rect = Rectangle(tabLabelWidth, label.height)
