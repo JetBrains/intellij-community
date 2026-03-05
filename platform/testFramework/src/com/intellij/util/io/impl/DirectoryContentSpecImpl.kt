@@ -245,18 +245,21 @@ internal fun assertContentUnderFileMatches(file: Path,
       errorReporter.reportError(".", FileComparisonFailedError(message, expected, actual))
     }
   }
-  assertSpecsMatch(filteredActual, filteredExpected, ".", fileTextMatcher, errorReporter, expectedDataIsInSpec)
+  if (expectedDataIsInSpec) {
+    assertSpecsMatch(filteredActual, filteredExpected, ".", fileTextMatcher, errorReporter)
+  } else {
+    assertSpecsMatch(filteredExpected, filteredActual, ".", fileTextMatcher, errorReporter)
+  }
 }
 
 private fun assertSpecsMatch(actual: DirectoryContentSpecImpl,
                              expected: DirectoryContentSpecImpl,
                              relativePath: String,
                              fileTextMatcher: FileTextMatcher,
-                             errorReporter: ContentMismatchReporter,
-                             expectedDataIsInSpec: Boolean) {
+                             errorReporter: ContentMismatchReporter) {
   when {
     expected is DirectorySpecBase && actual is DirectorySpecBase -> {
-      assertDirectorySpecsMatch(actual, expected, relativePath, fileTextMatcher, errorReporter, expectedDataIsInSpec)
+      assertDirectorySpecsMatch(actual, expected, relativePath, fileTextMatcher, errorReporter)
     }
     expected is FileSpec && actual is FileSpec -> {
       if (expected.content != null) {
@@ -269,8 +272,6 @@ private fun assertSpecsMatch(actual: DirectoryContentSpecImpl,
             if (!fileTextMatcher.matches(fileString, specString)) {
               val specFilePath = expected.originalFile?.toFile()?.absolutePath
               val actualFilePath = actual.originalFile?.toFile()?.absolutePath
-              val (expectedContent, actualContent) = if (expectedDataIsInSpec) specString to fileString else fileString to specString
-              val (expectedPath, actualPath) = if (expectedDataIsInSpec) specFilePath to actualFilePath else actualFilePath to specFilePath
               val message = if (StringUtil.convertLineSeparators(fileString) != StringUtil.convertLineSeparators(specString)) {
                 "File content mismatch$place: expected:\n $fileString\n but was\n$specString"
               }
@@ -278,7 +279,7 @@ private fun assertSpecsMatch(actual: DirectoryContentSpecImpl,
                 "Different line separators$place, expected ${StringUtil.detectSeparators(specString)}, but ${StringUtil.detectSeparators(fileString)} found:"
               }
               errorReporter.reportError(relativePath,
-                                        FileComparisonFailedError(message, expectedContent, actualContent, expectedPath, actualPath))
+                                        FileComparisonFailedError(message, specString, fileString, specFilePath, actualFilePath))
             }
           }
           else {
@@ -295,7 +296,17 @@ private fun assertSpecsMatch(actual: DirectoryContentSpecImpl,
                                                  "but got ${actual::class.simpleName} (no original file path available)"))
         return
       }
-      assertDirectorySpecsMatch(extractZipSpec(originalFile), expected, relativePath, fileTextMatcher, errorReporter, expectedDataIsInSpec)
+      assertDirectorySpecsMatch(extractZipSpec(originalFile), expected, relativePath, fileTextMatcher, errorReporter)
+    }
+    actual is ZipSpecBase && expected is FileSpec -> {
+      val originalFile = expected.originalFile
+      if (originalFile == null) {
+        errorReporter.reportError(relativePath,
+                                  AssertionError("Type mismatch at $relativePath: expected ${expected::class.simpleName} " +
+                                                 "but got ${actual::class.simpleName} (no original file path available)"))
+        return
+      }
+      assertDirectorySpecsMatch(actual, extractZipSpec(originalFile), relativePath, fileTextMatcher, errorReporter)
     }
     else -> {
       errorReporter.reportError(relativePath,
@@ -318,8 +329,7 @@ private fun assertDirectorySpecsMatch(actual: DirectorySpecBase,
                                       expected: DirectorySpecBase,
                                       relativePath: String,
                                       fileTextMatcher: FileTextMatcher,
-                                      errorReporter: ContentMismatchReporter,
-                                      expectedDataIsInSpec: Boolean) {
+                                      errorReporter: ContentMismatchReporter) {
   val expectedChildren = expected.getChildren()
   val actualChildren = actual.getChildren()
   val expectedNames = expectedChildren.keys.sortedWith(String.CASE_INSENSITIVE_ORDER)
@@ -327,16 +337,15 @@ private fun assertDirectorySpecsMatch(actual: DirectorySpecBase,
   val expectedNamesStr = expectedNames.joinToString("\n")
   val actualNamesStr = actualNames.joinToString("\n")
   if (expectedNamesStr != actualNamesStr) {
-    val (expectedStr, actualStr) = if (expectedDataIsInSpec) expectedNamesStr to actualNamesStr else actualNamesStr to expectedNamesStr
     errorReporter.reportError(relativePath, ComparisonFailure(
       "Directory content mismatch${if (relativePath != ".") " at $relativePath" else ""}:",
-      expectedStr, actualStr
+      expectedNamesStr, actualNamesStr
     ))
   }
   for (name in actualNames) {
     val actualChild = actualChildren[name] ?: continue
     val expectedChild = expectedChildren[name] ?: continue
-    assertSpecsMatch(actualChild, expectedChild, "$relativePath/$name", fileTextMatcher, errorReporter, expectedDataIsInSpec)
+    assertSpecsMatch(actualChild, expectedChild, "$relativePath/$name", fileTextMatcher, errorReporter)
   }
 }
 
