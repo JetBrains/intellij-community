@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.file.impl
 
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.impl.DebugUtil
 
 internal fun clearViewProvider(fileManagerEx: FileManagerEx, vFile: VirtualFile, why: String) {
@@ -9,3 +10,6 @@ internal fun clearViewProvider(fileManagerEx: FileManagerEx, vFile: VirtualFile,
     fileManagerEx.setViewProvider(vFile, null)
   }
 }
+
+internal fun FileManagerEx.getCachedDirectoryNullable(parent: VirtualFile?): PsiDirectory? =
+  if (parent == null) null else this.getCachedDirectory(parent)
