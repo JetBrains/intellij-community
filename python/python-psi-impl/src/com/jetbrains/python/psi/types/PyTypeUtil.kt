@@ -32,6 +32,8 @@ import org.jetbrains.annotations.UnmodifiableView
 import java.util.Collections
 import java.util.stream.Collector
 import java.util.stream.Collectors
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 /**
  * Tools and wrappers around [PyType] inheritors
@@ -325,4 +327,37 @@ object PyTypeUtil {
 
     return Collections.unmodifiableSet(result)
   }
+}
+
+@OptIn(ExperimentalContracts::class)
+val PyType?.isAnyOrUnknown: Boolean
+  get() {
+    contract {
+      returns(true) implies (this@isAnyOrUnknown is PyAnyType?)
+      returns(false) implies (this@isAnyOrUnknown is PyType)
+    }
+
+    return if (PyAnyType.isEnabled) this is PyAnyType else this == null
+  }
+
+@OptIn(ExperimentalContracts::class)
+val PyType?.isAny: Boolean
+  get() {
+    contract {
+      returns(true) implies (this@isAny is PyAnyType.Any?)
+      returns(false) implies (this@isAny is PyType)
+    }
+
+    return if (PyAnyType.isEnabled) this is PyAnyType.Any else this == null
+  }
+
+@OptIn(ExperimentalContracts::class)
+val PyType?.isUnknown: Boolean
+  get() {
+    contract {
+      returns(true) implies (this@isUnknown is PyAnyType.Unknown?)
+      returns(false) implies (this@isUnknown is PyType)
+    }
+
+    return if (PyAnyType.isEnabled) this is PyAnyType.Unknown else this == null
 }

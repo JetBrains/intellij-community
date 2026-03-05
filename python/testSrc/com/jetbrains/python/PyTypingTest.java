@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
+import com.intellij.idea.TestFor;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -6940,6 +6928,35 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  public void testSimpleUnknown() {
+    withNewAnyTypeEnabled(() -> {
+      doTest("Unknown", "expr = asdf");
+    });
+  }
+
+  public void testPlainAny() {
+    withNewAnyTypeEnabled(() -> {
+      doTest("Any", """
+        from typing import Any
+        
+        expr: Any
+        """);
+    });
+  }
+
+  @TestFor(issues = "PY-84430")
+  public void testQuotedAny() {
+    fixme("quoted Any", AssertionError.class, "Failed in code analysis context expected:<[Any]> but was:<[Literal[0]]>", () ->
+      doTest("Any", """
+        from typing import Any
+        
+        any: "Any" = 1
+        
+        expr = any.imag
+        """)
+    );
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
@@ -6989,5 +7006,17 @@ public class PyTypingTest extends PyTestCase {
 
     final TypeEvalContext userInitiated = TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()).withTracing();
     assertType("Failed in user initiated context", expectedType, expr, userInitiated);
+  }
+
+  private static void withNewAnyTypeEnabled(@NotNull Runnable test) {
+    var key = Registry.get("python.type.any");
+    var previousValue = key.asBoolean();
+    try {
+      key.setValue(true);
+      test.run();
+    }
+    finally {
+      key.setValue(previousValue);
+    }
   }
 }
