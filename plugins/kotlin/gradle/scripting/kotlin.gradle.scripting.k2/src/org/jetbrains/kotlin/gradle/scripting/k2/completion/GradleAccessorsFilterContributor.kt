@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.components.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.gradle.isUnderSpecialSrcDirectory
 import org.jetbrains.kotlin.name.FqName
@@ -58,7 +59,7 @@ internal class GradleAccessorsFilterContributor : CompletionContributor() {
             val symbol = (element.psiElement as? KtDeclaration)?.symbol ?: return true
             if (symbol.hasGradleAccessorPackage()) return false
 
-            val containingSymbol = symbol.containingSymbol as? KaDeclarationSymbol ?: return true
+            val containingSymbol = symbol.containingSymbol as? KaAnnotatedSymbol ?: return true
             return !containingSymbol.hasGradleGeneratedAnnotation()
         }
 
@@ -72,12 +73,12 @@ internal class GradleAccessorsFilterContributor : CompletionContributor() {
             return packageName != null && packageName.startsWith(GRADLE_ACCESSORS_PACKAGE)
         }
 
-        private fun KaDeclarationSymbol.hasGradleGeneratedAnnotation() =
+        private fun KaAnnotatedSymbol.hasGradleGeneratedAnnotation() =
             annotations.any { annotation ->
                 annotation.classId?.asSingleFqName() == GRADLE_GENERATED
             }
     }
 }
 
-private val GRADLE_GENERATED = FqName("org/gradle/api/Generated")
+private val GRADLE_GENERATED = FqName("org.gradle.api.Generated")
 private const val GRADLE_ACCESSORS_PACKAGE = "gradle.kotlin.dsl.accessors"
