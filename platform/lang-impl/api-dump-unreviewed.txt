@@ -7597,6 +7597,7 @@ f:com.intellij.ide.actions.runAnything.RunAnythingCache
 - getState():com.intellij.ide.actions.runAnything.RunAnythingCache$State
 - isGroupVisible(com.intellij.ide.actions.runAnything.groups.RunAnythingGroup):Z
 - loadState(com.intellij.ide.actions.runAnything.RunAnythingCache$State):V
+- saveGroupVisibilityKey(com.intellij.ide.actions.runAnything.groups.RunAnythingGroup,Z):V
 - saveGroupVisibilityKey(java.lang.String,Z):V
 f:com.intellij.ide.actions.runAnything.RunAnythingCache$State
 - <init>():V
