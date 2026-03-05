@@ -15,7 +15,7 @@ internal class GitIndexVirtualFileTabTitleProvider : CustomisableUniqueNameEdito
     return GitBundle.message("stage.vfs.presentable.file.name", baseUniqueName)
   }
 
-  override fun getEditorTabTooltipHtmlText(project: Project, virtualFile: VirtualFile): HtmlChunk? {
+  override fun getEditorTabTooltipHtml(project: Project, virtualFile: VirtualFile): HtmlChunk? {
     if (!isApplicable(virtualFile)) return null
     val text = GitBundle.message("stage.vfs.editor.tab.tooltip",
                                  VcsUtil.getPresentablePath(project, virtualFile.filePath(), true, false))

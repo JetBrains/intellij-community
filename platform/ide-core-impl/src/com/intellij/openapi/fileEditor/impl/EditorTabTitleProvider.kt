@@ -46,7 +46,7 @@ interface EditorTabTitleProvider : DumbAware {
    * If your tooltip doesn't suppose to contain HTML markup,
    * prefer using [HtmlChunk.text] to avoid accidental HTML injections.
    */
-  fun getEditorTabTooltipHtmlText(project: Project, virtualFile: VirtualFile): HtmlChunk? {
+  fun getEditorTabTooltipHtml(project: Project, virtualFile: VirtualFile): HtmlChunk? {
     @Suppress("DEPRECATION")
     val text = getEditorTabTooltipText(project, virtualFile) ?: return null
     // Use `raw` because returned text from `getEditorTabTooltipText` can contain HTML tags.

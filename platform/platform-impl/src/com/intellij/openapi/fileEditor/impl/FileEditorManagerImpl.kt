@@ -691,7 +691,7 @@ open class FileEditorManagerImpl(
 
     for (provider in EditorTabTitleProvider.EP_NAME.lazySequence()) {
       val text = try {
-        provider.getEditorTabTooltipHtmlText(project, file) ?: continue
+        provider.getEditorTabTooltipHtml(project, file) ?: continue
       }
       catch (_: IndexNotReadyException) {
         continue

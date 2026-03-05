@@ -16,7 +16,7 @@ internal class AgentChatEditorTabTitleProvider : EditorTabTitleProvider, DumbAwa
     return StringUtil.trimMiddle(chatFile.threadTitle, MAX_EDITOR_TAB_TITLE_LENGTH)
   }
 
-  override fun getEditorTabTooltipHtmlText(project: Project, virtualFile: VirtualFile): HtmlChunk? {
+  override fun getEditorTabTooltipHtml(project: Project, virtualFile: VirtualFile): HtmlChunk? {
     val chatFile = virtualFile as? AgentChatVirtualFile ?: return null
     return HtmlChunk.text(chatFile.threadTitle)
   }

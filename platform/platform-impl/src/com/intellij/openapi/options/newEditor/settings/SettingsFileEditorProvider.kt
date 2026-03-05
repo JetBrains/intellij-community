@@ -95,7 +95,7 @@ class SettingsFileEditorProvider : FileEditorProvider, FileStatusProvider, Edito
       FileStatus.NOT_CHANGED
   }
 
-  override fun getEditorTabTooltipHtmlText(project: Project, virtualFile: VirtualFile): HtmlChunk? {
+  override fun getEditorTabTooltipHtml(project: Project, virtualFile: VirtualFile): HtmlChunk? {
     if (virtualFile !is SettingsVirtualFile) return null
     return HtmlChunk.text(CommonBundle.settingsTitle())
   }

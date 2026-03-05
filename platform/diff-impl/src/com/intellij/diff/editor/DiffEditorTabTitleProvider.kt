@@ -31,7 +31,7 @@ internal class DiffEditorTabTitleProvider : EditorTabTitleProvider, DumbAware {
     return shortenTitleIfNeeded(project, file, title)
   }
 
-  override fun getEditorTabTooltipHtmlText(project: Project, virtualFile: VirtualFile): HtmlChunk? {
+  override fun getEditorTabTooltipHtml(project: Project, virtualFile: VirtualFile): HtmlChunk? {
     return getEditorTabName(project, virtualFile)?.let { HtmlChunk.text(it) }
   }
 

@@ -102,7 +102,7 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
 
 internal class DefaultVcsLogFileTabTitleProvider : EditorTabTitleProvider, DumbAware {
 
-  override fun getEditorTabTooltipHtmlText(project: Project, virtualFile: VirtualFile): HtmlChunk? {
+  override fun getEditorTabTooltipHtml(project: Project, virtualFile: VirtualFile): HtmlChunk? {
     if (virtualFile !is DefaultVcsLogFile) return null
     return getEditorTabTitle(project, virtualFile)?.let { HtmlChunk.text(it) }
   }

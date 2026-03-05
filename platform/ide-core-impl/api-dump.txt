@@ -88,7 +88,7 @@ com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
 - com.intellij.openapi.project.DumbAware
 - sf:Companion:com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider$Companion
 - a:getEditorTabTitle(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
-- getEditorTabTooltipHtmlText(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.util.text.HtmlChunk
+- getEditorTabTooltipHtml(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.util.text.HtmlChunk
 - getEditorTabTooltipText(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
 com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
