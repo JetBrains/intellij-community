@@ -12,12 +12,14 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.SequenceInputStream;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -345,6 +347,29 @@ public class JBZipEntry {
 
   @ApiStatus.Internal
   public InputStream getInputStream() throws IOException {
+    // When reading over a remote channel (EEL/IJent), every I/O call is a gRPC round-trip.
+    // The default path does 2 round-trips per entry:
+    //   1) calcDataOffset() — reads 4 bytes from Local File Header to find where data starts
+    //   2) BoundedInputStream.read() — reads the actual compressed data
+    // The combined-read path merges both into a single read: it fetches the LFH + compressed data
+    // together, then parses the data offset from the in-memory buffer.
+    // Only used for readonly archives (no ensureFlushed needed) and entries <= 10 MB (to avoid
+    // excessive memory allocation). Falls back to the default path if the buffer estimate was too small.
+    if (myFile.isRemoteIo && myFile.myIsReadonly) {
+      long compressedSize = getCompressedSize();
+      if (compressedSize >= 0 && compressedSize <= 10 * 1024 * 1024) {
+        InputStream result = getInputStreamCombinedRead(compressedSize);
+        if (result != null) {
+          return result;
+        }
+      }
+    }
+    return getInputStreamDefault();
+  }
+
+  // Original two-read path: calcDataOffset() + BoundedInputStream.
+  // Used for local I/O, writable archives, large entries, and as a fallback.
+  private InputStream getInputStreamDefault() throws IOException {
     myFile.ensureFlushed(getHeaderOffset() + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH + JBZipFile.WORD);
     long start = calcDataOffset();
     long size = getCompressedSize();
@@ -369,6 +394,85 @@ public class JBZipEntry {
           bufferSize = this.size <= 0 ? 8192 : (int)Math.min(this.size, 8192);
         }
         return new InflaterInputStream(bis, new Inflater(true), bufferSize);
+      default:
+        throw new ZipException("Found unsupported compression method " + getMethod());
+    }
+  }
+
+  /**
+   * Reads the Local File Header and compressed data in a single I/O operation,
+   * eliminating the extra round-trip that {@link #calcDataOffset()} would cause over remote channels.
+   * <p>
+   * ZIP Local File Header layout:
+   * <pre>
+   *   [0..3]   signature
+   *   [4..25]  fixed fields (version, flags, method, time, crc, sizes)
+   *   [26..27] filename length (N)
+   *   [28..29] extra field length (M)
+   *   [30..30+N-1]     filename
+   *   [30+N..30+N+M-1] extra field
+   *   [30+N+M..]       compressed data starts here
+   * </pre>
+   * We don't know N and M before reading the LFH, so we estimate the header size generously
+   * (UTF-8 worst-case for the name + 256 bytes padding for extra field). If the estimate was
+   * too small (extra field larger than expected), we return {@code null} and the caller falls
+   * back to the two-read path.
+   *
+   * @return an InputStream over the entry data, or {@code null} if the buffer was too small (caller should fall back)
+   */
+  private InputStream getInputStreamCombinedRead(long compressedSize) throws IOException {
+    long headerOffset = getHeaderOffset();
+
+    // lfhFixedEnd = offset right after the two length fields (byte 30 in LFH).
+    // That's where the variable-length filename starts.
+    int lfhFixedEnd = (int)JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH + JBZipFile.WORD;
+
+    // Estimate how much to read: LFH header (fixed + variable) + compressed data.
+    // name.length() * 3: UTF-8 can expand up to 3 bytes per char.
+    // + 256: generous padding for the extra field (typically small, but LFH extra
+    //        can differ from central directory extra).
+    int nameEstimate = name.length() * 3 + 256;
+    int headerEstimate = lfhFixedEnd + nameEstimate;
+    int totalToRead = headerEstimate + (int)compressedSize;
+
+    // For entries near the end of the file, our padded estimate may overshoot.
+    // Cap to the actual available bytes to avoid EOFException from readFullyFromPosition.
+    long available = myFile.getSize() - headerOffset;
+    if (available < lfhFixedEnd) {
+      return null; // not enough data even for the fixed LFH part
+    }
+    if (totalToRead > available) {
+      totalToRead = (int)available;
+    }
+
+    // Single I/O operation: read LFH + compressed data into one buffer.
+    byte[] buf = new byte[totalToRead];
+    myFile.readFullyFromPosition(buf, headerOffset);
+
+    // Parse actual filename and extra field lengths from the buffer (not from the file again).
+    int actualNameLen = ZipShort.getValue(buf, (int)JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH);
+    int actualExtraLen = ZipShort.getValue(buf, (int)JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH + JBZipFile.SHORT);
+    int dataOffset = lfhFixedEnd + actualNameLen + actualExtraLen;
+
+    // Verify that the buffer contains the full compressed data.
+    // If not (extra field was larger than our 256-byte estimate), fall back.
+    if (dataOffset + compressedSize > buf.length) {
+      return null;
+    }
+
+    // Data is already in memory — wrap in ByteArrayInputStream (no further I/O needed).
+    // Note: we can't reuse BoundedInputStream here because it reads from the file,
+    // which would defeat the purpose of the combined read.
+    ByteArrayInputStream compressedStream = new ByteArrayInputStream(buf, dataOffset, (int)compressedSize);
+    switch (getMethod()) {
+      case ZipEntry.STORED:
+        return compressedStream;
+      case ZipEntry.DEFLATED:
+        // Inflater(nowrap=true) needs an extra dummy byte after the compressed data — see Inflater javadocs.
+        // BoundedInputStream uses addDummy() for this; here we append it via SequenceInputStream.
+        InputStream withDummy = new SequenceInputStream(compressedStream, new ByteArrayInputStream(new byte[]{0}));
+        int inflaterBuf = (int)Math.min(Math.max(compressedSize, 8192L), 131072L);
+        return new InflaterInputStream(withDummy, new Inflater(true), inflaterBuf);
       default:
         throw new ZipException("Found unsupported compression method " + getMethod());
     }
