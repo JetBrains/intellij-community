@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
-import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase;
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
@@ -43,9 +42,9 @@ public class PyStepIntoMyCodeAction extends XDebuggerActionBase
     }
   };
 
+  @ApiStatus.Internal
   @Override
-  @SuppressWarnings("deprecation")
-  protected @NotNull DebuggerActionHandler getHandler(@NotNull DebuggerSupport debuggerSupport) {
+  protected @NotNull DebuggerActionHandler getHandler() {
     return myHandler;
   }
 
@@ -75,12 +74,13 @@ public class PyStepIntoMyCodeAction extends XDebuggerActionBase
       if (project == null) return;
       session = XDebuggerManager.getInstance(project).getCurrentSession();
     }
-    if (session == null) return;
+    if (session == null) {
+      event.getPresentation().setDescription("");
+      return;
+    }
     if (session.getDebugProcess() instanceof PyStepIntoSupport support) {
-      String reason = support.getStepIntoMyCodeUnavailableReason();
-      if (reason != null) {
-        event.getPresentation().setDescription(reason);
-      }
+      String reason = support.getCanApplyJustMyCodeChange() ? support.getStepIntoMyCodeUnavailableReason() : null;
+      event.getPresentation().setDescription(reason != null ? reason : "");
     }
   }
 
@@ -98,6 +98,7 @@ public class PyStepIntoMyCodeAction extends XDebuggerActionBase
     if (session == null) return null;
     if (!(session.getDebugProcess() instanceof PyStepIntoSupport support)) return null;
     if (support.isStepIntoMyCodeAvailable()) return null;
+    if (!support.getCanApplyJustMyCodeChange()) return null;
     return new TooltipLink(PyBundle.message("debugger.step.into.my.code.switch.link"), () -> support.applyJustMyCodeChange(true));
   }
 }
