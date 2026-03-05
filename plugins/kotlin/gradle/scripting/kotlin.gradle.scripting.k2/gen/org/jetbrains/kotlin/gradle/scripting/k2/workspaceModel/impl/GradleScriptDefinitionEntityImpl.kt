@@ -41,7 +41,7 @@ internal class GradleScriptDefinitionEntityImpl(private val dataSource: GradleSc
             readField("definitionId")
             return dataSource.definitionId
         }
-    override val compilationConfiguration: ScriptCompilationConfigurationData
+    override val compilationConfigurationData: ScriptCompilationConfigurationData
         get() {
             readField("compilationConfiguration")
             return dataSource.compilationConfiguration
@@ -118,8 +118,8 @@ internal class GradleScriptDefinitionEntityImpl(private val dataSource: GradleSc
             dataSource as GradleScriptDefinitionEntity
             if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
             if (this.definitionId != dataSource.definitionId) this.definitionId = dataSource.definitionId
-            if (this.compilationConfiguration != dataSource.compilationConfiguration) this.compilationConfiguration =
-                dataSource.compilationConfiguration
+            if (this.compilationConfiguration != dataSource.compilationConfigurationData) this.compilationConfiguration =
+                dataSource.compilationConfigurationData
             if (this.hostConfiguration != dataSource.hostConfiguration) this.hostConfiguration = dataSource.hostConfiguration
             if (this.evaluationConfiguration != dataSource?.evaluationConfiguration) this.evaluationConfiguration =
                 dataSource.evaluationConfiguration

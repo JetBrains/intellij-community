@@ -13,7 +13,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 interface ScriptCompilationConfigurationEntityBuilder : WorkspaceEntityBuilder<ScriptCompilationConfigurationEntity> {
     override var entitySource: EntitySource
     var data: ByteArray
-    var identity: ScriptCompilationConfigurationIdentity
+    var identity: ScriptCompilationConfigurationId
 }
 
 internal object ScriptCompilationConfigurationEntityType :
@@ -21,7 +21,7 @@ internal object ScriptCompilationConfigurationEntityType :
     override val entityClass: Class<ScriptCompilationConfigurationEntity> get() = ScriptCompilationConfigurationEntity::class.java
     operator fun invoke(
         data: ByteArray,
-        identity: ScriptCompilationConfigurationIdentity,
+        identity: ScriptCompilationConfigurationId,
         entitySource: EntitySource,
         init: (ScriptCompilationConfigurationEntityBuilder.() -> Unit)? = null,
     ): ScriptCompilationConfigurationEntityBuilder {
@@ -43,7 +43,7 @@ fun MutableEntityStorage.modifyScriptCompilationConfigurationEntity(
 @JvmName("createScriptCompilationConfigurationEntity")
 fun ScriptCompilationConfigurationEntity(
     data: ByteArray,
-    identity: ScriptCompilationConfigurationIdentity,
+    identity: ScriptCompilationConfigurationId,
     entitySource: EntitySource,
     init: (ScriptCompilationConfigurationEntityBuilder.() -> Unit)? = null,
 ): ScriptCompilationConfigurationEntityBuilder = ScriptCompilationConfigurationEntityType(data, identity, entitySource, init)

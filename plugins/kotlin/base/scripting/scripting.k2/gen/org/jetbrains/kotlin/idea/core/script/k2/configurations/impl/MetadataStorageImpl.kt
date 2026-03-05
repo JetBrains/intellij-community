@@ -64,7 +64,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
         addMetadata(typeMetadata)
 
         typeMetadata = FinalClassMetadata.ClassMetadata(
-            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationIdentity",
+            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationId",
             properties = listOf(
                 OwnPropertyMetadata(
                     isComputable = false,
@@ -242,11 +242,11 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                     isComputable = false,
                     isKey = false,
                     isOpen = false,
-                    name = "configuration",
+                    name = "configurationId",
                     valueType = ValueTypeMetadata.SimpleType.CustomType(
                         isNullable = true,
                         typeMetadata = FinalClassMetadata.ClassMetadata(
-                            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationIdentity",
+                            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationId",
                             properties = listOf(
                                 OwnPropertyMetadata(
                                     isComputable = false,
@@ -595,7 +595,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                     valueType = ValueTypeMetadata.SimpleType.CustomType(
                         isNullable = false,
                         typeMetadata = FinalClassMetadata.ClassMetadata(
-                            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationIdentity",
+                            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationId",
                             properties = listOf(
                                 OwnPropertyMetadata(
                                     isComputable = false,
@@ -635,7 +635,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                     valueType = ValueTypeMetadata.SimpleType.CustomType(
                         isNullable = false,
                         typeMetadata = FinalClassMetadata.ClassMetadata(
-                            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationIdentity",
+                            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationId",
                             properties = listOf(
                                 OwnPropertyMetadata(
                                     isComputable = false,
@@ -676,17 +676,17 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     }
 
     override fun initializeMetadataHash() {
-        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity", metadataHash = -1579312771)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity", metadataHash = -1743471275)
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity", metadataHash = 748449801)
         addMetadataHash(
             typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntity",
-            metadataHash = 734280406
+            metadataHash = 2055694198
         )
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId", metadataHash = 1246211390)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SdkId", metadataHash = 206069110)
         addMetadataHash(
-            typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationIdentity",
-            metadataHash = -1310517564
+            typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationId",
+            metadataHash = -1351257529
         )
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleId", metadataHash = 369441961)
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptDiagnosticData", metadataHash = -305007550)
@@ -702,6 +702,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
             typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsKotlinScriptEntitySource",
             metadataHash = -809979893
         )
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = 1880685048)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = 415699451)
     }
 }

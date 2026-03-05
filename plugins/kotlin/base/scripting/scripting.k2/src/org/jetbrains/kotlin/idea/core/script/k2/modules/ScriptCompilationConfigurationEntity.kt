@@ -7,13 +7,13 @@ import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 
 interface ScriptCompilationConfigurationEntity : WorkspaceEntityWithSymbolicId {
     val data: ByteArray
-    val identity: ScriptCompilationConfigurationIdentity
+    val identity: ScriptCompilationConfigurationId
 
-    override val symbolicId: ScriptCompilationConfigurationIdentity
+    override val symbolicId: ScriptCompilationConfigurationId
         get() = identity
 }
 
-data class ScriptCompilationConfigurationIdentity(val hash: Long, val tag: Byte) : SymbolicEntityId<ScriptCompilationConfigurationEntity> {
+data class ScriptCompilationConfigurationId(val hash: Long, val tag: Byte) : SymbolicEntityId<ScriptCompilationConfigurationEntity> {
     override val presentableName: @NlsSafe String
         get() = toString()
 }

@@ -20,7 +20,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntityBuilder
-import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationIdentity
+import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationId
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -34,14 +34,14 @@ internal class ScriptCompilationConfigurationEntityImpl(private val dataSource: 
 
     }
 
-    override val symbolicId: ScriptCompilationConfigurationIdentity = super.symbolicId
+    override val symbolicId: ScriptCompilationConfigurationId = super.symbolicId
 
     override val data: ByteArray
         get() {
             readField("data")
             return dataSource.data
         }
-    override val identity: ScriptCompilationConfigurationIdentity
+    override val identity: ScriptCompilationConfigurationId
         get() {
             readField("identity")
             return dataSource.identity
@@ -126,7 +126,7 @@ internal class ScriptCompilationConfigurationEntityImpl(private val dataSource: 
                 changedProperty.add("data")
 
             }
-        override var identity: ScriptCompilationConfigurationIdentity
+        override var identity: ScriptCompilationConfigurationId
             get() = getEntityData().identity
             set(value) {
                 checkModificationAllowed()
@@ -143,7 +143,7 @@ internal class ScriptCompilationConfigurationEntityImpl(private val dataSource: 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ScriptCompilationConfigurationEntityData : WorkspaceEntityData<ScriptCompilationConfigurationEntity>(), SoftLinkable {
     lateinit var data: ByteArray
-    lateinit var identity: ScriptCompilationConfigurationIdentity
+    lateinit var identity: ScriptCompilationConfigurationId
 
     internal fun isDataInitialized(): Boolean = ::data.isInitialized
     internal fun isIdentityInitialized(): Boolean = ::identity.isInitialized
@@ -174,7 +174,7 @@ internal class ScriptCompilationConfigurationEntityData : WorkspaceEntityData<Sc
         var changed = false
         val identity_data = if (identity == oldLink) {
             changed = true
-            newLink as ScriptCompilationConfigurationIdentity
+            newLink as ScriptCompilationConfigurationId
         } else {
             null
         }

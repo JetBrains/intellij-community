@@ -26,7 +26,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityBuilder
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId
-import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationIdentity
+import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationId
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptDiagnosticData
 
 @GeneratedCodeApiVersion(3)
@@ -56,10 +56,10 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
             readField("sdkId")
             return dataSource.sdkId
         }
-    override val configuration: ScriptCompilationConfigurationIdentity?
+    override val configurationId: ScriptCompilationConfigurationId?
         get() {
-            readField("configuration")
-            return dataSource.configuration
+            readField("configurationId")
+            return dataSource.configurationId
         }
     override var relatedModuleIds: List<ModuleId> = dataSource.relatedModuleIds
 
@@ -140,7 +140,7 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
             if (this.virtualFileUrl != dataSource.virtualFileUrl) this.virtualFileUrl = dataSource.virtualFileUrl
             if (this.dependencies != dataSource.dependencies) this.dependencies = dataSource.dependencies.toMutableList()
             if (this.sdkId != dataSource?.sdkId) this.sdkId = dataSource.sdkId
-            if (this.configuration != dataSource?.configuration) this.configuration = dataSource.configuration
+            if (this.configurationId != dataSource?.configurationId) this.configurationId = dataSource.configurationId
             if (this.relatedModuleIds != dataSource.relatedModuleIds) this.relatedModuleIds = dataSource.relatedModuleIds.toMutableList()
             if (this.reports != dataSource.reports) this.reports = dataSource.reports.toMutableList()
             updateChildToParentReferences(parents)
@@ -192,12 +192,12 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
                 changedProperty.add("sdkId")
 
             }
-        override var configuration: ScriptCompilationConfigurationIdentity?
-            get() = getEntityData().configuration
+        override var configurationId: ScriptCompilationConfigurationId?
+            get() = getEntityData().configurationId
             set(value) {
                 checkModificationAllowed()
-                getEntityData(true).configuration = value
-                changedProperty.add("configuration")
+                getEntityData(true).configurationId = value
+                changedProperty.add("configurationId")
 
             }
         private val relatedModuleIdsUpdater: (value: List<ModuleId>) -> Unit = { value ->
@@ -251,7 +251,7 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
     lateinit var virtualFileUrl: VirtualFileUrl
     lateinit var dependencies: MutableList<KotlinScriptLibraryEntityId>
     var sdkId: SdkId? = null
-    var configuration: ScriptCompilationConfigurationIdentity? = null
+    var configurationId: ScriptCompilationConfigurationId? = null
     var relatedModuleIds: MutableList<ModuleId> = listOf<ModuleId>().toMutableWorkspaceList()
     var reports: MutableList<ScriptDiagnosticData> = listOf<ScriptDiagnosticData>().toMutableWorkspaceList()
 
@@ -267,9 +267,9 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
         if (optionalLink_sdkId != null) {
             result.add(optionalLink_sdkId)
         }
-        val optionalLink_configuration = configuration
-        if (optionalLink_configuration != null) {
-            result.add(optionalLink_configuration)
+        val optionalLink_configurationId = configurationId
+        if (optionalLink_configurationId != null) {
+            result.add(optionalLink_configurationId)
         }
         for (item in relatedModuleIds) {
             result.add(item)
@@ -287,9 +287,9 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
         if (optionalLink_sdkId != null) {
             index.index(this, optionalLink_sdkId)
         }
-        val optionalLink_configuration = configuration
-        if (optionalLink_configuration != null) {
-            index.index(this, optionalLink_configuration)
+        val optionalLink_configurationId = configurationId
+        if (optionalLink_configurationId != null) {
+            index.index(this, optionalLink_configurationId)
         }
         for (item in relatedModuleIds) {
             index.index(this, item)
@@ -314,11 +314,11 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
                 index.index(this, optionalLink_sdkId)
             }
         }
-        val optionalLink_configuration = configuration
-        if (optionalLink_configuration != null) {
-            val removedItem_optionalLink_configuration = mutablePreviousSet.remove(optionalLink_configuration)
-            if (!removedItem_optionalLink_configuration) {
-                index.index(this, optionalLink_configuration)
+        val optionalLink_configurationId = configurationId
+        if (optionalLink_configurationId != null) {
+            val removedItem_optionalLink_configurationId = mutablePreviousSet.remove(optionalLink_configurationId)
+            if (!removedItem_optionalLink_configurationId) {
+                index.index(this, optionalLink_configurationId)
             }
         }
         for (item in relatedModuleIds) {
@@ -366,19 +366,19 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
         if (sdkId_data_optional != null) {
             sdkId = sdkId_data_optional
         }
-        var configuration_data_optional = if (configuration != null) {
-            val configuration___data = if (configuration!! == oldLink) {
+        var configurationId_data_optional = if (configurationId != null) {
+            val configurationId___data = if (configurationId!! == oldLink) {
                 changed = true
-                newLink as ScriptCompilationConfigurationIdentity
+                newLink as ScriptCompilationConfigurationId
             } else {
                 null
             }
-            configuration___data
+            configurationId___data
         } else {
             null
         }
-        if (configuration_data_optional != null) {
-            configuration = configuration_data_optional
+        if (configurationId_data_optional != null) {
+            configurationId = configurationId_data_optional
         }
         val relatedModuleIds_data = relatedModuleIds.map {
             val it_data = if (it == oldLink) {
@@ -437,7 +437,7 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
     override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
         return KotlinScriptEntity(virtualFileUrl, dependencies, entitySource) {
             this.sdkId = this@KotlinScriptEntityData.sdkId
-            this.configuration = this@KotlinScriptEntityData.configuration
+            this.configurationId = this@KotlinScriptEntityData.configurationId
             this.relatedModuleIds = this@KotlinScriptEntityData.relatedModuleIds.toMutableWorkspaceList()
             this.reports = this@KotlinScriptEntityData.reports.toMutableWorkspaceList()
         }
@@ -456,7 +456,7 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
         if (this.virtualFileUrl != other.virtualFileUrl) return false
         if (this.dependencies != other.dependencies) return false
         if (this.sdkId != other.sdkId) return false
-        if (this.configuration != other.configuration) return false
+        if (this.configurationId != other.configurationId) return false
         if (this.relatedModuleIds != other.relatedModuleIds) return false
         if (this.reports != other.reports) return false
         return true
@@ -469,7 +469,7 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
         if (this.virtualFileUrl != other.virtualFileUrl) return false
         if (this.dependencies != other.dependencies) return false
         if (this.sdkId != other.sdkId) return false
-        if (this.configuration != other.configuration) return false
+        if (this.configurationId != other.configurationId) return false
         if (this.relatedModuleIds != other.relatedModuleIds) return false
         if (this.reports != other.reports) return false
         return true
@@ -480,7 +480,7 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
         result = 31 * result + virtualFileUrl.hashCode()
         result = 31 * result + dependencies.hashCode()
         result = 31 * result + sdkId.hashCode()
-        result = 31 * result + configuration.hashCode()
+        result = 31 * result + configurationId.hashCode()
         result = 31 * result + relatedModuleIds.hashCode()
         result = 31 * result + reports.hashCode()
         return result
@@ -491,7 +491,7 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
         result = 31 * result + virtualFileUrl.hashCode()
         result = 31 * result + dependencies.hashCode()
         result = 31 * result + sdkId.hashCode()
-        result = 31 * result + configuration.hashCode()
+        result = 31 * result + configurationId.hashCode()
         result = 31 * result + relatedModuleIds.hashCode()
         result = 31 * result + reports.hashCode()
         return result

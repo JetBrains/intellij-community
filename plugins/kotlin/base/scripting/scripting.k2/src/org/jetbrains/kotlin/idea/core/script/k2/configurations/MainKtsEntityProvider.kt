@@ -16,7 +16,7 @@ import com.intellij.platform.util.progress.reportProgressScope
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.kotlin.idea.core.script.k2.getOrCreateScriptConfigurationIdentity
+import org.jetbrains.kotlin.idea.core.script.k2.getOrCreateScriptConfigurationId
 import org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolutionService
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider
@@ -94,7 +94,7 @@ class MainKtsEntityProvider(
             storage addEntity KotlinScriptEntity(
                 scriptUrl, libraryIds.map { it.first }, MainKtsKotlinScriptEntitySource
             ) {
-                this.configuration = storage.getOrCreateScriptConfigurationIdentity(configuration, MainKtsKotlinScriptEntitySource)
+                this.configurationId = configuration.getOrCreateScriptConfigurationId(storage, MainKtsKotlinScriptEntitySource)
                 this.sdkId = configuration.sdkId
             }
         }
