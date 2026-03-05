@@ -87,7 +87,7 @@ public class InspectionLIfeCycleTest extends ProductionLightDaemonAnalyzerTestCa
     };
     enableInspectionTool(tool);
 
-    List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR);
+    List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR);
     assertEmpty(infos);
 
     assertEquals(1, startedCount.get());

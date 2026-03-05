@@ -26,7 +26,7 @@ public abstract class ProductionLightDaemonAnalyzerTestCase extends LightDaemonA
 
   @Override
   protected final @NotNull @Unmodifiable List<HighlightInfo> doHighlighting() {
-    return myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightInfoType.SYMBOL_TYPE_SEVERITY);
+    return myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightInfoType.SYMBOL_TYPE_SEVERITY);
   }
 
   public static void runTestInProduction(@NotNull DaemonCodeAnalyzerImpl codeAnalyzer, @NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {

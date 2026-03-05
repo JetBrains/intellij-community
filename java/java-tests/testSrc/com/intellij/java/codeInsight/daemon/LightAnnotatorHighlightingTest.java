@@ -149,7 +149,7 @@ public class LightAnnotatorHighlightingTest extends ProductionLightDaemonAnalyze
 
     CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getProject(), editor.getDocument());
+    myTestDaemonCodeAnalyzer.waitForDaemonToFinish(editor.getDocument());
   }
 
   public static class MyCrazyAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {

@@ -62,10 +62,10 @@ public class DaemonRespondToChangesPerfTest extends ProductionDaemonAnalyzerTest
     configureByText(JavaFileType.INSTANCE, text.toString());
 
     Benchmark.newBenchmark(getName(), () -> {
-      List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR);
+      List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR);
       assertEmpty(infos);
       type("k");
-      assertNotEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
+      assertNotEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
       backspace();
     }).start();
   }
@@ -84,10 +84,10 @@ public class DaemonRespondToChangesPerfTest extends ProductionDaemonAnalyzerTest
     ExtensionTestUtil.maskExtensions(LanguageInjector.EXTENSION_POINT_NAME, Collections.emptyList(), getTestRootDisposable());
     ExtensionTestUtil.maskExtensions(new ExtensionPointName<>(LanguageAnnotators.INSTANCE.getName()), Collections.emptyList(), getTestRootDisposable());
     Benchmark.newBenchmark("highlighting many string literals", () -> {
-      assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
+      assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
 
       type("k");
-      assertNotEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
+      assertNotEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
 
       backspace();
     }).start();
@@ -107,10 +107,10 @@ public class DaemonRespondToChangesPerfTest extends ProductionDaemonAnalyzerTest
     configureByText(JavaFileType.INSTANCE, text);
 
     Benchmark.newBenchmark("highlighting deep call chain", () -> {
-      assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
+      assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
 
       type("k");
-      assertNotEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
+      assertNotEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
 
       backspace();
     }).start();
@@ -122,7 +122,7 @@ public class DaemonRespondToChangesPerfTest extends ProductionDaemonAnalyzerTest
     configureByFile(filePath);
     type(' ');
     CompletionContributor.forLanguage(getFile().getLanguage());
-    myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR);
+    myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR);
 
     int N = Math.max(5, Timings.adjustAccordingToMySpeed(80, false));
     LOG.debug("N = " + N);
@@ -175,7 +175,7 @@ public class DaemonRespondToChangesPerfTest extends ProductionDaemonAnalyzerTest
           throw new ProcessCanceledException();
         };
         long hiStart = System.currentTimeMillis();
-        myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getProject(), getEditor().getDocument(), interrupt);
+        myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getEditor().getDocument(), interrupt);
         long hiEnd = System.currentTimeMillis();
         DaemonProgressIndicator progress = ContainerUtil.getFirstItem(new ArrayList<>(myDaemonCodeAnalyzer.getUpdateProgress().values()));
         String message = "Should have been interrupted: " + progress + "; Elapsed: " + (hiEnd - hiStart) + "ms";
@@ -220,7 +220,7 @@ public class DaemonRespondToChangesPerfTest extends ProductionDaemonAnalyzerTest
     type(' ');
     CompletionContributor.forLanguage(getFile().getLanguage());
     long s = System.currentTimeMillis();
-    myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR);
+    myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR);
     if (DEBUG) {
       System.out.println("Hi elapsed: "+(System.currentTimeMillis() - s));
     }
@@ -261,7 +261,7 @@ public class DaemonRespondToChangesPerfTest extends ProductionDaemonAnalyzerTest
       try {
         CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getProject(), getEditor().getDocument(), interrupt);
+        myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getEditor().getDocument(), interrupt);
 
         throw new RuntimeException("should have been interrupted");
       }
@@ -289,7 +289,7 @@ public class DaemonRespondToChangesPerfTest extends ProductionDaemonAnalyzerTest
 
   public void testAllPassesFinishAfterInterruptOnTyping_Stress() throws Throwable {
     configureByFile("/psi/resolve/Thinlet.java");
-    assertNotEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertNotEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
 
     type(' ');
     for (int i=0; i<100; i++) {
@@ -299,7 +299,7 @@ public class DaemonRespondToChangesPerfTest extends ProductionDaemonAnalyzerTest
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
         CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
         Runnable callbackWhileWaiting = () -> type(' ');
-        myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getProject(), getEditor().getDocument(), callbackWhileWaiting);
+        myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getEditor().getDocument(), callbackWhileWaiting);
       }
       catch (ProcessCanceledException ignored) {
         myTestDaemonCodeAnalyzer.waitForTermination();
@@ -330,9 +330,9 @@ public class DaemonRespondToChangesPerfTest extends ProductionDaemonAnalyzerTest
     configureByText(PlainTextFileType.INSTANCE, " ".repeat(N));
     // just checks that highlighting doesn't freeze because there are no quadratics inside anymore
     DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(PlainTextLanguage.INSTANCE, new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyHugeAnnotator()}, ()->{
-      assertEquals(N, ContainerUtil.count(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.WARNING), h -> MyHugeAnnotator.myText.equals(h.getDescription())));
+      assertEquals(N, ContainerUtil.count(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING), h -> MyHugeAnnotator.myText.equals(h.getDescription())));
       type(' ');
-      assertEquals(N+1, ContainerUtil.count(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.WARNING), h -> MyHugeAnnotator.myText.equals(h.getDescription())));
+      assertEquals(N+1, ContainerUtil.count(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING), h -> MyHugeAnnotator.myText.equals(h.getDescription())));
     });
   }
 }

@@ -124,10 +124,10 @@ public class DaemonHighlightVisitorRespondToChangesTest extends ProductionDaemon
         assertNotEmpty(myInfos);
       }
     };
-    myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getProject(), getEditor().getDocument(), callbackWhileWaiting);
+    myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getEditor().getDocument(), callbackWhileWaiting);
 
     List<HighlightInfo> myWarns = filterMy(
-      myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.INFORMATION));
+      myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.INFORMATION));
     assertOneElement(myWarns);
   }
 
@@ -206,7 +206,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends ProductionDaemon
     configureByText(JavaFileType.INSTANCE, text);
 
     List<HighlightInfo> infos =
-      myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.WARNING);
+      myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
     MyHighlightCommentVisitor.assertHighlighted(infos);
   }
 
@@ -282,7 +282,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends ProductionDaemon
         // comment2
       }""";
     configureByText(JavaFileType.INSTANCE, text);
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
 
     INTERRUPT.set(true);
     COMMENT_HIGHLIGHTED.set(false);
@@ -294,7 +294,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends ProductionDaemon
     myDaemonCodeAnalyzer.restart(getTestName(false));
     log.clear();
     try {
-      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getProject(), getEditor().getDocument());
+      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getEditor().getDocument());
     }
     catch (ProcessCanceledException ignored) {
     }
@@ -308,7 +308,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends ProductionDaemon
     myDaemonCodeAnalyzer.restart(getTestName(false));
     log.clear();
     try {
-      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getProject(), getEditor().getDocument());
+      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getEditor().getDocument());
     }
     catch (ProcessCanceledException ignored) {
     }
@@ -365,7 +365,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends ProductionDaemon
         // comment1
       }""";
     configureByText(JavaFileType.INSTANCE, text);
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
 
     MyThinkingHighlightVisitor visitor1 = new MyThinkingHighlightVisitor.MyThinkingHighlightVisitor1(); // must have different classes
     MyThinkingHighlightVisitor visitor2 = new MyThinkingHighlightVisitor.MyThinkingHighlightVisitor2();
@@ -379,7 +379,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends ProductionDaemon
     STATE.put("MSG2", new State(new AtomicBoolean(), new AtomicBoolean(true), new AtomicBoolean()));
     myDaemonCodeAnalyzer.restart(getTestName(false));
     TestTimeOut timeOut = TestTimeOut.setTimeout(1, TimeUnit.MINUTES);
-    myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getProject(), getEditor().getDocument(), () -> {
+    myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getEditor().getDocument(), () -> {
       if (timeOut.isTimedOut()) {
         String dump = ThreadDumper.dumpThreadsToString();
         List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), HighlightSeverity.WARNING, getProject());
@@ -532,15 +532,15 @@ public class DaemonHighlightVisitorRespondToChangesTest extends ProductionDaemon
     configureByText(JavaFileType.INSTANCE, text);
 
     assertOneElement(ContainerUtil.filter(
-      myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.INFORMATION), h -> h.type.equals(HighlightInfoType.TODO)));
+      myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.INFORMATION), h -> h.type.equals(HighlightInfoType.TODO)));
 
     backspace();
     assertEmpty(ContainerUtil.filter(
-      myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.INFORMATION), h -> h.type.equals(HighlightInfoType.TODO)));
+      myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.INFORMATION), h -> h.type.equals(HighlightInfoType.TODO)));
 
     type('O');
     assertOneElement(ContainerUtil.filter(
-      myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.INFORMATION), h -> h.type.equals(HighlightInfoType.TODO)));
+      myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.INFORMATION), h -> h.type.equals(HighlightInfoType.TODO)));
   }
 
   public void testTodoDoesNotClearTodosUnaffectedBySmallChange() {
@@ -556,12 +556,12 @@ public class DaemonHighlightVisitorRespondToChangesTest extends ProductionDaemon
     configureByText(JavaFileType.INSTANCE, text);
 
     assertOneElement(ContainerUtil.filter(
-      myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.INFORMATION), h -> h.type.equals(HighlightInfoType.TODO)));
+      myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.INFORMATION), h -> h.type.equals(HighlightInfoType.TODO)));
 
     for (int i=0; i<10; i++) {
       type("X");
       assertOneElement(ContainerUtil.filter(
-        myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.INFORMATION), h -> h.type.equals(HighlightInfoType.TODO)));
+        myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.INFORMATION), h -> h.type.equals(HighlightInfoType.TODO)));
     }
   }
 
@@ -575,15 +575,15 @@ public class DaemonHighlightVisitorRespondToChangesTest extends ProductionDaemon
       """;
     configureByText(JavaFileType.INSTANCE, text);
     assertEmpty(ContainerUtil.filter(
-      myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.INFORMATION), info -> info.type == RainbowHighlighter.RAINBOW_ELEMENT));
+      myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.INFORMATION), info -> info.type == RainbowHighlighter.RAINBOW_ELEMENT));
     CodeInsightTestFixtureImpl.runWithRainbowEnabled(true, () -> {
       myDaemonCodeAnalyzer.restart(getTestName(false));
       assertNotEmpty(ContainerUtil.filter(
-        myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.INFORMATION), info -> info.type == RainbowHighlighter.RAINBOW_ELEMENT));
+        myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.INFORMATION), info -> info.type == RainbowHighlighter.RAINBOW_ELEMENT));
     });
     myDaemonCodeAnalyzer.restart(getTestName(false));
     assertEmpty(ContainerUtil.filter(
-      myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.INFORMATION), info -> info.type == RainbowHighlighter.RAINBOW_ELEMENT));
+      myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.INFORMATION), info -> info.type == RainbowHighlighter.RAINBOW_ELEMENT));
   }
 
 
@@ -629,7 +629,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends ProductionDaemon
     configureByText(JavaFileType.INSTANCE, text);
     MyCheckingCallsVisitor.VISIT_CALLED = false;
     MyCheckingCallsVisitor.ANALYZE_CALLED = false;
-    myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.INFORMATION);
+    myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.INFORMATION);
     assertTrue(MyCheckingCallsVisitor.ANALYZE_CALLED);
     assertTrue(MyCheckingCallsVisitor.VISIT_CALLED);
 
@@ -637,7 +637,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends ProductionDaemon
     MyCheckingCallsVisitor.VISIT_CALLED = false;
     MyCheckingCallsVisitor.ANALYZE_CALLED = false;
     myDaemonCodeAnalyzer.restart(this);
-    myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.INFORMATION);
+    myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.INFORMATION);
     assertFalse(MyCheckingCallsVisitor.VISIT_CALLED);
     assertFalse(MyCheckingCallsVisitor.ANALYZE_CALLED);
   }

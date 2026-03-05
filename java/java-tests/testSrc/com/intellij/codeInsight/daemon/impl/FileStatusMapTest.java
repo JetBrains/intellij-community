@@ -108,7 +108,7 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
   public void testHighlightersUpdate() throws Exception {
     configureByFile(BASE_PATH + "HighlightersUpdate.java");
     Document document = getDocument(getFile());
-    assertNotEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertNotEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
     List<HighlightInfo> errors = DaemonCodeAnalyzerImpl.getHighlights(document, HighlightSeverity.ERROR, getProject());
     assertSize(1, errors);
     TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, getFile(), Pass.UPDATE_ALL);
@@ -124,7 +124,7 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
   public void testNoPsiEventsAltogether() throws Exception {
     configureByFile(BASE_PATH + "HighlightersUpdate.java");
     Document document = getDocument(getFile());
-    assertNotEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertNotEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
     type(' ');
     backspace();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
@@ -142,14 +142,14 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
       """;
     configureByText(JavaFileType.INSTANCE, text);
     Document document = getDocument(getFile());
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
     PsiClass psiClass = ((PsiJavaFile)getFile()).getClasses()[0];
     new RenameProcessor(myProject, psiClass, "Class2", false, false).run();
     myTestDaemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests();
     TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, getFile(), Pass.UPDATE_ALL);
     assertEquals(getFile().getTextRange(), dirty);
 
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
     assertTrue(myDaemonCodeAnalyzer.isErrorAnalyzingFinished(getFile()));
   }
 
@@ -162,7 +162,7 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
       """;
     configureByText(JavaFileType.INSTANCE, text);
     Document document = getDocument(getFile());
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
 
     type("  ");
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
@@ -171,7 +171,7 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
     myTestDaemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests();
     TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, getFile(), Pass.UPDATE_ALL);
     assertEquals(elementAtCaret.getTextRange(), dirty);
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
     assertTrue(myDaemonCodeAnalyzer.isErrorAnalyzingFinished(getFile()));
   }
 
@@ -209,21 +209,21 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
     registrar.registerTextEditorHighlightingPass(new Fac(), null, null, false, -1);
     myDaemonCodeAnalyzer.restart(getTestName(false));
     creation[0]=0;
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
     assertEquals(1, creation[0]);
 
     //cached
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
     assertEquals(1, creation[0]);
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
     assertEquals(1, creation[0]);
 
     type(' ');
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
     assertEquals(2, creation[0]);
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
     assertEquals(2, creation[0]);
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
     assertEquals(2, creation[0]);
   }
 
@@ -232,7 +232,7 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
     String text = "class <caret>S { int ffffff =  0;}";
     configureByText(JavaFileType.INSTANCE, text);
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-    myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR);
+    myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR);
     Document document = myEditor.getDocument();
     FileStatusMap fileStatusMap = myDaemonCodeAnalyzer.getFileStatusMap();
     assertNull(fileStatusMap.getFileDirtyScope(document, myFile, Pass.LOCAL_INSPECTIONS));
@@ -258,7 +258,7 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
     String text = "@Deprecated<caret> class S { } ";
     configureByText(JavaFileType.INSTANCE, text);
 
-    List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightInfoType.SYMBOL_TYPE_SEVERITY);
+    List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightInfoType.SYMBOL_TYPE_SEVERITY);
     assertSize(2, infos);
 
     assertEquals("@Deprecated", infos.get(0).getText());
@@ -267,7 +267,7 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
     backspace();
     type('d');
 
-    List<HighlightInfo> after = myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightInfoType.SYMBOL_TYPE_SEVERITY);
+    List<HighlightInfo> after = myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightInfoType.SYMBOL_TYPE_SEVERITY);
 
     assertEquals("@Deprecated", after.get(0).getText());
     assertEquals("S", after.get(1).getText());
@@ -278,7 +278,7 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
     getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getTextLength());
     type(" ");
 
-    after = myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightInfoType.SYMBOL_TYPE_SEVERITY);
+    after = myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightInfoType.SYMBOL_TYPE_SEVERITY);
     assertSize(2, after);
 
     assertEquals("@Deprecated", after.get(0).getText());
@@ -294,7 +294,7 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
     assertTrue(ProjectFileIndex.getInstance(myProject).isExcluded(excluded));
 
     configureByText(JavaFileType.INSTANCE, "class X { <caret> }");
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
     FileStatusMap me = DaemonCodeAnalyzerEx.getInstanceEx(getProject()).getFileStatusMap();
     TextRange scope = me.getFileDirtyScope(getEditor().getDocument(), getFile(), Pass.UPDATE_ALL);
     assertNull(scope);
@@ -315,7 +315,7 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
       VirtualFile workspaceFile = Objects.requireNonNull(getProject().getWorkspaceFile());
       PsiFile excluded = Objects.requireNonNull(PsiManager.getInstance(getProject()).findFile(workspaceFile));
 
-      assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
+      assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
       FileStatusMap me = DaemonCodeAnalyzerEx.getInstanceEx(getProject()).getFileStatusMap();
       TextRange scope = me.getFileDirtyScope(getEditor().getDocument(), getFile(), Pass.UPDATE_ALL);
       assertNull(scope);
@@ -398,7 +398,7 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
     PsiFile psiFile = configureByText(JavaFileType.INSTANCE, "blah\nblah<caret>\nblah");
     Document document = psiFile.getFileDocument();
 
-    myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR);
+    myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR);
     assertNull(FileStatusMap.getDirtyTextRange(document, psiFile, Pass.LOCAL_INSPECTIONS));
 
     LightPlatformCodeInsightTestCase.executeAction(IdeActions.ACTION_EDITOR_DELETE_LINE, getEditor(), getProject());
@@ -410,7 +410,7 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
   public void testAfterNoPsiChangeTheWholeFileShouldBeDirty() {
     PsiFile psiFile = configureByText(JavaFileType.INSTANCE, "@Deprecated<caret> class S { } ");
     Document document = psiFile.getFileDocument();
-    myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR);
+    myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR);
     assertNull(FileStatusMap.getDirtyTextRange(document, psiFile, Pass.UPDATE_ALL));
 
     backspace();
@@ -432,7 +432,7 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
        }""";
     PsiFile psiFile = configureByText(JavaFileType.INSTANCE, text);
     Document document = psiFile.getFileDocument();
-    myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR);
+    myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR);
     assertNull(FileStatusMap.getDirtyTextRange(document, psiFile, Pass.UPDATE_ALL));
 
     type('3');
