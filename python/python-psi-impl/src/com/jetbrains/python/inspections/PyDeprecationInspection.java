@@ -23,7 +23,11 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.Property;
 import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyDeprecatable;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyExceptPart;
@@ -31,10 +35,14 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
+import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,6 +103,48 @@ public final class PyDeprecationInspection extends PyInspection {
       if (deprecationMessage != null) {
         ASTNode nameElement = node.getNameElement();
         registerProblem(nameElement == null ? node : nameElement.getPsi(), deprecationMessage, ProblemHighlightType.LIKE_DEPRECATED);
+      }
+    }
+
+    @Override
+    public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
+      final PyExpression qualifier = node.getQualifier();
+      if (qualifier == null) return;
+
+      final String name = node.getName();
+      if (name == null) return;
+
+      final PyType type = myTypeEvalContext.getType(qualifier);
+      if (!(type instanceof PyClassType classType)) return;
+
+      final PyClass cls = classType.getPyClass();
+      final Property property = cls.findProperty(name, true, myTypeEvalContext);
+      if (property == null) return;
+
+      final Maybe<PyCallable> accessor = property.getByDirection(AccessDirection.WRITE);
+      if (!accessor.isDefined() || accessor.value() == null) return;
+
+      final PyCallable callable = accessor.value();
+      if (!(callable instanceof PyDeprecatable deprecatable)) return;
+
+      @NlsSafe String deprecationMessage = deprecatable.getDeprecationMessage();
+
+      if (deprecationMessage == null && !(callable.getContainingFile() instanceof PyiFile)) {
+        PsiElement classStub = PyiUtil.getPythonStub(cls);
+        if (classStub instanceof PyClass stubClass) {
+          Property stubProperty = stubClass.findProperty(name, true, myTypeEvalContext);
+          if (stubProperty != null) {
+            PyCallable stubSetter = stubProperty.getByDirection(AccessDirection.WRITE).valueOrNull();
+            if (stubSetter instanceof PyDeprecatable stubDeprecatable) {
+              deprecationMessage = stubDeprecatable.getDeprecationMessage();
+            }
+          }
+        }
+      }
+
+      if (deprecationMessage != null) {
+        PsiElement nameIdentifier = node.getNameIdentifier();
+        registerProblem(nameIdentifier == null ? node : nameIdentifier, deprecationMessage, ProblemHighlightType.LIKE_DEPRECATED);
       }
     }
 
