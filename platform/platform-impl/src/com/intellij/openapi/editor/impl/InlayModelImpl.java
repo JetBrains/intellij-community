@@ -46,6 +46,7 @@ import java.util.function.Supplier;
 import static com.intellij.openapi.editor.impl.InlayKeys.OFFSET_BEFORE_DISPOSAL;
 
 //@ApiStatus.Internal
+@SuppressWarnings("SuspiciousPackagePrivateAccess")
 public final class InlayModelImpl implements InlayModel, InlayModelEx, PrioritizedDocumentListener, Disposable, Dumpable {
   private static final Logger LOG = Logger.getInstance(InlayModelImpl.class);
 
@@ -178,7 +179,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
     EditorImpl.assertIsDispatchThread();
     Document document = myDocument;
     if (DocumentUtil.isInsideSurrogatePair(document, offset)) return null;
-    offset = Math.max(0, Math.min(document.getTextLength(), offset));
+    offset = Math.clamp(offset, 0, document.getTextLength());
     InlineInlayImpl<T> inlay = new InlineInlayImpl<>(myEditor, offset, relatesToPrecedingText, priority, renderer);
     notifyAdded(inlay);
     if (myEditor.isDisposed()) {
@@ -222,7 +223,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
                                                                            int priority,
                                                                            @NotNull T renderer) {
     EditorImpl.assertIsDispatchThread();
-    offset = Math.max(0, Math.min(myDocument.getTextLength(), offset));
+    offset = Math.clamp(offset, 0, myDocument.getTextLength());
     BlockInlayImpl<T> inlay = new BlockInlayImpl<>(myEditor, offset, relatesToPrecedingText, showAbove, showWhenFolded, priority, renderer);
     notifyAdded(inlay);
     if (myEditor.isDisposed()) {
@@ -253,8 +254,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
                                                                                            int priority,
                                                                                            @NotNull T renderer) {
     EditorImpl.assertIsDispatchThread();
-    Document document = myDocument;
-    offset = Math.max(0, Math.min(document.getTextLength(), offset));
+    offset = Math.clamp(offset, 0, myDocument.getTextLength());
     AfterLineEndInlayImpl<T> inlay = new AfterLineEndInlayImpl<>(myEditor, offset, relatesToPrecedingText, softWrappable, priority,
                                                                  renderer);
     notifyAdded(inlay);
@@ -492,7 +492,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
         if (offset == myDocument.getLineEndOffset(logicalLine) && location.getCollapsedRegion() == null) {
           List<Inlay<?>> inlays = myEditor.getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
           if (!inlays.isEmpty()) {
-            Rectangle bounds = inlays.get(0).getBounds();
+            Rectangle bounds = inlays.getFirst().getBounds();
             assert bounds != null;
             if (point.y < bounds.y || point.y >= bounds.y + bounds.height) return null;
             Inlay<?> inlay = findInlay(inlays, point.x, bounds.x);
