@@ -31,11 +31,13 @@ import org.junit.jupiter.api.Test
 class AgentSessionsTreePopupActionsTest {
   @Test
   fun openActionVisibilityAndDispatchForProjectAndWorktreeThread() {
+    var dedicatedFrame = false
     var openedProjectPath: String? = null
     var openedThreadPath: String? = null
     var openedSubAgentPath: String? = null
     val openAction = AgentSessionsTreePopupOpenAction(
       resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
+      isDedicatedProject = { dedicatedFrame },
       openProject = { path -> openedProjectPath = path },
       openThread = { path, _, _ -> openedThreadPath = path },
       openSubAgent = { path, _, _, _ -> openedSubAgentPath = path },
@@ -59,6 +61,13 @@ class AgentSessionsTreePopupActionsTest {
     val openProjectEvent = popupEvent(openAction, openProjectContext)
     openAction.update(openProjectEvent)
     assertThat(openProjectEvent.presentation.isEnabledAndVisible).isFalse()
+
+    dedicatedFrame = true
+    openAction.update(openProjectEvent)
+    assertThat(openProjectEvent.presentation.isEnabledAndVisible).isTrue()
+    openedProjectPath = null
+    openAction.actionPerformed(openProjectEvent)
+    assertThat(openedProjectPath).isEqualTo("/work/project-open")
 
     val threadProject = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
     val thread = thread(id = "thread-1", provider = AgentSessionProvider.CODEX)
