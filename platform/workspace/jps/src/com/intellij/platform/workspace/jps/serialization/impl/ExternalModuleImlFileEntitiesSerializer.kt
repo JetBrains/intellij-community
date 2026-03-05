@@ -71,13 +71,20 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
     }
   }
 
-  override fun saveModuleOptions(externalSystemOptions: ExternalSystemModuleOptionsEntity?,
-                                 moduleType: String?,
-                                 customImlData: ModuleCustomImlDataEntity?,
-                                 content: WritableJpsFileContent) {
+  override fun saveModuleOptions(
+    externalSystemOptions: ExternalSystemModuleOptionsEntity?,
+    moduleType: String?,
+    moduleEntitySource: EntitySource,
+    customImlData: ModuleCustomImlDataEntity?,
+    content: WritableJpsFileContent
+  ) {
     val fileUrlString = fileUrl.url
     if (FileUtil.extensionEquals(fileUrlString, "iml")) {
       logger<ExternalModuleImlFileEntitiesSerializer>().error("External serializer should not write to iml files. Path:$fileUrlString")
+    }
+    if (moduleEntitySource is JpsImportedEntitySource && moduleEntitySource.externalSystemId != externalSystemOptions?.externalSystem) {
+      LOG.error("External system ID mismatch: ModuleEntity.entitySource (${moduleEntitySource.externalSystemId}) != ExternalSystemModuleOptionsEntity.externalSystem (${externalSystemOptions?.externalSystem}). " +
+                "Module is probably misconfigured. It'll get '${externalSystemOptions?.externalSystem}' system ID after deserialization.")
     }
     if (externalSystemOptions != null) {
       val componentTag = JDomSerializationUtil.createComponentElement("ExternalSystem")
