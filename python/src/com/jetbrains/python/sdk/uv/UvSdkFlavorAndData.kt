@@ -22,7 +22,7 @@ import kotlin.io.path.pathString
 class UvSdkAdditionalData : PythonSdkAdditionalData {
   internal val flavorData: UvSdkFlavorData
 
-  constructor(uvWorkingDirectory: Path?, usePip: Boolean, venvPath: Path?, uvPath: Path?) : this(UvSdkFlavorData(uvWorkingDirectory, usePip, venvPath?.pathString, uvPath?.pathString))
+  constructor(uvWorkingDirectory: Path?, usePip: Boolean?, venvPath: Path?, uvPath: Path?) : this(UvSdkFlavorData(uvWorkingDirectory, usePip, venvPath?.pathString, uvPath?.pathString))
 
   private constructor(flavorData: UvSdkFlavorData) : super(PyFlavorAndData(flavorData, UvSdkFlavor)) {
     this.flavorData = flavorData
@@ -31,7 +31,7 @@ class UvSdkAdditionalData : PythonSdkAdditionalData {
   constructor(data: PythonSdkAdditionalData) : super(data) {
     when (data) {
       is UvSdkAdditionalData -> this.flavorData = data.flavorData
-      else -> this.flavorData = UvSdkFlavorData(null, false, null, null)
+      else -> this.flavorData = UvSdkFlavorData(null, null, null, null)
     }
   }
 
@@ -44,8 +44,8 @@ class UvSdkAdditionalData : PythonSdkAdditionalData {
       element.setAttribute(UV_WORKING_DIR, flavorData.uvWorkingDirectory.pathString)
     }
 
-    if (flavorData.usePip) {
-      element.setAttribute(USE_PIP, flavorData.usePip.toString())
+    if (flavorData.usePip == true) {
+      element.setAttribute(USE_PIP, true.toString())
     }
 
     if (flavorData.venvPath?.isNotBlank() == true) {
@@ -69,7 +69,7 @@ class UvSdkAdditionalData : PythonSdkAdditionalData {
       return when {
         element.getAttributeValue(IS_UV) == "true" -> {
           val uvWorkingDirectory = if (element.getAttributeValue(UV_WORKING_DIR).isNullOrEmpty()) null else Path.of(element.getAttributeValue(UV_WORKING_DIR))
-          val usePip = element.getAttributeValue(USE_PIP)?.toBoolean() ?: false
+          val usePip = element.getAttributeValue(USE_PIP)?.toBoolean()
           val venvPath = if (element.getAttributeValue(UV_VENV_PATH).isNullOrEmpty()) null else Path.of(element.getAttributeValue(UV_VENV_PATH))
           val uvPath = if (element.getAttributeValue(UV_TOOL_PATH).isNullOrEmpty()) null else Path.of(element.getAttributeValue(UV_TOOL_PATH))
           UvSdkAdditionalData(uvWorkingDirectory, usePip, venvPath, uvPath).apply {
@@ -90,7 +90,7 @@ class UvSdkAdditionalData : PythonSdkAdditionalData {
 // TODO PY-87712 Move to a separate storage
 data class UvSdkFlavorData(
   val uvWorkingDirectory: Path?,
-  val usePip: Boolean,
+  val usePip: Boolean?,
   val venvPath: FullPathOnTarget?,
   val uvPath: FullPathOnTarget?,
 ) : PyFlavorData {
