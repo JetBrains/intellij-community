@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.popup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
@@ -102,6 +103,7 @@ internal object JDialogRenderer : PopupRenderer {
         onPreviewKeyEvent: ((KeyEvent) -> Boolean)?,
         onKeyEvent: ((KeyEvent) -> Boolean)?,
         cornerSize: CornerSize,
+        windowShape: ((IntSize) -> java.awt.Shape)?,
         content: @Composable () -> Unit,
     ) {
         val isJBREnvironment = remember { JBR.isAvailable() && JBR.isRoundedCornersManagerSupported() }
@@ -148,6 +150,7 @@ internal object JDialogRenderer : PopupRenderer {
                 onKeyEvent = onKeyEvent,
                 cornerSize = cornerSize,
                 blendingEnabled = supportBlending,
+                windowShape = windowShape,
                 content = content,
             )
         }
@@ -164,6 +167,7 @@ private fun JPopupImpl(
     onKeyEvent: ((KeyEvent) -> Boolean)?,
     cornerSize: CornerSize,
     blendingEnabled: Boolean,
+    windowShape: ((IntSize) -> java.awt.Shape)?,
     content: @Composable () -> Unit,
 ) {
     val popupDensity = LocalDensity.current
@@ -175,6 +179,7 @@ private fun JPopupImpl(
     val currentOnKeyEvent by rememberUpdatedState(onKeyEvent)
     val currentOnPreviewKeyEvent by rememberUpdatedState(onPreviewKeyEvent)
     val currentProperties by rememberUpdatedState(properties)
+    val windowShapeState = rememberUpdatedState(windowShape)
 
     val compositionLocalContext by rememberUpdatedState(currentCompositionLocalContext)
 
@@ -242,19 +247,40 @@ private fun JPopupImpl(
                             JPopupMeasurePolicy(dialog, currentPopupPositionProvider, parentBounds) { position, size ->
                                 popupRectangle = Rectangle(position.x, position.y, size.width, size.height)
 
+                                val currentWindowShape = windowShapeState.value
+                                if (currentWindowShape != null) {
+                                    if (blendingEnabled) {
+                                        // When blending is active (via compose.interop.blending), the window is
+                                        // already in java.awt.GraphicsDevice.WindowTranslucency.PERPIXEL_TRANSLUCENT
+                                        // mode (per-pixel alpha). Calling Window.setShape() would switch it to
+                                        // PERPIXEL_TRANSPARENT (hard pixel clip), breaking antialiasing at the edges.
+                                        // Compose's own drawing + transparent background is sufficient.
+                                        return@JPopupMeasurePolicy
+                                    }
+                                    // Without blending, fall back to Window.setShape() to at least
+                                    // clip the rectangular window boundary to the balloon outline.
+                                    // Note: this uses PERPIXEL_TRANSPARENT mode, which has known
+                                    // antialiasing limitations at concave corners (e.g. arrow junction).
+                                    val logicalSize =
+                                        IntSize(
+                                            floor(size.width / popupDensity.density).toInt(),
+                                            floor(size.height / popupDensity.density).toInt(),
+                                        )
+                                    try {
+                                        dialog.shape = currentWindowShape(logicalSize)
+                                    } catch (_: UnsupportedOperationException) {
+                                        applyRoundedCorners(dialog, cornerSize, size, popupDensity)
+                                    }
+                                    return@JPopupMeasurePolicy
+                                }
+
                                 if (blendingEnabled) {
                                     // If any of the blending logic is enabled, we don't need to use JBR APIs
                                     // to set the rounded corners and fix the background.
                                     return@JPopupMeasurePolicy
                                 }
 
-                                if (cornerSize != ZeroCornerSize) {
-                                    JBR.getRoundedCornersManager()
-                                        .setRoundedCorners(
-                                            dialog,
-                                            cornerSize.toPx(size.toSize(), popupDensity) / dialog.density(),
-                                        )
-                                }
+                                applyRoundedCorners(dialog, cornerSize, size, popupDensity)
                             }
                         },
                 )
@@ -388,6 +414,11 @@ private class JPopupMeasurePolicy(
 
         return layout(contentSize.width, contentSize.height) { placeables.fastForEach { it.place(0, 0) } }
     }
+}
+
+private fun applyRoundedCorners(dialog: Window, cornerSize: CornerSize, size: IntSize, density: Density) {
+    if (cornerSize == ZeroCornerSize) return
+    JBR.getRoundedCornersManager().setRoundedCorners(dialog, cornerSize.toPx(size.toSize(), density) / dialog.density())
 }
 
 // Based on implementation from JBUIScale and ScreenUtil
