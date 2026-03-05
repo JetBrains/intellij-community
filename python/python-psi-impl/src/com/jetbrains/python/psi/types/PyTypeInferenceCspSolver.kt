@@ -163,10 +163,11 @@ class CspBuilder(val context: TypeEvalContext) {
       }
       is PyTypeVarType -> {
         // if the solution is another PyTypeVarType, check the declared default types
-        return when {
-          instantiatedType.defaultType?.get() != null -> instantiatedType.defaultType?.get()
-          inferenceVariable.typeVariable.defaultType?.get() != null -> inferenceVariable.typeVariable.defaultType?.get()
-          else -> instantiatedType
+        if (inferenceVariable.typeVariable.defaultType != null) {
+          return inferenceVariable.typeVariable.defaultType?.get()
+        }
+        else {
+          return instantiatedType
         }
       }
       else -> {
@@ -528,16 +529,18 @@ private object ConstraintReducer {
           return
         }
       }
-      Variance.INVARIANT, Variance.BIVARIANT -> {
+      Variance.INVARIANT -> {
         if (!sameTypes(left, right, cp.context)) {
           cp.fail()
           return
         }
       }
+      Variance.BIVARIANT -> {
+        // success
+      }
       Variance.INFER_VARIANCE -> {
         UNREACHABLE()
       }
-      Variance.BIVARIANT -> {}
     }
     // success
   }
