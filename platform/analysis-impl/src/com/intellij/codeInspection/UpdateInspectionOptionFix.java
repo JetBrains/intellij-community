@@ -15,6 +15,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+/// Updates a single inspection option to a new `boolean` or `int` value.
+///
+/// @see AddToInspectionOptionListFix
 public class UpdateInspectionOptionFix implements ModCommandAction {
   private final InspectionProfileEntry myInspection;
   private final String myProperty;
