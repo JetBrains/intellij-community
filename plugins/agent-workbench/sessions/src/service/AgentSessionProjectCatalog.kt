@@ -31,11 +31,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.name
 
-private val LOG = logger<AgentSessionProjectCatalog>()
-
 internal class AgentSessionProjectCatalog {
-  private val projectBuildSystemBadgeCache = ProjectBuildSystemBadgeCatalogCache()
-
   suspend fun collectProjects(): List<ProjectEntry> {
     val rawEntries = collectRawProjectEntries()
     if (rawEntries.isEmpty()) return emptyList()

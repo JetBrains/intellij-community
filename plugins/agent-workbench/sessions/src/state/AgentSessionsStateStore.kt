@@ -6,11 +6,13 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
+import com.intellij.openapi.components.Service
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
+@Service(Service.Level.APP)
 internal class AgentSessionsStateStore {
   private val mutableState = MutableStateFlow(AgentSessionsState())
   val state: StateFlow<AgentSessionsState> = mutableState.asStateFlow()
@@ -61,7 +63,7 @@ internal class AgentSessionsStateStore {
 
   fun showMoreThreads(path: String) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
-    mutableState.update { state ->
+    update { state ->
       val current = state.visibleThreadCounts[normalizedPath] ?: DEFAULT_VISIBLE_THREAD_COUNT
       val nextVisible = current + DEFAULT_VISIBLE_THREAD_COUNT
       state.copy(visibleThreadCounts = state.visibleThreadCounts + (normalizedPath to nextVisible))
@@ -70,7 +72,7 @@ internal class AgentSessionsStateStore {
 
   fun ensureThreadVisible(path: String, provider: AgentSessionProvider, threadId: String) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
-    mutableState.update { state ->
+    update { state ->
       val threadIndex = findThreadIndex(
         projects = state.projects,
         normalizedPath = normalizedPath,
@@ -93,7 +95,7 @@ internal class AgentSessionsStateStore {
   fun removeThread(path: String, provider: AgentSessionProvider, threadId: String): Boolean {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
     var removed = false
-    mutableState.update { state ->
+    update { state ->
       val nextProjects = state.projects.map { project ->
         if (project.path == normalizedPath) {
           val nextThreads = project.threads.filterNot { it.provider == provider && it.id == threadId }

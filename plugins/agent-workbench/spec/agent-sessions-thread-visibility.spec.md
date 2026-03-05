@@ -12,8 +12,8 @@ targets:
   - ../sessions/testSrc/AgentSessionsSwingTreeRenderingTest.kt
   - ../sessions/testSrc/AgentSessionsSwingTreeInteractionTest.kt
   - ../sessions/testSrc/AgentSessionsTreeSnapshotTest.kt
-  - ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
-  - ../sessions/testSrc/AgentSessionsServiceOnDemandIntegrationTest.kt
+  - ../sessions/testSrc/AgentSessionRefreshServiceIntegrationTest.kt
+  - ../sessions/testSrc/AgentSessionRefreshOnDemandIntegrationTest.kt
 ---
 
 # Agent Threads Visibility and More Row
@@ -36,13 +36,13 @@ Define deterministic visibility rules for project/worktree thread rows so empty 
 
 ## Requirements
 - Initial visible-thread count per normalized path must be `DEFAULT_VISIBLE_THREAD_COUNT` (`3`).
-  [@test] ../sessions/testSrc/AgentSessionsServiceOnDemandIntegrationTest.kt
+  [@test] ../sessions/testSrc/AgentSessionRefreshOnDemandIntegrationTest.kt
 
 - Visible-thread count lookup order per normalized path must be:
   - in-memory runtime entry,
   - persisted tree UI state entry,
   - default value.
-  [@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
+  [@test] ../sessions/testSrc/AgentSessionRefreshServiceIntegrationTest.kt
   [@test] ../sessions/testSrc/AgentSessionsTreeUiStateServiceTest.kt
 
 - For project rows, render `More` only when `project.threads.size > visibleCount`.
@@ -69,17 +69,17 @@ Define deterministic visibility rules for project/worktree thread rows so empty 
   [@test] ../sessions/testSrc/AgentSessionsSwingTreeRenderingTest.kt
 
 - `showMoreThreads(path)` and `ensureThreadVisible(path, provider, threadId)` must follow runtime visibility increment contract defined in `spec/agent-core-contracts.spec.md`.
-  [@test] ../sessions/testSrc/AgentSessionsServiceOnDemandIntegrationTest.kt
+  [@test] ../sessions/testSrc/AgentSessionRefreshOnDemandIntegrationTest.kt
   [@test] ../sessions/testSrc/AgentSessionsSwingTreeInteractionTest.kt
 
 - Refresh bootstrap must keep runtime visible-thread counts above default for known project/worktree paths and must ignore persisted UI-state visible-thread counts.
-  [@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
+  [@test] ../sessions/testSrc/AgentSessionRefreshServiceIntegrationTest.kt
 
 - Persisted visibility key normalization must follow `spec/agent-core-contracts.spec.md`.
   [@test] ../sessions/testSrc/AgentSessionsTreeUiStateServiceTest.kt
 
 - Tree-side `More` click handling must not trigger backend loads directly; it only updates local visibility state.
-  [@test] ../sessions/testSrc/AgentSessionsServiceOnDemandIntegrationTest.kt
+  [@test] ../sessions/testSrc/AgentSessionRefreshOnDemandIntegrationTest.kt
 
 ## User Experience
 - Exact-count case renders `More (N)`.
@@ -99,8 +99,8 @@ Define deterministic visibility rules for project/worktree thread rows so empty 
 ## Testing / Local Run
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsSwingTreeRenderingTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsTreeSnapshotTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsServiceRefreshIntegrationTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsServiceOnDemandIntegrationTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionRefreshServiceIntegrationTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionRefreshOnDemandIntegrationTest'`
 
 ## Open Questions / Risks
 - If providers begin exposing exact remote totals independent of loaded rows, count semantics may require richer model than current hidden-row math.

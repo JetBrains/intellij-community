@@ -18,18 +18,16 @@ import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.model.WorktreeEntry
 import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveService
 import com.intellij.agent.workbench.sessions.service.AgentSessionChatOpenExecutor
-import com.intellij.agent.workbench.sessions.service.AgentSessionContentRepository
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
-import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
-import com.intellij.agent.workbench.sessions.state.InMemorySessionWarmState
-import com.intellij.agent.workbench.sessions.state.SessionWarmState
+import com.intellij.agent.workbench.sessions.state.InMemorySessionsTreeUiState
+import com.intellij.agent.workbench.sessions.state.SessionsTreeUiState
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -41,22 +39,7 @@ import kotlin.time.Duration.Companion.milliseconds
 internal const val PROJECT_PATH = "/work/project-a"
 internal const val WORKTREE_PATH = "/work/project-feature"
 
-data class TestProjectCatalogEntry(
-  @JvmField val path: String,
-  @JvmField val name: String,
-  @JvmField val worktrees: List<TestWorktreeCatalogEntry> = emptyList(),
-  @JvmField val branch: String? = null,
-  @JvmField val isOpen: Boolean = true,
-)
-
-data class TestWorktreeCatalogEntry(
-  @JvmField val path: String,
-  @JvmField val name: String,
-  @JvmField val branch: String?,
-  @JvmField val isOpen: Boolean = false,
-)
-
-class AgentSessionStateSyncTestFacade(
+internal class AgentSessionStateSyncTestFacade(
   private val stateStore: AgentSessionsStateStore,
   private val syncService: AgentSessionRefreshService,
 ) {
@@ -73,10 +56,6 @@ class AgentSessionStateSyncTestFacade(
 
   fun refreshProviderForPath(path: String, provider: AgentSessionProvider) {
     syncService.refreshProviderForPath(path = path, provider = provider)
-  }
-
-  fun markThreadAsRead(path: String, provider: AgentSessionProvider, threadId: String, updatedAt: Long) {
-    syncService.markThreadAsRead(path = path, provider = provider, threadId = threadId, updatedAt = updatedAt)
   }
 
   fun showMoreThreads(path: String) {
@@ -148,23 +127,10 @@ internal fun thread(
   )
 }
 
-suspend fun withTestService(
-  sessionSourcesProvider: () -> List<AgentSessionSource>,
-  projectEntriesProvider: suspend () -> List<TestProjectCatalogEntry>,
-  action: suspend (AgentSessionStateSyncTestFacade) -> Unit,
-) {
-  withService(
-    sessionSourcesProvider = sessionSourcesProvider,
-    projectEntriesProvider = { projectEntriesProvider().map { it.toProjectEntry() } },
-    action = action,
-  )
-}
-
 internal suspend fun withService(
   sessionSourcesProvider: () -> List<AgentSessionSource>,
   projectEntriesProvider: suspend () -> List<ProjectEntry>,
-  warmState: SessionWarmState = InMemorySessionWarmState(),
-  uiPreferencesState: AgentSessionUiPreferencesStateService = AgentSessionUiPreferencesStateService(),
+  treeUiState: SessionsTreeUiState = InMemorySessionsTreeUiState(),
   chatOpenExecutor: AgentSessionChatOpenExecutor? = null,
   openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingCodexTabSnapshot>> =
     ::collectOpenPendingCodexTabsByPath,
@@ -178,8 +144,7 @@ internal suspend fun withService(
   withServiceAndLaunch(
     sessionSourcesProvider = sessionSourcesProvider,
     projectEntriesProvider = projectEntriesProvider,
-    warmState = warmState,
-    uiPreferencesState = uiPreferencesState,
+    treeUiState = treeUiState,
     chatOpenExecutor = chatOpenExecutor,
     openPendingCodexTabsProvider = openPendingCodexTabsProvider,
     openConcreteChatThreadIdentitiesByPathProvider = openConcreteChatThreadIdentitiesByPathProvider,
@@ -192,8 +157,7 @@ internal suspend fun withService(
 internal suspend fun withServiceAndLaunch(
   sessionSourcesProvider: () -> List<AgentSessionSource>,
   projectEntriesProvider: suspend () -> List<ProjectEntry>,
-  warmState: SessionWarmState = InMemorySessionWarmState(),
-  uiPreferencesState: AgentSessionUiPreferencesStateService = AgentSessionUiPreferencesStateService(),
+  treeUiState: SessionsTreeUiState = InMemorySessionsTreeUiState(),
   chatOpenExecutor: AgentSessionChatOpenExecutor? = null,
   openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingCodexTabSnapshot>> =
     ::collectOpenPendingCodexTabsByPath,
@@ -207,8 +171,7 @@ internal suspend fun withServiceAndLaunch(
   withServiceAndArchiveAndLaunch(
     sessionSourcesProvider = sessionSourcesProvider,
     projectEntriesProvider = projectEntriesProvider,
-    warmState = warmState,
-    uiPreferencesState = uiPreferencesState,
+    treeUiState = treeUiState,
     archiveChatCleanup = { _, _, _ -> },
     chatOpenExecutor = chatOpenExecutor,
     openPendingCodexTabsProvider = openPendingCodexTabsProvider,
@@ -222,8 +185,7 @@ internal suspend fun withServiceAndLaunch(
 internal suspend fun withServiceAndArchive(
   sessionSourcesProvider: () -> List<AgentSessionSource>,
   projectEntriesProvider: suspend () -> List<ProjectEntry>,
-  warmState: SessionWarmState = InMemorySessionWarmState(),
-  uiPreferencesState: AgentSessionUiPreferencesStateService = AgentSessionUiPreferencesStateService(),
+  treeUiState: SessionsTreeUiState = InMemorySessionsTreeUiState(),
   archiveChatCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit = { _, _, _ -> },
   chatOpenExecutor: AgentSessionChatOpenExecutor? = null,
   openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingCodexTabSnapshot>> =
@@ -238,8 +200,7 @@ internal suspend fun withServiceAndArchive(
   withServiceAndArchiveAndLaunch(
     sessionSourcesProvider = sessionSourcesProvider,
     projectEntriesProvider = projectEntriesProvider,
-    warmState = warmState,
-    uiPreferencesState = uiPreferencesState,
+    treeUiState = treeUiState,
     archiveChatCleanup = archiveChatCleanup,
     chatOpenExecutor = chatOpenExecutor,
     openPendingCodexTabsProvider = openPendingCodexTabsProvider,
@@ -253,8 +214,7 @@ internal suspend fun withServiceAndArchive(
 internal suspend fun withServiceAndArchiveAndLaunch(
   sessionSourcesProvider: () -> List<AgentSessionSource>,
   projectEntriesProvider: suspend () -> List<ProjectEntry>,
-  warmState: SessionWarmState = InMemorySessionWarmState(),
-  uiPreferencesState: AgentSessionUiPreferencesStateService = AgentSessionUiPreferencesStateService(),
+  treeUiState: SessionsTreeUiState = InMemorySessionsTreeUiState(),
   archiveChatCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit = { _, _, _ -> },
   chatOpenExecutor: AgentSessionChatOpenExecutor? = null,
   openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingCodexTabSnapshot>> =
@@ -266,24 +226,19 @@ internal suspend fun withServiceAndArchiveAndLaunch(
   ) -> AgentChatPendingCodexTabRebindReport = ::rebindOpenPendingCodexTabs,
   action: suspend (AgentSessionStateSyncTestFacade, AgentSessionArchiveService, AgentSessionLaunchService) -> Unit,
 ) {
-  val job = SupervisorJob()
   @Suppress("RAW_SCOPE_CREATION")
-  val scope = CoroutineScope(job + Dispatchers.Default)
+  val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
   try {
     val stateStore = AgentSessionsStateStore()
-    val contentRepository = AgentSessionContentRepository(
-      stateStore = stateStore,
-      warmState = warmState,
-    )
     val syncService = AgentSessionRefreshService(
       serviceScope = scope,
       sessionSourcesProvider = sessionSourcesProvider,
       projectEntriesProvider = projectEntriesProvider,
       stateStore = stateStore,
-      warmState = warmState,
-      openPendingCodexTabsProvider = { _ -> openPendingCodexTabsProvider() },
+      treeUiState = treeUiState,
+      openPendingCodexTabsProvider = openPendingCodexTabsProvider,
       openConcreteChatThreadIdentitiesByPathProvider = openConcreteChatThreadIdentitiesByPathProvider,
-      openAgentChatPendingTabsBinder = { _, requestsByPath -> openAgentChatPendingTabsBinder(requestsByPath) },
+      openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinder,
       subscribeToProjectLifecycle = false,
     )
     val service = AgentSessionStateSyncTestFacade(
@@ -295,7 +250,7 @@ internal suspend fun withServiceAndArchiveAndLaunch(
         serviceScope = scope,
         stateStore = stateStore,
         syncService = syncService,
-        uiPreferencesState = uiPreferencesState,
+        treeUiState = treeUiState,
       )
     }
     else {
@@ -303,49 +258,32 @@ internal suspend fun withServiceAndArchiveAndLaunch(
         serviceScope = scope,
         stateStore = stateStore,
         syncService = syncService,
-        uiPreferencesState = uiPreferencesState,
+        treeUiState = treeUiState,
         chatOpenExecutor = chatOpenExecutor,
       )
     }
     val archiveService = AgentSessionArchiveService(
       serviceScope = scope,
+      stateStore = stateStore,
       syncService = syncService,
-      contentRepository = contentRepository,
       archiveChatCleanup = archiveChatCleanup,
     )
     action(service, archiveService, launchService)
   }
   finally {
-    job.cancelAndJoin()
+    scope.cancel()
   }
-}
-
-fun openTestProjectEntry(
-  path: String,
-  name: String,
-  worktrees: List<TestWorktreeCatalogEntry> = emptyList(),
-  branch: String? = null,
-): TestProjectCatalogEntry {
-  return TestProjectCatalogEntry(
-    path = path,
-    name = name,
-    branch = branch,
-    worktrees = worktrees,
-    isOpen = true,
-  )
 }
 
 internal fun openProjectEntry(
   path: String,
   name: String,
   worktrees: List<WorktreeEntry> = emptyList(),
-  branch: String? = null,
 ): ProjectEntry {
   return ProjectEntry(
     path = path,
     name = name,
     project = openProjectProxy(name),
-    branch = branch,
     worktreeEntries = worktrees,
   )
 }
@@ -354,13 +292,11 @@ internal fun closedProjectEntry(
   path: String,
   name: String,
   worktrees: List<WorktreeEntry> = emptyList(),
-  branch: String? = null,
 ): ProjectEntry {
   return ProjectEntry(
     path = path,
     name = name,
     project = null,
-    branch = branch,
     worktreeEntries = worktrees,
   )
 }
@@ -399,7 +335,7 @@ private fun defaultValue(returnType: Class<*>): Any? {
   }
 }
 
-suspend fun waitForCondition(timeoutMs: Long = 5_000, condition: () -> Boolean) {
+internal suspend fun waitForCondition(timeoutMs: Long = 5_000, condition: () -> Boolean) {
   val deadline = System.currentTimeMillis() + timeoutMs
   while (System.currentTimeMillis() < deadline) {
     if (condition()) {
@@ -408,23 +344,4 @@ suspend fun waitForCondition(timeoutMs: Long = 5_000, condition: () -> Boolean) 
     delay(20.milliseconds)
   }
   throw AssertionError("Condition was not satisfied within ${timeoutMs}ms")
-}
-
-private fun TestProjectCatalogEntry.toProjectEntry(): ProjectEntry {
-  return ProjectEntry(
-    path = path,
-    name = name,
-    project = if (isOpen) openProjectProxy(name) else null,
-    branch = branch,
-    worktreeEntries = worktrees.map { it.toWorktreeEntry() },
-  )
-}
-
-private fun TestWorktreeCatalogEntry.toWorktreeEntry(): WorktreeEntry {
-  return WorktreeEntry(
-    path = path,
-    name = name,
-    branch = branch,
-    project = if (isOpen) openProjectProxy(name) else null,
-  )
 }

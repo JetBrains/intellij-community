@@ -33,13 +33,15 @@ import com.intellij.agent.workbench.sessions.frame.AGENT_SESSIONS_TOOL_WINDOW_ID
 import com.intellij.agent.workbench.sessions.frame.AGENT_WORKBENCH_DEDICATED_FRAME_TYPE_ID
 import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
-import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
+import com.intellij.agent.workbench.sessions.state.AgentSessionsTreeUiStateService
+import com.intellij.agent.workbench.sessions.state.SessionsTreeUiState
 import com.intellij.agent.workbench.sessions.util.SingleFlightActionGate
 import com.intellij.agent.workbench.sessions.util.SingleFlightPolicy
 import com.intellij.agent.workbench.sessions.util.SingleFlightProgressRequest
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionNewIdentity
+import com.intellij.agent.workbench.sessions.util.isAgentSessionNewIdentity
 import com.intellij.agent.workbench.sessions.util.parseAgentSessionIdentity
 import com.intellij.agent.workbench.sessions.util.resolveAgentSessionId
 import com.intellij.ide.impl.OpenProjectTask
@@ -63,7 +65,6 @@ import com.intellij.project.ProjectStoreOwner
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
@@ -76,6 +77,8 @@ private const val OPEN_DEDICATED_FRAME_ACTION_KEY_PREFIX = "dedicated-frame-open
 private const val CREATE_SESSION_ACTION_KEY_PREFIX = "session-create"
 private const val OPEN_THREAD_ACTION_KEY_PREFIX = "thread-open"
 private const val OPEN_SUB_AGENT_ACTION_KEY_PREFIX = "subagent-open"
+private const val PENDING_LAUNCH_MODE_STANDARD = "standard"
+private const val PENDING_LAUNCH_MODE_YOLO = "yolo"
 private const val MAX_STARTUP_COMMAND_BYTES = 24 * 1024
 
 enum class OpenThreadLaunchOrigin(val keySuffix: String) {
@@ -136,11 +139,11 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
 }
 
 @Service(Service.Level.APP)
-class AgentSessionLaunchService internal constructor(
+internal class AgentSessionLaunchService(
   private val serviceScope: CoroutineScope,
   private val stateStore: AgentSessionsStateStore,
   private val syncService: AgentSessionRefreshService,
-  private val uiPreferencesState: AgentSessionUiPreferencesStateService = AgentSessionUiPreferencesStateService(),
+  private val treeUiState: SessionsTreeUiState,
   private val chatOpenExecutor: AgentSessionChatOpenExecutor = DefaultAgentSessionChatOpenExecutor,
 ) {
   @Suppress("unused")
@@ -148,13 +151,13 @@ class AgentSessionLaunchService internal constructor(
     serviceScope = serviceScope,
     stateStore = service<AgentSessionsStateStore>(),
     syncService = service<AgentSessionRefreshService>(),
-    uiPreferencesState = service<AgentSessionUiPreferencesStateService>(),
+    treeUiState = service<AgentSessionsTreeUiStateService>(),
     chatOpenExecutor = DefaultAgentSessionChatOpenExecutor,
   )
 
   private val actionGate = SingleFlightActionGate()
 
-  fun openOrFocusProject(path: String, entryPoint: AgentWorkbenchEntryPoint) {
+  fun openOrFocusProject(path: String) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
     launchDropAction(
       key = buildOpenProjectActionKey(normalizedPath),
@@ -272,56 +275,43 @@ class AgentSessionLaunchService internal constructor(
         { handler(AgentPromptLaunchResult.failure(AgentPromptLaunchError.DROPPED_DUPLICATE)) }
       },
     ) {
-      try {
-        uiPreferencesState.setLastUsedProvider(provider)
+      treeUiState.setLastUsedProvider(provider)
 
-        val bridge = AgentSessionProviderBridges.find(provider)
-        if (bridge == null) {
-          logMissingProviderBridge(provider)
-          syncService.appendProviderUnavailableWarning(normalizedPath, provider)
-          promptLaunchResolved?.invoke(AgentPromptLaunchResult.failure(AgentPromptLaunchError.PROVIDER_UNAVAILABLE))
-          return@launchDropAction
-        }
-        if (mode !in bridge.supportedLaunchModes) {
-          LOG.warn("Session provider bridge ${provider.value} does not support launch mode $mode")
-          syncService.appendProviderUnavailableWarning(normalizedPath, provider)
-          promptLaunchResolved?.invoke(AgentPromptLaunchResult.failure(AgentPromptLaunchError.UNSUPPORTED_LAUNCH_MODE))
-          return@launchDropAction
-        }
-
-        val createSpec = bridge.createNewSession(path = normalizedPath, mode = mode)
-        val identity = createSpec.sessionId?.let { sessionId ->
-          buildAgentSessionIdentity(provider, sessionId)
-        } ?: buildAgentSessionNewIdentity(provider)
-        val initialMessagePlan = initialMessageRequest
-          ?.let(bridge::buildInitialMessagePlan)
-          ?: AgentInitialMessagePlan.EMPTY
-        val initialMessageDispatchPlan = buildInitialMessageDispatchPlan(
-          bridge = bridge,
-          baseLaunchSpec = createSpec.launchSpec,
-          identity = identity,
-          initialMessagePlan = initialMessagePlan,
-        )
-
-        AgentWorkbenchTelemetry.logThreadCreateRequested(entryPoint, provider, mode)
-        chatOpenExecutor.openNewChat(
-          normalizedPath = normalizedPath,
-          identity = identity,
-          launchSpec = createSpec.launchSpec,
-          initialMessageDispatchPlan = initialMessageDispatchPlan,
-          preferredDedicatedFrame = preferredDedicatedFrame,
-        )
-        if (AgentSessionProviderBehaviors.find(provider)?.refreshPathAfterCreateNewSession == true) {
-          syncService.refreshProviderForPath(path = normalizedPath, provider = provider)
-        }
-        promptLaunchResolved?.invoke(AgentPromptLaunchResult.SUCCESS)
+      val bridge = AgentSessionProviderBridges.find(provider)
+      if (bridge == null) {
+        logMissingProviderBridge(provider)
+        syncService.appendProviderUnavailableWarning(normalizedPath, provider)
+        return@launchDropAction
       }
-      catch (t: Throwable) {
-        if (t is CancellationException) {
-          throw t
-        }
-        promptLaunchResolved?.invoke(AgentPromptLaunchResult.failure(AgentPromptLaunchError.INTERNAL_ERROR))
-        throw t
+      if (mode !in bridge.supportedLaunchModes) {
+        LOG.warn("Session provider bridge ${provider.value} does not support launch mode $mode")
+        syncService.appendProviderUnavailableWarning(normalizedPath, provider)
+        return@launchDropAction
+      }
+
+      val createSpec = bridge.createNewSession(path = normalizedPath, mode = mode)
+      val identity = createSpec.sessionId?.let { sessionId ->
+        buildAgentSessionIdentity(provider, sessionId)
+      } ?: buildAgentSessionNewIdentity(provider)
+      val initialMessagePlan = initialMessageRequest
+        ?.let(bridge::buildInitialMessagePlan)
+        ?: AgentInitialMessagePlan.EMPTY
+      val initialMessageDispatchPlan = buildInitialMessageDispatchPlan(
+        bridge = bridge,
+        baseLaunchSpec = createSpec.launchSpec,
+        identity = identity,
+        initialMessagePlan = initialMessagePlan,
+      )
+
+      chatOpenExecutor.openNewChat(
+        normalizedPath = normalizedPath,
+        identity = identity,
+        launchSpec = createSpec.launchSpec,
+        initialMessageDispatchPlan = initialMessageDispatchPlan,
+        preferredDedicatedFrame = preferredDedicatedFrame,
+      )
+      if (provider == AgentSessionProvider.CODEX) {
+        syncService.refreshProviderForPath(path = normalizedPath, provider = provider)
       }
     }
   }
@@ -436,7 +426,19 @@ class AgentSessionLaunchService internal constructor(
       block = block,
     )
   }
+
+  private fun markClaudeQuotaHintEligible(provider: AgentSessionProvider) {
+    if (provider != AgentSessionProvider.CLAUDE) {
+      return
+    }
+    treeUiState.markClaudeQuotaHintEligible()
+  }
 }
+
+private data class PendingCodexMetadata(
+  @JvmField val createdAtMs: Long,
+  @JvmField val launchMode: String,
+)
 
 private suspend fun openOrFocusProjectInternal(normalizedPath: String) {
   val project = openOrReuseSourceProjectByPath(normalizedPath) ?: return

@@ -108,15 +108,9 @@ class CodexAgentSessionProviderBridgeTest {
         assertThat(message).isEqualTo("/plan Refactor this")
     }
 
-    @Test
-    fun composeInitialMessagePrefixesPlanCommandWhenLegacyFlagIsEnabled() {
-        val message = messageFor(
-            bridge,
-            AgentPromptInitialMessageRequest(
-                prompt = "Refactor this",
-                planModeEnabled = true,
-            )
-        )
+    assertThat(message).doesNotContain("lang=")
+    assertThat(message).contains("```java\nval answer = 42\n```")
+  }
 
         assertThat(message).isEqualTo("/plan Refactor this")
     }
@@ -185,20 +179,11 @@ class CodexAgentSessionProviderBridgeTest {
             )
         )
 
-        assertThat(message).startsWith("Refactor this\n\n### IDE Context")
-        assertThat(message).contains("soft-cap: limit=12000 auto-trim=no")
-        assertThat(message).contains("snippet")
-        assertThat(message).doesNotContain("lang=")
-        assertThat(message).contains("```\nval answer = 42\n```")
-        assertThat(message).doesNotContain("```text")
-        assertThat(message).contains("val answer = 42")
-        assertThat(message).doesNotContain("Metadata:")
-        assertThat(message).doesNotContain("####")
-        assertThat(message).doesNotContain("Items:")
-        assertThat(message).doesNotContain("<context_envelope>")
-        assertThat(message).doesNotContain("<context_item>")
-        assertThat(message).doesNotContain("\"schema\"")
-    }
+    assertThat(message).contains("file: $expectedFile")
+    assertThat(message).contains("paths:")
+    assertThat(message).contains(expectedPathFile)
+    assertThat(message).contains(expectedPathDir)
+  }
 
     @Test
     fun composeInitialMessageUsesSnippetLanguageWhenProvided() {

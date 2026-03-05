@@ -22,16 +22,24 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import java.util.Locale
 import java.util.concurrent.atomic.AtomicReference
 
 private class AgentChatEditorServiceLog
 
 private val LOG = logger<AgentChatEditorServiceLog>()
 private val fileEditorProviderOverrideForTests: AtomicReference<FileEditorProvider?> = AtomicReference(null)
+
+private object CodexScopedRefreshSignalBus {
+  private val signalFlow = MutableSharedFlow<Set<String>>(extraBufferCapacity = 64)
+
+  fun signal(projectPath: String): Boolean {
+    val normalizedPath = normalizeAgentWorkbenchPath(projectPath)
+    return normalizedPath.isNotBlank() && signalFlow.tryEmit(setOf(normalizedPath))
+  }
+
+  fun signals(): Flow<Set<String>> = signalFlow.asSharedFlow()
+}
 
 data class AgentChatPendingTabRebindTarget(
   @JvmField val threadIdentity: String,
@@ -62,8 +70,9 @@ suspend fun openChat(
     "openChat(project=${project.name}, path=$projectPath, identity=$threadIdentity, " +
     "subAgentId=$subAgentId, existing=${existing != null}, title=$threadTitle)"
   }
-  val tabsService = serviceAsync<AgentChatTabsService>()
-  val fileSystem = agentChatVirtualFileSystem()
+  else {
+    initialMessageDispatchPlan.initialMessageTimeoutPolicy
+  }
   val snapshot = AgentChatTabSnapshot.create(
     projectHash = project.locationHash,
     projectPath = projectPath,
@@ -137,9 +146,8 @@ suspend fun openChat(
     "openChat openFile completed(identity=$threadIdentity, subAgentId=$subAgentId, fileName=${file.name}, activity=$threadActivity)"
   }
 
-  val pendingProvider = pendingProviderForThreadIdentity(threadIdentity)
-  if (pendingProvider != null && AgentSessionProviderBehaviors.find(pendingProvider)?.emitsScopedRefreshSignals == true) {
-    notifyAgentChatTerminalOutputForRefresh(provider = pendingProvider, projectPath = projectPath)
+  if (isPendingCodexThreadIdentity(threadIdentity)) {
+    notifyCodexTerminalOutputForRefresh(projectPath)
   }
 }
 
@@ -160,16 +168,14 @@ fun agentChatScopedRefreshSignals(provider: AgentSessionProvider): Flow<Set<Stri
 }
 
 fun notifyCodexTerminalOutputForRefresh(projectPath: String) {
-  notifyAgentChatTerminalOutputForRefresh(provider = AgentSessionProvider.CODEX, projectPath = projectPath)
+  CodexScopedRefreshSignalBus.signal(projectPath)
 }
 
 fun codexScopedRefreshSignals(): Flow<Set<String>> {
-  return agentChatScopedRefreshSignals(AgentSessionProvider.CODEX)
+  return CodexScopedRefreshSignalBus.signals()
 }
 
-suspend fun collectOpenPendingAgentChatTabsByPath(
-  provider: AgentSessionProvider,
-): Map<String, List<AgentChatPendingCodexTabSnapshot>> = withContext(Dispatchers.UI) {
+suspend fun collectOpenPendingCodexTabsByPath(): Map<String, List<AgentChatPendingCodexTabSnapshot>> = withContext(Dispatchers.UI) {
   val result = LinkedHashMap<String, MutableList<AgentChatPendingCodexTabSnapshot>>()
   for (project in ProjectManager.getInstance().openProjects) {
     val manager = project.serviceIfCreated<FileEditorManager>() ?: continue

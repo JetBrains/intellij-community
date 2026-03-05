@@ -6,15 +6,14 @@ import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntry
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
-import com.intellij.agent.workbench.sessions.state.AgentSessionTreeUiStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
-import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupActionContext
-import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
-import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
-import com.intellij.agent.workbench.sessions.toolwindow.tree.pathForMoreThreadsNode
-import com.intellij.agent.workbench.sessions.toolwindow.tree.pathForThreadNode
-import com.intellij.agent.workbench.sessions.toolwindow.tree.shouldHandleSingleClick
-import com.intellij.agent.workbench.sessions.toolwindow.tree.shouldRetargetSelectionForContextMenu
+import com.intellij.agent.workbench.sessions.state.AgentSessionsTreeUiStateService
+import com.intellij.agent.workbench.sessions.tree.SessionTreeId
+import com.intellij.agent.workbench.sessions.tree.SessionTreeNode
+import com.intellij.agent.workbench.sessions.tree.pathForMoreThreadsNode
+import com.intellij.agent.workbench.sessions.tree.pathForThreadNode
+import com.intellij.agent.workbench.sessions.tree.shouldHandleSingleClick
+import com.intellij.agent.workbench.sessions.tree.shouldRetargetSelectionForContextMenu
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -36,15 +35,15 @@ import javax.swing.event.TreeExpansionListener
 import javax.swing.tree.TreePath
 
 internal class AgentSessionsTreeInteractionController(
-    private val project: Project,
-    private val tree: Tree,
-    private val launchService: AgentSessionLaunchService,
-    private val syncService: AgentSessionRefreshService,
-    private val stateStore: AgentSessionsStateStore,
-    private val treeUiStateService: AgentSessionTreeUiStateService,
-    private val rowActionsOverlayProvider: () -> AgentSessionsTreeRowActionsOverlay,
-    private val nodeResolver: (SessionTreeId) -> SessionTreeNode?,
-    private val selectedArchiveTargets: () -> List<ArchiveThreadTarget>,
+  private val project: Project,
+  private val tree: Tree,
+  private val launchService: AgentSessionLaunchService,
+  private val syncService: AgentSessionRefreshService,
+  private val stateStore: AgentSessionsStateStore,
+  private val treeUiStateService: AgentSessionsTreeUiStateService,
+  private val rowActionsOverlayProvider: () -> AgentSessionsTreeRowActionsOverlay,
+  private val nodeResolver: (SessionTreeId) -> SessionTreeNode?,
+  private val selectedArchiveTargets: () -> List<ArchiveThreadTarget>,
 ) {
   var popupActionContext: AgentSessionsTreePopupActionContext? = null
     private set
@@ -229,26 +228,26 @@ internal class AgentSessionsTreeInteractionController(
         if (!includeOpenActions) return false
         if (isAgentSessionNewSessionId(treeNode.thread.id)) return false
         val path = pathForThreadNode(id, treeNode.project.path)
-        launchService.openChatThread(path, treeNode.thread, AgentWorkbenchEntryPoint.TREE_ROW, project)
+        launchService.openChatThread(path, treeNode.thread, project)
         true
       }
 
       is SessionTreeNode.SubAgent -> {
         if (!includeOpenActions) return false
         val path = pathForThreadNode(id, treeNode.project.path)
-        launchService.openChatSubAgent(path, treeNode.thread, treeNode.subAgent, AgentWorkbenchEntryPoint.TREE_ROW, project)
+        launchService.openChatSubAgent(path, treeNode.thread, treeNode.subAgent, project)
         true
       }
 
       is SessionTreeNode.Project -> {
         if (!includeOpenActions) return false
-        launchService.openOrFocusProject(treeNode.project.path, AgentWorkbenchEntryPoint.TREE_ROW)
+        launchService.openOrFocusProject(treeNode.project.path)
         true
       }
 
       is SessionTreeNode.Worktree -> {
         if (!includeOpenActions) return false
-        launchService.openOrFocusProject(treeNode.worktree.path, AgentWorkbenchEntryPoint.TREE_ROW)
+        launchService.openOrFocusProject(treeNode.worktree.path)
         true
       }
 

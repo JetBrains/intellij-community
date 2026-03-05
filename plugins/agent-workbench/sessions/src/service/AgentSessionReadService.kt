@@ -2,7 +2,7 @@
 package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
-import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
+import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindTarget
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
@@ -19,7 +19,7 @@ import com.intellij.openapi.components.serviceIfCreated
 import kotlinx.coroutines.flow.StateFlow
 
 @Service(Service.Level.APP)
-class AgentSessionReadService private constructor(
+internal class AgentSessionReadService private constructor(
   private val requiredStateStoreProvider: () -> AgentSessionsStateStore,
   private val optionalSessionsStateProvider: () -> AgentSessionsState?,
   private val resumeLaunchSpecProvider: (AgentSessionProvider, String) -> AgentSessionTerminalLaunchSpec,
@@ -46,15 +46,12 @@ class AgentSessionReadService private constructor(
 
   fun stateFlow(): StateFlow<AgentSessionsState> = requiredStateStoreProvider().state
 
-  internal fun stateSnapshot(): AgentSessionsState = stateFlow().value
+  fun stateSnapshot(): AgentSessionsState = stateFlow().value
 
-  internal fun isRefreshing(): Boolean = stateSnapshot().projects.any { project -> project.isLoading }
+  fun isRefreshing(): Boolean = stateSnapshot().projects.any { project -> project.isLoading }
 
-  fun resolvePendingThreadRebindTarget(
-    context: AgentChatEditorTabActionContext,
-    provider: AgentSessionProvider,
-  ): AgentChatTabRebindTarget? {
-    if (!isPendingEditorContext(context, provider)) {
+  fun resolvePendingCodexRebindTarget(context: AgentChatEditorTabActionContext): AgentChatPendingTabRebindTarget? {
+    if (!isPendingCodexEditorContext(context)) {
       return null
     }
 
@@ -62,16 +59,16 @@ class AgentSessionReadService private constructor(
     val normalizedPath = normalizeAgentWorkbenchPath(context.path)
     val candidateThreads = resolveThreadsForPath(state, normalizedPath)
       .asSequence()
-      .filter { thread -> thread.provider == provider }
+      .filter { thread -> thread.provider == AgentSessionProvider.CODEX }
       .sortedByDescending { thread -> thread.updatedAt }
       .toList()
 
     val thread = candidateThreads.firstOrNull() ?: return null
     val launchSpec = runCatching {
       resumeLaunchSpecProvider(thread.provider, thread.id)
-    }.getOrDefault(AgentSessionTerminalLaunchSpec(command = listOf(provider.value, "resume", thread.id)))
+    }.getOrDefault(AgentSessionTerminalLaunchSpec(command = listOf(AgentSessionProvider.CODEX.value, "resume", thread.id)))
 
-    return AgentChatTabRebindTarget(
+    return AgentChatPendingTabRebindTarget(
       threadIdentity = buildAgentSessionIdentity(provider = thread.provider, sessionId = thread.id),
       threadId = thread.id,
       shellCommand = launchSpec.command,
@@ -80,10 +77,6 @@ class AgentSessionReadService private constructor(
       threadActivity = thread.activity,
       threadUpdatedAt = thread.updatedAt,
     )
-  }
-
-  fun resolvePendingCodexRebindTarget(context: AgentChatEditorTabActionContext): AgentChatTabRebindTarget? {
-    return resolvePendingThreadRebindTarget(context = context, provider = AgentSessionProvider.CODEX)
   }
 }
 
@@ -120,8 +113,8 @@ internal fun resolveAgentSessionPathState(state: AgentSessionsState, normalizedP
   return null
 }
 
-fun isPendingEditorContext(context: AgentChatEditorTabActionContext, provider: AgentSessionProvider): Boolean {
-  return context.isPendingThread && context.provider == provider
+internal fun isPendingCodexEditorContext(context: AgentChatEditorTabActionContext): Boolean {
+  return context.isPendingThread && context.provider == AgentSessionProvider.CODEX
 }
 
 private fun resolveThreadsForPath(state: AgentSessionsState, normalizedPath: String): List<AgentSessionThread> {

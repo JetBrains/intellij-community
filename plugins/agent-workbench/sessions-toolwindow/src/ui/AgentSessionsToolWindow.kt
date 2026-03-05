@@ -9,18 +9,15 @@ import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBehaviors
-import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
-import com.intellij.agent.workbench.sessions.state.AgentSessionTreeUiStateService
-import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
-import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
-import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModel
-import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModelDiff
-import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
+import com.intellij.agent.workbench.sessions.state.AgentSessionsTreeUiStateService
+import com.intellij.agent.workbench.sessions.tree.SessionTreeId
+import com.intellij.agent.workbench.sessions.tree.SessionTreeModel
+import com.intellij.agent.workbench.sessions.tree.SessionTreeModelDiff
+import com.intellij.agent.workbench.sessions.tree.SessionTreeNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
@@ -197,10 +194,8 @@ internal class AgentSessionsToolWindowPanel(
       tree = tree,
       nodeResolver = ::sessionTreeNode,
       lastUsedProvider = { lastUsedProvider },
-      lastUsedLaunchMode = { uiPreferencesStateService.getLastUsedLaunchMode() },
-      onQuickCreate = { path, provider, mode ->
-        dispatchTreeRowOverlayQuickCreate(
-          project = project,
+      onQuickCreate = { path, provider ->
+        launchService.createNewSession(
           path = path,
           provider = provider,
           mode = mode,
@@ -226,21 +221,8 @@ internal class AgentSessionsToolWindowPanel(
 
     interactionController.install()
     stateController.start()
+    quotaHintController.start()
     syncService.refresh()
-  }
-
-  private fun buildNorthPanel(): JPanel? {
-    val contributions = AgentSessionProviderBehaviors.allBehaviors()
-      .mapNotNull { behavior -> behavior.createToolWindowNorthComponent(project) }
-    if (contributions.isEmpty()) {
-      return null
-    }
-
-    return JPanel().apply {
-      layout = BoxLayout(this, BoxLayout.Y_AXIS)
-      isOpaque = false
-      contributions.forEach(::add)
-    }
   }
 
   private fun configureTree() {

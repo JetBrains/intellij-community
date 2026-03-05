@@ -145,6 +145,18 @@ class AgentPromptContextEntryPathRenderingTest {
   }
 
   @Test
+  fun snippetChipShowsTitleOnly() {
+    val entry = contextEntry(
+      rendererId = AgentPromptContextRendererIds.SNIPPET,
+      title = "Selection (1-5)",
+      body = "val x = foo.bar(baz)\nval y = 42",
+      projectBasePath = null,
+    )
+
+    assertThat(entry.displayText).isEqualTo("Selection (1-5)")
+  }
+
+  @Test
   fun vcsRevisionsChipUsesFirstRevisionFromPayload() {
     val entry = contextEntry(
       rendererId = AgentPromptContextRendererIds.VCS_REVISIONS,

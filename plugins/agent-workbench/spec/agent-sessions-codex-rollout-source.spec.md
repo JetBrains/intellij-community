@@ -6,7 +6,7 @@ targets:
   - ../codex/common/src/CodexAppServerClient.kt
   - ../sessions/src/CodexSessionsCompatibility.kt
   - ../sessions/src/AgentSessionModels.kt
-  - ../sessions/src/AgentSessionsService.kt
+  - ../sessions/src/service/AgentSessionRefreshCoordinator.kt
   - ../codex/sessions/testSrc/*.kt
   - ../sessions/testSrc/CodexAppServerClientTest.kt
 ---
@@ -43,8 +43,29 @@ Define Codex thread-list behavior where discovery defaults to rollout files unde
 - Unknown backend override values must log warning and fall back to rollout.
   [@test] ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
 
+- App-server backend must request `thread/list` with server-side `cwd` and `sourceKinds` filters so sub-agent sessions are included in listing results.
+  [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
+
+- App-server backend must fold sub-agent thread-spawn sessions under parent threads and hide orphaned sub-agent sessions from tree rows.
+  [@test] ../codex/sessions/testSrc/CodexAppServerSessionBackendTest.kt
+
+- Hidden orphaned sub-agent sessions must be auto-archived with one-shot retry policy and at most one archive attempt per refresh.
+  [@test] ../codex/sessions/testSrc/CodexAppServerSessionBackendTest.kt
+
+- Pending Codex chat tabs must trigger pending-only polling refresh to rebind pending identities when source update notifications are unavailable.
+  [@test] ../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
+
 - Rollout backend scan scope must be limited to `~/.codex/sessions/**/rollout-*.jsonl`.
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+
+- Rollout hints must be consumed for pending-tab rebinding and Codex activity projection; rollout-discovered IDs must not create persisted thread rows.
+  [@test] ../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
+
+- App-server refresh hints must map `thread/read` snapshot status and flags to Codex activity states (`unread`, `reviewing`, `processing`, `ready`).
+  [@test] ../codex/sessions/testSrc/backend/appserver/CodexAppServerRefreshHintsProviderTest.kt
+
+- For Codex activity projection, app-server activity must remain primary for overlapping thread ids; rollout activity may apply only when app-server activity is missing or rollout reports `UNREAD`.
+  [@test] ../codex/sessions/testSrc/CodexSessionSourceRefreshHintsTest.kt
 
 - Rollout change detection must use `AgentWorkbenchDirectoryWatcher` stack; Java NIO `WatchService` must not be used.
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionsWatcherTest.kt

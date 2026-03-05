@@ -35,6 +35,10 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
 - Sessions gear menu must expose `AgentWorkbenchSessions.ToggleDedicatedFrame` and update the same advanced setting.
   [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
 
+- Sessions plugin must expose `AgentWorkbenchSessions.OpenDedicatedFrame` so users can explicitly reopen/focus dedicated frame.
+  [@test] ../sessions/testSrc/AgentSessionsOpenDedicatedFrameActionTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+
 - In dedicated mode (`true`):
   - thread/sub-agent open requests must route to dedicated frame project,
   - dedicated frame project must be created/opened on demand and then reused,
@@ -57,7 +61,7 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
   [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
 
 - Dedicated-frame project must be excluded from Sessions project registry for both open and recent project enumeration.
-  [@test] ../sessions/testSrc/AgentSessionsProjectCatalogTest.kt
+  [@test] ../sessions/testSrc/AgentSessionProjectCatalogTest.kt
 
 - Dedicated-frame project switching and header navigation affordances must follow `spec/agent-dedicated-frame-project-switching.spec.md`.
   [@test] ../sessions/testSrc/AgentWorkbenchProjectFrameCapabilitiesProviderTest.kt
@@ -74,18 +78,17 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
 - Chat persistence and restore behavior must follow `spec/agent-chat-editor.spec.md` in both modes.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
-- Implementation must stay independent from `welcomeScreenProjectProvider` singleton model.
+## Architecture Decision — Welcome Screen Independence
+- Implementation must stay independent from `welcomeScreenProjectProvider` singleton model. Dedicated-frame lifecycle is self-contained and must not couple to welcome-screen project provider internals.
   [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
-
-- Shared command mapping and new-thread semantics must follow `spec/agent-core-contracts.spec.md` and `spec/actions/new-thread.spec.md`.
-  [@test] ../sessions/testSrc/AgentSessionCliTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
 
 ## User Experience
 - Default click behavior opens chat in dedicated frame.
 - Toggling dedicated-frame setting affects subsequent opens immediately.
 - Dedicated frame receives focus when chat opens there.
+- Dedicated frame can be reopened from explicit action entry points.
 - Sessions tree never shows dedicated frame as a project node.
+- In Rider with per-app toolwindows enabled, dedicated-frame toolwindow layout customization remains independent from normal Rider project frames.
 
 ## Data & Backend
 - Mode state is stored via Advanced Settings.

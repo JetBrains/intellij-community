@@ -247,6 +247,41 @@ class AgentSessionsSwingTreeCellRendererTest {
   }
 
   @Test
+  fun threadTrailingMetadataOmitsInlineStatusForNonReadyThread() {
+    val now = 28L * 24L * 60L * 60L * 1000L
+    val tree = createTree(width = 460)
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
+    val thread = AgentSessionThread(
+      provider = AgentSessionProvider.CODEX,
+      id = "thread-1",
+      title = "Need input",
+      updatedAt = 14L * 24L * 60L * 60L * 1000L,
+      archived = false,
+      activity = AgentThreadActivity.UNREAD,
+    )
+    val threadId = SessionTreeId.Thread(project.path, thread.provider, thread.id)
+    val renderer = SessionTreeCellRenderer(
+      nowProvider = { now },
+      rowActionsProvider = { _, _, _ -> null },
+      nodeResolver = { id ->
+        if (id == threadId) SessionTreeNode.Thread(project, thread) else null
+      },
+      providerIconProvider = { EmptyIcon.create(12, 12) },
+    )
+
+    renderer.getTreeCellRendererComponent(tree, descriptorValue(threadId), false, false, true, 0, false)
+
+    val trailing = renderer.trailingThreadPaintForTest
+    assertThat(trailing).isNotNull()
+    trailing ?: return
+
+    assertThat(trailing.statusLabel).isNull()
+    assertThat(trailing.statusTextWidth).isEqualTo(0)
+    assertThat(trailing.statusColumnWidth).isEqualTo(0)
+    assertThat(renderer.accessibleContext.accessibleName).contains(AgentSessionsBundle.message("toolwindow.thread.status.needs.input"))
+  }
+
+  @Test
   fun threadRowsDoNotBadgeProviderIconWhenActivityIsReady() {
     val now = 14L * 24L * 60L * 60L * 1000L
     val tree = createTree(width = 420)

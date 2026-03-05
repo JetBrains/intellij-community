@@ -12,9 +12,9 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderActionModel
 import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderMenuModel
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries
-import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
-import com.intellij.agent.workbench.sessions.core.providers.withYoloModeBadge
+import com.intellij.agent.workbench.sessions.ui.providerDisplayName
+import com.intellij.agent.workbench.sessions.ui.providerIcon
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -32,7 +32,7 @@ fun createNewThreadViaService(
   currentProject: Project,
   entryPoint: AgentWorkbenchEntryPoint,
 ) {
-  service<AgentSessionLaunchService>().createNewSession(path, provider, mode, entryPoint, currentProject)
+  service<AgentSessionLaunchService>().createNewSession(path, provider, mode, currentProject)
 }
 
 fun buildNewThreadMenuModel(bridges: List<AgentSessionProviderBridge>): AgentSessionProviderMenuModel {

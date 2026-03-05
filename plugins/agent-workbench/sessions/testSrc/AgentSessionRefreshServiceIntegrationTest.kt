@@ -6,12 +6,13 @@ import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindReport
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindRequest
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindStatus
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabSnapshot
-import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
+import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindTarget
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadPreview
 import com.intellij.agent.workbench.sessions.state.InMemorySessionsTreeUiState
+import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -782,102 +783,13 @@ class AgentSessionRefreshServiceIntegrationTest {
         .containsExactlyInAnyOrder("codex-listed", "codex-open")
     }
   }
-
-  @Test
-  fun markThreadAsReadUpdatesRuntimeAndWarmSnapshotImmediately() = runBlocking(Dispatchers.Default) {
-    val warmState = InMemorySessionWarmState()
-
-    withService(
-      sessionSourcesProvider = {
-        listOf(
-          ScriptedSessionSource(
-            provider = AgentSessionProvider.CLAUDE,
-            listFromOpenProject = { path, _ ->
-              if (path == PROJECT_PATH) {
-                listOf(
-                  thread(
-                    id = "claude-1",
-                    updatedAt = 100,
-                    provider = AgentSessionProvider.CLAUDE,
-                    activity = AgentThreadActivity.UNREAD,
-                  )
-                )
-              }
-              else {
-                emptyList()
-              }
-            },
-          )
-        )
-      },
-      projectEntriesProvider = {
-        listOf(openProjectEntry(PROJECT_PATH, "Project A"))
-      },
-      warmState = warmState,
-    ) { service ->
-      service.refresh()
-      waitForCondition {
-        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
-          ?.threads
-          ?.firstOrNull()
-          ?.activity == AgentThreadActivity.UNREAD
-      }
-
-      service.markThreadAsRead(PROJECT_PATH, AgentSessionProvider.CLAUDE, "claude-1", 100)
-
-      assertThat(
-        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
-          ?.threads
-          ?.firstOrNull()
-          ?.activity
-      ).isEqualTo(AgentThreadActivity.READY)
-      assertThat(warmState.getPathSnapshot(PROJECT_PATH)?.threads?.firstOrNull()?.activity)
-        .isEqualTo(AgentThreadActivity.READY)
-    }
-  }
-
-  @Test
-  fun blockingRefreshFailureKeepsPreviousWarmSnapshot() = runBlocking(Dispatchers.Default) {
-    val warmState = InMemorySessionWarmState()
-    warmState.setPathSnapshot(
-      PROJECT_PATH,
-      AgentSessionWarmPathSnapshot(
-        threads = listOf(thread(id = "cached-1", updatedAt = 100, provider = AgentSessionProvider.CLAUDE)),
-        hasUnknownThreadCount = false,
-        updatedAt = 100,
-      ),
-    )
-
-    withService(
-      sessionSourcesProvider = {
-        listOf(
-          ScriptedSessionSource(
-            provider = AgentSessionProvider.CLAUDE,
-            listFromOpenProject = { _, _ -> throw IllegalStateException("boom") },
-          )
-        )
-      },
-      projectEntriesProvider = {
-        listOf(openProjectEntry(PROJECT_PATH, "Project A"))
-      },
-      warmState = warmState,
-    ) { service ->
-      service.refresh()
-      waitForCondition {
-        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.errorMessage != null
-      }
-
-      assertThat(warmState.getPathSnapshot(PROJECT_PATH)?.threads.orEmpty().map { it.id })
-        .containsExactly("cached-1")
-    }
-  }
 }
 
 private data class ServicePendingCodexRebindInvocation(
-  @JvmField val path: String,
-  @JvmField val pendingTabKey: String,
-  @JvmField val pendingThreadIdentity: String,
-  @JvmField val target: AgentChatTabRebindTarget,
+  val path: String,
+  val pendingTabKey: String,
+  val pendingThreadIdentity: String,
+  val target: AgentChatPendingTabRebindTarget,
 )
 
 private fun successfulPendingCodexRebindReport(

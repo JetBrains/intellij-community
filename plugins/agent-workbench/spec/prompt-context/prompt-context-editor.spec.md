@@ -74,8 +74,7 @@ Define editor-driven prompt context behavior for both direct invocation and fall
   - `snippet` renders as descriptor line + fenced code block with optional language label.
 
 - Chip rendering contract for editor item types:
-  - `file` chip shows shortened path only (project-relative when under project root), without a `File:` label,
-  - long `file` chip previews are filename-biased middle-truncated after path normalization,
+  - `file` chip shows shortened path (project-relative when under project root),
   - `symbol` chip shows symbol name,
   - `snippet` chip shows title only (line range), no code preview.
   [@test] ../../prompt/testSrc/ui/AgentPromptContextEntryPathRenderingTest.kt

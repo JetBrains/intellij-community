@@ -87,7 +87,7 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
   [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
 - Successful archive must close matching open chat tabs for the same normalized path + canonical thread identity and delete corresponding persisted tab-state entries.
-  [@test] ../sessions/testSrc/AgentSessionsServiceArchiveIntegrationTest.kt
+  [@test] ../sessions/testSrc/AgentSessionArchiveServiceIntegrationTest.kt
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
 - Restore validation failures and terminal initialization failures must close the tab, delete the corresponding tab-state entry immediately, and surface deduplicated non-blocking warning notifications.

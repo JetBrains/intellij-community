@@ -30,7 +30,6 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
   private val pathStateResolver: (AgentSessionsState, String) -> AgentSessionPathState?
   private val refreshCatalogAndLoadNewlyOpened: () -> Unit
   private val refreshProviderForPath: (String, AgentSessionProvider) -> Unit
-  private val preferredProviderProvider: () -> AgentSessionProvider?
 
   @Suppress("unused")
   constructor() : this(
@@ -39,7 +38,19 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
     pathStateResolver = ::resolveAgentSessionPathState,
     refreshCatalogAndLoadNewlyOpened = { service<AgentSessionRefreshService>().refreshCatalogAndLoadNewlyOpened() },
     refreshProviderForPath = { path, provider -> service<AgentSessionRefreshService>().refreshProviderForPath(path = path, provider = provider) },
-    preferredProviderProvider = { service<AgentSessionUiPreferencesStateService>().getLastUsedProvider() },
+  )
+
+  internal constructor(
+    stateFlowProvider: () -> StateFlow<AgentSessionsState>,
+    refreshCatalogAndLoadNewlyOpened: () -> Unit,
+    refreshProviderForPath: (String, AgentSessionProvider) -> Unit,
+    launchServiceProvider: () -> AgentSessionLaunchService,
+  ) : this(
+    launchPromptRequest = { request -> launchServiceProvider().launchPromptRequest(request) },
+    stateFlowProvider = stateFlowProvider,
+    pathStateResolver = ::resolveAgentSessionPathState,
+    refreshCatalogAndLoadNewlyOpened = refreshCatalogAndLoadNewlyOpened,
+    refreshProviderForPath = refreshProviderForPath,
   )
 
   internal constructor(
@@ -52,7 +63,6 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
     pathStateResolver = ::resolveAgentSessionPathState,
     refreshCatalogAndLoadNewlyOpened = {},
     refreshProviderForPath = { _, _ -> },
-    preferredProviderProvider = { null },
   )
 
   internal constructor(
@@ -61,22 +71,16 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
     pathStateResolver: (AgentSessionsState, String) -> AgentSessionPathState?,
     refreshCatalogAndLoadNewlyOpened: () -> Unit,
     refreshProviderForPath: (String, AgentSessionProvider) -> Unit,
-    preferredProviderProvider: () -> AgentSessionProvider?,
   ) {
     this.launchPromptRequest = launchPromptRequest
     this.stateFlowProvider = stateFlowProvider
     this.pathStateResolver = pathStateResolver
     this.refreshCatalogAndLoadNewlyOpened = refreshCatalogAndLoadNewlyOpened
     this.refreshProviderForPath = refreshProviderForPath
-    this.preferredProviderProvider = preferredProviderProvider
   }
 
   override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
     return launchPromptRequest(request)
-  }
-
-  override fun preferredProvider(): AgentSessionProvider? {
-    return preferredProviderProvider()
   }
 
   override fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String? {
@@ -176,6 +180,53 @@ private fun buildWorkingProjectPathCandidates(invocationData: AgentPromptInvocat
 
 private fun AgentPromptInvocationData.dataContextOrNull(): DataContext? {
   return attributes[AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY] as? DataContext
+}
+
+private fun resolveTreeContextProjectPathCandidate(context: AgentSessionsTreePopupActionContext): AgentPromptProjectPathCandidate? {
+  val path = resolveTreeContextPath(context.nodeId)
+    ?.takeIf { it.isNotBlank() }
+    ?.let(::normalizeAgentWorkbenchPath)
+    ?: return null
+  if (AgentWorkbenchDedicatedFrameProjectManager.isDedicatedProjectPath(path)) {
+    return null
+  }
+  return AgentPromptProjectPathCandidate(
+    path = path,
+    displayName = resolveTreeContextDisplayName(context.node),
+  )
+}
+
+private fun resolveTreeContextPath(treeId: SessionTreeId): String? {
+  return when (treeId) {
+    is SessionTreeId.Project -> treeId.path
+    is SessionTreeId.Thread -> treeId.projectPath
+    is SessionTreeId.SubAgent -> treeId.projectPath
+    is SessionTreeId.Warning -> treeId.projectPath
+    is SessionTreeId.Error -> treeId.projectPath
+    is SessionTreeId.Empty -> treeId.projectPath
+    SessionTreeId.MoreProjects -> null
+    is SessionTreeId.MoreThreads -> treeId.projectPath
+    is SessionTreeId.Worktree -> treeId.worktreePath
+    is SessionTreeId.WorktreeThread -> treeId.worktreePath
+    is SessionTreeId.WorktreeSubAgent -> treeId.worktreePath
+    is SessionTreeId.WorktreeWarning -> treeId.worktreePath
+    is SessionTreeId.WorktreeMoreThreads -> treeId.worktreePath
+    is SessionTreeId.WorktreeError -> treeId.worktreePath
+  }
+}
+
+private fun resolveTreeContextDisplayName(node: SessionTreeNode): String {
+  return when (node) {
+    is SessionTreeNode.Project -> node.project.name
+    is SessionTreeNode.Thread -> node.project.name
+    is SessionTreeNode.SubAgent -> node.project.name
+    is SessionTreeNode.Error -> node.project.name
+    is SessionTreeNode.Empty -> node.project.name
+    is SessionTreeNode.MoreThreads -> node.project.name
+    is SessionTreeNode.Worktree -> node.worktree.name
+    is SessionTreeNode.Warning,
+    is SessionTreeNode.MoreProjects -> ""
+  }
 }
 
 private fun buildSnapshot(pathState: AgentSessionPathState?, provider: AgentSessionProvider): AgentPromptExistingThreadsSnapshot {

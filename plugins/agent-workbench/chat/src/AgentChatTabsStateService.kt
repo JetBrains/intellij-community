@@ -21,7 +21,7 @@ import kotlinx.serialization.Serializable
 import java.nio.file.Files
 import kotlin.time.Duration.Companion.minutes
 
-private const val AGENT_CHAT_TABS_STATE_VERSION = 1
+private const val AGENT_CHAT_TABS_STATE_VERSION = 6
 private const val AGENT_CHAT_TABS_STATE_TTL_MILLIS = 30L * 24 * 60 * 60 * 1000
 private const val AGENT_CHAT_LEGACY_METADATA_DIR_NAME = "agent-workbench-chat-frame"
 private const val AGENT_CHAT_LEGACY_METADATA_TABS_DIR_NAME = "tabs"
@@ -156,7 +156,14 @@ internal data class PersistedAgentChatTabState(
   @JvmField val threadId: String,
   @JvmField val shellCommand: List<String>,
   @JvmField val lastKnownTitle: String,
-  @JvmField val lastKnownActivity: String,
+  @JvmField val lastKnownActivity: String = AgentThreadActivity.READY.name,
+  @JvmField val pendingCreatedAtMs: Long? = null,
+  @JvmField val pendingFirstInputAtMs: Long? = null,
+  @JvmField val pendingLaunchMode: String? = null,
+  @JvmField val initialComposedMessage: String? = null,
+  @JvmField val initialMessageToken: String? = null,
+  @JvmField val initialMessageSent: Boolean = false,
+  @JvmField val initialMessageTimeoutPolicy: String = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK.name,
   @JvmField val updatedAt: Long,
 )
 

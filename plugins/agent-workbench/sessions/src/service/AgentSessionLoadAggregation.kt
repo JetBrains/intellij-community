@@ -8,14 +8,14 @@ import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
 internal data class AgentSessionLoadResult(
   @JvmField val threads: List<AgentSessionThread>,
   @JvmField val errorMessage: String? = null,
-  @JvmField val hasUnknownThreadCount: Boolean = false,
-  @JvmField val providerWarnings: List<AgentSessionProviderWarning> = emptyList(),
+  val hasUnknownThreadCount: Boolean = false,
+  val providerWarnings: List<AgentSessionProviderWarning> = emptyList(),
 )
 
 internal data class AgentSessionSourceLoadResult(
   val provider: AgentSessionProvider,
   val result: Result<List<AgentSessionThread>>,
-  @JvmField val hasUnknownTotal: Boolean = false,
+  val hasUnknownTotal: Boolean = false,
 )
 
 internal fun mergeAgentSessionSourceLoadResults(

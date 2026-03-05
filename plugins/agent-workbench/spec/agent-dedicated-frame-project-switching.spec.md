@@ -113,9 +113,9 @@ Terminal hyperlink click routing in dedicated frame is owned by `spec/agent-dedi
 - Dedicated frame type id is `AGENT_DEDICATED`.
 - `AgentSessionLaunchService` sets `OpenProjectTask.projectFrameTypeId` when opening dedicated frame project.
 - `AgentWorkbenchDedicatedFrameProjectManager.configureProject` persists `projectFrameTypeId` into recent metadata.
-- Source project open/focus behavior uses `AgentSessionsService.openOrFocusProject(path)`.
+- Source project open/focus behavior uses `AgentSessionLaunchService.openOrFocusProject(path)`.
 - Toolbar source-project action resolves active chat-tab source path via `AgentChatTabSelectionService.selectedChatTab`.
-- Dedicated frame open/focus behavior uses `AgentSessionsService.openOrFocusDedicatedFrame(currentProject)`.
+- Dedicated frame open/focus behavior uses `AgentSessionLaunchService.openOrFocusDedicatedFrame(currentProject)`.
 
 ## Testing / Local Run
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentWorkbenchProjectFrameCapabilitiesProviderTest'`

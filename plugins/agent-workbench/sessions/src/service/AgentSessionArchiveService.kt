@@ -1,19 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.service
 
-// @spec community/plugins/agent-workbench/spec/agent-workbench-telemetry.spec.md
-
 import com.intellij.agent.workbench.chat.closeAndForgetAgentChatsForThread
+import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBehaviors
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
-import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
-import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelemetry
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
-import com.intellij.agent.workbench.sessions.model.archiveThreadTargetKey
-import com.intellij.agent.workbench.sessions.model.normalizeArchiveThreadTarget
-import com.intellij.agent.workbench.sessions.state.AgentSessionWarmStateService
+import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.util.SingleFlightActionGate
 import com.intellij.agent.workbench.sessions.util.SingleFlightPolicy
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
@@ -25,34 +19,30 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsSafe
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 private val LOG = logger<AgentSessionArchiveService>()
 
 private const val ARCHIVE_THREADS_ACTION_KEY_PREFIX = "threads-archive"
 private const val UNARCHIVE_THREADS_ACTION_KEY_PREFIX = "threads-unarchive"
 private const val AGENT_SESSIONS_NOTIFICATION_GROUP_ID = "Agent Workbench Sessions"
+private val CODEX_ARCHIVE_REFRESH_DELAY = 1.seconds
 
 @Service(Service.Level.APP)
-class AgentSessionArchiveService internal constructor(
+internal class AgentSessionArchiveService(
   private val serviceScope: CoroutineScope,
+  private val stateStore: AgentSessionsStateStore,
   private val syncService: AgentSessionRefreshService,
-  private val contentRepository: AgentSessionContentRepository,
   private val archiveChatCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit,
 ) {
   @Suppress("unused")
   constructor(serviceScope: CoroutineScope) : this(
     serviceScope = serviceScope,
+    stateStore = service<AgentSessionsStateStore>(),
     syncService = service<AgentSessionRefreshService>(),
-    contentRepository = AgentSessionContentRepository(
-      stateStore = service(),
-      warmState = service<AgentSessionWarmStateService>(),
-    ),
     archiveChatCleanup = { projectPath, threadIdentity, subAgentId ->
       closeAndForgetAgentChatsForThread(projectPath = projectPath, threadIdentity = threadIdentity, subAgentId = subAgentId)
     },
@@ -65,11 +55,7 @@ class AgentSessionArchiveService internal constructor(
     return bridge.supportsArchiveThread
   }
 
-  fun archiveThreads(
-    targets: List<ArchiveThreadTarget>,
-    entryPoint: AgentWorkbenchEntryPoint,
-    preferredSingleArchivedLabel: @NlsSafe String? = null,
-  ) {
+  fun archiveThreads(targets: List<ArchiveThreadTarget>) {
     val normalizedTargets = normalizeArchiveTargets(targets)
     if (normalizedTargets.isEmpty()) {
       return
@@ -78,13 +64,12 @@ class AgentSessionArchiveService internal constructor(
       key = buildArchiveThreadsActionKey(normalizedTargets),
       droppedActionMessage = "Dropped duplicate archive threads action for ${normalizedTargets.size} targets",
     ) {
-      AgentWorkbenchTelemetry.logThreadArchiveRequested(entryPoint, normalizedTargets.singleProviderOrNull())
-      val outcome = archiveTargetsInternal(normalizedTargets, preferredSingleArchivedLabel)
+      val outcome = archiveTargetsInternal(normalizedTargets)
       if (outcome.archivedTargets.isEmpty()) {
         return@launchDropAction
       }
-      if (outcome.refreshDelayMs > 0L) {
-        delay(outcome.refreshDelayMs.milliseconds)
+      if (outcome.requiresCodexRefreshDelay) {
+        delay(CODEX_ARCHIVE_REFRESH_DELAY)
       }
       syncService.refresh()
       showArchiveNotification(outcome)
@@ -101,11 +86,10 @@ class AgentSessionArchiveService internal constructor(
       droppedActionMessage = "Dropped duplicate unarchive threads action for ${normalizedTargets.size} targets",
     ) {
       var anyUnarchived = false
-      var refreshDelayMs = 0L
+      var requiresCodexRefreshDelay = false
       normalizedTargets.forEach { target ->
         val provider = target.provider
         val bridge = AgentSessionProviderBridges.find(provider)
-        val behavior = AgentSessionProviderBehaviors.find(provider)
         if (bridge == null) {
           logMissingProviderBridge(provider)
           return@forEach
@@ -129,37 +113,36 @@ class AgentSessionArchiveService internal constructor(
         }
 
         anyUnarchived = true
-        if (behavior?.suppressArchivedThreadsDuringRefresh == true) {
-          syncService.unsuppressArchivedTarget(target)
+        if (provider == AgentSessionProvider.CODEX) {
+          syncService.unsuppressArchivedThread(path = target.path, provider = provider, threadId = target.threadId)
+          requiresCodexRefreshDelay = true
         }
-        refreshDelayMs = maxOf(refreshDelayMs, behavior?.archiveRefreshDelayMs ?: 0L)
       }
       if (!anyUnarchived) {
         return@launchDropAction
       }
-      if (refreshDelayMs > 0L) {
-        delay(refreshDelayMs.milliseconds)
+      if (requiresCodexRefreshDelay) {
+        delay(CODEX_ARCHIVE_REFRESH_DELAY)
       }
       syncService.refresh()
     }
   }
 
-  private suspend fun archiveTargetsInternal(
-    targets: List<ArchiveThreadTarget>,
-    preferredSingleArchivedLabel: @NlsSafe String?,
-  ): ArchiveBatchOutcome {
-    val singleArchivedLabel = preferredSingleArchivedLabel?.takeIf(String::isNotBlank)
-                              ?: targets.singleOrNull()?.let(contentRepository::findArchiveNotificationLabel)
+  private suspend fun archiveTargetsInternal(targets: List<ArchiveThreadTarget>): ArchiveBatchOutcome {
     val archivedTargets = ArrayList<ArchiveThreadTarget>(targets.size)
     val undoTargets = ArrayList<ArchiveThreadTarget>()
-    var refreshDelayMs = 0L
+    var requiresCodexRefreshDelay = false
 
     targets.forEach { target ->
       val provider = target.provider
-      val cleanupTarget = target.toArchivedChatCleanupTarget()
+      val cleanupTarget = resolveArchivedChatCleanupTarget(
+        path = target.path,
+        provider = provider,
+        archivedThreadId = target.threadId,
+      )
 
-      if (target.isPendingThread()) {
-        contentRepository.removeArchivedTarget(target)
+      if (provider == AgentSessionProvider.CODEX && isAgentSessionNewSessionId(target.threadId)) {
+        stateStore.removeThread(target.path, provider, target.threadId)
         try {
           archiveChatCleanup(target.path, cleanupTarget.threadIdentity, cleanupTarget.subAgentId)
         }
@@ -182,7 +165,6 @@ class AgentSessionArchiveService internal constructor(
       if (!bridge.supportsArchiveThread) {
         return@forEach
       }
-      val behavior = AgentSessionProviderBehaviors.find(provider)
 
       val archived = try {
         bridge.archiveThread(path = target.path, threadId = target.threadId)
@@ -201,11 +183,11 @@ class AgentSessionArchiveService internal constructor(
         return@forEach
       }
 
-      if (behavior?.suppressArchivedThreadsDuringRefresh == true) {
-        syncService.suppressArchivedTarget(target)
+      if (provider == AgentSessionProvider.CODEX) {
+        syncService.suppressArchivedThread(path = target.path, provider = provider, threadId = target.threadId)
+        requiresCodexRefreshDelay = true
       }
-      refreshDelayMs = maxOf(refreshDelayMs, behavior?.archiveRefreshDelayMs ?: 0L)
-      contentRepository.removeArchivedTarget(target)
+      stateStore.removeThread(target.path, provider, target.threadId)
 
       try {
         archiveChatCleanup(target.path, cleanupTarget.threadIdentity, cleanupTarget.subAgentId)
@@ -226,26 +208,43 @@ class AgentSessionArchiveService internal constructor(
     }
 
     return ArchiveBatchOutcome(
-      requestedCount = targets.size,
       archivedTargets = archivedTargets,
-      singleArchivedLabel = singleArchivedLabel,
       undoTargets = undoTargets,
-      refreshDelayMs = refreshDelayMs,
+      requiresCodexRefreshDelay = requiresCodexRefreshDelay,
     )
   }
 
   private fun normalizeArchiveTargets(targets: List<ArchiveThreadTarget>): List<ArchiveThreadTarget> {
     val normalizedByKey = LinkedHashMap<String, ArchiveThreadTarget>()
     targets.forEach { target ->
-      val normalizedTarget = normalizeArchiveThreadTarget(target)
-      val key = archiveThreadTargetKey(normalizedTarget)
+      val normalizedPath = normalizeAgentWorkbenchPath(target.path)
+      val normalizedTarget = if (normalizedPath == target.path) target else target.copy(path = normalizedPath)
+      val key = archiveTargetKey(normalizedTarget)
       normalizedByKey.putIfAbsent(key, normalizedTarget)
     }
     return normalizedByKey.values.toList()
   }
 
-  private fun List<ArchiveThreadTarget>.singleProviderOrNull(): AgentSessionProvider? {
-    return map(ArchiveThreadTarget::provider).distinct().singleOrNull()
+  private fun resolveArchivedChatCleanupTarget(
+    path: String,
+    provider: AgentSessionProvider,
+    archivedThreadId: String,
+  ): ArchivedChatCleanupTarget {
+    val parentThreadId = stateStore.findParentThreadIdForSubAgent(
+      path = path,
+      provider = provider,
+      subAgentId = archivedThreadId,
+    )
+    if (parentThreadId == null) {
+      return ArchivedChatCleanupTarget(
+        threadIdentity = buildAgentSessionIdentity(provider, archivedThreadId),
+        subAgentId = null,
+      )
+    }
+    return ArchivedChatCleanupTarget(
+      threadIdentity = buildAgentSessionIdentity(provider, parentThreadId),
+      subAgentId = archivedThreadId,
+    )
   }
 
   private fun showArchiveNotification(outcome: ArchiveBatchOutcome) {
@@ -253,20 +252,14 @@ class AgentSessionArchiveService internal constructor(
       return
     }
     runCatching {
-      val presentation = buildArchiveNotificationPresentation(
-        requestedCount = outcome.requestedCount,
-        archivedCount = outcome.archivedTargets.size,
-        singleArchivedLabel = outcome.singleArchivedLabel,
-        canUndo = outcome.undoTargets.isNotEmpty(),
-      )
       val notification = NotificationGroupManager.getInstance()
         .getNotificationGroup(AGENT_SESSIONS_NOTIFICATION_GROUP_ID)
         .createNotification(
-          presentation.title,
-          presentation.body,
+          AgentSessionsBundle.message("toolwindow.notification.archive.title"),
+          AgentSessionsBundle.message("toolwindow.notification.archive.body", outcome.archivedTargets.size),
           NotificationType.INFORMATION,
         )
-      if (presentation.showUndoAction) {
+      if (outcome.undoTargets.isNotEmpty()) {
         val undoTargets = outcome.undoTargets.toList()
         notification.addAction(
           NotificationAction.createSimpleExpiring(
@@ -299,17 +292,9 @@ class AgentSessionArchiveService internal constructor(
 }
 
 private data class ArchiveBatchOutcome(
-  @JvmField val requestedCount: Int,
   @JvmField val archivedTargets: List<ArchiveThreadTarget>,
-  @JvmField val singleArchivedLabel: String?,
   @JvmField val undoTargets: List<ArchiveThreadTarget>,
-  @JvmField val refreshDelayMs: Long,
-)
-
-internal data class ArchiveNotificationPresentation(
-  @JvmField val title: @NlsContexts.NotificationTitle String,
-  @JvmField val body: @NlsContexts.NotificationContent String,
-  @JvmField val showUndoAction: Boolean,
+  @JvmField val requiresCodexRefreshDelay: Boolean,
 )
 
 private data class ArchivedChatCleanupTarget(
@@ -318,68 +303,19 @@ private data class ArchivedChatCleanupTarget(
 )
 
 private fun buildArchiveThreadsActionKey(targets: List<ArchiveThreadTarget>): String {
-  val targetsKey = targets.map(::archiveThreadTargetKey).sorted().joinToString("|")
+  val targetsKey = targets.map(::archiveTargetKey).sorted().joinToString("|")
   return "$ARCHIVE_THREADS_ACTION_KEY_PREFIX:$targetsKey"
 }
 
 private fun buildUnarchiveThreadsActionKey(targets: List<ArchiveThreadTarget>): String {
-  val targetsKey = targets.map(::archiveThreadTargetKey).sorted().joinToString("|")
+  val targetsKey = targets.map(::archiveTargetKey).sorted().joinToString("|")
   return "$UNARCHIVE_THREADS_ACTION_KEY_PREFIX:$targetsKey"
+}
+
+private fun archiveTargetKey(target: ArchiveThreadTarget): String {
+  return "${target.path}:${target.provider}:${target.threadId}"
 }
 
 private fun logMissingProviderBridge(provider: AgentSessionProvider) {
   LOG.warn("No session provider bridge registered for ${provider.value}")
-}
-
-private fun ArchiveThreadTarget.toArchivedChatCleanupTarget(): ArchivedChatCleanupTarget {
-  return when (this) {
-    is ArchiveThreadTarget.Thread -> ArchivedChatCleanupTarget(
-      threadIdentity = buildAgentSessionIdentity(provider, threadId),
-      subAgentId = null,
-    )
-
-    is ArchiveThreadTarget.SubAgent -> ArchivedChatCleanupTarget(
-      threadIdentity = buildAgentSessionIdentity(provider, parentThreadId),
-      subAgentId = subAgentId,
-    )
-  }
-}
-
-private fun ArchiveThreadTarget.isPendingThread(): Boolean {
-  return this is ArchiveThreadTarget.Thread && isAgentSessionNewSessionId(threadId)
-}
-
-internal fun buildArchiveNotificationPresentation(
-  requestedCount: Int,
-  archivedCount: Int,
-  singleArchivedLabel: @NlsSafe String?,
-  canUndo: Boolean,
-): ArchiveNotificationPresentation {
-  val title = AgentSessionsBundle.message(
-    if (requestedCount == 1 && archivedCount == 1) {
-      "toolwindow.notification.archive.title.single"
-    }
-    else {
-      "toolwindow.notification.archive.title.multiple"
-    }
-  )
-  val body = when {
-    requestedCount == 1 && archivedCount == 1 -> {
-      singleArchivedLabel?.takeIf(String::isNotBlank)
-      ?: AgentSessionsBundle.message("toolwindow.notification.archive.body.single.generic")
-    }
-
-    archivedCount == requestedCount -> {
-      AgentSessionsBundle.message("toolwindow.notification.archive.body.multiple", archivedCount)
-    }
-
-    else -> {
-      AgentSessionsBundle.message("toolwindow.notification.archive.body.partial", archivedCount, requestedCount)
-    }
-  }
-  return ArchiveNotificationPresentation(
-    title = title,
-    body = body,
-    showUndoAction = canUndo,
-  )
 }
