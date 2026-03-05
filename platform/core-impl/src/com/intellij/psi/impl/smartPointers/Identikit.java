@@ -13,6 +13,7 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.Interner;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,7 @@ import java.util.Objects;
  * </ul>
  * Instances are interned via weak interners to save memory.
  */
+@ApiStatus.Internal
 public abstract class Identikit {
   private static final Interner<ByType> ourPlainInterner = Interner.createWeakInterner();
   private static final Interner<ByAnchor> ourAnchorInterner = Interner.createWeakInterner();
