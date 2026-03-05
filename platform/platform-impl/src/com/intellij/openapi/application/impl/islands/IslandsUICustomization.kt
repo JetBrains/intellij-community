@@ -196,9 +196,6 @@ internal class IslandsUICustomization : InternalUICustomization() {
       return !isManyIslandEnabled
     }
 
-  override val isTabOccupiesWholeHeight: Boolean
-    get() = !isManyIslandEnabled
-
   override val isRoundedTabDuringDrag: Boolean
     get() = isManyIslandEnabled && (WindowRoundedCornersManager.isAvailable() || StartupUiUtil.isWaylandToolkit())
 
