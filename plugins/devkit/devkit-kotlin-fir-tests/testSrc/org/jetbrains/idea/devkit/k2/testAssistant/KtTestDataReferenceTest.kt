@@ -1,10 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.devkit.kotlin.testAssistant
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.k2.testAssistant
 
 import com.intellij.testFramework.writeChild
 import org.jetbrains.idea.devkit.testAssistant.TestDataReferenceTestCase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-class KtTestDataReferenceTest : TestDataReferenceTestCase() {
+class KtTestDataReferenceTest : TestDataReferenceTestCase(), ExpectedPluginModeProvider {
+  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+  override fun setUp() {
+    setUpWithKotlinPlugin { super.setUp() }
+  }
 
   fun testRootAndSubdir() {
     myFixture.configureByText("ATest.kt", """

@@ -1,5 +1,5 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.devkit.testAssistant
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.k2.testAssistant
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.execution.Location
@@ -13,11 +13,16 @@ import com.intellij.testFramework.MapDataContext
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import junit.framework.TestCase
+import org.jetbrains.idea.devkit.testAssistant.NavigateToTestDataAction
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-class KtTestMetadataNavigationTest : LightJavaCodeInsightFixtureTestCase() {
+class KtTestMetadataNavigationTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
+  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
   private val projectDescriptor = object : ProjectDescriptor(LanguageLevel.HIGHEST) {
 
@@ -30,7 +35,7 @@ class KtTestMetadataNavigationTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = projectDescriptor
 
   override fun setUp() {
-    super.setUp()
+    setUpWithKotlinPlugin { super.setUp() }
     ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
     myFixture.addClass("""
       package org.junit.platform.commons.annotation;
@@ -93,7 +98,7 @@ class KtTestMetadataNavigationTest : LightJavaCodeInsightFixtureTestCase() {
       .single()
 
     val dataContext = MapDataContext().apply {
-      put(Location.DATA_KEY, PsiLocation.fromPsiElement<PsiElement>(lineMarkerInfo.element))
+        put(Location.DATA_KEY, PsiLocation.fromPsiElement<PsiElement>(lineMarkerInfo.element))
     }
     val findTestDataFilesForTests = NavigateToTestDataAction.findTestDataFiles(
       dataContext, project, true).map { it.path }
