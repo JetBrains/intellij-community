@@ -110,7 +110,7 @@ class PipManagementInstaller(private val sdk: Sdk, private val manager: PythonPa
   }
 
   suspend fun hasManagement(): Boolean =
-    languageLevel < LanguageLevel.PYTHON27 || (manager.hasInstalledPackage(PIP_PACKAGE) && hasSetuptools())
+    languageLevel < LanguageLevel.PYTHON27 || (hasPip() && hasSetuptools())
 
   private suspend fun installManagement(): PyResult<Unit> {
     if (!hasPip()) installWheel(WheelFiles.PIP_WHEEL_NAME).getOr { return it }
@@ -126,21 +126,16 @@ class PipManagementInstaller(private val sdk: Sdk, private val manager: PythonPa
     ExecService().execGetStdout(pythonPath, args).mapSuccess { }
   }
 
-  private suspend fun hasPip(): Boolean = manager.hasInstalledPackage(PIP_PACKAGE)
+  private suspend fun hasPip(): Boolean = manager.hasInstalledPackage(PyPackageUtil.PIP)
 
   private suspend fun hasSetuptools(): Boolean =
     languageLevel >= LanguageLevel.PYTHON312 ||
-    manager.hasInstalledPackage(SETUPTOOLS_PACKAGE) ||
-    manager.hasInstalledPackage(DISTRIBUTE_PACKAGE)
+    manager.hasInstalledPackage(PyPackageUtil.SETUPTOOLS) ||
+    manager.hasInstalledPackage(PyPackageUtil.DISTRIBUTE)
 
   private object WheelFiles {
     const val SETUPTOOLS_WHEEL_NAME = "setuptools-44.1.1-py2.py3-none-any.whl"
     const val PIP_WHEEL_NAME = "pip-24.3.1-py2.py3-none-any.whl"
   }
 
-  companion object {
-    val PIP_PACKAGE: PythonPackage = PythonPackage(PyPackageUtil.PIP, "24.3.1", false)
-    val SETUPTOOLS_PACKAGE: PythonPackage = PythonPackage(PyPackageUtil.SETUPTOOLS, "44.1.1", false)
-    val DISTRIBUTE_PACKAGE: PythonPackage = PythonPackage(PyPackageUtil.DISTRIBUTE, "", false)
-  }
 }
