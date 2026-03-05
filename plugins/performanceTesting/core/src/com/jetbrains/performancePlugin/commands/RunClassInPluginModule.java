@@ -27,7 +27,8 @@ import java.util.List;
 
 public class RunClassInPluginModule extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "runClassInPluginModule";
-  protected final String myModuleId;
+  protected final String myModuleName;
+  protected final String myModuleNamespace;
   protected final String myClazzName;
   protected final String myMethodName;
   protected final List<File> myClasspath;
@@ -45,7 +46,8 @@ public class RunClassInPluginModule extends AbstractCommand {
     //the command name
     nextArg(args, text);
 
-    myModuleId = nextArg(args, text);
+    myModuleName = nextArg(args, text);
+    myModuleNamespace = nextArg(args, text);
     myClazzName = nextArg(args, text);
     myMethodName = nextArg(args, text);
     List<File> classpath = new ArrayList<>();
@@ -70,12 +72,12 @@ public class RunClassInPluginModule extends AbstractCommand {
   }
 
   public void computePromise(@NotNull Project project) throws Exception {
-    PluginModuleId moduleId = PluginModuleId.getId(myModuleId, PluginModuleId.JETBRAINS_NAMESPACE);
+    PluginModuleId moduleId = PluginModuleId.getId(myModuleName, myModuleNamespace);
     ContentModuleDescriptor module = PluginManagerCore.getPluginSet().findEnabledModule(moduleId);
-    if (module == null) throw new RuntimeException("Failed to find plugin module: " + myModuleId);
+    if (module == null) throw new RuntimeException("Failed to find plugin module: " + myModuleName + " (" + myModuleNamespace + ")");
 
     ClassLoader loader = module.getPluginClassLoader();
-    if (loader == null) throw new RuntimeException("Classloader is null for module: " + myModuleId);
+    if (loader == null) throw new RuntimeException("Classloader is null for module: " + myModuleName + " (" + myModuleNamespace + ")");
 
     URLClassLoader classLoader = new URLClassLoader(convertClasspathToURLs(), loader);
     runWithClassLoader(project, classLoader);
