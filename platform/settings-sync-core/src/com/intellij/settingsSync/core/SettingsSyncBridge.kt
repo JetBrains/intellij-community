@@ -65,19 +65,22 @@ class SettingsSyncBridge(
     get() = queueJob != null
 
 
+  @TestOnly
+  val isAnyInitializePerformed: AtomicBoolean = AtomicBoolean()
+
   private val eventsMutex = Mutex()
   private val initializationMutex = Mutex()
 
   private val settingsChangeListener = object : SettingsSyncEventListener {
     override fun settingChanged(event: SyncSettingsEvent) {
-      LOG.debug("Adding settings changed event $event to the queue")
+      /** LOG.debug **/ LOG.warn("Adding settings changed event $event to the queue")
       if (event is SyncSettingsEvent.ExclusiveEvent) { // such events will be processed separately from all others
         pendingExclusiveEvents.add(event)
         coroutineScope.launch {
           try {
             withTimeoutOrNull(60.seconds) {
               eventsMutex.withLock {
-                LOG.debug("Lock obtained for exclusive event")
+                /** LOG.debug **/ LOG.warn("Lock obtained for exclusive event")
                 processExclusiveEvent(event)
               }
             } ?: run {
@@ -122,10 +125,16 @@ class SettingsSyncBridge(
 
             applyInitialChanges(initMode)
 
-            startQueue()
+            if (SettingsSyncSettings.getInstance().syncEnabled) {
+              startQueue()
+            }
           }
           catch (ex: Exception) {
             stopSyncingAndRollback(null, ex)
+          }
+          finally {
+            // only used in tests to check the first initialization
+            isAnyInitializePerformed.set(true)
           }
         }
       }
@@ -133,27 +142,27 @@ class SettingsSyncBridge(
   }
 
   private fun startQueue() {
-    LOG.info("Starting settings sync queue")
+    /** LOG.info **/ LOG.warn("Starting settings sync queue")
     queueJob = coroutineScope.launch {
       try {
         while (true) {
           processPendingEvents()
           if (!SettingsSyncSettings.getInstance().syncEnabled && pendingEvents.isEmpty() && pendingExclusiveEvents.isEmpty()) {
-            LOG.info("Sync disabled and no pending events. Stopping queue.")
+            /** LOG.info **/ LOG.warn("Sync disabled and no pending events. Stopping queue.")
             break
           }
           try {
             delay(1000.milliseconds)
           }
           catch (_: CancellationException) {
-            LOG.info("queue processing was cancelled")
+            /** LOG.info **/ LOG.warn("queue processing was cancelled")
             break
           }
         }
       }
       finally {
         queueJob = null
-        LOG.info("Queue processing stopped, queueJob set to null")
+        /** LOG.info **/ LOG.warn("Queue processing stopped, queueJob set to null")
       }
     }
   }
@@ -217,12 +226,12 @@ class SettingsSyncBridge(
     val migrationSnapshot = migration.getLocalDataIfAvailable(appConfigPath)
     if (migrationSnapshot != null) {
       settingsLog.applyIdeState(migrationSnapshot, "Migrate from old settings sync")
-      LOG.info("Migration from old storage applied.")
+      /** LOG.info **/ LOG.warn("Migration from old storage applied.")
       var masterPosition = settingsLog.advanceMaster() // merge (preserve) 'ide' changes made by logging existing settings & by migration
 
       when (val updateResult = remoteCommunicator.receiveUpdates()) {
         is UpdateResult.Success -> {
-          LOG.info("There is a snapshot on the server => prefer server version over local migration data")
+          /** LOG.info **/ LOG.warn("There is a snapshot on the server => prefer server version over local migration data")
           val snapshot = updateResult.settingsSnapshot
           masterPosition = settingsLog.forceWriteToMaster(snapshot, "Remote changes to overwrite migration data by settings from cloud")
           settingsLog.setCloudPosition(masterPosition)
@@ -233,15 +242,15 @@ class SettingsSyncBridge(
         }
         is UpdateResult.FileDeletedFromServer -> {
           SettingsSyncSettings.getInstance().syncEnabled = false
-          LOG.info("Snapshot on the server has been deleted => not enabling settings sync after migration")
+          /** LOG.info **/ LOG.warn("Snapshot on the server has been deleted => not enabling settings sync after migration")
         }
         is UpdateResult.Error -> {
-          LOG.info("Error prevented checking server state: ${updateResult.message}")
+          /** LOG.info **/ LOG.warn("Error prevented checking server state: ${updateResult.message}")
           SettingsSyncSettings.getInstance().syncEnabled = false
           SettingsSyncStatusTracker.getInstance().updateOnError(updateResult.message)
         }
         UpdateResult.NoFileOnServer -> {
-          LOG.info("No snapshot file on the server yet => pushing the migrated data to the cloud")
+          /** LOG.info **/ LOG.warn("No snapshot file on the server yet => pushing the migrated data to the cloud")
           forcePushToCloud(masterPosition)
           settingsLog.setCloudPosition(masterPosition)
 
@@ -282,7 +291,7 @@ class SettingsSyncBridge(
   private suspend fun processExclusiveEvent(event: SyncSettingsEvent.ExclusiveEvent) {
     when (event) {
       is SyncSettingsEvent.CrossIdeSyncStateChanged -> {
-        LOG.info("Cross-ide sync state changed to: " + event.isCrossIdeSyncEnabled)
+        /** LOG.info **/ LOG.warn("Cross-ide sync state changed to: " + event.isCrossIdeSyncEnabled)
         if (event.isCrossIdeSyncEnabled) {
           remoteCommunicator.createFile(CROSS_IDE_SYNC_MARKER_FILE, "")
         }
@@ -306,7 +315,7 @@ class SettingsSyncBridge(
 
   private suspend fun processPendingEvents(force: Boolean = false) {
     if (pendingEvents.isEmpty()) {
-      LOG.debug("Pending events is empty")
+      /** LOG.debug **/ LOG.warn("Pending events is empty")
       return
     }
     if (force) {
@@ -322,7 +331,7 @@ class SettingsSyncBridge(
         processPendingEventsUnderLock()
         eventsMutex.unlock()
       } else {
-        LOG.debug("Events are being processed by another coroutine, will retry later")
+        /** LOG.debug **/ LOG.warn("Events are being processed by another coroutine, will retry later")
       }
     }
   }
@@ -336,7 +345,7 @@ class SettingsSyncBridge(
         try {
           val event = pendingEvents.removeAt(0)
           eventProcessingFlag.set(true)
-          LOG.info("Processing event $event")
+          /** LOG.info **/ LOG.warn("Processing event $event")
           when (event) {
             is SyncSettingsEvent.IdeChange -> {
               settingsLog.applyIdeState(event.snapshot, "Local changes made in the IDE")
@@ -389,16 +398,16 @@ class SettingsSyncBridge(
   private fun checkServer() {
     when (val result = remoteCommunicator.checkServerState()) {
       is ServerState.UpdateNeeded -> {
-        LOG.info("Updating from server")
+        /** LOG.info **/ LOG.warn("Updating from server")
         updateChecker.scheduleUpdateFromServer()
         // the push will happen automatically after updating and merging (if there is anything to merge)
       }
       ServerState.FileNotExists -> {
-        LOG.info("No file on server, will push local settings")
+        /** LOG.info **/ LOG.warn("No file on server, will push local settings")
         SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.MustPushRequest)
       }
       ServerState.UpToDate -> {
-        LOG.debug("Updating settings is not needed")
+        /** LOG.debug **/ LOG.warn("Updating settings is not needed")
         // Clear the error state, if any
         SettingsSyncStatusTracker.getInstance().updateOnSuccess()
       }
@@ -433,7 +442,7 @@ class SettingsSyncBridge(
       SettingsSyncEventsStatistics.DISABLED_AUTOMATICALLY.log(SettingsSyncEventsStatistics.AutomaticDisableReason.EXCEPTION)
     }
     else {
-      LOG.info("Settings Sync is switched off. Rolling back.")
+      /** LOG.info **/ LOG.warn("Settings Sync is switched off. Rolling back.")
     }
     SettingsSyncSettings.getInstance().syncEnabled = false
     if (exception != null) {
@@ -502,13 +511,13 @@ class SettingsSyncBridge(
       })
     }
     else {
-      LOG.debug("Nothing to push")
+      /** LOG.debug **/ LOG.warn("Nothing to push")
     }
   }
 
   private fun pushAndHandleResult(force: Boolean, positionToSetCloudBranch: SettingsLog.Position, onRejectedPush: () -> Unit) {
     val pushResult: SettingsSyncPushResult = pushToCloud(settingsLog.collectCurrentSnapshot(), force)
-    LOG.info("Result of pushing settings to the cloud: $pushResult")
+    /** LOG.info **/ LOG.warn("Result of pushing settings to the cloud: $pushResult")
     when (pushResult) {
       is SettingsSyncPushResult.Success -> {
         settingsLog.setCloudPosition(positionToSetCloudBranch)
@@ -554,7 +563,7 @@ class SettingsSyncBridge(
   private suspend fun pushToIde(settingsSnapshot: SettingsSnapshot, targetPosition: SettingsLog.Position, syncSettings: SettingsSyncState?) {
     ideMediator.applyToIde(settingsSnapshot, syncSettings)
     settingsLog.setIdePosition(targetPosition)
-    LOG.info("Applied settings to the IDE.")
+    /** LOG.info **/ LOG.warn("Applied settings to the IDE.")
   }
 
   @TestOnly
@@ -584,32 +593,32 @@ class SettingsSyncBridge(
 
     override fun checkServerState(): ServerState {
       val errorMsg = "Cannot check server state - no communicator provided"
-      LOG.info(errorMsg)
+      /** LOG.info **/ LOG.warn(errorMsg)
       return ServerState.Error(errorMsg)
     }
 
     override fun receiveUpdates(): UpdateResult {
       val errorMsg = "Cannot received updates - no communicator provided"
-      LOG.info(errorMsg)
+      /** LOG.info **/ LOG.warn(errorMsg)
       return UpdateResult.Error(errorMsg)
     }
 
     override fun push(snapshot: SettingsSnapshot, force: Boolean, expectedServerVersionId: String?): SettingsSyncPushResult {
       val errorMsg = "Cannot push - no communicator provided"
-      LOG.info(errorMsg)
+      /** LOG.info **/ LOG.warn(errorMsg)
       return SettingsSyncPushResult.Error(errorMsg)
     }
 
     override fun createFile(filePath: String, content: String) {
-      LOG.info("Cannot create file '$filePath' - no communicator provided")
+      /** LOG.info **/ LOG.warn("Cannot create file '$filePath' - no communicator provided")
     }
 
     override fun deleteFile(filePath: String) {
-      LOG.info("Cannot delete file '$filePath' - no communicator provided")
+      /** LOG.info **/ LOG.warn("Cannot delete file '$filePath' - no communicator provided")
     }
 
     override fun isFileExists(filePath: String): Boolean {
-      LOG.info("Cannot check if file '$filePath' exists - no communicator provided")
+      /** LOG.info **/ LOG.warn("Cannot check if file '$filePath' exists - no communicator provided")
       return false
     }
   }

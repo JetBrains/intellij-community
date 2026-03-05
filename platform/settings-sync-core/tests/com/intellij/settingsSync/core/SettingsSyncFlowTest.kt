@@ -54,8 +54,8 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     bridge = controls.bridge
     bridge.initialize(initMode)
     if (waitForInit) {
-      timeoutRunBlocking(200.seconds) {
-        while (!bridge.isInitialized) {
+      timeoutRunBlocking(2.seconds) {
+        while (!bridge.isAnyInitializePerformed.get()) {
           delay(10.milliseconds)
         }
       }
@@ -100,6 +100,12 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     Assertions.assertEquals(SettingsSyncLocalSettings.getInstance().userId, DUMMY_USER_ID)
     authService.userData = null
     initSettingsSync()
+
+    // Wait for resetLoginData to be called and complete
+    waitUntil(timeout = 2.seconds) {
+      !SettingsSyncSettings.getInstance().syncEnabled
+    }
+
     Assertions.assertEquals(SettingsSyncLocalSettings.getInstance().providerCode, null)
     Assertions.assertEquals(SettingsSyncLocalSettings.getInstance().userId, null)
     Assertions.assertFalse(SettingsSyncSettings.getInstance().syncEnabled)
@@ -347,6 +353,9 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     suppressFailureOnLogError(exceptionToThrow) {
       timeoutRunBlocking {
         initSettingsSync(SettingsSyncBridge.InitMode.TakeFromServer(SyncSettingsEvent.CloudChange(snapshot, null)))
+        waitUntil(timeout = 2.seconds) {
+          SettingsSyncStatusTracker.getInstance().currentStatus is SettingsSyncStatusTracker.SyncStatus.Error
+        }
       }
     }
 
