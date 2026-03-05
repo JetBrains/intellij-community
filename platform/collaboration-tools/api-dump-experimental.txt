@@ -331,6 +331,17 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - f:create(kotlinx.coroutines.CoroutineScope,javax.swing.JComponent,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):javax.swing.JComponent
 - f:wrapTextComponent(kotlinx.coroutines.CoroutineScope,javax.swing.JComponent,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function0):javax.swing.JComponent
 - bs:wrapTextComponent$default(com.intellij.collaboration.ui.EditableComponentFactory,kotlinx.coroutines.CoroutineScope,javax.swing.JComponent,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function0,I,java.lang.Object):javax.swing.JComponent
+*:com.intellij.collaboration.ui.Either
+- *sf:Companion:com.intellij.collaboration.ui.Either$Companion
+- asLeftOrNull():java.lang.Object
+- asRightOrNull():java.lang.Object
+- bimap(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.collaboration.ui.Either
+- fold(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):java.lang.Object
+- isLeft():Z
+- isRight():Z
+*f:com.intellij.collaboration.ui.Either$Companion
+- f:left(java.lang.Object):com.intellij.collaboration.ui.Either
+- f:right(java.lang.Object):com.intellij.collaboration.ui.Either
 *f:com.intellij.collaboration.ui.ExceptionUtil
 - sf:INSTANCE:com.intellij.collaboration.ui.ExceptionUtil
 - f:getPresentableMessage(java.lang.Throwable):java.lang.String
