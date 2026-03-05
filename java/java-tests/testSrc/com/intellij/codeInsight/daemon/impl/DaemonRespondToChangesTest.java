@@ -489,7 +489,9 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
       for (Editor editor : allEditors) {
         Document document = editor.getDocument();
         PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
-        if (psiFile == null) continue;
+        if (psiFile == null) {
+          continue;
+        }
         if (location.equals(psiFile.getName())) {
           schemaEditor = editor;
           break;
@@ -1935,6 +1937,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
     assertEquals("Class 'A2222' is never used", info.getDescription());
 
     Document document1111 = getFile().getParent().findFile("A1111.java").getFileDocument();
+    PsiDocumentManager.getInstance(getProject()).getPsiFile(document1111); // avoid "cached psiFile is null, cancel all passes"
     Editor editor1111 = ((TextEditor)FileEditorManager.getInstance(getProject())
       .getEditors(FileDocumentManager.getInstance().getFile(document1111))[0]).getEditor();
     setActiveEditors(getEditor(), editor1111);
@@ -1955,6 +1958,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
     assertEquals("A1111.java", getFile().getName());
     makeEditorWindowVisible(new Point(0, 1000), myEditor);
     Document document2222 = getFile().getParent().findFile("A2222.java").getFileDocument();
+    PsiDocumentManager.getInstance(getProject()).getPsiFile(document2222); // avoid "cached psiFile is null, cancel all passes"
     Editor editor2222 = ((TextEditor)FileEditorManager.getInstance(getProject())
       .getEditors(FileDocumentManager.getInstance().getFile(document2222))[0]).getEditor();
     setActiveEditors(getEditor(), editor2222);
