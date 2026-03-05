@@ -10,9 +10,14 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.Kotlin.logKmpWiz
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.DialogWrapper.CANCEL_EXIT_CODE
+import com.intellij.openapi.ui.ExitActionType.CANCEL
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.TopGap
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Component
+import java.util.EventObject
 
 @ApiStatus.Internal
 fun NewProjectWizardStep.addMultiPlatformLink(builder: Panel) {
@@ -38,12 +43,17 @@ fun NewProjectWizardStep.addMultiPlatformLink(builder: Panel) {
             } else { // install plugin from marketplace action
                 logKmpWizardInstallKmpPluginClicked()
 
+                event.closeContextDialog()
                 ShowSettingsUtil.getInstance().showSettingsDialog(null, PluginManagerConfigurable::class.java) {
                     it.openMarketplaceTab(KotlinMultiplatformPluginName)
                 }
             }
         }
     }.topGap(TopGap.SMALL)
+}
+
+private fun EventObject.closeContextDialog() {
+    DialogWrapper.findInstance(source as? Component)?.close(CANCEL_EXIT_CODE, CANCEL)
 }
 
 private val isKmpPluginEnabled: Boolean
