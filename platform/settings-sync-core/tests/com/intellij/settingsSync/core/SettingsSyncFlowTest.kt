@@ -572,4 +572,48 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
       }
     }
   }
+
+  @Test
+  fun `enable disable enable again - listeners work after re-enable`() = timeoutRunBlockingAndStopBridge {
+    // Initial setup: create initial settings and enable sync (first enable)
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+
+    assertServerSnapshot {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+
+    // Mimic UI disable (handleDisableSync from SettingsSyncConfigurable)
+    SettingsSyncSettings.getInstance().syncEnabled = false
+    bridge.waitForAllExecuted()
+    Assertions.assertFalse(SettingsSyncSettings.getInstance().syncEnabled)
+
+    // Mimic UI enable again (second enable via getSettingsFromServer)
+    SettingsSyncSettings.getInstance().syncEnabled = true
+    bridge.initialize(SettingsSyncBridge.InitMode.JustInit)
+    timeoutRunBlocking(2.seconds) {
+      while (!bridge.isInitialized) {
+        delay(10.milliseconds)
+      }
+    }
+
+    // Verify that listeners are working by making a local change
+    writeToConfig {
+      fileState("options/laf.xml", "LaF after re-enable")
+    }
+
+    // Fire IdeChange event to simulate file watcher detecting the change
+    val changedSnapshot = settingsSnapshot {
+      fileState("options/laf.xml", "LaF after re-enable")
+    }
+    syncSettingsAndWait(SyncSettingsEvent.IdeChange(changedSnapshot))
+
+    // Verify the change was synced to server
+    assertServerSnapshot {
+      fileState("options/laf.xml", "LaF after re-enable")
+    }
+  }
 }
