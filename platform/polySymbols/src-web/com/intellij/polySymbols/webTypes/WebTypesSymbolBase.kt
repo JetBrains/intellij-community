@@ -4,7 +4,6 @@ package com.intellij.polySymbols.webTypes
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbol.DocHideIconProperty
@@ -68,7 +67,10 @@ open class WebTypesSymbolBase : WebTypesSymbol {
             ?: base.contribution.extends
               .also { _superContributions = emptyList() }
               ?.resolve(PolySymbolQueryStack(), queryExecutor, true, true)
-              ?.toList()
+              // We should not resolve into dynamic symbols, since super contributions are cached and there is
+              // no easy way to clear caches, unless each scope has a modification tracker. There is no much
+              // point in such an extensive support for a rarely used feature.
+              ?.filterIsInstance<WebTypesSymbol>()
               ?.also { contributions -> _superContributions = contributions }
             ?: emptyList()
 
@@ -115,9 +117,6 @@ open class WebTypesSymbolBase : WebTypesSymbol {
 
   override fun toString(): String =
     base.toString()
-
-  override val modificationTracker: ModificationTracker
-    get() = ModificationTracker.NEVER_CHANGED
 
   override fun equals(other: Any?): Boolean =
     other === this

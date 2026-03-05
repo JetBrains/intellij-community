@@ -19,6 +19,7 @@ import com.intellij.polySymbols.query.PolySymbolNamesProvider
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolQueryParams
 import com.intellij.polySymbols.query.PolySymbolQueryStack
+import com.intellij.polySymbols.query.impl.PolySymbolQueryExecutorImpl
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
@@ -244,15 +245,22 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin>
       symbolsCache.getOrPut(item) { item.withQueryExecutorContext(queryExecutor) }
 
     fun checkForModifications() {
-      if (queryExecutor.modificationTracker.modificationCount != this.queryExecutorModificationCount) {
+      if (calcQueryExecutorModificationCount() != this.queryExecutorModificationCount) {
         synchronized(this) {
-          if (queryExecutor.modificationTracker.modificationCount != this.queryExecutorModificationCount) {
+          val count = calcQueryExecutorModificationCount()
+          if (count != this.queryExecutorModificationCount) {
             symbolsCache.clear()
-            this.queryExecutorModificationCount = queryExecutor.modificationTracker.modificationCount
+            this.queryExecutorModificationCount = count
           }
         }
       }
     }
+
+    private fun calcQueryExecutorModificationCount(): Long =
+      queryExecutor.namesProvider.modificationTracker.modificationCount +
+      (queryExecutor as PolySymbolQueryExecutorImpl).rootScope.sumOf {
+        (it as? StaticPolySymbolScope)?.modificationTracker?.modificationCount ?: 0L
+      }
 
   }
 

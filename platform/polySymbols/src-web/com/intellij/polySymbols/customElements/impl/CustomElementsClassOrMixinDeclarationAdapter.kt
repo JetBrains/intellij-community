@@ -2,7 +2,6 @@
 package com.intellij.polySymbols.customElements.impl
 
 import com.intellij.model.Pointer
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
@@ -72,11 +71,8 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
               ?: (base.declaration.mixins + listOfNotNull(base.declaration.superclass))
                 .also { _superContributions = emptyList() }
                 .flatMap { it.resolve(origin, queryExecutor) }
-                .toList()
+                .filterIsInstance<CustomElementsSymbol>()
                 .also { contributions -> _superContributions = contributions }
-
-    override val modificationTracker: ModificationTracker
-      get() = ModificationTracker.NEVER_CHANGED
 
     override val origin: CustomElementsJsonOrigin
       get() = base.origin
@@ -90,9 +86,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
     override val description: String?
       get() = (base.declaration.description?.takeIf { it.isNotBlank() } ?: base.declaration.summary)
                 ?.let { origin.renderDescription(it) }
-              ?: superContributions.asSequence()
-                .mapNotNull { (it as? CustomElementsSymbol)?.description }
-                .firstOrNull()
+              ?: superContributions.firstNotNullOfOrNull { (it as? CustomElementsSymbol)?.description }
 
     override val apiStatus: PolySymbolApiStatus
       get() = base.declaration.deprecated.toApiStatus(origin) ?: PolySymbolApiStatus.Stable

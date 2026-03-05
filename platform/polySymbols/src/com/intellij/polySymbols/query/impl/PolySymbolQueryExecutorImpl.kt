@@ -31,7 +31,6 @@ import com.intellij.polySymbols.query.PolySymbolQueryResultsCustomizer
 import com.intellij.polySymbols.query.PolySymbolQueryStack
 import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.query.PolySymbolWithPattern
-import com.intellij.polySymbols.utils.CompositeModificationTracker
 import com.intellij.polySymbols.utils.asSingleSymbol
 import com.intellij.polySymbols.utils.hideFromCompletion
 import com.intellij.polySymbols.utils.nameSegments
@@ -60,7 +59,7 @@ class PolySymbolQueryExecutorImpl(
 
   override val allowResolve: Boolean = if (PlatformUtils.isJetBrainsClient()) false else allowResolve
 
-  private val rootScope: List<PolySymbolScope> = initializeCompoundScopes(rootScope)
+  internal val rootScope: List<PolySymbolScope> = initializeCompoundScopes(rootScope)
   private var nestingLevel: Int = 0
 
   override var keepUnresolvedTopLevelReferences: Boolean = false
@@ -374,13 +373,6 @@ class PolySymbolQueryExecutorImpl(
         .sortAndDeduplicate()
       result
     }
-
-  override val modificationTracker: CompositeModificationTracker by lazy {
-    CompositeModificationTracker(
-      rootScope.asSequence().map { it.modificationTracker }
-        .plus(namesProvider.modificationTracker)
-    )
-  }
 
   @RequiresReadLock
   private fun <T, P : PolySymbolQueryParams> runQuery(

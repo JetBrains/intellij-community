@@ -1,7 +1,6 @@
 package com.intellij.polySymbols.utils
 
 import com.intellij.model.Pointer
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.TextRange
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
@@ -235,9 +234,6 @@ abstract class PolySymbolStructuredScope<T : PsiElement, R : PsiElement>(protect
 
     override fun createPointer(): Pointer<out PolySymbolScope> =
       throw IllegalStateException("PolySymbolPsiScopeImpl cannot be pointed to. It should be wrapped with PolySymbolPsiScopeWithPointer.")
-
-    override val modificationTracker: ModificationTracker
-      get() = PsiModificationTracker.getInstance(source.project)
   }
 
 }
