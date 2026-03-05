@@ -8,12 +8,8 @@ import com.intellij.debugger.engine.RequestHint
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
-import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.debugger.streams.trace.breakpoint.ex.MethodNotFoundException
-import com.intellij.debugger.ui.breakpoints.FilteredRequestorImpl
-import com.intellij.debugger.ui.breakpoints.SyntheticBreakpoint
 import com.intellij.openapi.diagnostic.logger
 import com.sun.jdi.ClassNotLoadedException
 import com.sun.jdi.IncompatibleThreadStateException
@@ -23,8 +19,8 @@ import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.ReferenceType
 import com.sun.jdi.Value
-import com.sun.jdi.event.LocatableEvent
-import com.sun.jdi.request.BreakpointRequest
+import com.sun.jdi.event.MethodEntryEvent
+import com.sun.jdi.event.MethodExitEvent
 import com.sun.jdi.request.ExceptionRequest
 import com.sun.jdi.request.MethodEntryRequest
 import com.sun.jdi.request.MethodExitRequest
@@ -49,10 +45,15 @@ typealias ExceptionHandler = (EvaluationContextImpl, Location?, ObjectReference)
 internal class JdiBreakpointFactory {
   fun createMethodEntryBreakpoint(evaluationContext: EvaluationContextImpl,
                                   signature: JvmMethodSignature,
+                                  filter: ((SuspendContextImpl, MethodEntryEvent) -> Boolean)? = null,
                                   onMethodEntry: ArgumentsTransformer): MethodEntryRequest {
     val vmMethod = findVmMethod(evaluationContext, signature) ?: throw MethodNotFoundException(signature)
     // There is no need to request a hit because we just need to replace arguments on the fly
     val requestor = MethodEntryRequestor(evaluationContext.project, vmMethod) { requestor, suspendContext, event ->
+      if (filter != null && !filter(suspendContext, event)) {
+        event.request().enable()
+        return@MethodEntryRequestor
+      }
       event.request().disable()
       suspendContext.debugProcess.requestsManager.deleteRequest(requestor)
 
@@ -87,9 +88,14 @@ internal class JdiBreakpointFactory {
 
   fun createMethodExitBreakpoint(evaluationContext: EvaluationContextImpl,
                                  signature: JvmMethodSignature,
+                                 filter: ((SuspendContextImpl, MethodExitEvent) -> Boolean)? = null,
                                  onMethodExit: ReturnValueTransformer): MethodExitRequest {
     val vmMethod = findVmMethod(evaluationContext, signature) ?: throw MethodNotFoundException(signature)
     val requestor = MethodExitRequestor(evaluationContext.project, vmMethod) { requestor, suspendContext, event ->
+      if (filter != null && !filter(suspendContext, event)) {
+        event.request().enable()
+        return@MethodExitRequestor
+      }
       event.request().disable()
       suspendContext.debugProcess.requestsManager.deleteRequest(requestor)
 

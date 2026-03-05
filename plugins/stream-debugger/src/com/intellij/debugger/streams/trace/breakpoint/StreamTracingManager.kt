@@ -2,7 +2,6 @@
 package com.intellij.debugger.streams.trace.breakpoint
 
 import com.intellij.debugger.engine.DebugProcessAdapterImpl
-import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebugProcessListener
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
@@ -21,6 +20,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.sun.jdi.InvocationException
 import com.sun.jdi.Value
 import com.sun.jdi.event.BreakpointEvent
+import com.sun.jdi.event.MethodExitEvent
 import com.sun.jdi.request.EventRequest
 import com.sun.jdi.request.MethodEntryRequest
 import com.sun.jdi.request.MethodExitRequest
@@ -126,7 +126,7 @@ internal class StreamTracingManager(
     }
     else {
       // if it is a method call, then we set additional breakpoint as for an intermediate operation
-      sourceOperationBreakpoint = createSourceOperationRequestor(evaluationContext, positions.qualifierExpressionMethod, instrumentation)
+      sourceOperationBreakpoint = createSourceOperationRequestor(evaluationContext, positions.qualifierExpressionMethod, instrumentation, positions.skipCount)
       sourceOperationBreakpoint
     }
 
@@ -152,8 +152,19 @@ internal class StreamTracingManager(
     evaluationContext: EvaluationContextImpl,
     methodSignature: JvmMethodSignature,
     instrumentation: StreamInstrumentationManager,
+    qualifierSkipCount: Int,
   ): MethodExitRequest {
-    return breakpointFactory.createMethodExitBreakpoint(evaluationContext, methodSignature) { evalContext, _, value ->
+    val filter = if (qualifierSkipCount > 0) {
+      var remainingSkips = qualifierSkipCount
+      { _: SuspendContextImpl, _: MethodExitEvent ->
+        if (remainingSkips > 0) { remainingSkips--; false }
+        else true
+      }
+    } else {
+      null
+    }
+
+    return breakpointFactory.createMethodExitBreakpoint(evaluationContext, methodSignature, filter) { evalContext, _, value ->
       LOG.debug("Source operation exit request hit")
       val result = instrumentation.onSourceOperationExit(evalContext, value)
       enableNextBreakpoint(-1)

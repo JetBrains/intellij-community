@@ -4,10 +4,14 @@ package com.intellij.debugger.streams.trace.breakpoint
 import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.JavaRecursiveElementVisitor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiStatement
+import com.intellij.psi.util.parentOfType
 
 internal class JavaBreakpointPositionResolver : BreakpointPositionResolver {
   /**
@@ -33,7 +37,29 @@ internal class JavaBreakpointPositionResolver : BreakpointPositionResolver {
       }
     }
 
+    // How many calls to the same method as `qualifierMethod`
+    // appear before the qualifier expression in the containing method body.
+    val qualifierSkipCount = if (qualifierMethod != null) {
+      val psiManager = containingFile.manager
+      val qualifierEndOffset = chain.qualifierExpression.textRange.endOffset
+      val containingStatement = findPsiMethodCall(containingFile, chain.terminationCall.textRange)
+      var count = 0
+      containingStatement?.accept(object : JavaRecursiveElementVisitor() {
+        override fun visitMethodCallExpression(expr: PsiMethodCallExpression) {
+          super.visitMethodCallExpression(expr)
+          if (expr.textRange.endOffset < qualifierEndOffset) {
+            val resolved = expr.methodExpression.resolve() as? PsiMethod
+            if (resolved != null && psiManager.areElementsEquivalent(resolved, qualifierMethod)) count++
+          }
+        }
+      })
+      count
+    } else {
+      0
+    }
+
     BreakpointResolveResult.Found(
+      skipCount = qualifierSkipCount,
       qualifierExpressionMethod = qualifierMethod?.let { JvmMethodSignature.of(it) },
       intermediateStepsMethods = intermediateMethods.map { JvmMethodSignature.of(it) },
       terminationOperationMethod = JvmMethodSignature.of(terminationMethod),
@@ -72,16 +98,21 @@ internal class JavaBreakpointPositionResolver : BreakpointPositionResolver {
    * In the example above it is `RPARENTH` token for each operator which is an indirect child of `PsiMethodCallExpression`
    */
   private fun findPsiMethodAt(psiFile: PsiFile, position: TextRange): PsiMethod? {
+    val methodCall = findPsiMethodCall(psiFile, position) ?: return null
+    return methodCall.resolveMethod()
+  }
+
+  private fun findPsiMethodCall(psiFile: PsiFile, position: TextRange): PsiMethodCallExpression? {
     val elementAt = psiFile.findElementAt(position.endOffset - 1) ?: return null
 
     var element: PsiElement? = elementAt
     while (element != null) {
       if (element is PsiMethodCallExpression && element.textRange == position) {
-        return element.methodExpression.resolve() as? PsiMethod
+        return element
       }
       element = element.parent
     }
-    
+
     return null
   }
 }
