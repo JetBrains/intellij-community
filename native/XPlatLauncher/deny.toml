@@ -28,7 +28,6 @@ allow = []
 deny = []
 skip = []
 skip-tree = [
-    { name = "windows-sys", version = "0.45.0" }, # 'jni' seems to stuck
     { name = "curl" }, # build-time dependency
     { name = "native-dialog" }, # false positives in macOS-specific subtree
 ]
