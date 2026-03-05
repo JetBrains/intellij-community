@@ -56,10 +56,17 @@ fun Driver.waitForIndicators(timeout: Duration, waitSmartLongEnough: Boolean = t
 internal fun Driver.waitForIndicators(projectGet: () -> Project?, timeout: Duration, waitSmartLongEnough: Boolean = true) {
   var smartLongEnoughStart: Instant? = null
 
-  waitFor("Indicators", timeout) {
+  waitFor("Indicators with waitSmartLongEnough=$waitSmartLongEnough", timeout) {
     val project = runCatching { projectGet.invoke() }.getOrNull()
-    if (project == null || !isProjectOpened(project) || areIndicatorsVisible(project)) {
-      logger<Driver>().warn("There is an indicator detected. Waiting for disappearing with timeout ${timeout.inWholeSeconds}s.")
+    val projectReady = (project != null && isProjectOpened(project))
+    val indicatorsVisible = projectReady && areIndicatorsVisible(project)
+    if (!projectReady) {
+      logger<Driver>().info("The project is not opened.")
+    }
+    if (indicatorsVisible) {
+      logger<Driver>().info("Running indicators were detected.")
+    }
+    if (!projectReady || indicatorsVisible) {
       smartLongEnoughStart = null
       return@waitFor false
     }
