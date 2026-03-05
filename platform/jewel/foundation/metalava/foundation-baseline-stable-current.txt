@@ -1,1 +1,3 @@
 // Baseline format: 1.0
+RemovedMethod: org.jetbrains.jewel.foundation.lazy.SelectableLazyListState#SelectableLazyListState(androidx.compose.foundation.lazy.LazyListState):
+    Binary breaking change: Removed constructor org.jetbrains.jewel.foundation.lazy.SelectableLazyListState(androidx.compose.foundation.lazy.LazyListState)
