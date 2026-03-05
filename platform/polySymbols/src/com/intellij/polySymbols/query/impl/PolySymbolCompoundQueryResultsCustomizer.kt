@@ -2,7 +2,6 @@
 package com.intellij.polySymbols.query.impl
 
 import com.intellij.model.Pointer
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
@@ -27,9 +26,6 @@ internal class PolySymbolCompoundQueryResultsCustomizer(private val customizers:
     customizers.foldRight(item as PolySymbolCodeCompletionItem?) { scope, i ->
       i?.let { scope.apply(it, kind) }
     }
-
-  override val modificationTracker: ModificationTracker =
-    ModificationTracker { customizers.sumOf { it.modificationTracker.modificationCount } }
 
   override fun createPointer(): Pointer<out PolySymbolQueryResultsCustomizer> {
     val customizersPointers = customizers.map { it.createPointer() }

@@ -2,15 +2,12 @@
 package com.intellij.polySymbols.query
 
 import com.intellij.model.Pointer
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 
 interface PolySymbolQueryResultsCustomizer {
-
-  val modificationTracker: ModificationTracker
 
   fun createPointer(): Pointer<out PolySymbolQueryResultsCustomizer>
 

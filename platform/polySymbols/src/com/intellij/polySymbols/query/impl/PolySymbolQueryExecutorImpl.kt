@@ -379,7 +379,6 @@ class PolySymbolQueryExecutorImpl(
     CompositeModificationTracker(
       rootScope.asSequence().map { it.modificationTracker }
         .plus(namesProvider.modificationTracker)
-        .plus(resultsCustomizer.modificationTracker)
     )
   }
 
