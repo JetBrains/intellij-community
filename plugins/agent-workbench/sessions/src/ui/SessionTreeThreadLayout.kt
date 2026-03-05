@@ -9,6 +9,7 @@ import com.intellij.ui.render.RenderingHelper
 import com.intellij.ui.tree.ui.PlainSelectionTree
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.JBUI
+import java.awt.Color
 import java.awt.FontMetrics
 import javax.swing.JTree
 
@@ -17,6 +18,7 @@ private const val SESSION_TREE_ACTION_GAP = 4
 private const val SESSION_TREE_ACTION_RIGHT_GAP = 4
 private const val SESSION_TREE_THREAD_META_LEFT_GAP = 8
 private const val SESSION_TREE_THREAD_META_RIGHT_GAP = 2
+private const val SESSION_TREE_THREAD_STATUS_TIME_GAP = 8
 private const val SESSION_TREE_THREAD_SELECTION_HORIZONTAL_INSET = 12
 
 internal data class SessionTreeViewportLayout(
@@ -32,12 +34,20 @@ internal data class SessionTreeViewportLayout(
 internal data class SessionTreeThreadHorizontalLayout(
   val reserveWidth: Int,
   val titleMaxWidth: Int,
+  val statusX: Int,
+  val statusRightBoundary: Int,
   val timeX: Int,
   val timeRightBoundary: Int,
 )
 
 internal data class SessionTreeThreadTrailingPaint(
   val reserveWidth: Int,
+  val statusLabel: @NlsSafe String?,
+  val statusX: Int,
+  val statusRightBoundary: Int,
+  val statusTextWidth: Int,
+  val statusColumnWidth: Int,
+  val statusColor: Color?,
   val timeLabel: @NlsSafe String,
   val timeX: Int,
   val timeRightBoundary: Int,
@@ -136,16 +146,23 @@ internal fun computeSessionTreeThreadHorizontalLayout(
   selectionRightInset: Int,
   timeTextWidth: Int,
   timeColumnWidth: Int,
+  statusTextWidth: Int = 0,
+  statusColumnWidth: Int = 0,
 ): SessionTreeThreadHorizontalLayout {
   val rightGap = JBUI.scale(SESSION_TREE_THREAD_META_RIGHT_GAP)
   val leftGap = JBUI.scale(SESSION_TREE_THREAD_META_LEFT_GAP)
-  val reserveWidth = actionRightPadding + selectionRightInset + rightGap + leftGap + timeColumnWidth
+  val statusTimeGap = if (statusColumnWidth > 0) JBUI.scale(SESSION_TREE_THREAD_STATUS_TIME_GAP) else 0
+  val reserveWidth = actionRightPadding + selectionRightInset + rightGap + leftGap + timeColumnWidth + statusTimeGap + statusColumnWidth
   val titleMaxWidth = (contentWidth - reserveWidth).coerceAtLeast(0)
   val timeRightBoundary = (contentWidth - selectionRightInset - actionRightPadding - rightGap).coerceAtLeast(0)
   val timeX = (timeRightBoundary - timeTextWidth).coerceAtLeast(0)
+  val statusRightBoundary = (timeX - statusTimeGap).coerceAtLeast(0)
+  val statusX = (statusRightBoundary - statusTextWidth).coerceAtLeast(0)
   return SessionTreeThreadHorizontalLayout(
     reserveWidth = reserveWidth,
     titleMaxWidth = titleMaxWidth,
+    statusX = statusX,
+    statusRightBoundary = statusRightBoundary,
     timeX = timeX,
     timeRightBoundary = timeRightBoundary,
   )
@@ -163,11 +180,16 @@ internal fun computeSessionTreeThreadTrailingPaint(
   tree: JTree,
   actionRightPadding: Int,
   timeLabel: @NlsSafe String?,
+  statusLabel: @NlsSafe String? = null,
+  statusColor: Color? = null,
   fontMetrics: FontMetrics,
   sharedTimeColumnWidth: Int,
+  sharedStatusColumnWidth: Int = 0,
 ): SessionTreeThreadTrailingPaint? {
   if (timeLabel == null) return null
   val selectionRightInset = sessionTreeThreadSelectionRightInset(tree)
+  val statusTextWidth = statusLabel?.let(fontMetrics::stringWidth) ?: 0
+  val statusColumnWidth = if (statusLabel == null) 0 else maxOf(sharedStatusColumnWidth, statusTextWidth)
   val timeTextWidth = fontMetrics.stringWidth(timeLabel)
   val timeColumnWidth = maxOf(sharedTimeColumnWidth, timeTextWidth)
   val horizontalLayout = computeSessionTreeThreadHorizontalLayout(
@@ -176,10 +198,18 @@ internal fun computeSessionTreeThreadTrailingPaint(
     selectionRightInset = selectionRightInset,
     timeTextWidth = timeTextWidth,
     timeColumnWidth = timeColumnWidth,
+    statusTextWidth = statusTextWidth,
+    statusColumnWidth = statusColumnWidth,
   )
 
   return SessionTreeThreadTrailingPaint(
     reserveWidth = horizontalLayout.reserveWidth,
+    statusLabel = statusLabel,
+    statusX = horizontalLayout.statusX,
+    statusRightBoundary = horizontalLayout.statusRightBoundary,
+    statusTextWidth = statusTextWidth,
+    statusColumnWidth = statusColumnWidth,
+    statusColor = statusColor,
     timeLabel = timeLabel,
     timeX = horizontalLayout.timeX,
     timeRightBoundary = horizontalLayout.timeRightBoundary,

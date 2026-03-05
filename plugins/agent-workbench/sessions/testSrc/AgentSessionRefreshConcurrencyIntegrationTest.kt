@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicInteger
 
 @TestApplication
-class AgentSessionsServiceConcurrencyIntegrationTest {
+class AgentSessionRefreshConcurrencyIntegrationTest {
   @Test
   fun refreshCoalescesConcurrentRequestsAndRunsFollowUpRefresh() = runBlocking(Dispatchers.Default) {
     val openInvocationCount = AtomicInteger(0)

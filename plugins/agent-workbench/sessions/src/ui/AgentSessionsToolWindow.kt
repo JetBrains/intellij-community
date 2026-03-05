@@ -9,7 +9,10 @@ import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.claude.ClaudeQuotaStatusBarWidgetSettings
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.service.AgentSessionsService
+import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
+import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
+import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
+import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.state.AgentSessionsTreeUiStateService
 import com.intellij.agent.workbench.sessions.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.tree.SessionTreeModel
@@ -34,7 +37,10 @@ import javax.swing.tree.TreePath
 internal class AgentSessionsToolWindowPanel(
   private val project: Project,
 ) : JPanel(BorderLayout()), Disposable, UiDataProvider {
-  private val service = service<AgentSessionsService>()
+  private val launchService = service<AgentSessionLaunchService>()
+  private val readService = service<AgentSessionReadService>()
+  private val stateStore = service<AgentSessionsStateStore>()
+  private val syncService = service<AgentSessionRefreshService>()
   private val chatSelectionService = project.service<AgentChatTabSelectionService>()
   private val treeUiStateService = service<AgentSessionsTreeUiStateService>()
 
@@ -128,7 +134,7 @@ internal class AgentSessionsToolWindowPanel(
   )
 
   private val stateController = AgentSessionsTreeStateController(
-    service = service,
+    sessionsStateFlow = readService.stateFlow(),
     chatSelectionService = chatSelectionService,
     treeUiStateService = treeUiStateService,
     tree = tree,
@@ -162,7 +168,9 @@ internal class AgentSessionsToolWindowPanel(
     interactionController = AgentSessionsTreeInteractionController(
       project = project,
       tree = tree,
-      service = service,
+      launchService = launchService,
+      syncService = syncService,
+      stateStore = stateStore,
       treeUiStateService = treeUiStateService,
       rowActionsOverlayProvider = { rowActionsOverlay },
       nodeResolver = ::sessionTreeNode,
@@ -174,7 +182,7 @@ internal class AgentSessionsToolWindowPanel(
       nodeResolver = ::sessionTreeNode,
       lastUsedProvider = { lastUsedProvider },
       onQuickCreate = { path, provider ->
-        service.createNewSession(
+        launchService.createNewSession(
           path = path,
           provider = provider,
           mode = AgentSessionLaunchMode.STANDARD,
@@ -194,7 +202,7 @@ internal class AgentSessionsToolWindowPanel(
     interactionController.install()
     stateController.start()
     quotaHintController.start()
-    service.refresh()
+    syncService.refresh()
   }
 
   private fun configureTree() {

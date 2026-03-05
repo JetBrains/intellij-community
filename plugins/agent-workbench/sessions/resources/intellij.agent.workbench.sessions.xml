@@ -11,7 +11,7 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
-    <agent.workbench.promptLauncher implementation="com.intellij.agent.workbench.sessions.service.AgentSessionsPromptLauncherBridge"/>
+    <agent.workbench.promptLauncher implementation="com.intellij.agent.workbench.sessions.service.AgentSessionPromptLauncherBridge"/>
     <toolWindow
       id="agent.workbench.sessions"
       anchor="right"

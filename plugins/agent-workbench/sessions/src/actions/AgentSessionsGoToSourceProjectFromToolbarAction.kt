@@ -5,7 +5,7 @@ import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
-import com.intellij.agent.workbench.sessions.service.AgentSessionsService
+import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.ide.ui.ProductIcons
 import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -29,7 +29,7 @@ internal class AgentSessionsGoToSourceProjectFromToolbarAction : DumbAwareAction
   constructor() {
     selectedSourcePath = { project -> project.service<AgentChatTabSelectionService>().selectedChatTab.value?.projectPath }
     isDedicatedProject = AgentWorkbenchDedicatedFrameProjectManager::isDedicatedProject
-    openProject = { path -> service<AgentSessionsService>().openOrFocusProject(path) }
+    openProject = { path -> service<AgentSessionLaunchService>().openOrFocusProject(path) }
   }
 
   internal constructor(

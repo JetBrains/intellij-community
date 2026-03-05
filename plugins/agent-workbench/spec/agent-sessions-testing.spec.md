@@ -10,7 +10,7 @@ targets:
 # Agent Threads Testing
 
 Status: Draft
-Date: 2026-03-04
+Date: 2026-03-05
 
 ## Summary
 Define required coverage ownership for Agent Workbench specs after the hard Swing cutover.
@@ -32,7 +32,7 @@ This file does not redefine runtime behavior; it maps each contract area to requ
 - Core contract coverage must include identity and command mapping, shared editor-tab popup actions, archive gate behavior (including optional unarchive capability contract), and visibility primitive persistence.
 - Archive service coverage must include single-thread archive, multi-target archive with partial provider support, and unarchive restore behavior for supported providers.
 - Sessions aggregation/service coverage must include ordering, partial warning, blocking error, unknown counts, refresh bootstrap, on-demand dedup, and refresh concurrency.
-- Swing tree rendering coverage must include warning/error precedence, empty-state exclusivity, and `More` row exact/unknown behavior.
+- Swing tree rendering coverage must include warning/error precedence, empty-state exclusivity, `More` row exact/unknown behavior, and thread-row metadata presentation (badge + time, no inline status text, tooltip status preserved).
 - Swing tree interaction coverage must include single-click select behavior, activation-open policy, double-click open precedence on openable parent rows, path resolution for `More` rows, and context-menu selection retarget rules.
 - Persisted tree-state coverage must include collapsed-state restoration and expansion parent mapping for selected worktree paths.
 - Persisted UI-state coverage must include visible-count persistence, preview-provider persistence, and legacy provider fallback.
@@ -49,18 +49,18 @@ This file does not redefine runtime behavior; it maps each contract area to requ
 - Mock-backend contract assertions must additionally validate deterministic fixture IDs, archive/unarchive mutation behavior, and idle-timeout lazy restart.
 
 ## Requirement Ownership Matrix
-- Core contracts: `AgentSessionCliTest`, `AgentSessionsEditorTabActionsTest`, `AgentSessionsServiceArchiveIntegrationTest`, `AgentSessionsServiceOnDemandIntegrationTest`
-- Sessions aggregation/loading: `AgentSessionLoadAggregationTest`, `AgentSessionsServiceRefreshIntegrationTest`, `AgentSessionsServiceOnDemandIntegrationTest`, `AgentSessionsServiceConcurrencyIntegrationTest`
-- Swing tree rendering: `AgentSessionsSwingTreeRenderingTest`
+- Core contracts: `AgentSessionCliTest`, `AgentSessionsEditorTabActionsTest`, `AgentSessionArchiveServiceIntegrationTest`, `AgentSessionRefreshOnDemandIntegrationTest`
+- Sessions aggregation/loading: `AgentSessionLoadAggregationTest`, `AgentSessionRefreshServiceIntegrationTest`, `AgentSessionRefreshOnDemandIntegrationTest`, `AgentSessionRefreshConcurrencyIntegrationTest`
+- Swing tree rendering: `AgentSessionsSwingTreeRenderingTest`, `AgentSessionsSwingTreeCellRendererTest`
 - Swing tree interaction: `AgentSessionsSwingTreeInteractionTest`
 - Swing tree state persistence: `AgentSessionsSwingTreeStatePersistenceTest`
 - Tree UI persisted state: `AgentSessionsTreeUiStateServiceTest`
-- New-thread flow: `AgentSessionsSwingNewSessionActionsTest`, `AgentSessionsLoadingCoordinatorTest`, `AgentChatEditorServiceTest`
+- New-thread flow: `AgentSessionsSwingNewSessionActionsTest`, `AgentSessionRefreshCoordinatorTest`, `AgentChatEditorServiceTest`
 - Tool-window factory wiring: `AgentSessionsToolWindowFactorySwingTest`, `AgentSessionsGearActionsTest`
 - Dedicated frame: `AgentSessionsGearActionsTest`, `AgentSessionsOpenModeRoutingTest`
 - Quota hint gating: `AgentSessionsSwingQuotaHintTest`, `AgentSessionsClaudeQuotaWidgetActionRegistrationTest`
 - Chat tab lifecycle: `AgentChatEditorServiceTest`, `AgentChatFileEditorProviderTest`, `AgentChatTabSelectionServiceTest`
-- Codex rollout/app-server selection + hint wiring: `CodexRolloutSessionBackendTest`, `CodexRolloutSessionBackendFileWatchIntegrationTest`, `CodexRolloutSessionsWatcherTest`, `CodexAppServerSessionBackendTest`, `CodexAppServerRefreshHintsProviderTest`, `CodexSessionSourceRefreshHintsTest`, `CodexSessionBackendSelectorTest`, `CodexSessionsPagingLogicTest`, `AgentSessionsLoadingCoordinatorTest`
+- Codex rollout/app-server selection + hint wiring: `CodexRolloutSessionBackendTest`, `CodexRolloutSessionBackendFileWatchIntegrationTest`, `CodexRolloutSessionsWatcherTest`, `CodexAppServerSessionBackendTest`, `CodexAppServerRefreshHintsProviderTest`, `CodexSessionSourceRefreshHintsTest`, `CodexSessionBackendSelectorTest`, `CodexSessionsPagingLogicTest`, `AgentSessionRefreshCoordinatorTest`
 - Codex app-server contract: `CodexAppServerClientTest`
 
 ## Contract Suite
@@ -80,7 +80,7 @@ This file does not redefine runtime behavior; it maps each contract area to requ
 
 ## Running Locally
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionLoadAggregationTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsService*IntegrationTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSession*IntegrationTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsSwing*Test'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsToolWindowFactorySwingTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChat*Test'`

@@ -61,7 +61,7 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
   [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
 
 - Dedicated-frame project must be excluded from Sessions project registry for both open and recent project enumeration.
-  [@test] ../sessions/testSrc/AgentSessionsProjectCatalogTest.kt
+  [@test] ../sessions/testSrc/AgentSessionProjectCatalogTest.kt
 
 - Dedicated-frame project switching and header navigation affordances must follow `spec/agent-dedicated-frame-project-switching.spec.md`.
   [@test] ../sessions/testSrc/AgentWorkbenchProjectFrameCapabilitiesProviderTest.kt

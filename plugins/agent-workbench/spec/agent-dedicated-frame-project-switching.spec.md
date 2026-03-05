@@ -17,7 +17,7 @@ targets:
   - ../../platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/MacToolbarFrameHeader.kt
   - ../../platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/MenuFrameHeader.kt
   - ../../platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/toolbar/ToolbarFrameHeader.kt
-  - ../sessions/src/AgentSessionsService.kt
+  - ../sessions/src/service/AgentSessionLaunchService.kt
   - ../sessions/src/AgentWorkbenchDedicatedFrameProjectManager.kt
   - ../sessions/src/AgentWorkbenchProjectFrameCapabilitiesProvider.kt
   - ../sessions/src/AgentSessionsGoToSourceProjectFromToolbarAction.kt
@@ -111,11 +111,11 @@ Terminal hyperlink click routing in dedicated frame is owned by `spec/agent-dedi
 
 ## Data & Backend
 - Dedicated frame type id is `AGENT_DEDICATED`.
-- `AgentSessionsService` sets `OpenProjectTask.projectFrameTypeId` when opening dedicated frame project.
+- `AgentSessionLaunchService` sets `OpenProjectTask.projectFrameTypeId` when opening dedicated frame project.
 - `AgentWorkbenchDedicatedFrameProjectManager.configureProject` persists `projectFrameTypeId` into recent metadata.
-- Source project open/focus behavior uses `AgentSessionsService.openOrFocusProject(path)`.
+- Source project open/focus behavior uses `AgentSessionLaunchService.openOrFocusProject(path)`.
 - Toolbar source-project action resolves active chat-tab source path via `AgentChatTabSelectionService.selectedChatTab`.
-- Dedicated frame open/focus behavior uses `AgentSessionsService.openOrFocusDedicatedFrame(currentProject)`.
+- Dedicated frame open/focus behavior uses `AgentSessionLaunchService.openOrFocusDedicatedFrame(currentProject)`.
 
 ## Testing / Local Run
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentWorkbenchProjectFrameCapabilitiesProviderTest'`

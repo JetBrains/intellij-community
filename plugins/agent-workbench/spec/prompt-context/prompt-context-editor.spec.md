@@ -73,6 +73,12 @@ Define editor-driven prompt context behavior for both direct invocation and fall
   - `symbol` renders as `symbol: <symbol-name>`,
   - `snippet` renders as descriptor line + fenced code block with optional language label.
 
+- Chip rendering contract for editor item types:
+  - `file` chip shows shortened path (project-relative when under project root),
+  - `symbol` chip shows symbol name,
+  - `snippet` chip shows title only (line range), no code preview.
+  [@test] ../../prompt/testSrc/ui/AgentPromptContextEntryPathRenderingTest.kt
+
 - Fallback contributor must collect from currently selected editor in project and participate only in `FALLBACK` phase.
 
 ## User Experience

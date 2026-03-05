@@ -11,7 +11,8 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
-import com.intellij.agent.workbench.sessions.service.AgentSessionsService
+import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
+import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.state.AgentSessionsTreeUiStateService
 import com.intellij.agent.workbench.sessions.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.tree.SessionTreeNode
@@ -57,10 +58,10 @@ internal class AgentSessionsTreePopupOpenAction : DumbAwareAction {
   constructor() {
     resolveContext = ::resolveAgentSessionsTreePopupActionContext
     isDedicatedProject = AgentWorkbenchDedicatedFrameProjectManager::isDedicatedProject
-    openProject = { path -> service<AgentSessionsService>().openOrFocusProject(path) }
-    openThread = { path, thread, project -> service<AgentSessionsService>().openChatThread(path, thread, project) }
+    openProject = { path -> service<AgentSessionLaunchService>().openOrFocusProject(path) }
+    openThread = { path, thread, project -> service<AgentSessionLaunchService>().openChatThread(path, thread, project) }
     openSubAgent = { path, thread, subAgent, project ->
-      service<AgentSessionsService>().openChatSubAgent(path, thread, subAgent, project)
+      service<AgentSessionLaunchService>().openChatSubAgent(path, thread, subAgent, project)
     }
   }
 
@@ -119,8 +120,8 @@ internal class AgentSessionsTreePopupMoreAction : DumbAwareAction {
   @Suppress("unused")
   constructor() {
     resolveContext = ::resolveAgentSessionsTreePopupActionContext
-    showMoreProjects = { service<AgentSessionsService>().showMoreProjects() }
-    showMoreThreads = { path -> service<AgentSessionsService>().showMoreThreads(path) }
+    showMoreProjects = { service<AgentSessionsStateStore>().showMoreProjects() }
+    showMoreThreads = { path -> service<AgentSessionsStateStore>().showMoreThreads(path) }
   }
 
   internal constructor(

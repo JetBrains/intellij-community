@@ -19,7 +19,7 @@ Define project-view prompt context collection from selected files/directories, i
 
 ## Goals
 - Keep project-view context pointer-first and compact.
-- Keep file/directory path semantics explicit in both envelope and chips.
+- Keep path context compact in envelope output; preserve file/directory semantics in contributor body.
 
 ## Non-goals
 - Defining editor, VCS, or test-runner context behavior.
@@ -55,7 +55,12 @@ Define project-view prompt context collection from selected files/directories, i
   - `fileCount`.
   [@test] ../../prompt/testSrc/context/AgentPromptProjectViewSelectionContextContributorTest.kt
 
-- `paths` chip rendering must preserve `file:`/`dir:` prefix while shortening path previews (project-relative when under project root).
+- `paths` envelope rendering:
+  - singular entry renders as `path: <absolute-path>`,
+  - multiple entries render as `paths:\n<absolute-path-1>\n<absolute-path-2>` (no per-line prefix).
+  [@test] ../../prompt/testSrc/ui/AgentPromptContextEntryPathRenderingTest.kt
+
+- `paths` chip rendering shortens path previews (project-relative when under project root); `file:`/`dir:` prefix is stripped by the renderer.
   [@test] ../../prompt/testSrc/ui/AgentPromptContextEntryPathRenderingTest.kt
 
 ## User Experience

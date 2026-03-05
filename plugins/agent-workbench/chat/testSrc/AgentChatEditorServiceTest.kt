@@ -19,13 +19,18 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 class AgentChatEditorServiceTest {
@@ -39,7 +44,6 @@ class AgentChatEditorServiceTest {
 
   @BeforeEach
   fun setUp(): Unit = timeoutRunBlocking {
-    clearCodexTerminalOutputRefreshSignalsForTests()
     runInUi {
       fileEditorManagerFixture.get()
       FileEditorProvider.EP_FILE_EDITOR_PROVIDER.point.registerExtension(
@@ -541,33 +545,17 @@ class AgentChatEditorServiceTest {
   }
 
   @Test
-  fun testConsumeRecentCodexTerminalOutputRefreshPathsIncludesDelayedNonStaleSignals(): Unit = timeoutRunBlocking {
-    val outputPath = "/work/project-terminal-output-delayed"
-    notifyCodexTerminalOutputForRefreshForTests(outputPath, timestampMs = 1_000L)
+  fun testCodexScopedRefreshSignalsEmitNormalizedPaths(): Unit = timeoutRunBlocking {
+    val outputPath = "/work/project-terminal-output-delayed/"
+    val signalWaiter = async(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+      withTimeout(5.seconds) {
+        codexScopedRefreshSignals().first()
+      }
+    }
 
-    val consumed = consumeRecentCodexTerminalOutputRefreshPathsForTests(nowMs = 4_500L)
-    assertThat(consumed).containsExactly(outputPath)
-  }
+    notifyCodexTerminalOutputForRefresh(outputPath)
 
-  @Test
-  fun testConsumeRecentCodexTerminalOutputRefreshPathsIsOneShotPerPath(): Unit = timeoutRunBlocking {
-    val outputPath = "/work/project-terminal-output-one-shot"
-    notifyCodexTerminalOutputForRefreshForTests(outputPath, timestampMs = 2_000L)
-
-    val first = consumeRecentCodexTerminalOutputRefreshPathsForTests(nowMs = 2_500L)
-    val second = consumeRecentCodexTerminalOutputRefreshPathsForTests(nowMs = 2_500L)
-
-    assertThat(first).containsExactly(outputPath)
-    assertThat(second).isEmpty()
-  }
-
-  @Test
-  fun testConsumeRecentCodexTerminalOutputRefreshPathsDropsStaleSignals(): Unit = timeoutRunBlocking {
-    val stalePath = "/work/project-terminal-output-stale"
-    notifyCodexTerminalOutputForRefreshForTests(stalePath, timestampMs = 1_000L)
-
-    val consumed = consumeRecentCodexTerminalOutputRefreshPathsForTests(nowMs = 11_100L)
-    assertThat(consumed).isEmpty()
+    assertThat(signalWaiter.await()).containsExactly("/work/project-terminal-output-delayed")
   }
 
   @Test

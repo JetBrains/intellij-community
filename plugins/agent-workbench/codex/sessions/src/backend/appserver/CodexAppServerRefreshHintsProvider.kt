@@ -71,6 +71,7 @@ internal class CodexAppServerRefreshHintsProvider(
         .asSequence()
         .map(String::trim)
         .filter(String::isNotEmpty)
+        .filterNot(::isPendingThreadId)
         .forEach(candidateThreadIds::add)
     }
 
@@ -128,3 +129,7 @@ internal class CodexAppServerRefreshHintsProvider(
 }
 
 private const val APP_SERVER_OUTPUT_NOTIFICATION_DEBOUNCE_MS = 250L
+
+private fun isPendingThreadId(threadId: String): Boolean {
+  return threadId.startsWith("new-")
+}

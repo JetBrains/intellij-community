@@ -185,6 +185,29 @@ class AgentChatFileEditorProviderTest {
   }
 
   @Test
+  fun restoresPersistedThreadActivityOnLoad() {
+    val snapshot = AgentChatTabSnapshot.create(
+      projectHash = "hash-1",
+      projectPath = "/work/project-a",
+      threadIdentity = "CODEX:thread-status",
+      threadId = "thread-status",
+      threadTitle = "Thread",
+      subAgentId = null,
+      shellCommand = listOf("codex", "resume", "thread-status"),
+      threadActivity = AgentThreadActivity.UNREAD,
+    )
+    val store = AgentChatTabsStateService(null)
+    store.upsert(snapshot)
+    try {
+      val loaded = store.load(snapshot.tabKey)
+      assertThat(loaded?.runtime?.threadActivity).isEqualTo(AgentThreadActivity.UNREAD)
+    }
+    finally {
+      store.delete(snapshot.tabKey)
+    }
+  }
+
+  @Test
   fun normalizesLegacyIdentityStyleThreadIdOnLoad() {
     val snapshot = AgentChatTabSnapshot.create(
       projectHash = "hash-1",

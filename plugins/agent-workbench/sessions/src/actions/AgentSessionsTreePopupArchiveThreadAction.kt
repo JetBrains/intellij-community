@@ -4,7 +4,7 @@ package com.intellij.agent.workbench.sessions.actions
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
-import com.intellij.agent.workbench.sessions.service.AgentSessionsService
+import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveService
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
@@ -18,8 +18,8 @@ internal class AgentSessionsTreePopupArchiveThreadAction : DumbAwareAction {
   @Suppress("unused")
   constructor() {
     resolveContext = ::resolveAgentSessionsTreePopupActionContext
-    canArchiveProvider = { provider -> service<AgentSessionsService>().canArchiveProvider(provider) }
-    archiveThreads = { targets -> service<AgentSessionsService>().archiveThreads(targets) }
+    canArchiveProvider = { provider -> service<AgentSessionArchiveService>().canArchiveProvider(provider) }
+    archiveThreads = { targets -> service<AgentSessionArchiveService>().archiveThreads(targets) }
   }
 
   internal constructor(

@@ -28,8 +28,8 @@ internal data class AgentPromptUiDraft(
 )
 
 internal data class AgentPromptUiContextRestoreSnapshot(
-  val contextFingerprint: HashValue128? = null,
-  val removedContextItemIds: List<String> = emptyList(),
+  @JvmField val contextFingerprint: HashValue128? = null,
+  @JvmField val removedContextItemIds: List<String> = emptyList(),
 )
 
 internal data class AgentPromptUiState(

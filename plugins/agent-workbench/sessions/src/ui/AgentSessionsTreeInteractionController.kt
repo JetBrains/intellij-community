@@ -4,7 +4,9 @@ package com.intellij.agent.workbench.sessions.ui
 import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
-import com.intellij.agent.workbench.sessions.service.AgentSessionsService
+import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
+import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
+import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.state.AgentSessionsTreeUiStateService
 import com.intellij.agent.workbench.sessions.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.tree.SessionTreeNode
@@ -35,7 +37,9 @@ import javax.swing.tree.TreePath
 internal class AgentSessionsTreeInteractionController(
   private val project: Project,
   private val tree: Tree,
-  private val service: AgentSessionsService,
+  private val launchService: AgentSessionLaunchService,
+  private val syncService: AgentSessionRefreshService,
+  private val stateStore: AgentSessionsStateStore,
   private val treeUiStateService: AgentSessionsTreeUiStateService,
   private val rowActionsOverlayProvider: () -> AgentSessionsTreeRowActionsOverlay,
   private val nodeResolver: (SessionTreeId) -> SessionTreeNode?,
@@ -143,14 +147,14 @@ internal class AgentSessionsTreeInteractionController(
             treeUiStateService.setProjectCollapsed(id.path, collapsed = false)
             val projectNode = nodeResolver(id) as? SessionTreeNode.Project ?: return
             if (!projectNode.project.hasLoaded && !projectNode.project.isLoading) {
-              service.loadProjectThreadsOnDemand(id.path)
+              syncService.loadProjectThreadsOnDemand(id.path)
             }
           }
 
           is SessionTreeId.Worktree -> {
             val worktreeNode = nodeResolver(id) as? SessionTreeNode.Worktree ?: return
             if (!worktreeNode.worktree.hasLoaded && !worktreeNode.worktree.isLoading) {
-              service.loadWorktreeThreadsOnDemand(id.projectPath, id.worktreePath)
+              syncService.loadWorktreeThreadsOnDemand(id.projectPath, id.worktreePath)
             }
           }
 
@@ -210,13 +214,13 @@ internal class AgentSessionsTreeInteractionController(
   private fun runNodeAction(id: SessionTreeId, treeNode: SessionTreeNode, includeOpenActions: Boolean): Boolean {
     return when (treeNode) {
       is SessionTreeNode.MoreProjects -> {
-        service.showMoreProjects()
+        stateStore.showMoreProjects()
         true
       }
 
       is SessionTreeNode.MoreThreads -> {
         val path = pathForMoreThreadsNode(id) ?: return false
-        service.showMoreThreads(path)
+        stateStore.showMoreThreads(path)
         true
       }
 
@@ -224,26 +228,26 @@ internal class AgentSessionsTreeInteractionController(
         if (!includeOpenActions) return false
         if (isAgentSessionNewSessionId(treeNode.thread.id)) return false
         val path = pathForThreadNode(id, treeNode.project.path)
-        service.openChatThread(path, treeNode.thread, project)
+        launchService.openChatThread(path, treeNode.thread, project)
         true
       }
 
       is SessionTreeNode.SubAgent -> {
         if (!includeOpenActions) return false
         val path = pathForThreadNode(id, treeNode.project.path)
-        service.openChatSubAgent(path, treeNode.thread, treeNode.subAgent, project)
+        launchService.openChatSubAgent(path, treeNode.thread, treeNode.subAgent, project)
         true
       }
 
       is SessionTreeNode.Project -> {
         if (!includeOpenActions) return false
-        service.openOrFocusProject(treeNode.project.path)
+        launchService.openOrFocusProject(treeNode.project.path)
         true
       }
 
       is SessionTreeNode.Worktree -> {
         if (!includeOpenActions) return false
-        service.openOrFocusProject(treeNode.worktree.path)
+        launchService.openOrFocusProject(treeNode.worktree.path)
         true
       }
 

@@ -24,8 +24,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicReference
 
 private class AgentChatEditorServiceLog
@@ -33,54 +35,16 @@ private class AgentChatEditorServiceLog
 private val LOG = logger<AgentChatEditorServiceLog>()
 private const val CODEX_PROVIDER_ID = "codex"
 private val fileEditorProviderOverrideForTests: AtomicReference<FileEditorProvider?> = AtomicReference(null)
-private const val TERMINAL_OUTPUT_SIGNAL_RETENTION_MS = 10_000L
 
-private object CodexTerminalOutputSignalStore {
-  private val lock = Any()
-  private val lastSignalByPath = LinkedHashMap<String, Long>()
+private object CodexScopedRefreshSignalBus {
+  private val signalFlow = MutableSharedFlow<Set<String>>(extraBufferCapacity = 64)
 
-  fun mark(projectPath: String, timestampMs: Long = System.currentTimeMillis()) {
+  fun signal(projectPath: String): Boolean {
     val normalizedPath = normalizeAgentWorkbenchPath(projectPath)
-    if (normalizedPath.isBlank()) {
-      return
-    }
-    synchronized(lock) {
-      lastSignalByPath[normalizedPath] = timestampMs
-      pruneStaleSignals(nowMs = timestampMs)
-    }
+    return normalizedPath.isNotBlank() && signalFlow.tryEmit(setOf(normalizedPath))
   }
 
-  fun consumeRecent(nowMs: Long = System.currentTimeMillis()): Set<String> {
-    val result = LinkedHashSet<String>()
-    synchronized(lock) {
-      val iterator = lastSignalByPath.entries.iterator()
-      while (iterator.hasNext()) {
-        val entry = iterator.next()
-        if (entry.value < nowMs - TERMINAL_OUTPUT_SIGNAL_RETENTION_MS) {
-          iterator.remove()
-          continue
-        }
-        result.add(entry.key)
-        iterator.remove()
-      }
-    }
-    return result
-  }
-
-  fun clear() {
-    synchronized(lock) {
-      lastSignalByPath.clear()
-    }
-  }
-
-  private fun pruneStaleSignals(nowMs: Long) {
-    val iterator = lastSignalByPath.entries.iterator()
-    while (iterator.hasNext()) {
-      if (iterator.next().value < nowMs - TERMINAL_OUTPUT_SIGNAL_RETENTION_MS) {
-        iterator.remove()
-      }
-    }
-  }
+  fun signals(): Flow<Set<String>> = signalFlow.asSharedFlow()
 }
 
 data class AgentChatPendingTabRebindTarget(
@@ -167,7 +131,6 @@ suspend fun openChat(
   else {
     initialMessageDispatchPlan.initialMessageTimeoutPolicy
   }
-
   val snapshot = AgentChatTabSnapshot.create(
     projectHash = project.locationHash,
     projectPath = projectPath,
@@ -264,6 +227,10 @@ suspend fun openChat(
   LOG.debug {
     "openChat openFile completed(identity=$threadIdentity, subAgentId=$subAgentId, fileName=${file.name}, activity=$threadActivity)"
   }
+
+  if (isPendingCodexThreadIdentity(threadIdentity)) {
+    notifyCodexTerminalOutputForRefresh(projectPath)
+  }
 }
 
 suspend fun collectOpenAgentChatProjectPaths(): Set<String> {
@@ -275,26 +242,11 @@ suspend fun collectOpenPendingAgentChatProjectPaths(): Set<String> {
 }
 
 fun notifyCodexTerminalOutputForRefresh(projectPath: String) {
-  CodexTerminalOutputSignalStore.mark(projectPath)
+  CodexScopedRefreshSignalBus.signal(projectPath)
 }
 
-fun consumeRecentCodexTerminalOutputRefreshPaths(): Set<String> {
-  return CodexTerminalOutputSignalStore.consumeRecent()
-}
-
-@TestOnly
-internal fun notifyCodexTerminalOutputForRefreshForTests(projectPath: String, timestampMs: Long) {
-  CodexTerminalOutputSignalStore.mark(projectPath, timestampMs)
-}
-
-@TestOnly
-internal fun consumeRecentCodexTerminalOutputRefreshPathsForTests(nowMs: Long): Set<String> {
-  return CodexTerminalOutputSignalStore.consumeRecent(nowMs)
-}
-
-@TestOnly
-internal fun clearCodexTerminalOutputRefreshSignalsForTests() {
-  CodexTerminalOutputSignalStore.clear()
+fun codexScopedRefreshSignals(): Flow<Set<String>> {
+  return CodexScopedRefreshSignalBus.signals()
 }
 
 suspend fun collectOpenPendingCodexTabsByPath(): Map<String, List<AgentChatPendingCodexTabSnapshot>> = withContext(Dispatchers.UI) {

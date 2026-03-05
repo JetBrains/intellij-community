@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicInteger
 
 @TestApplication
-class AgentSessionsServiceOnDemandIntegrationTest {
+class AgentSessionRefreshOnDemandIntegrationTest {
   @Test
   fun ensureThreadVisibleExpandsProjectVisibleCountForHiddenThread() = runBlocking(Dispatchers.Default) {
     val treeUiState = InMemorySessionsTreeUiState()

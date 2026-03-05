@@ -196,7 +196,7 @@ class CodexAgentSessionProviderBridgeTest {
       )
     )
 
-    assertThat(message).contains("snippet: lang=java")
+    assertThat(message).doesNotContain("lang=")
     assertThat(message).contains("```java\nval answer = 42\n```")
   }
 
@@ -269,8 +269,8 @@ class CodexAgentSessionProviderBridgeTest {
 
     assertThat(message).contains("file: $expectedFile")
     assertThat(message).contains("paths:")
-    assertThat(message).contains("file: $expectedPathFile")
-    assertThat(message).contains("dir: $expectedPathDir")
+    assertThat(message).contains(expectedPathFile)
+    assertThat(message).contains(expectedPathDir)
   }
 
   @Test

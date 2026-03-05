@@ -6,7 +6,7 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
-import com.intellij.agent.workbench.sessions.service.PendingCodexRebindTargetResolver
+import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test
 class PendingCodexRebindTargetResolverTest {
   @Test
   fun resolvePropagatesResumeLaunchSpecEnvVariables() {
-    val resolver = PendingCodexRebindTargetResolver(
+    val readService = AgentSessionReadService(
       stateProvider = {
         AgentSessionsState(
           projects = listOf(
@@ -50,7 +50,7 @@ class PendingCodexRebindTargetResolverTest {
       isPendingThread = true,
     )
 
-    val target = resolver.resolve(context)
+    val target = readService.resolvePendingCodexRebindTarget(context)
 
     assertThat(target).isNotNull
     assertThat(target?.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-42"))
@@ -60,4 +60,3 @@ class PendingCodexRebindTargetResolverTest {
       .containsExactlyEntriesOf(mapOf("DISABLE_AUTOUPDATER" to "1"))
   }
 }
-

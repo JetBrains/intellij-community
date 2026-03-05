@@ -6,7 +6,7 @@ import com.intellij.agent.workbench.sessions.service.resolveRecentPathCandidate
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-class AgentSessionsProjectCatalogTest {
+class AgentSessionProjectCatalogTest {
   @Test
   fun resolveOpenProjectPathNormalizesManagerPath() {
     assertThat(resolveOpenProjectPath(managerProjectPath = "/work/project-a/", projectBasePath = null))

@@ -6,7 +6,6 @@ import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsTreePopupDataKeys
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.prompt.AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptExistingThreadsSnapshot
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationData
@@ -15,7 +14,6 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchResult
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
-import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.tree.SessionTreeNode
@@ -24,14 +22,67 @@ import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.components.service
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
-internal class AgentSessionsPromptLauncherBridge(
-  private val sessionsServiceProvider: () -> AgentSessionsService = { service() },
-) : AgentPromptLauncherBridge {
+internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
+  private val launchPromptRequest: (AgentPromptLaunchRequest) -> AgentPromptLaunchResult
+  private val stateFlowProvider: () -> StateFlow<AgentSessionsState>
+  private val pathStateResolver: (AgentSessionsState, String) -> AgentSessionPathState?
+  private val refreshCatalogAndLoadNewlyOpened: () -> Unit
+  private val refreshProviderForPath: (String, AgentSessionProvider) -> Unit
+
+  @Suppress("unused")
+  constructor() : this(
+    launchPromptRequest = { request -> service<AgentSessionLaunchService>().launchPromptRequest(request) },
+    stateFlowProvider = { service<AgentSessionReadService>().stateFlow() },
+    pathStateResolver = ::resolveAgentSessionPathState,
+    refreshCatalogAndLoadNewlyOpened = { service<AgentSessionRefreshService>().refreshCatalogAndLoadNewlyOpened() },
+    refreshProviderForPath = { path, provider -> service<AgentSessionRefreshService>().refreshProviderForPath(path = path, provider = provider) },
+  )
+
+  internal constructor(
+    stateFlowProvider: () -> StateFlow<AgentSessionsState>,
+    refreshCatalogAndLoadNewlyOpened: () -> Unit,
+    refreshProviderForPath: (String, AgentSessionProvider) -> Unit,
+    launchServiceProvider: () -> AgentSessionLaunchService,
+  ) : this(
+    launchPromptRequest = { request -> launchServiceProvider().launchPromptRequest(request) },
+    stateFlowProvider = stateFlowProvider,
+    pathStateResolver = ::resolveAgentSessionPathState,
+    refreshCatalogAndLoadNewlyOpened = refreshCatalogAndLoadNewlyOpened,
+    refreshProviderForPath = refreshProviderForPath,
+  )
+
+  internal constructor(
+    launchPromptRequest: (AgentPromptLaunchRequest) -> AgentPromptLaunchResult,
+  ) : this(
+    launchPromptRequest = launchPromptRequest,
+    stateFlowProvider = {
+      error("stateFlowProvider is unavailable in this test setup")
+    },
+    pathStateResolver = ::resolveAgentSessionPathState,
+    refreshCatalogAndLoadNewlyOpened = {},
+    refreshProviderForPath = { _, _ -> },
+  )
+
+  internal constructor(
+    launchPromptRequest: (AgentPromptLaunchRequest) -> AgentPromptLaunchResult,
+    stateFlowProvider: () -> StateFlow<AgentSessionsState>,
+    pathStateResolver: (AgentSessionsState, String) -> AgentSessionPathState?,
+    refreshCatalogAndLoadNewlyOpened: () -> Unit,
+    refreshProviderForPath: (String, AgentSessionProvider) -> Unit,
+  ) {
+    this.launchPromptRequest = launchPromptRequest
+    this.stateFlowProvider = stateFlowProvider
+    this.pathStateResolver = pathStateResolver
+    this.refreshCatalogAndLoadNewlyOpened = refreshCatalogAndLoadNewlyOpened
+    this.refreshProviderForPath = refreshProviderForPath
+  }
+
   override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
-    return sessionsServiceProvider().launchPromptRequest(request)
+    return launchPromptRequest(request)
   }
 
   override fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String? {
@@ -47,9 +98,9 @@ internal class AgentSessionsPromptLauncherBridge(
     provider: AgentSessionProvider,
   ): Flow<AgentPromptExistingThreadsSnapshot> {
     val normalizedPath = normalizeAgentWorkbenchPath(projectPath)
-    return sessionsServiceProvider().state
+    return stateFlowProvider()
       .map { state ->
-        val pathState = resolvePathState(state = state, normalizedPath = normalizedPath)
+        val pathState = pathStateResolver(state, normalizedPath)
         buildSnapshot(pathState = pathState, provider = provider)
       }
       .distinctUntilChanged()
@@ -57,17 +108,16 @@ internal class AgentSessionsPromptLauncherBridge(
 
   override suspend fun refreshExistingThreads(projectPath: String, provider: AgentSessionProvider) {
     val normalizedPath = normalizeAgentWorkbenchPath(projectPath)
-    val sessionsService = sessionsServiceProvider()
-    val pathState = resolvePathState(state = sessionsService.state.value, normalizedPath = normalizedPath)
+    val pathState = pathStateResolver(stateFlowProvider().value, normalizedPath)
     when {
       pathState == null -> {
-        sessionsService.refreshCatalogAndLoadNewlyOpened()
+        refreshCatalogAndLoadNewlyOpened()
       }
       pathState.hasLoaded -> {
-        sessionsService.refreshProviderForPath(path = normalizedPath, provider = provider)
+        refreshProviderForPath(normalizedPath, provider)
       }
       !pathState.isLoading -> {
-        sessionsService.refreshCatalogAndLoadNewlyOpened()
+        refreshCatalogAndLoadNewlyOpened()
       }
     }
   }
@@ -182,40 +232,7 @@ private fun resolveTreeContextDisplayName(node: SessionTreeNode): String {
   }
 }
 
-private data class PromptPathState(
-  @JvmField val threads: List<AgentSessionThread>,
-  @JvmField val isLoading: Boolean,
-  @JvmField val hasLoaded: Boolean,
-  @JvmField val errorMessage: String?,
-  @JvmField val providerWarnings: List<AgentSessionProviderWarning>,
-)
-
-private fun resolvePathState(state: AgentSessionsState, normalizedPath: String): PromptPathState? {
-  state.projects.firstOrNull { project -> project.path == normalizedPath }?.let { project ->
-    return PromptPathState(
-      threads = project.threads,
-      isLoading = project.isLoading,
-      hasLoaded = project.hasLoaded,
-      errorMessage = project.errorMessage,
-      providerWarnings = project.providerWarnings,
-    )
-  }
-
-  state.projects.forEach { project ->
-    val worktree = project.worktrees.firstOrNull { candidate -> candidate.path == normalizedPath } ?: return@forEach
-    return PromptPathState(
-      threads = worktree.threads,
-      isLoading = worktree.isLoading,
-      hasLoaded = worktree.hasLoaded,
-      errorMessage = worktree.errorMessage,
-      providerWarnings = worktree.providerWarnings,
-    )
-  }
-
-  return null
-}
-
-private fun buildSnapshot(pathState: PromptPathState?, provider: AgentSessionProvider): AgentPromptExistingThreadsSnapshot {
+private fun buildSnapshot(pathState: AgentSessionPathState?, provider: AgentSessionProvider): AgentPromptExistingThreadsSnapshot {
   if (pathState == null) {
     return AgentPromptExistingThreadsSnapshot(
       threads = emptyList(),

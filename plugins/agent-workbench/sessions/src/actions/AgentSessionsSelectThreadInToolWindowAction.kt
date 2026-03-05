@@ -5,7 +5,7 @@ import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.chat.resolveAgentChatEditorTabActionContext
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.frame.AGENT_SESSIONS_TOOL_WINDOW_ID
-import com.intellij.agent.workbench.sessions.service.AgentSessionsService
+import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -13,7 +13,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 
 internal class AgentSessionsSelectThreadInToolWindowAction @JvmOverloads constructor(
   private val ensureThreadVisible: (String, AgentSessionProvider, String) -> Unit = { path, provider, threadId ->
-    service<AgentSessionsService>().ensureThreadVisible(path = path, provider = provider, threadId = threadId)
+    service<AgentSessionsStateStore>().ensureThreadVisible(path = path, provider = provider, threadId = threadId)
   },
   private val activateSessionsToolWindow: (Project) -> Unit = { project ->
     ToolWindowManager.getInstance(project).getToolWindow(AGENT_SESSIONS_TOOL_WINDOW_ID)?.activate(null)

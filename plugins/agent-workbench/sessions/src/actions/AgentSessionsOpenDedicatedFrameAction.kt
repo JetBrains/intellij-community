@@ -2,7 +2,7 @@
 package com.intellij.agent.workbench.sessions.actions
 
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
-import com.intellij.agent.workbench.sessions.service.AgentSessionsService
+import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
@@ -16,7 +16,7 @@ internal class AgentSessionsOpenDedicatedFrameAction : DumbAwareAction {
   @Suppress("unused")
   constructor() {
     isDedicatedProject = AgentWorkbenchDedicatedFrameProjectManager::isDedicatedProject
-    openDedicatedFrame = { project -> service<AgentSessionsService>().openOrFocusDedicatedFrame(project) }
+    openDedicatedFrame = { project -> service<AgentSessionLaunchService>().openOrFocusDedicatedFrame(project) }
   }
 
   internal constructor(

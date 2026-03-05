@@ -24,7 +24,7 @@ import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.name
 
-internal class AgentSessionsProjectCatalog {
+internal class AgentSessionProjectCatalog {
   suspend fun collectProjects(): List<ProjectEntry> {
     val rawEntries = collectRawProjectEntries()
     if (rawEntries.isEmpty()) return emptyList()
