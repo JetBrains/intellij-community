@@ -7,6 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.LayoutManager
+import java.awt.Rectangle
 import javax.swing.JPanel
 import kotlin.properties.Delegates.observable
 
@@ -28,7 +29,7 @@ open class BackgroundRoundedPanel(private val arcSize: Int, layoutManager: Layou
     //java.awt.Graphics2D#clip provides worse painting result than explicit rounded rectangle painting
     val g2 = g.create() as Graphics2D
     try {
-      val rect = bounds
+      val rect = Rectangle(0, 0, width, height)
       if (!fillBorder) {
         JBInsets.removeFrom(rect, insets)
       }
