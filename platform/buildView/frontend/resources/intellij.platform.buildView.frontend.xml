@@ -1,11 +1,12 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.frontend"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.buildView"/>
+    <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.util.coroutines"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <frontend.splitComponentProvider implementation="com.intellij.platform.buildView.frontend.BuildTreeComponentProvider"/>
     <postStartupActivity implementation="com.intellij.platform.buildView.frontend.FrontendBuildViewStartupActivity"/>

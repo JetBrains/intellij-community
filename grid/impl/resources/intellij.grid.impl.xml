@@ -6,6 +6,7 @@
     <module name="intellij.grid.csv.core.impl"/>
     <module name="intellij.grid.types"/>
     <module name="intellij.libraries.microba"/>
+    <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.util.coroutines"/>
   </dependencies>

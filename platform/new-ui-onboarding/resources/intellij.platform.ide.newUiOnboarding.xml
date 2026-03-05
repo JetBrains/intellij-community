@@ -1,4 +1,9 @@
 <idea-plugin visibility="internal" package="com.intellij.platform.ide.newUiOnboarding">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.execution.impl"/>
+  </dependencies>
+  <!-- endregion -->
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.ide.newUiOnboarding.step"
                     beanClass="com.intellij.util.KeyedLazyInstanceEP"

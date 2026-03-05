@@ -1,13 +1,14 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.debugger"/>
     <module name="intellij.platform.debugger.impl"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.execution.serviceView"/>
     <module name="intellij.platform.rpc"/>
     <module name="intellij.platform.util.coroutines"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.runDashboardManagerProxy"
                     interface="com.intellij.execution.dashboard.RunDashboardManagerProxy" dynamic="true"/>

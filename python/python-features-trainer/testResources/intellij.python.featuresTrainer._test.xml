@@ -4,6 +4,9 @@
     <module name="intellij.libraries.junit5.params"/>
     <module name="intellij.python.community.junit5Tests.framework._test"/>
     <module name="intellij.python.featuresTrainer"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.execution.impl"/>
     <module name="intellij.python.test.env.junit5"/>
+    <!-- endregion -->
   </dependencies>
 </idea-plugin>

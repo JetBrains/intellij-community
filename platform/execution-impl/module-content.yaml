@@ -1,0 +1,4 @@
+- name: dist.all/lib/intellij.platform.execution.impl.jar
+  modules:
+  - name: intellij.platform.execution.impl
+  - name: intellij.platform.wsl.impl

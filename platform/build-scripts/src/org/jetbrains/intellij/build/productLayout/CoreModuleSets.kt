@@ -336,6 +336,8 @@ object CoreModuleSets {
     // Include core IDE (corePlatform + intellij.platform.ide)
     moduleSet(coreIde())
 
+    embeddedModule("intellij.platform.execution.impl")
+
     embeddedModule("intellij.platform.lang.core")
     embeddedModule("intellij.platform.lang")
     embeddedModule("intellij.platform.lang.impl")

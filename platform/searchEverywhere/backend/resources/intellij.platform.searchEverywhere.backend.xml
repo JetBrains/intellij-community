@@ -1,12 +1,13 @@
 <idea-plugin visibility="internal" package="com.intellij.platform.searchEverywhere.backend">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.searchEverywhere"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.searchEverywhere.backend.impl.SeRemoteApiProvider"/>
