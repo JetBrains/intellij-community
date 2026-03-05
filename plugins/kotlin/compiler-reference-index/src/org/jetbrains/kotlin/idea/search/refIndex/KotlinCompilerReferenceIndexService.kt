@@ -164,9 +164,9 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
 
         // TODO KTIJ-37446 Make Kotlin Compiler Reference Index JPS-agnostic
         if (BtaFileWatcher.isApplicable(project)) {
-            BtaFileWatcher(project).watchIn(coroutineScope) { upToDateModules ->
+            BtaFileWatcher(project).watchIn(coroutineScope) { updatedModules ->
                 executeOnBuildThread {
-                    onExternalCompilationDetected(upToDateModules)
+                    onExternalCompilationDetected(updatedModules)
                 }
             }
         }
@@ -177,7 +177,9 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
         compilationCounter.increment()
         val projectPath = runReadActionBlocking { projectIfNotDisposed?.basePath }
         withDirtyScopeUnderWriteLock {
-            openStorage(projectPath)
+            if (!refreshStorageIncrementally(compiledModules)) {
+                openStorage(projectPath)
+            }
 
             if (!initialized) {
                 initialize(allModules, compiledModules)
@@ -268,6 +270,17 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
 
         storage = projectPath?.let {
             KotlinCompilerReferenceIndexStorage.open(project, it)
+        }
+    }
+
+    private fun refreshStorageIncrementally(updatedModules: Collection<Module>): Boolean {
+        val incrementalStorage = storage as? IncrementalKotlinCompilerReferenceIndexStorage ?: return false
+        return try {
+            incrementalStorage.refreshModules(updatedModules)
+        } catch (e: Throwable) {
+            if (Logger.shouldRethrow(e)) throw e
+            LOG.error("an exception during incremental KCRI storage refresh", e)
+            false
         }
     }
 
