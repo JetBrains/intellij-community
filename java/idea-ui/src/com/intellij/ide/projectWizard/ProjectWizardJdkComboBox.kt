@@ -362,6 +362,7 @@ class ProjectWizardJdkComboBox(
     ensureWorkspaceModelLoaded(descriptor)
   }
 
+  @RequiresEdt
   private fun ensureWorkspaceModelLoaded(descriptor: EelDescriptor?) {
     if (descriptor == null) return
     val eelMachine = descriptor.getResolvedEelMachine() ?: LocalEelMachine
