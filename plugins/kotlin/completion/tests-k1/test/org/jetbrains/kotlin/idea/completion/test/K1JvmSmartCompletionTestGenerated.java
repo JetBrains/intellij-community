@@ -19,10 +19,10 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../testData/smart")
-public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCompletionTest {
+public abstract class K1JvmSmartCompletionTestGenerated extends AbstractK1JvmSmartCompletionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/smart/afterAs")
-    public static class AfterAs extends AbstractJvmSmartCompletionTest {
+    public static class AfterAs extends AbstractK1JvmSmartCompletionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -51,7 +51,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/smart/anonymousObject")
-    public static class AnonymousObject extends AbstractJvmSmartCompletionTest {
+    public static class AnonymousObject extends AbstractK1JvmSmartCompletionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -90,7 +90,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/smart/callableReference")
-    public static class CallableReference extends AbstractJvmSmartCompletionTest {
+    public static class CallableReference extends AbstractK1JvmSmartCompletionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -219,7 +219,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/smart/constructor")
-    public static class Constructor extends AbstractJvmSmartCompletionTest {
+    public static class Constructor extends AbstractK1JvmSmartCompletionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -323,7 +323,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/smart/forLoopRange")
-    public static class ForLoopRange extends AbstractJvmSmartCompletionTest {
+    public static class ForLoopRange extends AbstractK1JvmSmartCompletionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -372,7 +372,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/smart/frontendAgnostic")
-    public static class FrontendAgnostic extends AbstractJvmSmartCompletionTest {
+    public static class FrontendAgnostic extends AbstractK1JvmSmartCompletionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -411,7 +411,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/smart/functionLiterals")
-    public static class FunctionLiterals extends AbstractJvmSmartCompletionTest {
+    public static class FunctionLiterals extends AbstractK1JvmSmartCompletionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -515,7 +515,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/smart/generics")
-    public static class Generics extends AbstractJvmSmartCompletionTest {
+    public static class Generics extends AbstractK1JvmSmartCompletionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -559,7 +559,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/smart/heuristicSignatures")
-    public static class HeuristicSignatures extends AbstractJvmSmartCompletionTest {
+    public static class HeuristicSignatures extends AbstractK1JvmSmartCompletionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -638,7 +638,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/smart/ifValue")
-    public static class IfValue extends AbstractJvmSmartCompletionTest {
+    public static class IfValue extends AbstractK1JvmSmartCompletionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -682,7 +682,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/smart/inElvisOperator")
-    public static class InElvisOperator extends AbstractJvmSmartCompletionTest {
+    public static class InElvisOperator extends AbstractK1JvmSmartCompletionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -726,7 +726,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/smart/inOperator")
-    public static class InOperator extends AbstractJvmSmartCompletionTest {
+    public static class InOperator extends AbstractK1JvmSmartCompletionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -790,7 +790,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/smart/inheritors")
-    public static class Inheritors extends AbstractJvmSmartCompletionTest {
+    public static class Inheritors extends AbstractK1JvmSmartCompletionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -849,7 +849,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/smart/lambdaSignature")
-    public static class LambdaSignature extends AbstractJvmSmartCompletionTest {
+    public static class LambdaSignature extends AbstractK1JvmSmartCompletionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -898,7 +898,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/smart/multipleArgsItem")
-    public static class MultipleArgsItem extends AbstractJvmSmartCompletionTest {
+    public static class MultipleArgsItem extends AbstractK1JvmSmartCompletionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1007,7 +1007,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/smart/propertyDelegate")
-    public static class PropertyDelegate extends AbstractJvmSmartCompletionTest {
+    public static class PropertyDelegate extends AbstractK1JvmSmartCompletionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1141,7 +1141,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/smart/smartCasts")
-    public static class SmartCasts extends AbstractJvmSmartCompletionTest {
+    public static class SmartCasts extends AbstractK1JvmSmartCompletionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1205,7 +1205,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/smart/this")
-    public static class This extends AbstractJvmSmartCompletionTest {
+    public static class This extends AbstractK1JvmSmartCompletionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1259,7 +1259,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/smart")
-    public static class Uncategorized extends AbstractJvmSmartCompletionTest {
+    public static class Uncategorized extends AbstractK1JvmSmartCompletionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1753,7 +1753,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/smart/vararg")
-    public static class Vararg extends AbstractJvmSmartCompletionTest {
+    public static class Vararg extends AbstractK1JvmSmartCompletionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1802,7 +1802,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/smart/whenEntry")
-    public static class WhenEntry extends AbstractJvmSmartCompletionTest {
+    public static class WhenEntry extends AbstractK1JvmSmartCompletionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {

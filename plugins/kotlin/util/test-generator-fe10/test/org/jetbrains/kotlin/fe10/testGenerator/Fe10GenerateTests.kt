@@ -71,11 +71,11 @@ import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.AbstractSer
 import org.jetbrains.kotlin.idea.completion.test.AbstractCompiledKotlinInJavaCompletionTest
 import org.jetbrains.kotlin.idea.completion.test.AbstractDumbCompletionTest
 import org.jetbrains.kotlin.idea.completion.test.AbstractJava8BasicCompletionTest
-import org.jetbrains.kotlin.idea.completion.test.AbstractJvmSmartCompletionTest
 import org.jetbrains.kotlin.idea.completion.test.AbstractJvmWithLibBasicCompletionTest
 import org.jetbrains.kotlin.idea.completion.test.AbstractK1CompletionIncrementalResolveTest
 import org.jetbrains.kotlin.idea.completion.test.AbstractK1JSBasicCompletionTest
 import org.jetbrains.kotlin.idea.completion.test.AbstractK1JvmBasicCompletionTest
+import org.jetbrains.kotlin.idea.completion.test.AbstractK1JvmSmartCompletionTest
 import org.jetbrains.kotlin.idea.completion.test.AbstractK1MLPerformanceCompletionTest
 import org.jetbrains.kotlin.idea.completion.test.AbstractKeywordCompletionTest
 import org.jetbrains.kotlin.idea.completion.test.AbstractKotlinSourceInJavaCompletionTest
@@ -1550,7 +1550,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             model("basic/java", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
-        testClass<AbstractJvmSmartCompletionTest> {
+        testClass<AbstractK1JvmSmartCompletionTest> {
             model("smart", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
