@@ -4,7 +4,6 @@ package com.intellij.openapi.fileEditor.impl
 import com.intellij.ide.browsers.actions.WebPreviewFileType
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
@@ -14,11 +13,9 @@ import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Companion.JS_FUNC
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
-import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.jcef.JBCefApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -30,9 +27,6 @@ import java.net.URI
 class HTMLEditorProvider : FileEditorProvider, DumbAware {
   @Suppress("CompanionObjectInExtension")
   companion object {
-    private val REQUEST_KEY: Key<Request> = Key.create("html.editor.request.key")
-    private val EDITOR_KEY: Key<FileEditor> = Key.create("html.editor.component.key")
-
     const val JS_FUNCTION_NAME: String = "jbCefQuery"
 
     @JvmStatic
@@ -52,17 +46,10 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
 
     @JvmStatic
     fun openEditor(project: Project, @DialogTitle title: String, request: Request, fileType: FileType): FileEditor? {
-      val file = getSyntheticFileToOpen(request, title, fileType)
+      val file = HTMLVirtualFile.createFile(project, title, request, fileType)
       return FileEditorManager.getInstance(project)
         .openFile(file, true)
         .find { it is HTMLFileEditor }
-    }
-
-    private fun getSyntheticFileToOpen(request: Request, @DialogTitle title: String, fileType: FileType): VirtualFile {
-      logger<HTMLEditorProvider>().info(if (request.url == null) "HTML (${request.html!!.length} chars)" else "URL=${request.url}")
-      val file = LightVirtualFile(title, fileType, "")
-      REQUEST_KEY.set(file, request)
-      return file
     }
 
     /**
@@ -70,7 +57,7 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
      */
     @ApiStatus.Experimental
     suspend fun openEditorAsync(project: Project, @DialogTitle title: String, request: Request): FileEditor? {
-      val file = getSyntheticFileToOpen(request, title, WebPreviewFileType.INSTANCE)
+      val file = HTMLVirtualFile.createFile(project, title, request, WebPreviewFileType.INSTANCE)
       val fileEditorManager = FileEditorManager.getInstance(project)
       val fileEditors = if (fileEditorManager is FileEditorManagerEx) {
         fileEditorManager.openFile(file, FileEditorOpenOptions(requestFocus = true, waitForCompositeOpen = false))
@@ -97,24 +84,15 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
 
   @ApiStatus.Internal
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    return file.getUserData(EDITOR_KEY)
-           ?: HTMLFileEditor(project, file as LightVirtualFile, REQUEST_KEY.get(file)!!).also { file.putUserData(EDITOR_KEY, it) }
+    require(file is HTMLVirtualFile) {
+      "cannot create html editor for non-html file, actual $file"
+    }
+    return file.createEditor(project)
   }
 
-  @ApiStatus.Internal
-  override fun disposeEditor(editor: FileEditor) {
-    try {
-      editor.file?.let { file ->
-        file.putUserData(EDITOR_KEY, null)
-        file.putUserData(REQUEST_KEY, null)
-      }
-    }
-    finally {
-      super.disposeEditor(editor)
-    }
+  override fun accept(project: Project, file: VirtualFile): Boolean {
+    return JBCefApp.isSupported() && file is HTMLVirtualFile && !file.isDisposed()
   }
-
-  override fun accept(project: Project, file: VirtualFile): Boolean = JBCefApp.isSupported() && file.getUserData(REQUEST_KEY) != null
 
   override fun acceptRequiresReadAction(): Boolean = false
 
