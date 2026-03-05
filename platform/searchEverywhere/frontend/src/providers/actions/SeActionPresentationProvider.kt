@@ -47,8 +47,8 @@ object SeActionPresentationProvider {
         .addProperty(SePropertyBean("Action ID", getActionId(value.action), true))
         .addProperty(SePropertyBean("Action Class", getClassPresentation(value.action), true))
         .build()
-      val commonData = SeActionItemPresentation.Common(text = "", extendedInfo = extendedInfo, uiInspectorInfo = uiInspectorInfo)
-      var presentation = SeRunnableActionItemPresentation(commonData = commonData, isMultiSelectionSupported = isMultiSelectionSupported)
+      val common = SeActionItemPresentation.Common(text = "", extendedInfo = extendedInfo, uiInspectorInfo = uiInspectorInfo)
+      var presentation = SeRunnableActionItemPresentation(commonData = common, isMultiSelectionSupported = isMultiSelectionSupported)
 
       val anAction = value.action
       val actionPresentation = value.presentation
@@ -113,8 +113,8 @@ object SeActionPresentationProvider {
         .addProperty(SePropertyBean("Option ID", value.option, true))
         .addProperty(SePropertyBean("Option Configurable Id", value.configurableId, true))
         .build()
-      val commonData = SeActionItemPresentation.Common(text = displayText, extendedInfo = extendedInfo, uiInspectorInfo = uiInspectorInfo)
-      var presentation = SeOptionActionItemPresentation(commonData = commonData, isMultiSelectionSupported = isMultiSelectionSupported)
+      val common = SeActionItemPresentation.Common(text = displayText, extendedInfo = extendedInfo, uiInspectorInfo = uiInspectorInfo)
+      var presentation = SeOptionActionItemPresentation(commonData = common, isMultiSelectionSupported = isMultiSelectionSupported)
 
       (value as? BooleanOptionDescription)?.isOptionEnabled.let {
         presentation = presentation.run {
