@@ -5,7 +5,7 @@ import com.intellij.tools.build.bazel.jvmIncBuilder.impl.CompositeZipOutputBuild
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.KotlinCriUtilKt;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.MVStoreSwapMap;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.Utils;
-import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ZipEntryIterator;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ZipElement;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ZipOutputBuilderImpl;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.forms.FormBinding;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.PersistentMVStoreMapletFactory;
@@ -23,7 +23,6 @@ import org.jetbrains.jps.dependency.impl.GraphImpl;
 import org.jetbrains.jps.dependency.kotlin.KotlinSubclassesIndex;
 import org.jetbrains.jps.dependency.kotlin.LookupsIndex;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -47,10 +46,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.zip.ZipFile;
 
 import static org.jetbrains.jps.util.Iterators.collect;
 import static org.jetbrains.jps.util.Iterators.filter;
-import static org.jetbrains.jps.util.Iterators.flat;
 import static org.jetbrains.jps.util.Iterators.map;
 
 public class StorageManager implements CloseableExt {
@@ -90,8 +89,8 @@ public class StorageManager implements CloseableExt {
       else {
         // collect paths from disk
         Path outBackup = DataPaths.getJarBackupStoreFile(myContext, output);
-        try (var is = new BufferedInputStream(Files.newInputStream(Files.exists(outBackup)? outBackup : output))) {
-          paths = collect(map(new ZipEntryIterator(is), ze -> ze.getEntry().getName()), new ArrayList<>());
+        try (var zip = new ZipFile((Files.exists(outBackup)? outBackup : output).toFile())) {
+          paths = collect(map(ZipElement.fromZipFile(zip), elem -> elem.getEntry().getName()), new ArrayList<>());
         }
         catch (IOException ignored) {
           // ignore corrupted or non-existing zips
@@ -385,18 +384,13 @@ public class StorageManager implements CloseableExt {
   public static void backupDependencies(BuildContext context, Iterable<Path> deletedPaths, Iterable<Path> presentPaths) throws IOException {
     Files.createDirectories(DataPaths.getDependenciesBackupStoreDir(context));
 
-    for (Path deletedOrModified : flat(deletedPaths, presentPaths)) {
-      Path backup = DataPaths.getJarBackupStoreFile(context, deletedOrModified);
-      if (!Utils.deleteIfExists(backup) && Files.exists(backup, LinkOption.NOFOLLOW_LINKS)) {
-        Path trash = DataPaths.getTrashDir(context);
-        Files.createDirectories(trash);
-        Path tempFile = Files.createTempFile(trash, null, null);
-        Files.move(backup, tempFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-      }
+    for (Path deleted : deletedPaths) {
+      cleanBackup(context, DataPaths.getJarBackupStoreFile(context, deleted));
     }
 
     for (Path presentPath : presentPaths) {
       Path backup = DataPaths.getJarBackupStoreFile(context, presentPath);
+      cleanBackup(context, backup);
       if (!Utils.tryCreateLink(backup, presentPath)) {
         Path trash = DataPaths.getLibraryTrashDir(context, presentPath);
         Files.createDirectories(trash);
@@ -405,6 +399,14 @@ public class StorageManager implements CloseableExt {
     }
   }
 
+  private static void cleanBackup(BuildContext context, Path backup) throws IOException {
+    if (!Utils.deleteIfExists(backup) && Files.exists(backup, LinkOption.NOFOLLOW_LINKS)) {
+      Path trash = DataPaths.getTrashDir(context);
+      Files.createDirectories(trash);
+      Path tempFile = Files.createTempFile(trash, null, null);
+      Files.move(backup, tempFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+    }
+  }
 
   private static void deleteOrMoveRecursively(Path dataDir, Path trashDir) throws IOException {
     if (Files.notExists(dataDir)) {

@@ -4,6 +4,7 @@ import com.intellij.tools.build.bazel.jvmIncBuilder.DataPaths;
 import com.intellij.tools.build.bazel.jvmIncBuilder.NodeSourceSnapshot;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ConfigurationState;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.Utils;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ZipElement;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.PersistentMVStoreMapletFactory;
 import kotlin.metadata.jvm.KmModule;
 import kotlin.metadata.jvm.KmPackageParts;
@@ -25,7 +26,6 @@ import org.junit.ComparisonFailure;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -51,6 +51,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 import static org.jetbrains.jps.util.Iterators.collect;
@@ -268,12 +269,10 @@ public abstract class BazelIncBuildTest {
 
   private static Iterable<String> readSessionLogs(Path diagnostic) throws IOException {
     List<String> logs = new ArrayList<>(); // the first description entry corresponds to the most recent build session
-    try (var zis = new ZipInputStream(new BufferedInputStream(Files.newInputStream(diagnostic)))) {
-      for (ZipEntry entry = zis.getNextEntry(); entry != null; entry = zis.getNextEntry()) {
-        if (entry.getName().endsWith("/description.txt")) {
-          ByteArrayOutputStream buf = new ByteArrayOutputStream();
-          zis.transferTo(buf);
-          logs.add(buf.toString(StandardCharsets.UTF_8));
+    try (var zip = new ZipFile(diagnostic.toFile())) {
+      for (ZipElement elem : ZipElement.fromZipFile(zip)) {
+        if (elem.getEntry().getName().endsWith("/description.txt")) {
+          logs.add(new String(elem.getContent(), StandardCharsets.UTF_8));
         }
       }
     }
