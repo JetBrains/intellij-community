@@ -35,7 +35,7 @@ class SortModifiersInspection : KotlinApplicableInspectionBase.Simple<KtModifier
         val modifiers = element.modifierKeywordTokens()
         if (modifiers.isEmpty()) return false
         val sortedModifiers = sortModifiers(modifiers)
-        return modifiers != sortedModifiers || element.modifiersBeforeAnnotations()
+        return modifiers != sortedModifiers || element.modifiersBeforeAnnotations() || element.modifierBeforeContextParameterList()
     }
 
     override fun buildVisitor(
@@ -92,4 +92,7 @@ class SortModifiersInspection : KotlinApplicableInspectionBase.Simple<KtModifier
         }
         return modifiersBeforeAnnotations
     }
+
+    private fun KtModifierList.modifierBeforeContextParameterList() = contextParameterList?.let { it != allChildren.first } ?: false
+
 }

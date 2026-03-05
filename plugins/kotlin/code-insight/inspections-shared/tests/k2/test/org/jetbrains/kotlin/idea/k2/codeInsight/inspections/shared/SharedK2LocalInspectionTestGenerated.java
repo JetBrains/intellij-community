@@ -6930,6 +6930,16 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/sortModifiers/annotationOverrideFinal.kt");
         }
 
+        @TestMetadata("contextParameters.kt")
+        public void testContextParameters() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/contextParameters.kt");
+        }
+
+        @TestMetadata("contextParametersOverride.kt")
+        public void testContextParametersOverride() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/contextParametersOverride.kt");
+        }
+
         @TestMetadata("overrideFinal.kt")
         public void testOverrideFinal() throws Exception {
             runTest("../testData/inspectionsLocal/sortModifiers/overrideFinal.kt");
