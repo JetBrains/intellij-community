@@ -24,6 +24,7 @@ import com.intellij.execution.testframework.sm.runner.OutputEventSplitter;
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
 import com.intellij.java.execution.AbstractTestFrameworkIntegrationTest;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -35,6 +36,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.junit.JUnitStarter;
+import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
@@ -135,6 +137,28 @@ public class JUnitVersionSwitchingIntegrationTest extends AbstractTestFrameworkC
                  messages.stream().filter(TestFinished.class::isInstance).count());
     assertEquals("Test should not fail", 0,
                  messages.stream().filter(TestFailed.class::isInstance).count());
+  }
+
+  public void testDumbModeRunnerIgnoresJUnit6FromSiblingModule() throws Exception {
+    Module junit6SiblingModule = createEmptyModule();
+    addMavenLibs(junit6SiblingModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "6.0.0",
+                                                                              false, List.of()), getRepoManager());
+
+    // check module settings
+    GlobalSearchScope allScope = GlobalSearchScope.allScope(myProject);
+    GlobalSearchScope myModuleScope = GlobalSearchScope.moduleRuntimeScope(myModule, true);
+    assertNotNull("Pre-condition: MethodOrderer.Default must be visible in allScope from sibling module",
+                  JavaPsiFacade.getInstance(myProject).findClass("org.junit.jupiter.api.MethodOrderer.Default", allScope));
+    assertNull("Pre-condition: MethodOrderer.Default must NOT be visible in myModule runtime scope",
+               JavaPsiFacade.getInstance(myProject).findClass("org.junit.jupiter.api.MethodOrderer.Default", myModuleScope));
+
+    // run junit5 module
+    PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass("org.example.SimpleJUnit5Test", GlobalSearchScope.projectScope(myProject));
+    RunConfiguration configuration = createConfiguration(aClass);
+    DumbModeTestUtils.runInDumbModeSynchronously(myProject, () -> {
+      ProcessOutput output = doStartTestsProcess(configuration);
+      assertTrue(output.sys.toString().contains("-junit5"));
+    });
   }
 
   private static ProcessOutput doStartTestsProcessWithExtraJUnitParam(RunConfiguration config, String extraParam)
