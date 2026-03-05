@@ -188,7 +188,8 @@ public final class FileManagerImpl implements FileManagerEx {
       myManager.beforePropertyChange(event);
       setViewProvider(vFile, null);
       myManager.propertyChanged(event);
-    } else {
+    }
+    else {
       event.setParent(parentDir);
 
       myManager.beforeChildrenChange(event);
@@ -503,8 +504,8 @@ public final class FileManagerImpl implements FileManagerEx {
       PsiFile psiFile1 = findFile(vFile, context);
       if (psiFile1 != null && viewProvider.isPhysical()) {
         PsiFile psi = viewProvider.getPsi(viewProvider.getBaseLanguage());
-        assert psi != null : viewProvider +"; "+viewProvider.getBaseLanguage()+"; "+psiFile1;
-        assert psiFile1.getClass().equals(psi.getClass()) : psiFile1 +"; "+psi + "; "+psiFile1.getClass() +"; "+psi.getClass();
+        assert psi != null : viewProvider + "; " + viewProvider.getBaseLanguage() + "; " + psiFile1;
+        assert psiFile1.getClass().equals(psi.getClass()) : psiFile1 + "; " + psi + "; " + psiFile1.getClass() + "; " + psi.getClass();
       }
     }
 
@@ -743,6 +744,7 @@ public final class FileManagerImpl implements FileManagerEx {
    * Should be called only from implementations of {@link PsiFile#isValid()}, only after they've been {@link PsiFileEx#markInvalidated()},
    * and only to check if they can be made valid again.
    * Synchronized by read-write action. Calls from several threads in read action for the same virtual file are allowed.
+   *
    * @return if the file is still valid
    */
   @RequiresReadLock(generateAssertion = false)
