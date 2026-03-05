@@ -418,9 +418,18 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     }
   }
 
-  private class PackageIndex(manager: PythonPackageManager) {
-    val installedByName: Map<String, PythonPackage> = manager.listInstalledPackagesSnapshot().associateBy { it.name }
-    val outdated: Map<String, PythonOutdatedPackage> = manager.listOutdatedPackagesSnapshot()
+  private class PackageIndex(
+    val installedByName: Map<String, PythonPackage>,
+    val outdated: Map<String, PythonOutdatedPackage>,
+  ) {
+    companion object {
+      suspend operator fun invoke(manager: PythonPackageManager): PackageIndex {
+        return PackageIndex(
+          installedByName = manager.listInstalledPackages().associateBy { it.name },
+          outdated = manager.listOutdatedPackages(),
+        )
+      }
+    }
   }
 
   private suspend fun buildPackagesFromTree(
