@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -36,22 +36,16 @@ public final class StringConcatenationInMessageFormatCallInspection extends Base
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {
-    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)infos[0];
-    final String referenceName = referenceExpression.getReferenceName();
-    return new StringConcatenationInFormatCallFix(referenceName);
+    return new StringConcatenationInFormatCallFix();
   }
 
   private static class StringConcatenationInFormatCallFix extends PsiUpdateModCommandQuickFix {
 
-    private final String variableName;
-
-    StringConcatenationInFormatCallFix(String variableName) {
-      this.variableName = variableName;
-    }
+    StringConcatenationInFormatCallFix() {}
 
     @Override
     public @NotNull String getName() {
-      return InspectionGadgetsBundle.message("string.concatenation.in.format.call.quickfix", variableName);
+      return InspectionGadgetsBundle.message("string.concatenation.in.format.call.quickfix");
     }
 
     @Override
@@ -76,8 +70,7 @@ public final class StringConcatenationInMessageFormatCallInspection extends Base
       final PsiExpression[] expressions = expressionList.getExpressions();
       final int parameter = expressions.length - 1;
       expressionList.add(rhs);
-      final Object constant =
-        ExpressionUtils.computeConstantExpression(lhs);
+      final Object constant = ExpressionUtils.computeConstantExpression(lhs);
       if (constant instanceof String) {
         final PsiExpression newExpression = addParameter(lhs, parameter);
         if (newExpression == null) {
