@@ -2,9 +2,11 @@
 package com.siyeh.ig.style;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -66,6 +68,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_CHAR_SEQUENCE;
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -76,6 +79,8 @@ public final class StringBufferReplaceableByStringInspection extends BaseInspect
 
   private static final String STRING_JOINER = "java.util.StringJoiner";
   private static final CallMatcher STRING_JOINER_ADD = CallMatcher.instanceCall(STRING_JOINER, "add").parameterCount(1);
+  private static final CallMatcher ABSTRACT_STRING_BUILDER_REPEAT =
+    CallMatcher.instanceCall(JAVA_LANG_ABSTRACT_STRING_BUILDER, "repeat").parameterTypes(JAVA_LANG_CHAR_SEQUENCE, "int");
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {
@@ -125,6 +130,7 @@ public final class StringBufferReplaceableByStringInspection extends BaseInspect
       return false;
     }
     if (STRING_JOINER_ADD.test(methodCallExpression)) return true;
+    if (ABSTRACT_STRING_BUILDER_REPEAT.test(methodCallExpression)) return true;
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
     final @NonNls String methodName = methodExpression.getReferenceName();
     if (!"append".equals(methodName)) {
@@ -381,12 +387,28 @@ public final class StringBufferReplaceableByStringInspection extends BaseInspect
               result.append("\"\"");
             }
           }
-          else if ("append".equals(referenceName) || "add".equals(referenceName)){
-            String commentsBefore = "";
-            final ASTNode dot = ((CompositeElement)methodExpression.getNode()).findChildByRole(ChildRole.DOT);
-            if (dot != null && !result.isEmpty()) {
-              commentsBefore = tracker.commentsBefore(dot.getPsi());
+          else if ("repeat".equals(referenceName)) {
+            String commentsBefore = getCommentsBefore(methodExpression, result, tracker);
+            PsiExpression[] arguments = argumentList.getExpressions();
+            if (arguments.length != 2) return null;
+            appendFormattedPlusIfNeeded(argumentList, result, commentsBefore);
+            PsiExpression charSequenceArg = arguments[0];
+            if (NullabilityUtil.getExpressionNullability(charSequenceArg, true) == Nullability.NOT_NULL) {
+              if (TypeUtils.isJavaLangString(charSequenceArg.getType())) {
+                result.append(tracker.textWithComments(charSequenceArg, PsiPrecedenceUtil.METHOD_CALL_PRECEDENCE));
+              }
+              else {
+                result.append(tracker.textWithComments(charSequenceArg, PsiPrecedenceUtil.METHOD_CALL_PRECEDENCE))
+                  .append(".toString()");
+              }
             }
+            else {
+              result.append("String.valueOf(").append(tracker.textWithComments(charSequenceArg)).append(")");
+            }
+            result.append(".repeat(").append(tracker.textWithComments(arguments[1])).append(')');
+          }
+          else if ("append".equals(referenceName) || "add".equals(referenceName)){
+            String commentsBefore = getCommentsBefore(methodExpression, result, tracker);
             final PsiExpression[] arguments = argumentList.getExpressions();
             if (arguments.length == 0) {
               return null;
@@ -451,6 +473,16 @@ public final class StringBufferReplaceableByStringInspection extends BaseInspect
           out.append('+');
         }
         currentLine = lineNumber;
+      }
+
+      private static @NotNull String getCommentsBefore(@NotNull PsiReferenceExpression methodExpression,
+                                                       @NotNull StringBuilder result,
+                                                       @NotNull CommentTracker tracker) {
+        final ASTNode dot = ((CompositeElement)methodExpression.getNode()).findChildByRole(ChildRole.DOT);
+        if (dot != null && !result.isEmpty()) {
+          return tracker.commentsBefore(dot.getPsi());
+        }
+        return "";
       }
 
       private static boolean hasTrailingLineBreak(StringBuilder sb) {
