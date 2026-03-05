@@ -61,15 +61,10 @@ import kotlin.jvm.Throws
 @ApiStatus.Experimental
 abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Disposable.Default {
   private val isInited = AtomicBoolean(false)
-  private val initializationJob = if (!shouldBeInitInstantly()) {
-    PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT, start = CoroutineStart.LAZY) {
-      initInstalledPackages()
-    }.also {
-      it.cancelOnDispose(this)
-    }
-  }
-  else {
-    null
+  private val initializationJob = PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT, start = CoroutineStart.LAZY) {
+    initInstalledPackages()
+  }.also {
+    it.cancelOnDispose(this)
   }
 
 
@@ -318,10 +313,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
 
   @ApiStatus.Internal
   suspend fun waitForInit() {
-    initializationJob?.join()
-    if (shouldBeInitInstantly()) {
-      initInstalledPackages()
-    }
+    initializationJob.join()
   }
 
   private suspend fun initInstalledPackages() {
@@ -340,22 +332,13 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
     }
   }
 
-  //Some test on EDT so need to be inited on first create
-  private fun shouldBeInitInstantly(): Boolean = ApplicationManager.getApplication().isUnitTestMode
-
   companion object {
     private val CACHE_KEY = Key.create<CachedValue<Deferred<PyResult<List<PythonPackage>>?>>>("PythonPackageManagerDependenciesCache")
 
     @Throws(AlreadyDisposedException::class)
     fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
       val pythonPackageManagerService = project.service<PythonPackageManagerService>()
-      val manager = pythonPackageManagerService.forSdk(project, sdk)
-      if (manager.shouldBeInitInstantly()) {
-        runBlockingMaybeCancellable {
-          manager.initInstalledPackages()
-        }
-      }
-      return manager
+      return pythonPackageManagerService.forSdk(project, sdk)
     }
 
     @Topic.AppLevel
