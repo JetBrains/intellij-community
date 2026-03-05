@@ -23,6 +23,7 @@ import org.jetbrains.intellij.build.productLayout.xml.includesPlatformLangPlugin
 import org.jetbrains.intellij.build.productLayout.xml.withEditorFold
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 internal fun appendDefaultProductPluginMetadata(sb: StringBuilder, spec: ProductModulesContentSpec) {
   // Add id/name/vendor if NOT getting them from xi:include (e.g., PlatformLangPlugin.xml)
@@ -83,7 +84,7 @@ internal fun generateProductXml(
 ): ProductFileResult {
   // Determine which generator to recommend based on plugin.xml file location
   // Community products are under community/ directory, Ultimate products are not
-  val generatorCommand = (if (pluginXmlPath.toString().contains("/community/")) "CommunityModuleSets" else "UltimateGenerator") + GENERATOR_SUFFIX
+  val generatorCommand = (if (pluginXmlPath.invariantSeparatorsPathString.contains("/community/")) "CommunityModuleSets" else "UltimateGenerator") + GENERATOR_SUFFIX
 
   // Build complete plugin.xml file
   // inlineModuleSets = false means: use xi:include to reference module set XML files in product XML
