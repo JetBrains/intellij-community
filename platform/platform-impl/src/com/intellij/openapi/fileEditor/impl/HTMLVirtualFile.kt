@@ -8,6 +8,7 @@ import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Request
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.testFramework.LightVirtualFile
@@ -21,14 +22,20 @@ import com.intellij.util.containers.WeakList
  */
 internal class HTMLVirtualFile private constructor(
   title: @DialogTitle String,
+  fileType: FileType,
   private var htmlRequest: Request,
-) : LightVirtualFile(title, WebPreviewFileType.INSTANCE, /* text = */ "") {
+) : LightVirtualFile(title, fileType, /* text = */ "") {
 
   companion object {
     private val DISPOSED_REQUEST: Request = Request.html("DISPOSED_REQUEST")
 
-    fun createFile(project: Project, title: @DialogTitle String, htmlRequest: Request): HTMLVirtualFile {
-      val file = HTMLVirtualFile(title, htmlRequest)
+    fun createFile(
+      project: Project,
+      title: @DialogTitle String,
+      htmlRequest: Request,
+      fileType: FileType = WebPreviewFileType.INSTANCE,
+    ): HTMLVirtualFile {
+      val file = HTMLVirtualFile(title, fileType, htmlRequest)
       project.service<HTMLVirtualFileManager>().registerFile(file)
       return file
     }
