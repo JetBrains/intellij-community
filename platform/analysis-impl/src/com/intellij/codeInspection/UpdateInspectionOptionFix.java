@@ -24,14 +24,20 @@ public class UpdateInspectionOptionFix implements ModCommandAction {
   private final @IntentionName String myMessage;
   private final Object myValue;
 
-  public UpdateInspectionOptionFix(@NotNull InspectionProfileEntry inspection, @NotNull @NonNls String property, @NotNull @IntentionName String message, boolean value) {
+  public UpdateInspectionOptionFix(@NotNull InspectionProfileEntry inspection,
+                                   @NotNull @NonNls String property,
+                                   @NotNull @IntentionName String message,
+                                   boolean value) {
     myInspection = inspection;
     myProperty = property;
     myMessage = message;
     myValue = value;
   }
 
-  public UpdateInspectionOptionFix(@NotNull InspectionProfileEntry inspection, @NotNull @NonNls String property, @NotNull @IntentionName String message, int value) {
+  public UpdateInspectionOptionFix(@NotNull InspectionProfileEntry inspection,
+                                   @NotNull @NonNls String property,
+                                   @NotNull @IntentionName String message,
+                                   int value) {
     myInspection = inspection;
     myProperty = property;
     myMessage = message;
