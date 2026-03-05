@@ -366,7 +366,7 @@ class NotebookCellInlayManager private constructor(
       editorNotebookPostprocessors.forEach {
         it.postprocess(notebook)
       }
-      Disposer.register(editor.disposable, notebook)
+      EditorUtil.disposeWithEditor(editor, notebook)
       return notebook
     }
 
