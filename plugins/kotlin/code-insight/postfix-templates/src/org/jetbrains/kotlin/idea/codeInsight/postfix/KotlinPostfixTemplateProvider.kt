@@ -5,6 +5,7 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.psi.KtBlockCodeFragment
 
 // K2 PostfixTemplateProvider
 internal class KotlinPostfixTemplateProvider : PostfixTemplateProvider {
@@ -52,7 +53,18 @@ internal class KotlinPostfixTemplateProvider : PostfixTemplateProvider {
 
     override fun isTerminalSymbol(currentChar: Char): Boolean = currentChar == '.' || currentChar == '!'
 
-    override fun preCheck(copyFile: PsiFile, realEditor: Editor, currentOffset: Int): PsiFile = copyFile
+    override fun preCheck(copyFile: PsiFile, realEditor: Editor, currentOffset: Int): PsiFile {
+        val originalFile = copyFile.originalFile
+        if (originalFile !is KtBlockCodeFragment) {
+            return copyFile
+        }
+        val fragment = KtBlockCodeFragment(
+            originalFile.project,
+            "fragment.kt", originalFile.text, originalFile.importsToString(), originalFile.context
+        )
+        fragment.setOriginalFile(originalFile)
+        return fragment
+    }
 
     override fun preExpand(file: PsiFile, editor: Editor) {}
     override fun afterExpand(file: PsiFile, editor: Editor) {}

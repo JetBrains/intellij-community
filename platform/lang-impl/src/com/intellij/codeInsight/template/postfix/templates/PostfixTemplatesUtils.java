@@ -21,6 +21,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -71,8 +73,14 @@ public final class PostfixTemplatesUtils {
     PsiElement[] elements = {expr};
     if (surrounder instanceof ModCommandSurrounder modCommandSurrounder) {
       ActionContext context = ActionContext.from(editor, expr.getContainingFile());
+      SmartPsiElementPointer<PsiElement> exprPointer = SmartPointerManager.createPointer(expr);
       ReadAction.nonBlocking(
-          () -> modCommandSurrounder.isApplicable(elements) ? modCommandSurrounder.surroundElements(context, elements) : null)
+          () -> {
+            PsiElement restoredExpr = exprPointer.getElement();
+            if (restoredExpr == null) return null;
+            PsiElement[] elems = {restoredExpr};
+            return modCommandSurrounder.isApplicable(elems) ? modCommandSurrounder.surroundElements(context, elems) : null;
+          })
         .expireWhen(() -> project.isDisposed() || editor.isDisposed())
         .finishOnUiThread(ModalityState.nonModal(), command -> {
           if (command == null) {
