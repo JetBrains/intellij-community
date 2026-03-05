@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.google.gson.Gson;
@@ -30,6 +30,7 @@ public final class LicensingFacade {
   public Map<String, String> confirmationStamps;
   public Map<String, ProductLicenseData> productLicenses;
   public String metadata;
+  public String fusMetadata;
   public boolean ai_enabled;
   /** @deprecated temporary field; use {@link #metadata} instead */
   @Deprecated(forRemoval = true)
