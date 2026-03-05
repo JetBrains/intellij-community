@@ -22,6 +22,7 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.ui.InplaceButton
+import com.intellij.ui.IslandsState
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.RelativeFont
 import com.intellij.ui.SimpleColoredComponent
@@ -347,8 +348,8 @@ open class TabLabel @Internal constructor(
   protected fun paintFadeout(g: Graphics) {
     val g2d = g.create() as Graphics2D
     try {
-      val isTabOccupiesWholeHeight = IslandsPainterProvider.getInstance()?.isTabOccupiesWholeHeight() != false
-      val tabBg = if (isTabOccupiesWholeHeight) effectiveBackground else tabs.tabPainter.getBackgroundColor()
+      val isIslands = IslandsState.isEnabled()
+      val tabBg = if (isIslands) tabs.tabPainter.getBackgroundColor() else effectiveBackground
       val transparent = ColorUtil.withAlpha(tabBg, 0.0)
       val borderThickness = tabs.borderThickness
       val width = JBUI.scale(MathUtil.clamp(Registry.intValue("ide.editor.tabs.fadeout.width", 10), 1, 200))
@@ -364,8 +365,18 @@ open class TabLabel @Internal constructor(
       val contentRect = labelPlaceholder.bounds
       // Fadeout for right side before pin/close button (needed only in side placements and in squeezing layout)
       if (contentRect.width < labelPlaceholder.preferredSize.width + tabs.tabHGap) {
-        if (isTabOccupiesWholeHeight) { // Can be implemented later for isTabOccupiesWholeHeight
-          val rightRect = Rectangle(contentRect.x + contentRect.width - width, borderThickness, width, rect.height - 2 * borderThickness)
+        val rightRect = Rectangle(contentRect.x + contentRect.width - width, borderThickness, width, rect.height - 2 * borderThickness)
+        if (isIslands) {
+          val composedBg = IslandsPainterProvider.getInstance()?.getEditorTabComposedBgColor(
+            tabs, tabs.tabPainter, info.tabColor, tabs.isActiveTabs(info), isHovered, isSelected)
+          if (composedBg != null) {
+            val labelCoord = SwingUtilities.convertPoint(label, 0, 0, this)
+            rightRect.y = labelCoord.y
+            rightRect.height = label.height
+            paintGradientRect(g2d, rightRect, ColorUtil.withAlpha(composedBg, 0.0), composedBg)
+          }
+        }
+        else {
           paintGradientRect(g2d, rightRect, transparent, tabBg)
         }
       }
