@@ -55,6 +55,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -302,55 +303,60 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
   }
 
   @NotNull
-  private Function<@Nullable ExecutionNode, @NotNull ActionGroup> getContextMenuSupplier() {
-    final DefaultActionGroup rerunActionGroup = new DefaultActionGroup();
-    List<AnAction> restartActions = myBuildDescriptor.getRestartActions();
-    rerunActionGroup.addAll(restartActions);
-    if (!restartActions.isEmpty()) {
-      rerunActionGroup.addSeparator();
+  private Function<@Nullable ExecutionNode, @NotNull ActionGroup> getMainContextMenuGroupSupplier() {
+    List<AnAction> actions = new ArrayList<>(myBuildDescriptor.getRestartActions());
+    if (!actions.isEmpty()) {
+      actions.add(Separator.getInstance());
     }
 
-    final DefaultActionGroup sourceActionGroup = new DefaultActionGroup();
     EditSourceAction edit = new EditSourceAction();
     ActionUtil.copyFrom(edit, "EditSource");
-    sourceActionGroup.add(edit);
-    DefaultActionGroup filteringActionsGroup = BuildTreeFilters.createFilteringActionsGroup(new WeakFilterableSupplier<>(this));
-    final DefaultActionGroup navigationActionGroup = new DefaultActionGroup();
-    final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
-    final AnAction prevAction = actionsManager.createPrevOccurenceAction(this);
-    navigationActionGroup.add(prevAction);
-    final AnAction nextAction = actionsManager.createNextOccurenceAction(this);
-    navigationActionGroup.add(nextAction);
+    actions.add(edit);
 
     return node -> {
-      final DefaultActionGroup group = new DefaultActionGroup();
-      group.addAll(rerunActionGroup);
-      group.addAll(sourceActionGroup);
-      group.addSeparator();
+      DefaultActionGroup group = new DefaultActionGroup();
+      group.addAll(actions);
       if (node != null) {
         List<AnAction> contextActions = myBuildDescriptor.getContextActions(node);
         if (!contextActions.isEmpty()) {
-          group.addAll(contextActions);
           group.addSeparator();
+          group.addAll(contextActions);
         }
       }
-      group.addAll(filteringActionsGroup);
-      group.addSeparator();
-      group.addAll(navigationActionGroup);
       return group;
     };
+  }
+
+  @ApiStatus.Internal
+  public ActionGroup getFilteringAndNavigationContextMenuGroup() {
+    DefaultActionGroup group = new DefaultActionGroup();
+    Supplier<Filterable<ExecutionNode>> supplier = new WeakFilterableSupplier<>(this);
+    group.add(new WarningsToggleAction(supplier));
+    group.add(new SuccessfulStepsToggleAction(supplier));
+    group.addSeparator();
+
+    CommonActionsManager actionsManager = CommonActionsManager.getInstance();
+    group.add(actionsManager.createPrevOccurenceAction(this));
+    group.add(actionsManager.createNextOccurenceAction(this));
+    return group;
   }
 
   private void installContextMenu() {
     if (myTree == null) return;
     UIUtil.invokeLaterIfNeeded(() -> {
-      Function<ExecutionNode, ActionGroup> supplier = getContextMenuSupplier();
+      Function<ExecutionNode, ActionGroup> supplier = getMainContextMenuGroupSupplier();
+      ActionGroup viewGroup = getFilteringAndNavigationContextMenuGroup();
       myTree.addMouseListener(new PopupHandler() {
         @Override
         public void invokePopup(Component comp, int x, int y) {
           ExecutionNode[] selectedNodes = getSelectedNodes();
           ExecutionNode selectedNode = selectedNodes.length == 1 ? selectedNodes[0] : null;
-          ActionGroup group = supplier.apply(selectedNode);
+
+          DefaultActionGroup group = new DefaultActionGroup();
+          group.add(supplier.apply(selectedNode));
+          group.addSeparator();
+          group.add(viewGroup);
+
           ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("BuildView", group);
           popupMenu.setTargetComponent(myTree);
           JPopupMenu menu = popupMenu.getComponent();
@@ -361,10 +367,10 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
   }
 
   @ApiStatus.Internal
-  public ActionGroup getContextMenuGroup(DataContext context) {
+  public ActionGroup getMainContextMenuGroup(DataContext context) {
     SelectedBuildTreeNode selectedNode = context.getData(BuildTreeContextKt.getBUILD_TREE_SELECTED_NODE());
     ExecutionNode node = selectedNode == null ? null : myTreeVm.getNodeById(selectedNode.getNodeId());
-    return getContextMenuSupplier().apply(node);
+    return getMainContextMenuGroupSupplier().apply(node);
   }
 
   @Override
