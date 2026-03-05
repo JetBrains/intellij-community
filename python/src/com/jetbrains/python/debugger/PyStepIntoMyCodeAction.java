@@ -1,8 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.actionSystem.ex.TooltipLinkProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -10,7 +12,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase;
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
@@ -40,15 +42,26 @@ public class PyStepIntoMyCodeAction extends XDebuggerActionBase
     }
   };
 
+  @ApiStatus.Internal
   @Override
-  @SuppressWarnings("deprecation")
-  protected @NotNull DebuggerActionHandler getHandler(@NotNull DebuggerSupport debuggerSupport) {
+  protected @NotNull DebuggerActionHandler getHandler() {
     return myHandler;
   }
 
   @Override
   protected boolean isHidden(@NotNull AnActionEvent event) {
-    return false;
+    XDebugSession session = event.getData(XDebugSession.DATA_KEY);
+    if (session == null) {
+      Project project = event.getProject();
+      if (project != null) {
+        session = XDebuggerManager.getInstance(project).getCurrentSession();
+      }
+    }
+    if (session != null) {
+      return !(session.getDebugProcess() instanceof PyStepIntoSupport);
+    }
+    RunProfile runProfile = event.getData(LangDataKeys.RUN_PROFILE);
+    return !(runProfile instanceof AbstractPythonRunConfiguration);
   }
 
   @ApiStatus.Internal
@@ -61,12 +74,13 @@ public class PyStepIntoMyCodeAction extends XDebuggerActionBase
       if (project == null) return;
       session = XDebuggerManager.getInstance(project).getCurrentSession();
     }
-    if (session == null) return;
+    if (session == null) {
+      event.getPresentation().setDescription("");
+      return;
+    }
     if (session.getDebugProcess() instanceof PyStepIntoSupport support) {
-      String reason = support.getStepIntoMyCodeUnavailableReason();
-      if (reason != null) {
-        event.getPresentation().setDescription(reason);
-      }
+      String reason = support.getCanApplyJustMyCodeChange() ? support.getStepIntoMyCodeUnavailableReason() : null;
+      event.getPresentation().setDescription(reason != null ? reason : "");
     }
   }
 
@@ -84,6 +98,7 @@ public class PyStepIntoMyCodeAction extends XDebuggerActionBase
     if (session == null) return null;
     if (!(session.getDebugProcess() instanceof PyStepIntoSupport support)) return null;
     if (support.isStepIntoMyCodeAvailable()) return null;
+    if (!support.getCanApplyJustMyCodeChange()) return null;
     return new TooltipLink(PyBundle.message("debugger.step.into.my.code.switch.link"), () -> support.applyJustMyCodeChange(true));
   }
 }
