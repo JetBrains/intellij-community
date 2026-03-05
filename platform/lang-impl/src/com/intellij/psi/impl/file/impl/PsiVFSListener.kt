@@ -334,7 +334,8 @@ internal class PsiVFSListener(private val project: Project) {
                 }
               }
               else {
-                val firstOldViewProvider = oldFileViewProviders.first() // todo IJPL-339 do we want to select a preferred view provider instead of the first one???
+                // todo IJPL-339 do we want to select a preferred view provider instead of the first one???
+                val firstOldViewProvider = oldFileViewProviders.first()
                 if (!FileManagerImpl.areViewProvidersEquivalent(newFileViewProvider, firstOldViewProvider)) {
                   // the file has changed its view provider factory
                   // we need to delete all old providers and create one new provider.
