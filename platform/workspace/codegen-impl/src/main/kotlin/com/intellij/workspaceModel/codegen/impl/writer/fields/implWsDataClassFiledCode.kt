@@ -45,6 +45,16 @@ private fun ObjProperty<*, *>.implWsDataBlockCode(fieldType: ValueType<*>, name:
     ValueType.Int -> "var $javaName: ${fieldType.javaType} = 0"
     ValueType.Boolean -> "var $javaName: ${fieldType.javaType} = false"
     ValueType.String -> "lateinit var $javaName: String"
+    ValueType.Char -> "var $javaName: ${fieldType.javaType} = 0.toChar()"
+    ValueType.Long -> "var $javaName: ${fieldType.javaType} = 0"
+    ValueType.Float -> "var $javaName: ${fieldType.javaType} = 0f"
+    ValueType.Double -> "var $javaName: ${fieldType.javaType} = 0.0"
+    ValueType.Short -> "var $javaName: ${fieldType.javaType} = 0"
+    ValueType.Byte -> "var $javaName: ${fieldType.javaType} = 0"
+    ValueType.UByte -> "var $javaName: ${fieldType.javaType} = 0u"
+    ValueType.UShort -> "var $javaName: ${fieldType.javaType} = 0u"
+    ValueType.UInt -> "var $javaName: ${fieldType.javaType} = 0u"
+    ValueType.ULong -> "var $javaName: ${fieldType.javaType} = 0u"
     is ValueType.ObjRef<*> -> error("Reference type at EntityData not supported")
     is ValueType.Collection<*, *> -> {
       if (fieldType.isRefType()) error("Reference type at EntityData not supported")
@@ -64,7 +74,8 @@ private fun ObjProperty<*, *>.implWsDataBlockCode(fieldType: ValueType<*>, name:
       }
     }
     is ValueType.Optional<*> -> when (fieldType.type) {
-      ValueType.Int, ValueType.Boolean, ValueType.String -> "var $javaName: ${fieldType.javaType} = null"
+      ValueType.String, ValueType.Int, ValueType.Boolean, ValueType.Char, ValueType.Long, ValueType.Float, ValueType.Double,
+      ValueType.Short, ValueType.Byte, ValueType.UByte, ValueType.UShort, ValueType.UInt, ValueType.ULong -> "var $javaName: ${fieldType.javaType} = null"
       else -> implWsDataBlockCode(fieldType.type, name, true)
     }
     is ValueType.JvmClass -> {
@@ -81,7 +92,8 @@ private fun ObjProperty<*, *>.implWsDataBlockCode(fieldType: ValueType<*>, name:
 
 val ObjProperty<*, *>.implWsDataFieldInitializedCode: String
   get() = when (valueType) {
-    is ValueType.Int, is ValueType.Boolean -> ""
+    ValueType.Int, ValueType.Boolean, ValueType.Char, ValueType.Long, ValueType.Float, ValueType.Double,
+    ValueType.Short, ValueType.Byte, ValueType.UByte, ValueType.UShort, ValueType.UInt, ValueType.ULong -> ""
     is ValueType.String, is ValueType.JvmClass, is ValueType.Collection<*, *>, is ValueType.Map<*, *> -> {
       val capitalizedFieldName = javaName.replaceFirstChar { it.titlecaseChar() }
       "internal fun is${capitalizedFieldName}Initialized(): Boolean = ::${javaName}.isInitialized"
