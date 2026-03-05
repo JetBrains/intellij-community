@@ -66,6 +66,7 @@ import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.toolWindow.ToolWindowProperty
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentTreeWatcher
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.ScrollPaneTracker
@@ -335,7 +336,7 @@ private val LOG = logger<ToolWindowManagerImpl>()
   internal fun hasTopToolbar(): Boolean {
     val decorator = decorator ?: return false
     val header = decorator.header
-    val headerBounds = SwingUtilities.convertRectangle(header.parent, header.bounds, decorator)
+    val headerBounds = ComponentUtil.convertRectangle(header.parent, header.bounds, decorator)
     val component = UIUtil.getDeepestComponentAt(
       decorator, headerBounds.width/2, headerBounds.height * 3 / 2)
     return UIUtil.getParentOfType(ActionToolbar::class.java, component) != null
@@ -380,7 +381,7 @@ private val LOG = logger<ToolWindowManagerImpl>()
   private fun isTouchingHeader(component: JComponent): Boolean {
     return componentBoundsSatisfy(component) { componentBounds, decorator ->
       val header = decorator.header
-      val headerBounds = SwingUtilities.convertRectangle(header.parent, header.bounds, decorator)
+      val headerBounds = ComponentUtil.convertRectangle(header.parent, header.bounds, decorator)
       componentBounds.y == headerBounds.y + headerBounds.height
     }
   }
@@ -409,7 +410,7 @@ private val LOG = logger<ToolWindowManagerImpl>()
       return false
     }
     else {
-      val componentBounds = SwingUtilities.convertRectangle(component.parent, component.bounds, decorator)
+      val componentBounds = ComponentUtil.convertRectangle(component.parent, component.bounds, decorator)
       return predicate(componentBounds, decorator)
     }
   }
