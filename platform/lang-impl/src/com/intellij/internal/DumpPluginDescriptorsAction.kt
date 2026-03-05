@@ -26,14 +26,16 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.util.io.jackson.createGenerator
 import com.intellij.util.lang.UrlClassLoader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import tools.jackson.core.JsonGenerator
-import tools.jackson.core.ObjectWriteContext
 import tools.jackson.core.json.JsonFactory
+import tools.jackson.core.util.DefaultIndenter
+import tools.jackson.core.util.DefaultPrettyPrinter
 import java.nio.file.Path
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -74,7 +76,8 @@ private class PluginDescriptionDumper(val coroutineScope: CoroutineScope) {
     coroutineScope.launch {
       withContext(Dispatchers.IO) {
         dumpPath.bufferedWriter().use { out ->
-          val writer = JsonFactory().createGenerator(ObjectWriteContext.empty(), out)
+          val prettyPrinter = DefaultPrettyPrinter().withArrayIndenter(DefaultIndenter())
+          val writer = JsonFactory().createGenerator(out, prettyPrinter)
           writer.writeStartArray()
           writer.writePlugins()
           writer.writeEndArray()
