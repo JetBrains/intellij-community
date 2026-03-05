@@ -48,6 +48,12 @@ public interface FileManagerEx extends FileManager {
 
   void reloadPsiAfterTextChange(@NotNull FileViewProvider viewProvider, @NotNull VirtualFile vFile);
 
+  /**
+   * See doc of {@link #possiblyInvalidatePhysicalPsi()}
+   *
+   * @param file the file to check
+   * @return true if the given PsiFile is valid
+   */
   @RequiresReadLock(generateAssertion = false)
   boolean evaluateValidity(@NotNull PsiFile file);
 
@@ -59,13 +65,35 @@ public interface FileManagerEx extends FileManager {
 
   void dispose();
 
+  /**
+   * Processes the queue of garbage-collected files.
+   */
   void processQueue();
 
   @RequiresReadLock
-  PsiFile getFastCachedPsiFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context);
+  @Nullable PsiFile getFastCachedPsiFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context);
 
+  /**
+   * If clearViewProviders is true, then it removes all view providers.
+   * If clearViewProviders is false, then it marks all view providers as "possibly invalid". See {@link #possiblyInvalidatePhysicalPsi()}.
+   * <p>
+   * Also fires property-change-event with PsiTreeChangeEvent.PROP_FILE_TYPES.
+   */
   void processFileTypesChanged(boolean clearViewProviders);
 
+
+  /**
+   * Originally, all PSI was invalidated on root change, to avoid UI freeze (IDEA-172762),
+   * but that has led to too many PIEAEs (like IDEA-191185, IDEA-188292, IDEA-184186, EA-114990).
+   * <p>
+   * Ideally, those clients should all be converted to smart pointers, but that proved to be quite hard to do, especially without breaking API.
+   * And they mostly worked before those batch invalidations.
+   * <p>
+   * So now we have a smarter way of dealing with this issue. On root change, we mark PSI as "potentially invalid".
+   * Then, when someone calls "isValid" (hopefully not for all cached PSI at once, and hopefully in a background thread),
+   * we check if the old PSI is equivalent to the one that would be re-created in its place.
+   * If yes, we return valid. If no, we invalidate the old PSI forever and return the new one.
+   */
   @RequiresWriteLock
   void possiblyInvalidatePhysicalPsi();
 
@@ -74,5 +102,5 @@ public interface FileManagerEx extends FileManager {
   @TestOnly
   void checkConsistency();
 
-  PsiDirectory getCachedDirectory(@NotNull VirtualFile vFile);
+  @Nullable PsiDirectory getCachedDirectory(@NotNull VirtualFile vFile);
 }
