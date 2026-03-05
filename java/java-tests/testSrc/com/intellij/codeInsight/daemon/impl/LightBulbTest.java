@@ -524,13 +524,15 @@ public class LightBulbTest extends ProductionDaemonAnalyzerTestCase {
         assertNotNull(actions.toString(), action);
       }
       WriteCommandAction.writeCommandAction(getProject()).withName(getTestName(false)).run(() -> action.getAction().invoke(getProject(), getEditor(), getFile()));
-      assertEquals("""
-                     class X {
-                       void foo(int a, int b) {
-                         foo(a, b);
-                       }
-                     }
-                     """, getEditor().getDocument().getText());
+      @Language("JAVA")
+      String expected = """
+        class X {
+          void foo(int a, int b) {
+            foo(a, b);
+          }
+        }
+        """;
+      assertEquals(expected, getEditor().getDocument().getText());
     });
   }
 }

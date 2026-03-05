@@ -135,7 +135,9 @@ public class DaemonAnnotatorsRespondToChangesTest extends ProductionDaemonAnalyz
   }
 
   public void testHighlightingDoesWaitForEmbarrassinglySlowExternalAnnotatorsToFinish() {
-    configureByText(JavaFileType.INSTANCE, "class X { int f() { int gg<caret> = 11; return 0;} }");
+    @Language("JAVA")
+    String text = "class X { int f() { int gg<caret> = 11; return 0;} }";
+    configureByText(JavaFileType.INSTANCE, text);
     AtomicBoolean run = new AtomicBoolean();
     final int SLEEP = 2_000;
     ExternalAnnotator<Integer, Integer> annotator = new ExternalAnnotator<>() {
@@ -476,12 +478,14 @@ public class DaemonAnnotatorsRespondToChangesTest extends ProductionDaemonAnalyz
       annotatorsByLanguage.put(XMLLanguage.INSTANCE, new MyRecordingAnnotator[]{new MyInjectedSlowAnnotator()});
 
       useAnnotatorsIn(annotatorsByLanguage, () -> {
+        @Language("JAVA")
+        String text = """
+          class X{
+          // language=XML
+          String ql = "<value>1</value>";
+          }""";
         configureByText(JavaFileType.INSTANCE,
-                        """
-                          class X{
-                          // language=XML
-                          String ql = "<value>1</value>";
-                          }""");
+                        text);
 
         myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.INFORMATION);
         assertTrue("File already has to be java annotated", annotated.get());
@@ -764,8 +768,6 @@ public class DaemonAnnotatorsRespondToChangesTest extends ProductionDaemonAnalyz
   static class MyComment1Annotator extends MyRecordingAnnotator {
     static final AtomicBoolean stall1 = new AtomicBoolean();
     static final String comment1Text = "comment1Text";
-    MyComment1Annotator() {
-    }
 
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
@@ -785,8 +787,6 @@ public class DaemonAnnotatorsRespondToChangesTest extends ProductionDaemonAnalyz
   static class MyComment2Annotator extends MyRecordingAnnotator {
     static final AtomicBoolean stall2 = new AtomicBoolean();
     static final String comment2Text = "comment2Text";
-    MyComment2Annotator() {
-    }
 
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {

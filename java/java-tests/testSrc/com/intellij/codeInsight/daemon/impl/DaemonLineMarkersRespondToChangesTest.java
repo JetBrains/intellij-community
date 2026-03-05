@@ -38,6 +38,7 @@ import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EdtInvocationManager;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -185,12 +186,14 @@ public class DaemonLineMarkersRespondToChangesTest extends ProductionDaemonAnaly
   }
 
   public void testLineMarkersDoNotBlinkOnBackSpaceRightBeforeMethodIdentifier() {
-    configureByText(JavaFileType.INSTANCE, """
+    @Language("JAVA")
+    String text = """
       package x;
       class  <caret>ToRun{
         public static void main(String[] args) {
         }
-      }""");
+      }""";
+    configureByText(JavaFileType.INSTANCE, text);
 
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
 
@@ -234,7 +237,9 @@ public class DaemonLineMarkersRespondToChangesTest extends ProductionDaemonAnaly
   }
 
   public void testLineMarkersClearWhenTypingAtTheEndOfPsiComment() {
-    configureByText(JavaFileType.INSTANCE, "class S {\n//ddd<caret>\n}");
+    @Language("JAVA")
+    String text = "class S {\n//ddd<caret>\n}";
+    configureByText(JavaFileType.INSTANCE, text);
     StringBuffer log = new StringBuffer();
     // highlight all PsiComments
     LineMarkerProvider provider = element -> {
@@ -288,13 +293,15 @@ public class DaemonLineMarkersRespondToChangesTest extends ProductionDaemonAnaly
   }
 
   public void testLineMarkerRegisteredOnWrongPsiElementForExampleOnFileLevelYeahCrazyIKnowMustNotRemoveItselfOnTypingOutsideTheLineMarkerRange() {
-    configureByText(JavaFileType.INSTANCE, """
+    @Language("JAVA")
+    String text = """
       class X {
         // blah
         int foo;
       }
       <caret>
-      """);
+      """;
+    configureByText(JavaFileType.INSTANCE, text);
 
     GutterIconNavigationHandler<PsiFile> MY_NAVIGATION_HANDLER = (_1, _2) -> { };
     LineMarkerProvider provider = element -> {

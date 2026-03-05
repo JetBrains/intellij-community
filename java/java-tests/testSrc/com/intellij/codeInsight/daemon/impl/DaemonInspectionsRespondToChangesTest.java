@@ -28,7 +28,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.EditorMouseHoverPopupManager;
 import com.intellij.openapi.editor.ScrollType;
@@ -39,8 +38,6 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -433,8 +430,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
       """;
     configureByText(JavaFileType.INSTANCE, text);
     ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
-    @NotNull Editor editor = getEditor();
-    assertEquals(getFile().getTextRange(), editor.calculateVisibleRange());
+    assertEquals(getFile().getTextRange(), getEditor().calculateVisibleRange());
 
     toSleepMs.set(1_000_000);
 
@@ -461,7 +457,6 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     };
     try {
       CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
-      TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       long start = System.currentTimeMillis();
       myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getEditor().getDocument(), checkHighlighted);

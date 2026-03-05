@@ -292,6 +292,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
   }
 
   public void testAutoImportCaretLocation() throws ExecutionException, InterruptedException {
+    @Language("JAVA")
     String text = "class X { ArrayList<caret> c; }";
     configureByText(text);
     type(" ");
@@ -317,6 +318,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
   }
   public void testAutoImportCaretLocationNotImportIfResolved() throws ExecutionException, InterruptedException {
 
+    @Language("JAVA")
     String text = """
       package org.example;
       
@@ -396,6 +398,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
   }
 
   public void testAutoImportCaretLocation2() throws ExecutionException, InterruptedException {
+    @Language("JAVA")
     String text = "class X { <caret>ArrayList c = null; }";
     configureByText(text);
     type(" ");
@@ -416,6 +419,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
   }
 
   public void testAutoImportWorksWhenITypeSpaceAfterClassName() throws Exception {
+    @Language("JAVA")
     @NonNls String text = "class S { ArrayList<caret> }";
     configureByText(text);
 
@@ -624,6 +628,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
   }
 
   public void testEnsureOptimizeImportsWhenInspectionReportsErrors() throws Exception {
+    @Language("JAVA")
     @NonNls String text = "import java.util.List; class S { } <caret>";
     configureByText(text);
     //ensure error will be provided by a local inspection
@@ -647,6 +652,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
   }
 
   public void testAutoImportWorks() {
+    @Language("JAVA")
     @NonNls final String text = "class S { JFrame x; <caret> }";
     configureByText(text);
     boolean isInContent = true;
@@ -666,6 +672,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
 
 
   public void testAutoImportOfGenericReference() throws Exception {
+    @Language("JAVA")
     @NonNls final String text = "class S {{ new ArrayList<caret><String> }}";
     configureByText(text);
     EditorTestUtil.setEditorVisibleSize(getEditor(), 1000, 1000); // make sure editor is visible - auto-import works only for visible area
@@ -699,6 +706,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
   }
 
   public void testAutoOptimizeUnresolvedImports() throws ExecutionException, InterruptedException {
+    @Language("JAVA")
     @NonNls String text = "import xxx.yyy; class S { } <caret> ";
     configureByText(text);
 
@@ -758,6 +766,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
   }
 
   public void testAutoOptimizeDoesntSuddenlyRemoveImportsDuringTyping() throws Exception {
+    @Language("JAVA")
     @NonNls String text = "package x; " +
                           "import java.util.ArrayList; " +
                           "class S {{ <caret> ArrayList l;\n" +
@@ -788,6 +797,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
   }
 
   public void testAutoInsertImportForInnerClass() throws ExecutionException, InterruptedException {
+    @Language("JAVA")
     @NonNls String text = "package x; class S { void f(ReadLock r){} } <caret> ";
     configureByText(text);
 
@@ -805,6 +815,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
   }
 
   public void testAutoInsertImportForInnerClassAllowInnerClassImports() throws Exception {
+    @Language("JAVA")
     @NonNls String text = "package x; class S { void f(ReadLock r){} } <caret> ";
     configureByText(text);
 
@@ -820,6 +831,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
   }
 
   public void testAutoImportSkipsClassReferenceInMethodPosition() throws Exception {
+    @Language("JAVA")
     @NonNls String text =
       "package x; import java.util.HashMap; class S { HashMap<String,String> f(){ return  Hash<caret>Map <String, String >();} }  ";
     configureByText(text);
@@ -839,6 +851,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
   }
 
   public void testAutoImportDoNotBreakCode() {
+    @Language("JAVA")
     @NonNls String text = "package x; class S {{ S.<caret>\n Runnable r; }}";
     configureByText(text);
 
@@ -884,6 +897,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
   }
 
   public void testAutoImportMustNotRunResolveInEDT() throws Exception {
+    @Language("JAVA")
     @NonNls final String text = "class S {{ new ArrayList<<caret>String> }}";
     configureByText(text);
     type(" ");
