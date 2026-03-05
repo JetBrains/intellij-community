@@ -59,7 +59,7 @@ class CodeGeneratorImpl : CodeGenerator {
         )
       } catch (e: Exception) {
         // todo: pass reporter everywhere (search for 'throw UnsupportedOperationException' in this module)
-        GenerationResult(emptyList(), listOf(GenerationProblem(e.message ?: "Failed to generate entity implementation for ${type.name}",
+        return GenerationResult(emptyList(), listOf(GenerationProblem(e.message ?: "Failed to generate entity implementation for ${type.name}",
                                                                GenerationProblem.Level.ERROR,
                                                                ProblemLocation.Class(type))))
       }
