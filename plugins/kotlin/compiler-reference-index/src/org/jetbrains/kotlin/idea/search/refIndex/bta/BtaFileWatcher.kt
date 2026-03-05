@@ -51,22 +51,25 @@ internal class BtaFileWatcher(private val project: Project) {
             if (project.isDisposed) return@runReadActionBlocking emptyArray()
             ModuleManager.getInstance(project).modules
         }
-        val updatedModules = modules.filter { module ->
-            val criPath = module.getCriPath() ?: return@filter false
-            val lookupsFile = criPath.resolve(CriToolchain.LOOKUPS_FILENAME).takeIf { it.exists() } ?: return@filter false
+        // Since `module_name` and `module_name.main` are different modules but share the same BTA CRI artifacts,
+        // we need to group them by their CRI path
+        val updatedModules = modules.groupBy { it.getCriPath() }.flatMap { (criPath, modules) ->
+            val criPath = criPath ?: return@flatMap emptyList()
+            val lookupsFile = criPath.resolve(CriToolchain.LOOKUPS_FILENAME)
+            if (!lookupsFile.exists()) return@flatMap emptyList()
             val currentTimestamp = try {
                 lookupsFile.getLastModifiedTime()
             } catch (e: IOException) {
-                LOG.warn("Failed to check CRI timestamp for lookups in module ${module.name}", e)
-                return@filter false
+                LOG.warn("Failed to check CRI timestamp for lookups in modules ${modules.joinToString { it.name }}", e)
+                return@flatMap emptyList()
             }
 
             val previousTimestamp = lastSeenCriTimestamps[criPath]
             if (previousTimestamp == null || currentTimestamp > previousTimestamp) {
                 lastSeenCriTimestamps[criPath] = currentTimestamp
-                return@filter true
+                return@flatMap modules
             }
-            false
+            emptyList()
         }
 
         if (updatedModules.isNotEmpty()) {
