@@ -22,12 +22,14 @@ public class AddToInspectionOptionListFix<T extends InspectionProfileEntry> exte
   private final @NotNull Function<@NotNull T, @NotNull List<String>> myExtractor;
 
   /**
-   * @param inspection inspection object
-   * @param fixName name of the quick-fix
-   * @param itemToAdd item to add
+   * @param inspection    inspection object
+   * @param fixName       name of the quick-fix
+   * @param itemToAdd     item to add
    * @param listExtractor a function that retrieves the option
    */
-  public AddToInspectionOptionListFix(@NotNull T inspection, @IntentionName String fixName, @NotNull String itemToAdd,
+  public AddToInspectionOptionListFix(@NotNull T inspection,
+                                      @IntentionName String fixName,
+                                      @NotNull String itemToAdd,
                                       @NotNull Function<@NotNull T, @NotNull List<String>> listExtractor) {
     myInspection = inspection;
     myExtractor = listExtractor;
@@ -47,11 +49,10 @@ public class AddToInspectionOptionListFix<T extends InspectionProfileEntry> exte
 
   @Override
   public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    return ModCommand.updateInspectionOption(descriptor.getStartElement(), myInspection,
-                                    inspection -> {
-                                      List<String> list = myExtractor.apply(inspection);
-                                      list.add(myItemToAdd);
-                                      list.sort(null);
-                                    });
+    return ModCommand.updateInspectionOption(descriptor.getStartElement(), myInspection, inspection -> {
+      List<String> list = myExtractor.apply(inspection);
+      list.add(myItemToAdd);
+      list.sort(null);
+    });
   }
 }
