@@ -213,7 +213,7 @@ class PowerShellCompletionContributor : TerminalCommandCompletionContributor {
   }
 }
 
-internal fun String.isSurroundedByQuotes(): Boolean {
+private fun String.isSurroundedByQuotes(): Boolean {
   return isSurroundedBy("'") || isSurroundedBy("\"")
 }
 
