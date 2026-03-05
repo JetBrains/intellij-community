@@ -5,7 +5,6 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
