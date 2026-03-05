@@ -39,7 +39,7 @@ fun NewProjectWizardStep.addMultiPlatformLink(builder: Panel) {
                 logKmpWizardInstallKmpPluginClicked()
 
                 ShowSettingsUtil.getInstance().showSettingsDialog(null, PluginManagerConfigurable::class.java) {
-                    it.openMarketplaceTab(KotlinMultiplatformPluginId)
+                    it.openMarketplaceTab(KotlinMultiplatformPluginName)
                 }
             }
         }
@@ -52,6 +52,8 @@ private val isKmpPluginEnabled: Boolean
         return PluginManagerCore.isLoaded(pluginId) && !PluginManagerCore.isDisabled(pluginId)
     }
 
-private const val KotlinMultiplatformPluginId: String = "Kotlin Multiplatform"
+private const val KotlinMultiplatformPluginId: String = "com.jetbrains.kmm"
+
+private const val KotlinMultiplatformPluginName: String = "Kotlin Multiplatform"
 
 private const val KotlinMultiplatformWizardPlaceId: String = "Kotlin Multiplatform"
