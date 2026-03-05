@@ -107,7 +107,7 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
   }
 
   fun `test Attrs type per default`() {
-    fixme("Support for combined CSPs necessary", AssertionError::class.java) {
+    fixme("PY-88142", AssertionError::class.java) {
       runWithAdditionalClassEntryInSdkRoots("packages")
       {
         doTestByText("""
@@ -151,7 +151,7 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
   }
 
   fun `test Bound from return to argument`() {
-    fixme("Support for combined CSPs necessary", AssertionError::class.java) {
+    fixme("PY-88142", AssertionError::class.java) {
       doTestByText("""
       from typing import Callable, assert_type
 
@@ -440,6 +440,8 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
   @TestFor(issues = ["PY-86098"])
   fun `test PY-86098`() {
     doTestByText("""
+      from typing import assert_type
+      
       class A[T: object]:
           def __init__(self, value: T): ...
       
@@ -484,7 +486,7 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
   }
 
   fun `test Nested csp with type parameter constraint`() {
-    fixme("Support for combined CSPs necessary", AssertionError::class.java) {
+    fixme("PY-88142", AssertionError::class.java) {
       doTestByText("""
         from typing import Callable, assert_type, Any
         
@@ -511,6 +513,63 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
       C = box_class()
       box_int : Box[int] = C()
       assert_type(box_int, Box[int])
+      """)
+  }
+
+  @TestFor(issues = ["PY-88071"])
+  fun `test Default type from nested call`() {
+    doTestByText("""
+      from typing import assert_type
+      def h1[S=int]() -> S: ...
+      def h2[T](t: T) -> T: ...
+      rh2 = h2(h1())
+      assert_type(rh2, int)
+      """)
+  }
+
+  @TestFor(issues = ["PY-88071"])
+  fun `test Default type from outer call`() {
+    doTestByText("""
+      from typing import assert_type
+      def g1[S]() -> S: ...
+      def g2[T=str](t: T) -> T: ...
+      rg2 = g2(g1())
+      assert_type(rg2, str)
+      """)
+  }
+
+  @TestFor(issues = ["PY-88071"])
+  fun `test Default type from both calls`() {
+    doTestByText("""
+      from typing import assert_type
+      def f1[S=int]() -> S: ...
+      def f2[T=str](t: T) -> T: ...
+      rf2 = f2(f1())
+      assert_type(rf2, int)
+      """)
+  }
+
+  @TestFor(issues = ["PY-88071"])
+  fun `test Default type from both calls explicit Any`() {
+    fixme("PY-88142", AssertionError::class.java) {
+      doTestByText("""
+      from typing import assert_type, Any
+      def f1[S=Any]() -> S: ...
+      def f2[T=str](t: T) -> T: ...
+      rf2 = f2(f1())
+      assert_type(rf2, Any)
+      """)
+    }
+  }
+
+  @TestFor(issues = ["PY-88089"])
+  fun `test Keep captured type`() {
+    doTestByText("""
+      from typing import assert_type
+      def f[S](s: S) -> S: ...
+      def main[T = int](t: T) -> T:
+          r = f(t)
+          assert_type(r, T)
       """)
   }
 }
