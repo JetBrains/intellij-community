@@ -14,6 +14,15 @@ java_binary(
   data = ALL_COMMUNITY_TARGETS,
 )
 
+# Android Studio (b/490117560): this is our custom platform distro target.
+java_binary(
+  name = "i_build_target_studio",
+  runtime_deps = [":build"],
+  main_class = "AndroidStudioBuildTarget",
+  add_opens = INTELLIJ_ADD_OPENS,
+  data = ALL_COMMUNITY_TARGETS,
+)
+
 java_binary(
   name = "run_tests_build_target",
   runtime_deps = [":build"],
