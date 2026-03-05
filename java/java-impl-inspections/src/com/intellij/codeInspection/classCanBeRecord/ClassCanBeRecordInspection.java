@@ -5,6 +5,7 @@ import com.intellij.codeInspection.AddToInspectionOptionListFix;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.UpdateInspectionOptionFix;
 import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.RecordCandidate;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptionController;
@@ -81,6 +82,12 @@ public final class ClassCanBeRecordInspection extends BaseInspection implements 
     boolean suggestQuickFix = (boolean)infos[0];
     if (suggestQuickFix) {
       fixes.add(new ConvertToRecordFix(suggestAccessorsRenaming, myIgnoredAnnotations));
+      fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(
+        this,
+        "noHighlightingFixAvailable",
+        JavaBundle.message("class.can.be.record.record.highlight.when.semantics.change"),
+        true
+      ), false));
       PsiClass psiClass = ObjectUtils.tryCast(infos[1], PsiClass.class);
       if (psiClass != null) {
         PsiAnnotation[] annotations = psiClass.getAnnotations();
