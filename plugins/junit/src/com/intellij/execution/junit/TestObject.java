@@ -640,7 +640,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   private static GlobalSearchScope getScopeForJUnit(@Nullable Module module, Project project) {
-    return module != null ? GlobalSearchScope.moduleRuntimeScope(module, true) : GlobalSearchScope.allScope(project);
+    return module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, true) : GlobalSearchScope.allScope(project);
   }
 
   public static GlobalSearchScope getScopeForJUnit(JUnitConfiguration configuration) {

@@ -11,6 +11,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
@@ -24,19 +25,23 @@ import com.intellij.execution.testframework.sm.runner.OutputEventSplitter;
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
 import com.intellij.java.execution.AbstractTestFrameworkIntegrationTest;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.junit.JUnitStarter;
-import com.intellij.testFramework.DumbModeTestUtils;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
@@ -46,7 +51,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
+import java.io.File;
 import java.text.ParseException;
+import java.util.Collection;
 import java.util.List;
 
 public class JUnitVersionSwitchingIntegrationTest extends AbstractTestFrameworkCompilingIntegrationTest {
@@ -139,26 +146,25 @@ public class JUnitVersionSwitchingIntegrationTest extends AbstractTestFrameworkC
                  messages.stream().filter(TestFailed.class::isInstance).count());
   }
 
-  public void testDumbModeRunnerIgnoresJUnit6FromSiblingModule() throws Exception {
-    Module junit6SiblingModule = createEmptyModule();
-    addMavenLibs(junit6SiblingModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "6.0.0",
-                                                                              false, List.of()), getRepoManager());
+  public void testRunnerIgnoresJUnit6FromRuntimeScopeOnlyLib() throws Exception {
+    Collection<File> junit6Files = getRepoManager().resolveDependency("org.junit.jupiter", "junit-jupiter-api", "6.0.0", false, List.of());
 
-    // check module settings
-    GlobalSearchScope allScope = GlobalSearchScope.allScope(myProject);
-    GlobalSearchScope myModuleScope = GlobalSearchScope.moduleRuntimeScope(myModule, true);
-    assertNotNull("Pre-condition: MethodOrderer.Default must be visible in allScope from sibling module",
-                  JavaPsiFacade.getInstance(myProject).findClass("org.junit.jupiter.api.MethodOrderer.Default", allScope));
-    assertNull("Pre-condition: MethodOrderer.Default must NOT be visible in myModule runtime scope",
-               JavaPsiFacade.getInstance(myProject).findClass("org.junit.jupiter.api.MethodOrderer.Default", myModuleScope));
+    LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+    JarFileSystem jarFileSystem = JarFileSystem.getInstance();
+    List<@NotNull String> classesUrls = junit6Files.stream().map(localFileSystem::findFileByIoFile)
+      .map(jarFileSystem::getJarRootForLocalFile)
+      .map(VirtualFile::getUrl).toList();
 
-    // run junit5 module
-    PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass("org.example.SimpleJUnit5Test", GlobalSearchScope.projectScope(myProject));
-    RunConfiguration configuration = createConfiguration(aClass);
-    DumbModeTestUtils.runInDumbModeSynchronously(myProject, () -> {
-      ProcessOutput output = doStartTestsProcess(configuration);
-      assertTrue(output.sys.toString().contains("-junit5"));
-    });
+    ModuleRootModificationUtil.addModuleLibrary(myModule, "junit6-runtime-only", classesUrls, List.of(), DependencyScope.RUNTIME);
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
+
+    // Package-level run must select -junit5, not -junit6
+    PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage("org.example");
+    assertNotNull("Package org.example not found", aPackage);
+    JUnitConfiguration configuration = createConfiguration(aPackage);
+    configuration.getConfigurationModule().setModule(myModule);
+    ProcessOutput output = doStartTestsProcess(configuration);
+    assertTrue("Expected -junit5 in output, but got: " + output.sys, output.sys.toString().contains("-junit5"));
   }
 
   private static ProcessOutput doStartTestsProcessWithExtraJUnitParam(RunConfiguration config, String extraParam)
