@@ -13,7 +13,8 @@ import com.jetbrains.python.psi.PyTypedElement
 import org.jetbrains.annotations.ApiStatus
 
 abstract class TypeEvalContext protected constructor() {
-  abstract val usesExternalTypeProvider: Boolean
+  @get:ApiStatus.Internal
+  abstract val usesExternalTypeEngine: Boolean
   abstract val processingContext: ProcessingContext
   abstract val origin: PsiFile?
 

@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import org.jetbrains.annotations.ApiStatus
+import kotlin.time.Duration
 
 @ApiStatus.Internal
 object PyTypeEvaluationCollector : CounterUsagesCollector() {
@@ -15,16 +16,10 @@ object PyTypeEvaluationCollector : CounterUsagesCollector() {
   private val JB_TYPE_ENGINE_TIME = GROUP.registerEvent("jb.type.engine.time", DURATION_BASKET)
   private val HYBRID_TYPE_ENGINE_TIME = GROUP.registerEvent("hybrid.type.engine.time", DURATION_BASKET)
 
-  private fun getDurationBasket(durationMs: Long): Int {
-    return (durationMs / 100).toInt()
-  }
+  private val Duration.basket: Int
+    get() = inWholeMilliseconds.toInt() / 100
 
-  fun logJBTypeEngineTime(durationMs: Long) {
-    JB_TYPE_ENGINE_TIME.log(getDurationBasket(durationMs))
-  }
+  fun logJBTypeEngineTime(duration: Duration): Unit = JB_TYPE_ENGINE_TIME.log(duration.basket)
 
-  fun logHybridTypeEngineTime(durationMs: Long) {
-    HYBRID_TYPE_ENGINE_TIME.log(getDurationBasket(durationMs))
-  }
+  fun logHybridTypeEngineTime(duration: Duration): Unit = HYBRID_TYPE_ENGINE_TIME.log(duration.basket)
 }
-

@@ -2963,13 +2963,13 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
 
     private fun <T> staticWithCustomContext(
       context: TypeEvalContext,
-      useFqn: Boolean,
+      typeRepresentationMode: Boolean,
       delegate: (Context) -> T,
     ): T {
       var customContext = context.processingContext.get(TYPE_HINT_EVAL_CONTEXT)
       val firstEntrance = customContext == null
       if (firstEntrance) {
-        customContext = Context(context, useFqn)
+        customContext = Context(context, typeRepresentationMode)
         context.processingContext.put(TYPE_HINT_EVAL_CONTEXT, customContext)
       }
       try {

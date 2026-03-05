@@ -29,6 +29,7 @@ import com.jetbrains.python.pyi.PyiLanguageDialect
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentMap
 import kotlin.concurrent.Volatile
+import kotlin.time.measureTimedValue
 
 @ApiStatus.Internal
 open class TypeEvalContextImpl internal constructor(
@@ -44,7 +45,7 @@ open class TypeEvalContextImpl internal constructor(
 
   private val myProcessingContext = ThreadLocal.withInitial { ProcessingContext() }
 
-  private var typeEngine: PyTypeEngine? = null
+  private val typeEngine: PyTypeEngine? = constraints.myOrigin?.let { PyTypeEngineProvider.createTypeResolver(it.project) }
   protected val myEvaluated: MutableMap<PyTypedElement?, PyType?> = getConcurrentMapForCaching()
   protected val myEvaluatedReturn: MutableMap<PyCallable?, PyType?> = getConcurrentMapForCaching()
   protected val contextTypeCache: ConcurrentMap<Pair<PyExpression?, Any?>, PyType> = getConcurrentMapForCaching()
@@ -53,12 +54,6 @@ open class TypeEvalContextImpl internal constructor(
     TypeEvalConstraints(allowDataFlow, allowStubToAST, allowCallContext, origin)
   )
 
-  init {
-    val origin = constraints.myOrigin
-    if (origin != null) {
-      typeEngine = PyTypeEngineProvider.createTypeResolver(origin.project)
-    }
-  }
 
   override fun toString(): String {
     return "TypeEvalContext(${constraints.myAllowDataFlow}, ${constraints.myAllowStubToAST}, ${constraints.myOrigin})"
@@ -188,18 +183,19 @@ open class TypeEvalContextImpl internal constructor(
     }
 
     return RecursionManager.doPreventingRecursion(element to this, false) {
-      val type: PyType?
-      if (typeEngine != null && typeEngine!!.isSupportedForResolve(element)) {
-        val startTime = System.currentTimeMillis()
-        type = Ref.deref(typeEngine!!.resolveType(element, this is LibraryTypeEvalContext))
-        val duration = System.currentTimeMillis() - startTime
+      val type = if (typeEngine != null && typeEngine.isSupportedForResolve(element)) {
+        val (result, duration) = measureTimedValue {
+          typeEngine.resolveType(element, this is LibraryTypeEvalContext)?.get()
+        }
         PyTypeEvaluationCollector.logHybridTypeEngineTime(duration)
+        result
       }
       else {
-        val startTime = System.currentTimeMillis()
-        type = element.getType(this, KeyImpl)
-        val duration = System.currentTimeMillis() - startTime
+        val (result, duration) = measureTimedValue {
+          element.getType(this, KeyImpl)
+        }
         PyTypeEvaluationCollector.logJBTypeEngineTime(duration)
+        result
       }
 
       assertValid(type, element)
@@ -242,7 +238,7 @@ open class TypeEvalContextImpl internal constructor(
 
   override val origin: PsiFile? = constraints.myOrigin
 
-  override val usesExternalTypeProvider: Boolean
+  override val usesExternalTypeEngine: Boolean
     get() = typeEngine != null
 
   @ApiStatus.Internal
