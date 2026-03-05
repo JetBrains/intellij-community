@@ -1,5 +1,6 @@
 package com.intellij.ide.starter.driver.engine.remoteDev
 
+import com.intellij.driver.client.Driver
 import com.intellij.driver.client.impl.DriverImpl
 import com.intellij.driver.client.impl.JmxHost
 import com.intellij.driver.model.RdTarget
@@ -11,7 +12,7 @@ import kotlin.reflect.KClass
 /**
  * Driver with BeControl elements support to ensure BeControl element have the same parameters as in monolith.
  */
-class RemDevFrontendDriver(jmxHost: JmxHost) : DriverImpl(jmxHost, true) {
+class RemDevFrontendDriver(jmxHost: JmxHost, beforeCall: (Driver.() -> Unit)? = null) : DriverImpl(jmxHost, true, beforeCall) {
   override val polymorphRegistry: PolymorphRegistryImpl = PolymorphRegistryImpl(this)
   override fun <T : Any> cast(instance: Any, clazz: KClass<T>): T {
     if (instance is BeControlComponentBase) {

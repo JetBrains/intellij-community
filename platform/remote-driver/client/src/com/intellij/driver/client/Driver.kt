@@ -87,7 +87,7 @@ interface Driver : AutoCloseable {
   /**
    * Hook that is called before each remote call.
    */
-  var beforeCall: (Driver.() -> Unit)?
+  val beforeCall: (Driver.() -> Unit)?
 
   /**
    * Forcefully exits the application.
