@@ -97,6 +97,38 @@ f:git4idea.push.GitPushNotificationCustomizerKt
 - isSilent():Z
 *f:git4idea.remote.hosting.http.SilentHostedGitHttpAuthDataProvider$Companion
 - f:getAccountsWithTokens(com.intellij.collaboration.auth.AccountManager,git4idea.remote.hosting.http.HostedGitAuthenticationFailureManager,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+*e:git4idea.remote.hosting.ui.BaseOrHead
+- java.lang.Enum
+- sf:Base:git4idea.remote.hosting.ui.BaseOrHead
+- sf:Head:git4idea.remote.hosting.ui.BaseOrHead
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getText():java.lang.String
+- s:valueOf(java.lang.String):git4idea.remote.hosting.ui.BaseOrHead
+- s:values():git4idea.remote.hosting.ui.BaseOrHead[]
+*f:git4idea.remote.hosting.ui.ResolveConflictsLocallyCoordinates
+- <init>(git4idea.remote.hosting.HostedGitRepositoryRemote,java.lang.String,git4idea.remote.hosting.HostedGitRepositoryRemote,java.lang.String):V
+- f:getBaseRefName():java.lang.String
+- f:getBaseRemoteDescriptor():git4idea.remote.hosting.HostedGitRepositoryRemote
+- f:getHeadRefName():java.lang.String
+- f:getHeadRemoteDescriptor():git4idea.remote.hosting.HostedGitRepositoryRemote
+*f:git4idea.remote.hosting.ui.ResolveConflictsLocallyDialogComponentFactory
+- sf:INSTANCE:git4idea.remote.hosting.ui.ResolveConflictsLocallyDialogComponentFactory
+- f:showBranchUpdateDialog(java.lang.String,java.lang.String):git4idea.remote.hosting.ui.ResolveConflictsMethod
+*:git4idea.remote.hosting.ui.ResolveConflictsLocallyViewModel
+- *sf:Companion:git4idea.remote.hosting.ui.ResolveConflictsLocallyViewModel$Companion
+- a:getHasConflicts():kotlinx.coroutines.flow.StateFlow
+- a:getRequestOrError():kotlinx.coroutines.flow.StateFlow
+- a:isBusy():kotlinx.coroutines.flow.StateFlow
+- a:performResolveConflicts(kotlin.jvm.functions.Function1):V
+*f:git4idea.remote.hosting.ui.ResolveConflictsLocallyViewModel$Companion
+- f:createIn(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.project.Project,git4idea.repo.GitRepository,kotlinx.coroutines.flow.Flow,kotlinx.coroutines.flow.Flow,com.intellij.collaboration.ui.Either):git4idea.remote.hosting.ui.ResolveConflictsLocallyViewModel
+*e:git4idea.remote.hosting.ui.ResolveConflictsMethod
+- java.lang.Enum
+- sf:MERGE:git4idea.remote.hosting.ui.ResolveConflictsMethod
+- sf:REBASE:git4idea.remote.hosting.ui.ResolveConflictsMethod
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):git4idea.remote.hosting.ui.ResolveConflictsMethod
+- s:values():git4idea.remote.hosting.ui.ResolveConflictsMethod[]
 *f:git4idea.repo.GitConfigurationCache
 - git4idea.repo.GitConfigurationCacheBase
 - *sf:Companion:git4idea.repo.GitConfigurationCache$Companion
