@@ -574,6 +574,8 @@
                  description="Enable weak-key caching for TypeEvalContext"/>
     <registryKey key="python.numeric.tower.type" defaultValue="true"
                  description="Enable specialized class type representing Python's numeric tower (int -> float -> complex)"/>
+    <registryKey key="python.type.any" defaultValue="false"
+                 description="Enable Any and Unknown support"/>
 
     <virtualFileCustomDataProvider implementation="com.jetbrains.python.formatter.PyCodeStyleSettingsProvider"/>
   </extensions>

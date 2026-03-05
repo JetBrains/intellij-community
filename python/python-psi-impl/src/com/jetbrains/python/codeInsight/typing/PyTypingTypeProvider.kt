@@ -91,6 +91,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex
+import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableParameterImpl
 import com.jetbrains.python.psi.types.PyCallableParameterListType
 import com.jetbrains.python.psi.types.PyCallableParameterListTypeImpl
@@ -1389,7 +1390,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         if (typeEngineType != null) {
           return typeEngineType
         }
-        return null
+        return PyAnyType.unknown?.let { Ref(it) }
       }
       finally {
         if (resolved is PyClass) {
@@ -1621,10 +1622,10 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
 
     private fun getAnyType(element: PsiElement, context: Context): Ref<PyType?>? {
       if (ANY == getQualifiedName(element)) {
-        return Ref()
+        return Ref(PyAnyType.any)
       }
       if (context.typeRepresentationMode && ANY == element.text) {
-        return Ref()
+        return Ref(PyAnyType.any)
       }
       return null
     }
