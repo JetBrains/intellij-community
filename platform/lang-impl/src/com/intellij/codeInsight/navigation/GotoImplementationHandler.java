@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.NavigateAction;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.lang.LangBundle;
@@ -21,6 +22,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorComponent;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.DumbService;
@@ -37,6 +39,8 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.LightweightHint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewShortNameLocation;
@@ -211,11 +215,23 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     if (source.isCanceled) return;
     if (source.targets.length == 0) {
       String message = getNotFoundMessage(project, editor, containingFile);
-      // Cannot call showEditorHint, as it doesn't work for mockEditor instance
       JComponent label = HintUtil.createErrorLabel(message);
-      label.setBorder(HintUtil.createHintBorder());
       int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
-      HintManager.getInstance().showHint(label, new RelativePoint(e), flags, 0);
+      // Cannot use the editor directly because it's a mock editor. Need to try to retrieve the real one.
+      TextEditorComponent textEditor = ComponentUtil.getParentOfType(TextEditorComponent.class, e.getComponent());
+      var hintManager = HintManager.getInstance();
+      if (textEditor != null && hintManager instanceof HintManagerImpl hintManagerImpl) {
+        hintManagerImpl.showEditorHint(
+          new LightweightHint(label),
+          textEditor.getEditor(),
+          new RelativePoint(e).getPoint(),
+          flags, 0, false, HintManager.UNDER
+        );
+      }
+      else { // Should not be reasonably possible in a production environment. Will work, but the hint will look ugly.
+        label.setBorder(HintUtil.createHintBorder());
+        hintManager.showHint(label, new RelativePoint(e), flags, 0);
+      }
       return;
     }
 
