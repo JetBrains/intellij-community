@@ -68,7 +68,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @ApiStatus.Internal
@@ -840,17 +839,6 @@ public final class FileManagerImpl implements FileManagerEx {
       return null;
     }
     return ((AbstractFileViewProvider)viewProvider).getCachedPsi(viewProvider.getBaseLanguage());
-  }
-
-  // todo IJPL-339 investigate this method usages!!!
-  @Override
-  public void forEachCachedDocument(@NotNull Consumer<? super @NotNull Document> consumer) {
-    myVFileToViewProviderMap.forEachKey(file -> {
-      Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-      if (document != null) {
-        consumer.accept(document);
-      }
-    });
   }
 
   private @NotNull CodeInsightContext getRawContext(@NotNull FileViewProvider fileViewProvider) {

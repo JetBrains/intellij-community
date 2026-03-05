@@ -1,8 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDirectory;
@@ -16,12 +15,9 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
-import java.util.function.Consumer;
 
 @ApiStatus.Internal
 public interface FileManagerEx extends FileManager {
-  void forEachCachedDocument(@NotNull Consumer<? super @NotNull Document> consumer);
-
   @TestOnly
   void assertNoInjectedFragmentsStoredInMaps();
 
