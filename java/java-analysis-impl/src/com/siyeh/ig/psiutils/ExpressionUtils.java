@@ -768,6 +768,18 @@ public final class ExpressionUtils {
     return element instanceof PsiPolyadicExpression expression && hasStringType(expression);
   }
 
+  @Contract(value = "null -> false", pure = true)
+  public static boolean isNonConstantStringConcatenation(@Nullable PsiExpression expression) {
+    return PsiUtil.deparenthesizeExpression(expression) instanceof PsiPolyadicExpression polyadicExpression
+           && hasStringType(polyadicExpression)
+           && JavaTokenType.PLUS.equals(polyadicExpression.getOperationTokenType())
+           && !isEvaluatedAtCompileTime(polyadicExpression)
+           && ContainerUtil.exists(polyadicExpression.getOperands(),
+                                   o -> nonStructuralChildren(o).anyMatch(c -> c instanceof PsiReferenceExpression
+                                                                               || c instanceof PsiMethodCallExpression
+                                                                               || c instanceof PsiArrayAccessExpression));
+  }
+
   /**
    * Returns true if the expression can be moved to earlier point in program order without possible semantic change or
    * notable performance handicap. Examples of simple expressions are:
