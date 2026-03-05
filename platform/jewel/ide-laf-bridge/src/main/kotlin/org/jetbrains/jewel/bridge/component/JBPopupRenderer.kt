@@ -68,6 +68,7 @@ internal object JBPopupRenderer : PopupRenderer {
         onPreviewKeyEvent: ((KeyEvent) -> Boolean)?,
         onKeyEvent: ((KeyEvent) -> Boolean)?,
         cornerSize: CornerSize,
+        windowShape: ((IntSize) -> java.awt.Shape)?,
         content: @Composable () -> Unit,
     ) {
         JBPopup(
