@@ -1325,5 +1325,31 @@
                      language="kotlin"
                      key="inspection.kotlin.convert.to.explicit.backing.fields.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertSealedClassToSealedInterfaceInspection"
+            shortName="ConvertSealedClassToSealedInterface"
+            groupPath="Kotlin"
+            groupBundle="messages.KotlinBundle"
+            groupKey="group.names.style.issues"
+            enabledByDefault="true"
+            level="INFORMATION"
+            language="kotlin"
+            bundle="messages.KotlinBundle"
+            key="inspection.convert.sealed.class.to.interface.display.name"
+            />
+
+    <localInspection
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertSealedInterfaceToSealedClassInspection"
+            shortName="ConvertSealedInterfaceToSealedClass"
+            groupPath="Kotlin"
+            groupBundle="messages.KotlinBundle"
+            groupKey="group.names.style.issues"
+            enabledByDefault="true"
+            level="INFORMATION"
+            language="kotlin"
+            bundle="messages.KotlinBundle"
+            key="inspection.convert.sealed.interface.to.class.display.name"
+    />
+
     </extensions>
 </idea-plugin>

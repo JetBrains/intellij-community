@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.inspections.tests;
 
@@ -395,6 +395,52 @@ public abstract class K2MultiFileLocalInspectionTestGenerated extends AbstractK2
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiFileInspectionsLocal")
     public abstract static class MultiFileInspectionsLocal extends AbstractK2MultiFileLocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/multiFileInspectionsLocal/convertSealedClassToSealedInterface")
+        public abstract static class ConvertSealedClassToSealedInterface extends AbstractK2MultiFileLocalInspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/multiFileInspectionsLocal/convertSealedClassToSealedInterface/basic")
+            public static class Basic extends AbstractK2MultiFileLocalInspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("basic.test")
+                public void testBasic() throws Exception {
+                    runTest("testData/multiFileInspectionsLocal/convertSealedClassToSealedInterface/basic/basic.test");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/multiFileInspectionsLocal/convertSealedInterfaceToSealedClass")
+        public abstract static class ConvertSealedInterfaceToSealedClass extends AbstractK2MultiFileLocalInspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/multiFileInspectionsLocal/convertSealedInterfaceToSealedClass/basic")
+            public static class Basic extends AbstractK2MultiFileLocalInspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("basic.test")
+                public void testBasic() throws Exception {
+                    runTest("testData/multiFileInspectionsLocal/convertSealedInterfaceToSealedClass/basic/basic.test");
+                }
+            }
+        }
+
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/multiFileInspectionsLocal/removeSingleExpressionStringTemplate")
         public abstract static class RemoveSingleExpressionStringTemplate extends AbstractK2MultiFileLocalInspectionTest {

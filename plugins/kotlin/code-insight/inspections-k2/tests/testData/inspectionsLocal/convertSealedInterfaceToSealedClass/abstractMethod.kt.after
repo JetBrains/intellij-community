@@ -1,0 +1,7 @@
+// FIX: Convert to sealed class
+sealed class Result {
+    abstract fun process()
+}
+class Success : Result() {
+    override fun process() {}
+}

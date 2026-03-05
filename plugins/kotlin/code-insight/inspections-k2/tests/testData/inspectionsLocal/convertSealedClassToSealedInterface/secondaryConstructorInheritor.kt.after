@@ -1,0 +1,5 @@
+// FIX: Convert to sealed interface
+sealed interface Result
+class Success(val data: String) : Result {
+    constructor(data: String, source: String) : this("$source: $data")
+}

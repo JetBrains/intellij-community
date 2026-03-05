@@ -1,0 +1,8 @@
+// FIX: Convert to sealed class
+interface Base {
+    fun process()
+}
+sealed class Result : Base {
+    override fun process() = println("override")
+}
+class Success : Result()

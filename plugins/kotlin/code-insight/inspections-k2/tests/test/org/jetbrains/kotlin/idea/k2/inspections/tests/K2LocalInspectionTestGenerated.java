@@ -13602,6 +13602,254 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/convertSealedClassToSealedInterface")
+        public static class ConvertSealedClassToSealedInterface extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("abstractMethod.kt")
+            public void testAbstractMethod() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/abstractMethod.kt");
+            }
+
+            @TestMetadata("abstractProperty.kt")
+            public void testAbstractProperty() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/abstractProperty.kt");
+            }
+
+            @TestMetadata("bodyProperty.kt")
+            public void testBodyProperty() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/bodyProperty.kt");
+            }
+
+            @TestMetadata("constructorAnnotation.kt")
+            public void testConstructorAnnotation() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/constructorAnnotation.kt");
+            }
+
+            @TestMetadata("constructorParameter.kt")
+            public void testConstructorParameter() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/constructorParameter.kt");
+            }
+
+            @TestMetadata("customSetterAndGetter.kt")
+            public void testCustomSetterAndGetter() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/customSetterAndGetter.kt");
+            }
+
+            @TestMetadata("delegatedOtherInterface.kt")
+            public void testDelegatedOtherInterface() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/delegatedOtherInterface.kt");
+            }
+
+            @TestMetadata("delegatedSuperType.kt")
+            public void testDelegatedSuperType() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/delegatedSuperType.kt");
+            }
+
+            @TestMetadata("finalMethod.kt")
+            public void testFinalMethod() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/finalMethod.kt");
+            }
+
+            @TestMetadata("finalProperty.kt")
+            public void testFinalProperty() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/finalProperty.kt");
+            }
+
+            @TestMetadata("genericInheriotor.kt")
+            public void testGenericInheriotor() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/genericInheriotor.kt");
+            }
+
+            @TestMetadata("initBlock.kt")
+            public void testInitBlock() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/initBlock.kt");
+            }
+
+            @TestMetadata("interface.kt")
+            public void testInterface() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/interface.kt");
+            }
+
+            @TestMetadata("lateinitProperty.kt")
+            public void testLateinitProperty() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/lateinitProperty.kt");
+            }
+
+            @TestMetadata("objectInheritor.kt")
+            public void testObjectInheritor() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/objectInheritor.kt");
+            }
+
+            @TestMetadata("openMethod.kt")
+            public void testOpenMethod() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/openMethod.kt");
+            }
+
+            @TestMetadata("privateMethod.kt")
+            public void testPrivateMethod() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/privateMethod.kt");
+            }
+
+            @TestMetadata("protectedMethod.kt")
+            public void testProtectedMethod() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/protectedMethod.kt");
+            }
+
+            @TestMetadata("sealedClassWithBody.kt")
+            public void testSealedClassWithBody() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/sealedClassWithBody.kt");
+            }
+
+            @TestMetadata("secondaryConstructor.kt")
+            public void testSecondaryConstructor() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/secondaryConstructor.kt");
+            }
+
+            @TestMetadata("secondaryConstructorInheritor.kt")
+            public void testSecondaryConstructorInheritor() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/secondaryConstructorInheritor.kt");
+            }
+
+            @TestMetadata("secondaryConstructorSuper.kt")
+            public void testSecondaryConstructorSuper() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/secondaryConstructorSuper.kt");
+            }
+
+            @TestMetadata("superclass.kt")
+            public void testSuperclass() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/superclass.kt");
+            }
+
+            @TestMetadata("typeParameter.kt")
+            public void testTypeParameter() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/typeParameter.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/convertSealedInterfaceToSealedClass")
+        public static class ConvertSealedInterfaceToSealedClass extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("abstractMethod.kt")
+            public void testAbstractMethod() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedInterfaceToSealedClass/abstractMethod.kt");
+            }
+
+            @TestMetadata("abstractProperty.kt")
+            public void testAbstractProperty() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedInterfaceToSealedClass/abstractProperty.kt");
+            }
+
+            @TestMetadata("body.kt")
+            public void testBody() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedInterfaceToSealedClass/body.kt");
+            }
+
+            @TestMetadata("class.kt")
+            public void testClass() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedInterfaceToSealedClass/class.kt");
+            }
+
+            @TestMetadata("customSetterAndGetter.kt")
+            public void testCustomSetterAndGetter() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedInterfaceToSealedClass/customSetterAndGetter.kt");
+            }
+
+            @TestMetadata("defaultMethod.kt")
+            public void testDefaultMethod() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedInterfaceToSealedClass/defaultMethod.kt");
+            }
+
+            @TestMetadata("defaultMethodOverride.kt")
+            public void testDefaultMethodOverride() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedInterfaceToSealedClass/defaultMethodOverride.kt");
+            }
+
+            @TestMetadata("delegatedSupertype.kt")
+            public void testDelegatedSupertype() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedInterfaceToSealedClass/delegatedSupertype.kt");
+            }
+
+            @TestMetadata("enumInheritor.kt")
+            public void testEnumInheritor() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedInterfaceToSealedClass/enumInheritor.kt");
+            }
+
+            @TestMetadata("genericInheritor.kt")
+            public void testGenericInheritor() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedInterfaceToSealedClass/genericInheritor.kt");
+            }
+
+            @TestMetadata("inlineMethod.kt")
+            public void testInlineMethod() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedInterfaceToSealedClass/inlineMethod.kt");
+            }
+
+            @TestMetadata("interfaceInheritor.kt")
+            public void testInterfaceInheritor() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedInterfaceToSealedClass/interfaceInheritor.kt");
+            }
+
+            @TestMetadata("objectInheritor.kt")
+            public void testObjectInheritor() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedInterfaceToSealedClass/objectInheritor.kt");
+            }
+
+            @TestMetadata("overrideMethod.kt")
+            public void testOverrideMethod() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedInterfaceToSealedClass/overrideMethod.kt");
+            }
+
+            @TestMetadata("overrideProperty.kt")
+            public void testOverrideProperty() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedInterfaceToSealedClass/overrideProperty.kt");
+            }
+
+            @TestMetadata("privateMethod.kt")
+            public void testPrivateMethod() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedInterfaceToSealedClass/privateMethod.kt");
+            }
+
+            @TestMetadata("secondaryConstructorNoPrimary.kt")
+            public void testSecondaryConstructorNoPrimary() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedInterfaceToSealedClass/secondaryConstructorNoPrimary.kt");
+            }
+
+            @TestMetadata("secondaryConstructorWithPrimary.kt")
+            public void testSecondaryConstructorWithPrimary() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedInterfaceToSealedClass/secondaryConstructorWithPrimary.kt");
+            }
+
+            @TestMetadata("superclass.kt")
+            public void testSuperclass() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedInterfaceToSealedClass/superclass.kt");
+            }
+
+            @TestMetadata("typeParameter.kt")
+            public void testTypeParameter() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedInterfaceToSealedClass/typeParameter.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/convertToExplicitBackingFields")
         public static class ConvertToExplicitBackingFields extends AbstractK2LocalInspectionTest {
             @java.lang.Override
