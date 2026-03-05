@@ -11,6 +11,9 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoStorageSupport
 import org.jetbrains.kotlin.psi.KtClassLikeDeclaration
 import org.jetbrains.kotlin.psi.KtElement
@@ -101,15 +104,10 @@ internal class K2MemberInfoStorageSupport : KotlinMemberInfoStorageSupport {
 
     @OptIn(KaAllowAnalysisOnEdt::class)
     override fun isInheritor(baseClass: PsiNamedElement, aClass: PsiNamedElement): Boolean = allowAnalysisOnEdt {
-        val analyzableElement = aClass as? KtElement ?: baseClass as? KtElement
-        if (analyzableElement == null) return@allowAnalysisOnEdt false
-
-        analyze(analyzableElement) {
-            val baseSymbol = getClassSymbol(baseClass) as? KaClassSymbol ?: return@analyze false
-            val currentSymbol = getClassSymbol(aClass) as? KaClassSymbol ?: return@analyze false
-
-            currentSymbol.isSubClassOf(baseSymbol)
-        }
+        val classSupers = analyze(aClass.getKaModule(aClass.project, null)) {
+            (getClassSymbol(aClass) as? KaClassSymbol)?.superTypes?.mapNotNull { it.symbol?.psi }
+        } ?: return false
+        baseClass in classSupers
     }
 }
 
