@@ -23,22 +23,6 @@ import java.util.UUID
 import kotlin.time.Duration
 
 class LocalDriverRunner : DriverRunner {
-  private fun Driver.beforeCall(pauseOnIndexing: Duration?) {
-    pauseOnIndexing?.let { timeout ->
-      var isInsideWaiting = false
-      if (isConnected && !isInsideWaiting) {
-        isInsideWaiting = true
-        try {
-          getOpenProjects().forEach {
-            waitForIndicators(it, timeout, false)
-          }
-        }
-        finally {
-          isInsideWaiting = false
-        }
-      }
-    }
-  }
 
   override fun runIdeWithDriver(
     context: IDETestContext,
@@ -55,7 +39,15 @@ class LocalDriverRunner : DriverRunner {
   ): BackgroundRun {
     val driverOptions = DriverOptions()
     val driver = DriverWithDetailedLogging(
-      driver = DriverImpl(JmxHost(address = driverOptions.address), isRemDevMode = false) { beforeCall(pauseOnIndexing) },
+      driver = DriverImpl(JmxHost(address = driverOptions.address), isRemDevMode = false) {
+        pauseOnIndexing?.let { timeout ->
+          if (isConnected) {
+            getOpenProjects().forEach {
+              waitForIndicators(it, timeout, false)
+            }
+          }
+        }
+      },
       logUiHierarchy = !context.isRemDevContext())
     val currentStep = Allure.getLifecycle().currentTestCaseOrStep
     val process = CompletableDeferred<IDEHandle>()

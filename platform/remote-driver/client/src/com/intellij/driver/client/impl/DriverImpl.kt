@@ -232,8 +232,18 @@ open class DriverImpl(host: JmxHost, override val isRemDevMode: Boolean, overrid
     }
   }
 
+  private val isInsideBeforeCall: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
+
   private fun makeCall(call: RemoteCall): RemoteCallResult {
-    beforeCall?.invoke(this)
+    if (!isInsideBeforeCall.get()) {
+      isInsideBeforeCall.set(true)
+      try {
+        beforeCall?.invoke(this)
+      }
+      finally {
+        isInsideBeforeCall.set(false)
+      }
+    }
     return try {
       invoker.invoke(call)
     }
