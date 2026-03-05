@@ -484,6 +484,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
       assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
 
       Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
+      setActiveEditors(allEditors);
       Editor schemaEditor = null;
       for (Editor editor : allEditors) {
         Document document = editor.getDocument();
@@ -1070,7 +1071,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
     enableDeadCodeInspection();
 
     Editor xEditor = createEditor(x.getVirtualFile());
-    EditorTracker.getInstance(getProject()).setActiveEditorsInTests(List.of(xEditor, getEditor())); // EditorTrackerImpl does not work correctly in case of multiple editors in tests
+    setActiveEditors(xEditor, getEditor()); // EditorTrackerImpl does not work correctly in case of multiple editors in tests
     List<HighlightInfo> xInfos = myTestDaemonCodeAnalyzer.waitHighlighting(xEditor.getDocument(), HighlightSeverity.WARNING);
     HighlightInfo info = ContainerUtil.find(xInfos, xInfo -> xInfo.getDescription().equals("Method 'ffffffffffffff()' is never used"));
     assertNull(xInfos.toString(), info);
@@ -1316,7 +1317,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
     TextEditor textEditor2 = new PsiAwareTextEditorProvider().getTextEditor(editor2);
     assertNotNull(textEditor1);
     assertNotNull(textEditor2);
-    EditorTracker.getInstance(getProject()).setActiveEditorsInTests(List.of(editor1, editor2));
+    setActiveEditors(editor1, editor2);
 
     // check that 'MySingletonAnnotator' is run only once for two editors for the same document
     DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MySingletonAnnotator()}, ()-> {
@@ -1925,14 +1926,18 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
   public void testTypingInsideCodeBlockCanAffectUnusedDeclarationInTheOtherClass() {
     enableInspectionTool(new UnusedSymbolLocalInspection());
     enableDeadCodeInspection();
-    configureByFiles(null, BASE_PATH+getTestName(true)+"/p2/A2222.java", BASE_PATH+getTestName(true)+"/p1/A1111.java");
+    configureByFiles(null,
+                     BASE_PATH+getTestName(true)+"/p2/A2222.java",
+                     BASE_PATH+getTestName(true)+"/p1/A1111.java");
     assertEquals("A2222.java", getFile().getName());
 
-    HighlightInfo info = assertOneElement(
-      myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING));
+    HighlightInfo info = assertOneElement(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING));
     assertEquals("Class 'A2222' is never used", info.getDescription());
 
     Document document1111 = getFile().getParent().findFile("A1111.java").getFileDocument();
+    Editor editor1111 = ((TextEditor)FileEditorManager.getInstance(getProject())
+      .getEditors(FileDocumentManager.getInstance().getFile(document1111))[0]).getEditor();
+    setActiveEditors(getEditor(), editor1111);
     // uncomment (inside code block) the reference to A2222
     WriteCommandAction.writeCommandAction(myProject).run(()->document1111.deleteString(document1111.getText().indexOf("//"), document1111.getText().indexOf("//")+2));
 
@@ -1944,17 +1949,24 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
   public void testTypingInsideCodeBlockCanAffectUnusedDeclarationInTheOtherClass2() {
     enableInspectionTool(new UnusedSymbolLocalInspection());
     enableDeadCodeInspection();
-    configureByFiles(null, BASE_PATH+getTestName(true)+"/p1/A1111.java", BASE_PATH+getTestName(true)+"/p2/A2222.java");
+    configureByFiles(null,
+                     BASE_PATH+getTestName(true)+"/p1/A1111.java",
+                     BASE_PATH+getTestName(true)+"/p2/A2222.java");
     assertEquals("A1111.java", getFile().getName());
     makeEditorWindowVisible(new Point(0, 1000), myEditor);
-    HighlightInfo info = assertOneElement(
-      myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING));
-    assertEquals("Method 'foo()' is never used", info.getDescription());
-
     Document document2222 = getFile().getParent().findFile("A2222.java").getFileDocument();
+    Editor editor2222 = ((TextEditor)FileEditorManager.getInstance(getProject())
+      .getEditors(FileDocumentManager.getInstance().getFile(document2222))[0]).getEditor();
+    setActiveEditors(getEditor(), editor2222);
+    LOG.debug("1==========================");
+    HighlightInfo info = assertOneElement(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING));
+    assertEquals("Method 'foo()' is never used", info.getDescription());
+    LOG.debug("2==========================");
+
     // uncomment (inside code block) the reference to A1111
     WriteCommandAction.writeCommandAction(myProject).run(()->document2222.deleteString(document2222.getText().indexOf("//"), document2222.getText().indexOf("//")+2));
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(document2222, HighlightSeverity.ERROR));
     // now foo() is no longer unused
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING));
   }
