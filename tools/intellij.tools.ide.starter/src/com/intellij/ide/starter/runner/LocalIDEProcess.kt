@@ -154,9 +154,7 @@ class LocalIDEProcess : IDEProcess {
 
             val link = FailureDetailsOnCI.instance.getLinkToCIArtifacts(this)
             TeamCityCIServer.addTestMetadata(testName = null, TeamCityCIServer.TeamCityMetadataType.LINK, flowId = null, name = "Link to Logs and artifacts", value = link.toString())
-            (CIServer.instance as? TeamCityCIServer)?.buildId?.let {
-              TeamCityCIServer.addTestMetadata(testName = null, TeamCityCIServer.TeamCityMetadataType.LINK, flowId = null, name = "Start bisect", value = "https://ij-perf.labs.jb.gg/bisect/launcher?buildId=${it}")
-            }
+            (CIServer.instance as? TeamCityCIServer)?.addBisectMetadata()
             ErrorReporter.instance.reportErrorsAsFailedTests(this)
           }
         }
