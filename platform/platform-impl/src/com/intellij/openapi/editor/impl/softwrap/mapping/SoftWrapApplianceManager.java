@@ -44,7 +44,7 @@ import java.util.List;
  * ({@code 'logical position -> visual position'}, {@code 'offset -> logical position'} etc) and update it incrementally
  * on events like document modification fold region(s) expanding/collapsing etc.
  * <p/>
- * This class encapsulates document parsing logic. It notifies {@link SoftWrapAwareDocumentParsingListener registered listeners}
+ * This class encapsulates document parsing logic. It notifies {@link SoftWrapParsingListener registered listeners}
  * about parsing and they are free to store necessary information for further usage.
  * <p/>
  * Not thread-safe.
@@ -68,7 +68,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     CUSTOM
   }
 
-  private final List<SoftWrapAwareDocumentParsingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<SoftWrapParsingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final SoftWrapsStorage myStorage;
   private final EditorImpl myEditor;
@@ -133,7 +133,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
   @ApiStatus.Internal
   public void reset() {
     myIsDirty = true;
-    for (SoftWrapAwareDocumentParsingListener listener : myListeners) {
+    for (SoftWrapParsingListener listener : myListeners) {
       listener.reset();
     }
   }
@@ -167,7 +167,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
       return startDiff == 0 ? o2.getEndOffset() - o1.getEndOffset() : startDiff;
     });
     final int[] lastRecalculatedOffset = {0};
-    SoftWrapAwareDocumentParsingListenerAdapter listener = new SoftWrapAwareDocumentParsingListenerAdapter() {
+    SoftWrapParsingListenerAdapter listener = new SoftWrapParsingListenerAdapter() {
       @Override
       public void onIncrementalUpdateEnd(@NotNull IncrementalCacheUpdateEvent event) {
         lastRecalculatedOffset[0] = event.getActualEndOffset();
@@ -224,7 +224,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
 
   private void onRecalculationEnd() {
     updateLastTopLeftCornerOffset();
-    for (SoftWrapAwareDocumentParsingListener listener : myListeners) {
+    for (SoftWrapParsingListener listener : myListeners) {
       listener.onRecalculationEnd();
     }
   }
@@ -414,12 +414,12 @@ public final class SoftWrapApplianceManager implements Dumpable {
    * @return            {@code true} if this collection changed as a result of the call; {@code false} otherwise
    */
   @ApiStatus.Internal
-  public boolean addListener(@NotNull SoftWrapAwareDocumentParsingListener listener) {
+  public boolean addListener(@NotNull SoftWrapParsingListener listener) {
     return myListeners.add(listener);
   }
 
   @ApiStatus.Internal
-  public boolean removeListener(@NotNull SoftWrapAwareDocumentParsingListener listener) {
+  public boolean removeListener(@NotNull SoftWrapParsingListener listener) {
     return myListeners.remove(listener);
   }
 
@@ -428,7 +428,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < myListeners.size(); i++) {
       // Avoid unnecessary Iterator object construction as this method is expected to be called frequently.
-      SoftWrapAwareDocumentParsingListener listener = myListeners.get(i);
+      SoftWrapParsingListener listener = myListeners.get(i);
       listener.onIncrementalUpdateStart(event);
     }
   }
@@ -437,7 +437,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < myListeners.size(); i++) {
       // Avoid unnecessary Iterator object construction as this method is expected to be called frequently.
-      SoftWrapAwareDocumentParsingListener listener = myListeners.get(i);
+      SoftWrapParsingListener listener = myListeners.get(i);
       listener.onIncrementalUpdateEnd(event);
     }
   }

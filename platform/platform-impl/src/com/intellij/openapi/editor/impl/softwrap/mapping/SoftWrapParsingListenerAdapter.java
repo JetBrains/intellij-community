@@ -19,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
-public abstract class SoftWrapAwareDocumentParsingListenerAdapter implements SoftWrapAwareDocumentParsingListener {
+public abstract class SoftWrapParsingListenerAdapter implements SoftWrapParsingListener {
   @Override
   public void onIncrementalUpdateStart(@NotNull IncrementalCacheUpdateEvent event) {
   }

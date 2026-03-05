@@ -19,7 +19,7 @@ import java.util.Collections;
 import java.util.List;
 
 @ApiStatus.Internal
-public final class CachingSoftWrapDataMapper implements SoftWrapAwareDocumentParsingListener, Dumpable {
+public final class CachingSoftWrapDataMapper implements SoftWrapParsingListener, Dumpable {
   private static final Logger LOG = Logger.getInstance(CachingSoftWrapDataMapper.class);
 
   private final List<SoftWrapImpl> myAffectedByUpdateSoftWraps = new ArrayList<>();

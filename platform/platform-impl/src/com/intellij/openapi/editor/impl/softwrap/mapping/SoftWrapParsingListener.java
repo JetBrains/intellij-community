@@ -5,7 +5,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
-public interface SoftWrapAwareDocumentParsingListener {
+public interface SoftWrapParsingListener {
 
   /**
    * Notifies current listener that particular document region re-parsing is about to begin.

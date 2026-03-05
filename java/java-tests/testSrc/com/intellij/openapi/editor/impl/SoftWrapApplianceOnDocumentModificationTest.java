@@ -16,7 +16,7 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.mapping.IncrementalCacheUpdateEvent;
-import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentParsingListenerAdapter;
+import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapParsingListenerAdapter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -1016,7 +1016,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     verifySoftWrapPositions(8, 15, 21);
     
     final IncrementalCacheUpdateEvent[] event = new IncrementalCacheUpdateEvent[1];
-    ((SoftWrapModelImpl)getEditor().getSoftWrapModel()).getApplianceManager().addListener(new SoftWrapAwareDocumentParsingListenerAdapter() {
+    ((SoftWrapModelImpl)getEditor().getSoftWrapModel()).getApplianceManager().addListener(new SoftWrapParsingListenerAdapter() {
       @Override
       public void onIncrementalUpdateEnd(@NotNull IncrementalCacheUpdateEvent e) {
         assertNull(event[0]);
