@@ -94,15 +94,17 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     }
   }
 
-  protected void configureByFile(String filePath) throws Exception {
+  protected void configureByFile(@NotNull String filePath) throws Exception {
     configureByFile(filePath, null);
   }
 
   /**
    * @param files the first file will be loaded in editor
    */
-  protected VirtualFile configureByFiles(@Nullable String projectRoot, String @NotNull ... files) {
-    if (files.length == 0) return null;
+  protected VirtualFile configureByFiles(@Nullable String projectRoot, @NotNull String @NotNull ... files) {
+    if (files.length == 0) {
+      return null;
+    }
     VirtualFile[] vFiles = new VirtualFile[files.length];
     for (int i = 0; i < files.length; i++) {
       vFiles[i] = findVirtualFile(files[i]);
@@ -193,7 +195,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     IndexingTestUtil.waitUntilIndexesAreReady(getProject());
   }
 
-  protected VirtualFile configureByFiles(@Nullable File rawProjectRoot, VirtualFile @NotNull ... vFiles) throws IOException {
+  protected VirtualFile configureByFiles(@Nullable File rawProjectRoot, @NotNull VirtualFile @NotNull ... vFiles) throws IOException {
     myFile = null;
     myEditor = null;
 
@@ -272,19 +274,19 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     IndexingTestUtil.waitUntilIndexesAreReady(getProject());
   }
 
-  protected void sourceRootAdded(VirtualFile dir) {
+  protected void sourceRootAdded(@NotNull VirtualFile dir) {
   }
 
   protected @NotNull Map<VirtualFile, EditorInfo> copyFilesFillingEditorInfos(@NotNull String testDataFromDir,
                                                                               @NotNull VirtualFile toDir,
-                                                                              String @NotNull ... relativePaths) throws IOException {
+                                                                              @NotNull String @NotNull ... relativePaths) throws IOException {
     if (!testDataFromDir.startsWith("/")) testDataFromDir = "/" + testDataFromDir;
     return copyFilesFillingEditorInfos(LocalFileSystem.getInstance().refreshAndFindFileByPath(getTestDataPath() + testDataFromDir), toDir, relativePaths);
   }
 
   protected @NotNull Map<VirtualFile, EditorInfo> copyFilesFillingEditorInfos(@NotNull VirtualFile fromDir,
                                                                               @NotNull VirtualFile toDir,
-                                                                              String @NotNull ... relativePaths) throws IOException {
+                                                                              @NotNull String @NotNull ... relativePaths) throws IOException {
     Map<VirtualFile, EditorInfo> editorInfos = new LinkedHashMap<>();
 
     List<OutputStream> streamsToClose = new ArrayList<>();
@@ -341,9 +343,9 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     });
   }
 
-  private void doWrite(String newFileText,
+  private void doWrite(@Nullable String newFileText,
                        @NotNull VirtualFile newVFile,
-                       byte[] content,
+                       byte [] content,
                        @NotNull List<? super OutputStream> streamsToClose) throws IOException {
     if (newFileText == null) {
       OutputStream outputStream = newVFile.getOutputStream(this, -1, -1);
@@ -363,7 +365,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     return true;
   }
 
-  protected VirtualFile configureByFile(@NotNull VirtualFile vFile, File projectRoot) throws IOException {
+  protected VirtualFile configureByFile(@NotNull VirtualFile vFile, @Nullable File projectRoot) throws IOException {
     return configureByFiles(projectRoot, vFile);
   }
 
