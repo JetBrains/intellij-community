@@ -31,6 +31,12 @@ interface PyStepIntoSupport {
   fun performStepIntoAllCode() {}
 
   /**
+   * Whether [applyJustMyCodeChange] can currently be invoked (e.g. false when the session is already stopped).
+   * Controls visibility of the "Switch to My code" / "Switch to all code" tooltip quickfix link.
+   */
+  val canApplyJustMyCodeChange: Boolean get() = true
+
+  /**
    * Applies [enableJustMyCode] to the active run configuration and opens the run configuration editor
    * so the user can verify and then restart the session manually.
    * Default is a no-op (used by pydevd, which does not have a justMyCode session-level flag).
