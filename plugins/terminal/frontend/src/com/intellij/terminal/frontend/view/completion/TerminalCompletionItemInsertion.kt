@@ -79,7 +79,7 @@ private fun calculateInsertionInfo(
     return CompletionItemInsertionInfo(baseInsertValue, initialBeforeReplacementLength, initialAfterReplacementLength)
   }
 
-  if (baseInsertValue.isSurroundedByQuotes()) {
+  if (baseInsertValue.isEscaped()) {
     // Already escaped
     return CompletionItemInsertionInfo(baseInsertValue, initialBeforeReplacementLength, initialAfterReplacementLength)
   }
@@ -197,6 +197,14 @@ private data class CompletionItemInsertionInfo(
   val beforePrefixReplacementLength: Int,
   val afterPrefixReplacementLength: Int,
 )
+
+/**
+ * Returns true of the string is surrounded by quotes and does not contain any quotes inside
+ */
+private fun String.isEscaped(): Boolean {
+  return isSurroundedBy("'") && !removeSurrounding("'").contains("'")
+         || isSurroundedBy("\"") && !removeSurrounding("\"").contains("\"")
+}
 
 private const val CURSOR_MARKER = "{cursor}"
 
