@@ -3,6 +3,7 @@ package com.intellij.polySymbols.impl
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
@@ -35,13 +36,9 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin>
 
   private val roots = mutableMapOf<Root, Origin>()
 
-  @JvmField
-  protected var modCount: Long = 0
-
   abstract override fun createPointer(): Pointer<out StaticPolySymbolScopeBase<Root, Contribution, Origin>>
 
-  final override val modificationTracker: ModificationTracker
-    get() = ModificationTracker { modCount }
+  final override val modificationTracker: ModificationTracker = SimpleModificationTracker()
 
   final override fun getMatchingSymbols(
     qualifiedName: PolySymbolQualifiedName,
@@ -176,13 +173,13 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin>
   }
 
   internal fun addRoot(root: Root?, origin: Origin) {
-    modCount++
+    (modificationTracker as SimpleModificationTracker).incModificationCount()
     if (root == null) return
     roots[root] = origin
   }
 
   internal fun removeRoot(root: Root?) {
-    modCount++
+    (modificationTracker as SimpleModificationTracker).incModificationCount()
     roots.remove(root)
   }
 

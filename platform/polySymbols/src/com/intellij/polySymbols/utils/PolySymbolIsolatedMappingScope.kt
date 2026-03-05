@@ -96,8 +96,11 @@ abstract class PolySymbolIsolatedMappingScope<T : PsiElement>(
     return result
   }
 
-  final override val modificationTracker: ModificationTracker
-    get() = PsiModificationTracker.getInstance(location.project)
+  final override val modificationTracker: ModificationTracker by lazy {
+    getCachedSubQueryExecutorAndScope().let { (executor, scopes) ->
+      CompositeModificationTracker(scopes.asSequence().map { it.modificationTracker }.plus(executor.modificationTracker))
+    }
+  }
 
   final override fun equals(other: Any?): Boolean =
     other === this
