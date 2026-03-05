@@ -164,7 +164,7 @@ sealed interface UvPathOperations<P : PathHolder> {
       uvPath: PathHolder.Target,
     ): PythonSdkAdditionalData {
       val targetConfig = fileSystem.targetEnvironmentConfiguration
-      val flavorAndData = PyFlavorAndData(UvSdkFlavorData(workingDir, usePip, venvPath?.pathString, uvPath.pathString), UvSdkFlavor)
+      val flavorAndData = PyFlavorAndData(UvSdkFlavorData(workingDir, usePip.takeIf { it }, venvPath?.pathString, uvPath.pathString), UvSdkFlavor)
       return PyTargetAwareAdditionalData(flavorAndData, targetConfig)
     }
 
