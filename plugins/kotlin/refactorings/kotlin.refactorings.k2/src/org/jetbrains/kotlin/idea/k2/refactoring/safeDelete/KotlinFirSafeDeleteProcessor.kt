@@ -10,8 +10,10 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate
 import com.intellij.refactoring.safeDelete.NonCodeUsageSearchInfo
@@ -62,7 +64,6 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtContextParameterList
 import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunction
@@ -190,9 +191,18 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                 if (original != null && !allElementsToDelete.contains(original)) {
                     analyze(original.getKaModule(original.project, useSiteModule = null)) {
                         val elementClassSymbol = containingClass.symbol as KaClassSymbol
+                        val currentClassFqName = elementClassSymbol.classId?.asFqNameString()
 
-                        fun isMultipleInheritance(function: KaSymbol): Boolean {
-                            val superMethods = (function as? KaCallableSymbol)?.directlyOverriddenSymbols ?: return false
+                        fun isMultipleInheritance(functionSymbol: KaSymbol): Boolean {
+                            val function = functionSymbol.psi
+                            // need to process java separately as a workaround for KT-84737
+                            if (function is PsiMethod && function.findSuperMethods().any { superMethod ->
+                                    !isInside(superMethod) &&
+                                    !(currentClassFqName != null && InheritanceUtil.isInheritor(superMethod.containingClass, currentClassFqName))
+                                }) {
+                                return true
+                            }
+                            val superMethods = (functionSymbol as? KaCallableSymbol)?.directlyOverriddenSymbols ?: return false
                             return superMethods.any {
                                 val superClassSymbol = it.containingDeclaration as? KaClassSymbol ?: return@any false
                                 val superMethod = it.psi ?: return@any false
