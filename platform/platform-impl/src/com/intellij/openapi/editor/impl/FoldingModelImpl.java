@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -52,6 +53,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
+@SuppressWarnings("SuspiciousPackagePrivateAccess")
 public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   implements FoldingModelEx, FoldingModelInternal, PrioritizedDocumentListener, Dumpable, ModificationTracker {
 
@@ -98,7 +100,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     myRegionTree = new MyMarkerTree(myDocument);
     myFoldTree = new MyFoldRegionsTree(myRegionTree);
     myScrollingPositionKeeper = new EditorScrollingPositionKeeper(editor);
-    Disposer.register(editor.getDisposable(), myScrollingPositionKeeper);
+    EditorUtil.disposeWithEditor(editor, myScrollingPositionKeeper);
     updateTextAttributes();
   }
 
@@ -159,8 +161,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     }
     Document document = myDocument;
     int maxLineNumber = Math.max(0, document.getLineCount() - 1);
-    startLine = Math.max(0, Math.min(maxLineNumber, startLine));
-    endLine = Math.max(startLine, Math.min(maxLineNumber, endLine));
+    startLine = Math.clamp(startLine, 0, maxLineNumber);
+    endLine = Math.clamp(endLine, startLine, maxLineNumber);
     int startOffset = document.getLineStartOffset(startLine);
     int endOffset = document.getLineEndOffset(endLine);
 
@@ -947,7 +949,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
     private static @NotNull FoldRegionImpl getRegion(@NotNull IntervalNode<FoldRegionImpl> node) {
       assert node.intervals.size() == 1;
-      FoldRegionImpl region = node.intervals.get(0).get();
+      FoldRegionImpl region = node.intervals.getFirst().get();
       assert region != null;
       return region;
     }
