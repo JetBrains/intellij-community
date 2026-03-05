@@ -140,7 +140,7 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
     applianceManager.addListener(new SoftWrapAwareDocumentParsingListenerAdapter() {
       @Override
-      public void recalculationEnds() {
+      public void onRecalculationEnd() {
         for (SoftWrapChangeListener listener : mySoftWrapListeners) {
           listener.recalculationEnds();
         }

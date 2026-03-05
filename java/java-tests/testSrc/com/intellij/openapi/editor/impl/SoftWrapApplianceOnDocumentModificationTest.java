@@ -1018,7 +1018,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     final IncrementalCacheUpdateEvent[] event = new IncrementalCacheUpdateEvent[1];
     ((SoftWrapModelImpl)getEditor().getSoftWrapModel()).getApplianceManager().addListener(new SoftWrapAwareDocumentParsingListenerAdapter() {
       @Override
-      public void onRecalculationEnd(@NotNull IncrementalCacheUpdateEvent e) {
+      public void onIncrementalUpdateEnd(@NotNull IncrementalCacheUpdateEvent e) {
         assertNull(event[0]);
         event[0] = e;
       }

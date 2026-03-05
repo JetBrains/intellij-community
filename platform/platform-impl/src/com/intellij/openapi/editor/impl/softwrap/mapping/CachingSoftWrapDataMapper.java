@@ -59,11 +59,11 @@ public final class CachingSoftWrapDataMapper implements SoftWrapAwareDocumentPar
   }
 
   @Override
-  public void recalculationEnds() {
+  public void onRecalculationEnd() {
   }
 
   @Override
-  public void onCacheUpdateStart(@NotNull IncrementalCacheUpdateEvent event) {
+  public void onIncrementalUpdateStart(@NotNull IncrementalCacheUpdateEvent event) {
     int startOffset = event.getStartOffset();
 
     myAffectedByUpdateSoftWraps.clear();
@@ -71,7 +71,7 @@ public final class CachingSoftWrapDataMapper implements SoftWrapAwareDocumentPar
   }
 
   @Override
-  public void onRecalculationEnd(@NotNull IncrementalCacheUpdateEvent event) {
+  public void onIncrementalUpdateEnd(@NotNull IncrementalCacheUpdateEvent event) {
     advanceSoftWrapOffsets(event);
   }
 

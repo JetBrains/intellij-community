@@ -21,15 +21,15 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Internal
 public abstract class SoftWrapAwareDocumentParsingListenerAdapter implements SoftWrapAwareDocumentParsingListener {
   @Override
-  public void onCacheUpdateStart(@NotNull IncrementalCacheUpdateEvent event) {
+  public void onIncrementalUpdateStart(@NotNull IncrementalCacheUpdateEvent event) {
   }
 
   @Override
-  public void onRecalculationEnd(@NotNull IncrementalCacheUpdateEvent event) {
+  public void onIncrementalUpdateEnd(@NotNull IncrementalCacheUpdateEvent event) {
   }
 
   @Override
-  public void recalculationEnds() {
+  public void onRecalculationEnd() {
   }
 
   @Override

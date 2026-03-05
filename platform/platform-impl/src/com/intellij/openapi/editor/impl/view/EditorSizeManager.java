@@ -98,7 +98,7 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
 
   private final SoftWrapAwareDocumentParsingListenerAdapter mySoftWrapChangeListener = new SoftWrapAwareDocumentParsingListenerAdapter() {
     @Override
-    public void onRecalculationEnd(@NotNull IncrementalCacheUpdateEvent event) {
+    public void onIncrementalUpdateEnd(@NotNull IncrementalCacheUpdateEvent event) {
       onSoftWrapRecalculationEnd(event);
     }
   };

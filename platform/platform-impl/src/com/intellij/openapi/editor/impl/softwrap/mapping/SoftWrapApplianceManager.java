@@ -169,7 +169,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     final int[] lastRecalculatedOffset = {0};
     SoftWrapAwareDocumentParsingListenerAdapter listener = new SoftWrapAwareDocumentParsingListenerAdapter() {
       @Override
-      public void onRecalculationEnd(@NotNull IncrementalCacheUpdateEvent event) {
+      public void onIncrementalUpdateEnd(@NotNull IncrementalCacheUpdateEvent event) {
         lastRecalculatedOffset[0] = event.getActualEndOffset();
       }
     };
@@ -225,7 +225,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
   private void onRecalculationEnd() {
     updateLastTopLeftCornerOffset();
     for (SoftWrapAwareDocumentParsingListener listener : myListeners) {
-      listener.recalculationEnds();
+      listener.onRecalculationEnd();
     }
   }
 
@@ -429,7 +429,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     for (int i = 0; i < myListeners.size(); i++) {
       // Avoid unnecessary Iterator object construction as this method is expected to be called frequently.
       SoftWrapAwareDocumentParsingListener listener = myListeners.get(i);
-      listener.onCacheUpdateStart(event);
+      listener.onIncrementalUpdateStart(event);
     }
   }
 
@@ -438,7 +438,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     for (int i = 0; i < myListeners.size(); i++) {
       // Avoid unnecessary Iterator object construction as this method is expected to be called frequently.
       SoftWrapAwareDocumentParsingListener listener = myListeners.get(i);
-      listener.onRecalculationEnd(event);
+      listener.onIncrementalUpdateEnd(event);
     }
   }
 
