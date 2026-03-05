@@ -77,13 +77,6 @@ interface Driver : AutoCloseable {
    * @return information about the product under test
    */
   fun getProductVersion(): ProductVersion
-
-  /**
-   * Duration to wait for indexing to finish, if it is in progress, before each remote call.
-   * If null, no waiting is performed.
-   */
-  var pauseOnIndexing: kotlin.time.Duration?
-
   /**
    * Hook that is called before each remote call.
    */

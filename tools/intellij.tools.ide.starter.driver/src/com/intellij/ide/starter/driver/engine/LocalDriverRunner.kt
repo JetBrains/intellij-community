@@ -1,7 +1,10 @@
 package com.intellij.ide.starter.driver.engine
 
 import com.intellij.driver.client.Driver
+import com.intellij.driver.client.impl.DriverImpl
 import com.intellij.driver.client.impl.JmxHost
+import com.intellij.driver.sdk.getOpenProjects
+import com.intellij.driver.sdk.waitForIndicators
 import com.intellij.ide.starter.coroutine.CommonScope.scopeForProcesses
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.ide.isRemDevContext
@@ -20,9 +23,40 @@ import java.util.UUID
 import kotlin.time.Duration
 
 class LocalDriverRunner : DriverRunner {
-  override fun runIdeWithDriver(context: IDETestContext, commandLine: (IDERunContext) -> IDECommandLine, commands: Iterable<MarshallableCommand>, runTimeout: Duration, useStartupScript: Boolean, launchName: String, expectedKill: Boolean, expectedExitCode: Int, collectNativeThreads: Boolean, pauseOnIndexing: Duration?, configure: IDERunContext.() -> Unit): BackgroundRun {
+  private fun Driver.beforeCall(pauseOnIndexing: Duration?) {
+    pauseOnIndexing?.let { timeout ->
+      var isInsideWaiting = false
+      if (isConnected && !isInsideWaiting) {
+        isInsideWaiting = true
+        try {
+          getOpenProjects().forEach {
+            waitForIndicators(it, timeout, false)
+          }
+        }
+        finally {
+          isInsideWaiting = false
+        }
+      }
+    }
+  }
+
+  override fun runIdeWithDriver(
+    context: IDETestContext,
+    commandLine: (IDERunContext) -> IDECommandLine,
+    commands: Iterable<MarshallableCommand>,
+    runTimeout: Duration,
+    useStartupScript: Boolean,
+    launchName: String,
+    expectedKill: Boolean,
+    expectedExitCode: Int,
+    collectNativeThreads: Boolean,
+    pauseOnIndexing: Duration?,
+    configure: IDERunContext.() -> Unit,
+  ): BackgroundRun {
     val driverOptions = DriverOptions()
-    val driver = DriverWithDetailedLogging(Driver.create(JmxHost(address = driverOptions.address)), logUiHierarchy = !context.isRemDevContext(), pauseOnIndexing = pauseOnIndexing)
+    val driver = DriverWithDetailedLogging(
+      driver = DriverImpl(JmxHost(address = driverOptions.address), isRemDevMode = false) { beforeCall(pauseOnIndexing) },
+      logUiHierarchy = !context.isRemDevContext())
     val currentStep = Allure.getLifecycle().currentTestCaseOrStep
     val process = CompletableDeferred<IDEHandle>()
     EventsBus.subscribeOnce(process) { event: IdeLaunchEvent ->

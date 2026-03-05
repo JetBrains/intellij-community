@@ -29,10 +29,8 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.management.AttributeNotFoundException
 import javax.management.InstanceNotFoundException
 import kotlin.reflect.KClass
-import kotlin.time.Duration
 
 open class DriverImpl(host: JmxHost, override val isRemDevMode: Boolean, override val beforeCall: (Driver.() -> Unit)? = null) : Driver {
-  override var pauseOnIndexing: Duration? = null
   private val invoker: Invoker = JmxCallHandler.jmx(Invoker::class.java, host)
   private val sessionHolder = ThreadLocal<Session>()
 
