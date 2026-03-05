@@ -11,6 +11,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Abstract base that stores metadata for a {@link com.intellij.psi.SmartPsiElementPointer}.
+ * Each inheritor captures a different restoration strategy depending on the kind of PSI element
+ * (file, directory, regular element, compiled element, injected element, or a hard reference).
+ */
 @ApiStatus.Internal
 public abstract class SmartPointerElementInfo {
   @Nullable

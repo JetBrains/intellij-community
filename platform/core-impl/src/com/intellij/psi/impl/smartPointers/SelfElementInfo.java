@@ -28,6 +28,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+/**
+ * Tracks a regular PSI element inside a file via an {@link Identikit} (element type + optional anchor)
+ * and text offsets. Offsets are kept in sync with document edits through {@link SmartPointerTracker}.
+ * The main workhorse of the hierarchy.
+ */
 @ApiStatus.Internal
 public class SelfElementInfo extends SmartPointerElementInfo {
   private static final FileDocumentManager ourFileDocManager = FileDocumentManager.getInstance();

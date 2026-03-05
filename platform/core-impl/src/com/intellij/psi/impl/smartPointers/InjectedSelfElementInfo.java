@@ -28,6 +28,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Tracks a PSI element inside a language injection. Stores a host-context smart pointer and the
+ * injected range in host-file coordinates, converting between host and injected coordinate spaces
+ * on restoration. Handles non-editable affix fragments (prefix/suffix around the injected code).
+ */
 class InjectedSelfElementInfo extends SmartPointerElementInfo {
   private final @NotNull SmartPsiFileRange myInjectedFileRangeInHostFile;
   private final @Nullable AffixOffsets myAffixOffsets;

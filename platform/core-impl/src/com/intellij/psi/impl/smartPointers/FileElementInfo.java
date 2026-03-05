@@ -21,6 +21,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+/**
+ * Tracks an entire {@link com.intellij.psi.PsiFile}.
+ * <p>
+ * Stores the virtual file, language ID, and file class name;
+ * verifies the class name matches on restoration to handle multi-language view providers correctly.
+ */
 final class FileElementInfo extends SmartPointerElementInfo {
   private final @NotNull VirtualFile myVirtualFile;
   private final @NotNull Project myProject;
