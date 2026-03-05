@@ -4,7 +4,7 @@ package com.intellij.debugger.streams.exec.streamex
 /**
  * @author Vitaliy.Bibaev
  */
-class FlatMappingOperationsTest : StreamExTestCase() {
+open class FlatMappingOperationsTest : StreamExTestCase() {
   override val packageName: String = "flatMapping"
 
   fun testFlatMapToInt() = doStreamExWithResultTest()
