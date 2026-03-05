@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.format;
 
 import com.intellij.openapi.util.Pair;
@@ -29,9 +29,7 @@ public final class MessageFormatUtil {
   /**
    * Matcher to match known JDK library methods that accept MessageFormat-like format string, along with an array/vararg of arguments
    */
-  public static final CallMatcher PATTERN_METHODS = anyOf(
-    staticCall("java.text.MessageFormat", "format").parameterCount(2)
-  );
+  public static final CallMatcher PATTERN_METHODS = anyOf(staticCall("java.text.MessageFormat", "format").parameterCount(2));
 
   private static final Map<String, List<String>> knownContractions = Map.ofEntries(
     Map.entry("aren", List.of("t")),
@@ -87,15 +85,13 @@ public final class MessageFormatUtil {
     }
     List<MessageFormatPlaceholder> placeholderIndexes = new ArrayList<>();
     for (MessageFormatPart part : parts) {
-      if (part.getParsedType() == MessageFormatParsedType.FORMAT_ELEMENT &&
-          part.getMessageFormatElement() != null &&
-          part.getMessageFormatElement().getIndex() != null) {
-        placeholderIndexes.add(new MessageFormatPlaceholder(part.getMessageFormatElement().getIndex(),
-                                                            part.getMessageFormatElement().formatType != null ?
-                              new TextRange(part.start, part.getMessageFormatElement().formatTypeSegmentStart) :
-                              new TextRange(part.start, part.start + part.text.length()),
-                                                            part.getMessageFormatElement().formatType == null &&
-                                                            part.getMessageFormatElement().currentPart == MessageFormatElementPart.ARGUMENT_INDEX));
+      MessageFormatElement element = part.getMessageFormatElement();
+      if (part.getParsedType() == MessageFormatParsedType.FORMAT_ELEMENT && element != null && element.getIndex() != null) {
+        TextRange range = element.formatType != null
+                          ? new TextRange(part.start, element.formatTypeSegmentStart)
+                          : new TextRange(part.start, part.start + part.text.length());
+        boolean isString = element.formatType == null && element.currentPart == MessageFormatElementPart.ARGUMENT_INDEX;
+        placeholderIndexes.add(new MessageFormatPlaceholder(element.getIndex(), range, isString));
       }
     }
     return new MessageFormatResult(errors.isEmpty(), errors, placeholderIndexes);
