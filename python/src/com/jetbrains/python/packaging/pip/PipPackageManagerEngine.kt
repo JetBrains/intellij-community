@@ -34,7 +34,7 @@ class PipPackageManagerEngine(
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
     val manager = PythonPackageManager.forSdk(project, sdk)
 
-    PipManagementInstaller(sdk, manager).installManagementIfNeeded()
+    PipManagementInstaller(sdk, manager).installManagementIfNeeded().getOr { return it }
 
     val argumentsGroups = partitionPackagesBySource(installRequest, options)
     return performInstall(argumentsGroups)
