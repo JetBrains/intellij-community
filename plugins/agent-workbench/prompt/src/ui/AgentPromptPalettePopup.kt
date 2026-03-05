@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.prompt.ui
 
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-entry.spec.md
 
+import com.dynatrace.hash4j.hashing.HashValue128
 import com.intellij.AbstractBundle
 import com.intellij.CommonBundle
 import com.intellij.agent.workbench.common.AgentThreadActivity
@@ -161,6 +162,8 @@ internal class AgentPromptPalettePopup(
   private var clearDraftOnClose: Boolean = false
   private var canSubmitNow: Boolean = false
   private var contextEntries: List<ContextEntry> = emptyList()
+  private var initialContextFingerprint: HashValue128? = null
+  private val removedLogicalItemIds = LinkedHashSet<String>()
   private var providerEntries: List<ProviderEntry> = emptyList()
   private var providerMenuModel: AgentSessionProviderMenuModel = AgentSessionProviderMenuModel(emptyList(), emptyList())
   private var selectedProvider: ProviderEntry? = null
@@ -429,6 +432,8 @@ internal class AgentPromptPalettePopup(
   private fun loadInitialContext() {
     val resolved = contextResolverService.collectDefaultContext(invocationData)
     val projectPath = resolveWorkingProjectPath(launcherProvider()) ?: project.basePath
+    initialContextFingerprint = computeContextFingerprint(resolved)
+    removedLogicalItemIds.clear()
     contextEntries = resolved.map { item -> ContextEntry(item = item, projectBasePath = projectPath) }
     rebuildContextChips()
   }
@@ -444,7 +449,15 @@ internal class AgentPromptPalettePopup(
 
   private fun createContextChip(entry: ContextEntry): JComponent {
     return TagButton(entry.displayText) {
-      contextEntries = resolveContextEntriesAfterRemoval(contextEntries, entry.id)
+      val beforeEntries = contextEntries
+      val updatedEntries = resolveContextEntriesAfterRemoval(beforeEntries, entry.id)
+      removedLogicalItemIds.addAll(
+        collectRemovedLogicalItemIds(
+          beforeEntries = beforeEntries,
+          afterEntries = updatedEntries,
+        )
+      )
+      contextEntries = updatedEntries
       rebuildContextChips()
       showInfo(AgentPromptBundle.message("popup.status.context.removed"))
     }.apply {
@@ -806,6 +819,7 @@ internal class AgentPromptPalettePopup(
 
   private fun restoreDraft() {
     val draft = uiStateService.loadDraft()
+    val contextRestoreSnapshot = uiStateService.loadContextRestoreSnapshot()
 
     promptArea.text = draft.promptText
     codexPlanModeCheckBox.isSelected = draft.codexPlanModeEnabled
@@ -816,6 +830,21 @@ internal class AgentPromptPalettePopup(
     setTargetMode(draft.targetMode)
     existingTaskSearchQuery = draft.existingTaskSearch
     selectedExistingTaskId = draft.selectedExistingTaskId
+    removedLogicalItemIds.clear()
+    if (contextRestoreSnapshot.contextFingerprint == initialContextFingerprint) {
+      val normalizedRemovedIds = normalizeRemovedContextItemIds(contextRestoreSnapshot.removedContextItemIds)
+      removedLogicalItemIds.addAll(normalizedRemovedIds)
+      val restoredEntries = applyDraftContextRemovals(
+        entries = contextEntries,
+        currentFingerprint = initialContextFingerprint,
+        draftFingerprint = contextRestoreSnapshot.contextFingerprint,
+        removedLogicalItemIds = normalizedRemovedIds,
+      )
+      if (restoredEntries != contextEntries) {
+        contextEntries = restoredEntries
+        rebuildContextChips()
+      }
+    }
 
     if (draft.targetMode == PromptTargetMode.EXISTING_TASK) {
       reloadExistingTasks()
@@ -844,6 +873,12 @@ internal class AgentPromptPalettePopup(
         existingTaskSearch = existingTaskSearchQuery,
         selectedExistingTaskId = selectedExistingTaskId,
         codexPlanModeEnabled = codexPlanModeCheckBox.isSelected,
+      )
+    )
+    uiStateService.saveContextRestoreSnapshot(
+      AgentPromptUiContextRestoreSnapshot(
+        contextFingerprint = initialContextFingerprint,
+        removedContextItemIds = normalizeRemovedContextItemIds(removedLogicalItemIds),
       )
     )
   }

@@ -15,6 +15,7 @@ jvm_library(
   resources = [":prompt_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "//libraries/hash4j",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/core-ui",
@@ -34,6 +35,8 @@ jvm_library(
   associates = [":prompt"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "//libraries/hash4j",
+    "//libraries/hash4j:hash4j_test_lib",
     "//platform/analysis-api:analysis",
     "//platform/analysis-api:analysis_test_lib",
     "//platform/core-api:core",
