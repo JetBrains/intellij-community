@@ -611,8 +611,8 @@ public final class FileManagerImpl implements FileManagerEx {
     if (isExcludedOrIgnored(vFile)) return null;
 
     VirtualFile parent = vFile.getParent();
-    if (parent != null) { //?
-      findDirectoryImpl(parent, psiDirMap);// need to cache parent directory - used for firing events
+    if (parent != null) {
+      findDirectoryImpl(parent, psiDirMap); // need to cache parent directory - used for firing events
     }
 
     psiDir = PsiDirectoryFactory.getInstance(myManager.getProject()).createDirectory(vFile);
