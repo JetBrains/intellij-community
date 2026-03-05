@@ -283,6 +283,10 @@ public final class ExpressionUtils {
     return PsiUtil.skipParenthesizedExprDown(expression) instanceof PsiLiteralExpression literal && "\"\"".equals(literal.getText());
   }
 
+  public static boolean isStringLiteral(@Nullable PsiExpression expression) {
+    return PsiUtil.skipParenthesizedExprDown(expression) instanceof PsiLiteralExpression literal && literal.getValue() instanceof String;
+  }
+
   @Contract("null -> false")
   public static boolean isNullLiteral(@Nullable PsiExpression expression) {
     return PsiUtil.deparenthesizeExpression(expression) instanceof PsiLiteralExpression literal
