@@ -40,6 +40,7 @@ jvm_library(
     "//platform/util/diff",
     "//platform/util/jdom",
     "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -76,6 +77,7 @@ jvm_library(
     "//platform/util/diff:diff_test_lib",
     "//platform/util/jdom:jdom_test_lib",
     "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.diff.impl` end

@@ -82,6 +82,10 @@ jvm_library(
     "@lib//:kotlinc-analysis-api-impl-base",
     "//jps/model-api:model",
     "//jps/model-api:model_test_lib",
+    "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ],
   runtime_deps = [
     ":common-tests",

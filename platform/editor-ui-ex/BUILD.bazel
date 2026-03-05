@@ -28,6 +28,7 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/statistics",
     "//libraries/jbr",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -52,6 +53,7 @@ jvm_library(
     "//platform/util/jdom:jdom_test_lib",
     "//platform/statistics:statistics_test_lib",
     "//libraries/jbr:jbr_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.editor.ex` end

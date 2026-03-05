@@ -19,6 +19,7 @@ jvm_library(
     "//platform/core-api:core",
     "//java/java-psi-api:psi",
     "//platform/util",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -33,6 +34,7 @@ jvm_library(
     "//platform/core-api:core_test_lib",
     "//java/java-psi-api:psi_test_lib",
     "//platform/util:util_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.copyright` end

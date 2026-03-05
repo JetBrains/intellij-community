@@ -54,6 +54,10 @@ jvm_library(
     "//platform/libraries/cglib:cglib_test_lib",
     "//xml/xml-analysis-api:analysis",
     "//xml/xml-analysis-api:analysis_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/code-style-api:codeStyle",
+    "//platform/code-style-api:codeStyle_test_lib",
   ],
   runtime_deps = [":dom-tests"]
 )

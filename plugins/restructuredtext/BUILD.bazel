@@ -55,6 +55,8 @@ jvm_library(
     "//libraries/jcef",
     "//platform/indexing-api:indexing",
     "//platform/core-impl",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//jps/model-api:model",
     ":platform_lang-impl_provided",
     ":platform_execution-impl_provided",
     ":platform_core-ui_provided",
@@ -95,6 +97,8 @@ jvm_library(
     "//spellchecker:spellchecker_test_lib",
     "//platform/indexing-api:indexing_test_lib",
     "//platform/core-impl:core-impl_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//jps/model-api:model_test_lib",
   ]
 )
 ### auto-generated section `build intellij.restructuredtext` end

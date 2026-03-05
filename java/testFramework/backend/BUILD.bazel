@@ -22,6 +22,8 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/testFramework/common",
     "//platform/util",
+    "//jps/jps-builders:build",
+    "//jps/model-api:model",
   ]
 )
 
@@ -40,6 +42,8 @@ jvm_library(
     "//platform/projectModel-api:projectModel_test_lib",
     "//platform/testFramework/common:common_test_lib",
     "//platform/util:util_test_lib",
+    "//jps/jps-builders:build_test_lib",
+    "//jps/model-api:model_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.testFramework.backend` end

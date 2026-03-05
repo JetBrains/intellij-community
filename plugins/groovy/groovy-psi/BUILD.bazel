@@ -43,6 +43,7 @@ jvm_library(
     "//libraries/fastutil",
     "//libraries/asm",
     "//platform/util/jdom",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
   exports = ["@lib//:org-codehaus-groovy-groovy"]
 )
@@ -87,6 +88,7 @@ jvm_library(
     "//libraries/fastutil:fastutil_test_lib",
     "//libraries/asm:asm_test_lib",
     "//platform/util/jdom:jdom_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.groovy.psi` end

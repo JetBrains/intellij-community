@@ -93,6 +93,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//java/java-runtime:rt",
     "//java/java-runtime:rt_test_lib",
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
   ],
   runtime_deps = [":externalSystem-dependencyUpdater-tests"]
 )

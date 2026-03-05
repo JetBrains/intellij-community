@@ -40,6 +40,7 @@ jvm_library(
     "//libraries/kotlinx/coroutines/core",
     "//platform/kernel/shared:kernel",
     "//platform/execution",
+    "//libraries/fastutil",
   ]
 )
 
@@ -76,6 +77,7 @@ jvm_library(
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/kernel/shared:kernel_test_lib",
     "//platform/execution:execution_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.execution.serviceView` end

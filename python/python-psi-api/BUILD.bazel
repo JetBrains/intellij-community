@@ -26,6 +26,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-kotlin-annotations-jvm",
     "//platform/editor-ui-api:editor-ui",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
   exports = [
     "//python/python-parser:parser",
@@ -58,6 +59,7 @@ jvm_library(
     "//python/python-syntax-core:syntax-core_test_lib",
     "//platform/backend:backend_test_lib",
     "//platform/editor-ui-api:editor-ui_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.python.psi` end

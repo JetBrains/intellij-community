@@ -39,6 +39,8 @@ jvm_library(
     "//plugins/toml",
     "//plugins/toml/core",
     "//plugins/yaml/backend",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/lang-core",
   ]
 )
 
@@ -143,6 +145,10 @@ jvm_library(
     "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
     "//platform/structure-view-impl:structureView-impl",
     "//platform/structure-view-impl:structureView-impl_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/lang-core",
+    "//platform/lang-core:lang-core_test_lib",
   ],
   runtime_deps = [
     ":tests",

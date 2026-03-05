@@ -22,6 +22,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/util/jdom",
     "//platform/eel-provider",
+    "//platform/util/concurrency",
   ]
 )
 
@@ -47,6 +48,7 @@ jvm_library(
     "//platform/analysis-api:analysis_test_lib",
     "//platform/util/jdom:jdom_test_lib",
     "//platform/eel-provider:eel-provider_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.macro` end

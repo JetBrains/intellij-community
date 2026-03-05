@@ -46,6 +46,9 @@ jvm_library(
     "//platform/util/text-matching",
     "//platform/polySymbols",
     "//platform/forms_rt:java-guiForms-rt",
+    "//libraries/fastutil",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/util/concurrency",
   ],
   exports = ["//plugins/tasks/tasks-core/lib:tasks-core-axis-1-4"]
 )
@@ -88,6 +91,9 @@ jvm_library(
     "//platform/util/text-matching:text-matching_test_lib",
     "//platform/polySymbols:polySymbols_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
   ]
 )
 ### auto-generated section `build intellij.tasks.core` end

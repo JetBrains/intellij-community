@@ -71,6 +71,7 @@ jvm_library(
   deps = [
     "@lib//:jetbrains-annotations-provided",
     "@lib//:kotlin-stdlib-provided",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ":plugins_textmate_common_provided",
     ":spellchecker_provided",
     ":platform_core_provided",
@@ -116,6 +117,7 @@ jvm_library(
     "//platform/indexing-api:indexing_test_lib",
     "//platform/core-impl",
     "//platform/core-impl:core-impl_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.textmate.backend` end

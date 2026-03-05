@@ -28,6 +28,8 @@ jvm_library(
     "//java/java-impl:impl",
     "//spellchecker",
     "//platform/core-ui",
+    "//libraries/fastutil",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -68,6 +70,10 @@ jvm_library(
     "//spellchecker:spellchecker_test_lib",
     "//platform/core-ui",
     "//platform/core-ui:core-ui_test_lib",
+    "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ],
   runtime_deps = ["//platform/platform-impl:ide-impl_test_lib"]
 )

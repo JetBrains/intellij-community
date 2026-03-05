@@ -27,6 +27,7 @@ jvm_library(
     "//xml/impl",
     "//spellchecker",
     "//spellchecker/xml",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -49,6 +50,7 @@ jvm_library(
     "//xml/impl:impl_test_lib",
     "//spellchecker:spellchecker_test_lib",
     "//spellchecker/xml:xml_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.grazie.xml` end

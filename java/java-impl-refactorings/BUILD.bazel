@@ -54,6 +54,7 @@ jvm_library(
     "//java/codeserver/core",
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -104,6 +105,7 @@ jvm_library(
     "//java/codeserver/core:core_test_lib",
     "//platform/execution:execution_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.impl.refactorings` end

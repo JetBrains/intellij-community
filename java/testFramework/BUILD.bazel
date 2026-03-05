@@ -66,6 +66,8 @@ jvm_library(
     "//java/java-frontback-psi-impl:frontback-psi-impl",
     "//platform/xdebugger-impl/shared",
     "//java/testFramework/backend",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/util/concurrency",
   ],
   exports = [
     "//java/openapi:java",
@@ -190,6 +192,10 @@ jvm_library(
     "//platform/xdebugger-impl/shared:shared_test_lib",
     "//java/testFramework/backend",
     "//java/testFramework/backend:backend_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
   ],
   exports = [
     "//java/openapi:java",

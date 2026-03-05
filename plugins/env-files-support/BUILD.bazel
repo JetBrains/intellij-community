@@ -27,6 +27,7 @@ jvm_library(
     "//platform/refactoring",
     "//platform/lang-impl",
     "//platform/lang-api:lang",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -50,6 +51,7 @@ jvm_library(
     "//platform/refactoring:refactoring_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/lang-api:lang_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.dotenv` end

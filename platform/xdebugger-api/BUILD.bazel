@@ -27,6 +27,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
     "//platform/execution",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -49,6 +50,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/json:json_test_lib",
     "//platform/core-api:core_test_lib",
     "//platform/execution:execution_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger` end

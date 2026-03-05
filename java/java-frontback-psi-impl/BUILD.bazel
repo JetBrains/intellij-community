@@ -25,6 +25,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/serialization/core",
     "//platform/syntax/syntax-psi:psi",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
   exports = [
     "//java/java-frontback-psi-api:frontback-psi",
@@ -55,6 +56,7 @@ jvm_library(
     "//libraries/fastutil:fastutil_test_lib",
     "//libraries/kotlinx/serialization/core:core_test_lib",
     "//platform/syntax/syntax-psi:psi_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.frontback.psi.impl` end

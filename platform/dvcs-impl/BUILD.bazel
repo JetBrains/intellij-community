@@ -46,6 +46,8 @@ jvm_library(
     "//platform/workspace/storage",
     "//platform/dvcs-impl/shared",
     "//platform/kernel/backend",
+    "//jps/model-api:model",
+    "//platform/lang-core",
   ]
 )
 
@@ -123,6 +125,10 @@ jvm_library(
     "//platform/dvcs-impl/shared:shared_test_lib",
     "//platform/kernel/backend",
     "//platform/kernel/backend:backend_test_lib",
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
+    "//platform/lang-core",
+    "//platform/lang-core:lang-core_test_lib",
   ],
   runtime_deps = [
     "//platform/platform-impl:ide-impl_test_lib",

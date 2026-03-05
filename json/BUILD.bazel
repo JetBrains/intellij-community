@@ -31,6 +31,7 @@ jvm_library(
     "//json/syntax",
     "//platform/syntax/syntax-psi:psi",
     "//platform/syntax/syntax-util:util",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
   exports = ["//json/syntax"]
 )
@@ -62,6 +63,7 @@ jvm_library(
     "//json/syntax:syntax_test_lib",
     "//platform/syntax/syntax-psi:psi_test_lib",
     "//platform/syntax/syntax-util:util_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.json` end

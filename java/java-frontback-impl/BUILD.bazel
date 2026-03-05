@@ -38,6 +38,8 @@ jvm_library(
     "//libraries/kotlinx/serialization/core",
     "//platform/execution",
     "//platform/lang-api:lang",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/util/concurrency",
   ],
   exports = [
     "//java/java-frontback-psi-api:frontback-psi",
@@ -88,6 +90,8 @@ jvm_library(
     "//libraries/kotlinx/serialization/core:core_test_lib",
     "//platform/execution:execution_test_lib",
     "//platform/lang-api:lang_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.frontback.impl` end

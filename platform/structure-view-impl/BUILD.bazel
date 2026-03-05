@@ -41,6 +41,7 @@ jvm_library(
     "//platform/remote-topics/shared:rpc-topics",
     "//platform/lang-impl",
     "//platform/lang-api:lang",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
   exports = ["//platform/util"]
 )
@@ -82,6 +83,7 @@ jvm_library(
     "//platform/remote-topics/shared:rpc-topics_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/lang-api:lang_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.structureView.impl` end

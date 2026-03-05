@@ -31,6 +31,8 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/core-ui",
     "//platform/util/jdom",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/util/concurrency",
   ]
 )
 
@@ -58,6 +60,8 @@ jvm_library(
     "//platform/ide-core-impl:ide-core-impl_test_lib",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/util/jdom:jdom_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
   ]
 )
 ### auto-generated section `build intellij.regexp` end
@@ -115,6 +119,10 @@ jvm_library(
     "//platform/core-ui:core-ui_test_lib",
     "//platform/util/jdom",
     "//platform/util/jdom:jdom_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
   ],
   runtime_deps = [
     ":regexp-tests",

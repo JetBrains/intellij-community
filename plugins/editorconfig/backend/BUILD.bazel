@@ -54,6 +54,7 @@ jvm_library(
     "//plugins/editorconfig/common",
     "//platform/backend",
     "//platform/forms_rt:java-guiForms-rt",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -128,6 +129,8 @@ jvm_library(
     "//platform/backend:backend_test_lib",
     "//platform/forms_rt:java-guiForms-rt",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ],
   runtime_deps = [
     "//platform/platform-impl:ide-impl_test_lib",

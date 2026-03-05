@@ -41,6 +41,9 @@ jvm_library(
     "//platform/dvcs-impl/shared",
     "//platform/vcs-impl/shared",
     "//platform/core-impl",
+    "//libraries/fastutil",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/lang-core",
   ]
 )
 
@@ -105,6 +108,12 @@ jvm_library(
     "//platform/vcs-impl/shared:shared_test_lib",
     "//platform/core-impl",
     "//platform/core-impl:core-impl_test_lib",
+    "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/lang-core",
+    "//platform/lang-core:lang-core_test_lib",
   ],
   runtime_deps = [
     "//platform/ide-core-impl:ide-core-impl_test_lib",

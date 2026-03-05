@@ -73,6 +73,7 @@ jvm_library(
     "//platform/util/jdom",
     "//xml/xml-psi-api:psi",
     "//platform/execution",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
   exports = [
     "//java/compiler/forms-compiler:java-guiForms-compiler",
@@ -195,6 +196,8 @@ jvm_library(
     "//libraries/caffeine:caffeine_test_lib",
     "//platform/execution",
     "//platform/execution:execution_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ],
   exports = [
     "//java/compiler/forms-compiler:java-guiForms-compiler",

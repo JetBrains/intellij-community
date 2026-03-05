@@ -32,6 +32,8 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/statistics",
     "//libraries/fastutil",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//jps/model-api:model",
   ]
 )
 
@@ -59,6 +61,8 @@ jvm_library(
     "//platform/analysis-api:analysis_test_lib",
     "//platform/statistics:statistics_test_lib",
     "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//jps/model-api:model_test_lib",
   ]
 )
 ### auto-generated section `build intellij.grid.core.impl` end

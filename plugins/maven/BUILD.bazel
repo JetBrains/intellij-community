@@ -110,6 +110,7 @@ jvm_library(
     "//libraries/http-client",
     "//platform/execution",
     "//platform/projectModel-impl",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ":platform_java-guiForms-rt_provided",
     ":plugins_maven_artifactResolver-m31_provided",
   ],
@@ -247,6 +248,7 @@ jvm_library(
     "//libraries/http-client:http-client_test_lib",
     "//platform/execution:execution_test_lib",
     "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.maven` end

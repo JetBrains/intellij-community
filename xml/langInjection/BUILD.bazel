@@ -30,6 +30,7 @@ jvm_library(
     "//xml/xml-parser:parser",
     "//platform/core-ui",
     "//platform/util/jdom",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -56,6 +57,7 @@ jvm_library(
     "//xml/xml-parser:parser_test_lib",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/util/jdom:jdom_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.xml.langInjection` end

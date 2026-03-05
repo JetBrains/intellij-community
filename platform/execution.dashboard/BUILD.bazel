@@ -42,6 +42,7 @@ jvm_library(
     "//platform/execution",
     "//platform/remote-topics/shared:rpc-topics",
     "//platform/lang-api:lang",
+    "//platform/util/concurrency",
   ]
 )
 
@@ -80,6 +81,7 @@ jvm_library(
     "//platform/execution:execution_test_lib",
     "//platform/remote-topics/shared:rpc-topics_test_lib",
     "//platform/lang-api:lang_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.execution.dashboard` end

@@ -30,6 +30,7 @@ jvm_library(
     "//platform/projectModel-impl",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/execution",
+    "//platform/util/concurrency",
   ]
 )
 
@@ -56,6 +57,7 @@ jvm_library(
     "//platform/projectModel-impl:projectModel-impl_test_lib",
     "//platform/editor-ui-ex:editor-ex_test_lib",
     "//platform/execution:execution_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.ui.inspector` end

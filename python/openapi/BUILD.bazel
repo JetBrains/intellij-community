@@ -33,6 +33,7 @@ jvm_library(
     "//platform/eel",
     "//platform/eel-provider",
     "//platform/execution",
+    "//jps/model-api:model",
   ],
   exports = [
     "//python/python-psi-api:psi",
@@ -72,6 +73,8 @@ jvm_library(
     "//platform/eel-provider:eel-provider_test_lib",
     "//platform/execution",
     "//platform/execution:execution_test_lib",
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
   ],
   exports = [
     "//python/python-psi-api:psi",

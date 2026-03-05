@@ -36,6 +36,8 @@ jvm_library(
     "//platform/lvcs-api:lvcs",
     "@lib//:kotlin-stdlib",
     "//platform/core-impl",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/util/concurrency",
   ]
 )
 
@@ -67,6 +69,8 @@ jvm_library(
     "//platform/usageView:usageView_test_lib",
     "//platform/lvcs-api:lvcs_test_lib",
     "//platform/core-impl:core-impl_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.refactoring` end

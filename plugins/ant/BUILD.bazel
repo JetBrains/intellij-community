@@ -58,6 +58,10 @@ jvm_library(
     "//platform/util/jdom",
     "//xml/xml-psi-api:psi",
     "//platform/execution",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/util/concurrency",
+    "//jps/model-api:model",
+    "//platform/code-style-api:codeStyle",
   ]
 )
 
@@ -159,6 +163,14 @@ jvm_library(
     "//xml/testFramework:testFramework_test_lib",
     "//platform/execution",
     "//platform/execution:execution_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
+    "//platform/code-style-api:codeStyle",
+    "//platform/code-style-api:codeStyle_test_lib",
   ],
   runtime_deps = [
     "//platform/ide-core-impl:ide-core-impl_test_lib",

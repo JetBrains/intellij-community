@@ -36,6 +36,8 @@ jvm_library(
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/core-impl",
     "//platform/execution",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/util/concurrency",
   ]
 )
 
@@ -89,6 +91,10 @@ jvm_library(
     "//platform/core-impl:core-impl_test_lib",
     "//platform/execution",
     "//platform/execution:execution_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
   ],
   runtime_deps = [
     "//platform/platform-impl:ide-impl_test_lib",

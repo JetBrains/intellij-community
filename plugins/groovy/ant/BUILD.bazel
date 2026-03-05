@@ -24,6 +24,8 @@ jvm_library(
     "//platform/util-class-loader:util-classLoader",
     "//platform/analysis-api:analysis",
     "//xml/dom-openapi:dom",
+    "//jps/model-api:model",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -44,6 +46,8 @@ jvm_library(
     "//platform/util-class-loader:util-classLoader_test_lib",
     "//platform/analysis-api:analysis_test_lib",
     "//xml/dom-openapi:dom_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.groovy.ant` end

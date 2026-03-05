@@ -65,6 +65,7 @@ jvm_library(
     "//platform/backend/workspace",
     "//plugins/kotlin/formatter",
     "//plugins/kotlin/base/code-insight/minimal",
+    "//platform/util/concurrency",
   ],
   exports = ["//plugins/kotlin/base/code-insight/minimal"]
 )
@@ -154,6 +155,8 @@ jvm_library(
     "//plugins/kotlin/base/code-insight/minimal",
     "//plugins/kotlin/base/code-insight/minimal:minimal_test_lib",
     "@lib//:kotlin-test",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
   ],
   exports = [
     "//plugins/kotlin/base/code-insight/minimal",

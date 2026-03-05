@@ -42,6 +42,7 @@ jvm_library(
     "//platform/todo",
     "//platform/vcs-impl/shared",
     "//platform/lang-api:lang",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -80,6 +81,7 @@ jvm_library(
     "//platform/todo:todo_test_lib",
     "//platform/vcs-impl/shared:shared_test_lib",
     "//platform/lang-api:lang_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl.lang` end

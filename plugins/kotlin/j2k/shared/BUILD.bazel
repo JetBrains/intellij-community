@@ -58,6 +58,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//platform/core-ui",
+    "//platform/util/concurrency",
   ]
 )
 
@@ -97,6 +98,7 @@ jvm_library(
     "//platform/lang-api:lang_test_lib",
     "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.j2k.shared` end

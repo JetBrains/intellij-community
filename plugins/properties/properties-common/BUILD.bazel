@@ -30,6 +30,8 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/refactoring",
     "//platform/lang-api:lang",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//jps/model-api:model",
   ]
 )
 
@@ -55,6 +57,8 @@ jvm_library(
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/refactoring:refactoring_test_lib",
     "//platform/lang-api:lang_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//jps/model-api:model_test_lib",
   ]
 )
 ### auto-generated section `build intellij.properties` end

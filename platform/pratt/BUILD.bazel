@@ -19,6 +19,7 @@ jvm_library(
     "//platform/util",
     "@lib//:kotlin-stdlib",
     "//platform/core-impl",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -32,6 +33,7 @@ jvm_library(
     "//platform/core-api:core_test_lib",
     "//platform/util:util_test_lib",
     "//platform/core-impl:core-impl_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.pratt` end

@@ -41,6 +41,7 @@ jvm_library(
     "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/lang-api:lang",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
   runtime_deps = ["//plugins/kotlin/base/frontend-agnostic"]
 )
@@ -68,6 +69,7 @@ jvm_library(
     "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal_test_lib",
     "//platform/code-style-impl:codeStyle-impl_test_lib",
     "//platform/lang-api:lang_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.formatter.minimal` end

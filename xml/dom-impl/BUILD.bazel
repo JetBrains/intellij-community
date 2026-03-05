@@ -40,6 +40,8 @@ jvm_library(
     "//platform/core-ui",
     "//platform/libraries/cglib",
     "//platform/core-impl",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//jps/model-api:model",
   ],
   exports = ["//xml/dom-openapi:dom"],
   runtime_deps = ["//platform/backend"]
@@ -83,6 +85,8 @@ jvm_library(
     "//platform/libraries/cglib:cglib_test_lib",
     "//platform/backend:backend_test_lib",
     "//platform/core-impl:core-impl_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//jps/model-api:model_test_lib",
   ]
 )
 ### auto-generated section `build intellij.xml.dom.impl` end

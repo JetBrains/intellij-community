@@ -25,6 +25,8 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/core-ui",
     "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//jps/model-api:model",
   ],
   exports = ["//platform/boot"]
 )
@@ -50,6 +52,8 @@ jvm_library(
     "//platform/boot:boot_test_lib",
     "//platform/util/jdom:jdom_test_lib",
     "//platform/core-ui:core-ui_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//jps/model-api:model_test_lib",
   ]
 )
 ### auto-generated section `build intellij.properties.psi` end

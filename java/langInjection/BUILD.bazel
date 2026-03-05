@@ -36,6 +36,8 @@ jvm_library(
     "//platform/core-ui",
     "//platform/util/jdom",
     "//platform/forms_rt:java-guiForms-rt",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/util/concurrency",
     ":plugins_IntelliLang_backend_provided",
   ],
   runtime_deps = [
@@ -72,6 +74,8 @@ jvm_library(
     "//plugins/IntelliLang/backend:backend_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
     "//platform/backend:backend_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.langInjection` end

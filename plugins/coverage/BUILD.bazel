@@ -16,6 +16,7 @@ jvm_library(
   deps = [
     "@lib//:java-coverage-_ja_co_co",
     "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
     "//platform/core-api:core",
     "//plugins/coverage-common:coverage",
     "//java/execution/openapi:java-execution",
@@ -47,6 +48,7 @@ jvm_library(
     "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
     "//libraries/fastutil",
     "//platform/execution",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
   exports = [
     "//plugins/coverage-common:coverage",
@@ -130,6 +132,8 @@ jvm_library(
     "//java/java-runtime:rt_test_lib",
     "//platform/execution",
     "//platform/execution:execution_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ],
   exports = [
     "//plugins/coverage-common:coverage",

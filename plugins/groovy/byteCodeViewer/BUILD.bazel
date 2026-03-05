@@ -20,6 +20,7 @@ jvm_library(
     "//plugins/ByteCodeViewer:java-byteCodeViewer",
     "@lib//:jetbrains-annotations",
     "//platform/util",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -35,6 +36,7 @@ jvm_library(
     "//java/java-psi-api:psi_test_lib",
     "//plugins/ByteCodeViewer:java-byteCodeViewer_test_lib",
     "//platform/util:util_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.groovy.byteCodeViewer` end

@@ -33,6 +33,8 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "//platform/workspace/storage",
     "//platform/workspace/jps",
+    "//libraries/fastutil",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -54,6 +56,8 @@ jvm_library(
     "//libraries/kotlinx/serialization/json:json_test_lib",
     "//platform/workspace/storage:storage_test_lib",
     "//platform/workspace/jps:jps_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.indexing` end

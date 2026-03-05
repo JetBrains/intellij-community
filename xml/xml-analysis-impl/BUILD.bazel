@@ -35,6 +35,8 @@ jvm_library(
     "//libraries/xerces",
     "//platform/polySymbols",
     "//platform/lang-api:lang",
+    "//libraries/fastutil",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
   runtime_deps = ["//platform/backend"]
 )
@@ -68,6 +70,8 @@ jvm_library(
     "//libraries/xerces:xerces_test_lib",
     "//platform/polySymbols:polySymbols_test_lib",
     "//platform/lang-api:lang_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.xml.analysis.impl` end

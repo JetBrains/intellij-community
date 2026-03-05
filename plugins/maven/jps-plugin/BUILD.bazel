@@ -23,6 +23,7 @@ jvm_library(
     "//libraries/plexus-utils",
     "//platform/util/jdom",
     "//libraries/hash4j",
+    "//libraries/fastutil",
   ]
 )
 
@@ -56,6 +57,8 @@ jvm_library(
     "//libraries/hash4j",
     "//libraries/hash4j:hash4j_test_lib",
     "@lib//:junit5",
+    "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
   ]
 )
 ### auto-generated section `build intellij.maven.jps` end

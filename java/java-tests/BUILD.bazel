@@ -307,6 +307,10 @@ jvm_library(
     "//plugins/groovy-live-templates:groovy-live-templates_test_lib",
     "//java/java-copyright:copyright",
     "//java/java-copyright:copyright_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/locking-impl",
+    "//platform/locking-impl:locking-impl_test_lib",
   ],
   exports = [
     "//plugins/java-i18n",

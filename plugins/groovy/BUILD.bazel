@@ -77,6 +77,7 @@ jvm_library(
     "//java/unscramble",
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
   exports = ["//plugins/groovy/groovy-psi:psi"]
 )
@@ -229,6 +230,8 @@ jvm_library(
     "@lib//:jet_check",
     "//platform/forms_rt:java-guiForms-rt",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ],
   exports = [
     "//plugins/groovy/groovy-psi:psi",

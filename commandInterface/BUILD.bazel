@@ -21,6 +21,7 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/execution",
     "//platform/editor-ui-api:editor-ui",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
   runtime_deps = ["//platform/backend"]
 )
@@ -40,6 +41,7 @@ jvm_library(
     "//platform/analysis-impl:analysis-impl_test_lib",
     "//platform/execution:execution_test_lib",
     "//platform/editor-ui-api:editor-ui_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.commandInterface` end

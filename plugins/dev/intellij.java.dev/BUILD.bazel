@@ -38,6 +38,7 @@ jvm_library(
     "//java/java-analysis-api:analysis",
     "//java/compiler/openapi:java-compiler",
     "//java/codeserver/highlighting",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -71,6 +72,7 @@ jvm_library(
     "//java/java-analysis-api:analysis_test_lib",
     "//java/compiler/openapi:java-compiler_test_lib",
     "//java/codeserver/highlighting:highlighting_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.dev` end

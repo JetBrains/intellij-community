@@ -25,6 +25,7 @@ jvm_library(
     "//libraries/fastutil",
     "//java/java-syntax:syntax",
     "//platform/syntax/syntax-psi:psi",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
   exports = [
     "//java/java-psi-api:psi",
@@ -62,6 +63,7 @@ jvm_library(
     "//libraries/fastutil:fastutil_test_lib",
     "//java/java-syntax:syntax_test_lib",
     "//platform/syntax/syntax-psi:psi_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.psi.impl` end

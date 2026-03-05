@@ -21,6 +21,7 @@ jvm_library(
     "//platform/util:util-ui",
     "//java/java-analysis-impl:analysis-impl",
     "//platform/platform-api:ide",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -38,6 +39,7 @@ jvm_library(
     "//platform/util:util-ui_test_lib",
     "//java/java-analysis-impl:analysis-impl_test_lib",
     "//platform/platform-api:ide_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.structureView` end

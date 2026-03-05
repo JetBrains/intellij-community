@@ -35,6 +35,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "//platform/forms_rt:java-guiForms-rt",
+    "//platform/util/concurrency",
   ]
 )
 
@@ -64,6 +65,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/core:core_test_lib",
     "//libraries/kotlinx/serialization/json:json_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.updateChecker` end

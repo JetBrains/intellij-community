@@ -107,6 +107,8 @@ jvm_library(
     "//plugins/kotlin/gradle/code-insight-toml/k2:k2_test_lib",
     "//plugins/kotlin/fir/testFramework",
     "//plugins/kotlin/fir/testFramework:testFramework_test_lib",
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
   ],
   runtime_deps = [":kotlin-gradle-java-tests"]
 )

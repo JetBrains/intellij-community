@@ -24,6 +24,7 @@ jvm_library(
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/ui",
     "//platform/execution",
+    "//platform/lang-api:lang",
   ]
 )
 
@@ -50,6 +51,7 @@ jvm_library(
     "//platform/xdebugger-impl/shared:shared_test_lib",
     "//platform/xdebugger-impl/ui:ui_test_lib",
     "//platform/execution:execution_test_lib",
+    "//platform/lang-api:lang_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.testFramework` end

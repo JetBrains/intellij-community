@@ -33,6 +33,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/usageView",
     "//platform/eel-provider",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -62,6 +63,7 @@ jvm_library(
     "//platform/analysis-api:analysis_test_lib",
     "//platform/usageView:usageView_test_lib",
     "//platform/eel-provider:eel-provider_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.lang.core` end

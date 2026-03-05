@@ -35,6 +35,7 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl",
     "//libraries/stream",
     "//platform/util-ex",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -86,6 +87,8 @@ jvm_library(
     "//libraries/stream:stream_test_lib",
     "//platform/util-ex",
     "//platform/util-ex:util-ex_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ],
   runtime_deps = ["//platform/platform-impl:ide-impl_test_lib"]
 )

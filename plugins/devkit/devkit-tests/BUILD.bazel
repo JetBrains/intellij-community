@@ -67,6 +67,10 @@ jvm_library(
     "//spellchecker:spellchecker_test_lib",
     "//plugins/grazie/src:core",
     "//plugins/grazie/src:core_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
   ],
   runtime_deps = [":testFramework"]
 )

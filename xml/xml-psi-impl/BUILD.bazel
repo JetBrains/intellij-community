@@ -50,6 +50,8 @@ jvm_library(
     "//platform/syntax/syntax-psi:psi",
     "//xml/xml-syntax:syntax",
     "//platform/platform-impl:ide-impl",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//jps/model-api:model",
   ]
 )
 
@@ -86,6 +88,8 @@ jvm_library(
     "//platform/syntax/syntax-psi:psi_test_lib",
     "//xml/xml-syntax:syntax_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//jps/model-api:model_test_lib",
   ]
 )
 ### auto-generated section `build intellij.xml.psi.impl` end

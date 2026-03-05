@@ -134,6 +134,7 @@ jvm_library(
     "//platform/platform-impl/rpc",
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
+    "//platform/locking-impl",
   ],
   exports = [
     "//platform/analysis-impl",
@@ -259,6 +260,7 @@ jvm_library(
     "//platform/platform-impl/rpc:rpc_test_lib",
     "//platform/execution:execution_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//platform/locking-impl:locking-impl_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.lang.impl` end

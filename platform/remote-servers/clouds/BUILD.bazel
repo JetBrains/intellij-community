@@ -16,6 +16,7 @@ jvm_library(
   deps = [
     "@lib//:jetbrains-annotations",
     "//platform/core-api:core",
+    "//platform/core-ui",
     "//platform/util:util-ui",
     "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core",
@@ -34,6 +35,7 @@ jvm_library(
   runtime_deps = [
     ":clouds",
     "//platform/core-api:core_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
     "//platform/util:util-ui_test_lib",
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/ide-core:ide-core_test_lib",

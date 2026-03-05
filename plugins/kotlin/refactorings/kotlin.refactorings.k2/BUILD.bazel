@@ -75,6 +75,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//plugins/kotlin/kotlin.ide",
     "//platform/forms_rt:java-guiForms-rt",
+    "//platform/util/concurrency",
   ]
 )
 
@@ -128,6 +129,7 @@ jvm_library(
     "//platform/ide-core-impl:ide-core-impl_test_lib",
     "//plugins/kotlin/kotlin.ide:kotlin.ide_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.refactorings` end

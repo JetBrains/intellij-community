@@ -18,6 +18,9 @@ jvm_library(
     "//plugins/editorconfig/backend",
     "//plugins/jsonpath",
     "//platform/vcs-log/impl",
+    "@lib//:jetbrains-annotations",
+    "//platform/util",
+    "//platform/util/base",
   ]
 )
 
@@ -32,6 +35,8 @@ jvm_library(
     "//plugins/editorconfig/backend:backend_test_lib",
     "//plugins/jsonpath:jsonpath_test_lib",
     "//platform/vcs-log/impl:impl_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util/base:base_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module` end

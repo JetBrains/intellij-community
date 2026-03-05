@@ -38,6 +38,7 @@ jvm_library(
     "//platform/workspace/storage",
     "//platform/backend/workspace",
     "//platform/execution",
+    "//libraries/fastutil",
   ],
   exports = ["//platform/external-system-rt:externalSystem-rt"]
 )
@@ -76,6 +77,7 @@ jvm_library(
     "//platform/workspace/storage:storage_test_lib",
     "//platform/backend/workspace:workspace_test_lib",
     "//platform/execution:execution_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.externalSystem` end

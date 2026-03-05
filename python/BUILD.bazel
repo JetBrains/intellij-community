@@ -244,6 +244,8 @@ jvm_library(
     "//python/python-sdk:sdk_test_lib",
     "//platform/testFramework/core",
     "//platform/testFramework/core:core_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ],
   runtime_deps = [":python-commonTests"]
 )
@@ -411,6 +413,7 @@ jvm_library(
     "//platform/forms_rt:java-guiForms-rt",
     "//python/python-external-index:externalIndex",
     "//python/conda",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
   exports = [
     "//python/openapi:community",
@@ -561,6 +564,7 @@ jvm_library(
     "//platform/forms_rt:java-guiForms-rt_test_lib",
     "//python/python-external-index:externalIndex_test_lib",
     "//python/conda:conda_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.python.community.impl` end
@@ -849,6 +853,10 @@ jvm_library(
     "//python/services/system-python:system-python_test_lib",
     "//python/interpreters",
     "//python/interpreters:interpreters_test_lib",
+    "//libraries/caffeine",
+    "//libraries/caffeine:caffeine_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ],
   runtime_deps = [
     ":python-community-tests",

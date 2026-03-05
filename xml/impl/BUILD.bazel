@@ -58,6 +58,8 @@ jvm_library(
     "//xml/xml-syntax:syntax",
     "//xml/xml-analysis-api:analysis",
     "//platform/forms_rt:java-guiForms-rt",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/util/concurrency",
   ],
   exports = [
     "//xml/xml-psi-impl:psi-impl",
@@ -130,6 +132,8 @@ jvm_library(
     "//xml/xml-syntax:syntax_test_lib",
     "//xml/xml-analysis-api:analysis_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
   ]
 )
 ### auto-generated section `build intellij.xml.impl` end

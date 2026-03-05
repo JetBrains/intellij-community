@@ -123,6 +123,12 @@ jvm_library(
     "//java/codeserver/highlighting:highlighting_test_lib",
     "//json",
     "//json:json_test_lib",
+    "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/code-style-api:codeStyle",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
   ],
   exports = [
     "//java/java-backend:backend",

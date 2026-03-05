@@ -159,6 +159,10 @@ jvm_library(
     "//jps/jps-builders:build_test_lib",
     "//java/java-indexing-api:indexing",
     "//java/java-indexing-api:indexing_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
   ],
   runtime_deps = [
     ":base-test",

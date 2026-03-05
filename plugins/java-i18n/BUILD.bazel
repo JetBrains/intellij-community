@@ -22,6 +22,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/foldings",
     "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
     "//platform/lang-api:lang",
     "//java/openapi:java",
     "//platform/projectModel-api:projectModel",
@@ -49,6 +50,7 @@ jvm_library(
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/util/jdom",
     "//xml/xml-psi-api:psi",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
   exports = [
     "//plugins/properties:properties-backend",
@@ -147,6 +149,8 @@ jvm_library(
     "//xml/xml-psi-api:psi_test_lib",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ],
   exports = [
     "//plugins/properties:properties-backend",

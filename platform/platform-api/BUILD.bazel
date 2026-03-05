@@ -59,6 +59,8 @@ jvm_library(
     "//platform/util/diff",
     "//platform/runtime/product",
     "//platform/util/coroutines",
+    "//libraries/fastutil",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
   exports = [
     "//platform/util",
@@ -123,6 +125,8 @@ jvm_library(
     "//platform/util/diff:diff_test_lib",
     "//platform/runtime/product:product_test_lib",
     "//platform/util/coroutines:coroutines_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.ide` end

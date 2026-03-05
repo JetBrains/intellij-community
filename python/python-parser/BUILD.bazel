@@ -19,6 +19,7 @@ jvm_library(
     "//platform/util",
     "//libraries/fastutil",
     "//platform/core-impl",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -33,6 +34,7 @@ jvm_library(
     "//platform/util:util_test_lib",
     "//libraries/fastutil:fastutil_test_lib",
     "//platform/core-impl:core-impl_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.python.parser` end

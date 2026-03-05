@@ -32,6 +32,7 @@ jvm_library(
     "//uast/uast-common-ide:ide",
     "//platform/workspace/jps",
     "//platform/workspace/storage",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
   exports = [
     "//uast/uast-common:uast",
@@ -63,6 +64,7 @@ jvm_library(
     "//uast/uast-common-ide:ide_test_lib",
     "//platform/workspace/jps:jps_test_lib",
     "//platform/workspace/storage:storage_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.analysis` end

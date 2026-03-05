@@ -73,6 +73,12 @@ jvm_library(
     "@lib//:jet_check",
     "//java/testFramework/backend",
     "//java/testFramework/backend:backend_test_lib",
+    "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//jps/jps-builders:build",
+    "//jps/jps-builders:build_test_lib",
   ],
   runtime_deps = [
     ":compiler-tests",

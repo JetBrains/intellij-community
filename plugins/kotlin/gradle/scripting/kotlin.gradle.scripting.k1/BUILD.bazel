@@ -181,6 +181,8 @@ jvm_library(
     "//platform/core-ui:core-ui_test_lib",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:kotlin-tooling-core",
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
   ],
   runtime_deps = [
     ":kotlin-gradle-scripting-k1-tests",

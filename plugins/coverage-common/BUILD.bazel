@@ -41,6 +41,7 @@ jvm_library(
     "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
     "//platform/core-impl",
     "//platform/execution",
+    "//jps/model-api:model",
   ]
 )
 
@@ -103,6 +104,8 @@ jvm_library(
     "//platform/core-impl:core-impl_test_lib",
     "//platform/execution",
     "//platform/execution:execution_test_lib",
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
   ],
   runtime_deps = [
     "//platform/platform-impl:ide-impl_test_lib",

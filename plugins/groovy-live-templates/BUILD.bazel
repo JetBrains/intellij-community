@@ -23,6 +23,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/util",
     "//platform/ide-core",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -39,6 +40,7 @@ jvm_library(
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/util:util_test_lib",
     "//platform/ide-core:ide-core_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.groovy.live.templates` end

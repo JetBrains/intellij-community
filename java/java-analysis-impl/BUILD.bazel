@@ -56,6 +56,8 @@ jvm_library(
     "//platform/refactoring",
     "//xml/xml-analysis-api:analysis",
     "//libraries/jsoup",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/core-ui",
   ],
   exports = [
     "//platform/analysis-impl",
@@ -123,6 +125,8 @@ jvm_library(
     "//platform/refactoring:refactoring_test_lib",
     "//xml/xml-analysis-api:analysis_test_lib",
     "//libraries/jsoup:jsoup_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.analysis.impl` end

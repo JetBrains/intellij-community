@@ -25,6 +25,7 @@ jvm_library(
     "//platform/core-ui",
     "@lib//:kotlin-stdlib",
     "//platform/platform-impl:ide-impl",
+    "//libraries/fastutil",
   ]
 )
 
@@ -55,6 +56,8 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/platform-impl:ide-impl",
     "@lib//:junit5",
+    "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
   ],
   runtime_deps = ["//platform/platform-impl:ide-impl_test_lib"]
 )

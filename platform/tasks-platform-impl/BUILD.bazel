@@ -42,6 +42,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/ui",
+    "//libraries/fastutil",
   ]
 )
 
@@ -79,6 +80,7 @@ jvm_library(
     "//platform/lang-api:lang_test_lib",
     "//platform/xdebugger-impl/shared:shared_test_lib",
     "//platform/xdebugger-impl/ui:ui_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.tasks.impl` end

@@ -28,6 +28,7 @@ jvm_library(
     "//platform/structure-view-impl:structureView-impl",
     "//platform/util/jdom",
     "//platform/core-api:core",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -70,6 +71,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ],
   runtime_deps = ["//platform/platform-impl:ide-impl_test_lib"]
 )

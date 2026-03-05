@@ -76,6 +76,7 @@ jvm_library(
     "//platform/kernel/rpc",
     "//platform/remote-topics/shared:rpc-topics",
     "//platform/execution",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -195,6 +196,8 @@ jvm_library(
     "//platform/remote-topics/shared:rpc-topics_test_lib",
     "//platform/execution",
     "//platform/execution:execution_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ],
   runtime_deps = [
     "//platform/ide-core-impl:ide-core-impl_test_lib",

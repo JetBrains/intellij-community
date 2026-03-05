@@ -21,6 +21,7 @@ jvm_library(
     "//platform/util/jdom",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
+    "//libraries/kotlinx/coroutines/core",
   ]
 )
 
@@ -36,6 +37,7 @@ jvm_library(
     "//jps/model-api:model_test_lib",
     "//libraries/fastutil:fastutil_test_lib",
     "//platform/util/jdom:jdom_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.jps.model.serialization` end

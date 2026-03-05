@@ -34,6 +34,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/jdom",
     "//platform/execution",
+    "//platform/code-style-api:codeStyle",
   ],
   exports = [
     "//platform/testRunner",
@@ -93,6 +94,8 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/execution",
     "//platform/execution:execution_test_lib",
+    "//platform/code-style-api:codeStyle",
+    "//platform/code-style-api:codeStyle_test_lib",
   ],
   exports = [
     "//platform/testRunner",

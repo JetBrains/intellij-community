@@ -30,6 +30,7 @@ jvm_library(
     "//python/python-sdk:sdk",
     "//libraries/guava",
     "//platform/core-ui",
+    "//platform/util/concurrency",
   ]
 )
 
@@ -55,6 +56,7 @@ jvm_library(
     "//python/python-sdk:sdk_test_lib",
     "//libraries/guava:guava_test_lib",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
   ]
 )
 ### auto-generated section `build intellij.python.community.plugin.impl` end

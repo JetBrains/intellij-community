@@ -45,6 +45,7 @@ jvm_library(
     "//plugins/kotlin/base/indices",
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/base/frontend-agnostic",
+    "//platform/util/concurrency",
   ]
 )
 
@@ -80,6 +81,7 @@ jvm_library(
     "//plugins/kotlin/base/indices:indices_test_lib",
     "//plugins/kotlin/base/facet:facet_test_lib",
     "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.searching.base` end

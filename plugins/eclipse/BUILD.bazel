@@ -44,6 +44,7 @@ jvm_library(
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
     "//platform/welcome-screen-impl:welcomeScreen-impl",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -123,6 +124,8 @@ jvm_library(
     "//platform/forms_rt:java-guiForms-rt_test_lib",
     "//platform/welcome-screen-impl:welcomeScreen-impl",
     "//platform/welcome-screen-impl:welcomeScreen-impl_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ],
   runtime_deps = [
     "//platform/platform-impl:ide-impl_test_lib",

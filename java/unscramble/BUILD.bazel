@@ -28,6 +28,7 @@ jvm_library(
     "//java/java-impl:impl",
     "//platform/threadDumpParser",
     "//platform/forms_rt:java-guiForms-rt",
+    "//platform/util/concurrency",
   ]
 )
 
@@ -52,6 +53,7 @@ jvm_library(
     "//java/java-impl:impl_test_lib",
     "//platform/threadDumpParser:threadDumpParser_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.unscramble` end

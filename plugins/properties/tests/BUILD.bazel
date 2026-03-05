@@ -79,6 +79,10 @@ jvm_library(
     "//libraries/fastutil",
     "//libraries/fastutil:fastutil_test_lib",
     "@lib//:jet_check",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
   ],
   exports = [
     "//plugins/properties:properties-backend",

@@ -84,6 +84,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/vcs-impl/shared",
     "//platform/lang-api:lang",
+    "//platform/util/concurrency",
   ]
 )
 
@@ -219,6 +220,8 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/lang-api:lang",
     "//platform/lang-api:lang_test_lib",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
   ],
   runtime_deps = [
     "//platform/platform-impl:ide-impl_test_lib",

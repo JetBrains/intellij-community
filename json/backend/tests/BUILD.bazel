@@ -83,6 +83,12 @@ jvm_library(
     "//platform/util/jdom:jdom_test_lib",
     "//platform/structure-view-impl:structureView-impl",
     "//platform/structure-view-impl:structureView-impl_test_lib",
+    "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
   ],
   runtime_deps = [
     ":tests",

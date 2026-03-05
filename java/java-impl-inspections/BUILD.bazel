@@ -43,6 +43,8 @@ jvm_library(
     "//platform/workspace/storage",
     "//java/java-syntax:syntax",
     "//xml/xml-psi-api:psi",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/util/concurrency",
   ]
 )
 
@@ -82,6 +84,8 @@ jvm_library(
     "//platform/workspace/storage:storage_test_lib",
     "//java/java-syntax:syntax_test_lib",
     "//xml/xml-psi-api:psi_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.impl.inspections` end

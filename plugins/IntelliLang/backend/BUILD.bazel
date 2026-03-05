@@ -72,6 +72,7 @@ jvm_library(
     "@lib//:jetbrains-annotations-provided",
     "@lib//:kotlin-stdlib",
     "//platform/core-impl",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ":platform_backend_provided",
     ":platform_core_provided",
     ":platform_util_provided",
@@ -117,6 +118,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/core-impl:core-impl_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.langInjection.backend` end

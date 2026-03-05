@@ -20,6 +20,7 @@ jvm_library(
     "//platform/util/multiplatform",
     "//platform/util",
     "//RegExpSupport:regexp",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -35,6 +36,7 @@ jvm_library(
     "//platform/util/multiplatform:multiplatform_test_lib",
     "//platform/util:util_test_lib",
     "//RegExpSupport:regexp_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.json.backend.regexp` end

@@ -61,6 +61,8 @@ jvm_library(
     "//plugins/IntelliLang/backend:backend_test_lib",
     "//plugins/markdown/plugin:plugin-main",
     "//plugins/markdown/plugin:plugin-main_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ],
   runtime_deps = [":tests"]
 )

@@ -335,6 +335,10 @@ jvm_library(
     "//plugins/repository-search/common:common_test_lib",
     "//plugins/gradle/completion",
     "//plugins/gradle/completion:completion_test_lib",
+    "//platform/code-style-api:codeStyle",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
   ],
   exports = [
     "//platform/external-system-api/testFramework",

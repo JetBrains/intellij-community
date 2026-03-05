@@ -26,6 +26,7 @@ jvm_library(
     "//platform/util:util-ui",
     "//platform/core-ui",
     "//platform/diagnostic",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -46,6 +47,7 @@ jvm_library(
     "//platform/util:util-ui_test_lib",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/diagnostic:diagnostic_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.editor.ui` end

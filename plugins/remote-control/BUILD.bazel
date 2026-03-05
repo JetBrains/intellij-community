@@ -26,6 +26,7 @@ jvm_library(
     "//libraries/gson",
     "//platform/analysis-api:analysis",
     "//platform/projectModel-api:projectModel",
+    "//platform/lang-api:lang",
   ]
 )
 
@@ -67,6 +68,8 @@ jvm_library(
     "@lib//:assert_j",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
   ],
   runtime_deps = [
     "//platform/platform-util-netty:ide-util-netty_test_lib",

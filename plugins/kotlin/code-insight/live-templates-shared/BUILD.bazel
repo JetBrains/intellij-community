@@ -43,6 +43,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//java/java-impl:impl",
     "//platform/lang-api:lang",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -93,6 +94,8 @@ jvm_library(
     "//java/testFramework:testFramework_test_lib",
     "//platform/lang-api:lang",
     "//platform/lang-api:lang_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.code-insight.live-templates.shared` end

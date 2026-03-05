@@ -46,6 +46,8 @@ jvm_library(
     "//plugins/yaml",
     "//platform/searchEverywhere/shared:searchEverywhere",
     "//platform/searchEverywhere/backend",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//jps/model-api:model",
   ],
   runtime_deps = ["//platform/backend"]
 )
@@ -124,6 +126,10 @@ jvm_library(
     "//plugins/IntelliLang/backend",
     "//plugins/IntelliLang/backend:backend_test_lib",
     "@lib//:jet_check",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
   ],
   runtime_deps = [
     "//platform/backend:backend_test_lib",

@@ -67,6 +67,8 @@ jvm_library(
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
     "//platform/forms_rt:java-guiForms-rt",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//jps/jps-builders:build",
   ]
 )
 
@@ -128,6 +130,8 @@ jvm_library(
     "//libraries/jackson/jackson:jackson_test_lib",
     "//libraries/jackson/databind:databind_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//jps/jps-builders:build_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.ui` end

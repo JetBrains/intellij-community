@@ -40,6 +40,8 @@ jvm_library(
     "//jvm/jvm-analysis-internal-testFramework:analysis-internal-testFramework",
     "//jvm/jvm-analysis-internal-testFramework:analysis-internal-testFramework_test_lib",
     "@lib//:jet_check",
+    "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
   ],
   runtime_deps = [":analysis-java-tests"]
 )

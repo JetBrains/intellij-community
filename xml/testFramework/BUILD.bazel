@@ -15,6 +15,8 @@ jvm_library(
     "//platform/core-impl",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//platform/syntax/syntax-psi:psi",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/lang-api:lang",
   ]
 )
 
@@ -33,6 +35,8 @@ jvm_library(
     "//platform/core-impl:core-impl_test_lib",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/syntax/syntax-psi:psi_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/lang-api:lang_test_lib",
   ]
 )
 ### auto-generated section `build intellij.xml.testFramework` end

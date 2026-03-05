@@ -36,6 +36,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/vcs-api/shared",
     "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/util/concurrency",
   ]
 )
 
@@ -67,6 +68,7 @@ jvm_library(
     "//platform/analysis-api:analysis_test_lib",
     "//platform/vcs-api/shared:shared_test_lib",
     "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl.frontend` end

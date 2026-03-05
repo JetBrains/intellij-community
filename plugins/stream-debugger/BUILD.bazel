@@ -32,6 +32,8 @@ jvm_library(
     "//java/openapi:java",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
   ],
   runtime_deps = ["//java/debugger/backend"]
 )
@@ -91,6 +93,10 @@ jvm_library(
     "//plugins/stream-debugger-core/testFramework:testFramework_test_lib",
     "//platform/util/coroutines",
     "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/code-style-api:codeStyle",
+    "//platform/code-style-api:codeStyle_test_lib",
   ],
   runtime_deps = [
     "//platform/platform-impl:ide-impl_test_lib",

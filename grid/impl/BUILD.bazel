@@ -71,6 +71,7 @@ jvm_library(
     "//platform/execution",
     "//platform/lang-api:lang",
     "//platform/forms_rt:java-guiForms-rt",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -121,6 +122,7 @@ jvm_library(
     "//platform/execution:execution_test_lib",
     "//platform/lang-api:lang_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.grid.impl` end

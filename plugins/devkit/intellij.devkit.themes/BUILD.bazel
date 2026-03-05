@@ -36,6 +36,8 @@ jvm_library(
     "//platform/core-ui",
     "//platform/lang-api:lang",
     "//xml/xml-psi-impl:psi-impl",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/util/concurrency",
   ]
 )
 
@@ -90,6 +92,10 @@ jvm_library(
     "//platform/lang-api:lang_test_lib",
     "//xml/xml-psi-impl:psi-impl",
     "//xml/xml-psi-impl:psi-impl_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
   ],
   runtime_deps = [
     "//platform/platform-impl:ide-impl_test_lib",

@@ -19,6 +19,8 @@ jvm_library(
     "//platform/core-ui",
     "//platform/ide-core/plugins",
     "//platform/platform-util-io-impl:ide-util-io-impl",
+    "//libraries/fastutil",
+    "//platform/util/concurrency",
   ]
 )
 
@@ -41,6 +43,8 @@ jvm_library(
     "//platform/core-ui:core-ui_test_lib",
     "//platform/ide-core/plugins:plugins_test_lib",
     "//platform/platform-util-io-impl:ide-util-io-impl_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.initialConfigImport` end

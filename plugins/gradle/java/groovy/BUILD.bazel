@@ -50,6 +50,7 @@ jvm_library(
     "//jps/jps-builders:build",
     "//jps/model-api:model",
     "//plugins/gradle/jps-plugin:jps",
+    "//platform/platform-util-io:ide-util-io",
   ]
 )
 
@@ -94,6 +95,7 @@ jvm_library(
     "//jps/jps-builders:build_test_lib",
     "//jps/model-api:model_test_lib",
     "//plugins/gradle/jps-plugin:jps_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
   ]
 )
 ### auto-generated section `build intellij.gradle.java.groovy` end

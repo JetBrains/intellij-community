@@ -33,6 +33,7 @@ jvm_library(
     "//platform/boot",
     "//platform/core-impl",
     "//.ownership/runtime-resolver:codeowners-runtime-resolver",
+    "//platform/lang-api:lang",
   ]
 )
 
@@ -70,6 +71,8 @@ jvm_library(
     "//platform/core-impl:core-impl_test_lib",
     "//.ownership/runtime-resolver:codeowners-runtime-resolver",
     "//.ownership/runtime-resolver:codeowners-runtime-resolver_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
   ]
 )
 ### auto-generated section `build intellij.tools.ide.metrics.benchmark` end

@@ -42,6 +42,10 @@ jvm_library(
     "//platform/diff-impl",
     "//platform/forms_rt:java-guiForms-rt",
     "//platform/structure-view-impl:structureView-impl",
+    "//libraries/fastutil",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/util/concurrency",
+    "//jps/model-api:model",
   ],
   runtime_deps = ["//platform/backend"]
 )
@@ -82,6 +86,10 @@ jvm_library(
     "//platform/diff-impl:diff-impl_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
     "//platform/structure-view-impl:structureView-impl_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//jps/model-api:model_test_lib",
   ]
 )
 ### auto-generated section `build intellij.properties.backend` end

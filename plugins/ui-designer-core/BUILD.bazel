@@ -32,6 +32,8 @@ jvm_library(
     "//platform/core-impl",
     "//platform/forms_rt:java-guiForms-rt",
     "//platform/backend",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/util/concurrency",
   ]
 )
 
@@ -60,6 +62,8 @@ jvm_library(
     "//platform/core-impl:core-impl_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
     "//platform/backend:backend_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
   ]
 )
 ### auto-generated section `build intellij.uiDesigner` end

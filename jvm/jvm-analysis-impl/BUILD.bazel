@@ -37,6 +37,9 @@ jvm_library(
     "//jvm/jvm-analysis-quickFix:analysis-quickFix",
     "//java/codeserver/core",
     "//platform/execution",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/util/concurrency",
+    "//libraries/fastutil",
   ],
   exports = ["//jvm/jvm-analysis-api:analysis"]
 )
@@ -75,6 +78,9 @@ jvm_library(
     "//jvm/jvm-analysis-quickFix:analysis-quickFix_test_lib",
     "//java/codeserver/core:core_test_lib",
     "//platform/execution:execution_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
   ]
 )
 ### auto-generated section `build intellij.jvm.analysis.impl` end

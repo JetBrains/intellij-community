@@ -37,6 +37,7 @@ jvm_library(
     "//libraries/fastutil",
     "//platform/util/xmlDom",
     "//platform/lang-api:lang",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
   exports = [
     "//plugins/textmate/core",
@@ -80,6 +81,7 @@ jvm_library(
     "//libraries/fastutil:fastutil_test_lib",
     "//platform/util/xmlDom:xmlDom_test_lib",
     "//platform/lang-api:lang_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.textmate` end

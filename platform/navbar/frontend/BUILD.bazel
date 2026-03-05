@@ -33,6 +33,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/lang-api:lang",
     "//platform/project-frame",
+    "//platform/util/concurrency",
   ],
   exports = ["//platform/navbar/shared:navbar"]
 )
@@ -66,6 +67,7 @@ jvm_library(
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/lang-api:lang_test_lib",
     "//platform/project-frame:project-frame_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.navbar.frontend` end

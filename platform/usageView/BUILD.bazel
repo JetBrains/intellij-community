@@ -31,6 +31,8 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/projectModel-impl",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//jps/model-api:model",
   ]
 )
 
@@ -58,6 +60,8 @@ jvm_library(
     "//platform/analysis-impl:analysis-impl_test_lib",
     "//platform/editor-ui-ex:editor-ex_test_lib",
     "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//jps/model-api:model_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.usageView` end

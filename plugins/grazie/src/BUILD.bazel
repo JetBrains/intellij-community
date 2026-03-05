@@ -87,6 +87,7 @@ jvm_library(
     "//libraries/ktor/client-cio:libraries-ktor-client-cio",
     "//platform/forms_rt:java-guiForms-rt",
     "//platform/diff-impl",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
   exports = [
     "@lib//:grazie-core-ai-grazie-api-gateway-client-jvm",
@@ -170,6 +171,7 @@ jvm_library(
     "//libraries/ktor/client-cio:libraries-ktor-client-cio_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
     "//platform/diff-impl:diff-impl_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.grazie.core` end

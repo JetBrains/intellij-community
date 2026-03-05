@@ -109,6 +109,7 @@ jvm_library(
     "//java/java-psi-api:psi",
     "//platform/execution",
     "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
   exports = [
     "//java/openapi:java",
@@ -292,6 +293,8 @@ jvm_library(
     "//platform/testFramework/common:common_test_lib",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ],
   exports = [
     "//java/openapi:java",

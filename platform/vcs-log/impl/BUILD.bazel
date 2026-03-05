@@ -57,6 +57,7 @@ jvm_library(
     "//platform/util/storages",
     "//platform/vcs-impl/shared",
     "//platform/bookmarks",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -157,6 +158,8 @@ jvm_library(
     "//libraries/mockito:mockito_test_lib",
     "//platform/bookmarks",
     "//platform/bookmarks:bookmarks_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ],
   runtime_deps = [
     "//platform/platform-impl:ide-impl_test_lib",

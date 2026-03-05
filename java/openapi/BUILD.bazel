@@ -56,6 +56,9 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "@lib//:kotlin-stdlib",
     "//platform/execution",
+    "//libraries/fastutil",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/util/concurrency",
     ":platform_java-guiForms-rt_provided",
   ],
   exports = [
@@ -114,6 +117,9 @@ jvm_library(
     "//xml/xml-psi-api:psi_test_lib",
     "//platform/execution:execution_test_lib",
     "//platform/backend:backend_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java` end

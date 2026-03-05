@@ -34,6 +34,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "//libraries/kotlinx/datetime",
     "//platform/feedback",
+    "//platform/util/concurrency",
   ]
 )
 
@@ -64,6 +65,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/json:json_test_lib",
     "//libraries/kotlinx/datetime:datetime_test_lib",
     "//platform/feedback:feedback_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.tips` end

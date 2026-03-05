@@ -112,6 +112,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib-provided",
     "//platform/forms_rt:java-guiForms-rt",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ":platform_core_provided",
     ":platform_analysis-impl_provided",
     ":xml_psi_provided",
@@ -181,6 +182,7 @@ jvm_library(
     "//platform/refactoring",
     "//platform/refactoring:refactoring_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.xml.emmet` end

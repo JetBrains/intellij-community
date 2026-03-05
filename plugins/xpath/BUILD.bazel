@@ -52,6 +52,8 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/util/concurrency",
   ],
   runtime_deps = ["//xml/dom-impl"]
 )
@@ -131,6 +133,10 @@ jvm_library(
     "//platform/execution:execution_test_lib",
     "//platform/forms_rt:java-guiForms-rt",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
   ],
   runtime_deps = [
     "//platform/platform-impl/concurrency:concurrency_test_lib",

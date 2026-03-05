@@ -62,6 +62,8 @@ jvm_library(
     "//platform/projectModel-impl",
     "//platform/execution",
     "//platform/kernel/rpc",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/locking-impl",
   ]
 )
 
@@ -119,6 +121,8 @@ jvm_library(
     "//platform/projectModel-impl:projectModel-impl_test_lib",
     "//platform/execution:execution_test_lib",
     "//platform/kernel/rpc:rpc_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/locking-impl:locking-impl_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.internal` end

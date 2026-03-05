@@ -31,6 +31,7 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//platform/core-ui",
     "//xml/xml-analysis-api:analysis",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -58,6 +59,7 @@ jvm_library(
     "//xml/xml-psi-api:psi_test_lib",
     "//platform/core-ui:core-ui_test_lib",
     "//xml/xml-analysis-api:analysis_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.html.tools` end
@@ -122,6 +124,10 @@ jvm_library(
     "//platform/core-impl:core-impl_test_lib",
     "//xml/xml-analysis-api:analysis",
     "//xml/xml-analysis-api:analysis_test_lib",
+    "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
   ],
   runtime_deps = [":html-tools-tests"]
 )

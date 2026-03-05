@@ -76,6 +76,8 @@ jvm_library(
     "//platform/service-container:service-container_test_lib",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
   ],
   runtime_deps = [":kotlin-completion-tests-shared"]
 )

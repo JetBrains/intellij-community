@@ -70,6 +70,8 @@ jvm_library(
     "//xml/xml-psi-api:psi_test_lib",
     "//java/java-impl-refactorings:impl-refactorings",
     "//java/java-impl-refactorings:impl-refactorings_test_lib",
+    "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
   ],
   exports = [
     "//plugins/javaFX",

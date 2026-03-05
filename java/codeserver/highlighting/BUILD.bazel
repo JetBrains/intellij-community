@@ -27,6 +27,7 @@ jvm_library(
     "//java/java-indexing-api:indexing",
     "//java/codeserver/core",
     "//java/java-frontback-impl:frontback-impl",
+    "//libraries/fastutil",
   ],
   runtime_deps = ["//platform/backend"]
 )
@@ -51,6 +52,7 @@ jvm_library(
     "//java/codeserver/core:core_test_lib",
     "//java/java-frontback-impl:frontback-impl_test_lib",
     "//platform/backend:backend_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.codeserver.highlighting` end

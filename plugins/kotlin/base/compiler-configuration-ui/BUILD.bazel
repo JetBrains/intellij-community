@@ -38,6 +38,7 @@ jvm_library(
     "//java/idea-ui:ui",
     "//java/compiler/impl",
     "//platform/backend/workspace",
+    "//jps/jps-builders:build",
   ]
 )
 
@@ -69,6 +70,7 @@ jvm_library(
     "//java/idea-ui:ui_test_lib",
     "//java/compiler/impl:impl_test_lib",
     "//platform/backend/workspace:workspace_test_lib",
+    "//jps/jps-builders:build_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.compilerConfiguration.ui` end

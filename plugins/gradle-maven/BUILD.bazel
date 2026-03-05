@@ -27,6 +27,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//plugins/repository-search/common",
     "//plugins/gradle/java/groovy",
+    "//platform/util/concurrency",
   ]
 )
 
@@ -63,6 +64,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/gradle/java/groovy",
     "//plugins/gradle/java/groovy:groovy_test_lib",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
   ],
   runtime_deps = ["//platform/platform-impl:ide-impl_test_lib"]
 )

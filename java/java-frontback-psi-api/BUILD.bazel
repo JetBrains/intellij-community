@@ -19,6 +19,7 @@ jvm_library(
     "//platform/core-api:core",
     "@lib//:kotlin-stdlib",
     "//java/java-syntax:syntax",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
   exports = ["//java/java-syntax:syntax"]
 )
@@ -38,6 +39,7 @@ jvm_library(
     "//platform/util:util_test_lib",
     "//platform/core-api:core_test_lib",
     "//java/java-syntax:syntax_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.frontback.psi` end

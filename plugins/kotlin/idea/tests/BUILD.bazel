@@ -370,6 +370,8 @@ jvm_library(
     "//platform/platform-tests:tests_test_lib",
     "//plugins/kotlin/base/fe10/project-structure",
     "//plugins/kotlin/base/fe10/project-structure:project-structure_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ],
   exports = [
     "//plugins/kotlin/intellij.kotlin.base.test:base-test",

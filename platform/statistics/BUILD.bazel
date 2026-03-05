@@ -46,6 +46,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/core",
     "@lib//:com-jetbrains-fus-reporting-fus-api",
     "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
   exports = [
     "@lib//:com-jetbrains-fus-reporting-fus-api",
@@ -117,6 +118,8 @@ jvm_library(
     "//libraries/kotlinx/serialization/core:core_test_lib",
     "@lib//:com-jetbrains-fus-reporting-fus-api",
     "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ],
   exports = [
     "@lib//:com-jetbrains-fus-reporting-fus-api",
