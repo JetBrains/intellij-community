@@ -705,7 +705,7 @@ private class SetDefaultTreeStateStrategy : TreeTableStateStrategy<Any?> {
 
   override fun restoreState(table: TreeTable, state: Any?) {
     TreeUtil.expandAll(table.tree)
-    TreeUtil.promiseSelectFirstLeaf(table.tree)
+    TreeUtil.promiseSelectFirst(table.tree)
   }
 }
 
@@ -734,14 +734,14 @@ private class OnGroupingChangeTreeStateStrategy : TreeTableStateStrategy<OnGroup
 
 private class OnModelChangeTreeStateStrategy : TreeTableStateStrategy<OnModelChangeTreeStateStrategy.SelectionState> {
   override fun saveState(table: TreeTable): SelectionState {
-    val treeState = TreeState.createOn(table.tree, true, true)
+    val treeState = TreeState.createOn(table.tree, false, true)
     val firstSelectedIndex = table.selectionModel.minSelectionIndex
     return SelectionState(treeState, firstSelectedIndex)
   }
 
   override fun restoreState(table: TreeTable, state: SelectionState) {
     state.treeState.applyTo(table.tree)
-
+    TreeUtil.expandAll(table.tree)
     if (table.tree.selectionCount == 0) {
       val toSelect = state.firstSelectedIndex.coerceAtMost(table.rowCount - 1)
       table.selectionModel.setSelectionInterval(toSelect, toSelect)
