@@ -109,7 +109,7 @@ object DebuggerUtils {
     ): List<KtFile> {
         if (!isKotlinSourceFile(fileName)) return emptyList()
         if (DumbService.isDumb(project)
-            && FileBasedIndex.getInstance().currentDumbModeAccessType != DumbModeAccessType.RELIABLE_DATA_ONLY) return emptyList()
+            && FileBasedIndex.getInstance().getCurrentDumbModeAccessType(project) != DumbModeAccessType.RELIABLE_DATA_ONLY) return emptyList()
 
         val partFqName = className.fqNameForClassNameWithoutDollars
 
