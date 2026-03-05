@@ -45,6 +45,10 @@ class BackendMultipleBuildsView(
       return findValueById(buildContentId, BackendMultipleBuildsViewIdType)
     }
 
+    fun getBuildView(buildId: BuildId): BuildView? {
+      return findValueById(buildId, BuildDataIdType)?.view
+    }
+
     fun getBuildViewActions(buildId: BuildId): Array<AnAction> {
       return findValueById(buildId, BuildDataIdType)?.actions ?: AnAction.EMPTY_ARRAY
     }
@@ -121,6 +125,7 @@ class BackendMultipleBuildsView(
         buildInfo.buildId = id
 
         val buildView = BuildView(project, buildInfo, "build.toolwindow." + viewManager.viewName + ".selection.state", viewManager)
+        buildData.view = buildView
         buildData.actions = buildView.createConsoleActions()
         Disposer.register(this, buildView)
         buildView.whenDisposed {
@@ -272,6 +277,7 @@ class BackendMultipleBuildsView(
 
   private class BuildData(val activationCallback: Runnable?) {
     var actions: Array<AnAction>? = null
+    var view: BuildView? = null
   }
 
   private class BuildInfo(descriptor: BuildDescriptor) : DefaultBuildDescriptor(descriptor) {
