@@ -33,6 +33,8 @@ import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtReferenceMutateService
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.KtSimpleReference
+import org.jetbrains.kotlin.lexer.KtSingleValueToken
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.tail
@@ -58,6 +60,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementOrCallableRef
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
 import org.jetbrains.kotlin.resolve.ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE
+import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 /**
@@ -339,11 +342,18 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         val replacedExpr = if (isOperator) {
             val identifier = Name.identifier(shortName)
             val isUnary = OperatorNameConventions.UNARY_OPERATION_NAMES.contains(identifier)
-            val operator = OperatorNameConventions.TOKENS_BY_OPERATOR_NAME[identifier] ?: shortName
-            val newOperator = if (isUnary) {
-                (psiFactory.createExpression("${operator}0") as KtUnaryExpression).operationReference
-            } else {
-                psiFactory.createOperationName(operator)
+            val isAugmentedAssignment = operationSignTokenType in KtTokens.AUGMENTED_ASSIGNMENTS
+            val operatorToken = OperatorConventions.getOperationSymbolForName(identifier) as? KtSingleValueToken
+            val wasOperator = this.operationSignTokenType != null
+            val operator = operatorToken?.value?.takeIf { wasOperator } ?: shortName
+            val newOperator = when {
+                isAugmentedAssignment -> {
+                    val augmentedOperator = OperatorConventions.ASSIGNMENT_OPERATION_COUNTERPARTS.inverse()[operatorToken]?.value
+                        ?: operator
+                    psiFactory.createOperationName(augmentedOperator)
+                }
+                isUnary -> (psiFactory.createExpression("${operator}0") as KtUnaryExpression).operationReference
+                else -> psiFactory.createOperationName(operator)
             }
             replaced(newOperator)
         } else if (isInfix) {

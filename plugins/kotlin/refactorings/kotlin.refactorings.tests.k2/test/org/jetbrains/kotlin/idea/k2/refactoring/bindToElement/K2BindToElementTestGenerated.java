@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.refactoring.bindToElement;
 
@@ -849,9 +849,24 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("AugmentedAssign.kt")
+            public void testAugmentedAssign() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/bindToElement/operationReference/AugmentedAssign.kt");
+            }
+
+            @TestMetadata("AugmentedAssignViaBasicOperator.kt")
+            public void testAugmentedAssignViaBasicOperator() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/bindToElement/operationReference/AugmentedAssignViaBasicOperator.kt");
+            }
+
             @TestMetadata("Operator.kt")
             public void testOperator() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/bindToElement/operationReference/Operator.kt");
+            }
+
+            @TestMetadata("OperatorAsInfixCall.kt")
+            public void testOperatorAsInfixCall() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/bindToElement/operationReference/OperatorAsInfixCall.kt");
             }
 
             @TestMetadata("OperatorOverride.kt")

@@ -3,12 +3,19 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move
 
 import com.google.gson.JsonObject
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.refactoring.move.AbstractMultiModuleMoveTest
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
 
 abstract class AbstractK2MultiModuleMoveTest : AbstractMultiModuleMoveTest() {
+    override fun setUpProject() {
+        // Workaround for KTIJ-37556
+        Registry.get("intellij.platform.shared.source.support").setValue(false, testRootDisposable)
+        super.setUpProject()
+    }
+
     override fun runRefactoring(path: String, config: JsonObject, rootDir: VirtualFile, project: Project) {
         val action = when (config.getString("type")) {
             "MOVE_PACKAGES" -> K2MovePackageRefactoringAction
