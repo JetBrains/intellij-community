@@ -27,7 +27,7 @@ class ProofreadingService {
      * it extracts text contents from the file and performs checking.
      *
      * @param file the PSI file to check
-     * @param range the text ranges to check; if empty, an empty list of problems is returned
+     * @param range the text ranges to check. If empty, then returns all found problems
      * @return problems found in the specified range
      */
     @JvmStatic
@@ -36,9 +36,13 @@ class ProofreadingService {
         .filter { text -> range.isEmpty || text.rangesInFile.any { it.intersects(range) } }
       if (GrazieInspection.skipCheckingTooLargeTexts(texts)) return emptyList()
       val problems = texts.flatMap { text ->
-        CheckerRunner(text).run().filter { range.isEmpty || it.intersects(range) }
+        CheckerRunner(text).run()
+          .filter { range.isEmpty || it.intersects(range) }
+          .filter { it.hasSuggestions() }
       }
       return problems + TreeRuleChecker.checkTextLevelProblems(file)
+        .filter { problem -> range.isEmpty || problem.intersects(range) || problem.text.rangesInFile.any { it.intersects(range) } }
+        .filter { it.hasSuggestions() }
     }
 
     /**
@@ -87,7 +91,8 @@ class ProofreadingService {
     }
 
     // if a typo's suggestion is to be calculated locally, let's hope there will be suggestion
-    private fun TextProblem.hasSuggestions(): Boolean = this is TypoProblem && !this.isCloud || this.suggestions.isNotEmpty()
+    private fun TextProblem.hasSuggestions(): Boolean =
+      this is TypoProblem && !this.isCloud || this.suggestions.isNotEmpty() || this.customFixes.isNotEmpty()
 
     private fun getProjectConfigStamp(file: PsiFile): Long =
       PsiModificationTracker.getInstance(file.project).modificationCount + file.modificationStamp
