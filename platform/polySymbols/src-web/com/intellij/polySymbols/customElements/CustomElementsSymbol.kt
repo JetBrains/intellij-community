@@ -2,7 +2,6 @@
 package com.intellij.polySymbols.customElements
 
 import com.intellij.model.Pointer
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.polySymbols.PolySymbol
@@ -36,9 +35,6 @@ interface CustomElementsSymbol : PolySymbol, PolySymbolScope {
     get() = origin.typeSupport
 
   override fun createPointer(): Pointer<out CustomElementsSymbol>
-
-  override val modificationTracker: ModificationTracker
-    get() = ModificationTracker.NEVER_CHANGED
 
   companion object {
 

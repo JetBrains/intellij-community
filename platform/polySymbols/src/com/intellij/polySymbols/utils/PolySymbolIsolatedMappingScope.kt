@@ -4,7 +4,6 @@
 package com.intellij.polySymbols.utils
 
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
@@ -94,12 +93,6 @@ abstract class PolySymbolIsolatedMappingScope<T : PsiElement>(
         .applyIf(params.expandPatterns) { map { it.withMatchedKind(kind) } }
     }
     return result
-  }
-
-  final override val modificationTracker: ModificationTracker by lazy {
-    getCachedSubQueryExecutorAndScope().let { (executor, scopes) ->
-      CompositeModificationTracker(scopes.asSequence().map { it.modificationTracker }.plus(executor.modificationTracker))
-    }
   }
 
   final override fun equals(other: Any?): Boolean =
