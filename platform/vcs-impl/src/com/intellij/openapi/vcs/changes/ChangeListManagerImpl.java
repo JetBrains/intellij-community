@@ -77,6 +77,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.VcsConfirmationUtil;
 import com.intellij.vcs.commit.ChangeListCommitState;
 import com.intellij.vcs.commit.CommitModeManager;
 import com.intellij.vcs.commit.LocalChangesCommitter;
@@ -331,26 +332,32 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
                             : StringUtil.join(lists, list -> StringUtil.first(list.getName(), 30, true), BR);
     String question = VcsBundle.message("changes.empty.changelists.no.longer.active", lists.size(), changeListName);
 
+    VcsShowConfirmationOption option = new VcsShowConfirmationOption() {
+      @Override
+      public Value getValue() {
+        return config.REMOVE_EMPTY_INACTIVE_CHANGELISTS;
+      }
 
-    VcsConfirmationDialog dialog =
-      new VcsConfirmationDialog(project, VcsBundle.message("dialog.title.remove.empty.changelist"), VcsBundle.message("button.remove"),
-                                CommonBundle.getCancelButtonText(), new VcsShowConfirmationOption() {
-        @Override
-        public Value getValue() {
-          return config.REMOVE_EMPTY_INACTIVE_CHANGELISTS;
-        }
+      @Override
+      public void setValue(Value value) {
+        config.REMOVE_EMPTY_INACTIVE_CHANGELISTS = value;
+      }
 
-        @Override
-        public void setValue(Value value) {
-          config.REMOVE_EMPTY_INACTIVE_CHANGELISTS = value;
-        }
+      @Override
+      public boolean isPersistent() {
+        return true;
+      }
+    };
 
-        @Override
-        public boolean isPersistent() {
-          return true;
-        }
-      }, XmlStringUtil.wrapInHtml(question), VcsBundle.message("checkbox.remember.my.choice"));
-    return dialog.showAndGet();
+    return VcsConfirmationUtil.requestConfirmation(
+      option,
+      project,
+      XmlStringUtil.wrapInHtml(question),
+      VcsBundle.message("dialog.title.remove.empty.changelist"),
+      Messages.getQuestionIcon(),
+      VcsBundle.message("button.remove"),
+      CommonBundle.getCancelButtonText()
+    );
   }
 
   @Override
