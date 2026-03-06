@@ -289,8 +289,8 @@ def __is_numeric(col_type):
     return col_type.kind in ['i', 'f', 'u']
 
 def __analyze_boolean_column(column):
-    res = column.value_counts().sort_index().to_dict(OrderedDict)
-    return __add_custom_key_value_separator(res.items())
+    value_counts = column.value_counts().sort_index()
+    return __add_custom_key_value_separator(zip(value_counts.index, value_counts.values))
 
 
 def __analyze_categorical_column(column):
@@ -305,14 +305,14 @@ def __analyze_categorical_column(column):
     if len(value_counts) <= 3 or float(len(value_counts)) / all_values * 100 <= ColumnVisualisationUtils.UNIQUE_VALUES_PERCENT:
         # If column contains <= 3 unique values no `Other` category is shown, but all of these values and their percentages
         num_unique_values_to_show_in_vis = ColumnVisualisationUtils.MAX_UNIQUE_VALUES_TO_SHOW_IN_VIS - (0 if len(value_counts) == 3 else 1)
-        top_values = value_counts.iloc[:num_unique_values_to_show_in_vis].apply(lambda v_c_share: round(v_c_share * 100, 1)).to_dict()
-        top_values = OrderedDict(top_values)
+        top_values_series = value_counts.iloc[:num_unique_values_to_show_in_vis].apply(lambda v_c_share: round(v_c_share * 100, 1))
+        top_values_list = list(zip(top_values_series.index, top_values_series.values))
         if len(value_counts) == 3:
-            top_values[ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_OTHER] = -1
+            top_values_list.append((ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_OTHER, -1))
         else:
             others_count = value_counts.iloc[num_unique_values_to_show_in_vis:].sum()
-            top_values[ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_OTHER] = round(others_count * 100, 1)
-        result = __add_custom_key_value_separator(top_values.items())
+            top_values_list.append((ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_OTHER, round(others_count * 100, 1)))
+        result = __add_custom_key_value_separator(top_values_list)
     else:
         vis_type = ColumnVisualisationType.UNIQUE
         top_values = len(value_counts)
@@ -322,7 +322,8 @@ def __analyze_categorical_column(column):
 
 def __analyze_numeric_column(column):
     if column.size <= ColumnVisualisationUtils.NUM_BINS:
-        res = column.value_counts().sort_index().to_dict()
+        value_counts = column.value_counts().sort_index()
+        res = zip(value_counts.index, value_counts.values)
     else:
         def format_function(x):
             if x == int(x):
@@ -334,9 +335,8 @@ def __analyze_numeric_column(column):
 
         # so the long dash will be correctly viewed both on Mac and Windows
         bin_labels = ['{} {} {}'.format(format_function(bin_edges[i]), DASH_SYMBOL, format_function(bin_edges[i+1])) for i in range(ColumnVisualisationUtils.NUM_BINS)]
-        bin_count_dict = {label: count for label, count in zip(bin_labels, counts)}
-        res = bin_count_dict
-    return __add_custom_key_value_separator(res.items())
+        res = zip(bin_labels, counts)
+    return __add_custom_key_value_separator(res)
 
 
 def __add_custom_key_value_separator(pairs_list):

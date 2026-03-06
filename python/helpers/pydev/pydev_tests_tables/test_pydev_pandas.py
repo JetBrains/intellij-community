@@ -300,7 +300,7 @@ def test_get_info_format(setup_dataframe):
 
     __read_expected_from_file_and_compare_with_actual(
         actual=actual,
-        expected_file='test_data/pandas/getInfo_result.txt'
+        expected_file='test_data/pandas/' + test_data_dir + '/getInfo_result.txt'
     )
 
 
