@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.execution;
 
 import com.intellij.execution.ExecutionException;
@@ -54,22 +54,39 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigurationTestCase {
   public static ProcessOutput doStartTestsProcess(RunConfiguration configuration) throws ExecutionException {
     return doStartTestsProcess(configuration, Collections.emptySet());
   }
 
-  public static ProcessOutput doStartTestsProcess(RunConfiguration configuration, Set<String> tests) throws ExecutionException {
-    ProcessOutput processOutput = doStartTestsProcessAsync(configuration, tests);
+  @SuppressWarnings("SameParameterValue")
+  private static ProcessOutput wait(ProcessOutput processOutput, long timeoutInMilliseconds) {
     OSProcessHandler process = processOutput.process;
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-    process.waitFor(10000);
+    process.waitFor(timeoutInMilliseconds);
     process.destroyProcess();
     return processOutput;
   }
 
+  public static ProcessOutput doStartTestsProcess(RunConfiguration configuration, Consumer<JavaParameters> parametersCustomizer)
+    throws ExecutionException {
+    return wait(doStartTestsProcessAsync(configuration, Collections.emptySet(), parametersCustomizer), 10_000);
+  }
+
+  public static ProcessOutput doStartTestsProcess(RunConfiguration configuration, Set<String> tests) throws ExecutionException {
+    return wait(doStartTestsProcessAsync(configuration, tests), 10_000);
+  }
+
   public static ProcessOutput doStartTestsProcessAsync(RunConfiguration configuration, Set<String> tests) throws ExecutionException {
+    return doStartTestsProcessAsync(configuration, tests, null);
+  }
+
+  public static ProcessOutput doStartTestsProcessAsync(RunConfiguration configuration,
+                                                       Set<String> tests,
+                                                       Consumer<JavaParameters> parametersCustomizer)
+    throws ExecutionException {
     List<SMTestProxy> proxies = ContainerUtil.map(tests, hint -> {
       String path = hint.substring(hint.indexOf("://") + 3);
       String methodName = path.substring(path.lastIndexOf('/') + 1);
@@ -92,6 +109,7 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
     state.appendRepeatMode();
 
     JavaParameters parameters = state.getJavaParameters();
+    if (parametersCustomizer != null) parametersCustomizer.accept(parameters);
     parameters.setUseDynamicClasspath(project);
     state.resolveServerSocketPort(new LocalTargetEnvironment(new LocalTargetEnvironmentRequest()));
     //parameters.getVMParametersList().addParametersString("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5007");
