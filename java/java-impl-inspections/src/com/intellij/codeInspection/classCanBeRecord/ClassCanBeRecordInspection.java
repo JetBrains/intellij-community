@@ -85,7 +85,7 @@ public final class ClassCanBeRecordInspection extends BaseInspection implements 
       fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(
         this,
         "noHighlightingFixAvailable",
-        JavaBundle.message("class.can.be.record.record.highlight.when.semantics.change"),
+        JavaBundle.message("class.can.be.record.record.highlight.when.semantics.change.fix.name"),
         true
       ), false));
       PsiClass psiClass = ObjectUtils.tryCast(infos[1], PsiClass.class);
