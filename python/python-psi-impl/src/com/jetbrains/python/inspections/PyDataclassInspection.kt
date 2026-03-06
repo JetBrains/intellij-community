@@ -740,29 +740,21 @@ class PyDataclassInspection : PyInspection() {
     }
 
     private fun inspectFieldDefaultFactoryType(field : PyTargetExpression, cls: PyClass, dataclassParameters: PyDataclassParameters, context: TypeEvalContext) {
-      val fieldStub = resolveDataclassFieldParameters(cls, dataclassParameters, field, myTypeEvalContext)
-                      ?: return
-
+      val fieldStub = resolveDataclassFieldParameters(cls, dataclassParameters, field, myTypeEvalContext) ?: return
       if (!fieldStub.hasDefaultFactory) return
 
       val call = field.findAssignedValue() as? PyCallExpression ?: return
+
       val annotationExpr = field.annotation?.value ?: return
-      val expectedType = context.getType(annotationExpr)
+      val expectedType = PyTypingTypeProvider.getType(annotationExpr, context)?.get() ?: return
+      val expectedInstanceType = (expectedType as? PyClassType)?.toInstance() ?: expectedType
 
       val defaultFactoryExpr = call.getKeywordArgument("default_factory") ?: return
       val defaultFactoryType = context.getType(defaultFactoryExpr) ?: return
-      val returnType = (defaultFactoryType as? PyCallableType)
-        ?.getReturnType(context)
+      val returnType = (defaultFactoryType as? PyCallableType)?.getReturnType(context)
 
-      val expectedInstanceType: PyType? = when (expectedType) {
-        is PyClassType -> expectedType.toInstance()
-        else -> expectedType
-      }
-
-      val actualInstanceType: PyType = when (val actualType = returnType ?: defaultFactoryType) {
-        is PyClassType -> actualType.toInstance()
-        else -> actualType
-      }
+      val actualType = returnType ?: defaultFactoryType
+      val actualInstanceType = (actualType as? PyClassType)?.toInstance() ?: actualType
 
       if (!PyTypeChecker.match(expectedInstanceType, actualInstanceType, context)) {
         val expectedTypeName = PythonDocumentationProvider.getTypeName(expectedInstanceType, context)

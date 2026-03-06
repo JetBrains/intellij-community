@@ -460,6 +460,17 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-88042
+  public void testFieldDefaultFactoryUnionType() {
+    doTestByText("""
+                   from dataclasses import dataclass, field
+                   
+                   @dataclass
+                   class DC:
+                       a: str | None = field(default_factory=lambda: "")
+                   """);
+  }
+
   @Override
   protected void doTest() {
     myFixture.copyDirectoryToProject("packages/attr", "attr");
