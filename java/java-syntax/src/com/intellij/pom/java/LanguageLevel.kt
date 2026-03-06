@@ -123,11 +123,11 @@ enum class LanguageLevel {
   }
 
   /**
-   * @return corresponding non-preview level, `this` if this level is non-preview already, `null` if the level is unreleased and unsupported
+   * @return corresponding non-preview level, `this` for [JDK_X] and non-preview levels.
    */
-  fun getNonPreviewLevel(): LanguageLevel? {
-    if (!isPreview) return this
-    return ourStandardVersions[myVersion.feature]
+  fun getNonPreviewLevel(): LanguageLevel {
+    if (!isPreview || this == JDK_X) return this
+    return requireNotNull(ourStandardVersions[myVersion.feature])
   }
 
   val presentableText: @Nls String
