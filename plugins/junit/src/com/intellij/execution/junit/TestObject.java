@@ -640,7 +640,14 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   private static GlobalSearchScope getScopeForJUnit(@Nullable Module module, Project project) {
-    return module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, true) : GlobalSearchScope.allScope(project);
+    if (module == null) return GlobalSearchScope.allScope(project);
+    return switch (Registry.stringValue("junit.version.detection.scope")) {
+      case "runtime" -> GlobalSearchScope.moduleRuntimeScope(module, true);
+      case "module" -> GlobalSearchScope.moduleScope(module);
+      case "testsWithDependents" -> GlobalSearchScope.moduleTestsWithDependentsScope(module);
+      case "WithLibraries" -> GlobalSearchScope.moduleWithLibrariesScope(module);
+      default -> GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, true);
+    };
   }
 
   public static GlobalSearchScope getScopeForJUnit(JUnitConfiguration configuration) {
