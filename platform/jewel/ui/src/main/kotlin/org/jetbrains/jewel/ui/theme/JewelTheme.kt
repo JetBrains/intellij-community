@@ -17,6 +17,9 @@ import org.jetbrains.jewel.foundation.theme.ThemeColorPalette
 import org.jetbrains.jewel.foundation.theme.ThemeDefinition
 import org.jetbrains.jewel.foundation.theme.ThemeIconData
 import org.jetbrains.jewel.ui.ComponentStyling
+import org.jetbrains.jewel.ui.component.gotit.GotItTooltipStyle
+import org.jetbrains.jewel.ui.component.gotit.LocalGotItButtonStyle
+import org.jetbrains.jewel.ui.component.gotit.LocalGotItTooltipStyle
 import org.jetbrains.jewel.ui.component.styling.BadgeStyles
 import org.jetbrains.jewel.ui.component.styling.ButtonStyle
 import org.jetbrains.jewel.ui.component.styling.CheckboxStyle
@@ -214,6 +217,21 @@ public val JewelTheme.Companion.outlinedSlimButtonStyle: ButtonStyle
 public val JewelTheme.Companion.badgeStyle: BadgeStyles
     @Composable @ReadOnlyComposable get() = LocalBadgeStyle.current
 
+/** The styling for Got It tooltip components. */
+public val JewelTheme.Companion.gotItTooltipStyle: GotItTooltipStyle
+    @Composable @ReadOnlyComposable get() = LocalGotItTooltipStyle.current
+
+/** The styling for the buttons shown inside Got It tooltips. */
+public val JewelTheme.Companion.gotItButtonStyle: ButtonStyle
+    @Composable @ReadOnlyComposable get() = LocalGotItButtonStyle.current
+
+/**
+ * Applies [theme] and [styling] to the [content] composition tree with Swing compat mode disabled.
+ *
+ * @param theme The [ThemeDefinition] describing colors, metrics, and text styles.
+ * @param styling The [ComponentStyling] providing all component-level styles.
+ * @param content The composable content to render under this theme.
+ */
 @Composable
 public fun BaseJewelTheme(theme: ThemeDefinition, styling: ComponentStyling, content: @Composable () -> Unit) {
     BaseJewelTheme(theme, styling, swingCompatMode = false, content)
