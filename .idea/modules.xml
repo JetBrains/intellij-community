@@ -482,8 +482,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/editorconfig/frontend/intellij.editorconfig.frontend.iml" filepath="$PROJECT_DIR$/plugins/editorconfig/frontend/intellij.editorconfig.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/editorconfig/intellij.editorconfig.plugin.iml" filepath="$PROJECT_DIR$/plugins/editorconfig/intellij.editorconfig.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/editorconfig/intellij.editorconfig.plugin.main.iml" filepath="$PROJECT_DIR$/plugins/editorconfig/intellij.editorconfig.plugin.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-lucene/intellij.searchEverywhereLucene.plugin.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-lucene/intellij.searchEverywhereLucene.plugin.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-lucene/intellij.searchEverywhereLucene.plugin.main.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-lucene/intellij.searchEverywhereLucene.plugin.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/emojipicker/intellij.emojipicker.iml" filepath="$PROJECT_DIR$/plugins/emojipicker/intellij.emojipicker.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/evaluation-plugin/intellij.evaluationPlugin.iml" filepath="$PROJECT_DIR$/plugins/evaluation-plugin/intellij.evaluationPlugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/evaluation-plugin/core/intellij.evaluationPlugin.core.iml" filepath="$PROJECT_DIR$/plugins/evaluation-plugin/core/intellij.evaluationPlugin.core.iml" />
@@ -1742,6 +1740,12 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/restructuredtext/intellij.restructuredtext.iml" filepath="$PROJECT_DIR$/plugins/restructuredtext/intellij.restructuredtext.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-restructuredtext/intellij.restructuredtext.python.iml" filepath="$PROJECT_DIR$/python/python-restructuredtext/intellij.restructuredtext.python.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/restructuredtext/intellij.restructuredtext.tests.iml" filepath="$PROJECT_DIR$/plugins/restructuredtext/intellij.restructuredtext.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-lucene/backend/intellij.searchEverywhereLucene.backend.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-lucene/backend/intellij.searchEverywhereLucene.backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-lucene/common/intellij.searchEverywhereLucene.common.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-lucene/common/intellij.searchEverywhereLucene.common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-lucene/frontend/intellij.searchEverywhereLucene.frontend.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-lucene/frontend/intellij.searchEverywhereLucene.frontend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-lucene/intellij.searchEverywhereLucene.plugin.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-lucene/intellij.searchEverywhereLucene.plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-lucene/intellij.searchEverywhereLucene.plugin.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-lucene/intellij.searchEverywhereLucene.plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-lucene/intellij.searchEverywhereLucene.plugin.main.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-lucene/intellij.searchEverywhereLucene.plugin.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/intellij.searchEverywhereMl.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/intellij.searchEverywhereMl.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/ranking/core/intellij.searchEverywhereMl.ranking.core.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/ranking/core/intellij.searchEverywhereMl.ranking.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/ranking/core/intellij.searchEverywhereMl.ranking.core.tests.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/ranking/core/intellij.searchEverywhereMl.ranking.core.tests.iml" />
