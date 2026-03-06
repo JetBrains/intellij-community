@@ -469,6 +469,202 @@ http_file(
 )
 
 http_file(
+  name = "io_github_java-diff-utils-java-diff-utils-4_12_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/java-diff-utils/java-diff-utils/4.12/java-diff-utils-4.12.jar",
+  sha256 = "9990a2039778f6b4cc94790141c2868864eacee0620c6c459451121a901cd5b5",
+  downloaded_file_path = "java-diff-utils-4.12.jar"
+)
+
+http_file(
+  name = "io_github_java-diff-utils-java-diff-utils-4_12-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/java-diff-utils/java-diff-utils/4.12/java-diff-utils-4.12-sources.jar",
+  sha256 = "fa24217b6eaa115a05d4a8f0003fe913c62716ca2184d2e4f17de4a7d42a8822",
+  downloaded_file_path = "java-diff-utils-4.12-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_kotlinx-kotlinx-serialization-json-okio-jvm-1_9_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-okio-jvm/1.9.0/kotlinx-serialization-json-okio-jvm-1.9.0.jar",
+  sha256 = "ab772ae19a4f5b2f83c8b6a422b62047642b894984bb6244d04ffeb8bdc261bd",
+  downloaded_file_path = "kotlinx-serialization-json-okio-jvm-1.9.0.jar"
+)
+
+http_file(
+  name = "org_jetbrains_kotlinx-kotlinx-serialization-json-jvm-1_9_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-jvm/1.9.0/kotlinx-serialization-json-jvm-1.9.0.jar",
+  sha256 = "d94cc34cae39246a1af74fda63f9c4812ce12216ef641d5fa3bbbb539a6922d8",
+  downloaded_file_path = "kotlinx-serialization-json-jvm-1.9.0.jar"
+)
+
+http_file(
+  name = "com_squareup_okio-okio-jvm-3_9_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.9.0/okio-jvm-3.9.0.jar",
+  sha256 = "ddc386ff14bd25d5c934167196eaf45b18de4f28e1c55a4db37ae594cbfd37e4",
+  downloaded_file_path = "okio-jvm-3.9.0.jar"
+)
+
+http_file(
+  name = "org_jetbrains_kotlinx-kotlinx-serialization-json-okio-jvm-1_9_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-okio-jvm/1.9.0/kotlinx-serialization-json-okio-jvm-1.9.0-sources.jar",
+  sha256 = "ac638145ceb59331b5e47cf367315a5efcb0c958a95be4296033332f686dd857",
+  downloaded_file_path = "kotlinx-serialization-json-okio-jvm-1.9.0-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_kotlinx-kotlinx-serialization-json-jvm-1_9_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-jvm/1.9.0/kotlinx-serialization-json-jvm-1.9.0-sources.jar",
+  sha256 = "6c231ddcd95b1023ffb72cfd98023a035f666e46b4479d68eff83cc30892396c",
+  downloaded_file_path = "kotlinx-serialization-json-jvm-1.9.0-sources.jar"
+)
+
+http_file(
+  name = "com_squareup_okio-okio-jvm-3_9_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.9.0/okio-jvm-3.9.0-sources.jar",
+  sha256 = "b8ab886c9ed94b6d22fe177efab23f66b2fe0cbcfbf9902d226667038410e0b1",
+  downloaded_file_path = "okio-jvm-3.9.0-sources.jar"
+)
+
+http_file(
+  name = "org_junit_jupiter-junit-jupiter-engine-5_12_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-engine/5.12.2/junit-jupiter-engine-5.12.2.jar",
+  sha256 = "f576c06b8accde9985063b8bc80526cb980eec24dee0b7221fc8ddd7ace65800",
+  downloaded_file_path = "junit-jupiter-engine-5.12.2.jar"
+)
+
+http_file(
+  name = "org_junit_platform-junit-platform-engine-1_12_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-engine/1.12.2/junit-platform-engine-1.12.2.jar",
+  sha256 = "cef0efcb5bd2e05e2b808d38bab5c655089c0c3001527376e74cb606a7911ec8",
+  downloaded_file_path = "junit-platform-engine-1.12.2.jar"
+)
+
+http_file(
+  name = "org_opentest4j-opentest4j-1_3_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar",
+  sha256 = "48e2df636cab6563ced64dcdff8abb2355627cb236ef0bf37598682ddf742f1b",
+  downloaded_file_path = "opentest4j-1.3.0.jar"
+)
+
+http_file(
+  name = "org_junit_platform-junit-platform-commons-1_12_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-commons/1.12.2/junit-platform-commons-1.12.2.jar",
+  sha256 = "e683a01e85dfabea520c056ac6015a6162756e602ec653c0da85e233f0afbc18",
+  downloaded_file_path = "junit-platform-commons-1.12.2.jar"
+)
+
+http_file(
+  name = "org_junit_jupiter-junit-jupiter-api-5_12_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-api/5.12.2/junit-jupiter-api-5.12.2.jar",
+  sha256 = "0b9ca728e4bcd9adc57f29deb9556ff9ed5e08b4e8843b875aba4e4e3e04f092",
+  downloaded_file_path = "junit-jupiter-api-5.12.2.jar"
+)
+
+http_file(
+  name = "org_apiguardian-apiguardian-api-1_1_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar",
+  sha256 = "b509448ac506d607319f182537f0b35d71007582ec741832a1f111e5b5b70b38",
+  downloaded_file_path = "apiguardian-api-1.1.2.jar"
+)
+
+http_file(
+  name = "org_junit_jupiter-junit-jupiter-engine-5_12_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-engine/5.12.2/junit-jupiter-engine-5.12.2-sources.jar",
+  sha256 = "95d15c0094b9af41bbeffb3f1fc9bfffbf68676de1c9497c4b2a8350969cd19e",
+  downloaded_file_path = "junit-jupiter-engine-5.12.2-sources.jar"
+)
+
+http_file(
+  name = "org_junit_platform-junit-platform-engine-1_12_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-engine/1.12.2/junit-platform-engine-1.12.2-sources.jar",
+  sha256 = "054e04ebe1df5268cac321b30f1ef86f0e32a059ec71a6f36b8d0e44518a5157",
+  downloaded_file_path = "junit-platform-engine-1.12.2-sources.jar"
+)
+
+http_file(
+  name = "org_opentest4j-opentest4j-1_3_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0-sources.jar",
+  sha256 = "724a24e3a68267d5ebac9411389a15638a71e50c62448ffa58f59c34d5c1ebb2",
+  downloaded_file_path = "opentest4j-1.3.0-sources.jar"
+)
+
+http_file(
+  name = "org_junit_platform-junit-platform-commons-1_12_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-commons/1.12.2/junit-platform-commons-1.12.2-sources.jar",
+  sha256 = "4c4275ef8401d04156e9e447c140b57bc8799b889a3095e4809ac8ad4e09b9f4",
+  downloaded_file_path = "junit-platform-commons-1.12.2-sources.jar"
+)
+
+http_file(
+  name = "org_junit_jupiter-junit-jupiter-api-5_12_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-api/5.12.2/junit-jupiter-api-5.12.2-sources.jar",
+  sha256 = "babbccb7ae82e7ed4f14c140fb11f21fc6ac595c60e8cafe445fbc84d938adab",
+  downloaded_file_path = "junit-jupiter-api-5.12.2-sources.jar"
+)
+
+http_file(
+  name = "org_apiguardian-apiguardian-api-1_1_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2-sources.jar",
+  sha256 = "277a7a4315412817beb6655b324dc7276621e95ebff00b8bf65e17a27b685e2d",
+  downloaded_file_path = "apiguardian-api-1.1.2-sources.jar"
+)
+
+http_file(
+  name = "org_junit_platform-junit-platform-console-1_12_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-console/1.12.2/junit-platform-console-1.12.2.jar",
+  sha256 = "5f515f08356396fd611c0951fffd44820f96eac14a6eea0bf1e7835c53945ad1",
+  downloaded_file_path = "junit-platform-console-1.12.2.jar"
+)
+
+http_file(
+  name = "org_junit_platform-junit-platform-reporting-1_12_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-reporting/1.12.2/junit-platform-reporting-1.12.2.jar",
+  sha256 = "5d0964d0fba027a39cc0123b8521e72a1371157239d56dadcf929529074b8cb3",
+  downloaded_file_path = "junit-platform-reporting-1.12.2.jar"
+)
+
+http_file(
+  name = "org_junit_platform-junit-platform-launcher-1_12_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-launcher/1.12.2/junit-platform-launcher-1.12.2.jar",
+  sha256 = "dccf2c1fa0a977c53ad094ad859bfdddd524d97594b76307ad787de71985757f",
+  downloaded_file_path = "junit-platform-launcher-1.12.2.jar"
+)
+
+http_file(
+  name = "org_opentest4j_reporting-open-test-reporting-tooling-spi-0_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/opentest4j/reporting/open-test-reporting-tooling-spi/0.2.0/open-test-reporting-tooling-spi-0.2.0.jar",
+  sha256 = "772c9f9a09173bcfc29210257a1eb5e873561b5e931832ebf2d29c1ca5bf1af3",
+  downloaded_file_path = "open-test-reporting-tooling-spi-0.2.0.jar"
+)
+
+http_file(
+  name = "org_junit_platform-junit-platform-console-1_12_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-console/1.12.2/junit-platform-console-1.12.2-sources.jar",
+  sha256 = "25ec318b1cf170690a6d87c24e77cdca0460ac31f2a208c55145300b34d4d08c",
+  downloaded_file_path = "junit-platform-console-1.12.2-sources.jar"
+)
+
+http_file(
+  name = "org_junit_platform-junit-platform-reporting-1_12_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-reporting/1.12.2/junit-platform-reporting-1.12.2-sources.jar",
+  sha256 = "4620e9b17a17e96b6ce74ef99031f4b5631cc242937e3e659d191d9fc5b7f08c",
+  downloaded_file_path = "junit-platform-reporting-1.12.2-sources.jar"
+)
+
+http_file(
+  name = "org_junit_platform-junit-platform-launcher-1_12_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-launcher/1.12.2/junit-platform-launcher-1.12.2-sources.jar",
+  sha256 = "b25eddab9b9b48faa08ffb1646938d899cae2ae7ce528e1c86aac274798705fb",
+  downloaded_file_path = "junit-platform-launcher-1.12.2-sources.jar"
+)
+
+http_file(
+  name = "org_opentest4j_reporting-open-test-reporting-tooling-spi-0_2_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/opentest4j/reporting/open-test-reporting-tooling-spi/0.2.0/open-test-reporting-tooling-spi-0.2.0-sources.jar",
+  sha256 = "3a24af664af66dfb37c5c6400217f9f39e374a62ac51e8d672c40e5bbf93c996",
+  downloaded_file_path = "open-test-reporting-tooling-spi-0.2.0-sources.jar"
+)
+
+http_file(
   name = "com_jetbrains_fus_reporting-ap-validation-all-1_0_226_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/ap-validation-all/1.0.226/ap-validation-all-1.0.226.jar",
   sha256 = "ab4e876b971e66217e311205823a626d10fc751999998ea67fe637277151a224",
@@ -4263,13 +4459,6 @@ http_file(
 )
 
 http_file(
-  name = "io_github_java-diff-utils-java-diff-utils-4_12_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/java-diff-utils/java-diff-utils/4.12/java-diff-utils-4.12.jar",
-  sha256 = "9990a2039778f6b4cc94790141c2868864eacee0620c6c459451121a901cd5b5",
-  downloaded_file_path = "java-diff-utils-4.12.jar"
-)
-
-http_file(
   name = "com_carrotsearch-hppc-0_8_2-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/carrotsearch/hppc/0.8.2/hppc-0.8.2-sources.jar",
   sha256 = "6a2000b2a47df35cf6ea0eec3ae293299ab15524a48d77d28585a320deffdbe7",
@@ -4771,13 +4960,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16-sources.jar",
   sha256 = "d938ad56953d65bd0806f75d17535fa32b1fc5078051212e0b010f69ec43f8cb",
   downloaded_file_path = "slf4j-api-2.0.16-sources.jar"
-)
-
-http_file(
-  name = "io_github_java-diff-utils-java-diff-utils-4_12-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/java-diff-utils/java-diff-utils/4.12/java-diff-utils-4.12-sources.jar",
-  sha256 = "fa24217b6eaa115a05d4a8f0003fe913c62716ca2184d2e4f17de4a7d42a8822",
-  downloaded_file_path = "java-diff-utils-4.12-sources.jar"
 )
 
 http_file(
@@ -6636,24 +6818,10 @@ http_file(
 )
 
 http_file(
-  name = "org_opentest4j-opentest4j-1_3_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar",
-  sha256 = "48e2df636cab6563ced64dcdff8abb2355627cb236ef0bf37598682ddf742f1b",
-  downloaded_file_path = "opentest4j-1.3.0.jar"
-)
-
-http_file(
   name = "org_junit_platform-junit-platform-commons-1_13_4_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-commons/1.13.4/junit-platform-commons-1.13.4.jar",
   sha256 = "1c25ca641ebaae44ff3ad21ca1b2ef68d0dd84bfeb07c4805ba7840899b77408",
   downloaded_file_path = "junit-platform-commons-1.13.4.jar"
-)
-
-http_file(
-  name = "org_apiguardian-apiguardian-api-1_1_2_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar",
-  sha256 = "b509448ac506d607319f182537f0b35d71007582ec741832a1f111e5b5b70b38",
-  downloaded_file_path = "apiguardian-api-1.1.2.jar"
 )
 
 http_file(
@@ -6664,24 +6832,10 @@ http_file(
 )
 
 http_file(
-  name = "org_opentest4j-opentest4j-1_3_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0-sources.jar",
-  sha256 = "724a24e3a68267d5ebac9411389a15638a71e50c62448ffa58f59c34d5c1ebb2",
-  downloaded_file_path = "opentest4j-1.3.0-sources.jar"
-)
-
-http_file(
   name = "org_junit_platform-junit-platform-commons-1_13_4-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-commons/1.13.4/junit-platform-commons-1.13.4-sources.jar",
   sha256 = "8bf2533dc967499bbb957a7b1cd0be471a0794d8d792fcb47c66393edfa66503",
   downloaded_file_path = "junit-platform-commons-1.13.4-sources.jar"
-)
-
-http_file(
-  name = "org_apiguardian-apiguardian-api-1_1_2-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2-sources.jar",
-  sha256 = "277a7a4315412817beb6655b324dc7276621e95ebff00b8bf65e17a27b685e2d",
-  downloaded_file_path = "apiguardian-api-1.1.2-sources.jar"
 )
 
 http_file(
@@ -7970,20 +8124,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.9.0/kotlinx-serialization-core-jvm-1.9.0-sources.jar",
   sha256 = "72ad8ca04529d29cb144f845858f650ad8f06ca3a43c637967ca88b733c06f19",
   downloaded_file_path = "kotlinx-serialization-core-jvm-1.9.0-sources.jar"
-)
-
-http_file(
-  name = "org_jetbrains_kotlinx-kotlinx-serialization-json-jvm-1_9_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-jvm/1.9.0/kotlinx-serialization-json-jvm-1.9.0.jar",
-  sha256 = "d94cc34cae39246a1af74fda63f9c4812ce12216ef641d5fa3bbbb539a6922d8",
-  downloaded_file_path = "kotlinx-serialization-json-jvm-1.9.0.jar"
-)
-
-http_file(
-  name = "org_jetbrains_kotlinx-kotlinx-serialization-json-jvm-1_9_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-jvm/1.9.0/kotlinx-serialization-json-jvm-1.9.0-sources.jar",
-  sha256 = "6c231ddcd95b1023ffb72cfd98023a035f666e46b4479d68eff83cc30892396c",
-  downloaded_file_path = "kotlinx-serialization-json-jvm-1.9.0-sources.jar"
 )
 
 http_file(
@@ -13776,24 +13916,10 @@ http_file(
 )
 
 http_file(
-  name = "com_squareup_okio-okio-jvm-3_9_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.9.0/okio-jvm-3.9.0.jar",
-  sha256 = "ddc386ff14bd25d5c934167196eaf45b18de4f28e1c55a4db37ae594cbfd37e4",
-  downloaded_file_path = "okio-jvm-3.9.0.jar"
-)
-
-http_file(
   name = "com_squareup_okhttp3-okhttp-5_0_0-alpha_14-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okhttp3/okhttp/5.0.0-alpha.14/okhttp-5.0.0-alpha.14-sources.jar",
   sha256 = "f596d92475c49de809a3ca7a5f2558f06a3b51c00c96ee8037c18b6618ac9d41",
   downloaded_file_path = "okhttp-5.0.0-alpha.14-sources.jar"
-)
-
-http_file(
-  name = "com_squareup_okio-okio-jvm-3_9_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.9.0/okio-jvm-3.9.0-sources.jar",
-  sha256 = "b8ab886c9ed94b6d22fe177efab23f66b2fe0cbcfbf9902d226667038410e0b1",
-  downloaded_file_path = "okio-jvm-3.9.0-sources.jar"
 )
 
 http_file(

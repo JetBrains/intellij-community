@@ -1,3 +1,7 @@
+.ownership/lib
+.ownership/lib-test
+.ownership/monorepo-resolver
+.ownership/runtime-resolver
 RegExpSupport
 aether-dependency-resolver
 android-customization

@@ -857,6 +857,265 @@ jvm_import(
 )
 
 copy_file(
+  name = "io.github.java-diff-utils/java-diff-utils-4.12.jar_copy",
+  src = "@io_github_java-diff-utils-java-diff-utils-4_12_http//file",
+  out = "io.github.java-diff-utils/java-diff-utils-4.12.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "codeowners-java-diff-utils",
+  jar = "@io_github_java-diff-utils-java-diff-utils-4_12_http//file",
+  source_jar = "@io_github_java-diff-utils-java-diff-utils-4_12-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.kotlinx/kotlinx-serialization-json-okio-jvm-1.9.0.jar_copy",
+  src = "@org_jetbrains_kotlinx-kotlinx-serialization-json-okio-jvm-1_9_0_http//file",
+  out = "org.jetbrains.kotlinx/kotlinx-serialization-json-okio-jvm-1.9.0.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.kotlinx/kotlinx-serialization-json-jvm-1.9.0.jar_copy",
+  src = "@org_jetbrains_kotlinx-kotlinx-serialization-json-jvm-1_9_0_http//file",
+  out = "org.jetbrains.kotlinx/kotlinx-serialization-json-jvm-1.9.0.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "com.squareup.okio/okio-jvm-3.9.0.jar_copy",
+  src = "@com_squareup_okio-okio-jvm-3_9_0_http//file",
+  out = "com.squareup.okio/okio-jvm-3.9.0.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "codeowners-kotlinx-serialization-json-okio",
+  exports = [
+    ":org_jetbrains_kotlinx-kotlinx-serialization-json-okio-jvm-1_9_0_http_import",
+    ":org_jetbrains_kotlinx-kotlinx-serialization-json-jvm-1_9_0_http_import",
+    ":com_squareup_okio-okio-jvm-3_9_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "org_jetbrains_kotlinx-kotlinx-serialization-json-okio-jvm-1_9_0_http_import",
+  jar = "@org_jetbrains_kotlinx-kotlinx-serialization-json-okio-jvm-1_9_0_http//file",
+  source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-json-okio-jvm-1_9_0-sources_http//file"
+)
+
+jvm_import(
+  name = "org_jetbrains_kotlinx-kotlinx-serialization-json-jvm-1_9_0_http_import",
+  jar = "@org_jetbrains_kotlinx-kotlinx-serialization-json-jvm-1_9_0_http//file",
+  source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-json-jvm-1_9_0-sources_http//file"
+)
+
+jvm_import(
+  name = "com_squareup_okio-okio-jvm-3_9_0_http_import",
+  jar = "@com_squareup_okio-okio-jvm-3_9_0_http//file",
+  source_jar = "@com_squareup_okio-okio-jvm-3_9_0-sources_http//file"
+)
+
+java_library(
+  name = "codeowners-monorepo-resolver-kotlinx-serialization-json-okio",
+  exports = [
+    ":org_jetbrains_kotlinx-kotlinx-serialization-json-okio-jvm-1_9_0_http_import",
+    ":org_jetbrains_kotlinx-kotlinx-serialization-json-jvm-1_9_0_http_import",
+    ":com_squareup_okio-okio-jvm-3_9_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.junit.jupiter/junit-jupiter-engine-5.12.2.jar_copy",
+  src = "@org_junit_jupiter-junit-jupiter-engine-5_12_2_http//file",
+  out = "org.junit.jupiter/junit-jupiter-engine-5.12.2.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.junit.platform/junit-platform-engine-1.12.2.jar_copy",
+  src = "@org_junit_platform-junit-platform-engine-1_12_2_http//file",
+  out = "org.junit.platform/junit-platform-engine-1.12.2.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.opentest4j/opentest4j-1.3.0.jar_copy",
+  src = "@org_opentest4j-opentest4j-1_3_0_http//file",
+  out = "org.opentest4j/opentest4j-1.3.0.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.junit.platform/junit-platform-commons-1.12.2.jar_copy",
+  src = "@org_junit_platform-junit-platform-commons-1_12_2_http//file",
+  out = "org.junit.platform/junit-platform-commons-1.12.2.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.junit.jupiter/junit-jupiter-api-5.12.2.jar_copy",
+  src = "@org_junit_jupiter-junit-jupiter-api-5_12_2_http//file",
+  out = "org.junit.jupiter/junit-jupiter-api-5.12.2.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.apiguardian/apiguardian-api-1.1.2.jar_copy",
+  src = "@org_apiguardian-apiguardian-api-1_1_2_http//file",
+  out = "org.apiguardian/apiguardian-api-1.1.2.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "codeowners-test-junit-jupiter-engine",
+  exports = [
+    ":org_junit_jupiter-junit-jupiter-engine-5_12_2_http_import",
+    ":org_junit_platform-junit-platform-engine-1_12_2_http_import",
+    ":org_opentest4j-opentest4j-1_3_0_http_import",
+    ":org_junit_platform-junit-platform-commons-1_12_2_http_import",
+    ":org_junit_jupiter-junit-jupiter-api-5_12_2_http_import",
+    ":org_apiguardian-apiguardian-api-1_1_2_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "org_junit_jupiter-junit-jupiter-engine-5_12_2_http_import",
+  jar = "@org_junit_jupiter-junit-jupiter-engine-5_12_2_http//file",
+  source_jar = "@org_junit_jupiter-junit-jupiter-engine-5_12_2-sources_http//file"
+)
+
+jvm_import(
+  name = "org_junit_platform-junit-platform-engine-1_12_2_http_import",
+  jar = "@org_junit_platform-junit-platform-engine-1_12_2_http//file",
+  source_jar = "@org_junit_platform-junit-platform-engine-1_12_2-sources_http//file"
+)
+
+jvm_import(
+  name = "org_opentest4j-opentest4j-1_3_0_http_import",
+  jar = "@org_opentest4j-opentest4j-1_3_0_http//file",
+  source_jar = "@org_opentest4j-opentest4j-1_3_0-sources_http//file"
+)
+
+jvm_import(
+  name = "org_junit_platform-junit-platform-commons-1_12_2_http_import",
+  jar = "@org_junit_platform-junit-platform-commons-1_12_2_http//file",
+  source_jar = "@org_junit_platform-junit-platform-commons-1_12_2-sources_http//file"
+)
+
+jvm_import(
+  name = "org_junit_jupiter-junit-jupiter-api-5_12_2_http_import",
+  jar = "@org_junit_jupiter-junit-jupiter-api-5_12_2_http//file",
+  source_jar = "@org_junit_jupiter-junit-jupiter-api-5_12_2-sources_http//file"
+)
+
+jvm_import(
+  name = "org_apiguardian-apiguardian-api-1_1_2_http_import",
+  jar = "@org_apiguardian-apiguardian-api-1_1_2_http//file",
+  source_jar = "@org_apiguardian-apiguardian-api-1_1_2-sources_http//file"
+)
+
+copy_file(
+  name = "org.junit.platform/junit-platform-console-1.12.2.jar_copy",
+  src = "@org_junit_platform-junit-platform-console-1_12_2_http//file",
+  out = "org.junit.platform/junit-platform-console-1.12.2.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.junit.platform/junit-platform-reporting-1.12.2.jar_copy",
+  src = "@org_junit_platform-junit-platform-reporting-1_12_2_http//file",
+  out = "org.junit.platform/junit-platform-reporting-1.12.2.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.junit.platform/junit-platform-launcher-1.12.2.jar_copy",
+  src = "@org_junit_platform-junit-platform-launcher-1_12_2_http//file",
+  out = "org.junit.platform/junit-platform-launcher-1.12.2.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.opentest4j.reporting/open-test-reporting-tooling-spi-0.2.0.jar_copy",
+  src = "@org_opentest4j_reporting-open-test-reporting-tooling-spi-0_2_0_http//file",
+  out = "org.opentest4j.reporting/open-test-reporting-tooling-spi-0.2.0.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "codeowners-test-junit-platform-console",
+  exports = [
+    ":org_junit_platform-junit-platform-console-1_12_2_http_import",
+    ":org_junit_platform-junit-platform-reporting-1_12_2_http_import",
+    ":org_junit_platform-junit-platform-launcher-1_12_2_http_import",
+    ":org_junit_platform-junit-platform-engine-1_12_2_http_import",
+    ":org_opentest4j-opentest4j-1_3_0_http_import",
+    ":org_junit_platform-junit-platform-commons-1_12_2_http_import",
+    ":org_opentest4j_reporting-open-test-reporting-tooling-spi-0_2_0_http_import",
+    ":org_apiguardian-apiguardian-api-1_1_2_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "org_junit_platform-junit-platform-console-1_12_2_http_import",
+  jar = "@org_junit_platform-junit-platform-console-1_12_2_http//file",
+  source_jar = "@org_junit_platform-junit-platform-console-1_12_2-sources_http//file"
+)
+
+jvm_import(
+  name = "org_junit_platform-junit-platform-reporting-1_12_2_http_import",
+  jar = "@org_junit_platform-junit-platform-reporting-1_12_2_http//file",
+  source_jar = "@org_junit_platform-junit-platform-reporting-1_12_2-sources_http//file"
+)
+
+jvm_import(
+  name = "org_junit_platform-junit-platform-launcher-1_12_2_http_import",
+  jar = "@org_junit_platform-junit-platform-launcher-1_12_2_http//file",
+  source_jar = "@org_junit_platform-junit-platform-launcher-1_12_2-sources_http//file"
+)
+
+jvm_import(
+  name = "org_opentest4j_reporting-open-test-reporting-tooling-spi-0_2_0_http_import",
+  jar = "@org_opentest4j_reporting-open-test-reporting-tooling-spi-0_2_0_http//file",
+  source_jar = "@org_opentest4j_reporting-open-test-reporting-tooling-spi-0_2_0-sources_http//file"
+)
+
+java_library(
+  name = "codeowners-test-junit-platform-reporting",
+  exports = [
+    ":org_junit_platform-junit-platform-reporting-1_12_2_http_import",
+    ":org_junit_platform-junit-platform-launcher-1_12_2_http_import",
+    ":org_junit_platform-junit-platform-engine-1_12_2_http_import",
+    ":org_opentest4j-opentest4j-1_3_0_http_import",
+    ":org_junit_platform-junit-platform-commons-1_12_2_http_import",
+    ":org_apiguardian-apiguardian-api-1_1_2_http_import",
+    ":org_opentest4j_reporting-open-test-reporting-tooling-spi-0_2_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
   name = "com.jetbrains.fus.reporting/ap-validation-all-1.0.226.jar_copy",
   src = "@com_jetbrains_fus_reporting-ap-validation-all-1_0_226_http//file",
   out = "com.jetbrains.fus.reporting/ap-validation-all-1.0.226.jar",
@@ -5258,14 +5517,6 @@ copy_file(
   visibility = ["//visibility:public"]
 )
 
-copy_file(
-  name = "io.github.java-diff-utils/java-diff-utils-4.12.jar_copy",
-  src = "@io_github_java-diff-utils-java-diff-utils-4_12_http//file",
-  out = "io.github.java-diff-utils/java-diff-utils-4.12.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
 java_library(
   name = "grazie-tests-pro-jetbrains-intellij-deps-languagetool-core",
   exports = [
@@ -8198,25 +8449,9 @@ copy_file(
 )
 
 copy_file(
-  name = "org.opentest4j/opentest4j-1.3.0.jar_copy",
-  src = "@org_opentest4j-opentest4j-1_3_0_http//file",
-  out = "org.opentest4j/opentest4j-1.3.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
   name = "org.junit.platform/junit-platform-commons-1.13.4.jar_copy",
   src = "@org_junit_platform-junit-platform-commons-1_13_4_http//file",
   out = "org.junit.platform/junit-platform-commons-1.13.4.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.apiguardian/apiguardian-api-1.1.2.jar_copy",
-  src = "@org_apiguardian-apiguardian-api-1_1_2_http//file",
-  out = "org.apiguardian/apiguardian-api-1.1.2.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -8239,21 +8474,9 @@ jvm_import(
 )
 
 jvm_import(
-  name = "org_opentest4j-opentest4j-1_3_0_http_import",
-  jar = "@org_opentest4j-opentest4j-1_3_0_http//file",
-  source_jar = "@org_opentest4j-opentest4j-1_3_0-sources_http//file"
-)
-
-jvm_import(
   name = "org_junit_platform-junit-platform-commons-1_13_4_http_import",
   jar = "@org_junit_platform-junit-platform-commons-1_13_4_http//file",
   source_jar = "@org_junit_platform-junit-platform-commons-1_13_4-sources_http//file"
-)
-
-jvm_import(
-  name = "org_apiguardian-apiguardian-api-1_1_2_http_import",
-  jar = "@org_apiguardian-apiguardian-api-1_1_2_http//file",
-  source_jar = "@org_apiguardian-apiguardian-api-1_1_2-sources_http//file"
 )
 
 java_library(
@@ -10085,14 +10308,6 @@ jvm_import(
   jar = "@org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_9_0_http//file",
   source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_9_0-sources_http//file",
   exported_compiler_plugins = ["@lib//:kotlin-serialization-plugin"],
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.kotlinx/kotlinx-serialization-json-jvm-1.9.0.jar_copy",
-  src = "@org_jetbrains_kotlinx-kotlinx-serialization-json-jvm-1_9_0_http//file",
-  out = "org.jetbrains.kotlinx/kotlinx-serialization-json-jvm-1.9.0.jar",
-  allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
@@ -17501,14 +17716,6 @@ copy_file(
   visibility = ["//visibility:public"]
 )
 
-copy_file(
-  name = "com.squareup.okio/okio-jvm-3.9.0.jar_copy",
-  src = "@com_squareup_okio-okio-jvm-3_9_0_http//file",
-  out = "com.squareup.okio/okio-jvm-3.9.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
 java_library(
   name = "okhttp",
   exports = [
@@ -17522,12 +17729,6 @@ jvm_import(
   name = "com_squareup_okhttp3-okhttp-5_0_0-alpha_14_http_import",
   jar = "@com_squareup_okhttp3-okhttp-5_0_0-alpha_14_http//file",
   source_jar = "@com_squareup_okhttp3-okhttp-5_0_0-alpha_14-sources_http//file"
-)
-
-jvm_import(
-  name = "com_squareup_okio-okio-jvm-3_9_0_http_import",
-  jar = "@com_squareup_okio-okio-jvm-3_9_0_http//file",
-  source_jar = "@com_squareup_okio-okio-jvm-3_9_0-sources_http//file"
 )
 
 copy_file(

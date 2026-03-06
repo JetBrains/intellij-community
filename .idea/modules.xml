@@ -355,6 +355,10 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/ant/jps-plugin/intellij.ant.jps.tests.iml" filepath="$PROJECT_DIR$/plugins/ant/jps-plugin/intellij.ant.jps.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/built-in-help/intellij.builtInHelp.iml" filepath="$PROJECT_DIR$/plugins/built-in-help/intellij.builtInHelp.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/classic-ui/intellij.classic.ui.iml" filepath="$PROJECT_DIR$/plugins/classic-ui/intellij.classic.ui.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.ownership/lib/intellij.codeowners.iml" filepath="$PROJECT_DIR$/.ownership/lib/intellij.codeowners.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.ownership/monorepo-resolver/intellij.codeowners.monorepo.resolver.iml" filepath="$PROJECT_DIR$/.ownership/monorepo-resolver/intellij.codeowners.monorepo.resolver.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.ownership/runtime-resolver/intellij.codeowners.runtime.resolver.iml" filepath="$PROJECT_DIR$/.ownership/runtime-resolver/intellij.codeowners.runtime.resolver.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.ownership/lib-test/intellij.codeowners.test.iml" filepath="$PROJECT_DIR$/.ownership/lib-test/intellij.codeowners.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/color-schemes/all-hallows-eve-color-scheme/intellij.color.scheme.all_hallows_eve.iml" filepath="$PROJECT_DIR$/plugins/color-schemes/all-hallows-eve-color-scheme/intellij.color.scheme.all_hallows_eve.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/color-schemes/blackboard-color-scheme/intellij.color.scheme.blackboard.iml" filepath="$PROJECT_DIR$/plugins/color-schemes/blackboard-color-scheme/intellij.color.scheme.blackboard.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/color-schemes/cobalt-color-scheme/intellij.color.scheme.cobalt.iml" filepath="$PROJECT_DIR$/plugins/color-schemes/cobalt-color-scheme/intellij.color.scheme.cobalt.iml" />
