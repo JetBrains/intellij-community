@@ -118,6 +118,8 @@ private data class ProjectTreeRowPresentation(
   val isLoading: Boolean,
 )
 
+private val DEFAULT_PROJECT_BRANCH_NAMES = setOf("main", "master")
+
 private data class WorktreeTreeRowPresentation(
   val name: @NlsSafe String,
   val branch: String?,
@@ -143,7 +145,7 @@ internal fun sessionTreeNodePresentation(node: SessionTreeNode, duplicateProject
         isOpen = node.project.isOpen,
         hasOpenWorktree = node.project.worktrees.any { it.isOpen },
         hasWorktrees = hasWorktrees,
-        branch = if (hasWorktrees) node.project.branch else null,
+        branch = visibleProjectBranch(node.project),
         isLoading = node.project.isLoading,
       )
     }
@@ -166,6 +168,15 @@ internal fun sessionTreeNodePresentation(node: SessionTreeNode, duplicateProject
     is SessionTreeNode.MoreProjects -> node.hiddenCount
     is SessionTreeNode.MoreThreads -> MoreThreadsTreeRowPresentation(node.hiddenCount)
   }
+}
+
+internal fun visibleProjectBranch(project: AgentProjectSessions): @NlsSafe String? {
+  if (project.worktrees.isNotEmpty()) {
+    return null
+  }
+
+  val branch = project.branch?.takeUnless { it.isBlank() } ?: return null
+  return branch.takeUnless { it in DEFAULT_PROJECT_BRANCH_NAMES }
 }
 
 internal fun computeVisibleProjects(

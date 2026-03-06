@@ -216,6 +216,28 @@ class AgentSessionRefreshServiceIntegrationTest {
   }
 
   @Test
+  fun refreshCatalogClearsStandaloneProjectBranchWhenCatalogStopsProvidingIt() = runBlocking(Dispatchers.Default) {
+    var entries = listOf(openProjectEntry(PROJECT_PATH, "Project A", branch = "feature-x"))
+
+    withService(
+      sessionSourcesProvider = { emptyList() },
+      projectEntriesProvider = { entries },
+    ) { service ->
+      service.refresh()
+      waitForCondition {
+        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.branch == "feature-x"
+      }
+
+      entries = listOf(openProjectEntry(PROJECT_PATH, "Project A"))
+      service.refreshCatalogAndLoadNewlyOpened()
+
+      waitForCondition {
+        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.branch == null
+      }
+    }
+  }
+
+  @Test
   fun lifecycleCatalogSyncMarksClosedProjectWithoutReloading() = runBlocking(Dispatchers.Default) {
     var entries = listOf(openProjectEntry(PROJECT_PATH, "Project A"))
     val openLoadCount = AtomicInteger(0)

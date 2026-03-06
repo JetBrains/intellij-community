@@ -1,6 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.sessions.git.GitWorktreeInfo
+import com.intellij.agent.workbench.sessions.model.ProjectEntry
+import com.intellij.agent.workbench.sessions.model.WorktreeEntry
+import com.intellij.agent.workbench.sessions.service.buildRepoProjectEntry
 import com.intellij.agent.workbench.sessions.service.resolveOpenProjectPath
 import com.intellij.agent.workbench.sessions.service.resolveRecentPathCandidate
 import org.assertj.core.api.Assertions.assertThat
@@ -85,5 +89,46 @@ class AgentSessionProjectCatalogTest {
     )
 
     assertThat(matched?.id).isEqualTo("b")
+  }
+
+  @Test
+  fun buildRepoProjectEntryAssignsMainBranchToStandaloneRepo() {
+    val mainRaw = ProjectEntry(path = "/work/project-a", name = "Project A", project = null)
+
+    val entry = buildRepoProjectEntry(
+      mainRaw = mainRaw,
+      repoRoot = mainRaw.path,
+      worktreeEntries = emptyList(),
+      discoveredWorktrees = listOf(
+        GitWorktreeInfo(path = mainRaw.path, branch = "refs/heads/feature-x", isMain = true)
+      ),
+    )
+
+    assertThat(entry).isEqualTo(mainRaw.copy(branch = "feature-x"))
+  }
+
+  @Test
+  fun buildRepoProjectEntryKeepsWorktreesAndMainBranchForRepoGroups() {
+    val mainRaw = ProjectEntry(path = "/work/project-a", name = "Project A", project = null)
+    val worktreeEntries = listOf(
+      WorktreeEntry(
+        path = "/work/project-a-feature",
+        name = "project-a-feature",
+        branch = "feature-x",
+        project = null,
+      )
+    )
+
+    val entry = buildRepoProjectEntry(
+      mainRaw = mainRaw,
+      repoRoot = mainRaw.path,
+      worktreeEntries = worktreeEntries,
+      discoveredWorktrees = listOf(
+        GitWorktreeInfo(path = mainRaw.path, branch = "refs/heads/main", isMain = true),
+        GitWorktreeInfo(path = "/work/project-a-feature", branch = "refs/heads/feature-x", isMain = false),
+      ),
+    )
+
+    assertThat(entry).isEqualTo(mainRaw.copy(branch = "main", worktreeEntries = worktreeEntries))
   }
 }

@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.sessions
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
+import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.state.InMemorySessionTreeUiState
 import com.intellij.agent.workbench.sessions.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.tree.buildSessionTreeModel
@@ -151,5 +152,72 @@ class AgentSessionsTreeModelDiffTest {
     assertThat(diff.structureChangedIds.isEmpty()).isTrue()
     assertThat(diff.contentChangedIds)
       .isEqualTo(setOf(SessionTreeId.Thread("/work/project-a", AgentSessionProvider.CODEX, "thread-1")))
+  }
+
+  @Test
+  fun detectsContentChangesWhenVisibleStandaloneProjectBranchChanges() {
+    val oldModel = buildSessionTreeModel(
+      projects = listOf(
+        AgentProjectSessions(path = "/work/project-a", name = "Project A", branch = "main", isOpen = true, hasLoaded = true)
+      ),
+      visibleClosedProjectCount = Int.MAX_VALUE,
+      visibleThreadCounts = emptyMap(),
+      treeUiState = InMemorySessionTreeUiState(),
+    )
+    val newModel = buildSessionTreeModel(
+      projects = listOf(
+        AgentProjectSessions(path = "/work/project-a", name = "Project A", branch = "feature-x", isOpen = true, hasLoaded = true)
+      ),
+      visibleClosedProjectCount = Int.MAX_VALUE,
+      visibleThreadCounts = emptyMap(),
+      treeUiState = InMemorySessionTreeUiState(),
+    )
+
+    val diff = diffSessionTreeModels(oldModel, newModel)
+
+    assertThat(diff.rootChanged).isFalse()
+    assertThat(diff.structureChangedIds).isEmpty()
+    assertThat(diff.contentChangedIds).isEqualTo(setOf(SessionTreeId.Project("/work/project-a")))
+  }
+
+  @Test
+  fun ignoresProjectBranchChangesWhenWorktreeBackedProjectBranchBadgeStaysHidden() {
+    val worktree = AgentWorktree(path = "/work/project-a-feature", name = "project-a-feature", branch = "feature-x", isOpen = false)
+    val oldModel = buildSessionTreeModel(
+      projects = listOf(
+        AgentProjectSessions(
+          path = "/work/project-a",
+          name = "Project A",
+          branch = "main",
+          isOpen = true,
+          hasLoaded = true,
+          worktrees = listOf(worktree),
+        )
+      ),
+      visibleClosedProjectCount = Int.MAX_VALUE,
+      visibleThreadCounts = emptyMap(),
+      treeUiState = InMemorySessionTreeUiState(),
+    )
+    val newModel = buildSessionTreeModel(
+      projects = listOf(
+        AgentProjectSessions(
+          path = "/work/project-a",
+          name = "Project A",
+          branch = "feature-base",
+          isOpen = true,
+          hasLoaded = true,
+          worktrees = listOf(worktree),
+        )
+      ),
+      visibleClosedProjectCount = Int.MAX_VALUE,
+      visibleThreadCounts = emptyMap(),
+      treeUiState = InMemorySessionTreeUiState(),
+    )
+
+    val diff = diffSessionTreeModels(oldModel, newModel)
+
+    assertThat(diff.rootChanged).isFalse()
+    assertThat(diff.structureChangedIds).isEmpty()
+    assertThat(diff.contentChangedIds).isEmpty()
   }
 }

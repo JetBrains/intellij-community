@@ -14,7 +14,7 @@ targets:
 # Agent Threads Tool Window
 
 Status: Draft
-Date: 2026-03-05
+Date: 2026-03-06
 
 ## Summary
 Define Agent Threads as a provider-agnostic, project-scoped browser implemented with native IntelliJ Swing tree APIs (`StructureTreeModel` + `AsyncTreeModel` + `Tree`).
@@ -34,6 +34,7 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 - Keep refresh/on-demand behavior predictable under concurrency.
 - Follow IntelliJ tree conventions: single-click selects, activation happens on Enter or double-click, and double-click on openable rows prefers open/focus over expand/collapse.
 - Use one UI path only (Swing async tree), with no Compose compatibility layer.
+- Surface branch metadata only when it helps differentiate standalone project checkouts, without repeating branch context already visible on worktree rows.
 
 ## Non-goals
 - Thread transcript rendering.
@@ -41,6 +42,7 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 - Feature-flagged dual-path UI rollout for sessions.
 - Backend-specific rollout parsing rules (owned by Codex rollout spec).
 - Shared command/action contracts (owned by core contracts spec).
+- Resolving remote default branches before rendering project rows.
 
 ## Architecture Decision
 - The sessions tool window must use IntelliJ-native Swing async tree infrastructure.
@@ -67,6 +69,21 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 
 - Git worktrees must be represented under parent projects when detected.
   [@test] ../sessions/testSrc/GitWorktreeDiscoveryTest.kt
+
+- Git-backed standalone projects must retain their discovered main-checkout branch in catalog metadata even when no linked worktrees are present.
+  [@test] ../sessions/testSrc/AgentSessionProjectCatalogTest.kt
+
+- Project-row branch visibility must follow differentiation rules:
+  - standalone project rows may show a branch only when the branch is known and is not `main` or `master`,
+  - project rows with worktree children must not show a project-level branch,
+  - worktree rows remain the place where per-worktree branch state is shown.
+  [@test] ../sessions/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
+
+- Tree presentation diffing must track only visible project-row branch badges; hidden project-branch changes for worktree-backed projects must not trigger content-change updates.
+  [@test] ../sessions/testSrc/AgentSessionsTreeModelDiffTest.kt
+
+- Catalog refresh must clear stale standalone-project branch metadata when the latest catalog entry no longer provides a branch.
+  [@test] ../sessions/testSrc/AgentSessionRefreshServiceIntegrationTest.kt
 
 - Default session-source registration must include Codex and Claude provider bridges.
   [@test] ../sessions/testSrc/AgentSessionProviderBridgesTest.kt
@@ -192,6 +209,10 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 
 ## User Experience
 - Project rows are always expandable and may show worktree children.
+- Duplicate project names are differentiated first by path label; any visible project-row branch remains secondary metadata.
+- Standalone project rows may show a trailing branch label only for non-default branches; `main` and `master` stay hidden.
+- Project rows with worktree children stay branchless to avoid duplicating branch context already visible on child worktree rows.
+- Worktree rows continue to show their branch, and detached worktrees continue to show detached state.
 - Open project rows must be visually emphasized via stronger title weight.
 - Closed project rows must remain readable but visually de-emphasized relative to open rows.
 - Default project visibility must include all open projects and up to 3 closed recent projects; additional closed projects appear behind `More`.
@@ -211,6 +232,7 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 - Open projects may use long-lived provider sessions where available.
 - Closed project/worktree loads may use path-scoped short-lived provider calls.
 - Aggregation normalizes provider differences (paging/count capability) into one state model.
+- Project-row branch visibility uses a local default-branch heuristic (`main`, `master`) and does not require remote default-branch lookup.
 - Codex refresh hints are app-server-first (`thread/read` snapshots), with rollout parser hints used only for pending-rebind fallback and unread uplift.
 - Sessions service must not impose global CLI home overrides; provider clients own process environment rules.
 - UI-layer migration to Swing does not change backend/service contracts.
@@ -231,6 +253,7 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 ## Open Questions / Risks
 - New providers may require additional provider-specific warning or context-row UX.
 - Worktree discovery quality depends on Git metadata completeness.
+- Repositories whose default branch is neither `main` nor `master` may require an expanded heuristic or explicit default-branch discovery in a future revision.
 
 ## References
 - `spec/agent-core-contracts.spec.md`

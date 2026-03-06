@@ -4,8 +4,10 @@ package com.intellij.agent.workbench.sessions.ui
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.tree.SessionTreeNode
+import com.intellij.agent.workbench.sessions.tree.visibleProjectBranch
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.ProductIcons
 import com.intellij.openapi.util.NlsSafe
@@ -75,6 +77,7 @@ internal class SessionTreeCellRenderer(
       is SessionTreeNode.Project -> {
         val projectIcon = ProductIcons.getInstance().getProjectNodeIcon()
         icon = projectIcon
+        val baseFontMetrics = getFontMetrics(getBaseFont())
         val titleAttributes = if (treeNode.project.isOpen || treeNode.project.worktrees.any { it.isOpen }) {
           SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
         }
@@ -88,10 +91,14 @@ internal class SessionTreeCellRenderer(
         else {
           treeNode.project.name
         }
-        append(projectName, titleAttributes)
-        if (treeNode.project.worktrees.isNotEmpty()) {
-          val branchLabel: @NlsSafe String = treeNode.project.branch ?: AgentSessionsBundle.message("toolwindow.worktree.detached")
-          append(" [$branchLabel]", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+        val branchText = projectBranchText(treeNode.project)
+        if (branchText == null) {
+          append(projectName, titleAttributes)
+        }
+        else {
+          metaRightPadding = baseFontMetrics.stringWidth(branchText)
+          appendWithClipping(projectName, titleAttributes, SessionTreeMiddleTextClipper)
+          append(branchText, SimpleTextAttributes.GRAYED_ATTRIBUTES)
         }
         if (treeNode.project.isLoading) {
           setAccessibleStatusText(AgentSessionsBundle.message("toolwindow.loading"))
@@ -273,6 +280,49 @@ internal class SessionTreeCellRenderer(
   }
 }
 
+internal fun projectBranchText(project: AgentProjectSessions): @NlsSafe String? {
+  val branch = visibleProjectBranch(project) ?: return null
+  return " [$branch]"
+}
+
+internal fun clipSessionTreeMiddleText(
+  text: @NlsSafe String,
+  fontMetrics: FontMetrics,
+  availTextWidth: Int,
+  rightReservedWidth: Int,
+): @NlsSafe String {
+  val effectiveAvailTextWidth = (availTextWidth - rightReservedWidth).coerceAtLeast(0)
+
+  if (effectiveAvailTextWidth <= 0) {
+    return StringUtil.ELLIPSIS
+  }
+
+  if (fontMetrics.stringWidth(text) <= effectiveAvailTextWidth) {
+    return text
+  }
+
+  val ellipsis = StringUtil.ELLIPSIS
+  if (fontMetrics.stringWidth(ellipsis) > effectiveAvailTextWidth) {
+    return ellipsis
+  }
+
+  var low = 1
+  var high = text.length
+  var best = ellipsis
+  while (low <= high) {
+    val mid = (low + high) ushr 1
+    val candidate = StringUtil.trimMiddle(text, mid)
+    if (fontMetrics.stringWidth(candidate) <= effectiveAvailTextWidth) {
+      best = candidate
+      low = mid + 1
+    }
+    else {
+      high = mid - 1
+    }
+  }
+  return best.ifBlank { ellipsis }
+}
+
 private object SessionTreeMiddleTextClipper : FragmentTextClipper {
   override fun clipText(
     component: com.intellij.ui.SimpleColoredComponent,
@@ -284,36 +334,12 @@ private object SessionTreeMiddleTextClipper : FragmentTextClipper {
     // appendWithClipping gets full component width from SimpleColoredComponent; subtract right reserved
     // area so thread titles don't paint into the trailing time/actions column.
     val rightReservedWidth = component.ipad.right + component.insets.right
-    val effectiveAvailTextWidth = (availTextWidth - rightReservedWidth).coerceAtLeast(0)
-
-    if (effectiveAvailTextWidth <= 0) {
-      return StringUtil.ELLIPSIS
-    }
-
     val fontMetrics = component.getFontMetrics(g.font)
-    if (fontMetrics.stringWidth(text) <= effectiveAvailTextWidth) {
-      return text
-    }
-
-    val ellipsis = StringUtil.ELLIPSIS
-    if (fontMetrics.stringWidth(ellipsis) > effectiveAvailTextWidth) {
-      return ellipsis
-    }
-
-    var low = 1
-    var high = text.length
-    var best = ellipsis
-    while (low <= high) {
-      val mid = (low + high) ushr 1
-      val candidate = StringUtil.trimMiddle(text, mid)
-      if (fontMetrics.stringWidth(candidate) <= effectiveAvailTextWidth) {
-        best = candidate
-        low = mid + 1
-      }
-      else {
-        high = mid - 1
-      }
-    }
-    return best.ifBlank { ellipsis }
+    return clipSessionTreeMiddleText(
+      text = text,
+      fontMetrics = fontMetrics,
+      availTextWidth = availTextWidth,
+      rightReservedWidth = rightReservedWidth,
+    )
   }
 }

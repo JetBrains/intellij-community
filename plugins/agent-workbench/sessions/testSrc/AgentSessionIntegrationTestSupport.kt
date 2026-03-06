@@ -287,11 +287,13 @@ internal fun openProjectEntry(
   path: String,
   name: String,
   worktrees: List<WorktreeEntry> = emptyList(),
+  branch: String? = null,
 ): ProjectEntry {
   return ProjectEntry(
     path = path,
     name = name,
     project = openProjectProxy(name),
+    branch = branch,
     worktreeEntries = worktrees,
   )
 }
@@ -300,11 +302,13 @@ internal fun closedProjectEntry(
   path: String,
   name: String,
   worktrees: List<WorktreeEntry> = emptyList(),
+  branch: String? = null,
 ): ProjectEntry {
   return ProjectEntry(
     path = path,
     name = name,
     project = null,
+    branch = branch,
     worktreeEntries = worktrees,
   )
 }
