@@ -16,8 +16,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.project.stateStore
-import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.impl.PsiManagerEx
@@ -71,59 +69,9 @@ internal class PsiVFSListener(private val project: Project) {
     }
   }
 
-  // optimization: call myFileManager.removeInvalidFilesAndDirs() once for a group of deletion events, instead of once for each event
-  private fun filesDeleted(events: List<VFileEvent>) {
-    var needToRemoveInvalidFilesAndDirs = false
-
-    fun fireChildRemoved(element: PsiElement, parentDir: PsiDirectory?) {
-      if (parentDir == null) return
-      runWriteActionWithExternalChange {
-        val treeEvent = PsiTreeChangeEventImpl(manager)
-        treeEvent.parent = parentDir
-        treeEvent.child = element
-        manager.childRemoved(treeEvent)
-      }
-    }
-
-    fun dirDeleted(dir: VirtualFile, parent: VirtualFile?) {
-      val psiDir = fileManager.getCachedDirectory(dir) ?: run {
-        handleVfsChangeWithoutPsi(parent)
-        return
-      }
-
-      val parentDir = fileManager.getCachedDirectoryNullable(parent)
-      fireChildRemoved(psiDir, parentDir)
-      needToRemoveInvalidFilesAndDirs = true
-    }
-
-    fun fileDeleted(vFile: VirtualFile, parent: VirtualFile?) {
-      val cachedPsiFiles = fileManager.getCachedPsiFilesInner(vFile).ifEmpty {
-        handleVfsChangeWithoutPsi(parent)
-        return
-      }
-
-      val parentDir = fileManager.getCachedDirectoryNullable(parent)
-      fileManager.setViewProvider(vFile, null)
-      for (psiFile in cachedPsiFiles) {
-        fireChildRemoved(psiFile, parentDir)
-      }
-    }
-
-    for (event in events) {
-      val de = event as VFileDeleteEvent
-      val vFile = de.file
-      val parent = vFile.parent
-
-      if (vFile.isDirectory) {
-        dirDeleted(vFile, parent)
-      }
-      else {
-        fileDeleted(vFile, parent)
-      }
-    }
-
-    if (needToRemoveInvalidFilesAndDirs) {
-      fileManager.removeInvalidFilesAndDirs(false)
+  private fun filesDeleted(events: List<VFileDeleteEvent>) {
+    DebugUtil.performPsiModification<RuntimeException>(null) {
+      FileDeletedEventEmitter(events, fileManager, manager, this).send()
     }
   }
 
@@ -235,7 +183,8 @@ internal class PsiVFSListener(private val project: Project) {
   private fun fireForGrouped(subList: List<VFileEvent>) {
     val event = subList[0]
     if (event is VFileDeleteEvent) {
-      DebugUtil.performPsiModification<RuntimeException>(null) { filesDeleted(subList) }
+      @Suppress("UNCHECKED_CAST")
+      filesDeleted(subList as List<VFileDeleteEvent>)
     }
     else if (event is VFileMoveEvent) {
       @Suppress("UNCHECKED_CAST")
