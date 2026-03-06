@@ -857,21 +857,6 @@ jvm_import(
 )
 
 copy_file(
-  name = "io.github.java-diff-utils/java-diff-utils-4.12.jar_copy",
-  src = "@io_github_java-diff-utils-java-diff-utils-4_12_http//file",
-  out = "io.github.java-diff-utils/java-diff-utils-4.12.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "codeowners-java-diff-utils",
-  jar = "@io_github_java-diff-utils-java-diff-utils-4_12_http//file",
-  source_jar = "@io_github_java-diff-utils-java-diff-utils-4_12-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
   name = "org.jetbrains.kotlinx/kotlinx-serialization-json-okio-jvm-1.9.0.jar_copy",
   src = "@org_jetbrains_kotlinx-kotlinx-serialization-json-okio-jvm-1_9_0_http//file",
   out = "org.jetbrains.kotlinx/kotlinx-serialization-json-okio-jvm-1.9.0.jar",
@@ -896,7 +881,7 @@ copy_file(
 )
 
 java_library(
-  name = "codeowners-kotlinx-serialization-json-okio",
+  name = "codeowners-monorepo-resolver-ownership-kotlinx-serialization-json-okio",
   exports = [
     ":org_jetbrains_kotlinx-kotlinx-serialization-json-okio-jvm-1_9_0_http_import",
     ":org_jetbrains_kotlinx-kotlinx-serialization-json-jvm-1_9_0_http_import",
@@ -923,8 +908,23 @@ jvm_import(
   source_jar = "@com_squareup_okio-okio-jvm-3_9_0-sources_http//file"
 )
 
+copy_file(
+  name = "io.github.java-diff-utils/java-diff-utils-4.12.jar_copy",
+  src = "@io_github_java-diff-utils-java-diff-utils-4_12_http//file",
+  out = "io.github.java-diff-utils/java-diff-utils-4.12.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "codeowners-ownership-java-diff-utils",
+  jar = "@io_github_java-diff-utils-java-diff-utils-4_12_http//file",
+  source_jar = "@io_github_java-diff-utils-java-diff-utils-4_12-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
 java_library(
-  name = "codeowners-monorepo-resolver-kotlinx-serialization-json-okio",
+  name = "codeowners-ownership-kotlinx-serialization-json-okio",
   exports = [
     ":org_jetbrains_kotlinx-kotlinx-serialization-json-okio-jvm-1_9_0_http_import",
     ":org_jetbrains_kotlinx-kotlinx-serialization-json-jvm-1_9_0_http_import",

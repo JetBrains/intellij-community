@@ -469,20 +469,6 @@ http_file(
 )
 
 http_file(
-  name = "io_github_java-diff-utils-java-diff-utils-4_12_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/java-diff-utils/java-diff-utils/4.12/java-diff-utils-4.12.jar",
-  sha256 = "9990a2039778f6b4cc94790141c2868864eacee0620c6c459451121a901cd5b5",
-  downloaded_file_path = "java-diff-utils-4.12.jar"
-)
-
-http_file(
-  name = "io_github_java-diff-utils-java-diff-utils-4_12-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/java-diff-utils/java-diff-utils/4.12/java-diff-utils-4.12-sources.jar",
-  sha256 = "fa24217b6eaa115a05d4a8f0003fe913c62716ca2184d2e4f17de4a7d42a8822",
-  downloaded_file_path = "java-diff-utils-4.12-sources.jar"
-)
-
-http_file(
   name = "org_jetbrains_kotlinx-kotlinx-serialization-json-okio-jvm-1_9_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-okio-jvm/1.9.0/kotlinx-serialization-json-okio-jvm-1.9.0.jar",
   sha256 = "ab772ae19a4f5b2f83c8b6a422b62047642b894984bb6244d04ffeb8bdc261bd",
@@ -522,6 +508,20 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.9.0/okio-jvm-3.9.0-sources.jar",
   sha256 = "b8ab886c9ed94b6d22fe177efab23f66b2fe0cbcfbf9902d226667038410e0b1",
   downloaded_file_path = "okio-jvm-3.9.0-sources.jar"
+)
+
+http_file(
+  name = "io_github_java-diff-utils-java-diff-utils-4_12_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/java-diff-utils/java-diff-utils/4.12/java-diff-utils-4.12.jar",
+  sha256 = "9990a2039778f6b4cc94790141c2868864eacee0620c6c459451121a901cd5b5",
+  downloaded_file_path = "java-diff-utils-4.12.jar"
+)
+
+http_file(
+  name = "io_github_java-diff-utils-java-diff-utils-4_12-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/java-diff-utils/java-diff-utils/4.12/java-diff-utils-4.12-sources.jar",
+  sha256 = "fa24217b6eaa115a05d4a8f0003fe913c62716ca2184d2e4f17de4a7d42a8822",
+  downloaded_file_path = "java-diff-utils-4.12-sources.jar"
 )
 
 http_file(

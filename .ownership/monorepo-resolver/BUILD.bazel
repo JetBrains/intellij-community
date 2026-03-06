@@ -9,7 +9,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-serialization-core",
-    "@lib//:codeowners-monorepo-resolver-kotlinx-serialization-json-okio",
+    "@lib//:codeowners-monorepo-resolver-ownership-kotlinx-serialization-json-okio",
     "//.ownership/lib:codeowners",
   ]
 )

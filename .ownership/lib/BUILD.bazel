@@ -22,11 +22,11 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kaml",
     "@lib//:kotlinx-serialization-core",
-    "@lib//:codeowners-kotlinx-serialization-json-okio",
+    "@lib//:codeowners-ownership-kotlinx-serialization-json-okio",
     "@lib//:jetbrains-intellij-deps-eclipse-jgit",
     "@lib//:slf4j-api",
     "@lib//:tc_service_messages",
-    "@lib//:codeowners-java-diff-utils",
+    "@lib//:codeowners-ownership-java-diff-utils",
   ]
 )
 

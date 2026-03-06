@@ -32,7 +32,7 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="module-library">
-      <library name="kotlinx-serialization-json-okio" type="repository">
+      <library name="ownership-kotlinx-serialization-json-okio" type="repository">
         <properties maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-okio-jvm:1.9.0">
           <verification>
             <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-json-okio-jvm/1.9.0/kotlinx-serialization-json-okio-jvm-1.9.0.jar">
