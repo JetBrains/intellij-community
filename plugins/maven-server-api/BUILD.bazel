@@ -11,13 +11,13 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/util-rt",
     "//platform/util/jdom",
-    "//plugins/maven-model",
+    "//plugins/maven/model",
     "//platform/diagnostic/telemetry/rt",
   ],
   exports = [
     "@lib//:jetbrains-annotations",
     "//platform/util-rt",
-    "//plugins/maven-model",
+    "//plugins/maven/model",
   ]
 )
 
@@ -31,14 +31,14 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/util-rt",
     "//platform/util-rt:util-rt_test_lib",
-    "//plugins/maven-model",
-    "//plugins/maven-model:maven-model_test_lib",
+    "//plugins/maven/model",
+    "//plugins/maven/model:model_test_lib",
   ],
   runtime_deps = [
     ":maven-server",
     "//platform/util-rt:util-rt_test_lib",
     "//platform/util/jdom:jdom_test_lib",
-    "//plugins/maven-model:maven-model_test_lib",
+    "//plugins/maven/model:model_test_lib",
     "//platform/diagnostic/telemetry/rt:rt_test_lib",
   ]
 )

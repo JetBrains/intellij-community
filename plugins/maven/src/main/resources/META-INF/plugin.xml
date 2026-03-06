@@ -79,6 +79,7 @@
   </dependencies>
 
   <content namespace="jetbrains">
+    <module name="intellij.maven.model" loading="embedded"/>
     <module name="intellij.maven.profiler"/>
     <module name="intellij.maven.proofreading"/>
     <module name="intellij.maven.performanceTesting"/>
