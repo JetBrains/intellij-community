@@ -198,7 +198,7 @@ private fun DirectorySpecBase.dropImpl(
         }
       }
       is FileSpec -> {
-        if (filePathFilter(childPath)) {
+        if (filePathFilter(childPath) && name != ".DS_Store") {
           result.addChild(name, child)
         }
       }
