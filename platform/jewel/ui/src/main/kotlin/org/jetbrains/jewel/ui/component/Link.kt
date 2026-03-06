@@ -38,7 +38,9 @@ import java.awt.Cursor
 import java.awt.datatransfer.StringSelection
 import java.io.IOException
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask
@@ -264,7 +266,9 @@ private fun ExternalLinkImpl(
     )
 }
 
-private fun openUri(uriHandler: UriHandler, link: String) {
+@ApiStatus.Internal
+@InternalJewelApi
+public fun openUri(uriHandler: UriHandler, link: String) {
     try {
         uriHandler.openUri(link)
     } catch (e: IllegalArgumentException) {

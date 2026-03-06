@@ -17,6 +17,9 @@ import org.jetbrains.jewel.foundation.theme.ThemeColorPalette
 import org.jetbrains.jewel.foundation.theme.ThemeDefinition
 import org.jetbrains.jewel.foundation.theme.ThemeIconData
 import org.jetbrains.jewel.ui.ComponentStyling
+import org.jetbrains.jewel.ui.component.gotit.GotItTooltipStyle
+import org.jetbrains.jewel.ui.component.gotit.LocalGotItButtonStyle
+import org.jetbrains.jewel.ui.component.gotit.LocalGotItTooltipStyle
 import org.jetbrains.jewel.ui.component.styling.BadgeStyles
 import org.jetbrains.jewel.ui.component.styling.ButtonStyle
 import org.jetbrains.jewel.ui.component.styling.CheckboxStyle
@@ -213,6 +216,12 @@ public val JewelTheme.Companion.outlinedSlimButtonStyle: ButtonStyle
 
 public val JewelTheme.Companion.badgeStyle: BadgeStyles
     @Composable @ReadOnlyComposable get() = LocalBadgeStyle.current
+
+public val JewelTheme.Companion.gotItTooltipStyle: GotItTooltipStyle
+    @Composable @ReadOnlyComposable get() = LocalGotItTooltipStyle.current
+
+public val JewelTheme.Companion.gotItButtonStyle: ButtonStyle
+    @Composable @ReadOnlyComposable get() = LocalGotItButtonStyle.current
 
 @Composable
 public fun BaseJewelTheme(theme: ThemeDefinition, styling: ComponentStyling, content: @Composable () -> Unit) {
