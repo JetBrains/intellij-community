@@ -2,7 +2,6 @@
 package com.intellij.coverage;
 
 import com.intellij.coverage.actions.ExternalReportImportManager;
-import com.intellij.coverage.actions.ExternalReportImportManagerKt;
 import com.intellij.icons.AllIcons;
 import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.openapi.fileTypes.INativeFileType;
@@ -60,10 +59,9 @@ final class JaCoCoCoverageFileType implements INativeFileType, FileTypeIdentifia
 
   @Override
   public boolean isMyFileType(@NotNull VirtualFile file) {
-    var coverageRunner = ExternalReportImportManagerKt.getCoverageRunner(file);
-    if (coverageRunner instanceof JaCoCoCoverageRunner jaCoCoCoverageRunner) {
-      return jaCoCoCoverageRunner.canBeLoaded(VfsUtilCore.virtualToIoFile(file));
-    }
-    return false;
+    var jaCoCoCoverageRunner = CoverageRunner.EP_NAME.findExtension(JaCoCoCoverageRunner.class);
+    if (jaCoCoCoverageRunner == null) return false;
+    if (!jaCoCoCoverageRunner.getDataFileExtension().equals(file.getExtension())) return false;
+    return jaCoCoCoverageRunner.canBeLoaded(VfsUtilCore.virtualToIoFile(file));
   }
 }
