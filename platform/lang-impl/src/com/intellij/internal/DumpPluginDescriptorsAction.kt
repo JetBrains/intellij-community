@@ -98,21 +98,24 @@ private class PluginDescriptionDumper(val coroutineScope: CoroutineScope) {
   }
 
   private fun JsonGenerator.writePlugins() {
-    val allPlugins = PluginManager.getPlugins()
+    val allPlugins = PluginManagerCore.getPluginSet().allPlugins
+    val allModules = allPlugins.asSequence().flatMap { sequenceOf(it) + it.contentModules }
 
-    val pluginClassLoaders = allPlugins.mapNotNullTo(HashSet()) { it.pluginClassLoader }
-    allPlugins.flatMapTo(pluginClassLoaders) {
-      (it as? IdeaPluginDescriptorImpl)?.contentModules?.mapNotNull { it.pluginClassLoader } ?: emptyList()
-    }
-    @Suppress("TestOnlyProblems")
-    val parentClassLoaders = pluginClassLoaders.filterIsInstance<PluginClassLoader>()
-      .flatMapTo(HashSet()) { classLoader -> classLoader._getParents().mapNotNull { it.pluginClassLoader } }
+    val moduleClassLoadersToCount =
+      allModules.groupBy { it.pluginClassLoader }.mapValues { it.value.size }
+    val allReferencedClassLoaders = LinkedHashSet<ClassLoader>()
+    moduleClassLoadersToCount.entries.filter { it.value > 1 }.mapNotNullTo(allReferencedClassLoaders) { it.key }
+    moduleClassLoadersToCount.keys.filterIsInstance<PluginClassLoader>()
+      .flatMapTo(allReferencedClassLoaders) { classLoader ->
+        @Suppress("TestOnlyProblems")
+        classLoader._getParents().mapNotNull { it.pluginClassLoader }
+      }
     val coreClassLoader = ClassLoaderConfigurator::class.java.classLoader
-    parentClassLoaders.add(coreClassLoader)
-    parentClassLoaders.add(ClassLoader.getSystemClassLoader())
-    parentClassLoaders.add(ClassLoader.getPlatformClassLoader())
-    val nonPluginClassLoaders = parentClassLoaders.filterNot { it is PluginClassLoader }.withIndex().associateBy({ it.value }, { it.index })
-    val classLoaderIds = parentClassLoaders.associateWith { classLoader ->
+    allReferencedClassLoaders.add(coreClassLoader)
+    allReferencedClassLoaders.add(ClassLoader.getSystemClassLoader())
+    allReferencedClassLoaders.add(ClassLoader.getPlatformClassLoader())
+    val nonPluginClassLoaders = allReferencedClassLoaders.filterNot { it is PluginClassLoader }.withIndex().associateBy({ it.value }, { it.index })
+    val classLoaderIds = allReferencedClassLoaders.associateWith { classLoader ->
       when (classLoader) {
         is PluginClassLoader -> {
           val moduleSuffix = (classLoader.pluginDescriptor as? IdeaPluginDescriptorImpl)?.contentModuleName?.let { ":$it" } ?: ""
