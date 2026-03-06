@@ -6791,7 +6791,6 @@ f:com.intellij.find.impl.FindManagerImpl
 - findWasPerformed():Z
 - getFindNextModel():com.intellij.find.FindModel
 - getFindNextModel(com.intellij.openapi.editor.Editor):com.intellij.find.FindModel
-- getFindUsagesManager():com.intellij.find.findUsages.FindUsagesManager
 - getPreviousFindModel():com.intellij.find.FindModel
 - selectNextOccurrenceWasPerformed():Z
 - setFindNextModel(com.intellij.find.FindModel):V

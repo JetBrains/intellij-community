@@ -7,6 +7,7 @@ import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.find.FindSettings;
+import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.LanguageUtil;
@@ -67,13 +68,14 @@ public abstract class FindManagerBase extends FindManager {
   private static final IntObjectMap<Boolean> ourReportedPatterns = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   private static final FindResultImpl NOT_FOUND_RESULT = new FindResultImpl();
 
+  protected final FindUsagesManager myFindUsagesManager;
   protected final @NotNull FindModel myFindInProjectModel = new FindModel();
   protected final @NotNull FindModel myFindInFileModel = new FindModel();
   @NotNull protected final Project myProject;
 
   public FindManagerBase(@NotNull Project project) {
     myProject = project;
-
+    myFindUsagesManager = new FindUsagesManager(project);
 
     FindSettings findSettings = FindSettings.getInstance();
     findSettings.initModelBySetings(myFindInProjectModel);
@@ -629,5 +631,9 @@ public abstract class FindManagerBase extends FindManager {
       }
       return true;
     }
+  }
+
+  public @NotNull FindUsagesManager getFindUsagesManager() {
+    return myFindUsagesManager;
   }
 }

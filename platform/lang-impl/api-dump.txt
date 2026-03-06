@@ -628,12 +628,14 @@ a:com.intellij.find.impl.FindManagerBase
 - com.intellij.find.FindManager
 - pf:myFindInFileModel:com.intellij.find.FindModel
 - pf:myFindInProjectModel:com.intellij.find.FindModel
+- pf:myFindUsagesManager:com.intellij.find.findUsages.FindUsagesManager
 - pf:myProject:com.intellij.openapi.project.Project
 - <init>(com.intellij.openapi.project.Project):V
 - findString(java.lang.CharSequence,I,com.intellij.find.FindModel):com.intellij.find.FindResult
 - findString(java.lang.CharSequence,I,com.intellij.find.FindModel,com.intellij.openapi.vfs.VirtualFile):com.intellij.find.FindResult
 - getFindInFileModel():com.intellij.find.FindModel
 - getFindInProjectModel():com.intellij.find.FindModel
+- getFindUsagesManager():com.intellij.find.findUsages.FindUsagesManager
 - getStringToReplace(java.lang.String,com.intellij.find.FindModel,I,java.lang.CharSequence):java.lang.String
 f:com.intellij.find.impl.FindManagerImpl
 - com.intellij.find.impl.FindManagerBase

@@ -88,7 +88,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 /**
- * see {@link com.intellij.find.impl.FindManagerImpl#getFindUsagesManager()}
+ * see {@link com.intellij.find.impl.FindManagerBase#getFindUsagesManager()}
  */
 public final class FindUsagesManager {
   private static final Logger LOG = Logger.getInstance(FindUsagesManager.class);
