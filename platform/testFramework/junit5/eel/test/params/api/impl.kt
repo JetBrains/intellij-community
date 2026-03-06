@@ -26,12 +26,11 @@ internal class EelHolderImpl<T : Annotation>(val eelTestProvider: EelIjentTestPr
   }
 
   override fun isEnabled(filter: EelFixtureFilter): Boolean {
-    val name = eel.descriptor.toString()
-    return when {
-      name.contains("Wsl") -> filter.isWslEnabled
-      name.contains("Docker") -> filter.isDockerEnabled
-      else -> {
-        logger<EelInterceptor>().warn("Unknown EelApi $eel with descriptor $name.")
+    return when (type) {
+      EelType.Wsl -> filter.isWslEnabled
+      EelType.Docker -> filter.isDockerEnabled
+      EelType.Local -> {
+        logger<EelInterceptor>().warn("This code should not be reached")
         false
       }
     }
