@@ -70,6 +70,7 @@ import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -82,6 +83,7 @@ import java.awt.Insets
 import java.awt.Rectangle
 import java.awt.event.InputEvent
 import java.util.function.Predicate
+import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingConstants
@@ -127,7 +129,13 @@ private fun createRunActionToolbar(): ActionToolbar {
   toolbar.setMinimumButtonSize {
     JBUI.size(JBUI.CurrentTheme.RunWidget.actionButtonWidth(), JBUI.CurrentTheme.RunWidget.toolbarHeight())
   }
-  toolbar.setActionButtonBorder(JBUI.Borders.empty(JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets()))
+  val insetsSupplier: Supplier<Insets> = Supplier {
+    val horizontal = JBUI.CurrentTheme.RunWidget.toolbarBorderDirectionalGap()
+    val mainToolbarInsets = (JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets() as JBInsets).unscaled
+    @Suppress("UseDPIAwareInsets") // the supplier must provide unscaled values
+    Insets(mainToolbarInsets.top, horizontal, mainToolbarInsets.bottom, horizontal)
+  }
+  toolbar.setActionButtonBorder(JBEmptyBorder(JBInsets.create(insetsSupplier, insetsSupplier.get())))
   toolbar.setCustomButtonLook(RunWidgetButtonLook())
   return toolbar
 }
