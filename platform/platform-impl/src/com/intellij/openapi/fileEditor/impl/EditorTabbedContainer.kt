@@ -718,7 +718,7 @@ private class EditorTabs(
   }
 
   private fun checkActive() {
-    val newActive = UIUtil.isFocusAncestor(this) || activePopup != null
+    val newActive = UIUtil.isFocusAncestor(this)
     if (newActive != isActive) {
       isActive = newActive
       resetScrollBarActivity()
