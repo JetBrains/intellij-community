@@ -238,8 +238,19 @@ class SpeedSearchableLazyColumnTest {
         onSpeedSearchAreaInput.assertDoesNotExist()
     }
 
+    @Test
+    fun `on lose focus with dismissOnLoseFocus false, keep input visible`() =
+        runComposeTest(dismissOnLoseFocus = false) {
+            onLazyColumn.performKeyPress("Item 42", rule = this)
+            onSpeedSearchAreaInput.assertExists().assertIsDisplayed()
+
+            onNodeWithTag("Button").performClick()
+            onSpeedSearchAreaInput.assertExists().assertIsDisplayed()
+        }
+
     private fun runComposeTest(
         listEntries: List<String> = List(500) { "Item ${it + 1}" },
+        dismissOnLoseFocus: Boolean = true,
         block: ComposeContentTestRule.() -> Unit,
     ) {
         rule.setContent {
@@ -247,7 +258,10 @@ class SpeedSearchableLazyColumnTest {
 
             IntUiTheme {
                 Column {
-                    SpeedSearchArea(modifier = Modifier.testTag("SpeedSearchArea")) {
+                    SpeedSearchArea(
+                        modifier = Modifier.testTag("SpeedSearchArea"),
+                        dismissOnLoseFocus = dismissOnLoseFocus,
+                    ) {
                         SpeedSearchableLazyColumn(
                             modifier = Modifier.size(200.dp).testTag("LazyColumn").focusRequester(focusRequester),
                             dispatcher = testDispatcher,
