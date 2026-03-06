@@ -227,7 +227,9 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
         visible
       }
     }
-    updateEditors(file = file, fileEditors = editors.toList())
+    if (editors.any()) {
+      updateEditors(file = file, fileEditors = editors.toList())
+    }
   }
 
   private fun getEditors(file: VirtualFile, fileEditorManager: FileEditorManager): Sequence<FileEditor> {
