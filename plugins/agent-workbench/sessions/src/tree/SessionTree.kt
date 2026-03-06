@@ -18,7 +18,7 @@ import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_THREAD_COUNT
-import com.intellij.agent.workbench.sessions.state.SessionsTreeUiState
+import com.intellij.agent.workbench.sessions.state.SessionTreeUiState
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.agent.workbench.sessions.util.parseAgentSessionIdentity
 import com.intellij.openapi.util.NlsSafe
@@ -58,10 +58,10 @@ internal data class VisibleProjectsResult(
 )
 
 internal fun buildSessionTreeModel(
-  projects: List<AgentProjectSessions>,
-  visibleClosedProjectCount: Int,
-  visibleThreadCounts: Map<String, Int>,
-  treeUiState: SessionsTreeUiState,
+    projects: List<AgentProjectSessions>,
+    visibleClosedProjectCount: Int,
+    visibleThreadCounts: Map<String, Int>,
+    treeUiState: SessionTreeUiState,
 ): SessionTreeModel {
   val visibleProjectsResult = computeVisibleProjects(projects, visibleClosedProjectCount)
   val duplicateProjectNames = visibleProjectsResult.visibleProjects

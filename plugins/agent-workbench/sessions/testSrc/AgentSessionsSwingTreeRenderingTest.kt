@@ -5,7 +5,7 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
-import com.intellij.agent.workbench.sessions.state.InMemorySessionsTreeUiState
+import com.intellij.agent.workbench.sessions.state.InMemorySessionTreeUiState
 import com.intellij.agent.workbench.sessions.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.tree.SessionTreeNode
 import com.intellij.agent.workbench.sessions.tree.buildSessionTreeModel
@@ -36,7 +36,7 @@ class AgentSessionsSwingTreeRenderingTest {
       ),
       visibleClosedProjectCount = Int.MAX_VALUE,
       visibleThreadCounts = emptyMap(),
-      treeUiState = InMemorySessionsTreeUiState(),
+      treeUiState = InMemorySessionTreeUiState(),
     )
 
     val projectNode = requireNotNull(model.entriesById[SessionTreeId.Project(projectPath)])
@@ -63,7 +63,7 @@ class AgentSessionsSwingTreeRenderingTest {
       ),
       visibleClosedProjectCount = Int.MAX_VALUE,
       visibleThreadCounts = emptyMap(),
-      treeUiState = InMemorySessionsTreeUiState(),
+      treeUiState = InMemorySessionTreeUiState(),
     )
 
     val projectNode = requireNotNull(model.entriesById[SessionTreeId.Project(projectPath)])
@@ -90,7 +90,7 @@ class AgentSessionsSwingTreeRenderingTest {
       ),
       visibleClosedProjectCount = Int.MAX_VALUE,
       visibleThreadCounts = mapOf(projectPath to 1),
-      treeUiState = InMemorySessionsTreeUiState(),
+      treeUiState = InMemorySessionTreeUiState(),
     )
 
     val projectNode = requireNotNull(model.entriesById[SessionTreeId.Project(projectPath)])

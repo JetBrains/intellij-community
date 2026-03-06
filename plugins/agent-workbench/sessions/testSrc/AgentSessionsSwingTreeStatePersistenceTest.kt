@@ -4,7 +4,7 @@ package com.intellij.agent.workbench.sessions
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
-import com.intellij.agent.workbench.sessions.state.InMemorySessionsTreeUiState
+import com.intellij.agent.workbench.sessions.state.InMemorySessionTreeUiState
 import com.intellij.agent.workbench.sessions.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.tree.buildSessionTreeModel
 import com.intellij.agent.workbench.sessions.tree.parentNodesForSelection
@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test
 class AgentSessionsSwingTreeStatePersistenceTest {
   @Test
   fun autoOpenProjectsSkipPersistedCollapsedState() {
-    val uiState = InMemorySessionsTreeUiState()
+    val uiState = InMemorySessionTreeUiState()
     uiState.setProjectCollapsed("/work/project-open", collapsed = true)
 
     val model = buildSessionTreeModel(
@@ -65,7 +65,7 @@ class AgentSessionsSwingTreeStatePersistenceTest {
       ),
       visibleClosedProjectCount = Int.MAX_VALUE,
       visibleThreadCounts = emptyMap(),
-      treeUiState = InMemorySessionsTreeUiState(),
+      treeUiState = InMemorySessionTreeUiState(),
     )
 
     assertThat(model.autoOpenProjects.contains(SessionTreeId.Project("/work/project-a"))).isTrue()

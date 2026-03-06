@@ -7,16 +7,20 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
+import kotlinx.serialization.Serializable
 
+@Serializable
 internal enum class PromptTargetMode {
   NEW_TASK,
   EXISTING_TASK,
 }
 
+@Serializable
 internal enum class PromptSendMode {
   SEND_NOW,
 }
 
+@Serializable
 internal data class AgentPromptUiDraft(
   @JvmField val promptText: String = "",
   @JvmField val providerId: String? = null,
@@ -32,14 +36,16 @@ internal data class AgentPromptUiContextRestoreSnapshot(
   @JvmField val removedContextItemIds: List<String> = emptyList(),
 )
 
+@Serializable
 internal data class AgentPromptUiState(
   @JvmField val draft: AgentPromptUiDraft = AgentPromptUiDraft(),
 )
 
 @Service(Service.Level.PROJECT)
-@State(name = "AgentPromptUiState", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+@State(name = "AgentPromptUiState", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 internal class AgentPromptUiSessionStateService
   : SerializablePersistentStateComponent<AgentPromptUiState>(AgentPromptUiState()) {
+  // Runtime-only snapshot: intentionally not persisted in AgentPromptUiState.
   private var contextRestoreSnapshot = AgentPromptUiContextRestoreSnapshot()
 
   fun loadDraft(): AgentPromptUiDraft {

@@ -27,7 +27,7 @@ import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
-import com.intellij.agent.workbench.sessions.state.SessionsTreeUiState
+import com.intellij.agent.workbench.sessions.state.SessionTreeUiState
 import com.intellij.agent.workbench.sessions.util.agentSessionCliMissingMessageKey
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.openapi.diagnostic.debug
@@ -52,21 +52,21 @@ private const val SOURCE_UPDATE_DEBOUNCE_MS = 350L
 private const val SOURCE_REFRESH_GATE_RETRY_MS = 500L
 
 internal class AgentSessionRefreshCoordinator(
-  private val serviceScope: CoroutineScope,
-  private val sessionSourcesProvider: () -> List<AgentSessionSource>,
-  private val projectEntriesProvider: suspend () -> List<ProjectEntry>,
-  private val treeUiState: SessionsTreeUiState,
-  private val stateStore: AgentSessionsStateStore,
-  private val isRefreshGateActive: suspend () -> Boolean,
-  private val openAgentChatProjectPathsProvider: suspend () -> Set<String> = ::collectOpenAgentChatProjectPaths,
-  private val codexScopedRefreshSignalsProvider: () -> Flow<Set<String>> = { codexScopedRefreshSignals() },
-  private val openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingCodexTabSnapshot>> = ::collectOpenPendingCodexTabsByPath,
-  private val openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> = ::collectOpenConcreteAgentChatThreadIdentitiesByPath,
-  private val openAgentChatTabPresentationUpdater: suspend (
+    private val serviceScope: CoroutineScope,
+    private val sessionSourcesProvider: () -> List<AgentSessionSource>,
+    private val projectEntriesProvider: suspend () -> List<ProjectEntry>,
+    private val treeUiState: SessionTreeUiState,
+    private val stateStore: AgentSessionsStateStore,
+    private val isRefreshGateActive: suspend () -> Boolean,
+    private val openAgentChatProjectPathsProvider: suspend () -> Set<String> = ::collectOpenAgentChatProjectPaths,
+    private val codexScopedRefreshSignalsProvider: () -> Flow<Set<String>> = { codexScopedRefreshSignals() },
+    private val openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingCodexTabSnapshot>> = ::collectOpenPendingCodexTabsByPath,
+    private val openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> = ::collectOpenConcreteAgentChatThreadIdentitiesByPath,
+    private val openAgentChatTabPresentationUpdater: suspend (
     Map<Pair<String, String>, String>,
     Map<Pair<String, String>, AgentThreadActivity>,
   ) -> Int = ::updateOpenAgentChatTabPresentation,
-  private val openAgentChatPendingTabsBinder: (
+    private val openAgentChatPendingTabsBinder: (
     Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
   ) -> AgentChatPendingCodexTabRebindReport = ::rebindOpenPendingCodexTabs,
 ) {

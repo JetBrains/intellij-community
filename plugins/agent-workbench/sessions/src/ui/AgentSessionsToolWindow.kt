@@ -12,8 +12,9 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
+import com.intellij.agent.workbench.sessions.state.AgentSessionTreeUiStateService
+import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
-import com.intellij.agent.workbench.sessions.state.AgentSessionsTreeUiStateService
 import com.intellij.agent.workbench.sessions.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.tree.SessionTreeModel
 import com.intellij.agent.workbench.sessions.tree.SessionTreeModelDiff
@@ -42,7 +43,8 @@ internal class AgentSessionsToolWindowPanel(
   private val stateStore = service<AgentSessionsStateStore>()
   private val syncService = service<AgentSessionRefreshService>()
   private val chatSelectionService = project.service<AgentChatTabSelectionService>()
-  private val treeUiStateService = service<AgentSessionsTreeUiStateService>()
+  private val treeUiStateService = service<AgentSessionTreeUiStateService>()
+  private val uiPreferencesStateService = service<AgentSessionUiPreferencesStateService>()
 
   private var sessionTreeModel: SessionTreeModel = SessionTreeModel.EMPTY
   private var lastUsedProvider: AgentSessionProvider? = null
@@ -126,10 +128,10 @@ internal class AgentSessionsToolWindowPanel(
   private val quotaHintPanel = ClaudeQuotaHintPanel(
     onEnable = {
       ClaudeQuotaStatusBarWidgetSettings.setEnabled(true)
-      treeUiStateService.acknowledgeClaudeQuotaHint()
+      uiPreferencesStateService.acknowledgeClaudeQuotaHint()
     },
     onDismiss = {
-      treeUiStateService.acknowledgeClaudeQuotaHint()
+      uiPreferencesStateService.acknowledgeClaudeQuotaHint()
     },
   )
 
@@ -137,6 +139,7 @@ internal class AgentSessionsToolWindowPanel(
     sessionsStateFlow = readService.stateFlow(),
     chatSelectionService = chatSelectionService,
     treeUiStateService = treeUiStateService,
+    uiPreferencesStateService = uiPreferencesStateService,
     tree = tree,
     getSessionTreeModel = { sessionTreeModel },
     setSessionTreeModel = { sessionTreeModel = it },
@@ -153,7 +156,7 @@ internal class AgentSessionsToolWindowPanel(
   )
 
   private val quotaHintController = ClaudeQuotaHintController(
-    treeUiStateService = treeUiStateService,
+    uiPreferencesStateService = uiPreferencesStateService,
     quotaHintPanel = quotaHintPanel,
   )
 

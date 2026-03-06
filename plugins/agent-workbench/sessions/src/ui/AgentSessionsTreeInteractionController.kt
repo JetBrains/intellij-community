@@ -6,8 +6,8 @@ import com.intellij.agent.workbench.sessions.actions.AgentSessionsTreePopupActio
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
+import com.intellij.agent.workbench.sessions.state.AgentSessionTreeUiStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
-import com.intellij.agent.workbench.sessions.state.AgentSessionsTreeUiStateService
 import com.intellij.agent.workbench.sessions.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.tree.SessionTreeNode
 import com.intellij.agent.workbench.sessions.tree.pathForMoreThreadsNode
@@ -35,15 +35,15 @@ import javax.swing.event.TreeExpansionListener
 import javax.swing.tree.TreePath
 
 internal class AgentSessionsTreeInteractionController(
-  private val project: Project,
-  private val tree: Tree,
-  private val launchService: AgentSessionLaunchService,
-  private val syncService: AgentSessionRefreshService,
-  private val stateStore: AgentSessionsStateStore,
-  private val treeUiStateService: AgentSessionsTreeUiStateService,
-  private val rowActionsOverlayProvider: () -> AgentSessionsTreeRowActionsOverlay,
-  private val nodeResolver: (SessionTreeId) -> SessionTreeNode?,
-  private val selectedArchiveTargets: () -> List<ArchiveThreadTarget>,
+    private val project: Project,
+    private val tree: Tree,
+    private val launchService: AgentSessionLaunchService,
+    private val syncService: AgentSessionRefreshService,
+    private val stateStore: AgentSessionsStateStore,
+    private val treeUiStateService: AgentSessionTreeUiStateService,
+    private val rowActionsOverlayProvider: () -> AgentSessionsTreeRowActionsOverlay,
+    private val nodeResolver: (SessionTreeId) -> SessionTreeNode?,
+    private val selectedArchiveTargets: () -> List<ArchiveThreadTarget>,
 ) {
   var popupActionContext: AgentSessionsTreePopupActionContext? = null
     private set

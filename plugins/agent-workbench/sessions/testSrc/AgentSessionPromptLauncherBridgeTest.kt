@@ -30,6 +30,8 @@ import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.service.AgentSessionChatOpenExecutor
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionPromptLauncherBridge
+import com.intellij.agent.workbench.sessions.service.resolveAgentSessionPathState
+import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.sessions.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.tree.SessionTreeNode
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -113,6 +115,40 @@ class AgentSessionPromptLauncherBridgeTest {
   }
 
   @Test
+  fun successfulLaunchUpdatesPreferredProvider() {
+    val providerBridge = RecordingPromptLaunchProviderBridge(
+      provider = AgentSessionProvider.CLAUDE,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+    )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
+    val uiPreferencesState = AgentSessionUiPreferencesStateService()
+    AgentSessionProviderBridges.withRegistryForTest(
+      InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
+    ) {
+      runBlocking(Dispatchers.Default) {
+        withServiceAndLaunch(
+          sessionSourcesProvider = { listOf(providerBridge.sessionSource) },
+          projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
+          uiPreferencesState = uiPreferencesState,
+          chatOpenExecutor = chatOpenExecutor,
+        ) { service, launchService ->
+          val bridge = promptLauncherBridge(service, launchService, uiPreferencesState::getLastUsedProvider)
+
+          assertThat(bridge.preferredProvider()).isNull()
+
+          val result = bridge.launch(promptLaunchRequest(provider = AgentSessionProvider.CLAUDE))
+
+          assertThat(result.launched).isTrue()
+          waitForCondition {
+            uiPreferencesState.getLastUsedProvider() == AgentSessionProvider.CLAUDE
+          }
+          assertThat(bridge.preferredProvider()).isEqualTo(AgentSessionProvider.CLAUDE)
+        }
+      }
+    }
+  }
+
+  @Test
   fun launchCarriesStartupOverrideEnvVariablesForNewSession() {
     val providerBridge = RecordingPromptLaunchProviderBridge(
       provider = AgentSessionProvider.CODEX,
@@ -168,7 +204,9 @@ class AgentSessionPromptLauncherBridgeTest {
           assertThat(result.launched).isTrue()
           assertThat(result.error).isNull()
           waitForCondition {
-            providerBridge.createCalls.get() == 1
+            providerBridge.createCalls.get() == 1 &&
+            providerBridge.composeCalls.get() == 1 &&
+            providerBridge.startupCommandCalls.get() == 1
           }
           assertThat(providerBridge.composeCalls.get()).isEqualTo(1)
           assertThat(providerBridge.startupCommandCalls.get()).isEqualTo(1)
@@ -869,12 +907,15 @@ class AgentSessionPromptLauncherBridgeTest {
 private fun promptLauncherBridge(
   service: AgentSessionStateSyncTestFacade,
   launchService: AgentSessionLaunchService,
+  preferredProviderProvider: () -> AgentSessionProvider? = { null },
 ): AgentSessionPromptLauncherBridge {
   return AgentSessionPromptLauncherBridge(
+    launchPromptRequest = { request -> launchService.launchPromptRequest(request) },
     stateFlowProvider = { service.state },
+    pathStateResolver = ::resolveAgentSessionPathState,
     refreshCatalogAndLoadNewlyOpened = { service.refreshCatalogAndLoadNewlyOpened() },
     refreshProviderForPath = { path, provider -> service.refreshProviderForPath(path = path, provider = provider) },
-    launchServiceProvider = { launchService },
+    preferredProviderProvider = preferredProviderProvider,
   )
 }
 

@@ -2,7 +2,7 @@
 package com.intellij.agent.workbench.sessions.ui
 
 import com.intellij.agent.workbench.sessions.claude.ClaudeQuotaStatusBarWidgetSettings
-import com.intellij.agent.workbench.sessions.state.AgentSessionsTreeUiStateService
+import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.openapi.application.EDT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -15,8 +15,8 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
 internal class ClaudeQuotaHintController(
-  private val treeUiStateService: AgentSessionsTreeUiStateService,
-  private val quotaHintPanel: ClaudeQuotaHintPanel,
+    private val uiPreferencesStateService: AgentSessionUiPreferencesStateService,
+    private val quotaHintPanel: ClaudeQuotaHintPanel,
 ) {
   @Suppress("RAW_SCOPE_CREATION")
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
@@ -27,14 +27,14 @@ internal class ClaudeQuotaHintController(
 
   fun start() {
     scope.launch {
-      treeUiStateService.claudeQuotaHintEligibleFlow.collect { eligible ->
+      uiPreferencesStateService.claudeQuotaHintEligibleFlow.collect { eligible ->
         claudeQuotaHintEligible = eligible
         syncClaudeQuotaHintState()
       }
     }
 
     scope.launch {
-      treeUiStateService.claudeQuotaHintAcknowledgedFlow.collect { acknowledged ->
+      uiPreferencesStateService.claudeQuotaHintAcknowledgedFlow.collect { acknowledged ->
         claudeQuotaHintAcknowledged = acknowledged
         syncClaudeQuotaHintState()
       }
@@ -66,7 +66,7 @@ internal class ClaudeQuotaHintController(
         widgetEnabled = isClaudeQuotaWidgetEnabled,
       )
     ) {
-      treeUiStateService.acknowledgeClaudeQuotaHint()
+      uiPreferencesStateService.acknowledgeClaudeQuotaHint()
     }
     quotaHintPanel.isVisible = shouldShowClaudeQuotaHint(
       eligible = claudeQuotaHintEligible,

@@ -820,10 +820,15 @@ internal class AgentPromptPalettePopup(
   private fun restoreDraft() {
     val draft = uiStateService.loadDraft()
     val contextRestoreSnapshot = uiStateService.loadContextRestoreSnapshot()
+    val launcher = launcherProvider()
 
     promptArea.text = draft.promptText
     codexPlanModeCheckBox.isSelected = draft.codexPlanModeEnabled
-    val persistedProvider = draft.providerId?.let(AgentSessionProvider::fromOrNull)
+    val persistedProvider = resolveRestoredPromptProvider(
+      draftProviderId = draft.providerId,
+      preferredProvider = launcher?.preferredProvider(),
+      availableProviders = providerEntries.map { entry -> entry.bridge.provider },
+    )
     selectedProvider = findProviderEntry(persistedProvider) ?: selectedProvider
     updateProviderIconPresentation()
 
@@ -1068,6 +1073,21 @@ internal fun resolveSubmitValidationErrorMessageKey(
     return "popup.error.existing.select.task"
   }
   return null
+}
+
+internal fun resolveRestoredPromptProvider(
+  draftProviderId: String?,
+  preferredProvider: AgentSessionProvider?,
+  availableProviders: Iterable<AgentSessionProvider>,
+): AgentSessionProvider? {
+  val availableProviderSet = availableProviders.toSet()
+  val draftProvider = draftProviderId
+    ?.let(AgentSessionProvider::fromOrNull)
+    ?.takeIf { provider -> provider in availableProviderSet }
+  if (draftProvider != null) {
+    return draftProvider
+  }
+  return preferredProvider?.takeIf { provider -> provider in availableProviderSet }
 }
 
 internal fun installPromptEnterHandlers(

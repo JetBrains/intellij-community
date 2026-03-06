@@ -15,6 +15,7 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLauncherBrid
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
+import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.sessions.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.tree.SessionTreeNode
 import com.intellij.ide.RecentProjectsManager
@@ -32,6 +33,7 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
   private val pathStateResolver: (AgentSessionsState, String) -> AgentSessionPathState?
   private val refreshCatalogAndLoadNewlyOpened: () -> Unit
   private val refreshProviderForPath: (String, AgentSessionProvider) -> Unit
+  private val preferredProviderProvider: () -> AgentSessionProvider?
 
   @Suppress("unused")
   constructor() : this(
@@ -40,19 +42,7 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
     pathStateResolver = ::resolveAgentSessionPathState,
     refreshCatalogAndLoadNewlyOpened = { service<AgentSessionRefreshService>().refreshCatalogAndLoadNewlyOpened() },
     refreshProviderForPath = { path, provider -> service<AgentSessionRefreshService>().refreshProviderForPath(path = path, provider = provider) },
-  )
-
-  internal constructor(
-    stateFlowProvider: () -> StateFlow<AgentSessionsState>,
-    refreshCatalogAndLoadNewlyOpened: () -> Unit,
-    refreshProviderForPath: (String, AgentSessionProvider) -> Unit,
-    launchServiceProvider: () -> AgentSessionLaunchService,
-  ) : this(
-    launchPromptRequest = { request -> launchServiceProvider().launchPromptRequest(request) },
-    stateFlowProvider = stateFlowProvider,
-    pathStateResolver = ::resolveAgentSessionPathState,
-    refreshCatalogAndLoadNewlyOpened = refreshCatalogAndLoadNewlyOpened,
-    refreshProviderForPath = refreshProviderForPath,
+    preferredProviderProvider = { service<AgentSessionUiPreferencesStateService>().getLastUsedProvider() },
   )
 
   internal constructor(
@@ -65,6 +55,7 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
     pathStateResolver = ::resolveAgentSessionPathState,
     refreshCatalogAndLoadNewlyOpened = {},
     refreshProviderForPath = { _, _ -> },
+    preferredProviderProvider = { null },
   )
 
   internal constructor(
@@ -73,16 +64,22 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
     pathStateResolver: (AgentSessionsState, String) -> AgentSessionPathState?,
     refreshCatalogAndLoadNewlyOpened: () -> Unit,
     refreshProviderForPath: (String, AgentSessionProvider) -> Unit,
+    preferredProviderProvider: () -> AgentSessionProvider?,
   ) {
     this.launchPromptRequest = launchPromptRequest
     this.stateFlowProvider = stateFlowProvider
     this.pathStateResolver = pathStateResolver
     this.refreshCatalogAndLoadNewlyOpened = refreshCatalogAndLoadNewlyOpened
     this.refreshProviderForPath = refreshProviderForPath
+    this.preferredProviderProvider = preferredProviderProvider
   }
 
   override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
     return launchPromptRequest(request)
+  }
+
+  override fun preferredProvider(): AgentSessionProvider? {
+    return preferredProviderProvider()
   }
 
   override fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String? {

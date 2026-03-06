@@ -5,7 +5,7 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSubAgent
 import com.intellij.agent.workbench.sessions.model.WorktreeEntry
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_THREAD_COUNT
-import com.intellij.agent.workbench.sessions.state.InMemorySessionsTreeUiState
+import com.intellij.agent.workbench.sessions.state.InMemorySessionTreeUiState
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class AgentSessionRefreshOnDemandIntegrationTest {
   @Test
   fun ensureThreadVisibleExpandsProjectVisibleCountForHiddenThread() = runBlocking(Dispatchers.Default) {
-    val treeUiState = InMemorySessionsTreeUiState()
+    val treeUiState = InMemorySessionTreeUiState()
     withService(
       sessionSourcesProvider = {
         listOf(
@@ -119,7 +119,7 @@ class AgentSessionRefreshOnDemandIntegrationTest {
 
   @Test
   fun showMoreThreadsUpdatesRuntimeVisibleCountWithoutPersistingUiState() = runBlocking(Dispatchers.Default) {
-    val treeUiState = InMemorySessionsTreeUiState()
+    val treeUiState = InMemorySessionTreeUiState()
     withService(
       sessionSourcesProvider = {
         listOf(

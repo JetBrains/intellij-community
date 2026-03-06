@@ -11,7 +11,7 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadPreview
-import com.intellij.agent.workbench.sessions.state.InMemorySessionsTreeUiState
+import com.intellij.agent.workbench.sessions.state.InMemorySessionTreeUiState
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.CompletableDeferred
@@ -28,7 +28,7 @@ class AgentSessionRefreshServiceIntegrationTest {
   fun refreshShowsCachedOpenProjectThreadsBeforeProviderLoadCompletes() = runBlocking(Dispatchers.Default) {
     val started = CompletableDeferred<Unit>()
     val release = CompletableDeferred<Unit>()
-    val treeUiState = InMemorySessionsTreeUiState()
+    val treeUiState = InMemorySessionTreeUiState()
     treeUiState.setOpenProjectThreadPreviews(
       PROJECT_PATH,
       listOf(
@@ -142,7 +142,7 @@ class AgentSessionRefreshServiceIntegrationTest {
 
   @Test
   fun refreshIgnoresPersistedVisibleThreadCountForKnownPath() = runBlocking(Dispatchers.Default) {
-    val treeUiState = InMemorySessionsTreeUiState()
+    val treeUiState = InMemorySessionTreeUiState()
     treeUiState.incrementVisibleThreadCount(PROJECT_PATH, delta = 6)
 
     withService(

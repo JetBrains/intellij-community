@@ -46,7 +46,7 @@ Define the single source of truth for cross-feature behavior that must stay cons
   [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
 - Project/worktree state keys (visibility, open-preview cache, dedup gates) must use normalized paths so `/path` and `/path/` resolve to the same entry.
-  [@test] ../sessions/testSrc/AgentSessionsTreeUiStateServiceTest.kt
+  [@test] ../sessions/testSrc/AgentSessionTreeUiStateServiceTest.kt
   [@test] ../sessions/testSrc/AgentSessionRefreshOnDemandIntegrationTest.kt
 
 - Resume command mapping is canonical:
