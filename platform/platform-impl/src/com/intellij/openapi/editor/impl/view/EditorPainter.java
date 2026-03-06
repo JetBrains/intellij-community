@@ -1597,11 +1597,43 @@ public final class EditorPainter implements TextDrawingCallback {
     private void paintCaretBar(@NotNull Graphics2D g, @Nullable Caret caret, float x, float y, float w, float h, boolean isRtl) {
       var old = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g.fill(new RoundRectangle2D.Float(x, y, w, h, w, w));
+
+      boolean shouldDrawRtl = myDocument.getTextLength() > 0 && caret != null &&
+                              !myView.getTextLayoutCache().getLineLayout(caret.getLogicalPosition().line).isLtr();
+
+      GeneralPath caretShape = new GeneralPath();
+
+      float radius = Math.min(w / 2, CARET_DIRECTION_MARK_SIZE);
+
+      caretShape.moveTo(x, y + radius);
+
+      if (shouldDrawRtl && isRtl) {
+        caretShape.moveTo(x, y + CARET_DIRECTION_MARK_SIZE);
+        caretShape.lineTo(x - CARET_DIRECTION_MARK_SIZE, y);
+        caretShape.lineTo(x + radius, y);
+      } else {
+        caretShape.quadTo(x, y, x + radius, y);
+      }
+
+      if (shouldDrawRtl && !isRtl) {
+        caretShape.lineTo(x + w + CARET_DIRECTION_MARK_SIZE, y);
+        caretShape.lineTo(x + w, y + CARET_DIRECTION_MARK_SIZE);
+      } else {
+        caretShape.lineTo(x + w - radius, y);
+        caretShape.quadTo(x + w, y, x + w, y + radius);
+      }
+
+      caretShape.lineTo(x + w, y + h - radius);
+      caretShape.quadTo(x + w, y + h, x + w - radius, y + h);
+      caretShape.lineTo(x + radius, y + h);
+      caretShape.quadTo(x, y + h, x, y + h - radius);
+
+      caretShape.closePath();
+      g.fill(caretShape);
+
       if (old != null) {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
       }
-      paintCaretRtlMarker(g, caret, x, y, w, isRtl);
     }
 
     private static void paintCaretBlock(@NotNull Graphics2D g, float x, float y, float w, float h) {
