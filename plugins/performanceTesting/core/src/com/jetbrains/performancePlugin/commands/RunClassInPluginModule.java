@@ -25,6 +25,13 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * Playback command that runs a class via a plugin content module classloader.
+ * For new tests, prefer the lambda test framework (community/tools/intellij.lambda.testFramework)
+ * which provides module-aware execution without playback scripts.
+ *
+ * Prefer the <a href="https://youtrack.jetbrains.com/articles/IJPL-A-1620/Lambda-testing-framework#how-to-use"> lambda test framework </a> for new tests.
+ */
 public class RunClassInPluginModule extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "runClassInPluginModule";
   protected final String myModuleName;

@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
+ * Prefer the <a href="https://youtrack.jetbrains.com/articles/IJPL-A-1620/Lambda-testing-framework#how-to-use"> lambda test framework </a> for new tests.
  * @deprecated Use {@link RunClassInPluginModule} to resolve the proper module classloader.
  */
 @Deprecated(forRemoval = false)
