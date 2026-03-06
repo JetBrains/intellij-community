@@ -103,6 +103,7 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.GraphicsEnvironment;
+import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -1250,6 +1251,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       private final boolean myGlassPaneIsSet;
 
       private Dimension myLastMinimumSize;
+      private Insets myLastWindowInsets;
 
       private DialogRootPane() {
         setGlassPane(new IdeGlassPaneImpl(this));
@@ -1277,15 +1279,21 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         if (wrapper != null && wrapper.isAutoAdjustable()) {
           Window window = wrapper.getWindow();
           if (window != null) {
+            Insets windowInsets = window.getInsets();
+            var windowInsetsChanged = !(Objects.equals(myLastWindowInsets, windowInsets));
+            if (windowInsetsChanged) {
+              myLastWindowInsets = windowInsets == null ? null : (Insets)windowInsets.clone();
+            }
+
             Dimension size = getMinimumSize();
-            if (!(Objects.equals(size, myLastMinimumSize))) {
-              // update window minimum size only if root pane minimum size is changed
+            if (!(Objects.equals(size, myLastMinimumSize)) || windowInsetsChanged) {
+              // update window minimum size only if root pane minimum size or window insets is changed
               if (size == null) {
                 myLastMinimumSize = null;
               }
               else {
                 myLastMinimumSize = new Dimension(size);
-                JBInsets.addTo(size, window.getInsets());
+                JBInsets.addTo(size, windowInsets);
                 Rectangle screen = ScreenUtil.getScreenRectangle(window);
                 if (size.width > screen.width || size.height > screen.height) {
                   Application application = ApplicationManager.getApplication();
