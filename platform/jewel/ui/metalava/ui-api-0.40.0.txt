@@ -15,7 +15,7 @@ package org.jetbrains.jewel.ui {
   }
 
   @androidx.compose.runtime.Stable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class DefaultComponentStyling implements org.jetbrains.jewel.ui.ComponentStyling {
-    ctor public DefaultComponentStyling(org.jetbrains.jewel.ui.component.styling.CheckboxStyle checkboxStyle, org.jetbrains.jewel.ui.component.styling.ChipStyle chipStyle, org.jetbrains.jewel.ui.component.styling.CircularProgressStyle circularProgressStyle, org.jetbrains.jewel.ui.component.styling.DefaultBannerStyles defaultBannerStyle, org.jetbrains.jewel.ui.component.styling.ComboBoxStyle comboBoxStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle defaultButtonStyle, org.jetbrains.jewel.ui.component.styling.DropdownStyle defaultDropdownStyle, org.jetbrains.jewel.ui.component.styling.SplitButtonStyle defaultSplitButtonStyle, org.jetbrains.jewel.ui.component.styling.TabStyle defaultTabStyle, org.jetbrains.jewel.ui.component.styling.DividerStyle dividerStyle, org.jetbrains.jewel.ui.component.styling.TabStyle editorTabStyle, org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle groupHeaderStyle, org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle horizontalProgressBarStyle, org.jetbrains.jewel.ui.component.styling.IconButtonStyle iconButtonStyle, org.jetbrains.jewel.ui.component.styling.IconButtonStyle transparentIconButtonStyle, org.jetbrains.jewel.ui.component.styling.InlineBannerStyles inlineBannerStyle, org.jetbrains.jewel.ui.component.styling.LazyTreeStyle lazyTreeStyle, org.jetbrains.jewel.ui.component.styling.LinkStyle linkStyle, org.jetbrains.jewel.ui.component.styling.MenuStyle menuStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle outlinedButtonStyle, org.jetbrains.jewel.ui.component.styling.PopupContainerStyle popupContainerStyle, org.jetbrains.jewel.ui.component.styling.SplitButtonStyle outlinedSplitButtonStyle, org.jetbrains.jewel.ui.component.styling.RadioButtonStyle radioButtonStyle, org.jetbrains.jewel.ui.component.styling.ScrollbarStyle scrollbarStyle, org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle segmentedControlButtonStyle, org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle segmentedControlStyle, org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle selectableLazyColumnStyle, org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle simpleListItemStyle, org.jetbrains.jewel.ui.component.styling.SliderStyle sliderStyle, org.jetbrains.jewel.ui.component.styling.TextAreaStyle textAreaStyle, org.jetbrains.jewel.ui.component.styling.TextFieldStyle textFieldStyle, org.jetbrains.jewel.ui.component.styling.TooltipStyle tooltipStyle, org.jetbrains.jewel.ui.component.styling.DropdownStyle undecoratedDropdownStyle, org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle speedSearchStyle, org.jetbrains.jewel.ui.component.styling.SearchMatchStyle searchMatchStyle, org.jetbrains.jewel.ui.component.styling.PopupAdStyle popupAdStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle defaultSlimButtonStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle outlinedSlimButtonStyle, org.jetbrains.jewel.ui.component.styling.BadgeStyles badgeStyle);
+    ctor public DefaultComponentStyling(org.jetbrains.jewel.ui.component.styling.CheckboxStyle checkboxStyle, org.jetbrains.jewel.ui.component.styling.ChipStyle chipStyle, org.jetbrains.jewel.ui.component.styling.CircularProgressStyle circularProgressStyle, org.jetbrains.jewel.ui.component.styling.DefaultBannerStyles defaultBannerStyle, org.jetbrains.jewel.ui.component.styling.ComboBoxStyle comboBoxStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle defaultButtonStyle, org.jetbrains.jewel.ui.component.styling.DropdownStyle defaultDropdownStyle, org.jetbrains.jewel.ui.component.styling.SplitButtonStyle defaultSplitButtonStyle, org.jetbrains.jewel.ui.component.styling.TabStyle defaultTabStyle, org.jetbrains.jewel.ui.component.styling.DividerStyle dividerStyle, org.jetbrains.jewel.ui.component.styling.TabStyle editorTabStyle, org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle groupHeaderStyle, org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle horizontalProgressBarStyle, org.jetbrains.jewel.ui.component.styling.IconButtonStyle iconButtonStyle, org.jetbrains.jewel.ui.component.styling.IconButtonStyle transparentIconButtonStyle, org.jetbrains.jewel.ui.component.styling.InlineBannerStyles inlineBannerStyle, org.jetbrains.jewel.ui.component.styling.LazyTreeStyle lazyTreeStyle, org.jetbrains.jewel.ui.component.styling.LinkStyle linkStyle, org.jetbrains.jewel.ui.component.styling.MenuStyle menuStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle outlinedButtonStyle, org.jetbrains.jewel.ui.component.styling.PopupContainerStyle popupContainerStyle, org.jetbrains.jewel.ui.component.styling.SplitButtonStyle outlinedSplitButtonStyle, org.jetbrains.jewel.ui.component.styling.RadioButtonStyle radioButtonStyle, org.jetbrains.jewel.ui.component.styling.ScrollbarStyle scrollbarStyle, org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle segmentedControlButtonStyle, org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle segmentedControlStyle, org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle selectableLazyColumnStyle, org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle simpleListItemStyle, org.jetbrains.jewel.ui.component.styling.SliderStyle sliderStyle, org.jetbrains.jewel.ui.component.styling.TextAreaStyle textAreaStyle, org.jetbrains.jewel.ui.component.styling.TextFieldStyle textFieldStyle, org.jetbrains.jewel.ui.component.styling.TooltipStyle tooltipStyle, org.jetbrains.jewel.ui.component.styling.DropdownStyle undecoratedDropdownStyle, org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle speedSearchStyle, org.jetbrains.jewel.ui.component.styling.SearchMatchStyle searchMatchStyle, org.jetbrains.jewel.ui.component.styling.PopupAdStyle popupAdStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle defaultSlimButtonStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle outlinedSlimButtonStyle, org.jetbrains.jewel.ui.component.styling.BadgeStyles badgeStyle, org.jetbrains.jewel.ui.component.gotit.GotItTooltipStyle gotItTooltipStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle gotItButtonStyle);
     method public org.jetbrains.jewel.ui.component.styling.BadgeStyles getBadgeStyle();
     method public org.jetbrains.jewel.ui.component.styling.CheckboxStyle getCheckboxStyle();
     method public org.jetbrains.jewel.ui.component.styling.ChipStyle getChipStyle();
@@ -29,6 +29,8 @@ package org.jetbrains.jewel.ui {
     method public org.jetbrains.jewel.ui.component.styling.TabStyle getDefaultTabStyle();
     method public org.jetbrains.jewel.ui.component.styling.DividerStyle getDividerStyle();
     method public org.jetbrains.jewel.ui.component.styling.TabStyle getEditorTabStyle();
+    method public org.jetbrains.jewel.ui.component.styling.ButtonStyle getGotItButtonStyle();
+    method public org.jetbrains.jewel.ui.component.gotit.GotItTooltipStyle getGotItTooltipStyle();
     method public org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle getGroupHeaderStyle();
     method public org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle getHorizontalProgressBarStyle();
     method public org.jetbrains.jewel.ui.component.styling.IconButtonStyle getIconButtonStyle();
@@ -69,6 +71,8 @@ package org.jetbrains.jewel.ui {
     property public org.jetbrains.jewel.ui.component.styling.TabStyle defaultTabStyle;
     property public org.jetbrains.jewel.ui.component.styling.DividerStyle dividerStyle;
     property public org.jetbrains.jewel.ui.component.styling.TabStyle editorTabStyle;
+    property public org.jetbrains.jewel.ui.component.styling.ButtonStyle gotItButtonStyle;
+    property public org.jetbrains.jewel.ui.component.gotit.GotItTooltipStyle gotItTooltipStyle;
     property public org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle groupHeaderStyle;
     property public org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle horizontalProgressBarStyle;
     property public org.jetbrains.jewel.ui.component.styling.IconButtonStyle iconButtonStyle;
@@ -1068,6 +1072,175 @@ package org.jetbrains.jewel.ui.component.banner {
 
   public interface BannerLinkActionScope {
     method public void action(String text, kotlin.jvm.functions.Function0<kotlin.Unit> onClick);
+  }
+
+}
+
+package org.jetbrains.jewel.ui.component.gotit {
+
+  public enum GotItBalloonPosition {
+    enum_constant public static final org.jetbrains.jewel.ui.component.gotit.GotItBalloonPosition ABOVE;
+    enum_constant public static final org.jetbrains.jewel.ui.component.gotit.GotItBalloonPosition BELOW;
+    enum_constant public static final org.jetbrains.jewel.ui.component.gotit.GotItBalloonPosition END;
+    enum_constant public static final org.jetbrains.jewel.ui.component.gotit.GotItBalloonPosition START;
+  }
+
+  @androidx.compose.runtime.Stable public final class GotItBody {
+  }
+
+  public final class GotItBodyBuilder {
+    method public org.jetbrains.jewel.ui.component.gotit.GotItBodyBuilder append(@org.jetbrains.annotations.Nls String text);
+    method public org.jetbrains.jewel.ui.component.gotit.GotItBodyBuilder bold(@org.jetbrains.annotations.Nls String text);
+    method public org.jetbrains.jewel.ui.component.gotit.GotItBodyBuilder browserLink(@org.jetbrains.annotations.Nls String text, String uri);
+    method public org.jetbrains.jewel.ui.component.gotit.GotItBodyBuilder code(@org.jetbrains.annotations.Nls String text);
+    method public org.jetbrains.jewel.ui.component.gotit.GotItBodyBuilder icon(String? contentDescription, kotlin.jvm.functions.Function0<kotlin.Unit> content);
+    method public org.jetbrains.jewel.ui.component.gotit.GotItBodyBuilder link(@org.jetbrains.annotations.Nls String text, kotlin.jvm.functions.Function0<kotlin.Unit> action);
+  }
+
+  @androidx.compose.runtime.Stable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class GotItButton {
+    ctor public GotItButton(@org.jetbrains.annotations.Nls String label, optional kotlin.jvm.functions.Function0<kotlin.Unit> action);
+    method public kotlin.jvm.functions.Function0<kotlin.Unit> getAction();
+    method public String getLabel();
+    property public kotlin.jvm.functions.Function0<kotlin.Unit> action;
+    property @org.jetbrains.annotations.Nls public String label;
+    field public static final org.jetbrains.jewel.ui.component.gotit.GotItButton.Companion Companion;
+  }
+
+  public static final class GotItButton.Companion {
+    method public org.jetbrains.jewel.ui.component.gotit.GotItButton getDefault();
+    property public org.jetbrains.jewel.ui.component.gotit.GotItButton Default;
+  }
+
+  @androidx.compose.runtime.Stable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class GotItButtons {
+    ctor public GotItButtons(org.jetbrains.jewel.ui.component.gotit.GotItButton? primary, optional org.jetbrains.jewel.ui.component.gotit.GotItButton? secondary);
+    method public org.jetbrains.jewel.ui.component.gotit.GotItButton? getPrimary();
+    method public org.jetbrains.jewel.ui.component.gotit.GotItButton? getSecondary();
+    property public org.jetbrains.jewel.ui.component.gotit.GotItButton? primary;
+    property public org.jetbrains.jewel.ui.component.gotit.GotItButton? secondary;
+    field public static final org.jetbrains.jewel.ui.component.gotit.GotItButtons.Companion Companion;
+  }
+
+  public static final class GotItButtons.Companion {
+    method public org.jetbrains.jewel.ui.component.gotit.GotItButtons getDefault();
+    method public org.jetbrains.jewel.ui.component.gotit.GotItButtons getNone();
+    property public org.jetbrains.jewel.ui.component.gotit.GotItButtons Default;
+    property public org.jetbrains.jewel.ui.component.gotit.GotItButtons None;
+  }
+
+  @androidx.compose.runtime.Stable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class GotItColors {
+    ctor @KotlinOnly public GotItColors(androidx.compose.ui.graphics.Color foreground, androidx.compose.ui.graphics.Color background, androidx.compose.ui.graphics.Color stepForeground, androidx.compose.ui.graphics.Color secondaryActionForeground, androidx.compose.ui.graphics.Color headerForeground, androidx.compose.ui.graphics.Color balloonBorderColor, androidx.compose.ui.graphics.Color imageBorderColor, androidx.compose.ui.graphics.Color link, androidx.compose.ui.graphics.Color codeForeground, androidx.compose.ui.graphics.Color codeBackground);
+    property public androidx.compose.ui.graphics.Color background;
+    property public androidx.compose.ui.graphics.Color balloonBorderColor;
+    property public androidx.compose.ui.graphics.Color codeBackground;
+    property public androidx.compose.ui.graphics.Color codeForeground;
+    property public androidx.compose.ui.graphics.Color foreground;
+    property public androidx.compose.ui.graphics.Color headerForeground;
+    property public androidx.compose.ui.graphics.Color imageBorderColor;
+    property public androidx.compose.ui.graphics.Color link;
+    property public androidx.compose.ui.graphics.Color secondaryActionForeground;
+    property public androidx.compose.ui.graphics.Color stepForeground;
+    field public static final org.jetbrains.jewel.ui.component.gotit.GotItColors.Companion Companion;
+  }
+
+  public static final class GotItColors.Companion {
+  }
+
+  @androidx.compose.runtime.Stable public sealed interface GotItIconOrStep {
+  }
+
+  @androidx.compose.runtime.Stable @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class GotItIconOrStep.Icon implements org.jetbrains.jewel.ui.component.gotit.GotItIconOrStep {
+    ctor public GotItIconOrStep.Icon(kotlin.jvm.functions.Function0<kotlin.Unit> content);
+    method public kotlin.jvm.functions.Function0<kotlin.Unit> getContent();
+    property public kotlin.jvm.functions.Function0<kotlin.Unit> content;
+  }
+
+  @androidx.compose.runtime.Stable @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class GotItIconOrStep.Step implements org.jetbrains.jewel.ui.component.gotit.GotItIconOrStep {
+    ctor public GotItIconOrStep.Step(int number);
+    method public String getFormattedText();
+    method public int getNumber();
+    property public String formattedText;
+    property public int number;
+  }
+
+  @androidx.compose.runtime.Stable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class GotItImage {
+    ctor public GotItImage(String path, String? contentDescription, optional boolean showBorder);
+    method public String? getContentDescription();
+    method public String getPath();
+    method public boolean getShowBorder();
+    property public String? contentDescription;
+    property public String path;
+    property public boolean showBorder;
+  }
+
+  @androidx.compose.runtime.Stable public sealed interface GotItLink {
+    method public kotlin.jvm.functions.Function0<kotlin.Unit> getAction();
+    method public String getLabel();
+    property public abstract kotlin.jvm.functions.Function0<kotlin.Unit> action;
+    property public abstract String label;
+  }
+
+  @androidx.compose.runtime.Stable @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class GotItLink.Browser implements org.jetbrains.jewel.ui.component.gotit.GotItLink {
+    ctor public GotItLink.Browser(@org.jetbrains.annotations.Nls String label, String uri, optional kotlin.jvm.functions.Function0<kotlin.Unit> action);
+    method public kotlin.jvm.functions.Function0<kotlin.Unit> getAction();
+    method public String getLabel();
+    method public String getUri();
+    property public kotlin.jvm.functions.Function0<kotlin.Unit> action;
+    property @org.jetbrains.annotations.Nls public String label;
+    property public String uri;
+  }
+
+  @androidx.compose.runtime.Stable @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class GotItLink.Regular implements org.jetbrains.jewel.ui.component.gotit.GotItLink {
+    ctor public GotItLink.Regular(@org.jetbrains.annotations.Nls String label, kotlin.jvm.functions.Function0<kotlin.Unit> action);
+    method public kotlin.jvm.functions.Function0<kotlin.Unit> getAction();
+    method public String getLabel();
+    property public kotlin.jvm.functions.Function0<kotlin.Unit> action;
+    property @org.jetbrains.annotations.Nls public String label;
+  }
+
+  @androidx.compose.runtime.Stable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class GotItMetrics {
+    ctor @KotlinOnly public GotItMetrics(androidx.compose.foundation.layout.PaddingValues contentPadding, androidx.compose.ui.unit.Dp textPadding, androidx.compose.foundation.layout.PaddingValues buttonPadding, androidx.compose.ui.unit.Dp iconPadding, androidx.compose.foundation.layout.PaddingValues imagePadding, androidx.compose.ui.unit.Dp cornerRadius);
+    method public androidx.compose.foundation.layout.PaddingValues getButtonPadding();
+    method public androidx.compose.foundation.layout.PaddingValues getContentPadding();
+    method public androidx.compose.foundation.layout.PaddingValues getImagePadding();
+    property public androidx.compose.foundation.layout.PaddingValues buttonPadding;
+    property public androidx.compose.foundation.layout.PaddingValues contentPadding;
+    property public androidx.compose.ui.unit.Dp cornerRadius;
+    property public androidx.compose.ui.unit.Dp iconPadding;
+    property public androidx.compose.foundation.layout.PaddingValues imagePadding;
+    property public androidx.compose.ui.unit.Dp textPadding;
+    field public static final org.jetbrains.jewel.ui.component.gotit.GotItMetrics.Companion Companion;
+  }
+
+  public static final class GotItMetrics.Companion {
+  }
+
+  public final class GotItTooltipBodyKt {
+    method public static inline org.jetbrains.jewel.ui.component.gotit.GotItBody buildGotItBody(kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.ui.component.gotit.GotItBodyBuilder,kotlin.Unit> builder);
+  }
+
+  public final class GotItTooltipKt {
+    method @androidx.compose.runtime.Composable public static void GotItTooltip(@org.jetbrains.annotations.Nls String text, boolean visible, kotlin.jvm.functions.Function0<kotlin.Unit> onDismiss, optional androidx.compose.ui.Modifier modifier, optional @org.jetbrains.annotations.Nls String? header, optional org.jetbrains.jewel.ui.component.gotit.GotItIconOrStep? iconOrStep, optional org.jetbrains.jewel.ui.component.gotit.GotItButtons buttons, optional org.jetbrains.jewel.ui.component.gotit.GotItLink? link, optional org.jetbrains.jewel.ui.component.gotit.GotItImage? image, optional androidx.compose.ui.unit.Dp? maxWidth, optional long timeout, optional org.jetbrains.jewel.ui.component.gotit.GotItBalloonPosition gotItBalloonPosition, optional androidx.compose.ui.Alignment anchor, optional float padding, optional kotlin.jvm.functions.Function0<kotlin.Unit> onShow, optional kotlin.jvm.functions.Function0<kotlin.Unit>? onEscapePress, optional org.jetbrains.jewel.ui.component.gotit.GotItTooltipStyle style, kotlin.jvm.functions.Function0<kotlin.Unit> content);
+    method @androidx.compose.runtime.Composable public static void GotItTooltip(org.jetbrains.jewel.ui.component.gotit.GotItBody body, boolean visible, kotlin.jvm.functions.Function0<kotlin.Unit> onDismiss, optional androidx.compose.ui.Modifier modifier, optional @org.jetbrains.annotations.Nls String? header, optional org.jetbrains.jewel.ui.component.gotit.GotItIconOrStep? iconOrStep, optional org.jetbrains.jewel.ui.component.gotit.GotItButtons buttons, optional org.jetbrains.jewel.ui.component.gotit.GotItLink? link, optional org.jetbrains.jewel.ui.component.gotit.GotItImage? image, optional androidx.compose.ui.unit.Dp? maxWidth, optional long timeout, optional org.jetbrains.jewel.ui.component.gotit.GotItBalloonPosition gotItBalloonPosition, optional androidx.compose.ui.Alignment anchor, optional float offset, optional kotlin.jvm.functions.Function0<kotlin.Unit> onShow, optional kotlin.jvm.functions.Function0<kotlin.Unit>? onEscapePress, optional org.jetbrains.jewel.ui.component.gotit.GotItTooltipStyle style, kotlin.jvm.functions.Function0<kotlin.Unit> content);
+    method @androidx.compose.runtime.Composable public static androidx.compose.ui.window.PopupPositionProvider rememberGotItTooltipBalloonPopupPositionProvider(org.jetbrains.jewel.ui.component.gotit.GotItBalloonPosition gotItBalloonPosition, androidx.compose.ui.Alignment anchor, optional float arrowOffset, optional float padding);
+  }
+
+  @androidx.compose.runtime.Stable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class GotItTooltipStyle {
+    ctor public GotItTooltipStyle(org.jetbrains.jewel.ui.component.gotit.GotItColors colors, org.jetbrains.jewel.ui.component.gotit.GotItMetrics metrics);
+    method public org.jetbrains.jewel.ui.component.gotit.GotItColors getColors();
+    method public org.jetbrains.jewel.ui.component.gotit.GotItMetrics getMetrics();
+    property public org.jetbrains.jewel.ui.component.gotit.GotItColors colors;
+    property public org.jetbrains.jewel.ui.component.gotit.GotItMetrics metrics;
+    field public static final org.jetbrains.jewel.ui.component.gotit.GotItTooltipStyle.Companion Companion;
+  }
+
+  public static final class GotItTooltipStyle.Companion {
+  }
+
+  public final class GotItTooltipStylingKt {
+    method public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.ui.component.styling.ButtonStyle> getLocalGotItButtonStyle();
+    method public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.ui.component.gotit.GotItTooltipStyle> getLocalGotItTooltipStyle();
+    property public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.ui.component.styling.ButtonStyle> LocalGotItButtonStyle;
+    property public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.ui.component.gotit.GotItTooltipStyle> LocalGotItTooltipStyle;
   }
 
 }
@@ -5033,6 +5206,8 @@ package org.jetbrains.jewel.ui.theme {
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.DividerStyle getDividerStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.DropdownStyle getDropdownStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.TabStyle getEditorTabStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
+    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.ButtonStyle getGotItButtonStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
+    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.gotit.GotItTooltipStyle getGotItTooltipStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle getGroupHeaderStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle getHorizontalProgressBarStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.IconButtonStyle getIconButtonStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
@@ -5073,6 +5248,8 @@ package org.jetbrains.jewel.ui.theme {
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.DividerStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.dividerStyle;
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.DropdownStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.dropdownStyle;
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.TabStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.editorTabStyle;
+    property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.ButtonStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.gotItButtonStyle;
+    property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.gotit.GotItTooltipStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.gotItTooltipStyle;
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.groupHeaderStyle;
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.horizontalProgressBarStyle;
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.IconButtonStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.iconButtonStyle;

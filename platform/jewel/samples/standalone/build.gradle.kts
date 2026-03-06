@@ -69,5 +69,6 @@ tasks {
             javaLauncher = project.javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(jdkLevel) }
             setExecutable(javaLauncher.map { it.executablePath.asFile.absolutePath }.get())
         }
+        jvmArgs("-Dcompose.interop.blending=true")
     }
 }
