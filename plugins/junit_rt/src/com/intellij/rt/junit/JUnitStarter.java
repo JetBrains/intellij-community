@@ -15,9 +15,11 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Before rename or move
@@ -175,7 +177,8 @@ public final class JUnitStarter {
   private static boolean isJUnit5Preferred() {
     try {
       return Boolean.getBoolean(JUNIT5_KEY);
-    } catch (SecurityException ignore) {
+    }
+    catch (SecurityException ignore) {
       return false;
     }
   }
@@ -274,9 +277,10 @@ public final class JUnitStarter {
       @Override
       public boolean check() {
         try {
-          Class.forName("org.junit.platform.engine.CancellationToken");
           Class.forName(getRunnerName());
-          return true;
+          String engineJar = getClassLocation("org.junit.platform.engine.TestEngine");
+          String engine6Jar = getClassLocation("org.junit.platform.engine.CancellationToken");
+          return Objects.equals(engineJar, engine6Jar);
         }
         catch (ClassNotFoundException e) {
           return false;
@@ -294,6 +298,7 @@ public final class JUnitStarter {
 
     /**
      * Verifies that all required classes for this runner are present on the classpath.
+     *
      * @return true if all required classes are present, false otherwise
      */
     public abstract boolean check();
@@ -307,6 +312,16 @@ public final class JUnitStarter {
         if (runner.parameter.equals(parameter)) return runner;
       }
       return null;
+    }
+
+    private static String getClassLocation(String className) {
+      try {
+        CodeSource cs = Class.forName(className).getProtectionDomain().getCodeSource();
+        return cs != null ? cs.getLocation().toExternalForm() : null;
+      }
+      catch (ClassNotFoundException | SecurityException e) {
+        return null;
+      }
     }
   }
 }
