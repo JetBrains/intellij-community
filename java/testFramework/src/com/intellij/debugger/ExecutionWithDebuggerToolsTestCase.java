@@ -53,6 +53,7 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointPr
 
 import javax.swing.SwingUtilities;
 import java.lang.reflect.InvocationTargetException;
+import java.text.MessageFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
@@ -102,6 +103,10 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     return true;
   }
 
+  protected boolean assertAllBreakpointsHit() {
+    return true;
+  }
+
   public final List<InvokeRatherLaterRequest> myRatherLaterRequests = new ArrayList<>();
 
   protected DebugProcessImpl getDebugProcess() {
@@ -144,9 +149,12 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     ThreadTracker.awaitJDIThreadsTermination(100, TimeUnit.SECONDS);
     try {
       myDebugProcess = null;
-      myBreakpointProvider = null;
       myRatherLaterRequests.clear();
       myWasUsedOnlyDefaultSuspendPolicy = true;
+      if (assertAllBreakpointsHit() && myBreakpointProvider != null) {
+        myBreakpointProvider.assertAllBreakpointsHit();
+      }
+      myBreakpointProvider = null;
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -605,6 +613,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     private final DebugProcessImpl myDebugProcess;
     private final List<SuspendContextRunnable> myRepeatingRunnables = new ArrayList<>();
     private final Queue<SuspendContextRunnable> myScriptRunnables = new ArrayDeque<>();
+    private int breakpointCount;
 
     public BreakpointProvider(DebugProcessImpl debugProcess) {
       myDebugProcess = debugProcess;
@@ -612,6 +621,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
     public void onBreakpoint(SuspendContextRunnable runnable) {
       myScriptRunnables.add(runnable);
+      breakpointCount++;
     }
 
     public void onEveryBreakpoint(SuspendContextRunnable runnable) {
@@ -678,6 +688,12 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
       // do not switch context on resume inside stepping
       if (pausedContext != null && !myDebugProcess.isSteppingInProgress()) {
         paused(pausedContext);
+      }
+    }
+
+    private void assertAllBreakpointsHit() {
+      if (breakpointCount > 0 && !myScriptRunnables.isEmpty()) {
+        fail(MessageFormat.format("{0} from {1} breakpoints are not hit", myScriptRunnables.size(), breakpointCount));
       }
     }
   }
