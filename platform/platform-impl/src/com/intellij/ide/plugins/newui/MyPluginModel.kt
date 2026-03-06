@@ -828,7 +828,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       group.titleWithEnabled(PluginModelFacade(this))
     }
     runInvalidFixCallback()
-    PluginUpdatesService.reapplyFilter()
+    myPluginUpdatesService?.refreshCallbacks()
   }
 
   override fun isDisabled(pluginId: PluginId): Boolean {

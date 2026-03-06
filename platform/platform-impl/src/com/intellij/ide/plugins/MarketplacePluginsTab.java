@@ -17,6 +17,7 @@ import com.intellij.ide.plugins.newui.PluginManagerCustomizer;
 import com.intellij.ide.plugins.newui.PluginModelFacade;
 import com.intellij.ide.plugins.newui.PluginUiModel;
 import com.intellij.ide.plugins.newui.PluginUiModelAdapter;
+import com.intellij.ide.plugins.newui.PluginUpdatesService;
 import com.intellij.ide.plugins.newui.PluginsGroup;
 import com.intellij.ide.plugins.newui.PluginsGroupComponent;
 import com.intellij.ide.plugins.newui.PluginsGroupComponentWithProgress;
@@ -85,6 +86,7 @@ class MarketplacePluginsTab extends PluginsTab {
   private final @NotNull PluginModelFacade myPluginModelFacade;
   private final @NotNull CoroutineScope myCoroutineScope;
   private final @Nullable PluginManagerCustomizer myPluginManagerCustomizer;
+  private final @NotNull PluginUpdatesService myPluginUpdatesService;
 
   private PluginsGroupComponentWithProgress myMarketplacePanel;
   private SearchResultPanel myMarketplaceSearchPanel;
@@ -98,12 +100,14 @@ class MarketplacePluginsTab extends PluginsTab {
   MarketplacePluginsTab(
     @NotNull PluginModelFacade facade,
     @NotNull CoroutineScope scope,
-    @Nullable PluginManagerCustomizer customizer
+    @Nullable PluginManagerCustomizer customizer,
+    @NotNull PluginUpdatesService service
   ) {
     super();
     myPluginModelFacade = facade;
     myCoroutineScope = scope;
     myPluginManagerCustomizer = customizer;
+    myPluginUpdatesService = service;
 
     myMarketplaceSortByGroup = new DefaultActionGroup();
     for (MarketplaceTabSearchSortByOptions option : MarketplaceTabSearchSortByOptions.getEntries()) {
@@ -286,8 +290,10 @@ class MarketplacePluginsTab extends PluginsTab {
           myMarketplacePanel.doLayout();
           myMarketplacePanel.initialSelection();
 
-          PluginUpdateListener.calculateUpdates(myCoroutineScope, plugin -> myPluginModelFacade.isEnabled(plugin), updates -> {
-            List<PluginUiModel> updateModels = new ArrayList<>(updates);
+          myPluginUpdatesService.calculateUpdates(updates -> {
+            List<PluginUiModel> updateModels = updates == null ? List.of() : updates.stream()
+              .filter(plugin -> myPluginModelFacade.isEnabled(plugin))
+              .toList();
             if (ContainerUtil.isEmpty(updateModels)) {
               clearUpdates(myMarketplacePanel);
               clearUpdates(myMarketplaceSearchPanel.getPanel());
@@ -298,7 +304,6 @@ class MarketplacePluginsTab extends PluginsTab {
             }
             selectionListener.accept(myMarketplacePanel);
             selectionListener.accept(myMarketplaceSearchPanel.getPanel());
-            return null;
           });
         }, ModalityState.any());
       }
