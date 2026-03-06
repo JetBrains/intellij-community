@@ -233,7 +233,7 @@ public final class ComponentUtil {
     // invariant: at the end of each iteration, result is in the currentSource's coordinate system
     while (currentSource != destination) {
       var sourceParent = currentSource.getParent();
-      if (sourceParent == null) break;
+      if (sourceParent == null || sourceParent instanceof Window) break; // Windows are not positioned relative to each other
       var sourceLocation = currentSource.getLocation();
       result.x += sourceLocation.x;
       result.y += sourceLocation.y;
@@ -250,7 +250,7 @@ public final class ComponentUtil {
     var destinationRelativeToCurrentDestinationY = 0;
     while (currentDestination != currentSource) {
       var destinationParent = currentDestination.getParent();
-      if (destinationParent == null) break;
+      if (destinationParent == null || destinationParent instanceof Window) break;
       destinationRelativeToCurrentDestinationX += currentDestination.getX();
       destinationRelativeToCurrentDestinationY += currentDestination.getY();
       currentDestination = destinationParent;
