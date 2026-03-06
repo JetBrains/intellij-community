@@ -81,8 +81,19 @@ enum class CodexAppServerNotificationKind {
 }
 
 @Immutable
+data class CodexAppServerStartedThread(
+  @JvmField val id: String,
+  @JvmField val title: String,
+  @JvmField val updatedAt: Long,
+  @JvmField val cwd: String,
+  @JvmField val statusKind: CodexThreadStatusKind = CodexThreadStatusKind.UNKNOWN,
+  @JvmField val activeFlags: List<CodexThreadActiveFlag> = emptyList(),
+)
+
+@Immutable
 data class CodexAppServerNotification(
   @JvmField val method: String,
   @JvmField val kind: CodexAppServerNotificationKind,
   @JvmField val threadId: String? = null,
+  @JvmField val startedThread: CodexAppServerStartedThread? = null,
 )
