@@ -174,6 +174,7 @@ internal object CodexTestAppServer {
       maybeWriteNotification(
         writer = writer,
         request = request,
+        threads = threads,
         notifyMethod = notifyMethod,
         notifyOnMethod = notifyOnMethod,
         notifyThreadId = notifyThreadId,
@@ -186,6 +187,7 @@ internal object CodexTestAppServer {
   private fun maybeWriteNotification(
     writer: BufferedWriter,
     request: Request,
+    threads: List<ThreadEntry>,
     notifyMethod: String?,
     notifyOnMethod: String?,
     notifyThreadId: String?,
@@ -199,7 +201,14 @@ internal object CodexTestAppServer {
     }
 
     val threadId = notifyThreadId ?: request.params.id
-    writeNotification(writer, method, threadId, notifyThreadIdStyle, notifyId)
+    writeNotification(
+      writer = writer,
+      method = method,
+      threadId = threadId,
+      thread = threadId?.let { requestedId -> threads.firstOrNull { entry -> entry.id == requestedId } },
+      threadIdStyle = notifyThreadIdStyle,
+      notificationId = notifyId,
+    )
   }
 
   private fun parseRequest(payload: String): Request? {
@@ -438,6 +447,7 @@ internal object CodexTestAppServer {
     writer: BufferedWriter,
     method: String,
     threadId: String?,
+    thread: ThreadEntry?,
     threadIdStyle: String?,
     notificationId: String?,
   ) {
@@ -458,11 +468,16 @@ internal object CodexTestAppServer {
       }
       "thread", "thread_object" -> {
         generator.writeFieldName("thread")
-        generator.writeStartObject()
-        if (threadId != null) {
-          generator.writeStringField("id", threadId)
+        if (method == "thread/started" && thread != null) {
+          writeThreadObject(generator, thread)
         }
-        generator.writeEndObject()
+        else {
+          generator.writeStartObject()
+          if (threadId != null) {
+            generator.writeStringField("id", threadId)
+          }
+          generator.writeEndObject()
+        }
       }
       else -> {
         if (threadId != null) {

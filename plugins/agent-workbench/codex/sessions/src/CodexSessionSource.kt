@@ -160,10 +160,7 @@ private fun mergeRebindCandidates(
     mergedByThreadId[candidate.threadId] = candidate
   }
   fallback.forEach { candidate ->
-    val existing = mergedByThreadId[candidate.threadId]
-    if (existing == null || candidate.updatedAt >= existing.updatedAt) {
-      mergedByThreadId[candidate.threadId] = candidate
-    }
+    mergedByThreadId.putIfAbsent(candidate.threadId, candidate)
   }
   return mergedByThreadId.values.toList()
 }

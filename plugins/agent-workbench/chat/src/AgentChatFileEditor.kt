@@ -14,21 +14,27 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
-import kotlinx.coroutines.CompletableDeferred
+import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -309,74 +315,19 @@ private class ToolWindowAgentChatTerminalTab(
     get() = delegate.view.keyEventsFlow
 
   override suspend fun awaitInitialMessageReadiness(timeoutMs: Long, idleMs: Long): AgentChatTerminalInputReadiness {
-    if (delegate.view.sessionState.value == TerminalViewSessionState.Terminated) {
-      return AgentChatTerminalInputReadiness.TERMINATED
-    }
-
-    val readinessDeferred = CompletableDeferred<AgentChatTerminalInputReadiness>()
-    val outputListenerDisposable = Disposer.newDisposable("agent-chat-initial-message-readiness")
-    var idleJob: Job? = null
-    var terminationJob: Job? = null
-    var sawMeaningfulOutput = false
-
-    fun rescheduleIdleCompletion() {
-      if (!sawMeaningfulOutput || readinessDeferred.isCompleted) {
-        return
-      }
-      idleJob?.cancel()
-      idleJob = delegate.view.coroutineScope.launch {
-        delay(idleMs.milliseconds)
-        readinessDeferred.complete(AgentChatTerminalInputReadiness.READY)
-      }
-    }
-
-    try {
-      withContext(Dispatchers.EDT) {
-        val listener = object : TerminalOutputModelListener {
-          override fun afterContentChanged(event: TerminalContentChangeEvent) {
-            if (event.isTypeAhead || event.isTrimming || readinessDeferred.isCompleted || event.newText.isEmpty()) {
-              return
-            }
-            if (event.newText.any(::isMeaningfulTerminalOutputChar)) {
-              sawMeaningfulOutput = true
-              if (provider == AgentSessionProvider.CODEX) {
-                notifyCodexTerminalOutputForRefresh(projectPath)
-              }
-            }
-            if (sawMeaningfulOutput) {
-              rescheduleIdleCompletion()
-            }
-          }
+    val outputModels = delegate.view.outputModels
+    return awaitTerminalInitialMessageReadiness(
+      sessionState = delegate.view.sessionState,
+      regularOutputModel = outputModels.regular,
+      alternativeOutputModel = outputModels.alternative,
+      timeoutMs = timeoutMs,
+      idleMs = idleMs,
+      onMeaningfulOutput = {
+        if (provider == AgentSessionProvider.CODEX) {
+          notifyCodexTerminalOutputForRefresh(projectPath)
         }
-        val outputModels = delegate.view.outputModels
-        outputModels.regular.addListener(outputListenerDisposable, listener)
-        outputModels.alternative.addListener(outputListenerDisposable, listener)
-
-        if (hasAnyMeaningfulTerminalOutput(outputModels.regular) || hasAnyMeaningfulTerminalOutput(outputModels.alternative)) {
-          sawMeaningfulOutput = true
-          if (provider == AgentSessionProvider.CODEX) {
-            notifyCodexTerminalOutputForRefresh(projectPath)
-          }
-          rescheduleIdleCompletion()
-        }
-      }
-
-      terminationJob = delegate.view.coroutineScope.launch {
-        delegate.view.sessionState.first { it == TerminalViewSessionState.Terminated }
-        readinessDeferred.complete(AgentChatTerminalInputReadiness.TERMINATED)
-      }
-
-      return withTimeoutOrNull(timeoutMs.milliseconds) {
-        readinessDeferred.await()
-      } ?: AgentChatTerminalInputReadiness.TIMEOUT
-    }
-    finally {
-      idleJob?.cancel()
-      terminationJob?.cancel()
-      withContext(Dispatchers.EDT) {
-        Disposer.dispose(outputListenerDisposable)
-      }
-    }
+      },
+    )
   }
 
   override fun sendText(text: String, shouldExecute: Boolean) {
@@ -392,11 +343,80 @@ private class ToolWindowAgentChatTerminalTab(
   }
 }
 
+@OptIn(FlowPreview::class)
+internal suspend fun awaitTerminalInitialMessageReadiness(
+  sessionState: StateFlow<TerminalViewSessionState>,
+  regularOutputModel: TerminalOutputModel,
+  alternativeOutputModel: TerminalOutputModel,
+  timeoutMs: Long,
+  idleMs: Long,
+  onMeaningfulOutput: () -> Unit = {},
+): AgentChatTerminalInputReadiness {
+  if (sessionState.value == TerminalViewSessionState.Terminated) {
+    return AgentChatTerminalInputReadiness.TERMINATED
+  }
+
+  val readinessFlow = merge(
+    meaningfulTerminalOutputFlow(
+      regularOutputModel = regularOutputModel,
+      alternativeOutputModel = alternativeOutputModel,
+      onMeaningfulOutput = onMeaningfulOutput,
+    )
+      .debounce(idleMs.milliseconds)
+      .map { AgentChatTerminalInputReadiness.READY },
+    sessionState
+      .filter { it == TerminalViewSessionState.Terminated }
+      .map { AgentChatTerminalInputReadiness.TERMINATED },
+  )
+
+  return withTimeoutOrNull(timeoutMs.milliseconds) {
+    readinessFlow.first()
+  } ?: AgentChatTerminalInputReadiness.TIMEOUT
+}
+
+private fun meaningfulTerminalOutputFlow(
+  regularOutputModel: TerminalOutputModel,
+  alternativeOutputModel: TerminalOutputModel,
+  onMeaningfulOutput: () -> Unit,
+): Flow<Unit> = callbackFlow {
+  val scope = this
+  val outputModels = listOf(regularOutputModel, alternativeOutputModel)
+
+  withContext(Dispatchers.EDT) {
+    val listenerDisposable = scope.asDisposable()
+    val listener = object : TerminalOutputModelListener {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
+        if (!scope.isActive || !isMeaningfulTerminalOutputChange(event)) {
+          return
+        }
+
+        onMeaningfulOutput()
+        scope.trySend(Unit)
+      }
+    }
+
+    outputModels.forEach { model ->
+      model.addListener(listenerDisposable, listener)
+    }
+
+    if (scope.isActive && outputModels.any(::hasAnyMeaningfulTerminalOutput)) {
+      onMeaningfulOutput()
+      scope.trySend(Unit)
+    }
+  }
+
+  awaitClose()
+}
+
 private fun hasAnyMeaningfulTerminalOutput(model: TerminalOutputModel): Boolean {
   val end = model.endOffset
   val availableChars = end - model.startOffset
   val start = if (availableChars > READINESS_SCAN_LIMIT_CHARS) end - READINESS_SCAN_LIMIT_CHARS else model.startOffset
   return model.getText(start, end).any(::isMeaningfulTerminalOutputChar)
+}
+
+internal fun isMeaningfulTerminalOutputChange(event: TerminalContentChangeEvent): Boolean {
+  return !event.isTypeAhead && !event.isTrimming && event.newText.isNotEmpty() && event.newText.any(::isMeaningfulTerminalOutputChar)
 }
 
 private fun isMeaningfulTerminalOutputChar(char: Char): Boolean {

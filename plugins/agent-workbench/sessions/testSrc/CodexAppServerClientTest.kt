@@ -507,6 +507,65 @@ class CodexAppServerClientTest {
       val event = notification.await()
       assertThat(event.threadId).isEqualTo("thread-notify-object")
       assertThat(event.method).isEqualTo("thread/status/changed")
+      assertThat(event.startedThread).isNull()
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
+  fun appServerStartedNotificationsExposeParsedThreadPayload(): Unit = runBlocking(Dispatchers.Default) {
+    val project = tempDir.resolve("project-notifications-started-thread")
+    Files.createDirectories(project)
+    val normalizedCwd = project.toString().replace('\\', '/').trimEnd('/')
+    val configPath = tempDir.resolve("codex-notifications-started-thread.json")
+    writeConfig(
+      path = configPath,
+      threads = listOf(
+        ThreadSpec(
+          id = "thread-started-object",
+          title = "Thread started object",
+          cwd = normalizedCwd,
+          sourceKind = "appServer",
+          statusType = "active",
+          activeFlags = listOf("waitingOnApproval"),
+          updatedAt = 1_700_000_054_000L,
+          archived = false,
+        )
+      )
+    )
+    val backendDir = tempDir.resolve("backend-notifications-started-thread")
+    Files.createDirectories(backendDir)
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+      environmentOverrides = mapOf(
+        "CODEX_TEST_NOTIFY_METHOD" to "thread/started",
+        "CODEX_TEST_NOTIFY_ON_METHOD" to "thread/read",
+        "CODEX_TEST_NOTIFY_THREAD_ID" to "thread-started-object",
+        "CODEX_TEST_NOTIFY_THREAD_ID_STYLE" to "thread_object",
+      ),
+    )
+    try {
+      val notification = async {
+        withTimeout(2.seconds) {
+          client.notifications.first()
+        }
+      }
+
+      val snapshot = client.readThreadActivitySnapshot("thread-started-object")
+      assertThat(snapshot).isNotNull
+
+      val event = notification.await()
+      assertThat(event.method).isEqualTo("thread/started")
+      assertThat(event.threadId).isEqualTo("thread-started-object")
+      assertThat(event.startedThread).isNotNull
+      assertThat(event.startedThread?.title).isEqualTo("Thread started object")
+      assertThat(event.startedThread?.cwd).isEqualTo(normalizedCwd)
+      assertThat(event.startedThread?.statusKind).isEqualTo(CodexThreadStatusKind.ACTIVE)
+      assertThat(event.startedThread?.activeFlags).containsExactly(CodexThreadActiveFlag.WAITING_ON_APPROVAL)
     }
     finally {
       client.shutdown()

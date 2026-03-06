@@ -122,7 +122,7 @@ internal class CodexAppServerProtocol {
 
       var hasResponseId = false
       var method: String? = null
-      var threadId: String? = null
+      var params = ParsedNotificationParams()
       forEachObjectField(parser) { fieldName ->
         when (fieldName) {
           "id" -> {
@@ -132,7 +132,7 @@ internal class CodexAppServerProtocol {
           "method" -> method = readStringOrNull(parser)
           "params" -> {
             if (parser.currentToken == JsonToken.START_OBJECT) {
-              threadId = parseNotificationThreadId(parser)
+              params = parseNotificationParams(parser)
             }
             else {
               parser.skipChildren()
@@ -147,26 +147,41 @@ internal class CodexAppServerProtocol {
         return null
       }
       val notificationMethod = method?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+      val notificationKind = notificationKindFromMethod(notificationMethod)
       return CodexAppServerNotification(
         method = notificationMethod,
-        kind = notificationKindFromMethod(notificationMethod),
-        threadId = threadId,
+        kind = notificationKind,
+        threadId = params.threadId,
+        startedThread = if (notificationKind == CodexAppServerNotificationKind.THREAD_STARTED) params.startedThread else null,
       )
     }
   }
 
 }
 
-private fun parseNotificationThreadId(parser: JsonParser): String? {
+private data class ParsedNotificationParams(
+  val threadId: String? = null,
+  val startedThread: CodexAppServerStartedThread? = null,
+)
+
+private data class ParsedNotificationThreadObject(
+  val threadId: String?,
+  val startedThread: CodexAppServerStartedThread?,
+)
+
+private fun parseNotificationParams(parser: JsonParser): ParsedNotificationParams {
   var threadId: String? = null
+  var startedThread: CodexAppServerStartedThread? = null
   forEachObjectField(parser) { fieldName ->
     when (fieldName) {
       "threadId", "thread_id" -> {
-        threadId = readStringOrNull(parser)
+        threadId = readStringOrNull(parser)?.trim()?.takeIf { it.isNotEmpty() }
       }
-      "thread" -> {
+      "thread", "data" -> {
         if (parser.currentToken == JsonToken.START_OBJECT) {
-          threadId = parseThreadIdFromThreadObject(parser) ?: threadId
+          val parsedThreadObject = parseNotificationThreadObject(parser)
+          threadId = parsedThreadObject.threadId ?: threadId
+          startedThread = parsedThreadObject.startedThread ?: startedThread
         }
         else {
           parser.skipChildren()
@@ -176,19 +191,18 @@ private fun parseNotificationThreadId(parser: JsonParser): String? {
     }
     true
   }
-  return threadId
+  return ParsedNotificationParams(
+    threadId = threadId,
+    startedThread = startedThread,
+  )
 }
 
-private fun parseThreadIdFromThreadObject(parser: JsonParser): String? {
-  var threadId: String? = null
-  forEachObjectField(parser) { fieldName ->
-    when (fieldName) {
-      "id" -> threadId = readStringOrNull(parser)
-      else -> parser.skipChildren()
-    }
-    true
-  }
-  return threadId
+private fun parseNotificationThreadObject(parser: JsonParser): ParsedNotificationThreadObject {
+  val payload = parseThreadPayload(parser, allowNestedThread = false)
+  return ParsedNotificationThreadObject(
+    threadId = resolveThreadId(payload),
+    startedThread = createStartedThread(payload),
+  )
 }
 
 private fun notificationKindFromMethod(method: String): CodexAppServerNotificationKind {
@@ -228,18 +242,9 @@ private fun parseThreadObject(parser: JsonParser, archived: Boolean, cwdFilter: 
 }
 
 private fun createCodexThread(payload: ThreadPayload, archived: Boolean): CodexThread? {
-  val threadId = payload.id ?: return null
-  val updatedAtValue = normalizeTimestamp(
-    payload.updatedAt
-      ?: payload.updatedAtAlt
-      ?: payload.createdAt
-      ?: payload.createdAtAlt
-      ?: 0L
-  )
-  val previewValue = payload.preview ?: payload.title ?: payload.name ?: payload.summary
-  val threadTitle = previewValue?.let { trimTitle(it) }?.takeIf { it.isNotBlank() } ?: "Thread ${threadId.take(8)}"
+  val threadId = resolveThreadId(payload) ?: return null
   return CodexThread(
-    id = threadId, title = threadTitle, updatedAt = updatedAtValue, archived = archived,
+    id = threadId, title = resolveThreadTitle(payload, threadId), updatedAt = resolveThreadUpdatedAt(payload), archived = archived,
     gitBranch = payload.gitBranch,
     cwd = payload.cwd?.let(::normalizeRootPath),
     sourceKind = payload.sourceKind,
@@ -255,6 +260,38 @@ private fun parseThreadFromResultObject(parser: JsonParser): CodexThread? {
   val payload = parseThreadPayload(parser, allowNestedThread = true)
   if (payload.nestedThread != null) return payload.nestedThread
   return createCodexThread(payload = payload, archived = false)
+}
+
+private fun createStartedThread(payload: ThreadPayload): CodexAppServerStartedThread? {
+  val threadId = resolveThreadId(payload) ?: return null
+  val cwd = payload.cwd?.let(::normalizeRootPath)?.takeIf { it.isNotBlank() } ?: return null
+  return CodexAppServerStartedThread(
+    id = threadId,
+    title = resolveThreadTitle(payload, threadId),
+    updatedAt = resolveThreadUpdatedAt(payload),
+    cwd = cwd,
+    statusKind = payload.statusKind,
+    activeFlags = payload.activeFlags,
+  )
+}
+
+private fun resolveThreadId(payload: ThreadPayload): String? {
+  return payload.id?.trim()?.takeIf { it.isNotEmpty() }
+}
+
+private fun resolveThreadUpdatedAt(payload: ThreadPayload): Long {
+  return normalizeTimestamp(
+    payload.updatedAt
+      ?: payload.updatedAtAlt
+      ?: payload.createdAt
+      ?: payload.createdAtAlt
+      ?: 0L
+  )
+}
+
+private fun resolveThreadTitle(payload: ThreadPayload, threadId: String): String {
+  val previewValue = payload.preview ?: payload.title ?: payload.name ?: payload.summary
+  return previewValue?.let(::trimTitle)?.takeIf { it.isNotBlank() } ?: "Thread ${threadId.take(8)}"
 }
 
 private data class ParsedTurnsActivity(

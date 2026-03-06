@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.codex.sessions.backend.appserver
 
 import com.intellij.agent.workbench.codex.common.CodexAppServerNotification
 import com.intellij.agent.workbench.codex.common.CodexAppServerNotificationKind
+import com.intellij.agent.workbench.codex.common.CodexAppServerStartedThread
 import com.intellij.agent.workbench.codex.common.CodexThreadActiveFlag
 import com.intellij.agent.workbench.codex.common.CodexThreadActivitySnapshot
 import com.intellij.agent.workbench.codex.common.CodexThreadStatusKind
@@ -145,6 +146,148 @@ class CodexAppServerRefreshHintsProviderTest {
   }
 
   @Test
+  fun threadStartedNotificationsEmitSnapshotBackedRebindCandidatesForUnknownThreadIds(): Unit = runBlocking(Dispatchers.Default) {
+    val notifications = MutableSharedFlow<CodexAppServerNotification>(replay = 1, extraBufferCapacity = 16)
+    val provider = CodexAppServerRefreshHintsProvider(
+      readThreadActivitySnapshot = { threadId ->
+        if (threadId == "thread-started") {
+          snapshot(
+            threadId = threadId,
+            statusKind = CodexThreadStatusKind.IDLE,
+            hasUnreadAssistantMessage = true,
+            updatedAt = 900L,
+          )
+        }
+        else {
+          null
+        }
+      },
+      notifications = notifications,
+    )
+
+    notifications.emit(
+      CodexAppServerNotification(
+        method = "thread/started",
+        kind = CodexAppServerNotificationKind.THREAD_STARTED,
+        threadId = "thread-started",
+        startedThread = startedThread(
+          threadId = "thread-started",
+          path = "/work/project",
+          updatedAt = 100L,
+          statusKind = CodexThreadStatusKind.IDLE,
+        ),
+      )
+    )
+
+    withTimeout(2.seconds) {
+      provider.updates.first()
+    }
+
+    val hintsByPath = provider.prefetchRefreshHints(
+      paths = listOf("/work/project"),
+      knownThreadIdsByPath = emptyMap(),
+    )
+
+    val hints = hintsByPath.getValue("/work/project")
+    assertThat(hints.activityByThreadId).isEmpty()
+    val candidate = hints.rebindCandidates.single()
+    assertThat(candidate.threadId).isEqualTo("thread-started")
+    assertThat(candidate.title).isEqualTo("thread-started")
+    assertThat(candidate.updatedAt).isEqualTo(900L)
+    assertThat(candidate.activity).isEqualTo(AgentThreadActivity.UNREAD)
+  }
+
+  @Test
+  fun startedRebindCandidatesDisappearOnceThreadIdBecomesKnown(): Unit = runBlocking(Dispatchers.Default) {
+    val notifications = MutableSharedFlow<CodexAppServerNotification>(replay = 1, extraBufferCapacity = 16)
+    val provider = CodexAppServerRefreshHintsProvider(
+      readThreadActivitySnapshot = { threadId ->
+        if (threadId == "thread-started") {
+          snapshot(
+            threadId = threadId,
+            statusKind = CodexThreadStatusKind.IDLE,
+            updatedAt = 500L,
+          )
+        }
+        else {
+          null
+        }
+      },
+      notifications = notifications,
+    )
+
+    notifications.emit(
+      CodexAppServerNotification(
+        method = "thread/started",
+        kind = CodexAppServerNotificationKind.THREAD_STARTED,
+        threadId = "thread-started",
+        startedThread = startedThread(
+          threadId = "thread-started",
+          path = "/work/project",
+          updatedAt = 100L,
+        ),
+      )
+    )
+
+    withTimeout(2.seconds) {
+      provider.updates.first()
+    }
+
+    val hintsBeforeKnown = provider.prefetchRefreshHints(
+      paths = listOf("/work/project"),
+      knownThreadIdsByPath = emptyMap(),
+    )
+    assertThat(hintsBeforeKnown.getValue("/work/project").rebindCandidates).hasSize(1)
+
+    val hintsAfterKnown = provider.prefetchRefreshHints(
+      paths = listOf("/work/project"),
+      knownThreadIdsByPath = mapOf("/work/project" to setOf("thread-started")),
+    )
+
+    val hints = hintsAfterKnown.getValue("/work/project")
+    assertThat(hints.rebindCandidates).isEmpty()
+    assertThat(hints.activityByThreadId)
+      .containsExactlyEntriesOf(mapOf("thread-started" to AgentThreadActivity.READY))
+  }
+
+  @Test
+  fun startedRebindCandidatesFallBackToNotificationStatusWhenSnapshotUnavailable(): Unit = runBlocking(Dispatchers.Default) {
+    val notifications = MutableSharedFlow<CodexAppServerNotification>(replay = 1, extraBufferCapacity = 16)
+    val provider = CodexAppServerRefreshHintsProvider(
+      readThreadActivitySnapshot = { null },
+      notifications = notifications,
+    )
+
+    notifications.emit(
+      CodexAppServerNotification(
+        method = "thread/started",
+        kind = CodexAppServerNotificationKind.THREAD_STARTED,
+        threadId = "thread-reviewing",
+        startedThread = startedThread(
+          threadId = "thread-reviewing",
+          path = "/work/project",
+          updatedAt = 700L,
+          activeFlags = listOf(CodexThreadActiveFlag.WAITING_ON_APPROVAL),
+        ),
+      )
+    )
+
+    withTimeout(2.seconds) {
+      provider.updates.first()
+    }
+
+    val hints = provider.prefetchRefreshHints(
+      paths = listOf("/work/project"),
+      knownThreadIdsByPath = emptyMap(),
+    ).getValue("/work/project")
+
+    val candidate = hints.rebindCandidates.single()
+    assertThat(candidate.threadId).isEqualTo("thread-reviewing")
+    assertThat(candidate.updatedAt).isEqualTo(700L)
+    assertThat(candidate.activity).isEqualTo(AgentThreadActivity.REVIEWING)
+  }
+
+  @Test
   fun emitsUpdatesFromThreadStatusNotifications(): Unit = runBlocking(Dispatchers.Default) {
     val notifications = MutableSharedFlow<CodexAppServerNotification>(replay = 1, extraBufferCapacity = 16)
     val provider = CodexAppServerRefreshHintsProvider(
@@ -221,14 +364,32 @@ private fun snapshot(
   hasUnreadAssistantMessage: Boolean = false,
   isReviewing: Boolean = false,
   hasInProgressTurn: Boolean = false,
+  updatedAt: Long = 100L,
 ): CodexThreadActivitySnapshot {
   return CodexThreadActivitySnapshot(
     threadId = threadId,
-    updatedAt = 100L,
+    updatedAt = updatedAt,
     statusKind = statusKind,
     activeFlags = activeFlags,
     hasUnreadAssistantMessage = hasUnreadAssistantMessage,
     isReviewing = isReviewing,
     hasInProgressTurn = hasInProgressTurn,
+  )
+}
+
+private fun startedThread(
+  threadId: String,
+  path: String,
+  updatedAt: Long,
+  statusKind: CodexThreadStatusKind = CodexThreadStatusKind.IDLE,
+  activeFlags: List<CodexThreadActiveFlag> = emptyList(),
+): CodexAppServerStartedThread {
+  return CodexAppServerStartedThread(
+    id = threadId,
+    title = threadId,
+    updatedAt = updatedAt,
+    cwd = path,
+    statusKind = statusKind,
+    activeFlags = activeFlags,
   )
 }

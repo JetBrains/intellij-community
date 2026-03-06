@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 
 class CodexSessionSourceRefreshHintsTest {
   @Test
-  fun mergePrefersAppServerButAllowsRolloutUnreadOverride() {
+  fun mergePrefersAppServerRebindCandidatesButAllowsRolloutUnreadOverride() {
     val appServerHintsByPath = mapOf(
       "/work/project" to AgentSessionRefreshHints(
         rebindCandidates = listOf(
@@ -72,8 +72,8 @@ class CodexSessionSourceRefreshHintsTest {
 
     val rebindById = hints.rebindCandidates.associateBy { it.threadId }
     assertThat(rebindById.keys).containsExactlyInAnyOrder("shared", "app-only", "rollout-only")
-    assertThat(rebindById.getValue("shared").title).isEqualTo("shared-from-rollout")
-    assertThat(rebindById.getValue("shared").updatedAt).isEqualTo(220L)
+    assertThat(rebindById.getValue("shared").title).isEqualTo("shared-from-app")
+    assertThat(rebindById.getValue("shared").updatedAt).isEqualTo(200L)
     assertThat(rebindById.getValue("app-only").title).isEqualTo("app-only")
     assertThat(rebindById.getValue("rollout-only").title).isEqualTo("rollout-only")
   }
@@ -111,4 +111,3 @@ private fun rebindCandidate(
     activity = activity,
   )
 }
-

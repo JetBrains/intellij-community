@@ -77,7 +77,10 @@ class AgentSessionPromptLauncherBridgeTest {
           assertThat(result.launched).isTrue()
           assertThat(result.error).isNull()
           waitForCondition {
-            providerBridge.createCalls.get() == 1
+            providerBridge.createCalls.get() == 1 &&
+            providerBridge.composeCalls.get() == 1 &&
+            providerBridge.startupCommandCalls.get() == 1 &&
+            chatOpenExecutor.openNewChatCalls.get() == 1
           }
 
           assertThat(providerBridge.lastCreatePath.get()).isEqualTo(INVALID_PROMPT_PROJECT_PATH)
@@ -88,9 +91,6 @@ class AgentSessionPromptLauncherBridgeTest {
           assertThat(providerBridge.lastStartupBaseLaunchSpec.get()?.command)
             .containsExactly("test", "create", INVALID_PROMPT_PROJECT_PATH, AgentSessionLaunchMode.STANDARD.name)
           assertThat(providerBridge.lastStartupPrompt.get()).isEqualTo("composed:Refactor selected code")
-          waitForCondition {
-            chatOpenExecutor.openNewChatCalls.get() == 1
-          }
           val openRequest = checkNotNull(chatOpenExecutor.lastOpenNewChatRequest.get())
           assertThat(openRequest.normalizedPath).isEqualTo(INVALID_PROMPT_PROJECT_PATH)
           assertThat(openRequest.identity).startsWith("codex:new-")
