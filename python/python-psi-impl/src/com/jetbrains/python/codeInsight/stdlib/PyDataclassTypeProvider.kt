@@ -47,7 +47,6 @@ import com.jetbrains.python.psi.types.PyDescriptorTypeUtil
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeMember
 import com.jetbrains.python.psi.types.PyTypeProviderBase
-import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.PyTypeUtil.notNullToRef
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.psi.types.PyUnionType
@@ -116,9 +115,6 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       return null
     }
     val dataclassParameters = parseDataclassParameters(type.pyClass, context.typeEvalContext) ?: return null
-    if (PyNames.MATCH_ARGS == name) {
-      return getMatchArgsMemberType(type, dataclassParameters, context.typeEvalContext)
-    }
     if (PyNames.HASH == name) {
       // See `unsafe_hash` section here https://docs.python.org/3/library/dataclasses.html
       if (dataclassParameters.unsafeHash) {
@@ -192,9 +188,29 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
     @ApiStatus.Internal
     class InitVarInfo(val targetExpression: PyTargetExpression, val type: PyType?)
 
+    fun constructGeneratedMatchArgs(classType: PyClassType, context: TypeEvalContext): List<String>? {
+      if (parseDataclassParameters(classType.pyClass, context)?.matchArgs != true) return null
+
+      val params = collectDataclassFieldParameters(classType, context, initOnly = false) ?: return null
+      return params
+        .asSequence()
+        .takeWhile { !it.isKeywordOnlySeparator }
+        .mapNotNull { it.name }
+        .toList()
+    }
+
     fun getDataclassTypeForClass(clsType: PyType?, context: TypeEvalContext): PyCallableType? {
       if (clsType !is PyClassType) return null
 
+      val params = collectDataclassFieldParameters(clsType, context, initOnly = true) ?: return null
+      return PyCallableTypeImpl(params, clsType.toInstance())
+    }
+
+    private fun collectDataclassFieldParameters(
+      clsType: PyClassType,
+      context: TypeEvalContext,
+      initOnly: Boolean = false,
+    ): List<PyCallableParameter>? {
       val resolveContext = PyResolveContext.defaultContext(context)
       val elementGenerator = PyElementGenerator.getInstance(clsType.pyClass.project)
       val ellipsis = elementGenerator.createEllipsis()
@@ -227,7 +243,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
         seenInit = seenInit || parameters.init
         seenKeywordOnlyClass = seenKeywordOnlyClass || parameters.kwOnly
 
-        if (seenInit) {
+        if (!initOnly || seenInit) {
           val fieldsInfo = current
             .classAttributes
             .asReversed()
@@ -267,7 +283,9 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
           }
         }
       }
-      return if (seenInit) PyCallableTypeImpl(buildParameters(elementGenerator, collected, keywordOnly), clsType.toInstance()) else null
+
+      if (initOnly && !seenInit) return null
+      return buildParameters(elementGenerator, collected, keywordOnly)
     }
 
     private fun isKwOnlyMarkerField(parameter: PyCallableParameter, context: TypeEvalContext): Boolean {
@@ -431,15 +449,4 @@ private fun getDataclassesReplaceType(resolvedCallee: PyCallable, call: PyCallEx
   dataclassParameters.mapTo(parameters) { PyCallableParameterImpl.nonPsi(it.name, it.getType(context), ellipsis) }
 
   return PyCallableTypeImpl(parameters, dataclassType.getReturnType(context))
-}
-
-private fun getMatchArgsMemberType(
-  type: PyClassType,
-  dataclassParameters: PyDataclassParameters,
-  context: TypeEvalContext,
-): List<PyTypeMember>? {
-  if (!dataclassParameters.matchArgs) return null
-  val fieldNames = getDataclassTypeForClass(type, context)?.getParameters(context)?.mapNotNull { it.name } ?: return null
-  val matchArgsType = PyTypeUtil.createTupleOfLiteralStringsType(type.pyClass, fieldNames) ?: return null
-  return listOf(PyTypeMember(null, matchArgsType))
 }

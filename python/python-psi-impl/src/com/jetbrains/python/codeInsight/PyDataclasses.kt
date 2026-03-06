@@ -56,6 +56,7 @@ object PyDataclassNames {
     const val DATACLASSES_KW_ONLY: String = "dataclasses.KW_ONLY"
     const val DUNDER_POST_INIT: String = "__post_init__"
     const val DUNDER_SLOTS: String = PyNames.SLOTS
+    const val DUNDER_MATCH_ARGS: String = PyNames.MATCH_ARGS
     val DECORATOR_PARAMETERS: List<String> = listOf("init", "repr", "eq", "order", "unsafe_hash", "frozen", "match_args", "kw_only", "slots")
     val HELPER_FUNCTIONS: Set<String> = setOf(DATACLASSES_FIELDS, DATACLASSES_ASDICT, "dataclasses.astuple", DATACLASSES_REPLACE)
   }

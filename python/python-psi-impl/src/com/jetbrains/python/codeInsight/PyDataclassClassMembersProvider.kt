@@ -8,16 +8,19 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.codeInsight.stdlib.PyDataclassTypeProvider
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyClassMembersProviderBase
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyTupleType
+import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 private enum class ProvidedDataclassMember(val memberName: String) {
   DUNDER_SLOTS(PyDataclassNames.Dataclasses.DUNDER_SLOTS),
-  DUNDER_ATTRS(PyDataclassNames.Attrs.DUNDER_ATTRS);
+  DUNDER_ATTRS(PyDataclassNames.Attrs.DUNDER_ATTRS),
+  DUNDER_MATCH_ARGS(PyDataclassNames.Dataclasses.DUNDER_MATCH_ARGS);
 
   val key: Key<CachedValue<PyCustomMember?>> = Key.create("py.dataclass.member.$memberName")
 
@@ -75,6 +78,17 @@ class PyDataclassClassMembersProvider : PyClassMembersProviderBase() {
 
         val objectClass = PyBuiltinCache.getInstance(pyClass).getClass(PyNames.OBJECT)
         PyCustomMember(member.memberName, objectClass).asClassVar()
+      }
+
+      // Member __match_args__ caused by @dataclass(match_args=True) (default True)
+      ProvidedDataclassMember.DUNDER_MATCH_ARGS -> {
+        if (dataclassParameters?.matchArgs != true) return null
+        if (pyClass.ownMatchArgs != null) return null
+
+        val matchArgs = PyDataclassTypeProvider.Helper.constructGeneratedMatchArgs(type, context) ?: return null
+        val tupleOfStrings = PyTypeUtil.createTupleOfLiteralStringsType(pyClass, matchArgs) ?: return null
+        val qNameTuple = tupleOfStrings.pyClass.qualifiedName
+        PyCustomMember(member.memberName, qNameTuple) { tupleOfStrings }.toPsiElement(pyClass).asClassVar()
       }
     }
   }

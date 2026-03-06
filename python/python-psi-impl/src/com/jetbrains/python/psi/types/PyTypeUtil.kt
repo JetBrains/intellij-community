@@ -349,7 +349,7 @@ object PyTypeUtil {
 
   /**
    * Creates a `tuple[Literal["name1"], Literal["name2"], ...]` type from a list of strings.
-   * Useful for creating types for synthetic members (e.g. `__match_args__ `, `__slots__ ` in a dataclasses).
+   * Useful for creating types for synthetic members (e.g. `__match_args__`, `__slots__` in a dataclasses).
    * 
    * @see extractStringLiteralsFromTupleType
    */
