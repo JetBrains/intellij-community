@@ -113,7 +113,7 @@
       "borderColor": "BorderTransparent",
       "Dropdown.transparentHoverBackground": "#FFFFFF12",
       "Button.arc.compact": 8,
-      "Icon.insets": "7,5,5,5"
+      "Icon.insets": "6,5,4,5"
     },
 
     "StatusBar": {

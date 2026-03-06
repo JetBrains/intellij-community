@@ -1107,7 +1107,7 @@
         "background": "container-main-window-bg",
         "hoverBackground": "toolbar-bg-hovered",
         "pressedBackground": "toolbar-bg-pressed",
-        "insets": "7,5,5,5"
+        "insets": "6,5,4,5"
       },
       "Dropdown": {
         "foreground": "text-default",
