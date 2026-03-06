@@ -4316,5 +4316,44 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
      assert_type(iter(MyFromStr()), Iterator[str])
      """);
   }
+
+  // PY-87344
+  public void testTypeOfIteratorOfEnumTypeAndInstance() {
+    doTestByText("""
+                   from enum import Enum
+                   from typing import Self
+                   
+                   class Color(Enum):
+                       RED = "red"
+                   
+                       @classmethod
+                       def all(cls) -> set[Self]:
+                           return set(cls)
+                   
+                       def foo(self):
+                           # __iter__ is defined in EnumMeta, thus, for definitions only
+                           return set(<warning descr="Expected type 'Iterable[Any]' (matched generic type 'Iterable[_T]'), got 'Self@Color' instead">self</warning>)
+                   """);
+  }
+
+  // PY-87344
+  public void testTypeOfIteratorOfStrEnumTypeAndInstance() {
+    doTestByText("""
+                   from enum import StrEnum
+                   from typing import Self
+                   
+                   
+                   class Variant(StrEnum):
+                       CREATED = "created"
+                   
+                       @classmethod
+                       def values(cls) -> set[Self]:
+                           return set(cls)
+                   
+                       def foo(self):
+                           # StrEnum inherits str which inherits Iterable[str], thus, iterable for both instance and definition
+                           return set(self) # OK
+                   """);
+  }
 }
 
