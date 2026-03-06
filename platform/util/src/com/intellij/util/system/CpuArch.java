@@ -19,19 +19,6 @@ public enum CpuArch {
   X86(32), X86_64(64), ARM32(32), ARM64(64), OTHER(0), UNKNOWN(0);
 
   /**
-   * Machine word size, in bits.
-   */
-  public final int width;
-
-  CpuArch(int width) {
-    if (width == 0) {
-      try { width = Integer.parseInt(System.getProperty("sun.arch.data.model", "32")); }
-      catch (NumberFormatException ignored) { }
-    }
-    this.width = width;
-  }
-
-  /**
    * <p>A CPU architecture this Java VM is executed on.
    * Here, {@link CpuArch#OTHER} is an architecture not yet supported by JetBrains Runtime,
    * and {@link CpuArch#UNKNOWN} means the code was unable to detect an architecture.</p>
@@ -39,6 +26,22 @@ public enum CpuArch {
    * <p><b>Note</b>: may not correspond to the actual hardware if a JVM is "virtualized" (like WoW64 or Rosetta 2).</p>
    */
   public static final CpuArch CURRENT = fromString(System.getProperty("os.arch"));
+  private static @Nullable Boolean ourEmulated;
+  /**
+   * Machine word size, in bits.
+   */
+  public final int width;
+
+  CpuArch(int width) {
+    if (width == 0) {
+      try {
+        width = Integer.parseInt(System.getProperty("sun.arch.data.model", "32"));
+      }
+      catch (NumberFormatException ignored) {
+      }
+    }
+    this.width = width;
+  }
 
   public static @NotNull CpuArch fromString(@Nullable String arch) {
     if ("x86_64".equals(arch) || "amd64".equals(arch)) return X86_64;
@@ -48,8 +51,11 @@ public enum CpuArch {
   }
 
   public static boolean isIntel32() { return CURRENT == X86; }
+
   public static boolean isIntel64() { return CURRENT == X86_64; }
+
   public static boolean isArm32() { return CURRENT == ARM32; }
+
   public static boolean isArm64() { return CURRENT == ARM64; }
 
   public static boolean is32Bit() { return CURRENT.width == 32; }
@@ -72,8 +78,6 @@ public enum CpuArch {
 
     return ourEmulated;
   }
-
-  private static @Nullable Boolean ourEmulated;
 
   //<editor-fold desc="Emulated environment detection">
   // https://developer.apple.com/documentation/apple-silicon/about-the-rosetta-translation-environment

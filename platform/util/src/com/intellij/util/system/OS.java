@@ -26,6 +26,14 @@ import java.util.stream.Stream;
 public enum OS {
   Windows, macOS, Linux, FreeBSD, Other;
 
+  /** Represents an operating system this JVM is running on */
+  public static final OS CURRENT = fromString(System.getProperty("os.name"));
+  /** @deprecated use {@link #version()} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  @SuppressWarnings("FieldMayBeStatic")
+  public final @NotNull String version = VersionHolder.STR;
+
   /**
    * A string representation of the OS version.
    * The format is system-dependent ("major.minor" for Windows and macOS, kernel version for Linux, etc.)
@@ -42,12 +50,6 @@ public enum OS {
   public final @NotNull Version parsedVersion() {
     return VersionHolder.VAL;
   }
-
-  /** @deprecated use {@link #version()} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  @SuppressWarnings("FieldMayBeStatic")
-  public final @NotNull String version = VersionHolder.STR;
 
   /**
    * Checks whether the current OS version is at least the specified major and minor versions.
@@ -71,8 +73,9 @@ public enum OS {
     );
   }
 
-  /** Represents an operating system this JVM is running on */
-  public static final OS CURRENT = fromString(System.getProperty("os.name"));
+  public @NotNull Platform getPlatform() {
+    return this == Windows ? Platform.WINDOWS : Platform.UNIX;
+  }
 
   public static @NotNull OS fromString(@Nullable String os) {
     if (os != null) {
@@ -83,6 +86,17 @@ public enum OS {
       if (os.startsWith("freebsd")) return FreeBSD;
     }
     return Other;
+  }
+
+  /**
+   * Returns {@code true} if the current operating system is a generic Unix-like system (not Windows or macOS).
+   */
+  public static boolean isGenericUnix() {
+    return CURRENT != Windows && CURRENT != macOS;
+  }
+
+  @ReviseWhenPortedToJDK(value = "17", description = "Seal")
+  public interface OsInfo {
   }
 
   private static final class VersionHolder {
@@ -100,27 +114,14 @@ public enum OS {
             version = version2;
           }
         }
-        catch (NumberFormatException ignored) { }
+        catch (NumberFormatException ignored) {
+        }
       }
       STR = version;
       Version parsed = Version.parseVersion(version);
       VAL = parsed != null ? parsed : new Version(0, 0, 0);
     }
   }
-
-  public @NotNull Platform getPlatform() {
-    return this == Windows ? Platform.WINDOWS : Platform.UNIX;
-  }
-
-  /**
-   * Returns {@code true} if the current operating system is a generic Unix-like system (not Windows or macOS).
-   */
-  public static boolean isGenericUnix() {
-    return CURRENT != Windows && CURRENT != macOS;
-  }
-
-  @ReviseWhenPortedToJDK(value = "17", description = "Seal")
-  public interface OsInfo { }
 
   public static final class WindowsInfo implements OsInfo {
     private static final WindowsInfo INSTANCE = new WindowsInfo();
@@ -215,7 +216,8 @@ public enum OS {
               }
             }
           }
-          catch (Throwable ignored) { }
+          catch (Throwable ignored) {
+          }
         }
         glibcVersion = version;
       }
