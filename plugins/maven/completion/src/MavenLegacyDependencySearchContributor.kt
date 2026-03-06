@@ -11,11 +11,10 @@ import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import org.jetbrains.idea.reposearch.SearchParameters
 import java.util.function.Consumer
 
-internal class MavenLegacyDependencySearchContributor(private val project: Project) : MavenDependencySearchContributor {
-  private val service: DependencySearchService
-    get() = DependencySearchService.getInstance(project)
+internal class MavenLegacyDependencySearchContributor : MavenDependencySearchContributor {
 
   override fun suggestPrefixBlocking(
+      project: Project,
       groupId: String,
       artifactId: String,
       useCache: Boolean,
@@ -23,30 +22,33 @@ internal class MavenLegacyDependencySearchContributor(private val project: Proje
       consumer: Consumer<MavenRepoArtifactInfo>,
   ): Promise<Int> {
     val parameters = SearchParameters(useCache, useLocalOnly)
-    return service.suggestPrefix(groupId, artifactId, parameters, consumer.toLegacy())
+    return DependencySearchService.getInstance(project).suggestPrefix(groupId, artifactId, parameters, consumer.toLegacy())
   }
 
   override fun fulltextSearchBlocking(
+      project: Project,
       searchString: String,
       useCache: Boolean,
       useLocalOnly: Boolean,
       consumer: Consumer<MavenRepoArtifactInfo>,
   ): Promise<Int> {
     val parameters = SearchParameters(useCache, useLocalOnly)
-    return service.fulltextSearch(searchString, parameters, consumer.toLegacy())
+    return DependencySearchService.getInstance(project).fulltextSearch(searchString, parameters, consumer.toLegacy())
   }
 
   override suspend fun fulltextSearch(
+      project: Project,
       searchString: String,
       useCache: Boolean,
       useLocalOnly: Boolean,
       consumer: Consumer<MavenRepoArtifactInfo>,
   ) {
     val parameters = SearchParameters(useCache, useLocalOnly)
-    service.fulltextSearchAsync(searchString, parameters, consumer.toLegacy())
+    DependencySearchService.getInstance(project).fulltextSearchAsync(searchString, parameters, consumer.toLegacy())
   }
 
   override suspend fun suggestPrefix(
+      project: Project,
       groupId: String,
       artifactId: String,
       useCache: Boolean,
@@ -54,31 +56,31 @@ internal class MavenLegacyDependencySearchContributor(private val project: Proje
       consumer: Consumer<MavenRepoArtifactInfo>,
   ) {
     val parameters = SearchParameters(useCache, useLocalOnly)
-    service.suggestPrefixAsync(groupId, artifactId, parameters, consumer.toLegacy())
+    DependencySearchService.getInstance(project).suggestPrefixAsync(groupId, artifactId, parameters, consumer.toLegacy())
   }
 
-  override fun getGroupIdsBlocking(pattern: String?): Set<String> {
-    return service.getGroupIds(pattern)
+  override fun getGroupIdsBlocking(project: Project, pattern: String?): Set<String> {
+    return DependencySearchService.getInstance(project).getGroupIds(pattern)
   }
 
-  override suspend fun getGroupIds(pattern: String?): Set<String> {
-    return service.getGroupIds(pattern)
+  override suspend fun getGroupIds(project: Project, pattern: String?): Set<String> {
+    return DependencySearchService.getInstance(project).getGroupIds(pattern)
   }
 
-  override fun getArtifactIdsBlocking(groupId: String): Set<String> {
-    return service.getArtifactIds(groupId)
+  override fun getArtifactIdsBlocking(project: Project, groupId: String): Set<String> {
+    return DependencySearchService.getInstance(project).getArtifactIds(groupId)
   }
 
-  override suspend fun getArtifactIds(groupId: String): Set<String> {
-    return service.getArtifactIds(groupId)
+  override suspend fun getArtifactIds(project: Project, groupId: String): Set<String> {
+    return DependencySearchService.getInstance(project).getArtifactIds(groupId)
   }
 
-  override fun getVersionsBlocking(groupId: String, artifactId: String): Set<String> {
-    return service.getVersions(groupId, artifactId)
+  override fun getVersionsBlocking(project: Project, groupId: String, artifactId: String): Set<String> {
+    return DependencySearchService.getInstance(project).getVersions(groupId, artifactId)
   }
 
-  override suspend fun getVersions(groupId: String, artifactId: String): Set<String> {
-    return service.getVersionsAsync(groupId, artifactId)
+  override suspend fun getVersions(project: Project, groupId: String, artifactId: String): Set<String> {
+    return DependencySearchService.getInstance(project).getVersionsAsync(groupId, artifactId)
   }
 
   private class LegacyMavenRepoArtifactInfo(groupId: String, artifactId: String, items: Array<MavenDependencyCompletionItem>) :

@@ -30,14 +30,10 @@ class MavenDependencySearchService(private val project: Project) {
       useLocalOnly: Boolean,
       consumer: Consumer<MavenRepoArtifactInfo>
   ): Promise<Int> {
-    val promises = providers.map { it.suggestPrefixBlocking(groupId, artifactId, useCache, useLocalOnly, consumer) }
+    val promises = providers.map { it.suggestPrefixBlocking(project, groupId, artifactId, useCache, useLocalOnly, consumer) }
     if (promises.isEmpty()) return resolvedPromise(0)
-    return promises.all().then { results ->
-      var total = 0
-      for (res in results as List<Int?>) {
-        if (res != null) total += res
-      }
-      total
+    return promises.all().then { _ ->
+      0
     }
   }
 
@@ -48,14 +44,10 @@ class MavenDependencySearchService(private val project: Project) {
       useLocalOnly: Boolean,
       consumer: Consumer<MavenRepoArtifactInfo>
   ): Promise<Int> {
-    val promises = providers.map { it.fulltextSearchBlocking(searchString, useCache, useLocalOnly, consumer) }
+    val promises = providers.map { it.fulltextSearchBlocking(project, searchString, useCache, useLocalOnly, consumer) }
     if (promises.isEmpty()) return resolvedPromise(0)
-    return promises.all().then { results ->
-      var total = 0
-      for (res in results as List<Int?>) {
-        if (res != null) total += res
-      }
-      total
+    return promises.all().then { _ ->
+      0
     }
   }
 
@@ -65,7 +57,7 @@ class MavenDependencySearchService(private val project: Project) {
       useLocalOnly: Boolean,
       consumer: Consumer<MavenRepoArtifactInfo>
   ) {
-    providers.forEach { it.fulltextSearch(searchString, useCache, useLocalOnly, consumer) }
+    providers.forEach { it.fulltextSearch(project, searchString, useCache, useLocalOnly, consumer) }
   }
 
   suspend fun suggestPrefix(
@@ -75,34 +67,34 @@ class MavenDependencySearchService(private val project: Project) {
       useLocalOnly: Boolean,
       consumer: Consumer<MavenRepoArtifactInfo>
   ) {
-    providers.forEach { it.suggestPrefix(groupId, artifactId, useCache, useLocalOnly, consumer) }
+    providers.forEach { it.suggestPrefix(project, groupId, artifactId, useCache, useLocalOnly, consumer) }
   }
 
   @Deprecated("prefer async method")
   fun getGroupIdsBlocking(pattern: String?): Set<String> {
-    return providers.flatMap { it.getGroupIdsBlocking(pattern) }.toSet()
+    return providers.flatMap { it.getGroupIdsBlocking(project, pattern) }.toSet()
   }
 
   suspend fun getGroupIds(pattern: String?): Set<String> {
-    return providers.flatMap { it.getGroupIds(pattern) }.toSet()
+    return providers.flatMap { it.getGroupIds(project, pattern) }.toSet()
   }
 
   @Deprecated("prefer async method")
   fun getArtifactIdsBlocking(groupId: String): Set<String> {
-    return providers.flatMap { it.getArtifactIdsBlocking(groupId) }.toSet()
+    return providers.flatMap { it.getArtifactIdsBlocking(project, groupId) }.toSet()
   }
 
   suspend fun getArtifactIds(groupId: String): Set<String> {
-    return providers.flatMap { it.getArtifactIds(groupId) }.toSet()
+    return providers.flatMap { it.getArtifactIds(project, groupId) }.toSet()
   }
 
   @Deprecated("prefer async method")
   fun getVersionsBlocking(groupId: String, artifactId: String): Set<String> {
-    return providers.flatMap { it.getVersionsBlocking(groupId, artifactId) }.toSet()
+    return providers.flatMap { it.getVersionsBlocking(project, groupId, artifactId) }.toSet()
   }
 
   suspend fun getVersions(groupId: String, artifactId: String): Set<String> {
-    return providers.flatMap { it.getVersions(groupId, artifactId) }.toSet()
+    return providers.flatMap { it.getVersions(project, groupId, artifactId) }.toSet()
   }
 
   companion object {

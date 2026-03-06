@@ -67,7 +67,7 @@
                     dynamic="true"/>
 
     <extensionPoint name="dependencySearchContributor" interface="org.jetbrains.idea.maven.completion.MavenDependencySearchContributor"
-                    dynamic="true" area="IDEA_PROJECT"/>
+                    dynamic="true"/>
   </extensionPoints>
 
   <dependencies>
