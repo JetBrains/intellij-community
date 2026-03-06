@@ -191,6 +191,8 @@ com.intellij.psi.impl.PsiFileEx
 com.intellij.psi.impl.PsiTreeChangePreprocessor
 - sf:EP:com.intellij.openapi.extensions.ProjectExtensionPointName
 - a:treeChanged(com.intellij.psi.impl.PsiTreeChangeEventImpl):V
+c:com.intellij.psi.impl.file.PsiDirectoryImpl
+- findFile(java.lang.String,com.intellij.psi.search.GlobalSearchScope):com.intellij.psi.PsiFile
 com.intellij.psi.impl.file.impl.FileManager
 - a:cleanupForNextTest():V
 - a:createFileViewProvider(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.psi.FileViewProvider
