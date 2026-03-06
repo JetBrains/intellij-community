@@ -62,7 +62,7 @@ final class ExcludeRootsCache {
   }
 
   @NotNull List<String> getExcludedUrls() {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       CachedUrls cache = myCache;
       long actualModCount = Arrays.stream(ProjectManager.getInstance().getOpenProjects())
         .mapToLong(project -> {

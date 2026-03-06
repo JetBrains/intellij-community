@@ -97,7 +97,7 @@ public abstract class DependenciesHandlerBase {
   }
 
   protected void bgtPostAnalyze(DependencyAnalysisResult result) {
-    result.panelDisplayName = ReadAction.compute(() -> getPanelDisplayName(result.getBuilders().get(0).getScope()));
+    result.panelDisplayName = ReadAction.computeBlocking(() -> getPanelDisplayName(result.getBuilders().get(0).getScope()));
   }
 
   private void onSuccess(final DependencyAnalysisResult result) {

@@ -63,8 +63,8 @@ public final class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiEle
     private final boolean myCheckDeep;
     private final Project myProject;
 
-    public SearchParameters(final @NotNull PsiElement element) {
-      this(element, ReadAction.compute(element::getUseScope), true);
+    public SearchParameters(@NotNull PsiElement element) {
+      this(element, ReadAction.computeBlocking(element::getUseScope), true);
     }
 
     public SearchParameters(@NotNull PsiElement element, @NotNull SearchScope scope, final boolean checkDeep) {
@@ -93,7 +93,7 @@ public final class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiEle
     }
 
     public @NotNull SearchScope getScope() {
-      return ReadAction.compute(() -> {
+      return ReadAction.computeBlocking(() -> {
         PsiFile file = myElement.getContainingFile();
         return myScope.intersectWith(
           PsiSearchHelper.getInstance(myElement.getProject()).getUseScope(file != null ? file : myElement));

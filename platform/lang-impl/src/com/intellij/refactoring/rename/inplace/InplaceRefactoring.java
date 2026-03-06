@@ -214,7 +214,7 @@ public abstract class InplaceRefactoring {
     SearchScope referencesSearchScope = getReferencesSearchScope(file);
 
     Collection<PsiReference> references = ProgressManager.getInstance().runProcessWithProgressSynchronously(() ->
-      ReadAction.compute(() -> {
+      ReadAction.computeBlocking(() -> {
         Collection<PsiReference> refs = collectRefs(referencesSearchScope);
 
         addReferenceAtCaret(refs);

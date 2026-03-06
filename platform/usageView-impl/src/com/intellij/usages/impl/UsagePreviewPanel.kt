@@ -17,6 +17,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
@@ -193,7 +194,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
             || !UsageViewPresentation.arePatternsEqual(myCachedSearchPattern, myPresentation.searchPattern)
             || myCachedReplaceString != myPresentation.replaceString || myCachedCaseSensitive != myPresentation.isCaseSensitive) {
           SlowOperations.knownIssue("IJPL-162820").use {
-            ReadAction.run<RuntimeException> {
+            runReadActionBlocking {
               highlight(infos, myEditor!!, project, myShowTooltipBalloon, HighlighterLayer.ADDITIONAL_SYNTAX)
             }
           }

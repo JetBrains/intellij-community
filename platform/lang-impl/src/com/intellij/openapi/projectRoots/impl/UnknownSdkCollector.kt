@@ -3,7 +3,7 @@ package com.intellij.openapi.projectRoots.impl
 
 import com.google.common.collect.MultimapBuilder
 import com.google.common.hash.Hashing
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
@@ -91,7 +91,7 @@ open class UnknownSdkCollector(private val project: Project) : UnknownSdkBlockin
    * For background activities it's more recommended to use [collectSdksPromise]
    * instead to allow better concurrency
    */
-  override fun collectSdksBlocking() : UnknownSdkSnapshot = runReadAction { collectSdksUnderReadAction() }
+  override fun collectSdksBlocking() : UnknownSdkSnapshot = runReadActionBlocking { collectSdksUnderReadAction() }
 
   protected open fun checkProjectSdk(project: Project) : Boolean = true
   protected open fun collectModulesToCheckSdk(project: Project) : List<Module> = ModuleManager.getInstance(this@UnknownSdkCollector.project).modules.toList()

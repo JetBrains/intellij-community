@@ -478,13 +478,13 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
 
     @Override
     public PsiElement retrieve() {
-      return ReadAction.compute(() -> restoreFromStubIndex((PsiFileWithStubSupport)getFile(), myIndex, myElementType, false));
+      return ReadAction.computeBlocking(() -> restoreFromStubIndex((PsiFileWithStubSupport)getFile(), myIndex, myElementType, false));
     }
 
     public @NotNull @NonNls String diagnoseNull() {
-      PsiFile file = ReadAction.compute(this::getFile);
+      PsiFile file = ReadAction.computeBlocking(this::getFile);
       try {
-        PsiElement element = ReadAction.compute(() -> restoreFromStubIndex((PsiFileWithStubSupport)file, myIndex, myElementType, true));
+        PsiElement element = ReadAction.computeBlocking(() -> restoreFromStubIndex((PsiFileWithStubSupport)file, myIndex, myElementType, true));
         return "No diagnostics, element=" + element + "@" + (element == null ? 0 : System.identityHashCode(element));
       }
       catch (AssertionError e) {

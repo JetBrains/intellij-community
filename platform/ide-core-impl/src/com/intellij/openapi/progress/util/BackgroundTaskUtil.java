@@ -421,7 +421,7 @@ public final class BackgroundTaskUtil {
    */
   @CalledInAny
   public static @NotNull <L> L syncPublisher(@NotNull Topic<L> topic) throws ProcessCanceledException {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       if (ApplicationManager.getApplication().isDisposed()) throw new ProcessCanceledException();
       return ApplicationManager.getApplication().getMessageBus().syncPublisher(topic);
     });

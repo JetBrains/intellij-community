@@ -25,7 +25,7 @@ public interface ReferenceImporter {
    */
   default boolean autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     ThreadingAssertions.assertEventDispatchThread();
-    Future<BooleanSupplier> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.compute(() -> {
+    Future<BooleanSupplier> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.computeBlocking(() -> {
       if (editor.isDisposed() || psiFile.getProject().isDisposed()) return null;
       int offset = editor.getCaretModel().getOffset();
       return computeAutoImportAtOffset(editor, psiFile, offset, true);

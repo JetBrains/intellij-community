@@ -25,10 +25,9 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
@@ -133,10 +132,9 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
   @RequiresEdt
   protected open fun initialize() {
     lifeSettingModel.isRegistryEnabled.whenTrue(codeVisionLifetime) { enableCodeVisionLifetime ->
-      runReadAction {
-        if (project.isDisposed) {
-          return@runReadAction
-        }
+      runReadActionBlocking {
+        if (project.isDisposed) return@runReadActionBlocking
+
         subscribeEditorCreated(enableCodeVisionLifetime)
         subscribeAnchorLimitChanged(enableCodeVisionLifetime)
         subscribeMetricsPositionChanged()
@@ -219,7 +217,7 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
   fun calculateCodeVisionSync(editor: Editor, testRootDisposable: Disposable) {
     calculateFrontendLenses(testRootDisposable.createLifetime(), editor, inTestSyncMode = true) { lenses, _ ->
       if (EDT.isCurrentThreadEdt()) {
-        ReadAction.run<Throwable> {
+        runReadActionBlocking {
           editor.lensContext?.setResults(lenses)
         }
       }

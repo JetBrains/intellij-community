@@ -703,7 +703,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     }
 
     while (true) {
-      boolean executed = ReadAction.compute(() -> {
+      boolean executed = ReadAction.computeBlocking(() -> {
         if (!hasEventSystemEnabledUncommittedDocuments()) {
           runnable.run();
           return true;

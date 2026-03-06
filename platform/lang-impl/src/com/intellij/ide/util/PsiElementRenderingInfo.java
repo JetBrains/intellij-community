@@ -41,7 +41,7 @@ public interface PsiElementRenderingInfo<T extends PsiElement> {
 
   static <T extends @NotNull PsiElement>
   @NotNull Comparator<T> getComparator(@NotNull PsiElementRenderingInfo<? super T> renderingInfo) {
-    return Comparator.comparing(element -> ReadAction.compute(() -> {
+    return Comparator.comparing(element -> ReadAction.computeBlocking(() -> {
       String elementText = renderingInfo.getPresentableText(element);
       String containerText = renderingInfo.getContainerText(element);
       TextWithIcon moduleTextWithIcon = PsiElementListCellRenderer.getModuleTextWithIcon(element);

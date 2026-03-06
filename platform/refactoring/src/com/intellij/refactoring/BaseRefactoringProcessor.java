@@ -300,7 +300,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
     final Runnable findUsagesRunnable = () -> {
       try {
-        refUsages.set(ReadAction.compute(this::findUsages));
+        refUsages.set(ReadAction.computeBlocking(this::findUsages));
       }
       catch (UnknownReferenceTypeException e) {
         refErrorLanguage.set(e.getElementLanguage());
@@ -347,7 +347,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
 
     if (!anyException.isNull()) {
-      //do not proceed if find usages fails
+      //do not proceed if Find Usages fails
       return;
     }
     assert !refUsages.isNull(): "Null usages from processor " + this;
@@ -530,7 +530,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
    *
    * @param project   project
    * @param conflicts map with conflict messages and locations
-   * @return true if refactoring could proceed or false if refactoring should be cancelled
+   * @return true if refactoring could proceed or false if refactoring should be canceled
    */
   public static boolean processConflicts(@NotNull Project project, @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
     if (conflicts.isEmpty()) return true;
@@ -634,14 +634,14 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       myTransaction = listenerManager.startTransaction();
       final Map<RefactoringHelper, Object> preparedData = new LinkedHashMap<>();
       final Runnable prepareHelpersRunnable = () -> {
-        RefactoringEventData data = ReadAction.compute(() -> getBeforeData());
+        RefactoringEventData data = ReadAction.computeBlocking(() -> getBeforeData());
         PsiElement[] elements = data != null ? data.getUserData(RefactoringEventData.PSI_ELEMENT_ARRAY_KEY) : null;
         PsiElement primaryElement = data != null ? data.getUserData(RefactoringEventData.PSI_ELEMENT_KEY) : null;
         PsiElement[] allElements = elements != null ? ArrayUtil.append(elements, primaryElement) : new PsiElement[]{primaryElement};
         for (final RefactoringHelper<?> helper : RefactoringHelper.EP_NAME.getExtensionList()) {
           if (!DumbService.getInstance(myProject).isUsableInCurrentContext(helper)) continue;
 
-          Object operation = ReadAction.compute(() -> {
+          Object operation = ReadAction.computeBlocking(() -> {
             return helper.prepareOperation(writableUsageInfos, ContainerUtil.filter(allElements, e -> e != null));
           });
           preparedData.put(helper, operation);

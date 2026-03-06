@@ -4,7 +4,7 @@ package com.intellij.util.indexing
 import com.google.common.util.concurrent.SettableFuture
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.backgroundWriteAction
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -361,7 +361,7 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
     else if (DumbService.isDumb(project)) {
       // here we want to immediately "start" executor without EDT in the case when scanning is started under a dumb task.
       // Acquire RA to make sure that dumb mode won't change to smart, otherwise we risk changing smart mode to not-smart outside WA.
-      runReadAction {
+      runReadActionBlocking {
         if (DumbService.isDumb(project)) {
           markAsRunning()
         }

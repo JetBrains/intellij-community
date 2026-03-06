@@ -249,7 +249,7 @@ public final class PsiElementListNavigator {
             for (int i = 0; i < selectedValues.length; i++) {
               copy[i] = (PsiElement)selectedValues[i];
             }
-            return ReadAction.compute(() -> PsiCopyPasteManager.newTransferable(copy));
+            return ReadAction.computeBlocking(() -> PsiCopyPasteManager.newTransferable(copy));
           }
 
           @Override

@@ -9,7 +9,7 @@ import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.editor.Document
@@ -309,7 +309,7 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
   override fun getDocument(): Document? {
     document?.let { return it }
     return LOG.runAndLogException {
-      runReadAction {
+      runReadActionBlocking {
         val psiDoc = cachedPsiFile?.let { psiFile -> PsiDocumentManager.getInstance(project).getDocument(psiFile) }
         if (psiDoc == null) {
           LOG.warn("PsiFile is not yet loaded for path ${model.presentablePath}. Trying to get document from virtualFile")

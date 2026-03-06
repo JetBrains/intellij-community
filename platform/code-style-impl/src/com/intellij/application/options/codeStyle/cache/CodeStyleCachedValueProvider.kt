@@ -7,6 +7,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -81,7 +82,7 @@ internal class CodeStyleCachedValueProvider(val fileSupplier: Supplier<VirtualFi
     try {
       settings = computation.getCurrentResult()
     }
-    catch (ignored: ProcessCanceledException) {
+    catch (_: ProcessCanceledException) {
       computation.reset()
       LOG.debug { "Computation was cancelled for ${file.name}" }
       return CachedValueProvider.Result(null, ModificationTracker.EVER_CHANGED)
@@ -159,7 +160,7 @@ internal class CodeStyleCachedValueProvider(val fileSupplier: Supplier<VirtualFi
       }
       else {
         LOG.debug { "sync for ${file.name}" }
-        val success = app.runReadAction<Boolean>(::computeSettings)
+        val success = runReadActionBlocking(::computeSettings)
         if (app.isDispatchThread) {
           notifyCachedValueComputed(success)
         }

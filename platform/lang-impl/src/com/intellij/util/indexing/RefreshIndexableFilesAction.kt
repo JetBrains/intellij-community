@@ -7,7 +7,7 @@ import com.intellij.ide.actions.cache.FilesRecoveryScope
 import com.intellij.ide.actions.cache.RecoveryAction
 import com.intellij.ide.actions.cache.RecoveryScope
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -50,10 +50,9 @@ class RefreshIndexableFilesAction : RecoveryAction {
       SynchronizeCurrentFileAction.synchronizeFiles(files, project, false)
     }
     return eventLog.loggedEvents
-      .filter { event -> runReadAction { event.file.isValid && rootsToRefresh.any { it.isValid && VfsUtilCore.isAncestor(it, event.file, false) } } }
+      .filter { event -> runReadActionBlocking { event.file.isValid && rootsToRefresh.any { it.isValid && VfsUtilCore.isAncestor(it, event.file, false) } } }
       .map { it.toCacheInconsistencyProblem() }
   }
-
 
   private class EventLog : BulkFileListenerBackgroundable {
     val loggedEvents: MutableList<Event> = mutableListOf()

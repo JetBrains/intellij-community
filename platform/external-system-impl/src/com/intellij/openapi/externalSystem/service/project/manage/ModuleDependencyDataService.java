@@ -110,7 +110,7 @@ public final class ModuleDependencyDataService extends AbstractDependencyDataSer
         }
         orderEntry = modelsProvider.findIdeModuleDependency(dependencyData, module);
         if (orderEntry == null) {
-          orderEntry = ReadAction.compute(() ->
+          orderEntry = ReadAction.computeBlocking(() ->
             ideDependencyModule == null
             ? modifiableRootModel.addInvalidModuleEntry(moduleData.getInternalName())
             : modifiableRootModel.addModuleOrderEntry(ideDependencyModule));

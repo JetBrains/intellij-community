@@ -250,7 +250,7 @@ public final class TextPrintHandler extends PrintActionHandler {
   }
 
   static TextPainter initTextPainter(final PsiFile psiFile) {
-    return ReadAction.compute(() -> doInitTextPainter(psiFile));
+    return ReadAction.computeBlocking(() -> doInitTextPainter(psiFile));
   }
 
   private static TextPainter doInitTextPainter(final PsiFile psiFile) {

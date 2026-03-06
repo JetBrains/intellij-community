@@ -21,7 +21,7 @@ abstract class CurrentFileTodosPanel extends TodoPanel {
     super(todoView, settings, true, content);
 
     VirtualFile[] virtualFiles = FileEditorManager.getInstance(myProject).getSelectedFiles();
-    setFile(virtualFiles.length == 0 ? null : ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(virtualFiles[0])), true);
+    setFile(virtualFiles.length == 0 ? null : ReadAction.computeBlocking(() -> PsiManager.getInstance(myProject).findFile(virtualFiles[0])), true);
     ClientId clientId = ClientId.getCurrent();
     // It's important to remove this listener. It prevents invocation of setFile method after the tree builder is disposed
     myProject.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
@@ -30,7 +30,7 @@ abstract class CurrentFileTodosPanel extends TodoPanel {
         if (!clientId.equals(ClientId.getCurrent())) return;
         VirtualFile virtualFile = e.getNewFile();
         PsiFile psiFile = virtualFile == null || !virtualFile.isValid() ? null
-                          : ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(virtualFile));
+                          : ReadAction.computeBlocking(() -> PsiManager.getInstance(myProject).findFile(virtualFile));
         // This invokeLater is required. The problem is setFile does a commit to PSI, but setFile is
         // invoked inside PSI change event. It causes an Exception like "Changes to PSI are not allowed inside event processing"
         ApplicationManager.getApplication().invokeLater(() -> setFile(psiFile, false));

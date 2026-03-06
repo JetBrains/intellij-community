@@ -38,10 +38,10 @@ public final class StructureViewUtil {
       }
       return text;
     }
-    // NB!: this point is achievable if the following method returns null
+    // NB: this point is achievable if the following method returns null
     // see com.intellij.ide.util.treeView.NodeDescriptor.toString
     if (value instanceof TreeElement) {
-      return ReadAction.compute(() -> {
+      return ReadAction.computeBlocking(() -> {
         if (value instanceof SearchableTextProvider searchableTextProvider) {
           String searchableText = searchableTextProvider.getSearchableText();
           if (searchableText != null) return searchableText;

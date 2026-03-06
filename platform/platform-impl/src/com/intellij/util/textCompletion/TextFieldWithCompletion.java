@@ -66,7 +66,7 @@ public class TextFieldWithCompletion extends LanguageTextField {
   @Override
   protected @NotNull EditorEx createEditor() {
     EditorEx editor = super.createEditor();
-    ReadAction.run(() -> {
+    ReadAction.runBlocking(() -> {
       EditorCustomization disableSpellChecking = SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
       if (disableSpellChecking != null) {
         disableSpellChecking.customize(editor);

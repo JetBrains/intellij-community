@@ -355,7 +355,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     @Override
     protected void paintChildren(Graphics g) {
-      ReadAction.run(() -> {
+      ReadAction.runBlocking(() -> {
         updateText(g.getClipBounds());
         super.paintChildren(g);
       });

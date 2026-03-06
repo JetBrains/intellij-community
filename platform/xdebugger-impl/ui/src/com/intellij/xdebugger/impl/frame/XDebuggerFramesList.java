@@ -514,7 +514,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
           fileColors.put(virtualFile, COMPUTING_COLOR);
           ApplicationManager.getApplication().executeOnPooledThread(() -> {
             if (fileColors == myFileColors) { // check if it is obsolete already
-              Color color = ReadAction.compute(() -> FileColorManager.getInstance(project).getFileColor(virtualFile));
+              Color color = ReadAction.computeBlocking(() -> FileColorManager.getInstance(project).getFileColor(virtualFile));
               EdtExecutorService.getInstance().execute(() -> {
                 if (fileColors == myFileColors) { // check if it is obsolete already
                   fileColors.put(virtualFile, color == null ? NULL_COLOR : color);

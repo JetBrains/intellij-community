@@ -299,7 +299,7 @@ public abstract class FileBasedIndex {
       if (visitedRoots != null && !root.equals(file) && file.isDirectory() && !visitedRoots.add(file)) {
         return false;
       }
-      return projectFileIndex == null || !ReadAction.compute(() -> projectFileIndex.isExcluded(file));
+      return projectFileIndex == null || !ReadAction.computeBlocking(() -> projectFileIndex.isExcluded(file));
     };
 
     VirtualFileFilter symlinkFilter = file -> {

@@ -2,7 +2,7 @@
 package com.intellij.xdebugger.impl.proxy
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.markup.GutterDraggableObject
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.vfs.VirtualFile
@@ -42,7 +42,7 @@ internal class MonolithLineBreakpointProxy @Deprecated("Use breakpoint.asProxy()
   }
 
   override fun getHighlightRange(): XLineBreakpointHighlighterRange {
-    val range = runReadAction { breakpoint.highlightRange }
+    val range = runReadActionBlocking { breakpoint.highlightRange }
     return XLineBreakpointHighlighterRange.Available(range)
   }
 

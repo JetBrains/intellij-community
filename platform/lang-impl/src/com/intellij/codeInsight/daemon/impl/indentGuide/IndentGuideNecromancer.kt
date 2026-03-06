@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.indentGuide
 
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.IndentGuideDescriptor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
@@ -47,7 +47,7 @@ private class IndentGuideNecromancer(
     limbs: List<IndentGuideDescriptor>,
   ): (Editor) -> Unit {
     val indentGuides = IndentGuides(recipe.document, IndentGuideZombieRenderer)
-    runReadAction {
+    runReadActionBlocking {
       indentGuides.buildIndents(limbs)
     }
     return { editor ->

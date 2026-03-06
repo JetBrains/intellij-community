@@ -1444,7 +1444,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         if (proj != null && !proj.equals(project)) {
           continue; // skip this set as associated with a different project
         }
-        if (ReadAction.compute(() -> set.first.isInSet(indexingRequest.getFile()))) {
+        if (ReadAction.computeBlocking(() -> set.first.isInSet(indexingRequest.getFile()))) {
           return true;
         }
       }

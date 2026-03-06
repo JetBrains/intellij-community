@@ -71,7 +71,7 @@ public abstract class DependenciesBuilder {
 
   public void analyze() {
     doAnalyze();
-    myIllegalDependencies = ReadAction.compute(this::doGetIllegalDependencies);
+    myIllegalDependencies = ReadAction.computeBlocking(this::doGetIllegalDependencies);
   }
 
   public abstract void doAnalyze();

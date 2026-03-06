@@ -35,6 +35,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
@@ -58,7 +59,6 @@ import com.intellij.ui.AppUIUtil.invokeOnEdt
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.application
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -455,7 +455,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
     XDebugManagerProxy.getInstance().getDebuggerExecutionPointManager(project)?.alternativeSourceKindFlow = this.alternativeSourceKindState
 
     if (process.checkCanInitBreakpoints()) {
-      ReadAction.run<RuntimeException?>(ThrowableRunnable { initBreakpoints() })
+      runReadActionBlocking {
+        initBreakpoints()
+      }
     }
     if (process is XDebugProcessDebuggeeInForeground &&
         process.isBringingToForegroundApplicable()

@@ -83,12 +83,12 @@ final class EditorAccessibilityCaret implements Caret {
 
   @Override
   public int getDot() {
-    return ReadAction.compute(() -> myEditor.getCaretModel().getOffset());
+    return ReadAction.computeBlocking(() -> myEditor.getCaretModel().getOffset());
   }
 
   @Override
   public int getMark() {
-    return ReadAction.compute(() -> myEditor.getSelectionModel().getSelectionStart());
+    return ReadAction.computeBlocking(() -> myEditor.getSelectionModel().getSelectionStart());
   }
 
   @Override

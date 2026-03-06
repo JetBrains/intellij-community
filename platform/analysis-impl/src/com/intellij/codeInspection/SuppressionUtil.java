@@ -83,7 +83,7 @@ public final class SuppressionUtil extends SuppressionUtilCore {
   public static boolean isSuppressedInStatement(final @NotNull PsiElement place,
                                                 final @NotNull String toolId,
                                                 final @NotNull Class<? extends PsiElement> statementClass) {
-    return ReadAction.compute(() -> getStatementToolSuppressedIn(place, toolId, statementClass)) != null;
+    return ReadAction.computeBlocking(() -> getStatementToolSuppressedIn(place, toolId, statementClass)) != null;
   }
 
   public static @NotNull PsiComment createComment(@NotNull Project project,

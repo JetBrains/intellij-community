@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.completion.BaseCompletionService;
 import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -243,7 +242,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
 
     private void triggerLookupUsed(@NotNull FinishType finishType, @Nullable LookupElement currentItem,
                                    char completionChar) {
-      final List<EventPair<?>> data = ReadAction.compute(() -> getCommonUsageInfo(finishType, currentItem, completionChar));
+      List<EventPair<?>> data = ReadAction.computeBlocking(() -> getCommonUsageInfo(finishType, currentItem, completionChar));
 
       final List<EventPair<?>> additionalData = new ArrayList<>();
       LookupUsageDescriptor.EP_NAME.forEachExtensionSafe(usageDescriptor -> {

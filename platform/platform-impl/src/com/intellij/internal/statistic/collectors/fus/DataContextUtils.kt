@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.InjectedDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.LanguageFileType
@@ -92,7 +92,7 @@ object DataContextUtils {
     if (project != null) {
       val editor = InjectedDataKeys.EDITOR.getData(dataContext)
       if (editor != null && !project.isDisposed) {
-        val injectedFile = runReadAction { PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.document) }
+        val injectedFile = runReadActionBlocking { PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.document) }
         if (injectedFile != null) {
           return injectedFile.language
         }

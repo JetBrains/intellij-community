@@ -373,7 +373,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       SwingUtilities.invokeLater(() -> {
         if (myTableModel.getRowCount() != 0) {
-          ReadAction.run(() -> {
+          ReadAction.runBlocking(() -> {
             myTable.getSelectionModel().addSelectionInterval(0, 0);
           });
         }

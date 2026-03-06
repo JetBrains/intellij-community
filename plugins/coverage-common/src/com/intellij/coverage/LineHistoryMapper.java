@@ -166,7 +166,7 @@ final class LineHistoryMapper {
   }
 
   private String @NotNull [] getUpToDateLines() {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       final int lineCount = myDocument.getLineCount();
       final String[] lines = new String[lineCount];
       final CharSequence chars = myDocument.getCharsSequence();

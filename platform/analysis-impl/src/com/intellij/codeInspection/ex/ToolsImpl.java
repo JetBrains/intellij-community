@@ -341,7 +341,7 @@ public final class ToolsImpl implements Tools {
 
   public @NotNull ScopeToolState getState(@Nullable PsiElement element) {
     if (myTools == null || element == null) return myDefaultState;
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       if (!element.isValid()) return myDefaultState;
 
       Project project = element.getProject();

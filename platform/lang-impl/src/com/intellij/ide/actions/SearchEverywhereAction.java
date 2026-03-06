@@ -117,7 +117,6 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
       }
     }
 
-    ReadAction.run(() -> showInSearchEverywherePopup(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID, newEvent, true, true));
+    ReadAction.runBlocking(() -> showInSearchEverywherePopup(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID, newEvent, true, true));
   }
 }
-

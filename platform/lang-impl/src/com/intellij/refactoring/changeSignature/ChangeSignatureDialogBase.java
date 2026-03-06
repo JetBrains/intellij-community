@@ -195,7 +195,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
 
     if (table != null && table.getRowCount() > 0) {
       if (table.getColumnModel().getSelectedColumnCount() == 0) {
-        final int selectedIdx = ReadAction.compute(() -> getSelectedIdx());
+        final int selectedIdx = ReadAction.computeBlocking(() -> getSelectedIdx());
         table.getSelectionModel().setSelectionInterval(selectedIdx, selectedIdx);
         table.getColumnModel().getSelectionModel().setSelectionInterval(0, 0);
       }

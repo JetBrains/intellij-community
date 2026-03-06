@@ -241,7 +241,7 @@ public final class EditorEmbeddedComponentManager {
 
     @Override
     public void doLayout() {
-      ReadAction.run(() -> {
+      ReadAction.runBlocking(() -> {
         synchronizeBoundsWithInlay();
         super.doLayout();
       });

@@ -80,6 +80,7 @@ public final class MainPassesRunner {
       }
       Ref<Exception> exception = Ref.create();
       ProgressManager.getInstance().run(new Task.Modal(myProject, myTitle, true) {
+        @SuppressWarnings("IncorrectCancellationExceptionHandling")
         @Override
         public void run(@NotNull ProgressIndicator progress) {
           try {
@@ -131,7 +132,7 @@ public final class MainPassesRunner {
       Disposable disposable = Disposer.newDisposable();
       try {
         SensitiveProgressWrapper wrapper = new SensitiveProgressWrapper(progress);
-        ReadAction.run(() -> {
+        ReadAction.runBlocking(() -> {
           ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
             @Override
             public void beforeWriteActionStart(@NotNull Object action) {
@@ -148,7 +149,7 @@ public final class MainPassesRunner {
         AtomicInteger filesCompleted = new AtomicInteger();
         JobLauncher.getInstance().invokeConcurrentlyUnderProgress(daemonIndicators, wrapper, pair -> {
           VirtualFile file = pair.getFirst();
-          wrapper.setText(ReadAction.compute(() -> ProjectUtil.calcRelativeToProjectPath(file, myProject)));
+          wrapper.setText(ReadAction.computeBlocking(() -> ProjectUtil.calcRelativeToProjectPath(file, myProject)));
           DaemonProgressIndicator daemonIndicator = pair.getSecond();
           runMainPasses(file, result, daemonIndicator, minimumSeverity);
           int completed = filesCompleted.incrementAndGet();
@@ -174,11 +175,19 @@ public final class MainPassesRunner {
                              @NotNull Map<? super Document, ? super List<HighlightInfo>> result,
                              @NotNull DaemonProgressIndicator daemonIndicator,
                              @Nullable HighlightSeverity minimumSeverity) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ThreadingAssertions.assertBackgroundThread();
     daemonIndicator.checkCanceled();
-    PsiFile psiFile = ReadAction.compute(() -> file.isValid() ? PsiManager.getInstance(myProject).findFile(file) : null);
-    Document document = ReadAction.compute(() -> file.isValid() ? FileDocumentManager.getInstance().getDocument(file) : null);
-    if (psiFile == null || document == null || !ReadAction.compute(() -> ProblemHighlightFilter.shouldProcessFileInBatch(psiFile))) {
+
+    var psiFileAndDoc = ReadAction.computeBlocking(() -> {
+      var doc = file.isValid() ? FileDocumentManager.getInstance().getDocument(file) : null;
+      var psiFile = file.isValid() ? PsiManager.getInstance(myProject).findFile(file) : null;
+      return Pair.create(psiFile, doc);
+    });
+
+    var psiFile = psiFileAndDoc.getFirst();
+    var document = psiFileAndDoc.getSecond();
+
+    if (psiFile == null || document == null || !ReadAction.computeBlocking(() -> ProblemHighlightFilter.shouldProcessFileInBatch(psiFile))) {
       return;
     }
     ProperTextRange range = ProperTextRange.create(0, document.getTextLength());
@@ -186,7 +195,7 @@ public final class MainPassesRunner {
       // todo IJPL-339 figure out what is the correct context here
       CodeInsightContext context;
       if (CodeInsightContexts.isSharedSourceSupportEnabled(myProject)) {
-        context = ReadAction.compute(() -> {
+        context = ReadAction.computeBlocking(() -> {
           CodeInsightContextManager manager = CodeInsightContextManager.getInstance(psiFile.getProject());
           return manager.getCodeInsightContext(psiFile.getViewProvider());
         });

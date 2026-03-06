@@ -86,7 +86,7 @@ public final class ExternalJavaDocAction extends AnAction {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       List<String> urls;
       if (StringUtil.isEmptyOrSpaces(docUrl)) {
-        urls = ReadAction.compute(() -> provider.getUrlFor(element, originalElement));
+        urls = ReadAction.computeBlocking(() -> provider.getUrlFor(element, originalElement));
       }
       else {
         urls = Collections.singletonList(docUrl);

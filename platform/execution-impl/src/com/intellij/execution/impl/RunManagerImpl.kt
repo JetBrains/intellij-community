@@ -46,6 +46,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
@@ -69,7 +70,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeature
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtilRt
@@ -459,9 +459,9 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
     removeConfigurations(deletedRunConfigs, deleteFileIfStoredInArbitraryFile = false)
 
     for (filePath in updatedFilePaths) {
-      val deletedAndAddedRunConfigs = ApplicationManager.getApplication().runReadAction( Computable {
+      val deletedAndAddedRunConfigs = runReadActionBlocking {
         lock.read { rcInArbitraryFileManager.loadChangedRunConfigsFromFile(this, filePath) }
-      })
+      }
 
       for (runConfig in deletedAndAddedRunConfigs.addedRunConfigs) {
         addConfiguration(runConfig)

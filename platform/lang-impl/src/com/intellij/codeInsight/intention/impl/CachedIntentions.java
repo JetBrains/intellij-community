@@ -414,7 +414,7 @@ public final class CachedIntentions implements IntentionContainer {
       }
     }
 
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       if (IntentionManagerSettings.getInstance().isShowLightBulb(action)) {
         return myErrorFixes.contains(value) ? AllIcons.Actions.QuickfixBulb :
                myInspectionFixes.contains(value) ? AllIcons.Actions.IntentionBulb :

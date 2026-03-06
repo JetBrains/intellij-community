@@ -92,7 +92,7 @@ public final class SelectWordHandler extends EditorActionHandler.ForEachCaret {
 
   private static @Nullable("null means unable to select") TextRange selectWord(@NotNull Caret caret, @NotNull Project project) {
     ThrowableComputable<TextRange, Exception> computable = () -> {
-      return ReadAction.compute(() -> {
+      return ReadAction.computeBlocking(() -> {
         return doSelectWord(caret, project);
       });
     };

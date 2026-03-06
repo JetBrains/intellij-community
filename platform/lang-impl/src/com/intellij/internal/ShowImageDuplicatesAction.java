@@ -48,7 +48,7 @@ final class ShowImageDuplicatesAction extends AnAction {
       indicator.setIndeterminate(false);
       final List<VirtualFile> images = new ArrayList<>();
       for (String ext : IMAGE_EXTENSIONS) {
-        images.addAll(ReadAction.compute(() -> FilenameIndex.getAllFilesByExt(project, ext)));
+        images.addAll(ReadAction.computeBlocking(() -> FilenameIndex.getAllFilesByExt(project, ext)));
       }
 
       final Map<Long, Set<VirtualFile>> duplicates = new HashMap<>();
@@ -56,7 +56,7 @@ final class ShowImageDuplicatesAction extends AnAction {
       for (int i = 0; i < images.size(); i++) {
         indicator.setFraction((double)(i + 1) / (double)images.size());
         final VirtualFile file = images.get(i);
-        ReadAction.run(() -> {
+        ReadAction.runBlocking(() -> {
           if (!(file.getFileSystem() instanceof LocalFileSystem)) return;
           final long length = file.getLength();
           if (all.containsKey(length)) {
@@ -90,7 +90,7 @@ final class ShowImageDuplicatesAction extends AnAction {
         seek++;
         indicator.setFraction((double)seek / (double)count);
         try {
-          ReadAction.run(() -> {
+          ReadAction.runBlocking(() -> {
             final String md5 = getMD5Checksum(file);
             realDuplicates.computeIfAbsent(md5, k -> new HashSet<>()).add(file);
           });

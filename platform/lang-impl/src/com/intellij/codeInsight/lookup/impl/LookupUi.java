@@ -209,7 +209,7 @@ final class LookupUi {
     }
 
     LookupElement item = lookup.getCurrentItem();
-    if (item != null && ReadAction.compute(() -> item.isValid())) {
+    if (item != null && ReadAction.computeBlocking(() -> item.isValid())) {
       ReadAction.nonBlocking(() -> lookup.getActionsFor(item))
         .expireWhen(() -> !item.isValid() || hintAlarm.isDisposed())
         .finishOnUiThread(modalityState, actions -> {

@@ -103,7 +103,7 @@ public abstract class DfaAssistBase implements Disposable {
 
   protected void cleanUp() {
     UIUtil.invokeLaterIfNeeded(() -> {
-      ReadAction.run(() -> Disposer.dispose(myMarkup));
+      ReadAction.runBlocking(() -> Disposer.dispose(myMarkup));
     });
   }
 

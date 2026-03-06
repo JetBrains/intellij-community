@@ -166,7 +166,7 @@ final class FindInProjectTask {
     String moduleName = findModel.getModuleName();
     moduleToSearchIn = moduleName == null ?
                        null :
-                       ReadAction.compute(() -> ModuleManager.getInstance(project).findModuleByName(moduleName));
+                       ReadAction.computeBlocking(() -> ModuleManager.getInstance(project).findModuleByName(moduleName));
 
     Predicate<CharSequence> fileNamePatternCondition = FindInProjectUtil.createFileMaskCondition(findModel.getFileFilter());
 
@@ -374,7 +374,7 @@ final class FindInProjectTask {
     progressIndicator.setText(text);
     progressIndicator.setText2(FindBundle.message("find.searching.for.string.in.file.occurrences.progress", occurrenceCount));
 
-    Pair.NonNull<PsiFile, VirtualFile> pair = ReadAction.compute(() -> findFile(virtualFile));
+    Pair.NonNull<PsiFile, VirtualFile> pair = ReadAction.computeBlocking(() -> findFile(virtualFile));
     if (pair == null) return true;
 
     Set<UsageInfo> processedUsages =
@@ -456,17 +456,16 @@ final class FindInProjectTask {
     SearchScope customScope = findModel.isCustomScope() ? findModel.getCustomScope() : null;
     GlobalSearchScope globalCustomScope = customScope == null ? null : GlobalSearchScopeUtil.toGlobalSearchScope(customScope, project);
     boolean searchInLibs = globalCustomScope != null
-                           && ReadAction.compute(() -> globalCustomScope.isSearchInLibraries());
+                           && ReadAction.computeBlocking(() -> globalCustomScope.isSearchInLibraries());
 
     boolean unfoldSubdirs = directoryToSearchIn != null
                             && findModel.isWithSubdirectories();
 
     boolean ignoreExcluded = directoryToSearchIn != null
                              && !Registry.is("find.search.in.excluded.dirs")
-                             && !ReadAction.compute(() -> projectFileIndex.isExcluded(directoryToSearchIn));
+                             && !ReadAction.computeBlocking(() -> projectFileIndex.isExcluded(directoryToSearchIn));
     boolean locateClassSources = directoryToSearchIn != null
-                                 && ReadAction.compute(() -> projectFileIndex.getClassRootForFile(directoryToSearchIn)) != null;
-
+                                 && ReadAction.computeBlocking(() -> projectFileIndex.getClassRootForFile(directoryToSearchIn)) != null;
 
     //wrap into concurrent deque for multi-threaded processing
     ConcurrentLinkedDeque<Object> searchItemsDeque = new ConcurrentLinkedDeque<>(searchItems);

@@ -352,7 +352,8 @@ public class GotoImplementationHandler extends GotoTargetHandler {
   private static @NotNull Comparator<ItemWithPresentation> wrapPsiComparator(Comparator<PsiElement> result) {
     Comparator<ItemWithPresentation> comparator = (o1, o2) -> {
       if (o1.getItem() instanceof SmartPsiElementPointer<?> && o2.getItem() instanceof SmartPsiElementPointer<?>) {
-        return ReadAction.compute(() -> result.compare(((SmartPsiElementPointer<?>)o1.getItem()).getElement(), ((SmartPsiElementPointer<?>)o2.getItem()).getElement()));
+        return ReadAction.computeBlocking(() -> result.compare(((SmartPsiElementPointer<?>)o1.getItem()).getElement(),
+                                                               ((SmartPsiElementPointer<?>)o2.getItem()).getElement()));
       }
       return 0;
     };
@@ -372,6 +373,6 @@ public class GotoImplementationHandler extends GotoTargetHandler {
   }
 
   public static <T> @NotNull Comparator<T> wrapIntoReadAction(@NotNull Comparator<? super T> base) {
-    return (e1, e2) -> ReadAction.compute(() -> base.compare(e1, e2));
+    return (e1, e2) -> ReadAction.computeBlocking(() -> base.compare(e1, e2));
   }
 }

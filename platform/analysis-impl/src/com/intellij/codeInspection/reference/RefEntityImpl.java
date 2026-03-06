@@ -200,7 +200,7 @@ public abstract class RefEntityImpl extends UserDataHolderBase implements RefEnt
 
   @Override
   public void accept(@NotNull RefVisitor refVisitor) {
-    ReadAction.run(() -> refVisitor.visitElement(this));
+    ReadAction.runBlocking(() -> refVisitor.visitElement(this));
   }
 
   public synchronized boolean checkFlag(long mask) {

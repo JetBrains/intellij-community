@@ -29,7 +29,7 @@ public final class FindUsagesHelper {
                                             boolean equivalentReferencesOnly,
                                             @NotNull GlobalSearchScope searchScope,
                                             @NotNull Processor<? super UsageInfo> processor) {
-    final TextRange elementTextRange = ReadAction.compute(
+    TextRange elementTextRange = ReadAction.computeBlocking(
       () -> {
         if (!element.isValid()) {
           return null;
@@ -78,11 +78,11 @@ public final class FindUsagesHelper {
                                                @NotNull GlobalSearchScope searchScope,
                                                final @NotNull UsageInfoFactory factory,
                                                final @NotNull Processor<? super UsageInfo> processor) {
-    PsiSearchHelper helper = ReadAction.compute(() -> PsiSearchHelper.getInstance(element.getProject()));
+    PsiSearchHelper helper = ReadAction.computeBlocking(() -> PsiSearchHelper.getInstance(element.getProject()));
 
     return helper.processUsagesInNonJavaFiles(element, stringToSearch, (psiFile, startOffset, endOffset) -> {
       try {
-        UsageInfo usageInfo = ReadAction.compute(() -> factory.createUsageInfo(psiFile, startOffset, endOffset));
+        UsageInfo usageInfo = ReadAction.computeBlocking(() -> factory.createUsageInfo(psiFile, startOffset, endOffset));
         return usageInfo == null || processor.process(usageInfo);
       }
       catch (ProcessCanceledException e) {

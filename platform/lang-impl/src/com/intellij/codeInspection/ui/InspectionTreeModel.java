@@ -159,7 +159,7 @@ public final class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode>
   public @NotNull RefElementNode createRefElementNode(@Nullable RefEntity entity,
                                                       @NotNull Supplier<? extends RefElementNode> supplier,
                                                       @NotNull InspectionTreeNode parent) {
-    return getOrAdd(entity, parent, () -> ReadAction.compute(supplier::get));
+    return getOrAdd(entity, parent, () -> ReadAction.computeBlocking(supplier::get));
   }
 
   public <T extends InspectionTreeNode> T createCustomNode(@NotNull Object userObject, @NotNull Supplier<? extends T> supplier, @NotNull InspectionTreeNode parent) {
@@ -177,7 +177,7 @@ public final class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode>
                                           @NotNull CommonProblemDescriptor descriptor,
                                           @NotNull InspectionToolPresentation presentation,
                                           @NotNull InspectionTreeNode parent) {
-    getOrAdd(descriptor, parent, () -> ReadAction.compute(() -> new ProblemDescriptionNode(element, descriptor, presentation, parent)));
+    getOrAdd(descriptor, parent, () -> ReadAction.computeBlocking(() -> new ProblemDescriptionNode(element, descriptor, presentation, parent)));
   }
 
   @ApiStatus.Internal
@@ -186,7 +186,7 @@ public final class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode>
                                                  @NotNull InspectionToolPresentation presentation,
                                                  @NotNull InspectionTreeNode parent) {
     getOrAdd(offlineDescriptor,
-             parent, () -> ReadAction.compute(() -> new OfflineProblemDescriptorNode(resolveResult, presentation, offlineDescriptor, parent))
+             parent, () -> ReadAction.computeBlocking(() -> new OfflineProblemDescriptorNode(resolveResult, presentation, offlineDescriptor, parent))
     );
   }
 
@@ -206,7 +206,7 @@ public final class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode>
       node = supplier.get();
       InspectionTreeNode finalNode = node;
       InspectionTreeNode.Children finalChildren = children;
-      int idx = ReadAction.compute(() -> Arrays.binarySearch(finalChildren.myChildren, finalNode, InspectionResultsViewComparator.INSTANCE));
+      int idx = ReadAction.computeBlocking(() -> Arrays.binarySearch(finalChildren.myChildren, finalNode, InspectionResultsViewComparator.INSTANCE));
       // it's allowed to have idx >= 0 for example for problem descriptor nodes.
       int insertionPoint = idx >= 0 ? idx : -idx - 1;
       children.myChildren = ArrayUtil.insert(children.myChildren, insertionPoint, node);

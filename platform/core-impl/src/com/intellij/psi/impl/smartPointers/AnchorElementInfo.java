@@ -72,7 +72,7 @@ class AnchorElementInfo extends SelfElementInfo {
         return packed1 == packed2;
       }
       if (packed1 != -1 || packed2 != -1) {
-        return ReadAction.compute(() -> Comparing.equal(restoreElement(manager), other.restoreElement(manager)));
+        return ReadAction.computeBlocking(() -> Comparing.equal(restoreElement(manager), other.restoreElement(manager)));
       }
     }
     return super.pointsToTheSameElementAs(other, manager);

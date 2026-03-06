@@ -3,7 +3,7 @@ package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.ApiStatus
@@ -136,7 +136,7 @@ open class DeclarativeInsertHandler protected constructor(
   class LazyBuilder(holdReadLock: Boolean, private val block: HandlerProducer) : Lazy<DeclarativeInsertHandler> {
     private val delegate = if (holdReadLock) {
       lazy {
-        runReadAction {
+        runReadActionBlocking {
           Builder().also(block::produce).build()
         }
       }

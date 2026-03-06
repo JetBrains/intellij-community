@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -99,6 +99,6 @@ object IndexableFilesIterationMethods {
     if (file !is VirtualFileWithId || file.id <= 0) {
       return false
     }
-    return !excludeNonProjectRoots || runReadAction { !projectFileIndex.isExcluded(file) }
+    return !excludeNonProjectRoots || runReadActionBlocking { !projectFileIndex.isExcluded(file) }
   }
 }

@@ -4,15 +4,13 @@ package com.intellij.workspaceModel.core.fileIndex.impl
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.ThrottledLogger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIteratorEx
 import com.intellij.openapi.roots.impl.DirectoryIndexImpl
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -166,7 +164,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
   ): Boolean {
     val visitor = object : VirtualFileVisitor<Void?>() {
       override fun visitFileEx(file: VirtualFile): Result {
-        val fileInfo = ApplicationManager.getApplication().runReadAction(Computable {
+        val fileInfo = runReadActionBlocking {
           getFileInfo(file = file,
                       honorExclusion = true,
                       includeContentSets = true,
@@ -175,7 +173,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
                       includeExternalSourceSets = false,
                       includeExternalNonIndexableSets = false,
                       includeCustomKindSets = false)
-        })
+        }
         if (file.isDirectory && fileInfo is NonWorkspace) {
           return when (fileInfo) {
             NonWorkspace.EXCLUDED, NonWorkspace.NOT_UNDER_ROOTS -> {
@@ -187,9 +185,9 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
             }
           }
         }
-        val accepted = ApplicationManager.getApplication().runReadAction(Computable {
+        val accepted = runReadActionBlocking {
           fileInfo.findFileSet(fileSetFilter) != null && (customFilter == null || customFilter.accept(file))
-        })
+        }
         val status = if (accepted) processor.processFileEx(file) else TreeNodeProcessingResult.CONTINUE
         return when (status) {
           TreeNodeProcessingResult.CONTINUE -> CONTINUE
@@ -200,7 +198,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
       }
     }
     // wrap non-indexable files as CacheAvoiding to prevent them from loading into VFS
-    val isIndexable = runReadAction { isIndexable(fileOrDir) }
+    val isIndexable = runReadActionBlocking { isIndexable(fileOrDir) }
     val cacheAvoidingIfNecessary = when {
       isIndexable -> fileOrDir
       else -> NewVirtualFile.asCacheAvoiding(fileOrDir)
@@ -233,7 +231,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
     val virtualFileUrl = virtualFileUrlManager.findByUrl(dir.url) ?: return VirtualFileVisitor.SKIP_CHILDREN
     val processed = virtualFileUrlManager.processChildrenRecursively(virtualFileUrl) { childUrl ->
       val childFile = childUrl.virtualFile ?: return@processChildrenRecursively TreeNodeProcessingResult.SKIP_CHILDREN
-      val isChildInContent = runReadAction {
+      val isChildInContent = runReadActionBlocking {
         findFileSet(file = childFile,
                     honorExclusion = true,
                     includeContentSets = true,

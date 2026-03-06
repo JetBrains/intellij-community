@@ -242,7 +242,7 @@ public final class ExecutionHelper {
 
   public static Collection<RunContentDescriptor> findRunningConsole(@NotNull Project project,
                                                                     @NotNull NotNullFunction<? super RunContentDescriptor, Boolean> descriptorMatcher) {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       RunContentManager contentManager = RunContentManager.getInstance(project);
       final RunContentDescriptor selectedContent = contentManager.getSelectedContent();
       if (selectedContent != null) {

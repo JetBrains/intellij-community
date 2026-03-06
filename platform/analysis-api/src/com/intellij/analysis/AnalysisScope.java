@@ -204,7 +204,7 @@ public class AnalysisScope {
     if (filter != null && !filter.contains(virtualFile)) {
       return true;
     }
-    return !myIncludeTestSource && ReadAction.compute(() -> TestSourcesFilter.isTestSources(virtualFile, myProject));
+    return !myIncludeTestSource && ReadAction.computeBlocking(() -> TestSourcesFilter.isTestSources(virtualFile, myProject));
   }
 
   private @NotNull FileIndex getFileIndex() {
@@ -259,7 +259,7 @@ public class AnalysisScope {
           VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor<Void>() {
             @Override
             public @NotNull Result visitFileEx(@NotNull VirtualFile file) {
-              boolean ignored = ReadAction.compute(() -> fileIndex.isExcluded(file));
+              boolean ignored = ReadAction.computeBlocking(() -> fileIndex.isExcluded(file));
               if (!ignored && !file.isDirectory()) {
                 fileSet.add(file);
               }
@@ -295,7 +295,7 @@ public class AnalysisScope {
     accept(file -> {
       if (file.isDirectory()) return true;
       if (ProjectCoreUtil.isProjectOrWorkspaceFile(file)) return true;
-      boolean isInContent = ReadAction.compute(() -> fileIndex.isInContent(file));
+      boolean isInContent = ReadAction.computeBlocking(() -> fileIndex.isInContent(file));
       if (isInContent && !isFilteredOut(file) && !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {
         return processFile(file, visitor, psiManager, needReadAction, idempotent);
       }
@@ -326,7 +326,7 @@ public class AnalysisScope {
       PsiElement[] psiElements = lss.getScope();
       Set<VirtualFile> files = new HashSet<>();
       for (PsiElement element : psiElements) {
-        VirtualFile file = ReadAction.compute(() -> PsiUtilCore.getVirtualFile(element));
+        VirtualFile file = ReadAction.computeBlocking(() -> PsiUtilCore.getVirtualFile(element));
         if (file != null && files.add(file)) {
           if (!processor.process(file)) return false;
         }
@@ -337,7 +337,7 @@ public class AnalysisScope {
       return accept(dir, processor);
     }
     if (myElement != null) {
-      VirtualFile file = ReadAction.compute(() -> PsiUtilCore.getVirtualFile(myElement));
+      VirtualFile file = ReadAction.computeBlocking(() -> PsiUtilCore.getVirtualFile(myElement));
       return file == null || processor.process(file);
     }
 
@@ -365,7 +365,7 @@ public class AnalysisScope {
 
   private @NotNull ContentIterator createScopeIterator(@NotNull Processor<? super VirtualFile> processor, @Nullable SearchScope searchScope) {
     return fileOrDir -> {
-      boolean isInScope = ReadAction.compute(() -> {
+      boolean isInScope = ReadAction.computeBlocking(() -> {
         if (searchScope != null && !searchScope.contains(fileOrDir)) return false;
         if (isFilteredOut(fileOrDir)) return false;
         return !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(fileOrDir, myProject);

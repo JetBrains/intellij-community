@@ -79,7 +79,7 @@ public final class ConsoleExecutionEditor implements Disposable {
   private void setEditorHighlighter() {
     ApplicationManager.getApplication().executeOnPooledThread(
       () -> {
-        EditorHighlighter highlighter = ReadAction.compute(() -> EditorHighlighterFactory.getInstance().createEditorHighlighter(
+        EditorHighlighter highlighter = ReadAction.computeBlocking(() -> EditorHighlighterFactory.getInstance().createEditorHighlighter(
           getVirtualFile(), myConsoleEditor.getColorsScheme(), getProject()));
         ApplicationManager.getApplication().invokeLater(() -> myConsoleEditor.setHighlighter(highlighter));
       }

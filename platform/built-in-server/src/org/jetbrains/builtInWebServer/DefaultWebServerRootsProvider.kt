@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.builtInWebServer
 
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -35,7 +35,7 @@ internal class DefaultWebServerRootsProvider : WebServerRootsProvider() {
       val index = effectivePath.indexOf('/')
       if (index > 0 && !effectivePath.regionMatches(0, project.name, 0, index, !SystemInfo.isFileSystemCaseSensitive)) {
         val moduleName = effectivePath.substring(0, index)
-        val module = runReadAction { ModuleManager.getInstance(project).findModuleByName(moduleName) }
+        val module = runReadActionBlocking { ModuleManager.getInstance(project).findModuleByName(moduleName) }
         if (module != null && !module.isDisposed) {
           effectivePath = effectivePath.substring(index + 1)
           val resolver = pathToFileManager.getResolver(effectivePath)
@@ -49,7 +49,7 @@ internal class DefaultWebServerRootsProvider : WebServerRootsProvider() {
     }
 
     val resolver = pathToFileManager.getResolver(effectivePath)
-    val modules = runReadAction { ModuleManager.getInstance(project).modules }
+    val modules = runReadActionBlocking { ModuleManager.getInstance(project).modules }
     if (pathQuery.useVfs) {
       var oldestParent = path.indexOf("/").let { if (it > 0) path.substring(0, it) else null }
       if (oldestParent == null && path.isNotEmpty() && !path.contains('.')) {
@@ -119,7 +119,7 @@ internal class DefaultWebServerRootsProvider : WebServerRootsProvider() {
   }
 
   override fun getPathInfo(file: VirtualFile, project: Project): PathInfo? {
-    return runReadAction {
+    return runReadActionBlocking {
       val fileIndex = ProjectFileIndex.getInstance(project)
       // we serve excluded files
       val isInLibrary = fileIndex.isInLibrary(file)
@@ -137,7 +137,7 @@ internal class DefaultWebServerRootsProvider : WebServerRootsProvider() {
             root = fileIndex.getClassRootForFile(file)
             if (root == null) {
               // https://youtrack.jetbrains.com/issue/WEB-20598
-              return@runReadAction null
+              return@runReadActionBlocking null
             }
           }
         }
@@ -255,7 +255,7 @@ private fun findInLibrariesAndSdk(project: Project, rootTypes: Array<OrderRootTy
   }
 
   return rootTypes.asSequence().map { rootType ->
-    runReadAction {
+    runReadActionBlocking {
       findInLibraryTable(LibraryTablesRegistrar.getInstance().getLibraryTable(project), rootType)
       ?: findInProjectSdkOrInAll(rootType)
       ?: ModuleManager.getInstance(project).modules.asSequence().filter { !it.isDisposed }.map { findInModuleLevelLibraries(it, rootType, fileProcessor) }.firstOrNull { it != null }

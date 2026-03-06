@@ -250,7 +250,7 @@ public final class StartBrowserPanel {
   }
 
   private static @Nullable Url virtualFileToUrl(@NotNull VirtualFile file, @NotNull Project project) {
-    PsiFile psiFile = ReadAction.compute(() -> PsiManager.getInstance(project).findFile(file));
+    PsiFile psiFile = ReadAction.computeBlocking(() -> PsiManager.getInstance(project).findFile(file));
     return WebBrowserServiceImpl.getDebuggableUrl(psiFile);
   }
 

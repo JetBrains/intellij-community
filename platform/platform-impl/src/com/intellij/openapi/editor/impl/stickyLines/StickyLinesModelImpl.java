@@ -231,7 +231,7 @@ public final class StickyLinesModelImpl implements StickyLinesModel {
 
   private void restartStickyLinesPass(@NotNull Project project) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      ReadAction.run(() -> {
+      ReadAction.runBlocking(() -> {
         if (!project.isDisposed()) {
           var collector = new StickyLinesCollector(project, myMarkupModel.getDocument());
           collector.forceCollectPass();

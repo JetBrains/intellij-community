@@ -44,7 +44,7 @@ public final class ApplyIntentionAction extends AnAction {
   }
 
   public String getName() {
-    return ReadAction.compute(() -> myAction.getText());
+    return ReadAction.computeBlocking(() -> myAction.getText());
   }
 
   public static ApplyIntentionAction @Nullable [] getAvailableIntentions(@NotNull Editor editor, @NotNull PsiFile file) {
@@ -59,7 +59,7 @@ public final class ApplyIntentionAction extends AnAction {
     final ApplyIntentionAction[] result = new ApplyIntentionAction[actions.size()];
     for (int i = 0; i < result.length; i++) {
       final HighlightInfo.IntentionActionDescriptor descriptor = actions.get(i);
-      final String actionText = ReadAction.compute(() -> descriptor.getAction().getText());
+      final String actionText = ReadAction.computeBlocking(() -> descriptor.getAction().getText());
       result[i] = new ApplyIntentionAction(descriptor, actionText, editor, file);
     }
     return result;

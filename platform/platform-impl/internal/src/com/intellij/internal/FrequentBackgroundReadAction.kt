@@ -4,7 +4,7 @@ package com.intellij.internal
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.CheckboxAction
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.ui.Messages
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -64,7 +64,7 @@ class FrequentBackgroundReadAction: CheckboxAction() {
       runningJob = e.coroutineScope.launch(Dispatchers.Default) {
         try {
           while (isActive) {
-            runReadAction {
+            runReadActionBlocking {
               Thread.sleep(sleepDurationMs)
             }
             delay(1)

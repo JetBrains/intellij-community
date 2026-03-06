@@ -81,7 +81,7 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
     renderer.append(LangBundle.message("node.slice.value"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
     if (usage != null) {
-      ReadAction.run(() -> {
+      ReadAction.runBlocking(() -> {
         PsiElement element = usage.getElement();
         if (element == null) {
           renderer.append(UsageViewBundle.message("node.invalid") + " ", UsageTreeColors.INVALID_ATTRIBUTES);

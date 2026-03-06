@@ -38,7 +38,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.Utils.isLockRequired
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.CeProcessCanceledException
@@ -221,7 +221,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     return if (!needRwLock) {
       block()
     } else {
-      runReadAction(block)
+      runReadActionBlocking(block)
     }
   }
 

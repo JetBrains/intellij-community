@@ -4,7 +4,7 @@ package com.intellij.codeInsight.hints.settings.language
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.hint.EditorFragmentComponent
 import com.intellij.lang.Language
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -61,6 +61,6 @@ fun createEditor(language: Language,
       DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, false)
     }
   }
-  ReadAction.run<Throwable> {  editorField.setCaretPosition(0) }
+  runReadActionBlocking { editorField.setCaretPosition(0) }
   return editorField
 }

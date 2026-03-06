@@ -2,7 +2,7 @@
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker.Companion.isAsyncChangesProcessing
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.EXTERNAL
@@ -202,7 +202,7 @@ class ProjectSettingsTracker(
       // Therefore, the operation stamp cannot be taken earlier than VFS refresh for the settings files.
       // @see the AsyncFileChangesListener#apply function for details
       val operationStamp = Stamp.nextStamp()
-      val newSettingsFilesCRC = runReadAction {
+      val newSettingsFilesCRC = runReadActionBlocking {
         calculateSettingsFilesCRC(settingsPaths)
       }
       val settingsFilesStatus = updateSettingsFilesStatus(operationName, newSettingsFilesCRC, context.reloadStatus)

@@ -51,7 +51,7 @@ public class DefaultModuleRendererFactory extends ModuleRendererFactory {
   public final @Nullable TextWithIcon getModuleTextWithIcon(Object element) {
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-334335, EA-841334")) {
       if (element instanceof PsiElement && ((PsiElement)element).isValid()) {
-        return ReadAction.compute(() -> elementLocation((PsiElement)element));
+        return ReadAction.computeBlocking(() -> elementLocation((PsiElement)element));
       }
       else {
         return null;

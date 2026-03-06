@@ -21,6 +21,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
@@ -50,13 +51,13 @@ public final class LazyQuickFixUpdaterImpl implements LazyQuickFixUpdater {
   @Override
   @RequiresBackgroundThread
   public void waitQuickFixesSynchronously(@NotNull HighlightInfo info, @NotNull Project project, @NotNull Document document) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
-    ReadAction.run(() -> {
+    ThreadingAssertions.assertBackgroundThread();
+
+    ReadAction.runBlocking(() -> {
       try {
         info.computeQuickFixesSynchronously(project, document);
       }
       catch (ExecutionException | InterruptedException ignored) {
-
       }
     });
   }

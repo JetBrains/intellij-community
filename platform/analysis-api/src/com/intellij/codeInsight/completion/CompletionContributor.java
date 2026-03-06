@@ -227,7 +227,7 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
   }
 
   public static @NotNull List<CompletionContributor> forParameters(@NotNull CompletionParameters parameters) {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       PsiElement position = parameters.getPosition();
       Language language = PsiUtilCore.getLanguageAtOffset(position.getContainingFile(), parameters.getOffset());
       return forLanguageHonorDumbness(language, position.getProject());

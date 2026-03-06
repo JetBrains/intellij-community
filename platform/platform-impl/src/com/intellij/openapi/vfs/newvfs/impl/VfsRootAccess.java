@@ -214,7 +214,7 @@ public final class VfsRootAccess {
         if (!project.isInitialized()) {
           return null; // all is allowed
         }
-        ReadAction.run(() -> {
+        ReadAction.runBlocking(() -> {
           for (VirtualFile root : ProjectRootManager.getInstance(project).getContentRoots()) {
             allowed.add(root.getPath());
             allowed.add(root.getCanonicalPath());

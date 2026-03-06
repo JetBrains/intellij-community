@@ -199,7 +199,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
           InspectionToolResultExporter presentation = getPresentation(toolWrapper);
           try {
             if (presentation instanceof AggregateResultsExporter) {
-              ReadAction.run(() -> presentation.updateContent());
+              ReadAction.runBlocking(() -> presentation.updateContent());
               if (presentation.hasReportedProblems().toBoolean()) {
                 toolsWithResultsToAggregate.add(sameTools);
                 break;
@@ -209,7 +209,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
               hasProblems = Files.exists(InspectionsResultUtil.getInspectionResultPath(outputDir, toolWrapper.getShortName()));
             }
             else {
-              ReadAction.run(() -> presentation.updateContent());
+              ReadAction.runBlocking(() -> presentation.updateContent());
               if (presentation.hasReportedProblems().toBoolean()) {
                 globalToolsWithProblems.add(sameTools);
                 LOG.assertTrue(!hasProblems, toolName);

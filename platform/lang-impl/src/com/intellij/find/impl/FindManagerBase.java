@@ -274,7 +274,7 @@ public abstract class FindManagerBase extends FindManager {
       Set<Language> relevantLanguages;
       if (lang != null) {
         final Language finalLang = lang;
-        relevantLanguages = ReadAction.compute(() -> {
+        relevantLanguages = ReadAction.computeBlocking(() -> {
           Set<Language> result = new HashSet<>();
           FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(file);
           if (viewProvider != null) {
@@ -310,7 +310,7 @@ public abstract class FindManagerBase extends FindManager {
 
       try {
         SyntaxHighlighterOverEditorHighlighter highlighterAdapter =
-          ReadAction.compute(() -> new SyntaxHighlighterOverEditorHighlighter(highlighter, file, myProject));
+          ReadAction.computeBlocking(() -> new SyntaxHighlighterOverEditorHighlighter(highlighter, file, myProject));
         currentThreadData =
           new FindManagerBase.CommentsLiteralsSearchData(file, relevantLanguages, highlighterAdapter, tokensOfInterest, searcher, matcher, model.clone());
         currentThreadData.highlighter.restart(text);

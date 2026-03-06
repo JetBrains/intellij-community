@@ -314,7 +314,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
               @Override
               public List<File> asFileList() {
-                return ReadAction.compute(() -> PsiCopyPasteManager.asFileList(getPsiElements()));
+                return ReadAction.computeBlocking(() -> PsiCopyPasteManager.asFileList(getPsiElements()));
               }
             });
           }

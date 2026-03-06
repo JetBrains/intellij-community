@@ -54,7 +54,7 @@ public abstract class UsageViewManager {
 
   public static boolean isSelfUsage(@NotNull Usage usage, UsageTarget @NotNull [] searchForTargets) {
     if (!(usage instanceof PsiElementUsage elementUsage)) return false;
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       final PsiElement element = elementUsage.getElement();
       if (element == null) return false;
       PsiElement parent = element.getParent();

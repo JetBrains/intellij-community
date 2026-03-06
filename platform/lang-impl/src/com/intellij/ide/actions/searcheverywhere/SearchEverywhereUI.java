@@ -449,7 +449,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     if (mySearchField == null) return;
 
     List<SearchEverywhereContributor<?>> contributors = myHeader.getSelectedTab().getContributors();
-    Pair<@Nls String, @Nls String> advertisementTextAndTooltip = ReadAction.compute(() -> getLoadingTextAndTooltip(contributors));
+    Pair<@Nls String, @Nls String> advertisementTextAndTooltip = ReadAction.computeBlocking(() -> getLoadingTextAndTooltip(contributors));
     if (advertisementTextAndTooltip != null) {
       myHintHelper.setLoadingText(advertisementTextAndTooltip.first, advertisementTextAndTooltip.second);
       updateRightActions(contributors);
@@ -1673,7 +1673,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
         }
       }
 
-      ReadAction.run(() -> foundElements.stream()
+      ReadAction.runBlocking(() -> foundElements.stream()
         .map(o -> toPsi(o))
         .filter(Objects::nonNull)
         .forEach(element -> {

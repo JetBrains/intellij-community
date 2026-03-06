@@ -2,7 +2,7 @@
 package com.intellij.model.search.impl
 
 import com.intellij.model.search.SearchParameters
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.psi.impl.search.searchers
 import com.intellij.util.AbstractQuery
 import com.intellij.util.Processor
@@ -12,7 +12,7 @@ internal class SearchersQuery<R : Any>(
 ) : AbstractQuery<R>() {
 
   override fun processResults(consumer: Processor<in R>): Boolean {
-    return runReadAction {
+    return runReadActionBlocking {
       processInReadAction(consumer)
     }
   }

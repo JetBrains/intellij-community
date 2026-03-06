@@ -65,7 +65,7 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
     if (component == null) return null;
 
     if (configurable instanceof ConfigurableWrapper) {
-      ReadAction.run(() -> addEPChangesListener((ConfigurableWrapper)configurable));
+      ReadAction.runBlocking(() -> addEPChangesListener((ConfigurableWrapper)configurable));
     }
     return new Wrapper(configurable, component);
   }
@@ -113,7 +113,7 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
    * this method adds a scroll bars for created component.
    */
   public static JComponent createConfigurableComponent(Configurable configurable) {
-    return configurable == null ? null : ReadAction.compute(() -> {
+    return configurable == null ? null : ReadAction.computeBlocking(() -> {
       JComponent component = null;
       long time = System.currentTimeMillis();
       try {

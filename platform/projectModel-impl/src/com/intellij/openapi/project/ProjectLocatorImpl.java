@@ -42,7 +42,7 @@ final class ProjectLocatorImpl extends ProjectLocator {
       return openProjects[0];
     }
 
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       for (Project openProject : projectManager.getOpenProjects()) {
         if (isUnder(openProject, file)) {
           return openProject;

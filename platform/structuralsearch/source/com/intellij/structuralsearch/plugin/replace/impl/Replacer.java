@@ -328,7 +328,7 @@ public class Replacer {
       final LanguageFileType fileType = options.getMatchOptions().getFileType();
       final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
       if (profile != null) {
-        ReadAction.run(() -> profile.checkReplacementPattern(project, options));
+        ReadAction.runBlocking(() -> profile.checkReplacementPattern(project, options));
       }
     } catch (IncorrectOperationException ex) {
       throw new MalformedPatternException(SSRBundle.message("incorrect.pattern.message"));

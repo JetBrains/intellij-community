@@ -77,7 +77,7 @@ public abstract class AbstractExternalFilter {
         prev = matcher.end(1) + 1;
         ready.append(before);
         ready.append("\"");
-        ready.append(ReadAction.compute(() -> convertReference(root, href.toString())));
+        ready.append(ReadAction.computeBlocking(() -> convertReference(root, href.toString())));
         ready.append("\"");
       }
 

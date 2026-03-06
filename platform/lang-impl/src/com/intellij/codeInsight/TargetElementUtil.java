@@ -246,7 +246,8 @@ public class TargetElementUtil  {
   }
 
   public boolean acceptImplementationForReference(@Nullable PsiReference reference, @Nullable PsiElement element) {
-    TargetElementEvaluatorEx2 evaluator = element != null ? TargetElementUtilBase.getElementEvaluatorsEx2(ReadAction.compute(element::getLanguage)) : null;
+    var evaluator = element != null ?
+                    TargetElementUtilBase.getElementEvaluatorsEx2(ReadAction.computeBlocking(element::getLanguage)) : null;
     return evaluator == null || evaluator.acceptImplementationForReference(reference, element);
   }
 

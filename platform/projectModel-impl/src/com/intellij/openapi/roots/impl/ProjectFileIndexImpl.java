@@ -61,7 +61,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
 
   @Override
   public boolean iterateContent(@NotNull ContentIterator processor, @Nullable VirtualFileFilter filter) {
-    Pair<List<VirtualFile>, List<VirtualFile>> rootsPair = ReadAction.compute(() -> {
+    Pair<List<VirtualFile>, List<VirtualFile>> rootsPair = ReadAction.computeBlocking(() -> {
       Set<VirtualFile> allRecursiveRoots = new LinkedHashSet<>();
       List<VirtualFile> allNonRecursiveRoots = new ArrayList<>();
       List<VirtualFile> allRecursiveNonIndexableRoots = new ArrayList<>();

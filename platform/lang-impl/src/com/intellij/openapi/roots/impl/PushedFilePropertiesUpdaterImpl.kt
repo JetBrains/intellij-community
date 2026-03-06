@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
@@ -317,8 +318,8 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
       fileOrDir.children // outside read action to avoid freezes
     }
 
-    ReadAction.run<RuntimeException> {
-      if (!fileOrDir.isValid || fileOrDir !is VirtualFileWithId) return@run
+    runReadActionBlocking {
+      if (!fileOrDir.isValid || fileOrDir !is VirtualFileWithId) return@runReadActionBlocking
       doApplyPushersToFile(fileOrDir, pushers, moduleValues)
     }
   }
@@ -468,7 +469,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
 
     private fun generateScanTasks(project: Project,
                                   iteratorProducer: Function<in Module, out ContentIteratorEx>): List<Runnable> {
-      val modulesSequence = ReadAction.compute<Sequence<ModuleEntity>, RuntimeException> {
+      val modulesSequence = runReadActionBlocking {
         WorkspaceModel.getInstance(project).currentSnapshot.entities(
           ModuleEntity::class.java)
       }

@@ -8,7 +8,7 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.AbstractTreeNodeCache
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -108,7 +108,7 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
       }
 
       val breakpoints = mutableMapOf<Any, Any>()
-      ReadAction.run<Exception> {
+      runReadActionBlocking {
         val managerProxy = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
         val items = managerProxy.getAllBreakpointItems()
 

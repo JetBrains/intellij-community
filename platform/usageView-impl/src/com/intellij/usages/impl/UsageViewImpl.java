@@ -757,7 +757,7 @@ public class UsageViewImpl implements UsageViewEx {
 
       UsageContextPanel.Provider[] extensions = UsageContextPanel.Provider.EP_NAME.getExtensions(myProject);
       List<UsageContextPanel.Provider> myUsageContextPanelProviders =
-        ContainerUtil.filter(extensions, provider -> ReadAction.compute(() -> provider.isAvailableFor(this)));
+        ContainerUtil.filter(extensions, provider -> ReadAction.computeBlocking(() -> provider.isAvailableFor(this)));
       Map<@NlsContexts.TabTitle String, JComponent> components = new LinkedHashMap<>();
       for (UsageContextPanel.Provider provider : myUsageContextPanelProviders) {
         JComponent component;
@@ -1153,7 +1153,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   private void rulesChanged() {
     try (AccessToken ignore = SlowOperations.knownIssue("IJPL-164976")) {
-      ReadAction.run(() -> {
+      ReadAction.runBlocking(() -> {
         rulesChangedImpl();
       });
     }
@@ -1407,7 +1407,7 @@ public class UsageViewImpl implements UsageViewEx {
   @Override
   public void appendUsage(@NotNull Usage usage) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      addUpdateRequest(() -> ReadAction.run(() -> doAppendUsage(usage)));
+      addUpdateRequest(() -> ReadAction.runBlocking(() -> doAppendUsage(usage)));
     }
     else {
       doAppendUsage(usage);
@@ -1432,7 +1432,7 @@ public class UsageViewImpl implements UsageViewEx {
   @Override
   public @NotNull CompletableFuture<?> appendUsagesInBulk(@NotNull Collection<? extends Usage> usages) {
     CompletableFuture<Object> result = new CompletableFuture<>();
-    addUpdateRequest(() -> ReadAction.run(() -> {
+    addUpdateRequest(() -> ReadAction.runBlocking(() -> {
       try {
         for (Usage usage : usages) {
           doAppendUsage(usage);

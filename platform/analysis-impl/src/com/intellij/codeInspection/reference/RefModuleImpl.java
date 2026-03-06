@@ -21,7 +21,7 @@ class RefModuleImpl extends RefEntityImpl implements RefModule {
 
   @Override
   public void accept(@NotNull RefVisitor refVisitor) {
-    ReadAction.run(() -> refVisitor.visitModule(this));
+    ReadAction.runBlocking(() -> refVisitor.visitModule(this));
   }
 
   @Override

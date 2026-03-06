@@ -3,6 +3,7 @@ package com.intellij.util.indexing
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
@@ -13,7 +14,6 @@ import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl
 import com.intellij.openapi.startup.StartupActivity.RequiredForSmartMode
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.wm.ex.isIndexingActivitiesSuppressedSync
 import com.intellij.platform.ide.progress.ModalTaskOwner
@@ -66,9 +66,9 @@ internal class ProjectFileBasedIndexStartupActivity : RequiredForSmartMode {
 
     // Add a project to various lists in read action to make sure that
     // they are not added to lists during disposing of a project (in this case project may be stuck forever in those lists)
-    val registered = ApplicationManager.getApplication().runReadAction(ThrowableComputable {
+    val registered = runReadActionBlocking {
       if (project.isDisposed()) {
-        return@ThrowableComputable false
+        return@runReadActionBlocking false
       }
 
       // Done mostly for tests.
@@ -87,7 +87,7 @@ internal class ProjectFileBasedIndexStartupActivity : RequiredForSmartMode {
 
       openProjects.add(project)
       true
-    })
+    }
 
     if (!registered) {
       return

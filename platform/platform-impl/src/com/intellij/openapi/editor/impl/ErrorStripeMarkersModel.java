@@ -58,7 +58,7 @@ final class ErrorStripeMarkersModel {
       int severity = info != null ? info.getSeverity().myVal : -1;
       VirtualFile vFile = event.getEditor().getVirtualFile();
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        int totalMarkersInFile = ReadAction.compute(()-> countErrorStripeMarkers());
+        int totalMarkersInFile = ReadAction.computeBlocking(()-> countErrorStripeMarkers());
         FileType fileType = vFile != null && vFile.isValid() ? vFile.getFileType() : null;
         UIEventLogger.ErrorStripeNavigate.log(project, severity, totalMarkersInFile, fileType);
       });

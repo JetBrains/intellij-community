@@ -1,6 +1,6 @@
 package com.intellij.util.indexing.diagnostic.dump.paths.resolvers
 
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
@@ -10,10 +10,10 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
 
-object LibraryRootPortableFilePathResolver : PortableFilePathResolver {
+internal object LibraryRootPortableFilePathResolver : PortableFilePathResolver {
   override fun findFileByPath(project: Project, portableFilePath: PortableFilePath): VirtualFile? {
     if (portableFilePath is PortableFilePath.LibraryRoot) {
-      return runReadAction {
+      return runReadActionBlocking {
         when (portableFilePath.libraryType) {
           PortableFilePath.LibraryRoot.LibraryType.APPLICATION -> {
             findInLibraryTable(LibraryTablesRegistrar.getInstance().getGlobalLibraryTable(project), portableFilePath)
@@ -23,7 +23,7 @@ object LibraryRootPortableFilePathResolver : PortableFilePathResolver {
           }
           PortableFilePath.LibraryRoot.LibraryType.MODULE -> {
             val moduleName = portableFilePath.moduleName!!
-            val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return@runReadAction null
+            val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return@runReadActionBlocking null
             val rootModel = ModuleRootManager.getInstance(module).modifiableModel
             try {
               findInLibraryTable(rootModel.moduleLibraryTable, portableFilePath)

@@ -18,7 +18,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
@@ -195,7 +195,7 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
 
   override fun updateNotifications(file: VirtualFile) {
     coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      if (runReadAction { file.isValid }) {
+      if (runReadActionBlocking { file.isValid }) {
         val fileEditorManager = project.serviceAsync<FileEditorManager>()
         doUpdateNotifications(file, fileEditorManager)
       }

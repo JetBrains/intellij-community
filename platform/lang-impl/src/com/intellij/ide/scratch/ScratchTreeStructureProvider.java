@@ -147,7 +147,7 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
     Disposer.register(parentDisposable, rootDisposable);
 
     NonUrgentExecutor.getInstance().execute(() -> {
-      ReadAction.run(() -> {
+      ReadAction.runBlocking(() -> {
         rootType.registerTreeUpdater(project, parentDisposable, onUpdate);
       });
     });

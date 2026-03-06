@@ -61,7 +61,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     myManager = PsiManager.getInstance(project);
     myAdditionalIndexableFileSet = new AdditionalIndexableFileSet(project);
 
-    myDefaultResolveScopesCache = ConcurrentFactoryMap.create(key -> ReadAction.compute(() -> createScopeByFile(key)),
+    myDefaultResolveScopesCache = ConcurrentFactoryMap.create(key -> ReadAction.computeBlocking(() -> createScopeByFile(key)),
                                                               () -> CollectionFactory.createConcurrentWeakKeySoftValueMap());
 
     myProject.getMessageBus().connect(this).subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {

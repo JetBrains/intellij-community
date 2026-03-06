@@ -91,7 +91,7 @@ public abstract class InspectionRVContentProvider {
     public @Nullable Module getModule(Project project) {
       String name = getModuleName();
       if (name == null) return null;
-      return ReadAction.compute(() -> ModuleManager.getInstance(project).findModuleByName(name));
+      return ReadAction.computeBlocking(() -> ModuleManager.getInstance(project).findModuleByName(name));
     }
 
     boolean supportStructure() {

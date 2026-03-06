@@ -113,7 +113,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     myMergedUsageInfos = usageInfo;
 
     ComputedData data =
-    ReadAction.compute(() -> {
+    ReadAction.computeBlocking(() -> {
       VirtualFile virtualFile = usageInfo.getVirtualFile();
       PsiElement element = getElement();
       PsiFile psiFile = usageInfo.getFile();

@@ -181,7 +181,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   public static @Nullable PsiDirectory restoreDirectoryFromVirtual(@NotNull VirtualFile virtualFile, @NotNull Project project) {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       if (project.isDisposed()) return null;
       VirtualFile child = restoreVFile(virtualFile);
       if (child == null || !child.isValid()) return null;
@@ -216,7 +216,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
       SelfElementInfo otherInfo = (SelfElementInfo)other;
       if (!getVirtualFile().equals(other.getVirtualFile()) || myIdentikit != otherInfo.myIdentikit) return false;
 
-      return ReadAction.compute(() -> {
+      return ReadAction.computeBlocking(() -> {
         Segment range1 = getPsiRange(manager);
         Segment range2 = otherInfo.getPsiRange(manager);
         return range1 != null && range2 != null

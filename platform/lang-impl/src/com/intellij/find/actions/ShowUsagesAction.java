@@ -810,7 +810,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
           return false;
         }
 
-        UsageNode nodes = ReadAction.compute(() -> usageView.doAppendUsage(usage));
+        UsageNode nodes = ReadAction.computeBlocking(() -> usageView.doAppendUsage(usage));
         usages.add(usage);
         firstUsageAddedTS.compareAndSet(0, System.nanoTime()); // Successes only once - at first assignment
 
@@ -947,7 +947,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
           }
 
           for (UsageInfo info : adapter.getMergedInfos()) {
-            Segment range = doIfNotNull(info.getPsiFileRange(), it -> ReadAction.compute(it::getRange));
+            Segment range = doIfNotNull(info.getPsiFileRange(), it -> ReadAction.computeBlocking(it::getRange));
             if (range != null && range.containsInclusive(offset)) {
               return true;
             }

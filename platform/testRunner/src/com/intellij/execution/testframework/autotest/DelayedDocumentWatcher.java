@@ -185,7 +185,7 @@ public final class DelayedDocumentWatcher implements AutoTestWatcher {
   private void asyncCheckErrors(@NotNull Collection<? extends VirtualFile> files,
                                 @NotNull Consumer<? super Boolean> errorsFoundConsumer) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      final boolean errorsFound = ReadAction.compute(() -> {
+      final boolean errorsFound = ReadAction.computeBlocking(() -> {
         for (VirtualFile file : files) {
           if (PsiErrorElementUtil.hasErrors(myProject, file)) {
             return true;

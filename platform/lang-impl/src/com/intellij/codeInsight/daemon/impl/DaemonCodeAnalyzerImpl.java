@@ -497,10 +497,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           List<TextEditorHighlightingPass> mainPasses = TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject)
             .instantiateMainPasses(psiFile, document, HighlightInfoProcessor.getEmpty());
 
-          JobLauncher.getInstance().invokeConcurrentlyUnderProgress(mainPasses, progress, pass -> ReadAction.compute(() -> {
-            pass.doCollectInformation(progress);
-            return true;
-          }));
+          JobLauncher.getInstance()
+            .invokeConcurrentlyUnderProgress(mainPasses, progress, pass -> ReadAction.computeBlocking(() -> {
+              pass.doCollectInformation(progress);
+              return true;
+            }));
+
           return mainPasses;
         });
 
@@ -946,7 +948,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     ThreadingAssertions.assertNoOwnReadAccess();
     List<HighlightInfo> relevantInfos = new ArrayList<>();
     Document document = editor.getDocument();
-    ReadAction.run(() -> {
+    ReadAction.runBlocking(() -> {
       PsiUtilBase.assertEditorAndProjectConsistent(project, editor);
       CaretModel caretModel = editor.getCaretModel();
       int offset = caretModel.getOffset();
@@ -1357,7 +1359,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
     try {
       ProgressManager.getInstance().executeProcessUnderProgress(Context.current().wrap(() -> {
-        HighlightingPass[] passes = ReadAction.compute(() -> {
+        HighlightingPass[] passes = ReadAction.computeBlocking(() -> {
           if (progress.isCanceled() ||
               myProject.isDisposed() ||
               getPsiDocumentManager().hasEventSystemEnabledUncommittedDocuments() ||

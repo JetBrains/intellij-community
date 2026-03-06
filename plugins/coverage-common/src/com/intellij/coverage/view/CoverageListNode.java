@@ -72,11 +72,11 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
                           CoverageSuitesBundle bundle) {
     super(project, element);
 
-    myName = ReadAction.compute(() -> element.getName());
+    myName = ReadAction.computeBlocking(() -> element.getName());
     myBundle = bundle;
     myStateBean = CoverageViewManager.getInstance(project).getStateBean();
     myFileStatusManager = FileStatusManager.getInstance(myProject);
-    myFile = ReadAction.compute(() -> {
+    myFile = ReadAction.computeBlocking(() -> {
       VirtualFile file = element.isValid() ? PsiUtilCore.getVirtualFile(element) : null;
       if (file != null) {
         VirtualFile canonical = file.getCanonicalFile();
@@ -162,7 +162,7 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
 
   @Override
   public int getWeight() {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       //todo weighted
       final Object value = getValue();
       if (value instanceof PsiElement element && element.getContainingFile() != null) return 40;

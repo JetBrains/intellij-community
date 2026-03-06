@@ -62,7 +62,7 @@ public class ModuleUtilCore {
   }
 
   public static @NotNull String getModuleNameInReadAction(@NotNull Module module) {
-    return ReadAction.compute(module::getName);
+    return ReadAction.computeBlocking(module::getName);
   }
 
   public static boolean isModuleDisposed(@NotNull PsiElement element) {
@@ -100,19 +100,18 @@ public class ModuleUtilCore {
     if (project.isDefault()) {
       return null;
     }
-    return ReadAction.compute(() -> ProjectFileIndex.getInstance(project).getModuleForFile(file));
+    return ReadAction.computeBlocking(() -> ProjectFileIndex.getInstance(project).getModuleForFile(file));
   }
 
   /**
-   * @return modules which include the file,
-   *         empty list for project files outside module content roots or library files
+   * @return modules that include the file, empty list for project files outside module content roots or library files
    */
   @ApiStatus.Internal
   public static @NotNull @Unmodifiable Set<Module> findModulesForFile(@NotNull VirtualFile file, @NotNull Project project) {
     if (project.isDefault()) {
       return Collections.emptySet();
     }
-    return ReadAction.compute(() -> ProjectFileIndex.getInstance(project).getModulesForFile(file, true));
+    return ReadAction.computeBlocking(() -> ProjectFileIndex.getInstance(project).getModulesForFile(file, true));
   }
 
   /**

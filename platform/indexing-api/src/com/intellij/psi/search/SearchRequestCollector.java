@@ -58,7 +58,7 @@ public class SearchRequestCollector {
         searchScope instanceof GlobalSearchScope &&
         ((searchContext & UsageSearchContext.IN_CODE) != 0 || searchContext == UsageSearchContext.ANY)) {
 
-      SearchScope restrictedCodeUsageSearchScope = ReadAction.compute(() -> {
+      SearchScope restrictedCodeUsageSearchScope = ReadAction.computeBlocking(() -> {
         return ScopeOptimizer.calculateOverallRestrictedUseScope(PsiSearchHelper.CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME.getExtensionList(),
                                                                  searchTarget);
       });
@@ -98,7 +98,7 @@ public class SearchRequestCollector {
   }
 
   private static String getContainerName(final @NotNull PsiElement target) {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       PsiElement container = getContainer(target);
       return container instanceof PsiNamedElement ? ((PsiNamedElement)container).getName() : null;
     });

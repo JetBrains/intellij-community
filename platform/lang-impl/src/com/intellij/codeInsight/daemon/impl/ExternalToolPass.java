@@ -173,7 +173,7 @@ final class ExternalToolPass extends ProgressableTextEditorHighlightingPass impl
             // All updates are running in the non-cancellable section, so here we are repeating the inner logic of MergingUpdateQueue here
             Cancellation.executeInNonCancelableSection(() -> {
               // Highlighting requires read access
-              ReadAction.run(() -> {
+              ReadAction.runBlocking(() -> {
                 doFinish();
               });
             });
@@ -196,7 +196,7 @@ final class ExternalToolPass extends ProgressableTextEditorHighlightingPass impl
           BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
             // run annotators outside the read action because they could start OSProcessHandler
             runChangeAware(myDocument, () -> doAnnotate());
-            ReadAction.run(() -> {
+            ReadAction.runBlocking(() -> {
               ProgressManager.checkCanceled();
               if (!documentChanged(modificationStampBefore)) {
                 doApply();

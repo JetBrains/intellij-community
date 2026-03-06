@@ -153,7 +153,7 @@ final class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
             if (element != null) {
               SmartPsiElementPointer pointer = element.getPointer();
               if (pointer != null) {
-                VirtualFile vFile = ReadAction.compute(() -> pointer.getVirtualFile());
+                VirtualFile vFile = ReadAction.computeBlocking(() -> pointer.getVirtualFile());
                 if (filesToCheck.contains(vFile)) {
                   unPresentFiles.remove(vFile);
                   ((SuppressableInspectionTreeNode)node).dropCaches();

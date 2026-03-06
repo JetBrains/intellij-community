@@ -172,12 +172,12 @@ public abstract class XSourcePositionImpl implements XSourcePosition {
 
 
   /**
-   * If the value is computed, returns it, otherwise computes the value inside a read action and returns it.
+   * If the value is computed, returns it, otherwise computes the value inside a Read Action and returns it.
    */
   private static @NotNull <T> T getOrComputeLazyValue(@NotNull NotNullLazyValue<T> lazyValue) {
     if (lazyValue.isComputed()) {
       return lazyValue.getValue();
     }
-    return ReadAction.compute(() -> lazyValue.getValue());
+    return ReadAction.computeBlocking(() -> lazyValue.getValue());
   }
 }

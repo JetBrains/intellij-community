@@ -65,7 +65,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
 
   @Override
   protected ModifiableModuleModel doGetModifiableModuleModel() {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       ModuleManager moduleManager = ModuleManager.getInstance(myProject);
       ModifiableModuleModel modifiableModel = ((ModuleManagerBridgeImpl)moduleManager).getModifiableModel(getActualStorageBuilder());
       Module[] modules = modifiableModel.getModules();
@@ -88,7 +88,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
       }
     };
 
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       ModuleRootManagerEx rootManager = ModuleRootManagerEx.getInstanceEx(module);
       return ((ModuleRootComponentBridge)rootManager).getModifiableModel(getActualStorageBuilder(), rootConfigurationAccessor);
     });
