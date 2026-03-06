@@ -7,10 +7,9 @@ import org.jetbrains.uast.test.kotlin.AbstractKotlinUastGenerationTest
 
 class FirKotlinUastGenerationTest: AbstractKotlinUastGenerationTest() {
 
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
-    fun `test method call generation with receiver`() {
+   override fun `test method call generation with receiver`() {
     `do test method call generation with receiver`("1", "2")
   }
 
