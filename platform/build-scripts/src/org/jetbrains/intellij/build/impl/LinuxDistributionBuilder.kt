@@ -175,6 +175,7 @@ class LinuxDistributionBuilder(
   override fun writeVmOptions(distBinDir: Path): Path = writeLinuxVmOptions(distBinDir, context)
 
   private fun generateReadme(unixDistPath: Path) {
+    if (context.options.isLanguageServer) return
     val fullName = context.applicationInfo.fullProductName
     val sourceFile = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/Install-Linux-tar.txt")
     val targetFile = unixDistPath.resolve("Install-Linux-tar.txt")
