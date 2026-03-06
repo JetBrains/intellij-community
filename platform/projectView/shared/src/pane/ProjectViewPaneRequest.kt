@@ -14,7 +14,6 @@ sealed class ProjectViewPaneRequest
 @ApiStatus.Internal
 @Serializable
 data class ProjectViewPaneSelectionChanged(
-  val providerId: ProjectViewPaneProviderId,
   val paneId: ProjectViewPaneId,
 ) : ProjectViewPaneRequest()
 

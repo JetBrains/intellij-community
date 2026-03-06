@@ -5,12 +5,19 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
-import com.intellij.platform.projectView.pane.*
-import kotlinx.coroutines.*
+import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
+import com.intellij.platform.projectView.pane.ProjectViewPaneId
+import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
@@ -25,16 +32,14 @@ internal class BackendProjectViewPaneService(
     suspend fun getInstanceSuspend(project: Project): BackendProjectViewPaneService = project.serviceAsync()
   }
   
-  private val panes = AtomicReference<Map<ProjectViewPaneProviderId, Map<ProjectViewPaneId, BackendProjectViewPane>>?>(null)
+  private val panes = AtomicReference<Map<ProjectViewPaneId, BackendProjectViewPane>?>(null)
   
   private val panesDeferred = coroutineScope.async(CoroutineName("BackendProjectViewPaneService: pane computation")) {
-    val result = hashMapOf<ProjectViewPaneProviderId, Map<ProjectViewPaneId, BackendProjectViewPane>>()
+    val result = hashMapOf<ProjectViewPaneId, BackendProjectViewPane>()
     for (provider in BackendProjectViewPaneProviderEP.extensionList) {
-      val panes = hashMapOf<ProjectViewPaneId, BackendProjectViewPane>()
       for (pane in provider.createPanes(project)) {
-        panes[pane.id] = pane
+        result[pane.id] = pane
       }
-      result[provider.id] = panes
     }
     panes.store(result)
     result
@@ -44,7 +49,7 @@ internal class BackendProjectViewPaneService(
     coroutineScope.launch(CoroutineName("BackendProjectViewPaneService: pane management")) {
       val panes = panesDeferred.await()
       supervisorScope {
-        for (pane in panes.values.flatMap { it.values }) {
+        for (pane in panes.values) {
           launch(CoroutineName("BackendProjectViewPaneService: pane ${pane.id}")) {
             pane.manage()
           }
@@ -53,19 +58,19 @@ internal class BackendProjectViewPaneService(
     }
   }
 
-  suspend fun getPaneRequestChannel(providerId: ProjectViewPaneProviderId, paneId: ProjectViewPaneId): SendChannel<ProjectViewPaneRequest> {
-    return panesDeferred.await()[providerId]?.get(paneId)?.getRequestChannel() ?: Channel<ProjectViewPaneRequest>(capacity = 0).also { it.close() }
+  suspend fun getPaneRequestChannel(paneId: ProjectViewPaneId): SendChannel<ProjectViewPaneRequest> {
+    return panesDeferred.await()[paneId]?.getRequestChannel() ?: Channel<ProjectViewPaneRequest>(capacity = 0).also { it.close() }
   }
 
-  suspend fun getPaneDescriptors(providerId: ProjectViewPaneProviderId): List<ProjectViewPaneDescriptor> {
-    return panesDeferred.await()[providerId]?.values?.toList()?.map { it.descriptor } ?: emptyList()
+  suspend fun getPaneDescriptors(): List<ProjectViewPaneDescriptor> {
+    return panesDeferred.await().values.toList().map { it.descriptor }
   }
 
-  suspend fun getPaneStateFlow(providerId: ProjectViewPaneProviderId, paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEvent> {
-    return panesDeferred.await()[providerId]?.get(paneId)?.getPaneStateFlow() ?: emptyFlow()
+  suspend fun getPaneStateFlow(paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEvent> {
+    return panesDeferred.await()[paneId]?.getPaneStateFlow() ?: emptyFlow()
   }
   
-  fun getPane(providerId: ProjectViewPaneProviderId, paneId: ProjectViewPaneId): BackendProjectViewPane? {
-    return panes.load()?.get(providerId)?.get(paneId)
+  fun getPane(paneId: ProjectViewPaneId): BackendProjectViewPane? {
+    return panes.load()?.get(paneId)
   }
 }

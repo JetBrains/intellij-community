@@ -32,7 +32,6 @@ import com.intellij.platform.projectView.actions.toNestingRuleState
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPane
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneProvider
 import com.intellij.platform.projectView.backend.pane.projectViewPaneStateBuilder
-import com.intellij.platform.projectView.impl.legacy.LEGACY_PROVIDER_ID
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
 import com.intellij.platform.projectView.pane.ProjectViewActionStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewChildRemoved
@@ -41,17 +40,16 @@ import com.intellij.platform.projectView.pane.ProjectViewChildrenRemoved
 import com.intellij.platform.projectView.pane.ProjectViewNodeAdded
 import com.intellij.platform.projectView.pane.ProjectViewNodeModel
 import com.intellij.platform.projectView.pane.ProjectViewNodeUpdated
-import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
-import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenRequest
-import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
-import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
-import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
-import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeFileNestingRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeOptionValueRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeSortKeyRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
+import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneSelectionChanged
+import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.SuperRoot
 import com.intellij.platform.projectView.pane.projectViewPaneId
@@ -88,9 +86,6 @@ import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 
 internal class LegacyBackendProjectViewPaneProvider : BackendProjectViewPaneProvider {
-  override val id: ProjectViewPaneProviderId
-    get() = LEGACY_PROVIDER_ID
-
   override fun createPanes(project: Project): List<BackendProjectViewPane> {
     return project.service<LegacyBackendProjectViewPaneService>().createPanes()
   }
@@ -125,7 +120,6 @@ private class LegacyBackendProjectViewPane(
   private val subId: String?,
 ) : BackendProjectViewPane {
   override val descriptor: ProjectViewPaneDescriptor = ProjectViewPaneDescriptor(
-    providerId = LEGACY_PROVIDER_ID,
     id = projectViewPaneId(if (subId == null) legacyPaneManager.id else "${legacyPaneManager.id}:$subId"),
     presentableName = if (subId == null) legacyPaneManager.legacyPane.title else legacyPaneManager.legacyPane.getPresentableSubIdName(subId),
     order = legacyPaneManager.legacyPane.weight,
@@ -253,7 +247,7 @@ private class AbstractProjectViewPaneStateManager(
                 is ProjectViewPaneChangeOptionValueRequest -> changeOptionValue(request.option, request.newValue)
                 is ProjectViewPaneChangeSortKeyRequest -> changeSortKey(request.sortKey)
                 is ProjectViewPaneChangeFileNestingRequest -> changeFileNesting(request.isFileNestingOn, request.activeRules)
-                is ProjectViewPaneSelectionChanged -> changeSelectedPaneIfOneOfOurs(request.providerId, request.paneId)
+                is ProjectViewPaneSelectionChanged -> changeSelectedPaneIfOneOfOurs(request.paneId)
               }
             }
           }
@@ -270,10 +264,9 @@ private class AbstractProjectViewPaneStateManager(
   }
 
   private fun changeSelectedPaneIfOneOfOurs(
-    providerId: ProjectViewPaneProviderId,
     paneId: ProjectViewPaneId,
   ) {
-    if (providerId == LEGACY_PROVIDER_ID && paneId in activePanes.value) {
+    if (paneId in activePanes.value) {
       val impl = ProjectViewImpl.getInstance(project) as ProjectViewImpl
       impl.changeView(id)
       updateActionStates()

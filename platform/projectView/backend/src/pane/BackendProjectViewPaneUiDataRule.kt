@@ -6,14 +6,12 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
 import com.intellij.openapi.actionSystem.UiDataRule
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
-import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
 
 internal class BackendProjectViewPaneUiDataRule : UiDataRule {
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
     val project = snapshot[CommonDataKeys.PROJECT] ?: return
-    val providerId = snapshot[ProjectViewPaneProviderId.DATA_KEY] ?: return
     val paneId = snapshot[ProjectViewPaneId.DATA_KEY] ?: return
-    val pane = BackendProjectViewPaneService.getInstance(project).getPane(providerId, paneId) ?: return
+    val pane = BackendProjectViewPaneService.getInstance(project).getPane(paneId) ?: return
     pane.uiDataSnapshot(sink, snapshot)
   }
 }

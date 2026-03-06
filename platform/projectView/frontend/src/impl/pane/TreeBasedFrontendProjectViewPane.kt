@@ -40,7 +40,6 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneChangeSortKeyReques
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
-import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneSelectionChanged
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
@@ -107,7 +106,7 @@ internal abstract class TreeBasedFrontendProjectViewPane(
     set(value) {
       field = value
       if (isCurrent) {
-        sendRequest(ProjectViewPaneSelectionChanged(providerId, id))
+        sendRequest(ProjectViewPaneSelectionChanged(id))
       }
     }
 
@@ -216,7 +215,6 @@ internal abstract class TreeBasedFrontendProjectViewPane(
 
   override fun uiDataSnapshot(sink: DataSink) {
     sink[ProjectViewPaneId.DATA_KEY] = id
-    sink[ProjectViewPaneProviderId.DATA_KEY] = providerId
     sink[PROJECT_VIEW_SELECTED_NODE_IDS_KEY] = tree.selectionPaths?.mapNotNull { path ->
       (path?.lastPathComponent as? Node)?.projectViewNode?.id
     }

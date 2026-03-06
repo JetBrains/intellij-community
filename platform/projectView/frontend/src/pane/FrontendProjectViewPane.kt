@@ -3,12 +3,11 @@ package com.intellij.platform.projectView.frontend.pane
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
-import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
-import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.channels.ReceiveChannel
 import org.jdom.Element
@@ -20,14 +19,11 @@ internal val FrontendProjectViewPaneProviderEP = ExtensionPointName.create<Front
 
 @ApiStatus.Internal
 interface FrontendProjectViewPaneProvider {
-  val id: ProjectViewPaneProviderId
   fun createPane(project: Project, descriptor: ProjectViewPaneDescriptor): FrontendProjectViewPane
 }
 
 @ApiStatus.Internal
 interface FrontendProjectViewPane {
-  val providerId: ProjectViewPaneProviderId
-
   val id: ProjectViewPaneId
 
   val displayName: @NonNls String

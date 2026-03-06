@@ -24,11 +24,8 @@ import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.frontend.actions.ProjectViewActionSupportImpl
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneProviderEP
-import com.intellij.platform.projectView.impl.legacy.LEGACY_PROVIDER_ID
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
-import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
 import com.intellij.platform.projectView.pane.projectViewPaneId
-import com.intellij.platform.projectView.pane.projectViewPaneProviderId
 import com.intellij.platform.projectView.rpc.ProjectViewRpc
 import com.intellij.platform.projectView.window.ProjectViewToolWindowService
 import com.intellij.ui.content.Content
@@ -62,7 +59,7 @@ internal class ProjectViewToolWindowServiceImpl(
 ) : ProjectViewToolWindowService, PersistentStateComponent<Element> {
   private val menuActionGroup: DefaultActionGroup by lazy { DefaultActionGroup() }
   private val stateInitJob = CompletableDeferred<Unit>()
-  private lateinit var defaultSelection: SelectedPaneState
+  private lateinit var defaultSelection: ProjectViewPaneId
   private val paneSelectJob = CompletableDeferred<Unit>()
   private val persistentState = ProjectViewToolWindowServiceState()
   private val currentPaneFlow = MutableStateFlow<FrontendProjectViewPane?>(null)
@@ -100,19 +97,17 @@ internal class ProjectViewToolWindowServiceImpl(
       }
       val rpc = ProjectViewRpc.getInstance()
       for (provider in FrontendProjectViewPaneProviderEP.extensionList) {
-        val paneDescriptors = rpc.getPaneDescriptors(project.projectId(), provider.id)
-        defaultSelection = paneDescriptors
-          .firstOrNull { it.isDefault }
-          ?.let { SelectedPaneState(it.providerId, it.id) } ?: defaultSelectedPaneState()
+        val paneDescriptors = rpc.getPaneDescriptors(project.projectId())
+        defaultSelection = paneDescriptors.firstOrNull { it.isDefault }?.id ?: defaultSelectedPaneId()
         for (descriptor in paneDescriptors) {
-          launch(CoroutineName("Manage PV pane ${descriptor.id} from the provider ${provider.id}")) {
+          launch(CoroutineName("Manage PV pane ${descriptor.id} from the provider ${provider}")) {
             try {
               LOG.debug { "Initializing pane ${descriptor.id}" }
               val pane = withContext(Dispatchers.UI) {
                 provider.createPane(project, descriptor)
               }
               LOG.debug { "Created pane ${descriptor.id}" }
-              managePane(toolWindow, provider.id, pane)
+              managePane(toolWindow, pane)
             }
             catch (e: Throwable) {
               rethrowControlFlowException(e)
@@ -132,7 +127,7 @@ internal class ProjectViewToolWindowServiceImpl(
     oldPane?.isCurrent = false
     newPane?.isCurrent = true
     if (newPane != null) {
-      persistentState.putSelectedPaneState(SelectedPaneState(newPane.providerId, newPane.id))
+      persistentState.putSelectedPaneState(newPane.id)
     }
     updateMenuActions()
   }
@@ -145,16 +140,16 @@ internal class ProjectViewToolWindowServiceImpl(
     }
   }
 
-  suspend fun managePane(toolWindow: ToolWindow, providerId: ProjectViewPaneProviderId, pane: FrontendProjectViewPane) {
+  suspend fun managePane(toolWindow: ToolWindow, pane: FrontendProjectViewPane) {
     coroutineScope {
       withTimeoutOrNull(15.seconds) { // in case something went wrong with loading the state
         stateInitJob.await()
       }
       LOG.debug { "The saved state has been loaded for ${pane.id}" }
       launch(Dispatchers.UI + CoroutineName("Manage TW content for PV pane ${pane.id}")) {
-        pane.component.launchOnShow("Pane $providerId:${pane.id} service state saving/restoring") {
+        pane.component.launchOnShow("Pane ${pane.id} service state saving/restoring") {
           try {
-            val paneState = persistentState.getPaneState(providerId, pane.id)
+            val paneState = persistentState.getPaneState(pane.id)
             if (paneState != null) {
               pane.restoreStateFrom(paneState)
             }
@@ -163,15 +158,14 @@ internal class ProjectViewToolWindowServiceImpl(
           }
           finally {
             val paneElement = Element("pane")
-            paneElement.setAttribute("provider", providerId.idString)
             paneElement.setAttribute("pane", pane.id.idString)
             pane.saveStateTo(paneElement)
-            persistentState.putPaneState(providerId, pane.id, paneElement)
+            persistentState.putPaneState(pane.id, paneElement)
             LOG.debug { "Saved the last state for ${pane.id}" }
           }
         }
-        val selectedPaneState = persistentState.getSelectedPaneState() ?: defaultSelection
-        val mustSelectThisPane = selectedPaneState.providerId == providerId && selectedPaneState.paneId == pane.id
+        val selectedPaneId = persistentState.getSelectedPaneState() ?: defaultSelection
+        val mustSelectThisPane = selectedPaneId == pane.id
         if (!mustSelectThisPane) {
           withTimeoutOrNull(5.seconds) { // at this point the state is already received, and panes are added very quickly
             paneSelectJob.await()
@@ -191,12 +185,12 @@ internal class ProjectViewToolWindowServiceImpl(
       }
       LOG.debug { "Obtaining the RCP service to manage the pane ${pane.id}" }
       val rpc = ProjectViewRpc.getInstance()
-      launch(CoroutineName("Pane $providerId:${pane.id} state updates")) {
+      launch(CoroutineName("Pane ${pane.id} state updates")) {
         currentPaneFlow.collectLatest { currentPane ->
           if (currentPane == pane) {
             LOG.debug { "The pane ${pane.id} is selected, starting to collect its updates"}
             try {
-              rpc.getPaneStateFlow(toolWindow.project.projectId(), providerId, pane.id).collect { eventDTO ->
+              rpc.getPaneStateFlow(toolWindow.project.projectId(), pane.id).collect { eventDTO ->
                 withContext(Dispatchers.UI) {
                   val event = eventDTO.toEvent()
                   LOG.trace { "Update pane state for ${pane.id}: $event" }
@@ -210,9 +204,9 @@ internal class ProjectViewToolWindowServiceImpl(
           }
         }
       }
-      launch(CoroutineName("Pane $providerId:${pane.id} requests to the backend")) {
+      launch(CoroutineName("Pane ${pane.id} requests to the backend")) {
         LOG.debug { "Sending pane requests for ${pane.id}" }
-        val rpcChannel = rpc.getPaneRequestChannel(project.projectId(), providerId, pane.id)
+        val rpcChannel = rpc.getPaneRequestChannel(project.projectId(), pane.id)
         for (request in pane.requestChannel) {
           LOG.trace { "Sent request for pane ${pane.id}: $request" }
           rpcChannel.send(request)
@@ -278,23 +272,23 @@ internal class ProjectViewToolWindowServiceImpl(
 }
 
 private class ProjectViewToolWindowServiceState {
-  private val selectedPaneState = AtomicReference<SelectedPaneState?>(null)
-  private val paneState = ConcurrentHashMap<ProjectViewPaneProviderId, ConcurrentHashMap<ProjectViewPaneId, Element>>()
+  private val selectedPaneState = AtomicReference<ProjectViewPaneId?>(null)
+  private val paneState = ConcurrentHashMap<ProjectViewPaneId, Element>()
 
-  fun getSelectedPaneState(): SelectedPaneState? {
+  fun getSelectedPaneState(): ProjectViewPaneId? {
     return selectedPaneState.load()
   }
 
-  fun putSelectedPaneState(state: SelectedPaneState?) {
+  fun putSelectedPaneState(state: ProjectViewPaneId?) {
     selectedPaneState.store(state)
   }
 
-  fun getPaneState(providerId: ProjectViewPaneProviderId, paneId: ProjectViewPaneId): Element? {
-    return paneState[providerId]?.get(paneId)
+  fun getPaneState(paneId: ProjectViewPaneId): Element? {
+    return paneState[paneId]
   }
 
-  fun putPaneState(providerId: ProjectViewPaneProviderId, paneId: ProjectViewPaneId, state: Element) {
-    paneState.computeIfAbsent(providerId) { ConcurrentHashMap() }[paneId] = state
+  fun putPaneState(paneId: ProjectViewPaneId, state: Element) {
+    paneState[paneId] = state
   }
 
   fun writeStateTo(element: Element) {
@@ -305,17 +299,14 @@ private class ProjectViewToolWindowServiceState {
   private fun writeSelectedPane(element: Element) {
     val selectedPane = selectedPaneState.load()
     if (selectedPane != null) {
-      element.setAttribute("selectedProviderId", selectedPane.providerId.idString)
-      element.setAttribute("selectedPaneId", selectedPane.paneId.idString)
+      element.setAttribute("selectedPaneId", selectedPane.idString)
     }
   }
 
   private fun writePanes(element: Element) {
     val panesElement = Element("panes")
-    for (providerState in paneState.values) {
-      for (paneState in providerState.values) {
-        panesElement.addContent(paneState.clone())
-      }
+    for (paneState in paneState.values) {
+      panesElement.addContent(paneState.clone())
     }
     element.addContent(panesElement)
   }
@@ -326,35 +317,24 @@ private class ProjectViewToolWindowServiceState {
   }
 
   private fun readSelectedPane(element: Element) {
-    val selectedProviderId = element.getAttributeValue("selectedProviderId")?.let { projectViewPaneProviderId(it) }
     val selectedPaneId = element.getAttributeValue("selectedPaneId")?.let { projectViewPaneId(it) }
-    if (selectedProviderId != null && selectedPaneId != null) {
-      selectedPaneState.store(SelectedPaneState(selectedProviderId, selectedPaneId))
+    if (selectedPaneId != null) {
+      selectedPaneState.store(selectedPaneId)
     }
   }
 
   private fun readPanes(element: Element) {
     val panesElement = element.getChild("panes")
     for (paneElement in panesElement?.getChildren("pane") ?: emptyList()) {
-      val providerIdString = paneElement.getAttribute("provider")?.value ?: continue
       val paneIdString = paneElement.getAttribute("pane")?.value ?: continue
-      val providerId = projectViewPaneProviderId(providerIdString)
       val paneId = projectViewPaneId(paneIdString)
-      paneState.computeIfAbsent(providerId) { ConcurrentHashMap() }[paneId] = paneElement
+      paneState[paneId] = paneElement
     }
   }
 }
 
-private data class SelectedPaneState(
-  val providerId: ProjectViewPaneProviderId,
-  val paneId: ProjectViewPaneId,
-)
-
-private fun defaultSelectedPaneState(): SelectedPaneState =
-  SelectedPaneState(
-    LEGACY_PROVIDER_ID,
-    projectViewPaneId(ProjectViewPane.ID)
-  )
+private fun defaultSelectedPaneId(): ProjectViewPaneId =
+  projectViewPaneId(ProjectViewPane.ID)
 
 private val PANE_KEY = Key.create<FrontendProjectViewPane>("FrontendProjectViewPane")
 private val LOG = logger<ProjectViewToolWindowServiceImpl>()

@@ -7,7 +7,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
-import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import kotlinx.coroutines.channels.SendChannel
@@ -18,7 +17,6 @@ internal val BackendProjectViewPaneProviderEP = ExtensionPointName.create<Backen
 
 @ApiStatus.Internal
 interface BackendProjectViewPaneProvider {
-  val id: ProjectViewPaneProviderId
   fun createPanes(project: Project): List<BackendProjectViewPane>
 }
 
