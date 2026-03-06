@@ -37,6 +37,7 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GraphicsDevice;
 import java.awt.Image;
 import java.awt.Insets;
 import java.awt.Point;
@@ -386,8 +387,10 @@ public final class PluginImagesComponent extends JPanel {
       @Override
       public void beforeShown(@NotNull LightweightWindowEvent event) {
         Window window = SwingUtilities.getWindowAncestor(event.asPopup().getContent());
-        window.setBackground(Gray.TRANSPARENT);
-        window.setOpacity(0.95f);
+        if (window.getGraphicsConfiguration().getDevice().isWindowTranslucencySupported(GraphicsDevice.WindowTranslucency.TRANSLUCENT)) {
+          window.setBackground(Gray.TRANSPARENT);
+          window.setOpacity(0.95f);
+        }
       }
 
       @Override
