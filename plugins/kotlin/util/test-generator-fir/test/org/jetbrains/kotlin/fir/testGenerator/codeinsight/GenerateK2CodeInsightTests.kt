@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.idea.k2.slicer.AbstractFirSlicerMultiplatformTest
 import org.jetbrains.kotlin.idea.k2.slicer.AbstractFirSlicerNullnessGroupingTest
 import org.jetbrains.kotlin.idea.k2.slicer.AbstractFirSlicerTreeTest
 import org.jetbrains.kotlin.idea.k2.structureView.AbstractKotlinGoToSuperDeclarationsHandlerTest
+import org.jetbrains.kotlin.idea.k2.structureView.AbstractKotlinGotoSuperMultiModuleTest
 import org.jetbrains.kotlin.idea.k2.surroundWith.AbstractKotlinFirSurroundWithTest
 import org.jetbrains.kotlin.idea.k2.unwrap.AbstractKotlinFirUnwrapRemoveTest
 import org.jetbrains.kotlin.idea.navigation.AbstractKotlinGotoImplementationMultiModuleTest
@@ -67,6 +68,11 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
         testClass<AbstractKotlinGoToSuperDeclarationsHandlerTest> {
             model("gotoSuperDeclarationsHandler", pattern = KT_WITHOUT_DOTS, passTestDataPath = false)
         }
+
+        testClass<AbstractKotlinGotoSuperMultiModuleTest> {
+            model("../../../idea/tests/testData/navigation/gotoSuper/multiModule", isRecursive = false, pattern = DIRECTORY)
+        }
+
         testClass<AbstractKotlinGotoImplementationTest>(generatedClassName = "org.jetbrains.kotlin.idea.k2.navigation.KotlinGotoImplementationTestGenerated") {
             model("../../../idea/tests/testData/navigation/implementations", isRecursive = false)
         }
