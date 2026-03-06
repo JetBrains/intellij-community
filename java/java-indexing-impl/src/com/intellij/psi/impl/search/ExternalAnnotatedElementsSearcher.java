@@ -4,10 +4,16 @@ package com.intellij.psi.impl.search;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.ReadableExternalAnnotationsManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.impl.java.stubs.index.ExternalAnnotationsIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -26,6 +32,8 @@ import org.jetbrains.annotations.Nullable;
  * then resolves item external names back to PSI elements.
  */
 public final class ExternalAnnotatedElementsSearcher implements QueryExecutor<PsiModifierListOwner, AnnotatedElementsSearch.Parameters> {
+  private static final Logger LOG = Logger.getInstance(ExternalAnnotatedElementsSearcher.class);
+
   @Override
   public boolean execute(AnnotatedElementsSearch.@NotNull Parameters queryParameters,
                          @NotNull Processor<? super PsiModifierListOwner> consumer) {
@@ -102,24 +110,44 @@ public final class ExternalAnnotatedElementsSearcher implements QueryExecutor<Ps
     PsiClass psiClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), classFQN, null, false, scope);
     if (psiClass == null) return null;
 
-    if (spaceIdx < 0 || externalName.substring(spaceIdx + 1).startsWith("<")) {
+    String memberPart = externalName.substring(spaceIdx + 1);
+    if (spaceIdx < 0 || memberPart.startsWith("<")) {
       return psiClass;
     }
 
-    for (PsiMethod method : psiClass.getMethods()) {
-      if (externalName.equals(PsiFormatUtil.getExternalName(method, false))) return method;
-      for (PsiParameter param : method.getParameterList().getParameters()) {
-        if (externalName.equals(PsiFormatUtil.getExternalName(param, false))) return param;
+    int parenIdx = memberPart.indexOf('(');
+    if (parenIdx < 0) {
+      // Field: memberPart is the field name
+      return psiClass.findFieldByName(memberPart, false);
+    }
+
+    // Method, constructor, or parameter.
+    // Extract method name: the token immediately before '('
+    int nameStart = memberPart.lastIndexOf(' ', parenIdx);
+    String methodName = memberPart.substring(nameStart < 0 ? 0 : nameStart + 1, parenIdx);
+
+    // Check for parameter index after closing paren (format: "... methodName(params) N")
+    int paramIndex = -1;
+    int closeParenIdx = memberPart.lastIndexOf(')');
+    if (closeParenIdx >= 0 && closeParenIdx + 2 < memberPart.length()) {
+      try {
+        paramIndex = Integer.parseInt(memberPart.substring(closeParenIdx + 2));
+      } catch (NumberFormatException ignored) {
+        LOG.warn("Invalid parameter index in external annotation: " + memberPart);
       }
     }
-    for (PsiMethod constructor : psiClass.getConstructors()) {
-      if (externalName.equals(PsiFormatUtil.getExternalName(constructor, false))) return constructor;
-      for (PsiParameter param : constructor.getParameterList().getParameters()) {
-        if (externalName.equals(PsiFormatUtil.getExternalName(param, false))) return param;
+
+    // findMethodsByName does not include constructors; check them separately
+    boolean isConstructor = nameStart < 0;
+    PsiMethod[] candidates = isConstructor ? psiClass.getConstructors() : psiClass.findMethodsByName(methodName, false);
+    for (PsiMethod method : candidates) {
+      if (paramIndex >= 0) {
+        PsiParameter param = method.getParameterList().getParameter(paramIndex);
+        if (param != null && externalName.equals(PsiFormatUtil.getExternalName(param, false))) return param;
       }
-    }
-    for (PsiField field : psiClass.getFields()) {
-      if (externalName.equals(PsiFormatUtil.getExternalName(field, false))) return field;
+      else {
+        if (externalName.equals(PsiFormatUtil.getExternalName(method, false))) return method;
+      }
     }
     return null;
   }
