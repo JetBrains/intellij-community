@@ -43,9 +43,13 @@ internal class HtmlTextVisualizer : TextValueVisualizer {
   override fun detectFileType(value: @NlsSafe String): FileType? =
     if (isHtml(value)) htmlFileType else null
 
-  private fun isHtml(value: @NlsSafe String): Boolean =
-    // Try to somehow verify that the input resembles HTML: contains tags and starts with '<'.
-    value.contains(Helper.htmlTagsRegex) && value.firstOrNull { !it.isWhitespace() } == '<'
+  private fun isHtml(value: @NlsSafe String): Boolean {
+    if (value.firstOrNull { !it.isWhitespace() } != '<') return false
+    // For huge non-HTML values, scanning the entire string with regex is expensive.
+    // Checking only the first chunk is enough for practical HTML detection in debugger value previews.
+    val limit = minOf(1_024, value.length)
+    return Helper.htmlTagsRegex.matcher(value).region(0, limit).find()
+  }
 
   private val htmlFileType
     get() =
@@ -68,5 +72,5 @@ private object Helper {
                        "sup", "svg", "table", "tbody", "td", "template", "textarea", "tfoot", "th", "thead", "time", "title",
                        "tr", "track", "tt", "u", "ul", "var", "video", "wbr")
 
-  val htmlTagsRegex = Regex("<(${htmlTags.joinToString("|")})[ >/]")
+  val htmlTagsRegex = Regex("<(${htmlTags.joinToString("|")})[ >/]").toPattern()
 }

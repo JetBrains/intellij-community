@@ -22,4 +22,8 @@ class HtmlTextVisualizerTest : TextVisualizerTestCase(HtmlTextVisualizer()) {
   fun testNotStandaloneHtml() {
     checkNegative("Hello, <b>world</b>!")
   }
+
+  fun testEmpty() {
+    checkNegative("")
+  }
 }
