@@ -22,7 +22,7 @@ sealed interface SePreviewInfo {
  * Factory class for creating instances of `SePreviewInfo`.
  */
 @ApiStatus.Experimental
-class SePreviewInfoFactory {
+object SePreviewInfoFactory {
   fun create(fileUrl: VirtualFileId, navigationRanges: List<Pair<Int, Int>>): SePreviewInfo =
     SePreviewInfoImpl(fileUrl = fileUrl, navigationRanges = navigationRanges)
 }
