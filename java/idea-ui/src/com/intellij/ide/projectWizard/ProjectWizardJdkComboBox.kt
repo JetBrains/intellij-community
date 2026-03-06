@@ -82,7 +82,7 @@ import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.application
-import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
 import com.intellij.util.ui.EmptyIcon
@@ -356,14 +356,14 @@ class ProjectWizardJdkComboBox(
     }
   }
 
-  @RequiresEdt
   fun refreshJdks(descriptor: EelDescriptor) {
+    ThreadingAssertions.assertEventDispatchThread()
     currentEelDescriptor = descriptor
     ensureWorkspaceModelLoaded(descriptor)
   }
 
-  @RequiresEdt
   private fun ensureWorkspaceModelLoaded(descriptor: EelDescriptor?) {
+    ThreadingAssertions.assertEventDispatchThread()
     if (descriptor == null) return
     val eelMachine = descriptor.getResolvedEelMachine() ?: LocalEelMachine
     loadWorkspaceModelJob?.cancel()
@@ -377,8 +377,8 @@ class ProjectWizardJdkComboBox(
     }
   }
 
-  @RequiresEdt
   private fun reloadJdks(key: EelDescriptor?) {
+    ThreadingAssertions.assertEventDispatchThread()
     model.removeAll()
 
     model.add(computeRegisteredSdks(key).filter { existing -> sdkFilter(existing.jdk) })
@@ -437,8 +437,8 @@ class ProjectWizardJdkComboBox(
     if (intent != null) selectedItem = intent
   }
 
-  @RequiresEdt
   internal fun addDownloadOpenJdkIntent(task: ProjectWizardJdkIntent?) {
+    ThreadingAssertions.assertEventDispatchThread()
     if (task == null) {
       isLoadingDownloadItem = false
       return
@@ -449,8 +449,8 @@ class ProjectWizardJdkComboBox(
     isLoadingDownloadItem = false
   }
 
-  @RequiresEdt
   internal fun addDetectedJdks(detected: List<DetectedJdk>) {
+    ThreadingAssertions.assertEventDispatchThread()
     detected
       .filter { d -> registered.none { r -> FileUtil.pathsEqual(d.home, r.jdk.homePath) } }
       .forEach {
