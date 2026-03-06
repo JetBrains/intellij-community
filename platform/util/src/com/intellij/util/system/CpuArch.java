@@ -24,7 +24,12 @@ public enum CpuArch {
    * and {@link CpuArch#UNKNOWN} means the code was unable to detect an architecture.</p>
    *
    * <p><b>Note</b>: may not correspond to the actual hardware if a JVM is "virtualized" (like WoW64 or Rosetta 2).</p>
+   * <strong>Warning</strong>: In most cases this is <strong>not</strong> what you are looking for.
+   * Except for the lowest level, all code must be written against Eel: {@link com.intellij.platform.eel.EelApi}.
+   * You should either get {@link com.intellij.platform.eel.EelApi} as an argument, or obtain it from {@link java.nio.file.Path} or project, and use
+   * {@link com.intellij.platform.eel.EelApi#getPlatform()} to check an OS.
    */
+  @LowLevelLocalMachineAccess
   public static final CpuArch CURRENT = fromString(System.getProperty("os.arch"));
   private static @Nullable Boolean ourEmulated;
   /**

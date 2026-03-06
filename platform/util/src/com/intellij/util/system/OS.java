@@ -26,7 +26,14 @@ import java.util.stream.Stream;
 public enum OS {
   Windows, macOS, Linux, FreeBSD, Other;
 
-  /** Represents an operating system this JVM is running on */
+  /**
+   * Represents an operating system this JVM is running on
+   * <strong>Warning</strong>: In most cases this is <strong>not</strong> what you are looking for.
+   * Except for the lowest level, all code must be written against Eel: {@link com.intellij.platform.eel.EelApi}.
+   * You should either get {@link com.intellij.platform.eel.EelApi} as an argument, or obtain it from {@link Path} or project, and use
+   * {@link com.intellij.platform.eel.EelApi#getPlatform()} to check an OS.
+   */
+  @LowLevelLocalMachineAccess
   public static final OS CURRENT = fromString(System.getProperty("os.name"));
   /** @deprecated use {@link #version()} instead */
   @Deprecated
