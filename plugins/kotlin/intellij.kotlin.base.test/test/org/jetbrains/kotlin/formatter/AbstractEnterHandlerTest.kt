@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.formatter
 
 import com.intellij.openapi.actionSystem.IdeActions
@@ -156,7 +156,7 @@ abstract class AbstractEnterHandlerTest : KotlinLightPlatformCodeInsightTestCase
         }
 
 
-        val result = kotlin.runCatching {
+        val result = runCatching {
             KotlinTestUtils.assertEqualsToFile(errorMessage, File(afterFilePath), actualTextWithCaret.toString())
         }
 

@@ -13,6 +13,7 @@ import org.jetbrains.fir.uast.test.AbstractFirUastTypesTest
 import org.jetbrains.fir.uast.test.AbstractFirUastValuesTest
 import org.jetbrains.kotlin.fir.testGenerator.codeinsight.generateK2CodeInsightTests
 import org.jetbrains.kotlin.fir.testGenerator.gradle.generateK2GradleTests
+import org.jetbrains.kotlin.formatter.AbstractEnterHandlerTest
 import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.AbstractIdeKotlinAnnotationsResolverTest
 import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.dependents.AbstractModuleDependentsTest
 import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.inheritors.AbstractDirectInheritorsProviderTest
@@ -56,6 +57,7 @@ import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirLiteralKotlinToKotlinC
 import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirLiteralTextToKotlinCopyPasteTest
 import org.jetbrains.kotlin.idea.fir.documentation.AbstractFirQuickDocMultiplatformTest
 import org.jetbrains.kotlin.idea.fir.documentation.AbstractFirQuickDocTest
+import org.jetbrains.kotlin.idea.fir.editor.AbstractK2EnterHandlerTest
 import org.jetbrains.kotlin.idea.fir.externalAnnotations.AbstractK2ExternalAnnotationTest
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesFirTest
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesMultiModuleFirTest
@@ -288,6 +290,11 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
         testClass<AbstractFirShortenRefsTest> {
             model("shortenRefsFir", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestWithMuting")
             model("shortenRefs/this", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestWithMuting")
+        }
+
+        testClass<AbstractK2EnterHandlerTest> {
+            model("editor/enterHandler", pattern = Patterns.forRegex("""^([^.]+)\.after\.kt.*$"""), testMethodName = "doNewlineTest", testClassName = "DirectSettings")
+            model("editor/enterHandler", pattern = Patterns.forRegex("""^([^.]+)\.after\.inv\.kt.*$"""), testMethodName = "doNewlineTestWithInvert", testClassName = "InvertedSettings")
         }
 
         run {
