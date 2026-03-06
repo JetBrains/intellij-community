@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="Gradle" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps:gradle-api:9.4.0-rc-1">
+    <properties maven-id="org.jetbrains.intellij.deps:gradle-api:9.4.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/9.4.0-rc-1/gradle-api-9.4.0-rc-1.jar">
-          <sha256sum>ad619900a4c554e441aec16f4918da7bad184d6f98c0dd8cdbbf0a39d83f2cba</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/9.4.0/gradle-api-9.4.0.jar">
+          <sha256sum>fbbfe6153ad6c5eb566b1943be45c090f7a8267f7e82ef28c856f482b6fa4bec</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/9.4.0-rc-1/gradle-api-9.4.0-rc-1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/9.4.0/gradle-api-9.4.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/9.4.0-rc-1/gradle-api-9.4.0-rc-1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/9.4.0/gradle-api-9.4.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

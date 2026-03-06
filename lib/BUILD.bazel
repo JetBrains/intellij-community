@@ -3139,17 +3139,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.intellij.deps/gradle-api-9.4.0-rc-1.jar_copy",
-  src = "@org_jetbrains_intellij_deps-gradle-api-9_4_0-rc-1_http//file",
-  out = "org.jetbrains.intellij.deps/gradle-api-9.4.0-rc-1.jar",
+  name = "org.jetbrains.intellij.deps/gradle-api-9.4.0.jar_copy",
+  src = "@org_jetbrains_intellij_deps-gradle-api-9_4_0_http//file",
+  out = "org.jetbrains.intellij.deps/gradle-api-9.4.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "gradle",
-  jar = "@org_jetbrains_intellij_deps-gradle-api-9_4_0-rc-1_http//file",
-  source_jar = "@org_jetbrains_intellij_deps-gradle-api-9_4_0-rc-1-sources_http//file",
+  jar = "@org_jetbrains_intellij_deps-gradle-api-9_4_0_http//file",
+  source_jar = "@org_jetbrains_intellij_deps-gradle-api-9_4_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

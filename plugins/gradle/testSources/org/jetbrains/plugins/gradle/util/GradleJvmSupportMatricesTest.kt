@@ -8,10 +8,10 @@ class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
 
   companion object {
     private const val FUTURE_GRADLE_VERSION = "100.0.0"
-    private const val LATEST_SUPPORTED_JAVA_VERSION = 25
+    private const val LATEST_SUPPORTED_JAVA_VERSION = 26
     private const val FUTURE_JAVA_VERSION = 100
-    private const val BUNDLED_GRADLE_VERSION = "9.4.0-rc-1"
-    private const val LATEST_GRADLE_VERSION = "9.3.1"
+    private const val BUNDLED_GRADLE_VERSION = "9.4.0"
+    private const val LATEST_GRADLE_VERSION = "9.4.0"
   }
 
   fun `test bundled gradle version`() {
@@ -84,6 +84,7 @@ class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
 
     assertFalse(isSupported("9.0.0", 25))
     assertTrue(isSupported("9.1.0", 25))
+    assertTrue(isSupported("9.4.0", 26))
   }
 
   fun `test suggesting gradle version for java version`() {
@@ -99,6 +100,8 @@ class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
     assertEquals(BUNDLED_GRADLE_VERSION, suggestGradleVersion(22))
     assertEquals(BUNDLED_GRADLE_VERSION, suggestGradleVersion(23))
     assertEquals(BUNDLED_GRADLE_VERSION, suggestGradleVersion(24))
+    assertEquals(BUNDLED_GRADLE_VERSION, suggestGradleVersion(25))
+    assertEquals(BUNDLED_GRADLE_VERSION, suggestGradleVersion(26))
 
     assertEquals(null, suggestGradleVersion(FUTURE_JAVA_VERSION))
   }
@@ -124,6 +127,7 @@ class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
     assertEquals(LATEST_GRADLE_VERSION, suggestLatestSupportedGradleVersion(23))
     assertEquals(LATEST_GRADLE_VERSION, suggestLatestSupportedGradleVersion(24))
     assertEquals(LATEST_GRADLE_VERSION, suggestLatestSupportedGradleVersion(25))
+    assertEquals(LATEST_GRADLE_VERSION, suggestLatestSupportedGradleVersion(26))
 
     assertEquals(null, suggestLatestSupportedGradleVersion(FUTURE_JAVA_VERSION))
   }
@@ -160,8 +164,9 @@ class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
     assertEquals(24, suggestLatestSupportedJavaVersion("8.14.4"))
     assertEquals(24, suggestLatestSupportedJavaVersion("9.0.0"))
     assertEquals(25, suggestLatestSupportedJavaVersion("9.1.0"))
+    assertEquals(26, suggestLatestSupportedJavaVersion("9.4.0"))
 
-    assertEquals(25, suggestLatestSupportedJavaVersion(FUTURE_GRADLE_VERSION))
+    assertEquals(26, suggestLatestSupportedJavaVersion(FUTURE_GRADLE_VERSION))
   }
 
   fun `test suggesting oldest compatible gradle version for java version`() {
@@ -185,6 +190,7 @@ class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
     assertEquals("8.10.2", suggestOldestSupportedGradleVersion(23))
     assertEquals("8.14.4", suggestOldestSupportedGradleVersion(24))
     assertEquals("9.1.0", suggestOldestSupportedGradleVersion(25))
+    assertEquals("9.4.0", suggestOldestSupportedGradleVersion(26))
 
     assertEquals(null, suggestOldestSupportedGradleVersion(FUTURE_JAVA_VERSION))
   }
@@ -222,7 +228,7 @@ class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
     assertSupportedGradleVersion("8.0.2") { minOrNull() }
     assertSupportedGradleVersion("8.14.4") { maxOrNull() }
     assertSupportedGradleVersion("9.0.0") { minOrNull() }
-    assertSupportedGradleVersion("9.3.1") { maxOrNull() }
+    assertSupportedGradleVersion("9.4.0") { maxOrNull() }
 
     assertSupportedGradleVersion(LATEST_GRADLE_VERSION) { maxOrNull() }
   }
