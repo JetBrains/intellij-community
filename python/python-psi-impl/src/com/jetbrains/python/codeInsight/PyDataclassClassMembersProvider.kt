@@ -1,55 +1,81 @@
 // Copyright 2000-2026 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight
 
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.PyDataclassNames.Dataclasses
 import com.jetbrains.python.psi.impl.PyBuiltinCache
+import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyClassMembersProviderBase
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.TypeEvalContext
+
+private enum class ProvidedDataclassMember(val memberName: String) {
+  DUNDER_SLOTS(PyDataclassNames.Dataclasses.DUNDER_SLOTS),
+  DUNDER_ATTRS(PyDataclassNames.Attrs.DUNDER_ATTRS);
+
+  val key: Key<CachedValue<PyCustomMember?>> = Key.create("py.dataclass.member.$memberName")
+
+  companion object {
+    private val byName = entries.associateBy { it.memberName }
+
+    fun fromName(name: String): ProvidedDataclassMember? = byName[name]
+  }
+}
 
 /**
  * Adds members for dataclass-like classes.
  */
 class PyDataclassClassMembersProvider : PyClassMembersProviderBase() {
 
-  override fun getMembers(
-    clazz: PyClassType,
-    location: PsiElement?,
-    context: TypeEvalContext,
-  ): Collection<PyCustomMember> {
-    val pyClass = clazz.pyClass
+  override fun resolveMember(type: PyClassType, name: String, location: PsiElement?, resolveContext: PyResolveContext): PsiElement? {
+    val pyClass = type.pyClass
+    val context = resolveContext.typeEvalContext
+    val member = ProvidedDataclassMember.fromName(name) ?: return null
+    return getCachedCustomMember(type, member, context)?.resolve(pyClass, resolveContext)
+  }
+
+  override fun getMembers(clazz: PyClassType, location: PsiElement?, context: TypeEvalContext): Collection<PyCustomMember> =
+    ProvidedDataclassMember.entries.mapNotNull { member ->
+      getCachedCustomMember(clazz, member, context)
+    }
+
+  private fun getCachedCustomMember(type: PyClassType, member: ProvidedDataclassMember, context: TypeEvalContext): PyCustomMember? {
+    val pyClass = type.pyClass
+    return CachedValuesManager.getCachedValue(pyClass, member.key) {
+      val customMember = getCustomMember(type, member, context)
+      CachedValueProvider.Result.create(customMember, PsiModificationTracker.MODIFICATION_COUNT)
+    }
+  }
+
+  private fun getCustomMember(type: PyClassType, member: ProvidedDataclassMember, context: TypeEvalContext): PyCustomMember? {
+    val pyClass = type.pyClass
     val dataclassParameters = parseDataclassParameters(pyClass, context)
+    return when (member) {
 
-    return CachedValuesManager.getCachedValue(pyClass) {
-      val result = mutableListOf<PyCustomMember>()
+      // Member __slots__ caused by dataclass.slots
+      ProvidedDataclassMember.DUNDER_SLOTS -> {
+        if (dataclassParameters?.slots != true) return null
 
-      // Adds member __slots__ caused by dataclass.slots
-      if (dataclassParameters?.slots == true) {
-        val strType = PyBuiltinCache.getInstance(pyClass).strType
-        if (strType != null) {
-          // creating the following PyTupleType requires caching the result to avoid Idempotency Errors at runtime
-          val tupleOfStrings = PyTupleType.createHomogeneous(pyClass, strType)
-          if (tupleOfStrings != null) {
-            val qNameTuple = tupleOfStrings.pyClass.qualifiedName
-            result.add(PyCustomMember(Dataclasses.DUNDER_SLOTS, qNameTuple) { tupleOfStrings })
-          }
-        }
+        val strType = PyBuiltinCache.getInstance(pyClass).strType ?: return null
+        // creating the following PyTupleType requires caching the result to avoid Idempotency Errors at runtime
+        val tupleOfStrings = PyTupleType.createHomogeneous(pyClass, strType) ?: return null
+        val qNameTuple = tupleOfStrings.pyClass.qualifiedName
+        PyCustomMember(member.memberName, qNameTuple) { tupleOfStrings }
       }
 
-      // Adds member __attrs_attrs__ caused by decorator @attrs.define
-      val hasAttrs = dataclassParameters?.type == PyDataclassParameters.PredefinedType.ATTRS
-      if (hasAttrs) {
+      // Member __attrs_attrs__ caused by decorator @attrs.define
+      ProvidedDataclassMember.DUNDER_ATTRS -> {
+        if (dataclassParameters?.type != PyDataclassParameters.PredefinedType.ATTRS) return null
+
         val objectClass = PyBuiltinCache.getInstance(pyClass).getClass(PyNames.OBJECT)
-        result.add(PyCustomMember("__attrs_attrs__", objectClass).asClassVar())
+        PyCustomMember(member.memberName, objectClass).asClassVar()
       }
-
-      CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT)
     }
   }
 }
