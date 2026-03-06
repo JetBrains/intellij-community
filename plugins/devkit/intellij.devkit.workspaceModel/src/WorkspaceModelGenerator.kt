@@ -4,7 +4,6 @@ package com.intellij.devkit.workspaceModel
 import com.intellij.devkit.workspaceModel.codegen.writer.CodeWriter
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.javaSourceRoots
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -25,9 +24,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.findSnapshotModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_ROOT_ENTITY_TYPE_ID
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.config.additionalArgumentsAsList
@@ -70,29 +67,27 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
     sourceRoots.forEach { sourceRoot ->
       if (sourceRoot.url.virtualFile == null)
         return@forEach
-      withContext(Dispatchers.EDT) {
-        DumbService.getInstance(project).completeJustSubmittedTasks() // Waiting for smart mode
-        CodeWriter.generate(
-          project, module, sourceRoot.url.virtualFile!!,
-          processAbstractTypes = module.withAbstractTypes,
-          explicitApiEnabled = module.explicitApiEnabled,
-          isTestSourceFolder = sourceRoot.rootTypeId == JAVA_TEST_ROOT_ENTITY_TYPE_ID,
-          isTestModule = module.isTestModule, // TODO(It doesn't work for all modules)
-          targetFolderGenerator = {
-            WriteAction.compute<VirtualFile?, Throwable> {
-              var genSourceRot: SourceRootEntity? = null
-              project.workspaceModel.updateProjectModel("Create gen folder for ${moduleEntity.name}") {
-                genSourceRot = createGenSourceRoot(it, sourceRoot)
-              }
-              genSourceRot?.url?.virtualFile
+      DumbService.getInstance(project).waitForSmartMode()
+      CodeWriter.generate(
+        project, module, sourceRoot.url.virtualFile!!,
+        processAbstractTypes = module.withAbstractTypes,
+        explicitApiEnabled = module.explicitApiEnabled,
+        isTestSourceFolder = sourceRoot.rootTypeId == JAVA_TEST_ROOT_ENTITY_TYPE_ID,
+        isTestModule = module.isTestModule, // TODO(It doesn't work for all modules)
+        targetFolderGenerator = {
+          WriteAction.compute<VirtualFile?, Throwable> {
+            var genSourceRot: SourceRootEntity? = null
+            project.workspaceModel.updateProjectModel("Create gen folder for ${moduleEntity.name}") {
+              genSourceRot = createGenSourceRoot(it, sourceRoot)
             }
-          },
-          existingTargetFolder = {
-            calculateExistingGenFolder(sourceRoot)
-          },
-          formatCode = true
-        )
-      }
+            genSourceRot?.url?.virtualFile
+          }
+        },
+        existingTargetFolder = {
+          calculateExistingGenFolder(sourceRoot)
+        },
+        formatCode = true
+      )
     }
   }
 

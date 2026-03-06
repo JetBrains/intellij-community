@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.codegen.writer
 
+import com.intellij.application.options.CodeStyle
+import com.intellij.application.options.codeStyle.cache.CodeStyleCachingService
 import com.intellij.devkit.workspaceModel.CodegenJarLoader
 import com.intellij.devkit.workspaceModel.DevKitWorkspaceModelBundle
 import com.intellij.devkit.workspaceModel.codegen.writer.CodeWriter.addGeneratedObjModuleFile
@@ -22,9 +24,10 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.FactoryMap
 import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
 import com.intellij.workspaceModel.codegen.engine.CodeGenerator
@@ -34,6 +37,7 @@ import com.intellij.workspaceModel.codegen.engine.GeneratorSettings
 import com.intellij.workspaceModel.codegen.engine.ObjClassGeneratedCode
 import com.intellij.workspaceModel.codegen.engine.ObjModuleFileGeneratedCode
 import com.intellij.workspaceModel.codegen.engine.SKIPPED_TYPES
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -54,7 +58,7 @@ import kotlin.time.Duration.Companion.seconds
 private val LOG = logger<CodeWriter>()
 
 object CodeWriter {
-  @RequiresEdt
+  @RequiresBackgroundThread
   suspend fun generate(
     project: Project, module: Module, sourceFolder: VirtualFile,
     processAbstractTypes: Boolean, explicitApiEnabled: Boolean,
@@ -98,90 +102,115 @@ object CodeWriter {
     }
 
     waitSmartMode(project)
+    val generatedFiles = ArrayList<KtFile>()
+
     withContext(Dispatchers.EDT) {
       executeCommand(project,
                      DevKitWorkspaceModelBundle.message("command.name.generate.code.for.workspace.entities.in", sourceFolder.name)) {
-      val title = DevKitWorkspaceModelBundle.message("progress.title.generating.code")
-      ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(title, project, null) { indicator ->
-        indicator.text = DevKitWorkspaceModelBundle.message("progress.text.collecting.classes.metadata")
+        val title = DevKitWorkspaceModelBundle.message("progress.title.generating.code")
+        ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(title, project, null) { indicator ->
+          indicator.text = DevKitWorkspaceModelBundle.message("progress.text.collecting.classes.metadata")
 
-        val metaLoader: WorkspaceMetaModelProvider = service<WorkspaceMetaModelProvider>()
-        val (objModules, metaProblems) = metaLoader.loadObjModules(ktClasses, module, processAbstractTypes, isTestSourceFolder)
-        if (metaProblems.isNotEmpty()) {
-          WorkspaceCodegenProblemsProvider.getInstance(project).reportMetaProblem(metaProblems)
-          val genFolder = existingTargetFolder.invoke()
-          if (genFolder != null) {
-            indicator.text = DevKitWorkspaceModelBundle.message("progress.text.removing.old.code")
-            removeGeneratedCode(genFolder)
+          val metaLoader: WorkspaceMetaModelProvider = service<WorkspaceMetaModelProvider>()
+          val (objModules, metaProblems) = metaLoader.loadObjModules(ktClasses, module, processAbstractTypes, isTestSourceFolder)
+          if (metaProblems.isNotEmpty()) {
+            WorkspaceCodegenProblemsProvider.getInstance(project).reportMetaProblem(metaProblems)
+            val genFolder = existingTargetFolder.invoke()
+            if (genFolder != null) {
+              indicator.text = DevKitWorkspaceModelBundle.message("progress.text.removing.old.code")
+              removeGeneratedCode(genFolder)
+            }
+            return@runWriteActionWithCancellableProgressInDispatchThread
           }
-          return@runWriteActionWithCancellableProgressInDispatchThread
-        }
 
-        val results = generate(codeGenerator, objModules, explicitApiEnabled, isTestModule)
-        val generatedCode = results.flatMap { it.generatedCode }
-        val problems = results.flatMap { it.problems }
-        WorkspaceCodegenProblemsProvider.getInstance(project).reportProblems(problems)
+          val results = generate(codeGenerator, objModules, explicitApiEnabled, isTestModule)
+          val generatedCode = results.flatMap { it.generatedCode }
+          val problems = results.flatMap { it.problems }
+          WorkspaceCodegenProblemsProvider.getInstance(project).reportProblems(problems)
 
-        if (generatedCode.isEmpty() || problems.any { it.level == GenerationProblem.Level.ERROR }) {
-          val genFolder = existingTargetFolder.invoke()
-          if (genFolder != null) {
-            indicator.text = DevKitWorkspaceModelBundle.message("progress.text.removing.old.code")
-            removeGeneratedCode(genFolder)
+          if (generatedCode.isEmpty() || problems.any { it.level == GenerationProblem.Level.ERROR }) {
+            val genFolder = existingTargetFolder.invoke()
+            if (genFolder != null) {
+              indicator.text = DevKitWorkspaceModelBundle.message("progress.text.removing.old.code")
+              removeGeneratedCode(genFolder)
+            }
+            return@runWriteActionWithCancellableProgressInDispatchThread
           }
-          return@runWriteActionWithCancellableProgressInDispatchThread
-        }
 
-        val genFolder = existingTargetFolder.invoke() ?: targetFolderGenerator.invoke()
-        if (genFolder == null) {
-          LOG.info("Generated source folder doesn't exist. Skip processing source folder with path: ${sourceFolder}")
-          return@runWriteActionWithCancellableProgressInDispatchThread
-        }
-
-        indicator.text = DevKitWorkspaceModelBundle.message("progress.text.removing.old.code")
-        removeGeneratedCode(genFolder)
-
-        val importsByFile = FactoryMap.create<KtFile, Imports> { Imports(it.packageFqName.asString()) }
-        val generatedFiles = ArrayList<KtFile>()
-
-        indicator.text = DevKitWorkspaceModelBundle.message("progress.text.writing.code")
-        indicator.isIndeterminate = false
-
-        generatedCode.forEachIndexed { i, code ->
-          val psiFactory = KtPsiFactory(project)
-          indicator.fraction = 0.15 + 0.1 * i / generatedCode.size
-          when (code) {
-            is ObjModuleFileGeneratedCode ->
-              addGeneratedObjModuleFile(
-                code, generatedFiles, project,
-                sourceFolder, genFolder,
-                sourceFilePerObjModule, importsByFile, psiFactory
-              )
-            is ObjClassGeneratedCode ->
-              addGeneratedObjClassFile(
-                code, generatedFiles, project,
-                sourceFolder, genFolder,
-                ktClasses, importsByFile, psiFactory,
-              )
+          val genFolder = existingTargetFolder.invoke() ?: targetFolderGenerator.invoke()
+          if (genFolder == null) {
+            LOG.info("Generated source folder doesn't exist. Skip processing source folder with path: ${sourceFolder}")
+            return@runWriteActionWithCancellableProgressInDispatchThread
           }
-        }
 
-        importsByFile.forEach { (file, imports) ->
-          addImports(file, imports)
-        }
+          indicator.text = DevKitWorkspaceModelBundle.message("progress.text.removing.old.code")
+          removeGeneratedCode(genFolder)
 
-        if (!formatCode) return@runWriteActionWithCancellableProgressInDispatchThread
+          val importsByFile = FactoryMap.create<KtFile, Imports> { Imports(it.packageFqName.asString()) }
 
-        for ((i, file) in generatedFiles.withIndex()) {
-          DumbService.getInstance(project).completeJustSubmittedTasks()
-          indicator.fraction = 0.25 + 0.7 * i / generatedFiles.size
-          addCopyright(file, ktClasses)
-          LanguageImportStatements.INSTANCE.forFile(file).forEach { it.processFile(file).run() }
-          PsiDocumentManager.getInstance(file.project).doPostponedOperationsAndUnblockDocument(file.viewProvider.document!!)
-          CodeStyleManager.getInstance(project).reformat(file)
-        }
+          indicator.text = DevKitWorkspaceModelBundle.message("progress.text.writing.code")
+          indicator.isIndeterminate = false
+
+          generatedCode.forEachIndexed { i, code ->
+            val psiFactory = KtPsiFactory(project)
+            indicator.fraction = 0.15 + 0.1 * i / generatedCode.size
+            when (code) {
+              is ObjModuleFileGeneratedCode ->
+                addGeneratedObjModuleFile(
+                  code, generatedFiles, project,
+                  sourceFolder, genFolder,
+                  sourceFilePerObjModule, importsByFile, psiFactory
+                )
+              is ObjClassGeneratedCode ->
+                addGeneratedObjClassFile(
+                  code, generatedFiles, project,
+                  sourceFolder, genFolder,
+                  ktClasses, importsByFile, psiFactory,
+                )
+            }
+          }
+
+          importsByFile.forEach { (file, imports) ->
+            addImports(file, imports)
+          }
         }
       }
     }
+    if (!formatCode) return
+
+    for (file in generatedFiles) {
+      // this has to be invoked outside EDT because the callback scheduleWhenSettingsComputed is invoked on EDT
+      // so unfortunately I have to split the Command into two
+      file.awaitCodeStyleCalculation()
+    }
+
+    withContext(Dispatchers.EDT) {
+      executeCommand(project,
+                     DevKitWorkspaceModelBundle.message("command.name.reformat.code.for.workspace.entities.in", sourceFolder.name)) {
+        val title = DevKitWorkspaceModelBundle.message("progress.title.reformatting.code")
+        ApplicationManagerEx.getApplicationEx()
+          .runWriteActionWithCancellableProgressInDispatchThread(title, project, null) { indicator ->
+            for ((i, file) in generatedFiles.withIndex()) {
+              DumbService.getInstance(project).completeJustSubmittedTasks()
+              indicator.fraction = 0.25 + 0.7 * i / generatedFiles.size
+              addCopyright(file, ktClasses)
+              LanguageImportStatements.INSTANCE.forFile(file).forEach { it.processFile(file).run() }
+              PsiDocumentManager.getInstance(file.project).doPostponedOperationsAndUnblockDocument(file.viewProvider.document!!)
+              CodeStyleManager.getInstance(project).reformat(file)
+            }
+          }
+      }
+    }
+  }
+
+  @RequiresBackgroundThread
+  private suspend fun PsiFile.awaitCodeStyleCalculation() {
+    val latch = CompletableDeferred<Unit>()
+    CodeStyle.getSettings(this) // trigger settings computation
+    CodeStyleCachingService.getInstance(project).scheduleWhenSettingsComputed(this) {
+      latch.complete(Unit)
+    }
+    latch.await()
   }
 
   private fun addCopyright(file: KtFile, ktClasses: HashMap<String, KtClassOrObject>) {
