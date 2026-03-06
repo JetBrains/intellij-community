@@ -30,7 +30,7 @@ class PropertiesCommandsCompletionTest : LightFixtureCompletionTestCase() {
       a.b.c.<caret>=some.strange
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    assertNotNull(elements.firstOrNull { element -> element.lookupString.contains("Show usages", ignoreCase = true) })
+    assertNotNull(elements.firstOrNull { element -> element.lookupString.contains("Go to declaration or usages", ignoreCase = true) })
   }
 
   fun testReformat() {
