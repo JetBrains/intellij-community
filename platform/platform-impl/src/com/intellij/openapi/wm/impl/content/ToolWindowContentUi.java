@@ -10,7 +10,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -73,7 +72,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Cursor;
@@ -125,6 +127,9 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
   private final JPanel tabComponent = new TabPanel();
   private final DefaultActionGroup tabActionGroup = new DefaultActionGroup();
   private ActionToolbar tabToolbar = null;
+
+  /** Content for which the action popup menu is opened at this moment */
+  private @Nullable Content contentOfPopup;
 
   public ToolWindowContentUi(@NotNull ToolWindowImpl window,
                              @NotNull ContentManager contentManager,
@@ -666,8 +671,30 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
       group.add(toolWindowGroup);
     }
 
-    final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, group);
-    popupMenu.getComponent().show(comp, x, y);
+    JPopupMenu popup = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, group).getComponent();
+    popup.addPopupMenuListener(new PopupMenuListener() {
+      @Override
+      public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+        contentOfPopup = selectedContent;
+      }
+
+      @Override
+      public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+        reset();
+      }
+
+      @Override
+      public void popupMenuCanceled(PopupMenuEvent e) {
+        reset();
+      }
+
+      private void reset() {
+        contentOfPopup = null;
+        popup.removePopupMenuListener(this);
+      }
+    });
+
+    popup.show(comp, x, y);
   }
 
   private static @NotNull AnAction createSplitTabsAction(@NotNull TabbedContent content) {
@@ -834,6 +861,11 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
   /** Checks if the selected content component or one of its descendants has focus. */
   @ApiStatus.Internal public Boolean isActive() {
     return UIUtil.isFocusAncestor(contentComponent);
+  }
+
+  @ApiStatus.Internal
+  public boolean isPopupOpenedForContent(@NotNull Content content) {
+    return contentOfPopup == content;
   }
 
   /**
