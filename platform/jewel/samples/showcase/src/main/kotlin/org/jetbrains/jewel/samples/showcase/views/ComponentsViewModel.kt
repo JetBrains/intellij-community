@@ -15,6 +15,7 @@ import org.jetbrains.jewel.samples.showcase.components.Buttons
 import org.jetbrains.jewel.samples.showcase.components.Checkboxes
 import org.jetbrains.jewel.samples.showcase.components.ChipsAndTrees
 import org.jetbrains.jewel.samples.showcase.components.ComboBoxes
+import org.jetbrains.jewel.samples.showcase.components.GotItTooltipShowcase
 import org.jetbrains.jewel.samples.showcase.components.Icons
 import org.jetbrains.jewel.samples.showcase.components.Links
 import org.jetbrains.jewel.samples.showcase.components.Menus
@@ -105,6 +106,7 @@ public class ComponentsViewModel(
                 content = { TypographyShowcase() },
             ),
             ViewInfo(title = "Brushes", iconKey = ShowcaseIcons.Components.brush, content = { BrushesShowcase() }),
+            ViewInfo(title = "Got It", iconKey = ShowcaseIcons.Components.gotIt, content = { GotItTooltipShowcase() }),
         )
 
     private var _currentView: ViewInfo by mutableStateOf(views.first())

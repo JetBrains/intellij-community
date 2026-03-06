@@ -109,6 +109,8 @@ internal fun createBridgeComponentStyling(theme: ThemeDefinition): ComponentStyl
         popupAdStyle = readPopupAdStyle(),
         defaultSlimButtonStyle = readDefaultSlimButtonStyle(defaultButtonStyle.colors),
         outlinedSlimButtonStyle = readOutlinedSlimButtonStyle(outlinedButtonStyle.colors),
+        gotItTooltipStyle = readGotItTooltipStyle(),
+        gotItButtonStyle = readGotItButtonStyle(),
     )
 }
 
