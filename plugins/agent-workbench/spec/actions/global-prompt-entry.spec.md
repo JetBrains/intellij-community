@@ -11,6 +11,7 @@ targets:
   - ../../prompt/resources/messages/AgentPromptBundle.properties
   - ../../sessions-core/src/prompt/AgentPromptLauncherBridge.kt
   - ../../sessions/src/service/AgentSessionPromptLauncherBridge.kt
+  - ../../prompt/testSrc/ui/AgentPromptProviderSelectionDecisionsTest.kt
   - ../../prompt/testSrc/ui/AgentPromptSubmitValidationDecisionsTest.kt
   - ../../prompt/testSrc/ui/AgentPromptFooterHintDecisionsTest.kt
   - ../../prompt/testSrc/ui/AgentPromptPlanModeDecisionsTest.kt
@@ -90,7 +91,16 @@ Prompt-context collection and rendering contracts are specified separately in `s
   - explicit existing-task selection hint is shown only when mode is `EXISTING_TASK`, selection is empty, and provider is non-Codex.
   [@test] ../../prompt/testSrc/ui/AgentPromptFooterHintDecisionsTest.kt
 
+- Provider restore order for opening the prompt must be:
+  - prompt draft `providerId`,
+  - shared preferred provider exposed by `AgentPromptLauncherBridge.preferredProvider()`,
+  - provider-list default ordering.
+  [@test] ../../prompt/testSrc/ui/AgentPromptProviderSelectionDecisionsTest.kt
+
 - Submit flow must route through `AgentPromptLauncherBridge` using `AgentPromptLaunchRequest`; prompt popup must not directly call provider session sources.
+
+- Successful prompt launch must update the shared preferred provider used by future prompt openings and new-thread affordances.
+  [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
 - Codex-only Plan mode toggle contract:
   - Toggle is visible only when selected provider is `CODEX`.

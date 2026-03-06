@@ -7,6 +7,32 @@ import org.junit.jupiter.api.Test
 
 class AgentPromptUiSessionStateServiceTest {
   @Test
+  fun loadStateRoundTripPersistsDraftButNotContextRestoreSnapshot() {
+    val original = AgentPromptUiSessionStateService()
+    val draft = AgentPromptUiDraft(
+      promptText = "fix",
+      providerId = "codex",
+      targetMode = PromptTargetMode.EXISTING_TASK,
+      existingTaskSearch = "query",
+      selectedExistingTaskId = "task-1",
+      codexPlanModeEnabled = false,
+    )
+    val snapshot = AgentPromptUiContextRestoreSnapshot(
+      contextFingerprint = Hashing.xxh3_128().hashCharsTo128Bits("context"),
+      removedContextItemIds = listOf("editor.file"),
+    )
+
+    original.saveDraft(draft)
+    original.saveContextRestoreSnapshot(snapshot)
+
+    val reloaded = AgentPromptUiSessionStateService()
+    reloaded.loadState(original.state)
+
+    assertThat(reloaded.loadDraft()).isEqualTo(draft)
+    assertThat(reloaded.loadContextRestoreSnapshot()).isEqualTo(AgentPromptUiContextRestoreSnapshot())
+  }
+
+  @Test
   fun contextRestoreSnapshotRoundTripWithinSession() {
     val service = AgentPromptUiSessionStateService()
     val snapshot = AgentPromptUiContextRestoreSnapshot(
@@ -68,4 +94,3 @@ class AgentPromptUiSessionStateServiceTest {
     assertThat(service.loadContextRestoreSnapshot()).isEqualTo(snapshot)
   }
 }
-

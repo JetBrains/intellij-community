@@ -109,10 +109,10 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
   [@test] ../sessions/testSrc/AgentSessionsSwingTreeStatePersistenceTest.kt
 
 - User collapse/expand interactions must update persisted collapsed state.
-  [@test] ../sessions/testSrc/AgentSessionsTreeUiStateServiceTest.kt
+  [@test] ../sessions/testSrc/AgentSessionTreeUiStateServiceTest.kt
 
 - Cached preview entries missing legacy provider value must default provider to Codex for backward compatibility.
-  [@test] ../sessions/testSrc/AgentSessionsTreeUiStateServiceTest.kt
+  [@test] ../sessions/testSrc/AgentSessionTreeUiStateServiceTest.kt
 
 - On-demand loading must deduplicate concurrent requests for the same normalized path.
   [@test] ../sessions/testSrc/AgentSessionRefreshOnDemandIntegrationTest.kt

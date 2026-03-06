@@ -10,6 +10,10 @@ import kotlinx.coroutines.flow.flowOf
 interface AgentPromptLauncherBridge {
   fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult
 
+  fun preferredProvider(): AgentSessionProvider? {
+    return null
+  }
+
   fun observeExistingThreads(
     projectPath: String,
     provider: AgentSessionProvider,

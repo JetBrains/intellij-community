@@ -11,12 +11,9 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.Serializable
 
-internal interface SessionsTreeUiState {
+internal interface SessionTreeUiState {
   fun isProjectCollapsed(path: String): Boolean
 
   fun setProjectCollapsed(path: String, collapsed: Boolean): Boolean
@@ -32,23 +29,16 @@ internal interface SessionsTreeUiState {
   fun setOpenProjectThreadPreviews(path: String, threads: List<AgentSessionThreadPreview>): Boolean
 
   fun retainOpenProjectThreadPreviews(paths: Set<String>): Boolean
-
-  fun getLastUsedProvider(): AgentSessionProvider?
-
-  fun setLastUsedProvider(provider: AgentSessionProvider)
-
-  fun markClaudeQuotaHintEligible()
 }
 
 internal const val DEFAULT_VISIBLE_CLOSED_PROJECT_COUNT: Int = 3
 internal const val DEFAULT_VISIBLE_THREAD_COUNT: Int = 3
 internal const val OPEN_PROJECT_THREAD_CACHE_LIMIT: Int = 10
 
-internal class InMemorySessionsTreeUiState : SessionsTreeUiState {
+internal class InMemorySessionTreeUiState : SessionTreeUiState {
   private val collapsedProjectPaths = LinkedHashSet<String>()
   private val visibleThreadCountByProject = LinkedHashMap<String, Int>()
   private val openProjectThreadPreviewsByProject = LinkedHashMap<String, List<AgentSessionThreadPreview>>()
-  private var lastUsedProvider: AgentSessionProvider? = null
 
   override fun isProjectCollapsed(path: String): Boolean {
     return normalizeAgentWorkbenchPath(path) in collapsedProjectPaths
@@ -113,32 +103,13 @@ internal class InMemorySessionsTreeUiState : SessionsTreeUiState {
     }
     return changed
   }
-
-  override fun getLastUsedProvider(): AgentSessionProvider? {
-    return lastUsedProvider
-  }
-
-  override fun setLastUsedProvider(provider: AgentSessionProvider) {
-    lastUsedProvider = provider
-  }
-
-  override fun markClaudeQuotaHintEligible() {
-    // No-op for in-memory state used in tests that don't assert quota-hint persistence.
-  }
 }
 
 @Service(Service.Level.APP)
-@State(name = "CodexSessionsTreeUiState", storages = [Storage(StoragePathMacros.CACHE_FILE)])
-internal class AgentSessionsTreeUiStateService
-  : SerializablePersistentStateComponent<AgentSessionsTreeUiStateService.SessionsTreeUiStateState>(SessionsTreeUiStateState()),
-    SessionsTreeUiState {
-
-  private val _lastUsedProviderFlow = MutableStateFlow(getLastUsedProvider())
-  val lastUsedProviderFlow: StateFlow<AgentSessionProvider?> = _lastUsedProviderFlow.asStateFlow()
-  private val _claudeQuotaHintEligibleFlow = MutableStateFlow(state.claudeQuotaHintEligible)
-  val claudeQuotaHintEligibleFlow: StateFlow<Boolean> = _claudeQuotaHintEligibleFlow.asStateFlow()
-  private val _claudeQuotaHintAcknowledgedFlow = MutableStateFlow(state.claudeQuotaHintAcknowledged)
-  val claudeQuotaHintAcknowledgedFlow: StateFlow<Boolean> = _claudeQuotaHintAcknowledgedFlow.asStateFlow()
+@State(name = "AgentSessionTreeUiState", storages = [Storage(StoragePathMacros.CACHE_FILE)])
+internal class AgentSessionTreeUiStateService
+  : SerializablePersistentStateComponent<AgentSessionTreeUiStateService.SessionTreeUiStateState>(SessionTreeUiStateState()),
+    SessionTreeUiState {
 
   override fun isProjectCollapsed(path: String): Boolean {
     return normalizeAgentWorkbenchPath(path) in state.collapsedProjectPaths
@@ -230,8 +201,8 @@ internal class AgentSessionsTreeUiStateService
   private fun updateNormalizedPathSet(
     path: String,
     includePath: Boolean,
-    currentSet: (SessionsTreeUiStateState) -> Set<String>,
-    setUpdated: (SessionsTreeUiStateState, Set<String>) -> SessionsTreeUiStateState,
+    currentSet: (SessionTreeUiStateState) -> Set<String>,
+    setUpdated: (SessionTreeUiStateState, Set<String>) -> SessionTreeUiStateState,
   ): Boolean {
     val normalized = normalizeAgentWorkbenchPath(path)
     if ((normalized in currentSet(state)) == includePath) {
@@ -269,43 +240,11 @@ internal class AgentSessionsTreeUiStateService
     return true
   }
 
-  override fun getLastUsedProvider(): AgentSessionProvider? {
-    val id = state.lastUsedProvider ?: return null
-    return AgentSessionProvider.fromOrNull(id)
-  }
-
-  override fun setLastUsedProvider(provider: AgentSessionProvider) {
-    updateState { it.copy(lastUsedProvider = provider.value) }
-    _lastUsedProviderFlow.value = provider
-  }
-
-  override fun markClaudeQuotaHintEligible() {
-    if (state.claudeQuotaHintEligible) return
-    updateState { it.copy(claudeQuotaHintEligible = true) }
-    _claudeQuotaHintEligibleFlow.value = true
-  }
-
-  fun acknowledgeClaudeQuotaHint() {
-    if (state.claudeQuotaHintAcknowledged) return
-    updateState { it.copy(claudeQuotaHintAcknowledged = true) }
-    _claudeQuotaHintAcknowledgedFlow.value = true
-  }
-
-  override fun loadState(state: SessionsTreeUiStateState) {
-    super.loadState(state)
-    _lastUsedProviderFlow.value = state.lastUsedProvider?.let(AgentSessionProvider::fromOrNull)
-    _claudeQuotaHintEligibleFlow.value = state.claudeQuotaHintEligible
-    _claudeQuotaHintAcknowledgedFlow.value = state.claudeQuotaHintAcknowledged
-  }
-
   @Serializable
-  internal data class SessionsTreeUiStateState(
+  internal data class SessionTreeUiStateState(
     @JvmField val collapsedProjectPaths: Set<String> = emptySet(),
     @JvmField val visibleThreadCountByProject: Map<String, Int> = emptyMap(),
     @JvmField val openProjectThreadPreviewsByProject: Map<String, List<ThreadPreviewState>> = emptyMap(),
-    @JvmField val lastUsedProvider: String? = null,
-    @JvmField val claudeQuotaHintEligible: Boolean = false,
-    @JvmField val claudeQuotaHintAcknowledged: Boolean = false,
   )
 
   @Serializable

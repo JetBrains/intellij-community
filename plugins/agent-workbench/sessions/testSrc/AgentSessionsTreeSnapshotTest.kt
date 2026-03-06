@@ -4,7 +4,7 @@ package com.intellij.agent.workbench.sessions
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
-import com.intellij.agent.workbench.sessions.state.InMemorySessionsTreeUiState
+import com.intellij.agent.workbench.sessions.state.InMemorySessionTreeUiState
 import com.intellij.agent.workbench.sessions.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.tree.SessionTreeNode
 import com.intellij.agent.workbench.sessions.tree.archiveTargetFromThreadNode
@@ -37,7 +37,7 @@ class AgentSessionsTreeSnapshotTest {
       projects = projects,
       visibleClosedProjectCount = 1,
       visibleThreadCounts = mapOf(projectPath to 1),
-      treeUiState = InMemorySessionsTreeUiState(),
+      treeUiState = InMemorySessionTreeUiState(),
     )
 
     assertThat(model.rootIds)
@@ -55,7 +55,7 @@ class AgentSessionsTreeSnapshotTest {
 
   @Test
   fun autoOpenProjectsSkipCollapsedProjects() {
-    val uiState = InMemorySessionsTreeUiState()
+    val uiState = InMemorySessionTreeUiState()
     uiState.setProjectCollapsed("/work/project-open", collapsed = true)
 
     val model = buildSessionTreeModel(

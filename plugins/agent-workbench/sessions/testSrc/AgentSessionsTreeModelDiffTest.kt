@@ -4,7 +4,7 @@ package com.intellij.agent.workbench.sessions
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
-import com.intellij.agent.workbench.sessions.state.InMemorySessionsTreeUiState
+import com.intellij.agent.workbench.sessions.state.InMemorySessionTreeUiState
 import com.intellij.agent.workbench.sessions.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.tree.buildSessionTreeModel
 import com.intellij.agent.workbench.sessions.tree.diffSessionTreeModels
@@ -20,7 +20,7 @@ class AgentSessionsTreeModelDiffTest {
       projects = listOf(AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true, hasLoaded = true)),
       visibleClosedProjectCount = Int.MAX_VALUE,
       visibleThreadCounts = emptyMap(),
-      treeUiState = InMemorySessionsTreeUiState(),
+      treeUiState = InMemorySessionTreeUiState(),
     )
     val newModel = buildSessionTreeModel(
       projects = listOf(
@@ -29,7 +29,7 @@ class AgentSessionsTreeModelDiffTest {
       ),
       visibleClosedProjectCount = Int.MAX_VALUE,
       visibleThreadCounts = emptyMap(),
-      treeUiState = InMemorySessionsTreeUiState(),
+      treeUiState = InMemorySessionTreeUiState(),
     )
 
     val diff = diffSessionTreeModels(oldModel, newModel)
@@ -59,7 +59,7 @@ class AgentSessionsTreeModelDiffTest {
       ),
       visibleClosedProjectCount = Int.MAX_VALUE,
       visibleThreadCounts = mapOf("/work/project-a" to 10),
-      treeUiState = InMemorySessionsTreeUiState(),
+      treeUiState = InMemorySessionTreeUiState(),
     )
     val newModel = buildSessionTreeModel(
       projects = listOf(
@@ -88,7 +88,7 @@ class AgentSessionsTreeModelDiffTest {
       ),
       visibleClosedProjectCount = Int.MAX_VALUE,
       visibleThreadCounts = mapOf("/work/project-a" to 10),
-      treeUiState = InMemorySessionsTreeUiState(),
+      treeUiState = InMemorySessionTreeUiState(),
     )
 
     val diff = diffSessionTreeModels(oldModel, newModel)
@@ -120,7 +120,7 @@ class AgentSessionsTreeModelDiffTest {
       ),
       visibleClosedProjectCount = Int.MAX_VALUE,
       visibleThreadCounts = mapOf("/work/project-a" to 10),
-      treeUiState = InMemorySessionsTreeUiState(),
+      treeUiState = InMemorySessionTreeUiState(),
     )
     val newModel = buildSessionTreeModel(
       projects = listOf(
@@ -142,7 +142,7 @@ class AgentSessionsTreeModelDiffTest {
       ),
       visibleClosedProjectCount = Int.MAX_VALUE,
       visibleThreadCounts = mapOf("/work/project-a" to 10),
-      treeUiState = InMemorySessionsTreeUiState(),
+      treeUiState = InMemorySessionTreeUiState(),
     )
 
     val diff = diffSessionTreeModels(oldModel, newModel)

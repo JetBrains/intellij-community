@@ -3,15 +3,15 @@ package com.intellij.agent.workbench.sessions
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadPreview
-import com.intellij.agent.workbench.sessions.state.AgentSessionsTreeUiStateService
+import com.intellij.agent.workbench.sessions.state.AgentSessionTreeUiStateService
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_THREAD_COUNT
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-class AgentSessionsTreeUiStateServiceTest {
+class AgentSessionTreeUiStateServiceTest {
   @Test
   fun projectCollapseStateRoundTrip() {
-    val uiState = AgentSessionsTreeUiStateService()
+    val uiState = AgentSessionTreeUiStateService()
 
     assertThat(uiState.setProjectCollapsed("/work/project-a", collapsed = true)).isTrue()
     assertThat(uiState.isProjectCollapsed("/work/project-a")).isTrue()
@@ -23,7 +23,7 @@ class AgentSessionsTreeUiStateServiceTest {
 
   @Test
   fun visibleThreadCountStateRoundTrip() {
-    val uiState = AgentSessionsTreeUiStateService()
+    val uiState = AgentSessionTreeUiStateService()
 
     assertThat(uiState.getVisibleThreadCount("/work/project-a")).isEqualTo(DEFAULT_VISIBLE_THREAD_COUNT)
 
@@ -37,7 +37,7 @@ class AgentSessionsTreeUiStateServiceTest {
 
   @Test
   fun pathNormalizationIsAppliedToStoredState() {
-    val uiState = AgentSessionsTreeUiStateService()
+    val uiState = AgentSessionTreeUiStateService()
 
     uiState.setProjectCollapsed("/work/project-a/", collapsed = true)
     assertThat(uiState.isProjectCollapsed("/work/project-a")).isTrue()
@@ -48,7 +48,7 @@ class AgentSessionsTreeUiStateServiceTest {
 
   @Test
   fun openProjectThreadPreviewCacheRoundTrip() {
-    val uiState = AgentSessionsTreeUiStateService()
+    val uiState = AgentSessionTreeUiStateService()
     val threads = listOf(
       AgentSessionThreadPreview(id = "thread-1", title = "Thread 1", updatedAt = 5L, activity = AgentThreadActivity.READY),
       AgentSessionThreadPreview(id = "thread-2", title = "Thread 2", updatedAt = 10L, activity = AgentThreadActivity.UNREAD),
@@ -66,7 +66,7 @@ class AgentSessionsTreeUiStateServiceTest {
 
   @Test
   fun openProjectThreadPreviewCachePreservesProvider() {
-    val uiState = AgentSessionsTreeUiStateService()
+    val uiState = AgentSessionTreeUiStateService()
     val threads = listOf(
       AgentSessionThreadPreview(
         id = "claude-thread",
@@ -86,7 +86,7 @@ class AgentSessionsTreeUiStateServiceTest {
 
   @Test
   fun openProjectThreadPreviewCacheNormalizesBlankTitleToFallback() {
-    val uiState = AgentSessionsTreeUiStateService()
+    val uiState = AgentSessionTreeUiStateService()
     val threads = listOf(
       AgentSessionThreadPreview(
         id = "blank-title-thread",
@@ -104,7 +104,7 @@ class AgentSessionsTreeUiStateServiceTest {
 
   @Test
   fun treeStateFieldsSurviveServiceStateRoundTrip() {
-    val original = AgentSessionsTreeUiStateService()
+    val original = AgentSessionTreeUiStateService()
     val path = "/work/project-a/"
     original.setProjectCollapsed(path, collapsed = true)
     original.incrementVisibleThreadCount(path, delta = 4)
@@ -128,7 +128,7 @@ class AgentSessionsTreeUiStateServiceTest {
       )
     )
 
-    val reloaded = AgentSessionsTreeUiStateService()
+    val reloaded = AgentSessionTreeUiStateService()
     reloaded.loadState(original.state)
 
     assertThat(reloaded.isProjectCollapsed("/work/project-a")).isTrue()
@@ -137,70 +137,5 @@ class AgentSessionsTreeUiStateServiceTest {
     assertThat(previews.map { it.id }).isEqualTo(listOf("claude-thread", "codex-thread"))
     assertThat(previews.map { it.provider }).isEqualTo(listOf(AgentSessionProvider.CLAUDE, AgentSessionProvider.CODEX))
     assertThat(previews.map { it.activity }).isEqualTo(listOf(AgentThreadActivity.UNREAD, AgentThreadActivity.READY))
-  }
-
-  @Test
-  fun lastUsedProviderDefaultsToNull() {
-    val uiState = AgentSessionsTreeUiStateService()
-    assertThat(uiState.getLastUsedProvider()).isNull()
-  }
-
-  @Test
-  fun claudeQuotaHintDefaultsToDisabledAndUnacknowledged() {
-    val uiState = AgentSessionsTreeUiStateService()
-
-    assertThat(uiState.state.claudeQuotaHintEligible).isFalse()
-    assertThat(uiState.state.claudeQuotaHintAcknowledged).isFalse()
-    assertThat(uiState.claudeQuotaHintEligibleFlow.value).isFalse()
-    assertThat(uiState.claudeQuotaHintAcknowledgedFlow.value).isFalse()
-  }
-
-  @Test
-  fun claudeQuotaHintStateRoundTrip() {
-    val uiState = AgentSessionsTreeUiStateService()
-
-    uiState.markClaudeQuotaHintEligible()
-    assertThat(uiState.state.claudeQuotaHintEligible).isTrue()
-    assertThat(uiState.claudeQuotaHintEligibleFlow.value).isTrue()
-
-    uiState.acknowledgeClaudeQuotaHint()
-    assertThat(uiState.state.claudeQuotaHintAcknowledged).isTrue()
-    assertThat(uiState.claudeQuotaHintAcknowledgedFlow.value).isTrue()
-  }
-
-  @Test
-  fun setAndGetLastUsedProvider() {
-    val uiState = AgentSessionsTreeUiStateService()
-
-    uiState.setLastUsedProvider(AgentSessionProvider.CLAUDE)
-    assertThat(uiState.getLastUsedProvider()).isEqualTo(AgentSessionProvider.CLAUDE)
-
-    uiState.setLastUsedProvider(AgentSessionProvider.CODEX)
-    assertThat(uiState.getLastUsedProvider()).isEqualTo(AgentSessionProvider.CODEX)
-  }
-
-  @Test
-  fun lastUsedProviderFlowUpdatesOnSet() {
-    val uiState = AgentSessionsTreeUiStateService()
-
-    assertThat(uiState.lastUsedProviderFlow.value).isNull()
-
-    uiState.setLastUsedProvider(AgentSessionProvider.CLAUDE)
-    assertThat(uiState.lastUsedProviderFlow.value).isEqualTo(AgentSessionProvider.CLAUDE)
-
-    uiState.setLastUsedProvider(AgentSessionProvider.CODEX)
-    assertThat(uiState.lastUsedProviderFlow.value).isEqualTo(AgentSessionProvider.CODEX)
-  }
-
-  @Test
-  fun lastUsedProviderSurvivesRoundTrip() {
-    val uiState = AgentSessionsTreeUiStateService()
-
-    uiState.setLastUsedProvider(AgentSessionProvider.CLAUDE)
-    val storedName = uiState.state.lastUsedProvider
-    assertThat(storedName).isEqualTo("claude")
-
-    // Verify the provider can be reconstructed from stored name
-    assertThat(uiState.getLastUsedProvider()).isEqualTo(AgentSessionProvider.CLAUDE)
   }
 }

@@ -54,7 +54,8 @@ This file does not redefine runtime behavior; it maps each contract area to requ
 - Swing tree rendering: `AgentSessionsSwingTreeRenderingTest`, `AgentSessionsSwingTreeCellRendererTest`
 - Swing tree interaction: `AgentSessionsSwingTreeInteractionTest`
 - Swing tree state persistence: `AgentSessionsSwingTreeStatePersistenceTest`
-- Tree UI persisted state: `AgentSessionsTreeUiStateServiceTest`
+- Tree UI persisted state: `AgentSessionTreeUiStateServiceTest`
+- Shared UI preferences state: `AgentSessionUiPreferencesStateServiceTest`
 - New-thread flow: `AgentSessionsSwingNewSessionActionsTest`, `AgentSessionRefreshCoordinatorTest`, `AgentChatEditorServiceTest`
 - Tool-window factory wiring: `AgentSessionsToolWindowFactorySwingTest`, `AgentSessionsGearActionsTest`
 - Dedicated frame: `AgentSessionsGearActionsTest`, `AgentSessionsOpenModeRoutingTest`

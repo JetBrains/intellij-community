@@ -15,9 +15,9 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.frame.AGENT_SESSIONS_TOOL_WINDOW_ID
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
+import com.intellij.agent.workbench.sessions.state.AgentSessionTreeUiStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
-import com.intellij.agent.workbench.sessions.state.AgentSessionsTreeUiStateService
-import com.intellij.agent.workbench.sessions.state.SessionsTreeUiState
+import com.intellij.agent.workbench.sessions.state.SessionTreeUiState
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -36,19 +36,19 @@ private val LOG = logger<AgentSessionRefreshService>()
 
 @Service(Service.Level.APP)
 internal class AgentSessionRefreshService(
-  private val serviceScope: CoroutineScope,
-  private val sessionSourcesProvider: () -> List<AgentSessionSource>,
-  private val projectEntriesProvider: suspend () -> List<ProjectEntry>,
-  private val stateStore: AgentSessionsStateStore,
-  private val treeUiState: SessionsTreeUiState,
-  private val openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingCodexTabSnapshot>> =
+    private val serviceScope: CoroutineScope,
+    private val sessionSourcesProvider: () -> List<AgentSessionSource>,
+    private val projectEntriesProvider: suspend () -> List<ProjectEntry>,
+    private val stateStore: AgentSessionsStateStore,
+    private val treeUiState: SessionTreeUiState,
+    private val openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingCodexTabSnapshot>> =
     ::collectOpenPendingCodexTabsByPath,
-  private val openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> =
+    private val openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> =
     ::collectOpenConcreteAgentChatThreadIdentitiesByPath,
-  private val openAgentChatPendingTabsBinder: (
+    private val openAgentChatPendingTabsBinder: (
     Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
   ) -> AgentChatPendingCodexTabRebindReport = ::rebindOpenPendingCodexTabs,
-  subscribeToProjectLifecycle: Boolean,
+    subscribeToProjectLifecycle: Boolean,
 ) {
   @Suppress("unused")
   constructor(serviceScope: CoroutineScope) : this(
@@ -56,7 +56,7 @@ internal class AgentSessionRefreshService(
     sessionSourcesProvider = AgentSessionProviderBridges::sessionSources,
     projectEntriesProvider = AgentSessionProjectCatalog()::collectProjects,
     stateStore = service<AgentSessionsStateStore>(),
-    treeUiState = service<AgentSessionsTreeUiStateService>(),
+    treeUiState = service<AgentSessionTreeUiStateService>(),
     subscribeToProjectLifecycle = true,
   )
 

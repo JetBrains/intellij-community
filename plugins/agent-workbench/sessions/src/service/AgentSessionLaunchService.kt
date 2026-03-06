@@ -28,9 +28,8 @@ import com.intellij.agent.workbench.sessions.frame.AGENT_SESSIONS_TOOL_WINDOW_ID
 import com.intellij.agent.workbench.sessions.frame.AGENT_WORKBENCH_DEDICATED_FRAME_TYPE_ID
 import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
+import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
-import com.intellij.agent.workbench.sessions.state.AgentSessionsTreeUiStateService
-import com.intellij.agent.workbench.sessions.state.SessionsTreeUiState
 import com.intellij.agent.workbench.sessions.util.SingleFlightActionGate
 import com.intellij.agent.workbench.sessions.util.SingleFlightPolicy
 import com.intellij.agent.workbench.sessions.util.SingleFlightProgressRequest
@@ -138,7 +137,7 @@ internal class AgentSessionLaunchService(
   private val serviceScope: CoroutineScope,
   private val stateStore: AgentSessionsStateStore,
   private val syncService: AgentSessionRefreshService,
-  private val treeUiState: SessionsTreeUiState,
+  private val uiPreferencesState: AgentSessionUiPreferencesStateService = AgentSessionUiPreferencesStateService(),
   private val chatOpenExecutor: AgentSessionChatOpenExecutor = DefaultAgentSessionChatOpenExecutor,
 ) {
   @Suppress("unused")
@@ -146,7 +145,7 @@ internal class AgentSessionLaunchService(
     serviceScope = serviceScope,
     stateStore = service<AgentSessionsStateStore>(),
     syncService = service<AgentSessionRefreshService>(),
-    treeUiState = service<AgentSessionsTreeUiStateService>(),
+    uiPreferencesState = service<AgentSessionUiPreferencesStateService>(),
     chatOpenExecutor = DefaultAgentSessionChatOpenExecutor,
   )
 
@@ -239,7 +238,7 @@ internal class AgentSessionLaunchService(
       droppedActionMessage = "Dropped duplicate create session action for $normalizedPath:$provider:mode=$mode",
       progress = dedicatedFrameOpenProgressRequest(currentProject),
     ) {
-      treeUiState.setLastUsedProvider(provider)
+      uiPreferencesState.setLastUsedProvider(provider)
 
       val bridge = AgentSessionProviderBridges.find(provider)
       if (bridge == null) {
@@ -309,6 +308,7 @@ internal class AgentSessionLaunchService(
           provider = request.provider,
           threadId = targetThreadId,
         ) ?: return AgentPromptLaunchResult.failure(AgentPromptLaunchError.TARGET_THREAD_NOT_FOUND)
+        uiPreferencesState.setLastUsedProvider(request.provider)
 
         val initialMessagePlan = bridge.buildInitialMessagePlan(request.initialMessageRequest)
         val targetIdentity = buildAgentSessionIdentity(provider = request.provider, sessionId = targetThread.id)
@@ -378,7 +378,7 @@ internal class AgentSessionLaunchService(
     if (provider != AgentSessionProvider.CLAUDE) {
       return
     }
-    treeUiState.markClaudeQuotaHintEligible()
+    uiPreferencesState.markClaudeQuotaHintEligible()
   }
 }
 
