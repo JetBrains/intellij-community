@@ -12,6 +12,10 @@ class Abstract:
     def foo1(self):
         pass
 
+    @abstractmethod
+    def foo2(self):
+        pass
+
     def bar(self):
         pass
 
@@ -23,3 +27,5 @@ class Foo(Abstract):
     def foo1(self):
         pass
 
+    def foo2(self):
+        pass
