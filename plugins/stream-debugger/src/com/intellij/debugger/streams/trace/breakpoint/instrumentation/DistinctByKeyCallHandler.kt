@@ -5,6 +5,7 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType
 import com.intellij.debugger.streams.trace.breakpoint.ObjectStorage
+import com.intellij.java.debugger.streams.rt.ArgumentRecordingWrapper
 import com.intellij.java.debugger.streams.rt.StreamDebuggerUtils
 import com.sun.jdi.ArrayReference
 import com.sun.jdi.Method
@@ -12,8 +13,10 @@ import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
 
 /**
- * Handler for StreamEx `distinct(keyExtractor)` — captures the key extractor function
- * and uses it to compute the equivalence class mapping via [StreamDebuggerUtils.computeDistinctByKeyMapping].
+ * Handler for StreamEx `distinct(keyExtractor)` — wraps the key extractor in a keyExtractor
+ * that records each computed key in order, then uses the captured keys to build the
+ * equivalence-class mapping. This avoids re-applying the extractor after execution,
+ * which would produce wrong results for stateful extractors.
  */
 internal class DistinctByKeyCallHandler(
   objectStorage: ObjectStorage,
@@ -22,6 +25,7 @@ internal class DistinctByKeyCallHandler(
   time: ObjectReference,
 ) : PeekCallHandler(objectStorage, typeBefore, typeAfter, time) {
 
+  // ArgumentRecordingWrapper created during transformArguments; records each computed key in order.
   private var keyExtractor: ObjectReference? = null
 
   override fun transformArguments(
@@ -29,8 +33,14 @@ internal class DistinctByKeyCallHandler(
     method: Method,
     arguments: List<Value?>,
   ): List<Value?> {
-    keyExtractor = arguments.firstOrNull() as? ObjectReference
-    return arguments
+    val original = arguments.firstOrNull() as? ObjectReference ?: return arguments
+    val wrapper = objectStorage.watch(evaluationContextImpl) {
+      // Use instance() so ClassLoadingUtils explicitly loads ArgumentRecordingWrapper into the target VM
+      // (it is not loaded automatically when StreamDebuggerUtils is loaded).
+      instance(ArgumentRecordingWrapper::class.java, "(Ljava/util/function/Function;)V", listOf(original))
+    }
+    keyExtractor = wrapper
+    return listOf(wrapper) + arguments.drop(1)
   }
 
   override fun result(evaluationContextImpl: EvaluationContextImpl): Value {
@@ -47,16 +57,16 @@ internal class DistinctByKeyCallHandler(
   private fun ValueContext.computeKeyBasedMapping(): ArrayReference {
     val before = beforeValuesMap
     val after = afterValuesMap
-    val extractor = keyExtractor
-    if (before == null || after == null || extractor == null) {
+    val keyExtractorRef = keyExtractor
+    if (before == null || after == null || keyExtractorRef == null) {
       return array(array("int", 0), array("int", 0))
     }
     val utilsClass = clazz(StreamDebuggerUtils::class.java)
     val method = utilsClass.method(
-      "computeDistinctByKeyMapping",
+      "computeDistinctByRecordedKeyMapping",
       "(Ljava/util/Map;Ljava/util/Map;Ljava/util/function/Function;)[Ljava/lang/Object;"
     )
-    return method.invoke(utilsClass, listOf(before, after, extractor)) as ArrayReference
+    return method.invoke(utilsClass, listOf(before, after, keyExtractorRef)) as ArrayReference
   }
 }
 

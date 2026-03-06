@@ -4,8 +4,10 @@ package com.intellij.java.debugger.streams.rt;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -95,6 +97,57 @@ public final class StreamDebuggerUtils {
         for (int classElementTime : classes.keySet()) {
           mapping.put(classElementTime, afterTime);
         }
+      }
+    }
+    return packMapping(mapping);
+  }
+
+  /**
+   * Computes the distinct-by-key mapping using keys captured during stream execution
+   * (via a {@link ArgumentRecordingWrapper} wrapper). Unlike {@link #computeDistinctByKeyMapping},
+   * this does not re-apply the extractor, so it works correctly for stateful extractors.
+   */
+  public static Object[] computeDistinctByRecordedKeyMapping(
+    Map<Integer, Object> beforeMap,
+    Map<Integer, Object> afterMap,
+    Function<Object, Object> keyExtractor  // must be a ArgumentRecordingWrapper
+  ) {
+    List<Object> capturedKeys = ((ArgumentRecordingWrapper)keyExtractor).capturedKeys;
+
+    List<Map.Entry<Integer, Object>> sortedBefore = new ArrayList<>(beforeMap.entrySet());
+    sortedBefore.sort(Map.Entry.comparingByKey());
+    List<Map.Entry<Integer, Object>> sortedAfter = new ArrayList<>(afterMap.entrySet());
+    sortedAfter.sort(Map.Entry.comparingByKey());
+
+    if (sortedBefore.size() != capturedKeys.size()) {
+      return packMapping(new LinkedHashMap<>());
+    }
+
+    // Identify "winner" indices: first occurrence of each key in before order
+    Set<Object> seenKeys = new LinkedHashSet<>();
+    List<Integer> winnerIndices = new ArrayList<>();
+    for (int i = 0; i < sortedBefore.size(); i++) {
+      Object key = capturedKeys.get(i);
+      if (seenKeys.add(key)) {
+        winnerIndices.add(i);
+      }
+    }
+    if (winnerIndices.size() != sortedAfter.size()) {
+      return packMapping(new LinkedHashMap<>());
+    }
+
+    // Map each distinct key to its after-time
+    Map<Object, Integer> keyToAfterTime = new LinkedHashMap<>();
+    for (int i = 0; i < winnerIndices.size(); i++) {
+      keyToAfterTime.put(capturedKeys.get(winnerIndices.get(i)), sortedAfter.get(i).getKey());
+    }
+
+    // Build before-time -> after-time mapping
+    Map<Integer, Integer> mapping = new LinkedHashMap<>();
+    for (int i = 0; i < sortedBefore.size(); i++) {
+      Integer afterTime = keyToAfterTime.get(capturedKeys.get(i));
+      if (afterTime != null) {
+        mapping.put(sortedBefore.get(i).getKey(), afterTime);
       }
     }
     return packMapping(mapping);
