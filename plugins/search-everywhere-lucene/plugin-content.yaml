@@ -1,0 +1,11 @@
+- name: lib/modules/intellij.searchEverywhereLucene.backend.jar
+  contentModules:
+  - name: intellij.searchEverywhereLucene.backend
+- name: lib/modules/intellij.searchEverywhereLucene.frontend.jar
+  contentModules:
+  - name: intellij.searchEverywhereLucene.frontend
+- name: lib/searchEverywhereLucene-plugin.jar
+  modules:
+  - name: intellij.searchEverywhereLucene.plugin
+  contentModules:
+  - name: intellij.searchEverywhereLucene.common
