@@ -134,7 +134,7 @@ public class PsiElementRenameHandler implements RenameHandler {
 
   public static boolean canRename(@NotNull Project project, Editor editor, PsiElement element) {
     if (element == null) return false;
-    String message = getErrorMessage(project, editor, element);
+    String message = getRenameErrorMessage(project, editor, element);
     if (message != null) {
       CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message),
                                           RefactoringBundle.message("rename.title"), null);
@@ -144,7 +144,10 @@ public class PsiElementRenameHandler implements RenameHandler {
     return true;
   }
 
-  private static @Nullable @NlsContexts.DialogMessage String getErrorMessage(@NotNull Project project, Editor editor, PsiElement element) {
+  /**
+   * Computes the error for the element if it can't be renamed due to general reasons like a file is not writable.
+   */
+  public static @Nullable @NlsContexts.DialogMessage String getRenameErrorMessage(@NotNull Project project, Editor editor, PsiElement element) {
     boolean hasRenameProcessor =
       !(RenamePsiElementProcessorBase.forPsiElement(element) instanceof RenamePsiElementProcessorBase.DefaultRenamePsiElementProcessor);
     boolean hasWritableMetaData = element instanceof PsiMetaOwner o && o.getMetaData() instanceof PsiWritableMetaData;

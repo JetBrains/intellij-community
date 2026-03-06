@@ -441,6 +441,7 @@ c:com.intellij.refactoring.rename.PsiElementRenameHandler
 - <init>():V
 - s:canRename(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement):Z
 - s:getElement(com.intellij.openapi.actionSystem.DataContext):com.intellij.psi.PsiElement
+- s:getRenameErrorMessage(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement):java.lang.String
 - invoke(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.openapi.actionSystem.DataContext):V
 - invoke(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement[],com.intellij.openapi.actionSystem.DataContext):V
 - s:invoke(com.intellij.psi.PsiElement,com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.openapi.editor.Editor):V
