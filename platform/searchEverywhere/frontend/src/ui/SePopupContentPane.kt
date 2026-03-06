@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(IntellijInternalApi::class)
 
 package com.intellij.platform.searchEverywhere.frontend.ui
@@ -1103,6 +1103,7 @@ class SePopupContentPane(
       }
 
       override fun onEditorCreated(editor: Editor) {
+        SePreviewPanelListener.EP.forEachExtensionSafe { it.onNewPreviewEditor(editor) }
         if (editor is EditorEx) {
           editor.setRendererMode(true)
         }

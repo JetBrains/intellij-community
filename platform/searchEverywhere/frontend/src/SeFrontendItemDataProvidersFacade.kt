@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend
 
 import com.intellij.ide.rpc.DataContextId
@@ -11,6 +11,7 @@ import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.SeTransferEnd
 import com.intellij.platform.searchEverywhere.SeTransferEvent
 import com.intellij.platform.searchEverywhere.SeTransferItem
+import com.intellij.platform.searchEverywhere.frontend.ui.SePreviewPanelListener
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeLog
@@ -72,6 +73,7 @@ class SeFrontendItemDataProvidersFacade(private val projectId: ProjectId,
     modifiers: Int,
     searchText: String,
   ): Boolean {
+    SePreviewPanelListener.EP.forEachExtensionSafe { it.onItemSelected() }
     return SeRemoteApi.getInstance().itemSelected(projectId, session, itemData, modifiers, searchText, isAllTab = isAllTab)
   }
 

@@ -20,6 +20,9 @@
     <extensionPoint name="searchEverywhere.mlService"
                     interface="com.intellij.platform.searchEverywhere.frontend.ml.SeMlService"
                     dynamic="true"/>
+    <extensionPoint name="searchEverywhere.previewPanelListener"
+                    interface="com.intellij.platform.searchEverywhere.frontend.ui.SePreviewPanelListener"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
