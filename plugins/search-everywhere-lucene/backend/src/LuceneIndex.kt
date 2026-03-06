@@ -69,8 +69,12 @@ class LuceneIndex(val project: Project, indexName: String, val log: Logger) : Di
       var before = 0
       if (log.isDebugEnabled) {
         val searcher = indexRW.searcherManager.acquire()
-        before = searcher.indexReader.numDocs()
-        indexRW.searcherManager.release(searcher)
+        before = try {
+          searcher.indexReader.numDocs()
+        }
+        finally {
+          indexRW.searcherManager.release(searcher)
+        }
       }
 
       changes(indexRW.writer)
@@ -80,8 +84,8 @@ class LuceneIndex(val project: Project, indexName: String, val log: Logger) : Di
         val searcher = indexRW.searcherManager.acquire()
         val after = searcher.indexReader.numDocs()
         indexRW.searcherManager.release(searcher)
-        
-        log.debug{ "Lucene Index docs number changes: before=$before, after=${after} (diff ${after - before})" }
+
+        log.debug { "Lucene Index docs number changes: before=$before, after=${after} (diff ${after - before})" }
       }
     }
     catch (t: Throwable) {
@@ -138,41 +142,26 @@ class LuceneIndex(val project: Project, indexName: String, val log: Logger) : Di
   override fun dispose() {
     val indexRW = this.atomicIndexRW.load()
 
-    var exception: Throwable? = null
-
-    try {
-      indexRW.searcherManager.close()
-    }
-    catch (e: Throwable) {
-      exception = e
-    }
-
-    try {
-      indexRW.writer.close()
-    }
-    catch (e: Throwable) {
-      if (exception == null) {
-        exception = e
-      }
-      else {
-        exception.addSuppressed(e)
-      }
-    }
-
-    try {
-      directory.close()
-    }
-    catch (e: Throwable) {
-      if (exception == null) {
-        exception = e
-      }
-      else {
-        exception.addSuppressed(e)
-      }
-    }
+    val exception: Throwable? = tryEachAndAccumulateExceptions({
+                                                                 indexRW.searcherManager.close()
+                                                               }, {
+                                                                 indexRW.writer.close()
+                                                               }, {
+                                                                 directory.close()
+                                                               })
 
     if (exception != null) {
       log.error(LuceneIndexInsufficientFaultHandlingException(exception))
+    }
+  }
+
+  private fun tryEachAndAccumulateExceptions(vararg blocks: () -> Unit): Throwable? = blocks.fold(null) { accumulator, block ->
+    try {
+      block()
+      accumulator
+    }
+    catch (e: Throwable) {
+      accumulator?.also { it.addSuppressed(e) } ?: e
     }
   }
 
