@@ -2,8 +2,7 @@
 package com.intellij.execution.wsl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.registry.Registry
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.Socket
@@ -58,14 +57,14 @@ import kotlin.coroutines.coroutineContext
  *
  */
 @ApiStatus.Internal
-@Deprecated("Please use Eel API instead")
+@Deprecated("Please use Eel API instead", level = DeprecationLevel.ERROR)
 class WslProxy(distro: AbstractWslDistribution, private val applicationAddress: InetSocketAddress) : Disposable {
   @Deprecated("Use the construction with the application address." +
               " This constructor can lead to sporadic 'connection refused' errors in case of IPv4/IPv6 confusion.")
   constructor(distro: AbstractWslDistribution, applicationPort: Int) : this(distro, InetSocketAddress("127.0.0.1", applicationPort))
 
   private companion object {
-    private val LOG = logger<WslProxy>()
+    private val LOG = fileLogger()
 
     /**
      * Server might not be opened yet. Since non-blocking Ktor API doesn't wait for it but throws exception instead, we retry
@@ -106,19 +105,19 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationAddress: 
         outputStream.close() // Closing stream should stop process
       }
       catch (e: IOException) {
-        Logger.getInstance(WslProxy::class.java).warn(e)
+        LOG.warn(e)
       }
       finally {
         GlobalScope.launch(Dispatchers.IO) {
           // Wait for process to die. If not -- kill it
           delay(1000)
           if (isAlive) {
-            Logger.getInstance(WslProxy::class.java).warn("Process still alive, destroying")
+            LOG.warn("Process still alive, destroying")
             destroy()
           }
           val exitCode = exitValue()
           if (exitCode != 0) {
-            Logger.getInstance(WslProxy::class.java).warn("Exit code was $exitCode")
+            LOG.warn("Exit code was $exitCode")
           }
         }
       }
@@ -152,7 +151,7 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationAddress: 
         wslCommandLine.createProcess()
       else
         Runtime.getRuntime().exec(wslCommandLine.commandLineString)
-    val log = Logger.getInstance(WslProxy::class.java)
+    val log = LOG
 
     scope.launch {
       process.errorStream.toByteReadChannel().readUTF8Line()?.let {
