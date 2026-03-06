@@ -44,6 +44,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiJavaModuleReferenceElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
@@ -55,6 +56,7 @@ import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.JavadocManager;
@@ -292,12 +294,6 @@ public final class JavaDocReferenceInspection extends LocalInspectionTool {
       linkElement, reference.getRangeInElement(), message, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, isOnTheFly, fixes.toArray(LocalQuickFix.EMPTY_ARRAY)));
   }
 
-  private boolean visitDocRefHolder(PsiDocReferenceHolder refHolder, PsiElement context, ProblemsHolder holder, boolean isOnTheFly) {
-
-
-    return true;
-  }
-
   private void visitRefInDocTag(PsiDocTag tag, JavadocManager manager, PsiElement context, ProblemsHolder holder, boolean isOnTheFly) {
     PsiDocTagValue value = tag.getValueElement();
     if (value == null) return;
@@ -318,16 +314,21 @@ public final class JavaDocReferenceInspection extends LocalInspectionTool {
       if (checkFragmentReference(context, holder, isOnTheFly, fragmentRef)) return;
     }
 
-    PsiReference reference = value.getReference();
+    PsiElement valueElement = value;
+    PsiReference reference = valueElement.getReference();
+    if (reference == null && valueElement.getLastChild() instanceof PsiDocMethodOrFieldRef) {
+      valueElement = valueElement.getLastChild();
+      reference = valueElement.getReference();
+    }
+
     if (reference == null) return;
-    int textOffset = value.getTextOffset();
-    if (textOffset == value.getTextRange().getEndOffset()) return;
-    PsiDocTagValue valueElement = tag.getValueElement();
-    if (valueElement == null) return;
+    int textOffset = valueElement.getTextOffset();
+    if (textOffset == valueElement.getTextRange().getEndOffset()) return;
 
     PsiElement element = reference.resolve();
     String paramName =
-      value.getContainingFile().getViewProvider().getContents().subSequence(textOffset, value.getTextRange().getEndOffset()).toString();
+      valueElement.getContainingFile().getViewProvider().getContents().subSequence(textOffset, valueElement.getTextRange().getEndOffset())
+        .toString();
     String message = element == null && reference instanceof PsiPolyVariantReference ?
                      getResolveErrorMessage(((PsiPolyVariantReference)reference).multiResolve(false), context, paramName) :
                      getResolveErrorMessage(element, context, paramName);
