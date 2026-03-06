@@ -1,9 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyInspectionTestCase
+import com.jetbrains.python.fixtures.fixme
 
 class PyTypeInferenceCspTest : PyInspectionTestCase() {
 
@@ -107,9 +108,8 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
   }
 
   fun `test Attrs type per default`() {
-    fixme("PY-88142", AssertionError::class.java) {
-      runWithAdditionalClassEntryInSdkRoots("packages")
-      {
+    fixme<AssertionError>("PY-88142", "Expected type 'list[Any]', got 'list[_T]' instead") {
+      runWithAdditionalClassEntryInSdkRoots("packages") {
         doTestByText("""
         from typing import Any, assert_type
         import attr
@@ -151,7 +151,7 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
   }
 
   fun `test Bound from return to argument`() {
-    fixme("PY-88142", AssertionError::class.java) {
+    fixme<AssertionError>("PY-88142", "Expected type 'str', got 'U' instead") {
       doTestByText("""
       from typing import Callable, assert_type
 
@@ -486,7 +486,7 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
   }
 
   fun `test Nested csp with type parameter constraint`() {
-    fixme("PY-88142", AssertionError::class.java) {
+    fixme<AssertionError>("Support for combined CSPs necessary", "Expected type 'int', got 'str | int' instead") {
       doTestByText("""
         from typing import Callable, assert_type, Any
         
@@ -551,14 +551,14 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
 
   @TestFor(issues = ["PY-88071"])
   fun `test Default type from both calls explicit Any`() {
-    fixme("PY-88142", AssertionError::class.java) {
+    fixme<AssertionError>("PY-88142", "Expected type 'Any', got 'str' instead") {
       doTestByText("""
-      from typing import assert_type, Any
-      def f1[S=Any]() -> S: ...
-      def f2[T=str](t: T) -> T: ...
-      rf2 = f2(f1())
-      assert_type(rf2, Any)
-      """)
+        from typing import assert_type, Any
+        def f1[S=Any]() -> S: ...
+        def f2[T=str](t: T) -> T: ...
+        rf2 = f2(f1())
+        assert_type(rf2, Any)
+        """)
     }
   }
 

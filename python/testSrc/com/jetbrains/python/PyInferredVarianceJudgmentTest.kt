@@ -2,6 +2,7 @@
 package com.jetbrains.python
 
 import com.jetbrains.python.fixtures.PyTestCase
+import com.jetbrains.python.fixtures.fixme
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyTypeParameter
@@ -744,7 +745,7 @@ internal class PyInferredVarianceJudgmentTest : PyTestCase() {
   }
 
   fun `test Type in string literal`() {
-    fixme("PY-87942: No AST in string literal of type annotation", AssertionFailedError::class.java) {
+    fixme<AssertionFailedError>("PY-87942: No AST in string literal of type annotation", "expected:<COVARIANT> but was:<BIVARIANT>") {
       doTest("T", Variance.COVARIANT, """
         class A[T]:
             def method(self) -> "T": pass
@@ -753,7 +754,7 @@ internal class PyInferredVarianceJudgmentTest : PyTestCase() {
   }
 
   fun `test Type in string literal with Callable`() {
-    fixme("PY-87942: No AST in string literal of type annotation", AssertionFailedError::class.java) {
+    fixme<AssertionFailedError>("PY-87942: No AST in string literal of type annotation", "expected:<COVARIANT> but was:<BIVARIANT>") {
       doTest("T", Variance.COVARIANT, """
       from typing import Callable
       class A[T]:

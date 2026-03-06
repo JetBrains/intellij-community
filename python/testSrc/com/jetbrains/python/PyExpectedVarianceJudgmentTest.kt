@@ -6,7 +6,6 @@ import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.types.PyExpectedVarianceJudgment.getExpectedVariance
 import com.jetbrains.python.psi.types.PyTypeVarType.Variance
 import com.jetbrains.python.psi.types.TypeEvalContext
-import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language
 
 internal class PyExpectedVarianceJudgmentTest : PyTestCase() {
@@ -333,12 +332,12 @@ internal class PyExpectedVarianceJudgmentTest : PyTestCase() {
   }
 
   fun `test String literal type at return`() {
-    fixme("PY-87942: No AST in string literal of type annotation", AssertionFailedError::class.java) {
-      doTest("T\"", Variance.COVARIANT, """
-        class A[T]:
-            def f(self, t: Callable[["T"],None]) : ...
-        """)
-    }
+    doTest("T\"", Variance.COVARIANT, """
+      from collections.abc import Callable
+      
+      class A[T]:
+          def f(self, t: Callable[["T"],None]) : ...
+      """)
   }
 
   // Expect null to avoid variance compatibility inspection check

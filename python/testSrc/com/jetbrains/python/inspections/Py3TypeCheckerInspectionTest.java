@@ -3833,7 +3833,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
   // PY-85997
   public void testRecursiveProtocolAndImplementationUsingSelf() {
-    fixme("Recursive protocol definitions cause infinite recursion during matching", StackOverflowPreventedException.class, () -> {
+    fixme("Recursive protocol definitions cause infinite recursion during matching", StackOverflowPreventedException.class, "", () -> {
       RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
       doTestByText("""
                      from typing import Self, Protocol
@@ -3854,7 +3854,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
   // PY-85997
   public void testRecursiveProtocolAndImplementationReferringToItself() {
-    fixme("Recursive protocol definitions cause infinite recursion during matching", StackOverflowPreventedException.class, () -> {
+    fixme("Recursive protocol definitions cause infinite recursion during matching", StackOverflowPreventedException.class, "", () -> {
       RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
       doTestByText("""
                      from typing import Self, Protocol

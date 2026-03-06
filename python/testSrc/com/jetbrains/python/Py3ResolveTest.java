@@ -919,7 +919,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   // PY-82850
   public void testNonIdempotentComputation() {
-    PyTestCase.fixme("PY-83181", StackOverflowPreventedException.class, () -> {
+    PyTestCase.fixme("PY-83181", StackOverflowPreventedException.class, "", () -> {
       RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
 
       myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
@@ -933,7 +933,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   // PY-83803
   public void testNonIdempotentComputation2() {
-    PyTestCase.fixme("PY-83803", StackOverflowPreventedException.class, () -> {
+    PyTestCase.fixme("PY-83803", StackOverflowPreventedException.class, "", () -> {
       RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
 
       myFixture.configureByFile("resolve/" + getTestName(false) + ".py");

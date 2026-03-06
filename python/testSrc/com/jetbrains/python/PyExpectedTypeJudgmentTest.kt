@@ -6,6 +6,7 @@ import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.StackOverflowPreventedException
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.fixtures.PyTestCase
+import com.jetbrains.python.fixtures.fixme
 import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyExpression
@@ -261,7 +262,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testExpressionInsideLambdaOfGenericFunction() {
-    fixme("PY-85922", StackOverflowPreventedException::class.java) {
+    fixme<StackOverflowPreventedException>("PY-85922", "") {
       doTest("expr", "int", """
       from collections.abc import Callable, Iterable
       
@@ -273,7 +274,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testExpressionInsideGenericClassAsReturnValue1() {
-    fixme("PY-85922", StackOverflowPreventedException::class.java) {
+    fixme<StackOverflowPreventedException>("PY-85922", "") {
       doTest("expr", "int", """
         from typing import Callable
         
@@ -286,7 +287,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testExpressionInsideGenericClassAsReturnValue2() {
-    fixme("PY-85922", StackOverflowPreventedException::class.java) {
+    fixme<StackOverflowPreventedException>("PY-85922", "") {
       doTest("expr", "int", """
         from typing import Callable
         
@@ -895,7 +896,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testDoubleStarredExpressionElementAsArgumentBothKwargsAndNamedParameter() {
-    fixme("Requires constructing an anonymous TypedDict with `extra_items=int`", ComparisonFailure::class.java) {
+    fixme<ComparisonFailure>("Requires constructing an anonymous TypedDict with `extra_items=int`", "int") {
       doTest("expr", "str", """
       def f(a: str, **kwargs: int):
           pass
@@ -1010,7 +1011,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testArgumentOfOverloadedFunctionsBoundedByReturn() {
-    fixme("Depends on correct function overload matching", ComparisonFailure::class.java) {
+    fixme<ComparisonFailure>("Depends on correct function overload matching", "int") {
       doTest("expr", "str", """
       from typing import overload
       
@@ -1028,7 +1029,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testReturnOfOverloadedFunctions() {
-    fixme("Depends on correct function overload matching", ComparisonFailure::class.java) {
+    fixme<ComparisonFailure>("Depends on correct function overload matching", "Any") {
       doTest("expr", "int", """
       from typing import overload
       
