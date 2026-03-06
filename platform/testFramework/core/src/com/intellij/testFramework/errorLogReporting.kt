@@ -1,12 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
+import com.intellij.codeowners.runtime.resolver.TestClassCodeOwnerResolverImpl
 import com.intellij.platform.testFramework.teamCity.generifyErrorMessage
 import com.intellij.platform.testFramework.teamCity.reportTestFailure
-import java.util.ServiceLoader
 
-private val codeOwnerResolver: RuntimeCodeOwnerResolver? by lazy {
-  ServiceLoader.load(RuntimeCodeOwnerResolver::class.java).firstOrNull()
+private val codeOwnerResolver: TestClassCodeOwnerResolverImpl? by lazy {
+  try {
+    TestClassCodeOwnerResolverImpl()
+  }
+  catch (_: Exception) {
+    null
+  }
 }
 
 internal fun ErrorLog.reportAsFailures() {

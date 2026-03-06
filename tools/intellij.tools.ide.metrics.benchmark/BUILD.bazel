@@ -32,6 +32,7 @@ jvm_library(
     "@lib//:opentelemetry",
     "//platform/boot",
     "//platform/core-impl",
+    "//.ownership/runtime-resolver:codeowners-runtime-resolver",
   ]
 )
 
@@ -67,6 +68,8 @@ jvm_library(
     "//platform/boot:boot_test_lib",
     "//platform/core-impl",
     "//platform/core-impl:core-impl_test_lib",
+    "//.ownership/runtime-resolver:codeowners-runtime-resolver",
+    "//.ownership/runtime-resolver:codeowners-runtime-resolver_test_lib",
   ]
 )
 ### auto-generated section `build intellij.tools.ide.metrics.benchmark` end

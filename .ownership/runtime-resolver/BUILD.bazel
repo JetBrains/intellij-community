@@ -1,23 +1,15 @@
 ### auto-generated section `build intellij.codeowners.runtime.resolver` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "codeowners-runtime-resolver_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "codeowners-runtime-resolver",
   module_name = "intellij.codeowners.runtime.resolver",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":codeowners-runtime-resolver_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//.ownership/lib:codeowners",
     "//.ownership/monorepo-resolver:codeowners-monorepo-resolver",
-    "//platform/testFramework/core",
     "//platform/testFramework/bootstrap:tools-testsBootstrap",
   ]
 )
@@ -31,7 +23,6 @@ jvm_library(
     ":codeowners-runtime-resolver",
     "//.ownership/lib:codeowners_test_lib",
     "//.ownership/monorepo-resolver:codeowners-monorepo-resolver_test_lib",
-    "//platform/testFramework/core:core_test_lib",
     "//platform/testFramework/bootstrap:tools-testsBootstrap_test_lib",
   ]
 )

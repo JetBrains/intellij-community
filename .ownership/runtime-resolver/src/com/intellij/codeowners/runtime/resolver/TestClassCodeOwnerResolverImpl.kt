@@ -3,14 +3,13 @@ package com.intellij.codeowners.runtime.resolver
 
 import com.intellij.codeowners.monorepo.resolver.TestOwnerResolver
 import com.intellij.codeowners.scripts.common.ultimateRoot
-import com.intellij.testFramework.RuntimeCodeOwnerResolver
 import com.intellij.tests.TestLocationStorage
 import kotlin.io.path.div
 
-class TestClassCodeOwnerResolverImpl : RuntimeCodeOwnerResolver {
+class TestClassCodeOwnerResolverImpl {
   private val resolver: TestOwnerResolver? by lazy { createResolver() }
 
-  override fun getOwnerGroupName(testClass: Class<*>): String? {
+  fun getOwnerGroupName(testClass: Class<*>): String? {
     val r = resolver ?: return null
     val locationInfo = TestLocationStorage.getTestLocationInfo(testClass) ?: return null
     return r.getOwner(locationInfo.moduleName(), locationInfo.packagePath(), locationInfo.fileName())?.group?.fullName

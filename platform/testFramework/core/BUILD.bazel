@@ -34,6 +34,7 @@ jvm_library(
     "//libraries/http-client",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//platform/testFramework/teamCity",
+    "//.ownership/runtime-resolver:codeowners-runtime-resolver",
     ":libraries_junit4_provided",
   ]
 )
@@ -60,6 +61,7 @@ jvm_library(
     "//libraries/http-client:http-client_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//platform/testFramework/teamCity:teamCity_test_lib",
+    "//.ownership/runtime-resolver:codeowners-runtime-resolver_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.testFramework.core` end
