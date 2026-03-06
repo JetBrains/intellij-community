@@ -129,7 +129,7 @@ internal class KotlinOptionsToCompilerOptionsInspection : AbstractKotlinInspecti
     }
 }
 
-private class ReplaceKotlinOptionsWithCompilerOptionsFix() : KotlinModCommandQuickFix<KtExpression>() {
+private class ReplaceKotlinOptionsWithCompilerOptionsFix : KotlinModCommandQuickFix<KtExpression>() {
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.kotlin.options.with.compiler.options")
 
     override fun applyFix(

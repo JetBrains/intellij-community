@@ -72,7 +72,7 @@ class PrepareKotlinIdeaImportTaskModelBuilder : AbstractModelBuilderService() {
     }
 
     private fun Project.findRegisteredPodImportTask(): String? {
-        return if (TaskNames.podImport in tasks.names) return TaskNames.podImport else null
+        return if (TaskNames.podImport in tasks.names) TaskNames.podImport else null
     }
 
     private fun Project.findRunCommonizerTask(): String? {
@@ -161,7 +161,7 @@ class PrepareKotlinIdeaImportTaskModelBuilder : AbstractModelBuilderService() {
                 buildPath
             } else {
                 val name = GradleReflectionUtil.getValue(this@buildPathCompat, "getName", String::class.java)
-                return if (name.startsWith(":")) {
+                if (name.startsWith(":")) {
                     name
                 } else {
                     ":$name"

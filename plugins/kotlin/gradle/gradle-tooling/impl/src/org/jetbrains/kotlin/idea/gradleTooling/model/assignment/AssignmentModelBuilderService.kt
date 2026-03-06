@@ -24,13 +24,13 @@ class AssignmentModelImpl(
 }
 
 class AssignmentModelBuilderService : AnnotationBasedPluginModelBuilderService<AssignmentModel>() {
-    override val gradlePluginNames
+    override val gradlePluginNames: List<String>
         get() = listOf(
             "org.jetbrains.kotlin.plugin.assignment",
             "kotlin-assignment"
         )
-    override val extensionName get() = "assignment"
-    override val modelClass get() = AssignmentModel::class.java
+    override val extensionName: String get() = "assignment"
+    override val modelClass: Class<AssignmentModel> get() = AssignmentModel::class.java
 
     override fun createModel(annotations: List<String>, presets: List<String>, extension: Any?): AssignmentModelImpl {
         return AssignmentModelImpl(annotations)

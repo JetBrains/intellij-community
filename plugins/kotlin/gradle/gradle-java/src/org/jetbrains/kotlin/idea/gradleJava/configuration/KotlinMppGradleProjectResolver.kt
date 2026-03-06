@@ -151,7 +151,7 @@ open class KotlinMppGradleProjectResolver : AbstractProjectResolverExtension() {
     }
 
     companion object {
-        val proxyObjectCloningCache = WeakHashMap<Any, Any>()
+        val proxyObjectCloningCache: WeakHashMap<Any, Any> = WeakHashMap<Any, Any>()
 
         internal fun getSiblingKotlinModuleData(
             kotlinComponent: KotlinComponent,

@@ -38,7 +38,7 @@ abstract class AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer 
             return false
         }
 
-        val platform = module.platform ?: return false
+        val platform = module.platform
         return isApplicable(module, platform)
     }
 
@@ -55,21 +55,21 @@ abstract class AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer 
         return shouldDisgraceConfiguration(other)
     }
 
-    override fun onFirstRun(fromContext: ConfigurationFromContext, context: ConfigurationContext, performRunnable: Runnable) {
-        val psiMethod = fromContext.sourceElement as PsiMethod
+    override fun onFirstRun(configuration: ConfigurationFromContext, context: ConfigurationContext, startRunnable: Runnable) {
+        val psiMethod = configuration.sourceElement as PsiMethod
         val psiClass = psiMethod.containingClass ?: return
 
         val inheritorChooser = object : InheritorChooser() {
             override fun runForClasses(classes: List<PsiClass>, method: PsiMethod?, context: ConfigurationContext, runnable: Runnable) {
-                chooseTestClassConfiguration(fromContext, context, runnable, psiMethod, *classes.toTypedArray())
+                chooseTestClassConfiguration(configuration, context, runnable, psiMethod, *classes.toTypedArray())
             }
 
             override fun runForClass(aClass: PsiClass, psiMethod: PsiMethod, context: ConfigurationContext, runnable: Runnable) {
-                chooseTestClassConfiguration(fromContext, context, runnable, psiMethod, aClass)
+                chooseTestClassConfiguration(configuration, context, runnable, psiMethod, aClass)
             }
         }
-        if (inheritorChooser.runMethodInAbstractClass(context, performRunnable, psiMethod, psiClass)) return
-        chooseTestClassConfiguration(fromContext, context, performRunnable, psiMethod, psiClass)
+        if (inheritorChooser.runMethodInAbstractClass(context, startRunnable, psiMethod, psiClass)) return
+        chooseTestClassConfiguration(configuration, context, startRunnable, psiMethod, psiClass)
     }
 
     override fun getAllTestsTaskToRun(
@@ -154,7 +154,7 @@ abstract class AbstractKotlinTestMethodGradleConfigurationProducer
         if (GradleConstants.SYSTEM_ID != configuration.settings.externalSystemId) return false
         if (sourceElement.isNull) return false
 
-        (configuration as? GradleRunConfiguration)?.apply {
+        configuration.apply {
             isDebugServerProcess = false
             isRunAsTest = true
         }
@@ -166,7 +166,7 @@ abstract class AbstractKotlinTestMethodGradleConfigurationProducer
         return hasTestFramework && myModule != null && isApplicable(myModule)
     }
 
-    override fun getPsiMethodForLocation(contextLocation: Location<*>) = getTestMethodForKotlinTest(contextLocation)
+    override fun getPsiMethodForLocation(contextLocation: Location<*>): PsiMethod? = getTestMethodForKotlinTest(contextLocation)
 
     override fun isPreferredConfiguration(self: ConfigurationFromContext, other: ConfigurationFromContext): Boolean {
         return checkShouldReplace(self, other) || super.isPreferredConfiguration(self, other)

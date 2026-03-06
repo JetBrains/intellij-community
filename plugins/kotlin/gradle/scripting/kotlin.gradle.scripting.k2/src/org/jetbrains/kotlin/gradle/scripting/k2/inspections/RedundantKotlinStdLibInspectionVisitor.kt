@@ -206,7 +206,7 @@ class RedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsHolder)
     }
 }
 
-private class RemoveDependencyFix() : KotlinModCommandQuickFix<KtCallExpression>() {
+private class RemoveDependencyFix : KotlinModCommandQuickFix<KtCallExpression>() {
     override fun getName(): @IntentionName String {
         return CommonQuickFixBundle.message("fix.remove.title", "dependency")
     }

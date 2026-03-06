@@ -786,7 +786,7 @@ class KotlinBuildScriptManipulator(
         return if (compilerOptionsBlock == null) {
             addCompilerOptionsBlockAndOption(taskName, compilerOption)
         } else {
-            return replaceOrAddCompilerOption(compilerOptionsBlock, parameterName, compilerOption, replaceIt)
+            replaceOrAddCompilerOption(compilerOptionsBlock, parameterName, compilerOption, replaceIt)
         }
     }
 

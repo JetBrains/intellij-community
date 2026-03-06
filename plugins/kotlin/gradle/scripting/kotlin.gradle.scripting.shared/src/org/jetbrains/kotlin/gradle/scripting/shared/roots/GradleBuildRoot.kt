@@ -23,10 +23,10 @@ sealed class GradleBuildRoot(
     open val externalProjectPath: String,
 ) {
     enum class ImportingStatus {
-        importing, updatingCaches, updated
+        IMPORTING, UPDATING_CACHES, UPDATED
     }
 
-    val importing = AtomicReference(ImportingStatus.updated)
+    val importing: AtomicReference<ImportingStatus?> = AtomicReference(ImportingStatus.UPDATED)
 
     abstract val projectRoots: Collection<String>
 
@@ -46,7 +46,7 @@ sealed class GradleBuildRoot(
     }
 
     fun isImportingInProgress(): Boolean {
-        return importing.get() != ImportingStatus.updated
+        return importing.get() != ImportingStatus.UPDATED
     }
 }
 

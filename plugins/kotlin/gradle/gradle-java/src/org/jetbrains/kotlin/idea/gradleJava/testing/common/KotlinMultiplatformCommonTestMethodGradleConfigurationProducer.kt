@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
-private class KotlinMultiplatformCommonTestMethodGradleConfigurationProducer : AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer(),
+internal class KotlinMultiplatformCommonTestMethodGradleConfigurationProducer : AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer(),
                                                                        KotlinMultiplatformCommonProducersProvider {
     override fun isApplicable(module: Module, platform: TargetPlatform) = platform.isCommon() || platform.isJvm()
     override fun findExistingConfiguration(context: ConfigurationContext): RunnerAndConfigurationSettings? = null

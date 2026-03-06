@@ -6,9 +6,5 @@ import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 
 @Suppress("UNCHECKED_CAST")
-fun DataNode<*>.findChildModuleById(id: String) =
+fun DataNode<*>.findChildModuleById(id: String): DataNode<out ModuleData>? =
     children.firstOrNull { (it.data as? ModuleData)?.id == id } as? DataNode<out ModuleData>
-
-@Suppress("UNCHECKED_CAST")
-fun DataNode<*>.findChildModuleByInternalName(name: String) =
-    children.firstOrNull { (it.data as? ModuleData)?.internalName == name } as? DataNode<out ModuleData>

@@ -93,7 +93,7 @@ abstract class GradleBuildRootsLocator(private val project: Project) {
         actualizeBuildRoot(
             workingDir,
             null
-        )?.importing?.set(if (inProgress) GradleBuildRoot.ImportingStatus.importing else GradleBuildRoot.ImportingStatus.updated)
+        )?.importing?.set(if (inProgress) GradleBuildRoot.ImportingStatus.IMPORTING else GradleBuildRoot.ImportingStatus.UPDATED)
         updateNotifications { it.startsWith(workingDir) }
     }
 
@@ -189,7 +189,7 @@ abstract class GradleBuildRootsLocator(private val project: Project) {
             return null
         }
 
-        oldRoot.importing.set(GradleBuildRoot.ImportingStatus.updatingCaches)
+        oldRoot.importing.set(GradleBuildRoot.ImportingStatus.UPDATING_CACHES)
 
         scriptingDebugLog { "save script models after import: ${sync.models}" }
 

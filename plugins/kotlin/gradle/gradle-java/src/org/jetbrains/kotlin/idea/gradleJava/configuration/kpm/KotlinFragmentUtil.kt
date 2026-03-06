@@ -7,6 +7,8 @@ import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.idea.kpm.IdeaKpmContentRoot
 import org.jetbrains.kotlin.gradle.idea.kpm.IdeaKpmFragment
 import org.jetbrains.kotlin.gradle.idea.kpm.IdeaKpmFragmentCoordinates
+import org.jetbrains.kotlin.gradle.idea.kpm.IdeaKpmProject
+import org.jetbrains.kotlin.gradle.idea.kpm.IdeaKpmProjectContainer
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
@@ -37,3 +39,7 @@ val IdeaKpmFragment.sourceDirs: Collection<File>
 
 val IdeaKpmFragment.resourceDirs: Collection<File>
     get() = contentRoots.filter { it.type == IdeaKpmContentRoot.RESOURCES_TYPE }.map { it.file }
+
+internal fun ProjectResolverContext.getIdeaKpmProject(gradleModule: IdeaModule): IdeaKpmProject? {
+    return this.getExtraProject(gradleModule, IdeaKpmProjectContainer::class.java)?.instanceOrNull
+}

@@ -18,12 +18,11 @@ import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
-import java.util.Arrays
-import java.util.stream.Collectors
+
 
 object KotlinModuleUtils {
 
-    fun KotlinComponent.fullName(simpleName: String = name) = when (this) {
+    fun KotlinComponent.fullName(simpleName: String = name): String = when (this) {
         is KotlinCompilation -> compilationFullName(simpleName, disambiguationClassifier)
         else -> simpleName
     }
@@ -89,7 +88,7 @@ object KotlinModuleUtils {
 
     fun getKotlinModuleId(
         gradleModule: IdeaModule, kotlinComponent: KotlinComponent, resolverCtx: ProjectResolverContext
-    ) = getGradleModuleQualifiedName(resolverCtx, gradleModule, kotlinComponent.fullName())
+    ): String = getGradleModuleQualifiedName(resolverCtx, gradleModule, kotlinComponent.fullName())
 
     fun getInternalModuleName(
         gradleModule: IdeaModule,
@@ -128,9 +127,10 @@ object KotlinModuleUtils {
         rootName: String,
         gradlePath: String
     ): String {
-        return ((if (gradlePath.startsWith(":")) "$rootName." else "")
-                + Arrays.stream(gradlePath.split(":".toRegex()).toTypedArray())
-            .filter { s: String -> s.isNotEmpty() }
-            .collect(Collectors.joining(".")))
+        val prefix = if (gradlePath.startsWith(":")) "$rootName." else ""
+        val path = gradlePath.split(":".toRegex())
+            .filter { it.isNotEmpty() }
+            .joinToString(".")
+        return prefix + path
     }
 }

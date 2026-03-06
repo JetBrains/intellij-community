@@ -68,7 +68,7 @@ class KotlinGradleEvent(group: EventLogGroup, val eventName: GradleStatisticsEve
                 else -> throw IllegalArgumentException("$it is of unknown metric type.")
             }
         }
-        CustomNumericalMetrics.values().forEach {
+        CustomNumericalMetrics.entries.forEach {
             if (it.eventGroup == eventName || eventName == GradleStatisticsEventGroups.All) {
                 numericalEventFields[it.name] = EventFields.Long(it.name.lowercase())
                 numericalMetricConsumers[it.name] = it.consumer

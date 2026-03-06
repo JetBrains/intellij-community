@@ -66,8 +66,7 @@ class ResolveModulesPerSourceSetInMppBuildIssueTest : LightPlatformTestCase() {
     }
 }
 
-private class TestProjectRefresher(
-) : ResolveModulesPerSourceSetInMppBuildIssue.ProjectRefresher {
+private class TestProjectRefresher : ResolveModulesPerSourceSetInMppBuildIssue.ProjectRefresher {
     val invocationCount = AtomicInteger(0)
     override fun invoke(project: Project): CompletableFuture<*> {
         invocationCount.getAndIncrement()

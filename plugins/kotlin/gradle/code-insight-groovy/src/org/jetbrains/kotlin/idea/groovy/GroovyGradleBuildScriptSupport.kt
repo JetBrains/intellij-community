@@ -456,7 +456,7 @@ class GroovyBuildScriptManipulator(
         val firstChar = withoutParens.firstOrNull() ?: return this
         val lastChar = withoutParens.lastOrNull() ?: return this
         return if (firstChar == lastChar && (firstChar == '"' || firstChar == '\'')) {
-            return withoutParens.removeSurrounding(firstChar.toString())
+            withoutParens.removeSurrounding(firstChar.toString())
         } else withoutParens
     }
 

@@ -60,7 +60,7 @@ class GradleScriptingTest {
         }
 
         gradleFixture.openProject(projectRoot).withProjectAsync { project ->
-            val reloadOperation = getGradleProjectReloadOperation(project, asDisposable())
+            val reloadOperation = getGradleProjectReloadOperation(project, this@runBlocking.asDisposable())
 
             gradleFixture.awaitProjectConfiguration(project) {
                 dumbMode(project) {

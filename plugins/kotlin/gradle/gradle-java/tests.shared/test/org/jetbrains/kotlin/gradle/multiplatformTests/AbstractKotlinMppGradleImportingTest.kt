@@ -96,7 +96,7 @@ import java.util.TreeSet
  * [com.intellij.ideaProjectStructure.fast.KotlinModuleConsistencyTest].
  */
 @RunWith(KotlinMppTestsJUnit4Runner::class)
-@TestDataPath("\$PROJECT_ROOT/community/plugins/kotlin/idea/tests/testData/gradle")
+@TestDataPath($$"$PROJECT_ROOT/community/plugins/kotlin/idea/tests/testData/gradle")
 abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
                                                       ExpectedPluginModeProvider,
                                                       WorkspaceChecksDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl,

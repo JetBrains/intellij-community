@@ -140,7 +140,7 @@ private class AddDescriptionFix : KotlinModCommandQuickFix<KtCallExpression>() {
     }
 }
 
-private class AddConfigBlockWithDescriptionFix() : KotlinModCommandQuickFix<KtElement>() {
+private class AddConfigBlockWithDescriptionFix : KotlinModCommandQuickFix<KtElement>() {
     override fun getName(): String = familyName
     override fun getFamilyName(): @IntentionFamilyName String = GradleInspectionBundle.message("intention.name.task.add.description")
 

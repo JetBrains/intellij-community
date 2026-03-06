@@ -84,7 +84,6 @@ private fun KotlinBuildScriptManipulator.findSourceSetDependenciesBlock(
         .mapNotNull { expression -> expression.selectorExpression as? KtCallExpression }
         .firstOrNull { expression -> expression.calleeExpression?.text == "dependencies" }
         ?.getBlock()
-    return null
 }
 
 private fun KotlinBuildScriptManipulator.createSourceSetDependenciesBlock(

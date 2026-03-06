@@ -18,7 +18,7 @@ class GradleDaemonJvmCriteriaMigrationAction : DumbAwareAction() {
     }
 
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = Registry.Companion.`is`("gradle.daemon.jvm.criteria.suggest.migration") && e.project != null
+        e.presentation.isEnabledAndVisible = Registry.`is`("gradle.daemon.jvm.criteria.suggest.migration") && e.project != null
     }
 
     override fun actionPerformed(e: AnActionEvent) {

@@ -10,8 +10,8 @@ import java.io.Serializable
 import java.io.StringWriter
 
 class BrokenKotlinDslScriptsModel(exception: Throwable) : KotlinDslScriptsModel, Serializable {
-    val message = exception.message
-    val stackTrace = StringWriter().also { exception.printStackTrace(PrintWriter(it)) }.toString()
+    val message: String? = exception.message
+    val stackTrace: String = StringWriter().also { exception.printStackTrace(PrintWriter(it)) }.toString()
 
     override fun getScriptModels(): Map<File, KotlinDslScriptModel> = mapOf()
 }

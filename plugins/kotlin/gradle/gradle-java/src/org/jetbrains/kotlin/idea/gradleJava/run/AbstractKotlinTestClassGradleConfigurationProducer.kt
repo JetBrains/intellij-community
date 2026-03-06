@@ -38,7 +38,7 @@ abstract class AbstractKotlinMultiplatformTestClassGradleConfigurationProducer :
             return false
         }
 
-        val platform = module.platform ?: return false
+        val platform = module.platform
         return isApplicable(module, platform)
     }
 
@@ -60,23 +60,23 @@ abstract class AbstractKotlinMultiplatformTestClassGradleConfigurationProducer :
         return tasks.map { TestTasksToRun(it, wildcardFilter) }
     }
 
-    override fun onFirstRun(fromContext: ConfigurationFromContext, context: ConfigurationContext, performRunnable: Runnable) {
+    override fun onFirstRun(configuration: ConfigurationFromContext, context: ConfigurationContext, startRunnable: Runnable) {
         val inheritorChooser: InheritorChooser = object : InheritorChooser() {
             override fun runForClasses(classes: List<PsiClass>, method: PsiMethod?, context: ConfigurationContext, runnable: Runnable) {
-                chooseTestClassConfiguration(fromContext, context, runnable, classes)
+                chooseTestClassConfiguration(configuration, context, runnable, classes)
             }
 
             override fun runForClass(aClass: PsiClass, psiMethod: PsiMethod?, context: ConfigurationContext, runnable: Runnable) {
-                chooseTestClassConfiguration(fromContext, context, runnable, listOf(aClass))
+                chooseTestClassConfiguration(configuration, context, runnable, listOf(aClass))
             }
         }
 
-        val sourceElement = fromContext.sourceElement as PsiClass
-        if (inheritorChooser.runMethodInAbstractClass(context, performRunnable, null, sourceElement)) {
+        val sourceElement = configuration.sourceElement as PsiClass
+        if (inheritorChooser.runMethodInAbstractClass(context, startRunnable, null, sourceElement)) {
             return
         }
 
-        chooseTestClassConfiguration(fromContext, context, performRunnable, listOf(sourceElement))
+        chooseTestClassConfiguration(configuration, context, startRunnable, listOf(sourceElement))
     }
 
     private fun chooseTestClassConfiguration(

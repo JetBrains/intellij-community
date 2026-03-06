@@ -55,17 +55,7 @@ public class PluginTargetVersionsRule implements MethodRule {
 
         TestWithKotlinPluginAndGradleVersions testCase = (TestWithKotlinPluginAndGradleVersions) target;
         if (targetVersions != null && !shouldRun(targetVersions, testCase)) {
-            String mark = "ignored";
-            String message = "Test is marked " + mark + " due to unmet requirements\n" +
-                             "Gradle version: " +
-                             testCase.getTestGradleVersion().getVersion() +
-                             " | Requirement: " +
-                             targetVersions.gradleVersion() +
-                             "\n" +
-                             "Plugin version: " +
-                             testCase.getKotlinPluginVersion() +
-                             " | Requirement: " +
-                             targetVersions.pluginVersion();
+            String message = buildErrorMessage(testCase, targetVersions);
 
             throw new AssumptionViolatedException(message);
         }
@@ -73,11 +63,26 @@ public class PluginTargetVersionsRule implements MethodRule {
         return base;
     }
 
+    private static @NotNull String buildErrorMessage(TestWithKotlinPluginAndGradleVersions testCase, PluginTargetVersions targetVersions) {
+        String mark = "ignored";
+        String message = "Test is marked " + mark + " due to unmet requirements\n" +
+                         "Gradle version: " +
+                         testCase.getTestGradleVersion().getVersion() +
+                         " | Requirement: " +
+                         targetVersions.gradleVersion() +
+                         "\n" +
+                         "Plugin version: " +
+                         testCase.getKotlinPluginVersion() +
+                         " | Requirement: " +
+                         targetVersions.pluginVersion();
+        return message;
+    }
+
     private static boolean shouldRun(PluginTargetVersions targetVersions, TestWithKotlinPluginAndGradleVersions testCase) {
         var gradleVersion = testCase.getTestGradleVersion().getVersion();
         var pluginVersion = testCase.getKotlinPluginVersion().getVersion();
 
-        var gradleVersionMatcher = createMatcher("Gradle", targetVersions.gradleVersion());
+        var gradleVersionMatcher = createMatcher(targetVersions.gradleVersion());
         var kotlinVersionRequirement = KotlinVersionUtils.parseKotlinVersionRequirement(targetVersions.pluginVersion());
 
         boolean matchGradleVersion = gradleVersionMatcher == null || gradleVersionMatcher.matches(gradleVersion.getVersion());
@@ -85,7 +90,8 @@ public class PluginTargetVersionsRule implements MethodRule {
     }
 
     @Nullable
-    private static CustomMatcher<String> createMatcher(@NotNull String caption, @NotNull String version) {
+    private static CustomMatcher<String> createMatcher(@NotNull String version) {
+        String caption = "Gradle";
         if (version.isEmpty()) {
             return null;
         }

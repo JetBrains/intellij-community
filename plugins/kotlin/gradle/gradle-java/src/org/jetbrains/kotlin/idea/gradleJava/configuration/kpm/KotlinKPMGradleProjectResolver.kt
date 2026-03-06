@@ -62,7 +62,7 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
         super.populateModuleExtraModels(gradleModule, ideModule)
     }
 
-    override fun createModule(gradleModule: IdeaModule, projectDataNode: DataNode<ProjectData>) =
+    override fun createModule(gradleModule: IdeaModule, projectDataNode: DataNode<ProjectData>): DataNode<ModuleData?>? =
         super.createModule(gradleModule, projectDataNode)?.also { mainModuleNode ->
             ExternalSystemTelemetryUtil.runWithSpan(mainModuleNode.data.owner, "kotlin_import_kmp_createModule") {
                 val initializerContext = ModuleDataInitializer.Context.EMPTY
@@ -99,8 +99,6 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
             return this.getExtraProject(gradleModule, IdeaKpmProjectContainer::class.java)?.instanceOrNull
         }
 
-        //TODO check this
-        internal fun extractPackagePrefix(fragment: IdeaKpmFragment): String? = null
         private fun extractContentRootSources(model: IdeaKpmProject): Collection<IdeaKpmFragment> =
             model.modules.flatMap { it.fragments }
 
