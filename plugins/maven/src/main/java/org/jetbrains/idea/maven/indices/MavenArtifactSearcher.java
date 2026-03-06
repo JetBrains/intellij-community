@@ -26,9 +26,7 @@ public class MavenArtifactSearcher extends MavenSearcher<MavenArtifactSearchResu
     MavenDependencySearchService searchService = MavenDependencySearchService.getInstance(project);
     boolean useLocalProvidersOnly = ApplicationManager.getApplication().isUnitTestMode();
     Promise<Integer> asyncPromise = searchService.fulltextSearchBlocking(pattern, false, useLocalProvidersOnly, mdci -> {
-      if (mdci instanceof MavenRepoArtifactInfo) {
-        searchResults.add((MavenRepoArtifactInfo)mdci);
-      }
+      searchResults.add(mdci);
     });
     new WaitFor(1000) {
       @Override
