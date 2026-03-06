@@ -27,8 +27,15 @@ suspend fun <T, R> StateQuery<T>.withCurrentMatch(f: suspend CoroutineScope.(T) 
 /**
  * Will wait until Maybe emits a match and then run with it once.
  */
-suspend fun <T, R> Query<Maybe, T>.withFirstMatch(f: suspend CoroutineScope.(T) -> R): WithMatchResult<R> {
+suspend fun <T, R> Query<Maybe, T>.withFirstMatchResult(f: suspend CoroutineScope.(T) -> R): WithMatchResult<R> {
   return matchesFlow().firstNotNull { it.withMatch(f) }
+}
+
+/**
+ * Will wait until Maybe emits a match and then run with it once while the match is valid.
+ */
+suspend fun <T, R> Query<Maybe, T>.withFirstMatch(f: suspend CoroutineScope.(T) -> R): R {
+  return withFirstMatchResult(f = f).getOrThrow()
 }
 
 /**
