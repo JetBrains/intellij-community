@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.fixtures;
 
 import com.google.common.base.Joiner;
@@ -644,15 +644,33 @@ public abstract class PyTestCase extends UsefulTestCase {
     }
   }
 
-  public static void fixme(@NotNull String comment, @NotNull Class<? extends Throwable> c, @NotNull Runnable test) {
+  public static void fixme(@NotNull String comment,
+                           @NotNull Class<? extends Throwable> expectedErrorClass,
+                           @NotNull String anticipatedMessage,
+                           @NotNull Runnable test) {
     try {
       test.run();
     }
     catch (Throwable failedError) {
-      if (c.isInstance(failedError) ||
-          failedError instanceof TestLoggerFactory.TestLoggerAssertionError testLoggerError && c.isInstance(testLoggerError.getCause())) {
-        // fix-me tests are supposed to fail
-        return;
+      if (
+        expectedErrorClass.isInstance(failedError)
+        || failedError instanceof TestLoggerFactory.TestLoggerAssertionError testLoggerError
+           && expectedErrorClass.isInstance(testLoggerError.getCause())
+      ) {
+        if (failedError.getMessage().contains(anticipatedMessage)) {
+          // fix-me tests are supposed to fail
+          return;
+        }
+        throw new AssertionError(
+          "Test " +
+          comment +
+          " expected the incorrect error message '" +
+          anticipatedMessage +
+          "' was not found in actual message '" +
+          failedError.getMessage() +
+          "'",
+          failedError
+        );
       }
       throw failedError;
     }
