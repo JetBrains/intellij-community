@@ -70,7 +70,6 @@ public final class PostfixTemplatesUtils {
                                    @NotNull Editor editor,
                                    @NotNull PsiElement expr) {
     Project project = expr.getProject();
-    PsiElement[] elements = {expr};
     if (surrounder instanceof ModCommandSurrounder modCommandSurrounder) {
       ActionContext context = ActionContext.from(editor, expr.getContainingFile());
       SmartPsiElementPointer<PsiElement> exprPointer = SmartPointerManager.createPointer(expr);
@@ -96,6 +95,7 @@ public final class PostfixTemplatesUtils {
         .submit(AppExecutorUtil.getAppExecutorService());
       return null;
     }
+    PsiElement[] elements = {expr};
     if (surrounder.isApplicable(elements)) {
       return surrounder.surroundElements(project, editor, elements);
     }
