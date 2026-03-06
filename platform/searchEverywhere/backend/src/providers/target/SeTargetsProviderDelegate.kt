@@ -129,7 +129,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
     }
     val (startOffset, endOffset) = rangeResult ?: return null
 
-    return SePreviewInfoFactory().create(usageInfo.virtualFile!!.rpcId(), listOf(startOffset to endOffset))
+    return SePreviewInfoFactory.create(usageInfo.virtualFile!!.rpcId(), listOf(startOffset to endOffset))
   }
 
   /**
