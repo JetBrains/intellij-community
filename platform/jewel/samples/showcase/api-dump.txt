@@ -20,6 +20,7 @@ f:org.jetbrains.jewel.samples.showcase.ShowcaseIcons$Components
 - f:getButton():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getCheckbox():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getComboBox():org.jetbrains.jewel.ui.icon.PathIconKey
+- f:getGotIt():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getLinks():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getMenu():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getProgressBar():org.jetbrains.jewel.ui.icon.PathIconKey
