@@ -12,12 +12,12 @@ import java.util.function.Function;
  * without re-applying the extractor.
  */
 @SuppressWarnings("unused")
-public final class ArgumentRecordingWrapper implements Function<Object, Object> {
+public final class KeyRecorder implements Function<Object, Object> {
   public final List<Object> capturedKeys = new ArrayList<>();
   private final Function<Object, Object> delegate;
 
   @SuppressWarnings("unchecked")
-  public ArgumentRecordingWrapper(Function<?, ?> delegate) {
+  public KeyRecorder(Function<?, ?> delegate) {
     this.delegate = (Function<Object, Object>) delegate;
   }
 

@@ -7,4 +7,8 @@ import com.intellij.xdebugger.XDebugSession
 
 class BreakpointEngineDistinctOperationsTest : DistinctOperationsTest() {
   override fun getHelper(session: XDebugSession): TraceExecutionTestHelper = breakpointEngineHelper(session)
+
+  fun testEntryWithSideEffectsDistinctKeys() = doStreamExWithResultTest()
+
+  fun testEntryWithSideEffectsDistinctValues() = doStreamExWithResultTest()
 }

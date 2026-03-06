@@ -8,7 +8,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 
 /**
  * @author Shumaf Lovpache
@@ -104,16 +103,14 @@ public final class StreamDebuggerUtils {
 
   /**
    * Computes the distinct-by-key mapping using keys captured during stream execution
-   * (via a {@link ArgumentRecordingWrapper} wrapper). Unlike {@link #computeDistinctByKeyMapping},
-   * this does not re-apply the extractor, so it works correctly for stateful extractors.
+   * (via a {@link KeyRecorder} or {@link EntryKeyCapturingWrapper}). Does not re-apply the
+   * extractor, so it works correctly for stateful extractors.
    */
   public static Object[] computeDistinctByRecordedKeyMapping(
     Map<Integer, Object> beforeMap,
     Map<Integer, Object> afterMap,
-    Function<Object, Object> keyExtractor  // must be a ArgumentRecordingWrapper
+    List<Object> capturedKeys
   ) {
-    List<Object> capturedKeys = ((ArgumentRecordingWrapper)keyExtractor).capturedKeys;
-
     List<Map.Entry<Integer, Object>> sortedBefore = new ArrayList<>(beforeMap.entrySet());
     sortedBefore.sort(Map.Entry.comparingByKey());
     List<Map.Entry<Integer, Object>> sortedAfter = new ArrayList<>(afterMap.entrySet());
@@ -151,37 +148,6 @@ public final class StreamDebuggerUtils {
       }
     }
     return packMapping(mapping);
-  }
-
-  public static Object[] computeDistinctByKeyMapping(
-    Map<Integer, Object> beforeMap,
-    Map<Integer, Object> afterMap,
-    Function<Object, Object> keyExtractor
-  ) {
-    Map<Object, List<Integer>> keyToBeforeTimes = new LinkedHashMap<>();
-    for (Map.Entry<Integer, Object> entry : beforeMap.entrySet()) {
-      Object key = keyExtractor.apply(entry.getValue());
-      keyToBeforeTimes.computeIfAbsent(key, k -> new ArrayList<>()).add(entry.getKey());
-    }
-    Map<Integer, Integer> mapping = new LinkedHashMap<>();
-    for (Map.Entry<Integer, Object> entry : afterMap.entrySet()) {
-      Object key = keyExtractor.apply(entry.getValue());
-      List<Integer> beforeTimes = keyToBeforeTimes.get(key);
-      if (beforeTimes != null) {
-        for (int beforeTime : beforeTimes) {
-          mapping.put(beforeTime, entry.getKey());
-        }
-      }
-    }
-    return packMapping(mapping);
-  }
-
-  public static Object[] computeDistinctByMapKeyMapping(Map<Integer, Object> beforeMap, Map<Integer, Object> afterMap) {
-    return computeDistinctByKeyMapping(beforeMap, afterMap, v -> ((Map.Entry<?, ?>) v).getKey());
-  }
-
-  public static Object[] computeDistinctByMapValueMapping(Map<Integer, Object> beforeMap, Map<Integer, Object> afterMap) {
-    return computeDistinctByKeyMapping(beforeMap, afterMap, v -> ((Map.Entry<?, ?>) v).getValue());
   }
 
   private static Object[] packMapping(Map<Integer, Integer> mapping) {
