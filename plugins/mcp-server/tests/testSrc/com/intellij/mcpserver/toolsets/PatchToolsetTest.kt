@@ -255,6 +255,107 @@ class PatchToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
+  fun apply_patch_supports_strict_at_at_pair_hunk_blocks() = runBlocking(Dispatchers.Default) {
+    val pathInProject = "src/Test.java"
+    val patch = buildPatch(
+      "*** Begin Patch",
+      "*** Update File: $pathInProject",
+      "@@",
+      "Test.java content",
+      "@@",
+      "updated with strict pair",
+      "*** End Patch",
+    )
+
+    testMcpTool(
+      PatchToolset::apply_patch.name,
+      buildJsonObject {
+        put("input", JsonPrimitive(patch))
+      },
+      "Applied patch to 1 file."
+    )
+
+    testMcpTool(
+      TextToolset::get_file_text_by_path.name,
+      buildJsonObject {
+        put("pathInProject", JsonPrimitive(pathInProject))
+      },
+      "updated with strict pair\n"
+    )
+  }
+
+  @Test
+  fun apply_patch_supports_wrapped_unified_git_diff() = runBlocking(Dispatchers.Default) {
+    val pathInProject = "src/Test.java"
+    val patch = buildPatch(
+      "*** Begin Patch",
+      "diff --git a/$pathInProject b/$pathInProject",
+      "--- a/$pathInProject",
+      "+++ b/$pathInProject",
+      "@@ -1 +1 @@",
+      "-Test.java content",
+      "+updated from git diff",
+      "*** End Patch",
+    )
+
+    testMcpTool(
+      PatchToolset::apply_patch.name,
+      buildJsonObject {
+        put("input", JsonPrimitive(patch))
+      },
+      "Applied patch to 1 file."
+    )
+
+    testMcpTool(
+      TextToolset::get_file_text_by_path.name,
+      buildJsonObject {
+        put("pathInProject", JsonPrimitive(pathInProject))
+      },
+      "updated from git diff\n"
+    )
+  }
+
+  @Test
+  fun apply_patch_supports_raw_git_rename_without_hunks() = runBlocking(Dispatchers.Default) {
+    val oldPath = "src/rename-old.txt"
+    val newPath = "src/rename-new.txt"
+
+    testMcpTool(
+      FileToolset::create_new_file.name,
+      buildJsonObject {
+        put("pathInProject", JsonPrimitive(oldPath))
+        put("text", JsonPrimitive("alpha\nbeta\n"))
+      },
+      "[success]"
+    )
+
+    val patch = buildPatch(
+      "diff --git a/$oldPath b/$newPath",
+      "similarity index 100%",
+      "rename from $oldPath",
+      "rename to $newPath",
+    )
+
+    testMcpTool(
+      PatchToolset::apply_patch.name,
+      buildJsonObject {
+        put("input", JsonPrimitive(patch))
+      },
+      "Applied patch to 1 file."
+    )
+
+    testMcpTool(
+      TextToolset::get_file_text_by_path.name,
+      buildJsonObject {
+        put("pathInProject", JsonPrimitive(newPath))
+      },
+      "alpha\nbeta\n"
+    )
+
+    assertReadFails(oldPath)
+  }
+
+  @Test
   fun apply_patch_accepts_patch_alias_parameter() = runBlocking(Dispatchers.Default) {
     val pathInProject = "src/alias.txt"
     val patch = buildPatch(

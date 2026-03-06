@@ -11,6 +11,8 @@ private const val UPDATE_PREFIX = "*** Update File: "
 private const val DELETE_PREFIX = "*** Delete File: "
 private const val MOVE_PREFIX = "*** Move to: "
 private const val END_OF_FILE = "*** End of File"
+private const val DIFF_GIT_PREFIX = "diff --git "
+private const val NO_NEWLINE_MARKER = "\\ No newline at end of file"
 
 private val HEREDOC_PREFIXES = setOf("<<EOF", "<<'EOF'", "<<\"EOF\"")
 private val CONTROL_CHAR_REGEX = Regex("[\\u0000-\\u001F\\u007F]")
@@ -57,12 +59,22 @@ internal object PatchApplyEngine {
   fun parsePatch(text: String): List<PatchOperation> {
     val lines = unwrapHeredocLines(splitLines(text))
     val startIndex = findMarkerIndex(lines, BEGIN_MARKER)
-    if (startIndex < 0) mcpFail("patch must include *** Begin Patch")
+    if (startIndex >= 0) {
+      val endIndex = findMarkerIndex(lines, END_MARKER, startIndex + 1)
+      if (endIndex < 0) mcpFail("patch must include *** End Patch")
 
-    val endIndex = findMarkerIndex(lines, END_MARKER, startIndex + 1)
-    if (endIndex < 0) mcpFail("patch must include *** End Patch")
+      val bodyStart = startIndex + 1
+      if (looksLikeGitDiff(lines, bodyStart, endIndex)) {
+        return GitDiffParser(lines, bodyStart, endIndex).parseOperations()
+      }
+      return PatchParser(lines, bodyStart, endIndex).parseOperations()
+    }
 
-    return PatchParser(lines, startIndex + 1, endIndex).parseOperations()
+    if (looksLikeGitDiff(lines, 0, lines.size)) {
+      return GitDiffParser(lines, 0, lines.size).parseOperations()
+    }
+
+    mcpFail("patch must include *** Begin Patch")
   }
 
   fun applyHunks(originalText: String, hunks: List<PatchHunk>): String {
@@ -192,10 +204,13 @@ private class PatchParser(
 
   private fun parseHunk(isFirstHunk: Boolean): PatchHunk {
     var header: String? = null
+    var allowsStrictPair = false
     val line = lines[index]
     if (isHunkHeaderLine(line)) {
-      val headerText = stripUnifiedDiffHeader(line.trim())
+      val trimmedHeader = line.trim()
+      val headerText = stripUnifiedDiffHeader(trimmedHeader)
       header = headerText.ifEmpty { null }
+      allowsStrictPair = trimmedHeader == "@@"
       index += 1
     }
     else if (isFirstHunk) {
@@ -203,6 +218,10 @@ private class PatchParser(
     }
     else {
       mcpFail("Expected @@ hunk header")
+    }
+
+    if (allowsStrictPair && index < endIndex && isStrictPairBlockStart(lines[index])) {
+      return parseStrictPairHunk()
     }
 
     val hunkLines = mutableListOf<PatchHunkLine>()
@@ -233,6 +252,240 @@ private class PatchParser(
 
     if (hunkLines.isEmpty()) mcpFail("Empty hunk in Update File")
     return PatchHunk(header = header, lines = hunkLines, isEndOfFile = isEndOfFile)
+  }
+
+  private fun parseStrictPairHunk(): PatchHunk {
+    val oldLines = mutableListOf<String>()
+    var hasSecondDelimiter = false
+
+    while (index < endIndex && !isPatchHeaderLine(lines[index])) {
+      val line = lines[index]
+      if (line.trim() == "@@") {
+        hasSecondDelimiter = true
+        index += 1
+        break
+      }
+      oldLines += line
+      index += 1
+    }
+
+    if (!hasSecondDelimiter) {
+      mcpFail("Strict @@ pair hunk requires second @@ delimiter")
+    }
+
+    val newLines = mutableListOf<String>()
+    while (index < endIndex && !isPatchHeaderLine(lines[index]) && !isHunkHeaderLine(lines[index])) {
+      val line = lines[index]
+      newLines += line
+      index += 1
+    }
+
+    if (oldLines.isEmpty() && newLines.isEmpty()) mcpFail("Empty hunk in Update File")
+
+    val hunkLines = ArrayList<PatchHunkLine>(oldLines.size + newLines.size)
+    for (line in oldLines) {
+      hunkLines += PatchHunkLine(prefix = '-', text = line)
+    }
+    for (line in newLines) {
+      hunkLines += PatchHunkLine(prefix = '+', text = line)
+    }
+    return PatchHunk(header = null, lines = hunkLines, isEndOfFile = false)
+  }
+
+  private fun isStrictPairBlockStart(line: String): Boolean {
+    if (isPatchHeaderLine(line) || isHunkHeaderLine(line)) return false
+    return !isPrefixedDiffLine(line)
+  }
+
+  private fun isPrefixedDiffLine(line: String): Boolean {
+    return line.isNotEmpty() && isDiffPrefix(line.first())
+  }
+}
+
+private class GitDiffParser(
+  private val lines: List<String>,
+  startIndex: Int,
+  private val endIndex: Int,
+) {
+  private var index: Int = startIndex
+
+  fun parseOperations(): List<PatchOperation> {
+    val operations = mutableListOf<PatchOperation>()
+    while (index < endIndex) {
+      while (index < endIndex && lines[index].trim().isEmpty()) {
+        index += 1
+      }
+      if (index >= endIndex) {
+        break
+      }
+      operations += parseOperation()
+    }
+
+    if (operations.isEmpty()) mcpFail("patch did not contain any operations")
+    return operations
+  }
+
+  private fun parseOperation(): PatchOperation {
+    var oldPath: String? = null
+    var newPath: String? = null
+    var renameFrom: String? = null
+    var renameTo: String? = null
+    val hunks = mutableListOf<PatchHunk>()
+    var sawGitSignal = false
+
+    while (index < endIndex) {
+      val line = lines[index]
+      val trimmed = line.trimStart()
+
+      if (trimmed.isEmpty()) {
+        index += 1
+        continue
+      }
+
+      if (trimmed.startsWith(DIFF_GIT_PREFIX)) {
+        if (sawGitSignal) {
+          break
+        }
+        sawGitSignal = true
+        parseDiffGitHeaderPaths(trimmed)?.let { (fromPath, toPath) ->
+          oldPath = fromPath
+          newPath = toPath
+        }
+        index += 1
+        continue
+      }
+
+      if (line.startsWith("--- ")) {
+        oldPath = parseGitMarkerPath(line.removePrefix("--- "))
+        sawGitSignal = true
+        index += 1
+        continue
+      }
+
+      if (line.startsWith("+++ ")) {
+        newPath = parseGitMarkerPath(line.removePrefix("+++ "))
+        sawGitSignal = true
+        index += 1
+        continue
+      }
+
+      if (trimmed.startsWith("rename from ")) {
+        renameFrom = parseGitRenamePath(trimmed.removePrefix("rename from "))
+        sawGitSignal = true
+        index += 1
+        continue
+      }
+
+      if (trimmed.startsWith("rename to ")) {
+        renameTo = parseGitRenamePath(trimmed.removePrefix("rename to "))
+        sawGitSignal = true
+        index += 1
+        continue
+      }
+
+      if (trimmed == NO_NEWLINE_MARKER) {
+        index += 1
+        continue
+      }
+
+      if (trimmed.startsWith("Binary files ") || trimmed == "GIT binary patch") {
+        mcpFail("Binary git patch is not supported")
+      }
+
+      if (isGitMetadataLine(trimmed)) {
+        sawGitSignal = true
+        index += 1
+        continue
+      }
+
+      if (isHunkHeaderLine(line)) {
+        sawGitSignal = true
+        hunks += parseUnifiedHunk()
+        continue
+      }
+
+      if (!sawGitSignal) {
+        mcpFail("Unexpected patch line: $line")
+      }
+      break
+    }
+
+    if (!sawGitSignal) {
+      mcpFail("patch did not contain any operations")
+    }
+
+    val sourcePath = renameFrom ?: oldPath
+    val targetPath = renameTo ?: newPath
+    return buildOperation(sourcePath, targetPath, hunks)
+  }
+
+  private fun parseUnifiedHunk(): PatchHunk {
+    val headerText = stripUnifiedDiffHeader(lines[index].trim())
+    val header = headerText.ifEmpty { null }
+    index += 1
+
+    val hunkLines = mutableListOf<PatchHunkLine>()
+    var isEndOfFile = false
+    while (index < endIndex) {
+      val line = lines[index]
+      val trimmed = line.trimStart()
+      if (trimmed.startsWith(DIFF_GIT_PREFIX) || line.startsWith("--- ") || line.startsWith("+++ ") || isHunkHeaderLine(line)) {
+        break
+      }
+      if (trimmed == NO_NEWLINE_MARKER) {
+        index += 1
+        continue
+      }
+      if (line == END_OF_FILE) {
+        isEndOfFile = true
+        index += 1
+        break
+      }
+      if (line.isEmpty()) {
+        hunkLines += PatchHunkLine(prefix = ' ', text = "")
+        index += 1
+        continue
+      }
+      val prefix = line.first()
+      if (!isDiffPrefix(prefix)) {
+        if (hunkLines.isEmpty()) {
+          mcpFail("Hunk lines must start with space, +, or -")
+        }
+        break
+      }
+
+      hunkLines += PatchHunkLine(prefix = prefix, text = line.substring(1))
+      index += 1
+    }
+
+    if (hunkLines.isEmpty()) mcpFail("Empty hunk in Update File")
+    return PatchHunk(header = header, lines = hunkLines, isEndOfFile = isEndOfFile)
+  }
+
+  private fun buildOperation(sourcePath: String?, targetPath: String?, hunks: List<PatchHunk>): PatchOperation {
+    if (sourcePath == null && targetPath == null) {
+      mcpFail("Could not determine file path from git diff")
+    }
+
+    if (sourcePath == null) {
+      val path = targetPath ?: mcpFail("Could not determine file path from git diff")
+      ensureSafePatchPath(path, "Add File")
+      val content = if (hunks.isEmpty()) "" else PatchApplyEngine.applyHunks("", hunks)
+      return AddPatchOperation(path = path, content = content)
+    }
+
+    if (targetPath == null) {
+      ensureSafePatchPath(sourcePath, "Delete File")
+      return DeletePatchOperation(path = sourcePath)
+    }
+
+    ensureSafePatchPath(sourcePath, "Update File")
+    ensureSafePatchPath(targetPath, "Move to")
+    return UpdatePatchOperation(
+      path = sourcePath,
+      moveTo = if (sourcePath == targetPath) null else targetPath,
+      hunks = hunks,
+    )
   }
 }
 
@@ -490,6 +743,72 @@ private fun findMarkerIndex(lines: List<String>, marker: String, start: Int = 0)
     if (lines[index].trim() == marker) return index
   }
   return -1
+}
+
+private fun looksLikeGitDiff(lines: List<String>, start: Int, end: Int): Boolean {
+  var hasFileMarkers = false
+  for (index in start until end) {
+    val line = lines[index]
+    val trimmed = line.trimStart()
+    if (trimmed.startsWith(DIFF_GIT_PREFIX)) return true
+    if (line.startsWith("--- ") || line.startsWith("+++ ")) {
+      hasFileMarkers = true
+      continue
+    }
+    if (trimmed.startsWith("rename from ") || trimmed.startsWith("rename to ")) return true
+  }
+  return hasFileMarkers
+}
+
+private fun parseDiffGitHeaderPaths(line: String): Pair<String, String>? {
+  val payload = line.removePrefix(DIFF_GIT_PREFIX).trim()
+  if (payload.isEmpty()) return null
+  val tokens = payload.split(' ', limit = 3)
+  if (tokens.size < 2) return null
+  val fromPath = normalizeGitMarkerPath(tokens[0]) ?: return null
+  val toPath = normalizeGitMarkerPath(tokens[1]) ?: return null
+  return fromPath to toPath
+}
+
+private fun parseGitMarkerPath(rawValue: String): String? {
+  val marker = rawValue.substringBefore('\t').trim()
+  return normalizeGitMarkerPath(marker)
+}
+
+private fun parseGitRenamePath(rawValue: String): String {
+  val path = unquoteGitPath(rawValue.trim())
+  if (path.isEmpty()) {
+    mcpFail("Could not determine file path from git diff")
+  }
+  return path
+}
+
+private fun normalizeGitMarkerPath(rawValue: String): String? {
+  val value = unquoteGitPath(rawValue)
+  if (value == "/dev/null") return null
+  return when {
+    value.startsWith("a/") || value.startsWith("b/") -> value.substring(2)
+    else -> value
+  }
+}
+
+private fun unquoteGitPath(rawValue: String): String {
+  val value = rawValue.trim()
+  if (value.length < 2 || value.first() != '"' || value.last() != '"') return value
+  val inner = value.substring(1, value.length - 1)
+  return inner
+    .replace("\\\\", "\\")
+    .replace("\\\"", "\"")
+}
+
+private fun isGitMetadataLine(trimmed: String): Boolean {
+  return trimmed.startsWith("index ") ||
+         trimmed.startsWith("old mode ") ||
+         trimmed.startsWith("new mode ") ||
+         trimmed.startsWith("new file mode ") ||
+         trimmed.startsWith("deleted file mode ") ||
+         trimmed.startsWith("similarity index ") ||
+         trimmed.startsWith("dissimilarity index ")
 }
 
 private fun splitLines(text: String): List<String> {

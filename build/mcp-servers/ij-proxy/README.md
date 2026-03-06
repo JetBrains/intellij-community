@@ -76,7 +76,7 @@ Each proxy command maps to one or more JetBrains MCP tools. Search tool mapping 
 
 - `read_file`: Matches Codex `read_file` (line-numbered output + indentation mode). Uses `get_file_text_by_path`.
 - `list_dir`: Matches Codex `list_dir`. Uses `list_directory_tree`.
-- `apply_patch`: Matches Codex `apply_patch`. Uses `get_file_text_by_path` + `create_new_file` and `git rm`/`git mv` for delete/move.
+- `apply_patch`: Matches Codex `apply_patch` and accepts unified git diff compatibility input (raw or wrapped in `*** Begin Patch` / `*** End Patch`). Uses `get_file_text_by_path` + `create_new_file` and `git rm`/`git mv` for delete/move.
 - `apply_patch` unified hunk compatibility: coordinate-only headers like `@@ -1,3 +1,4 @@` are treated as metadata (not search hints). See `apply-patch-unified-hunk-header-spec.md`.
 - `rename`: Uses `rename_refactoring`.
 

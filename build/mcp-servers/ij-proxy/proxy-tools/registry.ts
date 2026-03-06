@@ -130,7 +130,7 @@ const TOOL_VARIANTS: ToolVariant[] = [
   },
   {
     name: 'apply_patch',
-    description: 'Apply a patch using the Codex apply_patch format.',
+    description: 'Apply a patch using the Codex apply_patch format or unified git diff format.',
     schemaFactory: () => createApplyPatchSchema(),
     handlerFactory: ({projectPath, callUpstreamTool}) => (args) =>
       handleApplyPatchTool(args, projectPath, callUpstreamTool),

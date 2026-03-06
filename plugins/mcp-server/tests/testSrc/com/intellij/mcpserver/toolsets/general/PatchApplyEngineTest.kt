@@ -110,6 +110,113 @@ class PatchApplyEngineTest {
   }
 
   @Test
+  fun `parsePatch accepts raw unified git diff`() {
+    val patch = buildPatch(
+      "diff --git a/sample.txt b/sample.txt",
+      "index 1111111..2222222 100644",
+      "--- a/sample.txt",
+      "+++ b/sample.txt",
+      "@@ -1,2 +1,2 @@",
+      " alpha",
+      "-beta",
+      "+gamma",
+    )
+
+    val operations = PatchApplyEngine.parsePatch(patch)
+
+    assertThat(operations).hasSize(1)
+    val update = operations.single() as UpdatePatchOperation
+    assertThat(update.path).isEqualTo("sample.txt")
+    assertThat(update.moveTo).isNull()
+    assertThat(update.hunks).hasSize(1)
+    assertThat(update.hunks.single().lines).containsExactly(
+      PatchHunkLine(' ', "alpha"),
+      PatchHunkLine('-', "beta"),
+      PatchHunkLine('+', "gamma"),
+    )
+  }
+
+  @Test
+  fun `parsePatch accepts wrapped unified git diff`() {
+    val patch = buildPatch(
+      "*** Begin Patch",
+      "diff --git a/sample.txt b/sample.txt",
+      "--- a/sample.txt",
+      "+++ b/sample.txt",
+      "@@ -1 +1 @@",
+      "-old",
+      "+new",
+      "*** End Patch",
+    )
+
+    val operations = PatchApplyEngine.parsePatch(patch)
+
+    assertThat(operations).hasSize(1)
+    val update = operations.single() as UpdatePatchOperation
+    assertThat(update.path).isEqualTo("sample.txt")
+    assertThat(update.moveTo).isNull()
+    assertThat(update.hunks).hasSize(1)
+  }
+
+  @Test
+  fun `parsePatch maps rename-only git diff to move operation`() {
+    val patch = buildPatch(
+      "diff --git a/old.txt b/new.txt",
+      "similarity index 100%",
+      "rename from old.txt",
+      "rename to new.txt",
+    )
+
+    val operations = PatchApplyEngine.parsePatch(patch)
+
+    assertThat(operations).hasSize(1)
+    val update = operations.single() as UpdatePatchOperation
+    assertThat(update.path).isEqualTo("old.txt")
+    assertThat(update.moveTo).isEqualTo("new.txt")
+    assertThat(update.hunks).isEmpty()
+  }
+
+  @Test
+  fun `parsePatch supports strict at-at pair hunk blocks`() {
+    val patch = buildPatch(
+      "*** Begin Patch",
+      "*** Update File: sample.txt",
+      "@@",
+      "## Goals",
+      "- Keep old wording",
+      "@@",
+      "## Goals",
+      "- Keep new wording",
+      "*** End Patch",
+    )
+
+    val operations = PatchApplyEngine.parsePatch(patch)
+
+    assertThat(operations).hasSize(1)
+    val update = operations.single() as UpdatePatchOperation
+    assertThat(update.hunks).hasSize(1)
+    assertThat(update.hunks.single().header).isNull()
+    assertThat(update.hunks.single().lines).containsExactly(
+      PatchHunkLine('-', "## Goals"),
+      PatchHunkLine('-', "- Keep old wording"),
+      PatchHunkLine('+', "## Goals"),
+      PatchHunkLine('+', "- Keep new wording"),
+    )
+  }
+
+  @Test
+  fun `parsePatch rejects strict at-at pair without second delimiter`() {
+    assertParseFails(
+      "Strict @@ pair hunk requires second @@ delimiter",
+      "*** Begin Patch",
+      "*** Update File: sample.txt",
+      "@@",
+      "## Goals",
+      "*** End Patch",
+    )
+  }
+
+  @Test
   fun `parsePatch requires end marker`() {
     assertParseFails(
       "patch must include *** End Patch",
@@ -243,7 +350,7 @@ class PatchApplyEngineTest {
       "Hunk lines must start with space, +, or -",
       "*** Begin Patch",
       "*** Update File: sample.txt",
-      "@@",
+      "@@ def sample()",
       "oops",
       "*** End Patch",
     )

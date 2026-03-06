@@ -160,4 +160,58 @@ describe('ij MCP proxy apply_patch', {timeout: SUITE_TIMEOUT_MS}, () => {
       strictEqual(content, 'one\ntwo changed\n')
     })
   })
+
+  it('updates file contents from raw unified git diff', async () => {
+    await withProxy({onToolCall: createFsToolCallHandler()}, async ({proxyClient, testDir}) => {
+      const filePath = join(testDir, 'raw-edit.txt')
+      await writeFile(filePath, 'one\ntwo\n', 'utf8')
+      await initGitRepo(testDir)
+
+      const patch = buildPatch([
+        'diff --git a/raw-edit.txt b/raw-edit.txt',
+        'index 1111111..2222222 100644',
+        '--- a/raw-edit.txt',
+        '+++ b/raw-edit.txt',
+        '@@ -1,2 +1,2 @@',
+        ' one',
+        '-two',
+        '+two changed'
+      ])
+
+      await proxyClient.send('tools/call', {
+        name: 'apply_patch',
+        arguments: {input: patch}
+      })
+
+      const content = await readFile(filePath, 'utf8')
+      strictEqual(content, 'one\ntwo changed\n')
+    })
+  })
+
+  it('renames file from raw git diff without hunks', async () => {
+    await withProxy({onToolCall: createFsToolCallHandler()}, async ({proxyClient, testDir}) => {
+      const sourcePath = join(testDir, 'src', 'rename-old.txt')
+      await mkdir(dirname(sourcePath), {recursive: true})
+      await writeFile(sourcePath, 'alpha\nbeta\n', 'utf8')
+      await initGitRepo(testDir)
+
+      const patch = buildPatch([
+        'diff --git a/src/rename-old.txt b/src/rename-new.txt',
+        'similarity index 100%',
+        'rename from src/rename-old.txt',
+        'rename to src/rename-new.txt'
+      ])
+
+      await proxyClient.send('tools/call', {
+        name: 'apply_patch',
+        arguments: {input: patch}
+      })
+
+      const targetPath = join(testDir, 'src', 'rename-new.txt')
+      strictEqual(existsSync(sourcePath), false)
+      strictEqual(existsSync(targetPath), true)
+      const content = await readFile(targetPath, 'utf8')
+      strictEqual(content, 'alpha\nbeta\n')
+    })
+  })
 })
