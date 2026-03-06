@@ -76,8 +76,8 @@ import static com.intellij.execution.util.EnvFilesUtilKt.checkEnvFiles;
 public class ApplicationConfiguration extends JavaRunConfigurationBase
   implements SingleClassConfiguration, RefactoringListenerProvider, InputRedirectAware, TargetEnvironmentAwareRunProfile,
              FusAwareRunConfiguration, EnvFilesOptions {
-  /* deprecated, but 3rd-party used variables */
-  @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
+  /* deprecated, ~~but 3rd-party used variables~~, can be removed */
+  @SuppressWarnings("MissingDeprecatedAnnotation")
   @Deprecated public String MAIN_CLASS_NAME;
   @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
   @Deprecated public String PROGRAM_PARAMETERS;

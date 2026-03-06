@@ -14,30 +14,42 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.ObjectUtils.consumeIfCast
 
 class JavaApplicationRunConfigurationImporter : RunConfigurationImporter {
-  override fun process(project: Project, runConfiguration: RunConfiguration, cfg: Map<String, *>, modelsProvider: IdeModifiableModelsProvider) {
+  @Suppress("UNCHECKED_CAST")
+  override fun process(
+    project: Project,
+    runConfiguration: RunConfiguration,
+    cfg: Map<String, *>,
+    modelsProvider: IdeModifiableModelsProvider,
+  ) {
     if (runConfiguration !is ApplicationConfiguration) {
       throw IllegalArgumentException("Unexpected type of run configuration: ${runConfiguration::class.java}")
     }
 
-    consumeIfCast(cfg["moduleName"], String::class.java) {
-        val module = modelsProvider.modifiableModuleModel.findModuleByName(it)
-        if (module != null) {
-          runConfiguration.setModule(module)
+    val moduleName = cfg["moduleName"] as? String
+    val module = moduleName?.let(modelsProvider.modifiableModuleModel::findModuleByName)
+    if (module != null) {
+      runConfiguration.setModule(module)
+    }
+
+    val jrePath = (cfg["alternativeJrePath"] as? String)?.takeIf { it.isNotEmpty() }
+    val shortenCmdLine = cfg["shortenCommandLine"] as? String
+    with(runConfiguration) {
+      mainClassName = cfg["mainClass"] as? String
+      vmParameters = cfg["jvmArgs"] as? String
+      programParameters = cfg["programParameters"] as? String
+      envs = cfg["envs"] as? MutableMap<String, String> ?: mutableMapOf()
+      workingDirectory = cfg["workingDirectory"] as? String
+      setIncludeProvidedScope(cfg["includeProvidedDependencies"] as? Boolean ?: false)
+      isAlternativeJrePathEnabled = jrePath != null
+      alternativeJrePath = jrePath
+
+      if (shortenCmdLine != null) {
+        try {
+          shortenCommandLine = ShortenCommandLine.valueOf(shortenCmdLine)
         }
-      }
-
-    consumeIfCast(cfg["mainClass"], String::class.java) { runConfiguration.mainClassName = it }
-    consumeIfCast(cfg["jvmArgs"], String::class.java) { runConfiguration.vmParameters = it  }
-    consumeIfCast(cfg["programParameters"], String::class.java) { runConfiguration.programParameters = it }
-    consumeIfCast(cfg["envs"], Map::class.java) { runConfiguration.envs = it as MutableMap<String, String> }
-    consumeIfCast(cfg["workingDirectory"], String::class.java) { runConfiguration.workingDirectory = it }
-    runConfiguration.setIncludeProvidedScope(cfg["includeProvidedDependencies"] as? Boolean ?: false)
-
-    consumeIfCast(cfg["shortenCommandLine"], String::class.java) {
-      try {
-        runConfiguration.shortenCommandLine = ShortenCommandLine.valueOf(it)
-      } catch (e: IllegalArgumentException) {
-        LOG.warn("Illegal value of 'shortenCommandLine': $it", e)
+        catch (e: IllegalArgumentException) {
+          LOG.warn("Illegal value of 'shortenCommandLine': $shortenCmdLine", e)
+        }
       }
     }
   }
@@ -50,6 +62,6 @@ class JavaApplicationRunConfigurationImporter : RunConfigurationImporter {
       .configurationFactories[0]
 
   companion object {
-    val LOG = Logger.getInstance(JavaApplicationRunConfigurationImporter::class.java)
+    val LOG: Logger = Logger.getInstance(JavaApplicationRunConfigurationImporter::class.java)
   }
 }

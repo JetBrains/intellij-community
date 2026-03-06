@@ -7,28 +7,34 @@ import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter
 import com.intellij.openapi.project.Project
-import com.intellij.util.ObjectUtils.consumeIfCast
 
 class JarApplicationRunConfigurationImporter : RunConfigurationImporter {
-
-  override fun process(project: Project,
-                       runConfiguration: RunConfiguration,
-                       cfg: MutableMap<String, Any>,
-                       modelsProvider: IdeModifiableModelsProvider) {
+  @Suppress("UNCHECKED_CAST")
+  override fun process(
+    project: Project,
+    runConfiguration: RunConfiguration,
+    cfg: MutableMap<String, Any>,
+    modelsProvider: IdeModifiableModelsProvider,
+  ) {
     if (runConfiguration !is JarApplicationConfiguration) {
       throw IllegalArgumentException("Unexpected type of run configuration: ${runConfiguration::class.java}")
     }
-    consumeIfCast(cfg["moduleName"], String::class.java) {
-      val module = modelsProvider.modifiableModuleModel.findModuleByName(it)
-      if (module != null) {
-        runConfiguration.module = module
-      }
+    val moduleName = cfg["moduleName"] as? String
+    val module = moduleName?.let(modelsProvider.modifiableModuleModel::findModuleByName)
+
+    if (module != null) {
+      runConfiguration.module = module
     }
-    consumeIfCast(cfg["jarPath"], String::class.java) { runConfiguration.jarPath = it }
-    consumeIfCast(cfg["jvmArgs"], String::class.java) { runConfiguration.vmParameters = it }
-    consumeIfCast(cfg["programParameters"], String::class.java) { runConfiguration.programParameters = it }
-    consumeIfCast(cfg["workingDirectory"], String::class.java) { runConfiguration.workingDirectory = it }
-    consumeIfCast(cfg["envs"], Map::class.java) { runConfiguration.envs = it as MutableMap<String, String> }
+    val jrePath = (cfg["alternativeJrePath"] as? String)?.takeIf { it.isNotEmpty() }
+    with(runConfiguration) {
+      jarPath = cfg["jarPath"] as? String ?: ""
+      vmParameters = cfg["jvmArgs"] as? String ?: ""
+      programParameters = cfg["programParameters"] as? String ?: ""
+      workingDirectory = cfg["workingDirectory"] as? String ?: ""
+      envs = cfg["envs"] as? Map<String, String> ?: emptyMap()
+      isAlternativeJrePathEnabled = jrePath != null
+      alternativeJrePath = jrePath
+    }
   }
 
   override fun canImport(typeName: String): Boolean = typeName == "jarApplication"
