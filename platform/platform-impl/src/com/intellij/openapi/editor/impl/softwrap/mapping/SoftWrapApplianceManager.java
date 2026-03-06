@@ -167,7 +167,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
       return startDiff == 0 ? o2.getEndOffset() - o1.getEndOffset() : startDiff;
     });
     final int[] lastRecalculatedOffset = {0};
-    SoftWrapParsingListenerAdapter listener = new SoftWrapParsingListenerAdapter() {
+    SoftWrapParsingListener listener = new SoftWrapParsingListener() {
       @Override
       public void onIncrementalUpdateEnd(@NotNull IncrementalCacheUpdateEvent event) {
         lastRecalculatedOffset[0] = event.getActualEndOffset();

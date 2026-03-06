@@ -12,14 +12,14 @@ public interface SoftWrapParsingListener {
    * 
    * @param event   object that contains information about re-parsed document region
    */
-  void onIncrementalUpdateStart(@NotNull IncrementalCacheUpdateEvent event);
+  default void onIncrementalUpdateStart(@NotNull IncrementalCacheUpdateEvent event) {}
 
   /**
    * Notifies current listener that particular document region re-parsing has just finished.
    *
    * @param event   object that contains information about re-parsed document region
    */
-  void onIncrementalUpdateEnd(@NotNull IncrementalCacheUpdateEvent event);
+  default void onIncrementalUpdateEnd(@NotNull IncrementalCacheUpdateEvent event) {}
 
   /**
    * Notifies current listener that all dirty regions for the current editor have been recalculated.
@@ -29,10 +29,10 @@ public interface SoftWrapParsingListener {
    * {@link #onIncrementalUpdateEnd(IncrementalCacheUpdateEvent)} will be called after every region recalculation then
    * and current method will be called one time when all recalculations have been performed.
    */
-  void onRecalculationEnd();
+  default void onRecalculationEnd() {}
   
   /**
    * Callback for asking to drop all cached information (if any).
    */
-  void reset();
+  default void reset() {}
 }

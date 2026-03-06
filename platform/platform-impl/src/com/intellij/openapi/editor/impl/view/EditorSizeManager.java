@@ -28,7 +28,7 @@ import com.intellij.openapi.editor.impl.FoldingModelInternal;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.mapping.IncrementalCacheUpdateEvent;
-import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapParsingListenerAdapter;
+import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapParsingListener;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.DocumentEventUtil;
@@ -96,7 +96,7 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
 
   private long myDocumentStamp = Long.MIN_VALUE;
 
-  private final SoftWrapParsingListenerAdapter mySoftWrapChangeListener = new SoftWrapParsingListenerAdapter() {
+  private final SoftWrapParsingListener mySoftWrapChangeListener = new SoftWrapParsingListener() {
     @Override
     public void onIncrementalUpdateEnd(@NotNull IncrementalCacheUpdateEvent event) {
       onSoftWrapRecalculationEnd(event);

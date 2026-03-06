@@ -36,7 +36,7 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import com.intellij.openapi.editor.impl.softwrap.mapping.CachingSoftWrapDataMapper;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
-import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapParsingListenerAdapter;
+import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapParsingListener;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
@@ -138,9 +138,9 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     myDataMapper = new CachingSoftWrapDataMapper(editor, storage, this);
     applianceManager = new SoftWrapApplianceManager(storage, editor, myPainter, myDataMapper, this);
 
-    applianceManager.addListener(new SoftWrapParsingListenerAdapter() {
+    applianceManager.addListener(new SoftWrapParsingListener() {
       @Override
-      public void onRecalculationEnd() {
+      public void onAllDirtyRegionsReparsed() {
         for (SoftWrapChangeListener listener : mySoftWrapListeners) {
           listener.recalculationEnds();
         }
