@@ -74,23 +74,25 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
     val interval = editorCell.intervalOrNull ?: return null
     val startOffset = interval.getCellStartOffset(editor)
     val endOffset = interval.getCellEndOffset(editor)
+
     val upperInlayBounds = editor.inlayModel.getBlockElementsInRange(startOffset, startOffset)
       .asSequence()
       .filter { it.properties.priority == editor.notebookAppearance.cellInputInlaysPriority && it.properties.isShownAbove }
       .mapNotNull { it.bounds }
       .maxByOrNull { it.x + it.width }
+
     val lowerInlayBounds = editor.inlayModel.getBlockElementsInRange(endOffset, endOffset)
       .asSequence()
       .filter { it.properties.priority == editor.notebookAppearance.cellInputInlaysPriority && !it.properties.isShownAbove }
       .mapNotNull { it.bounds }
       .maxByOrNull { it.x + it.width }
 
-    val xFromInlay = upperInlayBounds?.let { it.x + it.width - 0.5 }
-                     ?: lowerInlayBounds?.let { it.x + it.width - 0.5 }
+    val xFromInlay = upperInlayBounds?.let { it.x + it.width - PIXEL_GRID_OFFSET }
+                     ?: lowerInlayBounds?.let { it.x + it.width - PIXEL_GRID_OFFSET }
     val x = xFromInlay ?: calculateRightBorderXFromViewport()
 
     if (upperInlayBounds != null && lowerInlayBounds != null) {
-      val startY = (upperInlayBounds.y + upperInlayBounds.height - editor.notebookAppearance.cellBorderHeight / 2).toDouble() + 0.5
+      val startY = (upperInlayBounds.y + upperInlayBounds.height - editor.notebookAppearance.cellBorderHeight / 2).toDouble() + PIXEL_GRID_OFFSET
       val endY = (lowerInlayBounds.y + lowerInlayBounds.height).toDouble() - 1
       return Line2D.Double(x, startY, x, endY)
     }
@@ -105,14 +107,16 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
     val visibleArea = editor.scrollingModel.visibleArea
     val scrollBarWidth = editor.scrollPane.verticalScrollBar.width
     val flipProperty = editor.scrollPane.getClientProperty(JBScrollPane.Flip::class.java)
+
     val leftShift = if (flipProperty === JBScrollPane.Flip.HORIZONTAL || flipProperty === JBScrollPane.Flip.BOTH) {
       scrollBarWidth
     }
     else {
       0
     }
+
     val visibleWidth = (visibleArea.width - scrollBarWidth).coerceAtLeast(0)
-    return visibleArea.x + leftShift + visibleWidth - 0.5
+    return visibleArea.x + leftShift + visibleWidth - PIXEL_GRID_OFFSET
   }
 
   fun updateCellFrameShow() {
@@ -154,6 +158,8 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
   }
 
   companion object {
+    private const val PIXEL_GRID_OFFSET: Double = 0.5
+
     fun create(editorCell: EditorCell): EditorCellFrameManager? =
       if (editorCell.interval.type == CellType.MARKDOWN && Registry.`is`("jupyter.markdown.cells.border") ||
           Registry.`is`("jupyter.code.cells.border")) {
