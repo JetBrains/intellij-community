@@ -20,10 +20,7 @@ jvm_library(
     "//platform/kernel/shared:kernel",
     "//platform/kernel/rpc.backend",
   ],
-  runtime_deps = [
-    "//platform/backend",
-    "//platform/main/intellij.platform.backend.main:backend-main",
-  ]
+  runtime_deps = ["//platform/backend"]
 )
 
 jvm_library(
@@ -37,7 +34,6 @@ jvm_library(
     "//platform/kernel/shared:kernel_test_lib",
     "//platform/kernel/rpc.backend:rpc.backend_test_lib",
     "//platform/backend:backend_test_lib",
-    "//platform/main/intellij.platform.backend.main:backend-main_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.completion.backend` end
