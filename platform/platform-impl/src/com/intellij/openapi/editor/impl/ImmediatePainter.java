@@ -40,6 +40,8 @@ import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.ApiStatus;
 import sun.awt.image.SunVolatileImage;
+
+import java.awt.geom.GeneralPath;
 import java.util.function.Consumer;
 
 import javax.swing.JComponent;
@@ -57,7 +59,6 @@ import java.awt.Shape;
 import java.awt.Toolkit;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.VolatileImage;
 import java.util.ArrayList;
@@ -315,12 +316,28 @@ public final class ImmediatePainter {
   }
 
   private void paintCaretBar(final Graphics2D g, final Rectangle2D r, final Color color) {
-    double w = r.getWidth();
+    double w = r.getWidth(), h = r.getHeight();
+    double x = r.getX(), y = r.getY();
 
     var old = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g.setColor(color);
-    g.fill(new RoundRectangle2D.Double(r.getX(), r.getY(), w, r.getHeight(), w, w));
+
+    var caretShape = new GeneralPath();
+    float radius = (float)(r.getWidth() / 2);
+
+    caretShape.moveTo(r.getX(), r.getY() + radius);
+    caretShape.quadTo(x, y, x + radius, y);
+    caretShape.lineTo(x + w - radius, y);
+    caretShape.quadTo(x + w, y, x + w, y + radius);
+    caretShape.lineTo(x + w, y + h - radius);
+    caretShape.quadTo(x + w, y + h, x + w - radius, y + h);
+    caretShape.lineTo(x + radius, y + h);
+    caretShape.quadTo(x, y + h, x, y + h - radius);
+
+    caretShape.closePath();
+    g.fill(caretShape);
+
     if (old != null) {
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
     }
