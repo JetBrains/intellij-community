@@ -25,5 +25,16 @@
     <codeInsight.lineMarkerProvider language="kotlin"
                                     implementationClass="com.intellij.compose.ide.plugin.k2.K2ComposeColorLineMarkerProviderDescriptor"/>
     <lang.foldingBuilder language="kotlin" implementationClass="com.intellij.compose.ide.plugin.k2.K2ComposeFoldingBuilder"/>
+
+    <localInspection implementationClass="com.intellij.compose.ide.plugin.k2.inspections.K2ComposeMissingPluginInspection"
+                     language="kotlin"
+                     enabledByDefault="true"
+                     bundle="messages.ComposeIdeBundle"
+                     groupKey="compose.inspection.group.name"
+                     key="compose.inspection.missing.plugin.name"
+                     level="ERROR"
+                     shortName="ComposableCallWithoutComposePlugin"/>
+
+    <daemon.highlightInfoFilter implementation="com.intellij.compose.ide.plugin.k2.inspections.K2ComposeMissingDependencyHighlightFilter"/>
   </extensions>
 </idea-plugin>
