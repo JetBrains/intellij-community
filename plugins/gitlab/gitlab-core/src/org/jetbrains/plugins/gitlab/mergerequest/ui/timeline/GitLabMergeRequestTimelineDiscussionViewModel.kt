@@ -33,6 +33,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussion
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter
+import org.jetbrains.plugins.gitlab.ui.GitLabViewModelWithTextCompletion
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditingViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModelImpl
@@ -66,7 +67,8 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   currentUser: GitLabUserDTO,
   private val mr: GitLabMergeRequest,
   private val discussion: GitLabMergeRequestDiscussion,
-  htmlConverter: GitLabMarkdownToHtmlConverter
+  htmlConverter: GitLabMarkdownToHtmlConverter,
+  textCompletionViewModel: GitLabViewModelWithTextCompletion,
 ) : GitLabMergeRequestTimelineDiscussionViewModel {
 
   private val cs = parentCs.childScope(this::class)
@@ -76,7 +78,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
     .map { it.first() }
     .distinctUntilChangedBy { it.id }
     .mapScoped {
-      GitLabNoteViewModelImpl(project, this, projectData, it, flowOf(true), currentUser, htmlConverter)
+      GitLabNoteViewModelImpl(project, this, projectData, it, flowOf(true), currentUser, htmlConverter, textCompletionViewModel)
     }
     .modelFlow(cs, LOG)
 
@@ -99,7 +101,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   override val replies: StateFlow<List<GitLabNoteViewModel>> = discussion.notes
     .map { it.drop(1) }
     .mapStatefulToStateful {
-      GitLabNoteViewModelImpl(project, this, projectData, it, flowOf(false), currentUser, htmlConverter)
+      GitLabNoteViewModelImpl(project, this, projectData, it, flowOf(false), currentUser, htmlConverter, textCompletionViewModel)
     }
     .stateIn(cs, SharingStarted.Lazily, listOf())
 
@@ -116,7 +118,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   override val canCreateReplies: StateFlow<Boolean> = discussion.canAddNotes.stateIn(cs, SharingStarted.Eagerly, false)
   override val replyVm: StateFlow<NewGitLabNoteViewModel?> =
     discussion.canAddNotes.mapScoped { canAddNotes ->
-      if (canAddNotes) GitLabNoteEditingViewModel.forReplyNote(this, project, projectData, discussion, currentUser) else null
+      if (canAddNotes) GitLabNoteEditingViewModel.forReplyNote(this, project, projectData, discussion, currentUser, textCompletionViewModel) else null
     }.stateIn(cs, SharingStarted.Eagerly, null)
 
   override val diffVm: Flow<GitLabDiscussionDiffViewModel?> =

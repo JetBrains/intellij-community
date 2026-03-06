@@ -35,6 +35,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotePosition
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsViewModel
 import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter
+import org.jetbrains.plugins.gitlab.ui.GitLabViewModelWithTextCompletion
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel.NoteItem
 import java.net.URL
 import java.util.Date
@@ -65,6 +66,7 @@ internal class GitLabMergeRequestDiscussionViewModelBase(
   currentUser: GitLabUserDTO,
   private val discussion: GitLabMergeRequestDiscussion,
   htmlConverter: GitLabMarkdownToHtmlConverter,
+  textCompletionViewModel: GitLabViewModelWithTextCompletion,
 ) : GitLabMergeRequestDiscussionViewModel {
   private val cs = parentCs.childScope(this::class)
   private val taskLauncher = SingleCoroutineLauncher(cs)
@@ -81,14 +83,14 @@ internal class GitLabMergeRequestDiscussionViewModelBase(
 
   override val replyVm: StateFlow<GitLabDiscussionReplyViewModel?> =
     discussion.canAddNotes.mapScoped { canAddNotes ->
-      if (canAddNotes) GitLabDiscussionReplyViewModelImpl(this, project, currentUser, projectData, discussion)
+      if (canAddNotes) GitLabDiscussionReplyViewModelImpl(this, project, currentUser, projectData, discussion, textCompletionViewModel)
       else null
     }.stateInNow(cs, null)
 
   private val initialNotesSize: Int = discussion.notes.value.size
   private val notesVms = discussion.notes.mapStatefulToStateful { note ->
     GitLabNoteViewModelImpl(project, this, projectData, note, discussion.notes.map { it.firstOrNull()?.id == note.id },
-                            currentUser, htmlConverter)
+                            currentUser, htmlConverter, textCompletionViewModel)
   }.stateInNow(cs, emptyList())
   override val notes: StateFlow<List<NoteItem>> =
     combineStateIn(cs, notesVms, expandRequested) { notes, expanded ->
@@ -137,6 +139,7 @@ class GitLabMergeRequestStandaloneDraftNoteViewModelBase internal constructor(
   mr: GitLabMergeRequest,
   projectData: GitLabProject,
   htmlConverter: GitLabMarkdownToHtmlConverter,
+  textCompletionViewModel: GitLabViewModelWithTextCompletion,
 ) : GitLabNoteViewModel {
 
   private val cs = parentCs.childScope(this::class)
@@ -148,7 +151,7 @@ class GitLabMergeRequestStandaloneDraftNoteViewModelBase internal constructor(
   override val serverUrl: URL = mr.serverPath.toURL()
 
   override val actionsVm: GitLabNoteAdminActionsViewModel? =
-    if (note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, projectData, note) else null
+    if (note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, projectData, note, textCompletionViewModel) else null
   override val reactionsVm: GitLabReactionsViewModel? = null
 
   override val body: StateFlow<String> = note.body

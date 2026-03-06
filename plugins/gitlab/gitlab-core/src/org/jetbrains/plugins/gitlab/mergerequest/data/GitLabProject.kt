@@ -29,15 +29,19 @@ import org.jetbrains.plugins.gitlab.api.GitLabGraphQLMutationException
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
 import org.jetbrains.plugins.gitlab.api.GitLabVersion
+import org.jetbrains.plugins.gitlab.api.dto.GitLabGroupRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabPlan
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO.Companion.fromRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabWorkItemDTO.GitLabWidgetDTO.WorkItemWidgetAssignees
 import org.jetbrains.plugins.gitlab.api.dto.GitLabWorkItemDTO.WorkItemType
 import org.jetbrains.plugins.gitlab.api.request.createAllProjectLabelsFlow
 import org.jetbrains.plugins.gitlab.api.request.createAllWorkItemsFlow
 import org.jetbrains.plugins.gitlab.api.request.getProjectNamespace
+import org.jetbrains.plugins.gitlab.api.request.getProjectSearchUsers
 import org.jetbrains.plugins.gitlab.api.request.getProjectUsers
 import org.jetbrains.plugins.gitlab.api.request.getProjectUsersURI
+import org.jetbrains.plugins.gitlab.api.request.searchGroups
 import org.jetbrains.plugins.gitlab.data.GitLabProjectDetails
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.createMergeRequest
@@ -103,7 +107,11 @@ interface GitLabProject {
   suspend fun uploadFile(path: Path): String
   suspend fun uploadImage(image: BufferedImage): String
   fun canUploadFile(): Boolean
+  suspend fun searchProjectUsers(searchString: String): List<GitLabUserDTO>
+  suspend fun searchGroups(searchString: String): List<GitLabGroupRestDTO>
 }
+
+private const val MIN_SEARCH_STRING_LENGTH = 3
 
 @CodeReviewDomainEntity
 internal class GitLabProjectImpl(
@@ -253,6 +261,28 @@ internal class GitLabProjectImpl(
     }.await()
     GitLabStatistics.logFileUploadActionExecuted(project)
     return uploadRestDTO.markdown
+  }
+
+  override suspend fun searchProjectUsers(searchString: String): List<GitLabUserDTO> {
+    return cs.async(Dispatchers.IO) {
+      if (searchString.isEmpty() || searchString.length < MIN_SEARCH_STRING_LENGTH) {
+        api.rest.getProjectUsers(api.rest.getProjectUsersURI(projectId)).body() ?: emptyList()
+      }
+      else {
+        api.rest.getProjectSearchUsers(projectId, searchString).body() ?: emptyList()
+      }
+    }.await().map { fromRestDTO(it) }
+  }
+
+  override suspend fun searchGroups(searchString: String): List<GitLabGroupRestDTO> {
+    return cs.async(Dispatchers.IO) {
+      if (searchString.isEmpty() || searchString.length < MIN_SEARCH_STRING_LENGTH) {
+        api.rest.searchGroups().body() ?: emptyList()
+      }
+      else {
+        api.rest.searchGroups(searchString).body() ?: emptyList()
+      }
+    }.await()
   }
 
   override fun canUploadFile(): Boolean {

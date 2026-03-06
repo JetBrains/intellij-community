@@ -29,6 +29,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.data.MutableGitLabNote
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
+import org.jetbrains.plugins.gitlab.ui.GitLabViewModelWithTextCompletion
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabCodeReviewSubmittableTextViewModel.FileUploadResult
 import org.jetbrains.plugins.gitlab.upload.GitLabUploadFileUtil
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
@@ -37,7 +38,7 @@ import java.nio.file.Path
 import java.util.UUID
 import javax.swing.Action
 
-interface GitLabCodeReviewSubmittableTextViewModel : CodeReviewSubmittableTextViewModel {
+interface GitLabCodeReviewSubmittableTextViewModel : CodeReviewSubmittableTextViewModel, GitLabViewModelWithTextCompletion {
   val uploadFinishedSignal: Flow<FileUploadResult>
   fun uploadFile(path: Path?, offset: Int)
   fun uploadImage(image: Image, offset: Int)
@@ -55,18 +56,20 @@ interface GitLabNoteEditingViewModel : GitLabCodeReviewSubmittableTextViewModel 
       project: Project,
       projectData: GitLabProject,
       note: MutableGitLabNote,
+      textCompletionViewModel: GitLabViewModelWithTextCompletion,
       onStopEditing: () -> Unit
     ): GitLabCodeReviewTextEditingViewModel =
-      GitLabNoteEditingViewModelImpl(project, parentCs, projectData, note, onStopEditing)
+      GitLabNoteEditingViewModelImpl(project, parentCs, projectData, note, textCompletionViewModel, onStopEditing)
 
     internal fun forNewNote(
       parentCs: CoroutineScope,
       project: Project,
       projectData: GitLabProject,
       mergeRequest: GitLabMergeRequest,
-      currentUser: GitLabUserDTO
+      currentUser: GitLabUserDTO,
+      textCompletionViewModel: GitLabViewModelWithTextCompletion
     ): NewGitLabNoteViewModel =
-      NewStandaloneGitLabNoteViewModel(project, parentCs, "", projectData, mergeRequest, currentUser)
+      NewStandaloneGitLabNoteViewModel(project, parentCs, "", projectData, mergeRequest, currentUser, textCompletionViewModel)
 
     internal fun forNewDiffNote(
       parentCs: CoroutineScope,
@@ -75,17 +78,19 @@ interface GitLabNoteEditingViewModel : GitLabCodeReviewSubmittableTextViewModel 
       mergeRequest: GitLabMergeRequest,
       currentUser: GitLabUserDTO,
       position: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition,
+      textCompletionViewModel: GitLabViewModelWithTextCompletion
     ): NewGitLabNoteViewModelWithAdjustablePosition =
-      NewDiffGitLabNoteViewModel(project, parentCs, "", projectData, mergeRequest, currentUser, position)
+      NewDiffGitLabNoteViewModel(project, parentCs, "", projectData, mergeRequest, currentUser, position, textCompletionViewModel)
 
     internal fun forReplyNote(
       parentCs: CoroutineScope,
       project: Project,
       projectData: GitLabProject,
       discussion: GitLabDiscussion,
-      currentUser: GitLabUserDTO
+      currentUser: GitLabUserDTO,
+      textCompletionViewModel: GitLabViewModelWithTextCompletion
     ): NewGitLabNoteViewModel =
-      NewReplyGitLabNoteViewModel(project, parentCs, "", projectData, discussion, currentUser)
+      NewReplyGitLabNoteViewModel(project, parentCs, "", projectData, discussion, currentUser, textCompletionViewModel)
   }
 }
 
@@ -125,8 +130,9 @@ private class GitLabNoteEditingViewModelImpl(
   project: Project, parentCs: CoroutineScope,
   projectData: GitLabProject,
   private val note: MutableGitLabNote,
+  textCompletionViewModel: GitLabViewModelWithTextCompletion,
   private val onStopEditing: () -> Unit,
-) : AbstractGitLabNoteEditingViewModel(project, projectData, parentCs, note.body.value), GitLabCodeReviewTextEditingViewModel {
+) : AbstractGitLabNoteEditingViewModel(project, projectData, parentCs, note.body.value), GitLabCodeReviewTextEditingViewModel, GitLabViewModelWithTextCompletion by textCompletionViewModel {
   override fun save() {
     submit {
       note.setBody(it)
@@ -193,13 +199,16 @@ private abstract class NewGitLabNoteViewModelBase(
   protected abstract suspend fun doSubmitAsDraft(text: String)
 }
 
-private class NewStandaloneGitLabNoteViewModel(project: Project,
-                                               parentCs: CoroutineScope,
-                                               initialText: String,
-                                               projectData: GitLabProject,
-                                               private val mergeRequest: GitLabMergeRequest,
-                                               currentUser: GitLabUserDTO)
-  : NewGitLabNoteViewModelBase(project, parentCs, projectData, initialText, currentUser) {
+private class NewStandaloneGitLabNoteViewModel(
+  project: Project,
+  parentCs: CoroutineScope,
+  initialText: String,
+  projectData: GitLabProject,
+  private val mergeRequest: GitLabMergeRequest,
+  currentUser: GitLabUserDTO,
+  textCompletionViewModel: GitLabViewModelWithTextCompletion
+)
+  : NewGitLabNoteViewModelBase(project, parentCs, projectData, initialText, currentUser), GitLabViewModelWithTextCompletion by textCompletionViewModel {
   override val canSubmitAsDraft: Boolean = mergeRequest.canAddDraftNotes
   override suspend fun doSubmit(text: String) = mergeRequest.addNote(text)
   override suspend fun doSubmitAsDraft(text: String) = mergeRequest.addDraftNote(text)
@@ -213,7 +222,8 @@ private class NewDiffGitLabNoteViewModel(
   private val mergeRequest: GitLabMergeRequest,
   currentUser: GitLabUserDTO,
   position: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition,
-) : NewGitLabNoteViewModelBase(project, parentCs, projectData, initialText, currentUser), NewGitLabNoteViewModelWithAdjustablePosition {
+  textCompletionViewModel: GitLabViewModelWithTextCompletion
+) : NewGitLabNoteViewModelBase(project, parentCs, projectData, initialText, currentUser), NewGitLabNoteViewModelWithAdjustablePosition, GitLabViewModelWithTextCompletion by textCompletionViewModel {
   private val _position = MutableStateFlow(position)
   override val position = _position.asStateFlow()
   override val canSubmitAsDraft: Boolean = mergeRequest.canAddPositionalDraftNotes
@@ -233,8 +243,9 @@ private class NewReplyGitLabNoteViewModel(project: Project,
                                           initialText: String,
                                           projectData: GitLabProject,
                                           private val discussion: GitLabDiscussion,
-                                          currentUser: GitLabUserDTO)
-  : NewGitLabNoteViewModelBase(project, parentCs, projectData, initialText, currentUser, ) {
+                                          currentUser: GitLabUserDTO,
+                                          textCompletionViewModel: GitLabViewModelWithTextCompletion)
+  : NewGitLabNoteViewModelBase(project, parentCs, projectData, initialText, currentUser, ), GitLabViewModelWithTextCompletion by textCompletionViewModel {
   override val canSubmitAsDraft: Boolean = discussion.canAddDraftNotes
   override suspend fun doSubmit(text: String) = discussion.addNote(text)
   override suspend fun doSubmitAsDraft(text: String) = discussion.addDraftNote(text)

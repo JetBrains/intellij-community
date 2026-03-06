@@ -63,6 +63,10 @@
     <customPasteProvider id="CommentFileLinkPasteProvider"
                          implementation="org.jetbrains.plugins.gitlab.ui.comment.CommitFilePasteProvider"/>
 
+    <completion.contributor language="any"
+                            implementationClass="org.jetbrains.plugins.gitlab.ui.GitlabMarkdownCompletionContributor"/>
+    <typedHandler implementation="org.jetbrains.plugins.gitlab.ui.GitlabMarkdownTypedHandler"/>
+
     <registryKey key="vcs.gitlab.connect.silently"
                  description="Connect to GitLab repository without an explicit user action"
                  defaultValue="true"/>

@@ -87,6 +87,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.observable" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.gitlab" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.collaborationTools.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.codeInsight" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.vcs.gitlab" />
 </module>

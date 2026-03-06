@@ -14,6 +14,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabEdition
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionRestDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabGroupRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceLabelEventDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceMilestoneEventDTO
@@ -27,6 +28,7 @@ import org.jetbrains.plugins.gitlab.api.request.getProjectUsersURI
 import org.jetbrains.plugins.gitlab.api.request.getServerMetadata
 import org.jetbrains.plugins.gitlab.api.request.getServerVersion
 import org.jetbrains.plugins.gitlab.api.request.guessServerEdition
+import org.jetbrains.plugins.gitlab.api.request.searchGroups
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.DiffPathsInputDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
@@ -350,6 +352,30 @@ class GitLabApiTest : GitLabApiTestCase() {
 
       assertNotNull(mrs)
       assertIterableEquals(listOf("2"), mrs.map { it.iid })
+    }
+  }
+
+  @Test
+  fun `REST searching Groups works`() = runTest {
+    checkVersion(after(v(14, 0)))
+
+    requiresAuthentication { api ->
+      val groups = api.rest.searchGroups().body()
+
+      assertNotNull(groups)
+      assertEquals("GitLab Instance,tests,volatile", groups.joinToString(",") { it.name })
+    }
+  }
+
+  @Test
+  fun `REST searching Groups with search string works`() = runTest {
+    checkVersion(after(v(14, 0)))
+
+    requiresAuthentication { api ->
+      val groups = api.rest.searchGroups("Git").body()
+
+      assertNotNull(groups)
+      assertEquals("GitLab Instance", groups.joinToString(",") { it.name })
     }
   }
 
