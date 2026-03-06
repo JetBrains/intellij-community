@@ -153,7 +153,7 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
     if (ApplicationManager.getApplication().isEAP()) return true;
     // language levels up to HIGHEST are officially supported
     var nonPreviewLevel = languageLevel.getNonPreviewLevel();
-    return nonPreviewLevel != null && JavaRelease.getHighest().compareTo(nonPreviewLevel) >= 0 || getSettings().acceptedNames.contains(languageLevel.name());
+    return JavaRelease.getHighest().compareTo(nonPreviewLevel) >= 0 || getSettings().acceptedNames.contains(languageLevel.name());
   }
 
   private static void acceptAndRestore(Project project, Collection<? extends Module> modules, LanguageLevel languageLevel) {
