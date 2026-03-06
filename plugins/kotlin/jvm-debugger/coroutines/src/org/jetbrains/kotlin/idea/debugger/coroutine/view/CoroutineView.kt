@@ -50,7 +50,6 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.util.XDebugSessionListenerPr
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import java.awt.BorderLayout
 import javax.swing.JPanel
-import javax.swing.tree.TreePath
 
 internal class CoroutineView(project: Project, javaDebugProcess: JavaDebugProcess) :
     Disposable, XDebugSessionListenerProvider, CreateContentParamsProvider {
@@ -87,6 +86,7 @@ internal class CoroutineView(project: Project, javaDebugProcess: JavaDebugProces
         threadsPanel.add(combobox, BorderLayout.CENTER)
         mainPanel.add(panel.mainPanel, BorderLayout.CENTER)
         installClickAndKeyListeners(panel.tree)
+        installSelectCurrentCoroutineListener()
     }
 
     fun saveState() {
@@ -107,11 +107,9 @@ internal class CoroutineView(project: Project, javaDebugProcess: JavaDebugProces
     fun collapseCoroutineHierarchyNode() {
         if (isLiveUpdateEnabled) return
         DebuggerUIUtil.invokeLater {
-            panel.tree.root?.let { treeRoot ->
-                val rootNode = treeRoot.children.firstOrNull() ?: return@invokeLater
-                val pathToRootNode = TreePath(panel.tree.treeModel.getPathToRoot(rootNode))
-                if ((rootNode as? XValueNodeImpl)?.name == KotlinDebuggerCoroutinesBundle.message("coroutine.view.node.jobs") && !panel.tree.isCollapsed(pathToRootNode)) {
-                    panel.tree.collapsePath(pathToRootNode)
+            getRootCoroutineContainer()?.path?.let {
+                if (panel.tree.isExpanded(it)) {
+                    panel.tree.collapsePath(it)
                 }
             }
         }
@@ -119,8 +117,27 @@ internal class CoroutineView(project: Project, javaDebugProcess: JavaDebugProces
 
     fun isShowing() = mainPanel.isShowing
 
+    private fun getRootCoroutineContainer(): XValueNodeImpl? {
+        val coroutinesRootNode = (panel.tree.root as? XCoroutinesRootNode)?.children?.firstOrNull()
+        return (coroutinesRootNode as? XValueNodeImpl)?.takeIf {
+            it.valueContainer is RootCoroutineContainer
+        }
+    }
+
+    private fun isRootCoroutineContainerExpanded(): Boolean =
+        getRootCoroutineContainer()?.let { panel.tree.isExpanded(it.path) } ?: false
+
     fun renewRoot(suspendContext: SuspendContextImpl) {
+        panel.tree.setRoot(XCoroutinesRootNode(suspendContext), false)
+        if (treeState != null) {
+            restorer?.dispose()
+            restorer = treeState?.restoreState(panel.tree)
+        }
+    }
+
+    private fun installSelectCurrentCoroutineListener() {
         panel.tree.expandNodesOnLoad { node ->
+            if (!isRootCoroutineContainerExpanded()) return@expandNodesOnLoad false
             val valueContainer = (node as? XValueNodeImpl)?.valueContainer
             if (valueContainer is CoroutineContainer && valueContainer.isPinned) {
                 return@expandNodesOnLoad true
@@ -132,16 +149,12 @@ internal class CoroutineView(project: Project, javaDebugProcess: JavaDebugProces
         }
         panel.tree.selectNodeOnLoad(
             { node ->
+                if (!isRootCoroutineContainerExpanded()) return@selectNodeOnLoad false
                 val valueContainer = (node as? XValueNodeImpl)?.valueContainer
                 valueContainer is CoroutineContainer && valueContainer.isCurrent
             },
             { node -> (node as? XValueNodeImpl)?.isObsolete == true }
         )
-        panel.tree.setRoot(XCoroutinesRootNode(suspendContext), false)
-        if (treeState != null) {
-            restorer?.dispose()
-            restorer = treeState?.restoreState(panel.tree)
-        }
     }
 
     override fun dispose() {
