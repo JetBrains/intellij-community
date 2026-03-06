@@ -59,6 +59,7 @@ import org.jetbrains.plugins.gradle.util.entity.GradleTestEntityId
 import org.jetbrains.plugins.gradle.util.entity.GradleTestEntitySource
 import org.jetbrains.plugins.gradle.util.whenExternalSystemTaskFinished
 import org.jetbrains.plugins.gradle.util.whenExternalSystemTaskStarted
+import org.junit.Assume
 import org.junit.Test
 import org.junit.jupiter.api.Assertions
 import java.util.concurrent.CopyOnWriteArrayList
@@ -66,6 +67,40 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
 
 class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
+
+  @Test
+  fun `test module naming`() {
+    var moduleNamesAtTheEndOfSyncContributors: Set<String>? = null
+    whenModelFetchCompleted(testRootDisposable) {
+      moduleNamesAtTheEndOfSyncContributors = myProject.modules.map { it.name }.toSet()
+    }
+
+    initMultiModuleProject()
+    importProject()
+    assertMultiModuleProjectStructure()
+
+    assertNotNull("Module names at the end of sync contributors not initialized!", moduleNamesAtTheEndOfSyncContributors)
+
+    CollectionAssertions.assertEqualsUnordered(moduleNamesAtTheEndOfSyncContributors, myProject.modules.map { it.name }.toSet())
+  }
+
+
+  @Test
+  fun `test module naming consistency with duplicated included project names`() {
+    Assume.assumeTrue(isGradleAtLeast("6.1")) // Gradle < 6.0 fails in such a case
+    var moduleNamesAtTheEndOfSyncContributors: Set<String>? = null
+    whenModelFetchCompleted(testRootDisposable) {
+      moduleNamesAtTheEndOfSyncContributors = myProject.modules.map { it.name }.toSet()
+    }
+
+    initMultiModuleProject(includeProjectsWithDuplicatedNames = true)
+    importProject()
+    assertMultiModuleProjectStructure(includeProjectsWithDuplicatedNames = true)
+
+    assertNotNull("Module names at the end of sync contributors not initialized!", moduleNamesAtTheEndOfSyncContributors)
+
+    CollectionAssertions.assertEqualsUnordered(moduleNamesAtTheEndOfSyncContributors, myProject.modules.map { it.name }.toSet())
+  }
 
   @Test
   fun `test Gradle model fetch phase completion`() {
