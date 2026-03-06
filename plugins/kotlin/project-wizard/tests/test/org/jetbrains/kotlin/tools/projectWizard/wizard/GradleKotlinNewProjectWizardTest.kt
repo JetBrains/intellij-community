@@ -3,10 +3,16 @@ package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.externalSystem.test.compileModules
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.testFramework.closeProjectAsync
@@ -15,6 +21,7 @@ import com.intellij.testFramework.withProjectAsync
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.base.plugin.useK2Plugin
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getCurrentProcessJdkHome
 import org.jetbrains.kotlin.tools.projectWizard.gradle.isLessOrEqualToMaxJvmTarget
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.annotations.CsvCrossProductSource
@@ -33,7 +40,8 @@ import kotlin.io.path.walk
 
 class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() {
     @BeforeEach
-    fun setUp() {
+    override fun setUp() {
+        super.setUp()
         assertTrue(useK2Plugin != false)
     }
 
@@ -41,6 +49,18 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
         assertModules(this, *moduleNames)
         compileModules(this, true, *moduleNames)
         assertCompilationError()
+    }
+
+    private fun lookupAndRegisterExternalSystemJdk(project: Project) {
+        val processJdkHome = getCurrentProcessJdkHome()
+        ExternalSystemJdkUtil.findJdkInSdkTableByPath(project, processJdkHome.path)?.let { sdk ->
+            val table = ProjectJdkTable.getInstance()
+            Disposer.register(parentDisposable, Disposable {
+                WriteAction.computeAndWait(ThrowableComputable {
+                    table.removeJdk(sdk)
+                })
+            })
+        }
     }
 
     @ParameterizedTest
@@ -63,6 +83,8 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
         createProjectByWizard(KOTLIN) {
             setGradleWizardData("project", gradleDsl = GradleDsl.KOTLIN)
         }.withProjectAsync { project ->
+            lookupAndRegisterExternalSystemJdk(project)
+
             assertProjectState(project, projectInfo("project", GradleDsl.KOTLIN) {
                 withKotlinBuildFile()
                 withKotlinSettingsFile()
