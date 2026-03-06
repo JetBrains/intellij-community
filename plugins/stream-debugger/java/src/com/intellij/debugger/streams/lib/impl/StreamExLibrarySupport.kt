@@ -2,26 +2,19 @@
 package com.intellij.debugger.streams.lib.impl
 
 import com.intellij.debugger.streams.core.lib.IntermediateOperation
-import com.intellij.debugger.streams.core.lib.impl.CollapseOperation
-import com.intellij.debugger.streams.core.lib.impl.ConcatOperation
-import com.intellij.debugger.streams.core.lib.impl.DistinctOperation
-import com.intellij.debugger.streams.core.lib.impl.FilterOperation
-import com.intellij.debugger.streams.core.lib.impl.FlatMappingOperation
-import com.intellij.debugger.streams.core.lib.impl.MappingOperation
-import com.intellij.debugger.streams.core.lib.impl.OrderBasedOperation
-import com.intellij.debugger.streams.core.lib.impl.SortedOperation
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedDistinctMapEntryOperation
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedDistinctOperation
 import com.intellij.debugger.streams.core.resolve.AppendResolver
 import com.intellij.debugger.streams.core.resolve.IntervalMapResolver
 import com.intellij.debugger.streams.core.resolve.PairMapResolver
 import com.intellij.debugger.streams.core.resolve.PrependResolver
-import com.intellij.debugger.streams.core.trace.impl.handler.unified.DistinctByKeyHandler
-import com.intellij.debugger.streams.core.trace.impl.handler.unified.DistinctTraceHandler
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedCollapseOperation
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedConcatOperation
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedFilterOperation
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedFlatMappingOperation
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedMappingOperation
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedOrderBasedOperation
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedSortedOperation
-import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctKeysHandler
-import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctValuesHandler
 
 
 /**
@@ -48,24 +41,18 @@ class StreamExLibrarySupport
     addIntermediateOperationsSupport(*sortedOperations("sortedBy", "sortedByInt", "sortedByDouble", "sortedByLong", "reverseSorted"))
 
     addIntermediateOperationsSupport(
-      DistinctOperation("distinct", { num, call, dsl ->
-        val arguments = call.arguments
-        if (arguments.isEmpty() || arguments[0].type == "int") {
-          return@DistinctOperation DistinctTraceHandler(num, call, dsl)
-        }
-        return@DistinctOperation DistinctByKeyHandler(num, call, dsl)
-      }),
-      DistinctOperation("distinctKeys", { num, call, dsl -> DistinctKeysHandler(num, call, dsl) }),
-      DistinctOperation("distinctValues", { num, call, dsl -> DistinctValuesHandler(num, call, dsl) })
+      BreakpointBasedDistinctOperation("distinct"),
+      BreakpointBasedDistinctMapEntryOperation.keys("distinctKeys"),
+      BreakpointBasedDistinctMapEntryOperation.values("distinctValues"),
     )
 
-    addIntermediateOperationsSupport(ConcatOperation("append", AppendResolver()),
-                                     ConcatOperation("prepend", PrependResolver()))
+    addIntermediateOperationsSupport(BreakpointBasedConcatOperation("append", AppendResolver()),
+                                     BreakpointBasedConcatOperation("prepend", PrependResolver()))
 
     addIntermediateOperationsSupport(*collapseOperations("collapse", "collapseKeys", "runLengths", "groupRuns"))
 
-    addIntermediateOperationsSupport(OrderBasedOperation("pairMap", PairMapResolver()),
-                                     OrderBasedOperation("intervalMap", IntervalMapResolver()))
+    addIntermediateOperationsSupport(BreakpointBasedOrderBasedOperation("pairMap", PairMapResolver()),
+                                     BreakpointBasedOrderBasedOperation("intervalMap", IntervalMapResolver()))
     addTerminationOperationsSupport()
   }
 
@@ -77,5 +64,5 @@ class StreamExLibrarySupport
 
   private fun sortedOperations(vararg names: String): Array<IntermediateOperation> = names.map { BreakpointBasedSortedOperation(it) }.toTypedArray()
 
-  private fun collapseOperations(vararg names: String): Array<IntermediateOperation> = names.map { CollapseOperation(it) }.toTypedArray()
+  private fun collapseOperations(vararg names: String): Array<IntermediateOperation> = names.map { BreakpointBasedCollapseOperation(it) }.toTypedArray()
 }

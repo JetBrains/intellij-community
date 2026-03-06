@@ -33,5 +33,5 @@ open class SortedOperation(name: String) : OrderBasedOperation(name, IdentityRes
 open class DistinctOperation(name: String, handlerFactory: (Int, IntermediateStreamCall, Dsl) -> IntermediateCallHandler)
   : IntermediateOperationBase(name, handlerFactory, DistinctCallTraceInterpreter(), DistinctResolver())
 
-class ConcatOperation(name: String, orderResolver: ValuesOrderResolver) : OrderBasedOperation(name, orderResolver)
-class CollapseOperation(name: String) : OrderBasedOperation(name, CollapseResolver())
+open class ConcatOperation(name: String, orderResolver: ValuesOrderResolver) : OrderBasedOperation(name, orderResolver)
+open class CollapseOperation(name: String) : OrderBasedOperation(name, CollapseResolver())

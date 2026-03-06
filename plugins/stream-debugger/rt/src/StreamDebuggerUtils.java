@@ -1,9 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.debugger.streams.rt;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * @author Shumaf Lovpache
@@ -94,6 +97,41 @@ public final class StreamDebuggerUtils {
         }
       }
     }
+    return packMapping(mapping);
+  }
+
+  public static Object[] computeDistinctByKeyMapping(
+    Map<Integer, Object> beforeMap,
+    Map<Integer, Object> afterMap,
+    Function<Object, Object> keyExtractor
+  ) {
+    Map<Object, List<Integer>> keyToBeforeTimes = new LinkedHashMap<>();
+    for (Map.Entry<Integer, Object> entry : beforeMap.entrySet()) {
+      Object key = keyExtractor.apply(entry.getValue());
+      keyToBeforeTimes.computeIfAbsent(key, k -> new ArrayList<>()).add(entry.getKey());
+    }
+    Map<Integer, Integer> mapping = new LinkedHashMap<>();
+    for (Map.Entry<Integer, Object> entry : afterMap.entrySet()) {
+      Object key = keyExtractor.apply(entry.getValue());
+      List<Integer> beforeTimes = keyToBeforeTimes.get(key);
+      if (beforeTimes != null) {
+        for (int beforeTime : beforeTimes) {
+          mapping.put(beforeTime, entry.getKey());
+        }
+      }
+    }
+    return packMapping(mapping);
+  }
+
+  public static Object[] computeDistinctByMapKeyMapping(Map<Integer, Object> beforeMap, Map<Integer, Object> afterMap) {
+    return computeDistinctByKeyMapping(beforeMap, afterMap, v -> ((Map.Entry<?, ?>) v).getKey());
+  }
+
+  public static Object[] computeDistinctByMapValueMapping(Map<Integer, Object> beforeMap, Map<Integer, Object> afterMap) {
+    return computeDistinctByKeyMapping(beforeMap, afterMap, v -> ((Map.Entry<?, ?>) v).getValue());
+  }
+
+  private static Object[] packMapping(Map<Integer, Integer> mapping) {
     int size = mapping.size();
     int[] keys = new int[size];
     int[] values = new int[size];
