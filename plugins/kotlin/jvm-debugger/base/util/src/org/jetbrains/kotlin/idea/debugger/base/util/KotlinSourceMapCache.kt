@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootModificationTracker
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiModificationTracker
@@ -29,6 +30,7 @@ import org.jetbrains.org.objectweb.asm.Opcodes
 import java.io.IOException
 import java.nio.file.Path
 import java.util.Optional
+import java.util.zip.ZipFile
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.readBytes
 
@@ -92,20 +94,43 @@ class KotlinSourceMapCache(private val project: Project) {
     }
 
     private fun findCompiledModuleClass(module: Module, jvmName: JvmClassName): ByteArray? {
-        for (outputRoot in CompilerPaths.getOutputPaths(arrayOf(module)).toList()) {
-          val path = Path.of(outputRoot, jvmName.internalName + ".class")
-          if (path.isRegularFile()) {
+        val roots = CompilerPaths.getOutputPaths(arrayOf(module)).toList().mapNotNull { it.toNioPathOrNull() }
+        for (outputRootPath in roots) {
+            if (outputRootPath.isRegularFile()) {
+                val bytes = readClassFromArchiveOutputRoot(outputRootPath, jvmName)
+                if (bytes != null) return bytes
+                continue
+            }
+
+            val path = outputRootPath.resolve(jvmName.internalName + ".class")
+            if (!path.isRegularFile()) continue
+
             try {
-              return path.readBytes()
+                return path.readBytes()
+            } catch (e: IOException) {
+                LOG.debug("Can't read class file $jvmName", e)
+                return null
             }
-            catch (e: IOException) {
-              LOG.debug("Can't read class file $jvmName", e)
-              return null
-            }
-          }
         }
 
         return null
+    }
+
+    private fun readClassFromArchiveOutputRoot(outputRootPath: Path, jvmName: JvmClassName): ByteArray? {
+        val classEntryPath = jvmName.internalName + ".class"
+        try {
+            ZipFile(outputRootPath.toString()).use { zipFile ->
+                val entry = zipFile.getEntry(classEntryPath)
+                if (entry == null || entry.isDirectory) return null
+
+                return zipFile.getInputStream(entry).use { inputStream ->
+                    inputStream.readBytes()
+                }
+            }
+        } catch (e: IOException) {
+            LOG.debug("Can't read class file $jvmName from archive output root $outputRootPath", e)
+            return null
+        }
     }
 
     private fun findLibraryClass(jvmName: JvmClassName): ByteArray? {
