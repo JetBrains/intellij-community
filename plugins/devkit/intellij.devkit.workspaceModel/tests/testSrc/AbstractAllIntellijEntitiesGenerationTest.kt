@@ -65,6 +65,7 @@ import org.editorconfig.configmanagement.extended.EditorConfigCodeStyleSettingsM
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -152,6 +153,7 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
     CodeGeneratorVersions.checkImplInImpl = true
   }
 
+  @DisplayName("test generation of all entities in intellij codebase")
   @ParameterizedTest(name = "{0}")
   @MethodSource("modules")
   open fun `test generation of all entities in intellij codebase`(
