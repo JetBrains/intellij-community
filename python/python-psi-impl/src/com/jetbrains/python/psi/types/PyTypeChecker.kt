@@ -678,9 +678,9 @@ object PyTypeChecker {
   }
 
   private fun matchProtocols(expected: PyClassType, actual: PyClassType, matchContext: MatchContext): Boolean {
-    val expectedSubstitutions = collectTypeSubstitutions(expected, matchContext.context)
-    val actualSubstitutions = collectTypeSubstitutions(actual, matchContext.context)
-
+    val context = matchContext.context
+    val expectedSubstitutions = collectTypeSubstitutions(expected, context)
+    val actualSubstitutions = collectTypeSubstitutions(actual, context)
 
     // See https://typing.python.org/en/latest/spec/generics.html#use-in-protocols
     // > If a protocol uses Self in methods or attribute annotations, then a class Foo is assignable to the protocol
@@ -689,20 +689,17 @@ object PyTypeChecker {
     // It should be equivalent to replacing Self in the protocol with the Foo class we're matching it with.
     val protocolSubstitutions = GenericSubstitutions()
     protocolSubstitutions.qualifierType = actual.toInstance()
-    val protocolContext =
-      MatchContext(matchContext.context, protocolSubstitutions, matchContext.reversedSubstitutions)
-    for (pair in inspectProtocolSubclass(
-      expected, actual,
-      matchContext.context
-    )) {
+    val protocolContext = MatchContext(context, protocolSubstitutions, matchContext.reversedSubstitutions)
+
+    for (pair in inspectProtocolSubclass(expected, actual, context)) {
       val protocolMember = pair.first
       val subclassElementMembers = pair.second
       if (ContainerUtil.isEmpty(subclassElementMembers)) {
         return false
       }
-      val rawProtocolElementType = dropSelfInProtocolMember(protocolMember.type, matchContext.context)
+      val rawProtocolElementType = dropSelfInProtocolMember(expected, protocolMember.type, context)
 
-      val protocolElementType = substitute(rawProtocolElementType, expectedSubstitutions, matchContext.context)
+      val protocolElementType = substitute(rawProtocolElementType, expectedSubstitutions, context)
       val elementResult: Boolean =
         subclassElementMembers.any { subclassElementMember: PyTypeMember? ->
           if (protocolMember.isWritable && !subclassElementMember!!.isWritable) {
@@ -717,8 +714,10 @@ object PyTypeChecker {
             return@any false
           }
 
-          var subclassElementType = dropSelfInProtocolMember(subclassElementMember.type, matchContext.context)
-          subclassElementType = substitute(subclassElementType, actualSubstitutions, matchContext.context)
+          var subclassElementType = substituteSelfInProtocolMember(actual, subclassElementMember.type, context)
+          subclassElementType = dropSelfInProtocolMember(expected, subclassElementType, context)
+          subclassElementType = substitute(subclassElementType, actualSubstitutions, context)
+
           match(protocolElementType, subclassElementType, protocolContext).orElse(true)!!
         }
 
@@ -743,6 +742,7 @@ object PyTypeChecker {
   }
 
   private fun match(expectedProtocol: PyClassType, actualModule: PyModuleType, matchContext: MatchContext): Boolean {
+    val context = matchContext.context
     val module = actualModule.module
 
     val moduleElements =
@@ -755,11 +755,11 @@ object PyTypeChecker {
         .associateBy { it.name }
 
     val protocolElements =
-      inspectProtocolSubclass(expectedProtocol, expectedProtocol, matchContext.context)
+      inspectProtocolSubclass(expectedProtocol, expectedProtocol, context)
 
     if (protocolElements.size != moduleElements.size) return false
 
-    val substitutions = collectTypeSubstitutions(expectedProtocol, matchContext.context)
+    val substitutions = collectTypeSubstitutions(expectedProtocol, context)
     for (pair in protocolElements) {
       val pm = pair.first.element
       if (pm !is PsiNamedElement) {
@@ -769,12 +769,9 @@ object PyTypeChecker {
       val moduleElement = moduleElements[name]
       if (moduleElement != null) {
         val expectedProtocolMemberType =
-          substitute(
-            dropSelfInProtocolMember( pair.first.type, matchContext.context), substitutions,
-            matchContext.context
-          )
-        val actualModuleElementType = matchContext.context.getType(moduleElement)
-        if (!match(expectedProtocolMemberType, actualModuleElementType, matchContext.context)) {
+          substitute(dropSelfInProtocolMember(expectedProtocol, pair.first.type, context), substitutions, context)
+        val actualModuleElementType = context.getType(moduleElement)
+        if (!match(expectedProtocolMemberType, actualModuleElementType, context)) {
           return false
         }
         continue
@@ -784,11 +781,28 @@ object PyTypeChecker {
     return true
   }
 
-  private fun dropSelfInProtocolMember(elementType: PyType?, context: TypeEvalContext): PyType? {
+  private fun dropSelfInProtocolMember(classType: PyClassType, elementType: PyType?, context: TypeEvalContext): PyType? {
     if (elementType is PyCallableType) {
-      return elementType.dropSelf(context)
+      if (PyUtil.isInitOrNewMethod(elementType.callable) || !classType.isDefinition) {
+        return elementType.dropSelf(context)
+      }
     }
     return elementType
+  }
+
+  /**
+   * Binds TypeVars from the self parameter annotation of protocol member to [classType].
+   */
+  private fun substituteSelfInProtocolMember(classType: PyClassType, elementType: PyType?, context: TypeEvalContext): PyType? {
+    if (elementType !is PyCallableType) return elementType
+    val parameters = elementType.getParameters(context)
+    if (parameters.isNullOrEmpty() || !parameters.first().isSelf) return elementType
+    val selfParamType = parameters.first().getType(context)
+    if (selfParamType !is PyTypeVarType) return elementType
+    val selfSubstitutions = GenericSubstitutions()
+    match(selfParamType, classType, MatchContext(context, selfSubstitutions, false))
+    if (selfSubstitutions.typeVars.isEmpty()) return elementType
+    return substitute(elementType, selfSubstitutions, context) as? PyCallableType ?: elementType
   }
 
   // https://typing.python.org/en/latest/spec/tuples.html#type-compatibility-rules
@@ -976,7 +990,8 @@ object PyTypeChecker {
       }
       return Optional.of(expectedOverloads.all { expectedCall ->
         actualOverloads.any { actualCall ->
-          match(dropSelfInProtocolMember(expectedCall, context), actualCall, matchContext).orElse(true)
+          match(dropSelfInProtocolMember(expected, expectedCall, context),
+                actualCall, matchContext).orElse(true)
         }
       })
     }
@@ -1470,7 +1485,7 @@ object PyTypeChecker {
         // A.a_method # type: Callable[[A], A]
         // B wasn't considered as the receiver type in the first place, instead of filtering it out during substitution
         // (see PyTypingTest.testMatchSelfUnionType)
-        return qualifierType.toStream()
+        val result = qualifierType.toStream()
           .map<PyType?> { qType: PyType? ->
             if (qType is PyInstantiableType<*>) {
               return@map if (selfScopeClassType.isDefinition) qType.toClass() else qType.toInstance()
@@ -1479,6 +1494,9 @@ object PyTypeChecker {
           }
           .filter { normalizedQType: PyType? -> match(selfScopeClassType, normalizedQType, context) }
           .collect(PyTypeUtil.toUnion(qualifierType))
+        // If no qualifier type matched Self's scope class, Self was probably inferred from a different context
+        // (e.g. protocol matching for a parameter type) and should be preserved as-is.
+        return result ?: selfType
       }
 
       override fun visitPyGenericType(genericType: PyCollectionType): PyType {
