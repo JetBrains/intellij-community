@@ -59,7 +59,7 @@ public final class CachingSoftWrapDataMapper implements SoftWrapParsingListener,
   }
 
   @Override
-  public void onIncrementalUpdateStart(@NotNull IncrementalCacheUpdateEvent event) {
+  public void onRegionReparseStart(@NotNull IncrementalCacheUpdateEvent event) {
     int startOffset = event.getStartOffset();
 
     myAffectedByUpdateSoftWraps.clear();
@@ -67,7 +67,7 @@ public final class CachingSoftWrapDataMapper implements SoftWrapParsingListener,
   }
 
   @Override
-  public void onIncrementalUpdateEnd(@NotNull IncrementalCacheUpdateEvent event) {
+  public void onRegionReparseEnd(@NotNull IncrementalCacheUpdateEvent event) {
     advanceSoftWrapOffsets(event);
   }
 

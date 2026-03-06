@@ -169,7 +169,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     final int[] lastRecalculatedOffset = {0};
     SoftWrapParsingListener listener = new SoftWrapParsingListener() {
       @Override
-      public void onIncrementalUpdateEnd(@NotNull IncrementalCacheUpdateEvent event) {
+      public void onRegionReparseEnd(@NotNull IncrementalCacheUpdateEvent event) {
         lastRecalculatedOffset[0] = event.getActualEndOffset();
       }
     };
@@ -225,7 +225,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
   private void onRecalculationEnd() {
     updateLastTopLeftCornerOffset();
     for (SoftWrapParsingListener listener : myListeners) {
-      listener.onRecalculationEnd();
+      listener.onAllDirtyRegionsReparsed();
     }
   }
 
@@ -237,7 +237,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     myInProgress = true;
     try {
       myEventBeingProcessed = event;
-      notifyListenersOnCacheUpdateStart(event);
+      notifyRegionReparseStart(event);
       int endOffsetUpperEstimate = SoftWrapHelper.getEndOffsetUpperEstimate(myEditor, myDocument, event);
       if (myVisibleAreaWidth == QUICK_DUMMY_WRAPPING) {
         doRecalculateSoftWrapsRoughly(event);
@@ -252,7 +252,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
       if (event.getActualEndOffset() > endOffsetUpperEstimate) {
         LOG.error("Unexpected error at soft wrap recalculation", new Attachment("softWrapModel.txt", myEditor.getSoftWrapModel().toString()));
       }
-      notifyListenersOnCacheUpdateEnd(event);
+      notifyRegionReparseEnd(event);
       myEventBeingProcessed = null;
     }
     finally {
@@ -424,21 +424,21 @@ public final class SoftWrapApplianceManager implements Dumpable {
   }
 
 
-  private void notifyListenersOnCacheUpdateStart(IncrementalCacheUpdateEvent event) {
+  private void notifyRegionReparseStart(IncrementalCacheUpdateEvent event) {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < myListeners.size(); i++) {
       // Avoid unnecessary Iterator object construction as this method is expected to be called frequently.
       SoftWrapParsingListener listener = myListeners.get(i);
-      listener.onIncrementalUpdateStart(event);
+      listener.onRegionReparseStart(event);
     }
   }
 
-  private void notifyListenersOnCacheUpdateEnd(IncrementalCacheUpdateEvent event) {
+  private void notifyRegionReparseEnd(IncrementalCacheUpdateEvent event) {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < myListeners.size(); i++) {
       // Avoid unnecessary Iterator object construction as this method is expected to be called frequently.
       SoftWrapParsingListener listener = myListeners.get(i);
-      listener.onIncrementalUpdateEnd(event);
+      listener.onRegionReparseEnd(event);
     }
   }
 
