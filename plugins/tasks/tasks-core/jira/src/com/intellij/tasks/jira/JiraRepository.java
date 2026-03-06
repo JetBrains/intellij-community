@@ -65,7 +65,7 @@ public final class JiraRepository extends BaseRepositoryImpl {
   private static final boolean BASIC_AUTH_ONLY = Boolean.getBoolean("tasks.jira.basic.auth.only");
   private static final boolean REDISCOVER_API = Boolean.getBoolean("tasks.jira.rediscover.api");
 
-  public static final Pattern JIRA_ID_PATTERN = Pattern.compile("\\p{javaUpperCase}+-\\d+");
+  public static final Pattern JIRA_ID_PATTERN = Pattern.compile("[\\p{javaUpperCase}\\p{Digit}_]+-\\d+");
   public static final String AUTH_COOKIE_NAME = "JSESSIONID";
 
   /**
