@@ -8,7 +8,7 @@ public class DistinctWithKeyExtractor {
   }
 
   public static void main(String[] args) {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     final long count = StreamEx.of(1, 2, 3, 4, 5, 6, 7).distinct(DistinctWithKeyExtractor::hash).count();
     System.out.println(count);
   }

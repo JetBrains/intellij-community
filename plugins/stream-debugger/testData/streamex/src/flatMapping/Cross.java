@@ -4,7 +4,7 @@ import one.util.streamex.StreamEx;
 
 public class Cross {
   public static void main(String[] args) {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     final long count = StreamEx.of(1, 2, 3).cross(1, 2, 3).count();
     System.out.println(count);
   }

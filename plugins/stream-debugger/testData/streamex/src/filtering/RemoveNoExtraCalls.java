@@ -4,7 +4,7 @@ import one.util.streamex.StreamEx;
 
 public class RemoveNoExtraCalls {
   public static void main(String[] args) {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     StreamEx.of(1, 2, 3, 4).remove(x -> x % 3 == 0).forEach(System.out::print);
   }
 }
