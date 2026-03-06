@@ -21,7 +21,6 @@ import org.apache.lucene.search.SearcherFactory
 import org.apache.lucene.search.SearcherManager
 import org.apache.lucene.search.TopDocs
 import org.apache.lucene.store.FSDirectory
-import java.io.IOException
 import java.nio.file.Path
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi

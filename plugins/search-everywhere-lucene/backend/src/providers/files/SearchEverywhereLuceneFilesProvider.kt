@@ -9,7 +9,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeItemsProvider
@@ -20,11 +19,10 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.NameUtil
+import com.intellij.searchEverywhereLucene.backend.SearchEverywhereLuceneBackendBundle
 import com.intellij.searchEverywhereLucene.common.SearchEverywhereLuceneProviderIdUtils
-import com.intellij.searchEverywhereLucene.frontend.SearchEverywhereLuceneBackendBundle
 import com.intellij.util.text.matching.MatchingMode
 import org.jetbrains.annotations.Nls
-import java.nio.file.Path
 
 class SearchEverywhereLuceneFileItem(
   private val project: Project,

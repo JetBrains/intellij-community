@@ -1,6 +1,5 @@
 package com.intellij.searchEverywhereLucene.backend.providers.files
 
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
@@ -12,7 +11,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 
 internal class ChangeListener : AsyncFileListener {
-  override fun prepareChange(events: List<out VFileEvent>): AsyncFileListener.ChangeApplier? {
+  override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
 
     val projects = ProjectManager.getInstance().openProjects
       .filter { project -> project.basePath != null }
@@ -23,7 +22,7 @@ internal class ChangeListener : AsyncFileListener {
     // We rely on the fact that the VirtualFiles will not reflect renaming changes here.
     events.asSequence().forEach { event ->
       when (event) {
-        is VFileCreateEvent -> changedUrls.add("${event.parent.url}/${event.getChildName()}")
+        is VFileCreateEvent -> changedUrls.add("${event.parent.url}/${event.childName}")
         is VFileDeleteEvent -> virtualFilesToIndex.add(event.file)
         is VFileCopyEvent -> changedUrls.add("${event.newParent.url}/${event.newChildName}")
         is VFileMoveEvent -> {
