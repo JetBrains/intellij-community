@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.isTooLarge
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.psi.ExternalChangeActionUtil
 import com.intellij.psi.LanguageSubstitutors
 import com.intellij.psi.PsiLargeFile
 import com.intellij.psi.impl.PsiManagerEx
@@ -106,7 +105,7 @@ internal class MyFileDocumentManagerListener(private val project: Project) : Fil
       project.service<PsiVFSListener>().handleVfsChangeWithoutPsi(file)
     }
     else {
-      ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction {
+      runWriteActionWithExternalChange {
         if (FileDocumentManagerImpl.recomputeFileTypeIfNecessary(file)) {
           fileManager.forceReload(file)
         }
@@ -115,16 +114,16 @@ internal class MyFileDocumentManagerListener(private val project: Project) : Fil
             fileManager.reloadPsiAfterTextChange(viewProvider, file)
           }
         }
-      })
+      }
     }
   }
 
   override fun fileContentReloaded(file: VirtualFile, document: Document) {
     val psiFile = fileManager.findCachedViewProvider(file)
     if (file.isValid && psiFile != null && file.isTooLarge() && psiFile !is PsiLargeFile) {
-      ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction {
-        fileManager.reloadPsiAfterTextChange(psiFile, file) }
-      )
+      runWriteActionWithExternalChange {
+        fileManager.reloadPsiAfterTextChange(psiFile, file)
+      }
     }
   }
 }

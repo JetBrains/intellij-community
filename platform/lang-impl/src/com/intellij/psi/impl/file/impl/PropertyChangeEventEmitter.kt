@@ -1,11 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
-import com.intellij.psi.ExternalChangeActionUtil
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
@@ -47,13 +45,13 @@ internal class PropertyChangeEventEmitter(
       }
     }
 
-    ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction {
+    runWriteActionWithExternalChange {
       when (propertyName) {
         VirtualFile.PROP_NAME -> sendRenameEvents(vFile, parentDir, oldPsiFiles, oldFileViewProviders)
         VirtualFile.PROP_WRITABLE -> sendWriteAccessChangeEvent(oldPsiFiles, parentDir)
         VirtualFile.PROP_ENCODING -> sendEncodingChangeEvent(oldPsiFiles, parentDir)
       }
-    })
+    }
   }
 
   private fun sendEncodingChangeEvent(oldPsiFiles: List<PsiFile>, parentDir: PsiDirectory?) {

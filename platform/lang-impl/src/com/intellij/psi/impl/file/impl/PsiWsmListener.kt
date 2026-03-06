@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -12,7 +11,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
-import com.intellij.psi.ExternalChangeActionUtil
 import com.intellij.psi.PsiTreeChangeEvent
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.impl.PsiManagerEx
@@ -67,18 +65,18 @@ internal class PsiVFSModuleRootListenerImpl(private val listenerProject: Project
     }
 
     LOG.trace { "Event is not caused by file types change" }
-    ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction {
+    runWriteActionWithExternalChange {
       depthCounter++
       LOG.trace { "depthCounter increased $depthCounter" }
       if (depthCounter > 1) {
-        return@externalChangeAction
+        return@runWriteActionWithExternalChange
       }
 
       val psiManager = PsiManagerEx.getInstanceEx(listenerProject)
       val treeEvent = PsiTreeChangeEventImpl(psiManager)
       treeEvent.propertyName = PsiTreeChangeEvent.PROP_ROOTS
       psiManager.beforePropertyChange(treeEvent)
-    })
+    }
   }
 
   fun rootsChanged(isCausedByFileTypesChange: Boolean) {
@@ -92,24 +90,22 @@ internal class PsiVFSModuleRootListenerImpl(private val listenerProject: Project
     }
 
     LOG.trace { "Event is not caused by file types change" }
-    ApplicationManager.getApplication().runWriteAction(
-      ExternalChangeActionUtil.externalChangeAction {
-        depthCounter--
-        LOG.trace { "depthCounter decreased $depthCounter" }
-        assert(depthCounter >= 0) { "unbalanced `beforeRootsChange`/`rootsChanged`: $depthCounter" }
-        if (depthCounter > 0) {
-          return@externalChangeAction
-        }
-
-        DebugUtil.performPsiModification<RuntimeException>(null) {
-          fileManager.possiblyInvalidatePhysicalPsi()
-        }
-
-        val treeEvent = PsiTreeChangeEventImpl(psiManager)
-        treeEvent.propertyName = PsiTreeChangeEvent.PROP_ROOTS
-        psiManager.propertyChanged(treeEvent)
+    runWriteActionWithExternalChange {
+      depthCounter--
+      LOG.trace { "depthCounter decreased $depthCounter" }
+      assert(depthCounter >= 0) { "unbalanced `beforeRootsChange`/`rootsChanged`: $depthCounter" }
+      if (depthCounter > 0) {
+        return@runWriteActionWithExternalChange
       }
-    )
+
+      DebugUtil.performPsiModification<RuntimeException>(null) {
+        fileManager.possiblyInvalidatePhysicalPsi()
+      }
+
+      val treeEvent = PsiTreeChangeEventImpl(psiManager)
+      treeEvent.propertyName = PsiTreeChangeEvent.PROP_ROOTS
+      psiManager.propertyChanged(treeEvent)
+    }
   }
 }
 

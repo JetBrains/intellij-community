@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
@@ -11,7 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFile.PROP_NAME
 import com.intellij.openapi.vfs.VirtualFile.PROP_WRITABLE
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
-import com.intellij.psi.ExternalChangeActionUtil
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
@@ -35,12 +33,12 @@ internal class BeforePropertyChangeEventEmitter(
       return
     }
 
-    ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction {
+    runWriteActionWithExternalChange {
       when (event.propertyName) {
         PROP_NAME -> sendRenameEvent(parentDir, vFile)
         PROP_WRITABLE -> sendWritePermissionChangeEvent(parentDir, vFile)
       }
-    })
+    }
   }
 
   private fun findParentDir(

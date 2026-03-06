@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -17,7 +16,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.project.stateStore
-import com.intellij.psi.ExternalChangeActionUtil
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
@@ -36,12 +34,12 @@ internal class PsiVFSListener(private val project: Project) {
   private var reportedUnloadedPsiChange = false
 
   private fun fileCreated(vFile: VirtualFile) {
-    ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction {
+    runWriteActionWithExternalChange {
       val parent = vFile.parent
       val parentDir = fileManager.getCachedDirectory(parent)
       if (parentDir == null) {
         handleVfsChangeWithoutPsi(vFile)
-        return@externalChangeAction
+        return@runWriteActionWithExternalChange
       }
 
       val item = if (vFile.isDirectory) fileManager.findDirectory(vFile) else fileManager.findFile(vFile)
@@ -52,7 +50,7 @@ internal class PsiVFSListener(private val project: Project) {
         treeEvent.child = item
         manager.childAdded(treeEvent)
       }
-    })
+    }
   }
 
   private fun beforeFileDeletion(event: VFileDeleteEvent) {
@@ -62,7 +60,7 @@ internal class PsiVFSListener(private val project: Project) {
     // do not notify listeners if the parent directory was never accessed via PSI
     val parentDir = fileManager.getCachedDirectoryNullable(parent) ?: return
 
-    ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction {
+    runWriteActionWithExternalChange {
       val items = if (vFile.isDirectory) listOfNotNull(fileManager.findDirectory(vFile)) else fileManager.getCachedPsiFiles(vFile)
       for (item in items) {
         val treeEvent = PsiTreeChangeEventImpl(manager)
@@ -70,7 +68,7 @@ internal class PsiVFSListener(private val project: Project) {
         treeEvent.child = item
         manager.beforeChildRemoval(treeEvent)
       }
-    })
+    }
   }
 
   // optimization: call myFileManager.removeInvalidFilesAndDirs() once for a group of deletion events, instead of once for each event
@@ -79,12 +77,12 @@ internal class PsiVFSListener(private val project: Project) {
 
     fun fireChildRemoved(element: PsiElement, parentDir: PsiDirectory?) {
       if (parentDir == null) return
-      ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction {
+      runWriteActionWithExternalChange {
         val treeEvent = PsiTreeChangeEventImpl(manager)
         treeEvent.parent = parentDir
         treeEvent.child = element
         manager.childRemoved(treeEvent)
-      })
+      }
     }
 
     fun dirDeleted(dir: VirtualFile, parent: VirtualFile?) {
@@ -146,7 +144,7 @@ internal class PsiVFSListener(private val project: Project) {
       return
     }
 
-    ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction {
+    runWriteActionWithExternalChange {
       val isExcluded = vFile.isDirectory && Registry.`is`("ide.hide.excluded.files") && myProjectRootManager.fileIndex.isExcluded(vFile)
       if (oldParentDir != null && !isExcluded) {
 
@@ -182,7 +180,7 @@ internal class PsiVFSListener(private val project: Project) {
         treeEvent.parent = newParentDir
         manager.beforeChildAddition(treeEvent)
       }
-    })
+    }
   }
 
   // optimization: call fileManager.removeInvalidFilesAndDirs() once for a group of move events, instead of once for each event

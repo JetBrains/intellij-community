@@ -2,12 +2,10 @@
 package com.intellij.psi.impl.file.impl
 
 import com.intellij.ide.PsiCopyPasteManager
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectLocator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
-import com.intellij.psi.ExternalChangeActionUtil
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
@@ -101,9 +99,9 @@ internal class FileMoveEventEmitter(
       return
     }
 
-    ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction {
+    runWriteActionWithExternalChange {
       doSendMoveEvents(vFile, oldParentDir, newParentDir, oldElements, newViewProvider, newElement)
-    })
+    }
   }
 
   fun doSendMoveEvents(
