@@ -271,7 +271,6 @@ private fun assertSpecsMatch(actual: DirectoryContentSpecImpl,
           if (fileString != null && specString != null) {
             if (!fileTextMatcher.matches(fileString, specString)) {
               val specFilePath = expected.originalFile?.toFile()?.absolutePath
-              val actualFilePath = actual.originalFile?.toFile()?.absolutePath
               val message = if (StringUtil.convertLineSeparators(fileString) != StringUtil.convertLineSeparators(specString)) {
                 "File content mismatch$place: expected:\n $fileString\n but was\n$specString"
               }
@@ -279,7 +278,7 @@ private fun assertSpecsMatch(actual: DirectoryContentSpecImpl,
                 "Different line separators$place, expected ${StringUtil.detectSeparators(specString)}, but ${StringUtil.detectSeparators(fileString)} found:"
               }
               errorReporter.reportError(relativePath,
-                                        FileComparisonFailedError(message, specString, fileString, specFilePath, actualFilePath))
+                                        FileComparisonFailedError(message, specString, fileString, specFilePath, null))
             }
           }
           else {
