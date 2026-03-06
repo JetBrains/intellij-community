@@ -145,7 +145,7 @@ public class PsiElementRenameHandler implements RenameHandler {
   }
 
   /**
-   * Computes the error for the element if it can't be renamed due to general reasons like a file is not writable.
+   * Computes the error for the element if it can't be renamed due to general reasons like a file not being writable.
    */
   public static @Nullable @NlsContexts.DialogMessage String getRenameErrorMessage(@NotNull Project project, Editor editor, PsiElement element) {
     boolean hasRenameProcessor =
