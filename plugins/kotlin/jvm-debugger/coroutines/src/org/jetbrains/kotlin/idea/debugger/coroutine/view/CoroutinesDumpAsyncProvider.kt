@@ -45,10 +45,11 @@ class CoroutinesDumpAsyncProvider : ThreadDumpItemsProviderFactory() {
               if (!enabled || suspendContext == null) emptyList()
               else {
                 val (coroutinesCache, _) = CoroutineDebugProbesProxy(suspendContext).dumpCoroutinesWithHierarchy()
-                if (coroutinesCache.isOk()) coroutinesCache.cache.map { info ->
+                val coroutineDumpItems = if (coroutinesCache.isOk()) coroutinesCache.cache.map { info ->
                     if (info.parentJobId == null) info.parentJobId = CoroutineRootDumpItem.treeId
                     CoroutineDumpItem(info)
-                } + CoroutineRootDumpItem else emptyList()
+                } else emptyList()
+                if (coroutineDumpItems.isNotEmpty()) coroutineDumpItems + CoroutineRootDumpItem else coroutineDumpItems
               })
               .also {
                 DebuggerStatistics.logCoroutineDump(context.project, it.size)
