@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -97,26 +97,20 @@ public final class SimplifiableAnnotationInspection extends BaseInspection imple
       if (attributes.length == 0) {
         return out.toString();
       }
-      out.append('(');
-      if (attributes.length == 1) {
-        final PsiNameValuePair attribute = attributes[0];
-        final @NonNls String name = attribute.getName();
-        if (name != null && !PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(name)) {
-          out.append(name).append('=');
-        }
-        buildAttributeValueText(attribute.getValue(), out, tracker);
-      }
-      else {
-        for (int i = 0; i < attributes.length; i++) {
-          final PsiNameValuePair attribute = attributes[i];
-          if (i > 0) {
-            out.append(',');
+      PsiElement child = parameterList.getFirstChild();
+      while (child != null) {
+        if (child instanceof PsiNameValuePair attribute) {
+          String name = attribute.getName();
+          if (attributes.length > 1 || name != null && !PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(name)) {
+            out.append(name).append('=');
           }
-          out.append(attribute.getName()).append('=');
           buildAttributeValueText(attribute.getValue(), out, tracker);
         }
+        else {
+          out.append(child.getText());
+        }
+        child = child.getNextSibling();
       }
-      out.append(')');
       return out.toString();
     }
 

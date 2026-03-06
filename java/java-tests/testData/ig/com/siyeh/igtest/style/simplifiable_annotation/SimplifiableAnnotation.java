@@ -2,7 +2,7 @@ package com.siyeh.igtest.style.simplifiable_annotation;
 
 public class SimplifiableAnnotation {
 
-    @<warning descr="Unnecessary whitespace in annotation"> </warning>SuppressWarnings<warning descr="Unnecessary whitespace in annotation">  </warning>(<warning descr="Unnecessary 'value =' in annotation">value = </warning>"blabla")
+    @<warning descr="Unnecessary whitespace in annotation"><caret> </warning>SuppressWarnings<warning descr="Unnecessary whitespace in annotation">  </warning>(<warning descr="Unnecessary 'value =' in annotation">value = </warning>"blabla")
     @<warning descr="Unnecessary whitespace in annotation"> </warning>Deprecated<warning descr="Unnecessary '()' in annotation">()</warning>
     Object foo() {
         return null;
@@ -30,3 +30,8 @@ class MyClass {
   int[] i();
   int j();
 }
+@Two(
+  i = <warning descr="Unnecessary braces around '{10}' in annotation">{</warning>10<warning descr="Unnecessary braces around '{10}' in annotation">}</warning>,
+  j = 11
+)
+class X { }
