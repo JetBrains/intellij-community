@@ -105,5 +105,13 @@ class SearchEverywherePreviewFetcher(
       }
       return UsageInfo(psiFile)
     }
+
+    fun readRangeFromUsageInfo(info: UsageInfo): Pair<Int, Int>? {
+      for (finder in SearchEverywherePreviewPrimaryUsageFinder.EP_NAME.extensionList) {
+        val range = finder.readRangeFromUsageInfo(info)
+        if (range != null) return range
+      }
+      return null
+    }
   }
 }
