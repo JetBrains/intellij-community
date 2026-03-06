@@ -46,10 +46,10 @@ object CheckboxIcon {
     get() = if (ExperimentalUI.isNewUI()) 4 else 0
 
 
-  class WithColor(private val size: Int, color: Color, arc: Int) : ColorIcon(size, size, size, size, color, false, arc) {
+  class WithColor : ColorIcon {
     private var mySizedIcon: SizedIcon
 
-    init {
+    constructor(size: Int, color: Color, arc: Int) : super(size, size, size, size, color, false, arc) {
       val icon = if (ExperimentalUI.isNewUI()) {
         IconUtil.resizeSquared(LafIconLookup.getIcon("checkmark", true), checkMarkSize)
       }
@@ -57,6 +57,10 @@ object CheckboxIcon {
         PlatformIcons.CHECK_ICON_SMALL
       }
       mySizedIcon = SizedIcon(icon, checkMarkSize, checkMarkSize)
+    }
+
+    constructor(icon: WithColor) : super(icon) {
+      mySizedIcon = icon.mySizedIcon.copy()
     }
 
     override fun withIconPreScaled(preScaled: Boolean): WithColor {
@@ -72,7 +76,7 @@ object CheckboxIcon {
     }
 
     override fun copy(): ColorIcon {
-      return WithColor(size, iconColor, arcSize)
+      return WithColor(this)
     }
   }
 }
