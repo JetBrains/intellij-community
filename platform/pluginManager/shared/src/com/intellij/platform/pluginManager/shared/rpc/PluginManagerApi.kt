@@ -70,7 +70,7 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun findInstalledPlugins(plugins: Set<PluginId>): Map<PluginId, PluginDto>
   suspend fun loadDescriptorById(pluginId: PluginId): PluginDto?
   suspend fun getCustomRepoTags(): Set<String>
-  suspend fun updateCustomRepositories(repositoryUrls: List<String>): List<String>
+  suspend fun updateCustomRepositories(addedRepositoryUrls: List<String>, removedRepositoryUrls: List<String>, ): List<String>
   suspend fun setPluginsAutoUpdateEnabled(enabled: Boolean)
 
 
