@@ -52,7 +52,7 @@ import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UpdateScaleHelper;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.intellij.lang.annotations.JdkConstants;
+import com.intellij.util.ui.JdkConstants;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;

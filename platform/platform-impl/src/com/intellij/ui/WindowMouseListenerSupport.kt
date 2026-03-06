@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
 import com.intellij.openapi.diagnostic.debug
@@ -8,7 +8,7 @@ import com.intellij.ui.wayland.getValidBoundsForPopup
 import com.intellij.ui.wayland.isUnconstrainedPopupPositioning
 import com.intellij.util.ui.StartupUiUtil
 import com.jetbrains.JBR
-import org.intellij.lang.annotations.JdkConstants
+import com.intellij.util.ui.JdkConstants
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Cursor
