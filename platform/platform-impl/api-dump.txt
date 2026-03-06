@@ -1319,6 +1319,12 @@ com.intellij.ui.EditorSettingsProvider
 com.intellij.ui.EditorTextFieldProvider
 - a:getEditorField(com.intellij.lang.Language,com.intellij.openapi.project.Project,java.lang.Iterable):com.intellij.ui.EditorTextField
 - s:getInstance():com.intellij.ui.EditorTextFieldProvider
+f:com.intellij.ui.FontComboBox
+- setupDefaultRenderer(Z,Z):V
+f:com.intellij.ui.FontInfoRendererBuilder
+- <init>():V
+- f:build():javax.swing.ListCellRenderer
+- f:editorFont():com.intellij.ui.FontInfoRendererBuilder
 com.intellij.ui.GotItTextBuilder
 - browserLink(java.lang.String,java.net.URL):java.lang.String
 - code(java.lang.String):java.lang.String
@@ -1677,7 +1683,6 @@ com.intellij.ui.popup.list.ComboBoxPopup$Context
 com.intellij.ui.popup.list.FilterableListPopupStep
 - com.intellij.openapi.ui.popup.ListPopupStep
 - a:updateFilter(java.lang.String):V
-f:com.intellij.ui.render.RenderersKt
 f:com.intellij.ui.render.RenderingHelper
 - sf:RESIZE_EDITOR_TO_RENDERER_SIZE:com.intellij.openapi.util.Key
 - sf:SHRINK_LONG_RENDERER:com.intellij.openapi.util.Key

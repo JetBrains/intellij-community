@@ -22,6 +22,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRendererComponent;
 import com.intellij.ui.dsl.listCellRenderer.LcrRow;
 import com.intellij.ui.popup.WizardPopup;
+import com.intellij.ui.render.CompositeRenderer;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -301,6 +302,13 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
         KotlinUIDslRendererComponent component =
           (KotlinUIDslRendererComponent)unwrappedRenderer.getListCellRendererComponent(myProxyList, value, -1, false, false);
         return component.getListSeparator();
+      }
+      if (unwrappedRenderer instanceof CompositeRenderer<?>) {
+        //noinspection unchecked
+        var component = unwrappedRenderer.getListCellRendererComponent(myProxyList, value, -1, false, false);
+        if (component instanceof KotlinUIDslRendererComponent dslRendererComponent) {
+          return dslRendererComponent.getListSeparator();
+        }
       }
 
       return null;

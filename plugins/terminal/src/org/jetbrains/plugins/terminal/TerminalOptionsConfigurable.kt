@@ -69,7 +69,6 @@ import com.intellij.ui.layout.enteredTextSatisfies
 import com.intellij.ui.layout.selected
 import com.intellij.ui.layout.selectedValueIs
 import com.intellij.ui.layout.selectedValueMatches
-import com.intellij.ui.render.fontInfoRenderer
 import com.intellij.util.PathUtil
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.system.OS
@@ -614,7 +613,7 @@ private fun findColorByKey(vararg colorKeys: String): Color =
   throw IllegalStateException("Can't find color for keys " + colorKeys.contentToString())
 
 private fun fontComboBox(): FontComboBox = FontComboBox().apply {
-  renderer = fontInfoRenderer(true)
+  setupDefaultRenderer(true, false)
   isMonospacedOnly = true
 }
 

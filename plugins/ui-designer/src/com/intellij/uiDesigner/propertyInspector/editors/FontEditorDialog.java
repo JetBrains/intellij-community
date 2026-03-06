@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.FontInfoRendererBuilder;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
@@ -48,8 +49,6 @@ import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.ResourceBundle;
-
-import static com.intellij.ui.render.RenderersKt.fontInfoRenderer;
 
 
 public class FontEditorDialog extends DialogWrapper {
@@ -174,7 +173,7 @@ public class FontEditorDialog extends DialogWrapper {
     init();
     setTitle(UIDesignerBundle.message("font.chooser.title", propertyName));
     myFontNameList.setModel(myModel);
-    myFontNameList.setCellRenderer(fontInfoRenderer(false));
+    myFontNameList.setCellRenderer(new FontInfoRendererBuilder().build());
     myFontNameList.addListSelectionListener(new MyListSelectionListener(myFontNameEdit));
     myFontStyleList.setListData(new String[]{
       UIDesignerBundle.message("font.chooser.regular"),
@@ -392,7 +391,7 @@ public class FontEditorDialog extends DialogWrapper {
     return object == null ? null : object.toString();
   }
 
-  private static final class Model extends AbstractListModel {
+  private static final class Model extends AbstractListModel<FontInfo> {
     private final List<FontInfo> myList = FontInfo.getAll(false);
 
     @Override

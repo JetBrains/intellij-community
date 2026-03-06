@@ -24,8 +24,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.ui.FontComboBoxRendererKt.createFontComboBoxRenderer;
-
 public final class FontComboBox extends AbstractFontCombo {
 
   private Model myModel;
@@ -46,9 +44,7 @@ public final class FontComboBox extends AbstractFontCombo {
     // preScaled=true as 'size' reflects already scaled font
     mySize = JBDimension.create(size, true);
     setSwingPopup(false);
-    Model model = (Model)getModel();
-    //noinspection unchecked
-    setRenderer(createFontComboBoxRenderer(() -> model.myAllFonts, () -> model.myMonoFonts));
+    setupDefaultRenderer(false, true);
     getModel().addListDataListener(new ListDataListener() {
       @Override
       public void intervalAdded(ListDataEvent e) {}
@@ -114,6 +110,27 @@ public final class FontComboBox extends AbstractFontCombo {
     else {
       throw new UnsupportedOperationException();
     }
+  }
+
+  /**
+   * Customizes the renderer for the font combo box.
+   *
+   * @param isEditorFont whether the fonts are used in the editor or in the UI
+   * @param showGroups whether to show Monospaced/Proportional font groups. Should be false if the combobox uses
+   *                   monospaced fonts only.
+   */
+  public void setupDefaultRenderer(boolean isEditorFont, boolean showGroups) {
+    var builder = new FontInfoRendererBuilder();
+
+    if (isEditorFont) {
+      builder.editorFont();
+    }
+    if (showGroups) {
+      builder.withSeparatorFontType(() -> myModel.myAllFonts, () -> myModel.myMonoFonts);
+    }
+
+    //noinspection unchecked
+    setRenderer(builder.buildFontComboBoxRenderer());
   }
 
   static final class Model extends AbstractListModel implements ComboBoxModel {
