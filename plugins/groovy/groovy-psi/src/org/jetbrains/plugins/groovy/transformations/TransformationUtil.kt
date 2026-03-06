@@ -23,31 +23,59 @@ class TransformationResult(
   val innerClasses: Array<PsiClass>,
   val implementsTypes: Array<PsiClassType>,
   val extendsTypes: Array<PsiClassType>,
-  val modifiers: Map<GrModifierList, List<String>>
+  val modifiers: Map<GrModifierList, List<String>>,
+  internal val wasExtendsTypeSet: Boolean
 )
 
-enum class MethodOrder{
+/**
+ * Stores the way method was added to [TransformationContext]
+ * 1. [FIRST] - method was added to the beginning of the `TransformationResult#methodInfos` via `TransformationContext.addMethod(PsiMethod, true)`
+ * 2. [DEFAULT] - method was already in the code [org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition.getCodeMethods]
+ * 3. [LAST] - method was added to the end of the method list via `TransformationContext.addMethod(PsiMethod, false)`
+ */
+enum class MethodOrder {
   FIRST, DEFAULT, LAST,
 }
 
-data class MethodInfo(val method: PsiMethod, val methodOrder: MethodOrder): Comparable<MethodInfo> {
-  override fun compareTo(other: MethodInfo): Int = methodOrder.compareTo(other.methodOrder)
+/**
+ * Stores information about method added to [TransformationContext]
+ *
+ * @property method actual method
+ * @property order describes how the method was added to the method list
+ */
+data class MethodInfo(val method: PsiMethod, val order: MethodOrder): Comparable<MethodInfo> {
+  override fun compareTo(other: MethodInfo): Int = order.compareTo(other.order)
 }
 
+/**
+ * Merges two [TransformationResult]s into one preserving order for methods.
+ * NB: this method assumes there are no duplicates between members [TransformationResult] to avoid recursion issues
+ */
 infix operator fun TransformationResult.plus(other: TransformationResult): TransformationResult {
   val removedMethodInfos = myRemovedMethodInfos + other.myRemovedMethodInfos
-  val mergedMethodInfos = (methodInfos + other.methodInfos).distinctBy { method -> method.hashCode() }.filter {
+  val mergedMethodInfos = (methodInfos + other.methodInfos).filter {
     it !in removedMethodInfos
   }.sorted().toTypedArray<MethodInfo>()
   return TransformationResult(
     mergedMethodInfos,
     removedMethodInfos,
-    (fields + other.fields).distinctBy { field -> field.hashCode() }.toTypedArray<GrField>(),
-    (innerClasses + other.innerClasses).distinctBy { clazz -> clazz.hashCode() }.toTypedArray<PsiClass>(),
-    (implementsTypes + other.implementsTypes).distinctBy { type -> type.hashCode() }.toTypedArray<PsiClassType>(),
-    (extendsTypes + other.extendsTypes).distinctBy { type -> type.hashCode() }.toTypedArray<PsiClassType>(),
-    modifiers + other.modifiers
+    fields + other.fields,
+    innerClasses + other.innerClasses,
+    implementsTypes + other.implementsTypes,
+    mergeExtendsTypes(extendsTypes, wasExtendsTypeSet, other.extendsTypes, other.wasExtendsTypeSet),
+    modifiers + other.modifiers,
+    wasExtendsTypeSet || other.wasExtendsTypeSet
   )
+}
+
+private fun mergeExtendsTypes(
+  first: Array<PsiClassType>,
+  firstWasSet: Boolean,
+  second: Array<PsiClassType>,
+  secondWasSet: Boolean,
+): Array<PsiClassType> {
+  if (firstWasSet && secondWasSet) throw IllegalArgumentException("Custom types was set in 2 transformations, can't decided which is more appropriate")
+  return if (firstWasSet) first else if (secondWasSet) second else first + second
 }
 
 private val emptyTransformationResult = TransformationResult(
@@ -57,7 +85,8 @@ private val emptyTransformationResult = TransformationResult(
   PsiClass.EMPTY_ARRAY,
   PsiClassType.EMPTY_ARRAY,
   PsiClassType.EMPTY_ARRAY,
-  emptyMap()
+  emptyMap(),
+  false
 )
 
 private val LOG: Logger = Logger.getInstance("#org.jetbrains.plugins.groovy.transformations.TransformationUtilKt")
@@ -81,7 +110,7 @@ fun disableAssertOnRecursion(disposable: Disposable) {
 @JvmOverloads
 fun transformDefinition(definition: GrTypeDefinition, type: TransformationType = TransformationType.DEFAULT): TransformationResult {
   return RecursionManager.doPreventingRecursion(definition, false) {
-    val transformationContext = TransformationContextImpl(definition)
+    val transformationContext = TransformationContextImpl(definition, type != TransformationType.LIGHT)
     val project = definition.project
     if (DumbService.isDumb(project)) {
       DumbService.getDumbAwareExtensions(project, AstTransformationSupport.EP_NAME)
