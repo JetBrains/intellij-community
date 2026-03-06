@@ -5,13 +5,11 @@ package com.intellij.internal
 
 import com.intellij.ide.ApplicationActivity
 import com.intellij.ide.plugins.ClassLoaderConfigurator
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.plugins.contentModuleName
-import com.intellij.ide.plugins.contentModules
 import com.intellij.internal.PluginDescriptionDumper.Companion.getDumpFileLocation
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
@@ -129,32 +127,33 @@ private class PluginDescriptionDumper(val coroutineScope: CoroutineScope) {
     }
 
     val printedClassLoaders = HashSet<ClassLoader>()
-    PluginManager.getLoadedPlugins().forEach { plugin ->
-      writePluginData(plugin, classLoaderIds, printedClassLoaders)
+    val enabledPlugins = PluginManagerCore.getPluginSet().enabledPlugins
+    enabledPlugins.forEach { plugin ->
+      writePluginData(plugin, enabled = true, classLoaderIds, printedClassLoaders)
     }
-    allPlugins.filterNot { it.isEnabled }.sortedBy { it.pluginId.idString }.forEach { plugin ->
-      writePluginData(plugin, classLoaderIds, printedClassLoaders)
+    (allPlugins - enabledPlugins.toSet()).sortedBy { it.pluginId.idString }.forEach { plugin ->
+      writePluginData(plugin, enabled = false, classLoaderIds, printedClassLoaders)
     }
   }
 
-  private fun JsonGenerator.writePluginData(plugin: IdeaPluginDescriptor,
+  private fun JsonGenerator.writePluginData(plugin: PluginMainDescriptor,
+                                            enabled: Boolean,
                                             classLoaderIds: Map<ClassLoader, String>,
                                             printedClassLoaders: MutableSet<ClassLoader>) {
     writeStartObject()
     writeStringProperty("id", plugin.pluginId.idString)
-    writeBooleanProperty("enabled", plugin.isEnabled)
+    writeBooleanProperty("enabled", enabled)
     writeBooleanProperty("bundled", plugin.isBundled)
-    if (plugin.isEnabled) {
-      writeClassLoaderData(plugin.classLoader, classLoaderIds, printedClassLoaders)
+    if (enabled) {
+      writeClassLoaderData(plugin.pluginClassLoader, classLoaderIds, printedClassLoaders)
     }
     writePluginModulesData(plugin, classLoaderIds, printedClassLoaders)
     writeEndObject()
   }
 
-  private fun JsonGenerator.writePluginModulesData(plugin: IdeaPluginDescriptor,
+  private fun JsonGenerator.writePluginModulesData(plugin: PluginMainDescriptor,
                                                    classLoaderIds: Map<ClassLoader, String>,
                                                    printedClassLoaders: MutableSet<ClassLoader>) {
-    if (plugin !is IdeaPluginDescriptorImpl) return
     val modules = plugin.contentModules
     if (modules.isEmpty()) return
 
@@ -165,14 +164,14 @@ private class PluginDescriptionDumper(val coroutineScope: CoroutineScope) {
       val isEnabled = module in PluginManagerCore.getPluginSet().getEnabledModules()
       writeBooleanProperty("enabled", isEnabled)
       if (isEnabled) {
-        writeClassLoaderData(module.classLoader, classLoaderIds, printedClassLoaders)
+        writeClassLoaderData(module.pluginClassLoader, classLoaderIds, printedClassLoaders)
       }
       writeEndObject()
     }
     writeEndArray()
   }
 
-  private fun JsonGenerator.writeClassLoaderData(classLoader: ClassLoader,
+  private fun JsonGenerator.writeClassLoaderData(classLoader: ClassLoader?,
                                                  classLoaderIds: Map<ClassLoader, String>,
                                                  printedClassLoaders: MutableSet<ClassLoader>) {
     writeName("classLoader")
@@ -180,7 +179,7 @@ private class PluginDescriptionDumper(val coroutineScope: CoroutineScope) {
     classLoaderIds[classLoader]?.let {
       writeStringProperty("id", it)
     }
-    if (printedClassLoaders.add(classLoader)) {
+    if (classLoader != null && printedClassLoaders.add(classLoader)) {
       @Suppress("TestOnlyProblems")
       val parents = when (classLoader) {
         is PluginClassLoader -> classLoader.getAllParentsClassLoaders().toList()
@@ -193,10 +192,10 @@ private class PluginDescriptionDumper(val coroutineScope: CoroutineScope) {
       writeEndArray()
 
       writeArrayPropertyStart("classpath")
-      val homePath = Path.of(PathManager.getHomePath())
+      val homeDir = PathManager.getHomeDir()
       if (classLoader is UrlClassLoader) {
         for (path in classLoader.baseUrls) {
-          val relativePath = if (path.startsWith(homePath)) path.relativeTo(homePath) else path
+          val relativePath = if (path.startsWith(homeDir)) path.relativeTo(homeDir) else path
           writeString(relativePath.toString())
         }
       }
