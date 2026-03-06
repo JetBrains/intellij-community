@@ -17,6 +17,7 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.extensions.LoadingOrder
@@ -180,7 +181,9 @@ object ExecuteRunConfigurationsChecker : AbstractTestChecker<ExecuteRunConfigura
                 .create(DefaultRunExecutor.getRunExecutorInstance(), runConfiguration)
                 .build()
 
-            ExecutionManager.getInstance(testProject).restartRunProfile(environment)
+            ApplicationManager.getApplication().invokeAndWait {
+                ExecutionManager.getInstance(testProject).restartRunProfile(environment)
+            }
         }
 
     private fun <T> runBlockingWithTimeout(timeout: Duration, action: CoroutineScope.(continuation: Continuation<T>) -> Unit): T {
