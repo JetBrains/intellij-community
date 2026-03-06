@@ -351,7 +351,7 @@ internal class AgentSessionRefreshCoordinator(
       AgentProjectSessions(
         path = normalizedEntryPath,
         name = entry.name,
-        branch = entry.branch ?: existing?.branch,
+        branch = entry.branch,
         isOpen = entryIsOpen,
         isLoading = shouldLoadProject,
         hasLoaded = existing?.hasLoaded ?: (cachedPreviews != null),

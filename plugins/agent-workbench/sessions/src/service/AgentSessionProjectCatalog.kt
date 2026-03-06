@@ -69,23 +69,13 @@ internal class AgentSessionProjectCatalog {
 
       val discoveredWorktrees = discoveredByRepoRoot[repoRoot] ?: emptyList()
       val worktreeEntries = buildWorktreeEntries(worktreeRaws.map { it.value }, discoveredWorktrees)
-      val mainBranch = shortBranchName(discoveredWorktrees.firstOrNull { it.isMain }?.branch)
-
-      if (worktreeEntries.isEmpty()) {
-        val raw = mainRaw?.value ?: continue
-        resultEntries.add(IndexedValue(firstIndex, raw))
-      }
-      else {
-        val entry = mainRaw?.value?.copy(worktreeEntries = worktreeEntries, branch = mainBranch)
-                    ?: ProjectEntry(
-                      path = repoRoot,
-                      name = worktreeDisplayName(repoRoot),
-                      project = null,
-                      branch = mainBranch,
-                      worktreeEntries = worktreeEntries,
-                    )
-        resultEntries.add(IndexedValue(firstIndex, entry))
-      }
+      val entry = buildRepoProjectEntry(
+        mainRaw = mainRaw?.value,
+        repoRoot = repoRoot,
+        worktreeEntries = worktreeEntries,
+        discoveredWorktrees = discoveredWorktrees,
+      ) ?: continue
+      resultEntries.add(IndexedValue(firstIndex, entry))
     }
 
     for (indexed in standaloneEntries) {
@@ -95,6 +85,27 @@ internal class AgentSessionProjectCatalog {
     return resultEntries.sortedBy { it.index }.map { it.value }
   }
 
+}
+
+internal fun buildRepoProjectEntry(
+  mainRaw: ProjectEntry?,
+  repoRoot: String,
+  worktreeEntries: List<WorktreeEntry>,
+  discoveredWorktrees: List<GitWorktreeInfo>,
+): ProjectEntry? {
+  val mainBranch = shortBranchName(discoveredWorktrees.firstOrNull { it.isMain }?.branch)
+  if (worktreeEntries.isEmpty()) {
+    return mainRaw?.copy(branch = mainBranch)
+  }
+
+  return mainRaw?.copy(worktreeEntries = worktreeEntries, branch = mainBranch)
+         ?: ProjectEntry(
+           path = repoRoot,
+           name = worktreeDisplayName(repoRoot),
+           project = null,
+           branch = mainBranch,
+           worktreeEntries = worktreeEntries,
+         )
 }
 
 private fun buildWorktreeEntries(
