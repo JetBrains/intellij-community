@@ -19,7 +19,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassObjectAccessExpression;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
@@ -76,14 +75,13 @@ public final class SimplifiableAnnotationInspection extends BaseInspection imple
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(element, PsiAnnotation.class);
+      final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(element, PsiAnnotation.class, false);
       if (annotation == null) {
         return;
       }
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      CommentTracker tracker = new CommentTracker();
+      final CommentTracker tracker = new CommentTracker();
       final String annotationText = buildAnnotationText(annotation, tracker);
-      final PsiAnnotation newAnnotation = factory.createAnnotationFromText(annotationText, element);
+      final PsiAnnotation newAnnotation = JavaPsiFacade.getElementFactory(project).createAnnotationFromText(annotationText, element);
       tracker.replaceAndRestoreComments(annotation, newAnnotation);
     }
 
@@ -100,7 +98,7 @@ public final class SimplifiableAnnotationInspection extends BaseInspection imple
       PsiElement child = parameterList.getFirstChild();
       while (child != null) {
         if (child instanceof PsiNameValuePair attribute) {
-          String name = attribute.getName();
+          final String name = attribute.getName();
           if (attributes.length > 1 || name != null && !PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(name)) {
             out.append(name).append('=');
           }
@@ -114,9 +112,7 @@ public final class SimplifiableAnnotationInspection extends BaseInspection imple
       return out.toString();
     }
 
-    private static void buildAttributeValueText(PsiAnnotationMemberValue value,
-                                                StringBuilder out,
-                                                CommentTracker tracker) {
+    private static void buildAttributeValueText(PsiAnnotationMemberValue value, StringBuilder out, CommentTracker tracker) {
       if (value instanceof PsiArrayInitializerMemberValue arrayValue) {
         final PsiAnnotationMemberValue[] initializers = arrayValue.getInitializers();
         if (initializers.length == 1) {
@@ -124,8 +120,8 @@ public final class SimplifiableAnnotationInspection extends BaseInspection imple
           return;
         }
       }
-      else if (value instanceof PsiAnnotation) {
-        out.append(buildAnnotationText((PsiAnnotation)value, tracker));
+      else if (value instanceof PsiAnnotation annotation) {
+        out.append(buildAnnotationText(annotation, tracker));
         return;
       }
       out.append(tracker.text(value));
@@ -153,7 +149,7 @@ public final class SimplifiableAnnotationInspection extends BaseInspection imple
         if (!isOnTheFly())  return;
       }
       if (annotationChildren.length >= 4) {
-        PsiElement child = annotationChildren[annotationChildren.length - 2];
+        final PsiElement child = annotationChildren[annotationChildren.length - 2];
         if (child instanceof PsiWhiteSpace && !containsError(annotation)) {
           registerError(child);
           if (!isOnTheFly())  return;
@@ -219,8 +215,7 @@ public final class SimplifiableAnnotationInspection extends BaseInspection imple
       if (PsiUtilCore.hasErrorElementChild(annotationParameterList)) {
         return true;
       }
-      final PsiNameValuePair[] attributes = annotationParameterList.getAttributes();
-      for (PsiNameValuePair attribute : attributes) {
+      for (PsiNameValuePair attribute : annotationParameterList.getAttributes()) {
         final PsiReference reference = attribute.getReference();
         if (reference == null) {
           return true;
@@ -233,7 +228,7 @@ public final class SimplifiableAnnotationInspection extends BaseInspection imple
         if (value == null || PsiUtilCore.hasErrorElementChild(value)) {
           return true;
         }
-        if (value instanceof PsiAnnotation && containsError((PsiAnnotation)value)) {
+        if (value instanceof PsiAnnotation a && containsError(a)) {
           return true;
         }
         if (!hasCorrectType(value, method.getReturnType())) {
@@ -265,21 +260,18 @@ public final class SimplifiableAnnotationInspection extends BaseInspection imple
         return false;
       }
 
-      if (value instanceof PsiAnnotation) {
-        final PsiJavaCodeReferenceElement nameRef = ((PsiAnnotation)value).getNameReferenceElement();
+      if (value instanceof PsiAnnotation annotation) {
+        final PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
         if (nameRef == null) return true;
 
-        if (expectedType instanceof PsiClassType) {
-          final PsiClass aClass = ((PsiClassType)expectedType).resolve();
+        if (expectedType instanceof PsiClassType type) {
+          final PsiClass aClass = type.resolve();
           if (aClass != null && nameRef.isReferenceTo(aClass)) return true;
         }
 
-        if (expectedType instanceof PsiArrayType) {
-          final PsiType componentType = ((PsiArrayType)expectedType).getComponentType();
-          if (componentType instanceof PsiClassType) {
-            final PsiClass aClass = ((PsiClassType)componentType).resolve();
-            if (aClass != null && nameRef.isReferenceTo(aClass)) return true;
-          }
+        if (expectedType instanceof PsiArrayType type && type.getComponentType() instanceof PsiClassType classType) {
+          final PsiClass aClass = classType.resolve();
+          if (aClass != null && nameRef.isReferenceTo(aClass)) return true;
         }
         return false;
       }
@@ -288,8 +280,8 @@ public final class SimplifiableAnnotationInspection extends BaseInspection imple
       }
       if (value instanceof PsiExpression expression) {
         return expression.getType() != null && TypeConversionUtil.areTypesAssignmentCompatible(expectedType, expression) ||
-               expectedType instanceof PsiArrayType &&
-               TypeConversionUtil.areTypesAssignmentCompatible(((PsiArrayType)expectedType).getComponentType(), expression);
+               expectedType instanceof PsiArrayType type &&
+               TypeConversionUtil.areTypesAssignmentCompatible(type.getComponentType(), expression);
       }
       return true;
     }
