@@ -5,16 +5,17 @@ import com.intellij.mcpserver.McpToolFilterProvider.MaskBasedMcpToolFilter.Compa
 import com.intellij.mcpserver.settings.McpToolFilterSettings
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 
-internal class SettingsBasedMcpToolFilterProvider(val cs: CoroutineScope) : McpToolFilterProvider {
-  override fun getFilters(clientInfo: Implementation?): StateFlow<List<McpToolFilterProvider.McpToolFilter>> {
+internal class SettingsBasedMcpToolFilterProvider : McpToolFilterProvider {
+  override fun getFilters(clientInfo: Implementation?, sessionOptions: McpServerService.McpSessionOptions?): List<McpToolFilterProvider.McpToolFilter> {
     val settings = McpToolFilterSettings.getInstance()
-    return settings.toolsFilterFlow
-      .map { getMaskFilters(it) }
-      .stateIn(cs, SharingStarted.Lazily, getMaskFilters(settings.toolsFilter))
+    return getMaskFilters(settings.toolsFilter)
+  }
+
+  override fun getUpdates(clientInfo: Implementation?, scope: CoroutineScope, sessionOptions: McpServerService.McpSessionOptions?): Flow<Unit> {
+    val settings = McpToolFilterSettings.getInstance()
+    return settings.toolsFilterFlow.map { }
   }
 }
