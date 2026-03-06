@@ -68,6 +68,7 @@ object PyDataclassNames {
     val ATTRS_EVOLVE: Set<String> = setOf("attr.evolve", "attrs.evolve")
     val ATTRS_FROZEN: Set<String> = setOf("attr.frozen", "attrs.frozen")
     const val DUNDER_POST_INIT: String = "__attrs_post_init__"
+    const val DUNDER_ATTRS: String = "__attrs_attrs__"
     val DECORATOR_PARAMETERS: List<String> = listOf(
       "these",
       "repr_ns",
