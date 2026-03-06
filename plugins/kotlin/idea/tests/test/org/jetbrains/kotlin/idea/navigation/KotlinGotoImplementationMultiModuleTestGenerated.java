@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.navigation;
 
@@ -30,6 +30,11 @@ public class KotlinGotoImplementationMultiModuleTestGenerated extends AbstractKo
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("actualClass")
+    public void testActualClass() throws Exception {
+        runTest("testData/navigation/implementations/multiModule/actualClass/");
+    }
+
     @TestMetadata("actualFunction")
     public void testActualFunction() throws Exception {
         runTest("testData/navigation/implementations/multiModule/actualFunction/");
@@ -48,6 +53,11 @@ public class KotlinGotoImplementationMultiModuleTestGenerated extends AbstractKo
     @TestMetadata("expectClassFun")
     public void testExpectClassFun() throws Exception {
         runTest("testData/navigation/implementations/multiModule/expectClassFun/");
+    }
+
+    @TestMetadata("expectClassMultiplePlatforms")
+    public void testExpectClassMultiplePlatforms() throws Exception {
+        runTest("testData/navigation/implementations/multiModule/expectClassMultiplePlatforms/");
     }
 
     @TestMetadata("expectClassProperty")
