@@ -3,8 +3,11 @@
   <dependencies>
     <module name="intellij.libraries.ktor.client"/>
     <module name="intellij.libraries.kotlinx.io"/>
-    <module name="intellij.libraries.kotlinx.document.store.mvstore"/>
     <module name="intellij.libraries.kotlinx.coroutines.slf4j"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.kotlinx.document.store.mvstore"/>
+    <module name="intellij.maven.model"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensionPoints>
