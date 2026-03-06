@@ -17,9 +17,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.TestModuleProperties;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.entities.ModuleId;
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
@@ -461,6 +460,33 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     var javaSettings = JavaModuleSettingsKt.getJavaSettings(moduleEntity);
     var automaticModuleName = javaSettings.getManifestAttributes().get(PsiJavaModule.AUTO_MODULE_NAME);
     assertEquals("my.module.name", automaticModuleName);
+  }
+
+  @Test
+  public void testJavaModuleCompileOutputPathFromGradleDependency() throws Exception {
+    createProjectSubFile("src/main/java/A.java");
+    createProjectSubFile("src/main/resources/resource.properties");
+    importProject("apply plugin: 'java'");
+
+    IdeModifiableModelsProvider modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject);
+    var appModule = modelsProvider.newModule(getProjectPath() + "/app.iml", StdModuleTypes.JAVA.getId());
+    ModuleRootModificationUtil.addDependency(appModule, getModule("project.main"));
+    edt(() -> ApplicationManager.getApplication().runWriteAction(modelsProvider::commit));
+
+    assertModules("app", "project", "project.main", "project.test");
+
+    assertNull(ExternalSystemApiUtil.getExternalProjectPath(getModule("app")));
+    assertEquals(getProjectPath(), ExternalSystemApiUtil.getExternalProjectPath(getModule("project")));
+    assertEquals(getProjectPath(), ExternalSystemApiUtil.getExternalProjectPath(getModule("project.main")));
+    assertEquals(getProjectPath(), ExternalSystemApiUtil.getExternalProjectPath(getModule("project.test")));
+
+    String[] outputPathsFromEnumerator = ContainerUtil.map2Array(
+      OrderEnumerator.orderEntries(appModule).recursively().withoutSdk().withoutLibraries().classes().getUrls(),
+      String.class,
+      VfsUtilCore::urlToPath
+    );
+
+    assertUnorderedElementsAreEqual(outputPathsFromEnumerator, path("build/classes/java/main"), path("build/resources/main"));
   }
 
   private static void assertExternalProjectIds(Map<String, ExternalProject> projectMap, String projectId, String... sourceSetModulesIds) {
