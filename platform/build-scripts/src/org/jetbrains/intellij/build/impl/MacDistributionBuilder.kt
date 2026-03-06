@@ -484,6 +484,7 @@ class MacDistributionBuilder(
                   false
                 }
                 sourceFile.fileName.toString() == ".DS_Store" -> false
+                isContentDir && context.options.isLanguageServer && sourceFile.extension == "sh" -> true
                 isContentDir && sourceFile.fileName.toString() != "Info.plist" -> {
                   error("Only Info.plist file is allowed in ${zipRoot} directory but found ${zipRoot}/${relativePath}")
                 }
