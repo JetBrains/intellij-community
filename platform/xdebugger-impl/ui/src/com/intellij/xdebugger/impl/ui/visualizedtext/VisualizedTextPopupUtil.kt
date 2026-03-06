@@ -3,7 +3,11 @@ package com.intellij.xdebugger.impl.ui.visualizedtext
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -20,6 +24,7 @@ import com.intellij.ui.AppUIUtil
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.components.JBTabbedPane
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.frame.XFullValueEvaluator
 import com.intellij.xdebugger.impl.ui.CustomComponentEvaluator
@@ -38,6 +43,14 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
 import javax.swing.JPanel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.max
 
 /**
@@ -84,14 +97,18 @@ object VisualizedTextPopupUtil {
   }
 
   // We return pairs because it's easier to do all dangerous stuff and catch all errors in one place.
-  fun collectVisualizedTabs(project: Project, fullValue: String, parentDisposable: Disposable): List<Pair<VisualizedContentTab, JComponent>> {
-    val tabs = calcNonTrivialVisualizedTabs(fullValue) +
-               // Explicitly add the fallback raw visualizer to make it the last one.
-               RawTextVisualizer.visualize(fullValue)
+  suspend fun collectVisualizedTabs(project: Project, fullValue: String, parentDisposable: Disposable): List<Pair<VisualizedContentTab, JComponent>> {
+    val tabs = withContext(Dispatchers.Default) {
+      calcNonTrivialVisualizedTabs(fullValue) +
+        // Explicitly add the fallback raw visualizer to make it the last one.
+        RawTextVisualizer.visualize(fullValue)
+    }
 
-    return tabs.mapNotNull { tab ->
-      wrapUnsafeAction(fullValue, "create visualized component (${tab.id})") {
-        tab to tab.createComponent(project, parentDisposable)
+    return withContext(Dispatchers.EDT) {
+      tabs.mapNotNull { tab ->
+        wrapUnsafeAction(fullValue, "create visualized component (${tab.id})") {
+          tab to tab.createComponent(project, parentDisposable)
+        }
       }
     }
   }
@@ -108,6 +125,9 @@ internal class VisualizedTextPanel(private val project: Project) : JPanel(CardLa
   private data class Showing(val text: String) : State()
   private data class Editing(val initText: String, val editor: Editor) : State()
   private object Other : State()
+
+  private val coroutineScope: CoroutineScope = project.service<VisualizedTextPopupUtilProjectCoroutineScope>().cs
+  private var visualizationJob: Job? = null
 
   private var state: State = Other
 
@@ -139,20 +159,41 @@ internal class VisualizedTextPanel(private val project: Project) : JPanel(CardLa
 
   /** Visualize the text and show it nicely. */
   fun showVisualizedText(value: String) {
-    val tabs = VisualizedTextPopupUtil.collectVisualizedTabs(project, value, parentDisposable = this)
-    if (tabs.isEmpty()) {
-      // popup might already be canceled, ignore it
-      return
-    }
-    val component = if (tabs.size > 1) {
-      createTabbedPane(tabs)
-    } else {
-      val (tab, component) = tabs.first()
-      tab.onShown(project, firstTime = true)
-      component
-    }
-    showComponent(component)
-    state = Showing(value)
+    showVisualizedText(value, onDone = null)
+  }
+
+  fun showVisualizedText(value: String, onDone: Runnable?) {
+    visualizationJob?.cancel()
+    visualizationJob = coroutineScope.launch(Dispatchers.EDT) {
+      try {
+        val tabs = VisualizedTextPopupUtil.collectVisualizedTabs(project, value, parentDisposable = this@VisualizedTextPanel)
+        if (tabs.isEmpty()) {
+          // popup might already be canceled, ignore it
+          return@launch
+        }
+
+        val component = if (tabs.size > 1) {
+          createTabbedPane(tabs)
+        }
+        else {
+          val (tab, component) = tabs.first()
+          tab.onShown(project, firstTime = true)
+          component
+        }
+        showComponent(component)
+        state = Showing(value)
+      }
+      catch (e: Exception) {
+        if (e is CancellationException || e is ControlFlowException) throw e
+        LOG.error(e)
+        showError(e.toString())
+      }
+      finally {
+        if (currentCoroutineContext().isActive) {
+          onDone?.run()
+        }
+      }
+    }.also { it.cancelOnDispose(this) }
   }
 
   private fun createTabbedPane(tabsAndComponents: List<Pair<VisualizedContentTab, JComponent>>): JComponent {
@@ -267,6 +308,7 @@ private fun <R> wrapUnsafeAction(fullValue: String, actionDescription: String, a
     return action()
   }
   catch (t: Throwable) {
+    if (t is CancellationException || t is ControlFlowException) throw t
     LOG.error("failed to $actionDescription", t, Attachment("value.txt", fullValue))
     return null
   }
@@ -313,3 +355,6 @@ private class EvaluationCallback(private val panel: VisualizedTextPanel) : XFull
     return obsolete.get()
   }
 }
+
+@Service(Service.Level.PROJECT)
+private class VisualizedTextPopupUtilProjectCoroutineScope(val cs: CoroutineScope)
