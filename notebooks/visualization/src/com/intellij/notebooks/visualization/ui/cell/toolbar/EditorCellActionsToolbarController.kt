@@ -40,6 +40,7 @@ import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.toKotlinDuration
 
 /** Position of the floating toolbar in cells top right corner. */
@@ -129,7 +130,7 @@ internal class EditorCellActionsToolbarController(
 
     showToolbarJob = coroutineScope.launch {
       delay(SHOW_TOOLBAR_DELAY_MS)
-      withContext(Dispatchers.Main) {
+      withContext(Dispatchers.EDT) {
         updateToolbarPosition(component)
         editor.contentComponent.add(toolbar, 0)
       }
@@ -179,11 +180,11 @@ internal class EditorCellActionsToolbarController(
     .putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
 
   private fun calculateToolbarBounds(panel: JComponent, toolbar: JComponent): Rectangle {
-    val toolbarHeight = toolbar.preferredSize.height
-    val toolbarWidth = toolbar.preferredSize.width
-
     val panelHeight = panel.height
     val panelWidth = panel.width
+
+    val toolbarHeight = toolbar.preferredSize.height
+    val toolbarWidth = min(toolbar.preferredSize.width, panelWidth)
 
     val delimiterSize = when (cell.interval.ordinal) {
       0 -> editor.notebookAppearance.aboveFirstCellDelimiterHeight
@@ -192,7 +193,7 @@ internal class EditorCellActionsToolbarController(
 
     val panelRoofHeight = panelHeight - delimiterSize
 
-    val xOffset = panelWidth - toolbarWidth - (panelWidth * RELATIVE_Y_OFFSET_RATIO).toInt()
+    val xOffset = max(0, panelWidth - toolbarWidth - (panelWidth * RELATIVE_Y_OFFSET_RATIO).toInt())
     val yOffset = panelHeight - panelRoofHeight - (toolbarHeight / 2)
 
     val panelLocationInEditor = SwingUtilities.convertPoint(panel, Point(0, 0), editor.contentComponent)
@@ -227,7 +228,7 @@ internal class EditorCellActionsToolbarController(
   }
 
   companion object {
-    private const val SHOW_TOOLBAR_DELAY_MS = 35L
+    private val SHOW_TOOLBAR_DELAY_MS = 35.milliseconds
 
     private const val RELATIVE_Y_OFFSET_RATIO = 0.05
 
