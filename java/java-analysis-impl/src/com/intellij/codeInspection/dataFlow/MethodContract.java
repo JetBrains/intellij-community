@@ -11,8 +11,6 @@ import java.util.List;
 /**
  * A method contract which states that method will have a concrete return value
  * if arguments fulfill some constraint.
- *
- * @author Tagir Valeev
  */
 public abstract class MethodContract {
   private final ContractReturnValue myReturnValue;

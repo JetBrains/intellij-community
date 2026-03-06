@@ -19,8 +19,6 @@ import java.util.List;
  * 2. Preprocessing (addBestNameCandidate/addOtherNameCandidate/markFinal can be called).
  * 3. Register variable in {@code ChainContext}: actual variable name is assigned here
  * 4. Usage in code generation: getName()/getType()/isFinal() could be called.
- *
- * @author Tagir Valeev
  */
 public class ChainVariable {
   private static final Logger LOG = Logger.getInstance(ChainVariable.class);

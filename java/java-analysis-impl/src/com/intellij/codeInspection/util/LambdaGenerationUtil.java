@@ -26,8 +26,6 @@ import java.util.function.Predicate;
 
 /**
  * Utility methods which are helpful to generate new lambda expressions in quick-fixes
- *
- * @author Tagir Valeev
  */
 public final class LambdaGenerationUtil {
   /**

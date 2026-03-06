@@ -36,8 +36,6 @@ import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeUtil.setBit
  * Currently, all math are performed according to JVM operations on int or long numbers.
  * In particular, overflows are processed in JVM-specific way,
  * so it might be not well-suitable for non-JVM languages.
- *
- * @author Tagir Valeev
  */
 public abstract sealed class LongRangeSet {
 

@@ -27,8 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Utility methods related to the expressions of functional type
- *
- * @author Tagir Valeev
  */
 public final class FunctionalExpressionUtils {
   /**

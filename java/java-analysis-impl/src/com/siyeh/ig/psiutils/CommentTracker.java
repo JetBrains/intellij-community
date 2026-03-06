@@ -52,8 +52,6 @@ import java.util.function.Predicate;
  * A helper class for implementing quick-fixes. CommentTracker collects removed comments from the PSI and can restore them at once.
  *
  * After this object restores comments, it becomes unusable.
- *
- * @author Tagir Valeev
  */
 public final class CommentTracker {
   private final Set<PsiElement> ignoredParents = new HashSet<>();

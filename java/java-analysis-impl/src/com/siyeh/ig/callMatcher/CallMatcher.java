@@ -48,8 +48,6 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 /**
  * This interface represents a condition upon method call
- *
- * @author Tagir Valeev
  */
 public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
   /**

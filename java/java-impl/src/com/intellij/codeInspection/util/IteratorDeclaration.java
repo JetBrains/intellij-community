@@ -33,8 +33,6 @@ import java.util.Objects;
 
 /**
  * Represents the iterator which traverses the iterable within the loop
- *
- * @author Tagir Valeev
  */
 public final class IteratorDeclaration extends IterableTraversal {
   private final @NotNull PsiLocalVariable myIterator;
