@@ -90,5 +90,6 @@
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.python.externalIndex" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
   </component>
 </module>

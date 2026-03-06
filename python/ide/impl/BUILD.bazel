@@ -76,6 +76,7 @@ jvm_library(
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
     "//python/python-external-index:externalIndex",
+    "//platform/util/jdom",
   ],
   runtime_deps = ["//python/python-features-trainer:featuresTrainer"],
   plugins = ["@lib//:compose-plugin"]
@@ -197,6 +198,8 @@ jvm_library(
     "//platform/forms_rt:java-guiForms-rt_test_lib",
     "//python/python-external-index:externalIndex",
     "//python/python-external-index:externalIndex_test_lib",
+    "//platform/util/jdom",
+    "//platform/util/jdom:jdom_test_lib",
   ],
   runtime_deps = [
     "//platform/platform-impl:ide-impl_test_lib",
