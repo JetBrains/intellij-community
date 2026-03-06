@@ -66,7 +66,11 @@ interface PluginManagerCustomizer {
 
   fun ensurePluginStatesLoaded()
 
-  fun updateCustomRepositories(repoUrls: List<String>, updateUi: () -> Unit)
+  fun updateCustomRepositories(
+    addedRepoUrls: List<String>,
+    removedRepoUrls: List<String>,
+    updateUi: () -> Unit,
+  )
 
   fun requestRestart(pluginModelFacade: PluginModelFacade, parentComponent: JComponent? = null)
 
