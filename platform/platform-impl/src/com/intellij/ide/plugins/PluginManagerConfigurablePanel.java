@@ -342,12 +342,13 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   }
 
   private void createMarketplaceTab() {
-    myMarketplaceTab = new MarketplacePluginsTab(myPluginModelFacade, myCoroutineScope, myPluginManagerCustomizer);
+    myMarketplaceTab = new MarketplacePluginsTab(myPluginModelFacade, myCoroutineScope, myPluginManagerCustomizer, myPluginUpdatesService);
   }
 
   private void createInstalledTab() {
     myInstalledTab = new InstalledPluginsTab(
       myPluginModelFacade,
+      myPluginUpdatesService,
       myCoroutineScope,
       query -> myTabHeaderComponent.setSelectionWithEvents(MARKETPLACE_TAB)
     );
