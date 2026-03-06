@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.DimensionService
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.limits.FileSizeLimit
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.ScreenUtil
@@ -245,13 +246,20 @@ private fun guessTextFileType(fullValue: String): FileType =
     }
   ?: FileTypes.PLAIN_TEXT
 
-private fun calcNonTrivialVisualizedTabs(fullValue: String): List<VisualizedContentTab> =
-  extensionPoint.extensionList
+private fun calcNonTrivialVisualizedTabs(fullValue: String): List<VisualizedContentTab> {
+  if (fullValue.length > FileSizeLimit.getDefaultContentLoadLimit()) {
+    // Don't try to jump over your head.
+    LOG.info("value is too big to visualize, length: ${fullValue.length}")
+    return emptyList()
+  }
+
+  return extensionPoint.extensionList
     .flatMap { viz ->
       wrapUnsafeAction(fullValue, "visualize value ($viz)") {
         viz.visualize(fullValue)
       } ?: emptyList()
     }
+}
 
 /** Extensions trying visualizing value might fail with arbitrary exceptions. Handle them with care. */
 private fun <R> wrapUnsafeAction(fullValue: String, actionDescription: String, action: () -> R): R? {
