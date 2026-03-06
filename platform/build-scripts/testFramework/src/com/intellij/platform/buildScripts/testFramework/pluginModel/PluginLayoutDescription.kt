@@ -45,7 +45,6 @@ fun createLayoutProviderByContentYamlFiles(
   mainModuleOfCorePlugin: String,
   corePluginDescriptorPath: String,
   nameOfTestWhichGeneratesFiles: String,
-  includeOnlyPluginsSpecifiedInYamlFile: Boolean = false,
   project: JpsProject,
 ): PluginLayoutProvider {
   return YamlFileBasedPluginLayoutProvider(
@@ -53,7 +52,6 @@ fun createLayoutProviderByContentYamlFiles(
     mainModuleOfCorePlugin = mainModuleOfCorePlugin,
     corePluginDescriptorPath = corePluginDescriptorPath,
     nameOfTestWhichGeneratesFiles = nameOfTestWhichGeneratesFiles,
-    includeOnlyPluginsSpecifiedInYamlFile = includeOnlyPluginsSpecifiedInYamlFile,
     project = project,
     ultimateHome = ultimateHome,
   )
@@ -64,7 +62,6 @@ private class YamlFileBasedPluginLayoutProvider(
   private val mainModuleOfCorePlugin: String,
   private val corePluginDescriptorPath: String,
   private val nameOfTestWhichGeneratesFiles: String,
-  private val includeOnlyPluginsSpecifiedInYamlFile: Boolean,
   private val project: JpsProject,
   private val ultimateHome: Path,
 ) : PluginLayoutProvider {
@@ -142,7 +139,7 @@ private class YamlFileBasedPluginLayoutProvider(
   }
 
   override fun loadPluginLayout(mainModule: JpsModule): PluginLayoutDescription? {
-    if (includeOnlyPluginsSpecifiedInYamlFile && mainModule.name !in mainModulesOfBundledPlugins && mainModule.name !in mainModulesOfNonBundledPlugins) {
+    if (mainModule.name !in mainModulesOfBundledPlugins && mainModule.name !in mainModulesOfNonBundledPlugins) {
       return null
     }
     val contentRootUrl = mainModule.contentRootsList.urls.firstOrNull() ?: return null
