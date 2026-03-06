@@ -22,10 +22,15 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.util.system.OS
+import com.intellij.util.system.OS.CURRENT
 import org.jdom.Element
 import java.io.File
+import java.nio.file.Path
 import java.util.Properties
 import java.util.function.Consumer
 import java.util.function.Predicate
@@ -194,7 +199,7 @@ abstract class SdkTestCase : LightPlatformTestCase() {
     fun createNextDependentSdk(parentSdk: Sdk): Sdk {
       val name = "dependent-test-name (${createdSdkCounter++})"
       val versionString = "11"
-      val homePath = FileUtil.getTempDirectory() + "/jdk-$name"
+      val homePath = Path.of(FileUtilRt.getTempDirectory(), "jdk-$name").toCanonicalPath()
 
       val sdk = ProjectJdkTable.getInstance().createSdk(name, DependentTestSdkType)
       val sdkModificator = sdk.sdkModificator
@@ -210,8 +215,13 @@ abstract class SdkTestCase : LightPlatformTestCase() {
       val homePath = sdkInfo.homePath
       createFile("$homePath/release")
       createFile("$homePath/jre/lib/rt.jar")
-      createFile("$homePath/bin/javac")
-      createFile("$homePath/bin/java")
+      if (CURRENT == OS.Windows) {
+        createFile("$homePath/bin/javac.exe")
+        createFile("$homePath/bin/java.exe")
+      } else {
+        createFile("$homePath/bin/javac")
+        createFile("$homePath/bin/java")
+      }
       val properties = Properties()
       properties.setProperty("JAVA_FULL_VERSION", sdkInfo.versionString)
       File("$homePath/release").outputStream().use {
