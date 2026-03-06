@@ -2,8 +2,6 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.lucene.common"/>
-    <module name="intellij.platform.backend"/>
-    <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.searchEverywhere"/>
     <module name="intellij.searchEverywhereLucene.common"/>
   </dependencies>
