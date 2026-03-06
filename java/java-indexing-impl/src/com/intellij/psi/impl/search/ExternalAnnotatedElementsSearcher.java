@@ -102,7 +102,7 @@ public final class ExternalAnnotatedElementsSearcher implements QueryExecutor<Ps
     PsiClass psiClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), classFQN, null, false, scope);
     if (psiClass == null) return null;
 
-    if (spaceIdx < 0) {
+    if (spaceIdx < 0 || externalName.substring(spaceIdx + 1).startsWith("<")) {
       return psiClass;
     }
 

@@ -19,8 +19,13 @@ import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
+import net.n3.nanoxml.IXMLEntityResolver;
+import net.n3.nanoxml.StdXMLParser;
+import net.n3.nanoxml.StdXMLReader;
+import net.n3.nanoxml.XMLException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,6 +34,8 @@ import com.intellij.util.Processor;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -97,54 +104,103 @@ public final class ExternalAnnotationsIndex extends FileBasedIndexExtension<Stri
     };
   }
 
+  /**
+   * Entity resolver that handles the five predefined XML entities.
+   * <p>
+   * {@link NanoXmlUtil} uses an {@code EmptyEntityResolver} that returns empty strings for all entities,
+   * which silently discards characters like {@code <} and {@code >} in attribute values.
+   * External annotation item names can contain these characters (e.g., generic type parameters),
+   * so we need proper entity resolution.
+   */
+  private static final IXMLEntityResolver ENTITY_RESOLVER = new IXMLEntityResolver() {
+    @Override
+    public void addInternalEntity(String name, String value) { }
+
+    @Override
+    public void addExternalEntity(String name, String publicID, String systemID) { }
+
+    @Override
+    public Reader getEntity(StdXMLReader xmlReader, String name) {
+      return new StringReader(switch (name) {
+        case "lt" -> "<";
+        case "gt" -> ">";
+        case "amp" -> "&";
+        case "quot" -> "\"";
+        case "apos" -> "'";
+        default -> "";
+      });
+    }
+
+    @Override
+    public boolean isExternalEntity(String name) {
+      return false;
+    }
+  };
+
   @Override
   public @NotNull DataIndexer<String, List<String>, FileContent> getIndexer() {
     return inputData -> {
       Map<String, List<String>> result = new HashMap<>();
-      NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlBuilder() {
-        private String currentElement;
-        private String currentItem;
-        private String currentAnnotation;
+      // Use StdXMLParser directly instead of NanoXmlUtil.parse() because NanoXmlUtil's
+      // EmptyEntityResolver discards standard XML entities (&lt; &gt; etc.), which corrupts
+      // item names containing generic type parameters (e.g., "com.example.Box <T>").
+      try {
+        StdXMLParser parser = new StdXMLParser(
+          new StdXMLReader(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText())),
+          new NanoXmlBuilder() {
+            private String currentElement;
+            private String currentItem;
+            private String currentAnnotation;
 
-        @Override
-        public void startElement(@NonNls String name, @NonNls String nsPrefix, @NonNls String nsURI, String systemID, int lineNr) {
-          currentElement = name;
-          if ("item".equals(name)) {
-            currentItem = null;
-          }
-          else if ("annotation".equals(name)) {
-            currentAnnotation = null;
-          }
-        }
+            @Override
+            public void startElement(@NonNls String name, @NonNls String nsPrefix, @NonNls String nsURI, String systemID, int lineNr) {
+              currentElement = name;
+              if ("item".equals(name)) {
+                currentItem = null;
+              }
+              else if ("annotation".equals(name)) {
+                currentAnnotation = null;
+              }
+            }
 
-        @Override
-        public void endElement(String name, String nsPrefix, String nsURI) {
-          if ("annotation".equals(name)) {
-            if (currentItem != null && currentAnnotation != null) {
-              result.computeIfAbsent(currentAnnotation, k -> new ArrayList<>()).add(currentItem);
+            @Override
+            public void endElement(String name, String nsPrefix, String nsURI) {
+              if ("annotation".equals(name)) {
+                if (currentItem != null && currentAnnotation != null) {
+                  result.computeIfAbsent(currentAnnotation, k -> new ArrayList<>()).add(currentItem);
+                }
+              }
+              else if ("item".equals(name)) {
+                currentItem = null;
+              }
             }
-          }
-          else if ("item".equals(name)) {
-            currentItem = null;
-          }
-        }
 
-        @Override
-        public void addAttribute(@NonNls String key, String nsPrefix, String nsURI, String value, String type) {
-          if ("item".equals(currentElement) && "name".equals(key) && value != null && !value.isEmpty()) {
-            currentItem = value;
-          }
-          else if ("annotation".equals(currentElement)) {
-            if ("name".equals(key) && value != null && !value.isEmpty()) {
-              currentAnnotation = value;
+            @Override
+            public void addAttribute(@NonNls String key, String nsPrefix, String nsURI, String value, String type) {
+              if ("item".equals(currentElement) && "name".equals(key) && value != null && !value.isEmpty()) {
+                currentItem = value;
+              }
+              else if ("annotation".equals(currentElement)) {
+                if ("name".equals(key) && value != null && !value.isEmpty()) {
+                  currentAnnotation = value;
+                }
+                else if ("typePath".equals(key)) {
+                  currentAnnotation = null;
+                  currentElement = null;
+                }
+              }
             }
-            else if ("typePath".equals(key)) {
-              currentAnnotation = null;
-              currentElement = null;
-            }
-          }
+          },
+          new NanoXmlUtil.EmptyValidator(),
+          ENTITY_RESOLVER
+        );
+        parser.parse();
+      }
+      catch (XMLException e) {
+        if (e.getException() instanceof ProcessCanceledException pce) {
+          throw pce;
         }
-      });
+      }
       return result;
     };
   }

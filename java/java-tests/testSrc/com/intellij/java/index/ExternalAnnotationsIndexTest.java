@@ -112,6 +112,22 @@ public class ExternalAnnotationsIndexTest extends JavaCodeInsightFixtureTestCase
     assertSameElements(items, "com.example.Foo java.lang.String[] bar()");
   }
 
+  public void testEntityResolutionInItemNames() {
+    myFixture.addFileToProject("annotations.xml", """
+      <root>
+        <item name="com.example.Box &lt;T&gt;">
+          <annotation name="test.Ann"/>
+        </item>
+        <item name="com.example.Foo java.util.Map&lt;java.lang.String, java.lang.Integer&gt; getMap()">
+          <annotation name="test.Ann"/>
+        </item>
+      </root>
+      """);
+
+    List<String> items = ExternalAnnotationsIndex.getItemsByAnnotation("test.Ann", GlobalSearchScope.allScope(getProject()));
+    assertSameElements(items, "com.example.Box <T>", "com.example.Foo java.util.Map<java.lang.String, java.lang.Integer> getMap()");
+  }
+
   public void testMultipleFilesAggregation() {
     myFixture.addFileToProject("pkg1/annotations.xml", """
       <root>

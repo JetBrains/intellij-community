@@ -351,6 +351,31 @@ public class ExternalAnnotatedElementsSearcherTest extends JavaCodeInsightFixtur
     assertEquals("deepMethod", methods.iterator().next().getName());
   }
 
+  public void testSearchExternallyAnnotatedGenericClass() {
+    PsiClass annClass = myFixture.addClass("""
+      package test;
+      public @interface MyAnnotation {}
+      """);
+
+    myFixture.addClass("""
+      package com.example;
+      public class Box<T> {}
+      """);
+
+    myFixture.addFileToProject("annotations.xml", """
+      <root>
+        <item name="com.example.Box &lt;T&gt;">
+          <annotation name="test.MyAnnotation"/>
+        </item>
+      </root>
+      """);
+
+    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+    Collection<PsiClass> result = AnnotatedElementsSearch.searchPsiClasses(annClass, scope).findAll();
+    assertSize(1, result);
+    assertEquals("Box", result.iterator().next().getName());
+  }
+
   public void testExternalAnnotationsManagerFindsAnnotations() {
     // This test uses a subdirectory (/extAnno) as the annotation root to verify that
     // ExternalAnnotationsManager correctly resolves annotation roots under subdirectories.
