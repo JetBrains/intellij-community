@@ -89,7 +89,7 @@ public final class TextViewer extends EditorTextField {
     editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     editor.setEmbeddedIntoDialogWrapper(myEmbeddedIntoDialogWrapper);
     editor.getComponent().setPreferredSize(null);
-    editor.getSettings().setUseSoftWraps(true);
+    editor.getSettings().setUseSoftWraps(!DebuggerUIUtil.isTextTooBigForFormatting(getDocument().getImmutableCharSequence()));
     editor.setContextMenuGroupId(CONTEXT_MENU_GROUP_ID);
 
     editor.setColorsScheme(editor.createBoundColorSchemeDelegate(DebuggerUIUtil.getColorScheme()));

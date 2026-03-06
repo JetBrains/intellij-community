@@ -232,6 +232,31 @@ public final class DebuggerUIUtil {
     return textArea;
   }
 
+  private static final int FORMATTED_TEXT_MAX_LENGTH = 100_000;
+  private static final int FORMATTED_TEXT_MAX_LINE = 10_000;
+
+  static boolean isTextTooBigForFormatting(@NotNull CharSequence text) {
+    // Don't try to format huge text files.
+    // Soft wrapping calculations and lexer are pretty expensive and lead to unresponsive UI, IDEA-386609.
+
+    if (text.length() > FORMATTED_TEXT_MAX_LENGTH) {
+      return true;
+    }
+
+    int currentLineLength = 0;
+    for (int i = 0; i < text.length(); i++) {
+      char c = text.charAt(i);
+      if (c == '\n' || c == '\r') {
+        currentLineLength = 0;
+      }
+      else if (++currentLineLength > FORMATTED_TEXT_MAX_LINE) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   /**
    * Create {@link Editor} for text data with syntax highlighting, folding and other {@link Editor} features.
    * @see #createTextViewer(String, Project)
@@ -239,19 +264,31 @@ public final class DebuggerUIUtil {
    */
   @ApiStatus.Experimental
   public static Editor createFormattedTextEditor(@NotNull String initialText, @NotNull FileType type, @NotNull Project project, @NotNull Disposable parentDisposable, boolean isViewer) {
-    // Proper highlighting requires presense of PSIFile corresponding to the Document, see IJPL-157652.
-    var virtualFile = new LightVirtualFile("", type, initialText);
-    var psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-    assert psiFile != null;
-    var document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
-    assert document != null;
-
-    var editor = EditorFactory.getInstance().createEditor(document, project, virtualFile, isViewer);
-    Disposer.register(parentDisposable, () -> {
-      EditorFactory.getInstance().releaseEditor(editor);
-    });
+    var editorFactory = EditorFactory.getInstance();
+    var skipFormatting = isTextTooBigForFormatting(initialText);
+    final Editor editor;
+    if (skipFormatting) {
+      var document = editorFactory.createDocument(initialText);
+      editor = isViewer
+               ? editorFactory.createViewer(document, project)
+               : editorFactory.createEditor(document, project);
+    }
+    else {
+      // Proper highlighting requires presense of PSIFile corresponding to the Document, see IJPL-157652.
+      var virtualFile = new LightVirtualFile("", type, initialText);
+      var psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+      assert psiFile != null;
+      var document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+      assert document != null;
+      editor = editorFactory.createEditor(document, project, virtualFile, isViewer);
+    }
     editor.getSettings().setLineNumbersShown(false);
-    editor.getSettings().setUseSoftWraps(true);
+    editor.getSettings().setUseSoftWraps(!skipFormatting); // they might be very expensive in case of a huge text
+
+    Disposer.register(parentDisposable, () -> {
+      editorFactory.releaseEditor(editor);
+    });
+
     return editor;
   }
 
