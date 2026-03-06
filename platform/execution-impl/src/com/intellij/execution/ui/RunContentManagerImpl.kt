@@ -19,6 +19,7 @@ import com.intellij.execution.rpc.emitLiveIconUpdate
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.ui.layout.impl.DockableGridContainerFactory
+import com.intellij.ide.ActivityTracker
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
@@ -427,6 +428,8 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         || oldDescriptor != null && content.manager!!.isSelected(content)) {
       content.manager!!.setSelectedContent(content)
     }
+    // Main toolbar actions are refreshed through the action-system activity tracker.
+    ActivityTracker.getInstance().inc()
 
     if (!descriptor.isActivateToolWindowWhenAdded) {
       return
@@ -677,6 +680,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       }
       finally {
         content.release()
+        ActivityTracker.getInstance().inc()
       }
     }
 
