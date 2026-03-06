@@ -64,6 +64,7 @@ import org.editorconfig.Utils
 import org.editorconfig.configmanagement.extended.EditorConfigCodeStyleSettingsModifier
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.params.ParameterizedTest
@@ -173,6 +174,7 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
   //@IJIgnore(issue = "IDEA-364751")
   @ParameterizedTest(name = "{0}")
   @MethodSource("modules")
+  @DisplayName("test update code")
   fun `test update code`(
     moduleName: String,
     ultimateModuleEntity: ModuleEntity,
@@ -181,6 +183,7 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
     jpsProjectSerializer: JpsProjectSerializers,
   ) {
     if (!SystemProperties.getBooleanProperty(UPDATE_PROPERTY_KEY, false)) {
+      assumeTrue(false, "Set ${UPDATE_PROPERTY_KEY} system property to 'true' to update entities code in the sources")
       println("Set ${UPDATE_PROPERTY_KEY} system property to 'true' to update entities code in the sources")
       return
     }
