@@ -51,7 +51,7 @@ import com.intellij.openapi.wm.impl.content.ContentLayout
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.isInternal
-import com.intellij.toolWindow.InternalDecoratorImpl.Companion.preventRecursiveBackgroundUpdateOnToolwindow
+import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
 import com.intellij.toolWindow.xNext.island.XNextIslandHolder
@@ -270,7 +270,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
     val isToolWindow = UIUtil.getGeneralizedParentOfType(InternalDecorator::class.java, component) != null
 
     if (isToolWindow) {
-      if (component.background == JBColor.PanelBackground) {
+      if (component.background == JBColor.PanelBackground && !InternalDecoratorImpl.isRecursiveBackgroundUpdateDisabled(component)) {
         if (UIUtil.getGeneralizedParentOfType(SearchReplaceWrapper::class.java, component) != null) {
           return@AWTEventListener
         }
@@ -650,7 +650,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
   override fun configureTerminalSearchReplaceComponent(component: EditorHeaderComponent): JComponent {
     component.putClientProperty("originalBorder", component.border)
     val header = configureSearchReplaceComponent(component, 6)
-    preventRecursiveBackgroundUpdateOnToolwindow(header)
+    InternalDecoratorImpl.preventRecursiveBackgroundUpdateOnToolwindow(header)
     return header
   }
 

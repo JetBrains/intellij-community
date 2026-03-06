@@ -35,6 +35,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.AdditionalPageAtBottomEditorCustomization;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.EditorCustomization;
@@ -81,9 +82,15 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
   private final @Nullable @Nls String myMessagePlaceholder;
 
   private static final @NotNull EditorCustomization COLOR_SCHEME_FOR_CURRENT_UI_THEME_CUSTOMIZATION = editor -> {
+    preventRecursiveBackground(editor.getComponent());
     editor.setBackgroundColor(null); // to use background from set color scheme
     editor.setColorsScheme(getCommitMessageColorScheme(editor));
   };
+
+  private static void preventRecursiveBackground(@NotNull JComponent component) {
+    UIUtil.forEachComponentInHierarchy(component,
+                                       child -> InternalDecoratorImpl.preventRecursiveBackgroundUpdateOnToolwindow((JComponent)child));
+  }
 
   private static @NotNull EditorColorsScheme getCommitMessageColorScheme(EditorEx editor) {
     boolean isLaFDark = ColorUtil.isDark(UIUtil.getPanelBackground());
@@ -146,6 +153,8 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
         add(createToolbar(false), BorderLayout.EAST);
       }
     }
+
+    preventRecursiveBackground(this);
 
     setBorder(createEmptyBorder());
 

@@ -207,7 +207,8 @@ class InternalDecoratorImpl internal constructor(
       component.putClientProperty(PREVENT_RECURSIVE_BACKGROUND_CHANGE, true)
     }
 
-    private fun isRecursiveBackgroundUpdateDisabled(component: Component): Boolean {
+    @JvmStatic
+    fun isRecursiveBackgroundUpdateDisabled(component: Component): Boolean {
       val preventRecoloring = (component as? JComponent)?.getClientProperty(PREVENT_RECURSIVE_BACKGROUND_CHANGE) ?: return false
 
       return preventRecoloring == true
