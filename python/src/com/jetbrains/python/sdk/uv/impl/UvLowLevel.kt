@@ -18,6 +18,7 @@ import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyPackageName
+import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
@@ -201,9 +202,9 @@ private class UvLowLevelImpl<P : PathHolder>(private val cwd: Path, private val 
   }
 
   override suspend fun installPackage(name: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
-    uvCli.runUv(cwd, venvPath, true, "pip", "install", *name.formatPackageName(), *options.toTypedArray())
-      .getOr { return it }
-
+    for (args in partitionPackagesBySource(name, options)) {
+      uvCli.runUv(cwd, venvPath, true, "pip", "install", *args).getOr { return it }
+    }
     return PyExecResult.success(Unit)
   }
 
@@ -294,6 +295,32 @@ private class UvLowLevelImpl<P : PathHolder>(private val cwd: Path, private val 
   fun PythonPackageInstallRequest.formatPackageName(): Array<String> = when (this) {
     is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> specifications.map { it.nameWithVersionsSpec }.toTypedArray()
     is PythonPackageInstallRequest.ByLocation -> error("UV does not support installing from location uri")
+  }
+
+  private fun partitionPackagesBySource(installRequest: PythonPackageInstallRequest, options: List<String>): List<Array<String>> {
+    if (installRequest !is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications) {
+      return listOf(arrayOf(*installRequest.formatPackageName(), *options.toTypedArray()))
+    }
+
+    val (pypiSpecs, nonPypi) = installRequest.specifications.partition {
+      val url = it.repository.urlForInstallation?.toString()
+      url == null || url == PyPIPackageUtil.PYPI_LIST_URL
+    }
+
+    val result = mutableListOf<Array<String>>()
+    if (pypiSpecs.isNotEmpty()) {
+      result.add((options + pypiSpecs.map { it.nameWithVersionsSpec }).toTypedArray())
+    }
+
+    nonPypi
+      .groupBy { it.repository.urlForInstallation?.toString() }
+      .forEach { (url, specs) ->
+        if (url == null || specs.isEmpty()) return@forEach
+        val names = specs.map { it.nameWithVersionsSpec }
+        result.add((options + listOf("--index-url", url) + names).toTypedArray())
+      }
+
+    return result
   }
 
   override suspend fun sync(): PyResult<String> {

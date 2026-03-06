@@ -135,7 +135,7 @@ class PipPackageManagerEngine(
     }
 
     val byRepository = nonPypi
-      .groupBy { it.repository.repositoryUrl }
+      .groupBy { it.repository.urlForInstallation?.toString() }
       .mapNotNull { (url, specs) ->
         if (url == null || specs.isEmpty()) {
           return@mapNotNull null
