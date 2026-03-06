@@ -1138,7 +1138,7 @@ object EelPathUtils {
           Files.deleteIfExists(dirTargetPath)
 
           Files.createDirectory(dirTargetPath)
-          sourceQ.removeFirst()
+          sourceQ.addAll(listDirectories(sourceQ.removeFirst(), isSourceLocal, sourceEelApi))
         }
         // the source directory was deleted
         else if (comparison < 0) {
