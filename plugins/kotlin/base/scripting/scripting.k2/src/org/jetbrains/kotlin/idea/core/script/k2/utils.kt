@@ -119,7 +119,7 @@ fun ScriptCompilationConfiguration.getOrCreateScriptConfigurationId(
     val data = asBytes()
     val hash = Xxh3.hash(data)
 
-    for (tagInt in 0..<Short.MAX_VALUE) {
+    for (tagInt in Byte.MIN_VALUE..Byte.MAX_VALUE) {
         val tag = tagInt.toByte()
         val configurationId = ScriptCompilationConfigurationId(hash = hash, tag = tag)
         val existingEntity = storage.resolve(configurationId)
