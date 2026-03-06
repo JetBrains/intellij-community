@@ -16,7 +16,7 @@ class GameTools(private val context: BuildContext, private val os: OsFamily, pri
     }
   }
 
-  private fun getClassPaths() : List<String> {
+  private fun getClassPathJars() : List<String> {
     val classPaths = mutableListOf<String>()
 
     classPaths.addAll(context.bootClassPathJarNames.map { "lib/${it}" })
@@ -70,16 +70,26 @@ class GameTools(private val context: BuildContext, private val os: OsFamily, pri
     map["ide_jvm_args"] = getJavaArgs().joinToString(" ")
     map["main_class_name"] = context.productProperties.mainClassName
 
-    val classPaths = getClassPaths()
+    val classPathJars = getClassPathJars()
 
     if (os == OsFamily.WINDOWS) {
-      map["class_path"] = "SET CLASS_PATH=" + classPaths.joinToString(";") { "%IDE_HOME%\\${it}" }
+      var classPath = ""
+      for (jar in classPathJars) {
+        classPath += "\nECHO|SET /P=\"\"%IDE_HOME:\\=/%/${jar};\"\" >> \"%ARG_FILE%\""
+      }
+
+      map["class_path"] = classPath
       map["vm_options"] = "${context.productProperties.baseFileName}64.exe"
       map["base_name"] = "game_tools"
     }
 
     if (os == OsFamily.LINUX) {
-      map["class_path"] = "CLASS_PATH=\"" + classPaths.joinToString(":") { "\${IDE_HOME}/${it}" } + "\""
+      var classPath = $$"CLASS_PATH=\"$IDE_HOME/$${classPathJars[0]}\""
+      for (i in 1 until classPathJars.size) {
+        classPath += $$"\nCLASS_PATH=\"$CLASS_PATH:$IDE_HOME/$${classPathJars[i]}\""
+      }
+
+      map["class_path"] = classPath
       map["vm_options"] = context.productProperties.baseFileName
     }
 
