@@ -2280,7 +2280,7 @@
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.style.ReturnThisInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifiableAnnotation" bundle="messages.InspectionGadgetsBundle"
                      key="simplifiable.annotation.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="com.siyeh.ig.style.SimplifiableAnnotationInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifiableEqualsExpression" bundle="messages.InspectionGadgetsBundle"
                      key="simplifiable.equals.expression.display.name" groupBundle="messages.InspectionsBundle"
