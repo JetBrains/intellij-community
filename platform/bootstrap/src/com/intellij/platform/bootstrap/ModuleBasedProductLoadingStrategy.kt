@@ -268,7 +268,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     pluginModuleGroup: PluginModuleGroup,
     context: PluginDescriptorLoadingContext,
     zipFilePool: ZipEntryResolverPool,
-    serviceModuleMapping: ServiceModuleMapping?,
+    serviceModuleMapping: ServiceModuleMapping,
     mainGroupResourceRootSet: Set<Path>,
     isBundled: Boolean,
     pluginDir: Path?,
@@ -283,7 +283,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
 
     val includedModules = pluginModuleGroup.includedModules
     val allResourceRoots = includedModules.flatMapTo(LinkedHashSet()) { it.moduleDescriptor.resourceRootPaths }
-    val additionalServiceModules = serviceModuleMapping?.getAdditionalModules(pluginModuleGroup) ?: collectRequiredLibraryModules(pluginModuleGroup)
+    val additionalServiceModules = serviceModuleMapping.getAdditionalModules(pluginModuleGroup)
     if (additionalServiceModules.isNotEmpty()) {
       thisLogger().debug { "Additional modules will be added to classpath of $pluginModuleGroup: $additionalServiceModules" }
       additionalServiceModules.flatMapTo(allResourceRoots) {
@@ -361,17 +361,6 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         isBundled = isBundled,
         pluginDir = pluginDir,
       )
-    }
-  }
-
-  /* TODO: reuse ServiceModuleMapping instead */
-  private fun collectRequiredLibraryModules(pluginModuleGroup: PluginModuleGroup): Set<RuntimeModuleDescriptor> {
-    val includedInPlatform = productModules.mainModuleGroup.includedModules.mapTo(HashSet()) { it.moduleDescriptor }
-
-    return pluginModuleGroup.includedModules.flatMapTo(LinkedHashSet()) { includedModule ->
-      includedModule.moduleDescriptor.dependencies.filter { dependency ->
-        dependency.moduleId.stringId.startsWith(RuntimeModuleId.LIB_NAME_PREFIX) && dependency !in includedInPlatform
-      }
     }
   }
 
