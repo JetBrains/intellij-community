@@ -37,6 +37,8 @@ def format_rest(docstring):
     from docutils.nodes import Text, field_body, field_name, SkipNode
     from docutils.parsers.rst import directives
     from docutils.parsers.rst.directives.admonitions import BaseAdmonition
+    from docutils.transforms import universal
+    from docutils.transforms.universal import FilterMessages
     from docutils.writers import Writer
     from docutils.writers.html4css1 import HTMLTranslator, Writer as HTMLWriter
 
@@ -220,20 +222,56 @@ def format_rest(docstring):
             self.body.append('</tt>')
             raise nodes.SkipNode
 
+    class _FilterMessagesKeepProblematic(FilterMessages):
+        """Like `FilterMessages` but preserves `<problematic>` nodes.
+
+        The latest `docutils` converts problematic nodes to plain text.
+        `visit_problematic()` therefore is never called on them.
+        Unknown Sphinx roles (like `:obj:`) are left in the resulting render.
+
+        This subclass skips problematic nodes conversion to text, so they can
+        be processed later by `visit_problematic()`.
+        """
+
+        def apply(self):
+            for node in tuple(self.document.findall(nodes.system_message)):
+                if node['level'] < self.document.reporter.report_level:
+                    node.parent.remove(node)
+                    try:
+                        del self.document.ids[node['ids'][0]]
+                    except IndexError:
+                        pass
+            for node in self.document.findall(nodes.section):
+                if "system-messages" in node['classes'] and len(node) == 1:
+                    node.parent.remove(node)
+
     class _DocumentPseudoWriter(Writer):
         def __init__(self):
             self.document = None
             Writer.__init__(self)
+
+        def get_transforms(self):
+            return super(Writer, self).get_transforms() + [
+                universal.Messages,
+                _FilterMessagesKeepProblematic,  # Instead of `FilterMessages`
+                universal.StripClassesAndElements,
+            ]
 
         def translate(self):
             self.output = ''
 
     writer = _DocumentPseudoWriter()
     docstring = add_blank_line_before_first_tag(docstring)
-    publish_string(docstring, writer=writer, settings_overrides={'report_level': 10000,
-                                                                 'halt_level': 10000,
-                                                                 'warning_stream': None,
-                                                                 'docinfo_xform': False})
+    publish_string(
+        docstring,
+        writer=writer,
+        settings_overrides={
+            'report_level': 10000,
+            'halt_level': 10000,
+            'warning_stream': None,
+            'docinfo_xform': False,
+        },
+    )
     document = writer.document
     document.settings.xml_declaration = None
     visitor = RestHTMLTranslator(document)
