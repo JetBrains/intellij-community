@@ -3,13 +3,13 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
+import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo;
 
 public class MavenClassSearchResult extends MavenArtifactSearchResult {
   private final String className;
   private final String packageName;
 
-  public MavenClassSearchResult(@NotNull MavenRepositoryArtifactInfo results, String className, String packageName) {
+  public MavenClassSearchResult(@NotNull MavenRepoArtifactInfo results, String className, String packageName) {
     super(results);
     this.className = className;
     this.packageName = packageName;

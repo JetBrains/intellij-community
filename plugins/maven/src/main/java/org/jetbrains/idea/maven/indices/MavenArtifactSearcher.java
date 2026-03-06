@@ -7,9 +7,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.WaitFor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
-import org.jetbrains.idea.reposearch.DependencySearchService;
-import org.jetbrains.idea.reposearch.SearchParameters;
+import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo;
+import org.jetbrains.idea.maven.completion.MavenDependencySearchService;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,13 +22,12 @@ public class MavenArtifactSearcher extends MavenSearcher<MavenArtifactSearchResu
     if (StringUtil.isEmpty(pattern)) {
       return Collections.emptyList();
     }
-    List<MavenRepositoryArtifactInfo> searchResults = new ArrayList<>();
-    DependencySearchService searchService = DependencySearchService.getInstance(project);
+    List<MavenRepoArtifactInfo> searchResults = new ArrayList<>();
+    MavenDependencySearchService searchService = MavenDependencySearchService.getInstance(project);
     boolean useLocalProvidersOnly = ApplicationManager.getApplication().isUnitTestMode();
-    SearchParameters parameters = new SearchParameters(false, useLocalProvidersOnly);
-    Promise<Integer> asyncPromise = searchService.fulltextSearch(pattern, parameters, mdci -> {
-      if (mdci instanceof MavenRepositoryArtifactInfo) {
-        searchResults.add((MavenRepositoryArtifactInfo)mdci);
+    Promise<Integer> asyncPromise = searchService.fulltextSearchBlocking(pattern, false, useLocalProvidersOnly, mdci -> {
+      if (mdci instanceof MavenRepoArtifactInfo) {
+        searchResults.add((MavenRepoArtifactInfo)mdci);
       }
     });
     new WaitFor(1000) {
@@ -41,7 +39,7 @@ public class MavenArtifactSearcher extends MavenSearcher<MavenArtifactSearchResu
     return processResults(searchResults);
   }
 
-  private static List<MavenArtifactSearchResult> processResults(List<MavenRepositoryArtifactInfo> searchResults) {
+  private static List<MavenArtifactSearchResult> processResults(List<MavenRepoArtifactInfo> searchResults) {
     return ContainerUtil.map(searchResults, MavenArtifactSearchResult::new);
   }
 }

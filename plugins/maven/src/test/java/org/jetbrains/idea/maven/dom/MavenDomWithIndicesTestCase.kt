@@ -29,7 +29,7 @@ import org.jetbrains.idea.maven.indices.MavenIndicesManager.MavenIndexerListener
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
 import org.jetbrains.idea.maven.indices.MavenSystemIndicesManager
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
-import org.jetbrains.idea.maven.onlinecompletion.MavenCompletionProviderFactory
+import com.intellij.maven.completion.provider.MavenCompletionProviderFactory
 import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.jetbrains.idea.maven.server.MavenServerConnector
 import org.jetbrains.idea.maven.server.MavenServerDownloadListener

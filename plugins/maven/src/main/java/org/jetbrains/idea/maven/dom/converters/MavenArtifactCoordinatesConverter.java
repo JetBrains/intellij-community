@@ -46,7 +46,6 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -88,15 +87,14 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
   @Override
   public @NotNull Collection<String> getVariants(@NotNull ConvertContext context) {
-    DependencySearchService searchService = DependencySearchService.getInstance(context.getProject());
     MavenId id = MavenArtifactCoordinatesHelper.getId(context);
 
     MavenDomShortArtifactCoordinates coordinates = MavenArtifactCoordinatesHelper.getCoordinates(context);
 
-    return selectStrategy(context).getVariants(id, searchService, coordinates);
+    return selectStrategy(context).getVariants(id, coordinates);
   }
 
-  protected abstract Set<String> doGetVariants(MavenId id, DependencySearchService searchService);
+  protected abstract Set<String> doGetVariants(MavenId id);
 
   @Override
   public PsiElement resolve(String o, @NotNull ConvertContext context) {
@@ -206,8 +204,8 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       return doIsValid(id, manager, context) || resolveBySpecifiedPath() != null;
     }
 
-    public Set<String> getVariants(MavenId id, DependencySearchService searchService, MavenDomShortArtifactCoordinates coordinates) {
-      return doGetVariants(id, searchService);
+    public Set<String> getVariants(MavenId id, MavenDomShortArtifactCoordinates coordinates) {
+      return doGetVariants(id);
     }
 
     public PsiFile resolve(MavenId id, ConvertContext context) {
@@ -373,17 +371,17 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     @Override
-    public Set<String> getVariants(MavenId id, DependencySearchService searchService, MavenDomShortArtifactCoordinates coordinates) {
+    public Set<String> getVariants(MavenId id, MavenDomShortArtifactCoordinates coordinates) {
       if (StringUtil.isEmpty(id.getGroupId())) {
         Set<String> result = new HashSet<>();
 
         for (String each : MavenArtifactUtil.DEFAULT_GROUPS) {
           id = new MavenId(each, id.getArtifactId(), id.getVersion());
-          result.addAll(super.getVariants(id, searchService, coordinates));
+          result.addAll(super.getVariants(id, coordinates));
         }
         return result;
       }
-      return super.getVariants(id, searchService, coordinates);
+      return super.getVariants(id, coordinates);
     }
 
     @Override

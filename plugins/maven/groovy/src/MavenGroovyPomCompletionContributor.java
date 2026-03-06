@@ -16,7 +16,6 @@ import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,7 +40,7 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
-import org.jetbrains.idea.reposearch.DependencySearchService;
+import org.jetbrains.idea.maven.completion.MavenDependencySearchService;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -124,10 +123,10 @@ public final class MavenGroovyPomCompletionContributor extends CompletionContrib
     }
 
     if (completeDependency.get()) {
-      DependencySearchService searchService = DependencySearchService.getInstance(project);
+      MavenDependencySearchService searchService = MavenDependencySearchService.getInstance(project);
 
-      for (String groupId : searchService.getGroupIds("")) {
-        for (String artifactId : searchService.getArtifactIds(groupId)) {
+      for (String groupId : searchService.getGroupIdsBlocking("")) {
+        for (String artifactId : searchService.getArtifactIdsBlocking(groupId)) {
           LookupElement builder = LookupElementBuilder.create(groupId + ':' + artifactId)
             .withIcon(AllIcons.Nodes.PpLib).withInsertHandler(MavenDependencyInsertHandler.INSTANCE);
           result.addElement(builder);
@@ -197,7 +196,7 @@ public final class MavenGroovyPomCompletionContributor extends CompletionContrib
       //}
     }
     else {
-      versions = DependencySearchService.getInstance(project).getVersions(groupId, artifactId);
+      versions = MavenDependencySearchService.getInstance(project).getVersionsBlocking(groupId, artifactId);
     }
 
     for (String version : versions) {

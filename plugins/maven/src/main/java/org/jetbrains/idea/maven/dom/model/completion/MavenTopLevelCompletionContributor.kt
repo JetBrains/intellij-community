@@ -13,10 +13,9 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.completion.MavenCoordinateCompletionContributor.Companion.trimDummy
 import org.jetbrains.idea.maven.dom.model.completion.insert.MavenTopLevelDependencyInsertionHandler
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
+import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 import org.jetbrains.idea.maven.utils.MavenUtil
-import org.jetbrains.idea.reposearch.DependencySearchService
-import org.jetbrains.idea.reposearch.SearchParameters
+import org.jetbrains.idea.maven.completion.MavenDependencySearchService
 import java.util.concurrent.ConcurrentLinkedDeque
 
 abstract class MavenTopLevelCompletionContributor(val myName: String) : CompletionContributor() {
@@ -35,7 +34,7 @@ abstract class MavenTopLevelCompletionContributor(val myName: String) : Completi
 
     result.restartCompletionWhenNothingMatches()
 
-    val cld = ConcurrentLinkedDeque<MavenRepositoryArtifactInfo>()
+    val cld = ConcurrentLinkedDeque<MavenRepoArtifactInfo>()
     val promise = find(xmlText.project, trimDummy(xmlText.value), parameters, cld)
     while (promise.state == Promise.State.PENDING || !cld.isEmpty()) {
       ProgressManager.checkCanceled()
@@ -51,18 +50,15 @@ abstract class MavenTopLevelCompletionContributor(val myName: String) : Completi
   protected fun find(project: Project,
                      text: String,
                      parameters: CompletionParameters,
-                     cld: ConcurrentLinkedDeque<MavenRepositoryArtifactInfo>): Promise<Int> {
-    val searchParameters = createSearchParameters(parameters)
+                     cld: ConcurrentLinkedDeque<MavenRepoArtifactInfo>): Promise<Int> {
     val searchString: String = trimDummy(text)
-    val service = DependencySearchService.getInstance(project)
+    val service = MavenDependencySearchService.getInstance(project)
     val splitted = searchString.split(':')
+    val useCache = parameters.invocationCount < 2
+    val useLocalOnly = MavenUtil.isMavenUnitTestModeEnabled()
     if (splitted.size < 2) {
-      return service.fulltextSearch(searchString, searchParameters) { (it as? MavenRepositoryArtifactInfo)?.let { cld.add(it) } }
+      return service.fulltextSearchBlocking(searchString, useCache, useLocalOnly) { (it as? MavenRepoArtifactInfo)?.let { cld.add(it) } }
     }
-    return service.suggestPrefix(splitted[0], splitted[1], searchParameters) { (it as? MavenRepositoryArtifactInfo)?.let { cld.add(it) } }
-  }
-
-  private fun createSearchParameters(parameters: CompletionParameters): SearchParameters {
-    return SearchParameters(parameters.invocationCount < 2, MavenUtil.isMavenUnitTestModeEnabled())
+    return service.suggestPrefixBlocking(splitted[0], splitted[1], useCache, useLocalOnly) { (it as? MavenRepoArtifactInfo)?.let { cld.add(it) } }
   }
 }

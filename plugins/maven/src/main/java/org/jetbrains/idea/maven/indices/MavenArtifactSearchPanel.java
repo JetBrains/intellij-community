@@ -23,8 +23,8 @@ import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
+import org.jetbrains.idea.maven.model.MavenDependencyCompletionItem;
 import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.utils.MavenLog;
 

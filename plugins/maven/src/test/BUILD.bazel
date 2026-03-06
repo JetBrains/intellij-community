@@ -139,6 +139,8 @@ jvm_library(
     "//platform/execution:execution_test_lib",
     "//plugins/repository-search/common",
     "//plugins/repository-search/common:common_test_lib",
+    "//plugins/maven/completion",
+    "//plugins/maven/completion:completion_test_lib",
   ],
   runtime_deps = [
     ":maven-tests",

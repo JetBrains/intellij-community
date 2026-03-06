@@ -65,13 +65,17 @@
 
     <extensionPoint name="mavenRemoteConnectionCreator" interface="org.jetbrains.idea.maven.execution.MavenRemoteConnectionCreator"
                     dynamic="true"/>
+
+    <extensionPoint name="dependencySearchContributor" interface="org.jetbrains.idea.maven.completion.MavenDependencySearchContributor"
+                    dynamic="true" area="IDEA_PROJECT"/>
   </extensionPoints>
 
   <dependencies>
-    <module name="intellij.properties.backend"/>
     <module name="intellij.java.backend"/>
-    <module name="intellij.repository.search.common"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.aetherDependencyResolver"/>
+    <module name="intellij.properties.backend"/>
+    <!-- endregion -->
   </dependencies>
 
   <content namespace="jetbrains">
@@ -80,6 +84,7 @@
     <module name="intellij.maven.performanceTesting"/>
     <module name="intellij.maven.errorProne.compiler"/>
     <module name="intellij.maven.groovy"/>
+    <module name="intellij.maven.completion"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -732,9 +737,7 @@
     <log.spy.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.Maven4ModelVersionErrorParser"/>
 
     <mavenRemoteConnectionCreator implementation="org.jetbrains.idea.maven.execution.ExecRemoteConnectionCreator" order="last"/>
-  </extensions>
-  <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
-    <provider implementation="org.jetbrains.idea.maven.onlinecompletion.MavenCompletionProviderFactory"/>
+
   </extensions>
 
   <actions>

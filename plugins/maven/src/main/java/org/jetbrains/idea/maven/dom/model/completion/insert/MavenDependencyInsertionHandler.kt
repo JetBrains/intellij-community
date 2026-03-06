@@ -16,8 +16,8 @@ import org.jetbrains.idea.maven.dom.model.MavenDomArtifactCoordinates
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
-import org.jetbrains.idea.maven.onlinecompletion.MavenScopeTable
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
+import org.jetbrains.idea.maven.completion.MavenScopeTable
+import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 
 open class MavenDependencyInsertionHandler : InsertHandler<LookupElement?> {
   override fun handleInsert(context: InsertionContext, item: LookupElement) {
@@ -25,7 +25,7 @@ open class MavenDependencyInsertionHandler : InsertHandler<LookupElement?> {
       return; // Don't brake the template.
     }*/
     val obj = item.getObject()
-    if (obj !is MavenRepositoryArtifactInfo) {
+    if (obj !is MavenRepoArtifactInfo) {
       return
     }
     val contextFile = context.file
@@ -46,7 +46,7 @@ open class MavenDependencyInsertionHandler : InsertHandler<LookupElement?> {
 
   protected open fun setDependency(
     context: InsertionContext,
-    completionItem: MavenRepositoryArtifactInfo,
+    completionItem: MavenRepoArtifactInfo,
     contextFile: XmlFile?, domCoordinates: MavenDomShortArtifactCoordinates
   ) {
     domCoordinates.getGroupId().setStringValue(completionItem.getGroupId())
@@ -105,7 +105,7 @@ open class MavenDependencyInsertionHandler : InsertHandler<LookupElement?> {
 
     private fun insertVersion(
       context: InsertionContext,
-      completionItem: MavenRepositoryArtifactInfo,
+      completionItem: MavenRepoArtifactInfo,
       domCoordinates: MavenDomArtifactCoordinates
     ) {
       if (completionItem.items.size == 1 && completionItem.version != null) {

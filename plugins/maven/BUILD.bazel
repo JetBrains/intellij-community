@@ -24,7 +24,6 @@ jvm_library(
   srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/java/**/*.form", "src/main/gen/**/*.kt", "src/main/gen/**/*.java"], allow_empty = True),
   resources = [":maven_resources"],
   deps = [
-    "//plugins/repository-search/common",
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
     "//platform/editor-ui-api:editor-ui",
@@ -74,7 +73,6 @@ jvm_library(
     "//platform/util/nanoxml",
     "//platform/workspace/storage",
     "//platform/workspace/jps",
-    "//plugins/repository-search",
     "//libraries/stream",
     "//platform/statistics",
     "//plugins/maven-model",
@@ -167,7 +165,6 @@ jvm_library(
   ],
   runtime_deps = [
     ":maven",
-    "//plugins/repository-search/common:common_test_lib",
     "//platform/analysis-api:analysis_test_lib",
     "//platform/code-style-api:codeStyle_test_lib",
     "//platform/editor-ui-api:editor-ui_test_lib",
@@ -218,7 +215,6 @@ jvm_library(
     "//platform/util/nanoxml:nanoxml_test_lib",
     "//platform/workspace/storage:storage_test_lib",
     "//platform/workspace/jps:jps_test_lib",
-    "//plugins/repository-search:repository-search_test_lib",
     "//libraries/stream:stream_test_lib",
     "//platform/statistics:statistics_test_lib",
     "//plugins/maven-model:maven-model_test_lib",

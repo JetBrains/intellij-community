@@ -43,7 +43,7 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenActivityKey
-import org.jetbrains.idea.reposearch.DependencySearchService
+import org.jetbrains.idea.maven.completion.MavenDependencySearchService
 import org.jetbrains.jps.model.java.JpsJavaSdkType
 import java.util.Collections
 
@@ -175,7 +175,7 @@ class MavenProjectModelModifier(private val myProject: Project) : JavaProjectMod
   ): String {
     val versions = if (mavenId.groupId == null || mavenId.artifactId == null) mutableSetOf<String?>()
     else
-      DependencySearchService.getInstance(myProject).getVersionsAsync(mavenId.groupId!!, mavenId.artifactId!!)
+      MavenDependencySearchService.getInstance(myProject).getVersions(mavenId.groupId!!, mavenId.artifactId!!)
     if (preferredVersion != null && versions.contains(preferredVersion)) {
       return preferredVersion
     }

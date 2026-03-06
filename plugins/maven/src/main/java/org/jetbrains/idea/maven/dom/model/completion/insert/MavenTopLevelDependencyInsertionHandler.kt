@@ -13,7 +13,7 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.dom.generate.GenerateDependencyProvider
 import org.jetbrains.idea.maven.dom.generate.GenerateManagedDependencyAction
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
+import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 
 internal class MavenTopLevelDependencyInsertionHandler : InsertHandler<LookupElement> {
   override fun handleInsert(context: InsertionContext, item: LookupElement) {
@@ -21,7 +21,7 @@ internal class MavenTopLevelDependencyInsertionHandler : InsertHandler<LookupEle
       return  // Don't brake the template.
     }
     val obj = item.getObject()
-    if (obj !is MavenRepositoryArtifactInfo) {
+    if (obj !is MavenRepoArtifactInfo) {
       return
     }
     val contextFile = context.file

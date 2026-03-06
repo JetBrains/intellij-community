@@ -7,8 +7,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.idea.maven.indices.searcher.MavenLuceneIndexer;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
+import org.jetbrains.idea.maven.model.MavenDependencyCompletionItem;
+import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo;
 import org.jetbrains.idea.maven.server.MavenServerIndexer;
 
 import java.util.Arrays;
@@ -98,7 +98,7 @@ public final class MavenClassSearcher extends MavenSearcher<MavenClassSearchResu
         if (classResult == null) {
 
           int pos = classFQName.lastIndexOf(".");
-          MavenRepositoryArtifactInfo artifactInfo = new MavenRepositoryArtifactInfo(
+          MavenRepoArtifactInfo artifactInfo = new MavenRepoArtifactInfo(
             each.getGroupId(), each.getArtifactId(),
             Collections.singletonList(each.getVersion()));
           if (pos == -1) {
@@ -111,7 +111,7 @@ public final class MavenClassSearcher extends MavenSearcher<MavenClassSearchResu
         else {
           List<String> versions = ContainerUtil.append(ContainerUtil.map(classResult.getSearchResults().getItems(), i -> i.getVersion()),
                                                        each.getVersion());
-          MavenRepositoryArtifactInfo artifactInfo = new MavenRepositoryArtifactInfo(
+          MavenRepoArtifactInfo artifactInfo = new MavenRepoArtifactInfo(
             each.getGroupId(), each.getArtifactId(),
             versions);
           result.put(key, new MavenClassSearchResult(artifactInfo, classResult.getClassName(), classResult.getPackageName()));

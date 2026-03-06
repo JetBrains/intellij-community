@@ -96,6 +96,9 @@
   modules:
   - name: intellij.idea.community.build.dependencies
   - name: intellij.maven
+- name: lib/modules/intellij.maven.completion.jar
+  contentModules:
+  - name: intellij.maven.completion
 - name: lib/modules/intellij.maven.errorProne.compiler.jar
   contentModules:
   - name: intellij.maven.errorProne.compiler

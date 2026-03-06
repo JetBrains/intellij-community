@@ -1418,6 +1418,7 @@ plugins/maven-server-api
 plugins/maven-server-api/test
 plugins/maven/artifact-resolver-m31
 plugins/maven/artifact-resolver/common
+plugins/maven/completion
 plugins/maven/groovy
 plugins/maven/jps-plugin
 plugins/maven/maven-event-listener
