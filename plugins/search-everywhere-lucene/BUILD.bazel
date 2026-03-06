@@ -13,6 +13,14 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":searchEverywhereLucene-plugin_resources"]
 )
+
+jvm_library(
+  name = "searchEverywhereLucene-plugin_test_lib",
+  module_name = "intellij.searchEverywhereLucene.plugin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":searchEverywhereLucene-plugin"]
+)
 ### auto-generated section `build intellij.searchEverywhereLucene.plugin` end
 
 ### auto-generated section `build intellij.searchEverywhereLucene.plugin.main` start
@@ -33,6 +41,12 @@ jvm_library(
   module_name = "intellij.searchEverywhereLucene.plugin.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  runtime_deps = [":searchEverywhereLucene-plugin-main"]
+  runtime_deps = [
+    ":searchEverywhereLucene-plugin-main",
+    "//plugins/search-everywhere-lucene:searchEverywhereLucene-plugin_test_lib",
+    "//plugins/search-everywhere-lucene/common:common_test_lib",
+    "//plugins/search-everywhere-lucene/frontend:frontend_test_lib",
+    "//plugins/search-everywhere-lucene/backend:backend_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.searchEverywhereLucene.plugin.main` end
