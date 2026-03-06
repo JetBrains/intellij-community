@@ -1,6 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.formatter;
+package org.jetbrains.kotlin.idea.fir.formatter;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
@@ -15,20 +15,20 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("idea/tests")
+@TestRoot("fir/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
+public abstract class K2FormatterTestGenerated extends AbstractK2FormatterTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/formatter")
-    public abstract static class Formatter extends AbstractK1FormatterTest {
+    @TestMetadata("../../idea/tests/testData/formatter")
+    public abstract static class Formatter extends AbstractK2FormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/formatter/callChain")
-        public static class CallChain extends AbstractK1FormatterTest {
+        @TestMetadata("../../idea/tests/testData/formatter/callChain")
+        public static class CallChain extends AbstractK2FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+                return KotlinPluginMode.K2;
             }
 
             private void runTest(String testDataFilePath) throws Exception {
@@ -37,97 +37,97 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
             @TestMetadata("CallChainWrapping.after.kt")
             public void testCallChainWrapping() throws Exception {
-                runTest("testData/formatter/callChain/CallChainWrapping.after.kt");
+                runTest("../../idea/tests/testData/formatter/callChain/CallChainWrapping.after.kt");
             }
 
             @TestMetadata("CallChainWrapping2.after.kt")
             public void testCallChainWrapping2() throws Exception {
-                runTest("testData/formatter/callChain/CallChainWrapping2.after.kt");
+                runTest("../../idea/tests/testData/formatter/callChain/CallChainWrapping2.after.kt");
             }
 
             @TestMetadata("CallChainWrappingChopDown.after.kt")
             public void testCallChainWrappingChopDown() throws Exception {
-                runTest("testData/formatter/callChain/CallChainWrappingChopDown.after.kt");
+                runTest("../../idea/tests/testData/formatter/callChain/CallChainWrappingChopDown.after.kt");
             }
 
             @TestMetadata("CallChainWrappingInElvis.after.kt")
             public void testCallChainWrappingInElvis() throws Exception {
-                runTest("testData/formatter/callChain/CallChainWrappingInElvis.after.kt");
+                runTest("../../idea/tests/testData/formatter/callChain/CallChainWrappingInElvis.after.kt");
             }
 
             @TestMetadata("ConsecutiveCalls.after.kt")
             public void testConsecutiveCalls() throws Exception {
-                runTest("testData/formatter/callChain/ConsecutiveCalls.after.kt");
+                runTest("../../idea/tests/testData/formatter/callChain/ConsecutiveCalls.after.kt");
             }
 
             @TestMetadata("ConsecutiveSafeCallsIndent.after.kt")
             public void testConsecutiveSafeCallsIndent() throws Exception {
-                runTest("testData/formatter/callChain/ConsecutiveSafeCallsIndent.after.kt");
+                runTest("../../idea/tests/testData/formatter/callChain/ConsecutiveSafeCallsIndent.after.kt");
             }
 
             @TestMetadata("ContinuationIndentForChainedCalls.after.kt")
             public void testContinuationIndentForChainedCalls() throws Exception {
-                runTest("testData/formatter/callChain/ContinuationIndentForChainedCalls.after.kt");
+                runTest("../../idea/tests/testData/formatter/callChain/ContinuationIndentForChainedCalls.after.kt");
             }
 
             @TestMetadata("FunctionLiteralsInChainCalls.after.kt")
             public void testFunctionLiteralsInChainCalls() throws Exception {
-                runTest("testData/formatter/callChain/FunctionLiteralsInChainCalls.after.kt");
+                runTest("../../idea/tests/testData/formatter/callChain/FunctionLiteralsInChainCalls.after.kt");
             }
 
             @TestMetadata("KT15099.after.kt")
             public void testKT15099() throws Exception {
-                runTest("testData/formatter/callChain/KT15099.after.kt");
+                runTest("../../idea/tests/testData/formatter/callChain/KT15099.after.kt");
             }
 
             @TestMetadata("KT20362.after.kt")
             public void testKT20362() throws Exception {
-                runTest("testData/formatter/callChain/KT20362.after.kt");
+                runTest("../../idea/tests/testData/formatter/callChain/KT20362.after.kt");
             }
 
             @TestMetadata("KT22071.after.kt")
             public void testKT22071() throws Exception {
-                runTest("testData/formatter/callChain/KT22071.after.kt");
+                runTest("../../idea/tests/testData/formatter/callChain/KT22071.after.kt");
             }
 
             @TestMetadata("KT22115.after.kt")
             public void testKT22115() throws Exception {
-                runTest("testData/formatter/callChain/KT22115.after.kt");
+                runTest("../../idea/tests/testData/formatter/callChain/KT22115.after.kt");
             }
 
             @TestMetadata("KT22148.after.kt")
             public void testKT22148() throws Exception {
-                runTest("testData/formatter/callChain/KT22148.after.kt");
+                runTest("../../idea/tests/testData/formatter/callChain/KT22148.after.kt");
             }
 
             @TestMetadata("KT22346.after.kt")
             public void testKT22346() throws Exception {
-                runTest("testData/formatter/callChain/KT22346.after.kt");
+                runTest("../../idea/tests/testData/formatter/callChain/KT22346.after.kt");
             }
 
             @TestMetadata("KT36466.after.kt")
             public void testKT36466() throws Exception {
-                runTest("testData/formatter/callChain/KT36466.after.kt");
+                runTest("../../idea/tests/testData/formatter/callChain/KT36466.after.kt");
             }
 
             @TestMetadata("KT37545.after.kt")
             public void testKT37545() throws Exception {
-                runTest("testData/formatter/callChain/KT37545.after.kt");
+                runTest("../../idea/tests/testData/formatter/callChain/KT37545.after.kt");
             }
 
             @TestMetadata("NotCallChain.after.kt")
             public void testNotCallChain() throws Exception {
-                runTest("testData/formatter/callChain/NotCallChain.after.kt");
+                runTest("../../idea/tests/testData/formatter/callChain/NotCallChain.after.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/formatter/fileAnnotations")
-        public static class FileAnnotations extends AbstractK1FormatterTest {
+        @TestMetadata("../../idea/tests/testData/formatter/fileAnnotations")
+        public static class FileAnnotations extends AbstractK2FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+                return KotlinPluginMode.K2;
             }
 
             private void runTest(String testDataFilePath) throws Exception {
@@ -136,67 +136,67 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
             @TestMetadata("afterComment.after.kt")
             public void testAfterComment() throws Exception {
-                runTest("testData/formatter/fileAnnotations/afterComment.after.kt");
+                runTest("../../idea/tests/testData/formatter/fileAnnotations/afterComment.after.kt");
             }
 
             @TestMetadata("beforeDeclaration.after.kt")
             public void testBeforeDeclaration() throws Exception {
-                runTest("testData/formatter/fileAnnotations/beforeDeclaration.after.kt");
+                runTest("../../idea/tests/testData/formatter/fileAnnotations/beforeDeclaration.after.kt");
             }
 
             @TestMetadata("beforeImportList.after.kt")
             public void testBeforeImportList() throws Exception {
-                runTest("testData/formatter/fileAnnotations/beforeImportList.after.kt");
+                runTest("../../idea/tests/testData/formatter/fileAnnotations/beforeImportList.after.kt");
             }
 
             @TestMetadata("beforePackage.after.kt")
             public void testBeforePackage() throws Exception {
-                runTest("testData/formatter/fileAnnotations/beforePackage.after.kt");
+                runTest("../../idea/tests/testData/formatter/fileAnnotations/beforePackage.after.kt");
             }
 
             @TestMetadata("commentAfter.after.kt")
             public void testCommentAfter() throws Exception {
-                runTest("testData/formatter/fileAnnotations/commentAfter.after.kt");
+                runTest("../../idea/tests/testData/formatter/fileAnnotations/commentAfter.after.kt");
             }
 
             @TestMetadata("commentAfter2.after.kt")
             public void testCommentAfter2() throws Exception {
-                runTest("testData/formatter/fileAnnotations/commentAfter2.after.kt");
+                runTest("../../idea/tests/testData/formatter/fileAnnotations/commentAfter2.after.kt");
             }
 
             @TestMetadata("commentAfter3.after.kt")
             public void testCommentAfter3() throws Exception {
-                runTest("testData/formatter/fileAnnotations/commentAfter3.after.kt");
+                runTest("../../idea/tests/testData/formatter/fileAnnotations/commentAfter3.after.kt");
             }
 
             @TestMetadata("inEmptyFile.after.kt")
             public void testInEmptyFile() throws Exception {
-                runTest("testData/formatter/fileAnnotations/inEmptyFile.after.kt");
+                runTest("../../idea/tests/testData/formatter/fileAnnotations/inEmptyFile.after.kt");
             }
 
             @TestMetadata("manyLinesFromFileBegin.after.kt")
             public void testManyLinesFromFileBegin() throws Exception {
-                runTest("testData/formatter/fileAnnotations/manyLinesFromFileBegin.after.kt");
+                runTest("../../idea/tests/testData/formatter/fileAnnotations/manyLinesFromFileBegin.after.kt");
             }
 
             @TestMetadata("spacesAfterColon.after.kt")
             public void testSpacesAfterColon() throws Exception {
-                runTest("testData/formatter/fileAnnotations/spacesAfterColon.after.kt");
+                runTest("../../idea/tests/testData/formatter/fileAnnotations/spacesAfterColon.after.kt");
             }
 
             @TestMetadata("spacesBeforeColon.after.kt")
             public void testSpacesBeforeColon() throws Exception {
-                runTest("testData/formatter/fileAnnotations/spacesBeforeColon.after.kt");
+                runTest("../../idea/tests/testData/formatter/fileAnnotations/spacesBeforeColon.after.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/formatter/modifierList")
-        public static class ModifierList extends AbstractK1FormatterTest {
+        @TestMetadata("../../idea/tests/testData/formatter/modifierList")
+        public static class ModifierList extends AbstractK2FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+                return KotlinPluginMode.K2;
             }
 
             private void runTest(String testDataFilePath) throws Exception {
@@ -205,92 +205,92 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
             @TestMetadata("funAnnotationBeforeAnnotation.after.kt")
             public void testFunAnnotationBeforeAnnotation() throws Exception {
-                runTest("testData/formatter/modifierList/funAnnotationBeforeAnnotation.after.kt");
+                runTest("../../idea/tests/testData/formatter/modifierList/funAnnotationBeforeAnnotation.after.kt");
             }
 
             @TestMetadata("funAnnotationBeforeAnnotationEntry.after.kt")
             public void testFunAnnotationBeforeAnnotationEntry() throws Exception {
-                runTest("testData/formatter/modifierList/funAnnotationBeforeAnnotationEntry.after.kt");
+                runTest("../../idea/tests/testData/formatter/modifierList/funAnnotationBeforeAnnotationEntry.after.kt");
             }
 
             @TestMetadata("funAnnotationBeforeModifiers.after.kt")
             public void testFunAnnotationBeforeModifiers() throws Exception {
-                runTest("testData/formatter/modifierList/funAnnotationBeforeModifiers.after.kt");
+                runTest("../../idea/tests/testData/formatter/modifierList/funAnnotationBeforeModifiers.after.kt");
             }
 
             @TestMetadata("funAnnotationEntryBeforeAnnotation.after.kt")
             public void testFunAnnotationEntryBeforeAnnotation() throws Exception {
-                runTest("testData/formatter/modifierList/funAnnotationEntryBeforeAnnotation.after.kt");
+                runTest("../../idea/tests/testData/formatter/modifierList/funAnnotationEntryBeforeAnnotation.after.kt");
             }
 
             @TestMetadata("funAnnotationEntryBeforeAnnotationEntry.after.kt")
             public void testFunAnnotationEntryBeforeAnnotationEntry() throws Exception {
-                runTest("testData/formatter/modifierList/funAnnotationEntryBeforeAnnotationEntry.after.kt");
+                runTest("../../idea/tests/testData/formatter/modifierList/funAnnotationEntryBeforeAnnotationEntry.after.kt");
             }
 
             @TestMetadata("funAnnotationEntryBeforeModifiers.after.kt")
             public void testFunAnnotationEntryBeforeModifiers() throws Exception {
-                runTest("testData/formatter/modifierList/funAnnotationEntryBeforeModifiers.after.kt");
+                runTest("../../idea/tests/testData/formatter/modifierList/funAnnotationEntryBeforeModifiers.after.kt");
             }
 
             @TestMetadata("funModifierBeforeAnnotation.after.kt")
             public void testFunModifierBeforeAnnotation() throws Exception {
-                runTest("testData/formatter/modifierList/funModifierBeforeAnnotation.after.kt");
+                runTest("../../idea/tests/testData/formatter/modifierList/funModifierBeforeAnnotation.after.kt");
             }
 
             @TestMetadata("funModifierBeforeAnnotationEntry.after.kt")
             public void testFunModifierBeforeAnnotationEntry() throws Exception {
-                runTest("testData/formatter/modifierList/funModifierBeforeAnnotationEntry.after.kt");
+                runTest("../../idea/tests/testData/formatter/modifierList/funModifierBeforeAnnotationEntry.after.kt");
             }
 
             @TestMetadata("funModifierBeforeModifiers.after.kt")
             public void testFunModifierBeforeModifiers() throws Exception {
-                runTest("testData/formatter/modifierList/funModifierBeforeModifiers.after.kt");
+                runTest("../../idea/tests/testData/formatter/modifierList/funModifierBeforeModifiers.after.kt");
             }
 
             @TestMetadata("funTheOnlyModifier.after.kt")
             public void testFunTheOnlyModifier() throws Exception {
-                runTest("testData/formatter/modifierList/funTheOnlyModifier.after.kt");
+                runTest("../../idea/tests/testData/formatter/modifierList/funTheOnlyModifier.after.kt");
             }
 
             @TestMetadata("memberFunTheOnlyModifier.after.kt")
             public void testMemberFunTheOnlyModifier() throws Exception {
-                runTest("testData/formatter/modifierList/memberFunTheOnlyModifier.after.kt");
+                runTest("../../idea/tests/testData/formatter/modifierList/memberFunTheOnlyModifier.after.kt");
             }
 
             @TestMetadata("memberValTheOnlyModifier.after.kt")
             public void testMemberValTheOnlyModifier() throws Exception {
-                runTest("testData/formatter/modifierList/memberValTheOnlyModifier.after.kt");
+                runTest("../../idea/tests/testData/formatter/modifierList/memberValTheOnlyModifier.after.kt");
             }
 
             @TestMetadata("memberVarTheOnlyModifier.after.kt")
             public void testMemberVarTheOnlyModifier() throws Exception {
-                runTest("testData/formatter/modifierList/memberVarTheOnlyModifier.after.kt");
+                runTest("../../idea/tests/testData/formatter/modifierList/memberVarTheOnlyModifier.after.kt");
             }
 
             @TestMetadata("secondMemberFunTheOnlyModifier.after.kt")
             public void testSecondMemberFunTheOnlyModifier() throws Exception {
-                runTest("testData/formatter/modifierList/secondMemberFunTheOnlyModifier.after.kt");
+                runTest("../../idea/tests/testData/formatter/modifierList/secondMemberFunTheOnlyModifier.after.kt");
             }
 
             @TestMetadata("secondMemberValTheOnlyModifier.after.kt")
             public void testSecondMemberValTheOnlyModifier() throws Exception {
-                runTest("testData/formatter/modifierList/secondMemberValTheOnlyModifier.after.kt");
+                runTest("../../idea/tests/testData/formatter/modifierList/secondMemberValTheOnlyModifier.after.kt");
             }
 
             @TestMetadata("secondMemberVarTheOnlyModifier.after.kt")
             public void testSecondMemberVarTheOnlyModifier() throws Exception {
-                runTest("testData/formatter/modifierList/secondMemberVarTheOnlyModifier.after.kt");
+                runTest("../../idea/tests/testData/formatter/modifierList/secondMemberVarTheOnlyModifier.after.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/formatter/parameterList")
-        public static class ParameterList extends AbstractK1FormatterTest {
+        @TestMetadata("../../idea/tests/testData/formatter/parameterList")
+        public static class ParameterList extends AbstractK2FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+                return KotlinPluginMode.K2;
             }
 
             private void runTest(String testDataFilePath) throws Exception {
@@ -299,85 +299,85 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
             @TestMetadata("ArgumentListChopAsNeeded.after.kt")
             public void testArgumentListChopAsNeeded() throws Exception {
-                runTest("testData/formatter/parameterList/ArgumentListChopAsNeeded.after.kt");
+                runTest("../../idea/tests/testData/formatter/parameterList/ArgumentListChopAsNeeded.after.kt");
             }
 
             @TestMetadata("ArgumentListDoNotWrap.after.kt")
             public void testArgumentListDoNotWrap() throws Exception {
-                runTest("testData/formatter/parameterList/ArgumentListDoNotWrap.after.kt");
+                runTest("../../idea/tests/testData/formatter/parameterList/ArgumentListDoNotWrap.after.kt");
             }
 
             @TestMetadata("ArgumentListNamedArguments.after.kt")
             public void testArgumentListNamedArguments() throws Exception {
-                runTest("testData/formatter/parameterList/ArgumentListNamedArguments.after.kt");
+                runTest("../../idea/tests/testData/formatter/parameterList/ArgumentListNamedArguments.after.kt");
             }
 
             @TestMetadata("ArgumentListNamedArgumentsFunctionCall.after.kt")
             public void testArgumentListNamedArgumentsFunctionCall() throws Exception {
-                runTest("testData/formatter/parameterList/ArgumentListNamedArgumentsFunctionCall.after.kt");
+                runTest("../../idea/tests/testData/formatter/parameterList/ArgumentListNamedArgumentsFunctionCall.after.kt");
             }
 
             @TestMetadata("ArgumentListNamedArgumentsInFunction.after.kt")
             public void testArgumentListNamedArgumentsInFunction() throws Exception {
-                runTest("testData/formatter/parameterList/ArgumentListNamedArgumentsInFunction.after.kt");
+                runTest("../../idea/tests/testData/formatter/parameterList/ArgumentListNamedArgumentsInFunction.after.kt");
             }
 
             @TestMetadata("ArgumentListWrapAlways.after.kt")
             public void testArgumentListWrapAlways() throws Exception {
-                runTest("testData/formatter/parameterList/ArgumentListWrapAlways.after.kt");
+                runTest("../../idea/tests/testData/formatter/parameterList/ArgumentListWrapAlways.after.kt");
             }
 
             @TestMetadata("ArgumentListWrapAsNeeded.after.kt")
             public void testArgumentListWrapAsNeeded() throws Exception {
-                runTest("testData/formatter/parameterList/ArgumentListWrapAsNeeded.after.kt");
+                runTest("../../idea/tests/testData/formatter/parameterList/ArgumentListWrapAsNeeded.after.kt");
             }
 
             @TestMetadata("ArgumentListWrapLParen.after.kt")
             public void testArgumentListWrapLParen() throws Exception {
-                runTest("testData/formatter/parameterList/ArgumentListWrapLParen.after.kt");
+                runTest("../../idea/tests/testData/formatter/parameterList/ArgumentListWrapLParen.after.kt");
             }
 
             @TestMetadata("DefaultParameterValues.after.kt")
             public void testDefaultParameterValues() throws Exception {
-                runTest("testData/formatter/parameterList/DefaultParameterValues.after.kt");
+                runTest("../../idea/tests/testData/formatter/parameterList/DefaultParameterValues.after.kt");
             }
 
             @TestMetadata("KT19727.after.kt")
             public void testKT19727() throws Exception {
-                runTest("testData/formatter/parameterList/KT19727.after.kt");
+                runTest("../../idea/tests/testData/formatter/parameterList/KT19727.after.kt");
             }
 
             @TestMetadata("ParameterListChopAsNeeded.after.kt")
             public void testParameterListChopAsNeeded() throws Exception {
-                runTest("testData/formatter/parameterList/ParameterListChopAsNeeded.after.kt");
+                runTest("../../idea/tests/testData/formatter/parameterList/ParameterListChopAsNeeded.after.kt");
             }
 
             @TestMetadata("ParameterListDoNotWrap.after.kt")
             public void testParameterListDoNotWrap() throws Exception {
-                runTest("testData/formatter/parameterList/ParameterListDoNotWrap.after.kt");
+                runTest("../../idea/tests/testData/formatter/parameterList/ParameterListDoNotWrap.after.kt");
             }
 
             @TestMetadata("ParameterListWrapAlways.after.kt")
             public void testParameterListWrapAlways() throws Exception {
-                runTest("testData/formatter/parameterList/ParameterListWrapAlways.after.kt");
+                runTest("../../idea/tests/testData/formatter/parameterList/ParameterListWrapAlways.after.kt");
             }
 
             @TestMetadata("ParameterListWrapAsNeeded.after.kt")
             public void testParameterListWrapAsNeeded() throws Exception {
-                runTest("testData/formatter/parameterList/ParameterListWrapAsNeeded.after.kt");
+                runTest("../../idea/tests/testData/formatter/parameterList/ParameterListWrapAsNeeded.after.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/formatter/trailingComma")
-        public abstract static class TrailingComma extends AbstractK1FormatterTest {
+        @TestMetadata("../../idea/tests/testData/formatter/trailingComma")
+        public abstract static class TrailingComma extends AbstractK2FormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/formatter/trailingComma/collectionLiteralExpression")
-            public static class CollectionLiteralExpression extends AbstractK1FormatterTest {
+            @TestMetadata("../../idea/tests/testData/formatter/trailingComma/collectionLiteralExpression")
+            public static class CollectionLiteralExpression extends AbstractK2FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
+                    return KotlinPluginMode.K2;
                 }
 
                 private void runTest(String testDataFilePath) throws Exception {
@@ -386,22 +386,22 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
                 @TestMetadata("CollectionLiteralEnabled.after.kt")
                 public void testCollectionLiteralEnabled() throws Exception {
-                    runTest("testData/formatter/trailingComma/collectionLiteralExpression/CollectionLiteralEnabled.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/collectionLiteralExpression/CollectionLiteralEnabled.after.kt");
                 }
 
                 @TestMetadata("CollectionLiteralInAnnotation.after.kt")
                 public void testCollectionLiteralInAnnotation() throws Exception {
-                    runTest("testData/formatter/trailingComma/collectionLiteralExpression/CollectionLiteralInAnnotation.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/collectionLiteralExpression/CollectionLiteralInAnnotation.after.kt");
                 }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/formatter/trailingComma/contextParameters")
-            public static class ContextParameters extends AbstractK1FormatterTest {
+            @TestMetadata("../../idea/tests/testData/formatter/trailingComma/contextParameters")
+            public static class ContextParameters extends AbstractK2FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
+                    return KotlinPluginMode.K2;
                 }
 
                 private void runTest(String testDataFilePath) throws Exception {
@@ -410,22 +410,22 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
                 @TestMetadata("ContextParametersList.after.kt")
                 public void testContextParametersList() throws Exception {
-                    runTest("testData/formatter/trailingComma/contextParameters/ContextParametersList.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/contextParameters/ContextParametersList.after.kt");
                 }
 
                 @TestMetadata("ContextParametersListDisabled.after.kt")
                 public void testContextParametersListDisabled() throws Exception {
-                    runTest("testData/formatter/trailingComma/contextParameters/ContextParametersListDisabled.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/contextParameters/ContextParametersListDisabled.after.kt");
                 }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/formatter/trailingComma/destructuringDeclarations")
-            public static class DestructuringDeclarations extends AbstractK1FormatterTest {
+            @TestMetadata("../../idea/tests/testData/formatter/trailingComma/destructuringDeclarations")
+            public static class DestructuringDeclarations extends AbstractK2FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
+                    return KotlinPluginMode.K2;
                 }
 
                 private void runTest(String testDataFilePath) throws Exception {
@@ -434,27 +434,27 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
                 @TestMetadata("DestructuringDeclarationsDisabled.after.kt")
                 public void testDestructuringDeclarationsDisabled() throws Exception {
-                    runTest("testData/formatter/trailingComma/destructuringDeclarations/DestructuringDeclarationsDisabled.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/destructuringDeclarations/DestructuringDeclarationsDisabled.after.kt");
                 }
 
                 @TestMetadata("DestructuringDeclarationsInLambda.after.kt")
                 public void testDestructuringDeclarationsInLambda() throws Exception {
-                    runTest("testData/formatter/trailingComma/destructuringDeclarations/DestructuringDeclarationsInLambda.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/destructuringDeclarations/DestructuringDeclarationsInLambda.after.kt");
                 }
 
                 @TestMetadata("MultiVariableDeclaration.after.kt")
                 public void testMultiVariableDeclaration() throws Exception {
-                    runTest("testData/formatter/trailingComma/destructuringDeclarations/MultiVariableDeclaration.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/destructuringDeclarations/MultiVariableDeclaration.after.kt");
                 }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/formatter/trailingComma/enumEntry")
-            public static class EnumEntry extends AbstractK1FormatterTest {
+            @TestMetadata("../../idea/tests/testData/formatter/trailingComma/enumEntry")
+            public static class EnumEntry extends AbstractK2FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
+                    return KotlinPluginMode.K2;
                 }
 
                 private void runTest(String testDataFilePath) throws Exception {
@@ -463,17 +463,17 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
                 @TestMetadata("Enum.after.kt")
                 public void testEnum() throws Exception {
-                    runTest("testData/formatter/trailingComma/enumEntry/Enum.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/enumEntry/Enum.after.kt");
                 }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/formatter/trailingComma/indices")
-            public static class Indices extends AbstractK1FormatterTest {
+            @TestMetadata("../../idea/tests/testData/formatter/trailingComma/indices")
+            public static class Indices extends AbstractK2FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
+                    return KotlinPluginMode.K2;
                 }
 
                 private void runTest(String testDataFilePath) throws Exception {
@@ -482,22 +482,22 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
                 @TestMetadata("IndicesAccess.after.kt")
                 public void testIndicesAccess() throws Exception {
-                    runTest("testData/formatter/trailingComma/indices/IndicesAccess.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/indices/IndicesAccess.after.kt");
                 }
 
                 @TestMetadata("IndicesEnabled.after.kt")
                 public void testIndicesEnabled() throws Exception {
-                    runTest("testData/formatter/trailingComma/indices/IndicesEnabled.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/indices/IndicesEnabled.after.kt");
                 }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/formatter/trailingComma/lambdaParameters")
-            public static class LambdaParameters extends AbstractK1FormatterTest {
+            @TestMetadata("../../idea/tests/testData/formatter/trailingComma/lambdaParameters")
+            public static class LambdaParameters extends AbstractK2FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
+                    return KotlinPluginMode.K2;
                 }
 
                 private void runTest(String testDataFilePath) throws Exception {
@@ -506,22 +506,22 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
                 @TestMetadata("LambdaParameterList.after.kt")
                 public void testLambdaParameterList() throws Exception {
-                    runTest("testData/formatter/trailingComma/lambdaParameters/LambdaParameterList.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/lambdaParameters/LambdaParameterList.after.kt");
                 }
 
                 @TestMetadata("LambdaParametersDisabled.after.kt")
                 public void testLambdaParametersDisabled() throws Exception {
-                    runTest("testData/formatter/trailingComma/lambdaParameters/LambdaParametersDisabled.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/lambdaParameters/LambdaParametersDisabled.after.kt");
                 }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/formatter/trailingComma/typeArguments")
-            public static class TypeArguments extends AbstractK1FormatterTest {
+            @TestMetadata("../../idea/tests/testData/formatter/trailingComma/typeArguments")
+            public static class TypeArguments extends AbstractK2FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
+                    return KotlinPluginMode.K2;
                 }
 
                 private void runTest(String testDataFilePath) throws Exception {
@@ -530,22 +530,22 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
                 @TestMetadata("TypeArgumentList.after.kt")
                 public void testTypeArgumentList() throws Exception {
-                    runTest("testData/formatter/trailingComma/typeArguments/TypeArgumentList.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/typeArguments/TypeArgumentList.after.kt");
                 }
 
                 @TestMetadata("TypeArgumentListEnabled.after.kt")
                 public void testTypeArgumentListEnabled() throws Exception {
-                    runTest("testData/formatter/trailingComma/typeArguments/TypeArgumentListEnabled.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/typeArguments/TypeArgumentListEnabled.after.kt");
                 }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/formatter/trailingComma/typeParameters")
-            public static class TypeParameters extends AbstractK1FormatterTest {
+            @TestMetadata("../../idea/tests/testData/formatter/trailingComma/typeParameters")
+            public static class TypeParameters extends AbstractK2FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
+                    return KotlinPluginMode.K2;
                 }
 
                 private void runTest(String testDataFilePath) throws Exception {
@@ -554,22 +554,22 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
                 @TestMetadata("TypeParameterList.after.kt")
                 public void testTypeParameterList() throws Exception {
-                    runTest("testData/formatter/trailingComma/typeParameters/TypeParameterList.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/typeParameters/TypeParameterList.after.kt");
                 }
 
                 @TestMetadata("TypeParameterListDisabled.after.kt")
                 public void testTypeParameterListDisabled() throws Exception {
-                    runTest("testData/formatter/trailingComma/typeParameters/TypeParameterListDisabled.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/typeParameters/TypeParameterListDisabled.after.kt");
                 }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/formatter/trailingComma/valueArguments")
-            public static class ValueArguments extends AbstractK1FormatterTest {
+            @TestMetadata("../../idea/tests/testData/formatter/trailingComma/valueArguments")
+            public static class ValueArguments extends AbstractK2FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
+                    return KotlinPluginMode.K2;
                 }
 
                 private void runTest(String testDataFilePath) throws Exception {
@@ -578,42 +578,42 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
                 @TestMetadata("ArgumentListChopAsNeeded.after.kt")
                 public void testArgumentListChopAsNeeded() throws Exception {
-                    runTest("testData/formatter/trailingComma/valueArguments/ArgumentListChopAsNeeded.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/valueArguments/ArgumentListChopAsNeeded.after.kt");
                 }
 
                 @TestMetadata("ArgumentListDoNotWrap.after.kt")
                 public void testArgumentListDoNotWrap() throws Exception {
-                    runTest("testData/formatter/trailingComma/valueArguments/ArgumentListDoNotWrap.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/valueArguments/ArgumentListDoNotWrap.after.kt");
                 }
 
                 @TestMetadata("ArgumentListWrapAlways.after.kt")
                 public void testArgumentListWrapAlways() throws Exception {
-                    runTest("testData/formatter/trailingComma/valueArguments/ArgumentListWrapAlways.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/valueArguments/ArgumentListWrapAlways.after.kt");
                 }
 
                 @TestMetadata("ArgumentListWrapAsNeeded.after.kt")
                 public void testArgumentListWrapAsNeeded() throws Exception {
-                    runTest("testData/formatter/trailingComma/valueArguments/ArgumentListWrapAsNeeded.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/valueArguments/ArgumentListWrapAsNeeded.after.kt");
                 }
 
                 @TestMetadata("NamedArguments.after.kt")
                 public void testNamedArguments() throws Exception {
-                    runTest("testData/formatter/trailingComma/valueArguments/NamedArguments.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/valueArguments/NamedArguments.after.kt");
                 }
 
                 @TestMetadata("ValueArgumentsEnabled.after.kt")
                 public void testValueArgumentsEnabled() throws Exception {
-                    runTest("testData/formatter/trailingComma/valueArguments/ValueArgumentsEnabled.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/valueArguments/ValueArgumentsEnabled.after.kt");
                 }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/formatter/trailingComma/valueParameters")
-            public static class ValueParameters extends AbstractK1FormatterTest {
+            @TestMetadata("../../idea/tests/testData/formatter/trailingComma/valueParameters")
+            public static class ValueParameters extends AbstractK2FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
+                    return KotlinPluginMode.K2;
                 }
 
                 private void runTest(String testDataFilePath) throws Exception {
@@ -622,42 +622,42 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
                 @TestMetadata("LambdaValueParameters.after.kt")
                 public void testLambdaValueParameters() throws Exception {
-                    runTest("testData/formatter/trailingComma/valueParameters/LambdaValueParameters.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/valueParameters/LambdaValueParameters.after.kt");
                 }
 
                 @TestMetadata("NamedParameters.after.kt")
                 public void testNamedParameters() throws Exception {
-                    runTest("testData/formatter/trailingComma/valueParameters/NamedParameters.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/valueParameters/NamedParameters.after.kt");
                 }
 
                 @TestMetadata("ParameterListChopAsNeeded.after.kt")
                 public void testParameterListChopAsNeeded() throws Exception {
-                    runTest("testData/formatter/trailingComma/valueParameters/ParameterListChopAsNeeded.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/valueParameters/ParameterListChopAsNeeded.after.kt");
                 }
 
                 @TestMetadata("ParameterListDoNotWrap.after.kt")
                 public void testParameterListDoNotWrap() throws Exception {
-                    runTest("testData/formatter/trailingComma/valueParameters/ParameterListDoNotWrap.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/valueParameters/ParameterListDoNotWrap.after.kt");
                 }
 
                 @TestMetadata("ParameterListWrapAlways.after.kt")
                 public void testParameterListWrapAlways() throws Exception {
-                    runTest("testData/formatter/trailingComma/valueParameters/ParameterListWrapAlways.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/valueParameters/ParameterListWrapAlways.after.kt");
                 }
 
                 @TestMetadata("ParameterListWrapAsNeeded.after.kt")
                 public void testParameterListWrapAsNeeded() throws Exception {
-                    runTest("testData/formatter/trailingComma/valueParameters/ParameterListWrapAsNeeded.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/valueParameters/ParameterListWrapAsNeeded.after.kt");
                 }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/formatter/trailingComma/whenEntry")
-            public static class WhenEntry extends AbstractK1FormatterTest {
+            @TestMetadata("../../idea/tests/testData/formatter/trailingComma/whenEntry")
+            public static class WhenEntry extends AbstractK2FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
+                    return KotlinPluginMode.K2;
                 }
 
                 private void runTest(String testDataFilePath) throws Exception {
@@ -666,33 +666,33 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
                 @TestMetadata("WhenEntry.after.kt")
                 public void testWhenEntry() throws Exception {
-                    runTest("testData/formatter/trailingComma/whenEntry/WhenEntry.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/whenEntry/WhenEntry.after.kt");
                 }
 
                 @TestMetadata("WhenEntryDisabled.after.kt")
                 public void testWhenEntryDisabled() throws Exception {
-                    runTest("testData/formatter/trailingComma/whenEntry/WhenEntryDisabled.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/whenEntry/WhenEntryDisabled.after.kt");
                 }
 
                 @TestMetadata("WhenEntryNoIndentBeforeArrow.after.kt")
                 public void testWhenEntryNoIndentBeforeArrow() throws Exception {
-                    runTest("testData/formatter/trailingComma/whenEntry/WhenEntryNoIndentBeforeArrow.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/whenEntry/WhenEntryNoIndentBeforeArrow.after.kt");
                 }
 
                 @TestMetadata("WhenEntryWithGuards.after.kt")
                 public void testWhenEntryWithGuards() throws Exception {
-                    runTest("testData/formatter/trailingComma/whenEntry/WhenEntryWithGuards.after.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/whenEntry/WhenEntryWithGuards.after.kt");
                 }
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/formatter")
-        public static class Uncategorized extends AbstractK1FormatterTest {
+        @TestMetadata("../../idea/tests/testData/formatter")
+        public static class Uncategorized extends AbstractK2FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+                return KotlinPluginMode.K2;
             }
 
             private void runTest(String testDataFilePath) throws Exception {
@@ -701,956 +701,956 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
             @TestMetadata("AfterSemiColonInEnumClass.after.kt")
             public void testAfterSemiColonInEnumClass() throws Exception {
-                runTest("testData/formatter/AfterSemiColonInEnumClass.after.kt");
+                runTest("../../idea/tests/testData/formatter/AfterSemiColonInEnumClass.after.kt");
             }
 
             @TestMetadata("AnnotationBeforeExpression.after.kt")
             public void testAnnotationBeforeExpression() throws Exception {
-                runTest("testData/formatter/AnnotationBeforeExpression.after.kt");
+                runTest("../../idea/tests/testData/formatter/AnnotationBeforeExpression.after.kt");
             }
 
             @TestMetadata("AnnotationBeforeTypeAliasOrConstructor.after.kt")
             public void testAnnotationBeforeTypeAliasOrConstructor() throws Exception {
-                runTest("testData/formatter/AnnotationBeforeTypeAliasOrConstructor.after.kt");
+                runTest("../../idea/tests/testData/formatter/AnnotationBeforeTypeAliasOrConstructor.after.kt");
             }
 
             @TestMetadata("AnonymousInitializers.after.kt")
             public void testAnonymousInitializers() throws Exception {
-                runTest("testData/formatter/AnonymousInitializers.after.kt");
+                runTest("../../idea/tests/testData/formatter/AnonymousInitializers.after.kt");
             }
 
             @TestMetadata("AnonymousInitializersLineBreak.after.kt")
             public void testAnonymousInitializersLineBreak() throws Exception {
-                runTest("testData/formatter/AnonymousInitializersLineBreak.after.kt");
+                runTest("../../idea/tests/testData/formatter/AnonymousInitializersLineBreak.after.kt");
             }
 
             @TestMetadata("ArrayAccess.after.kt")
             public void testArrayAccess() throws Exception {
-                runTest("testData/formatter/ArrayAccess.after.kt");
+                runTest("../../idea/tests/testData/formatter/ArrayAccess.after.kt");
             }
 
             @TestMetadata("ArrayLiteral.after.kt")
             public void testArrayLiteral() throws Exception {
-                runTest("testData/formatter/ArrayLiteral.after.kt");
+                runTest("../../idea/tests/testData/formatter/ArrayLiteral.after.kt");
             }
 
             @TestMetadata("AssignmentWrap.after.kt")
             public void testAssignmentWrap() throws Exception {
-                runTest("testData/formatter/AssignmentWrap.after.kt");
+                runTest("../../idea/tests/testData/formatter/AssignmentWrap.after.kt");
             }
 
             @TestMetadata("BinaryExpressionAlignmentSpread.after.kt")
             public void testBinaryExpressionAlignmentSpread() throws Exception {
-                runTest("testData/formatter/BinaryExpressionAlignmentSpread.after.kt");
+                runTest("../../idea/tests/testData/formatter/BinaryExpressionAlignmentSpread.after.kt");
             }
 
             @TestMetadata("BinaryExpressions.after.kt")
             public void testBinaryExpressions() throws Exception {
-                runTest("testData/formatter/BinaryExpressions.after.kt");
+                runTest("../../idea/tests/testData/formatter/BinaryExpressions.after.kt");
             }
 
             @TestMetadata("BinaryExpressionsBoolean.after.kt")
             public void testBinaryExpressionsBoolean() throws Exception {
-                runTest("testData/formatter/BinaryExpressionsBoolean.after.kt");
+                runTest("../../idea/tests/testData/formatter/BinaryExpressionsBoolean.after.kt");
             }
 
             @TestMetadata("BinaryExpressionsWithoutAlignment.after.kt")
             public void testBinaryExpressionsWithoutAlignment() throws Exception {
-                runTest("testData/formatter/BinaryExpressionsWithoutAlignment.after.kt");
+                runTest("../../idea/tests/testData/formatter/BinaryExpressionsWithoutAlignment.after.kt");
             }
 
             @TestMetadata("BlankLinesAfterClassHeader.after.kt")
             public void testBlankLinesAfterClassHeader() throws Exception {
-                runTest("testData/formatter/BlankLinesAfterClassHeader.after.kt");
+                runTest("../../idea/tests/testData/formatter/BlankLinesAfterClassHeader.after.kt");
             }
 
             @TestMetadata("BlankLinesAfterClassHeader2.after.kt")
             public void testBlankLinesAfterClassHeader2() throws Exception {
-                runTest("testData/formatter/BlankLinesAfterClassHeader2.after.kt");
+                runTest("../../idea/tests/testData/formatter/BlankLinesAfterClassHeader2.after.kt");
             }
 
             @TestMetadata("BlankLinesBeforeRBrace.after.kt")
             public void testBlankLinesBeforeRBrace() throws Exception {
-                runTest("testData/formatter/BlankLinesBeforeRBrace.after.kt");
+                runTest("../../idea/tests/testData/formatter/BlankLinesBeforeRBrace.after.kt");
             }
 
             @TestMetadata("BlankLinesBeforeRBrace2.after.kt")
             public void testBlankLinesBeforeRBrace2() throws Exception {
-                runTest("testData/formatter/BlankLinesBeforeRBrace2.after.kt");
+                runTest("../../idea/tests/testData/formatter/BlankLinesBeforeRBrace2.after.kt");
             }
 
             @TestMetadata("BlockFor.after.kt")
             public void testBlockFor() throws Exception {
-                runTest("testData/formatter/BlockFor.after.kt");
+                runTest("../../idea/tests/testData/formatter/BlockFor.after.kt");
             }
 
             @TestMetadata("By.after.kt")
             public void testBy() throws Exception {
-                runTest("testData/formatter/By.after.kt");
+                runTest("../../idea/tests/testData/formatter/By.after.kt");
             }
 
             @TestMetadata("CallLParenthOnNextLine.after.kt")
             public void testCallLParenthOnNextLine() throws Exception {
-                runTest("testData/formatter/CallLParenthOnNextLine.after.kt");
+                runTest("../../idea/tests/testData/formatter/CallLParenthOnNextLine.after.kt");
             }
 
             @TestMetadata("CallLParenthOnNextLineAndComma.after.kt")
             public void testCallLParenthOnNextLineAndComma() throws Exception {
-                runTest("testData/formatter/CallLParenthOnNextLineAndComma.after.kt");
+                runTest("../../idea/tests/testData/formatter/CallLParenthOnNextLineAndComma.after.kt");
             }
 
             @TestMetadata("CallRParenthOnNextLine.after.kt")
             public void testCallRParenthOnNextLine() throws Exception {
-                runTest("testData/formatter/CallRParenthOnNextLine.after.kt");
+                runTest("../../idea/tests/testData/formatter/CallRParenthOnNextLine.after.kt");
             }
 
             @TestMetadata("CallRParenthOnNextLineAndComma.after.kt")
             public void testCallRParenthOnNextLineAndComma() throws Exception {
-                runTest("testData/formatter/CallRParenthOnNextLineAndComma.after.kt");
+                runTest("../../idea/tests/testData/formatter/CallRParenthOnNextLineAndComma.after.kt");
             }
 
             @TestMetadata("Cast.after.kt")
             public void testCast() throws Exception {
-                runTest("testData/formatter/Cast.after.kt");
+                runTest("../../idea/tests/testData/formatter/Cast.after.kt");
             }
 
             @TestMetadata("CatchFinallyOnNewLine.after.kt")
             public void testCatchFinallyOnNewLine() throws Exception {
-                runTest("testData/formatter/CatchFinallyOnNewLine.after.kt");
+                runTest("../../idea/tests/testData/formatter/CatchFinallyOnNewLine.after.kt");
             }
 
             @TestMetadata("Class.after.kt")
             public void testClass() throws Exception {
-                runTest("testData/formatter/Class.after.kt");
+                runTest("../../idea/tests/testData/formatter/Class.after.kt");
             }
 
             @TestMetadata("ClassAnnotationWrapping.after.kt")
             public void testClassAnnotationWrapping() throws Exception {
-                runTest("testData/formatter/ClassAnnotationWrapping.after.kt");
+                runTest("../../idea/tests/testData/formatter/ClassAnnotationWrapping.after.kt");
             }
 
             @TestMetadata("ClassInBody.after.kt")
             public void testClassInBody() throws Exception {
-                runTest("testData/formatter/ClassInBody.after.kt");
+                runTest("../../idea/tests/testData/formatter/ClassInBody.after.kt");
             }
 
             @TestMetadata("ClassLineBreak.after.kt")
             public void testClassLineBreak() throws Exception {
-                runTest("testData/formatter/ClassLineBreak.after.kt");
+                runTest("../../idea/tests/testData/formatter/ClassLineBreak.after.kt");
             }
 
             @TestMetadata("ClassTypeParam.after.kt")
             public void testClassTypeParam() throws Exception {
-                runTest("testData/formatter/ClassTypeParam.after.kt");
+                runTest("../../idea/tests/testData/formatter/ClassTypeParam.after.kt");
             }
 
             @TestMetadata("ColonSpaces.after.kt")
             public void testColonSpaces() throws Exception {
-                runTest("testData/formatter/ColonSpaces.after.kt");
+                runTest("../../idea/tests/testData/formatter/ColonSpaces.after.kt");
             }
 
             @TestMetadata("CommentAfterPackage.after.kt")
             public void testCommentAfterPackage() throws Exception {
-                runTest("testData/formatter/CommentAfterPackage.after.kt");
+                runTest("../../idea/tests/testData/formatter/CommentAfterPackage.after.kt");
             }
 
             @TestMetadata("CommentInExpressionBodies.after.kt")
             public void testCommentInExpressionBodies() throws Exception {
-                runTest("testData/formatter/CommentInExpressionBodies.after.kt");
+                runTest("../../idea/tests/testData/formatter/CommentInExpressionBodies.after.kt");
             }
 
             @TestMetadata("CommentInFunctionLiteral.after.kt")
             public void testCommentInFunctionLiteral() throws Exception {
-                runTest("testData/formatter/CommentInFunctionLiteral.after.kt");
+                runTest("../../idea/tests/testData/formatter/CommentInFunctionLiteral.after.kt");
             }
 
             @TestMetadata("ContextParameterModifiers.after.kt")
             public void testContextParameterModifiers() throws Exception {
-                runTest("testData/formatter/ContextParameterModifiers.after.kt");
+                runTest("../../idea/tests/testData/formatter/ContextParameterModifiers.after.kt");
             }
 
             @TestMetadata("ContextParameterMultiline.after.kt")
             public void testContextParameterMultiline() throws Exception {
-                runTest("testData/formatter/ContextParameterMultiline.after.kt");
+                runTest("../../idea/tests/testData/formatter/ContextParameterMultiline.after.kt");
             }
 
             @TestMetadata("ContinuationIndentInAssigments.after.kt")
             public void testContinuationIndentInAssigments() throws Exception {
-                runTest("testData/formatter/ContinuationIndentInAssigments.after.kt");
+                runTest("../../idea/tests/testData/formatter/ContinuationIndentInAssigments.after.kt");
             }
 
             @TestMetadata("ContinuationIndentInParameterLists.after.kt")
             public void testContinuationIndentInParameterLists() throws Exception {
-                runTest("testData/formatter/ContinuationIndentInParameterLists.after.kt");
+                runTest("../../idea/tests/testData/formatter/ContinuationIndentInParameterLists.after.kt");
             }
 
             @TestMetadata("ContinuationIndentInSupertypeLists.after.kt")
             public void testContinuationIndentInSupertypeLists() throws Exception {
-                runTest("testData/formatter/ContinuationIndentInSupertypeLists.after.kt");
+                runTest("../../idea/tests/testData/formatter/ContinuationIndentInSupertypeLists.after.kt");
             }
 
             @TestMetadata("CurlyBraceStringInterpolation.after.kt")
             public void testCurlyBraceStringInterpolation() throws Exception {
-                runTest("testData/formatter/CurlyBraceStringInterpolation.after.kt");
+                runTest("../../idea/tests/testData/formatter/CurlyBraceStringInterpolation.after.kt");
             }
 
             @TestMetadata("DanglingComments.after.kt")
             public void testDanglingComments() throws Exception {
-                runTest("testData/formatter/DanglingComments.after.kt");
+                runTest("../../idea/tests/testData/formatter/DanglingComments.after.kt");
             }
 
             @TestMetadata("DefinitelyNonNullTypes.after.kt")
             public void testDefinitelyNonNullTypes() throws Exception {
-                runTest("testData/formatter/DefinitelyNonNullTypes.after.kt");
+                runTest("../../idea/tests/testData/formatter/DefinitelyNonNullTypes.after.kt");
             }
 
             @TestMetadata("DelegationList.after.kt")
             public void testDelegationList() throws Exception {
-                runTest("testData/formatter/DelegationList.after.kt");
+                runTest("../../idea/tests/testData/formatter/DelegationList.after.kt");
             }
 
             @TestMetadata("DoWhileLineBreak.after.kt")
             public void testDoWhileLineBreak() throws Exception {
-                runTest("testData/formatter/DoWhileLineBreak.after.kt");
+                runTest("../../idea/tests/testData/formatter/DoWhileLineBreak.after.kt");
             }
 
             @TestMetadata("DoWhileSpacing.after.kt")
             public void testDoWhileSpacing() throws Exception {
-                runTest("testData/formatter/DoWhileSpacing.after.kt");
+                runTest("../../idea/tests/testData/formatter/DoWhileSpacing.after.kt");
             }
 
             @TestMetadata("DocComments.after.kt")
             public void testDocComments() throws Exception {
-                runTest("testData/formatter/DocComments.after.kt");
+                runTest("../../idea/tests/testData/formatter/DocComments.after.kt");
             }
 
             @TestMetadata("ElseOnNewLine.after.kt")
             public void testElseOnNewLine() throws Exception {
-                runTest("testData/formatter/ElseOnNewLine.after.kt");
+                runTest("../../idea/tests/testData/formatter/ElseOnNewLine.after.kt");
             }
 
             @TestMetadata("Elvis.after.kt")
             public void testElvis() throws Exception {
-                runTest("testData/formatter/Elvis.after.kt");
+                runTest("../../idea/tests/testData/formatter/Elvis.after.kt");
             }
 
             @TestMetadata("ElvisContinuationIndentOptions.after.kt")
             public void testElvisContinuationIndentOptions() throws Exception {
-                runTest("testData/formatter/ElvisContinuationIndentOptions.after.kt");
+                runTest("../../idea/tests/testData/formatter/ElvisContinuationIndentOptions.after.kt");
             }
 
             @TestMetadata("ElvisInStringTemplate.after.kt")
             public void testElvisInStringTemplate() throws Exception {
-                runTest("testData/formatter/ElvisInStringTemplate.after.kt");
+                runTest("../../idea/tests/testData/formatter/ElvisInStringTemplate.after.kt");
             }
 
             @TestMetadata("ElvisIndent.after.kt")
             public void testElvisIndent() throws Exception {
-                runTest("testData/formatter/ElvisIndent.after.kt");
+                runTest("../../idea/tests/testData/formatter/ElvisIndent.after.kt");
             }
 
             @TestMetadata("ElvisWithOperationReference.after.kt")
             public void testElvisWithOperationReference() throws Exception {
-                runTest("testData/formatter/ElvisWithOperationReference.after.kt");
+                runTest("../../idea/tests/testData/formatter/ElvisWithOperationReference.after.kt");
             }
 
             @TestMetadata("ElvisWrap.after.kt")
             public void testElvisWrap() throws Exception {
-                runTest("testData/formatter/ElvisWrap.after.kt");
+                runTest("../../idea/tests/testData/formatter/ElvisWrap.after.kt");
             }
 
             @TestMetadata("EmptyLineAfterObjectDeclaration.after.kt")
             public void testEmptyLineAfterObjectDeclaration() throws Exception {
-                runTest("testData/formatter/EmptyLineAfterObjectDeclaration.after.kt");
+                runTest("../../idea/tests/testData/formatter/EmptyLineAfterObjectDeclaration.after.kt");
             }
 
             @TestMetadata("EmptyLineAfterPackage.after.kt")
             public void testEmptyLineAfterPackage() throws Exception {
-                runTest("testData/formatter/EmptyLineAfterPackage.after.kt");
+                runTest("../../idea/tests/testData/formatter/EmptyLineAfterPackage.after.kt");
             }
 
             @TestMetadata("EmptyLineBetweeAbstractFunctions.after.kt")
             public void testEmptyLineBetweeAbstractFunctions() throws Exception {
-                runTest("testData/formatter/EmptyLineBetweeAbstractFunctions.after.kt");
+                runTest("../../idea/tests/testData/formatter/EmptyLineBetweeAbstractFunctions.after.kt");
             }
 
             @TestMetadata("EmptyLineBetweeMultilineDeclarationTwo.after.kt")
             public void testEmptyLineBetweeMultilineDeclarationTwo() throws Exception {
-                runTest("testData/formatter/EmptyLineBetweeMultilineDeclarationTwo.after.kt");
+                runTest("../../idea/tests/testData/formatter/EmptyLineBetweeMultilineDeclarationTwo.after.kt");
             }
 
             @TestMetadata("EmptyLineBetweeMultilineDeclarationZero.after.kt")
             public void testEmptyLineBetweeMultilineDeclarationZero() throws Exception {
-                runTest("testData/formatter/EmptyLineBetweeMultilineDeclarationZero.after.kt");
+                runTest("../../idea/tests/testData/formatter/EmptyLineBetweeMultilineDeclarationZero.after.kt");
             }
 
             @TestMetadata("EmptyLineBetweeSecondaryConstructors.after.kt")
             public void testEmptyLineBetweeSecondaryConstructors() throws Exception {
-                runTest("testData/formatter/EmptyLineBetweeSecondaryConstructors.after.kt");
+                runTest("../../idea/tests/testData/formatter/EmptyLineBetweeSecondaryConstructors.after.kt");
             }
 
             @TestMetadata("EmptyLineBetweenClassAndFunction.after.kt")
             public void testEmptyLineBetweenClassAndFunction() throws Exception {
-                runTest("testData/formatter/EmptyLineBetweenClassAndFunction.after.kt");
+                runTest("../../idea/tests/testData/formatter/EmptyLineBetweenClassAndFunction.after.kt");
             }
 
             @TestMetadata("EmptyLineBetweenClasses.after.kt")
             public void testEmptyLineBetweenClasses() throws Exception {
-                runTest("testData/formatter/EmptyLineBetweenClasses.after.kt");
+                runTest("../../idea/tests/testData/formatter/EmptyLineBetweenClasses.after.kt");
             }
 
             @TestMetadata("EmptyLineBetweenEnumEntries.after.kt")
             public void testEmptyLineBetweenEnumEntries() throws Exception {
-                runTest("testData/formatter/EmptyLineBetweenEnumEntries.after.kt");
+                runTest("../../idea/tests/testData/formatter/EmptyLineBetweenEnumEntries.after.kt");
             }
 
             @TestMetadata("EmptyLineBetweenFunAndProperty.after.kt")
             public void testEmptyLineBetweenFunAndProperty() throws Exception {
-                runTest("testData/formatter/EmptyLineBetweenFunAndProperty.after.kt");
+                runTest("../../idea/tests/testData/formatter/EmptyLineBetweenFunAndProperty.after.kt");
             }
 
             @TestMetadata("EmptyLineBetweenFunctions.after.kt")
             public void testEmptyLineBetweenFunctions() throws Exception {
-                runTest("testData/formatter/EmptyLineBetweenFunctions.after.kt");
+                runTest("../../idea/tests/testData/formatter/EmptyLineBetweenFunctions.after.kt");
             }
 
             @TestMetadata("EmptyLineBetweenProperties.after.kt")
             public void testEmptyLineBetweenProperties() throws Exception {
-                runTest("testData/formatter/EmptyLineBetweenProperties.after.kt");
+                runTest("../../idea/tests/testData/formatter/EmptyLineBetweenProperties.after.kt");
             }
 
             @TestMetadata("EnumArguments.after.kt")
             public void testEnumArguments() throws Exception {
-                runTest("testData/formatter/EnumArguments.after.kt");
+                runTest("../../idea/tests/testData/formatter/EnumArguments.after.kt");
             }
 
             @TestMetadata("EnumEntiesWithComments.after.kt")
             public void testEnumEntiesWithComments() throws Exception {
-                runTest("testData/formatter/EnumEntiesWithComments.after.kt");
+                runTest("../../idea/tests/testData/formatter/EnumEntiesWithComments.after.kt");
             }
 
             @TestMetadata("EnumInitializerList.after.kt")
             public void testEnumInitializerList() throws Exception {
-                runTest("testData/formatter/EnumInitializerList.after.kt");
+                runTest("../../idea/tests/testData/formatter/EnumInitializerList.after.kt");
             }
 
             @TestMetadata("EnumWrapping.after.kt")
             public void testEnumWrapping() throws Exception {
-                runTest("testData/formatter/EnumWrapping.after.kt");
+                runTest("../../idea/tests/testData/formatter/EnumWrapping.after.kt");
             }
 
             @TestMetadata("ExpressionBodyWrap.after.kt")
             public void testExpressionBodyWrap() throws Exception {
-                runTest("testData/formatter/ExpressionBodyWrap.after.kt");
+                runTest("../../idea/tests/testData/formatter/ExpressionBodyWrap.after.kt");
             }
 
             @TestMetadata("ExtendsListAlignEnum.after.kt")
             public void testExtendsListAlignEnum() throws Exception {
-                runTest("testData/formatter/ExtendsListAlignEnum.after.kt");
+                runTest("../../idea/tests/testData/formatter/ExtendsListAlignEnum.after.kt");
             }
 
             @TestMetadata("ExtendsListWrap.after.kt")
             public void testExtendsListWrap() throws Exception {
-                runTest("testData/formatter/ExtendsListWrap.after.kt");
+                runTest("../../idea/tests/testData/formatter/ExtendsListWrap.after.kt");
             }
 
             @TestMetadata("FloatingPointRangeWithDots.after.kt")
             public void testFloatingPointRangeWithDots() throws Exception {
-                runTest("testData/formatter/FloatingPointRangeWithDots.after.kt");
+                runTest("../../idea/tests/testData/formatter/FloatingPointRangeWithDots.after.kt");
             }
 
             @TestMetadata("FloatingPointRangeWithoutDots.after.kt")
             public void testFloatingPointRangeWithoutDots() throws Exception {
-                runTest("testData/formatter/FloatingPointRangeWithoutDots.after.kt");
+                runTest("../../idea/tests/testData/formatter/FloatingPointRangeWithoutDots.after.kt");
             }
 
             @TestMetadata("ForLineBreak.after.kt")
             public void testForLineBreak() throws Exception {
-                runTest("testData/formatter/ForLineBreak.after.kt");
+                runTest("../../idea/tests/testData/formatter/ForLineBreak.after.kt");
             }
 
             @TestMetadata("ForNoBraces.after.kt")
             public void testForNoBraces() throws Exception {
-                runTest("testData/formatter/ForNoBraces.after.kt");
+                runTest("../../idea/tests/testData/formatter/ForNoBraces.after.kt");
             }
 
             @TestMetadata("ForSpacing.after.kt")
             public void testForSpacing() throws Exception {
-                runTest("testData/formatter/ForSpacing.after.kt");
+                runTest("../../idea/tests/testData/formatter/ForSpacing.after.kt");
             }
 
             @TestMetadata("FormatFirstColumnComments.after.kt")
             public void testFormatFirstColumnComments() throws Exception {
-                runTest("testData/formatter/FormatFirstColumnComments.after.kt");
+                runTest("../../idea/tests/testData/formatter/FormatFirstColumnComments.after.kt");
             }
 
             @TestMetadata("FormatFirstColumnCommentsBeforeDeclaration.after.kt")
             public void testFormatFirstColumnCommentsBeforeDeclaration() throws Exception {
-                runTest("testData/formatter/FormatFirstColumnCommentsBeforeDeclaration.after.kt");
+                runTest("../../idea/tests/testData/formatter/FormatFirstColumnCommentsBeforeDeclaration.after.kt");
             }
 
             @TestMetadata("FunctionCallParametersAlign.after.kt")
             public void testFunctionCallParametersAlign() throws Exception {
-                runTest("testData/formatter/FunctionCallParametersAlign.after.kt");
+                runTest("../../idea/tests/testData/formatter/FunctionCallParametersAlign.after.kt");
             }
 
             @TestMetadata("FunctionDefParametersAlign.after.kt")
             public void testFunctionDefParametersAlign() throws Exception {
-                runTest("testData/formatter/FunctionDefParametersAlign.after.kt");
+                runTest("../../idea/tests/testData/formatter/FunctionDefParametersAlign.after.kt");
             }
 
             @TestMetadata("FunctionExpression.after.kt")
             public void testFunctionExpression() throws Exception {
-                runTest("testData/formatter/FunctionExpression.after.kt");
+                runTest("../../idea/tests/testData/formatter/FunctionExpression.after.kt");
             }
 
             @TestMetadata("FunctionLineBreak.after.kt")
             public void testFunctionLineBreak() throws Exception {
-                runTest("testData/formatter/FunctionLineBreak.after.kt");
+                runTest("../../idea/tests/testData/formatter/FunctionLineBreak.after.kt");
             }
 
             @TestMetadata("FunctionReferenceOperator.after.kt")
             public void testFunctionReferenceOperator() throws Exception {
-                runTest("testData/formatter/FunctionReferenceOperator.after.kt");
+                runTest("../../idea/tests/testData/formatter/FunctionReferenceOperator.after.kt");
             }
 
             @TestMetadata("FunctionWithInference.after.kt")
             public void testFunctionWithInference() throws Exception {
-                runTest("testData/formatter/FunctionWithInference.after.kt");
+                runTest("../../idea/tests/testData/formatter/FunctionWithInference.after.kt");
             }
 
             @TestMetadata("FunctionalType.after.kt")
             public void testFunctionalType() throws Exception {
-                runTest("testData/formatter/FunctionalType.after.kt");
+                runTest("../../idea/tests/testData/formatter/FunctionalType.after.kt");
             }
 
             @TestMetadata("GetterAfterOneLinePropertyWithAnnotation.after.kt")
             public void testGetterAfterOneLinePropertyWithAnnotation() throws Exception {
-                runTest("testData/formatter/GetterAfterOneLinePropertyWithAnnotation.after.kt");
+                runTest("../../idea/tests/testData/formatter/GetterAfterOneLinePropertyWithAnnotation.after.kt");
             }
 
             @TestMetadata("GetterAndSetter.after.kt")
             public void testGetterAndSetter() throws Exception {
-                runTest("testData/formatter/GetterAndSetter.after.kt");
+                runTest("../../idea/tests/testData/formatter/GetterAndSetter.after.kt");
             }
 
             @TestMetadata("If.after.kt")
             public void testIf() throws Exception {
-                runTest("testData/formatter/If.after.kt");
+                runTest("../../idea/tests/testData/formatter/If.after.kt");
             }
 
             @TestMetadata("IfClosingParen.after.kt")
             public void testIfClosingParen() throws Exception {
-                runTest("testData/formatter/IfClosingParen.after.kt");
+                runTest("../../idea/tests/testData/formatter/IfClosingParen.after.kt");
             }
 
             @TestMetadata("IfConditionIndent.after.kt")
             public void testIfConditionIndent() throws Exception {
-                runTest("testData/formatter/IfConditionIndent.after.kt");
+                runTest("../../idea/tests/testData/formatter/IfConditionIndent.after.kt");
             }
 
             @TestMetadata("IfElseRemoveLineBreak.after.kt")
             public void testIfElseRemoveLineBreak() throws Exception {
-                runTest("testData/formatter/IfElseRemoveLineBreak.after.kt");
+                runTest("../../idea/tests/testData/formatter/IfElseRemoveLineBreak.after.kt");
             }
 
             @TestMetadata("IfElseWithLineBreak.after.kt")
             public void testIfElseWithLineBreak() throws Exception {
-                runTest("testData/formatter/IfElseWithLineBreak.after.kt");
+                runTest("../../idea/tests/testData/formatter/IfElseWithLineBreak.after.kt");
             }
 
             @TestMetadata("IfElseWithTrickyComments.after.kt")
             public void testIfElseWithTrickyComments() throws Exception {
-                runTest("testData/formatter/IfElseWithTrickyComments.after.kt");
+                runTest("../../idea/tests/testData/formatter/IfElseWithTrickyComments.after.kt");
             }
 
             @TestMetadata("IfRParen.after.kt")
             public void testIfRParen() throws Exception {
-                runTest("testData/formatter/IfRParen.after.kt");
+                runTest("../../idea/tests/testData/formatter/IfRParen.after.kt");
             }
 
             @TestMetadata("IfSpacing.after.kt")
             public void testIfSpacing() throws Exception {
-                runTest("testData/formatter/IfSpacing.after.kt");
+                runTest("../../idea/tests/testData/formatter/IfSpacing.after.kt");
             }
 
             @TestMetadata("In.after.kt")
             public void testIn() throws Exception {
-                runTest("testData/formatter/In.after.kt");
+                runTest("../../idea/tests/testData/formatter/In.after.kt");
             }
 
             @TestMetadata("InfixCall.after.kt")
             public void testInfixCall() throws Exception {
-                runTest("testData/formatter/InfixCall.after.kt");
+                runTest("../../idea/tests/testData/formatter/InfixCall.after.kt");
             }
 
             @TestMetadata("Is.after.kt")
             public void testIs() throws Exception {
-                runTest("testData/formatter/Is.after.kt");
+                runTest("../../idea/tests/testData/formatter/Is.after.kt");
             }
 
             @TestMetadata("KDoc.after.kt")
             public void testKDoc() throws Exception {
-                runTest("testData/formatter/KDoc.after.kt");
+                runTest("../../idea/tests/testData/formatter/KDoc.after.kt");
             }
 
             @TestMetadata("KT22230.after.kt")
             public void testKT22230() throws Exception {
-                runTest("testData/formatter/KT22230.after.kt");
+                runTest("../../idea/tests/testData/formatter/KT22230.after.kt");
             }
 
             @TestMetadata("KeepLineBreak.after.kt")
             public void testKeepLineBreak() throws Exception {
-                runTest("testData/formatter/KeepLineBreak.after.kt");
+                runTest("../../idea/tests/testData/formatter/KeepLineBreak.after.kt");
             }
 
             @TestMetadata("LabeledExpression.after.kt")
             public void testLabeledExpression() throws Exception {
-                runTest("testData/formatter/LabeledExpression.after.kt");
+                runTest("../../idea/tests/testData/formatter/LabeledExpression.after.kt");
             }
 
             @TestMetadata("LambdaArrow.after.kt")
             public void testLambdaArrow() throws Exception {
-                runTest("testData/formatter/LambdaArrow.after.kt");
+                runTest("../../idea/tests/testData/formatter/LambdaArrow.after.kt");
             }
 
             @TestMetadata("LineBreakBeforeExtendsColon.after.kt")
             public void testLineBreakBeforeExtendsColon() throws Exception {
-                runTest("testData/formatter/LineBreakBeforeExtendsColon.after.kt");
+                runTest("../../idea/tests/testData/formatter/LineBreakBeforeExtendsColon.after.kt");
             }
 
             @TestMetadata("LineBreakBeforeExtendsColonWrap.after.kt")
             public void testLineBreakBeforeExtendsColonWrap() throws Exception {
-                runTest("testData/formatter/LineBreakBeforeExtendsColonWrap.after.kt");
+                runTest("../../idea/tests/testData/formatter/LineBreakBeforeExtendsColonWrap.after.kt");
             }
 
             @TestMetadata("LocalVariableAnnotationWrap.after.kt")
             public void testLocalVariableAnnotationWrap() throws Exception {
-                runTest("testData/formatter/LocalVariableAnnotationWrap.after.kt");
+                runTest("../../idea/tests/testData/formatter/LocalVariableAnnotationWrap.after.kt");
             }
 
             @TestMetadata("LoopParameterWithExplicitType.after.kt")
             public void testLoopParameterWithExplicitType() throws Exception {
-                runTest("testData/formatter/LoopParameterWithExplicitType.after.kt");
+                runTest("../../idea/tests/testData/formatter/LoopParameterWithExplicitType.after.kt");
             }
 
             @TestMetadata("MethodAnnotationWrapping.after.kt")
             public void testMethodAnnotationWrapping() throws Exception {
-                runTest("testData/formatter/MethodAnnotationWrapping.after.kt");
+                runTest("../../idea/tests/testData/formatter/MethodAnnotationWrapping.after.kt");
             }
 
             @TestMetadata("MethodCall.after.kt")
             public void testMethodCall() throws Exception {
-                runTest("testData/formatter/MethodCall.after.kt");
+                runTest("../../idea/tests/testData/formatter/MethodCall.after.kt");
             }
 
             @TestMetadata("MethodLParenthOnNextLine.after.kt")
             public void testMethodLParenthOnNextLine() throws Exception {
-                runTest("testData/formatter/MethodLParenthOnNextLine.after.kt");
+                runTest("../../idea/tests/testData/formatter/MethodLParenthOnNextLine.after.kt");
             }
 
             @TestMetadata("MethodRParenthOnNextLine.after.kt")
             public void testMethodRParenthOnNextLine() throws Exception {
-                runTest("testData/formatter/MethodRParenthOnNextLine.after.kt");
+                runTest("../../idea/tests/testData/formatter/MethodRParenthOnNextLine.after.kt");
             }
 
             @TestMetadata("Multideclaration.after.kt")
             public void testMultideclaration() throws Exception {
-                runTest("testData/formatter/Multideclaration.after.kt");
+                runTest("../../idea/tests/testData/formatter/Multideclaration.after.kt");
             }
 
             @TestMetadata("MultilineFunctionLiteral.after.kt")
             public void testMultilineFunctionLiteral() throws Exception {
-                runTest("testData/formatter/MultilineFunctionLiteral.after.kt");
+                runTest("../../idea/tests/testData/formatter/MultilineFunctionLiteral.after.kt");
             }
 
             @TestMetadata("MultilineFunctionLiteralWithParams.after.kt")
             public void testMultilineFunctionLiteralWithParams() throws Exception {
-                runTest("testData/formatter/MultilineFunctionLiteralWithParams.after.kt");
+                runTest("../../idea/tests/testData/formatter/MultilineFunctionLiteralWithParams.after.kt");
             }
 
             @TestMetadata("MultilineStringEntry.after.kt")
             public void testMultilineStringEntry() throws Exception {
-                runTest("testData/formatter/MultilineStringEntry.after.kt");
+                runTest("../../idea/tests/testData/formatter/MultilineStringEntry.after.kt");
             }
 
             @TestMetadata("MultilineStringEntry2.after.kt")
             public void testMultilineStringEntry2() throws Exception {
-                runTest("testData/formatter/MultilineStringEntry2.after.kt");
+                runTest("../../idea/tests/testData/formatter/MultilineStringEntry2.after.kt");
             }
 
             @TestMetadata("MultilineStringEntry3.after.kt")
             public void testMultilineStringEntry3() throws Exception {
-                runTest("testData/formatter/MultilineStringEntry3.after.kt");
+                runTest("../../idea/tests/testData/formatter/MultilineStringEntry3.after.kt");
             }
 
             @TestMetadata("MultilineStringEntry4.after.kt")
             public void testMultilineStringEntry4() throws Exception {
-                runTest("testData/formatter/MultilineStringEntry4.after.kt");
+                runTest("../../idea/tests/testData/formatter/MultilineStringEntry4.after.kt");
             }
 
             @TestMetadata("MultilineStringEntry5.after.kt")
             public void testMultilineStringEntry5() throws Exception {
-                runTest("testData/formatter/MultilineStringEntry5.after.kt");
+                runTest("../../idea/tests/testData/formatter/MultilineStringEntry5.after.kt");
             }
 
             @TestMetadata("MultilineStringEntry6.after.kt")
             public void testMultilineStringEntry6() throws Exception {
-                runTest("testData/formatter/MultilineStringEntry6.after.kt");
+                runTest("../../idea/tests/testData/formatter/MultilineStringEntry6.after.kt");
             }
 
             @TestMetadata("NewLineForRBrace.after.kt")
             public void testNewLineForRBrace() throws Exception {
-                runTest("testData/formatter/NewLineForRBrace.after.kt");
+                runTest("../../idea/tests/testData/formatter/NewLineForRBrace.after.kt");
             }
 
             @TestMetadata("NoSpaceBeforeSpread.after.kt")
             public void testNoSpaceBeforeSpread() throws Exception {
-                runTest("testData/formatter/NoSpaceBeforeSpread.after.kt");
+                runTest("../../idea/tests/testData/formatter/NoSpaceBeforeSpread.after.kt");
             }
 
             @TestMetadata("NotIn.after.kt")
             public void testNotIn() throws Exception {
-                runTest("testData/formatter/NotIn.after.kt");
+                runTest("../../idea/tests/testData/formatter/NotIn.after.kt");
             }
 
             @TestMetadata("NotIs.after.kt")
             public void testNotIs() throws Exception {
-                runTest("testData/formatter/NotIs.after.kt");
+                runTest("../../idea/tests/testData/formatter/NotIs.after.kt");
             }
 
             @TestMetadata("NullableType.after.kt")
             public void testNullableType() throws Exception {
-                runTest("testData/formatter/NullableType.after.kt");
+                runTest("../../idea/tests/testData/formatter/NullableType.after.kt");
             }
 
             @TestMetadata("ObjectInBody.after.kt")
             public void testObjectInBody() throws Exception {
-                runTest("testData/formatter/ObjectInBody.after.kt");
+                runTest("../../idea/tests/testData/formatter/ObjectInBody.after.kt");
             }
 
             @TestMetadata("ParameterAnnotationWrap.after.kt")
             public void testParameterAnnotationWrap() throws Exception {
-                runTest("testData/formatter/ParameterAnnotationWrap.after.kt");
+                runTest("../../idea/tests/testData/formatter/ParameterAnnotationWrap.after.kt");
             }
 
             @TestMetadata("ParameterDocComments.after.kt")
             public void testParameterDocComments() throws Exception {
-                runTest("testData/formatter/ParameterDocComments.after.kt");
+                runTest("../../idea/tests/testData/formatter/ParameterDocComments.after.kt");
             }
 
             @TestMetadata("Parameters.after.kt")
             public void testParameters() throws Exception {
-                runTest("testData/formatter/Parameters.after.kt");
+                runTest("../../idea/tests/testData/formatter/Parameters.after.kt");
             }
 
             @TestMetadata("PrimaryConstructor.after.kt")
             public void testPrimaryConstructor() throws Exception {
-                runTest("testData/formatter/PrimaryConstructor.after.kt");
+                runTest("../../idea/tests/testData/formatter/PrimaryConstructor.after.kt");
             }
 
             @TestMetadata("PropertyAccessorLineBreak.after.kt")
             public void testPropertyAccessorLineBreak() throws Exception {
-                runTest("testData/formatter/PropertyAccessorLineBreak.after.kt");
+                runTest("../../idea/tests/testData/formatter/PropertyAccessorLineBreak.after.kt");
             }
 
             @TestMetadata("PropertyAccessors.after.kt")
             public void testPropertyAccessors() throws Exception {
-                runTest("testData/formatter/PropertyAccessors.after.kt");
+                runTest("../../idea/tests/testData/formatter/PropertyAccessors.after.kt");
             }
 
             @TestMetadata("PropertyAnnotationWrap.after.kt")
             public void testPropertyAnnotationWrap() throws Exception {
-                runTest("testData/formatter/PropertyAnnotationWrap.after.kt");
+                runTest("../../idea/tests/testData/formatter/PropertyAnnotationWrap.after.kt");
             }
 
             @TestMetadata("PropertyInitializerLineBreak.after.kt")
             public void testPropertyInitializerLineBreak() throws Exception {
-                runTest("testData/formatter/PropertyInitializerLineBreak.after.kt");
+                runTest("../../idea/tests/testData/formatter/PropertyInitializerLineBreak.after.kt");
             }
 
             @TestMetadata("PropertyTypeParameterList.after.kt")
             public void testPropertyTypeParameterList() throws Exception {
-                runTest("testData/formatter/PropertyTypeParameterList.after.kt");
+                runTest("../../idea/tests/testData/formatter/PropertyTypeParameterList.after.kt");
             }
 
             @TestMetadata("PropertyWithInference.after.kt")
             public void testPropertyWithInference() throws Exception {
-                runTest("testData/formatter/PropertyWithInference.after.kt");
+                runTest("../../idea/tests/testData/formatter/PropertyWithInference.after.kt");
             }
 
             @TestMetadata("ReferenceExpressionFunctionLiteral.after.kt")
             public void testReferenceExpressionFunctionLiteral() throws Exception {
-                runTest("testData/formatter/ReferenceExpressionFunctionLiteral.after.kt");
+                runTest("../../idea/tests/testData/formatter/ReferenceExpressionFunctionLiteral.after.kt");
             }
 
             @TestMetadata("RemoveSpacesAroundOperations.after.kt")
             public void testRemoveSpacesAroundOperations() throws Exception {
-                runTest("testData/formatter/RemoveSpacesAroundOperations.after.kt");
+                runTest("../../idea/tests/testData/formatter/RemoveSpacesAroundOperations.after.kt");
             }
 
             @TestMetadata("ReturnExpression.after.kt")
             public void testReturnExpression() throws Exception {
-                runTest("testData/formatter/ReturnExpression.after.kt");
+                runTest("../../idea/tests/testData/formatter/ReturnExpression.after.kt");
             }
 
             @TestMetadata("RightBracketOnNewLine.after.kt")
             public void testRightBracketOnNewLine() throws Exception {
-                runTest("testData/formatter/RightBracketOnNewLine.after.kt");
+                runTest("../../idea/tests/testData/formatter/RightBracketOnNewLine.after.kt");
             }
 
             @TestMetadata("SafeCast.after.kt")
             public void testSafeCast() throws Exception {
-                runTest("testData/formatter/SafeCast.after.kt");
+                runTest("../../idea/tests/testData/formatter/SafeCast.after.kt");
             }
 
             @TestMetadata("SaveSpacesInDocComments.after.kt")
             public void testSaveSpacesInDocComments() throws Exception {
-                runTest("testData/formatter/SaveSpacesInDocComments.after.kt");
+                runTest("../../idea/tests/testData/formatter/SaveSpacesInDocComments.after.kt");
             }
 
             @TestMetadata("Script.after.kts")
             public void testScript() throws Exception {
-                runTest("testData/formatter/Script.after.kts");
+                runTest("../../idea/tests/testData/formatter/Script.after.kts");
             }
 
             @TestMetadata("SecondaryConstructors.after.kt")
             public void testSecondaryConstructors() throws Exception {
-                runTest("testData/formatter/SecondaryConstructors.after.kt");
+                runTest("../../idea/tests/testData/formatter/SecondaryConstructors.after.kt");
             }
 
             @TestMetadata("secondaryCtorLineBreak.after.kt")
             public void testSecondaryCtorLineBreak() throws Exception {
-                runTest("testData/formatter/secondaryCtorLineBreak.after.kt");
+                runTest("../../idea/tests/testData/formatter/secondaryCtorLineBreak.after.kt");
             }
 
             @TestMetadata("Semicolon.after.kt")
             public void testSemicolon() throws Exception {
-                runTest("testData/formatter/Semicolon.after.kt");
+                runTest("../../idea/tests/testData/formatter/Semicolon.after.kt");
             }
 
             @TestMetadata("SemicolonNoSpace.after.kt")
             public void testSemicolonNoSpace() throws Exception {
-                runTest("testData/formatter/SemicolonNoSpace.after.kt");
+                runTest("../../idea/tests/testData/formatter/SemicolonNoSpace.after.kt");
             }
 
             @TestMetadata("SingleLineFunctionLiteral.after.kt")
             public void testSingleLineFunctionLiteral() throws Exception {
-                runTest("testData/formatter/SingleLineFunctionLiteral.after.kt");
+                runTest("../../idea/tests/testData/formatter/SingleLineFunctionLiteral.after.kt");
             }
 
             @TestMetadata("SpaceAroundDotInUserReference.after.kt")
             public void testSpaceAroundDotInUserReference() throws Exception {
-                runTest("testData/formatter/SpaceAroundDotInUserReference.after.kt");
+                runTest("../../idea/tests/testData/formatter/SpaceAroundDotInUserReference.after.kt");
             }
 
             @TestMetadata("SpaceAroundExtendColon.after.kt")
             public void testSpaceAroundExtendColon() throws Exception {
-                runTest("testData/formatter/SpaceAroundExtendColon.after.kt");
+                runTest("../../idea/tests/testData/formatter/SpaceAroundExtendColon.after.kt");
             }
 
             @TestMetadata("SpaceAroundExtendColonInObjects.after.kt")
             public void testSpaceAroundExtendColonInObjects() throws Exception {
-                runTest("testData/formatter/SpaceAroundExtendColonInObjects.after.kt");
+                runTest("../../idea/tests/testData/formatter/SpaceAroundExtendColonInObjects.after.kt");
             }
 
             @TestMetadata("SpaceAroundExtendColonInSecondaryCtr.after.kt")
             public void testSpaceAroundExtendColonInSecondaryCtr() throws Exception {
-                runTest("testData/formatter/SpaceAroundExtendColonInSecondaryCtr.after.kt");
+                runTest("../../idea/tests/testData/formatter/SpaceAroundExtendColonInSecondaryCtr.after.kt");
             }
 
             @TestMetadata("SpaceBeforeCatchParentheses.after.kt")
             public void testSpaceBeforeCatchParentheses() throws Exception {
-                runTest("testData/formatter/SpaceBeforeCatchParentheses.after.kt");
+                runTest("../../idea/tests/testData/formatter/SpaceBeforeCatchParentheses.after.kt");
             }
 
             @TestMetadata("SpaceBeforeForParentheses.after.kt")
             public void testSpaceBeforeForParentheses() throws Exception {
-                runTest("testData/formatter/SpaceBeforeForParentheses.after.kt");
+                runTest("../../idea/tests/testData/formatter/SpaceBeforeForParentheses.after.kt");
             }
 
             @TestMetadata("SpaceBeforeFunctionLiteral.after.kt")
             public void testSpaceBeforeFunctionLiteral() throws Exception {
-                runTest("testData/formatter/SpaceBeforeFunctionLiteral.after.kt");
+                runTest("../../idea/tests/testData/formatter/SpaceBeforeFunctionLiteral.after.kt");
             }
 
             @TestMetadata("SpaceBeforeIfParentheses.after.kt")
             public void testSpaceBeforeIfParentheses() throws Exception {
-                runTest("testData/formatter/SpaceBeforeIfParentheses.after.kt");
+                runTest("../../idea/tests/testData/formatter/SpaceBeforeIfParentheses.after.kt");
             }
 
             @TestMetadata("SpaceBeforeIndices.after.kt")
             public void testSpaceBeforeIndices() throws Exception {
-                runTest("testData/formatter/SpaceBeforeIndices.after.kt");
+                runTest("../../idea/tests/testData/formatter/SpaceBeforeIndices.after.kt");
             }
 
             @TestMetadata("SpaceBeforeTypeArgumentList.after.kt")
             public void testSpaceBeforeTypeArgumentList() throws Exception {
-                runTest("testData/formatter/SpaceBeforeTypeArgumentList.after.kt");
+                runTest("../../idea/tests/testData/formatter/SpaceBeforeTypeArgumentList.after.kt");
             }
 
             @TestMetadata("SpaceBeforeWhenParentheses.after.kt")
             public void testSpaceBeforeWhenParentheses() throws Exception {
-                runTest("testData/formatter/SpaceBeforeWhenParentheses.after.kt");
+                runTest("../../idea/tests/testData/formatter/SpaceBeforeWhenParentheses.after.kt");
             }
 
             @TestMetadata("SpaceBeforeWhileParentheses.after.kt")
             public void testSpaceBeforeWhileParentheses() throws Exception {
-                runTest("testData/formatter/SpaceBeforeWhileParentheses.after.kt");
+                runTest("../../idea/tests/testData/formatter/SpaceBeforeWhileParentheses.after.kt");
             }
 
             @TestMetadata("SpacedInsideParans.after.kt")
             public void testSpacedInsideParans() throws Exception {
-                runTest("testData/formatter/SpacedInsideParans.after.kt");
+                runTest("../../idea/tests/testData/formatter/SpacedInsideParans.after.kt");
             }
 
             @TestMetadata("SpacesAroundOperations.after.kt")
             public void testSpacesAroundOperations() throws Exception {
-                runTest("testData/formatter/SpacesAroundOperations.after.kt");
+                runTest("../../idea/tests/testData/formatter/SpacesAroundOperations.after.kt");
             }
 
             @TestMetadata("SpacesAroundUnaryOperations.after.kt")
             public void testSpacesAroundUnaryOperations() throws Exception {
-                runTest("testData/formatter/SpacesAroundUnaryOperations.after.kt");
+                runTest("../../idea/tests/testData/formatter/SpacesAroundUnaryOperations.after.kt");
             }
 
             @TestMetadata("SpacesInDeclarations.after.kt")
             public void testSpacesInDeclarations() throws Exception {
-                runTest("testData/formatter/SpacesInDeclarations.after.kt");
+                runTest("../../idea/tests/testData/formatter/SpacesInDeclarations.after.kt");
             }
 
             @TestMetadata("SpacesInQualifiedExpressions.after.kt")
             public void testSpacesInQualifiedExpressions() throws Exception {
-                runTest("testData/formatter/SpacesInQualifiedExpressions.after.kt");
+                runTest("../../idea/tests/testData/formatter/SpacesInQualifiedExpressions.after.kt");
             }
 
             @TestMetadata("SuperListIndent.after.kt")
             public void testSuperListIndent() throws Exception {
-                runTest("testData/formatter/SuperListIndent.after.kt");
+                runTest("../../idea/tests/testData/formatter/SuperListIndent.after.kt");
             }
 
             @TestMetadata("Throw.after.kt")
             public void testThrow() throws Exception {
-                runTest("testData/formatter/Throw.after.kt");
+                runTest("../../idea/tests/testData/formatter/Throw.after.kt");
             }
 
             @TestMetadata("TryCatchLineBreak.after.kt")
             public void testTryCatchLineBreak() throws Exception {
-                runTest("testData/formatter/TryCatchLineBreak.after.kt");
+                runTest("../../idea/tests/testData/formatter/TryCatchLineBreak.after.kt");
             }
 
             @TestMetadata("TypeAliasSpacing.after.kt")
             public void testTypeAliasSpacing() throws Exception {
-                runTest("testData/formatter/TypeAliasSpacing.after.kt");
+                runTest("../../idea/tests/testData/formatter/TypeAliasSpacing.after.kt");
             }
 
             @TestMetadata("UnnecessarySpacesInParametersLists.after.kt")
             public void testUnnecessarySpacesInParametersLists() throws Exception {
-                runTest("testData/formatter/UnnecessarySpacesInParametersLists.after.kt");
+                runTest("../../idea/tests/testData/formatter/UnnecessarySpacesInParametersLists.after.kt");
             }
 
             @TestMetadata("ValVarSpaces.after.kt")
             public void testValVarSpaces() throws Exception {
-                runTest("testData/formatter/ValVarSpaces.after.kt");
+                runTest("../../idea/tests/testData/formatter/ValVarSpaces.after.kt");
             }
 
             @TestMetadata("When.after.kt")
             public void testWhen() throws Exception {
-                runTest("testData/formatter/When.after.kt");
+                runTest("../../idea/tests/testData/formatter/When.after.kt");
             }
 
             @TestMetadata("WhenArrow.after.kt")
             public void testWhenArrow() throws Exception {
-                runTest("testData/formatter/WhenArrow.after.kt");
+                runTest("../../idea/tests/testData/formatter/WhenArrow.after.kt");
             }
 
             @TestMetadata("WhenBlockBlankLines.after.kt")
             public void testWhenBlockBlankLines() throws Exception {
-                runTest("testData/formatter/WhenBlockBlankLines.after.kt");
+                runTest("../../idea/tests/testData/formatter/WhenBlockBlankLines.after.kt");
             }
 
             @TestMetadata("WhenBraceAndEntry.after.kt")
             public void testWhenBraceAndEntry() throws Exception {
-                runTest("testData/formatter/WhenBraceAndEntry.after.kt");
+                runTest("../../idea/tests/testData/formatter/WhenBraceAndEntry.after.kt");
             }
 
             @TestMetadata("WhenComment.after.kt")
             public void testWhenComment() throws Exception {
-                runTest("testData/formatter/WhenComment.after.kt");
+                runTest("../../idea/tests/testData/formatter/WhenComment.after.kt");
             }
 
             @TestMetadata("WhenEntry.after.kt")
             public void testWhenEntry() throws Exception {
-                runTest("testData/formatter/WhenEntry.after.kt");
+                runTest("../../idea/tests/testData/formatter/WhenEntry.after.kt");
             }
 
             @TestMetadata("WhenEntryExpr.after.kt")
             public void testWhenEntryExpr() throws Exception {
-                runTest("testData/formatter/WhenEntryExpr.after.kt");
+                runTest("../../idea/tests/testData/formatter/WhenEntryExpr.after.kt");
             }
 
             @TestMetadata("WhenEntryExprNoIndentBeforeArrow.after.kt")
             public void testWhenEntryExprNoIndentBeforeArrow() throws Exception {
-                runTest("testData/formatter/WhenEntryExprNoIndentBeforeArrow.after.kt");
+                runTest("../../idea/tests/testData/formatter/WhenEntryExprNoIndentBeforeArrow.after.kt");
             }
 
             @TestMetadata("WhenGuardsFormatting.after.kt")
             public void testWhenGuardsFormatting() throws Exception {
-                runTest("testData/formatter/WhenGuardsFormatting.after.kt");
+                runTest("../../idea/tests/testData/formatter/WhenGuardsFormatting.after.kt");
             }
 
             @TestMetadata("WhenIfGuardUnnecessarySpace.after.kt")
             public void testWhenIfGuardUnnecessarySpace() throws Exception {
-                runTest("testData/formatter/WhenIfGuardUnnecessarySpace.after.kt");
+                runTest("../../idea/tests/testData/formatter/WhenIfGuardUnnecessarySpace.after.kt");
             }
 
             @TestMetadata("WhenLineBreak.after.kt")
             public void testWhenLineBreak() throws Exception {
-                runTest("testData/formatter/WhenLineBreak.after.kt");
+                runTest("../../idea/tests/testData/formatter/WhenLineBreak.after.kt");
             }
 
             @TestMetadata("WhenLinesBeforeLbrace.after.kt")
             public void testWhenLinesBeforeLbrace() throws Exception {
-                runTest("testData/formatter/WhenLinesBeforeLbrace.after.kt");
+                runTest("../../idea/tests/testData/formatter/WhenLinesBeforeLbrace.after.kt");
             }
 
             @TestMetadata("WhenWithVariable.after.kt")
             public void testWhenWithVariable() throws Exception {
-                runTest("testData/formatter/WhenWithVariable.after.kt");
+                runTest("../../idea/tests/testData/formatter/WhenWithVariable.after.kt");
             }
 
             @TestMetadata("WhereClause.after.kt")
             public void testWhereClause() throws Exception {
-                runTest("testData/formatter/WhereClause.after.kt");
+                runTest("../../idea/tests/testData/formatter/WhereClause.after.kt");
             }
 
             @TestMetadata("WhileLineBreak.after.kt")
             public void testWhileLineBreak() throws Exception {
-                runTest("testData/formatter/WhileLineBreak.after.kt");
+                runTest("../../idea/tests/testData/formatter/WhileLineBreak.after.kt");
             }
 
             @TestMetadata("WhileOnNewLine.after.kt")
             public void testWhileOnNewLine() throws Exception {
-                runTest("testData/formatter/WhileOnNewLine.after.kt");
+                runTest("../../idea/tests/testData/formatter/WhileOnNewLine.after.kt");
             }
 
             @TestMetadata("WhileSpacing.after.kt")
             public void testWhileSpacing() throws Exception {
-                runTest("testData/formatter/WhileSpacing.after.kt");
+                runTest("../../idea/tests/testData/formatter/WhileSpacing.after.kt");
             }
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/formatter/trailingComma")
-    public abstract static class FormatterCallSite extends AbstractK1FormatterTest {
+    @TestMetadata("../../idea/tests/testData/formatter/trailingComma")
+    public abstract static class FormatterCallSite extends AbstractK2FormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/formatter/trailingComma/collectionLiteralExpression")
-        public static class CollectionLiteralExpression extends AbstractK1FormatterTest {
+        @TestMetadata("../../idea/tests/testData/formatter/trailingComma/collectionLiteralExpression")
+        public static class CollectionLiteralExpression extends AbstractK2FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+                return KotlinPluginMode.K2;
             }
 
             private void runTest(String testDataFilePath) throws Exception {
@@ -1659,17 +1659,17 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
             @TestMetadata("CollectionLiteralInAnnotation.call.after.kt")
             public void testCollectionLiteralInAnnotation() throws Exception {
-                runTest("testData/formatter/trailingComma/collectionLiteralExpression/CollectionLiteralInAnnotation.call.after.kt");
+                runTest("../../idea/tests/testData/formatter/trailingComma/collectionLiteralExpression/CollectionLiteralInAnnotation.call.after.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/formatter/trailingComma/indices")
-        public static class Indices extends AbstractK1FormatterTest {
+        @TestMetadata("../../idea/tests/testData/formatter/trailingComma/indices")
+        public static class Indices extends AbstractK2FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+                return KotlinPluginMode.K2;
             }
 
             private void runTest(String testDataFilePath) throws Exception {
@@ -1678,17 +1678,17 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
             @TestMetadata("IndicesAccess.call.after.kt")
             public void testIndicesAccess() throws Exception {
-                runTest("testData/formatter/trailingComma/indices/IndicesAccess.call.after.kt");
+                runTest("../../idea/tests/testData/formatter/trailingComma/indices/IndicesAccess.call.after.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/formatter/trailingComma/lambdaParameters")
-        public static class LambdaParameters extends AbstractK1FormatterTest {
+        @TestMetadata("../../idea/tests/testData/formatter/trailingComma/lambdaParameters")
+        public static class LambdaParameters extends AbstractK2FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+                return KotlinPluginMode.K2;
             }
 
             private void runTest(String testDataFilePath) throws Exception {
@@ -1697,17 +1697,17 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
             @TestMetadata("LambdaParameterList.call.after.kt")
             public void testLambdaParameterList() throws Exception {
-                runTest("testData/formatter/trailingComma/lambdaParameters/LambdaParameterList.call.after.kt");
+                runTest("../../idea/tests/testData/formatter/trailingComma/lambdaParameters/LambdaParameterList.call.after.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/formatter/trailingComma/typeArguments")
-        public static class TypeArguments extends AbstractK1FormatterTest {
+        @TestMetadata("../../idea/tests/testData/formatter/trailingComma/typeArguments")
+        public static class TypeArguments extends AbstractK2FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+                return KotlinPluginMode.K2;
             }
 
             private void runTest(String testDataFilePath) throws Exception {
@@ -1716,17 +1716,17 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
             @TestMetadata("TypeArgumentList.call.after.kt")
             public void testTypeArgumentList() throws Exception {
-                runTest("testData/formatter/trailingComma/typeArguments/TypeArgumentList.call.after.kt");
+                runTest("../../idea/tests/testData/formatter/trailingComma/typeArguments/TypeArgumentList.call.after.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/formatter/trailingComma/typeParameters")
-        public static class TypeParameters extends AbstractK1FormatterTest {
+        @TestMetadata("../../idea/tests/testData/formatter/trailingComma/typeParameters")
+        public static class TypeParameters extends AbstractK2FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+                return KotlinPluginMode.K2;
             }
 
             private void runTest(String testDataFilePath) throws Exception {
@@ -1735,17 +1735,17 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
             @TestMetadata("TypeParameterList.call.after.kt")
             public void testTypeParameterList() throws Exception {
-                runTest("testData/formatter/trailingComma/typeParameters/TypeParameterList.call.after.kt");
+                runTest("../../idea/tests/testData/formatter/trailingComma/typeParameters/TypeParameterList.call.after.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/formatter/trailingComma/valueArguments")
-        public static class ValueArguments extends AbstractK1FormatterTest {
+        @TestMetadata("../../idea/tests/testData/formatter/trailingComma/valueArguments")
+        public static class ValueArguments extends AbstractK2FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+                return KotlinPluginMode.K2;
             }
 
             private void runTest(String testDataFilePath) throws Exception {
@@ -1754,17 +1754,17 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
             @TestMetadata("ArgumentListWrapAsNeeded.call.after.kt")
             public void testArgumentListWrapAsNeeded() throws Exception {
-                runTest("testData/formatter/trailingComma/valueArguments/ArgumentListWrapAsNeeded.call.after.kt");
+                runTest("../../idea/tests/testData/formatter/trailingComma/valueArguments/ArgumentListWrapAsNeeded.call.after.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/formatter/trailingComma/valueParameters")
-        public static class ValueParameters extends AbstractK1FormatterTest {
+        @TestMetadata("../../idea/tests/testData/formatter/trailingComma/valueParameters")
+        public static class ValueParameters extends AbstractK2FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+                return KotlinPluginMode.K2;
             }
 
             private void runTest(String testDataFilePath) throws Exception {
@@ -1773,21 +1773,21 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
             @TestMetadata("ParameterListWrapAsNeeded.call.after.kt")
             public void testParameterListWrapAsNeeded() throws Exception {
-                runTest("testData/formatter/trailingComma/valueParameters/ParameterListWrapAsNeeded.call.after.kt");
+                runTest("../../idea/tests/testData/formatter/trailingComma/valueParameters/ParameterListWrapAsNeeded.call.after.kt");
             }
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/formatter")
-    public abstract static class FormatterInverted extends AbstractK1FormatterTest {
+    @TestMetadata("../../idea/tests/testData/formatter")
+    public abstract static class FormatterInverted extends AbstractK2FormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/formatter/callChain")
-        public static class CallChain extends AbstractK1FormatterTest {
+        @TestMetadata("../../idea/tests/testData/formatter/callChain")
+        public static class CallChain extends AbstractK2FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+                return KotlinPluginMode.K2;
             }
 
             private void runTest(String testDataFilePath) throws Exception {
@@ -1796,52 +1796,52 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
             @TestMetadata("CallChainWrapping.after.inv.kt")
             public void testCallChainWrapping() throws Exception {
-                runTest("testData/formatter/callChain/CallChainWrapping.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/callChain/CallChainWrapping.after.inv.kt");
             }
 
             @TestMetadata("CallChainWrapping2.after.inv.kt")
             public void testCallChainWrapping2() throws Exception {
-                runTest("testData/formatter/callChain/CallChainWrapping2.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/callChain/CallChainWrapping2.after.inv.kt");
             }
 
             @TestMetadata("CallChainWrappingChopDown.after.inv.kt")
             public void testCallChainWrappingChopDown() throws Exception {
-                runTest("testData/formatter/callChain/CallChainWrappingChopDown.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/callChain/CallChainWrappingChopDown.after.inv.kt");
             }
 
             @TestMetadata("CallChainWrappingInElvis.after.inv.kt")
             public void testCallChainWrappingInElvis() throws Exception {
-                runTest("testData/formatter/callChain/CallChainWrappingInElvis.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/callChain/CallChainWrappingInElvis.after.inv.kt");
             }
 
             @TestMetadata("ConsecutiveSafeCallsIndent.after.inv.kt")
             public void testConsecutiveSafeCallsIndent() throws Exception {
-                runTest("testData/formatter/callChain/ConsecutiveSafeCallsIndent.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/callChain/ConsecutiveSafeCallsIndent.after.inv.kt");
             }
 
             @TestMetadata("ContinuationIndentForChainedCalls.after.inv.kt")
             public void testContinuationIndentForChainedCalls() throws Exception {
-                runTest("testData/formatter/callChain/ContinuationIndentForChainedCalls.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/callChain/ContinuationIndentForChainedCalls.after.inv.kt");
             }
 
             @TestMetadata("FunctionLiteralsInChainCalls.after.inv.kt")
             public void testFunctionLiteralsInChainCalls() throws Exception {
-                runTest("testData/formatter/callChain/FunctionLiteralsInChainCalls.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/callChain/FunctionLiteralsInChainCalls.after.inv.kt");
             }
 
             @TestMetadata("NotCallChain.after.inv.kt")
             public void testNotCallChain() throws Exception {
-                runTest("testData/formatter/callChain/NotCallChain.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/callChain/NotCallChain.after.inv.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/formatter/parameterList")
-        public static class ParameterList extends AbstractK1FormatterTest {
+        @TestMetadata("../../idea/tests/testData/formatter/parameterList")
+        public static class ParameterList extends AbstractK2FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+                return KotlinPluginMode.K2;
             }
 
             private void runTest(String testDataFilePath) throws Exception {
@@ -1850,35 +1850,35 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
             @TestMetadata("ArgumentListNamedArguments.after.inv.kt")
             public void testArgumentListNamedArguments() throws Exception {
-                runTest("testData/formatter/parameterList/ArgumentListNamedArguments.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/parameterList/ArgumentListNamedArguments.after.inv.kt");
             }
 
             @TestMetadata("ArgumentListNamedArgumentsFunctionCall.after.inv.kt")
             public void testArgumentListNamedArgumentsFunctionCall() throws Exception {
-                runTest("testData/formatter/parameterList/ArgumentListNamedArgumentsFunctionCall.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/parameterList/ArgumentListNamedArgumentsFunctionCall.after.inv.kt");
             }
 
             @TestMetadata("ArgumentListNamedArgumentsInFunction.after.inv.kt")
             public void testArgumentListNamedArgumentsInFunction() throws Exception {
-                runTest("testData/formatter/parameterList/ArgumentListNamedArgumentsInFunction.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/parameterList/ArgumentListNamedArgumentsInFunction.after.inv.kt");
             }
 
             @TestMetadata("DefaultParameterValues.after.inv.kt")
             public void testDefaultParameterValues() throws Exception {
-                runTest("testData/formatter/parameterList/DefaultParameterValues.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/parameterList/DefaultParameterValues.after.inv.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/formatter/trailingComma")
-        public abstract static class TrailingComma extends AbstractK1FormatterTest {
+        @TestMetadata("../../idea/tests/testData/formatter/trailingComma")
+        public abstract static class TrailingComma extends AbstractK2FormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/formatter/trailingComma/collectionLiteralExpression")
-            public static class CollectionLiteralExpression extends AbstractK1FormatterTest {
+            @TestMetadata("../../idea/tests/testData/formatter/trailingComma/collectionLiteralExpression")
+            public static class CollectionLiteralExpression extends AbstractK2FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
+                    return KotlinPluginMode.K2;
                 }
 
                 private void runTest(String testDataFilePath) throws Exception {
@@ -1887,17 +1887,17 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
                 @TestMetadata("CollectionLiteralInAnnotation.after.inv.kt")
                 public void testCollectionLiteralInAnnotation() throws Exception {
-                    runTest("testData/formatter/trailingComma/collectionLiteralExpression/CollectionLiteralInAnnotation.after.inv.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/collectionLiteralExpression/CollectionLiteralInAnnotation.after.inv.kt");
                 }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/formatter/trailingComma/contextParameters")
-            public static class ContextParameters extends AbstractK1FormatterTest {
+            @TestMetadata("../../idea/tests/testData/formatter/trailingComma/contextParameters")
+            public static class ContextParameters extends AbstractK2FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
+                    return KotlinPluginMode.K2;
                 }
 
                 private void runTest(String testDataFilePath) throws Exception {
@@ -1906,17 +1906,17 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
                 @TestMetadata("ContextParametersList.after.inv.kt")
                 public void testContextParametersList() throws Exception {
-                    runTest("testData/formatter/trailingComma/contextParameters/ContextParametersList.after.inv.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/contextParameters/ContextParametersList.after.inv.kt");
                 }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/formatter/trailingComma/destructuringDeclarations")
-            public static class DestructuringDeclarations extends AbstractK1FormatterTest {
+            @TestMetadata("../../idea/tests/testData/formatter/trailingComma/destructuringDeclarations")
+            public static class DestructuringDeclarations extends AbstractK2FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
+                    return KotlinPluginMode.K2;
                 }
 
                 private void runTest(String testDataFilePath) throws Exception {
@@ -1925,22 +1925,22 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
                 @TestMetadata("DestructuringDeclarationsInLambda.after.inv.kt")
                 public void testDestructuringDeclarationsInLambda() throws Exception {
-                    runTest("testData/formatter/trailingComma/destructuringDeclarations/DestructuringDeclarationsInLambda.after.inv.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/destructuringDeclarations/DestructuringDeclarationsInLambda.after.inv.kt");
                 }
 
                 @TestMetadata("MultiVariableDeclaration.after.inv.kt")
                 public void testMultiVariableDeclaration() throws Exception {
-                    runTest("testData/formatter/trailingComma/destructuringDeclarations/MultiVariableDeclaration.after.inv.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/destructuringDeclarations/MultiVariableDeclaration.after.inv.kt");
                 }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/formatter/trailingComma/enumEntry")
-            public static class EnumEntry extends AbstractK1FormatterTest {
+            @TestMetadata("../../idea/tests/testData/formatter/trailingComma/enumEntry")
+            public static class EnumEntry extends AbstractK2FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
+                    return KotlinPluginMode.K2;
                 }
 
                 private void runTest(String testDataFilePath) throws Exception {
@@ -1949,17 +1949,17 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
                 @TestMetadata("Enum.after.inv.kt")
                 public void testEnum() throws Exception {
-                    runTest("testData/formatter/trailingComma/enumEntry/Enum.after.inv.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/enumEntry/Enum.after.inv.kt");
                 }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/formatter/trailingComma/indices")
-            public static class Indices extends AbstractK1FormatterTest {
+            @TestMetadata("../../idea/tests/testData/formatter/trailingComma/indices")
+            public static class Indices extends AbstractK2FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
+                    return KotlinPluginMode.K2;
                 }
 
                 private void runTest(String testDataFilePath) throws Exception {
@@ -1968,17 +1968,17 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
                 @TestMetadata("IndicesAccess.after.inv.kt")
                 public void testIndicesAccess() throws Exception {
-                    runTest("testData/formatter/trailingComma/indices/IndicesAccess.after.inv.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/indices/IndicesAccess.after.inv.kt");
                 }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/formatter/trailingComma/lambdaParameters")
-            public static class LambdaParameters extends AbstractK1FormatterTest {
+            @TestMetadata("../../idea/tests/testData/formatter/trailingComma/lambdaParameters")
+            public static class LambdaParameters extends AbstractK2FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
+                    return KotlinPluginMode.K2;
                 }
 
                 private void runTest(String testDataFilePath) throws Exception {
@@ -1987,17 +1987,17 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
                 @TestMetadata("LambdaParameterList.after.inv.kt")
                 public void testLambdaParameterList() throws Exception {
-                    runTest("testData/formatter/trailingComma/lambdaParameters/LambdaParameterList.after.inv.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/lambdaParameters/LambdaParameterList.after.inv.kt");
                 }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/formatter/trailingComma/typeArguments")
-            public static class TypeArguments extends AbstractK1FormatterTest {
+            @TestMetadata("../../idea/tests/testData/formatter/trailingComma/typeArguments")
+            public static class TypeArguments extends AbstractK2FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
+                    return KotlinPluginMode.K2;
                 }
 
                 private void runTest(String testDataFilePath) throws Exception {
@@ -2006,17 +2006,17 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
                 @TestMetadata("TypeArgumentList.after.inv.kt")
                 public void testTypeArgumentList() throws Exception {
-                    runTest("testData/formatter/trailingComma/typeArguments/TypeArgumentList.after.inv.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/typeArguments/TypeArgumentList.after.inv.kt");
                 }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/formatter/trailingComma/typeParameters")
-            public static class TypeParameters extends AbstractK1FormatterTest {
+            @TestMetadata("../../idea/tests/testData/formatter/trailingComma/typeParameters")
+            public static class TypeParameters extends AbstractK2FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
+                    return KotlinPluginMode.K2;
                 }
 
                 private void runTest(String testDataFilePath) throws Exception {
@@ -2025,17 +2025,17 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
                 @TestMetadata("TypeParameterList.after.inv.kt")
                 public void testTypeParameterList() throws Exception {
-                    runTest("testData/formatter/trailingComma/typeParameters/TypeParameterList.after.inv.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/typeParameters/TypeParameterList.after.inv.kt");
                 }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/formatter/trailingComma/valueArguments")
-            public static class ValueArguments extends AbstractK1FormatterTest {
+            @TestMetadata("../../idea/tests/testData/formatter/trailingComma/valueArguments")
+            public static class ValueArguments extends AbstractK2FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
+                    return KotlinPluginMode.K2;
                 }
 
                 private void runTest(String testDataFilePath) throws Exception {
@@ -2044,37 +2044,37 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
                 @TestMetadata("ArgumentListChopAsNeeded.after.inv.kt")
                 public void testArgumentListChopAsNeeded() throws Exception {
-                    runTest("testData/formatter/trailingComma/valueArguments/ArgumentListChopAsNeeded.after.inv.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/valueArguments/ArgumentListChopAsNeeded.after.inv.kt");
                 }
 
                 @TestMetadata("ArgumentListDoNotWrap.after.inv.kt")
                 public void testArgumentListDoNotWrap() throws Exception {
-                    runTest("testData/formatter/trailingComma/valueArguments/ArgumentListDoNotWrap.after.inv.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/valueArguments/ArgumentListDoNotWrap.after.inv.kt");
                 }
 
                 @TestMetadata("ArgumentListWrapAlways.after.inv.kt")
                 public void testArgumentListWrapAlways() throws Exception {
-                    runTest("testData/formatter/trailingComma/valueArguments/ArgumentListWrapAlways.after.inv.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/valueArguments/ArgumentListWrapAlways.after.inv.kt");
                 }
 
                 @TestMetadata("ArgumentListWrapAsNeeded.after.inv.kt")
                 public void testArgumentListWrapAsNeeded() throws Exception {
-                    runTest("testData/formatter/trailingComma/valueArguments/ArgumentListWrapAsNeeded.after.inv.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/valueArguments/ArgumentListWrapAsNeeded.after.inv.kt");
                 }
 
                 @TestMetadata("NamedArguments.after.inv.kt")
                 public void testNamedArguments() throws Exception {
-                    runTest("testData/formatter/trailingComma/valueArguments/NamedArguments.after.inv.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/valueArguments/NamedArguments.after.inv.kt");
                 }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/formatter/trailingComma/valueParameters")
-            public static class ValueParameters extends AbstractK1FormatterTest {
+            @TestMetadata("../../idea/tests/testData/formatter/trailingComma/valueParameters")
+            public static class ValueParameters extends AbstractK2FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
+                    return KotlinPluginMode.K2;
                 }
 
                 private void runTest(String testDataFilePath) throws Exception {
@@ -2083,42 +2083,42 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
                 @TestMetadata("LambdaValueParameters.after.inv.kt")
                 public void testLambdaValueParameters() throws Exception {
-                    runTest("testData/formatter/trailingComma/valueParameters/LambdaValueParameters.after.inv.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/valueParameters/LambdaValueParameters.after.inv.kt");
                 }
 
                 @TestMetadata("NamedParameters.after.inv.kt")
                 public void testNamedParameters() throws Exception {
-                    runTest("testData/formatter/trailingComma/valueParameters/NamedParameters.after.inv.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/valueParameters/NamedParameters.after.inv.kt");
                 }
 
                 @TestMetadata("ParameterListChopAsNeeded.after.inv.kt")
                 public void testParameterListChopAsNeeded() throws Exception {
-                    runTest("testData/formatter/trailingComma/valueParameters/ParameterListChopAsNeeded.after.inv.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/valueParameters/ParameterListChopAsNeeded.after.inv.kt");
                 }
 
                 @TestMetadata("ParameterListDoNotWrap.after.inv.kt")
                 public void testParameterListDoNotWrap() throws Exception {
-                    runTest("testData/formatter/trailingComma/valueParameters/ParameterListDoNotWrap.after.inv.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/valueParameters/ParameterListDoNotWrap.after.inv.kt");
                 }
 
                 @TestMetadata("ParameterListWrapAlways.after.inv.kt")
                 public void testParameterListWrapAlways() throws Exception {
-                    runTest("testData/formatter/trailingComma/valueParameters/ParameterListWrapAlways.after.inv.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/valueParameters/ParameterListWrapAlways.after.inv.kt");
                 }
 
                 @TestMetadata("ParameterListWrapAsNeeded.after.inv.kt")
                 public void testParameterListWrapAsNeeded() throws Exception {
-                    runTest("testData/formatter/trailingComma/valueParameters/ParameterListWrapAsNeeded.after.inv.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/valueParameters/ParameterListWrapAsNeeded.after.inv.kt");
                 }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/formatter/trailingComma/whenEntry")
-            public static class WhenEntry extends AbstractK1FormatterTest {
+            @TestMetadata("../../idea/tests/testData/formatter/trailingComma/whenEntry")
+            public static class WhenEntry extends AbstractK2FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
+                    return KotlinPluginMode.K2;
                 }
 
                 private void runTest(String testDataFilePath) throws Exception {
@@ -2127,28 +2127,28 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
                 @TestMetadata("WhenEntry.after.inv.kt")
                 public void testWhenEntry() throws Exception {
-                    runTest("testData/formatter/trailingComma/whenEntry/WhenEntry.after.inv.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/whenEntry/WhenEntry.after.inv.kt");
                 }
 
                 @TestMetadata("WhenEntryNoIndentBeforeArrow.after.inv.kt")
                 public void testWhenEntryNoIndentBeforeArrow() throws Exception {
-                    runTest("testData/formatter/trailingComma/whenEntry/WhenEntryNoIndentBeforeArrow.after.inv.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/whenEntry/WhenEntryNoIndentBeforeArrow.after.inv.kt");
                 }
 
                 @TestMetadata("WhenEntryWithGuards.after.inv.kt")
                 public void testWhenEntryWithGuards() throws Exception {
-                    runTest("testData/formatter/trailingComma/whenEntry/WhenEntryWithGuards.after.inv.kt");
+                    runTest("../../idea/tests/testData/formatter/trailingComma/whenEntry/WhenEntryWithGuards.after.inv.kt");
                 }
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/formatter")
-        public static class Uncategorized extends AbstractK1FormatterTest {
+        @TestMetadata("../../idea/tests/testData/formatter")
+        public static class Uncategorized extends AbstractK2FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+                return KotlinPluginMode.K2;
             }
 
             private void runTest(String testDataFilePath) throws Exception {
@@ -2157,306 +2157,306 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
             @TestMetadata("AnonymousInitializersLineBreak.after.inv.kt")
             public void testAnonymousInitializersLineBreak() throws Exception {
-                runTest("testData/formatter/AnonymousInitializersLineBreak.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/AnonymousInitializersLineBreak.after.inv.kt");
             }
 
             @TestMetadata("ArrayAccess.after.inv.kt")
             public void testArrayAccess() throws Exception {
-                runTest("testData/formatter/ArrayAccess.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/ArrayAccess.after.inv.kt");
             }
 
             @TestMetadata("BinaryExpressions.after.inv.kt")
             public void testBinaryExpressions() throws Exception {
-                runTest("testData/formatter/BinaryExpressions.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/BinaryExpressions.after.inv.kt");
             }
 
             @TestMetadata("BinaryExpressionsBoolean.after.inv.kt")
             public void testBinaryExpressionsBoolean() throws Exception {
-                runTest("testData/formatter/BinaryExpressionsBoolean.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/BinaryExpressionsBoolean.after.inv.kt");
             }
 
             @TestMetadata("BinaryExpressionsWithoutAlignment.after.inv.kt")
             public void testBinaryExpressionsWithoutAlignment() throws Exception {
-                runTest("testData/formatter/BinaryExpressionsWithoutAlignment.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/BinaryExpressionsWithoutAlignment.after.inv.kt");
             }
 
             @TestMetadata("CallLParenthOnNextLine.after.inv.kt")
             public void testCallLParenthOnNextLine() throws Exception {
-                runTest("testData/formatter/CallLParenthOnNextLine.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/CallLParenthOnNextLine.after.inv.kt");
             }
 
             @TestMetadata("CallLParenthOnNextLineAndComma.after.inv.kt")
             public void testCallLParenthOnNextLineAndComma() throws Exception {
-                runTest("testData/formatter/CallLParenthOnNextLineAndComma.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/CallLParenthOnNextLineAndComma.after.inv.kt");
             }
 
             @TestMetadata("CallRParenthOnNextLine.after.inv.kt")
             public void testCallRParenthOnNextLine() throws Exception {
-                runTest("testData/formatter/CallRParenthOnNextLine.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/CallRParenthOnNextLine.after.inv.kt");
             }
 
             @TestMetadata("CallRParenthOnNextLineAndComma.after.inv.kt")
             public void testCallRParenthOnNextLineAndComma() throws Exception {
-                runTest("testData/formatter/CallRParenthOnNextLineAndComma.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/CallRParenthOnNextLineAndComma.after.inv.kt");
             }
 
             @TestMetadata("CatchFinallyOnNewLine.after.inv.kt")
             public void testCatchFinallyOnNewLine() throws Exception {
-                runTest("testData/formatter/CatchFinallyOnNewLine.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/CatchFinallyOnNewLine.after.inv.kt");
             }
 
             @TestMetadata("ClassLineBreak.after.inv.kt")
             public void testClassLineBreak() throws Exception {
-                runTest("testData/formatter/ClassLineBreak.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/ClassLineBreak.after.inv.kt");
             }
 
             @TestMetadata("ColonSpaces.after.inv.kt")
             public void testColonSpaces() throws Exception {
-                runTest("testData/formatter/ColonSpaces.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/ColonSpaces.after.inv.kt");
             }
 
             @TestMetadata("ContinuationIndentForExpressionBodies.after.inv.kt")
             public void testContinuationIndentForExpressionBodies() throws Exception {
-                runTest("testData/formatter/ContinuationIndentForExpressionBodies.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/ContinuationIndentForExpressionBodies.after.inv.kt");
             }
 
             @TestMetadata("ContinuationIndentInAssigments.after.inv.kt")
             public void testContinuationIndentInAssigments() throws Exception {
-                runTest("testData/formatter/ContinuationIndentInAssigments.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/ContinuationIndentInAssigments.after.inv.kt");
             }
 
             @TestMetadata("DelegationList.after.inv.kt")
             public void testDelegationList() throws Exception {
-                runTest("testData/formatter/DelegationList.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/DelegationList.after.inv.kt");
             }
 
             @TestMetadata("DoWhileLineBreak.after.inv.kt")
             public void testDoWhileLineBreak() throws Exception {
-                runTest("testData/formatter/DoWhileLineBreak.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/DoWhileLineBreak.after.inv.kt");
             }
 
             @TestMetadata("ElseOnNewLine.after.inv.kt")
             public void testElseOnNewLine() throws Exception {
-                runTest("testData/formatter/ElseOnNewLine.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/ElseOnNewLine.after.inv.kt");
             }
 
             @TestMetadata("Elvis.after.inv.kt")
             public void testElvis() throws Exception {
-                runTest("testData/formatter/Elvis.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/Elvis.after.inv.kt");
             }
 
             @TestMetadata("ElvisContinuationIndentOptions.after.inv.kt")
             public void testElvisContinuationIndentOptions() throws Exception {
-                runTest("testData/formatter/ElvisContinuationIndentOptions.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/ElvisContinuationIndentOptions.after.inv.kt");
             }
 
             @TestMetadata("ElvisIndent.after.inv.kt")
             public void testElvisIndent() throws Exception {
-                runTest("testData/formatter/ElvisIndent.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/ElvisIndent.after.inv.kt");
             }
 
             @TestMetadata("EmptyBlocks.after.inv.kt")
             public void testEmptyBlocks() throws Exception {
-                runTest("testData/formatter/EmptyBlocks.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/EmptyBlocks.after.inv.kt");
             }
 
             @TestMetadata("EmptyLineBetweenEnumEntries.after.inv.kt")
             public void testEmptyLineBetweenEnumEntries() throws Exception {
-                runTest("testData/formatter/EmptyLineBetweenEnumEntries.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/EmptyLineBetweenEnumEntries.after.inv.kt");
             }
 
             @TestMetadata("ExtendsListAlignEnum.after.inv.kt")
             public void testExtendsListAlignEnum() throws Exception {
-                runTest("testData/formatter/ExtendsListAlignEnum.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/ExtendsListAlignEnum.after.inv.kt");
             }
 
             @TestMetadata("FloatingPointRangeWithDots.after.inv.kt")
             public void testFloatingPointRangeWithDots() throws Exception {
-                runTest("testData/formatter/FloatingPointRangeWithDots.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/FloatingPointRangeWithDots.after.inv.kt");
             }
 
             @TestMetadata("FloatingPointRangeWithoutDots.after.inv.kt")
             public void testFloatingPointRangeWithoutDots() throws Exception {
-                runTest("testData/formatter/FloatingPointRangeWithoutDots.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/FloatingPointRangeWithoutDots.after.inv.kt");
             }
 
             @TestMetadata("ForLineBreak.after.inv.kt")
             public void testForLineBreak() throws Exception {
-                runTest("testData/formatter/ForLineBreak.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/ForLineBreak.after.inv.kt");
             }
 
             @TestMetadata("FormatFirstColumnComments.after.inv.kt")
             public void testFormatFirstColumnComments() throws Exception {
-                runTest("testData/formatter/FormatFirstColumnComments.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/FormatFirstColumnComments.after.inv.kt");
             }
 
             @TestMetadata("FormatFirstColumnCommentsBeforeDeclaration.after.inv.kt")
             public void testFormatFirstColumnCommentsBeforeDeclaration() throws Exception {
-                runTest("testData/formatter/FormatFirstColumnCommentsBeforeDeclaration.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/FormatFirstColumnCommentsBeforeDeclaration.after.inv.kt");
             }
 
             @TestMetadata("FunctionLineBreak.after.inv.kt")
             public void testFunctionLineBreak() throws Exception {
-                runTest("testData/formatter/FunctionLineBreak.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/FunctionLineBreak.after.inv.kt");
             }
 
             @TestMetadata("FunctionalType.after.inv.kt")
             public void testFunctionalType() throws Exception {
-                runTest("testData/formatter/FunctionalType.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/FunctionalType.after.inv.kt");
             }
 
             @TestMetadata("IfConditionIndent.after.inv.kt")
             public void testIfConditionIndent() throws Exception {
-                runTest("testData/formatter/IfConditionIndent.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/IfConditionIndent.after.inv.kt");
             }
 
             @TestMetadata("IfElseWithTrickyComments.after.inv.kt")
             public void testIfElseWithTrickyComments() throws Exception {
-                runTest("testData/formatter/IfElseWithTrickyComments.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/IfElseWithTrickyComments.after.inv.kt");
             }
 
             @TestMetadata("KeepLineBreak.after.inv.kt")
             public void testKeepLineBreak() throws Exception {
-                runTest("testData/formatter/KeepLineBreak.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/KeepLineBreak.after.inv.kt");
             }
 
             @TestMetadata("LambdaArrow.after.inv.kt")
             public void testLambdaArrow() throws Exception {
-                runTest("testData/formatter/LambdaArrow.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/LambdaArrow.after.inv.kt");
             }
 
             @TestMetadata("MethodLParenthOnNextLine.after.inv.kt")
             public void testMethodLParenthOnNextLine() throws Exception {
-                runTest("testData/formatter/MethodLParenthOnNextLine.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/MethodLParenthOnNextLine.after.inv.kt");
             }
 
             @TestMetadata("MethodRParenthOnNextLine.after.inv.kt")
             public void testMethodRParenthOnNextLine() throws Exception {
-                runTest("testData/formatter/MethodRParenthOnNextLine.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/MethodRParenthOnNextLine.after.inv.kt");
             }
 
             @TestMetadata("MultilineFunctionLiteralWithParams.after.inv.kt")
             public void testMultilineFunctionLiteralWithParams() throws Exception {
-                runTest("testData/formatter/MultilineFunctionLiteralWithParams.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/MultilineFunctionLiteralWithParams.after.inv.kt");
             }
 
             @TestMetadata("Parameters.after.inv.kt")
             public void testParameters() throws Exception {
-                runTest("testData/formatter/Parameters.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/Parameters.after.inv.kt");
             }
 
             @TestMetadata("RightBracketOnNewLine.after.inv.kt")
             public void testRightBracketOnNewLine() throws Exception {
-                runTest("testData/formatter/RightBracketOnNewLine.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/RightBracketOnNewLine.after.inv.kt");
             }
 
             @TestMetadata("secondaryCtorLineBreak.after.inv.kt")
             public void testSecondaryCtorLineBreak() throws Exception {
-                runTest("testData/formatter/secondaryCtorLineBreak.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/secondaryCtorLineBreak.after.inv.kt");
             }
 
             @TestMetadata("SingleLineFunctionLiteral.after.inv.kt")
             public void testSingleLineFunctionLiteral() throws Exception {
-                runTest("testData/formatter/SingleLineFunctionLiteral.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/SingleLineFunctionLiteral.after.inv.kt");
             }
 
             @TestMetadata("SpaceAroundExtendColon.after.inv.kt")
             public void testSpaceAroundExtendColon() throws Exception {
-                runTest("testData/formatter/SpaceAroundExtendColon.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/SpaceAroundExtendColon.after.inv.kt");
             }
 
             @TestMetadata("SpaceAroundExtendColonInObjects.after.inv.kt")
             public void testSpaceAroundExtendColonInObjects() throws Exception {
-                runTest("testData/formatter/SpaceAroundExtendColonInObjects.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/SpaceAroundExtendColonInObjects.after.inv.kt");
             }
 
             @TestMetadata("SpaceAroundExtendColonInSecondaryCtr.after.inv.kt")
             public void testSpaceAroundExtendColonInSecondaryCtr() throws Exception {
-                runTest("testData/formatter/SpaceAroundExtendColonInSecondaryCtr.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/SpaceAroundExtendColonInSecondaryCtr.after.inv.kt");
             }
 
             @TestMetadata("SpaceBeforeCatchParentheses.after.inv.kt")
             public void testSpaceBeforeCatchParentheses() throws Exception {
-                runTest("testData/formatter/SpaceBeforeCatchParentheses.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/SpaceBeforeCatchParentheses.after.inv.kt");
             }
 
             @TestMetadata("SpaceBeforeForParentheses.after.inv.kt")
             public void testSpaceBeforeForParentheses() throws Exception {
-                runTest("testData/formatter/SpaceBeforeForParentheses.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/SpaceBeforeForParentheses.after.inv.kt");
             }
 
             @TestMetadata("SpaceBeforeIfParentheses.after.inv.kt")
             public void testSpaceBeforeIfParentheses() throws Exception {
-                runTest("testData/formatter/SpaceBeforeIfParentheses.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/SpaceBeforeIfParentheses.after.inv.kt");
             }
 
             @TestMetadata("SpaceBeforeWhenParentheses.after.inv.kt")
             public void testSpaceBeforeWhenParentheses() throws Exception {
-                runTest("testData/formatter/SpaceBeforeWhenParentheses.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/SpaceBeforeWhenParentheses.after.inv.kt");
             }
 
             @TestMetadata("SpaceBeforeWhileParentheses.after.inv.kt")
             public void testSpaceBeforeWhileParentheses() throws Exception {
-                runTest("testData/formatter/SpaceBeforeWhileParentheses.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/SpaceBeforeWhileParentheses.after.inv.kt");
             }
 
             @TestMetadata("SpacesAroundOperations.after.inv.kt")
             public void testSpacesAroundOperations() throws Exception {
-                runTest("testData/formatter/SpacesAroundOperations.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/SpacesAroundOperations.after.inv.kt");
             }
 
             @TestMetadata("SpacesAroundUnaryOperations.after.inv.kt")
             public void testSpacesAroundUnaryOperations() throws Exception {
-                runTest("testData/formatter/SpacesAroundUnaryOperations.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/SpacesAroundUnaryOperations.after.inv.kt");
             }
 
             @TestMetadata("TryCatchLineBreak.after.inv.kt")
             public void testTryCatchLineBreak() throws Exception {
-                runTest("testData/formatter/TryCatchLineBreak.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/TryCatchLineBreak.after.inv.kt");
             }
 
             @TestMetadata("When.after.inv.kt")
             public void testWhen() throws Exception {
-                runTest("testData/formatter/When.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/When.after.inv.kt");
             }
 
             @TestMetadata("WhenArrow.after.inv.kt")
             public void testWhenArrow() throws Exception {
-                runTest("testData/formatter/WhenArrow.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/WhenArrow.after.inv.kt");
             }
 
             @TestMetadata("WhenEntry.after.inv.kt")
             public void testWhenEntry() throws Exception {
-                runTest("testData/formatter/WhenEntry.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/WhenEntry.after.inv.kt");
             }
 
             @TestMetadata("WhenLineBreak.after.inv.kt")
             public void testWhenLineBreak() throws Exception {
-                runTest("testData/formatter/WhenLineBreak.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/WhenLineBreak.after.inv.kt");
             }
 
             @TestMetadata("WhileLineBreak.after.inv.kt")
             public void testWhileLineBreak() throws Exception {
-                runTest("testData/formatter/WhileLineBreak.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/WhileLineBreak.after.inv.kt");
             }
 
             @TestMetadata("WhileOnNewLine.after.inv.kt")
             public void testWhileOnNewLine() throws Exception {
-                runTest("testData/formatter/WhileOnNewLine.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/WhileOnNewLine.after.inv.kt");
             }
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/formatter/trailingComma")
-    public abstract static class FormatterInvertedCallSite extends AbstractK1FormatterTest {
+    @TestMetadata("../../idea/tests/testData/formatter/trailingComma")
+    public abstract static class FormatterInvertedCallSite extends AbstractK2FormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/formatter/trailingComma/collectionLiteralExpression")
-        public static class CollectionLiteralExpression extends AbstractK1FormatterTest {
+        @TestMetadata("../../idea/tests/testData/formatter/trailingComma/collectionLiteralExpression")
+        public static class CollectionLiteralExpression extends AbstractK2FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+                return KotlinPluginMode.K2;
             }
 
             private void runTest(String testDataFilePath) throws Exception {
@@ -2465,17 +2465,17 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
             @TestMetadata("CollectionLiteralInAnnotation.call.after.inv.kt")
             public void testCollectionLiteralInAnnotation() throws Exception {
-                runTest("testData/formatter/trailingComma/collectionLiteralExpression/CollectionLiteralInAnnotation.call.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/trailingComma/collectionLiteralExpression/CollectionLiteralInAnnotation.call.after.inv.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/formatter/trailingComma/indices")
-        public static class Indices extends AbstractK1FormatterTest {
+        @TestMetadata("../../idea/tests/testData/formatter/trailingComma/indices")
+        public static class Indices extends AbstractK2FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+                return KotlinPluginMode.K2;
             }
 
             private void runTest(String testDataFilePath) throws Exception {
@@ -2484,17 +2484,17 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
             @TestMetadata("IndicesAccess.call.after.inv.kt")
             public void testIndicesAccess() throws Exception {
-                runTest("testData/formatter/trailingComma/indices/IndicesAccess.call.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/trailingComma/indices/IndicesAccess.call.after.inv.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/formatter/trailingComma/lambdaParameters")
-        public static class LambdaParameters extends AbstractK1FormatterTest {
+        @TestMetadata("../../idea/tests/testData/formatter/trailingComma/lambdaParameters")
+        public static class LambdaParameters extends AbstractK2FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+                return KotlinPluginMode.K2;
             }
 
             private void runTest(String testDataFilePath) throws Exception {
@@ -2503,17 +2503,17 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
             @TestMetadata("LambdaParameterList.call.after.inv.kt")
             public void testLambdaParameterList() throws Exception {
-                runTest("testData/formatter/trailingComma/lambdaParameters/LambdaParameterList.call.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/trailingComma/lambdaParameters/LambdaParameterList.call.after.inv.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/formatter/trailingComma/typeArguments")
-        public static class TypeArguments extends AbstractK1FormatterTest {
+        @TestMetadata("../../idea/tests/testData/formatter/trailingComma/typeArguments")
+        public static class TypeArguments extends AbstractK2FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+                return KotlinPluginMode.K2;
             }
 
             private void runTest(String testDataFilePath) throws Exception {
@@ -2522,17 +2522,17 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
             @TestMetadata("TypeArgumentList.call.after.inv.kt")
             public void testTypeArgumentList() throws Exception {
-                runTest("testData/formatter/trailingComma/typeArguments/TypeArgumentList.call.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/trailingComma/typeArguments/TypeArgumentList.call.after.inv.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/formatter/trailingComma/typeParameters")
-        public static class TypeParameters extends AbstractK1FormatterTest {
+        @TestMetadata("../../idea/tests/testData/formatter/trailingComma/typeParameters")
+        public static class TypeParameters extends AbstractK2FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+                return KotlinPluginMode.K2;
             }
 
             private void runTest(String testDataFilePath) throws Exception {
@@ -2541,17 +2541,17 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
             @TestMetadata("TypeParameterList.call.after.inv.kt")
             public void testTypeParameterList() throws Exception {
-                runTest("testData/formatter/trailingComma/typeParameters/TypeParameterList.call.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/trailingComma/typeParameters/TypeParameterList.call.after.inv.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/formatter/trailingComma/valueArguments")
-        public static class ValueArguments extends AbstractK1FormatterTest {
+        @TestMetadata("../../idea/tests/testData/formatter/trailingComma/valueArguments")
+        public static class ValueArguments extends AbstractK2FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+                return KotlinPluginMode.K2;
             }
 
             private void runTest(String testDataFilePath) throws Exception {
@@ -2560,17 +2560,17 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
             @TestMetadata("ArgumentListWrapAsNeeded.call.after.inv.kt")
             public void testArgumentListWrapAsNeeded() throws Exception {
-                runTest("testData/formatter/trailingComma/valueArguments/ArgumentListWrapAsNeeded.call.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/trailingComma/valueArguments/ArgumentListWrapAsNeeded.call.after.inv.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/formatter/trailingComma/valueParameters")
-        public static class ValueParameters extends AbstractK1FormatterTest {
+        @TestMetadata("../../idea/tests/testData/formatter/trailingComma/valueParameters")
+        public static class ValueParameters extends AbstractK2FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+                return KotlinPluginMode.K2;
             }
 
             private void runTest(String testDataFilePath) throws Exception {
@@ -2579,7 +2579,7 @@ public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
 
             @TestMetadata("ParameterListWrapAsNeeded.call.after.inv.kt")
             public void testParameterListWrapAsNeeded() throws Exception {
-                runTest("testData/formatter/trailingComma/valueParameters/ParameterListWrapAsNeeded.call.after.inv.kt");
+                runTest("../../idea/tests/testData/formatter/trailingComma/valueParameters/ParameterListWrapAsNeeded.call.after.inv.kt");
             }
         }
     }
