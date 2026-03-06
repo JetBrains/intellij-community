@@ -112,7 +112,6 @@ TODO: Consider additional features:
 
 See
 [JSpecify: test-data format: Directory structure](https://docs.google.com/document/d/1JVH2p61kReO8bW4AKnbkpybPYlUulVmyNrR1WRIEE_k/edit#bookmark=id.2t1r58i5a03s).
-TODO(#134): Inline that here if Tagir can sign the CLA and contribute it.
 
 Additionally:
 
