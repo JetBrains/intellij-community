@@ -76,6 +76,7 @@ data class SimplifiedPluginModel(
   val allMainModulesOfPlugins: ArrayList<ModuleInfo>,
   val pluginIdToInfo: HashMap<String, ModuleInfo>,
   val pluginAliases: HashSet<String>,
+  val contentModuleDescriptorsIncludedViaXiInclude: List<Path>,
   val errors: List<SimplifiedPluginModelBuilderError>,
 )
 
@@ -210,7 +211,16 @@ class SimplifiedPluginModelBuilder(
         ))
       }
     }
-    return SimplifiedPluginModel(descriptorFileInfos, moduleNameToInfo, allMainModulesOfPlugins, pluginIdToInfo, pluginAliases, errors)
+    val contentModuleDescriptorsIncludedViaXiInclude = xIncludeLoader.includedContentModuleDescriptors
+    return SimplifiedPluginModel(
+      descriptorFileInfos,
+      moduleNameToInfo,
+      allMainModulesOfPlugins,
+      pluginIdToInfo,
+      pluginAliases,
+      contentModuleDescriptorsIncludedViaXiInclude,
+      errors
+    )
   }
 
   private fun loadRawPluginDescriptor(file: Path): RawPluginDescriptor? {

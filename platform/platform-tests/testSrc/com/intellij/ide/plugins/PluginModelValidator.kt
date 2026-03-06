@@ -28,6 +28,7 @@ import java.io.StringWriter
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.name
+import kotlin.io.path.nameWithoutExtension
 
 data class CorePluginDescription(
   val mainModuleName: String,
@@ -244,6 +245,29 @@ internal class PluginModelValidator(
 
       // in the end, after processing content and dependencies
       checkDepends(pluginInfo, descriptor)
+    }
+
+    for (contentModuleDescriptor in simplifiedPluginModel.contentModuleDescriptorsIncludedViaXiInclude) {
+      val moduleName = contentModuleDescriptor.nameWithoutExtension
+      val moduleInfo = moduleNameToInfo[moduleName]
+      val pluginInfo = contentModuleToContainingPlugins[moduleName]?.firstOrNull()
+      if (moduleInfo != null && pluginInfo != null) {
+        //todo: this case is already fixed in khbminus/ij-light/IJPL-222430-unmbed-thin-client branch, remove this condition after it's merged to master
+        if (moduleName == "intellij.rider.rdclient.languages") {
+          continue
+        }
+
+        reportError(
+          """
+            |Module '$moduleName' is registered as a content module in '${pluginInfo.pluginId}', but its descriptor ${contentModuleDescriptor.name}
+            |is also included via xi:include tag. 
+            |It is not allowed, because it means that the classloader for the module is configured differently in different cases, and it's
+            |not possible to automatically determine the dependencies for the module.
+          """.trimMargin(),
+          moduleInfo.sourceModule,
+          mapOf("descriptorFile" to moduleInfo.descriptorFile),
+        )
+      }
     }
 
     return PluginValidationResult(_errors, pluginIdToInfo)
