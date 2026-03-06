@@ -108,6 +108,9 @@ public interface TransformationContext {
 
   void addMethods(@NotNull Collection<? extends PsiMethod> methods);
 
+  /**
+   * Removes non-synthetic method from the context class.
+   */
   void removeMethod(@NotNull PsiMethod codeMethod);
 
   void addField(@NotNull GrField field);

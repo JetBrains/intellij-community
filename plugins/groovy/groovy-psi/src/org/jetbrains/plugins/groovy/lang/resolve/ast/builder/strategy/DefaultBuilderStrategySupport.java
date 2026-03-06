@@ -28,6 +28,36 @@ import java.util.Objects;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType;
 
+/**
+ * Adds to a class, constructor, or static method annotated with {@code @groovy.transform.builder.Builder} annotation an implicit builder subclass
+ * when using the default strategy ({@code @Builder(builderStrategy = DefaultStrategy)}).
+ * <p>
+ * Example:
+ * <pre>
+ * {@code @Builder(builderStrategy = DefaultStrategy)}
+ * class PersonBuilder {
+ *     String name
+ *     int age
+ }
+ * class Person {
+ *     String name
+ *     int age
+ * }
+ * </pre>
+ *
+ * Usage example:
+ * <pre>
+ * def person = Person.builder()
+ *     .name("John")
+ *     .age(30)
+ *     .build()
+ * </pre>
+ *
+ * The transformation can also be applied to constructors and static factory methods.
+ *
+ * @see groovy.transform.builder.Builder
+ * @see groovy.transform.builder.DefaultStrategy
+ */
 public final class DefaultBuilderStrategySupport extends BuilderAnnotationContributor implements LightAstTransformationSupport {
 
   public static final String DEFAULT_STRATEGY_NAME = "DefaultStrategy";

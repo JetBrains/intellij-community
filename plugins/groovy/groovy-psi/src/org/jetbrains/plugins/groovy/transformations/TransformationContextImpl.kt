@@ -45,13 +45,14 @@ import java.util.Collections
 import java.util.IdentityHashMap
 import java.util.LinkedList
 
-internal class TransformationContextImpl(private val myCodeClass: GrTypeDefinition) : TransformationContext {
+internal class TransformationContextImpl(private val myCodeClass: GrTypeDefinition, private val addCodeMembers: Boolean) : TransformationContext {
   private val myProject: Project = myCodeClass.project
   private val myPsiManager: PsiManager = myCodeClass.manager
   private val myPsiFacade: JavaPsiFacade = JavaPsiFacade.getInstance(myProject)
   private var myHierarchyView: PsiClass? = null
   private val myClassType: PsiClassType = myPsiFacade.elementFactory.createType(codeClass, PsiSubstitutor.EMPTY)
   private val myMemberBuilder = MemberBuilder(this)
+  private var wasExtendsTypeSet: Boolean = false
 
   private val myMethods: LinkedList<MethodInfo> by lazy(LazyThreadSafetyMode.NONE) {
     myCodeClass.codeMethods.flatMapTo(LinkedList()) {
@@ -279,14 +280,12 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
     for (expanded in expandReflectedMethods(method)) {
       val signature = expanded.getSignature(PsiSubstitutor.EMPTY)
       if (signatures.remove(signature)) {
-        myMethods.removeIf { m ->
-          if (areSignaturesErasureEqual(signature, m.method.getSignature(PsiSubstitutor.EMPTY))) {
-            myRemovedMethodInfos.add(m)
-            true
-          } else {
-            false
-          }
+        val (toRemove, toKeep) = myMethods.partition { m ->
+          areSignaturesErasureEqual(signature, m.method.getSignature(PsiSubstitutor.EMPTY)) && m.order == MethodOrder.DEFAULT
         }
+        myRemovedMethodInfos.addAll(toRemove)
+        myMethods.clear()
+        myMethods.addAll(toKeep)
       }
     }
   }
@@ -309,6 +308,7 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
 
   override fun setSuperType(type: PsiClassType) {
     if (!codeClass.isInterface) {
+      wasExtendsTypeSet = true
       myExtendsTypes.clear()
       myExtendsTypes.add(type)
       myHierarchyView = null
@@ -327,15 +327,23 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
   }
 
   internal val transformationResult: TransformationResult
-    get() = TransformationResult(
-      (myMethods + enumMethods()).toTypedArray(),
-      myRemovedMethodInfos,
-      fields.toArray(GrField.EMPTY_ARRAY),
-      innerClasses.toArray(PsiClass.EMPTY_ARRAY),
-      implementsTypes.toArray(PsiClassType.EMPTY_ARRAY),
-      extendsTypes.toArray(PsiClassType.EMPTY_ARRAY),
-      myModifiers
-    )
+    get() {
+      val methods = if (addCodeMembers) myMethods + enumMethods() else myMethods.filter { it.order != MethodOrder.DEFAULT }
+      val fields = if (addCodeMembers) myFields else myFields.drop(myCodeClass.codeFields.size)
+      val innerClasses = if (addCodeMembers) myInnerClasses else myInnerClasses.drop(myCodeClass.codeInnerClasses.size)
+      val implementTypes = if (addCodeMembers) myImplementsTypes else myImplementsTypes.drop(getReferenceListTypes(myCodeClass.implementsClause).size)
+      val extendsTypes = if (!addCodeMembers && !wasExtendsTypeSet) myExtendsTypes.drop(getReferenceListTypes(myCodeClass.extendsClause).size) else myExtendsTypes
+      return TransformationResult(
+        methods.toTypedArray(),
+        myRemovedMethodInfos,
+        fields.toArray(GrField.EMPTY_ARRAY),
+        innerClasses.toArray(PsiClass.EMPTY_ARRAY),
+        implementTypes.toArray(PsiClassType.EMPTY_ARRAY),
+        extendsTypes.toArray(PsiClassType.EMPTY_ARRAY),
+        myModifiers,
+        wasExtendsTypeSet
+      )
+    }
 
   private fun enumMethods() : List<MethodInfo> {
     return if (myCodeClass is GrEnumTypeDefinitionImpl)

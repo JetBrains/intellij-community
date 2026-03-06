@@ -31,6 +31,10 @@ import java.util.Objects;
 import static org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport.getBuilderClassName;
 import static org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport.getFieldMethodName;
 
+/**
+ * Same as {@link DefaultBuilderStrategySupport}, but uses {@link groovy.transform.builder.InitializerStrategy}
+ *
+ */
 public final class InitializerBuilderStrategySupport extends BuilderAnnotationContributor implements LightAstTransformationSupport {
 
   public static final String INITIALIZER_STRATEGY_NAME = "InitializerStrategy";
