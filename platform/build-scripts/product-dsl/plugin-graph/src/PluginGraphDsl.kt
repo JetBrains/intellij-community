@@ -497,6 +497,9 @@ value class GraphScope @PublishedApi internal constructor(
   /** Plugin: is this DSL-defined (auto-computed dependencies)? */
   val PluginNode.isDslDefined: Boolean get() = store.isDslDefined(id)
 
+  /** Plugin: is this node a generated wrapper for a pluginized module set? */
+  val PluginNode.isModuleSetWrapper: Boolean get() = store.isModuleSetWrapper(id)
+
   /** Whether this module is a test descriptor (._test suffix) */
   val ContentModuleNode.isTestDescriptor: Boolean get() = store.isTestDescriptor(id)
 

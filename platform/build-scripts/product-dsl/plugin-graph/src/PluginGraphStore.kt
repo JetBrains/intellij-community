@@ -129,6 +129,9 @@ class PluginGraphStore internal constructor(
   /** Check if plugin is DSL-defined (auto-computed dependencies) */
   fun isDslDefined(nodeId: Int): Boolean = (kinds[nodeId] and NODE_FLAG_IS_DSL_DEFINED) != 0
 
+  /** Check if plugin is a generated wrapper for a pluginized module set */
+  fun isModuleSetWrapper(nodeId: Int): Boolean = (kinds[nodeId] and NODE_FLAG_IS_MODULE_SET_WRAPPER) != 0
+
   /** Get plugin ID (from <id> element) */
   fun pluginId(nodeId: Int): PluginId {
     val value = pluginIds.get(nodeId)

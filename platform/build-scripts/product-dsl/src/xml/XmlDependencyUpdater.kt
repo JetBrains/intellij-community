@@ -109,19 +109,45 @@ internal fun updateXmlDependencies(
   allowInsideSectionRegion: Boolean = true,
   strategy: FileUpdateStrategy,
 ): FileChangeStatus {
+  val updatedContent = buildUpdatedXmlDependenciesContent(
+    content = content,
+    moduleDependencies = moduleDependencies,
+    pluginDependencies = pluginDependencies,
+    preserveExistingModule = preserveExistingModule,
+    preserveExistingPlugin = preserveExistingPlugin,
+    legacyPluginDependencies = legacyPluginDependencies,
+    xiIncludeModuleDeps = xiIncludeModuleDeps,
+    xiIncludePluginDeps = xiIncludePluginDeps,
+    allowInsideSectionRegion = allowInsideSectionRegion,
+  ) ?: return FileChangeStatus.UNCHANGED
+
+  return strategy.writeIfChanged(path = path, oldContent = content, newContent = updatedContent)
+}
+
+internal fun buildUpdatedXmlDependenciesContent(
+  content: String,
+  moduleDependencies: List<String>,
+  pluginDependencies: List<String> = emptyList(),
+  preserveExistingModule: ((String) -> Boolean)? = null,
+  preserveExistingPlugin: ((String) -> Boolean)? = null,
+  legacyPluginDependencies: List<String> = emptyList(),
+  xiIncludeModuleDeps: Set<ContentModuleName> = emptySet(),
+  xiIncludePluginDeps: Set<PluginId> = emptySet(),
+  allowInsideSectionRegion: Boolean = true,
+): String? {
   if (content.isEmpty()) {
-    return FileChangeStatus.UNCHANGED
+    return null
   }
 
   val info = parseDependenciesInfo(content, allowInsideSectionRegion)
   if (info == null) {
     if (moduleDependencies.isEmpty() && pluginDependencies.isEmpty()) {
-      return FileChangeStatus.UNCHANGED
+      return null
     }
     // Compare with legacy <depends> - if semantically same, don't convert format
     if (moduleDependencies.isEmpty() && legacyPluginDependencies.isNotEmpty()) {
       if (pluginDependencies.sorted() == legacyPluginDependencies.sorted()) {
-        return FileChangeStatus.UNCHANGED
+        return null
       }
     }
     // Check if all auto-derived deps are covered by xi:includes - if so, no need to insert in main file
@@ -130,10 +156,10 @@ internal fun updateXmlDependencies(
     val uncoveredModules = moduleDependencies.toSet() - xiIncludeModuleValues
     val uncoveredPlugins = pluginDependencies.toSet() - xiIncludePluginValues
     if (uncoveredModules.isEmpty() && uncoveredPlugins.isEmpty()) {
-      return FileChangeStatus.UNCHANGED  // All deps in xi:includes, no modification needed
+      return null  // All deps in xi:includes, no modification needed
     }
     // Only insert deps NOT covered by xi:includes
-    return strategy.writeIfChanged(path = path, oldContent = content, newContent = insertDependenciesSection(content, uncoveredModules.sorted(), uncoveredPlugins.sorted()))
+    return insertDependenciesSection(content, uncoveredModules.sorted(), uncoveredPlugins.sorted())
   }
 
   // Extract current entries for comparison
@@ -180,7 +206,7 @@ internal fun updateXmlDependencies(
   val pluginsUnchanged = pluginIds.sorted() == (effectiveAutoPlugins + manualPluginIds).distinct().sorted()
 
   if (modulesUnchanged && pluginsUnchanged && !usesLegacyMarkers && !usesOldRegionText) {
-    return FileChangeStatus.UNCHANGED
+    return null
   }
 
   val replacement = when {
@@ -207,7 +233,7 @@ internal fun updateXmlDependencies(
     }
   }
 
-  return strategy.writeIfChanged(path = path, oldContent = content, newContent = content.substring(0, info.startOffset) + replacement + content.substring(info.endOffset))
+  return content.substring(0, info.startOffset) + replacement + content.substring(info.endOffset)
 }
 
 /**

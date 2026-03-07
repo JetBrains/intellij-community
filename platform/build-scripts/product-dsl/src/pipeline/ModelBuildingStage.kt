@@ -27,11 +27,13 @@ import org.jetbrains.intellij.build.findFileInModuleLibraryDependencies
 import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.productLayout.ContentModule
 import org.jetbrains.intellij.build.productLayout.DeprecatedXmlInclude
+import org.jetbrains.intellij.build.productLayout.ModuleSet
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 import org.jetbrains.intellij.build.productLayout.TestPluginSpec
 import org.jetbrains.intellij.build.productLayout.appendDefaultProductPluginMetadata
 import org.jetbrains.intellij.build.productLayout.buildContentBlocksAndChainMapping
 import org.jetbrains.intellij.build.productLayout.buildProductContentXml
+import org.jetbrains.intellij.build.productLayout.collectPluginizedModuleSets
 import org.jetbrains.intellij.build.productLayout.collectAndValidateAliases
 import org.jetbrains.intellij.build.productLayout.config.SuppressionConfig
 import org.jetbrains.intellij.build.productLayout.debug
@@ -44,6 +46,7 @@ import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
 import org.jetbrains.intellij.build.productLayout.discovery.PluginXmlOverride
 import org.jetbrains.intellij.build.productLayout.discovery.computePluginContentFromDslSpec
 import org.jetbrains.intellij.build.productLayout.graph.PluginGraphBuilder
+import org.jetbrains.intellij.build.productLayout.moduleSetPluginModuleName
 import org.jetbrains.intellij.build.productLayout.model.ErrorSink
 import org.jetbrains.intellij.build.productLayout.model.error.DuplicateDslTestPluginIdError
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionUsage
@@ -193,6 +196,7 @@ internal object ModelBuildingStage {
       dslTestPluginAdditionalBundles = dslTestPluginAdditionalBundles,
       testPluginModuleNames = testPluginModuleNames,
       extraPluginModules = extraPluginDescriptors.pluginModules,
+      moduleSetWrapperTargets = collectPluginizedModuleSets(discovery.allModuleSets),
     )
     val pluginsToExtract = collectSeededPluginTargets(builder.build())
     extractPlugins(
@@ -941,12 +945,13 @@ internal object ModelBuildingStage {
     dslTestPluginAdditionalBundles: Set<TargetName>,
     testPluginModuleNames: Set<TargetName>,
     extraPluginModules: Set<TargetName>,
+    moduleSetWrapperTargets: List<ModuleSet>,
   ) {
     // Compare by string value since TargetName (JPS module) and PluginId are different semantic types.
     val dslTestPluginIdStrings = dslTestPluginIds.mapTo(HashSet()) { it.value }
-    fun addPlugin(target: TargetName) {
+    fun addPlugin(target: TargetName, pluginId: PluginId? = null, isModuleSetWrapper: Boolean = false) {
       if (target.value in dslTestPluginIdStrings) return
-      builder.addPlugin(name = target, isTest = false)
+      builder.addPlugin(name = target, isTest = false, pluginId = pluginId, isModuleSetWrapper = isModuleSetWrapper)
     }
 
     for (product in discovery.products) {
@@ -959,6 +964,12 @@ internal object ModelBuildingStage {
     testPluginModuleNames.forEach(::addPlugin)
     dslTestPluginAdditionalBundles.forEach(::addPlugin)
     extraPluginModules.forEach(::addPlugin)
+    for (moduleSet in moduleSetWrapperTargets) {
+      addPlugin(
+        target = moduleSetPluginModuleName(moduleSet.name),
+        isModuleSetWrapper = true,
+      )
+    }
   }
 
   private fun collectSeededPluginTargets(graph: PluginGraph): List<TargetName> {

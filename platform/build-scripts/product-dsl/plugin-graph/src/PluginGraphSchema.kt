@@ -63,11 +63,14 @@ const val NODE_FLAG_SELF_CONTAINED: Int = 1 shl 9
 /** Flag: plugin is DSL-defined (auto-computed dependencies) */
 const val NODE_FLAG_IS_DSL_DEFINED: Int = 1 shl 10
 
+/** Flag: plugin is a generated wrapper for a pluginized module set */
+const val NODE_FLAG_IS_MODULE_SET_WRAPPER: Int = 1 shl 11
+
 /** Flag: content module is a test descriptor (._test suffix) */
-const val NODE_FLAG_IS_TEST_DESCRIPTOR: Int = 1 shl 11
+const val NODE_FLAG_IS_TEST_DESCRIPTOR: Int = 1 shl 12
 
 /** Flag: content module has a descriptor on disk ({moduleName}.xml) */
-const val NODE_FLAG_HAS_DESCRIPTOR: Int = 1 shl 12
+const val NODE_FLAG_HAS_DESCRIPTOR: Int = 1 shl 13
 
 // endregion
 

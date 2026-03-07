@@ -289,6 +289,37 @@ class PluginDependencyGraphTest {
   }
 
   @Test
+  fun `module set wrapper flag survives extraction merge`() {
+    runBlocking(Dispatchers.Default) {
+      val pluginModule = TargetName("intellij.moduleSet.plugin.recentFiles")
+      val info = pluginInfo(
+        pluginId = "com.intellij.moduleSet.recentFiles",
+        contentModules = listOf(ContentModuleInfo(ContentModuleName("intellij.platform.recentFiles.frontend"), ModuleLoadingRuleValue.OPTIONAL)),
+      )
+
+      val builder = PluginGraphBuilder()
+      builder.addPlugin(
+        name = pluginModule,
+        isTest = false,
+        pluginId = PluginId("com.intellij.moduleSet.recentFiles"),
+        isModuleSetWrapper = true,
+      )
+      builder.addPluginWithContent(pluginModule, info, emptySet())
+
+      val graph = builder.build()
+
+      graph.query {
+        val plugin = requireNotNull(plugin(pluginModule.value))
+        assertThat(plugin.isModuleSetWrapper).isTrue()
+
+        val contentNames = mutableListOf<String>()
+        plugin.containsContent { module, _ -> contentNames.add(module.name().value) }
+        assertThat(contentNames).containsExactly("intellij.platform.recentFiles.frontend")
+      }
+    }
+  }
+
+  @Test
   fun `discovered plugin id resolves to content node`() {
     runBlocking(Dispatchers.Default) {
       val discoveredModule = TargetName("plugin.b.module")

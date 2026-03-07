@@ -25,6 +25,7 @@ import com.intellij.platform.pluginGraph.MutablePluginGraphStore
 import com.intellij.platform.pluginGraph.NODE_CONTENT_MODULE
 import com.intellij.platform.pluginGraph.NODE_FLAG_HAS_DESCRIPTOR
 import com.intellij.platform.pluginGraph.NODE_FLAG_IS_DSL_DEFINED
+import com.intellij.platform.pluginGraph.NODE_FLAG_IS_MODULE_SET_WRAPPER
 import com.intellij.platform.pluginGraph.NODE_FLAG_IS_TEST
 import com.intellij.platform.pluginGraph.NODE_FLAG_IS_TEST_DESCRIPTOR
 import com.intellij.platform.pluginGraph.NODE_FLAG_SELF_CONTAINED
@@ -130,10 +131,13 @@ internal class PluginGraphBuilder(
     isDslDefined: Boolean = false,
     pluginId: PluginId? = null,
     pluginAliases: List<PluginId> = emptyList(),
+    isModuleSetWrapper: Boolean = false,
   ): Int {
     val existing = store.nameIndex[NODE_PLUGIN].getOrDefault(name.value, -1)
     if (existing >= 0) {
-      val flags = (if (isTest) NODE_FLAG_IS_TEST else 0) or (if (isDslDefined) NODE_FLAG_IS_DSL_DEFINED else 0)
+      val flags = (if (isTest) NODE_FLAG_IS_TEST else 0) or
+                  (if (isDslDefined) NODE_FLAG_IS_DSL_DEFINED else 0) or
+                  (if (isModuleSetWrapper) NODE_FLAG_IS_MODULE_SET_WRAPPER else 0)
       if (flags != 0) {
         store.kinds[existing] = store.kinds[existing] or flags
       }
@@ -165,7 +169,8 @@ internal class PluginGraphBuilder(
     store.names.add(name.value)
     store.kinds.add(NODE_PLUGIN
               or (if (isTest) NODE_FLAG_IS_TEST else 0)
-              or (if (isDslDefined) NODE_FLAG_IS_DSL_DEFINED else 0))
+              or (if (isDslDefined) NODE_FLAG_IS_DSL_DEFINED else 0)
+              or (if (isModuleSetWrapper) NODE_FLAG_IS_MODULE_SET_WRAPPER else 0))
     store.mutableNameIndex(NODE_PLUGIN).set(name.value, id)
 
     if (pluginId != null) {

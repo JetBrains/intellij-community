@@ -73,7 +73,7 @@
   </actions>
 
   <extensionPoints>
-    <extensionPoint name="frontendChangesViewContentProvider"
+    <extensionPoint qualifiedName="com.intellij.frontendChangesViewContentProvider"
                     interface="com.intellij.platform.vcs.impl.frontend.changes.FrontendChangesViewContentProvider"
                     dynamic="true">
     </extensionPoint>

@@ -3,6 +3,8 @@ package org.jetbrains.intellij.build.productLayout.generator
 
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginId
+import com.intellij.platform.pluginGraph.TargetName
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -13,6 +15,9 @@ import org.jetbrains.intellij.build.productLayout.dependency.generateDependencie
 import org.jetbrains.intellij.build.productLayout.dependency.pluginGraph
 import org.jetbrains.intellij.build.productLayout.dependency.pluginTestSetup
 import org.jetbrains.intellij.build.productLayout.dependency.testGenerationModel
+import org.jetbrains.intellij.build.productLayout.graph.PluginGraphBuilder
+import org.jetbrains.intellij.build.productLayout.moduleSet
+import org.jetbrains.intellij.build.productLayout.moduleSetPluginModuleName
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContextImpl
 import org.jetbrains.intellij.build.productLayout.pipeline.Slots
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionType
@@ -461,6 +466,152 @@ class ContentModuleDependencyGeneratorTest {
         assertThat(plan.testDependencies)
           .describedAs("Shared module should keep production library filtering in test deps")
           .doesNotContain(ContentModuleName("intellij.libraries.assertj.core"))
+      }
+    }
+  }
+
+  @Nested
+  inner class ModuleSetPluginExtensionPointQualificationTest {
+    @Test
+    fun `qualifyModuleSetExtensionPoints rewrites name attribute without reformatting`() {
+      val original = """
+        <idea-plugin>
+          <extensionPoints>
+            <extensionPoint name="frontendChangesViewContentProvider"
+                            interface="com.intellij.platform.vcs.impl.frontend.changes.FrontendChangesViewContentProvider"
+                            dynamic="true"/>
+          </extensionPoints>
+        </idea-plugin>
+      """.trimIndent()
+
+      val expected = """
+        <idea-plugin>
+          <extensionPoints>
+            <extensionPoint qualifiedName="com.intellij.frontendChangesViewContentProvider"
+                            interface="com.intellij.platform.vcs.impl.frontend.changes.FrontendChangesViewContentProvider"
+                            dynamic="true"/>
+          </extensionPoints>
+        </idea-plugin>
+      """.trimIndent()
+
+      assertThat(qualifyModuleSetExtensionPoints(original)).isEqualTo(expected)
+    }
+
+    @Test
+    fun `qualifyModuleSetExtensionPoints leaves existing qualified names intact`() {
+      val original = """
+        <idea-plugin>
+          <extensionPoints>
+            <extensionPoint qualifiedName="com.intellij.frontendChangesViewContentProvider"
+                            interface="com.intellij.platform.vcs.impl.frontend.changes.FrontendChangesViewContentProvider"
+                            dynamic="true"/>
+          </extensionPoints>
+        </idea-plugin>
+      """.trimIndent()
+
+      assertThat(qualifyModuleSetExtensionPoints(original)).isEqualTo(original)
+    }
+
+    @Test
+    fun `wrapper plugin source rewrites extension point names in descriptor`(@TempDir tempDir: Path) {
+      runBlocking(Dispatchers.Default) {
+        val moduleName = ContentModuleName("intellij.platform.recentFiles.frontend")
+        val setup = pluginTestSetup(tempDir) {
+          contentModule(moduleName.value) {
+            descriptor = """
+            <idea-plugin>
+              <extensionPoints>
+                <extensionPoint name="recentFiles.navigator"
+                                interface="com.intellij.platform.recentFiles.frontend.RecentFilesNavigator"
+                                dynamic="true"/>
+              </extensionPoints>
+            </idea-plugin>
+          """.trimIndent()
+          }
+        }
+
+        val builder = PluginGraphBuilder()
+        builder.addModuleSetContent(moduleSet("recentFiles") {
+          module(moduleName.value)
+        })
+        val wrapperPluginName = moduleSetPluginModuleName("recentFiles")
+        builder.addPlugin(name = wrapperPluginName, isTest = false, isModuleSetWrapper = true)
+        builder.linkPluginContent(wrapperPluginName, moduleName, ModuleLoadingRuleValue.OPTIONAL, isTest = false)
+        val model = testGenerationModel(
+          pluginGraph = builder.build(),
+          outputProvider = setup.jps.outputProvider,
+          fileUpdater = setup.strategy,
+        )
+
+        val ctx = ComputeContextImpl(model)
+        ctx.initSlot(Slots.CONTENT_MODULE_PLAN)
+        ctx.initSlot(Slots.CONTENT_MODULE)
+        val planCtx = ctx.forNode(ContentModuleDependencyPlanner.id)
+        ContentModuleDependencyPlanner.execute(planCtx)
+        ctx.finalizeNodeErrors(ContentModuleDependencyPlanner.id)
+
+        val writeCtx = ctx.forNode(ContentModuleXmlWriter.id)
+        ContentModuleXmlWriter.execute(writeCtx)
+        ctx.finalizeNodeErrors(ContentModuleXmlWriter.id)
+
+        val diff = setup.strategy.getDiffs().single()
+        assertThat(diff.expectedContent).isEqualTo(
+          """
+          <idea-plugin>
+            <extensionPoints>
+              <extensionPoint qualifiedName="com.intellij.recentFiles.navigator"
+                              interface="com.intellij.platform.recentFiles.frontend.RecentFilesNavigator"
+                              dynamic="true"/>
+            </extensionPoints>
+          </idea-plugin>
+          """.trimIndent()
+        )
+      }
+    }
+
+    @Test
+    fun `regular plugin source does not rewrite extension point names in shared descriptor`(@TempDir tempDir: Path) {
+      runBlocking(Dispatchers.Default) {
+        val moduleName = ContentModuleName("intellij.platform.recentFiles.frontend")
+        val setup = pluginTestSetup(tempDir) {
+          contentModule(moduleName.value) {
+            descriptor = """
+            <idea-plugin>
+              <extensionPoints>
+                <extensionPoint name="recentFiles.navigator"
+                                interface="com.intellij.platform.recentFiles.frontend.RecentFilesNavigator"
+                                dynamic="true"/>
+              </extensionPoints>
+            </idea-plugin>
+          """.trimIndent()
+          }
+        }
+
+        val builder = PluginGraphBuilder()
+        builder.addModuleSetContent(moduleSet("recentFiles") {
+          module(moduleName.value)
+        })
+        val regularPluginName = TargetName("intellij.regular.plugin")
+        builder.addPlugin(name = regularPluginName, isTest = false)
+        builder.linkPluginContent(regularPluginName, moduleName, ModuleLoadingRuleValue.OPTIONAL, isTest = false)
+        val model = testGenerationModel(
+          pluginGraph = builder.build(),
+          outputProvider = setup.jps.outputProvider,
+          fileUpdater = setup.strategy,
+        )
+
+        val ctx = ComputeContextImpl(model)
+        ctx.initSlot(Slots.CONTENT_MODULE_PLAN)
+        ctx.initSlot(Slots.CONTENT_MODULE)
+        val planCtx = ctx.forNode(ContentModuleDependencyPlanner.id)
+        ContentModuleDependencyPlanner.execute(planCtx)
+        ctx.finalizeNodeErrors(ContentModuleDependencyPlanner.id)
+
+        val writeCtx = ctx.forNode(ContentModuleXmlWriter.id)
+        ContentModuleXmlWriter.execute(writeCtx)
+        ctx.finalizeNodeErrors(ContentModuleXmlWriter.id)
+
+        assertThat(setup.strategy.getDiffs()).isEmpty()
       }
     }
   }
