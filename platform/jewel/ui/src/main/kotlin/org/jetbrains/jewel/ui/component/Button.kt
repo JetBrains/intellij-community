@@ -842,7 +842,7 @@ private fun SplitButtonImpl(
                             true
                         },
                         horizontalAlignment = Alignment.Start,
-                        style = menuStyle,
+                        menuStyle = menuStyle,
                         content = secondaryContentMenu,
                     )
                 }
