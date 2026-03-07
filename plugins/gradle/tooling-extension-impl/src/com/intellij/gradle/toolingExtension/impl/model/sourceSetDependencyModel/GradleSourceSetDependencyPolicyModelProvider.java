@@ -5,6 +5,7 @@ import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyM
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetArtifactIndex.GradleSourceSetArtifactBuildRequest;
 import com.intellij.gradle.toolingExtension.impl.util.GradleModelProviderUtil;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
+
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.jetbrains.annotations.ApiStatus;
@@ -15,11 +16,11 @@ import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
 import java.util.Collection;
 
 @ApiStatus.Internal
-public class GradleSourceSetDependencyModelProvider implements ProjectImportModelProvider {
+public class GradleSourceSetDependencyPolicyModelProvider implements ProjectImportModelProvider {
 
   @Override
   public GradleModelFetchPhase getPhase() {
-    return GradleModelFetchPhase.PROJECT_SOURCE_SET_DEPENDENCY_PHASE;
+    return GradleModelFetchPhase.DEPENDENCY_DOWNLOAD_POLICY_PHASE;
   }
 
   @Override
@@ -28,7 +29,6 @@ public class GradleSourceSetDependencyModelProvider implements ProjectImportMode
     @NotNull Collection<? extends GradleBuild> buildModels,
     @NotNull GradleModelConsumer modelConsumer
   ) {
-    GradleModelProviderUtil.buildModels(controller, buildModels, GradleSourceSetArtifactBuildRequest.class, GradleModelConsumer.NOOP);
-    GradleModelProviderUtil.buildModels(controller, buildModels, GradleSourceSetDependencyModel.class, modelConsumer);
+    GradleModelProviderUtil.buildModelsRecursively(controller, buildModels, GradleDependencyDownloadPolicy.class, GradleModelConsumer.NOOP);
   }
 }

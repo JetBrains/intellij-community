@@ -8,6 +8,7 @@ import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleDep
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry
 import com.intellij.gradle.toolingExtension.impl.util.GradleModelProviderUtil
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.api.Project
@@ -109,6 +110,8 @@ private const val REQUEST_FOR_NON_ANDROID_MODULES_ONLY = "*"
 class AndroidAwareGradleModelProvider(
     private val androidPluginIsRequestingVariantSpecificModels: Boolean
 ) : ProjectImportModelProvider {
+    override fun getPhase() = GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE
+
     private val modelClass = KotlinGradleModel::class.java
     override fun populateModels(controller: BuildController, buildModels: Collection<GradleBuild>, modelConsumer: GradleModelConsumer) {
         if (androidPluginIsRequestingVariantSpecificModels) {

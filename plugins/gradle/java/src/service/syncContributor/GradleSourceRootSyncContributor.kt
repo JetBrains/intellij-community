@@ -5,6 +5,7 @@ import com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.javaResourceRoots
 import com.intellij.java.workspace.entities.javaSourceRoots
+import com.intellij.openapi.externalSystem.autolink.forEachExtensionSafeAsync
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import com.intellij.openapi.externalSystem.model.project.IExternalSystemSourceType
 import com.intellij.openapi.progress.checkCanceled
@@ -33,6 +34,8 @@ import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_RESOURCE
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_ROOT_ENTITY_TYPE_ID
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet
+import org.jetbrains.plugins.gradle.model.GradleLightBuild
+import org.jetbrains.plugins.gradle.model.GradleLightProject
 import org.jetbrains.plugins.gradle.model.GradleSourceSetModel
 import org.jetbrains.plugins.gradle.service.project.GradleContentRootIndex
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
@@ -88,7 +91,13 @@ internal class GradleSourceRootSyncContributor : GradleSyncContributor {
           val contentRootPaths = contentRootIndex.resolveContentRoots(externalProject, sourceSet)
           val sourceSetModuleName = GradleProjectResolverUtil.resolveSourceSetModuleName(context, storage, projectModel, externalProject, sourceSet.name)
           val sourceRootData = GradleSourceRootData(externalProject, sourceSet, contentRootPaths, sourceSetModuleName, entitySource)
-          storage addEntity createModuleEntity(context, sourceRootData)
+          val moduleEntity = createModuleEntity(context, sourceRootData)
+          GradleSourceRootSyncContributorExtension.EP_NAME.forEachExtensionSafeAsync {
+            it.configureSourceSetModules(GradleSourceSetSyncContextImpl(
+              context, buildModel, projectModel, moduleEntity, sourceSet.name
+            ))
+          }
+          storage addEntity moduleEntity
         }
       }
     }
@@ -213,4 +222,12 @@ internal class GradleSourceRootSyncContributor : GradleSyncContributor {
     override val projectPath: String,
     override val phase: GradleSyncPhase,
   ) : GradleBridgeEntitySource
+
+  private data class GradleSourceSetSyncContextImpl(
+    override val resolverContext: ProjectResolverContext,
+    override val buildModel: GradleLightBuild,
+    override val projectModel: GradleLightProject,
+    override val moduleEntity: ModuleEntityBuilder,
+    override val sourceSetName: String
+  ) : GradleSourceSetSyncContext
 }

@@ -6,6 +6,7 @@ import com.intellij.build.issue.BuildIssue;
 import com.intellij.gradle.toolingExtension.impl.model.buildScriptClasspathModel.GradleBuildScriptClasspathModelProvider;
 import com.intellij.gradle.toolingExtension.impl.model.projectModel.GradleExternalProjectModelProvider;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetDependencyModel.GradleSourceSetDependencyModelProvider;
+import com.intellij.gradle.toolingExtension.impl.model.sourceSetDependencyModel.GradleSourceSetDependencyPolicyModelProvider;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetModelProvider;
 import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskModelProvider;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
@@ -795,6 +796,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       super.getModelProviders(),
       new GradleSourceSetModelProvider(),
       new GradleSourceSetDependencyModelProvider(),
+      new GradleSourceSetDependencyPolicyModelProvider(),
       new GradleExternalProjectModelProvider(),
       new GradleTaskModelProvider(),
       new GradleBuildScriptClasspathModelProvider()

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.process.ProcessOutputType
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
@@ -22,7 +23,9 @@ import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.testFramework.assertion.listenerAssertion.ListenerAssertion
 import com.intellij.testFramework.VfsTestUtil
+import com.intellij.util.application
 import org.gradle.util.GradleVersion
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
@@ -38,7 +41,10 @@ import org.jetbrains.kotlin.idea.test.TestMetadataUtil.getTestData
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.utils.addToStdlib.filterIsInstanceWithChecker
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
+import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.project.open.createLinkSettings
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncListener
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Assume
 import org.junit.runners.Parameterized
@@ -119,7 +125,7 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase(),
     }
 
     override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
+        get() = KotlinPluginMode.K2
 
     protected open fun setUpImportStatusCollector() {
         ExternalSystemProgressNotificationManager
@@ -335,6 +341,47 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase(),
         return getRootManager(moduleName).orderEntries.asList().filterIsInstanceWithChecker { it.presentableName == depName }
     }
 
+    private fun whenModelFetchCompletedOrSourceSetPhaseFinished(parentDisposable: Disposable, action: (ProjectResolverContext) -> Unit) {
+        application.messageBus.connect(parentDisposable)
+            .subscribe(GradleSyncListener.TOPIC, object : GradleSyncListener {
+                override fun onSyncPhaseCompleted(
+                    context: ProjectResolverContext,
+                    phase: GradleSyncPhase
+                ) {
+                    if (phase == GradleSyncPhase.SOURCE_SET_MODEL_PHASE) {
+                        action(context)
+                    }
+                }
+
+                override fun onModelFetchCompleted(context: ProjectResolverContext) {
+                    action(context)
+                }
+            })
+    }
+
+
+    protected fun runImportTestWithPhasedSyncAssertions(facetSettingsAssertions: () -> Unit) {
+        val modelFetchCompletionAssertion = ListenerAssertion()
+
+        whenModelFetchCompletedOrSourceSetPhaseFinished(testRootDisposable) {
+            modelFetchCompletionAssertion.trace {
+                facetSettingsAssertions()
+            }
+        }
+
+
+        configureByFiles()
+        importProject()
+
+        modelFetchCompletionAssertion.assertListenerState(2) {
+            "Model fetch should have completed"
+        }
+        modelFetchCompletionAssertion.assertListenerFailures()
+        facetSettingsAssertions()
+
+    }
+
+
     protected fun linkProject(projectFilePath: String = projectPath) {
         val localFileSystem = LocalFileSystem.getInstance()
         val projectFile = localFileSystem.refreshAndFindFileByPath(projectFilePath)
@@ -400,7 +447,7 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase(),
 
         const val LATEST_STABLE_GRADLE_PLUGIN_VERSION = "2.0.0"
 
-        val SUPPORTED_GRADLE_VERSIONS = arrayOf("6.8.3", "7.6.5")//, "9.0.0", "9.1.0") // To support them in KTIJ-36754
+        val SUPPORTED_GRADLE_VERSIONS = arrayOf("6.8.3", "7.6.5", "8.6")//, "9.0.0", "9.1.0") // To support them in KTIJ-36754
 
         // https://kotlinlang.org/docs/gradle-configure-project.html#targeting-the-jvm
         val GRADLE_TO_KGP_VERSION = mapOf(
