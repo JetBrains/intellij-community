@@ -49,8 +49,8 @@ public class LightClassEqualsTest extends KotlinLightCodeInsightFixtureTestCase 
         assertNotNull(origin);
 
         KotlinAsJavaSupportBase<?> javaSupport = (KotlinAsJavaSupportBase<?>) KotlinAsJavaSupport.getInstance(origin.getProject());
-        PsiClass lightClass1 = javaSupport.createLightClass(origin).getValue();
-        PsiClass lightClass2 = javaSupport.createLightClass(origin).getValue();
+        PsiClass lightClass1 = javaSupport.createLightClass(origin, null);
+        PsiClass lightClass2 = javaSupport.createLightClass(origin, null);
         assertNotNull(lightClass1);
         assertNotNull(lightClass2);
 
