@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.key.KeyEvent
@@ -279,7 +280,9 @@ public value class DecoratedWindowState(public val state: ULong) {
     }
 }
 
-internal data class TitleBarInfo(val title: String, val icon: Painter?)
+internal data class TitleBarInfo(val title: String, val icon: Painter?) {
+    val clientRegions: MutableMap<String, Rect> = mutableMapOf()
+}
 
 internal val LocalTitleBarInfo: ProvidableCompositionLocal<TitleBarInfo> = compositionLocalOf {
     error("LocalTitleBarInfo not provided, TitleBar must be used in DecoratedWindow")

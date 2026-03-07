@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import com.jetbrains.JBR
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.window.styling.TitleBarStyle
+import org.jetbrains.jewel.window.utils.WindowMouseEventEffect
 import org.jetbrains.jewel.window.utils.macos.MacUtil
 
 public fun Modifier.newFullscreenControls(newControls: Boolean = true): Modifier =
@@ -78,8 +79,9 @@ internal fun DecoratedWindowScope.TitleBarOnMacOs(
 
     val titleBar = remember { JBR.getWindowDecorations().createCustomTitleBar() }
 
+    WindowMouseEventEffect(titleBar)
+
     TitleBarImpl(
-        modifier = modifier.customTitleBarMouseEventHandler(titleBar),
         gradientStartColor = gradientStartColor,
         style = style,
         applyTitleBar = { height, state ->
