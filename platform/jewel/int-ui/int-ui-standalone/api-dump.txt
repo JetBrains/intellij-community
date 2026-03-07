@@ -44,8 +44,10 @@ f:org.jetbrains.jewel.intui.standalone.StandalonePainterHintsProvider
 - hints(java.lang.String,androidx.compose.runtime.Composer,I):java.util.List
 f:org.jetbrains.jewel.intui.standalone.StandalonePainterHintsProvider$Companion
 f:org.jetbrains.jewel.intui.standalone.styling.IntUIBannerStylingKt
-- sf:default-3ABfNKs(org.jetbrains.jewel.ui.component.styling.BannerMetrics$Companion,F):org.jetbrains.jewel.ui.component.styling.BannerMetrics
+- bsf:default-3ABfNKs(org.jetbrains.jewel.ui.component.styling.BannerMetrics$Companion,F):org.jetbrains.jewel.ui.component.styling.BannerMetrics
 - bs:default-3ABfNKs$default(org.jetbrains.jewel.ui.component.styling.BannerMetrics$Companion,F,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.BannerMetrics
+- sf:default-ziNgDLE(org.jetbrains.jewel.ui.component.styling.BannerMetrics$Companion,F,androidx.compose.foundation.shape.CornerSize,androidx.compose.foundation.layout.PaddingValues):org.jetbrains.jewel.ui.component.styling.BannerMetrics
+- bs:default-ziNgDLE$default(org.jetbrains.jewel.ui.component.styling.BannerMetrics$Companion,F,androidx.compose.foundation.shape.CornerSize,androidx.compose.foundation.layout.PaddingValues,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.BannerMetrics
 - sf:getDefault(org.jetbrains.jewel.ui.component.styling.DefaultBannerStyles$Companion):org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultBannerStylesFactory
 - sf:getDefault(org.jetbrains.jewel.ui.component.styling.InlineBannerStyles$Companion):org.jetbrains.jewel.intui.standalone.styling.IntUiInlineBannerStylesFactory
 - sf:getError(org.jetbrains.jewel.ui.component.styling.BannerColors$Companion):org.jetbrains.jewel.intui.standalone.styling.IntUiErrorBannerColorFactory
