@@ -1,85 +1,40 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.jetbrains.python.inspections;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.inspections
 
-import com.jetbrains.python.fixtures.PyInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.jetbrains.python.fixtures.PyInspectionTestCase
 
-public class Py3StringFormatInspectionTest extends PyInspectionTestCase {
-  public static final String TEST_DIRECTORY = "inspections/PyStringFormatInspection/";
-
+class Py3StringFormatInspectionTest : PyInspectionTestCase() {
   // PY-16938
-  public void testByteString() {
-    doTest();
-  }
+  fun testByteString() = doTest()
 
-  public void testIndexElementWithPackedReferenceExpr() {
-    doTest();
-  }
+  fun testIndexElementWithPackedReferenceExpr() = doTest()
 
-  public void testPackedDictLiteralInsideDictLiteral() {
-    doTest();
-  }
+  fun testPackedDictLiteralInsideDictLiteral() = doTest()
 
-  public void testPackedDictCallInsideDictLiteral() {
-    doTest();
-  }
+  fun testPackedDictCallInsideDictLiteral() = doTest()
 
-  public void testPackedListInsideList() {
-    doTest();
-  }
+  fun testPackedListInsideList() = doTest()
 
-  public void testPackedTupleInsideList() {
-    doTest();
-  }
+  fun testPackedTupleInsideList() = doTest()
 
-  public void testPackedTupleInsideTuple() {
-    doTest();
-  }
+  fun testPackedTupleInsideTuple() = doTest()
 
-  public void testPackedListInsideTuple() {
-    doTest();
-  }
+  fun testPackedListInsideTuple() = doTest()
 
-  public void testPackedRefInsideList() {
-    doTest();
-  }
+  fun testPackedRefInsideList() = doTest()
 
-  public void testPackedRefInsideTuple() {
-    doTest();
-  }
+  fun testPackedRefInsideTuple() = doTest()
 
   // PY-20599
-  public void testPy3kAsciiFormatSpecifier() {
-    doTest();
-  }
+  fun testPy3kAsciiFormatSpecifier() = doTest()
 
-  @NotNull
-  @Override
-  protected Class<? extends PyInspection> getInspectionClass() {
-    return PyStringFormatInspection.class;
-  }
+  override fun getInspectionClass() = PyStringFormatInspection::class.java
 
-  @Override
-  protected String getTestCaseDirectory() {
-    return TEST_DIRECTORY;
-  }
+  override fun getTestCaseDirectory() = TEST_DIRECTORY
 
-  @Override
-  protected boolean isLowerCaseTestFile() {
-    return false;
+  override fun isLowerCaseTestFile() = false
+
+  companion object {
+    const val TEST_DIRECTORY: String = "inspections/PyStringFormatInspection/"
   }
 }

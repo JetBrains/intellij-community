@@ -1,242 +1,128 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.inspections;
+package com.jetbrains.python.inspections
 
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.jetbrains.python.fixtures.PyInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.idea.TestFor
+import com.intellij.testFramework.LightProjectDescriptor
+import com.jetbrains.python.fixtures.PyInspectionTestCase
 
-public class PyStringFormatInspectionTest extends PyInspectionTestCase {
+class PyStringFormatInspectionTest : PyInspectionTestCase() {
+  override fun getProjectDescriptor(): LightProjectDescriptor? = ourPy2Descriptor
 
-  @Override
-  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
-    return ourPy2Descriptor;
-  }
-
-  public void testBasic() {
-    doTest();
-  }
+  fun testBasic() = doTest()
 
   // PY-2836
-  public void testDictionaryArgument() {
-    doTest();
-  }
+  fun testDictionaryArgument() = doTest()
 
   // PY-4647
-  public void testTupleMultiplication() {
-    doTest();
-  }
+  fun testTupleMultiplication() = doTest()
 
   // PY-6756
-  public void testSlice() {
-    doTest();
-  }
-  
+  fun testSlice() = doTest()
+
   // PY-18954
-  public void testOneElementDict() {
-    doTest();
-  }
-  
+  fun testOneElementDict() = doTest()
+
   // PY-18725
-  public void testDictWithReferenceKeys() {
-    doTest();
-  }
-  
-  public void testTooFewArgumentsNewStyleFormat() {
-    doTest();
-  }
-  
-  public void testTooManyArgumentsNewStyleFormat() {
-    doTest();
-  }
-  
-  public void testUnusedMappingNewStyleFormat() {
-    doTest();
-  }
-  
-  public void testIncompatibleTypesNewStyleFormat() {
-    doTest();
-  }
-  
-  public void testNewStyleMappingKeyWithSubscriptionListArg() {
-    doTest();
-  }
-  
-  public void testNewStyleMappingKeyWithSubscriptionRefArgs() {
-    doTest();
-  }
-  
-  public void testNewStyleMappingKeyWithSubscriptionDictArg() {
-    doTest();
-  }
+  fun testDictWithReferenceKeys() = doTest()
 
-  public void testNewStyleMappingKeyWithSubscriptionRefDictArg() {
-    doTest();
-  }
-  
-  public void testNewStyleMappingKeyWithSubscriptionParenArg() {
-    doTest();
-  }
+  fun testTooFewArgumentsNewStyleFormat() = doTest()
 
-  public void testNewStyleMappingKeyWithSubscriptionDictCall() {
-    doTest();
-  }
-  
-  public void testNewStyleStringWithPercentSymbol() {
-    doTest();
-  }
-  
-  public void testNewStylePackedAndNonPackedArgs() {
-    doTest();
-  }
-  
-  public void testNewStyleEmptyDictArg() {
-    doTest();
-  }
-  
-  public void testNewStyleDictLiteralExprInsideDictCall() {
-    doTest();
-  }
-  
-  public void testNewStylePositionalSubstitutionWithDictArg() {
-    doTest();
-  }
-  
-  public void testNewStylePackedReference() {
-    doTest();
-  }
-  
-  public void testNewStylePackedFunctionCall() {
-    doTest();
-  }
-  
-  public void testNewStyleStringRegularExpression() {
-    doTest();
-  }
-  
-  public void testNewStyleStringMapArg() {
-    doTest();
-  }
-  
-  public void testNewStyleDictLiteralWithReferenceKeys() {
-    doTest();
-  }
-  
-  public void testNewStyleDictLiteralWithNumericKeys() {
-    doTest();
-  }
-  
-  public void testNewStyleCallExpressionArgument() {
-    doTest();
-  }
+  fun testTooManyArgumentsNewStyleFormat() = doTest()
+
+  fun testUnusedMappingNewStyleFormat() = doTest()
+
+  fun testIncompatibleTypesNewStyleFormat() = doTest()
+
+  fun testNewStyleMappingKeyWithSubscriptionListArg() = doTest()
+
+  fun testNewStyleMappingKeyWithSubscriptionRefArgs() = doTest()
+
+  fun testNewStyleMappingKeyWithSubscriptionDictArg() = doTest()
+
+  fun testNewStyleMappingKeyWithSubscriptionRefDictArg() = doTest()
+
+  fun testNewStyleMappingKeyWithSubscriptionParenArg() = doTest()
+
+  fun testNewStyleMappingKeyWithSubscriptionDictCall() = doTest()
+
+  fun testNewStyleStringWithPercentSymbol() = doTest()
+
+  fun testNewStylePackedAndNonPackedArgs() = doTest()
+
+  fun testNewStyleEmptyDictArg() = doTest()
+
+  fun `test new style dict literal expr inside dict call`() = doTest()
+
+  fun testNewStylePositionalSubstitutionWithDictArg() = doTest()
+
+  fun testNewStylePackedReference() = doTest()
+
+  fun testNewStylePackedFunctionCall() = doTest()
+
+  fun testNewStyleStringRegularExpression() = doTest()
+
+  fun testNewStyleStringMapArg() = doTest()
+
+  fun testNewStyleDictLiteralWithReferenceKeys() = doTest()
+
+  fun testNewStyleDictLiteralWithNumericKeys() = doTest()
+
+  fun testNewStyleCallExpressionArgument() = doTest()
 
   // PY-27601
-  public void testNewStylePositionalSubstitutionAfterKeywordSubstitution() {
-    doTest();
-  }
+  fun testNewStylePositionalSubstitutionAfterKeywordSubstitution() = doTest()
 
-  public void testNewStyleAutomaticAfterManualNumbering() {
-    doTest();
-  }
+  fun testNewStyleAutomaticAfterManualNumbering() = doTest()
 
-  public void testNewStyleManualAfterAutomaticNumbering() {
-    doTest();
-  }
-  
-  public void testPercentStringWithFormatStringReplacementSymbols() {
-    doTest();
-  }
-  
-  public void testPercentStringPositionalWithEmptyDictArg() {
-    doTest();
-  }
-  
-  public void testPercentStringWithDictElement() {
-    doTest();
-  }
-  
-  public void testPercentStringWithDictCall() {
-    doTest();
-  }
-  
-  public void testPercentStringWithDictArgument() {
-    doTest();
-  }
-  
-  public void testPercentStringPositionalListArgument() {
-    doTest();
-  }
-  
-  public void testPercentStringPositionalDictArgument() {
-    doTest();
-  }
-  
-  public void testPercentStringKeywordSetArgument() {
-    doTest();
-  }
-  
-  public void testPercentStringKeywordListArgument() {
-    doTest();
-  }
-  
-  public void testPercentStringCallUnionArgument() {
-    doTest();
-  } 
-  
-  public void testPercentStringCallArgument() {
-    doTest();
-  }
+  fun testNewStyleManualAfterAutomaticNumbering() = doTest()
 
-  public void testMultilineString() {
-    doTest();
-  }
-  
+  fun testPercentStringWithFormatStringReplacementSymbols() = doTest()
+
+  fun testPercentStringPositionalWithEmptyDictArg() = doTest()
+
+  fun testPercentStringWithDictElement() = doTest()
+
+  fun testPercentStringWithDictCall() = doTest()
+
+  fun testPercentStringWithDictArgument() = doTest()
+
+  fun testPercentStringPositionalListArgument() = doTest()
+
+  fun testPercentStringPositionalDictArgument() = doTest()
+
+  fun testPercentStringKeywordSetArgument() = doTest()
+
+  fun testPercentStringKeywordListArgument() = doTest()
+
+  fun testPercentStringCallUnionArgument() = doTest()
+
+  fun testPercentStringCallArgument() = doTest()
+
+  fun testMultilineString() = doTest()
+
   // PY-8325
-  public void testTooFewMappingKeys() {
-    doTest();
-  }
+  fun testTooFewMappingKeys() = doTest()
 
-  public void testEscapedString() {
-    doTest();
-  }
+  fun testEscapedString() = doTest()
 
   //PY-21166
-  public void testUnsupportedFormatSpecifierNewStyleFormatting() {
-    doTest();
-  }
-  
-  // PY-21156
-  public void testPackedStringTooFewArguments() {
-    doTest();
-  }
-  
-  // PY-21156
-  public void testPackedDictCallUnusedMappingKey() {
-    doTest();
-  }
+  fun testUnsupportedFormatSpecifierNewStyleFormatting() = doTest()
 
-  public void testUnionCallType() {
-    doTest();
-  }
+  // PY-21156
+  fun testPackedStringTooFewArguments() = doTest()
+
+  // PY-21156
+  fun testPackedDictCallUnusedMappingKey() = doTest()
+
+  fun testUnionCallType() = doTest()
 
   // PY-26028
-  public void testSOEOnReassignedFormatArgument() {
-    doTest();
-  }
+  fun testSOEOnReassignedFormatArgument() = doTest()
 
   // PY-33218
-  public void testNoTypeMismatchOnElementsOfTupleDeclaration() {
-    doTest();
-  }
+  fun testNoTypeMismatchOnElementsOfTupleDeclaration() = doTest()
 
-  @NotNull
-  @Override
-  protected Class<? extends PyInspection> getInspectionClass() {
-    return PyStringFormatInspection.class;
-  }
+  override fun getInspectionClass() = PyStringFormatInspection::class.java
 
-  @Override
-  protected boolean isLowerCaseTestFile() {
-    return false;
-  }
+  override fun isLowerCaseTestFile() = false
 }
