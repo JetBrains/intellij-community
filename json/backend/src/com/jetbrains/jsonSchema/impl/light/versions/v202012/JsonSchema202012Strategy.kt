@@ -45,16 +45,16 @@ internal data object JsonSchema202012Strategy : JsonSchemaInterpretationStrategy
 
   override fun getValidations(schemaNode: JsonSchemaObject, type: JsonSchemaType?, value: JsonValueAdapter): Sequence<JsonSchemaValidation> {
     return sequence {
+      if (schemaNode.constantSchema != null) {
+        yield(ConstantSchemaValidation)
+        return@sequence
+      }
       if (type != null) yieldAll(getTypeValidations(type))
       yieldAll(getBaseValidations(value, schemaNode))
     }
   }
 
   private fun getBaseValidations(value: JsonValueAdapter, schemaNode: JsonSchemaObject): Sequence<JsonSchemaValidation> {
-    if (schemaNode.constantSchema != null) {
-      return sequenceOf(ConstantSchemaValidation)
-    }
-
     return sequence {
       yield(EnumValidation.INSTANCE)
 

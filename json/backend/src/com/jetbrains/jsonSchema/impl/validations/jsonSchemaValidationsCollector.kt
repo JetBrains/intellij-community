@@ -11,6 +11,10 @@ internal fun getSchema7AndEarlierValidations(schema: JsonSchemaObject,
                                    type: JsonSchemaType?,
                                    value: JsonValueAdapter): Sequence<JsonSchemaValidation> {
   return sequence {
+    if (schema.constantSchema != null) {
+      yield(ConstantSchemaValidation)
+      return@sequence
+    }
     if (type != null) yieldAll(getTypeValidations(type))
     yieldAll(getBaseValidations(schema, value))
   }.distinct()
@@ -42,10 +46,6 @@ internal fun getTypeValidations(type: JsonSchemaType): Sequence<JsonSchemaValida
 }
 
 internal fun getBaseValidations(schema: JsonSchemaObject, value: JsonValueAdapter): Sequence<JsonSchemaValidation> {
-  if (schema.constantSchema != null) {
-    return sequenceOf(ConstantSchemaValidation)
-  }
-
   return sequence {
     yield(EnumValidation.INSTANCE)
     if (!value.isShouldBeIgnored) {

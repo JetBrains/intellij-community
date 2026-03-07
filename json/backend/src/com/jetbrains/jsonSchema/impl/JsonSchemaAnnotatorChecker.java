@@ -289,6 +289,7 @@ public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
   }
 
   public static @Nullable JsonSchemaType getMatchingSchemaType(@NotNull JsonSchemaObject schema, @Nullable JsonSchemaType input) {
+    if (schema.getConstantSchema() != null) return input;
     final JsonSchemaType matchType = schema.getType();
     if (matchType != null) {
       if (JsonSchemaType._integer.equals(input) && JsonSchemaType._number.equals(matchType)) {

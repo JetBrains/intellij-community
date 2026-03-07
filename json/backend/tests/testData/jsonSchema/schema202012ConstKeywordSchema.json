@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "example-schema.json",
+  "type": "object",
+  "properties": {
+    "test": {
+      "type": "string",
+      "const": "hello-world"
+    }
+  },
+  "required": [
+    "test"
+  ],
+  "additionalProperties": false
+}
