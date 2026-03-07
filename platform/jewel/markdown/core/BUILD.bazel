@@ -73,6 +73,8 @@ jvm_library(
     "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
     "//libraries/compose-foundation-desktop-junit",
     "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
+    "//platform/jewel/markdown/testing",
+    "//platform/jewel/markdown/testing:testing_test_lib",
     "//libraries/jsoup",
     "//libraries/jsoup:jsoup_test_lib",
   ],
