@@ -23,7 +23,7 @@
   <xi:include href="light-classes.xml"/>
   <xi:include href="parcelize.k2.xml"/>
   <xi:include href="jvm-debugger.xml"/>
-  <xi:include href="jvm-debugger-k2.xml"/>
+  <xi:include href="jvm-debugger-evaluation.xml"/>
   <xi:include href="dep-spellchecker.xml"/>
   <xi:include href="scripting-v1.xml"/>
   <xi:include href="native.xml"/>
