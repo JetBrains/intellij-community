@@ -221,8 +221,12 @@ class ProjectLoaded : ApplicationInitializedListener {
     // TODO: Under flag since a proper solution should be implemented in the platform later
     if (SystemProperties.getBooleanProperty("STARTER_TESTS_SUPPORT_TARGETS", false)
         || System.getenv("STARTER_TESTS_SUPPORT_TARGETS").toBoolean()) {
-      IntegrationTestApplicationLoadListener.projectPathFromCommandLine?.run {
-        EelInitialization.runEelInitialization(this)
+      IntegrationTestApplicationLoadListener.data?.let {
+        EelInitialization.runEelInitialization(it.projectPath)
+        // Re-evaluate AppMode flags: the first setFlags call in Main.kt runs before EPs are loaded,
+        // so MultiRoutingFileSystemBackend (Docker/WSL) isn't registered yet and mayHappenToBeAFile
+        // can't resolve remote paths, incorrectly setting isLightEdit=true.
+        AppMode.setFlags(it.args)
       }
     }
 
