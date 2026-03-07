@@ -17,7 +17,7 @@ public class JavaUsage {
     }
 
     void test2() {
-        EXPECT expect = new Provider().<!HIGHLIGHTING("severity='ERROR'; descr='Incompatible types. Found: 'pkg.@org.jetbrains.annotations.NotNull EXPECT', required: 'pkg.EXPECT''")!>getExpect<!>();
+        EXPECT expect = new Provider().getExpect();
     }
 
     void test3() {
@@ -26,6 +26,6 @@ public class JavaUsage {
 
     void test4() {
         new MPPSuper().hello();
-        new CommonChild().<!HIGHLIGHTING("severity='ERROR'; descr='Cannot resolve method 'hello' in 'CommonChild''")!>hello<!>();
+        new CommonChild().hello();
     }
 }
