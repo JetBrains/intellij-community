@@ -1,11 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.detekt
 
-import io.github.detekt.test.utils.readResourceContent
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.test.TestConfig
-import io.gitlab.arturbosch.detekt.test.assertThat
-import io.gitlab.arturbosch.detekt.test.lint
+import dev.detekt.api.Config
+import dev.detekt.test.TestConfig
+import dev.detekt.test.assertj.assertThat
+import dev.detekt.test.lint
+import dev.detekt.test.utils.readResourceContent
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jewel.detekt.rules.EqualityMembersRule
 import org.junit.jupiter.api.Nested
@@ -525,6 +525,52 @@ class EqualityMembersRuleSpec {
                     """
                         .trimMargin()
                 )
+        }
+
+        @Test
+        fun `should not change expression body`() {
+            val code =
+                $$"""
+                |annotation class GenerateDataFunctions
+                |
+                |@GenerateDataFunctions
+                |class DataFuncTest(
+                |    val a: String,
+                |    val b: String
+                |) {
+                |    fun unrelated() {
+                |        println("hello")
+                |    }
+                |
+                |    override fun equals(other: Any?): Boolean {
+                |        if (this === other) return true
+                |        if (javaClass != other?.javaClass) return false
+                |
+                |        other as DataFuncTest
+                |
+                |        if (a != other.a) return false
+                |        if (b != other.b) return false
+                |
+                |        return true
+                |    }
+                |
+                |    override fun hashCode(): Int {
+                |        var result = a.hashCode()
+                |        result = 31 * result + b.hashCode()
+                |        return result
+                |    }
+                |
+                |    override fun toString(): String = "DataFuncTest(a=$a, b=$b)"
+                |
+                |    companion object
+                |}
+                """
+                    .trimMargin()
+
+            val (findings, result) = subject.lintAndFix(code)
+
+            assertThat(findings).hasSize(0)
+            assertThat(result).isEqualTo(code)
         }
     }
 

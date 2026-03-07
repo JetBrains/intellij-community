@@ -1,15 +1,17 @@
 @file:Suppress("UnstableApiUsage")
 
 plugins {
-    id("io.gitlab.arturbosch.detekt")
+    id("dev.detekt")
     id("org.jmailen.kotlinter")
     id("com.ncorti.ktfmt.gradle")
 }
 
 detekt {
-    autoCorrect = true
-    config.from(files(rootProject.file("detekt.yml")))
     buildUponDefaultConfig = true
+    autoCorrect = true
+    debug = true
+    config.from(files(rootProject.file("detekt.yml")))
+    failOnSeverity = dev.detekt.gradle.extensions.FailOnSeverity.Error
 }
 
 dependencies {
