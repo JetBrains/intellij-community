@@ -208,7 +208,8 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFi
       structureActions.add(new SelectFromHistoryAction(filter));
     }
 
-    List<AnAction> actionsList = new ArrayList<>(Arrays.asList(new EditPathsAction(), new SelectPathsInTreeAction(),
+    List<AnAction> actionsList = new ArrayList<>(Arrays.asList(createAllAction(),
+                                                               new EditPathsAction(), new SelectPathsInTreeAction(),
                                                                new Separator(VcsLogBundle.messagePointer("vcs.log.filter.recent")),
                                                                new DefaultActionGroup(structureActions)));
 
