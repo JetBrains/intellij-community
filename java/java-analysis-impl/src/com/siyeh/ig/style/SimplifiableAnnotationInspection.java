@@ -103,6 +103,7 @@ public final class SimplifiableAnnotationInspection extends BaseInspection imple
           buildAttributeValueText(attribute.getValue(), out, tracker);
         }
         else {
+          tracker.markUnchanged(child);
           out.append(child.getText());
         }
         child = child.getNextSibling();

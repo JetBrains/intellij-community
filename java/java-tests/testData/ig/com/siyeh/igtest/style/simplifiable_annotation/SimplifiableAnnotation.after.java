@@ -30,8 +30,9 @@ class MyClass {
   int[] i();
   int j();
 }
+/*1*/
 @Two(
-        i = 10,
-        j = 11
+        i = 10,/*2*/
+        j = 11/*3*/
 )
 class X { }

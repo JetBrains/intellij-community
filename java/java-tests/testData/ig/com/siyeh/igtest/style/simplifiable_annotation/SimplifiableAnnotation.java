@@ -31,7 +31,7 @@ class MyClass {
   int j();
 }
 @Two(
-  i = <warning descr="Unnecessary braces around '{10}' in annotation">{</warning>10<warning descr="Unnecessary braces around '{10}' in annotation">}</warning>,
-  j = 11
+  i/*1*/ = <warning descr="Unnecessary braces around '{10}' in annotation">{</warning>10<warning descr="Unnecessary braces around '{10}' in annotation">}</warning>,/*2*/
+  j = 11/*3*/
 )
 class X { }
