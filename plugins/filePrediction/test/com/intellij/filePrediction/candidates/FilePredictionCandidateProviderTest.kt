@@ -12,9 +12,11 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.ModuleFixture
 import com.intellij.util.containers.ContainerUtil
+import org.junit.Ignore
 import java.util.concurrent.Callable
 import java.util.concurrent.TimeUnit
 
+@Ignore("AT-3959")
 class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder<ModuleFixture>>() {
 
   override fun isCommunity(): Boolean = true

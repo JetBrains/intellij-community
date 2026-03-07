@@ -114,5 +114,19 @@
     <orderEntry type="module" module-name="intellij.relaxng.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.git.coverage" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.rareRefactorings" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.evaluationPlugin.languages.kotlin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.findUsagesMl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.idea.tools.launch" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.jshell.protocol" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.maven.groovy" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.maven.proofreading" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.nio.fs.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.agent.extension" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.eel.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem.dependencyUpdater.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.detektPlugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.selfContainedProjects" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tools.cmd.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.turboComplete.tests" scope="TEST" />
   </component>
 </module>
