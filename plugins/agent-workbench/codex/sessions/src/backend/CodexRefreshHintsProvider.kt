@@ -2,8 +2,28 @@
 
 package com.intellij.agent.workbench.codex.sessions.backend
 
+import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import kotlinx.coroutines.flow.Flow
+
+internal data class CodexRefreshActivityHint(
+  @JvmField val activity: AgentThreadActivity,
+  @JvmField val updatedAt: Long,
+  @JvmField val responseRequired: Boolean = false,
+)
+
+internal data class CodexRefreshHints(
+  @JvmField val rebindCandidates: List<AgentSessionRebindCandidate> = emptyList(),
+  @JvmField val activityHintsByThreadId: Map<String, CodexRefreshActivityHint> = emptyMap(),
+)
+
+internal fun CodexRefreshHints.toAgentSessionRefreshHints(): AgentSessionRefreshHints {
+  return AgentSessionRefreshHints(
+    rebindCandidates = rebindCandidates,
+    activityByThreadId = activityHintsByThreadId.mapValues { (_, hint) -> hint.activity },
+  )
+}
 
 internal interface CodexRefreshHintsProvider {
   val updates: Flow<Unit>
@@ -11,5 +31,5 @@ internal interface CodexRefreshHintsProvider {
   suspend fun prefetchRefreshHints(
     paths: List<String>,
     knownThreadIdsByPath: Map<String, Set<String>>,
-  ): Map<String, AgentSessionRefreshHints>
+  ): Map<String, CodexRefreshHints>
 }

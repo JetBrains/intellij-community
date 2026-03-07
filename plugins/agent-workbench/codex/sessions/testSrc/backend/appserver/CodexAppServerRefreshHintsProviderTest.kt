@@ -8,6 +8,7 @@ import com.intellij.agent.workbench.codex.common.CodexAppServerStartedThread
 import com.intellij.agent.workbench.codex.common.CodexThreadActiveFlag
 import com.intellij.agent.workbench.codex.common.CodexThreadActivitySnapshot
 import com.intellij.agent.workbench.codex.common.CodexThreadStatusKind
+import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHints
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -75,18 +76,22 @@ class CodexAppServerRefreshHintsProviderTest {
       ),
     )
 
-    val activityByThreadId = hintsByPath.getValue("/work/project").activityByThreadId
+    val hints = hintsByPath.getValue("/work/project")
+    val activityByThreadId = hints.activities()
     assertThat(activityByThreadId).containsExactlyInAnyOrderEntriesOf(
       mapOf(
         "thread-ready" to AgentThreadActivity.READY,
         "thread-unread-flag" to AgentThreadActivity.UNREAD,
         "thread-unread-message" to AgentThreadActivity.UNREAD,
-        "thread-review-flag" to AgentThreadActivity.REVIEWING,
+        "thread-review-flag" to AgentThreadActivity.UNREAD,
         "thread-review-mode" to AgentThreadActivity.REVIEWING,
         "thread-processing-status" to AgentThreadActivity.PROCESSING,
         "thread-processing-turn" to AgentThreadActivity.PROCESSING,
       )
     )
+    assertThat(hints.activityHintsByThreadId.getValue("thread-unread-flag").responseRequired).isTrue()
+    assertThat(hints.activityHintsByThreadId.getValue("thread-review-flag").responseRequired).isTrue()
+    assertThat(hints.activityHintsByThreadId.getValue("thread-unread-message").responseRequired).isFalse()
   }
 
   @Test
@@ -113,9 +118,9 @@ class CodexAppServerRefreshHintsProviderTest {
 
     assertThat(requestedThreadIds).containsExactly("thread-shared")
     assertThat(hintsByPath.keys).containsExactlyInAnyOrder("/work/project-a", "/work/project-b")
-    assertThat(hintsByPath.getValue("/work/project-a").activityByThreadId)
+    assertThat(hintsByPath.getValue("/work/project-a").activities())
       .containsExactlyEntriesOf(mapOf("thread-shared" to AgentThreadActivity.READY))
-    assertThat(hintsByPath.getValue("/work/project-b").activityByThreadId)
+    assertThat(hintsByPath.getValue("/work/project-b").activities())
       .containsExactlyEntriesOf(mapOf("thread-shared" to AgentThreadActivity.READY))
   }
 
@@ -141,7 +146,7 @@ class CodexAppServerRefreshHintsProviderTest {
     )
 
     assertThat(requestedThreadIds).containsExactly("thread-real")
-    assertThat(hintsByPath.getValue("/work/project").activityByThreadId)
+    assertThat(hintsByPath.getValue("/work/project").activities())
       .containsExactlyEntriesOf(mapOf("thread-real" to AgentThreadActivity.READY))
   }
 
@@ -189,7 +194,7 @@ class CodexAppServerRefreshHintsProviderTest {
     )
 
     val hints = hintsByPath.getValue("/work/project")
-    assertThat(hints.activityByThreadId).isEmpty()
+    assertThat(hints.activityHintsByThreadId).isEmpty()
     val candidate = hints.rebindCandidates.single()
     assertThat(candidate.threadId).isEqualTo("thread-started")
     assertThat(candidate.title).isEqualTo("thread-started")
@@ -246,7 +251,7 @@ class CodexAppServerRefreshHintsProviderTest {
 
     val hints = hintsAfterKnown.getValue("/work/project")
     assertThat(hints.rebindCandidates).isEmpty()
-    assertThat(hints.activityByThreadId)
+    assertThat(hints.activities())
       .containsExactlyEntriesOf(mapOf("thread-started" to AgentThreadActivity.READY))
   }
 
@@ -284,7 +289,7 @@ class CodexAppServerRefreshHintsProviderTest {
     val candidate = hints.rebindCandidates.single()
     assertThat(candidate.threadId).isEqualTo("thread-reviewing")
     assertThat(candidate.updatedAt).isEqualTo(700L)
-    assertThat(candidate.activity).isEqualTo(AgentThreadActivity.REVIEWING)
+    assertThat(candidate.activity).isEqualTo(AgentThreadActivity.UNREAD)
   }
 
   @Test
@@ -375,6 +380,10 @@ private fun snapshot(
     isReviewing = isReviewing,
     hasInProgressTurn = hasInProgressTurn,
   )
+}
+
+private fun CodexRefreshHints.activities(): Map<String, AgentThreadActivity> {
+  return activityHintsByThreadId.mapValues { (_, hint) -> hint.activity }
 }
 
 private fun startedThread(

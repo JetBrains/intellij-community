@@ -6,6 +6,8 @@ package com.intellij.agent.workbench.codex.sessions
 
 import com.intellij.agent.workbench.codex.common.CodexThread
 import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
+import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshActivityHint
+import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHints
 import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHintsProvider
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
@@ -13,6 +15,7 @@ import com.intellij.agent.workbench.codex.sessions.backend.appserver.CodexAppSer
 import com.intellij.agent.workbench.codex.sessions.backend.appserver.SharedCodexAppServerService
 import com.intellij.agent.workbench.codex.sessions.backend.createDefaultCodexSessionBackend
 import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutRefreshHintsProvider
+import com.intellij.agent.workbench.codex.sessions.backend.toAgentSessionRefreshHints
 import com.intellij.agent.workbench.codex.sessions.backend.toAgentThreadActivity
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
@@ -25,14 +28,20 @@ import com.intellij.agent.workbench.sessions.core.providers.BaseAgentSessionSour
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import java.util.concurrent.ConcurrentHashMap
 
-internal class CodexSessionSource private constructor(
+internal class CodexSessionSource internal constructor(
   private val backend: CodexSessionBackend,
   private val appServerRefreshHintsProvider: CodexRefreshHintsProvider,
   private val rolloutRefreshHintsProvider: CodexRefreshHintsProvider,
 ) : BaseAgentSessionSource(provider = AgentSessionProvider.CODEX, canReportExactThreadCount = false) {
+  private val readTracker = ConcurrentHashMap<String, Long>()
+  private val readStateUpdates = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+  @Volatile private var activeThreadId: String? = null
+
   constructor(
     backend: CodexSessionBackend = createDefaultCodexSessionBackend(),
     sharedAppServerService: SharedCodexAppServerService = service(),
@@ -53,6 +62,7 @@ internal class CodexSessionSource private constructor(
       backend.updates,
       appServerRefreshHintsProvider.updates,
       rolloutRefreshHintsProvider.updates,
+      readStateUpdates,
     )
 
   override val updateEvents: Flow<AgentSessionSourceUpdate>
@@ -60,17 +70,31 @@ internal class CodexSessionSource private constructor(
       backend.updates.map { AgentSessionSourceUpdate.THREADS_CHANGED },
       appServerRefreshHintsProvider.updates.map { AgentSessionSourceUpdate.HINTS_CHANGED },
       rolloutRefreshHintsProvider.updates.map { AgentSessionSourceUpdate.HINTS_CHANGED },
+      readStateUpdates.map { AgentSessionSourceUpdate.HINTS_CHANGED },
     )
 
+  override fun setActiveThreadId(threadId: String?) {
+    activeThreadId = threadId
+  }
+
+  override fun markThreadAsRead(threadId: String, updatedAt: Long) {
+    readTracker.merge(threadId, updatedAt, ::maxOf)
+    readStateUpdates.tryEmit(Unit)
+  }
+
   override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> {
-    return backend.listThreads(path = path, openProject = openProject).map { toAgentSessionThread(it) }
+    val threads = backend.listThreads(path = path, openProject = openProject)
+    trackActiveThreadRead(threads)
+    return threads.map(::toAgentSessionThread)
   }
 
   override suspend fun prefetchThreads(paths: List<String>): Map<String, List<AgentSessionThread>> {
     val prefetched = backend.prefetchThreads(paths)
     if (prefetched.isEmpty()) return emptyMap()
+
+    prefetched.values.forEach(::trackActiveThreadRead)
     return prefetched.mapValues { (_, threads) ->
-      threads.map { toAgentSessionThread(it) }
+      threads.map(::toAgentSessionThread)
     }
   }
 
@@ -86,17 +110,71 @@ internal class CodexSessionSource private constructor(
       paths = paths,
       knownThreadIdsByPath = knownThreadIdsByPath,
     )
-    return mergeCodexRefreshHints(
-      appServerHintsByPath = appServerHints,
-      rolloutHintsByPath = rolloutHints,
-    )
+    return filterCodexRefreshHints(
+      mergeCodexRefreshHints(
+        appServerHintsByPath = appServerHints,
+        rolloutHintsByPath = rolloutHints,
+      )
+    ).mapValues { (_, hints) ->
+      hints.toAgentSessionRefreshHints()
+    }
+  }
+
+  private fun trackActiveThreadRead(threads: Iterable<CodexBackendThread>) {
+    val currentActiveId = activeThreadId ?: return
+    for (thread in threads) {
+      if (thread.thread.id != currentActiveId) {
+        continue
+      }
+      readTracker.merge(thread.thread.id, thread.thread.updatedAt, ::maxOf)
+      return
+    }
+  }
+
+  private fun filterCodexRefreshHints(hintsByPath: Map<String, CodexRefreshHints>): Map<String, CodexRefreshHints> {
+    if (hintsByPath.isEmpty()) {
+      return emptyMap()
+    }
+
+    val currentActiveId = activeThreadId
+    val filtered = LinkedHashMap<String, CodexRefreshHints>(hintsByPath.size)
+    for ((path, hints) in hintsByPath) {
+      val filteredActivityHintsByThreadId = LinkedHashMap<String, CodexRefreshActivityHint>(hints.activityHintsByThreadId.size)
+      for ((threadId, hint) in hints.activityHintsByThreadId) {
+        if (currentActiveId == threadId && !hint.responseRequired) {
+          readTracker.merge(threadId, hint.updatedAt, ::maxOf)
+        }
+
+        if (shouldKeepRefreshHint(threadId = threadId, hint = hint)) {
+          filteredActivityHintsByThreadId[threadId] = hint
+        }
+      }
+
+      if (hints.rebindCandidates.isEmpty() && filteredActivityHintsByThreadId.isEmpty()) {
+        continue
+      }
+      filtered[path] = CodexRefreshHints(
+        rebindCandidates = hints.rebindCandidates,
+        activityHintsByThreadId = filteredActivityHintsByThreadId,
+      )
+    }
+    return filtered
+  }
+
+  private fun shouldKeepRefreshHint(threadId: String, hint: CodexRefreshActivityHint): Boolean {
+    if (hint.activity != AgentThreadActivity.UNREAD || hint.responseRequired) {
+      return true
+    }
+
+    val lastReadAt = readTracker[threadId] ?: return true
+    return hint.updatedAt > lastReadAt
   }
 }
 
 internal fun mergeCodexRefreshHints(
-  appServerHintsByPath: Map<String, AgentSessionRefreshHints>,
-  rolloutHintsByPath: Map<String, AgentSessionRefreshHints>,
-): Map<String, AgentSessionRefreshHints> {
+  appServerHintsByPath: Map<String, CodexRefreshHints>,
+  rolloutHintsByPath: Map<String, CodexRefreshHints>,
+): Map<String, CodexRefreshHints> {
   if (appServerHintsByPath.isEmpty()) {
     return rolloutHintsByPath
   }
@@ -104,7 +182,7 @@ internal fun mergeCodexRefreshHints(
     return appServerHintsByPath
   }
 
-  val merged = LinkedHashMap<String, AgentSessionRefreshHints>()
+  val merged = LinkedHashMap<String, CodexRefreshHints>()
   val allPaths = LinkedHashSet<String>(appServerHintsByPath.keys.size + rolloutHintsByPath.keys.size)
   allPaths.addAll(appServerHintsByPath.keys)
   allPaths.addAll(rolloutHintsByPath.keys)
@@ -116,36 +194,41 @@ internal fun mergeCodexRefreshHints(
       primary = appHints?.rebindCandidates.orEmpty(),
       fallback = rolloutHints?.rebindCandidates.orEmpty(),
     )
-    val mergedActivityByThreadId = LinkedHashMap<String, AgentThreadActivity>()
-    appHints?.activityByThreadId?.forEach { (threadId, activity) ->
-      mergedActivityByThreadId[threadId] = activity
+    val mergedActivityHintsByThreadId = LinkedHashMap<String, CodexRefreshActivityHint>()
+    appHints?.activityHintsByThreadId?.forEach { (threadId, hint) ->
+      mergedActivityHintsByThreadId[threadId] = hint
     }
-    rolloutHints?.activityByThreadId?.forEach { (threadId, activity) ->
+    rolloutHints?.activityHintsByThreadId?.forEach { (threadId, hint) ->
       if (shouldApplyRolloutActivityFallback(
-          currentActivity = mergedActivityByThreadId[threadId],
-          rolloutActivity = activity,
+          currentHint = mergedActivityHintsByThreadId[threadId],
+          rolloutHint = hint,
         )) {
         // Rollout fallback is intentionally narrow: it can raise stale API activity to unread.
-        mergedActivityByThreadId[threadId] = activity
+        mergedActivityHintsByThreadId[threadId] = hint
       }
     }
 
-    if (mergedRebindCandidates.isEmpty() && mergedActivityByThreadId.isEmpty()) {
+    if (mergedRebindCandidates.isEmpty() && mergedActivityHintsByThreadId.isEmpty()) {
       continue
     }
-    merged[path] = AgentSessionRefreshHints(
+    merged[path] = CodexRefreshHints(
       rebindCandidates = mergedRebindCandidates,
-      activityByThreadId = mergedActivityByThreadId,
+      activityHintsByThreadId = mergedActivityHintsByThreadId,
     )
   }
   return merged
 }
 
 private fun shouldApplyRolloutActivityFallback(
-  currentActivity: AgentThreadActivity?,
-  rolloutActivity: AgentThreadActivity,
+  currentHint: CodexRefreshActivityHint?,
+  rolloutHint: CodexRefreshActivityHint,
 ): Boolean {
-  return currentActivity == null || rolloutActivity == AgentThreadActivity.UNREAD
+  return when {
+    currentHint == null -> true
+    currentHint.responseRequired -> false
+    rolloutHint.activity != AgentThreadActivity.UNREAD -> false
+    else -> true
+  }
 }
 
 private fun mergeRebindCandidates(

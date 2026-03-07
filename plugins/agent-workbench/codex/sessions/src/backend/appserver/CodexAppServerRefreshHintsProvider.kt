@@ -7,14 +7,13 @@ import com.intellij.agent.workbench.codex.common.CodexAppServerNotificationKind
 import com.intellij.agent.workbench.codex.common.CodexAppServerStartedThread
 import com.intellij.agent.workbench.codex.common.CodexThreadActivitySnapshot
 import com.intellij.agent.workbench.codex.common.normalizeRootPath
-import com.intellij.agent.workbench.codex.sessions.backend.CodexActivitySignals
+import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshActivityHint
+import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHints
 import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHintsProvider
-import com.intellij.agent.workbench.codex.sessions.backend.resolveCodexSessionActivity
+import com.intellij.agent.workbench.codex.sessions.backend.isResponseRequired
 import com.intellij.agent.workbench.codex.sessions.backend.toAgentThreadActivity
-import com.intellij.agent.workbench.codex.sessions.backend.toCodexActivitySignals
-import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.codex.sessions.backend.toCodexSessionActivity
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.FlowPreview
@@ -69,7 +68,7 @@ internal class CodexAppServerRefreshHintsProvider(
   override suspend fun prefetchRefreshHints(
     paths: List<String>,
     knownThreadIdsByPath: Map<String, Set<String>>,
-  ): Map<String, AgentSessionRefreshHints> {
+  ): Map<String, CodexRefreshHints> {
     val normalizedPathToOriginal = normalizePaths(paths)
     if (normalizedPathToOriginal.isEmpty()) {
       return emptyMap()
@@ -111,18 +110,18 @@ internal class CodexAppServerRefreshHintsProvider(
       }.awaitAll().associate { it }
     }
 
-    val hintsByPath = LinkedHashMap<String, AgentSessionRefreshHints>()
+    val hintsByPath = LinkedHashMap<String, CodexRefreshHints>()
     var resolvedActivityThreadCount = 0
     var rebindCandidateCount = 0
     for ((normalizedPath, originalPath) in normalizedPathToOriginal) {
       val idsForPath = normalizedKnownThreadIdsByPath[normalizedPath].orEmpty()
-      val activityByThreadId = LinkedHashMap<String, AgentThreadActivity>()
+      val activityHintsByThreadId = LinkedHashMap<String, CodexRefreshActivityHint>()
       for (threadId in idsForPath) {
         if (isPendingThreadId(threadId)) {
           continue
         }
         val snapshot = snapshotsByThreadId[threadId] ?: continue
-        activityByThreadId[threadId] = snapshot.toAgentThreadActivity()
+        activityHintsByThreadId[threadId] = snapshot.toRefreshActivityHint()
         resolvedActivityThreadCount += 1
       }
 
@@ -131,12 +130,12 @@ internal class CodexAppServerRefreshHintsProvider(
         .map { hint -> buildRebindCandidate(hint.startedThread, snapshotsByThreadId[hint.startedThread.id]) }
       rebindCandidateCount += rebindCandidates.size
 
-      if (activityByThreadId.isEmpty() && rebindCandidates.isEmpty()) {
+      if (activityHintsByThreadId.isEmpty() && rebindCandidates.isEmpty()) {
         continue
       }
-      hintsByPath[originalPath] = AgentSessionRefreshHints(
+      hintsByPath[originalPath] = CodexRefreshHints(
         rebindCandidates = rebindCandidates,
-        activityByThreadId = activityByThreadId,
+        activityHintsByThreadId = activityHintsByThreadId,
       )
     }
 
@@ -279,7 +278,7 @@ private fun buildRebindCandidate(
   startedThread: CodexAppServerStartedThread,
   snapshot: CodexThreadActivitySnapshot?,
 ): AgentSessionRebindCandidate {
-  val activity = snapshot?.toAgentThreadActivity() ?: startedThread.toAgentThreadActivity()
+  val activity = (snapshot?.toCodexSessionActivity() ?: startedThread.toCodexSessionActivity()).toAgentThreadActivity()
   val updatedAt = snapshot?.updatedAt ?: startedThread.updatedAt
   return AgentSessionRebindCandidate(
     threadId = startedThread.id,
@@ -289,20 +288,12 @@ private fun buildRebindCandidate(
   )
 }
 
-private fun CodexAppServerStartedThread.toAgentThreadActivity(): AgentThreadActivity {
-  return resolveCodexSessionActivity(
-    CodexActivitySignals(
-      statusKind = statusKind,
-      activeFlags = activeFlags.toSet(),
-      hasUnreadAssistantMessage = false,
-      isReviewing = false,
-      hasInProgressTurn = false,
-    )
-  ).toAgentThreadActivity()
-}
-
-private fun CodexThreadActivitySnapshot.toAgentThreadActivity(): AgentThreadActivity {
-  return resolveCodexSessionActivity(toCodexActivitySignals()).toAgentThreadActivity()
+private fun CodexThreadActivitySnapshot.toRefreshActivityHint(): CodexRefreshActivityHint {
+  return CodexRefreshActivityHint(
+    activity = toCodexSessionActivity().toAgentThreadActivity(),
+    updatedAt = updatedAt,
+    responseRequired = activeFlags.isResponseRequired(),
+  )
 }
 
 private fun isPendingThreadId(threadId: String): Boolean {

@@ -7,14 +7,14 @@ targets:
   - ../sessions/src/CodexSessionsCompatibility.kt
   - ../sessions/src/AgentSessionModels.kt
   - ../sessions/src/service/AgentSessionRefreshCoordinator.kt
-  - ../codex/sessions/testSrc/*.kt
+  - ../codex/sessions/testSrc/**/*.kt
   - ../sessions/testSrc/CodexAppServerClientTest.kt
 ---
 
 # Codex Sessions Rollout Source
 
 Status: Draft
-Date: 2026-03-04
+Date: 2026-03-07
 
 ## Summary
 Define Codex thread-list behavior where discovery and primary status projection come from app-server (`thread/list` + `thread/read`), while rollout parsing is used only as a refresh-hints fallback (pending-tab rebinding and unread uplift). This spec owns backend selection, app-server sub-agent mapping, rollout hint wiring, and Codex activity derivation.
@@ -61,7 +61,37 @@ Define Codex thread-list behavior where discovery and primary status projection 
 - Rollout hints must be consumed for pending-tab rebinding and Codex activity projection; rollout-discovered IDs must not create persisted thread rows.
   [@test] ../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
-- App-server refresh hints must map `thread/read` snapshot status and flags to Codex activity states (`unread`, `reviewing`, `processing`, `ready`).
+- App-server refresh hints must map `thread/read` snapshot status and flags to Codex activity states (`unread`, `reviewing`, `processing`, `ready`) using the normalization rules below.
+  [@test] ../codex/sessions/testSrc/backend/CodexSessionActivityResolverTest.kt
+  [@test] ../codex/sessions/testSrc/backend/appserver/CodexAppServerRefreshHintsProviderTest.kt
+
+- Workbench must treat `CodexThreadStatusKind` as raw provider status, not as UI activity.
+  - `NOT_LOADED`: thread is not currently loaded by the app-server.
+  - `IDLE`: thread is loaded and has no in-progress turn or action-required flag.
+  - `ACTIVE`: thread is loaded and either running or blocked on approval/user input.
+  - `SYSTEM_ERROR`: thread is loaded and currently in a provider runtime failure state.
+  - `UNKNOWN`: thread status was absent or unrecognized and must be treated as a non-fatal fallback state.
+  [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
+
+- Workbench must treat `CodexThreadActiveFlag` as response-required raw signals only.
+  - `WAITING_ON_APPROVAL` and `WAITING_ON_USER_INPUT` both mean action is required outside the running agent turn.
+  - `responseRequired` must be `true` only for those two flags.
+  [@test] ../codex/sessions/testSrc/backend/CodexSessionActivityResolverTest.kt
+  [@test] ../codex/sessions/testSrc/CodexSessionSourceRefreshHintsTest.kt
+
+- `REVIEWING` must remain a derived workbench activity only; it must come from snapshot or rollout review-mode signals and never from raw `CodexThreadStatusKind`.
+  [@test] ../codex/sessions/testSrc/backend/CodexSessionActivityResolverTest.kt
+
+- Activity normalization from Codex raw signals must be:
+  - `UNREAD` when `hasUnreadAssistantMessage = true` or active flags indicate response required.
+  - `REVIEWING` when `isReviewing = true` and unread is not already selected.
+  - `PROCESSING` when `hasInProgressTurn = true` or `statusKind = ACTIVE` without response-required flags.
+  - `READY` otherwise, including `IDLE`, `SYSTEM_ERROR`, `NOT_LOADED`, and `UNKNOWN`.
+  [@test] ../codex/sessions/testSrc/backend/CodexSessionActivityResolverTest.kt
+  [@test] ../codex/sessions/testSrc/backend/appserver/CodexAppServerRefreshHintsProviderTest.kt
+
+- `thread/started` fallback and `thread/status/changed` notifications must use only raw `statusKind` and `activeFlags`; snapshot-only promotions (`hasUnreadAssistantMessage`, `isReviewing`, `hasInProgressTurn`) require `thread/read` or rollout fallback.
+  [@test] ../codex/sessions/testSrc/backend/CodexSessionActivityResolverTest.kt
   [@test] ../codex/sessions/testSrc/backend/appserver/CodexAppServerRefreshHintsProviderTest.kt
 
 - For Codex activity projection, app-server activity must remain primary for overlapping thread ids; rollout activity may apply only when app-server activity is missing or rollout reports `UNREAD`.
@@ -109,8 +139,15 @@ Define Codex thread-list behavior where discovery and primary status projection 
 - If no qualifying title is found, fallback title must be `Thread <id-prefix>`.
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
-- Activity precedence must be `unread > reviewing > processing > ready`.
+- Activity precedence must be `unread > reviewing > processing > ready`; this order must apply consistently to direct snapshot resolution, started-thread fallback, folded parent/sub-agent aggregation, and rollout unread uplift merge.
+  [@test] ../codex/sessions/testSrc/backend/CodexSessionActivityResolverTest.kt
+  [@test] ../codex/sessions/testSrc/CodexAppServerSessionBackendTest.kt
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+  [@test] ../codex/sessions/testSrc/CodexSessionSourceRefreshHintsTest.kt
+
+- `SYSTEM_ERROR` must not introduce a separate session-tree activity state; it normalizes to `ready` unless a higher-priority unread, reviewing, or processing signal exists, and provider failures continue to surface through existing warning and error channels.
+  [@test] ../codex/sessions/testSrc/backend/CodexSessionActivityResolverTest.kt
+  [@test] ../codex/sessions/testSrc/CodexAppServerSessionBackendTest.kt
 
 - Session-tree indicator colors for Codex activity must map to:
   - unread: `#4DA3FF`,
@@ -133,7 +170,7 @@ Define Codex thread-list behavior where discovery and primary status projection 
   [@test] ../codex/sessions/testSrc/CodexSessionsPagingLogicTest.kt
 
 ## User Experience
-- Codex activity indicators should reflect app-server `thread/read` status, with rollout hints used only for missing-thread fallback and unread uplift.
+- Codex activity indicators should reflect normalized workbench activity derived from app-server `thread/read` snapshots; raw Codex status kinds are not shown directly, and rollout hints are used only for missing-thread fallback and unread uplift.
 - Archive action remains available for Codex threads discovered from rollout source.
 - Archive undo should be available when Codex unarchive is supported by the active provider bridge.
 
@@ -142,7 +179,7 @@ Define Codex thread-list behavior where discovery and primary status projection 
 - `response_item` contributes to activity timing but not title source extraction.
 - Branch value comes from rollout session metadata when present; no branch fallback store is used.
 - Listing stays app-server-backed; write operations (`thread/start`, `thread/archive`, `thread/unarchive`, persistence calls) remain app-server RPC.
-- Refresh hints merge app-server and rollout signals, with rollout able to fill missing activity or raise activity to unread.
+- Refresh hints merge app-server and rollout signals after app-server raw status normalization, with rollout able to fill missing activity or raise activity to unread.
 
 ## Error Handling
 - Invalid override values must not disable Codex listing; fallback to app-server must apply.
@@ -154,6 +191,8 @@ Define Codex thread-list behavior where discovery and primary status projection 
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexRolloutSessionBackendFileWatchIntegrationTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexRolloutSessionsWatcherTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexSessionBackendSelectorTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivityResolverTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexAppServerSessionBackendTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.backend.appserver.CodexAppServerRefreshHintsProviderTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexSessionSourceRefreshHintsTest'`
 

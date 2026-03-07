@@ -264,7 +264,7 @@ class CodexAppServerSessionBackendTest {
             parentThread(id = "ready-unknown", cwd = cwd, updatedAt = 120L, statusKind = CodexThreadStatusKind.UNKNOWN),
             parentThread(id = "processing-active", cwd = cwd, updatedAt = 130L, statusKind = CodexThreadStatusKind.ACTIVE),
             parentThread(
-              id = "reviewing-approval",
+              id = "unread-approval",
               cwd = cwd,
               updatedAt = 140L,
               statusKind = CodexThreadStatusKind.ACTIVE,
@@ -289,7 +289,7 @@ class CodexAppServerSessionBackendTest {
       assertThat(byId.getValue("ready-system-error").activity).isEqualTo(CodexSessionActivity.READY)
       assertThat(byId.getValue("ready-unknown").activity).isEqualTo(CodexSessionActivity.READY)
       assertThat(byId.getValue("processing-active").activity).isEqualTo(CodexSessionActivity.PROCESSING)
-      assertThat(byId.getValue("reviewing-approval").activity).isEqualTo(CodexSessionActivity.REVIEWING)
+      assertThat(byId.getValue("unread-approval").activity).isEqualTo(CodexSessionActivity.UNREAD)
       assertThat(byId.getValue("unread-input").activity).isEqualTo(CodexSessionActivity.UNREAD)
     }
   }
@@ -304,18 +304,18 @@ class CodexAppServerSessionBackendTest {
       val backend = CodexAppServerSessionBackend(
         listThreadsForProject = {
           listOf(
-            parentThread(id = "parent-review", cwd = cwd, updatedAt = 200L),
+            parentThread(id = "parent-unread-approval", cwd = cwd, updatedAt = 200L),
             subAgentThread(
               id = "child-processing",
               cwd = cwd,
-              parentThreadId = "parent-review",
+              parentThreadId = "parent-unread-approval",
               updatedAt = 210L,
               activeFlags = emptyList(),
             ),
             subAgentThread(
-              id = "child-review",
+              id = "child-approval",
               cwd = cwd,
-              parentThreadId = "parent-review",
+              parentThreadId = "parent-unread-approval",
               updatedAt = 220L,
               activeFlags = listOf(CodexThreadActiveFlag.WAITING_ON_APPROVAL),
             ),
@@ -342,8 +342,8 @@ class CodexAppServerSessionBackendTest {
       val byId = backend.listThreads(path = projectDir.toString(), openProject = null)
         .associateBy { it.thread.id }
 
-      assertThat(byId.keys).containsExactlyInAnyOrder("parent-review", "parent-unread")
-      assertThat(byId.getValue("parent-review").activity).isEqualTo(CodexSessionActivity.REVIEWING)
+      assertThat(byId.keys).containsExactlyInAnyOrder("parent-unread-approval", "parent-unread")
+      assertThat(byId.getValue("parent-unread-approval").activity).isEqualTo(CodexSessionActivity.UNREAD)
       assertThat(byId.getValue("parent-unread").activity).isEqualTo(CodexSessionActivity.UNREAD)
     }
   }

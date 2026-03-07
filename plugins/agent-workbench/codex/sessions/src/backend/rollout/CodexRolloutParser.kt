@@ -78,6 +78,7 @@ internal class CodexRolloutParser(
           gitBranch = state.gitBranch,
         ),
         activity = activity,
+        requiresResponse = hasPendingUserInput,
       ),
     )
   }

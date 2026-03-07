@@ -14,7 +14,7 @@ targets:
 # Agent Threads Tool Window
 
 Status: Draft
-Date: 2026-03-06
+Date: 2026-03-07
 
 ## Summary
 Define Agent Threads as a provider-agnostic, project-scoped browser implemented with native IntelliJ Swing tree APIs (`StructureTreeModel` + `AsyncTreeModel` + `Tree`).
@@ -216,8 +216,8 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 - Open project rows must be visually emphasized via stronger title weight.
 - Closed project rows must remain readable but visually de-emphasized relative to open rows.
 - Default project visibility must include all open projects and up to 3 closed recent projects; additional closed projects appear behind `More`.
-- Thread rows use a provider-aware leading icon; non-`READY` activities add an overlay badge, and rows show a right-aligned relative activity time.
-- Thread rows must not render inline status text; status remains available through the activity badge and thread tooltip status line.
+- Thread rows use a provider-aware leading icon; only normalized attention-needed activity (`UNREAD`) adds an overlay badge, and rows show a right-aligned relative activity time.
+- Thread rows must not render inline provider status text; badges and tooltip status lines must use normalized `AgentThreadActivity` values (`READY`, `PROCESSING`, `REVIEWING`, `UNREAD`).
 - Thread-row archive context menu applies to current multi-selection when invoked from a selected thread and shows `Archive Selected (N)` when `N > 1`.
 - Single-click on normal rows selects only; open happens on Enter or double-click.
 - On rows that are both openable and parents, double-click opens/focuses instead of expanding/collapsing.
@@ -232,8 +232,9 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 - Open projects may use long-lived provider sessions where available.
 - Closed project/worktree loads may use path-scoped short-lived provider calls.
 - Aggregation normalizes provider differences (paging/count capability) into one state model.
+- Session UI consumes normalized `AgentThreadActivity`; provider raw statuses remain backend inputs and must not create extra tree activity states.
 - Project-row branch visibility uses a local default-branch heuristic (`main`, `master`) and does not require remote default-branch lookup.
-- Codex refresh hints are app-server-first (`thread/read` snapshots), with rollout parser hints used only for pending-rebind fallback and unread uplift.
+- Codex refresh hints are app-server-first (`thread/read` snapshots), with raw Codex status normalized before UI projection and rollout parser hints used only for pending-rebind fallback and unread uplift.
 - Sessions service must not impose global CLI home overrides; provider clients own process environment rules.
 - UI-layer migration to Swing does not change backend/service contracts.
 
