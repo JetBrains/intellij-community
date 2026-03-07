@@ -1,3 +1,28 @@
+*:org.jetbrains.jewel.markdown.DimensionSize
+*f:org.jetbrains.jewel.markdown.DimensionSize$Percent
+- org.jetbrains.jewel.markdown.DimensionSize
+- bsf:box-impl(I):org.jetbrains.jewel.markdown.DimensionSize$Percent
+- s:constructor-impl(I):I
+- equals(java.lang.Object):Z
+- s:equals-impl(I,java.lang.Object):Z
+- sf:equals-impl0(I,I):Z
+- f:getValue():I
+- hashCode():I
+- s:hashCode-impl(I):I
+- s:toString-impl(I):java.lang.String
+- bf:unbox-impl():I
+*f:org.jetbrains.jewel.markdown.DimensionSize$Pixels
+- org.jetbrains.jewel.markdown.DimensionSize
+- bsf:box-impl(I):org.jetbrains.jewel.markdown.DimensionSize$Pixels
+- s:constructor-impl(I):I
+- equals(java.lang.Object):Z
+- s:equals-impl(I,java.lang.Object):Z
+- sf:equals-impl0(I,I):Z
+- f:getValue():I
+- hashCode():I
+- s:hashCode-impl(I):I
+- s:toString-impl(I):java.lang.String
+- bf:unbox-impl():I
 *:org.jetbrains.jewel.markdown.InlineMarkdown
 *f:org.jetbrains.jewel.markdown.InlineMarkdown$Code
 - org.jetbrains.jewel.markdown.InlineMarkdown
@@ -41,12 +66,16 @@
 - org.jetbrains.jewel.markdown.WithInlineMarkdown
 - sf:$stable:I
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.util.List):V
+- <init>(java.lang.String,java.lang.String,java.lang.String,org.jetbrains.jewel.markdown.DimensionSize,org.jetbrains.jewel.markdown.DimensionSize,java.util.List):V
+- b:<init>(java.lang.String,java.lang.String,java.lang.String,org.jetbrains.jewel.markdown.DimensionSize,org.jetbrains.jewel.markdown.DimensionSize,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - <init>(java.lang.String,java.lang.String,java.lang.String,org.jetbrains.jewel.markdown.InlineMarkdown[]):V
 - equals(java.lang.Object):Z
 - f:getAlt():java.lang.String
+- f:getHeight():org.jetbrains.jewel.markdown.DimensionSize
 - getInlineContent():java.util.List
 - f:getSource():java.lang.String
 - f:getTitle():java.lang.String
+- f:getWidth():org.jetbrains.jewel.markdown.DimensionSize
 - hashCode():I
 *f:org.jetbrains.jewel.markdown.InlineMarkdown$Link
 - org.jetbrains.jewel.markdown.InlineMarkdown
