@@ -190,7 +190,27 @@ public class ComboBoxMetrics(
     public val popupContentPadding: PaddingValues,
     public val borderWidth: Dp,
     public val maxPopupHeight: Dp,
+    public val maxPopupRowCount: Int,
 ) {
+    public constructor(
+        arrowAreaSize: DpSize,
+        minSize: DpSize,
+        cornerSize: CornerSize,
+        contentPadding: PaddingValues,
+        popupContentPadding: PaddingValues,
+        borderWidth: Dp,
+        maxPopupHeight: Dp,
+    ) : this(
+        arrowAreaSize,
+        minSize,
+        cornerSize,
+        contentPadding,
+        popupContentPadding,
+        borderWidth,
+        maxPopupHeight,
+        8, // For backwards compatibility
+    )
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -204,6 +224,7 @@ public class ComboBoxMetrics(
         if (popupContentPadding != other.popupContentPadding) return false
         if (borderWidth != other.borderWidth) return false
         if (maxPopupHeight != other.maxPopupHeight) return false
+        if (maxPopupRowCount != other.maxPopupRowCount) return false
 
         return true
     }
@@ -216,6 +237,7 @@ public class ComboBoxMetrics(
         result = 31 * result + popupContentPadding.hashCode()
         result = 31 * result + borderWidth.hashCode()
         result = 31 * result + maxPopupHeight.hashCode()
+        result = 31 * result + maxPopupRowCount.hashCode()
         return result
     }
 
@@ -228,6 +250,7 @@ public class ComboBoxMetrics(
             "popupContentPadding=$popupContentPadding, " +
             "borderWidth=$borderWidth, " +
             "maxPopupHeight=$maxPopupHeight" +
+            "maxPopupRowCount=$maxPopupRowCount" +
             ")"
     }
 

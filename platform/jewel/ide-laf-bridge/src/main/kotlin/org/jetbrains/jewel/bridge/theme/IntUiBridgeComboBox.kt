@@ -65,6 +65,7 @@ internal fun readDefaultComboBoxStyle(): ComboBoxStyle {
                     ),
                 borderWidth = borderWidth,
                 maxPopupHeight = Dp.Unspecified,
+                maxPopupRowCount = 8,
             ),
         icons = ComboBoxIcons(chevronDown = AllIconsKeys.General.ChevronDown),
     )
