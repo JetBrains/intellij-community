@@ -599,8 +599,9 @@ open class IDETestContext(
       logOutput("License is not provided")
       return this
     }
-    this.onRemDevContext {
-      return frontendIDEContext.setLicense(license)
+    onRemDevContext {
+      frontendIDEContext.setLicense(license)
+      return this
     }
 
     val licenseKeyFileName: String = when (this.ide.productCode) {
