@@ -187,7 +187,7 @@
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyDocStringHighlightingAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyDefinitionsHighlightingAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyLocalVariableHighlightingAnnotator"/>
-    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyCompositeAnnotator"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyFStringFormatSpecAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyFunctionHighlightingAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyBuiltinHighlightingAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.UnsupportedFeatures"/>
