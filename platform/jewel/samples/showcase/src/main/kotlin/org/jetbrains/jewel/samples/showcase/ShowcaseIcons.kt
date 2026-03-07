@@ -23,6 +23,7 @@ public object ShowcaseIcons {
         public val button: PathIconKey = PathIconKey("icons/components/button.svg", ShowcaseIcons::class.java)
         public val checkbox: PathIconKey = PathIconKey("icons/components/checkBox.svg", ShowcaseIcons::class.java)
         public val comboBox: PathIconKey = PathIconKey("icons/components/comboBox.svg", ShowcaseIcons::class.java)
+        public val gotIt: PathIconKey = PathIconKey("icons/components/balloon.svg", ShowcaseIcons::class.java)
         public val links: PathIconKey = PathIconKey("icons/components/links.svg", ShowcaseIcons::class.java)
         public val menu: PathIconKey = PathIconKey("icons/components/menu.svg", ShowcaseIcons::class.java)
         public val progressBar: PathIconKey = PathIconKey("icons/components/progressbar.svg", ShowcaseIcons::class.java)

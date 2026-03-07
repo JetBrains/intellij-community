@@ -30,16 +30,23 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.ui.GotItTextBuilder
+import com.intellij.ui.GotItTooltip
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.COLUMNS_SHORT
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -60,6 +67,7 @@ import org.jetbrains.jewel.ui.disabledAppearance
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.theme.textAreaStyle
 import org.jetbrains.jewel.ui.typography
+import java.net.URL
 import javax.swing.BoxLayout
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JLabel
@@ -82,6 +90,8 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
       textAreasRow()
       separator()
       comboBoxesRow()
+      separator()
+      gotItTooltipRow()
       separator()
     }
       .apply {
@@ -214,7 +224,8 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
     }
 
     row(DevkitComposeBundle.message("jewel.swing.titles.swing")) {
-      text(DevkitComposeBundle.message("jewel.swing.label.this.will.wrap.over.couple.rows"), maxLineLength = 30).component.font = JBFont.h1()
+      text(DevkitComposeBundle.message("jewel.swing.label.this.will.wrap.over.couple.rows"), maxLineLength = 30).component.font =
+        JBFont.h1()
     }
     row(DevkitComposeBundle.message("jewel.swing.titles.compose")) {
       compose {
@@ -505,6 +516,102 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
         )
       }
     }
+      .layout(RowLayout.PARENT_GRID)
+  }
+
+  private fun Panel.gotItTooltipRow() {
+    row(DevkitComposeBundle.message("jewel.swing.gotit.label")) {
+      var currentBalloonPosition = 0
+      val balloonPosition = listOf(Balloon.Position.atLeft, Balloon.Position.atRight, Balloon.Position.above, Balloon.Position.below)
+      var currentGotItPosition = 0
+      val gotItPosition = listOf(GotItTooltip.LEFT_MIDDLE, GotItTooltip.RIGHT_MIDDLE, GotItTooltip.TOP_MIDDLE, GotItTooltip.BOTTOM_MIDDLE,
+                                 GotItTooltip.BOTTOM_LEFT)
+      panel {
+        row {
+          panel {
+            row {
+              text("Current balloon position: ${balloonPosition[currentBalloonPosition % balloonPosition.size]}")
+            }
+            row {
+              button("change balloon position") { currentBalloonPosition++ }
+            }
+          }
+        }
+        row {
+          panel {
+            row {
+              text("Current got it position: ${gotItPosition[currentGotItPosition % gotItPosition.size]}")
+            }
+            row {
+              button("change got it position") { currentGotItPosition++ }
+            }
+          }
+        }
+        row {
+          text("what")
+        }
+        row {
+          text("what")
+        }
+        row {
+          text("what")
+        }
+        row {
+          text("what")
+        }
+        row {
+          text("what")
+        }
+        row {
+          text("what")
+        }
+        row {
+          text("what")
+        }
+      }
+      button(DevkitComposeBundle.message("jewel.swing.button.swing.button")) {}
+        .align(AlignY.CENTER)
+        .applyToComponent {
+
+          this.addActionListener {
+            val randomId = java.util.UUID.randomUUID().toString()
+            GotItTooltip(randomId, "This is a got it tooltip")
+              .withHeader("This is a header")
+              .withPosition(balloonPosition[currentBalloonPosition % balloonPosition.size])
+              .withShowCount(999)
+              .withLink("Yeah", {})
+              .withBrowserLink("Open browser link", URL("https://www.jetbrains.com/help/idea/getting-started.html"))
+              .show(this, gotItPosition[currentGotItPosition % gotItPosition.size])
+          }
+        }
+
+
+      compose {
+        val metrics = remember(JBFont.label(), LocalDensity.current) { getFontMetrics(JBFont.label()) }
+        val charWidth =
+          remember(metrics.widths) {
+            // Same logic as in JTextArea
+            metrics.charWidth('m')
+          }
+        val lineHeight = metrics.height
+
+        val width = remember(charWidth) { (COLUMNS_SHORT * charWidth) }
+        val height = remember(lineHeight) { (3 * lineHeight) }
+
+        val contentPadding = JewelTheme.textAreaStyle.metrics.contentPadding
+        val state = rememberTextFieldState("Hello")
+        TextArea(
+          state = state,
+          modifier =
+            Modifier.size(
+              width = width.dp + contentPadding.horizontal(LocalLayoutDirection.current),
+              height = height.dp + contentPadding.vertical(),
+            ),
+        )
+      }
+    }
+      .topGap(TopGap.MEDIUM)
+      .bottomGap(BottomGap.MEDIUM)
       .layout(RowLayout.PARENT_GRID)
   }
 
