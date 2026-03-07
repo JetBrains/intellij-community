@@ -33,6 +33,10 @@ internal class SessionTreeCellRenderer(
   private val providerIconProvider: (AgentSessionProvider) -> Icon? = ::providerIcon,
   private val duplicateProjectNamesProvider: () -> Set<String> = { emptySet() },
 ) : ColoredTreeCellRenderer() {
+  private fun shouldBadgeThreadActivity(activity: AgentThreadActivity): Boolean {
+    return activity == AgentThreadActivity.UNREAD
+  }
+
   private data class SharedTimeColumnWidthCacheKey(
     val fontHash: Int,
     val labelsSignature: @NlsSafe String,
@@ -275,7 +279,7 @@ internal class SessionTreeCellRenderer(
     val key = ThreadCompositeIconCacheKey(provider = provider, activity = activity, statusRgb = statusColor.rgb)
     return threadCompositeIconCache.getOrPut(key) {
       val baseIcon = scaledProviderIcon(provider)
-      if (activity == AgentThreadActivity.READY) baseIcon else IconManager.getInstance().withIconBadge(baseIcon, statusColor)
+      if (!shouldBadgeThreadActivity(activity)) baseIcon else IconManager.getInstance().withIconBadge(baseIcon, statusColor)
     }
   }
 }

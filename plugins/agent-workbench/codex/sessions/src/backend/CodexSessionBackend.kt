@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.emptyFlow
 data class CodexBackendThread(
   val thread: CodexThread,
   val activity: CodexSessionActivity = CodexSessionActivity.READY,
+  val requiresResponse: Boolean = false,
 )
 
 enum class CodexSessionActivity {

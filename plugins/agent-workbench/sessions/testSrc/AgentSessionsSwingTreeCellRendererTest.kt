@@ -29,12 +29,15 @@ import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.IconManager
 import com.intellij.ui.render.RenderingHelper
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.awt.Rectangle
 import javax.swing.JTree
@@ -42,6 +45,16 @@ import javax.swing.tree.TreePath
 
 @TestApplication
 class AgentSessionsSwingTreeCellRendererTest {
+  @BeforeEach
+  fun setUp() {
+    IconManager.activate(null)
+  }
+
+  @AfterEach
+  fun tearDown() {
+    IconManager.deactivate()
+  }
+
   @Test
   fun treeRenderingPropertiesEnableShrinkAndDisableExpandableItems() {
     val tree = Tree()
@@ -486,38 +499,82 @@ class AgentSessionsSwingTreeCellRendererTest {
   }
 
   @Test
-  fun threadRowsDoNotBadgeProviderIconWhenActivityIsReady() {
+  fun threadRowsBadgeProviderIconOnlyForUnreadActivity() {
     val now = 14L * 24L * 60L * 60L * 1000L
     val tree = createTree(width = 420)
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
-    val thread = AgentSessionThread(
+    val readyThread = AgentSessionThread(
       provider = AgentSessionProvider.CODEX,
-      id = "thread-1",
+      id = "thread-ready",
       title = "How much time",
       updatedAt = 0L,
       archived = false,
       activity = AgentThreadActivity.READY,
     )
-    val providerBaseIcon = EmptyIcon.create(12, 12)
-    val threadId = SessionTreeId.Thread(project.path, thread.provider, thread.id)
+    val providerBaseIcon = AllIcons.Toolwindows.ToolWindowMessages
+    val readyThreadId = SessionTreeId.Thread(project.path, readyThread.provider, readyThread.id)
     val renderer = SessionTreeCellRenderer(
       nowProvider = { now },
       rowActionsProvider = { _, _, _ -> null },
       nodeResolver = { id ->
-        if (id == threadId) SessionTreeNode.Thread(project, thread) else null
+        when (id) {
+          readyThreadId -> SessionTreeNode.Thread(project, readyThread)
+          SessionTreeId.Thread(project.path, AgentSessionProvider.CODEX, "thread-processing") -> SessionTreeNode.Thread(
+            project,
+            readyThread.copy(id = "thread-processing", activity = AgentThreadActivity.PROCESSING),
+          )
+          SessionTreeId.Thread(project.path, AgentSessionProvider.CODEX, "thread-reviewing") -> SessionTreeNode.Thread(
+            project,
+            readyThread.copy(id = "thread-reviewing", activity = AgentThreadActivity.REVIEWING),
+          )
+          SessionTreeId.Thread(project.path, AgentSessionProvider.CODEX, "thread-unread") -> SessionTreeNode.Thread(
+            project,
+            readyThread.copy(id = "thread-unread", activity = AgentThreadActivity.UNREAD),
+          )
+          else -> null
+        }
       },
       providerIconProvider = { providerBaseIcon },
     )
 
-    renderer.getTreeCellRendererComponent(tree, descriptorValue(threadId), false, false, true, 0, false)
+    renderer.getTreeCellRendererComponent(tree, descriptorValue(readyThreadId), false, false, true, 0, false)
+    val readyIcon = renderer.icon
+    assertThat(readyIcon).isNotNull()
+    readyIcon ?: return
 
-    val renderedIcon = renderer.icon
-    assertThat(renderedIcon).isNotNull()
-    renderedIcon ?: return
+    renderer.getTreeCellRendererComponent(
+      tree,
+      descriptorValue(SessionTreeId.Thread(project.path, AgentSessionProvider.CODEX, "thread-processing")),
+      false,
+      false,
+      true,
+      0,
+      false,
+    )
+    assertThat(renderer.icon).isSameAs(readyIcon)
 
-    val scaledBaseClass = IconUtil.toSize(providerBaseIcon, JBUI.scale(12), JBUI.scale(12)).javaClass
-    assertThat(renderedIcon.javaClass).isEqualTo(scaledBaseClass)
-    assertThat(renderer.getCharSequence(true).toString()).doesNotContain("\u25CF")
+    renderer.getTreeCellRendererComponent(
+      tree,
+      descriptorValue(SessionTreeId.Thread(project.path, AgentSessionProvider.CODEX, "thread-reviewing")),
+      false,
+      false,
+      true,
+      0,
+      false,
+    )
+    assertThat(renderer.icon).isSameAs(readyIcon)
+
+    renderer.getTreeCellRendererComponent(
+      tree,
+      descriptorValue(SessionTreeId.Thread(project.path, AgentSessionProvider.CODEX, "thread-unread")),
+      false,
+      false,
+      true,
+      0,
+      false,
+    )
+    assertThat(renderer.icon).isNotNull()
+    assertThat(renderer.icon).isNotSameAs(readyIcon)
   }
 
   @Test

@@ -389,11 +389,15 @@ class AgentChatFileEditorProviderTest {
   }
 
   @Test
-  fun usesUnbadgedProviderIconForReadyAndBadgedIconForNonReadyActivity() {
+  fun usesBadgedProviderIconOnlyForUnreadActivity() {
     val readyIcon = providerIcon(threadIdentity = "codex:thread-1", threadActivity = AgentThreadActivity.READY)
+    val processingIcon = providerIcon(threadIdentity = "codex:thread-1", threadActivity = AgentThreadActivity.PROCESSING)
+    val reviewingIcon = providerIcon(threadIdentity = "codex:thread-1", threadActivity = AgentThreadActivity.REVIEWING)
     val unreadIcon = providerIcon(threadIdentity = "codex:thread-1", threadActivity = AgentThreadActivity.UNREAD)
 
     assertThat(readyIcon).isEqualTo(AgentWorkbenchCommonIcons.Codex_14x14)
+    assertThat(processingIcon).isEqualTo(readyIcon)
+    assertThat(reviewingIcon).isEqualTo(readyIcon)
     assertThat(unreadIcon).isNotEqualTo(readyIcon)
   }
 }

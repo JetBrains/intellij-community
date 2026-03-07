@@ -20,6 +20,10 @@ private data class AgentChatIconKey(
 
 private val ICON_CACHE = ConcurrentHashMap<AgentChatIconKey, Icon>()
 
+private fun shouldBadgeThreadActivity(activity: AgentThreadActivity): Boolean {
+  return activity == AgentThreadActivity.UNREAD
+}
+
 @TestOnly
 internal fun clearAgentChatIconCacheForTests() {
   ICON_CACHE.clear()
@@ -44,6 +48,6 @@ internal fun providerIcon(
       "claude" -> AgentWorkbenchCommonIcons.Claude_14x14
       else -> AllIcons.Toolwindows.ToolWindowMessages
     }
-    if (threadActivity == AgentThreadActivity.READY) baseIcon else IconManager.getInstance().withIconBadge(baseIcon, threadActivity.badgeColor())
+    if (!shouldBadgeThreadActivity(threadActivity)) baseIcon else IconManager.getInstance().withIconBadge(baseIcon, threadActivity.badgeColor())
   }
 }

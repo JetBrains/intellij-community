@@ -4,13 +4,13 @@ description: Coverage ownership matrix for Swing-based Agent Threads, shared con
 targets:
   - ../sessions/testSrc/*.kt
   - ../chat/testSrc/*.kt
-  - ../codex/sessions/testSrc/*.kt
+  - ../codex/sessions/testSrc/**/*.kt
 ---
 
 # Agent Threads Testing
 
 Status: Draft
-Date: 2026-03-05
+Date: 2026-03-07
 
 ## Summary
 Define required coverage ownership for Agent Workbench specs after the hard Swing cutover.
@@ -43,7 +43,7 @@ This file does not redefine runtime behavior; it maps each contract area to requ
 - Dedicated-frame coverage must include gear toggle setting wiring, routing behavior in both modes, and dedicated-project filtering.
 - Claude quota hint coverage must include visibility/acknowledgement gating and toggle action registration.
 - Chat-editor lifecycle coverage must include protocol v2 restore, state round-trip, lazy initialization, tab title refresh, icon mapping fallback, and archive-triggered close+forget.
-- Codex backend coverage must include rollout parser/title/activity behavior, watcher behavior (path-scoped + overflow/full-rescan), app-server sub-agent hierarchy/orphan handling, app-server-only backend selection, app-server `thread/read` status-to-activity mapping, app-server-first refresh-hints merge with rollout unread fallback, and paging no-progress guard behavior.
+- Codex backend coverage must include raw status-kind parsing, rollout parser/title/activity behavior, watcher behavior (path-scoped + overflow/full-rescan), app-server sub-agent hierarchy/orphan handling, app-server-only backend selection, app-server `thread/read` status-and-flag normalization, response-required/read-tracker behavior, started-thread fallback mapping, app-server-first refresh-hints merge with rollout unread fallback, and paging no-progress guard behavior.
 - Codex app-server contract tests must run against mock backend in all environments and real backend when CLI is available.
 - Real-backend contract assertions must be invariant-based (ordering and archived consistency) and must not depend on user-specific thread IDs.
 - Mock-backend contract assertions must additionally validate deterministic fixture IDs, archive/unarchive mutation behavior, and idle-timeout lazy restart.
@@ -61,7 +61,7 @@ This file does not redefine runtime behavior; it maps each contract area to requ
 - Dedicated frame: `AgentSessionsGearActionsTest`, `AgentSessionsOpenModeRoutingTest`
 - Quota hint gating: `AgentSessionsSwingQuotaHintTest`, `AgentSessionsClaudeQuotaWidgetActionRegistrationTest`
 - Chat tab lifecycle: `AgentChatEditorServiceTest`, `AgentChatFileEditorProviderTest`, `AgentChatTabSelectionServiceTest`
-- Codex rollout/app-server selection + hint wiring: `CodexRolloutSessionBackendTest`, `CodexRolloutSessionBackendFileWatchIntegrationTest`, `CodexRolloutSessionsWatcherTest`, `CodexAppServerSessionBackendTest`, `CodexAppServerRefreshHintsProviderTest`, `CodexSessionSourceRefreshHintsTest`, `CodexSessionBackendSelectorTest`, `CodexSessionsPagingLogicTest`, `AgentSessionRefreshCoordinatorTest`
+- Codex rollout/app-server selection + hint wiring: `CodexRolloutSessionBackendTest`, `CodexRolloutSessionBackendFileWatchIntegrationTest`, `CodexRolloutSessionsWatcherTest`, `CodexSessionActivityResolverTest`, `CodexAppServerSessionBackendTest`, `CodexAppServerRefreshHintsProviderTest`, `CodexSessionSourceRefreshHintsTest`, `CodexSessionBackendSelectorTest`, `CodexSessionsPagingLogicTest`, `AgentSessionRefreshCoordinatorTest`
 - Codex app-server contract: `CodexAppServerClientTest`
 
 ## Contract Suite
