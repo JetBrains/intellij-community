@@ -101,7 +101,7 @@ public abstract class YAMLBlockScalarTextEvaluator<T extends YAMLBlockScalarImpl
   /**
    * See <a href="http://www.yaml.org/spec/1.2/spec.html#id2794534">8.1.1.2. Block Chomping Indicator</a>
    */
-  protected final @NotNull ChompingIndicator getChompingIndicator() {
+  protected @NotNull ChompingIndicator getChompingIndicator() {
     ASTNode headerNode = myHost.getNthContentTypeChild(0);
     assert headerNode != null;
 
