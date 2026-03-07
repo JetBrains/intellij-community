@@ -7,6 +7,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import org.jetbrains.jewel.intui.standalone.ScrollbarHelper
 import org.jetbrains.jewel.ui.component.styling.ScrollbarColors
 import org.jetbrains.jewel.ui.component.styling.ScrollbarMetrics
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
@@ -49,15 +50,15 @@ public fun ScrollbarStyle.Companion.dark(): ScrollbarStyle =
  *
  * @param colors The color scheme for the scrollbar.
  * @param metrics The sizing and shape properties.
- * @param trackClickBehavior The behavior when clicking on the track.
- * @param scrollbarVisibility The visibility behavior of the scrollbar.
+ * @param trackClickBehavior The behavior when clicking on the track. Defaults to reading from system preferences.
+ * @param scrollbarVisibility The visibility behavior of the scrollbar. Defaults to reading from system preferences.
  * @return A [ScrollbarStyle] configured for light theme on macOS.
  */
 public fun ScrollbarStyle.Companion.macOsLight(
     colors: ScrollbarColors = ScrollbarColors.macOsLight(),
     metrics: ScrollbarMetrics = ScrollbarMetrics.macOs(),
-    trackClickBehavior: TrackClickBehavior = TrackClickBehavior.NextPage,
-    scrollbarVisibility: ScrollbarVisibility = WhenScrolling.default(),
+    trackClickBehavior: TrackClickBehavior = ScrollbarHelper.trackClickBehavior,
+    scrollbarVisibility: ScrollbarVisibility = ScrollbarHelper.scrollbarVisibilityStyle,
 ): ScrollbarStyle =
     ScrollbarStyle(
         colors = colors,
@@ -71,15 +72,15 @@ public fun ScrollbarStyle.Companion.macOsLight(
  *
  * @param colors The color scheme for the scrollbar.
  * @param metrics The sizing and shape properties.
- * @param trackClickBehavior The behavior when clicking on the track.
- * @param scrollbarVisibility The visibility behavior of the scrollbar.
+ * @param trackClickBehavior The behavior when clicking on the track. Defaults to reading from system preferences.
+ * @param scrollbarVisibility The visibility behavior of the scrollbar. Defaults to reading from system preferences.
  * @return A [ScrollbarStyle] configured for dark theme on macOS.
  */
 public fun ScrollbarStyle.Companion.macOsDark(
     colors: ScrollbarColors = ScrollbarColors.macOsDark(),
     metrics: ScrollbarMetrics = ScrollbarMetrics.macOs(),
-    trackClickBehavior: TrackClickBehavior = TrackClickBehavior.NextPage,
-    scrollbarVisibility: ScrollbarVisibility = WhenScrolling.default(),
+    trackClickBehavior: TrackClickBehavior = ScrollbarHelper.trackClickBehavior,
+    scrollbarVisibility: ScrollbarVisibility = ScrollbarHelper.scrollbarVisibilityStyle,
 ): ScrollbarStyle =
     ScrollbarStyle(
         colors = colors,

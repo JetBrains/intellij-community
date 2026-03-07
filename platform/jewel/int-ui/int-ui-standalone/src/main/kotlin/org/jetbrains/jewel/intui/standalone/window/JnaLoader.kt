@@ -1,16 +1,21 @@
-package org.jetbrains.jewel.window.utils
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.jewel.intui.standalone.window
 
 import com.sun.jna.Native
 import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.system.measureTimeMillis
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jewel.foundation.InternalJewelApi
 
-internal object JnaLoader {
+@ApiStatus.Internal
+@InternalJewelApi
+public object JnaLoader {
     private var loaded: Boolean? = null
     private val logger = Logger.getLogger(JnaLoader::class.java.simpleName)
 
     @Synchronized
-    fun load() {
+    public fun load() {
         if (loaded == null) {
             loaded = false
             try {
@@ -32,7 +37,7 @@ internal object JnaLoader {
     }
 
     @get:Synchronized
-    val isLoaded: Boolean
+    public val isLoaded: Boolean
         get() {
             if (loaded == null) {
                 load()

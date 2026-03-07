@@ -15,6 +15,7 @@ public object ShowcaseIcons {
     public val themeSystem: PathIconKey = PathIconKey("icons/systemTheme.svg", ShowcaseIcons::class.java)
     public val welcome: PathIconKey = PathIconKey("icons/meetNewUi.svg", ShowcaseIcons::class.java)
     public val sunny: PathIconKey = PathIconKey("icons/sunny.svg", ShowcaseIcons::class.java)
+    public val terminal: PathIconKey = PathIconKey("icons/terminal.svg", ShowcaseIcons::class.java)
 
     public object Components {
         public val banners: PathIconKey = PathIconKey("icons/components/banners.svg", ShowcaseIcons::class.java)
