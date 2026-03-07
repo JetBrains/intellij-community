@@ -46,10 +46,9 @@ import org.jetbrains.jewel.foundation.JewelFlags
  *   consume the event.
  * @param onKeyEvent Callback invoked for key events after they are dispatched to children. Return `true` to consume the
  *   event.
- * @param cornerSize The size of the popup's rounded corners. This value gets ignored if the popup's implementation used
- *   is the default Compose popup.
  * @param content The composable content to be displayed inside the popup.
  */
+@Deprecated(message = "Please use the overload with windowShape.", level = DeprecationLevel.HIDDEN)
 @Composable
 public fun Popup(
     popupPositionProvider: PopupPositionProvider,
@@ -59,9 +58,87 @@ public fun Popup(
     onKeyEvent: ((KeyEvent) -> Boolean)? = null,
     content: @Composable () -> Unit,
 ) {
-    Popup(popupPositionProvider, ZeroCornerSize, onDismissRequest, properties, onPreviewKeyEvent, onKeyEvent, content)
+    Popup(
+        popupPositionProvider,
+        ZeroCornerSize,
+        onDismissRequest,
+        properties,
+        onPreviewKeyEvent,
+        onKeyEvent,
+        null,
+        content,
+    )
 }
 
+/**
+ * Displays a popup with the provided content at a position determined by the given [PopupPositionProvider].
+ *
+ * This function behavior is influenced by the 'jewel.customPopupRender' system property. If set to `true`, it allows
+ * using a custom popup rendering implementation; otherwise, it defaults to the standard Compose popup.
+ *
+ * If running on the IntelliJ Platform and setting the [JewelFlags.useCustomPopupRenderer] property to `true`, the
+ * plugin will use the JBPopup implementation for rendering popups. This is useful if your composable content is small,
+ * but you need to display a popup that is bigger than the component size.
+ *
+ * @param popupPositionProvider Determines the position of the popup on the screen.
+ * @param onDismissRequest Callback invoked when a dismiss event is requested, typically when the popup is dismissed.
+ * @param properties Configuration parameters for the popup, such as whether it should consume touch events or focusable
+ *   behavior.
+ * @param onPreviewKeyEvent Callback invoked for key events before they are dispatched to children. Return `true` to
+ *   consume the event.
+ * @param onKeyEvent Callback invoked for key events after they are dispatched to children. Return `true` to consume the
+ *   event.
+ * @param windowShape An optional factory that produces the [java.awt.Shape] used to clip the native popup window. The
+ *   lambda receives the window's measured size in AWT logical units and must return a shape in the same coordinate
+ *   system. Only applied by JDialogRenderer when `useCustomPopupRenderer = true`; all other renderers ignore it. When
+ *   null, window clipping falls back to the `cornerSize`-based rounded corners (via JBR) if the platform supports it.
+ * @param content The composable content to be displayed inside the popup.
+ */
+@Composable
+public fun Popup(
+    popupPositionProvider: PopupPositionProvider,
+    onDismissRequest: (() -> Unit)? = null,
+    properties: PopupProperties = PopupProperties(),
+    onPreviewKeyEvent: ((KeyEvent) -> Boolean)? = null,
+    onKeyEvent: ((KeyEvent) -> Boolean)? = null,
+    windowShape: ((IntSize) -> java.awt.Shape)? = null,
+    content: @Composable () -> Unit,
+) {
+    Popup(
+        popupPositionProvider,
+        ZeroCornerSize,
+        onDismissRequest,
+        properties,
+        onPreviewKeyEvent,
+        onKeyEvent,
+        windowShape,
+        content,
+    )
+}
+
+/**
+ * Displays a popup with the provided content at a position determined by the given [PopupPositionProvider].
+ *
+ * This function behavior is influenced by the 'jewel.customPopupRender' system property. If set to `true`, it allows
+ * using a custom popup rendering implementation; otherwise, it defaults to the standard Compose popup.
+ *
+ * If running on the IntelliJ Platform and setting the [JewelFlags.useCustomPopupRenderer] property to `true`, the
+ * plugin will use the JBPopup implementation for rendering popups. This is useful if your composable content is small,
+ * but you need to display a popup that is bigger than the component size.
+ *
+ * @param popupPositionProvider Determines the position of the popup on the screen.
+ * @param cornerSize The size of the popup's rounded corners. This value gets ignored if the popup's implementation used
+ *   is the default Compose popup.
+ * @param onDismissRequest Callback invoked when a dismiss event is requested, typically when the popup is dismissed.
+ * @param properties Configuration parameters for the popup, such as whether it should consume touch events or focusable
+ *   behavior.
+ * @param onPreviewKeyEvent Callback invoked for key events before they are dispatched to children. Return `true` to
+ *   consume the event.
+ * @param onKeyEvent Callback invoked for key events after they are dispatched to children. Return `true` to consume the
+ *   event.
+ * @param content The composable content to be displayed inside the popup.
+ */
+@Deprecated(message = "Please use the overload with windowShape.", level = DeprecationLevel.HIDDEN)
 @Composable
 public fun Popup(
     popupPositionProvider: PopupPositionProvider,
@@ -80,6 +157,67 @@ public fun Popup(
             onPreviewKeyEvent = onPreviewKeyEvent,
             onKeyEvent = onKeyEvent,
             cornerSize = cornerSize,
+            windowShape = null,
+            content = content,
+        )
+    } else {
+        ComposePopup(
+            popupPositionProvider = popupPositionProvider,
+            onDismissRequest = onDismissRequest,
+            properties = properties,
+            onPreviewKeyEvent = onPreviewKeyEvent,
+            onKeyEvent = onKeyEvent,
+            content = content,
+        )
+    }
+}
+
+/**
+ * Displays a popup with the provided content at a position determined by the given [PopupPositionProvider].
+ *
+ * This function behavior is influenced by the 'jewel.customPopupRender' system property. If set to `true`, it allows
+ * using a custom popup rendering implementation; otherwise, it defaults to the standard Compose popup.
+ *
+ * If running on the IntelliJ Platform and setting the [JewelFlags.useCustomPopupRenderer] property to `true`, the
+ * plugin will use the JBPopup implementation for rendering popups. This is useful if your composable content is small,
+ * but you need to display a popup that is bigger than the component size.
+ *
+ * @param popupPositionProvider Determines the position of the popup on the screen.
+ * @param cornerSize The size of the popup's rounded corners. This value gets ignored if the popup's implementation used
+ *   is the default Compose popup.
+ * @param onDismissRequest Callback invoked when a dismiss event is requested, typically when the popup is dismissed.
+ * @param properties Configuration parameters for the popup, such as whether it should consume touch events or focusable
+ *   behavior.
+ * @param onPreviewKeyEvent Callback invoked for key events before they are dispatched to children. Return `true` to
+ *   consume the event.
+ * @param onKeyEvent Callback invoked for key events after they are dispatched to children. Return `true` to consume the
+ *   event.
+ * @param windowShape An optional factory that produces the [java.awt.Shape] used to clip the native popup window. The
+ *   lambda receives the window's measured size in AWT logical units and must return a shape in the same coordinate
+ *   system. Only applied by JDialogRenderer when `useCustomPopupRenderer = true`; all other renderers ignore it. When
+ *   null, window clipping falls back to the `cornerSize`-based rounded corners (via JBR) if the platform supports it.
+ * @param content The composable content to be displayed inside the popup.
+ */
+@Composable
+public fun Popup(
+    popupPositionProvider: PopupPositionProvider,
+    cornerSize: CornerSize,
+    onDismissRequest: (() -> Unit)? = null,
+    properties: PopupProperties = PopupProperties(),
+    onPreviewKeyEvent: ((KeyEvent) -> Boolean)? = null,
+    onKeyEvent: ((KeyEvent) -> Boolean)? = null,
+    windowShape: ((IntSize) -> java.awt.Shape)? = null,
+    content: @Composable () -> Unit,
+) {
+    if (JewelFlags.useCustomPopupRenderer) {
+        LocalPopupRenderer.current.Popup(
+            popupPositionProvider = popupPositionProvider,
+            properties = properties,
+            onDismissRequest = onDismissRequest,
+            onPreviewKeyEvent = onPreviewKeyEvent,
+            onKeyEvent = onKeyEvent,
+            cornerSize = cornerSize,
+            windowShape = windowShape,
             content = content,
         )
     } else {
@@ -110,6 +248,7 @@ public interface PopupRenderer {
         onPreviewKeyEvent: ((KeyEvent) -> Boolean)?,
         onKeyEvent: ((KeyEvent) -> Boolean)?,
         cornerSize: CornerSize,
+        windowShape: ((IntSize) -> java.awt.Shape)? = null,
         content: @Composable () -> Unit,
     )
 
@@ -134,6 +273,7 @@ private object DefaultPopupRenderer : PopupRenderer {
         onPreviewKeyEvent: ((KeyEvent) -> Boolean)?,
         onKeyEvent: ((KeyEvent) -> Boolean)?,
         cornerSize: CornerSize,
+        windowShape: ((IntSize) -> java.awt.Shape)?,
         content: @Composable () -> Unit,
     ) {
         ComposePopup(
