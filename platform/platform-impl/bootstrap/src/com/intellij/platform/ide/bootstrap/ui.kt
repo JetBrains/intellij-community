@@ -34,6 +34,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.icons.impl.intellij.IntelliJIconManager
+import org.jetbrains.icons.impl.intellij.rendering.IntelliJIconRendererManager
+import org.jetbrains.icons.impl.intellij.rendering.images.IntelliJImageResourceProvider
+import org.jetbrains.icons.rendering.IconRendererManager
+import org.jetbrains.icons.rendering.ImageResourceProvider
 import java.awt.Font
 import java.awt.GraphicsEnvironment
 import java.awt.Toolkit
@@ -48,7 +53,11 @@ internal suspend fun initUi(initAwtToolkitJob: Job, isHeadless: Boolean, asyncSc
   // IdeaLaF uses AllIcons - icon manager must be activated
   if (!isHeadless) {
     span("icon manager activation") {
-      IconManager.activate(CoreIconManager())
+      val iconManager = CoreIconManager()
+      IconManager.activate(iconManager)
+    }
+    span("new icon manager activation") {
+      IntelliJIconManager.activate()
     }
   }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.compose.showcase
 
+import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -8,7 +9,9 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,8 +21,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.withFrameNanos
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -31,18 +37,27 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import org.jetbrains.icons.modifiers.IconModifier
+import org.jetbrains.icons.modifiers.fillMaxSize
+import org.jetbrains.icons.swing.toNewIcon
 import org.jetbrains.jewel.bridge.compose
+import org.jetbrains.jewel.ui.component.Checkbox
+import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.Slider
 import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.icon.IconKey
+import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import java.awt.BorderLayout
 import java.util.LinkedList
 import javax.swing.BoxLayout
 import javax.swing.ButtonGroup
+import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -69,7 +84,7 @@ private class MyDialog(project: Project?, dialogTitle: String) :
   DialogWrapper(project, null, true, IdeModalityType.MODELESS, true) {
   val centerPanelWrapper = JPanel(BorderLayout())
 
-  enum class TestCase { TextAnimation, Canvas }
+  enum class TestCase { TextAnimation, Canvas, Icons }
   enum class Mode { Swing, AWT }
 
   var mode = Mode.Swing
@@ -94,17 +109,22 @@ private class MyDialog(project: Project?, dialogTitle: String) :
     ButtonGroup().let { group ->
       val textAnimationButton = JRadioButton("Text animation")
       val canvasButton = JRadioButton("Canvas")
+      val iconsButton = JRadioButton("Icons")
       group.add(textAnimationButton)
       group.add(canvasButton)
+      group.add(iconsButton)
 
       textAnimationButton.isSelected = testCase == TestCase.TextAnimation
       canvasButton.isSelected = testCase == TestCase.Canvas
+      iconsButton.isSelected = testCase == TestCase.Icons
 
       textAnimationButton.addActionListener { testCase = TestCase.TextAnimation; initCentralPanel() }
       canvasButton.addActionListener { testCase = TestCase.Canvas; initCentralPanel() }
+      iconsButton.addActionListener { testCase = TestCase.Icons; initCentralPanel() }
 
       controlPanel.add(canvasButton)
       controlPanel.add(textAnimationButton)
+      controlPanel.add(iconsButton)
     }
 
     controlPanel.add(JSeparator(JSeparator.VERTICAL))
@@ -139,6 +159,7 @@ private class MyDialog(project: Project?, dialogTitle: String) :
     val comp = when (testCase) {
       TestCase.TextAnimation -> createTextAnimationComponent()
       TestCase.Canvas -> createClockComponent()
+      TestCase.Icons -> createIconsComponent()
     }
 
     centerPanelWrapper.add(comp)
@@ -146,6 +167,111 @@ private class MyDialog(project: Project?, dialogTitle: String) :
     centerPanelWrapper.repaint()
 
     System.setProperty("compose.swing.render.on.graphics", swingModeValue)
+  }
+}
+
+private fun createIconsComponent(): JComponent {
+  return compose {
+    var minFps by remember { mutableStateOf(Int.MAX_VALUE) }
+    var maxFps by remember { mutableStateOf(Int.MIN_VALUE) }
+    val frameTimes = remember { LinkedList<Long>() }
+    SideEffect {
+      frameTimes.add(System.nanoTime())
+      frameTimes.removeAll { it < System.nanoTime() - 1_000_000_000 }
+    }
+
+    val transition = rememberInfiniteTransition("coso")
+    val iconSize by transition.animateFloat(
+      30f,
+      50f,
+      infiniteRepeatable(tween(durationMillis = 1000, easing = EaseInOut), repeatMode = RepeatMode.Reverse),
+    )
+
+    Column {
+      val fps = frameTimes.size
+      if (fps > maxFps) {
+        maxFps = fps
+      }
+      if (fps < minFps) {
+        minFps = fps
+      }
+      Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+        Text(
+          text = "FPS: $fps",
+          modifier = Modifier.padding(10.dp),
+          fontSize = 25.sp,
+          color = Color.Red
+        )
+        Text(
+          text = "MIN: $minFps",
+          modifier = Modifier.padding(10.dp),
+          fontSize = 25.sp,
+          color = Color.Red
+        )
+        Text(
+          text = "MAX: $maxFps",
+          modifier = Modifier.padding(10.dp),
+          fontSize = 25.sp,
+          color = Color.Red
+        )
+      }
+
+      var useComposeIcons by remember { mutableStateOf(false) }
+      Row {
+        Text("Use Compose Icons: ")
+        Checkbox(useComposeIcons, {
+          maxFps = Int.MIN_VALUE
+          minFps = Int.MAX_VALUE
+          useComposeIcons = it
+        })
+      }
+
+      Column(modifier = Modifier.fillMaxSize().clipToBounds(), verticalArrangement = Arrangement.Center) {
+        if (useComposeIcons) {
+          val icons = remember {
+            val icons = mutableListOf<IconKey>()
+            for (nested in AllIconsKeys::class.java.nestMembers) {
+              val fields = nested.declaredFields.filter { it.type.name.contains("IconKey") }
+              icons.addAll(fields.map { it.get(null) as IconKey })
+            }
+            icons
+          }
+
+          var i = 1
+          for (x in 0..30) {
+            Row {
+              for (y in 0..30) {
+                Column(modifier = Modifier.size(55.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                  val icon = icons[i++ % icons.size]
+                  Icon(icon, "Balloon", modifier = Modifier.size(iconSize.dp).padding(10.dp))
+                }
+              }
+            }
+          }
+        } else {
+          val icons = remember {
+            val icons = mutableListOf<org.jetbrains.icons.Icon>()
+            for (nested in AllIcons::class.java.nestMembers) {
+              val fields = nested.declaredFields.filter { it.type.name.contains("Icon") }
+              icons.addAll(fields.map { (it.get(null) as Icon).toNewIcon(IconModifier.fillMaxSize()) })
+            }
+            icons
+          }
+
+          var i = 1
+          for (x in 0..30) {
+            Row {
+              for (y in 0..30) {
+                Column(modifier = Modifier.size(55.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                  val icon = icons[i++ % icons.size]
+                  Icon(icon, "Balloon", modifier = Modifier.size(iconSize.dp).padding(10.dp))
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }
 

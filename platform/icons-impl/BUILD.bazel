@@ -1,0 +1,44 @@
+### auto-generated section `build intellij.platform.icons.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "icons-impl",
+  module_name = "intellij.platform.icons.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/icons-api",
+    "//platform/icons-api/rendering",
+    "//libraries/kotlinx/serialization/core",
+    "@lib//:jetbrains-annotations",
+  ],
+  exports = [
+    "//platform/icons-api",
+    "//platform/icons-api/rendering",
+  ]
+)
+
+jvm_library(
+  name = "icons-impl_test_lib",
+  module_name = "intellij.platform.icons.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//platform/icons-api",
+    "//platform/icons-api:icons-api_test_lib",
+    "//platform/icons-api/rendering",
+    "//platform/icons-api/rendering:rendering_test_lib",
+  ],
+  runtime_deps = [
+    ":icons-impl",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/icons-api:icons-api_test_lib",
+    "//platform/icons-api/rendering:rendering_test_lib",
+    "//platform/icons",
+    "//platform/icons:icons_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.icons.impl` end

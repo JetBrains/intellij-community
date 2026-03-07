@@ -50,6 +50,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers.IO
@@ -84,8 +85,9 @@ import java.awt.event.KeyEvent
 import java.io.File
 import javax.swing.KeyStroke
 
+
 @Composable
-internal fun ComposeShowcase() {
+internal fun ComposeShowcase(project: Project) {
   Column(
     verticalArrangement = Arrangement.spacedBy(15.dp),
     modifier = Modifier.padding(10.dp)
@@ -110,6 +112,7 @@ internal fun ComposeShowcase() {
           TextFieldWithButton()
           TooltipAreaSimple()
           InfiniteAnimation()
+          Icons(project)
         }
       }
     }
