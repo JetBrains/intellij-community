@@ -168,6 +168,16 @@ object PyTypeUtil {
     else
       StreamEx.of(this)
 
+  /**
+   * Returns a sequence of all the union members if it's a union type, or of only the type itself otherwise.
+   */
+  @JvmStatic
+  fun PyType?.asUnionSequence(): Sequence<PyType?> =
+    if (this is PyUnionType || this is PyUnsafeUnionType)
+      members.asSequence()
+    else
+      sequenceOf(this)
+
   @JvmStatic
   @Contract("null -> null; !null -> !null")
   fun PyType?.notNullToRef(): Ref<PyType>? =
