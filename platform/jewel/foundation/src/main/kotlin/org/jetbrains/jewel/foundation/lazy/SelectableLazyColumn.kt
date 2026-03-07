@@ -29,6 +29,7 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.focused
@@ -43,13 +44,164 @@ import org.jetbrains.jewel.foundation.lazy.tree.DefaultSelectableLazyColumnEvent
 import org.jetbrains.jewel.foundation.lazy.tree.DefaultSelectableLazyColumnKeyActions
 import org.jetbrains.jewel.foundation.lazy.tree.KeyActions
 import org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions
+import org.jetbrains.jewel.foundation.util.JewelLogger
 
+private val logger = JewelLogger.getInstance("org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn")
+
+/**
+ * Displays a lazily composed column with single-selection behavior.
+ *
+ * Use this API with [SingleSelectionLazyListState], usually created via [rememberSingleSelectionLazyListState].
+ *
+ * @param modifier The [Modifier] applied to the underlying [LazyColumn] container.
+ * @param state The single-selection state holder for scroll and selection behavior.
+ * @param contentPadding Inner padding applied around the content.
+ * @param reverseLayout Whether items are laid out in reverse order (bottom-to-top).
+ * @param onSelectedIndexesChange Callback invoked when selected indices change after initial composition.
+ * @param verticalArrangement Vertical arrangement of items. Defaults to [Arrangement.Top] unless [reverseLayout] is
+ *   `true`, in which case it defaults to [Arrangement.Bottom].
+ * @param horizontalAlignment Horizontal alignment for items in the column.
+ * @param flingBehavior Fling behavior used by the underlying [LazyColumn].
+ * @param keyActions Keyboard interaction handlers used for selection/navigation behavior.
+ * @param pointerEventActions Pointer interaction handlers used for selection behavior.
+ * @param interactionSource Optional [MutableInteractionSource] to observe focus/interaction state. If `null`, an
+ *   internal source is created.
+ * @param content The list content declared in [SelectableLazyListScope].
+ */
 @Composable
-@Deprecated("Use SelectableLazyColumn with 'interactionSource' parameter instead", level = DeprecationLevel.HIDDEN)
+public fun SingleSelectionLazyColumn(
+    modifier: Modifier = Modifier,
+    state: SingleSelectionLazyListState = rememberSingleSelectionLazyListState(),
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    reverseLayout: Boolean = false,
+    onSelectedIndexesChange: (List<Int>) -> Unit = {},
+    verticalArrangement: Arrangement.Vertical = if (!reverseLayout) Arrangement.Top else Arrangement.Bottom,
+    horizontalAlignment: Alignment.Horizontal = Alignment.Start,
+    flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
+    keyActions: KeyActions = DefaultSelectableLazyColumnKeyActions,
+    pointerEventActions: PointerEventActions = DefaultSelectableLazyColumnEventAction(),
+    interactionSource: MutableInteractionSource? = null,
+    content: SelectableLazyListScope.() -> Unit,
+) {
+    SelectableLazyColumnImpl(
+        modifier = modifier,
+        selectionMode = SelectionMode.Single,
+        state = state.delegate,
+        contentPadding = contentPadding,
+        reverseLayout = reverseLayout,
+        onSelectedIndexesChange = onSelectedIndexesChange,
+        verticalArrangement = verticalArrangement,
+        horizontalAlignment = horizontalAlignment,
+        flingBehavior = flingBehavior,
+        keyActions = keyActions,
+        pointerEventActions = pointerEventActions,
+        interactionSource = interactionSource,
+        content = content,
+    )
+}
+
+/**
+ * Displays a lazily composed column with multiple-selection behavior.
+ *
+ * Use this API with [MultiSelectionLazyListState], usually created via [rememberMultiSelectionLazyListState].
+ *
+ * @param modifier The [Modifier] applied to the underlying [LazyColumn] container.
+ * @param state The multi-selection state holder for scroll and selection behavior.
+ * @param contentPadding Inner padding applied around the content.
+ * @param reverseLayout Whether items are laid out in reverse order (bottom-to-top).
+ * @param onSelectedIndexesChange Callback invoked when selected indices change after initial composition.
+ * @param verticalArrangement Vertical arrangement of items. Defaults to [Arrangement.Top] unless [reverseLayout] is
+ *   `true`, in which case it defaults to [Arrangement.Bottom].
+ * @param horizontalAlignment Horizontal alignment for items in the column.
+ * @param flingBehavior Fling behavior used by the underlying [LazyColumn].
+ * @param keyActions Keyboard interaction handlers used for selection/navigation behavior.
+ * @param pointerEventActions Pointer interaction handlers used for selection behavior.
+ * @param interactionSource Optional [MutableInteractionSource] to observe focus/interaction state. If `null`, an
+ *   internal source is created.
+ * @param content The list content declared in [SelectableLazyListScope].
+ */
+@Composable
+public fun MultiSelectionLazyColumn(
+    modifier: Modifier = Modifier,
+    state: MultiSelectionLazyListState = rememberMultiSelectionLazyListState(),
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    reverseLayout: Boolean = false,
+    onSelectedIndexesChange: (List<Int>) -> Unit = {},
+    verticalArrangement: Arrangement.Vertical = if (!reverseLayout) Arrangement.Top else Arrangement.Bottom,
+    horizontalAlignment: Alignment.Horizontal = Alignment.Start,
+    flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
+    keyActions: KeyActions = DefaultSelectableLazyColumnKeyActions,
+    pointerEventActions: PointerEventActions = DefaultSelectableLazyColumnEventAction(),
+    interactionSource: MutableInteractionSource? = null,
+    content: SelectableLazyListScope.() -> Unit,
+) {
+    SelectableLazyColumnImpl(
+        modifier = modifier,
+        selectionMode = SelectionMode.Multiple,
+        state = state.delegate,
+        contentPadding = contentPadding,
+        reverseLayout = reverseLayout,
+        onSelectedIndexesChange = onSelectedIndexesChange,
+        verticalArrangement = verticalArrangement,
+        horizontalAlignment = horizontalAlignment,
+        flingBehavior = flingBehavior,
+        keyActions = keyActions,
+        pointerEventActions = pointerEventActions,
+        interactionSource = interactionSource,
+        content = content,
+    )
+}
+
+/** A composable that displays a scrollable and selectable list of items in a column arrangement. */
+@Composable
+@Deprecated(
+    message =
+        "Migrate to SingleSelectionLazyColumn or MultiSelectionLazyColumn and use the matching " +
+            "rememberSingleSelectionLazyListState(...) or rememberMultiSelectionLazyListState(...)."
+)
 public fun SelectableLazyColumn(
     modifier: Modifier = Modifier,
     selectionMode: SelectionMode = SelectionMode.Multiple,
-    state: SelectableLazyListState = rememberSelectableLazyListState(),
+    state: SelectableLazyListState = rememberSelectableLazyListState(selectionMode = selectionMode),
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    reverseLayout: Boolean = false,
+    onSelectedIndexesChange: (List<Int>) -> Unit = {},
+    verticalArrangement: Arrangement.Vertical = if (!reverseLayout) Arrangement.Top else Arrangement.Bottom,
+    horizontalAlignment: Alignment.Horizontal = Alignment.Start,
+    flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
+    keyActions: KeyActions = DefaultSelectableLazyColumnKeyActions,
+    pointerEventActions: PointerEventActions = DefaultSelectableLazyColumnEventAction(),
+    interactionSource: MutableInteractionSource? = null,
+    content: SelectableLazyListScope.() -> Unit,
+) {
+    SelectableLazyColumnImpl(
+        modifier = modifier,
+        selectionMode = selectionMode,
+        state = state,
+        contentPadding = contentPadding,
+        reverseLayout = reverseLayout,
+        onSelectedIndexesChange = onSelectedIndexesChange,
+        verticalArrangement = verticalArrangement,
+        horizontalAlignment = horizontalAlignment,
+        flingBehavior = flingBehavior,
+        keyActions = keyActions,
+        pointerEventActions = pointerEventActions,
+        interactionSource = interactionSource,
+        content = content,
+    )
+}
+
+@Composable
+@Deprecated(
+    message =
+        "Migrate to SingleSelectionLazyColumn or MultiSelectionLazyColumn and use the matching " +
+            "rememberSingleSelectionLazyListState(...) or rememberMultiSelectionLazyListState(...).",
+    level = DeprecationLevel.HIDDEN,
+)
+public fun SelectableLazyColumn(
+    modifier: Modifier = Modifier,
+    selectionMode: SelectionMode = SelectionMode.Multiple,
+    state: SelectableLazyListState = rememberSelectableLazyListState(selectionMode = selectionMode),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     reverseLayout: Boolean = false,
     onSelectedIndexesChange: (List<Int>) -> Unit = {},
@@ -77,12 +229,39 @@ public fun SelectableLazyColumn(
     )
 }
 
-/** A composable that displays a scrollable and selectable list of items in a column arrangement. */
+/**
+ * A composable function that implements a lazy column with selection capabilities. This method allows multiple or
+ * single item selection based on the specified selection mode and offers advanced configuration like content alignment,
+ * key action handling, pointer event handling, and state management.
+ *
+ * @param modifier A [Modifier] that will be applied to the lazy column.
+ * @param selectionMode The mode of selection, which can be [SelectionMode.Multiple] for multi-selection or
+ *   [SelectionMode.None] to disable selection.
+ * @param state The state object defining the current selection and configuration of the lazy column. Use
+ *   [rememberSelectableLazyListState] to create or remember the default state if none is provided.
+ * @param contentPadding The padding values for the content displayed inside the lazy column.
+ * @param reverseLayout A boolean indicating whether to reverse the layout of the column (i.e., bottom-to-top).
+ * @param onSelectedIndexesChange A callback invoked when the selected indices change. It provides the list of currently
+ *   selected indices.
+ * @param verticalArrangement Specifies the spacing and arrangement of items in the vertical direction. Defaults to
+ *   [Arrangement.Top] for non-reversed layouts or [Arrangement.Bottom] for reversed layouts.
+ * @param horizontalAlignment Aligns the horizontal position of items within the column. Defaults to [Alignment.Start].
+ * @param flingBehavior The behavior that determines how the lazy column will respond to fling gestures. Defaults to
+ *   [ScrollableDefaults.flingBehavior].
+ * @param keyActions Key bindings for handling keyboard interactions and selection behaviors in the lazy column.
+ *   Defaults to [DefaultSelectableLazyColumnKeyActions].
+ * @param pointerEventActions Event handlers for pointer-based interactions (e.g., mouse or touch input). Defaults to
+ *   [DefaultSelectableLazyColumnEventAction].
+ * @param interactionSource Optional [MutableInteractionSource] that stores interaction state and events, such as hover
+ *   or focus. If none is provided, a new one will be remembered and managed internally.
+ * @param content The lambda defining the content to be displayed within the lazy column. Use the
+ *   [SelectableLazyListScope] receiver to define items and content behavior.
+ */
 @Composable
-public fun SelectableLazyColumn(
+private fun SelectableLazyColumnImpl(
     modifier: Modifier = Modifier,
     selectionMode: SelectionMode = SelectionMode.Multiple,
-    state: SelectableLazyListState = rememberSelectableLazyListState(),
+    state: SelectableLazyListState = rememberSelectableLazyListState(selectionMode = selectionMode),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     reverseLayout: Boolean = false,
     onSelectedIndexesChange: (List<Int>) -> Unit = {},
@@ -94,6 +273,19 @@ public fun SelectableLazyColumn(
     interactionSource: MutableInteractionSource? = null,
     content: SelectableLazyListScope.() -> Unit,
 ) {
+    // Legacy compatibility contract:
+    // `SelectableLazyColumn` historically accepts both `selectionMode` and `state`, so callers can pass values
+    // that disagree (for example: selectionMode=Single, state.selectionMode=Multiple).
+    //
+    // In this legacy API, the explicit `selectionMode` argument remains authoritative for interaction behavior
+    // (keyboard/pointer handlers). We intentionally do not rewrite state during composition.
+    // Instead, we warn and preserve current state values for rendering/callback baseline to avoid unnecessary
+    // recompositions and side-effects.
+    //
+    // The typed entry points (`SingleSelectionLazyColumn` and `MultiSelectionLazyColumn`) avoid this ambiguity.
+    LogLegacySelectionModeWarnings(selectionMode = selectionMode, state = state)
+
+    val effectiveSelectionMode = selectionMode
     val intSource = interactionSource ?: remember { MutableInteractionSource() }
 
     val scope = rememberCoroutineScope()
@@ -106,8 +298,13 @@ public fun SelectableLazyColumn(
     val keys = remember(container) { container.getKeys() }
     val isFocused by intSource.collectIsFocusedAsState()
 
-    /** Tracks the last emitted indices to avoid duplicate emissions from both commit-time and effect-driven updates. */
-    var lastEmittedIndices by remember { mutableStateOf<List<Int>>(emptyList()) }
+    // Tracks last emitted indices to dedupe commit-time/effect-driven updates.
+    // Seed once from the composition-time selection snapshot:
+    // - prevents initial preselected keys from emitting on first composition
+    // - still allows early programmatic selection changes (after composition starts) to emit
+    var lastEmittedIndices by remember {
+        mutableStateOf(state.selectedKeys.mapNotNull { key -> container.getKeyIndex(key) })
+    }
 
     // Keep the latest callback reference to avoid capturing a stale lambda inside effects
     val latestOnSelectedIndexesChange = rememberUpdatedState(onSelectedIndexesChange)
@@ -133,10 +330,13 @@ public fun SelectableLazyColumn(
         if (indices != lastEmittedIndices) {
             lastEmittedIndices = indices
 
-            // Keep keyboard navigation gate in sync after key→index remaps, including through empty→non‑empty
-            // transitions.
+            // Keep the keyboard navigation gate in sync after key→index remaps, including through empty→non‑empty
+            // transitions. Preserve an existing active index when it is still selected; otherwise fall back to
+            // the first selected index.
             if (indices.isNotEmpty()) {
-                state.lastActiveItemIndex = indices.first()
+                val activeIndex = state.lastActiveItemIndex
+                state.lastActiveItemIndex =
+                    if (activeIndex != null && activeIndex in indices) activeIndex else indices.first()
             }
 
             // Notify using the latest callback reference to avoid capturing a stale lambda.
@@ -145,8 +345,9 @@ public fun SelectableLazyColumn(
     }
 
     LaunchedEffect(isFocused) {
+        if (!isFocused || effectiveSelectionMode == SelectionMode.None) return@LaunchedEffect
         with(state) {
-            if (isFocused && lastActiveItemIndex == null && selectedKeys.isEmpty()) {
+            if (lastActiveItemIndex == null && selectedKeys.isEmpty()) {
                 keyActions.actions.onSelectFirstItem(keys, this)
             }
         }
@@ -173,7 +374,7 @@ public fun SelectableLazyColumn(
                 }
 
                 override fun handlePointerEventPress(
-                    pointerEvent: androidx.compose.ui.input.pointer.PointerEvent,
+                    pointerEvent: PointerEvent,
                     keybindings: SelectableColumnKeybindings,
                     selectableLazyListState: SelectableLazyListState,
                     selectionMode: SelectionMode,
@@ -280,7 +481,7 @@ public fun SelectableLazyColumn(
                     }
 
                     val actionHandled =
-                        notifyingKeyActions.handleOnKeyEvent(event, keys, state, selectionMode).invoke(event)
+                        notifyingKeyActions.handleOnKeyEvent(event, keys, state, effectiveSelectionMode).invoke(event)
                     if (actionHandled) {
                         scope.launch { state.lastActiveItemIndex?.let { state.scrollToItem(it) } }
                     }
@@ -302,7 +503,7 @@ public fun SelectableLazyColumn(
                 focusRequester,
                 notifyingKeyActions,
                 notifyingPointerEventActions,
-                selectionMode,
+                effectiveSelectionMode,
                 container::isKeySelectable,
             )
         }
@@ -449,4 +650,51 @@ private fun SelectableLazyListState.selectedIndicesIfChanged(
         if (indices != lastEmitted) return indices
     }
     return null
+}
+
+/**
+ * Logs mismatch warnings for legacy `SelectableLazyColumn` mode/state inputs.
+ *
+ * This helper isolates deprecation-compatibility diagnostics from core selection logic.
+ *
+ * Emitted warnings:
+ * - Generic mismatch: `selectionMode != state.selectionMode` (legacy precedence applies).
+ * - Edge-case mismatch:
+ *     - `selectionMode = None` while state already contains selected keys.
+ *     - `selectionMode = Single` while state contains multiple selected keys.
+ *
+ * We only warn; we do not mutate state here. That keeps composition side-effect free with respect to selection data and
+ * avoids recomposition churn from compatibility normalization.
+ */
+@Composable
+private fun LogLegacySelectionModeWarnings(selectionMode: SelectionMode, state: SelectableLazyListState) {
+    val modeMismatch = selectionMode != state.selectionMode
+
+    LaunchedEffect(selectionMode, state.selectionMode) {
+        if (!modeMismatch) return@LaunchedEffect
+        logger.warn(
+            "SelectableLazyColumn: selectionMode=$selectionMode does not match state.selectionMode=" +
+                "${state.selectionMode}. selectionMode will be used."
+        )
+    }
+
+    LaunchedEffect(selectionMode, state.selectionMode, state.selectedKeys.size) {
+        if (!modeMismatch) return@LaunchedEffect
+        when {
+            selectionMode == SelectionMode.None && state.selectedKeys.isNotEmpty() -> {
+                logger.warn(
+                    "SelectableLazyColumn: selectionMode=${SelectionMode.None} " +
+                        "while state has ${state.selectedKeys.size} selected key(s). " +
+                        "Initial selection may appear inconsistent until user interaction."
+                )
+            }
+            selectionMode == SelectionMode.Single && state.selectedKeys.size > 1 -> {
+                logger.warn(
+                    "SelectableLazyColumn: selectionMode=${SelectionMode.Single} " +
+                        "while state has ${state.selectedKeys.size} selected key(s). " +
+                        "Initial selection may appear inconsistent until user interaction."
+                )
+            }
+        }
+    }
 }
