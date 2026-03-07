@@ -7,9 +7,11 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     "//module-set-plugins/generated/intellij.moduleSet.plugin.recentFiles:moduleSet-plugin-recentFiles",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.vcs.frontend:moduleSet-plugin-vcs-frontend",
     "//platform/recentFiles/shared:recentFiles",
     "//platform/recentFiles/backend",
     "//platform/recentFiles/frontend",
+    "//platform/vcs-impl/frontend",
   ]
 )
 
@@ -21,9 +23,11 @@ jvm_library(
   runtime_deps = [
     ":moduleSet-plugin-main",
     "//module-set-plugins/generated/intellij.moduleSet.plugin.recentFiles:moduleSet-plugin-recentFiles_test_lib",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.vcs.frontend:moduleSet-plugin-vcs-frontend_test_lib",
     "//platform/recentFiles/shared:recentFiles_test_lib",
     "//platform/recentFiles/backend:backend_test_lib",
     "//platform/recentFiles/frontend:frontend_test_lib",
+    "//platform/vcs-impl/frontend:frontend_test_lib",
   ]
 )
 ### auto-generated section `build intellij.moduleSet.plugin.main` end

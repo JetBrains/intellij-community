@@ -324,10 +324,6 @@
     <module name="intellij.platform.vcs.dvcs.impl.shared"/>
     <!-- endregion -->
 
-    <!-- region nested: vcs > vcs.frontend -->
-    <module name="intellij.platform.vcs.impl.frontend"/>
-    <!-- endregion -->
-
     <!-- region direct modules -->
     <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.platform.vcs.impl.exec"/>

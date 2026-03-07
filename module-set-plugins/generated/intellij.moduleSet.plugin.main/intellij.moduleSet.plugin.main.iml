@@ -5,8 +5,10 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.moduleSet.plugin.recentFiles" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.moduleSet.plugin.vcs.frontend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.recentFiles" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.recentFiles.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.recentFiles.frontend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl.frontend" scope="RUNTIME" />
   </component>
 </module>

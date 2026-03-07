@@ -228,7 +228,6 @@ object CommunityModuleSets {
     embeddedModule("intellij.platform.vcs")
 
     moduleSet(vcsShared())
-    moduleSet(vcsFrontend())
   }
 
   /**
@@ -244,7 +243,8 @@ object CommunityModuleSets {
   /**
    * VCS frontend modules.
    */
-  fun vcsFrontend(): ModuleSet = moduleSet("vcs.frontend") {
+  @Suppress("unused")
+  fun vcsFrontend(): ModuleSet = plugin("vcs.frontend") {
     module("intellij.platform.vcs.impl.frontend")
   }
 

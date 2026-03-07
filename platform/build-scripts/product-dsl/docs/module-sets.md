@@ -205,7 +205,7 @@ See [programmatic-content.md](programmatic-content.md) for details on content vs
 /**
  * VCS frontend modules.
  */
-fun vcsFrontend(): ModuleSet = moduleSet("vcs.frontend") {
+fun vcsFrontend(): ModuleSet = plugin("vcs.frontend") {
   module("intellij.platform.vcs.impl.frontend")
 }
 ```

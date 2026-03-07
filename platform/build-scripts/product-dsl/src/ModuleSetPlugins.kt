@@ -18,6 +18,8 @@ private const val MODULE_SET_PLUGIN_ID_PREFIX: String = "com.intellij.moduleSet.
 data class ModuleSetPluginSpec(
   /** Optional plugin ID override. If omitted, a deterministic ID is generated from module set name. */
   val pluginIdOverride: PluginId? = null,
+  /** Whether this generated wrapper should be added to intellij.moduleSet.plugin.main for flat-classpath launches. */
+  @JvmField val addToMainModule: Boolean = true,
 )
 
 fun moduleSetPluginModuleName(moduleSetName: String): TargetName {

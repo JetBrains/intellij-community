@@ -82,7 +82,11 @@ suspend fun runModuleSetMain(
     setProductDslLogFilter(options.logFilter)
 
     if (options.commitChanges) {
-      syncModuleSetPluginsOnDisk(projectRoot = projectRoot, moduleSets = communityModuleSets + ultimateModuleSets)
+      syncModuleSetPluginsOnDisk(
+        projectRoot = projectRoot,
+        communityModuleSets = communityModuleSets,
+        ultimateModuleSets = ultimateModuleSets,
+      )
     }
 
     coroutineScope {

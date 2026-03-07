@@ -1058,6 +1058,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/ml-local-models/java/intellij.ml.models.local.java.iml" filepath="$PROJECT_DIR$/plugins/ml-local-models/java/intellij.ml.models.local.java.iml" />
       <module fileurl="file://$PROJECT_DIR$/module-set-plugins/generated/intellij.moduleSet.plugin.main/intellij.moduleSet.plugin.main.iml" filepath="$PROJECT_DIR$/module-set-plugins/generated/intellij.moduleSet.plugin.main/intellij.moduleSet.plugin.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/module-set-plugins/generated/intellij.moduleSet.plugin.recentFiles/intellij.moduleSet.plugin.recentFiles.iml" filepath="$PROJECT_DIR$/module-set-plugins/generated/intellij.moduleSet.plugin.recentFiles/intellij.moduleSet.plugin.recentFiles.iml" />
+      <module fileurl="file://$PROJECT_DIR$/module-set-plugins/generated/intellij.moduleSet.plugin.vcs.frontend/intellij.moduleSet.plugin.vcs.frontend.iml" filepath="$PROJECT_DIR$/module-set-plugins/generated/intellij.moduleSet.plugin.vcs.frontend/intellij.moduleSet.plugin.vcs.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/mps/build/intellij.mps.build.iml" filepath="$PROJECT_DIR$/mps/build/intellij.mps.build.iml" />
       <module fileurl="file://$PROJECT_DIR$/mps/build/intellij.mps.resources/intellij.mps.resources.iml" filepath="$PROJECT_DIR$/mps/build/intellij.mps.resources/intellij.mps.resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/jupyter/intellij.notebooks.jupyter.core.iml" filepath="$PROJECT_DIR$/jupyter/intellij.notebooks.jupyter.core.iml" />

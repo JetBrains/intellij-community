@@ -157,12 +157,13 @@ class ModuleSetBuilder(private val defaultIncludeDependencies: Boolean = false) 
   }
 
   @PublishedApi
-  internal fun configurePluginSpec(pluginId: String? = null) {
+  internal fun configurePluginSpec(pluginId: String? = null, addToMainModule: Boolean = true) {
     check(pluginSpec == null) {
       "module set plugin specification can be configured only once"
     }
     pluginSpec = ModuleSetPluginSpec(
       pluginIdOverride = pluginId?.let(::PluginId),
+      addToMainModule = addToMainModule,
     )
   }
 
@@ -234,12 +235,13 @@ inline fun moduleSet(
 /**
  * Creates a module set that is materialized as a standalone bundled plugin wrapper.
  *
- * This is sugar for `moduleSet(name, ...) { configurePluginSpec(pluginId); ... }`.
+ * This is sugar for `moduleSet(name, ...) { configurePluginSpec(pluginId, addToMainModule); ... }`.
  */
 fun plugin(
   name: String,
   pluginId: String? = null,
   outputModule: String? = null,
+  addToMainModule: Boolean = true,
   block: ModuleSetBuilder.() -> Unit,
 ): ModuleSet {
   return moduleSet(
@@ -249,7 +251,7 @@ fun plugin(
     selfContained = false,
     includeDependencies = false,
   ) {
-    this.configurePluginSpec(pluginId = pluginId)
+    this.configurePluginSpec(pluginId = pluginId, addToMainModule = addToMainModule)
     block()
   }
 }

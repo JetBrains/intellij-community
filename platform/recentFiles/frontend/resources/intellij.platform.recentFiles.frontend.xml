@@ -10,7 +10,7 @@
 
   <extensionPoints>
     <extensionPoint interface="com.intellij.platform.recentFiles.frontend.RecentFilesAdvertisementProvider"
-                    name="recentFiles.advertisementProvider"
+                    qualifiedName="com.intellij.recentFiles.advertisementProvider"
                     dynamic="true"/>
     <extensionPoint interface="com.intellij.platform.recentFiles.frontend.RecentFilesNavigator"
                     name="recentFiles.navigator"

@@ -13,23 +13,65 @@ import kotlin.io.path.name
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
-private const val MODULE_SET_PLUGIN_GENERATED_ROOT: String = "community/module-set-plugins/generated"
+private const val COMMUNITY_MODULE_SET_PLUGIN_GENERATED_ROOT: String = "community/module-set-plugins/generated"
+private const val ULTIMATE_MODULE_SET_PLUGIN_GENERATED_ROOT: String = "module-set-plugins/generated"
 private const val MODULE_SET_PLUGIN_MAIN_MODULE_NAME: String = "intellij.moduleSet.plugin.main"
 private val MODULE_SET_PLUGIN_LEGACY_GENERATED_ROOTS: List<String> = listOf(
   "community/platform/platform-resources/generated/module-set-plugins",
 )
 private const val MODULE_SET_PLUGIN_LEGACY_BUNDLE_PATH: String = "resources/messages/ModuleSetPluginsBundle.properties"
 private const val MODULE_SET_PLUGIN_XML_PATH: String = "resources/META-INF/plugin.xml"
+private const val MODULE_SET_PLUGIN_CONTENT_YAML_PATH: String = "plugin-content.yaml"
 private const val PROJECT_DIR_MACRO: String = "$" + "PROJECT_DIR" + "$"
 private const val MODULE_DIR_MACRO: String = "$" + "MODULE_DIR" + "$"
 private val FILEPATH_ATTRIBUTE_REGEX = Regex("\\bfilepath=\"([^\"]+)\"")
 
-fun syncModuleSetPluginsOnDisk(projectRoot: Path, moduleSets: List<ModuleSet>) {
-  val pluginizedSets = collectPluginizedModuleSets(moduleSets)
-  val generatedRoot = projectRoot.resolve(MODULE_SET_PLUGIN_GENERATED_ROOT)
+fun syncModuleSetPluginsOnDisk(
+  projectRoot: Path,
+  communityModuleSets: List<ModuleSet>,
+  ultimateModuleSets: List<ModuleSet> = emptyList(),
+) {
+  val communityGeneratedRoot = projectRoot.resolve(COMMUNITY_MODULE_SET_PLUGIN_GENERATED_ROOT)
+  val ultimateGeneratedRoot = projectRoot.resolve(ULTIMATE_MODULE_SET_PLUGIN_GENERATED_ROOT)
+  val communityWrappers = collectPluginWrappers(communityModuleSets, communityGeneratedRoot)
+  val ultimateWrappers = collectPluginWrappers(ultimateModuleSets, ultimateGeneratedRoot)
 
+  val duplicateWrapperModuleNames = communityWrappers.keys.intersect(ultimateWrappers.keys)
+  check(duplicateWrapperModuleNames.isEmpty()) {
+    "Module-set plugin wrappers must be unique across community and ultimate registries: ${duplicateWrapperModuleNames.sorted().joinToString()}"
+  }
+
+  val ultimateWrappersAddedToMainModule = ultimateWrappers.values
+    .filter { requireNotNull(it.moduleSet.pluginSpec).addToMainModule }
+    .map { it.moduleSet.name }
+    .sorted()
+  check(ultimateWrappersAddedToMainModule.isEmpty()) {
+    "Ultimate module-set plugin wrappers cannot use addToMainModule=true while intellij.moduleSet.plugin.main remains community-only: ${ultimateWrappersAddedToMainModule.joinToString()}"
+  }
+
+  for (wrapper in communityWrappers.values + ultimateWrappers.values) {
+    syncWrapperFiles(wrapper)
+  }
+
+  val mainModule = syncMainModuleFile(generatedRoot = communityGeneratedRoot, wrappers = communityWrappers.values.toList())
+  val requiredCommunityModuleNames = LinkedHashSet(communityWrappers.keys)
+  if (mainModule != null) {
+    requiredCommunityModuleNames.add(mainModule.moduleName)
+  }
+
+  cleanupOrphanWrappers(communityGeneratedRoot, requiredCommunityModuleNames)
+  cleanupOrphanWrappers(ultimateGeneratedRoot, ultimateWrappers.keys)
+  cleanupLegacyGeneratedRoots(projectRoot)
+  syncModulesXml(
+    projectRoot = projectRoot,
+    rootModuleImlPaths = communityWrappers.values.map { it.imlPath } + ultimateWrappers.values.map { it.imlPath } + listOfNotNull(mainModule?.imlPath),
+    communityModuleImlPaths = communityWrappers.values.map { it.imlPath } + listOfNotNull(mainModule?.imlPath),
+  )
+}
+
+private fun collectPluginWrappers(moduleSets: List<ModuleSet>, generatedRoot: Path): LinkedHashMap<String, ModuleSetPluginWrapper> {
   val wrappers = LinkedHashMap<String, ModuleSetPluginWrapper>()
-  for (moduleSet in pluginizedSets) {
+  for (moduleSet in collectPluginizedModuleSets(moduleSets)) {
     val moduleName = moduleSetPluginModuleName(moduleSet.name).value
     val contentModules = collectPluginContentModules(moduleSet)
     val moduleDir = generatedRoot.resolve(moduleName)
@@ -39,26 +81,11 @@ fun syncModuleSetPluginsOnDisk(projectRoot: Path, moduleSets: List<ModuleSet>) {
       moduleDir = moduleDir,
       imlPath = moduleDir.resolve("$moduleName.iml"),
       pluginXmlPath = moduleDir.resolve(MODULE_SET_PLUGIN_XML_PATH),
+      pluginContentYamlPath = moduleDir.resolve(MODULE_SET_PLUGIN_CONTENT_YAML_PATH),
       contentModules = contentModules,
     )
   }
-
-  for (wrapper in wrappers.values) {
-    syncWrapperFiles(wrapper)
-  }
-
-  val mainModule = syncMainModuleFile(generatedRoot = generatedRoot, wrappers = wrappers.values.toList())
-  val requiredModuleNames = LinkedHashSet(wrappers.keys)
-  if (mainModule != null) {
-    requiredModuleNames.add(mainModule.moduleName)
-  }
-
-  cleanupOrphanWrappers(generatedRoot, requiredModuleNames)
-  cleanupLegacyGeneratedRoots(projectRoot)
-  syncModulesXml(
-    projectRoot = projectRoot,
-    moduleImlPaths = wrappers.values.map { it.imlPath } + listOfNotNull(mainModule?.imlPath),
-  )
+  return wrappers
 }
 
 private data class ModuleSetPluginWrapper(
@@ -67,6 +94,7 @@ private data class ModuleSetPluginWrapper(
   val moduleDir: Path,
   val imlPath: Path,
   val pluginXmlPath: Path,
+  val pluginContentYamlPath: Path,
   val contentModules: List<ContentModule>,
 )
 
@@ -79,6 +107,8 @@ private data class ModuleSetPluginMainModule(
 private data class ModulesXmlTarget(
   val modulesXmlPath: Path,
   val modulesRoot: Path,
+  val managedGeneratedRoots: List<Path>,
+  val moduleImlPaths: List<Path>,
 )
 
 private data class ModuleEntry(
@@ -92,11 +122,15 @@ private fun syncWrapperFiles(wrapper: ModuleSetPluginWrapper) {
 
   writeIfChanged(wrapper.imlPath, renderWrapperIml())
   writeIfChanged(wrapper.pluginXmlPath, renderPluginXml(wrapper.moduleSet, wrapper.contentModules))
+  writeIfChanged(wrapper.pluginContentYamlPath, renderPluginContentYaml(wrapper))
   cleanupLegacyBundleArtifacts(wrapper)
 }
 
 private fun syncMainModuleFile(generatedRoot: Path, wrappers: List<ModuleSetPluginWrapper>): ModuleSetPluginMainModule? {
-  if (wrappers.isEmpty()) {
+  val wrappersToAdd = wrappers.filter { wrapper ->
+    requireNotNull(wrapper.moduleSet.pluginSpec).addToMainModule
+  }
+  if (wrappersToAdd.isEmpty()) {
     return null
   }
 
@@ -109,7 +143,7 @@ private fun syncMainModuleFile(generatedRoot: Path, wrappers: List<ModuleSetPlug
   )
 
   val runtimeDependencies = LinkedHashSet<String>()
-  for (wrapper in wrappers.sortedBy { it.moduleName }) {
+  for (wrapper in wrappersToAdd.sortedBy { it.moduleName }) {
     runtimeDependencies.add(wrapper.moduleName)
     for (contentModule in wrapper.contentModules.sortedBy { it.name.value }) {
       runtimeDependencies.add(contentModule.name.value)
@@ -207,6 +241,30 @@ private fun renderPluginXml(moduleSet: ModuleSet, contentModules: List<ContentMo
   }
 }
 
+private fun renderPluginContentYaml(wrapper: ModuleSetPluginWrapper): String {
+  val contentEntries = wrapper.contentModules
+    .map { contentModule ->
+      val jarPath = "lib/modules/${contentModule.name.value}.jar"
+      jarPath to contentModule.name.value
+    }
+    .sortedBy { (jarPath, _) -> jarPath }
+
+  return buildString {
+    appendLine("- name: lib/${moduleSetPluginJarFileName(wrapper.moduleSet.name)}")
+    appendLine("  modules:")
+    appendLine("  - name: ${wrapper.moduleName}")
+    for ((jarPath, moduleName) in contentEntries) {
+      appendLine("- name: $jarPath")
+      appendLine("  contentModules:")
+      appendLine("  - name: $moduleName")
+    }
+  }.removeSuffix("\n")
+}
+
+private fun moduleSetPluginJarFileName(moduleSetName: String): String {
+  return "moduleSet-plugin-${moduleSetName.replace('.', '-')}" + ".jar"
+}
+
 private fun cleanupLegacyBundleArtifacts(wrapper: ModuleSetPluginWrapper) {
   val legacyBundleFile = wrapper.moduleDir.resolve(MODULE_SET_PLUGIN_LEGACY_BUNDLE_PATH)
   if (Files.exists(legacyBundleFile)) {
@@ -277,23 +335,30 @@ private fun cleanupLegacyGeneratedRoots(projectRoot: Path) {
   }
 }
 
-private fun syncModulesXml(projectRoot: Path, moduleImlPaths: List<Path>) {
+private fun syncModulesXml(projectRoot: Path, rootModuleImlPaths: List<Path>, communityModuleImlPaths: List<Path>) {
+  val communityGeneratedRoot = projectRoot.resolve(COMMUNITY_MODULE_SET_PLUGIN_GENERATED_ROOT)
+  val ultimateGeneratedRoot = projectRoot.resolve(ULTIMATE_MODULE_SET_PLUGIN_GENERATED_ROOT)
+  val legacyGeneratedRoots = MODULE_SET_PLUGIN_LEGACY_GENERATED_ROOTS.map(projectRoot::resolve)
   val targets = listOf(
     ModulesXmlTarget(
       modulesXmlPath = projectRoot.resolve(".idea/modules.xml"),
       modulesRoot = projectRoot,
+      managedGeneratedRoots = listOf(communityGeneratedRoot, ultimateGeneratedRoot) + legacyGeneratedRoots,
+      moduleImlPaths = rootModuleImlPaths,
     ),
     ModulesXmlTarget(
       modulesXmlPath = projectRoot.resolve("community/.idea/modules.xml"),
       modulesRoot = projectRoot.resolve("community"),
+      managedGeneratedRoots = listOf(communityGeneratedRoot) + legacyGeneratedRoots,
+      moduleImlPaths = communityModuleImlPaths,
     ),
   )
   for (target in targets) {
-    syncModulesXmlFile(projectRoot = projectRoot, target = target, moduleImlPaths = moduleImlPaths)
+    syncModulesXmlFile(target = target)
   }
 }
 
-private fun syncModulesXmlFile(projectRoot: Path, target: ModulesXmlTarget, moduleImlPaths: List<Path>) {
+private fun syncModulesXmlFile(target: ModulesXmlTarget) {
   if (!Files.exists(target.modulesXmlPath) || !Files.isDirectory(target.modulesRoot)) {
     return
   }
@@ -318,7 +383,7 @@ private fun syncModulesXmlFile(projectRoot: Path, target: ModulesXmlTarget, modu
     .subList(modulesStart + 1, modulesEnd)
     .mapNotNull(::parseModuleEntry)
 
-  val generatedPrefixes = collectGeneratedPrefixes(projectRoot = projectRoot, target = target)
+  val generatedPrefixes = collectGeneratedPrefixes(target)
 
   val mergedEntries = LinkedHashMap<String, ModuleEntry>()
   for (entry in existingEntries) {
@@ -328,7 +393,7 @@ private fun syncModulesXmlFile(projectRoot: Path, target: ModulesXmlTarget, modu
     mergedEntries.putIfAbsent(entry.filepath, entry)
   }
 
-  for (moduleImlPath in moduleImlPaths) {
+  for (moduleImlPath in target.moduleImlPaths) {
     val requiredPath = "$PROJECT_DIR_MACRO/${target.modulesRoot.relativize(moduleImlPath).invariantSeparatorsPathString}"
     mergedEntries[requiredPath] = ModuleEntry(
       filepath = requiredPath,
@@ -347,16 +412,10 @@ private fun syncModulesXmlFile(projectRoot: Path, target: ModulesXmlTarget, modu
   writeIfChanged(target.modulesXmlPath, updatedLines.joinToString(separator = "\n"))
 }
 
-private fun collectGeneratedPrefixes(projectRoot: Path, target: ModulesXmlTarget): List<String> {
-  return (listOf(MODULE_SET_PLUGIN_GENERATED_ROOT) + MODULE_SET_PLUGIN_LEGACY_GENERATED_ROOTS)
-    .mapNotNull { generatedRoot ->
-      val absoluteGeneratedRoot = projectRoot.resolve(generatedRoot)
-      val relativeGeneratedRoot = try {
-        target.modulesRoot.relativize(absoluteGeneratedRoot)
-      }
-      catch (_: IllegalArgumentException) {
-        null
-      } ?: return@mapNotNull null
+private fun collectGeneratedPrefixes(target: ModulesXmlTarget): List<String> {
+  return target.managedGeneratedRoots
+    .map { generatedRoot ->
+      val relativeGeneratedRoot = target.modulesRoot.relativize(generatedRoot)
       "$PROJECT_DIR_MACRO/${relativeGeneratedRoot.invariantSeparatorsPathString}/"
     }
     .distinct()

@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.platform.vcs.impl.frontend">
+<idea-plugin visibility="internal">
   <projectListeners>
   </projectListeners>
   <dependencies>
