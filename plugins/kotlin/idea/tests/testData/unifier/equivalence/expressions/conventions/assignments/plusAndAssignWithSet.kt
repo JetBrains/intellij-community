@@ -1,6 +1,6 @@
 // DISABLE_ERRORS
 class A(val n: Int) {
-    fun plus(m: Int) = A(n + m)
+    operator fun plus(m: Int) = A(n + m)
 }
 
 class Foo {
