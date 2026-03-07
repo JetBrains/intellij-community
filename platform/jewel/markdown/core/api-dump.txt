@@ -2,6 +2,10 @@ f:org.jetbrains.jewel.markdown.MarkdownKt
 f:org.jetbrains.jewel.markdown.MarkdownModeKt
 f:org.jetbrains.jewel.markdown.MarkdownTextKt
 f:org.jetbrains.jewel.markdown.SemanticsKt
+f:org.jetbrains.jewel.markdown.TestThemeKt
+- sf:CODE_TEXT_SIZE:I
+- sf:createMarkdownStyling():org.jetbrains.jewel.markdown.rendering.MarkdownStyling
+- sf:createThemeDefinition():org.jetbrains.jewel.foundation.theme.ThemeDefinition
 f:org.jetbrains.jewel.markdown.extensions.MarkdownKt
 f:org.jetbrains.jewel.markdown.processing.ProcessingUtilKt
 f:org.jetbrains.jewel.markdown.rendering.ImageSourceResolverKt
