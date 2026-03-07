@@ -139,6 +139,8 @@ public class PyHighlighter extends SyntaxHighlighterBase {
   public static final TextAttributesKey PY_FSTRING_FRAGMENT_BRACES = TextAttributesKey.createTextAttributesKey("PY.FSTRING_FRAGMENT_BRACES", VALID_STRING_ESCAPE);
   public static final TextAttributesKey PY_FSTRING_FRAGMENT_COLON = TextAttributesKey.createTextAttributesKey("PY.FSTRING_FRAGMENT_COLON", VALID_STRING_ESCAPE);
   public static final TextAttributesKey PY_FSTRING_FRAGMENT_TYPE_CONVERSION = TextAttributesKey.createTextAttributesKey("PY.FSTRING_FRAGMENT_TYPE_CONVERSION", VALID_STRING_ESCAPE);
+  public static final TextAttributesKey PY_FSTRING_FORMAT_SPEC_SPECIAL_CHAR = TextAttributesKey.createTextAttributesKey("PY.FSTRING_FORMAT_SPEC_SPECIAL_CHAR", VALID_STRING_ESCAPE);
+  public static final TextAttributesKey PY_FSTRING_FORMAT_SPEC_NUMBER = TextAttributesKey.createTextAttributesKey("PY.FSTRING_FORMAT_SPEC_NUMBER", NUMBER);
   public static final TextAttributesKey PY_LOCAL_VARIABLE = TextAttributesKey.createTextAttributesKey("PY.LOCAL_VARIABLE", LOCAL_VARIABLE);
   public static final TextAttributesKey PY_TYPE_PARAMETER = TextAttributesKey.createTextAttributesKey("PY.TYPE_PARAMETER", PARAMETER);
 

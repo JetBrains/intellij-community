@@ -27,7 +27,7 @@ import java.util.Map;
 
 
 public class PythonColorsPage implements RainbowColorSettingsPage, InspectionColorSettingsPage, DisplayPrioritySortable {
-  private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
+  private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[]{
     new AttributesDescriptor(PySyntaxBundle.messagePointer("python.colors.number"), PyHighlighter.PY_NUMBER),
     new AttributesDescriptor(PySyntaxBundle.messagePointer("python.colors.keyword"), PyHighlighter.PY_KEYWORD),
     new AttributesDescriptor(PySyntaxBundle.messagePointer("python.colors.line.comment"), PyHighlighter.PY_LINE_COMMENT),
@@ -39,6 +39,8 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
     new AttributesDescriptor(PySyntaxBundle.messagePointer("python.colors.string.f.string.expression.braces"), PyHighlighter.PY_FSTRING_FRAGMENT_BRACES),
     new AttributesDescriptor(PySyntaxBundle.messagePointer("python.colors.string.f.string.type.conversion"), PyHighlighter.PY_FSTRING_FRAGMENT_TYPE_CONVERSION),
     new AttributesDescriptor(PySyntaxBundle.messagePointer("python.colors.string.f.string.format.specifier.start"), PyHighlighter.PY_FSTRING_FRAGMENT_COLON),
+    new AttributesDescriptor(PySyntaxBundle.messagePointer("python.colors.string.f.string.spec.special"), PyHighlighter.PY_FSTRING_FORMAT_SPEC_SPECIAL_CHAR),
+    new AttributesDescriptor(PySyntaxBundle.messagePointer("python.colors.string.f.string.spec.number"), PyHighlighter.PY_FSTRING_FORMAT_SPEC_NUMBER),
 
     new AttributesDescriptor(PySyntaxBundle.messagePointer("python.colors.docstring.text"), PyHighlighter.PY_DOC_COMMENT),
     new AttributesDescriptor(PySyntaxBundle.messagePointer("python.colors.docstring.tag"), PyHighlighter.PY_DOC_COMMENT_TAG),
@@ -71,7 +73,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
     new AttributesDescriptor(PySyntaxBundle.messagePointer("python.colors.type.parameters"), PyHighlighter.PY_TYPE_PARAMETER),
   };
 
-  private static final @NonNls Map<String,TextAttributesKey> ourTagToDescriptorMap = ImmutableMap.<String, TextAttributesKey>builder()
+  private static final @NonNls Map<String, TextAttributesKey> ourTagToDescriptorMap = ImmutableMap.<String, TextAttributesKey>builder()
     .put("docComment", PyHighlighter.PY_DOC_COMMENT)
     .put("docCommentTag", PyHighlighter.PY_DOC_COMMENT_TAG)
     .put("decorator", PyHighlighter.PY_DECORATOR)
@@ -89,6 +91,8 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
     .put("annotation", PyHighlighter.PY_ANNOTATION)
     .put("localVar", PyHighlighter.PY_LOCAL_VARIABLE)
     .put("typeParam", PyHighlighter.PY_TYPE_PARAMETER)
+    .put("fspecSpecial", PyHighlighter.PY_FSTRING_FORMAT_SPEC_SPECIAL_CHAR)
+    .put("fspecNumber", PyHighlighter.PY_FSTRING_FORMAT_SPEC_NUMBER)
     .putAll(RainbowHighlighter.createRainbowHLM())
     .build();
 
@@ -123,37 +127,37 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
 
   @Override
   public @NotNull String getDemoText() {
-    return
-      "@<decorator>decorator</decorator>(<kwarg>param</kwarg>=1)\n" +
-      "def f(<param>x</param>):\n" +
-      "    <docComment>\"\"\"\n" +
-      "    Syntax Highlighting Demo\n" +
-      "    <docCommentTag>@param</docCommentTag> x Parameter\n" +
-      RainbowHighlighter.generatePaletteExample("\n    ") + "\n" +
-      "    \"\"\"</docComment>\n" +
-      "\n" +
-      "    def <nestedFuncDef>nested_func</nestedFuncDef>(<param>y</param>):\n" +
-      "        <call>print</call>(<param>y</param> + 1)\n" +
-      "\n" +
-      "    <localVar>s</localVar> = (\"Test\", 2+3, {'a': 'b'}, f'{<param>x</param>!s:{\"^10\"}}')   # Comment\n" +
-      "    <call>f</call>(<localVar>s</localVar>[0].<mcall>lower</mcall>())\n" +
-      "    <call>nested_func</call>(42)\n" +
-      "\n" +
-      "class <classDef>Foo</classDef>:\n" +
-      "    tags: <annotation>List[<builtin>str</builtin>]</annotation>\n" +
-      "\n" +
-      "    def <predefined>__init__</predefined>(<self>self</self>: <annotation>Foo</annotation>):\n" +
-      "        <localVar>byte_string</localVar>: <annotation><builtin>bytes</builtin></annotation> = b'newline:\\n also newline:\\x0a'\n" +
-      "        <localVar>text_string</localVar> = u\"Cyrillic Я is \\u042f. Oops: \\u042g\"\n" +
-      "        <self>self</self>.<mcall>make_sense</mcall>(<kwarg>whatever</kwarg>=1)\n" +
-      "    \n" +
-      "    def <funcDef>make_sense[<typeParam>T</typeParam>]</funcDef>(<self>self</self>, <param>whatever:</param> <annotation>T</annotation>):\n" +
-      "        <self>self</self>.sense = <param>whatever</param>\n" +
-      "\n" +
-      "x = <builtin>len</builtin>('abc')\n" +
-      "type my_int = <builtin>int</builtin>\n" +
-      "print(f.<predefinedUsage>__doc__</predefinedUsage>)"
-    ;
+    //noinspection NonAsciiCharacters
+    return """
+             @<decorator>decorator</decorator>(<kwarg>param</kwarg>=1)def f(<param>x</param>):
+                 <docComment>\"""
+                 Syntax Highlighting Demo
+                 <docCommentTag>@param</docCommentTag> x Parameter
+             """ + RainbowHighlighter.generatePaletteExample("\n    ") + """
+             
+                 \"""</docComment>
+             
+                 def <nestedFuncDef>nested_func</nestedFuncDef>(<param>y</param>):
+                     <call>print</call>(<param>y</param> + 1)
+             
+                 <localVar>s</localVar> = ("Test", 2+3, {'a': 'b'}, f'{<param>x</param>!s:{"^10"}}', f"{1:<fspecSpecial>0</fspecSpecial><fspecNumber>1</fspecNumber><fspecSpecial>d</fspecSpecial>}")   # Comment
+                 <call>f</call>(<localVar>s</localVar>[0].<mcall>lower</mcall>())
+                 <call>nested_func</call>(42)
+             
+             class <classDef>Foo</classDef>:
+                 tags: <annotation>List[<builtin>str</builtin>]</annotation>
+             
+                 def <predefined>__init__</predefined>(<self>self</self>: <annotation>Foo</annotation>):
+                     <localVar>byte_string</localVar>: <annotation><builtin>bytes</builtin></annotation> = b'newline:\\n also newline:\\x0a'
+                     <localVar>text_string</localVar> = u"Cyrillic Я is \\u042f. Oops: \\u042g"
+                     <self>self</self>.<mcall>make_sense</mcall>(<kwarg>whatever</kwarg>=1)
+             
+                 def <funcDef>make_sense</funcDef>[<typeParam>T</typeParam>](<self>self</self>, <param>whatever:</param> <annotation>T</annotation>):
+                     <self>self</self>.sense = <param>whatever</param>
+             
+             x = <builtin>len</builtin>('abc')
+             type my_int = <builtin>int</builtin>
+             print(f.<predefinedUsage>__doc__</predefinedUsage>)""";
   }
 
   @Override
