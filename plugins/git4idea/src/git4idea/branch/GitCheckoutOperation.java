@@ -148,12 +148,13 @@ class GitCheckoutOperation extends GitBranchOperation {
         GitSimpleEventDetector unknownPathspec = new GitSimpleEventDetector(GitSimpleEventDetector.Event.INVALID_REFERENCE);
         GitUntrackedFilesOverwrittenByOperationDetector untrackedOverwrittenByCheckout =
           new GitUntrackedFilesOverwrittenByOperationDetector(root);
+        GitBranchAlreadyCheckedOutInWorktreeDetector worktreeDetector = new GitBranchAlreadyCheckedOutInWorktreeDetector();
 
         StructuredIdeActivity checkoutOperation = CHECKOUT_OPERATION.startedWithParent(myProject, activity);
         GitCommandResult result;
         try {
           result = myGit.checkout(repository, myStartPointReference, myNewBranch, false, myDetach, myReset,
-                                  localChangesDetector, unmergedFiles, unknownPathspec, untrackedOverwrittenByCheckout);
+                                  localChangesDetector, unmergedFiles, unknownPathspec, untrackedOverwrittenByCheckout, worktreeDetector);
         }
         finally {
           checkoutOperation.finished();
@@ -182,6 +183,12 @@ class GitCheckoutOperation extends GitBranchOperation {
         else if (untrackedOverwrittenByCheckout.isDetected()) {
           fatalUntrackedFilesError(repository.getRoot(), untrackedOverwrittenByCheckout.getRelativeFilePaths());
           fatalErrorHappened = true;
+        }
+        else if (worktreeDetector.isDetected()) {
+          boolean checkoutSucceeded = handleWorktreeCheckout(repository, worktreeDetector, startHash, activity);
+          if (!checkoutSucceeded) {
+            fatalErrorHappened = true;
+          }
         }
         else if (!myRefShouldBeValid && unknownPathspec.isDetected()) {
           markSkip(repository);
@@ -232,6 +239,55 @@ class GitCheckoutOperation extends GitBranchOperation {
       }
     }
     return success;
+  }
+
+  /**
+   * Handles the case when the branch is already checked out in another worktree.
+   * Shows a confirmation dialog and retries checkout with --ignore-other-worktrees if the user confirms.
+   */
+  private boolean handleWorktreeCheckout(@NotNull GitRepository repository,
+                                         @NotNull GitBranchAlreadyCheckedOutInWorktreeDetector worktreeDetector,
+                                         @NotNull Hash startHash,
+                                         @NotNull StructuredIdeActivity activity) {
+    String branchName = worktreeDetector.getBranchName();
+    String worktreePath = worktreeDetector.getWorktreePath();
+
+    if (branchName == null || worktreePath == null) {
+      // Should not happen, but handle gracefully
+      fatalError(getCommonErrorTitle(), GitBundle.message("checkout.operation.could.not.checkout.error", myStartPointReference));
+      return false;
+    }
+
+    boolean userConfirmed = myUiHandler.showBranchAlreadyCheckedOutInWorktreeDialog(branchName, worktreePath);
+    if (!userConfirmed) {
+      return false;
+    }
+
+    // Retry checkout with --ignore-other-worktrees
+    StructuredIdeActivity checkoutOperation = CHECKOUT_OPERATION.startedWithParent(myProject, activity);
+    GitCommandResult result;
+    try {
+      result = myGit.checkout(repository, myStartPointReference, myNewBranch, false, myDetach, myReset, true);
+    }
+    finally {
+      checkoutOperation.finished();
+    }
+
+    if (result.success()) {
+      StructuredIdeActivity vfsRefresh = VFS_REFRESH.startedWithParent(myProject, activity);
+      try {
+        updateAndRefreshChangedVfs(repository, startHash);
+      }
+      finally {
+        vfsRefresh.finished();
+      }
+      markSuccessful(repository);
+      return true;
+    }
+    else {
+      fatalError(getCommonErrorTitle(), result);
+      return false;
+    }
   }
 
   private boolean smartCheckoutOrNotify(@NotNull GitRepository repository,
