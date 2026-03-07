@@ -27,10 +27,12 @@ internal class GitStashDialog(private val project: Project, roots: List<VirtualF
     Disposer.register(disposable, it)
   }
   private val keepIndexCheckBox = JBCheckBox(GitBundle.message("stash.keep.index")).also { it.toolTipText = GitBundle.message("stash.keep.index.tooltip") }
+  private val includeUntrackedCheckBox = JBCheckBox(GitBundle.message("stash.include.untracked")).also { it.toolTipText = GitBundle.message("stash.include.untracked.tooltip") }
 
   val selectedRoot: VirtualFile get() = rootComboBox.item
   val message: String get() = stashMessageEditor.text
   val keepIndex: Boolean get() = keepIndexCheckBox.isSelected
+  val includeUntracked: Boolean get() = includeUntrackedCheckBox.isSelected
 
   init {
     title = GitBundle.message("stash.title")
@@ -44,14 +46,17 @@ internal class GitStashDialog(private val project: Project, roots: List<VirtualF
       row(GitBundle.message("common.git.root")) { cell(rootComboBox) }
       row(GitBundle.message("common.current.branch")) { cell(currentBranchLabel) }
       commitMessageWithLabelAndToolbar(stashMessageEditor, GitBundle.message("stash.message"))
-      row { cell(keepIndexCheckBox) }
+      row {
+        cell(keepIndexCheckBox)
+        cell(includeUntrackedCheckBox)
+      }
     }
   }
 
   override fun doOKAction() {
     super.doOKAction()
 
-    GitStashUsageCollector.logStashPushDialog(message.isNotEmpty(), keepIndex)
+    GitStashUsageCollector.logStashPushDialog(message.isNotEmpty(), keepIndex, includeUntracked)
   }
 
   override fun dispose() {
