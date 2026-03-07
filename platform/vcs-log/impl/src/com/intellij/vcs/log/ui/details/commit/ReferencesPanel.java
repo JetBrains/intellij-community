@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.details.commit;
 
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -19,15 +20,13 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Icon;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.LayoutManager;
 import java.util.Collection;
 import java.util.Collections;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -79,7 +78,8 @@ public class ReferencesPanel extends JPanel {
 
     for (VcsBookmarkRef bookmark : myBookmarks) {
       Icon icon = new BookmarkIcon(this, height, getBackground(), bookmark);
-      JBLabel label = createLabel(bookmark.getText(), icon);
+      String bookmarkText = bookmark.getText();
+      JBLabel label = createLabel(bookmarkText, icon, bookmarkText);
       label.setIconTextGap(JBUI.scale(2));
       addWrapped(label, firstLabel);
       if (firstLabel == null) firstLabel = label;
@@ -91,9 +91,10 @@ public class ReferencesPanel extends JPanel {
       int refIndex = 0;
       for (VcsRef reference : refs) {
         Icon icon = createIcon(type, refs, refIndex, height);
+        String refName = reference.getName();
         String ending = (refIndex != refs.size() - 1) ? "," : "";
-        String text = reference.getName() + ending;
-        JBLabel label = createLabel(text, icon);
+        String text = refName + ending;
+        JBLabel label = createLabel(text, icon, refName);
         addWrapped(label, firstLabel);
         if (firstLabel == null) firstLabel = label;
         refIndex++;
@@ -144,12 +145,26 @@ public class ReferencesPanel extends JPanel {
   }
 
   protected @NotNull JBLabel createLabel(@Nls @NotNull String text, @Nullable Icon icon) {
+    return createLabel(text, icon, null);
+  }
+
+  protected @NotNull JBLabel createLabel(@Nls @NotNull String text, @Nullable Icon icon, @Nullable String copyText) {
     JBLabel label = new JBLabel(text, icon, SwingConstants.LEFT);
     label.setFont(getLabelsFont());
     label.setIconTextGap(2);
     label.setHorizontalAlignment(SwingConstants.LEFT);
     label.setVerticalTextPosition(SwingConstants.CENTER);
     label.setCopyable(true);
+    if (copyText != null) {
+      label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      label.setToolTipText(VcsLogBundle.message("vcs.log.details.reference.click.to.copy.tooltip", copyText));
+      label.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          CopyPasteManager.getInstance().setContents(new StringSelection(copyText));
+        }
+      });
+    }
     return label;
   }
 
