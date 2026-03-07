@@ -42,6 +42,7 @@ import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import java.awt.Dimension
 import java.awt.Insets
@@ -520,3 +521,13 @@ public fun retrieveEditorColorScheme(): EditorColorsScheme {
     val manager = EditorColorsManager.getInstance() as EditorColorsManagerImpl
     return manager.schemeManager.activeScheme ?: DefaultColorSchemesManager.getInstance().firstScheme
 }
+
+/**
+ * Converts a raw Swing dimension (which might already be scaled by JBUI) into a Compose Dp.
+ *
+ * Use this whenever you fetch an Int value from a scaled property in JBUI. If you don't, you'll get "Double Scaling":
+ * 1. JBUI scales the value (e.g. 24px -> 42px for Presentation Mode)
+ * 2. Compose scales it AGAIN via LocalDensity (e.g. 42px -> 147px)
+ */
+public val Int.unscaledDp: Dp
+    get() = JBUI.unscale(this).dp
