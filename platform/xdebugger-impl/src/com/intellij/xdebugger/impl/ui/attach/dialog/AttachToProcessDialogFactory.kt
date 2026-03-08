@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.attach.XAttachDebuggerProvider
@@ -12,11 +13,12 @@ import com.intellij.xdebugger.attach.XAttachHost
 import com.intellij.xdebugger.attach.XAttachHostProvider
 import com.intellij.xdebugger.impl.util.isAlive
 import com.intellij.xdebugger.impl.util.onTermination
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
-class AttachToProcessDialogFactory(private val project: Project) {
+class AttachToProcessDialogFactory(private val project: Project, private val scope: CoroutineScope) {
   companion object {
     // used externally
     @Suppress("MemberVisibilityCanBePrivate")
@@ -26,6 +28,8 @@ class AttachToProcessDialogFactory(private val project: Project) {
   }
 
   private var currentDialog: AttachToProcessDialog? = null
+
+  fun childScope(name: String): CoroutineScope = scope.childScope(name)
 
   fun showDialog(attachDebuggerProviders: List<XAttachDebuggerProvider>,
                  attachHosts: List<XAttachHostProvider<XAttachHost>>,

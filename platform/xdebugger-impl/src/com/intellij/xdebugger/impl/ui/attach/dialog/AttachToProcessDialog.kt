@@ -35,8 +35,7 @@ import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.application
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
+import com.intellij.util.ui.update.DebouncedUpdates
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.attach.XAttachDebugger
 import com.intellij.xdebugger.attach.XAttachDebuggerProvider
@@ -49,6 +48,7 @@ import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.getActionPresenta
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessItemsListBase
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayoutService
 import com.intellij.xdebugger.impl.ui.attach.dialog.statistics.AttachDialogStatisticsCollector
+import kotlinx.coroutines.Dispatchers
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -111,15 +111,17 @@ open class AttachToProcessDialog(
 
   private val state = AttachDialogState(disposable, dataContext)
 
-  private val filterTypingMergeQueue: MergingUpdateQueue = MergingUpdateQueue(
+  private val filterTypingMergeQueue = DebouncedUpdates.forScope<Unit>(
+    project.getService(AttachToProcessDialogFactory::class.java).childScope("AttachToProcessDialog"),
     "Attach to process search typing merging queue",
-    200,
-    true,
-    null,
-    disposable,
-    null,
-    false
-  ).setRestartTimerOnAdd(true)
+    200
+  )
+    .withContext(Dispatchers.Default)
+    .restartTimerOnAdd(true)
+    .runLatest {
+      if (filteringPattern == state.searchFieldValue.get()) return@runLatest
+      state.searchFieldValue.set(filteringPattern)
+    }.cancelOnDispose(disposable)
 
   private var filteringPattern: String = ""
 
@@ -171,14 +173,7 @@ open class AttachToProcessDialog(
         if (filteringPattern == filterTextField.text) return
 
         filteringPattern = filterTextField.text
-        filterTypingMergeQueue.queue(object : Update(filterTextField) {
-          override fun run() {
-            if (filteringPattern == state.searchFieldValue.get()) {
-              return
-            }
-            state.searchFieldValue.set(filteringPattern)
-          }
-        })
+        filterTypingMergeQueue.queue(Unit)
       }
     })
 
