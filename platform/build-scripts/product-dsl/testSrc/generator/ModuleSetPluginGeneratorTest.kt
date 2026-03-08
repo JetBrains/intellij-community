@@ -155,12 +155,12 @@ class ModuleSetPluginGeneratorTest {
   @Test
   fun `syncs ultimate wrappers into root generated dir only`() {
     val rootGeneratedUltimateWrapperPath =
-      "$PROJECT_DIR_MACRO/$ULTIMATE_GENERATED_ROOT_IN_ROOT_MODULES_XML/intellij.moduleSet.plugin.vcs.frontend.split/intellij.moduleSet.plugin.vcs.frontend.split.iml"
+      "$PROJECT_DIR_MACRO/$ULTIMATE_GENERATED_ROOT_IN_ROOT_MODULES_XML/intellij.moduleSet.plugin.vcs.split/intellij.moduleSet.plugin.vcs.split.iml"
     val staleCommunityUltimateWrapperPath =
-      "$PROJECT_DIR_MACRO/$COMMUNITY_GENERATED_ROOT_IN_ROOT_MODULES_XML/intellij.moduleSet.plugin.vcs.frontend.split/intellij.moduleSet.plugin.vcs.frontend.split.iml"
+      "$PROJECT_DIR_MACRO/$COMMUNITY_GENERATED_ROOT_IN_ROOT_MODULES_XML/intellij.moduleSet.plugin.vcs.split/intellij.moduleSet.plugin.vcs.split.iml"
     val staleCommunityUltimateWrapperDir = projectRoot
       .resolve(COMMUNITY_GENERATED_ROOT_IN_ROOT_MODULES_XML)
-      .resolve("intellij.moduleSet.plugin.vcs.frontend.split")
+      .resolve("intellij.moduleSet.plugin.vcs.split")
     staleCommunityUltimateWrapperDir.createDirectories()
     staleCommunityUltimateWrapperDir.resolve("stale.marker").writeText("legacy")
 
@@ -177,14 +177,14 @@ class ModuleSetPluginGeneratorTest {
     writeModulesXml(
       communityModulesXml,
       moduleFilepaths = listOf(
-        "$PROJECT_DIR_MACRO/${GENERATED_ROOT_IN_COMMUNITY_MODULES_XML}/intellij.moduleSet.plugin.vcs.frontend.split/intellij.moduleSet.plugin.vcs.frontend.split.iml",
+        "$PROJECT_DIR_MACRO/${GENERATED_ROOT_IN_COMMUNITY_MODULES_XML}/intellij.moduleSet.plugin.vcs.split/intellij.moduleSet.plugin.vcs.split.iml",
         "$PROJECT_DIR_MACRO/aaa/intellij.zulu.iml",
       ),
     )
 
     generateAndCommit(
       communityModuleSets = listOf(recentFilesModuleSet()),
-      ultimateModuleSets = listOf(vcsFrontendSplitModuleSet()),
+      ultimateModuleSets = listOf(vcsSplitModuleSet()),
     )
 
     assertThat(ultimateWrapperPath()).exists()
@@ -197,7 +197,7 @@ class ModuleSetPluginGeneratorTest {
 
     val communityPaths = moduleFilepaths(communityModulesXml.readText())
     assertThat(communityPaths)
-      .doesNotContain("$PROJECT_DIR_MACRO/${GENERATED_ROOT_IN_COMMUNITY_MODULES_XML}/intellij.moduleSet.plugin.vcs.frontend.split/intellij.moduleSet.plugin.vcs.frontend.split.iml")
+      .doesNotContain("$PROJECT_DIR_MACRO/${GENERATED_ROOT_IN_COMMUNITY_MODULES_XML}/intellij.moduleSet.plugin.vcs.split/intellij.moduleSet.plugin.vcs.split.iml")
   }
 
   @Test
@@ -337,8 +337,9 @@ class ModuleSetPluginGeneratorTest {
     }
   }
 
-  private fun vcsFrontendSplitModuleSet(): ModuleSet {
-    return plugin("vcs.frontend.split", addToMainModule = false) {
+  private fun vcsSplitModuleSet(): ModuleSet {
+    return plugin("vcs.split", addToMainModule = false) {
+      module("intellij.platform.vcs.backend.split")
       module("intellij.platform.vcs.protocol.split.generated")
       module("intellij.platform.vcs.common.split")
       module("intellij.platform.vcs.frontend.split")
@@ -360,7 +361,7 @@ class ModuleSetPluginGeneratorTest {
   }
 
   private fun ultimateWrapperPath(): Path {
-    val moduleName = "intellij.moduleSet.plugin.vcs.frontend.split"
+    val moduleName = "intellij.moduleSet.plugin.vcs.split"
     return projectRoot.resolve(ULTIMATE_GENERATED_ROOT_IN_ROOT_MODULES_XML).resolve(moduleName)
   }
 
