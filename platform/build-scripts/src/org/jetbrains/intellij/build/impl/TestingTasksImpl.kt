@@ -334,7 +334,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           excludedRootPaths.addAll(context.outputProvider.getModuleOutputRoots(module, forTests = true))
         }
       }
-      val excludedRoots = replaceAllWithArchivedIfNeeded(excludedRootPaths).filter(Files::exists).map(Path::toString)
+      val excludedRoots = replaceAllWithArchivedIfNeeded(excludedRootPaths).map(Path::toString)
 
       val excludedRootsFile = context.paths.tempDir.resolve("excluded.classpath")
       Files.createDirectories(excludedRootsFile.parent)
@@ -469,19 +469,19 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val modulePath: List<String>?
 
     val moduleInfoFile = JpsJavaExtensionService.getInstance().getJavaModuleIndex(context.project).getModuleInfoFile(mainJpsModule, true)
-    val toExistingAbsolutePathConverter: (Path) -> String? = { if (Files.exists(it)) it.toAbsolutePath().normalize().toString() else null }
+    val toExistingAbsolutePathConverter: (Path) -> String = { require(Files.exists(it)); it.toAbsolutePath().normalize().toString() }
     if (moduleInfoFile != null) {
       val outputDir = ModuleBuildTarget(mainJpsModule, JavaModuleBuildTargetType.TEST).outputDir
       val pair = ModulePathSplitter().splitPath(moduleInfoFile, mutableSetOf(outputDir), testRoots.map {
         @Suppress("IO_FILE_USAGE")
         it.toFile()
       })
-      modulePath = replaceAllWithArchivedIfNeeded(pair.first.path.map { it.toPath() }).mapNotNull(toExistingAbsolutePathConverter)
-      testClasspath = replaceAllWithArchivedIfNeeded(pair.second.map { it.toPath() }).mapNotNull(toExistingAbsolutePathConverter)
+      modulePath = replaceAllWithArchivedIfNeeded(pair.first.path.map { it.toPath() }).map(toExistingAbsolutePathConverter)
+      testClasspath = replaceAllWithArchivedIfNeeded(pair.second.map { it.toPath() }).map(toExistingAbsolutePathConverter)
     }
     else {
       modulePath = null
-      testClasspath = replaceAllWithArchivedIfNeeded(testRoots).mapNotNull(toExistingAbsolutePathConverter)
+      testClasspath = replaceAllWithArchivedIfNeeded(testRoots).map(toExistingAbsolutePathConverter)
     }
 
     if (!searchForTestsAcrossModuleDependencies) {  // don't modify testClasspath
@@ -496,7 +496,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val classpathFile = context.paths.tempDir.resolve("junit.classpath")
     Files.createDirectories(classpathFile.parent)
     // this is required to collect tests both on class and module paths
-    Files.writeString(classpathFile, replaceAllWithArchivedIfNeeded(testRoots).mapNotNull(toExistingAbsolutePathConverter).joinToString(separator = "\n"))
+    Files.writeString(classpathFile, replaceAllWithArchivedIfNeeded(testRoots).joinToString(separator = "\n", transform = toExistingAbsolutePathConverter))
     @Suppress("NAME_SHADOWING")
     val systemProperties = systemProperties.toMutableMap()
     systemProperties.put("io.netty.allocator.type", "pooled")
@@ -768,20 +768,16 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     return context.project.modules.mapConcurrent { module ->
       withContext(CoroutineName("loading tests annotated with @SkipInHeadlessEnvironment from the module '${module.name}'")) {
         val outputRoots = context.outputProvider.getModuleOutputRoots(module, forTests = true)
+        if (outputRoots.isEmpty()) return@withContext emptyList()
         val root = requireNotNull(outputRoots.singleOrNull()) { "More than one output root for module '${module.name}': ${outputRoots.joinToString()}" }
-        if (Files.exists(root)) {
-          ClassFinder(root, "", false).classes
-            .filter {
-              val testClass = classloader.loadClass(it)
-              !Modifier.isAbstract(testClass.modifiers) &&
-              !testClass.isAnnotationPresent(ignoreAnnotation) &&
-              testClass.isAnnotationPresent(testAnnotation)
-            }
-            .map { Pair(it, module.name) }
-        }
-        else {
-          emptyList()
-        }
+        ClassFinder(root, "", false).classes
+          .filter {
+            val testClass = classloader.loadClass(it)
+            !Modifier.isAbstract(testClass.modifiers) &&
+            !testClass.isAnnotationPresent(ignoreAnnotation) &&
+            testClass.isAnnotationPresent(testAnnotation)
+          }
+          .map { Pair(it, module.name) }
       }
     }.flatten()
   }

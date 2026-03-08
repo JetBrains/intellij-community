@@ -23,9 +23,9 @@ internal class ArchivedCompilationOutputStorage(
 ) {
   private val unarchivedToArchivedMap = ConcurrentHashMap(initialMapping)
 
-  fun getArchived(path: Path): Path {
-    if (Files.isRegularFile(path)) {
-      return path
+  fun getArchived(path: Path): Path? {
+    if (!path.startsWith(classesOutputDirectory)) {
+      return path  // not a module output root
     }
 
     unarchivedToArchivedMap.get(path)?.let {
@@ -33,21 +33,21 @@ internal class ArchivedCompilationOutputStorage(
     }
 
     if (!archiveIfAbsent) {
-      return path
+      return null  // no module output root, skip
     }
 
     if (Files.notExists(path)) {
-      return path
+      return null  // no module output root, skip
     }
 
-    val archived = archive(path)
+    val archived = archive(path) ?: return null  // no module output root, skip
     return unarchivedToArchivedMap.putIfAbsent(path, archived) ?: archived
   }
 
-  private fun archive(path: Path): Path {
+  private fun archive(path: Path): Path? {
     if (!Files.newDirectoryStream(path).use { stream -> stream.iterator().hasNext() }) {
       // Empty dir, no need to archive
-      return path
+      return null
     }
     val name = classesOutputDirectory.relativize(path).toString()
 
