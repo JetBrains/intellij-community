@@ -349,6 +349,7 @@ internal class AgentSessionRefreshCoordinator(
         path = normalizedEntryPath,
         name = entry.name,
         branch = entry.branch,
+        buildSystemBadge = entry.buildSystemBadge,
         isOpen = entryIsOpen,
         isLoading = shouldLoadProject,
         hasLoaded = existing?.hasLoaded ?: (warmSnapshot != null),

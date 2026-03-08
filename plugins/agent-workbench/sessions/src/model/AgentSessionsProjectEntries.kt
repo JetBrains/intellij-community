@@ -8,6 +8,7 @@ internal data class ProjectEntry(
   val name: String,
   val project: Project?,
   val branch: String? = null,
+  val buildSystemBadge: ProjectBuildSystemBadge? = null,
   val worktreeEntries: List<WorktreeEntry> = emptyList(),
 )
 

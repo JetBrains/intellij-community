@@ -115,6 +115,7 @@ private data class ProjectTreeRowPresentation(
   val hasOpenWorktree: Boolean,
   val hasWorktrees: Boolean,
   val branch: String?,
+  val buildSystemBadgeId: String?,
   val isLoading: Boolean,
 )
 
@@ -146,6 +147,7 @@ internal fun sessionTreeNodePresentation(node: SessionTreeNode, duplicateProject
         hasOpenWorktree = node.project.worktrees.any { it.isOpen },
         hasWorktrees = hasWorktrees,
         branch = visibleProjectBranch(node.project),
+        buildSystemBadgeId = node.project.buildSystemBadge?.id,
         isLoading = node.project.isLoading,
       )
     }

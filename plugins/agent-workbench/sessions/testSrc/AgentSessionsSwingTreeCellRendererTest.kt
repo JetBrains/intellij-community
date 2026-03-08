@@ -7,6 +7,7 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
+import com.intellij.agent.workbench.sessions.model.ProjectBuildSystemBadge
 import com.intellij.agent.workbench.sessions.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.tree.SessionTreeNode
 import com.intellij.agent.workbench.sessions.ui.SESSION_TREE_MORE_ROW_FRAGMENT_TAG
@@ -154,6 +155,33 @@ class AgentSessionsSwingTreeCellRendererTest {
     renderer.getTreeCellRendererComponent(tree, descriptorValue(projectId), false, false, false, 0, false)
 
     assertThat(renderer.icon).isEqualTo(ProductIcons.getInstance().getProjectNodeIcon())
+  }
+
+  @Test
+  fun projectRowsUseBuildSystemIconWhenAvailable() {
+    val buildSystemIcon = EmptyIcon.create(16, 16)
+    val project = AgentProjectSessions(
+      path = "/work/project-a",
+      name = "Project A",
+      buildSystemBadge = ProjectBuildSystemBadge("gradle", buildSystemIcon),
+      isOpen = true,
+    )
+    val projectId = SessionTreeId.Project(project.path)
+    val renderer = SessionTreeCellRenderer(
+      nowProvider = { 0L },
+      rowActionsProvider = { _, _, _ -> null },
+      nodeResolver = { id ->
+        if (id == projectId) SessionTreeNode.Project(project) else null
+      },
+    )
+    val tree = createTree(width = 420)
+
+    renderer.getTreeCellRendererComponent(tree, descriptorValue(projectId), false, false, false, 0, false)
+
+    val renderedIcon = renderer.icon
+    assertThat(renderedIcon).isSameAs(buildSystemIcon)
+    assertThat(renderedIcon?.iconWidth).isEqualTo(ProductIcons.getInstance().getProjectNodeIcon().iconWidth)
+    assertThat(renderedIcon?.iconHeight).isEqualTo(ProductIcons.getInstance().getProjectNodeIcon().iconHeight)
   }
 
   @Test

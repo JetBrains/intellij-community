@@ -6,6 +6,7 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_CLOSED_PROJECT_COUNT
 import com.intellij.openapi.util.NlsSafe
+import javax.swing.Icon
 
 internal sealed interface ArchiveThreadTarget {
   val path: String
@@ -60,6 +61,17 @@ internal data class AgentSessionProviderWarning(
   @JvmField val message: @NlsSafe String,
 )
 
+internal class ProjectBuildSystemBadge(
+  @JvmField val id: String,
+  @JvmField val icon: Icon,
+) {
+  override fun equals(other: Any?): Boolean = other is ProjectBuildSystemBadge && id == other.id
+
+  override fun hashCode(): Int = id.hashCode()
+
+  override fun toString(): String = "ProjectBuildSystemBadge(id=$id)"
+}
+
 internal data class AgentWorktree(
   @JvmField val path: String,
   @JvmField val name: @NlsSafe String,
@@ -77,6 +89,7 @@ internal data class AgentProjectSessions(
   @JvmField val path: String,
   @JvmField val name: @NlsSafe String,
   @JvmField val branch: @NlsSafe String? = null,
+  @JvmField val buildSystemBadge: ProjectBuildSystemBadge? = null,
   @JvmField val isOpen: Boolean,
   @JvmField val threads: List<AgentSessionThread> = emptyList(),
   @JvmField val isLoading: Boolean = false,

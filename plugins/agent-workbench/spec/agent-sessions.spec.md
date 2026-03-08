@@ -216,6 +216,7 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 - Duplicate project names are differentiated first by path label; any visible project-row branch remains secondary metadata.
 - Standalone project rows may show a trailing branch label only for non-default branches; `main` and `master` stay hidden.
 - Project rows with worktree children stay branchless to avoid duplicating branch context already visible on child worktree rows.
+- Project rows may use a detected build-system icon in place of the generic project icon when exactly one icon-bearing project-open processor matches the project path; ambiguous or unknown projects stay generic.
 - Worktree rows continue to show their branch, and detached worktrees continue to show detached state.
 - Open project rows must be visually emphasized via stronger title weight.
 - Closed project rows must remain readable but visually de-emphasized relative to open rows.

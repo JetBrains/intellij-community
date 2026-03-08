@@ -43,12 +43,19 @@ internal class SessionTreeCellRenderer(
     val activity: AgentThreadActivity,
   )
 
+  private data class ProjectCompositeIconCacheKey(
+    val badgeId: String,
+    val baseIconWidth: Int,
+    val baseIconHeight: Int,
+  )
+
   private var threadTrailingPaint: SessionTreeThreadTrailingPaint? = null
   private var sharedTimeColumnWidthCacheKey: SharedTimeColumnWidthCacheKey? = null
   private var sharedTimeColumnWidthCacheValue: Int = 0
   private var cachedProviderIconSize: Int = -1
   private val providerIconCache = LinkedHashMap<AgentSessionProvider, Icon>()
   private val threadCompositeIconCache = LinkedHashMap<ThreadCompositeIconCacheKey, Icon>()
+  private val projectCompositeIconCache = LinkedHashMap<ProjectCompositeIconCacheKey, Icon>()
 
   internal val trailingThreadPaintForTest: SessionTreeThreadTrailingPaint?
     get() = threadTrailingPaint
@@ -74,7 +81,7 @@ internal class SessionTreeCellRenderer(
 
     when (treeNode) {
       is SessionTreeNode.Project -> {
-        val projectIcon = ProductIcons.getInstance().getProjectNodeIcon()
+        val projectIcon = projectCompositeIcon(treeNode.project)
         icon = projectIcon
         val baseFontMetrics = getFontMetrics(getBaseFont())
         val titleAttributes = if (treeNode.project.isOpen || treeNode.project.worktrees.any { it.isOpen }) {
@@ -276,6 +283,30 @@ internal class SessionTreeCellRenderer(
       val baseIcon = scaledProviderIcon(provider)
       withAgentThreadActivityBadge(baseIcon, activity)
     }
+  }
+
+  private fun projectCompositeIcon(project: AgentProjectSessions): Icon {
+    val baseIcon = ProductIcons.getInstance().getProjectNodeIcon()
+    val buildSystemBadge = project.buildSystemBadge ?: return baseIcon
+    val key = ProjectCompositeIconCacheKey(
+      badgeId = buildSystemBadge.id,
+      baseIconWidth = baseIcon.iconWidth,
+      baseIconHeight = baseIcon.iconHeight,
+    )
+    return projectCompositeIconCache.getOrPut(key) {
+      fitProjectIconSize(icon = buildSystemBadge.icon, targetWidth = baseIcon.iconWidth, targetHeight = baseIcon.iconHeight)
+    }
+  }
+}
+
+private fun fitProjectIconSize(icon: Icon, targetWidth: Int, targetHeight: Int): Icon {
+  val scale = minOf(targetWidth.toFloat() / icon.iconWidth, targetHeight.toFloat() / icon.iconHeight)
+  val scaledIcon = if (scale == 1f) icon else IconUtil.scale(icon = icon, ancestor = null, scale = scale)
+  return if (scaledIcon.iconWidth == targetWidth && scaledIcon.iconHeight == targetHeight) {
+    scaledIcon
+  }
+  else {
+    IconUtil.toSize(scaledIcon, targetWidth, targetHeight)
   }
 }
 

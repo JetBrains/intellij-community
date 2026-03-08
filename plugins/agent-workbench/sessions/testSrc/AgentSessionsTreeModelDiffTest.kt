@@ -5,11 +5,13 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
+import com.intellij.agent.workbench.sessions.model.ProjectBuildSystemBadge
 import com.intellij.agent.workbench.sessions.state.InMemorySessionTreeUiState
 import com.intellij.agent.workbench.sessions.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.tree.buildSessionTreeModel
 import com.intellij.agent.workbench.sessions.tree.diffSessionTreeModels
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.ui.EmptyIcon
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -167,6 +169,44 @@ class AgentSessionsTreeModelDiffTest {
     val newModel = buildSessionTreeModel(
       projects = listOf(
         AgentProjectSessions(path = "/work/project-a", name = "Project A", branch = "feature-x", isOpen = true, hasLoaded = true)
+      ),
+      visibleClosedProjectCount = Int.MAX_VALUE,
+      visibleThreadCounts = emptyMap(),
+      treeUiState = InMemorySessionTreeUiState(),
+    )
+
+    val diff = diffSessionTreeModels(oldModel, newModel)
+
+    assertThat(diff.rootChanged).isFalse()
+    assertThat(diff.structureChangedIds).isEmpty()
+    assertThat(diff.contentChangedIds).isEqualTo(setOf(SessionTreeId.Project("/work/project-a")))
+  }
+
+  @Test
+  fun detectsContentChangesWhenProjectBuildSystemBadgeChanges() {
+    val oldModel = buildSessionTreeModel(
+      projects = listOf(
+        AgentProjectSessions(
+          path = "/work/project-a",
+          name = "Project A",
+          buildSystemBadge = ProjectBuildSystemBadge("gradle", EmptyIcon.create(16, 16)),
+          isOpen = true,
+          hasLoaded = true,
+        )
+      ),
+      visibleClosedProjectCount = Int.MAX_VALUE,
+      visibleThreadCounts = emptyMap(),
+      treeUiState = InMemorySessionTreeUiState(),
+    )
+    val newModel = buildSessionTreeModel(
+      projects = listOf(
+        AgentProjectSessions(
+          path = "/work/project-a",
+          name = "Project A",
+          buildSystemBadge = ProjectBuildSystemBadge("maven", EmptyIcon.create(16, 16)),
+          isOpen = true,
+          hasLoaded = true,
+        )
       ),
       visibleClosedProjectCount = Int.MAX_VALUE,
       visibleThreadCounts = emptyMap(),
