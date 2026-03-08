@@ -103,16 +103,20 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
   [@test] ../sessions/testSrc/AgentSessionsSwingTreeRenderingTest.kt
   [@test] ../sessions/testSrc/AgentSessionRefreshServiceIntegrationTest.kt
 
-- Refresh bootstrap must seed open project/worktree paths from preview cache immediately and keep those paths marked loaded until live provider results arrive.
+- Refresh bootstrap must seed open project/worktree paths from warm snapshot immediately and keep those paths marked loaded until live provider results arrive.
   [@test] ../sessions/testSrc/AgentSessionRefreshServiceIntegrationTest.kt
 
 - Refresh bootstrap visibility-restoration behavior must follow `spec/agent-sessions-thread-visibility.spec.md`.
   [@test] ../sessions/testSrc/AgentSessionRefreshServiceIntegrationTest.kt
 
-- Refresh bootstrap must retain preview cache only for currently open project/worktree paths and prune stale closed-path entries.
+- Refresh bootstrap must retain warm snapshot only for currently open project/worktree paths and prune stale closed-path entries.
   [@test] ../sessions/testSrc/AgentSessionRefreshServiceIntegrationTest.kt
 
-- Final refresh results must update preview cache only for paths that are not in blocking error state.
+- Final refresh results must update warm snapshot only for paths that are not in blocking error state.
+  [@test] ../sessions/testSrc/AgentSessionRefreshServiceIntegrationTest.kt
+
+- Successful archive and local read-state updates must update warm snapshot immediately so stale persisted session rows cannot resurrect on restart.
+  [@test] ../sessions/testSrc/AgentSessionArchiveServiceIntegrationTest.kt
   [@test] ../sessions/testSrc/AgentSessionRefreshServiceIntegrationTest.kt
 
 - Explicit refresh must set loading state only for project/worktree paths in the active refresh load scope; rows outside that scope must not show loading indicators.
@@ -216,7 +220,7 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 - Open project rows must be visually emphasized via stronger title weight.
 - Closed project rows must remain readable but visually de-emphasized relative to open rows.
 - Default project visibility must include all open projects and up to 3 closed recent projects; additional closed projects appear behind `More`.
-- Thread rows use a provider-aware leading icon; only normalized attention-needed activity (`UNREAD`) adds an overlay badge, and rows show a right-aligned relative activity time.
+- Thread rows use a provider-aware leading icon with an overlay badge colored by normalized `AgentThreadActivity`, and rows show a right-aligned relative activity time.
 - Thread rows must not render inline provider status text; badges and tooltip status lines must use normalized `AgentThreadActivity` values (`READY`, `PROCESSING`, `REVIEWING`, `UNREAD`).
 - Thread-row archive context menu applies to current multi-selection when invoked from a selected thread and shows `Archive Selected (N)` when `N > 1`.
 - Single-click on normal rows selects only; open happens on Enter or double-click.
@@ -242,6 +246,7 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 - Missing provider tooling must produce provider-specific messages.
 - Unexpected provider failures must map to provider-unavailable warnings when partial data exists.
 - Load failures should preserve previously loaded thread data where safe.
+- Blocking open-path refresh failures should preserve the previous warm snapshot instead of overwriting it with error-state content.
 - Batch archive/unarchive failures should isolate to failing targets and preserve successful target state updates.
 - Chat metadata cleanup failures during archive must be logged and must not block successful thread removal/refresh.
 

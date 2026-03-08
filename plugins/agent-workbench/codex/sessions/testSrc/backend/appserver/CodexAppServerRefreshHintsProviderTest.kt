@@ -82,7 +82,7 @@ class CodexAppServerRefreshHintsProviderTest {
       mapOf(
         "thread-ready" to AgentThreadActivity.READY,
         "thread-unread-flag" to AgentThreadActivity.UNREAD,
-        "thread-unread-message" to AgentThreadActivity.UNREAD,
+        "thread-unread-message" to AgentThreadActivity.PROCESSING,
         "thread-review-flag" to AgentThreadActivity.UNREAD,
         "thread-review-mode" to AgentThreadActivity.REVIEWING,
         "thread-processing-status" to AgentThreadActivity.PROCESSING,

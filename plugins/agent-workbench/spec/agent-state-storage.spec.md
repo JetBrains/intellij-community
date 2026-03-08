@@ -3,10 +3,12 @@ name: Agent Workbench State Storage
 description: Inventory and persistence requirements for all Agent Workbench @State components and their storage locations.
 targets:
   - ../chat/src/AgentChatTabsStateService.kt
+  - ../sessions/src/state/AgentSessionWarmStateService.kt
   - ../sessions/src/state/AgentSessionTreeUiStateService.kt
   - ../sessions/src/state/AgentSessionUiPreferencesStateService.kt
   - ../prompt/src/ui/AgentPromptUiSessionStateService.kt
   - ../chat/testSrc/AgentChatFileEditorProviderTest.kt
+  - ../sessions/testSrc/AgentSessionWarmStateServiceTest.kt
   - ../sessions/testSrc/AgentSessionTreeUiStateServiceTest.kt
   - ../sessions/testSrc/AgentSessionUiPreferencesStateServiceTest.kt
   - ../prompt/testSrc/ui/AgentPromptUiSessionStateServiceTest.kt
@@ -34,17 +36,22 @@ This file is the single inventory for where Agent Workbench state is persisted a
 ## Requirements
 - Agent Workbench must keep exactly these `@State` components:
   - `AgentChatTabsState` (`Service.Level.APP`, `StoragePathMacros.CACHE_FILE`).
+  - `AgentSessionWarmState` (`Service.Level.APP`, `StoragePathMacros.CACHE_FILE`).
   - `AgentSessionTreeUiState` (`Service.Level.APP`, `StoragePathMacros.CACHE_FILE`).
-  - `AgentSessionUiPreferencesState` (`Service.Level.APP`, `StoragePathMacros.CACHE_FILE`).
+  - `AgentSessionUiPreferencesState` (`Service.Level.APP`, `StoragePathMacros.NON_ROAMABLE_FILE`).
   - `AgentPromptUiState` (`Service.Level.PROJECT`, `StoragePathMacros.PRODUCT_WORKSPACE_FILE`).
 
 - `AgentChatTabsState` persistence must remain cache-scoped app state and must store tab snapshots keyed by `tabKey`.
   [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
-- `AgentSessionTreeUiState` persistence must remain cache-scoped app state and must store only tree UI preferences (collapsed paths, visible counts, thread previews).
+- `AgentSessionWarmState` persistence must remain cache-scoped app state and must store only warm-start session content for open paths (threads, `hasUnknownThreadCount`, snapshot timestamp).
+  It must not store blocking errors, provider warnings, loading flags, or pending `new-*` thread identities.
+  [@test] ../sessions/testSrc/AgentSessionWarmStateServiceTest.kt
+
+- `AgentSessionTreeUiState` persistence must remain cache-scoped app state and must store only tree UI preferences (collapsed paths and visible counts).
   [@test] ../sessions/testSrc/AgentSessionTreeUiStateServiceTest.kt
 
-- `AgentSessionUiPreferencesState` persistence must remain cache-scoped app state and must store shared UI preferences (`lastUsedProvider`, Claude quota hint eligibility/acknowledgement).
+- `AgentSessionUiPreferencesState` persistence must remain non-roamable app state and must store shared UI preferences (`lastUsedProvider`, Claude quota hint eligibility/acknowledgement).
   [@test] ../sessions/testSrc/AgentSessionUiPreferencesStateServiceTest.kt
 
 - `AgentPromptUiState` persistence must remain workspace-scoped project state and must store only prompt draft fields.
@@ -65,6 +72,12 @@ This file is the single inventory for where Agent Workbench state is persisted a
   - Storage: `StoragePathMacros.CACHE_FILE`
   - Persisted root state type: `AgentChatTabsState`
 
+- `AgentSessionWarmStateService`
+  - Component name: `AgentSessionWarmState`
+  - Service level: `APP`
+  - Storage: `StoragePathMacros.CACHE_FILE`
+  - Persisted root state type: `WarmState`
+
 - `AgentSessionTreeUiStateService`
   - Component name: `AgentSessionTreeUiState`
   - Service level: `APP`
@@ -74,7 +87,7 @@ This file is the single inventory for where Agent Workbench state is persisted a
 - `AgentSessionUiPreferencesStateService`
   - Component name: `AgentSessionUiPreferencesState`
   - Service level: `APP`
-  - Storage: `StoragePathMacros.CACHE_FILE`
+  - Storage: `StoragePathMacros.NON_ROAMABLE_FILE`
   - Persisted root state type: `UiPreferencesState`
 
 - `AgentPromptUiSessionStateService`
@@ -86,6 +99,7 @@ This file is the single inventory for where Agent Workbench state is persisted a
 
 ## Testing / Local Run
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptUiSessionStateServiceTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionWarmStateServiceTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionTreeUiStateServiceTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionUiPreferencesStateServiceTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatFileEditorProviderTest'`

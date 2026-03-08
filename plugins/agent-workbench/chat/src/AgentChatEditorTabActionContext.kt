@@ -16,6 +16,7 @@ data class AgentChatEditorTabActionContext(
   val provider: AgentSessionProvider? = null,
   val sessionId: String = "",
   val isPendingThread: Boolean = false,
+  val subAgentId: String? = null,
 )
 
 internal data class AgentChatThreadCoordinates(
@@ -56,5 +57,6 @@ fun resolveAgentChatEditorTabActionContext(event: AnActionEvent): AgentChatEdito
     provider = selectedChatFile.provider,
     sessionId = selectedChatFile.sessionId,
     isPendingThread = selectedChatFile.isPendingThread,
+    subAgentId = selectedChatFile.subAgentId,
   )
 }

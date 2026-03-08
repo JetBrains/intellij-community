@@ -107,7 +107,7 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - If initial prompt metadata is updated while waiting for `Running`, dispatch must use the latest metadata and stale in-flight dispatch attempts must not mark metadata as sent.
   [@test] ../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
 
-- Editor tab icon must be provider-specific using canonical identity; only attention-needed activity (`UNREAD`) is badged, unknown provider uses the default chat icon, and unknown activity defaults to `READY`.
+- Editor tab icon must be provider-specific using canonical identity; every normalized `AgentThreadActivity` state is represented by an activity badge, unknown provider uses the default chat icon as the base icon, and unknown activity defaults to `READY`.
   [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
 - Provider icon lookup in chat/editor tab providers must use shared typed icon holder (`AgentWorkbenchCommonIcons`), not inline path-based icon loading.

@@ -23,12 +23,11 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
-import com.intellij.agent.workbench.sessions.model.AgentSessionThreadPreview
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
+import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
-import com.intellij.agent.workbench.sessions.state.SessionTreeUiState
 import com.intellij.agent.workbench.sessions.util.agentSessionCliMissingMessageKey
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.openapi.diagnostic.debug
@@ -56,8 +55,8 @@ internal class AgentSessionRefreshCoordinator(
     private val serviceScope: CoroutineScope,
     private val sessionSourcesProvider: () -> List<AgentSessionSource>,
     private val projectEntriesProvider: suspend () -> List<ProjectEntry>,
-    private val treeUiState: SessionTreeUiState,
     private val stateStore: AgentSessionsStateStore,
+    private val contentRepository: AgentSessionContentRepository,
     private val isRefreshGateActive: suspend () -> Boolean,
     private val openAgentChatProjectPathsProvider: suspend () -> Set<String> = ::collectOpenAgentChatProjectPaths,
     private val codexScopedRefreshSignalsProvider: () -> Flow<Set<String>> = { codexScopedRefreshSignals() },
@@ -207,7 +206,7 @@ internal class AgentSessionRefreshCoordinator(
     ensureSourceUpdateObservers()
     val currentState = stateStore.snapshot()
     val bootstrap = buildRefreshBootstrap(currentState = currentState, loadScope = loadScope)
-    treeUiState.retainOpenProjectThreadPreviews(bootstrap.openPaths)
+    contentRepository.retainWarmSnapshots(bootstrap.openPaths)
     stateStore.replaceProjects(
       projects = bootstrap.initialProjects,
       visibleThreadCounts = bootstrap.initialVisibleThreadCounts,
@@ -270,9 +269,7 @@ internal class AgentSessionRefreshCoordinator(
               providerWarnings = finalResult.providerWarnings,
             )
           }
-          if (finalResult.errorMessage == null) {
-            treeUiState.setOpenProjectThreadPreviews(normalizedEntryPath, finalResult.threads.toThreadPreviews())
-          }
+          contentRepository.syncWarmSnapshotFromRuntime(normalizedEntryPath)
         }
         for (wt in entry.worktreeEntries) {
           launch {
@@ -311,9 +308,7 @@ internal class AgentSessionRefreshCoordinator(
                 providerWarnings = finalResult.providerWarnings,
               )
             }
-            if (finalResult.errorMessage == null) {
-              treeUiState.setOpenProjectThreadPreviews(normalizedWorktreePath, finalResult.threads.toThreadPreviews())
-            }
+            contentRepository.syncWarmSnapshotFromRuntime(normalizedWorktreePath)
           }
         }
       }
@@ -343,21 +338,21 @@ internal class AgentSessionRefreshCoordinator(
         openPaths = openPaths,
         loadPaths = loadPaths,
       )
-      val cachedPreviews = if (entryIsOpen) {
-        treeUiState.getOpenProjectThreadPreviews(normalizedEntryPath)
+      val warmSnapshot = if (entryIsOpen) {
+        contentRepository.getWarmSnapshot(normalizedEntryPath)
       }
       else {
         null
       }
-      val cachedThreads = cachedPreviews.orEmpty().toCachedSessionThreads()
+      val cachedThreads = warmSnapshot?.threads.orEmpty()
       AgentProjectSessions(
         path = normalizedEntryPath,
         name = entry.name,
         branch = entry.branch,
         isOpen = entryIsOpen,
         isLoading = shouldLoadProject,
-        hasLoaded = existing?.hasLoaded ?: (cachedPreviews != null),
-        hasUnknownThreadCount = existing?.hasUnknownThreadCount ?: false,
+        hasLoaded = existing?.hasLoaded ?: (warmSnapshot != null),
+        hasUnknownThreadCount = existing?.hasUnknownThreadCount ?: (warmSnapshot?.hasUnknownThreadCount ?: false),
         threads = existing?.threads ?: cachedThreads,
         errorMessage = existing?.errorMessage,
         providerWarnings = existing?.providerWarnings ?: emptyList(),
@@ -374,21 +369,21 @@ internal class AgentSessionRefreshCoordinator(
             openPaths = openPaths,
             loadPaths = loadPaths,
           )
-          val cachedWorktreePreviews = if (worktreeIsOpen) {
-            treeUiState.getOpenProjectThreadPreviews(normalizedWorktreePath)
+          val warmWorktreeSnapshot = if (worktreeIsOpen) {
+            contentRepository.getWarmSnapshot(normalizedWorktreePath)
           }
           else {
             null
           }
-          val cachedWorktreeThreads = cachedWorktreePreviews.orEmpty().toCachedSessionThreads()
+          val cachedWorktreeThreads = warmWorktreeSnapshot?.threads.orEmpty()
           AgentWorktree(
             path = normalizedWorktreePath,
             name = wt.name,
             branch = wt.branch,
             isOpen = worktreeIsOpen,
             isLoading = shouldLoadWorktree,
-            hasLoaded = existingWt?.hasLoaded ?: (cachedWorktreePreviews != null),
-            hasUnknownThreadCount = existingWt?.hasUnknownThreadCount ?: false,
+            hasLoaded = existingWt?.hasLoaded ?: (warmWorktreeSnapshot != null),
+            hasUnknownThreadCount = existingWt?.hasUnknownThreadCount ?: (warmWorktreeSnapshot?.hasUnknownThreadCount ?: false),
             threads = existingWt?.threads ?: cachedWorktreeThreads,
             errorMessage = existingWt?.errorMessage,
             providerWarnings = existingWt?.providerWarnings ?: emptyList(),
@@ -507,12 +502,12 @@ internal class AgentSessionRefreshCoordinator(
     }
   }
 
-  fun suppressArchivedThread(path: String, provider: AgentSessionProvider, threadId: String) {
-    archiveSuppressionSupport.suppress(path = path, provider = provider, threadId = threadId)
+  fun suppressArchivedTarget(target: ArchiveThreadTarget) {
+    archiveSuppressionSupport.suppress(target)
   }
 
-  fun unsuppressArchivedThread(path: String, provider: AgentSessionProvider, threadId: String) {
-    archiveSuppressionSupport.unsuppress(path = path, provider = provider, threadId = threadId)
+  fun unsuppressArchivedTarget(target: ArchiveThreadTarget) {
+    archiveSuppressionSupport.unsuppress(target)
   }
 
   fun loadProjectThreadsOnDemand(path: String) {
@@ -954,6 +949,7 @@ internal class AgentSessionRefreshCoordinator(
           )
         }
       }
+      contentRepository.syncWarmSnapshotsFromRuntime(targetPaths)
       LOG.debug { "Finished provider refresh id=$refreshId provider=${provider.value}" }
     }
   }
@@ -1147,31 +1143,6 @@ private fun mergeThreadsForProvider(
   mergedThreads.addAll(newProviderThreads)
   mergedThreads.sortByDescending { it.updatedAt }
   return mergedThreads
-}
-
-private fun List<AgentSessionThreadPreview>.toCachedSessionThreads(): List<AgentSessionThread> {
-  return map { preview ->
-    AgentSessionThread(
-      id = preview.id,
-      title = preview.title,
-      updatedAt = preview.updatedAt,
-      archived = false,
-      activity = preview.activity,
-      provider = preview.provider,
-    )
-  }
-}
-
-private fun List<AgentSessionThread>.toThreadPreviews(): List<AgentSessionThreadPreview> {
-  return map { thread ->
-    AgentSessionThreadPreview(
-      id = thread.id,
-      title = thread.title,
-      updatedAt = thread.updatedAt,
-      activity = thread.activity,
-      provider = thread.provider,
-    )
-  }
 }
 
 private data class PendingSourceRefreshJob(

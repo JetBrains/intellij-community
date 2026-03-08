@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions.ui
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.withAgentThreadActivityBadge
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
@@ -13,7 +14,6 @@ import com.intellij.ide.ui.ProductIcons
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ColoredTreeCellRenderer
-import com.intellij.ui.IconManager
 import com.intellij.ui.SimpleColoredComponent.FragmentTextClipper
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil
@@ -33,10 +33,6 @@ internal class SessionTreeCellRenderer(
   private val providerIconProvider: (AgentSessionProvider) -> Icon? = ::providerIcon,
   private val duplicateProjectNamesProvider: () -> Set<String> = { emptySet() },
 ) : ColoredTreeCellRenderer() {
-  private fun shouldBadgeThreadActivity(activity: AgentThreadActivity): Boolean {
-    return activity == AgentThreadActivity.UNREAD
-  }
-
   private data class SharedTimeColumnWidthCacheKey(
     val fontHash: Int,
     val labelsSignature: @NlsSafe String,
@@ -45,7 +41,6 @@ internal class SessionTreeCellRenderer(
   private data class ThreadCompositeIconCacheKey(
     val provider: AgentSessionProvider,
     val activity: AgentThreadActivity,
-    val statusRgb: Int,
   )
 
   private var threadTrailingPaint: SessionTreeThreadTrailingPaint? = null
@@ -128,7 +123,7 @@ internal class SessionTreeCellRenderer(
           treeNode = treeNode,
           now = nowProvider(),
         )
-        icon = threadCompositeIcon(treeNode.thread.provider, treeNode.thread.activity, threadRowPresentation.statusColor)
+        icon = threadCompositeIcon(treeNode.thread.provider, treeNode.thread.activity)
         val threadTitle: @NlsSafe String = threadRowPresentation.title
         appendWithClipping(threadTitle, SimpleTextAttributes.REGULAR_ATTRIBUTES, SessionTreeMiddleTextClipper)
         threadTrailingPaint = computeSessionTreeThreadTrailingPaint(
@@ -275,11 +270,11 @@ internal class SessionTreeCellRenderer(
     }
   }
 
-  private fun threadCompositeIcon(provider: AgentSessionProvider, activity: AgentThreadActivity, statusColor: Color): Icon {
-    val key = ThreadCompositeIconCacheKey(provider = provider, activity = activity, statusRgb = statusColor.rgb)
+  private fun threadCompositeIcon(provider: AgentSessionProvider, activity: AgentThreadActivity): Icon {
+    val key = ThreadCompositeIconCacheKey(provider = provider, activity = activity)
     return threadCompositeIconCache.getOrPut(key) {
       val baseIcon = scaledProviderIcon(provider)
-      if (!shouldBadgeThreadActivity(activity)) baseIcon else IconManager.getInstance().withIconBadge(baseIcon, statusColor)
+      withAgentThreadActivityBadge(baseIcon, activity)
     }
   }
 }

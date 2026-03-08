@@ -1,8 +1,5 @@
 package com.intellij.agent.workbench.sessions
 
-import com.intellij.agent.workbench.common.AgentThreadActivity
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.model.AgentSessionThreadPreview
 import com.intellij.agent.workbench.sessions.state.AgentSessionTreeUiStateService
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_THREAD_COUNT
 import org.assertj.core.api.Assertions.assertThat
@@ -47,95 +44,18 @@ class AgentSessionTreeUiStateServiceTest {
   }
 
   @Test
-  fun openProjectThreadPreviewCacheRoundTrip() {
-    val uiState = AgentSessionTreeUiStateService()
-    val threads = listOf(
-      AgentSessionThreadPreview(id = "thread-1", title = "Thread 1", updatedAt = 5L, activity = AgentThreadActivity.READY),
-      AgentSessionThreadPreview(id = "thread-2", title = "Thread 2", updatedAt = 10L, activity = AgentThreadActivity.UNREAD),
-    )
-
-    assertThat(uiState.setOpenProjectThreadPreviews("/work/project-a/", threads)).isTrue()
-
-    val cached = uiState.getOpenProjectThreadPreviews("/work/project-a")
-    assertThat(cached?.map { it.id }).isEqualTo(listOf("thread-2", "thread-1"))
-    assertThat(cached?.map { it.activity }).isEqualTo(listOf(AgentThreadActivity.UNREAD, AgentThreadActivity.READY))
-
-    assertThat(uiState.retainOpenProjectThreadPreviews(setOf("/work/project-b"))).isTrue()
-    assertThat(uiState.getOpenProjectThreadPreviews("/work/project-a")).isNull()
-  }
-
-  @Test
-  fun openProjectThreadPreviewCachePreservesProvider() {
-    val uiState = AgentSessionTreeUiStateService()
-    val threads = listOf(
-      AgentSessionThreadPreview(
-        id = "claude-thread",
-        title = "Claude Thread",
-        updatedAt = 5L,
-        activity = AgentThreadActivity.UNREAD,
-        provider = AgentSessionProvider.CLAUDE,
-      )
-    )
-
-    assertThat(uiState.setOpenProjectThreadPreviews("/work/project-a", threads)).isTrue()
-    assertThat(uiState.getOpenProjectThreadPreviews("/work/project-a")?.single()?.provider)
-      .isEqualTo(AgentSessionProvider.CLAUDE)
-    assertThat(uiState.getOpenProjectThreadPreviews("/work/project-a")?.single()?.activity)
-      .isEqualTo(AgentThreadActivity.UNREAD)
-  }
-
-  @Test
-  fun openProjectThreadPreviewCacheNormalizesBlankTitleToFallback() {
-    val uiState = AgentSessionTreeUiStateService()
-    val threads = listOf(
-      AgentSessionThreadPreview(
-        id = "blank-title-thread",
-        title = "   \n ",
-        updatedAt = 5L,
-        activity = AgentThreadActivity.READY,
-        provider = AgentSessionProvider.CODEX,
-      )
-    )
-
-    assertThat(uiState.setOpenProjectThreadPreviews("/work/project-a", threads)).isTrue()
-    assertThat(uiState.getOpenProjectThreadPreviews("/work/project-a")?.single()?.title)
-      .isEqualTo("Thread blank-ti")
-  }
-
-  @Test
-  fun treeStateFieldsSurviveServiceStateRoundTrip() {
+  fun treeUiStateRoundTripExcludesSessionContent() {
     val original = AgentSessionTreeUiStateService()
     val path = "/work/project-a/"
     original.setProjectCollapsed(path, collapsed = true)
     original.incrementVisibleThreadCount(path, delta = 4)
-    original.setOpenProjectThreadPreviews(
-      path,
-      listOf(
-        AgentSessionThreadPreview(
-          id = "claude-thread",
-          title = "Claude Thread",
-          updatedAt = 20,
-          activity = AgentThreadActivity.UNREAD,
-          provider = AgentSessionProvider.CLAUDE,
-        ),
-        AgentSessionThreadPreview(
-          id = "codex-thread",
-          title = "Codex Thread",
-          updatedAt = 10,
-          activity = AgentThreadActivity.READY,
-          provider = AgentSessionProvider.CODEX,
-        ),
-      )
-    )
 
     val reloaded = AgentSessionTreeUiStateService()
     reloaded.loadState(original.state)
 
     assertThat(reloaded.isProjectCollapsed("/work/project-a")).isTrue()
     assertThat(reloaded.getVisibleThreadCount("/work/project-a")).isEqualTo(DEFAULT_VISIBLE_THREAD_COUNT + 4)
-    val previews = reloaded.getOpenProjectThreadPreviews("/work/project-a").orEmpty()
-    assertThat(previews.map { it.id }).isEqualTo(listOf("claude-thread", "codex-thread"))
-    assertThat(previews.map { it.provider }).isEqualTo(listOf(AgentSessionProvider.CLAUDE, AgentSessionProvider.CODEX))
-    assertThat(previews.map { it.activity }).isEqualTo(listOf(AgentThreadActivity.UNREAD, AgentThreadActivity.READY))
+    assertThat(reloaded.state::class.java.declaredFields.map { it.name })
+      .doesNotContain("openProjectThreadPreviewsByProject")
   }
 }

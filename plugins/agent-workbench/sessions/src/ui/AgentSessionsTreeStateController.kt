@@ -37,7 +37,7 @@ internal class AgentSessionsTreeStateController(
   private val chatSelectionService: AgentChatTabSelectionService,
   private val treeUiStateService: AgentSessionTreeUiStateService,
   private val uiPreferencesStateService: AgentSessionUiPreferencesStateService,
-  private val markThreadAsRead: (AgentSessionProvider, String, Long) -> Unit,
+  private val markThreadAsRead: (String, AgentSessionProvider, String, Long) -> Unit,
   private val tree: Tree,
   private val getSessionTreeModel: () -> SessionTreeModel,
   private val setSessionTreeModel: (SessionTreeModel) -> Unit,
@@ -98,7 +98,7 @@ internal class AgentSessionsTreeStateController(
       }
       .firstOrNull { it.id == selection.threadId && it.provider == provider && it.activity == AgentThreadActivity.UNREAD }
       ?: return
-    markThreadAsRead(provider, thread.id, thread.updatedAt)
+    markThreadAsRead(selection.projectPath, provider, thread.id, thread.updatedAt)
   }
 
   private fun rebuildTree() {

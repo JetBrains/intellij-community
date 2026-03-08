@@ -45,7 +45,7 @@ Define the single source of truth for cross-feature behavior that must stay cons
 - Provider ids in canonical thread identities must use lowercase stable values (`codex`, `claude`). Unknown provider ids are valid identities but must use fallback icon behavior on editor tabs.
   [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
-- Project/worktree state keys (visibility, open-preview cache, dedup gates) must use normalized paths so `/path` and `/path/` resolve to the same entry.
+- Project/worktree state keys (visibility, warm snapshot, dedup gates) must use normalized paths so `/path` and `/path/` resolve to the same entry.
   [@test] ../sessions/testSrc/AgentSessionTreeUiStateServiceTest.kt
   [@test] ../sessions/testSrc/AgentSessionRefreshOnDemandIntegrationTest.kt
 

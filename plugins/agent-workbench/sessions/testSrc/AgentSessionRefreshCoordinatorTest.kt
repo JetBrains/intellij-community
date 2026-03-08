@@ -17,9 +17,10 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
+import com.intellij.agent.workbench.sessions.service.AgentSessionContentRepository
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshCoordinator
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
-import com.intellij.agent.workbench.sessions.state.InMemorySessionTreeUiState
+import com.intellij.agent.workbench.sessions.state.InMemorySessionWarmState
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.CompletableDeferred
@@ -1643,15 +1644,18 @@ private suspend fun withLoadingCoordinator(
 ) {
   @Suppress("RAW_SCOPE_CREATION")
   val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-  val treeUiState = InMemorySessionTreeUiState()
   val stateStore = AgentSessionsStateStore()
+  val contentRepository = AgentSessionContentRepository(
+    stateStore = stateStore,
+    warmState = InMemorySessionWarmState(),
+  )
   try {
     val coordinator = AgentSessionRefreshCoordinator(
       serviceScope = scope,
       sessionSourcesProvider = sessionSourcesProvider,
       projectEntriesProvider = projectEntriesProvider,
-      treeUiState = treeUiState,
       stateStore = stateStore,
+      contentRepository = contentRepository,
       isRefreshGateActive = isRefreshGateActive,
       openAgentChatProjectPathsProvider = openChatPathsProvider,
       codexScopedRefreshSignalsProvider = codexScopedRefreshSignalsProvider,

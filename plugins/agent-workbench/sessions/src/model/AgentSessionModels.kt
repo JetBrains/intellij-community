@@ -1,25 +1,59 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.model
 
-import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_CLOSED_PROJECT_COUNT
 import com.intellij.openapi.util.NlsSafe
 
-data class AgentSessionThreadPreview(
-  @JvmField val id: String,
-  @JvmField val title: @NlsSafe String,
-  @JvmField val updatedAt: Long,
-  @JvmField val activity: AgentThreadActivity = AgentThreadActivity.READY,
-  val provider: AgentSessionProvider = AgentSessionProvider.CODEX,
-)
+internal sealed interface ArchiveThreadTarget {
+  val path: String
+  val provider: AgentSessionProvider
+  val threadId: String
 
-internal data class ArchiveThreadTarget(
-  @JvmField val path: String,
-  val provider: AgentSessionProvider,
-  @JvmField val threadId: String,
-)
+  data class Thread(
+    override val path: String,
+    override val provider: AgentSessionProvider,
+    override val threadId: String,
+  ) : ArchiveThreadTarget
+
+  data class SubAgent(
+    override val path: String,
+    override val provider: AgentSessionProvider,
+    @JvmField val parentThreadId: String,
+    @JvmField val subAgentId: String,
+  ) : ArchiveThreadTarget {
+    override val threadId: String
+      get() = subAgentId
+  }
+}
+
+internal fun normalizeArchiveThreadTarget(target: ArchiveThreadTarget): ArchiveThreadTarget {
+  val normalizedPath = normalizeAgentWorkbenchPath(target.path)
+  return when (target) {
+    is ArchiveThreadTarget.Thread -> {
+      if (normalizedPath == target.path) target else target.copy(path = normalizedPath)
+    }
+
+    is ArchiveThreadTarget.SubAgent -> {
+      if (normalizedPath == target.path) target else target.copy(path = normalizedPath)
+    }
+  }
+}
+
+internal fun archiveThreadTargetKey(target: ArchiveThreadTarget): String {
+  val normalizedTarget = normalizeArchiveThreadTarget(target)
+  return when (normalizedTarget) {
+    is ArchiveThreadTarget.Thread -> {
+      "thread:${normalizedTarget.path}:${normalizedTarget.provider.value}:${normalizedTarget.threadId}"
+    }
+
+    is ArchiveThreadTarget.SubAgent -> {
+      "sub-agent:${normalizedTarget.path}:${normalizedTarget.provider.value}:${normalizedTarget.parentThreadId}:${normalizedTarget.subAgentId}"
+    }
+  }
+}
 
 internal data class AgentSessionProviderWarning(
   val provider: AgentSessionProvider,

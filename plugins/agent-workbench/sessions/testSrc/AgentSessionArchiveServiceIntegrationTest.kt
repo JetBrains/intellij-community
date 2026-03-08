@@ -14,6 +14,8 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
+import com.intellij.agent.workbench.sessions.state.AgentSessionWarmPathSnapshot
+import com.intellij.agent.workbench.sessions.state.InMemorySessionWarmState
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
@@ -102,8 +104,8 @@ class AgentSessionArchiveServiceIntegrationTest {
           val claudeTarget = threads.first { it.id == "claude-1" }
           archiveService.archiveThreads(
             listOf(
-              ArchiveThreadTarget(path = PROJECT_PATH, provider = codexTarget.provider, threadId = codexTarget.id),
-              ArchiveThreadTarget(path = PROJECT_PATH, provider = claudeTarget.provider, threadId = claudeTarget.id),
+              ArchiveThreadTarget.Thread(path = PROJECT_PATH, provider = codexTarget.provider, threadId = codexTarget.id),
+              ArchiveThreadTarget.Thread(path = PROJECT_PATH, provider = claudeTarget.provider, threadId = claudeTarget.id),
             )
           )
 
@@ -152,7 +154,9 @@ class AgentSessionArchiveServiceIntegrationTest {
           }
 
           val threadToArchive = service.state.value.projects.first().threads.first { it.id == "codex-1" }
-          archiveService.archiveThreads(listOf(ArchiveThreadTarget(PROJECT_PATH, threadToArchive.provider, threadToArchive.id)))
+          archiveService.archiveThreads(
+            listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, threadToArchive.provider, threadToArchive.id))
+          )
 
           waitForCondition {
             val threads = service.state.value.projects.firstOrNull()?.threads.orEmpty()
@@ -208,7 +212,9 @@ class AgentSessionArchiveServiceIntegrationTest {
 
           val callsBeforeArchive = listCalls.get()
           val threadToArchive = service.state.value.projects.first().threads.first { it.id == "codex-1" }
-          archiveService.archiveThreads(listOf(ArchiveThreadTarget(PROJECT_PATH, threadToArchive.provider, threadToArchive.id)))
+          archiveService.archiveThreads(
+            listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, threadToArchive.provider, threadToArchive.id))
+          )
 
           waitForCondition {
             val threads = service.state.value.projects.firstOrNull()?.threads.orEmpty()
@@ -222,6 +228,63 @@ class AgentSessionArchiveServiceIntegrationTest {
 
           assertThat(cleanupCalls)
             .containsExactly(PROJECT_PATH to buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-1"))
+        }
+      }
+    }
+  }
+
+  @Test
+  fun archiveThreadEagerlyPrunesWarmSnapshotBeforeRefreshRewrite() = runBlocking(Dispatchers.Default) {
+    val listCalls = AtomicInteger(0)
+    val staleSourceThreads = listOf(
+      thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX),
+      thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.CODEX),
+    )
+    val warmState = InMemorySessionWarmState()
+    warmState.setPathSnapshot(
+      PROJECT_PATH,
+      AgentSessionWarmPathSnapshot(
+        threads = staleSourceThreads,
+        hasUnknownThreadCount = false,
+        updatedAt = 100,
+      ),
+    )
+    val sessionSource = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      listFromOpenProject = { path, _ ->
+        if (path == PROJECT_PATH) {
+          listCalls.incrementAndGet()
+          staleSourceThreads
+        }
+        else {
+          emptyList()
+        }
+      },
+    )
+    val bridge = testCodexBridge(
+      sessionSource = sessionSource,
+      onArchive = { _, _ -> true },
+    )
+
+    AgentSessionProviderBridges.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
+      runBlocking(Dispatchers.Default) {
+        withServiceAndArchive(
+          sessionSourcesProvider = { listOf(sessionSource) },
+          projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
+          warmState = warmState,
+        ) { _, archiveService ->
+          assertThat(warmState.getPathSnapshot(PROJECT_PATH)?.threads.orEmpty().map { it.id })
+            .containsExactly("codex-1", "codex-2")
+
+          val callsBeforeArchive = listCalls.get()
+          archiveService.archiveThreads(
+            listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-1"))
+          )
+
+          waitForCondition {
+            listCalls.get() == callsBeforeArchive &&
+            warmState.getPathSnapshot(PROJECT_PATH)?.threads.orEmpty().map { it.id } == listOf("codex-2")
+          }
         }
       }
     }
@@ -260,7 +323,9 @@ class AgentSessionArchiveServiceIntegrationTest {
           }
 
           val threadToArchive = service.state.value.projects.first().threads.first { it.id == "codex-1" }
-          archiveService.archiveThreads(listOf(ArchiveThreadTarget(PROJECT_PATH, threadToArchive.provider, threadToArchive.id)))
+          archiveService.archiveThreads(
+            listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, threadToArchive.provider, threadToArchive.id))
+          )
 
           waitForCondition {
             val threads = service.state.value.projects.firstOrNull()?.threads.orEmpty()
@@ -308,7 +373,9 @@ class AgentSessionArchiveServiceIntegrationTest {
             service.state.value.projects.firstOrNull()?.threads?.any { it.id == "codex-2" } == true
           }
 
-          archiveService.archiveThreads(listOf(ArchiveThreadTarget(PROJECT_PATH, AgentSessionProvider.CODEX, "new-pending")))
+          archiveService.archiveThreads(
+            listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.CODEX, "new-pending"))
+          )
 
           waitForCondition {
             cleanupCalls.isNotEmpty()
@@ -323,9 +390,11 @@ class AgentSessionArchiveServiceIntegrationTest {
   }
 
   @Test
-  fun archiveSubAgentUsesSubAgentThreadIdAndTargetsSubAgentMetadata() = runBlocking(Dispatchers.Default) {
+  fun archiveSubAgentKeepsSubAgentHiddenWhenRefreshReturnsStaleData() = runBlocking(Dispatchers.Default) {
     val cleanupCalls = mutableListOf<Triple<String, String, String?>>()
     val archiveCalls = mutableListOf<String>()
+    val listCalls = AtomicInteger(0)
+    val warmState = InMemorySessionWarmState()
     val sourceThreads = mutableListOf(
       thread(
         id = "codex-parent",
@@ -337,21 +406,19 @@ class AgentSessionArchiveServiceIntegrationTest {
     val sessionSource = ScriptedSessionSource(
       provider = AgentSessionProvider.CODEX,
       listFromOpenProject = { path, _ ->
-        if (path == PROJECT_PATH) sourceThreads.toList() else emptyList()
+        if (path == PROJECT_PATH) {
+          listCalls.incrementAndGet()
+          sourceThreads.toList()
+        }
+        else {
+          emptyList()
+        }
       },
     )
     val bridge = testCodexBridge(
       sessionSource = sessionSource,
       onArchive = { _, threadId ->
         archiveCalls.add(threadId)
-        sourceThreads.replaceAll { thread ->
-          if (thread.id != "codex-parent") {
-            thread
-          }
-          else {
-            thread.copy(subAgents = thread.subAgents.filterNot { subAgent -> subAgent.id == threadId })
-          }
-        }
         true
       },
     )
@@ -361,6 +428,7 @@ class AgentSessionArchiveServiceIntegrationTest {
         withServiceAndArchive(
           sessionSourcesProvider = { listOf(sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
+          warmState = warmState,
           archiveChatCleanup = { projectPath, threadIdentity, subAgentId ->
             cleanupCalls.add(Triple(projectPath, threadIdentity, subAgentId))
           },
@@ -372,10 +440,29 @@ class AgentSessionArchiveServiceIntegrationTest {
               ?.subAgents
               ?.any { it.id == "codex-sub-1" } == true
           }
+          assertThat(warmState.getPathSnapshot(PROJECT_PATH)?.threads?.single()?.subAgents)
+            .containsExactly(AgentSubAgent(id = "codex-sub-1", name = "Sub-agent 1"))
 
-          archiveService.archiveThreads(listOf(ArchiveThreadTarget(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-sub-1")))
+          val callsBeforeArchive = listCalls.get()
+          archiveService.archiveThreads(
+            listOf(
+              ArchiveThreadTarget.SubAgent(
+                path = PROJECT_PATH,
+                provider = AgentSessionProvider.CODEX,
+                parentThreadId = "codex-parent",
+                subAgentId = "codex-sub-1",
+              )
+            )
+          )
 
           waitForCondition {
+            service.state.value.projects.firstOrNull()?.threads
+              ?.firstOrNull { it.id == "codex-parent" }
+              ?.subAgents
+              ?.none { it.id == "codex-sub-1" } == true
+          }
+          waitForCondition(timeoutMs = 6_000) {
+            listCalls.get() > callsBeforeArchive &&
             service.state.value.projects.firstOrNull()?.threads
               ?.firstOrNull { it.id == "codex-parent" }
               ?.subAgents
@@ -391,6 +478,7 @@ class AgentSessionArchiveServiceIntegrationTest {
                 "codex-sub-1",
               )
             )
+          assertThat(warmState.getPathSnapshot(PROJECT_PATH)?.threads?.single()?.subAgents).isEmpty()
         }
       }
     }
@@ -437,7 +525,9 @@ class AgentSessionArchiveServiceIntegrationTest {
 
           val callsBeforeArchive = listCalls.get()
           val threadToArchive = service.state.value.projects.first().threads.first { it.id == "codex-1" }
-          archiveService.archiveThreads(listOf(ArchiveThreadTarget(PROJECT_PATH, threadToArchive.provider, threadToArchive.id)))
+          archiveService.archiveThreads(
+            listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, threadToArchive.provider, threadToArchive.id))
+          )
 
           waitForCondition {
             val threads = service.state.value.projects.firstOrNull()?.threads.orEmpty()
@@ -491,7 +581,7 @@ class AgentSessionArchiveServiceIntegrationTest {
           }
 
           val threadToArchive = service.state.value.projects.first().threads.first { it.id == "codex-1" }
-          val target = ArchiveThreadTarget(path = PROJECT_PATH, provider = threadToArchive.provider, threadId = threadToArchive.id)
+          val target = ArchiveThreadTarget.Thread(path = PROJECT_PATH, provider = threadToArchive.provider, threadId = threadToArchive.id)
           archiveService.archiveThreads(listOf(target))
           waitForCondition {
             service.state.value.projects.firstOrNull()?.threads?.none { it.id == "codex-1" } == true
