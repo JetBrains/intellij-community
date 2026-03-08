@@ -6,11 +6,14 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
 import com.intellij.agent.workbench.codex.common.CodexThread
+import com.intellij.agent.workbench.codex.common.CodexThreadActiveFlag
+import com.intellij.agent.workbench.codex.common.CodexThreadStatusKind
 import com.intellij.agent.workbench.codex.common.forEachObjectField
 import com.intellij.agent.workbench.codex.common.normalizeRootPath
 import com.intellij.agent.workbench.codex.common.readStringOrNull
+import com.intellij.agent.workbench.codex.sessions.backend.CodexActivitySignals
 import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
-import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity
+import com.intellij.agent.workbench.codex.sessions.backend.resolveCodexSessionActivity
 import com.intellij.agent.workbench.json.WorkbenchJsonlScanner
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -49,12 +52,15 @@ internal class CodexRolloutParser(
     val resolvedSessionId = state.sessionId ?: return null
     val hasUnread = state.latestAgentMessageAt > state.latestUserMessageAt
     val hasPendingUserInput = state.pendingUserInputAt != null
-    val activity = when {
-      hasPendingUserInput || hasUnread -> CodexSessionActivity.UNREAD
-      state.reviewing -> CodexSessionActivity.REVIEWING
-      state.processing -> CodexSessionActivity.PROCESSING
-      else -> CodexSessionActivity.READY
-    }
+    val activity = resolveCodexSessionActivity(
+      CodexActivitySignals(
+        statusKind = CodexThreadStatusKind.IDLE,
+        activeFlags = if (hasPendingUserInput) setOf(CodexThreadActiveFlag.WAITING_ON_USER_INPUT) else emptySet(),
+        hasUnreadAssistantMessage = hasUnread,
+        isReviewing = state.reviewing,
+        hasInProgressTurn = state.processing,
+      )
+    )
 
     val fallbackUpdatedAt = runCatching { Files.getLastModifiedTime(path).toMillis() }.getOrDefault(0L)
     val resolvedUpdatedAt = if (state.updatedAt > 0L) state.updatedAt else fallbackUpdatedAt
@@ -97,8 +103,8 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
   when (event.topLevelType) {
     "event_msg" -> {
       when (event.payloadType) {
-        "task_started" -> parseState.processing = true
-        "task_complete", "turn_aborted" -> parseState.processing = false
+        "task_started", "turn_started" -> parseState.processing = true
+        "task_complete", "turn_complete", "turn_aborted" -> parseState.processing = false
         "user_message" -> {
           parseState.latestUserMessageAt = maxTimestamp(parseState.latestUserMessageAt, eventTimestamp)
           parseState.title = parseState.title ?: extractTitle(event.payloadMessage)
@@ -115,15 +121,13 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
         "agent_message" -> {
           parseState.latestAgentMessageAt = maxTimestamp(parseState.latestAgentMessageAt, eventTimestamp)
         }
-      }
 
-      if (event.payloadType?.contains("requestUserInput", ignoreCase = true) == true) {
-        parseState.pendingUserInputAt = maxTimestamp(parseState.pendingUserInputAt ?: Long.MIN_VALUE, eventTimestamp)
-      }
+        "request_user_input" -> {
+          parseState.pendingUserInputAt = maxTimestamp(parseState.pendingUserInputAt ?: Long.MIN_VALUE, eventTimestamp)
+        }
 
-      when (event.itemType) {
-        "enteredReviewMode" -> parseState.reviewing = true
-        "exitedReviewMode" -> parseState.reviewing = false
+        "entered_review_mode" -> parseState.reviewing = true
+        "exited_review_mode" -> parseState.reviewing = false
       }
     }
 
@@ -162,7 +166,6 @@ private fun parseEvent(parser: JsonParser): RolloutEvent? {
     var sessionTimestampMs: Long? = null
     var parentThreadId: String? = null
     var gitBranch: String? = null
-    var itemType: String? = null
 
     forEachObjectField(parser) { fieldName ->
       when (fieldName) {
@@ -180,15 +183,11 @@ private fun parseEvent(parser: JsonParser): RolloutEvent? {
                 "cwd" -> sessionCwd = readStringOrNull(parser)
                 "timestamp" -> sessionTimestampMs = parseIsoTimestamp(readStringOrNull(parser))
                 "git" -> {
-                  gitBranch = parseNestedStringField(parser, "branch")
+                  gitBranch = parseBranchField(parser)
                 }
 
                 "source" -> {
                   parentThreadId = parseSubAgentParentThreadId(parser) ?: parentThreadId
-                }
-
-                "item" -> {
-                  itemType = parseNestedStringField(parser, "type")
                 }
 
                 else -> parser.skipChildren()
@@ -218,7 +217,6 @@ private fun parseEvent(parser: JsonParser): RolloutEvent? {
       sessionTimestampMs = sessionTimestampMs,
       parentThreadId = parentThreadId,
       gitBranch = gitBranch,
-      itemType = itemType,
     )
   }
   catch (_: Throwable) {
@@ -244,7 +242,6 @@ private data class RolloutEvent(
   @JvmField val sessionTimestampMs: Long?,
   @JvmField val parentThreadId: String?,
   @JvmField val gitBranch: String?,
-  @JvmField val itemType: String?,
 )
 
 private data class RolloutParseState(
@@ -309,7 +306,7 @@ private fun trimTitle(value: String): String {
   return value.take(MAX_TITLE_LENGTH - 3).trimEnd() + "..."
 }
 
-private fun parseNestedStringField(parser: JsonParser, fieldName: String): String? {
+private fun parseBranchField(parser: JsonParser): String? {
   if (parser.currentToken != JsonToken.START_OBJECT) {
     parser.skipChildren()
     return null
@@ -317,7 +314,7 @@ private fun parseNestedStringField(parser: JsonParser, fieldName: String): Strin
 
   var result: String? = null
   forEachObjectField(parser) { nestedField ->
-    if (nestedField == fieldName) {
+    if (nestedField == "branch") {
       result = readStringOrNull(parser)
     }
     else {
