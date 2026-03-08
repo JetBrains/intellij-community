@@ -24,6 +24,7 @@ import com.intellij.mcpserver.util.TruncateMode
 import com.intellij.mcpserver.util.checkUserConfirmationIfNeeded
 import com.intellij.mcpserver.util.truncateText
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
@@ -37,6 +38,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import java.nio.file.Files
 import kotlin.time.Duration.Companion.milliseconds
 
 private val logger = logger<ExecutionToolset>()
@@ -157,12 +159,29 @@ class ExecutionToolset : McpToolset {
         mcpFail("Execution failed: ${e.message}")
       }
     }
-    val output = truncateText(outputBuilder.toString(), maxLinesCount = maxLinesCount, truncateMode = truncateMode)
+    val fullOutput = outputBuilder.toString()
+    val output = truncateText(fullOutput, maxLinesCount = maxLinesCount, truncateMode = truncateMode)
+    val fullOutputPath = if (output.length != fullOutput.length) createTmpFile(fullOutput) else null
+
     return RunConfigurationResult(
       exitCode = exitCode,
       timedOut = exitCode == null,
-      output = output
+      output = output,
+      fullOutputPath = fullOutputPath,
     )
+  }
+
+  private fun createTmpFile(fullOutput: String): String? {
+    return try {
+      val tmpFile = Files.createTempFile(PathManager.getTempDir(), "run-config-output", ".log")
+      Files.writeString(tmpFile, fullOutput)
+      tmpFile.toAbsolutePath().toString()
+    }
+    catch (e: Exception) {
+      rethrowControlFlowException(e)
+      logger.trace { "Failed to write full output to temp file: ${e.message}" }
+      null
+    }
   }
 
   @Serializable
@@ -184,12 +203,15 @@ class ExecutionToolset : McpToolset {
   )
 
   @Serializable
-  data class RunConfigurationResult(
+  data class RunConfigurationResult @JvmOverloads constructor(
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
     val exitCode: Int? = null,
     @property:McpDescription(Constants.TIMED_OUT_DESCRIPTION)
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
     val timedOut: Boolean? = false,
-    val output: String
+    val output: String,
+    @property:McpDescription("Path to a temp file containing the full untruncated output. Present only when output was truncated. Use read_file to access the complete log.")
+    @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
+    val fullOutputPath: String? = null,
   )
 }
