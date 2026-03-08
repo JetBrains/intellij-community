@@ -7,6 +7,8 @@ import com.intellij.agent.workbench.codex.common.CodexCliNotFoundException
 import com.intellij.agent.workbench.codex.common.CodexThreadActiveFlag
 import com.intellij.agent.workbench.codex.common.CodexThreadSourceKind
 import com.intellij.agent.workbench.codex.common.CodexThreadStatusKind
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -38,6 +40,23 @@ class CodexAppServerClientTest {
 
   @TempDir
   lateinit var tempDir: Path
+
+  // Use UNDISPATCHED so the collector reaches SharedFlow.first() before thread/read triggers
+  // the mock app-server notification. notificationsFlow has no replay, so a scheduled async
+  // collector can miss the event and make the test flaky.
+  private fun CoroutineScope.awaitNextNotification(client: CodexAppServerClient) = async(start = CoroutineStart.UNDISPATCHED) {
+    withTimeout(2.seconds) {
+      client.notifications.first()
+    }
+  }
+
+  // Keep the same eager subscription behavior for negative assertions so an unexpected early
+  // notification cannot be lost before the timeout window starts.
+  private fun CoroutineScope.awaitNoNotification(client: CodexAppServerClient) = async(start = CoroutineStart.UNDISPATCHED) {
+    withTimeoutOrNull(500.milliseconds) {
+      client.notifications.first()
+    }
+  }
 
   @ParameterizedTest(name = "{0}")
   @MethodSource("backends")
@@ -395,11 +414,7 @@ class CodexAppServerClientTest {
       ),
     )
     try {
-      val notification = async {
-        withTimeout(2.seconds) {
-          client.notifications.first()
-        }
-      }
+      val notification = awaitNextNotification(client)
 
       val snapshot = client.readThreadActivitySnapshot("thread-notify-1")
       assertThat(snapshot).isNotNull
@@ -445,11 +460,7 @@ class CodexAppServerClientTest {
       ),
     )
     try {
-      val notification = async {
-        withTimeout(2.seconds) {
-          client.notifications.first()
-        }
-      }
+      val notification = awaitNextNotification(client)
 
       val snapshot = client.readThreadActivitySnapshot("thread-notify-snake")
       assertThat(snapshot).isNotNull
@@ -495,11 +506,7 @@ class CodexAppServerClientTest {
       ),
     )
     try {
-      val notification = async {
-        withTimeout(2.seconds) {
-          client.notifications.first()
-        }
-      }
+      val notification = awaitNextNotification(client)
 
       val snapshot = client.readThreadActivitySnapshot("thread-notify-object")
       assertThat(snapshot).isNotNull
@@ -549,11 +556,7 @@ class CodexAppServerClientTest {
       ),
     )
     try {
-      val notification = async {
-        withTimeout(2.seconds) {
-          client.notifications.first()
-        }
-      }
+      val notification = awaitNextNotification(client)
 
       val snapshot = client.readThreadActivitySnapshot("thread-started-object")
       assertThat(snapshot).isNotNull
@@ -604,11 +607,7 @@ class CodexAppServerClientTest {
       ),
     )
     try {
-      val notification = async {
-        withTimeoutOrNull(500.milliseconds) {
-          client.notifications.first()
-        }
-      }
+      val notification = awaitNoNotification(client)
 
       val snapshot = client.readThreadActivitySnapshot("thread-notify-with-id")
       assertThat(snapshot).isNotNull

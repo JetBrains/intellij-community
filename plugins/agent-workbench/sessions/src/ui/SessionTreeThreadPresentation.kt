@@ -2,13 +2,14 @@
 package com.intellij.agent.workbench.sessions.ui
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.statusColor
+import com.intellij.agent.workbench.common.statusMessageKey
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.tree.SessionTreeNode
 import com.intellij.agent.workbench.sessions.tree.formatRelativeTimeShort
 import com.intellij.agent.workbench.sessions.tree.threadDisplayTitle
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.JBColor
 import java.awt.Color
 import java.awt.FontMetrics
 
@@ -30,7 +31,7 @@ internal fun buildSessionTreeThreadRowPresentation(
   treeNode: SessionTreeNode.Thread,
   now: Long,
 ): SessionTreeThreadRowPresentation {
-  val activityColor = JBColor(Color(treeNode.thread.activity.argb, true), Color(treeNode.thread.activity.argb, true))
+  val activityColor = treeNode.thread.activity.statusColor()
   val timeLabel = treeNode.thread.updatedAt.takeIf { it > 0 }?.let { timestamp ->
     formatRelativeTimeShort(timestamp, now)
   } ?: AgentSessionsBundle.message("toolwindow.time.unknown")
@@ -46,9 +47,7 @@ internal fun buildSessionTreeThreadRowPresentation(
   val providerName = providerDisplayName(treeNode.thread.provider)
   val accessibleStatusText = buildList {
     add(providerName)
-    if (treeNode.thread.activity != AgentThreadActivity.READY) {
-      add(statusLabel)
-    }
+    add(statusLabel)
     add(timeLabel)
   }.joinToString(separator = ", ")
   return SessionTreeThreadRowPresentation(
@@ -80,12 +79,7 @@ internal fun buildSessionTreeThreadTooltipHtml(
 }
 
 private fun threadActivityDisplayName(activity: AgentThreadActivity): @NlsSafe String {
-  return when (activity) {
-    AgentThreadActivity.READY -> AgentSessionsBundle.message("toolwindow.thread.status.ready")
-    AgentThreadActivity.PROCESSING -> AgentSessionsBundle.message("toolwindow.thread.status.in.progress")
-    AgentThreadActivity.REVIEWING -> AgentSessionsBundle.message("toolwindow.thread.status.needs.review")
-    AgentThreadActivity.UNREAD -> AgentSessionsBundle.message("toolwindow.thread.status.needs.input")
-  }
+  return AgentSessionsBundle.message(activity.statusMessageKey())
 }
 
 internal fun computeSessionTreeSharedTimeColumnWidth(fontMetrics: FontMetrics): Int {
