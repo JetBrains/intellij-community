@@ -1,0 +1,22 @@
+{
+  "name": "AgentWorkbench",
+  "fixed": false,
+  "ui": [
+    {
+      "key": "AgentWorkbench.ThreadStatus.ready",
+      "description": "Color of the ready thread status badge"
+    },
+    {
+      "key": "AgentWorkbench.ThreadStatus.processing",
+      "description": "Color of the processing thread status badge"
+    },
+    {
+      "key": "AgentWorkbench.ThreadStatus.reviewing",
+      "description": "Color of the reviewing thread status badge"
+    },
+    {
+      "key": "AgentWorkbench.ThreadStatus.unread",
+      "description": "Color of the unread thread status badge"
+    }
+  ]
+}

@@ -1,2 +1,5 @@
 <idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <themeMetadataProvider path="/META-INF/AgentWorkbench.themeMetadata.json"/>
+  </extensions>
 </idea-plugin>
