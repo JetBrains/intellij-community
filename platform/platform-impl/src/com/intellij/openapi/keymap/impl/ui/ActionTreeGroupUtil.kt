@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.QuickList
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.keymap.Keymap
@@ -34,6 +35,8 @@ private const val EDITOR_PREFIX = "Editor"
 private const val GROUP_INTENTIONS = "Intentions"
 
 private typealias ActionFilter = (AnAction?) -> Boolean
+
+private val LOG = logger<ActionTreeGroupUtil>()
 
 @ApiStatus.Internal
 object ActionTreeGroupUtil {
@@ -341,7 +344,10 @@ private fun createOtherGroup(project: Project?, filtered: ActionFilter, mainGrou
     result.add(actionId)
   }
 
-  otherGroup.children.sortBy { (it as Group).name }
+  val unexpectedChildren = sortChildGroupsByName(otherGroup)
+  if (unexpectedChildren.isNotEmpty()) {
+    logUnexpectedNonGroupChildren(otherGroup, unexpectedChildren)
+  }
 
   for (id in result.sortedBy(ActionsTreeUtil::getTextToCompare)) {
     val actionOrStub = actionManager.getActionOrStub(id)
@@ -350,6 +356,32 @@ private fun createOtherGroup(project: Project?, filtered: ActionFilter, mainGrou
     }
   }
   return otherGroup
+}
+
+private fun sortChildGroupsByName(group: Group): List<String> {
+  val children = group.children
+  val groupIndexes = ArrayList<Int>()
+  val groups = ArrayList<Group>()
+  val unexpectedChildren = ArrayList<String>()
+  for ((index, child) in children.withIndex()) {
+    if (child is Group) {
+      groupIndexes.add(index)
+      groups.add(child)
+    }
+    else {
+      unexpectedChildren.add("${child.javaClass.name} ($child)")
+    }
+  }
+
+  groups.sortBy(Group::getName)
+  for (index in groups.indices) {
+    children[groupIndexes[index]] = groups[index]
+  }
+  return unexpectedChildren
+}
+
+private fun logUnexpectedNonGroupChildren(group: Group, unexpectedChildren: List<String>) {
+  LOG.error("Unexpected non-group children in '${group.name}' keymap group: ${unexpectedChildren.joinToString()}")
 }
 
 private fun isSearchable(action: AnAction): Boolean {
