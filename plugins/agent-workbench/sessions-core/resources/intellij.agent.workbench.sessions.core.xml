@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.agent.workbench.common"/>
@@ -21,6 +21,10 @@
     <extensionPoint
       qualifiedName="com.intellij.agent.workbench.promptContextRenderer"
       interface="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererBridge"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.promptPaletteExtension"
+      interface="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPaletteExtension"
       dynamic="true"/>
   </extensionPoints>
 

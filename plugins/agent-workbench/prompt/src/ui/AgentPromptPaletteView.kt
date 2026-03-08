@@ -99,8 +99,12 @@ internal fun createAgentPromptPaletteView(
     background = JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND
   }
 
-  tabbedPane.addTab(AgentPromptBundle.message("popup.target.new"), JPanel())
-  tabbedPane.addTab(AgentPromptBundle.message("popup.target.existing"), JPanel())
+  tabbedPane.addTab(AgentPromptBundle.message("popup.target.new"), JPanel().apply {
+    putClientProperty("targetMode", PromptTargetMode.NEW_TASK)
+  })
+  tabbedPane.addTab(AgentPromptBundle.message("popup.target.existing"), JPanel().apply {
+    putClientProperty("targetMode", PromptTargetMode.EXISTING_TASK)
+  })
 
   val existingTaskListModel = DefaultListModel<ThreadEntry>()
   val existingTaskList = JBList(existingTaskListModel).apply {
