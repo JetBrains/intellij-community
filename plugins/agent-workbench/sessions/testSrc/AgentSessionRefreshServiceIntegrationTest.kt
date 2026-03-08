@@ -6,7 +6,7 @@ import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindReport
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindRequest
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindStatus
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabSnapshot
-import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindTarget
+import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
@@ -890,7 +890,7 @@ private data class ServicePendingCodexRebindInvocation(
   val path: String,
   val pendingTabKey: String,
   val pendingThreadIdentity: String,
-  val target: AgentChatPendingTabRebindTarget,
+  val target: AgentChatTabRebindTarget,
 )
 
 private fun successfulPendingCodexRebindReport(

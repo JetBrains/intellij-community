@@ -4,7 +4,7 @@ package com.intellij.agent.workbench.sessions.actions
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindReport
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindRequest
-import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindTarget
+import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 import com.intellij.agent.workbench.chat.rebindOpenPendingCodexTabs
 import com.intellij.agent.workbench.chat.resolveAgentChatEditorTabActionContext
 import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
@@ -13,7 +13,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 
 internal class AgentSessionsBindPendingCodexThreadFromEditorTabAction @JvmOverloads constructor(
-  private val resolveTarget: (AgentChatEditorTabActionContext) -> AgentChatPendingTabRebindTarget? = { context ->
+  private val resolveTarget: (AgentChatEditorTabActionContext) -> AgentChatTabRebindTarget? = { context ->
     service<AgentSessionReadService>().resolvePendingCodexRebindTarget(context)
   },
   private val rebindPendingTab: (Map<String, List<AgentChatPendingCodexTabRebindRequest>>) -> AgentChatPendingCodexTabRebindReport =

@@ -10,13 +10,13 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
+import com.intellij.terminal.frontend.view.TerminalKeyEvent
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
@@ -44,6 +44,7 @@ import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 import java.awt.BorderLayout
+import java.awt.event.KeyEvent
 import java.beans.PropertyChangeListener
 import java.util.concurrent.CancellationException
 import javax.swing.JComponent
@@ -54,6 +55,7 @@ internal class AgentChatFileEditor(
   private val project: Project,
   private val file: AgentChatVirtualFile,
   private val terminalTabs: AgentChatTerminalTabs = ToolWindowAgentChatTerminalTabs,
+  private val tabSnapshotWriter: AgentChatTabSnapshotWriter = ApplicationAgentChatTabSnapshotWriter,
 ) : UserDataHolderBase(), FileEditor {
   private val component = JPanel(BorderLayout())
   private val editorTabActions: ActionGroup? by lazy {
@@ -123,6 +125,7 @@ internal class AgentChatFileEditor(
       val createdTab = terminalTabs.createTab(project, file)
       tab = createdTab
       subscribePendingFirstInput(createdTab)
+      subscribeConcreteCodexNewThreadRebind(createdTab)
       scheduleInitialMessageSend(createdTab)
       component.removeAll()
       component.add(createdTab.component, BorderLayout.CENTER)
@@ -137,6 +140,26 @@ internal class AgentChatFileEditor(
     }
   }
 
+  private fun subscribeConcreteCodexNewThreadRebind(createdTab: AgentChatTerminalTab) {
+    if (file.provider != AgentSessionProvider.CODEX || file.isPendingThread || file.subAgentId != null) {
+      return
+    }
+    createdTab.coroutineScope.launch {
+      val commandTracker = AgentChatTerminalCommandTracker()
+      createdTab.keyEventsFlow.collectLatest { event ->
+        val executedCommand = commandTracker.record(event.awtEvent) ?: return@collectLatest
+        if (executedCommand != "/new") {
+          return@collectLatest
+        }
+        if (!file.updateNewThreadRebindRequestedAtMs(System.currentTimeMillis())) {
+          return@collectLatest
+        }
+        tabSnapshotWriter.upsert(file.toSnapshot())
+        notifyCodexTerminalOutputForRefresh(file.projectPath)
+      }
+    }
+  }
+
   internal fun flushPendingInitialMessageIfInitialized() {
     val initializedTab = tab ?: return
     scheduleInitialMessageSend(initializedTab)
@@ -147,12 +170,11 @@ internal class AgentChatFileEditor(
       return
     }
     createdTab.coroutineScope.launch {
-      val tabsService = serviceAsync<AgentChatTabsService>()
       createdTab.keyEventsFlow.collectLatest {
         if (!file.markPendingFirstInputAtMsIfAbsent(System.currentTimeMillis())) {
           return@collectLatest
         }
-        tabsService.upsert(file.toSnapshot())
+        tabSnapshotWriter.upsert(file.toSnapshot())
       }
     }
   }
@@ -201,7 +223,7 @@ internal class AgentChatFileEditor(
     }
   }
 
-  private fun sendInitialMessageIfReady(createdTab: AgentChatTerminalTab): Boolean {
+  private suspend fun sendInitialMessageIfReady(createdTab: AgentChatTerminalTab): Boolean {
     if (createdTab.sessionState.value != TerminalViewSessionState.Running) {
       return false
     }
@@ -220,8 +242,18 @@ internal class AgentChatFileEditor(
     if (!file.completeInitialMessageDispatch(dispatch)) {
       return false
     }
-    serviceIfCreated<AgentChatTabsService>()?.upsert(file.toSnapshot())
+    tabSnapshotWriter.upsert(file.toSnapshot())
     return true
+  }
+}
+
+internal fun interface AgentChatTabSnapshotWriter {
+  suspend fun upsert(snapshot: AgentChatTabSnapshot)
+}
+
+private object ApplicationAgentChatTabSnapshotWriter : AgentChatTabSnapshotWriter {
+  override suspend fun upsert(snapshot: AgentChatTabSnapshot) {
+    serviceAsync<AgentChatTabsService>().upsert(snapshot)
   }
 }
 
@@ -235,7 +267,7 @@ internal interface AgentChatTerminalTab {
   val preferredFocusableComponent: JComponent
   val coroutineScope: CoroutineScope
   val sessionState: StateFlow<TerminalViewSessionState>
-  val keyEventsFlow: Flow<*>
+  val keyEventsFlow: Flow<TerminalKeyEvent>
 
   suspend fun awaitInitialMessageReadiness(timeoutMs: Long, idleMs: Long): AgentChatTerminalInputReadiness
 
@@ -311,7 +343,7 @@ private class ToolWindowAgentChatTerminalTab(
   override val sessionState: StateFlow<TerminalViewSessionState>
     get() = delegate.view.sessionState
 
-  override val keyEventsFlow: Flow<*>
+  override val keyEventsFlow: Flow<TerminalKeyEvent>
     get() = delegate.view.keyEventsFlow
 
   override suspend fun awaitInitialMessageReadiness(timeoutMs: Long, idleMs: Long): AgentChatTerminalInputReadiness {
@@ -340,6 +372,46 @@ private class ToolWindowAgentChatTerminalTab(
       sendTextBuilder.shouldExecute()
     }
     sendTextBuilder.send(normalizedText)
+  }
+}
+
+internal class AgentChatTerminalCommandTracker {
+  private val lineBuffer = StringBuilder()
+
+  fun record(event: KeyEvent): String? {
+    return when (event.id) {
+      KeyEvent.KEY_TYPED -> {
+        val typedChar = event.keyChar
+        if (!typedChar.isISOControl() && typedChar != KeyEvent.CHAR_UNDEFINED) {
+          lineBuffer.append(typedChar)
+        }
+        null
+      }
+
+      KeyEvent.KEY_PRESSED -> when (event.keyCode) {
+        KeyEvent.VK_BACK_SPACE, KeyEvent.VK_DELETE -> {
+          if (lineBuffer.isNotEmpty()) {
+            lineBuffer.deleteCharAt(lineBuffer.lastIndex)
+          }
+          null
+        }
+
+        KeyEvent.VK_ESCAPE -> {
+          lineBuffer.setLength(0)
+          null
+        }
+
+        KeyEvent.VK_ENTER -> {
+          val command = lineBuffer.toString().trim()
+          lineBuffer.setLength(0)
+          command
+        }
+
+        else -> null
+      }
+
+      else -> null
+    }
   }
 }
 

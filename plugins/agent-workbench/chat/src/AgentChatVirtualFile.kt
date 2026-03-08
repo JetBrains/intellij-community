@@ -72,6 +72,9 @@ internal class AgentChatVirtualFile internal constructor(
   var pendingLaunchMode: String? = null
     private set
 
+  var newThreadRebindRequestedAtMs: Long? = null
+    private set
+
   var initialComposedMessage: String? = null
     private set
 
@@ -202,6 +205,14 @@ internal class AgentChatVirtualFile internal constructor(
     return true
   }
 
+  fun updateNewThreadRebindRequestedAtMs(newThreadRebindRequestedAtMs: Long?): Boolean {
+    if (this.newThreadRebindRequestedAtMs == newThreadRebindRequestedAtMs) {
+      return false
+    }
+    this.newThreadRebindRequestedAtMs = newThreadRebindRequestedAtMs
+    return true
+  }
+
   @Synchronized
   fun updateInitialMessageMetadata(
     initialComposedMessage: String?,
@@ -300,6 +311,48 @@ internal class AgentChatVirtualFile internal constructor(
     threadTitle: String,
     threadActivity: AgentThreadActivity,
   ): Boolean {
+    return rebindThread(
+      threadIdentity = threadIdentity,
+      shellCommand = shellCommand,
+      shellEnvVariables = shellEnvVariables,
+      threadId = threadId,
+      threadTitle = threadTitle,
+      threadActivity = threadActivity,
+      clearPendingMetadata = true,
+    )
+  }
+
+  fun rebindConcreteThread(
+    threadIdentity: String,
+    shellCommand: List<String>,
+    shellEnvVariables: Map<String, String>,
+    threadId: String,
+    threadTitle: String,
+    threadActivity: AgentThreadActivity,
+  ): Boolean {
+    if (isPendingThread || newThreadRebindRequestedAtMs == null) {
+      return false
+    }
+    return rebindThread(
+      threadIdentity = threadIdentity,
+      shellCommand = shellCommand,
+      shellEnvVariables = shellEnvVariables,
+      threadId = threadId,
+      threadTitle = threadTitle,
+      threadActivity = threadActivity,
+      clearPendingMetadata = false,
+    )
+  }
+
+  private fun rebindThread(
+    threadIdentity: String,
+    shellCommand: List<String>,
+    shellEnvVariables: Map<String, String>,
+    threadId: String,
+    threadTitle: String,
+    threadActivity: AgentThreadActivity,
+    clearPendingMetadata: Boolean,
+  ): Boolean {
     var changed = false
     if (this.threadIdentity != threadIdentity) {
       this.threadIdentity = threadIdentity
@@ -316,7 +369,13 @@ internal class AgentChatVirtualFile internal constructor(
     if (updateThreadActivity(threadActivity)) {
       changed = true
     }
-    if (updatePendingMetadata(pendingCreatedAtMs = null, pendingFirstInputAtMs = null, pendingLaunchMode = null)) {
+    if (
+      clearPendingMetadata &&
+      updatePendingMetadata(pendingCreatedAtMs = null, pendingFirstInputAtMs = null, pendingLaunchMode = null)
+    ) {
+      changed = true
+    }
+    if (updateNewThreadRebindRequestedAtMs(newThreadRebindRequestedAtMs = null)) {
       changed = true
     }
     if (updateInitialMessageMetadata(
@@ -330,7 +389,7 @@ internal class AgentChatVirtualFile internal constructor(
 
     if (changed) {
       LOG.debug {
-        "Rebound pending tab(identity=$threadIdentity, subAgentId=$subAgentId, threadId=$threadId)"
+        "Rebound tab(identity=$threadIdentity, subAgentId=$subAgentId, threadId=$threadId)"
       }
     }
     return changed
@@ -371,6 +430,7 @@ internal class AgentChatVirtualFile internal constructor(
       pendingFirstInputAtMs = snapshot.runtime.pendingFirstInputAtMs,
       pendingLaunchMode = snapshot.runtime.pendingLaunchMode,
     )
+    updateNewThreadRebindRequestedAtMs(snapshot.runtime.newThreadRebindRequestedAtMs)
     updateInitialMessageMetadata(
       initialComposedMessage = snapshot.runtime.initialComposedMessage,
       initialMessageToken = snapshot.runtime.initialMessageToken,
@@ -404,6 +464,7 @@ internal class AgentChatVirtualFile internal constructor(
         pendingCreatedAtMs = pendingCreatedAtMs,
         pendingFirstInputAtMs = pendingFirstInputAtMs,
         pendingLaunchMode = pendingLaunchMode,
+        newThreadRebindRequestedAtMs = newThreadRebindRequestedAtMs,
         initialComposedMessage = initialComposedMessage,
         initialMessageToken = initialMessageToken,
         initialMessageSent = initialMessageSent,

@@ -5,7 +5,7 @@ import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindReport
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindRequest
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindStatus
-import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindTarget
+import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsBindPendingCodexThreadFromEditorTabAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsCopyThreadIdFromEditorTabAction
@@ -310,7 +310,7 @@ class AgentSessionsEditorTabActionsTest {
       sessionId = "new-1",
       isPendingThread = true,
     )
-    val target = AgentChatPendingTabRebindTarget(
+    val target = AgentChatTabRebindTarget(
       threadIdentity = "codex:thread-42",
       threadId = "thread-42",
       shellCommand = listOf("codex", "resume", "thread-42"),
@@ -375,7 +375,7 @@ class AgentSessionsEditorTabActionsTest {
       sessionId = "new-1",
       isPendingThread = true,
     )
-    val target = AgentChatPendingTabRebindTarget(
+    val target = AgentChatTabRebindTarget(
       threadIdentity = "codex:thread-42",
       threadId = "thread-42",
       shellCommand = listOf("codex", "resume", "thread-42"),
@@ -385,7 +385,7 @@ class AgentSessionsEditorTabActionsTest {
     var reboundPath: String? = null
     var reboundPendingTabKey: String? = null
     var reboundPendingIdentity: String? = null
-    var reboundTarget: AgentChatPendingTabRebindTarget? = null
+    var reboundTarget: AgentChatTabRebindTarget? = null
 
     val action = AgentSessionsBindPendingCodexThreadFromEditorTabAction(
       resolveContext = { context },

@@ -1,12 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabRebindReport
+import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabRebindRequest
+import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabRebindStatus
+import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindOutcome
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindReport
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindRequest
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindStatus
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabSnapshot
-import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindTarget
+import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
@@ -1544,13 +1548,514 @@ class AgentSessionRefreshCoordinatorTest {
     }
   }
 
+  @Test
+  fun concreteCodexScopedRefreshRebindsAnchoredTabsFromRefreshHintsOnly() = runBlocking(Dispatchers.Default) {
+    val closedRefreshInvocations = AtomicInteger(0)
+    val rebindInvocations = mutableListOf<ConcreteCodexRebindInvocation>()
+    val scopedRefreshSignals = MutableSharedFlow<Set<String>>(replay = 1, extraBufferCapacity = 1)
+    val rebindRequestedAtMs = System.currentTimeMillis() - 1_000L
+    val oldIdentity = buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-old")
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = false,
+      listFromClosedProject = { path ->
+        if (path != PROJECT_PATH) {
+          emptyList()
+        }
+        else {
+          closedRefreshInvocations.incrementAndGet()
+          listOf(
+            thread(id = "codex-old", updatedAt = 100L, title = "Old thread", provider = AgentSessionProvider.CODEX),
+            thread(id = "codex-listed-new", updatedAt = rebindRequestedAtMs + 100L, title = "Listed thread", provider = AgentSessionProvider.CODEX),
+          )
+        }
+      },
+      prefetchRefreshHintsProvider = { paths, _ ->
+        if (PROJECT_PATH !in paths) {
+          emptyMap()
+        }
+        else {
+          mapOf(
+            PROJECT_PATH to AgentSessionRefreshHints(
+              rebindCandidates = listOf(
+                AgentSessionRebindCandidate(
+                  threadId = "codex-hinted-new",
+                  title = "Hinted thread",
+                  updatedAt = rebindRequestedAtMs + 200L,
+                  activity = AgentThreadActivity.UNREAD,
+                )
+              )
+            )
+          )
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      openChatPathsProvider = { setOf(PROJECT_PATH) },
+      codexScopedRefreshSignalsProvider = { scopedRefreshSignals },
+      openConcreteCodexTabsAwaitingNewThreadRebindProvider = {
+        mapOf(
+          PROJECT_PATH to listOf(
+            concreteCodexTab(
+              currentThreadIdentity = oldIdentity,
+              tabKey = "concrete-codex-old",
+              newThreadRebindRequestedAtMs = rebindRequestedAtMs,
+            )
+          )
+        )
+      },
+      openConcreteChatThreadIdentitiesByPathProvider = {
+        mapOf(PROJECT_PATH to setOf(oldIdentity))
+      },
+      openChatConcreteTabsBinder = { requestsByPath ->
+        requestsByPath.forEach { (path, requests) ->
+          requests.forEach { request ->
+            rebindInvocations.add(
+              ConcreteCodexRebindInvocation(
+                path = path,
+                tabKey = request.tabKey,
+                currentThreadIdentity = request.currentThreadIdentity,
+                newThreadRebindRequestedAtMs = request.newThreadRebindRequestedAtMs,
+                target = request.target,
+              )
+            )
+          }
+        }
+        successfulConcreteCodexRebindReport(requestsByPath)
+      },
+    ) { coordinator, _ ->
+      coordinator.observeSessionSourceUpdates()
+      scopedRefreshSignals.tryEmit(setOf(PROJECT_PATH))
+
+      waitForCondition {
+        closedRefreshInvocations.get() > 0 && rebindInvocations.isNotEmpty()
+      }
+
+      val invocation = rebindInvocations.single()
+      assertThat(invocation.path).isEqualTo(PROJECT_PATH)
+      assertThat(invocation.tabKey).isEqualTo("concrete-codex-old")
+      assertThat(invocation.currentThreadIdentity).isEqualTo(oldIdentity)
+      assertThat(invocation.newThreadRebindRequestedAtMs).isEqualTo(rebindRequestedAtMs)
+      assertThat(invocation.target.threadIdentity)
+        .isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-hinted-new"))
+      assertThat(invocation.target.threadId).isEqualTo("codex-hinted-new")
+      assertThat(invocation.target.threadTitle).isEqualTo("Hinted thread")
+      assertThat(invocation.target.threadActivity).isEqualTo(AgentThreadActivity.UNREAD)
+    }
+  }
+
+  @Test
+  fun concreteCodexScopedRefreshUsesHintCandidateForListedNewThread() = runBlocking(Dispatchers.Default) {
+    val closedRefreshInvocations = AtomicInteger(0)
+    val rebindInvocations = mutableListOf<ConcreteCodexRebindInvocation>()
+    val capturedKnownThreadIdsByPath = mutableListOf<Map<String, Set<String>>>()
+    val scopedRefreshSignals = MutableSharedFlow<Set<String>>(replay = 1, extraBufferCapacity = 1)
+    val rebindRequestedAtMs = System.currentTimeMillis() - 1_000L
+    val oldIdentity = buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-old")
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = false,
+      listFromClosedProject = { path ->
+        if (path != PROJECT_PATH) {
+          emptyList()
+        }
+        else {
+          closedRefreshInvocations.incrementAndGet()
+          listOf(
+            thread(id = "codex-old", updatedAt = 100L, title = "Old thread", provider = AgentSessionProvider.CODEX),
+            thread(id = "codex-listed-new", updatedAt = rebindRequestedAtMs + 100L, title = "Listed new thread", provider = AgentSessionProvider.CODEX),
+          )
+        }
+      },
+      prefetchRefreshHintsProvider = { paths, knownThreadIdsByPath ->
+        if (PROJECT_PATH !in paths) {
+          emptyMap()
+        }
+        else {
+          capturedKnownThreadIdsByPath += knownThreadIdsByPath.mapValues { (_, ids) -> ids.toSet() }
+          if ("codex-listed-new" in knownThreadIdsByPath[PROJECT_PATH].orEmpty()) {
+            emptyMap()
+          }
+          else {
+            mapOf(
+              PROJECT_PATH to AgentSessionRefreshHints(
+                rebindCandidates = listOf(
+                  AgentSessionRebindCandidate(
+                    threadId = "codex-listed-new",
+                    title = "Listed new thread",
+                    updatedAt = rebindRequestedAtMs + 100L,
+                    activity = AgentThreadActivity.UNREAD,
+                  )
+                )
+              )
+            )
+          }
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      openChatPathsProvider = { setOf(PROJECT_PATH) },
+      codexScopedRefreshSignalsProvider = { scopedRefreshSignals },
+      openConcreteCodexTabsAwaitingNewThreadRebindProvider = {
+        mapOf(
+          PROJECT_PATH to listOf(
+            concreteCodexTab(
+              currentThreadIdentity = oldIdentity,
+              tabKey = "concrete-codex-listed",
+              newThreadRebindRequestedAtMs = rebindRequestedAtMs,
+            )
+          )
+        )
+      },
+      openConcreteChatThreadIdentitiesByPathProvider = {
+        mapOf(PROJECT_PATH to setOf(oldIdentity))
+      },
+      openChatConcreteTabsBinder = { requestsByPath ->
+        requestsByPath.forEach { (path, requests) ->
+          requests.forEach { request ->
+            rebindInvocations.add(
+              ConcreteCodexRebindInvocation(
+                path = path,
+                tabKey = request.tabKey,
+                currentThreadIdentity = request.currentThreadIdentity,
+                newThreadRebindRequestedAtMs = request.newThreadRebindRequestedAtMs,
+                target = request.target,
+              )
+            )
+          }
+        }
+        successfulConcreteCodexRebindReport(requestsByPath)
+      },
+    ) { coordinator, _ ->
+      coordinator.observeSessionSourceUpdates()
+      scopedRefreshSignals.tryEmit(setOf(PROJECT_PATH))
+
+      waitForCondition {
+        closedRefreshInvocations.get() > 0 && rebindInvocations.isNotEmpty()
+      }
+
+      assertThat(capturedKnownThreadIdsByPath).isNotEmpty()
+      assertThat(capturedKnownThreadIdsByPath.last()[PROJECT_PATH]).containsExactly("codex-old")
+      val invocation = rebindInvocations.single()
+      assertThat(invocation.target.threadIdentity)
+        .isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-listed-new"))
+    }
+  }
+
+  @Test
+  fun concreteCodexScopedRefreshPrioritizesExplicitNewThreadRebindOverPendingTabs() = runBlocking(Dispatchers.Default) {
+    val concreteRebindInvocations = mutableListOf<ConcreteCodexRebindInvocation>()
+    val pendingRebindInvocations = mutableListOf<PendingCodexRebindInvocation>()
+    val scopedRefreshSignals = MutableSharedFlow<Set<String>>(replay = 1, extraBufferCapacity = 1)
+    val rebindRequestedAtMs = System.currentTimeMillis() - 1_000L
+    val oldIdentity = buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-old")
+    val targetIdentity = buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-hinted-new")
+    val openConcreteIdentities = LinkedHashSet<String>().apply { add(oldIdentity) }
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = false,
+      listFromClosedProject = { path ->
+        if (path != PROJECT_PATH) {
+          emptyList()
+        }
+        else {
+          listOf(thread(id = "codex-old", updatedAt = 100L, title = "Old thread", provider = AgentSessionProvider.CODEX))
+        }
+      },
+      prefetchRefreshHintsProvider = { paths, _ ->
+        if (PROJECT_PATH !in paths) {
+          emptyMap()
+        }
+        else {
+          mapOf(
+            PROJECT_PATH to AgentSessionRefreshHints(
+              rebindCandidates = listOf(
+                AgentSessionRebindCandidate(
+                  threadId = "codex-hinted-new",
+                  title = "Hinted thread",
+                  updatedAt = rebindRequestedAtMs + 200L,
+                  activity = AgentThreadActivity.UNREAD,
+                )
+              )
+            )
+          )
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      openChatPathsProvider = { setOf(PROJECT_PATH) },
+      codexScopedRefreshSignalsProvider = { scopedRefreshSignals },
+      openPendingCodexTabsProvider = {
+        mapOf(
+          PROJECT_PATH to listOf(
+            pendingCodexTab(
+              pendingThreadIdentity = "codex:new-1",
+              pendingCreatedAtMs = rebindRequestedAtMs,
+              pendingLaunchMode = "default",
+            )
+          )
+        )
+      },
+      openConcreteCodexTabsAwaitingNewThreadRebindProvider = {
+        mapOf(
+          PROJECT_PATH to listOf(
+            concreteCodexTab(
+              currentThreadIdentity = oldIdentity,
+              tabKey = "concrete-codex-old",
+              newThreadRebindRequestedAtMs = rebindRequestedAtMs,
+            )
+          )
+        )
+      },
+      openConcreteChatThreadIdentitiesByPathProvider = {
+        mapOf(PROJECT_PATH to openConcreteIdentities.toSet())
+      },
+      openChatPendingTabsBinder = { requestsByPath ->
+        requestsByPath.forEach { (path, requests) ->
+          requests.forEach { request ->
+            pendingRebindInvocations.add(
+              PendingCodexRebindInvocation(
+                path = path,
+                pendingTabKey = request.pendingTabKey,
+                pendingThreadIdentity = request.pendingThreadIdentity,
+                target = request.target,
+              )
+            )
+          }
+        }
+        successfulPendingCodexRebindReport(requestsByPath)
+      },
+      openChatConcreteTabsBinder = { requestsByPath ->
+        requestsByPath.forEach { (path, requests) ->
+          requests.forEach { request ->
+            concreteRebindInvocations.add(
+              ConcreteCodexRebindInvocation(
+                path = path,
+                tabKey = request.tabKey,
+                currentThreadIdentity = request.currentThreadIdentity,
+                newThreadRebindRequestedAtMs = request.newThreadRebindRequestedAtMs,
+                target = request.target,
+              )
+            )
+            openConcreteIdentities.add(request.target.threadIdentity)
+          }
+        }
+        successfulConcreteCodexRebindReport(requestsByPath)
+      },
+    ) { coordinator, _ ->
+      coordinator.observeSessionSourceUpdates()
+      scopedRefreshSignals.tryEmit(setOf(PROJECT_PATH))
+
+      waitForCondition {
+        concreteRebindInvocations.isNotEmpty()
+      }
+      delay(150.milliseconds)
+
+      val invocation = concreteRebindInvocations.single()
+      assertThat(invocation.target.threadIdentity).isEqualTo(targetIdentity)
+      assertThat(pendingRebindInvocations).isEmpty()
+    }
+  }
+
+  @Test
+  fun concreteCodexScopedRefreshSkipsAmbiguousMatches() = runBlocking(Dispatchers.Default) {
+    val closedRefreshInvocations = AtomicInteger(0)
+    val binderInvocations = AtomicInteger(0)
+    val scopedRefreshSignals = MutableSharedFlow<Set<String>>(replay = 1, extraBufferCapacity = 1)
+    val rebindRequestedAtMs = System.currentTimeMillis() - 1_000L
+    val oldIdentity = buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-old")
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = false,
+      listFromClosedProject = { path ->
+        if (path != PROJECT_PATH) {
+          emptyList()
+        }
+        else {
+          closedRefreshInvocations.incrementAndGet()
+          listOf(thread(id = "codex-old", updatedAt = 100L, title = "Old thread", provider = AgentSessionProvider.CODEX))
+        }
+      },
+      prefetchRefreshHintsProvider = { paths, _ ->
+        if (PROJECT_PATH !in paths) {
+          emptyMap()
+        }
+        else {
+          mapOf(
+            PROJECT_PATH to AgentSessionRefreshHints(
+              rebindCandidates = listOf(
+                AgentSessionRebindCandidate(
+                  threadId = "codex-hinted-a",
+                  title = "Hinted thread A",
+                  updatedAt = rebindRequestedAtMs + 100L,
+                  activity = AgentThreadActivity.UNREAD,
+                ),
+                AgentSessionRebindCandidate(
+                  threadId = "codex-hinted-b",
+                  title = "Hinted thread B",
+                  updatedAt = rebindRequestedAtMs + 150L,
+                  activity = AgentThreadActivity.UNREAD,
+                ),
+              )
+            )
+          )
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      openChatPathsProvider = { setOf(PROJECT_PATH) },
+      codexScopedRefreshSignalsProvider = { scopedRefreshSignals },
+      openConcreteCodexTabsAwaitingNewThreadRebindProvider = {
+        mapOf(
+          PROJECT_PATH to listOf(
+            concreteCodexTab(
+              currentThreadIdentity = oldIdentity,
+              tabKey = "ambiguous-concrete-codex-old",
+              newThreadRebindRequestedAtMs = rebindRequestedAtMs,
+            )
+          )
+        )
+      },
+      openConcreteChatThreadIdentitiesByPathProvider = {
+        mapOf(PROJECT_PATH to setOf(oldIdentity))
+      },
+      openChatConcreteTabsBinder = { requestsByPath ->
+        binderInvocations.incrementAndGet()
+        successfulConcreteCodexRebindReport(requestsByPath)
+      },
+    ) { coordinator, _ ->
+      coordinator.observeSessionSourceUpdates()
+      scopedRefreshSignals.tryEmit(setOf(PROJECT_PATH))
+
+      waitForCondition {
+        closedRefreshInvocations.get() > 0
+      }
+      delay(150.milliseconds)
+
+      assertThat(binderInvocations.get()).isEqualTo(0)
+    }
+  }
+
+  @Test
+  fun concreteCodexScopedRefreshClearsStaleAnchorsWithoutRebinding() = runBlocking(Dispatchers.Default) {
+    val closedRefreshInvocations = AtomicInteger(0)
+    val binderInvocations = AtomicInteger(0)
+    val clearedTabs = mutableListOf<AgentChatConcreteCodexTabSnapshot>()
+    val scopedRefreshSignals = MutableSharedFlow<Set<String>>(replay = 1, extraBufferCapacity = 1)
+    val staleRequestedAtMs = System.currentTimeMillis() - 60_000L
+    val oldIdentity = buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-old")
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = false,
+      listFromClosedProject = { path ->
+        if (path != PROJECT_PATH) {
+          emptyList()
+        }
+        else {
+          closedRefreshInvocations.incrementAndGet()
+          listOf(thread(id = "codex-old", updatedAt = 100L, title = "Old thread", provider = AgentSessionProvider.CODEX))
+        }
+      },
+      prefetchRefreshHintsProvider = { paths, _ ->
+        if (PROJECT_PATH !in paths) {
+          emptyMap()
+        }
+        else {
+          mapOf(
+            PROJECT_PATH to AgentSessionRefreshHints(
+              rebindCandidates = listOf(
+                AgentSessionRebindCandidate(
+                  threadId = "codex-hinted-new",
+                  title = "Hinted thread",
+                  updatedAt = staleRequestedAtMs + 200L,
+                  activity = AgentThreadActivity.UNREAD,
+                )
+              )
+            )
+          )
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      openChatPathsProvider = { setOf(PROJECT_PATH) },
+      codexScopedRefreshSignalsProvider = { scopedRefreshSignals },
+      openConcreteCodexTabsAwaitingNewThreadRebindProvider = {
+        mapOf(
+          PROJECT_PATH to listOf(
+            concreteCodexTab(
+              currentThreadIdentity = oldIdentity,
+              tabKey = "stale-concrete-codex-old",
+              newThreadRebindRequestedAtMs = staleRequestedAtMs,
+            )
+          )
+        )
+      },
+      openConcreteChatThreadIdentitiesByPathProvider = {
+        mapOf(PROJECT_PATH to setOf(oldIdentity))
+      },
+      openChatConcreteTabsBinder = { requestsByPath ->
+        binderInvocations.incrementAndGet()
+        successfulConcreteCodexRebindReport(requestsByPath)
+      },
+      clearOpenConcreteCodexTabAnchors = { tabsByPath ->
+        tabsByPath.values.forEach(clearedTabs::addAll)
+        clearedTabs.size
+      },
+    ) { coordinator, _ ->
+      coordinator.observeSessionSourceUpdates()
+      scopedRefreshSignals.tryEmit(setOf(PROJECT_PATH))
+
+      waitForCondition {
+        closedRefreshInvocations.get() > 0 && clearedTabs.isNotEmpty()
+      }
+      delay(150.milliseconds)
+
+      assertThat(binderInvocations.get()).isEqualTo(0)
+      assertThat(clearedTabs).containsExactly(
+        concreteCodexTab(
+          currentThreadIdentity = oldIdentity,
+          tabKey = "stale-concrete-codex-old",
+          newThreadRebindRequestedAtMs = staleRequestedAtMs,
+        )
+      )
+    }
+  }
+
 }
 
 private data class PendingCodexRebindInvocation(
   val path: String,
   val pendingTabKey: String,
   val pendingThreadIdentity: String,
-  val target: AgentChatPendingTabRebindTarget,
+  val target: AgentChatTabRebindTarget,
+)
+
+private data class ConcreteCodexRebindInvocation(
+  val path: String,
+  val tabKey: String,
+  val currentThreadIdentity: String,
+  val newThreadRebindRequestedAtMs: Long,
+  val target: AgentChatTabRebindTarget,
 )
 
 private fun pendingCodexTab(
@@ -1568,6 +2073,20 @@ private fun pendingCodexTab(
     pendingCreatedAtMs = pendingCreatedAtMs,
     pendingFirstInputAtMs = pendingFirstInputAtMs,
     pendingLaunchMode = pendingLaunchMode,
+  )
+}
+
+private fun concreteCodexTab(
+  currentThreadIdentity: String,
+  projectPath: String = PROJECT_PATH,
+  tabKey: String = "tab-$currentThreadIdentity",
+  newThreadRebindRequestedAtMs: Long,
+): AgentChatConcreteCodexTabSnapshot {
+  return AgentChatConcreteCodexTabSnapshot(
+    projectPath = projectPath,
+    tabKey = tabKey,
+    currentThreadIdentity = currentThreadIdentity,
+    newThreadRebindRequestedAtMs = newThreadRebindRequestedAtMs,
   )
 }
 
@@ -1621,6 +2140,31 @@ private fun failingPendingCodexRebindReport(
   )
 }
 
+private fun successfulConcreteCodexRebindReport(
+  requestsByPath: Map<String, List<AgentChatConcreteCodexTabRebindRequest>>,
+): AgentChatConcreteCodexTabRebindReport {
+  val outcomesByPath = LinkedHashMap<String, List<com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabRebindOutcome>>()
+  var requestedBindings = 0
+  for ((path, requests) in requestsByPath) {
+    requestedBindings += requests.size
+    outcomesByPath[path] = requests.map { request ->
+      com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabRebindOutcome(
+        projectPath = path,
+        request = request,
+        status = AgentChatConcreteCodexTabRebindStatus.REBOUND,
+        reboundFiles = 1,
+      )
+    }
+  }
+  return AgentChatConcreteCodexTabRebindReport(
+    requestedBindings = requestedBindings,
+    reboundBindings = requestedBindings,
+    reboundFiles = requestedBindings,
+    updatedPresentations = requestedBindings,
+    outcomesByPath = outcomesByPath,
+  )
+}
+
 private suspend fun withLoadingCoordinator(
   sessionSourcesProvider: () -> List<AgentSessionSource>,
   projectEntriesProvider: suspend () -> List<ProjectEntry> = { emptyList() },
@@ -1630,6 +2174,7 @@ private suspend fun withLoadingCoordinator(
     kotlinx.coroutines.flow.emptyFlow()
   },
   openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingCodexTabSnapshot>> = { emptyMap() },
+  openConcreteCodexTabsAwaitingNewThreadRebindProvider: suspend () -> Map<String, List<AgentChatConcreteCodexTabSnapshot>> = { emptyMap() },
   openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> = { emptyMap() },
   openChatTabPresentationUpdater: suspend (
     Map<Pair<String, String>, String>,
@@ -1639,6 +2184,12 @@ private suspend fun withLoadingCoordinator(
     failingPendingCodexRebindReport(
       requestsByPath = it,
     )
+  },
+  openChatConcreteTabsBinder: (Map<String, List<AgentChatConcreteCodexTabRebindRequest>>) -> AgentChatConcreteCodexTabRebindReport = {
+    successfulConcreteCodexRebindReport(requestsByPath = it)
+  },
+  clearOpenConcreteCodexTabAnchors: (Map<String, List<AgentChatConcreteCodexTabSnapshot>>) -> Int = { tabsByPath ->
+    tabsByPath.values.sumOf { it.size }
   },
   action: suspend (AgentSessionRefreshCoordinator, AgentSessionsStateStore) -> Unit,
 ) {
@@ -1660,9 +2211,12 @@ private suspend fun withLoadingCoordinator(
       openAgentChatProjectPathsProvider = openChatPathsProvider,
       codexScopedRefreshSignalsProvider = codexScopedRefreshSignalsProvider,
       openPendingCodexTabsProvider = openPendingCodexTabsProvider,
+      openConcreteCodexTabsAwaitingNewThreadRebindProvider = openConcreteCodexTabsAwaitingNewThreadRebindProvider,
       openConcreteChatThreadIdentitiesByPathProvider = openConcreteChatThreadIdentitiesByPathProvider,
       openAgentChatTabPresentationUpdater = openChatTabPresentationUpdater,
       openAgentChatPendingTabsBinder = openChatPendingTabsBinder,
+      openAgentChatConcreteTabsBinder = openChatConcreteTabsBinder,
+      clearOpenConcreteCodexTabAnchors = clearOpenConcreteCodexTabAnchors,
     )
     action(coordinator, stateStore)
   }

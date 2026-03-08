@@ -11,8 +11,10 @@ targets:
   - ../../sessions/resources/intellij.agent.workbench.sessions.xml
   - ../../codex/sessions/src/CodexAgentSessionProviderBridge.kt
   - ../../codex/sessions/src/backend/CodexSessionBackendSelector.kt
+  - ../../codex/sessions/src/backend/rollout/CodexRolloutRefreshHintsProvider.kt
   - ../../sessions/resources/messages/AgentSessionsBundle.properties
   - ../../chat/testSrc/AgentChatEditorServiceTest.kt
+  - ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
   - ../../sessions/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
   - ../../sessions/testSrc/AgentSessionsTreePopupActionsTest.kt
   - ../../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
@@ -20,12 +22,13 @@ targets:
   - ../../sessions/testSrc/AgentSessionCliTest.kt
   - ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
   - ../../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
+  - ../../codex/sessions/testSrc/backend/rollout/CodexRolloutRefreshHintsProviderTest.kt
 ---
 
 # Agent Sessions New-Session Actions
 
 Status: Draft
-Date: 2026-03-04
+Date: 2026-03-09
 
 ## Summary
 Define project/worktree `New Thread` behavior across tree and editor-tab actions:
@@ -100,6 +103,11 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
   - Note: rebind matching uses these timestamps for deterministic time windows.
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
 
+- Already-concrete top-level Codex tabs must treat exact terminal command `/new` as a request to migrate the open tab to the next concrete thread created for the same path.
+- The open concrete tab must persist `/new` anchor metadata (`newThreadRebindRequestedAtMs`) so refresh can rebind by `tabKey + currentThreadIdentity + request timestamp`.
+  [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+  [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
+
 - App-server backend remains the only Codex discovery source for listing; backend override values are ignored and rollout stays refresh-hints-only fallback.
   [@test] ../../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
 
@@ -112,7 +120,16 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
+- Refresh may also rebind an already-concrete top-level Codex tab after exact terminal `/new`, but only from rollout/app-server refresh hints for the same normalized path, never from arbitrary listed rows.
+- Concrete `/new` rebinding must consider only top-level CLI thread candidates, use a bounded timestamp window around the `/new` request, clear stale anchors after 30 seconds, validate the stored `/new` anchor timestamp before applying, and skip rebinding if the candidate target is already open.
+- When the same candidate could satisfy both a pending Codex tab and an explicit concrete `/new` rebind, the explicit `/new` rebind wins and the pending tab remains pending.
+- Concrete `/new` rebinding must require an unambiguous one-to-one match; if multiple candidates fall in the window, the tab remains anchored and is not rebound automatically.
+  [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
+  [@test] ../../codex/sessions/testSrc/backend/rollout/CodexRolloutRefreshHintsProviderTest.kt
+
 - When automatic pending-Codex matching is ambiguous or unmatched, users must be able to manually rebind from editor tab actions via `Bind Pending Codex Thread`.
+- Manual bind remains pending-tab-only and must not repurpose the editor-tab action for already-concrete `/new` rebinding.
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
@@ -129,6 +146,7 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 ## Data & Backend
 - Codex creation flow starts with pending identity and is resolved asynchronously from app-server listing plus refresh hints.
 - Concrete identity rebinding updates tab identity and command to resume form.
+- Exact terminal `/new` on an already-concrete top-level Codex tab keeps the same editor tab open while migrating that tab to the newly created concrete thread when a matching refresh-hint candidate appears.
 
 ## Error Handling
 - Provider CLI/app-server failures must continue through provider-specific error paths in existing service flow.

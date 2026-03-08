@@ -2,12 +2,12 @@
 package com.intellij.agent.workbench.sessions.codex
 
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabSnapshot
-import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindTarget
+import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 
 internal data class CodexPendingTabBinding(
   val pendingTabKey: String,
   val pendingThreadIdentity: String,
-  val target: AgentChatPendingTabRebindTarget,
+  val target: AgentChatTabRebindTarget,
 )
 
 internal data class CodexPendingTabMatchResult(
@@ -19,7 +19,7 @@ internal data class CodexPendingTabMatchResult(
 internal object CodexPendingTabMatcher {
   fun match(
     pendingTabsByPath: Map<String, List<AgentChatPendingCodexTabSnapshot>>,
-    candidatesByPath: Map<String, List<AgentChatPendingTabRebindTarget>>,
+    candidatesByPath: Map<String, List<AgentChatTabRebindTarget>>,
     openConcreteIdentitiesByPath: Map<String, Set<String>>,
     preWindowMs: Long,
     postWindowMs: Long,
@@ -61,7 +61,7 @@ internal object CodexPendingTabMatcher {
 
   private fun matchPath(
     pendingTabs: List<AgentChatPendingCodexTabSnapshot>,
-    candidates: List<AgentChatPendingTabRebindTarget>,
+    candidates: List<AgentChatTabRebindTarget>,
     openConcreteIdentities: Set<String>,
     preWindowMs: Long,
     postWindowMs: Long,
@@ -98,7 +98,7 @@ internal object CodexPendingTabMatcher {
       initialEdgeCounts[pendingTab.pendingTabKey] = connectedCandidates.size
     }
 
-    val bindings = LinkedHashMap<String, AgentChatPendingTabRebindTarget>()
+    val bindings = LinkedHashMap<String, AgentChatTabRebindTarget>()
     while (true) {
       val forcedPairs = pendingEdges.entries
         .asSequence()
@@ -157,8 +157,8 @@ internal object CodexPendingTabMatcher {
     )
   }
 
-  private fun deduplicateCandidates(candidates: List<AgentChatPendingTabRebindTarget>): Map<String, AgentChatPendingTabRebindTarget> {
-    val result = LinkedHashMap<String, AgentChatPendingTabRebindTarget>()
+  private fun deduplicateCandidates(candidates: List<AgentChatTabRebindTarget>): Map<String, AgentChatTabRebindTarget> {
+    val result = LinkedHashMap<String, AgentChatTabRebindTarget>()
     for (candidate in candidates) {
       val existing = result[candidate.threadIdentity]
       if (existing == null || candidate.threadUpdatedAt >= existing.threadUpdatedAt) {

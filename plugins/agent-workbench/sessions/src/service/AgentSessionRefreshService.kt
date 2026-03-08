@@ -1,12 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.service
 
+import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabRebindReport
+import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabRebindRequest
+import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindReport
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindRequest
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
+import com.intellij.agent.workbench.chat.clearOpenConcreteCodexNewThreadRebindAnchors
 import com.intellij.agent.workbench.chat.collectOpenConcreteAgentChatThreadIdentitiesByPath
+import com.intellij.agent.workbench.chat.collectOpenConcreteCodexTabsAwaitingNewThreadRebindByPath
 import com.intellij.agent.workbench.chat.collectOpenPendingCodexTabsByPath
+import com.intellij.agent.workbench.chat.rebindOpenConcreteCodexTabs
 import com.intellij.agent.workbench.chat.rebindOpenPendingCodexTabs
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
@@ -44,11 +50,19 @@ internal class AgentSessionRefreshService(
     private val warmState: SessionWarmState,
     private val openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingCodexTabSnapshot>> =
     ::collectOpenPendingCodexTabsByPath,
+    private val openConcreteCodexTabsAwaitingNewThreadRebindProvider: suspend () -> Map<String, List<AgentChatConcreteCodexTabSnapshot>> =
+    ::collectOpenConcreteCodexTabsAwaitingNewThreadRebindByPath,
     private val openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> =
     ::collectOpenConcreteAgentChatThreadIdentitiesByPath,
     private val openAgentChatPendingTabsBinder: (
     Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
   ) -> AgentChatPendingCodexTabRebindReport = ::rebindOpenPendingCodexTabs,
+    private val openAgentChatConcreteTabsBinder: (
+    Map<String, List<AgentChatConcreteCodexTabRebindRequest>>,
+  ) -> AgentChatConcreteCodexTabRebindReport = ::rebindOpenConcreteCodexTabs,
+    private val clearOpenConcreteCodexTabAnchors: (
+    Map<String, List<AgentChatConcreteCodexTabSnapshot>>,
+  ) -> Int = ::clearOpenConcreteCodexNewThreadRebindAnchors,
     subscribeToProjectLifecycle: Boolean,
 ) {
   @Suppress("unused")
@@ -74,8 +88,11 @@ internal class AgentSessionRefreshService(
     contentRepository = contentRepository,
     isRefreshGateActive = ::isSourceRefreshGateActive,
     openPendingCodexTabsProvider = openPendingCodexTabsProvider,
+    openConcreteCodexTabsAwaitingNewThreadRebindProvider = openConcreteCodexTabsAwaitingNewThreadRebindProvider,
     openConcreteChatThreadIdentitiesByPathProvider = openConcreteChatThreadIdentitiesByPathProvider,
     openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinder,
+    openAgentChatConcreteTabsBinder = openAgentChatConcreteTabsBinder,
+    clearOpenConcreteCodexTabAnchors = clearOpenConcreteCodexTabAnchors,
   )
 
   init {

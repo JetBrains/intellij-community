@@ -325,7 +325,7 @@ class AgentChatEditorServiceTest {
           AgentChatPendingCodexTabRebindRequest(
             pendingTabKey = file.tabKey,
             pendingThreadIdentity = file.threadIdentity,
-            target = AgentChatPendingTabRebindTarget(
+            target = AgentChatTabRebindTarget(
               threadIdentity = "CODEX:thread-3",
               threadId = "thread-3",
               shellCommand = listOf("codex", "resume", "thread-3"),
@@ -403,6 +403,164 @@ class AgentChatEditorServiceTest {
   }
 
   @Test
+  fun testCollectOpenConcreteCodexTabsAwaitingNewThreadRebindByPath(): Unit = timeoutRunBlocking {
+    openChatInModal(
+      threadIdentity = "CODEX:thread-42",
+      shellCommand = listOf("codex", "resume", "thread-42"),
+      threadId = "thread-42",
+      threadTitle = "Concrete thread",
+      subAgentId = null,
+    )
+
+    val concreteFile = openedChatFiles().single()
+    concreteFile.updateNewThreadRebindRequestedAtMs(1_000L)
+    service<AgentChatTabsService>().upsert(concreteFile.toSnapshot())
+
+    val concreteTabsByPath = collectOpenConcreteCodexTabsAwaitingNewThreadRebindByPath()
+    val concreteSnapshot = concreteTabsByPath[projectPath].orEmpty().single()
+    assertThat(concreteSnapshot.projectPath).isEqualTo(projectPath)
+    assertThat(concreteSnapshot.tabKey).isEqualTo(concreteFile.tabKey)
+    assertThat(concreteSnapshot.currentThreadIdentity).isEqualTo("CODEX:thread-42")
+    assertThat(concreteSnapshot.newThreadRebindRequestedAtMs).isEqualTo(1_000L)
+  }
+
+  @Test
+  fun testRebindOpenConcreteCodexTabToNewThread(): Unit = timeoutRunBlocking {
+    openChatInModal(
+      threadIdentity = "CODEX:thread-1",
+      shellCommand = listOf("codex", "resume", "thread-1"),
+      threadId = "thread-1",
+      threadTitle = "Original thread",
+      subAgentId = null,
+    )
+
+    val file = openedChatFiles().single()
+    file.updateNewThreadRebindRequestedAtMs(1_000L)
+    service<AgentChatTabsService>().upsert(file.toSnapshot())
+
+    val rebindReport = rebindOpenConcreteCodexTabs(
+      requestsByProjectPath = mapOf(
+        projectPath to listOf(
+          AgentChatConcreteCodexTabRebindRequest(
+            tabKey = file.tabKey,
+            currentThreadIdentity = file.threadIdentity,
+            newThreadRebindRequestedAtMs = 1_000L,
+            target = AgentChatTabRebindTarget(
+              threadIdentity = "CODEX:thread-2",
+              threadId = "thread-2",
+              shellCommand = listOf("codex", "resume", "thread-2"),
+              threadTitle = "New thread",
+              threadActivity = AgentThreadActivity.UNREAD,
+            ),
+          )
+        )
+      )
+    )
+
+    assertThat(rebindReport.requestedBindings).isEqualTo(1)
+    assertThat(rebindReport.reboundBindings).isEqualTo(1)
+    assertThat(rebindReport.outcomesByPath[projectPath].orEmpty().single().status)
+      .isEqualTo(AgentChatConcreteCodexTabRebindStatus.REBOUND)
+    assertThat(file.threadIdentity).isEqualTo("CODEX:thread-2")
+    assertThat(file.threadId).isEqualTo("thread-2")
+    assertThat(file.shellCommand).containsExactly("codex", "resume", "thread-2")
+    assertThat(file.threadTitle).isEqualTo("New thread")
+    assertThat(file.threadActivity).isEqualTo(AgentThreadActivity.UNREAD)
+    assertThat(file.newThreadRebindRequestedAtMs).isNull()
+  }
+
+  @Test
+  fun testRebindOpenConcreteCodexTabsFailsWhenTargetIsAlreadyOpen(): Unit = timeoutRunBlocking {
+    openChatInModal(
+      threadIdentity = "CODEX:thread-1",
+      shellCommand = listOf("codex", "resume", "thread-1"),
+      threadId = "thread-1",
+      threadTitle = "Original thread",
+      subAgentId = null,
+    )
+    openChatInModal(
+      threadIdentity = "CODEX:thread-2",
+      shellCommand = listOf("codex", "resume", "thread-2"),
+      threadId = "thread-2",
+      threadTitle = "Already open",
+      subAgentId = null,
+    )
+
+    val concreteTab = openedChatFiles().first { it.threadIdentity == "CODEX:thread-1" }
+    concreteTab.updateNewThreadRebindRequestedAtMs(1_000L)
+    service<AgentChatTabsService>().upsert(concreteTab.toSnapshot())
+
+    val rebindReport = rebindOpenConcreteCodexTabs(
+      requestsByProjectPath = mapOf(
+        projectPath to listOf(
+          AgentChatConcreteCodexTabRebindRequest(
+            tabKey = concreteTab.tabKey,
+            currentThreadIdentity = "CODEX:thread-1",
+            newThreadRebindRequestedAtMs = 1_000L,
+            target = AgentChatTabRebindTarget(
+              threadIdentity = "CODEX:thread-2",
+              threadId = "thread-2",
+              shellCommand = listOf("codex", "resume", "thread-2"),
+              threadTitle = "Should not replace",
+              threadActivity = AgentThreadActivity.READY,
+            ),
+          )
+        )
+      )
+    )
+
+    assertThat(rebindReport.reboundBindings).isEqualTo(0)
+    assertThat(rebindReport.outcomesByPath[projectPath].orEmpty().single().status)
+      .isEqualTo(AgentChatConcreteCodexTabRebindStatus.TARGET_ALREADY_OPEN)
+    assertThat(concreteTab.threadIdentity).isEqualTo("CODEX:thread-1")
+    assertThat(concreteTab.newThreadRebindRequestedAtMs).isEqualTo(1_000L)
+  }
+
+  @Test
+  fun testRebindOpenConcreteCodexTabRejectsStaleAnchorTimestamp(): Unit = timeoutRunBlocking {
+    openChatInModal(
+      threadIdentity = "CODEX:thread-1",
+      shellCommand = listOf("codex", "resume", "thread-1"),
+      threadId = "thread-1",
+      threadTitle = "Original thread",
+      subAgentId = null,
+    )
+
+    val file = openedChatFiles().single()
+    file.updateNewThreadRebindRequestedAtMs(1_000L)
+    service<AgentChatTabsService>().upsert(file.toSnapshot())
+    val staleSnapshot = collectOpenConcreteCodexTabsAwaitingNewThreadRebindByPath().getValue(projectPath).single()
+
+    file.updateNewThreadRebindRequestedAtMs(2_000L)
+    service<AgentChatTabsService>().upsert(file.toSnapshot())
+
+    val rebindReport = rebindOpenConcreteCodexTabs(
+      requestsByProjectPath = mapOf(
+        projectPath to listOf(
+          AgentChatConcreteCodexTabRebindRequest(
+            tabKey = staleSnapshot.tabKey,
+            currentThreadIdentity = staleSnapshot.currentThreadIdentity,
+            newThreadRebindRequestedAtMs = staleSnapshot.newThreadRebindRequestedAtMs,
+            target = AgentChatTabRebindTarget(
+              threadIdentity = "CODEX:thread-2",
+              threadId = "thread-2",
+              shellCommand = listOf("codex", "resume", "thread-2"),
+              threadTitle = "Should not rebind",
+              threadActivity = AgentThreadActivity.READY,
+            ),
+          )
+        )
+      )
+    )
+
+    assertThat(rebindReport.reboundBindings).isEqualTo(0)
+    assertThat(rebindReport.outcomesByPath[projectPath].orEmpty().single().status)
+      .isEqualTo(AgentChatConcreteCodexTabRebindStatus.INVALID_CONCRETE_TAB)
+    assertThat(file.threadIdentity).isEqualTo("CODEX:thread-1")
+    assertThat(file.newThreadRebindRequestedAtMs).isEqualTo(2_000L)
+  }
+
+  @Test
   fun testRebindOpenPendingCodexTabsTargetsOnlyRequestedPendingIdentity(): Unit = timeoutRunBlocking {
     openChatInModal(
       threadIdentity = "CODEX:new-1",
@@ -426,7 +584,7 @@ class AgentChatEditorServiceTest {
           AgentChatPendingCodexTabRebindRequest(
             pendingTabKey = pendingTab.tabKey,
             pendingThreadIdentity = "CODEX:new-2",
-            target = AgentChatPendingTabRebindTarget(
+            target = AgentChatTabRebindTarget(
               threadIdentity = "CODEX:thread-2",
               threadId = "thread-2",
               shellCommand = listOf("codex", "resume", "thread-2"),
@@ -471,7 +629,7 @@ class AgentChatEditorServiceTest {
           AgentChatPendingCodexTabRebindRequest(
             pendingTabKey = pendingTab.tabKey,
             pendingThreadIdentity = "CODEX:new-1",
-            target = AgentChatPendingTabRebindTarget(
+            target = AgentChatTabRebindTarget(
               threadIdentity = "CODEX:thread-2",
               threadId = "thread-2",
               shellCommand = listOf("codex", "resume", "thread-2"),
@@ -504,7 +662,7 @@ class AgentChatEditorServiceTest {
           AgentChatPendingCodexTabRebindRequest(
             pendingTabKey = "missing-tab-key",
             pendingThreadIdentity = "CODEX:new-1",
-            target = AgentChatPendingTabRebindTarget(
+            target = AgentChatTabRebindTarget(
               threadIdentity = "CODEX:thread-2",
               threadId = "thread-2",
               shellCommand = listOf("codex", "resume", "thread-2"),
