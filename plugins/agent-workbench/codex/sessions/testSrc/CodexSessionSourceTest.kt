@@ -126,6 +126,38 @@ class CodexSessionSourceTest {
       assertThat(hints).isEmpty()
     }
   }
+
+  @Test
+  fun newerRolloutWorkingHintOverridesReadyOutputHints() {
+    val source = createSource(
+      appServerHints = mapOf(
+        PROJECT_PATH to refreshHints(
+          "thread-1" to refreshHint(
+            activity = AgentThreadActivity.READY,
+            updatedAt = 100L,
+          )
+        )
+      ),
+      rolloutHints = mapOf(
+        PROJECT_PATH to refreshHints(
+          "thread-1" to refreshHint(
+            activity = AgentThreadActivity.PROCESSING,
+            updatedAt = 200L,
+          )
+        )
+      ),
+    )
+
+    runBlocking(Dispatchers.Default) {
+      val hints = source.prefetchRefreshHints(
+        paths = listOf(PROJECT_PATH),
+        knownThreadIdsByPath = mapOf(PROJECT_PATH to setOf("thread-1")),
+      )
+
+      assertThat(hints.getValue(PROJECT_PATH).activityByThreadId)
+        .containsExactlyEntriesOf(mapOf("thread-1" to AgentThreadActivity.PROCESSING))
+    }
+  }
 }
 
 private const val PROJECT_PATH = "/work/project"

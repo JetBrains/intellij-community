@@ -203,7 +203,7 @@ internal fun mergeCodexRefreshHints(
           currentHint = mergedActivityHintsByThreadId[threadId],
           rolloutHint = hint,
         )) {
-        // Rollout fallback is intentionally narrow: it can raise stale API activity to unread.
+        // Rollout can keep TUI-backed working activity ahead of stale app-server state.
         mergedActivityHintsByThreadId[threadId] = hint
       }
     }
@@ -226,9 +226,15 @@ private fun shouldApplyRolloutActivityFallback(
   return when {
     currentHint == null -> true
     currentHint.responseRequired -> false
-    rolloutHint.activity != AgentThreadActivity.UNREAD -> false
+    rolloutHint.activity == AgentThreadActivity.UNREAD -> true
+    !rolloutHint.activity.isWorkingActivity() -> false
+    rolloutHint.updatedAt <= currentHint.updatedAt -> false
     else -> true
   }
+}
+
+private fun AgentThreadActivity.isWorkingActivity(): Boolean {
+  return this == AgentThreadActivity.PROCESSING || this == AgentThreadActivity.REVIEWING
 }
 
 private fun mergeRebindCandidates(
