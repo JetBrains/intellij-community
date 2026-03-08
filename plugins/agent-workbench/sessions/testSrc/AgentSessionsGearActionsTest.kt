@@ -11,15 +11,20 @@ import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewTh
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProjectFromEditorTabAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProjectFromToolbarAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsOpenDedicatedFrameAction
+import com.intellij.agent.workbench.sessions.actions.AgentSessionsPreventSleepWhileWorkingToggleAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsRefreshAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsSelectThreadInToolWindowAction
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -33,6 +38,7 @@ class AgentSessionsGearActionsTest {
     assertThat(actionManager.childActionIds("AgentWorkbenchSessions.ToolWindow.GearActions"))
       .contains("OpenFile")
       .contains("AgentWorkbenchSessions.ToggleDedicatedFrame")
+      .contains("AgentWorkbenchSessions.TogglePreventSleepWhileWorking")
       .contains("AgentWorkbenchSessions.ToggleClaudeQuotaWidget")
       .contains("AgentWorkbenchSessions.Refresh")
       .doesNotContain("AgentWorkbenchSessions.OpenDedicatedFrame")
@@ -62,6 +68,41 @@ class AgentSessionsGearActionsTest {
     assertThat(actionManager.getAction("AgentWorkbenchSessions.ToggleDedicatedFrame"))
       .isNotNull
       .isInstanceOf(AgentSessionsDedicatedFrameToggleAction::class.java)
+  }
+
+  @Test
+  fun sleepPreventionToggleRegistersSettingAndStartupActivity() {
+    val actionManager = ActionManager.getInstance()
+    val descriptor = checkNotNull(javaClass.classLoader.getResource("intellij.agent.workbench.sessions.xml")) {
+      "Module descriptor intellij.agent.workbench.sessions.xml is missing"
+    }.readText()
+
+    assertThat(descriptor)
+      .contains("<postStartupActivity implementation=\"com.intellij.agent.workbench.sessions.sleep.AgentSessionSleepPreventionStartupActivity\"/>")
+      .contains("<advancedSetting")
+      .contains("id=\"agent.workbench.prevent.system.sleep.while.working\"")
+    assertThat(actionManager.getAction("AgentWorkbenchSessions.TogglePreventSleepWhileWorking"))
+      .isNotNull
+      .isInstanceOf(AgentSessionsPreventSleepWhileWorkingToggleAction::class.java)
+    assertThat(AgentSessionsBundle.message("action.AgentWorkbenchSessions.TogglePreventSleepWhileWorking.text"))
+      .isEqualTo("Prevent System Sleep While Agent Is Working")
+    assertThat(AgentSessionsBundle.message("advanced.setting.agent.workbench.prevent.system.sleep.while.working"))
+      .isEqualTo("Prevent system sleep while agent is working")
+  }
+
+  @Test
+  fun sleepPreventionToggleUpdatesAdvancedSetting(@TestDisposable disposable: Disposable) {
+    val action = AgentSessionsPreventSleepWhileWorkingToggleAction()
+    val advancedSettings = AdvancedSettings.getInstance() as AdvancedSettingsImpl
+
+    advancedSettings.setSetting("agent.workbench.prevent.system.sleep.while.working", true, disposable)
+    assertThat(action.isSelected(TestActionEvent.createTestEvent(action))).isTrue()
+
+    runInEdtAndWait {
+      action.setSelected(TestActionEvent.createTestEvent(action), false)
+    }
+
+    assertThat(AdvancedSettings.getBoolean("agent.workbench.prevent.system.sleep.while.working")).isFalse()
   }
 
   @Test

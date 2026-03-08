@@ -12,6 +12,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <agent.workbench.promptLauncher implementation="com.intellij.agent.workbench.sessions.service.AgentSessionPromptLauncherBridge"/>
+    <postStartupActivity implementation="com.intellij.agent.workbench.sessions.sleep.AgentSessionSleepPreventionStartupActivity"/>
     <toolWindow
       id="agent.workbench.sessions"
       anchor="right"
@@ -22,6 +23,11 @@
                        key="notification.group.agent.workbench.sessions"/>
     <advancedSetting
       id="agent.workbench.chat.open.in.dedicated.frame"
+      default="true"
+      bundle="messages.AgentSessionsBundle"
+      groupKey="advanced.settings.agent.workbench"/>
+    <advancedSetting
+      id="agent.workbench.prevent.system.sleep.while.working"
       default="true"
       bundle="messages.AgentSessionsBundle"
       groupKey="advanced.settings.agent.workbench"/>
@@ -57,6 +63,7 @@
       <reference ref="OpenFile"/>
       <separator/>
       <action id="AgentWorkbenchSessions.ToggleDedicatedFrame" class="com.intellij.agent.workbench.sessions.actions.AgentSessionsDedicatedFrameToggleAction"/>
+      <action id="AgentWorkbenchSessions.TogglePreventSleepWhileWorking" class="com.intellij.agent.workbench.sessions.actions.AgentSessionsPreventSleepWhileWorkingToggleAction"/>
       <action id="AgentWorkbenchSessions.ToggleClaudeQuotaWidget" class="com.intellij.agent.workbench.sessions.actions.AgentSessionsToggleClaudeQuotaWidgetAction"/>
       <action id="AgentWorkbenchSessions.Refresh" class="com.intellij.agent.workbench.sessions.actions.AgentSessionsRefreshAction"/>
     </group>
