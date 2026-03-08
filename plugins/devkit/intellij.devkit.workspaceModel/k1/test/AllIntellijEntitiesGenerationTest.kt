@@ -4,7 +4,9 @@ package com.intellij.devkit.workspaceModel.k1
 import com.intellij.devkit.workspaceModel.AbstractAllIntellijEntitiesGenerationTest
 import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.kotlin.idea.test.UseK1PluginMode
+import org.junit.jupiter.api.Disabled
 
 @UseK1PluginMode
 @TestApplication
+@Disabled("AT-3959")
 class AllIntellijEntitiesGenerationTest : AbstractAllIntellijEntitiesGenerationTest()

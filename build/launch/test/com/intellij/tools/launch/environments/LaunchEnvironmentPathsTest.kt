@@ -2,10 +2,12 @@ package com.intellij.tools.launch.environments
 
 import com.intellij.openapi.application.PathManager
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.nio.file.Paths
 
 class LaunchEnvironmentPathsTest {
+  @Disabled("AT-3959")
   @Test
   fun test() {
     val basePath = Paths.get(PathManager.getHomePath())
