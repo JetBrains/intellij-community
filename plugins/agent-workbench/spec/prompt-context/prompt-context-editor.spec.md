@@ -75,6 +75,7 @@ Define editor-driven prompt context behavior for both direct invocation and fall
 
 - Chip rendering contract for editor item types:
   - `file` chip shows shortened path (project-relative when under project root),
+  - long `file` chip previews are filename-biased middle-truncated after path normalization,
   - `symbol` chip shows symbol name,
   - `snippet` chip shows title only (line range), no code preview.
   [@test] ../../prompt/testSrc/ui/AgentPromptContextEntryPathRenderingTest.kt

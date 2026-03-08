@@ -6,6 +6,7 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRende
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayload
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayloadValue
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.SystemProperties
 import org.assertj.core.api.Assertions.assertThat
@@ -64,6 +65,32 @@ class AgentPromptContextEntryPathRenderingTest {
   }
 
   @Test
+  fun fileChipMiddleTruncatesLongProjectRelativePath() {
+    val home = systemPath(SystemProperties.getUserHome())
+    val projectBasePath = systemPath("$home/agent-workbench-project-long")
+    val relativePath = listOf(
+      "very-long-source-root",
+      "deeply-nested-package-name",
+      "with-extra-context-for-preview",
+      "and-even-more-structure",
+      "VeryLongFileNameForPathChipRendering.kt",
+    ).joinToString(File.separator)
+    val filePath = systemPath("$projectBasePath/$relativePath")
+    val expected = StringUtil.shortenPathWithEllipsis(relativePath, 60, true)
+
+    val entry = contextEntry(
+      rendererId = AgentPromptContextRendererIds.FILE,
+      title = "File",
+      body = filePath,
+      projectBasePath = projectBasePath,
+    )
+
+    assertThat(expected).contains("…")
+    assertThat(entry.displayText).isEqualTo("File: $expected")
+    assertThat(entry.displayText).doesNotEndWith("…")
+  }
+
+  @Test
   fun pathsChipKeepsPrefixAndShortensPath() {
     val home = systemPath(SystemProperties.getUserHome())
     val projectBasePath = systemPath("$home/agent-workbench-project-paths")
@@ -78,6 +105,26 @@ class AgentPromptContextEntryPathRenderingTest {
 
     assertThat(entry.displayText).isEqualTo("Paths: subdir")
     assertThat(entry.tooltipText).isEqualTo("path: $selectedDirectory")
+  }
+
+  @Test
+  fun pathsChipMiddleTruncatesLongHomeRelativePath() {
+    val home = systemPath(SystemProperties.getUserHome())
+    val selectedPath = systemPath(
+      "$home/awb-long-selection/deeply-nested-selection/with-extra-context/for-preview/VeryLongSelectedPathName.txt"
+    )
+    val expected = StringUtil.shortenPathWithEllipsis(FileUtil.getLocationRelativeToUserHome(selectedPath, false), 60, true)
+
+    val entry = contextEntry(
+      rendererId = AgentPromptContextRendererIds.PATHS,
+      title = "Paths",
+      body = "file: $selectedPath",
+      projectBasePath = systemPath("$home/other-project"),
+    )
+
+    assertThat(expected).contains("…")
+    assertThat(entry.displayText).isEqualTo("Paths: $expected")
+    assertThat(entry.displayText).doesNotEndWith("…")
   }
 
   @Test

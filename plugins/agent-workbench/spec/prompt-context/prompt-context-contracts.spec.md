@@ -73,7 +73,8 @@ Provider/source-specific context rules are defined in separate specs under `spec
 - Chip rendering contract:
   - use renderer `renderChip(...)` when available,
   - fallback chip text uses `title` + first line preview,
-  - path-like previews must shorten to project-relative under project root, else user-home-relative under home root.
+  - path-like previews must shorten to project-relative under project root, else user-home-relative under home root,
+  - long path-like previews use filename-biased middle truncation after that normalization.
   [@test] ../../prompt/testSrc/ui/AgentPromptContextEntryPathRenderingTest.kt
 
 - Hierarchical context item contract:

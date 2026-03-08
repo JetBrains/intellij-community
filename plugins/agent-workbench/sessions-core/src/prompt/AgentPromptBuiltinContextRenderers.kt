@@ -4,11 +4,14 @@ package com.intellij.agent.workbench.sessions.core.prompt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
 import java.nio.file.FileSystems
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.math.max
+
+private const val CHIP_PREVIEW_MAX_LENGTH = 60
 
 internal class AgentPromptSnippetContextRendererBridge : AgentPromptContextRendererBridge {
   override val rendererId: String
@@ -60,7 +63,7 @@ class AgentPromptFileContextRendererBridge : AgentPromptContextRendererBridge {
     val payload = input.item.payload.objOrNull()
     val pathText = payload?.string("path") ?: input.item.body
     val shortened = shortenPathForChip(pathText, input.projectBasePath)
-    return AgentPromptChipRender(text = composeChipText(input.item.title, shortened))
+    return AgentPromptChipRender(text = composePathChipText(input.item.title, shortened))
   }
 }
 
@@ -105,7 +108,7 @@ class AgentPromptPathsContextRendererBridge : AgentPromptContextRendererBridge {
   override fun renderChip(input: AgentPromptChipRenderInput): AgentPromptChipRender {
     val first = extractPaths(input.item).firstOrNull().orEmpty()
     val preview = shortenPathForChip(first, input.projectBasePath)
-    return AgentPromptChipRender(text = composeChipText(input.item.title, preview))
+    return AgentPromptChipRender(text = composePathChipText(input.item.title, preview))
   }
 
   private fun extractPaths(item: AgentPromptContextItem): List<String> {
@@ -226,7 +229,17 @@ internal fun composeChipText(title: String?, preview: String): String {
   if (trimmedPreview.isEmpty()) {
     return resolvedTitle
   }
-  val shortPreview = if (trimmedPreview.length <= 60) trimmedPreview else trimmedPreview.take(60) + "\u2026"
+  val shortPreview = if (trimmedPreview.length <= CHIP_PREVIEW_MAX_LENGTH) trimmedPreview else trimmedPreview.take(CHIP_PREVIEW_MAX_LENGTH) + "\u2026"
+  return "$resolvedTitle: $shortPreview"
+}
+
+internal fun composePathChipText(title: String?, preview: String): String {
+  val resolvedTitle = title?.takeIf { it.isNotBlank() } ?: "Context"
+  val trimmedPreview = preview.trim()
+  if (trimmedPreview.isEmpty()) {
+    return resolvedTitle
+  }
+  val shortPreview = StringUtil.shortenPathWithEllipsis(trimmedPreview, CHIP_PREVIEW_MAX_LENGTH, true)
   return "$resolvedTitle: $shortPreview"
 }
 
