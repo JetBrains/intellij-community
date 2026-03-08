@@ -1,18 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.codex.sessions
 
-import com.intellij.agent.workbench.codex.common.CodexThread
-import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
-import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshActivityHint
-import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHints
-import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHintsProvider
-import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
-import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutRefreshHintsProvider
-import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutSessionBackend
 import com.intellij.agent.workbench.common.AgentThreadActivity
-import com.intellij.openapi.project.Project
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -36,16 +26,18 @@ class CodexSessionSourceRolloutIntegrationTest {
         ),
       )
 
-      val source = createSource(
+      val source = testCreateSource(
         projectDir = projectDir,
+        codexHome = tempDir,
+        threadIds = listOf(THREAD_ID),
         appServerHints = mapOf(
-          projectDir.toString() to refreshHints(
-            THREAD_ID to refreshHint(activity = AgentThreadActivity.READY, updatedAt = 100L)
+          projectDir.toString() to testRefreshHintsOf(
+            THREAD_ID to testRefreshHint(activity = AgentThreadActivity.READY, updatedAt = 100L)
           )
         ),
       )
 
-      assertThat(refreshActivities(source, projectDir))
+      assertThat(testRefreshActivities(source, projectDir, listOf(THREAD_ID)))
         .containsExactlyEntriesOf(mapOf(THREAD_ID to AgentThreadActivity.PROCESSING))
     }
   }
@@ -61,16 +53,18 @@ class CodexSessionSourceRolloutIntegrationTest {
         ),
       )
 
-      val source = createSource(
+      val source = testCreateSource(
         projectDir = projectDir,
+        codexHome = tempDir,
+        threadIds = listOf(THREAD_ID),
         appServerHints = mapOf(
-          projectDir.toString() to refreshHints(
-            THREAD_ID to refreshHint(activity = AgentThreadActivity.READY, updatedAt = 100L)
+          projectDir.toString() to testRefreshHintsOf(
+            THREAD_ID to testRefreshHint(activity = AgentThreadActivity.READY, updatedAt = 100L)
           )
         ),
       )
 
-      assertThat(refreshActivities(source, projectDir))
+      assertThat(testRefreshActivities(source, projectDir, listOf(THREAD_ID)))
         .containsExactlyEntriesOf(mapOf(THREAD_ID to AgentThreadActivity.REVIEWING))
     }
   }
@@ -86,16 +80,18 @@ class CodexSessionSourceRolloutIntegrationTest {
         ),
       )
 
-      val source = createSource(
+      val source = testCreateSource(
         projectDir = projectDir,
+        codexHome = tempDir,
+        threadIds = listOf(THREAD_ID),
         appServerHints = mapOf(
-          projectDir.toString() to refreshHints(
-            THREAD_ID to refreshHint(activity = AgentThreadActivity.READY, updatedAt = 100L)
+          projectDir.toString() to testRefreshHintsOf(
+            THREAD_ID to testRefreshHint(activity = AgentThreadActivity.READY, updatedAt = 100L)
           )
         ),
       )
 
-      assertThat(refreshActivities(source, projectDir))
+      assertThat(testRefreshActivities(source, projectDir, listOf(THREAD_ID)))
         .containsExactlyEntriesOf(mapOf(THREAD_ID to AgentThreadActivity.UNREAD))
     }
   }
@@ -111,11 +107,13 @@ class CodexSessionSourceRolloutIntegrationTest {
         ),
       )
 
-      val source = createSource(
+      val source = testCreateSource(
         projectDir = projectDir,
+        codexHome = tempDir,
+        threadIds = listOf(THREAD_ID),
         appServerHints = mapOf(
-          projectDir.toString() to refreshHints(
-            THREAD_ID to refreshHint(
+          projectDir.toString() to testRefreshHintsOf(
+            THREAD_ID to testRefreshHint(
               activity = AgentThreadActivity.UNREAD,
               updatedAt = 100L,
               responseRequired = true,
@@ -124,7 +122,7 @@ class CodexSessionSourceRolloutIntegrationTest {
         ),
       )
 
-      assertThat(refreshActivities(source, projectDir))
+      assertThat(testRefreshActivities(source, projectDir, listOf(THREAD_ID)))
         .containsExactlyEntriesOf(mapOf(THREAD_ID to AgentThreadActivity.UNREAD))
     }
   }
@@ -132,86 +130,8 @@ class CodexSessionSourceRolloutIntegrationTest {
 
 private const val THREAD_ID = "thread-1"
 
-private fun createSource(
-  projectDir: Path,
-  appServerHints: Map<String, CodexRefreshHints>,
-): CodexSessionSource {
-  val projectPath = projectDir.toString()
-  return CodexSessionSource(
-    backend = object : CodexSessionBackend {
-      override suspend fun listThreads(path: String, openProject: Project?): List<CodexBackendThread> {
-        return if (path == projectPath) {
-          listOf(
-            CodexBackendThread(
-              thread = CodexThread(
-                id = THREAD_ID,
-                title = "Thread 1",
-                updatedAt = 100L,
-                archived = false,
-              )
-            )
-          )
-        }
-        else {
-          emptyList()
-        }
-      }
-    },
-    appServerRefreshHintsProvider = staticHintsProvider(appServerHints),
-    rolloutRefreshHintsProvider = CodexRolloutRefreshHintsProvider(
-      rolloutBackend = CodexRolloutSessionBackend(codexHomeProvider = { projectDir.parent })
-    ),
-  )
-}
-
-private suspend fun refreshActivities(source: CodexSessionSource, projectDir: Path): Map<String, AgentThreadActivity> {
-  val projectPath = projectDir.toString()
-  val listedThreads = source.listThreadsFromClosedProject(projectPath)
-  assertThat(listedThreads.map { it.id }).containsExactly(THREAD_ID)
-
-  return source.prefetchRefreshHints(
-    paths = listOf(projectPath),
-    knownThreadIdsByPath = mapOf(projectPath to listedThreads.mapTo(HashSet(listedThreads.size)) { it.id }),
-  ).getValue(projectPath).activityByThreadId
-}
-
-private fun staticHintsProvider(hintsByPath: Map<String, CodexRefreshHints>): CodexRefreshHintsProvider {
-  return object : CodexRefreshHintsProvider {
-    override val updates = emptyFlow<Unit>()
-
-    override suspend fun prefetchRefreshHints(
-      paths: List<String>,
-      knownThreadIdsByPath: Map<String, Set<String>>,
-    ): Map<String, CodexRefreshHints> {
-      return hintsByPath.filterKeys(paths::contains)
-    }
-  }
-}
-
-private fun refreshHints(vararg entries: Pair<String, CodexRefreshActivityHint>): CodexRefreshHints {
-  return CodexRefreshHints(activityHintsByThreadId = linkedMapOf(*entries))
-}
-
-private fun refreshHint(
-  activity: AgentThreadActivity,
-  updatedAt: Long,
-  responseRequired: Boolean = false,
-): CodexRefreshActivityHint {
-  return CodexRefreshActivityHint(
-    activity = activity,
-    updatedAt = updatedAt,
-    responseRequired = responseRequired,
-  )
-}
-
-private fun createProjectDir(root: Path, name: String): Path {
-  val projectDir = root.resolve(name)
-  Files.createDirectories(projectDir)
-  return projectDir
-}
-
 private fun CodexSessionSourceRolloutIntegrationTest.createProjectDir(name: String): Path {
-  return createProjectDir(tempDir, name)
+  return testCreateProjectDir(tempDir, name)
 }
 
 private fun CodexSessionSourceRolloutIntegrationTest.writeRollout(projectDir: Path, lines: List<String>) {

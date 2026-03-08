@@ -68,6 +68,8 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//libraries/assertj-core",
     "//libraries/assertj-core:assertj-core_test_lib",
+    "//libraries/pty4j",
+    "//libraries/pty4j:pty4j_test_lib",
   ],
   runtime_deps = ["//platform/platform-util-io:ide-util-io_test_lib"]
 )
