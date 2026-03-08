@@ -10,7 +10,9 @@ import org.jetbrains.intellij.build.productLayout.TestFailureLogger
 import org.jetbrains.intellij.build.productLayout.dependency.pluginGraph
 import org.jetbrains.intellij.build.productLayout.dependency.runValidationRule
 import org.jetbrains.intellij.build.productLayout.dependency.testGenerationModel
+import org.jetbrains.intellij.build.productLayout.model.error.DuplicateModuleSetPluginWrapperError
 import org.jetbrains.intellij.build.productLayout.model.error.ModuleSetPluginizationError
+import org.jetbrains.intellij.build.productLayout.model.error.UltimateModuleSetMainModuleError
 import org.jetbrains.intellij.build.productLayout.moduleSet
 import org.jetbrains.intellij.build.productLayout.plugin
 import org.junit.jupiter.api.Test
@@ -80,11 +82,56 @@ class ModuleSetPluginizationValidatorTest {
     assertThat(error.nestedPluginizedSets).containsExactly("nested.pluginized")
   }
 
-  private fun modelWithModuleSets(vararg moduleSets: ModuleSet) =
+  @Test
+  fun `reports duplicate wrapper module names across community and ultimate registries`(): Unit = runBlocking(Dispatchers.Default) {
+    val duplicateCommunity = plugin("duplicate.wrapper") {
+      module("community.module")
+    }
+    val duplicateUltimate = plugin("duplicate.wrapper") {
+      module("ultimate.module")
+    }
+
+    val model = modelWithModuleSets(
+      communityModuleSets = listOf(duplicateCommunity),
+      ultimateModuleSets = listOf(duplicateUltimate),
+    )
+    val errors = runValidationRule(ModuleSetPluginizationValidator, model)
+
+    assertThat(errors.filterIsInstance<DuplicateModuleSetPluginWrapperError>())
+      .singleElement()
+      .extracting { it.context }
+      .isEqualTo("intellij.moduleSet.plugin.duplicate.wrapper")
+  }
+
+  @Test
+  fun `reports ultimate wrappers that opt into community main module`(): Unit = runBlocking(Dispatchers.Default) {
+    val ultimatePluginized = plugin("ultimate.main.module") {
+      module("ultimate.module")
+    }
+
+    val model = modelWithModuleSets(ultimateModuleSets = listOf(ultimatePluginized))
+    val errors = runValidationRule(ModuleSetPluginizationValidator, model)
+
+    assertThat(errors.filterIsInstance<UltimateModuleSetMainModuleError>())
+      .singleElement()
+      .extracting { it.context }
+      .isEqualTo("ultimate.main.module")
+  }
+
+  private fun modelWithModuleSets(
+    vararg moduleSets: ModuleSet,
+    communityModuleSets: List<ModuleSet> = moduleSets.toList(),
+    ultimateModuleSets: List<ModuleSet> = emptyList(),
+  ) =
     testGenerationModel(pluginGraph {})
       .let { model ->
         model.copy(
-          discovery = model.discovery.copy(moduleSetsByLabel = mapOf("test" to moduleSets.toList()))
+          discovery = model.discovery.copy(
+            moduleSetsByLabel = buildMap {
+              if (communityModuleSets.isNotEmpty()) put("community", communityModuleSets)
+              if (ultimateModuleSets.isNotEmpty()) put("ultimate", ultimateModuleSets)
+            }
+          )
         )
       }
 }

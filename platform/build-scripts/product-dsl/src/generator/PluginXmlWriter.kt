@@ -36,7 +36,7 @@ internal object PluginXmlWriter : PipelineNode {
     val files = ArrayList<PluginDependencyFileResult>(plans.size)
     val detailed = ArrayList<PluginXmlFileResult>(plans.size)
     for (plan in plans) {
-      val (fileResult, detailedResult) = writePluginXml(plan, model.xmlWritePolicy)
+      val (fileResult, detailedResult) = writePluginXml(plan, model.generatedArtifactWritePolicy)
       files.add(fileResult)
       detailed.add(detailedResult)
     }

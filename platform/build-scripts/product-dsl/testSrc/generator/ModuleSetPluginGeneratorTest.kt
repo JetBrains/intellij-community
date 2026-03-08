@@ -1,10 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.intellij.build.productLayout
+package org.jetbrains.intellij.build.productLayout.generator
 
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.jetbrains.intellij.build.productLayout.ModuleSet
+import org.jetbrains.intellij.build.productLayout.TestFailureLogger
+import org.jetbrains.intellij.build.productLayout.pipeline.GenerationMode
+import org.jetbrains.intellij.build.productLayout.plugin
+import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
+import org.jetbrains.intellij.build.productLayout.util.GeneratedArtifactWritePolicy
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
@@ -19,7 +25,8 @@ private const val MAIN_MODULE_NAME: String = "intellij.moduleSet.plugin.main"
 private const val LEGACY_GENERATED_ROOT: String = "community/platform/platform-resources/generated/module-set-plugins"
 private const val LEGACY_GENERATED_ROOT_IN_COMMUNITY_MODULES_XML: String = "platform/platform-resources/generated/module-set-plugins"
 
-class ModuleSetPluginWrapperSyncTest {
+@ExtendWith(TestFailureLogger::class)
+class ModuleSetPluginGeneratorTest {
   @TempDir
   lateinit var projectRoot: Path
 
@@ -58,7 +65,7 @@ class ModuleSetPluginWrapperSyncTest {
       ),
     )
 
-    syncWrappers(communityModuleSets = listOf(recentFilesModuleSet()))
+    generateAndCommit(communityModuleSets = listOf(recentFilesModuleSet()))
 
     val wrapperImlText = wrapperPath()
       .resolve("intellij.moduleSet.plugin.recentFiles.iml")
@@ -98,7 +105,7 @@ class ModuleSetPluginWrapperSyncTest {
 
   @Test
   fun `generates wrapper without content dependencies and shared main runtime dependencies`() {
-    syncWrappers(communityModuleSets = listOf(recentFilesModuleSet()))
+    generateAndCommit(communityModuleSets = listOf(recentFilesModuleSet()))
 
     val wrapperImlText = wrapperPath().resolve("intellij.moduleSet.plugin.recentFiles.iml").readText()
     assertThat(wrapperImlText)
@@ -117,7 +124,7 @@ class ModuleSetPluginWrapperSyncTest {
 
   @Test
   fun `skips opted-out wrapper from shared main runtime dependencies`() {
-    syncWrappers(
+    generateAndCommit(
       communityModuleSets = listOf(recentFilesModuleSet(), optedOutFrontendModuleSet()),
     )
 
@@ -140,7 +147,7 @@ class ModuleSetPluginWrapperSyncTest {
     staleMainModuleDir.createDirectories()
     staleMainModuleDir.resolve("$MAIN_MODULE_NAME.iml").writeText("stale")
 
-    syncWrappers(communityModuleSets = listOf(optedOutFrontendModuleSet()))
+    generateAndCommit(communityModuleSets = listOf(optedOutFrontendModuleSet()))
 
     assertThat(staleMainModuleDir).doesNotExist()
   }
@@ -175,7 +182,7 @@ class ModuleSetPluginWrapperSyncTest {
       ),
     )
 
-    syncWrappers(
+    generateAndCommit(
       communityModuleSets = listOf(recentFilesModuleSet()),
       ultimateModuleSets = listOf(vcsFrontendSplitModuleSet()),
     )
@@ -194,18 +201,8 @@ class ModuleSetPluginWrapperSyncTest {
   }
 
   @Test
-  fun `fails when ultimate wrapper opts into community main module`() {
-    assertThatThrownBy {
-      syncWrappers(ultimateModuleSets = listOf(ultimateAddedToMainModuleSet()))
-    }
-      .isInstanceOf(IllegalStateException::class.java)
-      .hasMessageContaining("Ultimate module-set plugin wrappers cannot use addToMainModule=true")
-      .hasMessageContaining("ultimate.added.to.main")
-  }
-
-  @Test
   fun `generates wrapper plugin with literal name and without resource bundle`() {
-    syncWrappers(communityModuleSets = listOf(recentFilesModuleSet()))
+    generateAndCommit(communityModuleSets = listOf(recentFilesModuleSet()))
 
     val pluginXml = wrapperPath()
       .resolve("resources/META-INF/plugin.xml")
@@ -225,7 +222,7 @@ class ModuleSetPluginWrapperSyncTest {
 
   @Test
   fun `generates plugin content yaml for dotted module set names`() {
-    syncWrappers(communityModuleSets = listOf(vcsFrontendModuleSet()))
+    generateAndCommit(communityModuleSets = listOf(vcsFrontendModuleSet()))
 
     val pluginContentYaml = projectRoot
       .resolve(COMMUNITY_GENERATED_ROOT_IN_ROOT_MODULES_XML)
@@ -253,7 +250,7 @@ class ModuleSetPluginWrapperSyncTest {
     val legacyBundleFile = messagesDir.resolve("ModuleSetPluginsBundle.properties")
     legacyBundleFile.writeText("module.set.plugin.recentFiles.name=Recent Files\n")
 
-    syncWrappers(communityModuleSets = listOf(recentFilesModuleSet()))
+    generateAndCommit(communityModuleSets = listOf(recentFilesModuleSet()))
 
     assertThat(legacyBundleFile).doesNotExist()
     assertThat(messagesDir).doesNotExist()
@@ -266,10 +263,58 @@ class ModuleSetPluginWrapperSyncTest {
     legacyWrapperDir.createDirectories()
     legacyWrapperDir.resolve("legacy.marker").writeText("legacy")
 
-    syncWrappers(communityModuleSets = listOf(recentFilesModuleSet()))
+    generateAndCommit(communityModuleSets = listOf(recentFilesModuleSet()))
 
     assertThat(legacyWrapperDir).doesNotExist()
     assertThat(wrapperPath()).exists()
+  }
+
+  @Test
+  fun `validate only mode records wrapper diffs without touching disk`() {
+    val execution = generate(
+      communityModuleSets = listOf(recentFilesModuleSet()),
+      generationMode = GenerationMode.VALIDATE_ONLY,
+    )
+
+    assertThat(wrapperPath()).doesNotExist()
+    assertThat(mainPath()).doesNotExist()
+    assertThat(execution.fileUpdater.getDiffs().map { projectRoot.relativize(it.path).toString() })
+      .contains(
+        "$COMMUNITY_GENERATED_ROOT_IN_ROOT_MODULES_XML/intellij.moduleSet.plugin.recentFiles/intellij.moduleSet.plugin.recentFiles.iml",
+        "$COMMUNITY_GENERATED_ROOT_IN_ROOT_MODULES_XML/$MAIN_MODULE_NAME/$MAIN_MODULE_NAME.iml",
+      )
+  }
+
+  @Test
+  fun `validate only mode records orphan cleanup diffs without touching disk`() {
+    val staleWrapperDir = projectRoot
+      .resolve(COMMUNITY_GENERATED_ROOT_IN_ROOT_MODULES_XML)
+      .resolve("intellij.moduleSet.plugin.stale")
+    staleWrapperDir.createDirectories()
+    val staleMarker = staleWrapperDir.resolve("stale.marker")
+    staleMarker.writeText("stale")
+
+    val execution = generate(
+      communityModuleSets = listOf(recentFilesModuleSet()),
+      generationMode = GenerationMode.VALIDATE_ONLY,
+    )
+    cleanupOrphanedModuleSetPluginFiles(projectRoot, execution.output, execution.strategy)
+
+    assertThat(staleMarker).exists()
+    assertThat(execution.fileUpdater.getDiffs().map { projectRoot.relativize(it.path).toString() })
+      .contains("$COMMUNITY_GENERATED_ROOT_IN_ROOT_MODULES_XML/intellij.moduleSet.plugin.stale/stale.marker")
+  }
+
+  @Test
+  fun `update suppressions mode skips wrapper generation entirely`() {
+    val execution = generate(
+      communityModuleSets = listOf(recentFilesModuleSet()),
+      generationMode = GenerationMode.UPDATE_SUPPRESSIONS,
+    )
+
+    assertThat(execution.output.files).isEmpty()
+    assertThat(execution.fileUpdater.getDiffs()).isEmpty()
+    assertThat(wrapperPath()).doesNotExist()
   }
 
   private fun recentFilesModuleSet(): ModuleSet {
@@ -299,12 +344,6 @@ class ModuleSetPluginWrapperSyncTest {
     }
   }
 
-  private fun ultimateAddedToMainModuleSet(): ModuleSet {
-    return plugin("ultimate.added.to.main") {
-      module("intellij.platform.ultimate.added.to.main")
-    }
-  }
-
   private fun wrapperPath(): Path {
     val moduleName = "intellij.moduleSet.plugin.recentFiles"
     return projectRoot.resolve(COMMUNITY_GENERATED_ROOT_IN_ROOT_MODULES_XML).resolve(moduleName)
@@ -324,15 +363,32 @@ class ModuleSetPluginWrapperSyncTest {
     return projectRoot.resolve(ULTIMATE_GENERATED_ROOT_IN_ROOT_MODULES_XML).resolve(moduleName)
   }
 
-  private fun syncWrappers(
+  private fun generateAndCommit(
     communityModuleSets: List<ModuleSet> = emptyList(),
     ultimateModuleSets: List<ModuleSet> = emptyList(),
-  ) {
-    syncModuleSetPluginsOnDisk(
+  ): GeneratorExecution {
+    val execution = generate(communityModuleSets = communityModuleSets, ultimateModuleSets = ultimateModuleSets)
+    val cleanup = cleanupOrphanedModuleSetPluginFiles(projectRoot, execution.output, execution.strategy)
+    execution.fileUpdater.commit()
+    cleanupGeneratedArtifactDirectories(cleanup.emptyDirectoryCandidates)
+    return execution
+  }
+
+  private fun generate(
+    communityModuleSets: List<ModuleSet> = emptyList(),
+    ultimateModuleSets: List<ModuleSet> = emptyList(),
+    generationMode: GenerationMode = GenerationMode.NORMAL,
+  ): GeneratorExecution {
+    val fileUpdater = DeferredFileUpdater(projectRoot)
+    val strategy = GeneratedArtifactWritePolicy(generationMode, fileUpdater)
+    val output = generateModuleSetPlugins(
       projectRoot = projectRoot,
+      strategy = strategy,
       communityModuleSets = communityModuleSets,
       ultimateModuleSets = ultimateModuleSets,
+      generationMode = generationMode,
     )
+    return GeneratorExecution(output = output, fileUpdater = fileUpdater, strategy = strategy)
   }
 
   private fun writeModulesXml(path: Path, moduleFilepaths: List<String>) {
@@ -358,4 +414,10 @@ class ModuleSetPluginWrapperSyncTest {
     val regex = Regex("<module\\s+[^>]*filepath=\"([^\"]+)\"")
     return regex.findAll(xmlText).map { it.groupValues[1] }.toList()
   }
+
+  private data class GeneratorExecution(
+    val output: org.jetbrains.intellij.build.productLayout.pipeline.ModuleSetPluginsOutput,
+    val fileUpdater: DeferredFileUpdater,
+    val strategy: GeneratedArtifactWritePolicy,
+  )
 }

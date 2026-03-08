@@ -1,17 +1,28 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.intellij.build.productLayout
+package org.jetbrains.intellij.build.productLayout.generator
 
 import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import org.jetbrains.intellij.build.productLayout.ContentModule
+import org.jetbrains.intellij.build.productLayout.ModuleSet
+import org.jetbrains.intellij.build.productLayout.collectPluginizedModuleSets
+import org.jetbrains.intellij.build.productLayout.moduleSetPluginModuleName
+import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
+import org.jetbrains.intellij.build.productLayout.pipeline.GenerationMode
+import org.jetbrains.intellij.build.productLayout.pipeline.ModuleSetPluginsOutput
+import org.jetbrains.intellij.build.productLayout.pipeline.NodeIds
+import org.jetbrains.intellij.build.productLayout.pipeline.PipelineNode
+import org.jetbrains.intellij.build.productLayout.pipeline.Slots
+import org.jetbrains.intellij.build.productLayout.resolveModuleSetPluginId
+import org.jetbrains.intellij.build.productLayout.stats.FileChangeStatus
+import org.jetbrains.intellij.build.productLayout.stats.ModuleSetPluginFileResult
+import org.jetbrains.intellij.build.productLayout.util.FileUpdateStrategy
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Comparator
-import kotlin.io.path.createDirectories
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.name
-import kotlin.io.path.readText
-import kotlin.io.path.writeText
 
 private const val COMMUNITY_MODULE_SET_PLUGIN_GENERATED_ROOT: String = "community/module-set-plugins/generated"
 private const val ULTIMATE_MODULE_SET_PLUGIN_GENERATED_ROOT: String = "module-set-plugins/generated"
@@ -26,47 +37,153 @@ private const val PROJECT_DIR_MACRO: String = "$" + "PROJECT_DIR" + "$"
 private const val MODULE_DIR_MACRO: String = "$" + "MODULE_DIR" + "$"
 private val FILEPATH_ATTRIBUTE_REGEX = Regex("\\bfilepath=\"([^\"]+)\"")
 
-fun syncModuleSetPluginsOnDisk(
+internal object ModuleSetPluginGenerator : PipelineNode {
+  override val id get() = NodeIds.MODULE_SET_PLUGINS
+  override val produces get() = setOf(Slots.MODULE_SET_PLUGINS)
+
+  override suspend fun execute(ctx: ComputeContext) {
+    val model = ctx.model
+    if (model.generationMode == GenerationMode.UPDATE_SUPPRESSIONS) {
+      ctx.publish(
+        Slots.MODULE_SET_PLUGINS,
+        ModuleSetPluginsOutput(files = emptyList(), managedWrapperRoots = emptyMap(), legacyGeneratedRoots = emptySet())
+      )
+      return
+    }
+
+    ctx.publish(
+      Slots.MODULE_SET_PLUGINS,
+      generateModuleSetPlugins(
+        projectRoot = model.projectRoot,
+        strategy = model.generatedArtifactWritePolicy,
+        communityModuleSets = model.discovery.communityModuleSets,
+        ultimateModuleSets = model.discovery.ultimateModuleSets,
+        generationMode = model.generationMode,
+      )
+    )
+  }
+}
+
+internal data class ModuleSetPluginCleanupResult(
+  val files: List<ModuleSetPluginFileResult>,
+  val emptyDirectoryCandidates: Set<Path>,
+)
+
+internal fun generateModuleSetPlugins(
   projectRoot: Path,
+  strategy: FileUpdateStrategy,
   communityModuleSets: List<ModuleSet>,
-  ultimateModuleSets: List<ModuleSet> = emptyList(),
-) {
+  ultimateModuleSets: List<ModuleSet>,
+  generationMode: GenerationMode = GenerationMode.NORMAL,
+): ModuleSetPluginsOutput {
+  if (generationMode == GenerationMode.UPDATE_SUPPRESSIONS) {
+    return ModuleSetPluginsOutput(files = emptyList(), managedWrapperRoots = emptyMap(), legacyGeneratedRoots = emptySet())
+  }
+
   val communityGeneratedRoot = projectRoot.resolve(COMMUNITY_MODULE_SET_PLUGIN_GENERATED_ROOT)
   val ultimateGeneratedRoot = projectRoot.resolve(ULTIMATE_MODULE_SET_PLUGIN_GENERATED_ROOT)
   val communityWrappers = collectPluginWrappers(communityModuleSets, communityGeneratedRoot)
   val ultimateWrappers = collectPluginWrappers(ultimateModuleSets, ultimateGeneratedRoot)
 
   val duplicateWrapperModuleNames = communityWrappers.keys.intersect(ultimateWrappers.keys)
-  check(duplicateWrapperModuleNames.isEmpty()) {
-    "Module-set plugin wrappers must be unique across community and ultimate registries: ${duplicateWrapperModuleNames.sorted().joinToString()}"
+  for (moduleName in duplicateWrapperModuleNames) {
+    communityWrappers.remove(moduleName)
+    ultimateWrappers.remove(moduleName)
   }
 
-  val ultimateWrappersAddedToMainModule = ultimateWrappers.values
-    .filter { requireNotNull(it.moduleSet.pluginSpec).addToMainModule }
-    .map { it.moduleSet.name }
-    .sorted()
-  check(ultimateWrappersAddedToMainModule.isEmpty()) {
-    "Ultimate module-set plugin wrappers cannot use addToMainModule=true while intellij.moduleSet.plugin.main remains community-only: ${ultimateWrappersAddedToMainModule.joinToString()}"
+  val files = ArrayList<ModuleSetPluginFileResult>()
+  val emptyDirectoryCandidates = LinkedHashSet<Path>()
+
+  for (wrapper in (communityWrappers.values + ultimateWrappers.values).sortedBy { it.moduleName }) {
+    generateWrapperFiles(projectRoot, strategy, wrapper, files, emptyDirectoryCandidates)
   }
 
-  for (wrapper in communityWrappers.values + ultimateWrappers.values) {
-    syncWrapperFiles(wrapper)
-  }
-
-  val mainModule = syncMainModuleFile(generatedRoot = communityGeneratedRoot, wrappers = communityWrappers.values.toList())
+  val mainModule = generateMainModule(projectRoot, strategy, communityGeneratedRoot, communityWrappers.values.toList(), files)
   val requiredCommunityModuleNames = LinkedHashSet(communityWrappers.keys)
   if (mainModule != null) {
     requiredCommunityModuleNames.add(mainModule.moduleName)
   }
 
-  cleanupOrphanWrappers(communityGeneratedRoot, requiredCommunityModuleNames)
-  cleanupOrphanWrappers(ultimateGeneratedRoot, ultimateWrappers.keys)
-  cleanupLegacyGeneratedRoots(projectRoot)
-  syncModulesXml(
+  updateModulesXml(
     projectRoot = projectRoot,
+    strategy = strategy,
     rootModuleImlPaths = communityWrappers.values.map { it.imlPath } + ultimateWrappers.values.map { it.imlPath } + listOfNotNull(mainModule?.imlPath),
     communityModuleImlPaths = communityWrappers.values.map { it.imlPath } + listOfNotNull(mainModule?.imlPath),
+    files = files,
   )
+
+  return ModuleSetPluginsOutput(
+    files = files,
+    managedWrapperRoots = linkedMapOf(
+      communityGeneratedRoot to requiredCommunityModuleNames,
+      ultimateGeneratedRoot to ultimateWrappers.keys.toSet(),
+    ),
+    legacyGeneratedRoots = MODULE_SET_PLUGIN_LEGACY_GENERATED_ROOTS.mapTo(LinkedHashSet(), projectRoot::resolve),
+    emptyDirectoryCandidates = emptyDirectoryCandidates,
+  )
+}
+
+internal fun cleanupOrphanedModuleSetPluginFiles(
+  projectRoot: Path,
+  output: ModuleSetPluginsOutput,
+  strategy: FileUpdateStrategy,
+): ModuleSetPluginCleanupResult {
+  val files = ArrayList<ModuleSetPluginFileResult>()
+  val emptyDirectoryCandidates = LinkedHashSet<Path>()
+
+  for ((generatedRoot, requiredModuleNames) in output.managedWrapperRoots) {
+    if (!Files.exists(generatedRoot)) {
+      continue
+    }
+
+    Files.newDirectoryStream(generatedRoot).use { entries ->
+      for (entry in entries) {
+        if (entry.name in requiredModuleNames) {
+          continue
+        }
+        planRecursiveDelete(projectRoot, entry, strategy, files)
+        emptyDirectoryCandidates.add(entry)
+      }
+    }
+  }
+
+  for (legacyRoot in output.legacyGeneratedRoots.sortedByDescending { it.nameCount }) {
+    if (!Files.exists(legacyRoot)) {
+      continue
+    }
+    planRecursiveDelete(projectRoot, legacyRoot, strategy, files)
+    emptyDirectoryCandidates.add(legacyRoot)
+  }
+
+  return ModuleSetPluginCleanupResult(
+    files = files,
+    emptyDirectoryCandidates = emptyDirectoryCandidates + output.emptyDirectoryCandidates,
+  )
+}
+
+internal fun cleanupGeneratedArtifactDirectories(directories: Collection<Path>) {
+  for (directory in directories.distinct().sortedByDescending { it.nameCount }) {
+    if (!Files.exists(directory) || !Files.isDirectory(directory)) {
+      continue
+    }
+
+    val nestedDirectories = Files.walk(directory).use { stream ->
+      stream
+        .filter { Files.isDirectory(it) }
+        .sorted(Comparator.reverseOrder())
+        .toList()
+    }
+    for (candidate in nestedDirectories) {
+      if (!Files.exists(candidate) || !Files.isDirectory(candidate)) {
+        continue
+      }
+      Files.newDirectoryStream(candidate).use { entries ->
+        if (!entries.iterator().hasNext()) {
+          Files.deleteIfExists(candidate)
+        }
+      }
+    }
+  }
 }
 
 private fun collectPluginWrappers(moduleSets: List<ModuleSet>, generatedRoot: Path): LinkedHashMap<String, ModuleSetPluginWrapper> {
@@ -100,7 +217,6 @@ private data class ModuleSetPluginWrapper(
 
 private data class ModuleSetPluginMainModule(
   val moduleName: String,
-  val moduleDir: Path,
   val imlPath: Path,
 )
 
@@ -116,17 +232,26 @@ private data class ModuleEntry(
   val line: String,
 )
 
-private fun syncWrapperFiles(wrapper: ModuleSetPluginWrapper) {
-  wrapper.moduleDir.createDirectories()
-  wrapper.pluginXmlPath.parent.createDirectories()
-
-  writeIfChanged(wrapper.imlPath, renderWrapperIml())
-  writeIfChanged(wrapper.pluginXmlPath, renderPluginXml(wrapper.moduleSet, wrapper.contentModules))
-  writeIfChanged(wrapper.pluginContentYamlPath, renderPluginContentYaml(wrapper))
-  cleanupLegacyBundleArtifacts(wrapper)
+private fun generateWrapperFiles(
+  projectRoot: Path,
+  strategy: FileUpdateStrategy,
+  wrapper: ModuleSetPluginWrapper,
+  files: MutableList<ModuleSetPluginFileResult>,
+  emptyDirectoryCandidates: MutableSet<Path>,
+) {
+  recordFileResult(projectRoot, files, wrapper.imlPath, strategy.updateIfChanged(wrapper.imlPath, renderWrapperIml()))
+  recordFileResult(projectRoot, files, wrapper.pluginXmlPath, strategy.updateIfChanged(wrapper.pluginXmlPath, renderPluginXml(wrapper.moduleSet, wrapper.contentModules)))
+  recordFileResult(projectRoot, files, wrapper.pluginContentYamlPath, strategy.updateIfChanged(wrapper.pluginContentYamlPath, renderPluginContentYaml(wrapper)))
+  cleanupLegacyBundleArtifacts(projectRoot, strategy, wrapper, files, emptyDirectoryCandidates)
 }
 
-private fun syncMainModuleFile(generatedRoot: Path, wrappers: List<ModuleSetPluginWrapper>): ModuleSetPluginMainModule? {
+private fun generateMainModule(
+  projectRoot: Path,
+  strategy: FileUpdateStrategy,
+  generatedRoot: Path,
+  wrappers: List<ModuleSetPluginWrapper>,
+  files: MutableList<ModuleSetPluginFileResult>,
+): ModuleSetPluginMainModule? {
   val wrappersToAdd = wrappers.filter { wrapper ->
     requireNotNull(wrapper.moduleSet.pluginSpec).addToMainModule
   }
@@ -135,12 +260,7 @@ private fun syncMainModuleFile(generatedRoot: Path, wrappers: List<ModuleSetPlug
   }
 
   val moduleName = MODULE_SET_PLUGIN_MAIN_MODULE_NAME
-  val moduleDir = generatedRoot.resolve(moduleName)
-  val mainModule = ModuleSetPluginMainModule(
-    moduleName = moduleName,
-    moduleDir = moduleDir,
-    imlPath = moduleDir.resolve("$moduleName.iml"),
-  )
+  val imlPath = generatedRoot.resolve(moduleName).resolve("$moduleName.iml")
 
   val runtimeDependencies = LinkedHashSet<String>()
   for (wrapper in wrappersToAdd.sortedBy { it.moduleName }) {
@@ -150,9 +270,8 @@ private fun syncMainModuleFile(generatedRoot: Path, wrappers: List<ModuleSetPlug
     }
   }
 
-  mainModule.moduleDir.createDirectories()
-  writeIfChanged(mainModule.imlPath, renderMainModuleIml(runtimeDependencies.toList().sorted()))
-  return mainModule
+  recordFileResult(projectRoot, files, imlPath, strategy.updateIfChanged(imlPath, renderMainModuleIml(runtimeDependencies.toList().sorted())))
+  return ModuleSetPluginMainModule(moduleName = moduleName, imlPath = imlPath)
 }
 
 private fun collectPluginContentModules(moduleSet: ModuleSet): List<ContentModule> {
@@ -265,20 +384,20 @@ private fun moduleSetPluginJarFileName(moduleSetName: String): String {
   return "moduleSet-plugin-${moduleSetName.replace('.', '-')}" + ".jar"
 }
 
-private fun cleanupLegacyBundleArtifacts(wrapper: ModuleSetPluginWrapper) {
+private fun cleanupLegacyBundleArtifacts(
+  projectRoot: Path,
+  strategy: FileUpdateStrategy,
+  wrapper: ModuleSetPluginWrapper,
+  files: MutableList<ModuleSetPluginFileResult>,
+  emptyDirectoryCandidates: MutableSet<Path>,
+) {
   val legacyBundleFile = wrapper.moduleDir.resolve(MODULE_SET_PLUGIN_LEGACY_BUNDLE_PATH)
   if (Files.exists(legacyBundleFile)) {
-    Files.delete(legacyBundleFile)
+    strategy.delete(legacyBundleFile)
+    files.add(ModuleSetPluginFileResult(relativePath = relativePath(projectRoot, legacyBundleFile), status = FileChangeStatus.DELETED))
   }
 
-  val messagesDir = legacyBundleFile.parent
-  if (messagesDir != null && Files.isDirectory(messagesDir)) {
-    Files.newDirectoryStream(messagesDir).use { entries ->
-      if (!entries.iterator().hasNext()) {
-        Files.delete(messagesDir)
-      }
-    }
-  }
+  legacyBundleFile.parent?.let(emptyDirectoryCandidates::add)
 }
 
 private fun toDisplayName(moduleSetName: String): String {
@@ -315,27 +434,13 @@ private fun collectAliases(moduleSet: ModuleSet): List<PluginId> {
   return result.toList().sortedBy { it.value }
 }
 
-private fun cleanupOrphanWrappers(generatedRoot: Path, requiredModuleNames: Set<String>) {
-  if (!Files.exists(generatedRoot)) {
-    return
-  }
-
-  Files.newDirectoryStream(generatedRoot).use { entries ->
-    for (entry in entries) {
-      if (entry.name !in requiredModuleNames) {
-        deleteRecursively(entry)
-      }
-    }
-  }
-}
-
-private fun cleanupLegacyGeneratedRoots(projectRoot: Path) {
-  for (legacyRoot in MODULE_SET_PLUGIN_LEGACY_GENERATED_ROOTS) {
-    deleteRecursively(projectRoot.resolve(legacyRoot))
-  }
-}
-
-private fun syncModulesXml(projectRoot: Path, rootModuleImlPaths: List<Path>, communityModuleImlPaths: List<Path>) {
+private fun updateModulesXml(
+  projectRoot: Path,
+  strategy: FileUpdateStrategy,
+  rootModuleImlPaths: List<Path>,
+  communityModuleImlPaths: List<Path>,
+  files: MutableList<ModuleSetPluginFileResult>,
+) {
   val communityGeneratedRoot = projectRoot.resolve(COMMUNITY_MODULE_SET_PLUGIN_GENERATED_ROOT)
   val ultimateGeneratedRoot = projectRoot.resolve(ULTIMATE_MODULE_SET_PLUGIN_GENERATED_ROOT)
   val legacyGeneratedRoots = MODULE_SET_PLUGIN_LEGACY_GENERATED_ROOTS.map(projectRoot::resolve)
@@ -354,15 +459,21 @@ private fun syncModulesXml(projectRoot: Path, rootModuleImlPaths: List<Path>, co
     ),
   )
   for (target in targets) {
-    syncModulesXmlFile(target = target)
+    updateModulesXmlFile(projectRoot, target, strategy, files)
   }
 }
 
-private fun syncModulesXmlFile(target: ModulesXmlTarget) {
+private fun updateModulesXmlFile(
+  projectRoot: Path,
+  target: ModulesXmlTarget,
+  strategy: FileUpdateStrategy,
+  files: MutableList<ModuleSetPluginFileResult>,
+) {
   if (!Files.exists(target.modulesXmlPath) || !Files.isDirectory(target.modulesRoot)) {
     return
   }
 
+  val currentContent = Files.readString(target.modulesXmlPath)
   val lines = Files.readAllLines(target.modulesXmlPath)
   val modulesStart = lines.indexOfFirst { it.trim() == "<modules>" }
   if (modulesStart == -1) {
@@ -384,7 +495,6 @@ private fun syncModulesXmlFile(target: ModulesXmlTarget) {
     .mapNotNull(::parseModuleEntry)
 
   val generatedPrefixes = collectGeneratedPrefixes(target)
-
   val mergedEntries = LinkedHashMap<String, ModuleEntry>()
   for (entry in existingEntries) {
     if (generatedPrefixes.any { entry.filepath.startsWith(it) }) {
@@ -401,15 +511,14 @@ private fun syncModulesXmlFile(target: ModulesXmlTarget) {
     )
   }
 
-  val sortedEntries = mergedEntries.values.sortedWith(
-    compareBy({ moduleNameFromFilepath(it.filepath) }, { it.filepath }),
-  )
+  val sortedEntries = mergedEntries.values.sortedWith(compareBy({ moduleNameFromFilepath(it.filepath) }, { it.filepath }))
   val updatedLines = ArrayList<String>(lines.size - (modulesEnd - modulesStart - 1) + sortedEntries.size)
   updatedLines.addAll(lines.subList(0, modulesStart + 1))
   updatedLines.addAll(sortedEntries.map { it.line })
   updatedLines.addAll(lines.subList(modulesEnd, lines.size))
 
-  writeIfChanged(target.modulesXmlPath, updatedLines.joinToString(separator = "\n"))
+  val updatedContent = updatedLines.joinToString(separator = "\n")
+  recordFileResult(projectRoot, files, target.modulesXmlPath, strategy.writeIfChanged(target.modulesXmlPath, currentContent, updatedContent))
 }
 
 private fun collectGeneratedPrefixes(target: ModulesXmlTarget): List<String> {
@@ -433,20 +542,43 @@ private fun moduleNameFromFilepath(filepath: String): String {
   return filepath.substringAfterLast('/').removeSuffix(".iml")
 }
 
-private fun deleteRecursively(path: Path) {
+private fun planRecursiveDelete(
+  projectRoot: Path,
+  path: Path,
+  strategy: FileUpdateStrategy,
+  files: MutableList<ModuleSetPluginFileResult>,
+) {
   if (!Files.exists(path)) {
     return
   }
+
+  if (Files.isRegularFile(path)) {
+    strategy.delete(path)
+    files.add(ModuleSetPluginFileResult(relativePath = relativePath(projectRoot, path), status = FileChangeStatus.DELETED))
+    return
+  }
+
   Files.walk(path).use { stream ->
-    stream.sorted(Comparator.reverseOrder()).forEach(Files::deleteIfExists)
+    val filePaths = stream
+      .filter { Files.isRegularFile(it) }
+      .sorted(Comparator.comparing { it.invariantSeparatorsPathString })
+      .toList()
+    for (filePath in filePaths) {
+      strategy.delete(filePath)
+      files.add(ModuleSetPluginFileResult(relativePath = relativePath(projectRoot, filePath), status = FileChangeStatus.DELETED))
+    }
   }
 }
 
-private fun writeIfChanged(path: Path, newContent: String) {
-  val existing = if (Files.exists(path)) path.readText() else null
-  if (existing == newContent) {
-    return
-  }
-  path.parent?.createDirectories()
-  path.writeText(newContent)
+private fun recordFileResult(
+  projectRoot: Path,
+  files: MutableList<ModuleSetPluginFileResult>,
+  path: Path,
+  status: FileChangeStatus,
+) {
+  files.add(ModuleSetPluginFileResult(relativePath = relativePath(projectRoot, path), status = status))
+}
+
+private fun relativePath(projectRoot: Path, path: Path): String {
+  return projectRoot.relativize(path).invariantSeparatorsPathString
 }

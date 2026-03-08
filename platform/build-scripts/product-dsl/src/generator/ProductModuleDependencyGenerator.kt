@@ -57,7 +57,7 @@ internal object ProductModuleDependencyGenerator : PipelineNode {
 
       val cache = model.descriptorCache
       val graph = model.pluginGraph
-      val strategy = model.xmlWritePolicy
+      val strategy = model.generatedArtifactWritePolicy
       val suppressionConfig = model.suppressionConfig
       val updateSuppressions = model.updateSuppressions
 

@@ -17,7 +17,7 @@ enum class ErrorCategory {
   MISSING_MODULE_SETS,
   /** [SelfContainedValidationError] - hard failure, not suppressible */
   SELF_CONTAINED_VIOLATION,
-  /** [ModuleSetPluginizationError] - hard failure, not suppressible */
+  /** [ModuleSetPluginizationError] and related wrapper placement errors - hard failure, not suppressible */
   MODULE_SET_PLUGINIZATION,
 
   // Plugin validation
@@ -107,6 +107,8 @@ fun ValidationError.errorId(): String {
     is DuplicateModulesError -> "duplicates:$context"
     is SelfContainedValidationError -> "self-contained:$context"
     is ModuleSetPluginizationError -> "module-set-pluginization:$context"
+    is DuplicateModuleSetPluginWrapperError -> "module-set-plugin-wrapper-duplicate:$context"
+    is UltimateModuleSetMainModuleError -> "module-set-plugin-main-module:$context"
     is MissingContentModulePluginDependencyError -> "missing-plugin-dep:$context"
     is DuplicatePluginContentModulesError -> "plugin-content-dup:$context"
     is PluginDescriptorIdConflictError -> "plugin-descriptor-id-conflict:$context"

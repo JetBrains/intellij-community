@@ -37,7 +37,7 @@ internal object ContentModuleXmlWriter : PipelineNode {
     }
 
     val results = plans.map { plan ->
-      writeContentModuleXml(plan, model.xmlWritePolicy, model.pluginGraph)
+      writeContentModuleXml(plan, model.generatedArtifactWritePolicy, model.pluginGraph)
     }
 
     ctx.publish(Slots.CONTENT_MODULE, ContentModuleOutput(files = results))

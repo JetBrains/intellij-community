@@ -6,6 +6,7 @@ import org.jetbrains.intellij.build.productLayout.deps.PluginDependencyPlanOutpu
 import org.jetbrains.intellij.build.productLayout.model.error.FileDiff
 import org.jetbrains.intellij.build.productLayout.stats.DependencyFileResult
 import org.jetbrains.intellij.build.productLayout.stats.ModuleSetFileResult
+import org.jetbrains.intellij.build.productLayout.stats.ModuleSetPluginFileResult
 import org.jetbrains.intellij.build.productLayout.stats.PluginDependencyFileResult
 import org.jetbrains.intellij.build.productLayout.stats.PluginXmlFileResult
 import org.jetbrains.intellij.build.productLayout.stats.ProductFileResult
@@ -41,6 +42,21 @@ internal data class ModuleSetsOutput(
   val files: List<ModuleSetFileResult>
     get() = resultsByLabel.flatMap { it.files }
 }
+
+/**
+ * Output from module-set plugin wrapper generation.
+ */
+internal data class ModuleSetPluginsOutput(
+  /** Generated and updated wrapper artifacts */
+  @JvmField val files: List<ModuleSetPluginFileResult>,
+  /** Generated roots with the set of live top-level wrapper directories */
+  @JvmField val managedWrapperRoots: Map<Path, Set<String>>,
+  /** Legacy roots that should be removed after the new generated layout is written */
+  @JvmField val legacyGeneratedRoots: Set<Path>,
+  /** Directories that should be deleted when they become empty after file deletes commit */
+  @JvmField val emptyDirectoryCandidates: Set<Path> = emptySet(),
+  @JvmField val diffs: List<FileDiff> = emptyList(),
+)
 
 /**
  * Output from product module dependency generation.
@@ -125,6 +141,9 @@ internal object Slots {
 
   /** Module set XML file generation results */
   @JvmField val MODULE_SETS = DataSlot<ModuleSetsOutput>("moduleSets")
+
+  /** Module-set plugin wrapper generation results */
+  @JvmField val MODULE_SET_PLUGINS = DataSlot<ModuleSetPluginsOutput>("moduleSetPlugins")
 
   /** Product module dependency generation results (modules in module sets) */
   @JvmField val PRODUCT_MODULE_DEPS = DataSlot<ProductModuleDepsOutput>("productModuleDeps")

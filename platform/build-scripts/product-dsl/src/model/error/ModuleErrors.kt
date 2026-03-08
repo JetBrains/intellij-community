@@ -67,6 +67,42 @@ data class ModuleSetPluginizationError(
   }
 }
 
+data class DuplicateModuleSetPluginWrapperError(
+  override val context: String,
+  override val ruleName: String = "ModuleSetPluginizationValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.MODULE_SET_PLUGINIZATION
+
+  override fun format(s: AnsiStyle): String = buildString {
+    appendLine("${s.red}${s.bold}Module-set plugin wrapper '$context' is defined in multiple registries${s.reset}")
+    appendLine()
+    appendLine("  ${s.red}*${s.reset} Community and ultimate module sets resolve to the same wrapper module name")
+    appendLine()
+    appendLine("${s.yellow}Fix:${s.reset} keep pluginized module set names unique across community and ultimate registries")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+}
+
+data class UltimateModuleSetMainModuleError(
+  override val context: String,
+  override val ruleName: String = "ModuleSetPluginizationValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.MODULE_SET_PLUGINIZATION
+
+  override fun format(s: AnsiStyle): String = buildString {
+    appendLine("${s.red}${s.bold}Ultimate module set '$context' cannot be added to intellij.moduleSet.plugin.main${s.reset}")
+    appendLine()
+    appendLine("  ${s.red}*${s.reset} addToMainModule=true is only supported for community wrappers while intellij.moduleSet.plugin.main remains community-only")
+    appendLine()
+    appendLine("${s.yellow}Fix:${s.reset} set addToMainModule=false for ultimate pluginized module sets")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+}
+
 data class MissingModuleSetsError(
   override val context: String,
   @JvmField val missingModuleSets: Set<String>,

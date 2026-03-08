@@ -399,11 +399,13 @@ fun plugin(
   name: String,
   pluginId: String? = null,
   outputModule: String? = null,
+  addToMainModule: Boolean = true,
   block: ModuleSetBuilder.() -> Unit
 ): ModuleSet
 ```
 
 Creates a module set and marks it to be materialized as a standalone bundled plugin wrapper.
+The Product DSL pipeline generates the wrapper module files, `plugin-content.yaml`, and `modules.xml` entries during generation.
 
 **Example:**
 ```kotlin

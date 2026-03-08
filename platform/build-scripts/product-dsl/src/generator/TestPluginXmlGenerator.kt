@@ -48,7 +48,7 @@ internal object TestPluginXmlGenerator : PipelineNode {
         moduleDependencies = plan.moduleDependencies,
         pluginDependencies = plan.pluginDependencies,
         moduleDependencyChains = moduleDependencyChains,
-        strategy = model.xmlWritePolicy,
+        strategy = model.generatedArtifactWritePolicy,
       )
     }
     ctx.publish(Slots.TEST_PLUGINS, TestPluginsOutput(files = results))

@@ -5,7 +5,11 @@ package org.jetbrains.intellij.build.productLayout.validator
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import org.jetbrains.intellij.build.productLayout.ModuleSet
+import org.jetbrains.intellij.build.productLayout.collectPluginizedModuleSets
 import org.jetbrains.intellij.build.productLayout.model.error.ModuleSetPluginizationError
+import org.jetbrains.intellij.build.productLayout.model.error.DuplicateModuleSetPluginWrapperError
+import org.jetbrains.intellij.build.productLayout.model.error.UltimateModuleSetMainModuleError
+import org.jetbrains.intellij.build.productLayout.moduleSetPluginModuleName
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
 import org.jetbrains.intellij.build.productLayout.pipeline.NodeIds
 import org.jetbrains.intellij.build.productLayout.pipeline.PipelineNode
@@ -40,6 +44,21 @@ internal object ModuleSetPluginizationValidator : PipelineNode {
           nestedPluginizedSets = nestedPluginizedSets,
         )
       )
+    }
+
+    val communityWrapperModuleNames = collectPluginizedModuleSets(ctx.model.discovery.communityModuleSets)
+      .mapTo(LinkedHashSet()) { moduleSetPluginModuleName(it.name).value }
+    val duplicateWrapperModuleNames = collectPluginizedModuleSets(ctx.model.discovery.ultimateModuleSets)
+      .map { moduleSetPluginModuleName(it.name).value }
+      .filterTo(LinkedHashSet()) { it in communityWrapperModuleNames }
+    for (moduleName in duplicateWrapperModuleNames.sorted()) {
+      ctx.emitError(DuplicateModuleSetPluginWrapperError(context = moduleName))
+    }
+
+    for (moduleSet in collectPluginizedModuleSets(ctx.model.discovery.ultimateModuleSets)) {
+      if (requireNotNull(moduleSet.pluginSpec).addToMainModule) {
+        ctx.emitError(UltimateModuleSetMainModuleError(context = moduleSet.name))
+      }
     }
   }
 }
@@ -86,4 +105,3 @@ private fun collectNestedPluginizedSets(root: ModuleSet): Set<String> {
   visit(root, isRoot = true)
   return pluginizedSets
 }
-

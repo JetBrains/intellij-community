@@ -38,7 +38,7 @@ import org.jetbrains.intellij.build.productLayout.pipeline.TestPluginDependencyP
 import org.jetbrains.intellij.build.productLayout.pipeline.TestPluginsOutput
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
-import org.jetbrains.intellij.build.productLayout.util.XmlWritePolicy
+import org.jetbrains.intellij.build.productLayout.util.GeneratedArtifactWritePolicy
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -796,7 +796,7 @@ internal fun testGenerationModel(
     descriptorCache = ModuleDescriptorCache(effectiveOutputProvider, GlobalScope),
     pluginContentCache = effectivePluginContentCache,
     fileUpdater = effectiveFileUpdater,
-    xmlWritePolicy = XmlWritePolicy(generationMode, effectiveFileUpdater),
+    generatedArtifactWritePolicy = GeneratedArtifactWritePolicy(generationMode, effectiveFileUpdater),
     scope = GlobalScope,
     pluginGraph = pluginGraph,
     dslTestPluginsByProduct = emptyMap(),

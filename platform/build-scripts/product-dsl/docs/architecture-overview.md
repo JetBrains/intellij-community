@@ -77,6 +77,7 @@ The generation uses a **5-stage pipeline architecture** with pluggable generator
 │  STAGE 3: GENERATE (Parallel ComputeNodes)                       │
 │     Nodes execute in topological order based on slot deps:      │
 │     ├─ ModuleSetXmlNode             - Module set XML files      │
+│     ├─ ModuleSetPluginNode          - Wrapper plugin artifacts  │
 │     ├─ ProductModuleDependencyNode  - Module descriptors        │
 │     ├─ ContentModuleDependencyNode  - moduleName.xml deps       │
 │     ├─ TestDescriptorNode           - moduleName._test.xml      │
@@ -91,11 +92,13 @@ The generation uses a **5-stage pipeline architecture** with pluggable generator
 │     ├─ Collect errors from all generators                       │
 │     ├─ Collect diffs from file updater                          │
 │     └─ Merge tracking maps for orphan cleanup                   │
-│     → AggregatedResult { errors, diffs, trackingMaps }          │
+│     → AggregatedResult { errors, diffs, trackingMaps, wrappers }│
 │                                                                  │
 │  STAGE 5: OUTPUT                                                 │
 │     ├─ Cleanup orphaned module set files                        │
+│     ├─ Cleanup orphaned module-set plugin artifacts             │
 │     ├─ Commit deferred writes (if commitChanges=true)           │
+│     ├─ Remove empty generated directories after commit          │
 │     └─ Build GenerationStats from generator results             │
 │     → GenerationResult { errors, diffs, stats }                 │
 │                                                                  │
@@ -109,6 +112,7 @@ The generation uses a **5-stage pipeline architecture** with pluggable generator
 | Output Type | Location | Purpose |
 |-------------|----------|---------|
 | Module Set XML | `*/generated/META-INF/intellij.moduleSets.*.xml` | Module set definitions for xi:include |
+| Module-Set Plugin Wrappers | `community/module-set-plugins/generated/` and `module-set-plugins/generated/` | Generated wrapper `.iml`, `plugin.xml`, `plugin-content.yaml`, and `modules.xml` entries |
 | Module Descriptor XML | `<module>/resources/META-INF/<module>.xml` | Module dependencies |
 | Test Plugin XML | `<module>/testResources/META-INF/plugin.xml` | Test plugin definitions |
 
@@ -225,6 +229,7 @@ community/platform/build-scripts/product-dsl/
 │   │   │   └── ModelBuildingStage.kt
 │   │   └── generators/               # ComputeNode implementations
 │   │       ├── ModuleSetXmlGenerator.kt         # ModuleSetXmlNode
+│   │       ├── ModuleSetPluginGenerator.kt      # ModuleSetPluginNode
 │   │       ├── ProductModuleDependencyGenerator.kt  # ProductModuleDependencyNode
 │   │       ├── ContentModuleDependencyGenerator.kt  # ContentModuleDependencyPlanNode
 │   │       ├── ContentModuleXmlWriter.kt        # ContentModuleXmlWriteNode

@@ -21,7 +21,7 @@ GenerationPipeline.execute(config)
   ├─ STAGE 2: BUILD_MODEL   → Caches + shared values  
   ├─ STAGE 3: GENERATE      → Parallel ComputeNodes (slot-based dependencies)
   ├─ STAGE 4: AGGREGATE     → Collect errors, diffs, tracking maps
-  └─ STAGE 5: OUTPUT        → Cleanup orphans, commit, build stats
+  └─ STAGE 5: OUTPUT        → Cleanup orphan files/dirs, commit, build stats
 ```
 
 For detailed architecture, file organization, and component documentation, see [architecture-overview.md](docs/architecture-overview.md)

@@ -38,6 +38,9 @@ internal object NodeIds {
   /** Module set XML file generation */
   @JvmField val MODULE_SET_XML = NodeId("moduleSetXml", NodeCategory.GENERATION)
 
+  /** Module-set plugin wrapper generation */
+  @JvmField val MODULE_SET_PLUGINS = NodeId("moduleSetPlugins", NodeCategory.GENERATION)
+
   /** Product module dependency generation (modules in module sets) */
   @JvmField val PRODUCT_MODULE_DEPS = NodeId("productModuleDeps", NodeCategory.GENERATION)
 

@@ -54,7 +54,7 @@ import org.jetbrains.intellij.build.productLayout.traversal.collectPluginContent
 import org.jetbrains.intellij.build.productLayout.traversal.collectProductModuleNames
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
-import org.jetbrains.intellij.build.productLayout.util.XmlWritePolicy
+import org.jetbrains.intellij.build.productLayout.util.GeneratedArtifactWritePolicy
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
@@ -127,7 +127,7 @@ internal object ModelBuildingStage {
       !commitChanges -> GenerationMode.VALIDATE_ONLY
       else -> GenerationMode.NORMAL
     }
-    val xmlWritePolicy = XmlWritePolicy(generationMode, fileUpdater)
+    val generatedArtifactWritePolicy = GeneratedArtifactWritePolicy(generationMode, fileUpdater)
 
     // Create xi:include cache (shared across plugin content extraction)
     val xIncludeCache = AsyncCache<String, ByteArray?>(scope)
@@ -266,7 +266,7 @@ internal object ModelBuildingStage {
       descriptorCache = descriptorCache,
       pluginContentCache = pluginContentCache,
       fileUpdater = fileUpdater,
-      xmlWritePolicy = xmlWritePolicy,
+      generatedArtifactWritePolicy = generatedArtifactWritePolicy,
       scope = scope,
       pluginGraph = pluginGraph,
       dslTestPluginsByProduct = dslTestPluginExpansion.pluginsByProduct,

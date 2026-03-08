@@ -42,7 +42,7 @@ internal object ModuleSetXmlGenerator : PipelineNode {
             outputDir = outputDir,
             label = label,
             outputProvider = model.outputProvider,
-            strategy = model.xmlWritePolicy,
+            strategy = model.generatedArtifactWritePolicy,
           )
         }
       }.awaitAll()
