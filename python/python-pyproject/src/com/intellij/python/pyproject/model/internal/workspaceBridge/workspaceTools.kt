@@ -1,7 +1,6 @@
 package com.intellij.python.pyproject.model.internal.workspaceBridge
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.workspace.workspaceModel
@@ -368,8 +367,7 @@ private class ModuleAnchor(moduleEntity: ModuleEntity) {
 
 // Warning: this entity must be unique for each model, it can't be reused
 internal fun createEntitySource(project: Project): EntitySource {
-  val moduleRoot =
-    project.stateStore.projectBasePath.resolve(DIRECTORY_STORE_FOLDER).toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())
+  val moduleRoot = project.stateStore.directoryStorePath!!.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())
   val externalSource = ExternalProjectSystemRegistry.getInstance()
     .getSourceById(PY_PROJECT_SYSTEM_ID.id)
   return LegacyBridgeJpsEntitySourceFactory.getInstance(project)
