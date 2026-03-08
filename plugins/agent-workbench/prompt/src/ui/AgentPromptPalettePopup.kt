@@ -85,6 +85,7 @@ internal class AgentPromptPalettePopup(
   private var contextEntries: List<ContextEntry> = emptyList()
   private var initialContextFingerprint: HashValue128? = null
   private val removedLogicalItemIds = LinkedHashSet<String>()
+  private var selectedLaunchMode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD
   private var selectedWorkingProjectPath: String? = null
   private var existingTaskSearchQuery: String = ""
   private var activeExtensionTabs: List<ExtensionTabEntry> = emptyList()
@@ -508,7 +509,7 @@ internal class AgentPromptPalettePopup(
     val request = AgentPromptLaunchRequest(
       provider = providerEntry.bridge.provider,
       projectPath = effectiveProjectPath,
-      launchMode = AgentSessionLaunchMode.STANDARD,
+      launchMode = selectedLaunchMode,
       initialMessageRequest = AgentPromptInitialMessageRequest(
         prompt = prompt,
         projectPath = effectiveProjectPath,
