@@ -53,6 +53,7 @@ jvm_library(
     "//libraries/hash4j",
     "//python/python-sdk:sdk",
     "//platform/statistics",
+    "//libraries/hdr-histogram",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
   exports = ["//python/python-syntax-core:syntax-core"]
@@ -107,6 +108,7 @@ jvm_library(
     "//libraries/hash4j:hash4j_test_lib",
     "//python/python-sdk:sdk_test_lib",
     "//platform/statistics:statistics_test_lib",
+    "//libraries/hdr-histogram:hdr-histogram_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )

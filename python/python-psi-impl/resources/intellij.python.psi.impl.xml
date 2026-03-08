@@ -193,7 +193,7 @@
 
     <daemon.changeLocalityDetector implementation="com.jetbrains.python.inspections.PyChangeLocalityDetector"/>
 
-    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.psi.types.PyTypeEvaluationCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.jetbrains.python.psi.types.PyTypeEvaluationAggregatesCollector"/>
 
     <localInspection language="Python" shortName="PyUnusedLocalInspection" suppressId="PyUnusedLocal" bundle="messages.PyPsiBundle" key="INSP.NAME.unused" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection"/>
     <localInspection language="Python" shortName="PyRedundantParenthesesInspection" suppressId="PyRedundantParentheses" bundle="messages.PyPsiBundle" key="INSP.NAME.redundant.parentheses" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyRedundantParenthesesInspection"/>

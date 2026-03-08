@@ -191,14 +191,14 @@ open class TypeEvalContextImpl internal constructor(
         val (result, duration) = measureTimedValue {
           typeEngine.resolveType(element, this is LibraryTypeEvalContext)?.get()
         }
-        PyTypeEvaluationCollector.logHybridTypeEngineTime(duration)
+        PyTypeEvaluationAggregatesCollector.recordHybridTypeEngineTime(typeEngine.name, duration.inWholeMilliseconds)
         result
       }
       else {
         val (result, duration) = measureTimedValue {
           element.getType(this, KeyImpl)
         }
-        PyTypeEvaluationCollector.logJBTypeEngineTime(duration)
+        PyTypeEvaluationAggregatesCollector.recordPyCharmTypeEngineTime(duration.inWholeMilliseconds)
         result
       }
 
