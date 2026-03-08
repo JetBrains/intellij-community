@@ -18,6 +18,7 @@ public final class VirtualThreadDumper {
   private final MethodHandle containerChildrenHandle;
   private final MethodHandle containerThreadsHandle;
   private final MethodHandle containerNameHandle;
+  private final MethodHandle containerOwnerHandle;
 
   private final MethodHandle threadIsVirtualHandle;
   private final MethodHandle threadThreadState;
@@ -26,6 +27,7 @@ public final class VirtualThreadDumper {
   private final HashMap<String, ArrayList<Thread>> threadsGroupedByStackTrace = new HashMap<>();
 
   private final ArrayList<String> containerNames = new ArrayList<>();
+  private final ArrayList<Object> containerOwners = new ArrayList<>();
   private final ArrayList<Object> containerReferences = new ArrayList<>();
   private final ArrayList<Integer> containerParentOrdinals = new ArrayList<>();
 
@@ -37,6 +39,7 @@ public final class VirtualThreadDumper {
     containerChildrenHandle = lookup.findVirtual(threadContainerClass, "children", MethodType.methodType(Stream.class));
     containerThreadsHandle = lookup.findVirtual(threadContainerClass, "threads", MethodType.methodType(Stream.class));
     containerNameHandle = lookup.findVirtual(threadContainerClass, "name", MethodType.methodType(String.class));
+    containerOwnerHandle = lookup.findVirtual(threadContainerClass, "owner", MethodType.methodType(Thread.class));
 
     // VirtualThread & Co., since Java 21
     threadIsVirtualHandle = lookup.findVirtual(Thread.class, "isVirtual", MethodType.methodType(boolean.class));
@@ -61,6 +64,8 @@ public final class VirtualThreadDumper {
    *   <li> {@code long[]} - thread IDs of threads from the first array in the corresponding order.</li>
    *   <li> {@code String[]} - names of all {@code jdk.internal.vm.ThreadContainer}s, they are referenced from the first array by ordinals.</li>
    *   <li> {@code Object[]} - {@code jdk.internal.vm.ThreadContainer} objects in the same order as their names in the array above.</li>
+   *   <li> {@code Object[]} - scope owners (see {@code jdk.internal.vm.StackableScope#owner}) of thread containers
+   *     as {@link com.sun.jdi.ThreadReference ThreadReferences}, in the same order as thread containers in the array above.</li>
    *   <li> {@code int[]} - ordinals of the parent container for every thread container or -1 if there is no parent.</li>
    * </ol>
    */
@@ -96,6 +101,7 @@ public final class VirtualThreadDumper {
       threadIds,
       containerNames.toArray(),
       containerReferences.toArray(),
+      containerOwners.toArray(),
       containerParentOrdinals.stream().mapToInt(Integer::intValue).toArray()
     };
   }
@@ -145,6 +151,7 @@ public final class VirtualThreadDumper {
     assert containerNames.size() == containerParentOrdinals.size();
     int ordinal = containerNames.size();
     containerNames.add((String)containerNameHandle.invoke(container));
+    containerOwners.add(containerOwnerHandle.invoke(container));
     containerReferences.add(container);
     containerParentOrdinals.add(parentContainerOrdinal);
     return ordinal;

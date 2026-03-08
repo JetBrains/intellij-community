@@ -148,13 +148,20 @@ fun toDumpItems(threadStates: List<ThreadState>, threadContainerDescriptors: Lis
   }
 
   val threadContainerDumpItems = threadContainerDescriptors.map {
-    JavaVirtualThreadContainerItem(it.name, it.containerId, it.parentContainerId)
+    JavaThreadContainerItem(it.name, it.containerId, it.parentId)
   }
   return threadDumpItems + threadContainerDumpItems
 }
 
+/**
+ * Descriptor of a Java thread container.
+ *
+ * @param name display name of the container
+ * @param containerId unique identifier of the container
+ * @param parentId unique identifier of the owning thread or parent container, or `null` if it's parent is the top-level root container
+ */
 @ApiStatus.Internal
-data class JavaThreadContainerDesc(val name: String, val containerId: Long, val parentContainerId: Long?)
+data class JavaThreadContainerDesc(val name: String, val containerId: Long, val parentId: Long?)
 
 private class JavaThreadDumpItem(private val threadState: ThreadState) : MergeableDumpItem {
   override val name: String = threadState.name
@@ -297,7 +304,7 @@ private class JavaThreadDumpItem(private val threadState: ThreadState) : Mergeab
   }
 }
 
-private class JavaVirtualThreadContainerItem(private val containerName: String, override val treeId: Long, override val parentTreeId: Long?) : MergeableDumpItem {
+private class JavaThreadContainerItem(private val containerName: String, override val treeId: Long, override val parentTreeId: Long?) : MergeableDumpItem {
   override val name: @NlsSafe String
     get() = formatThreadContainerName(containerName)
 
@@ -331,11 +338,11 @@ private class JavaVirtualThreadContainerItem(private val containerName: String, 
   companion object {
     // see jdk.internal.vm.ThreadContainers.RootContainer.name
     const val ROOT = "<root>"
-    const val VIRTUAL_THREADS_ROOT_CONTAINER = "Root Container of Virtual Threads"
+    const val THREADS_ROOT_CONTAINER = "Root Container"
     const val JUC_PACKAGE = "java.util.concurrent"
 
     fun formatThreadContainerName(name: String) = when {
-      name == ROOT -> VIRTUAL_THREADS_ROOT_CONTAINER
+      name == ROOT -> THREADS_ROOT_CONTAINER
       name.startsWith(JUC_PACKAGE) -> name.removePrefix(JUC_PACKAGE)
       else -> name
     }
