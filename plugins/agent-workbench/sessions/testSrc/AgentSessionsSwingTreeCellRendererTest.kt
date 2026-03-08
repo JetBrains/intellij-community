@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.withAgentThreadActivityBadge
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
@@ -499,7 +500,7 @@ class AgentSessionsSwingTreeCellRendererTest {
   }
 
   @Test
-  fun threadRowsBadgeProviderIconOnlyForUnreadActivity() {
+  fun threadRowsBadgeProviderIconForAllActivities() {
     val now = 14L * 24L * 60L * 60L * 1000L
     val tree = createTree(width = 420)
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
@@ -541,6 +542,7 @@ class AgentSessionsSwingTreeCellRendererTest {
     val readyIcon = renderer.icon
     assertThat(readyIcon).isNotNull()
     readyIcon ?: return
+    assertThat(readyIcon).isNotEqualTo(providerBaseIcon)
 
     renderer.getTreeCellRendererComponent(
       tree,
@@ -551,7 +553,7 @@ class AgentSessionsSwingTreeCellRendererTest {
       0,
       false,
     )
-    assertThat(renderer.icon).isSameAs(readyIcon)
+    assertThat(renderer.icon).isNotSameAs(readyIcon)
 
     renderer.getTreeCellRendererComponent(
       tree,
@@ -562,7 +564,7 @@ class AgentSessionsSwingTreeCellRendererTest {
       0,
       false,
     )
-    assertThat(renderer.icon).isSameAs(readyIcon)
+    assertThat(renderer.icon).isNotSameAs(readyIcon)
 
     renderer.getTreeCellRendererComponent(
       tree,
@@ -578,7 +580,7 @@ class AgentSessionsSwingTreeCellRendererTest {
   }
 
   @Test
-  fun threadRowsUseUnbadgedFallbackWhenProviderIconIsMissing() {
+  fun threadRowsBadgeFallbackWhenProviderIconIsMissing() {
     val now = 14L * 24L * 60L * 60L * 1000L
     val tree = createTree(width = 420)
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
@@ -605,7 +607,10 @@ class AgentSessionsSwingTreeCellRendererTest {
     assertThat(renderedIcon).isNotNull()
     renderedIcon ?: return
 
-    val expectedFallback = IconUtil.toSize(AllIcons.Toolwindows.ToolWindowMessages, JBUI.scale(12), JBUI.scale(12))
+    val expectedFallback = withAgentThreadActivityBadge(
+      IconUtil.toSize(AllIcons.Toolwindows.ToolWindowMessages, JBUI.scale(12), JBUI.scale(12)),
+      AgentThreadActivity.READY,
+    )
     assertThat(renderedIcon.javaClass).isEqualTo(expectedFallback.javaClass)
     assertThat(renderer.getCharSequence(true).toString()).doesNotContain("\u25CF")
   }

@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
+import com.intellij.agent.workbench.common.withAgentThreadActivityBadge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.icons.AllIcons
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -384,20 +385,26 @@ class AgentChatFileEditorProviderTest {
   @Test
   fun usesFallbackIconForUnknownProviderIdentity() {
     val icon = providerIcon(threadIdentity = "unknown:thread-1", threadActivity = AgentThreadActivity.READY)
+    val expected = withAgentThreadActivityBadge(AllIcons.Toolwindows.ToolWindowMessages, AgentThreadActivity.READY)
 
-    assertThat(icon).isEqualTo(AllIcons.Toolwindows.ToolWindowMessages)
+    assertThat(icon).isNotEqualTo(AllIcons.Toolwindows.ToolWindowMessages)
+    assertThat(icon.javaClass).isEqualTo(expected.javaClass)
+    assertThat(icon.iconWidth).isEqualTo(expected.iconWidth)
+    assertThat(icon.iconHeight).isEqualTo(expected.iconHeight)
   }
 
   @Test
-  fun usesBadgedProviderIconOnlyForUnreadActivity() {
+  fun usesBadgedProviderIconForAllActivities() {
     val readyIcon = providerIcon(threadIdentity = "codex:thread-1", threadActivity = AgentThreadActivity.READY)
     val processingIcon = providerIcon(threadIdentity = "codex:thread-1", threadActivity = AgentThreadActivity.PROCESSING)
     val reviewingIcon = providerIcon(threadIdentity = "codex:thread-1", threadActivity = AgentThreadActivity.REVIEWING)
     val unreadIcon = providerIcon(threadIdentity = "codex:thread-1", threadActivity = AgentThreadActivity.UNREAD)
 
-    assertThat(readyIcon).isEqualTo(AgentWorkbenchCommonIcons.Codex_14x14)
-    assertThat(processingIcon).isEqualTo(readyIcon)
-    assertThat(reviewingIcon).isEqualTo(readyIcon)
+    assertThat(readyIcon).isNotEqualTo(AgentWorkbenchCommonIcons.Codex_14x14)
+    assertThat(processingIcon).isNotEqualTo(readyIcon)
+    assertThat(reviewingIcon).isNotEqualTo(readyIcon)
     assertThat(unreadIcon).isNotEqualTo(readyIcon)
+    assertThat(unreadIcon).isNotEqualTo(processingIcon)
+    assertThat(unreadIcon).isNotEqualTo(reviewingIcon)
   }
 }

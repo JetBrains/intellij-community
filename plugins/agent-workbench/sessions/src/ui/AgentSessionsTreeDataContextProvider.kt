@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.common.parseAgentWorkbenchPathOrNull
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsTreePopupDataKeys
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
+import com.intellij.agent.workbench.sessions.model.archiveThreadTargetKey
 import com.intellij.agent.workbench.sessions.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.tree.SessionTreeNode
 import com.intellij.agent.workbench.sessions.tree.archiveTargetFromThreadNode
@@ -55,8 +56,7 @@ internal class AgentSessionsTreeDataContextProvider(
     selectedTreeIds().forEach { id ->
       val threadNode = nodeResolver(id) as? SessionTreeNode.Thread ?: return@forEach
       val target = archiveTargetFromThreadNode(id, threadNode)
-      val key = "${target.path}:${target.provider}:${target.threadId}"
-      targetsByKey.putIfAbsent(key, target)
+      targetsByKey.putIfAbsent(archiveThreadTargetKey(target), target)
     }
     return targetsByKey.values.toList()
   }

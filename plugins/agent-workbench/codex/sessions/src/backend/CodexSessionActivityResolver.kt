@@ -65,9 +65,10 @@ internal fun CodexAppServerStartedThread.toCodexSessionActivity(): CodexSessionA
 
 internal fun resolveCodexSessionActivity(signals: CodexActivitySignals): CodexSessionActivity {
   return when {
-    signals.hasUnreadAssistantMessage || signals.activeFlags.isResponseRequired() -> CodexSessionActivity.UNREAD
+    signals.activeFlags.isResponseRequired() -> CodexSessionActivity.UNREAD
     signals.isReviewing -> CodexSessionActivity.REVIEWING
     signals.hasInProgressTurn || signals.statusKind == CodexThreadStatusKind.ACTIVE -> CodexSessionActivity.PROCESSING
+    signals.hasUnreadAssistantMessage -> CodexSessionActivity.UNREAD
     else -> CodexSessionActivity.READY
   }
 }

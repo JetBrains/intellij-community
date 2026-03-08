@@ -8,7 +8,9 @@ import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 internal data class AgentSessionsEditorTabThreadCoordinates(
   val path: String,
   val provider: AgentSessionProvider,
+  val parentThreadId: String,
   val threadId: String,
+  val subAgentId: String?,
 )
 
 internal fun resolveAgentSessionsEditorTabThreadCoordinates(
@@ -20,6 +22,7 @@ internal fun resolveAgentSessionsEditorTabThreadCoordinates(
 
   val provider = context.provider ?: return null
   val sessionId = context.sessionId.takeIf { it.isNotBlank() } ?: return null
+  val subAgentId = context.subAgentId?.takeIf { it.isNotBlank() }
   if (context.threadIdentity.isNotBlank()) {
     val separator = context.threadIdentity.indexOf(':')
     if (separator <= 0 || separator == context.threadIdentity.lastIndex) {
@@ -34,19 +37,34 @@ internal fun resolveAgentSessionsEditorTabThreadCoordinates(
       return null
     }
   }
-  val threadId = context.threadId.takeIf { it.isNotBlank() } ?: sessionId
+  val threadId = context.threadId.takeIf { it.isNotBlank() } ?: subAgentId ?: sessionId
+  if (subAgentId != null && threadId != subAgentId) {
+    return null
+  }
   return AgentSessionsEditorTabThreadCoordinates(
     path = context.path,
     provider = provider,
+    parentThreadId = sessionId,
     threadId = threadId,
+    subAgentId = subAgentId,
   )
 }
 
 internal fun resolveArchiveThreadTargetFromEditorTabContext(context: AgentChatEditorTabActionContext): ArchiveThreadTarget? {
   val threadCoordinates = resolveAgentSessionsEditorTabThreadCoordinates(context) ?: return null
-  return ArchiveThreadTarget(
-    path = threadCoordinates.path,
-    provider = threadCoordinates.provider,
-    threadId = threadCoordinates.threadId,
-  )
+  return if (threadCoordinates.subAgentId == null) {
+    ArchiveThreadTarget.Thread(
+      path = threadCoordinates.path,
+      provider = threadCoordinates.provider,
+      threadId = threadCoordinates.threadId,
+    )
+  }
+  else {
+    ArchiveThreadTarget.SubAgent(
+      path = threadCoordinates.path,
+      provider = threadCoordinates.provider,
+      parentThreadId = threadCoordinates.parentThreadId,
+      subAgentId = threadCoordinates.subAgentId,
+    )
+  }
 }

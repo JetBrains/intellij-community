@@ -93,45 +93,6 @@ internal class AgentSessionsStateStore {
     }
   }
 
-  fun removeThread(path: String, provider: AgentSessionProvider, threadId: String): Boolean {
-    val normalizedPath = normalizeAgentWorkbenchPath(path)
-    var removed = false
-    update { state ->
-      val nextProjects = state.projects.map { project ->
-        if (project.path == normalizedPath) {
-          val nextThreads = project.threads.filterNot { it.provider == provider && it.id == threadId }
-          if (nextThreads.size != project.threads.size) {
-            removed = true
-            project.copy(threads = nextThreads)
-          }
-          else {
-            project
-          }
-        }
-        else {
-          val nextWorktrees = project.worktrees.map { worktree ->
-            if (worktree.path == normalizedPath) {
-              val nextThreads = worktree.threads.filterNot { it.provider == provider && it.id == threadId }
-              if (nextThreads.size != worktree.threads.size) {
-                removed = true
-                worktree.copy(threads = nextThreads)
-              }
-              else {
-                worktree
-              }
-            }
-            else {
-              worktree
-            }
-          }
-          if (nextWorktrees == project.worktrees) project else project.copy(worktrees = nextWorktrees)
-        }
-      }
-      if (!removed) state else state.copy(projects = nextProjects, lastUpdatedAt = System.currentTimeMillis())
-    }
-    return removed
-  }
-
   fun buildInitialVisibleThreadCounts(knownPaths: List<String>): Map<String, Int> {
     return buildInitialVisibleThreadCounts(
       knownPaths = knownPaths,
@@ -168,28 +129,6 @@ internal class AgentSessionsStateStore {
     for (project in mutableState.value.projects) {
       for (worktree in project.worktrees) {
         if (worktree.path == path) return worktree.branch
-      }
-    }
-    return null
-  }
-
-  fun findParentThreadIdForSubAgent(path: String, provider: AgentSessionProvider, subAgentId: String): String? {
-    val normalizedPath = normalizeAgentWorkbenchPath(path)
-    val projectThreads = mutableState.value.projects.firstOrNull { it.path == normalizedPath }?.threads
-    val projectMatch = projectThreads?.firstOrNull { thread ->
-      thread.provider == provider && thread.subAgents.any { subAgent -> subAgent.id == subAgentId }
-    }
-    if (projectMatch != null) {
-      return projectMatch.id
-    }
-
-    mutableState.value.projects.forEach { project ->
-      val worktreeThreads = project.worktrees.firstOrNull { it.path == normalizedPath }?.threads ?: return@forEach
-      val worktreeMatch = worktreeThreads.firstOrNull { thread ->
-        thread.provider == provider && thread.subAgents.any { subAgent -> subAgent.id == subAgentId }
-      }
-      if (worktreeMatch != null) {
-        return worktreeMatch.id
       }
     }
     return null

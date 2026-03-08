@@ -18,12 +18,13 @@ import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.model.WorktreeEntry
 import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveService
 import com.intellij.agent.workbench.sessions.service.AgentSessionChatOpenExecutor
+import com.intellij.agent.workbench.sessions.service.AgentSessionContentRepository
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
-import com.intellij.agent.workbench.sessions.state.InMemorySessionTreeUiState
-import com.intellij.agent.workbench.sessions.state.SessionTreeUiState
+import com.intellij.agent.workbench.sessions.state.InMemorySessionWarmState
+import com.intellij.agent.workbench.sessions.state.SessionWarmState
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -57,6 +58,10 @@ internal class AgentSessionStateSyncTestFacade(
 
   fun refreshProviderForPath(path: String, provider: AgentSessionProvider) {
     syncService.refreshProviderForPath(path = path, provider = provider)
+  }
+
+  fun markThreadAsRead(path: String, provider: AgentSessionProvider, threadId: String, updatedAt: Long) {
+    syncService.markThreadAsRead(path = path, provider = provider, threadId = threadId, updatedAt = updatedAt)
   }
 
   fun showMoreThreads(path: String) {
@@ -131,7 +136,7 @@ internal fun thread(
 internal suspend fun withService(
   sessionSourcesProvider: () -> List<AgentSessionSource>,
   projectEntriesProvider: suspend () -> List<ProjectEntry>,
-  treeUiState: SessionTreeUiState = InMemorySessionTreeUiState(),
+  warmState: SessionWarmState = InMemorySessionWarmState(),
   uiPreferencesState: AgentSessionUiPreferencesStateService = AgentSessionUiPreferencesStateService(),
   chatOpenExecutor: AgentSessionChatOpenExecutor? = null,
   openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingCodexTabSnapshot>> =
@@ -146,7 +151,7 @@ internal suspend fun withService(
   withServiceAndLaunch(
     sessionSourcesProvider = sessionSourcesProvider,
     projectEntriesProvider = projectEntriesProvider,
-    treeUiState = treeUiState,
+    warmState = warmState,
     uiPreferencesState = uiPreferencesState,
     chatOpenExecutor = chatOpenExecutor,
     openPendingCodexTabsProvider = openPendingCodexTabsProvider,
@@ -160,7 +165,7 @@ internal suspend fun withService(
 internal suspend fun withServiceAndLaunch(
   sessionSourcesProvider: () -> List<AgentSessionSource>,
   projectEntriesProvider: suspend () -> List<ProjectEntry>,
-  treeUiState: SessionTreeUiState = InMemorySessionTreeUiState(),
+  warmState: SessionWarmState = InMemorySessionWarmState(),
   uiPreferencesState: AgentSessionUiPreferencesStateService = AgentSessionUiPreferencesStateService(),
   chatOpenExecutor: AgentSessionChatOpenExecutor? = null,
   openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingCodexTabSnapshot>> =
@@ -175,7 +180,7 @@ internal suspend fun withServiceAndLaunch(
   withServiceAndArchiveAndLaunch(
     sessionSourcesProvider = sessionSourcesProvider,
     projectEntriesProvider = projectEntriesProvider,
-    treeUiState = treeUiState,
+    warmState = warmState,
     uiPreferencesState = uiPreferencesState,
     archiveChatCleanup = { _, _, _ -> },
     chatOpenExecutor = chatOpenExecutor,
@@ -190,7 +195,7 @@ internal suspend fun withServiceAndLaunch(
 internal suspend fun withServiceAndArchive(
   sessionSourcesProvider: () -> List<AgentSessionSource>,
   projectEntriesProvider: suspend () -> List<ProjectEntry>,
-  treeUiState: SessionTreeUiState = InMemorySessionTreeUiState(),
+  warmState: SessionWarmState = InMemorySessionWarmState(),
   uiPreferencesState: AgentSessionUiPreferencesStateService = AgentSessionUiPreferencesStateService(),
   archiveChatCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit = { _, _, _ -> },
   chatOpenExecutor: AgentSessionChatOpenExecutor? = null,
@@ -206,7 +211,7 @@ internal suspend fun withServiceAndArchive(
   withServiceAndArchiveAndLaunch(
     sessionSourcesProvider = sessionSourcesProvider,
     projectEntriesProvider = projectEntriesProvider,
-    treeUiState = treeUiState,
+    warmState = warmState,
     uiPreferencesState = uiPreferencesState,
     archiveChatCleanup = archiveChatCleanup,
     chatOpenExecutor = chatOpenExecutor,
@@ -221,7 +226,7 @@ internal suspend fun withServiceAndArchive(
 internal suspend fun withServiceAndArchiveAndLaunch(
   sessionSourcesProvider: () -> List<AgentSessionSource>,
   projectEntriesProvider: suspend () -> List<ProjectEntry>,
-  treeUiState: SessionTreeUiState = InMemorySessionTreeUiState(),
+  warmState: SessionWarmState = InMemorySessionWarmState(),
   uiPreferencesState: AgentSessionUiPreferencesStateService = AgentSessionUiPreferencesStateService(),
   archiveChatCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit = { _, _, _ -> },
   chatOpenExecutor: AgentSessionChatOpenExecutor? = null,
@@ -238,12 +243,16 @@ internal suspend fun withServiceAndArchiveAndLaunch(
   val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
   try {
     val stateStore = AgentSessionsStateStore()
+    val contentRepository = AgentSessionContentRepository(
+      stateStore = stateStore,
+      warmState = warmState,
+    )
     val syncService = AgentSessionRefreshService(
       serviceScope = scope,
       sessionSourcesProvider = sessionSourcesProvider,
       projectEntriesProvider = projectEntriesProvider,
       stateStore = stateStore,
-      treeUiState = treeUiState,
+      warmState = warmState,
       openPendingCodexTabsProvider = openPendingCodexTabsProvider,
       openConcreteChatThreadIdentitiesByPathProvider = openConcreteChatThreadIdentitiesByPathProvider,
       openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinder,
@@ -272,8 +281,8 @@ internal suspend fun withServiceAndArchiveAndLaunch(
     }
     val archiveService = AgentSessionArchiveService(
       serviceScope = scope,
-      stateStore = stateStore,
       syncService = syncService,
+      contentRepository = contentRepository,
       archiveChatCleanup = archiveChatCleanup,
     )
     action(service, archiveService, launchService)

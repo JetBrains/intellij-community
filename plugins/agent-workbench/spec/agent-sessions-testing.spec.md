@@ -31,11 +31,11 @@ This file does not redefine runtime behavior; it maps each contract area to requ
 ## Requirements
 - Core contract coverage must include identity and command mapping, shared editor-tab popup actions, archive gate behavior (including optional unarchive capability contract), and visibility primitive persistence.
 - Archive service coverage must include single-thread archive, multi-target archive with partial provider support, and unarchive restore behavior for supported providers.
-- Sessions aggregation/service coverage must include ordering, partial warning, blocking error, unknown counts, refresh bootstrap, on-demand dedup, and refresh concurrency.
+- Sessions aggregation/service coverage must include ordering, partial warning, blocking error, unknown counts, warm-snapshot bootstrap, on-demand dedup, refresh concurrency, and local read-state synchronization.
 - Swing tree rendering coverage must include warning/error precedence, empty-state exclusivity, `More` row exact/unknown behavior, and thread-row metadata presentation (badge + time, no inline status text, tooltip status preserved).
 - Swing tree interaction coverage must include single-click select behavior, activation-open policy, double-click open precedence on openable parent rows, path resolution for `More` rows, and context-menu selection retarget rules.
 - Persisted tree-state coverage must include collapsed-state restoration and expansion parent mapping for selected worktree paths.
-- Persisted UI-state coverage must include visible-count persistence, preview-provider persistence, and legacy provider fallback.
+- Persisted UI-state coverage must include visible-count persistence, warm-snapshot persistence, and exclusion of transient thread content from tree UI state.
 - New-thread action coverage must include quick-provider eligibility, loading-row exposure, Standard/YOLO popup modeling, dedup, and pending-to-concrete Codex rebinding.
 - Refresh-loading coverage must include per-refreshed-path loading indicators and loading completion semantics (loading is not cleared on first partial provider success).
 - Tool-window factory coverage must include Swing factory registration and title/gear action registration.
@@ -55,6 +55,7 @@ This file does not redefine runtime behavior; it maps each contract area to requ
 - Swing tree interaction: `AgentSessionsSwingTreeInteractionTest`
 - Swing tree state persistence: `AgentSessionsSwingTreeStatePersistenceTest`
 - Tree UI persisted state: `AgentSessionTreeUiStateServiceTest`
+- Warm snapshot persisted state: `AgentSessionWarmStateServiceTest`
 - Shared UI preferences state: `AgentSessionUiPreferencesStateServiceTest`
 - New-thread flow: `AgentSessionsSwingNewSessionActionsTest`, `AgentSessionRefreshCoordinatorTest`, `AgentChatEditorServiceTest`
 - Tool-window factory wiring: `AgentSessionsToolWindowFactorySwingTest`, `AgentSessionsGearActionsTest`

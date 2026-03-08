@@ -4,11 +4,11 @@ package com.intellij.agent.workbench.chat
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.agent.workbench.common.parseAgentThreadIdentity
+import com.intellij.agent.workbench.common.withAgentThreadActivityBadge
 import com.intellij.icons.AllIcons
 import com.intellij.ide.FileIconProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.IconManager
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
@@ -19,10 +19,6 @@ private data class AgentChatIconKey(
 )
 
 private val ICON_CACHE = ConcurrentHashMap<AgentChatIconKey, Icon>()
-
-private fun shouldBadgeThreadActivity(activity: AgentThreadActivity): Boolean {
-  return activity == AgentThreadActivity.UNREAD
-}
 
 @TestOnly
 internal fun clearAgentChatIconCacheForTests() {
@@ -48,6 +44,6 @@ internal fun providerIcon(
       "claude" -> AgentWorkbenchCommonIcons.Claude_14x14
       else -> AllIcons.Toolwindows.ToolWindowMessages
     }
-    if (!shouldBadgeThreadActivity(threadActivity)) baseIcon else IconManager.getInstance().withIconBadge(baseIcon, threadActivity.badgeColor())
+    withAgentThreadActivityBadge(baseIcon, threadActivity)
   }
 }

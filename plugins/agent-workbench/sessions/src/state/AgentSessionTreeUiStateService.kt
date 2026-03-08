@@ -1,11 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.state
 
-import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.model.AgentSessionThreadPreview
-import com.intellij.agent.workbench.sessions.tree.threadDisplayTitle
 import com.intellij.openapi.components.SerializablePersistentStateComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
@@ -23,22 +19,14 @@ internal interface SessionTreeUiState {
   fun incrementVisibleThreadCount(path: String, delta: Int): Boolean
 
   fun resetVisibleThreadCount(path: String): Boolean
-
-  fun getOpenProjectThreadPreviews(path: String): List<AgentSessionThreadPreview>?
-
-  fun setOpenProjectThreadPreviews(path: String, threads: List<AgentSessionThreadPreview>): Boolean
-
-  fun retainOpenProjectThreadPreviews(paths: Set<String>): Boolean
 }
 
 internal const val DEFAULT_VISIBLE_CLOSED_PROJECT_COUNT: Int = 3
 internal const val DEFAULT_VISIBLE_THREAD_COUNT: Int = 3
-internal const val OPEN_PROJECT_THREAD_CACHE_LIMIT: Int = 10
 
 internal class InMemorySessionTreeUiState : SessionTreeUiState {
   private val collapsedProjectPaths = LinkedHashSet<String>()
   private val visibleThreadCountByProject = LinkedHashMap<String, Int>()
-  private val openProjectThreadPreviewsByProject = LinkedHashMap<String, List<AgentSessionThreadPreview>>()
 
   override fun isProjectCollapsed(path: String): Boolean {
     return normalizeAgentWorkbenchPath(path) in collapsedProjectPaths
@@ -75,33 +63,6 @@ internal class InMemorySessionTreeUiState : SessionTreeUiState {
 
   override fun resetVisibleThreadCount(path: String): Boolean {
     return visibleThreadCountByProject.remove(normalizeAgentWorkbenchPath(path)) != null
-  }
-
-  override fun getOpenProjectThreadPreviews(path: String): List<AgentSessionThreadPreview>? {
-    return openProjectThreadPreviewsByProject[normalizeAgentWorkbenchPath(path)]
-  }
-
-  override fun setOpenProjectThreadPreviews(path: String, threads: List<AgentSessionThreadPreview>): Boolean {
-    val normalizedPath = normalizeAgentWorkbenchPath(path)
-    val normalizedThreads = normalizeOpenProjectThreadPreviewList(threads)
-    val current = openProjectThreadPreviewsByProject[normalizedPath]
-    if (current == normalizedThreads) return false
-    openProjectThreadPreviewsByProject[normalizedPath] = normalizedThreads
-    return true
-  }
-
-  override fun retainOpenProjectThreadPreviews(paths: Set<String>): Boolean {
-    val normalizedPaths = paths.mapTo(LinkedHashSet()) { normalizeAgentWorkbenchPath(it) }
-    var changed = false
-    val iterator = openProjectThreadPreviewsByProject.keys.iterator()
-    while (iterator.hasNext()) {
-      val key = iterator.next()
-      if (key !in normalizedPaths) {
-        iterator.remove()
-        changed = true
-      }
-    }
-    return changed
   }
 }
 
@@ -140,62 +101,6 @@ internal class AgentSessionTreeUiStateService
   override fun resetVisibleThreadCount(path: String): Boolean {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
     return setVisibleThreadCountInternal(normalizedPath, DEFAULT_VISIBLE_THREAD_COUNT)
-  }
-
-  override fun getOpenProjectThreadPreviews(path: String): List<AgentSessionThreadPreview>? {
-    val normalizedPath = normalizeAgentWorkbenchPath(path)
-    val previews = state.openProjectThreadPreviewsByProject[normalizedPath] ?: return null
-    return previews.map { preview ->
-      AgentSessionThreadPreview(
-        id = preview.id,
-        title = threadDisplayTitle(threadId = preview.id, title = preview.title),
-        updatedAt = preview.updatedAt,
-        activity = preview.activity
-          ?.let(::parseThreadActivity)
-          ?: AgentThreadActivity.READY,
-        provider = preview.provider
-          ?.let(AgentSessionProvider::fromOrNull)
-          ?: AgentSessionProvider.CODEX,
-      )
-    }
-  }
-
-  override fun setOpenProjectThreadPreviews(path: String, threads: List<AgentSessionThreadPreview>): Boolean {
-    val normalizedPath = normalizeAgentWorkbenchPath(path)
-    val normalizedPreviews = normalizeOpenProjectThreadPreviewList(threads)
-      .map { thread ->
-        ThreadPreviewState(
-          id = thread.id,
-          title = thread.title,
-          updatedAt = thread.updatedAt,
-          activity = thread.activity.name,
-          provider = thread.provider.value,
-        )
-      }
-    val current = state.openProjectThreadPreviewsByProject[normalizedPath]
-    if (current == normalizedPreviews) {
-      return false
-    }
-    updateState { currentState ->
-      val updated = currentState.openProjectThreadPreviewsByProject.toMutableMap()
-      updated[normalizedPath] = normalizedPreviews
-      currentState.copy(openProjectThreadPreviewsByProject = updated)
-    }
-    return true
-  }
-
-  override fun retainOpenProjectThreadPreviews(paths: Set<String>): Boolean {
-    val normalizedPaths = paths.mapTo(LinkedHashSet()) { normalizeAgentWorkbenchPath(it) }
-    val current = state.openProjectThreadPreviewsByProject
-    if (current.keys.all { it in normalizedPaths }) {
-      return false
-    }
-    updateState { currentState ->
-      val filtered = currentState.openProjectThreadPreviewsByProject
-        .filterKeys { it in normalizedPaths }
-      currentState.copy(openProjectThreadPreviewsByProject = filtered)
-    }
-    return true
   }
 
   private fun updateNormalizedPathSet(
@@ -244,33 +149,9 @@ internal class AgentSessionTreeUiStateService
   internal data class SessionTreeUiStateState(
     @JvmField val collapsedProjectPaths: Set<String> = emptySet(),
     @JvmField val visibleThreadCountByProject: Map<String, Int> = emptyMap(),
-    @JvmField val openProjectThreadPreviewsByProject: Map<String, List<ThreadPreviewState>> = emptyMap(),
-  )
-
-  @Serializable
-  internal data class ThreadPreviewState(
-    @JvmField val id: String,
-    @JvmField val title: String,
-    @JvmField val updatedAt: Long,
-    @JvmField val activity: String? = null,
-    @JvmField val provider: String? = null,
   )
 }
 
 private fun normalizeVisibleThreadCount(value: Int): Int {
   return value.coerceAtLeast(DEFAULT_VISIBLE_THREAD_COUNT)
-}
-
-private fun normalizeOpenProjectThreadPreviewList(threads: List<AgentSessionThreadPreview>): List<AgentSessionThreadPreview> {
-  return threads
-    .map { thread ->
-      thread.copy(title = threadDisplayTitle(threadId = thread.id, title = thread.title))
-    }
-    .sortedByDescending { it.updatedAt }
-    .take(OPEN_PROJECT_THREAD_CACHE_LIMIT)
-}
-
-private fun parseThreadActivity(value: String): AgentThreadActivity {
-  return runCatching { AgentThreadActivity.valueOf(value) }
-    .getOrDefault(AgentThreadActivity.READY)
 }

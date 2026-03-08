@@ -83,9 +83,10 @@ Define Codex thread-list behavior where discovery and primary status projection 
   [@test] ../codex/sessions/testSrc/backend/CodexSessionActivityResolverTest.kt
 
 - Activity normalization from Codex raw signals must be:
-  - `UNREAD` when `hasUnreadAssistantMessage = true` or active flags indicate response required.
-  - `REVIEWING` when `isReviewing = true` and unread is not already selected.
+  - `UNREAD` when active flags indicate response required.
+  - `REVIEWING` when `isReviewing = true` and response-required activity is not already selected.
   - `PROCESSING` when `hasInProgressTurn = true` or `statusKind = ACTIVE` without response-required flags.
+  - `UNREAD` when `hasUnreadAssistantMessage = true` and no higher-priority reviewing, processing, or response-required activity is present.
   - `READY` otherwise, including `IDLE`, `SYSTEM_ERROR`, `NOT_LOADED`, and `UNKNOWN`.
   [@test] ../codex/sessions/testSrc/backend/CodexSessionActivityResolverTest.kt
   [@test] ../codex/sessions/testSrc/backend/appserver/CodexAppServerRefreshHintsProviderTest.kt

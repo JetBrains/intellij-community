@@ -519,7 +519,7 @@ internal fun archiveTargetFromThreadNode(
     is SessionTreeId.WorktreeThread -> id.worktreePath
     else -> threadNode.project.path
   }
-  return ArchiveThreadTarget(
+  return ArchiveThreadTarget.Thread(
     path = normalizeAgentWorkbenchPath(path),
     provider = threadNode.thread.provider,
     threadId = threadNode.thread.id,
