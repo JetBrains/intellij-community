@@ -102,12 +102,12 @@ Prompt-context collection and rendering contracts are specified separately in `s
 - Successful prompt launch must update the shared preferred provider used by future prompt openings and new-thread affordances.
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
-- Codex-only Plan mode toggle contract:
-  - Toggle is visible only when selected provider is `CODEX`.
+- Plan mode toggle contract:
+  - Toggle is visible when selected provider's bridge has `supportsPlanMode == true`.
   - Toggle default is enabled and is persisted in per-project prompt draft state.
-  - When effective plan mode is enabled, submit must set `initialMessageRequest.codexPlanModeEnabled = true`.
+  - When effective plan mode is enabled, submit must set `initialMessageRequest.planModeEnabled = true`.
   - Effective plan mode must be forced off for `EXISTING_TASK` target when selected thread activity is `PROCESSING` or `REVIEWING`.
-  - Non-Codex providers must always submit with plan mode disabled.
+  - Providers without `supportsPlanMode` must always submit with plan mode disabled.
   [@test] ../../prompt/testSrc/ui/AgentPromptPlanModeDecisionsTest.kt
 
 - Context block soft-cap limit is `12_000` characters. When exceeded, user must explicitly choose send-full, auto-trim, or cancel before launch.

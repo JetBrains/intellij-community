@@ -2,7 +2,6 @@
 package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -10,9 +9,9 @@ class AgentPromptPlanModeDecisionsTest {
   @Test
   fun codexNewTaskWithToggleEnabledUsesPlanMode() {
     assertThat(
-      resolveEffectiveCodexPlanModeEnabled(
-        selectedProvider = AgentSessionProvider.CODEX,
-        isCodexPlanModeSelected = true,
+      resolveEffectivePlanModeEnabled(
+        supportsPlanMode = true,
+        isPlanModeSelected = true,
         targetMode = PromptTargetMode.NEW_TASK,
         selectedThreadActivity = null,
       )
@@ -22,9 +21,9 @@ class AgentPromptPlanModeDecisionsTest {
   @Test
   fun codexExistingReadyTaskWithToggleEnabledUsesPlanMode() {
     assertThat(
-      resolveEffectiveCodexPlanModeEnabled(
-        selectedProvider = AgentSessionProvider.CODEX,
-        isCodexPlanModeSelected = true,
+      resolveEffectivePlanModeEnabled(
+        supportsPlanMode = true,
+        isPlanModeSelected = true,
         targetMode = PromptTargetMode.EXISTING_TASK,
         selectedThreadActivity = AgentThreadActivity.READY,
       )
@@ -34,18 +33,18 @@ class AgentPromptPlanModeDecisionsTest {
   @Test
   fun codexExistingActiveTaskForcesPlanModeOff() {
     assertThat(
-      resolveEffectiveCodexPlanModeEnabled(
-        selectedProvider = AgentSessionProvider.CODEX,
-        isCodexPlanModeSelected = true,
+      resolveEffectivePlanModeEnabled(
+        supportsPlanMode = true,
+        isPlanModeSelected = true,
         targetMode = PromptTargetMode.EXISTING_TASK,
         selectedThreadActivity = AgentThreadActivity.PROCESSING,
       )
     ).isFalse()
 
     assertThat(
-      resolveEffectiveCodexPlanModeEnabled(
-        selectedProvider = AgentSessionProvider.CODEX,
-        isCodexPlanModeSelected = true,
+      resolveEffectivePlanModeEnabled(
+        supportsPlanMode = true,
+        isPlanModeSelected = true,
         targetMode = PromptTargetMode.EXISTING_TASK,
         selectedThreadActivity = AgentThreadActivity.REVIEWING,
       )
@@ -53,11 +52,11 @@ class AgentPromptPlanModeDecisionsTest {
   }
 
   @Test
-  fun nonCodexProviderNeverUsesPlanMode() {
+  fun providerWithoutPlanModeNeverUsesPlanMode() {
     assertThat(
-      resolveEffectiveCodexPlanModeEnabled(
-        selectedProvider = AgentSessionProvider.CLAUDE,
-        isCodexPlanModeSelected = true,
+      resolveEffectivePlanModeEnabled(
+        supportsPlanMode = false,
+        isPlanModeSelected = true,
         targetMode = PromptTargetMode.NEW_TASK,
         selectedThreadActivity = null,
       )
@@ -67,12 +66,24 @@ class AgentPromptPlanModeDecisionsTest {
   @Test
   fun toggleOffNeverUsesPlanMode() {
     assertThat(
-      resolveEffectiveCodexPlanModeEnabled(
-        selectedProvider = AgentSessionProvider.CODEX,
-        isCodexPlanModeSelected = false,
+      resolveEffectivePlanModeEnabled(
+        supportsPlanMode = true,
+        isPlanModeSelected = false,
         targetMode = PromptTargetMode.NEW_TASK,
         selectedThreadActivity = null,
       )
     ).isFalse()
+  }
+
+  @Test
+  fun claudeNewTaskWithToggleEnabledUsesPlanMode() {
+    assertThat(
+      resolveEffectivePlanModeEnabled(
+        supportsPlanMode = true,
+        isPlanModeSelected = true,
+        targetMode = PromptTargetMode.NEW_TASK,
+        selectedThreadActivity = null,
+      )
+    ).isTrue()
   }
 }

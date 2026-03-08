@@ -73,7 +73,7 @@ internal class AgentPromptPalettePopup(
   private lateinit var tabbedPane: JBTabbedPane
   private lateinit var providerIconLabel: JBLabel
   private lateinit var existingTaskScrollPane: JBScrollPane
-  private lateinit var codexPlanModeCheckBox: JBCheckBox
+  private lateinit var planModeCheckBox: JBCheckBox
   private lateinit var footerLabel: JBLabel
   private lateinit var providerSelector: AgentPromptProviderSelector
   private lateinit var existingTaskController: AgentPromptExistingTaskController
@@ -163,23 +163,23 @@ internal class AgentPromptPalettePopup(
   }
 
   private fun createContentPanel(): JPanel {
-    val planModeCheckBox = createCodexPlanModeCheckBox()
+    val planModeCheckBox = createPlanModeCheckBox()
     val view = createAgentPromptPaletteView(
       promptArea = promptArea,
       contextChipsPanel = contextChips.component,
-      codexPlanModeCheckBox = planModeCheckBox,
+      planModeCheckBox = planModeCheckBox,
       onProviderIconClicked = ::showProviderChooser,
       onExistingTaskSelected = ::onExistingTaskSelected,
     )
     tabbedPane = view.tabbedPane
     providerIconLabel = view.providerIconLabel
     existingTaskScrollPane = view.existingTaskScrollPane
-    codexPlanModeCheckBox = checkNotNull(view.codexPlanModeCheckBox)
+    this.planModeCheckBox = checkNotNull(view.planModeCheckBox)
     footerLabel = view.footerLabel
     providerSelector = AgentPromptProviderSelector(
       invocationData = invocationData,
       providerIconLabel = providerIconLabel,
-      codexPlanModeCheckBox = codexPlanModeCheckBox,
+      codexPlanModeCheckBox = planModeCheckBox,
       providersProvider = providersProvider,
       sessionsMessageResolver = sessionsMessageResolver,
     )
@@ -193,7 +193,7 @@ internal class AgentPromptPalettePopup(
     return view.rootPanel
   }
 
-  private fun createCodexPlanModeCheckBox(): JBCheckBox {
+  private fun createPlanModeCheckBox(): JBCheckBox {
     return JBCheckBox(AgentPromptBundle.message("popup.plan.checkbox"), true).apply {
       isFocusable = false
     }
@@ -244,9 +244,7 @@ internal class AgentPromptPalettePopup(
     if (!isExtensionTab && mode == PromptTargetMode.EXISTING_TASK && !existingTaskController.hasLoadedEntries()) {
       reloadExistingTasks()
     }
-    if (isExtensionTab) {
-      codexPlanModeCheckBox.isVisible = false
-    }
+    updatePlanToggleVisibility()
     refreshFooterHintForCurrentState()
   }
 
@@ -274,12 +272,17 @@ internal class AgentPromptPalettePopup(
     providerSelector.refresh()
   }
 
+  private fun updatePlanToggleVisibility() {
+    planModeCheckBox.isVisible = activeExtensionTab == null && providerSelector.selectedProvider?.bridge?.supportsPlanMode == true
+  }
+
   private fun showProviderChooser() {
     providerSelector.showChooser(onUnavailable = ::showError) {
       if (currentTargetMode() == PromptTargetMode.EXISTING_TASK) {
         existingTaskController.clearSelection()
         reloadExistingTasks()
       }
+      updatePlanToggleVisibility()
       updateSendAvailability()
       refreshFooterHintForCurrentState()
     }
@@ -490,13 +493,13 @@ internal class AgentPromptPalettePopup(
         PromptTargetMode.EXISTING_TASK -> existingTaskController.selectedExistingTaskId ?: return
       }
     }
-    val effectiveCodexPlanModeEnabled = if (activeExtensionTab != null) {
+    val effectivePlanModeEnabled = if (activeExtensionTab != null) {
       false
     }
     else {
-      resolveEffectiveCodexPlanModeEnabled(
-        selectedProvider = providerEntry.bridge.provider,
-        isCodexPlanModeSelected = codexPlanModeCheckBox.isSelected,
+      resolveEffectivePlanModeEnabled(
+        supportsPlanMode = providerEntry.bridge.supportsPlanMode,
+        isPlanModeSelected = planModeCheckBox.isSelected,
         targetMode = currentTargetMode(),
         selectedThreadActivity = existingTaskController.selectedEntry()?.activity,
       )
@@ -511,7 +514,7 @@ internal class AgentPromptPalettePopup(
         projectPath = effectiveProjectPath,
         contextItems = contextSelection.items,
         contextEnvelopeSummary = contextSelection.summary,
-        codexPlanModeEnabled = effectiveCodexPlanModeEnabled,
+        planModeEnabled = effectivePlanModeEnabled,
       ),
       targetThreadId = targetThreadId,
       preferredDedicatedFrame = null,
@@ -656,7 +659,7 @@ internal class AgentPromptPalettePopup(
     val contextRestoreSnapshot = uiStateService.loadContextRestoreSnapshot()
     val launcher = launcherProvider()
 
-    codexPlanModeCheckBox.isSelected = draft.codexPlanModeEnabled
+    planModeCheckBox.isSelected = draft.planModeEnabled
     val persistedProvider = resolveRestoredPromptProvider(
       draftProviderId = draft.providerId,
       preferredProvider = launcher?.preferredProvider(),
@@ -704,7 +707,7 @@ internal class AgentPromptPalettePopup(
         sendMode = PromptSendMode.SEND_NOW,
         existingTaskSearch = existingTaskSearchQuery,
         selectedExistingTaskId = existingTaskController.selectedExistingTaskId,
-        codexPlanModeEnabled = codexPlanModeCheckBox.isSelected,
+        planModeEnabled = planModeCheckBox.isSelected,
         taskDrafts = allTaskDrafts,
       )
     )
@@ -760,3 +763,49 @@ private data class ContextSelection(
   @JvmField val items: List<AgentPromptContextItem>,
   @JvmField val summary: AgentPromptContextEnvelopeSummary,
 )
+
+internal fun installPromptEnterHandlers(
+  promptArea: JBTextArea,
+  canSubmit: () -> Boolean,
+  isTabQueueEnabled: () -> Boolean = { false },
+  onSubmit: () -> Unit,
+  onTabFocusTransfer: () -> Unit = promptArea::transferFocus,
+  onTabBackwardFocusTransfer: () -> Unit = promptArea::transferFocusBackward,
+) {
+  val popupSubmitActionKey = "agent.prompt.submit"
+  val popupNewLineActionKey = "agent.prompt.insert.break"
+  val popupQueueActionKey = "agent.prompt.queue"
+  val popupBackwardFocusActionKey = "agent.prompt.focus.backward"
+
+  promptArea.focusTraversalKeysEnabled = false
+
+  promptArea.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), popupSubmitActionKey)
+  promptArea.actionMap.put(popupSubmitActionKey, object : AbstractAction() {
+    override fun actionPerformed(e: ActionEvent?) {
+      canSubmit()
+      onSubmit()
+    }
+  })
+
+  promptArea.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK), popupNewLineActionKey)
+  promptArea.actionMap.put(popupNewLineActionKey, promptArea.actionMap.get(DefaultEditorKit.insertBreakAction))
+
+  promptArea.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), popupQueueActionKey)
+  promptArea.actionMap.put(popupQueueActionKey, object : AbstractAction() {
+    override fun actionPerformed(e: ActionEvent?) {
+      if (isTabQueueEnabled()) {
+        onSubmit()
+      }
+      else {
+        onTabFocusTransfer()
+      }
+    }
+  })
+
+  promptArea.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK), popupBackwardFocusActionKey)
+  promptArea.actionMap.put(popupBackwardFocusActionKey, object : AbstractAction() {
+    override fun actionPerformed(e: ActionEvent?) {
+      onTabBackwardFocusTransfer()
+    }
+  })
+}

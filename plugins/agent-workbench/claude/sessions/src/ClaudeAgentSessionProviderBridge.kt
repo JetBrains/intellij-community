@@ -6,6 +6,8 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
@@ -33,6 +35,9 @@ internal class ClaudeAgentSessionProviderBridge(
   override val supportedLaunchModes: Set<AgentSessionLaunchMode>
     get() = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO)
 
+  override val supportsPlanMode: Boolean
+    get() = true
+
   override val cliMissingMessageKey: String
     get() = "toolwindow.error.claude.cli"
 
@@ -54,7 +59,7 @@ internal class ClaudeAgentSessionProviderBridge(
 
   override fun buildNewEntryLaunchSpec(): AgentSessionTerminalLaunchSpec {
     return AgentSessionTerminalLaunchSpec(
-      command = listOf(ClaudeCliSupport.CLAUDE_COMMAND),
+      command = listOf(ClaudeCliSupport.CLAUDE_COMMAND, PERMISSION_MODE_FLAG, PERMISSION_MODE_DEFAULT),
       envVariables = mapOf(CLAUDE_DISABLE_AUTO_UPDATER_ENV to CLAUDE_DISABLE_AUTO_UPDATER_VALUE),
     )
   }
@@ -63,11 +68,32 @@ internal class ClaudeAgentSessionProviderBridge(
     baseLaunchSpec: AgentSessionTerminalLaunchSpec,
     prompt: String,
   ): AgentSessionTerminalLaunchSpec {
-    return baseLaunchSpec.copy(command = baseLaunchSpec.command + listOf("--", prompt))
+    val planMode = isPlanModeCommand(prompt)
+    val effectivePrompt = if (planMode) prompt.removePrefix(PLAN_MODE_COMMAND).trim() else prompt
+    val permissionMode = if (planMode) PERMISSION_MODE_PLAN else PERMISSION_MODE_DEFAULT
+    val command = replaceOrAddPermissionMode(baseLaunchSpec.command, permissionMode) + listOf("--", effectivePrompt)
+    return baseLaunchSpec.copy(command = command)
   }
 
   override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
-    return AgentInitialMessagePlan.composeDefault(request)
+    val basePlan = AgentInitialMessagePlan.composeDefault(request)
+    val normalizedMessage = basePlan.message ?: return basePlan
+    val message = if (request.planModeEnabled) {
+      ensurePlanModePrefix(normalizedMessage)
+    }
+    else {
+      normalizedMessage
+    }
+    return AgentInitialMessagePlan(
+      message = message,
+      startupPolicy = AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND,
+      timeoutPolicy = if (isPlanModeCommand(message)) {
+        AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS
+      }
+      else {
+        AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK
+      },
+    )
   }
 
   override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
@@ -76,7 +102,39 @@ internal class ClaudeAgentSessionProviderBridge(
       launchSpec = buildNewSessionLaunchSpec(mode),
     )
   }
+
+  private fun ensurePlanModePrefix(message: String): String {
+    val normalized = message.trim()
+    if (normalized.isEmpty()) {
+      return PLAN_MODE_COMMAND
+    }
+    if (isPlanModeCommand(normalized)) {
+      return normalized
+    }
+    return "$PLAN_MODE_COMMAND $normalized"
+  }
+
+  private fun isPlanModeCommand(message: String): Boolean {
+    if (!message.startsWith(PLAN_MODE_COMMAND)) {
+      return false
+    }
+    val suffix = message.removePrefix(PLAN_MODE_COMMAND)
+    return suffix.isEmpty() || suffix.first().isWhitespace()
+  }
+}
+
+private fun replaceOrAddPermissionMode(command: List<String>, mode: String): List<String> {
+  val result = command.toMutableList()
+  val index = result.indexOf(PERMISSION_MODE_FLAG)
+  if (index >= 0 && index + 1 < result.size) {
+    result[index + 1] = mode
+  }
+  else {
+    result.addAll(listOf(PERMISSION_MODE_FLAG, mode))
+  }
+  return result
 }
 
 private const val CLAUDE_DISABLE_AUTO_UPDATER_ENV: String = "DISABLE_AUTOUPDATER"
 private const val CLAUDE_DISABLE_AUTO_UPDATER_VALUE: String = "1"
+private const val PLAN_MODE_COMMAND: String = "/plan"

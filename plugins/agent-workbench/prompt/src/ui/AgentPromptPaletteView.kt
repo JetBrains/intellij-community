@@ -40,13 +40,13 @@ internal data class AgentPromptPaletteView(
   val existingTaskList: JBList<ThreadEntry>,
   val existingTaskScrollPane: JBScrollPane,
   val footerLabel: JBLabel,
-  val codexPlanModeCheckBox: JBCheckBox?,
+  val planModeCheckBox: JBCheckBox?,
 )
 
 internal fun createAgentPromptPaletteView(
   promptArea: JBTextArea,
   contextChipsPanel: JPanel,
-  codexPlanModeCheckBox: JBCheckBox? = null,
+  planModeCheckBox: JBCheckBox? = null,
   onProviderIconClicked: () -> Unit,
   onExistingTaskSelected: (ThreadEntry) -> Unit,
 ): AgentPromptPaletteView {
@@ -81,14 +81,14 @@ internal fun createAgentPromptPaletteView(
       cell(tabbedPane)
       cell(spacer)
         .resizableColumn()
-      if (codexPlanModeCheckBox != null) {
-        cell(codexPlanModeCheckBox)
+      if (planModeCheckBox != null) {
+        cell(planModeCheckBox)
           .align(AlignX.RIGHT)
           .customize(UnscaledGaps(left = controlsLeftGap))
       }
       cell(providerIconLabel)
         .align(AlignX.RIGHT)
-        .customize(UnscaledGaps(left = if (codexPlanModeCheckBox != null) controlToIconGap else controlsLeftGap))
+        .customize(UnscaledGaps(left = if (planModeCheckBox != null) controlToIconGap else controlsLeftGap))
     }
   }
   headerPanel.apply {
@@ -183,6 +183,6 @@ internal fun createAgentPromptPaletteView(
     existingTaskList = existingTaskList,
     existingTaskScrollPane = existingTaskScrollPane,
     footerLabel = footerLabel,
-    codexPlanModeCheckBox = codexPlanModeCheckBox,
+    planModeCheckBox = planModeCheckBox,
   )
 }

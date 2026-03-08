@@ -48,6 +48,9 @@ internal class CodexAgentSessionProviderBridge(
   override val supportsUnarchiveThread: Boolean
     get() = true
 
+  override val supportsPlanMode: Boolean
+    get() = true
+
   override fun isCliAvailable(): Boolean = CodexCliUtils.findExecutable() != null
 
   override fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
@@ -82,7 +85,7 @@ internal class CodexAgentSessionProviderBridge(
   override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
     val basePlan = AgentInitialMessagePlan.composeDefault(request)
     val normalizedMessage = basePlan.message ?: return basePlan
-    val message = if (request.codexPlanModeEnabled) {
+    val message = if (request.planModeEnabled) {
       ensurePlanModePrefix(normalizedMessage)
     }
     else {
@@ -90,7 +93,7 @@ internal class CodexAgentSessionProviderBridge(
     }
     return AgentInitialMessagePlan(
       message = message,
-      startupPolicy = if (request.codexPlanModeEnabled) {
+      startupPolicy = if (request.planModeEnabled) {
         AgentInitialMessageStartupPolicy.POST_START_ONLY
       }
       else {

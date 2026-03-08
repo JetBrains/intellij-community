@@ -75,7 +75,7 @@ data class AgentPromptInitialMessageRequest(
   @JvmField val projectPath: String? = null,
   @JvmField val contextItems: List<AgentPromptContextItem> = emptyList(),
   @JvmField val contextEnvelopeSummary: AgentPromptContextEnvelopeSummary? = null,
-  @JvmField val codexPlanModeEnabled: Boolean = false,
+  @JvmField val planModeEnabled: Boolean = false,
 )
 
 data class AgentPromptContextEnvelopeSummary(

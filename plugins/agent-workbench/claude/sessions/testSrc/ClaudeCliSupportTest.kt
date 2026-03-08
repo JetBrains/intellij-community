@@ -8,7 +8,7 @@ class ClaudeCliSupportTest {
   @Test
   fun buildNewSessionCommandNormal() {
     assertThat(ClaudeCliSupport.buildNewSessionCommand(yolo = false))
-      .containsExactly("claude")
+      .containsExactly("claude", "--permission-mode", "default")
   }
 
   @Test

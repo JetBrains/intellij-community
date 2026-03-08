@@ -34,13 +34,13 @@ internal fun shouldShowExistingTaskSelectionHint(
          selectedProvider != AgentSessionProvider.CODEX
 }
 
-internal fun resolveEffectiveCodexPlanModeEnabled(
-  selectedProvider: AgentSessionProvider?,
-  isCodexPlanModeSelected: Boolean,
+internal fun resolveEffectivePlanModeEnabled(
+  supportsPlanMode: Boolean,
+  isPlanModeSelected: Boolean,
   targetMode: PromptTargetMode,
   selectedThreadActivity: AgentThreadActivity?,
 ): Boolean {
-  if (selectedProvider != AgentSessionProvider.CODEX || !isCodexPlanModeSelected) {
+  if (!supportsPlanMode || !isPlanModeSelected) {
     return false
   }
   if (targetMode != PromptTargetMode.EXISTING_TASK) {
