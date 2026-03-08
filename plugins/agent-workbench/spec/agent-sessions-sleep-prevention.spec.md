@@ -17,6 +17,7 @@ Date: 2026-03-08
 Define plugin-local system sleep prevention for Agent Workbench. When any loaded session thread is actively working, the IDE must prevent idle system sleep on macOS and Windows. Linux is out of scope for v1.
 
 Sleep prevention must acquire immediately when work starts and release with a 30-second debounce after work stops. The debounce is release-only and exists to avoid sleep-block flapping during brief session refresh gaps or status churn.
+IDE Power Save Mode is a hard override: while it is enabled, sleep prevention must stay released.
 
 ## Goals
 - Keep macOS and Windows machines awake while Agent Workbench shows active agent work.
@@ -55,6 +56,11 @@ Sleep prevention must acquire immediately when work starts and release with a 30
   If aggregate working state becomes active again before the debounce expires, the pending release must be canceled and the blocker must remain held.
   [@test] ../sessions/testSrc/AgentSessionSleepPreventionServiceTest.kt
 
+- While IDE Power Save Mode is enabled, sleep prevention must remain released even if the setting is enabled and qualifying work is active.
+  Turning Power Save Mode on must cancel any pending debounce and release immediately.
+  Turning Power Save Mode off must acquire immediately if the setting is enabled and qualifying work is still active.
+  [@test] ../sessions/testSrc/AgentSessionSleepPreventionServiceTest.kt
+
 - Turning the setting off must release sleep prevention immediately and cancel any pending debounce.
   Turning the setting back on while aggregate working state is already active must acquire immediately.
   [@test] ../sessions/testSrc/AgentSessionSleepPreventionServiceTest.kt
@@ -88,11 +94,13 @@ Sleep prevention must acquire immediately when work starts and release with a 30
 - The Sessions gear menu exposes a toggle labeled `Prevent System Sleep While Agent Is Working`.
 - Advanced Settings exposes the same behavior under the Agent Workbench group.
 - Toggling the setting affects subsequent acquire/release behavior immediately.
+- Power Save Mode temporarily suppresses the runtime effect without changing the stored toggle value.
 - No new tool-window badge, notification, or status text is required for this feature.
 
 ## Data & Backend
 - Activity aggregation must consume normalized `AgentThreadActivity` values already present in sessions state.
 - The service may observe `AgentSessionReadService.stateFlow()` or the underlying app-level sessions state store, but behavior must stay event-driven; polling loops are not allowed.
+- The service must also observe IDE Power Save Mode changes and treat Power Save Mode as a hard override on blocker ownership.
 - The 30-second debounce applies only to releasing an already-held blocker. Acquisition is always immediate.
 
 ## Error Handling

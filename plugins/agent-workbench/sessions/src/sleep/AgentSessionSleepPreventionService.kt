@@ -6,6 +6,7 @@ package com.intellij.agent.workbench.sessions.sleep
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
+import com.intellij.ide.PowerSaveMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -40,6 +41,7 @@ internal class AgentSessionSleepPreventionService(
   serviceScope: CoroutineScope,
   private val sessionsStateFlow: StateFlow<AgentSessionsState>,
   private val settingFlow: StateFlow<Boolean>,
+  private val powerSaveModeFlow: StateFlow<Boolean>,
   private val sleepInhibitor: AgentSleepInhibitor,
   releaseSchedulerFactory: (CoroutineScope) -> AgentSleepReleaseScheduler,
   private val processingContext: AgentSleepPreventionExecutionContext,
@@ -51,6 +53,7 @@ internal class AgentSessionSleepPreventionService(
     serviceScope = serviceScope,
     sessionsStateFlow = service<AgentSessionReadService>().stateFlow(),
     settingFlow = createSleepPreventionSettingFlow(serviceScope),
+    powerSaveModeFlow = createPowerSaveModeFlow(serviceScope),
     sleepInhibitor = createAgentSleepInhibitor(),
     releaseSchedulerFactory = ::CoroutineAgentSleepReleaseScheduler,
     processingContext = createAgentSleepPreventionExecutionContext(),
@@ -80,6 +83,11 @@ internal class AgentSessionSleepPreventionService(
         }
         launch {
           settingFlow.collect {
+            applyCurrentState()
+          }
+        }
+        launch {
+          powerSaveModeFlow.collect {
             applyCurrentState()
           }
         }
@@ -135,7 +143,7 @@ internal class AgentSessionSleepPreventionService(
       return
     }
 
-    if (!settingFlow.value) {
+    if (!isSleepPreventionAllowed()) {
       cancelPendingRelease()
       releaseHeldBlocker()
       return
@@ -157,10 +165,14 @@ internal class AgentSessionSleepPreventionService(
 
     pendingRelease = releaseScheduler.schedule(releaseDebounceMillis) {
       pendingRelease = null
-      if (!disposed && (!settingFlow.value || !sessionsStateFlow.value.hasSleepPreventingWork())) {
+      if (!disposed && (!isSleepPreventionAllowed() || !sessionsStateFlow.value.hasSleepPreventingWork())) {
         releaseHeldBlocker()
       }
     }
+  }
+
+  private fun isSleepPreventionAllowed(): Boolean {
+    return settingFlow.value && !powerSaveModeFlow.value
   }
 
   private fun acquireBlocker() {
@@ -247,6 +259,15 @@ private fun createSleepPreventionSettingFlow(serviceScope: CoroutineScope): Stat
           flow.value = newValue as Boolean
         }
       }
+    })
+  return flow
+}
+
+private fun createPowerSaveModeFlow(serviceScope: CoroutineScope): StateFlow<Boolean> {
+  val flow = MutableStateFlow(PowerSaveMode.isEnabled())
+  ApplicationManager.getApplication().messageBus.connect(serviceScope)
+    .subscribe(PowerSaveMode.TOPIC, PowerSaveMode.Listener {
+      flow.value = PowerSaveMode.isEnabled()
     })
   return flow
 }
