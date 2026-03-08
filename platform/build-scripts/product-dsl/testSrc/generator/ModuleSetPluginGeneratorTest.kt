@@ -339,6 +339,7 @@ class ModuleSetPluginGeneratorTest {
 
   private fun vcsFrontendSplitModuleSet(): ModuleSet {
     return plugin("vcs.frontend.split", addToMainModule = false) {
+      module("intellij.platform.vcs.protocol.split.generated")
       module("intellij.platform.vcs.common.split")
       module("intellij.platform.vcs.frontend.split")
     }
