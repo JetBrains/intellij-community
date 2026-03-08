@@ -74,14 +74,14 @@ class AgentPromptPaletteViewStructureTest {
       val view = createAgentPromptPaletteView(
         promptArea = promptArea,
         contextChipsPanel = JPanel(),
-        codexPlanModeCheckBox = planModeCheckBox,
+        planModeCheckBox = planModeCheckBox,
         onProviderIconClicked = {},
         onExistingTaskSelected = {},
       )
 
       val planModeCheckBoxes = collectComponentsOfType(view.rootPanel, JBCheckBox::class.java)
       assertThat(planModeCheckBoxes).containsExactly(planModeCheckBox)
-      assertThat(view.codexPlanModeCheckBox).isSameAs(planModeCheckBox)
+      assertThat(view.planModeCheckBox).isSameAs(planModeCheckBox)
       assertThat(planModeCheckBox.isFocusable).isFalse()
     }
   }
@@ -96,7 +96,7 @@ class AgentPromptPaletteViewStructureTest {
       val view = createAgentPromptPaletteView(
         promptArea = promptArea,
         contextChipsPanel = JPanel(),
-        codexPlanModeCheckBox = planModeCheckBox,
+        planModeCheckBox = planModeCheckBox,
         onProviderIconClicked = {},
         onExistingTaskSelected = {},
       )

@@ -18,7 +18,7 @@ class ClaudeAgentSessionProviderBridgeTest {
   @Test
   fun buildNewEntryLaunchSpec() {
     assertThat(bridge.buildNewEntryLaunchSpec().command)
-      .containsExactly("claude")
+      .containsExactly("claude", "--permission-mode", "default")
     assertThat(bridge.buildNewEntryLaunchSpec().envVariables)
       .containsExactlyEntriesOf(mapOf("DISABLE_AUTOUPDATER" to "1"))
   }
@@ -38,13 +38,39 @@ class ClaudeAgentSessionProviderBridgeTest {
   }
 
   @Test
+  fun buildStandardLaunchSpec() {
+    assertThat(bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD).command)
+      .containsExactly("claude", "--permission-mode", "default")
+  }
+
+  @Test
+  fun buildLaunchSpecWithInitialPromptAddsPermissionModeDefault() {
+    val baseLaunchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+
+    val launchSpec = bridge.buildLaunchSpecWithInitialPrompt(baseLaunchSpec, "Refactor this")
+
+    assertThat(launchSpec.command)
+      .containsExactly("claude", "--permission-mode", "default", "--", "Refactor this")
+  }
+
+  @Test
+  fun buildLaunchSpecWithInitialPromptSwitchesToPlanMode() {
+    val baseLaunchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+
+    val launchSpec = bridge.buildLaunchSpecWithInitialPrompt(baseLaunchSpec, "/plan Refactor this")
+
+    assertThat(launchSpec.command)
+      .containsExactly("claude", "--permission-mode", "plan", "--", "Refactor this")
+  }
+
+  @Test
   fun buildLaunchSpecWithInitialPromptForResumeCommand() {
     val resumeLaunchSpec = bridge.buildResumeLaunchSpec("session-1")
 
     val launchSpec = bridge.buildLaunchSpecWithInitialPrompt(resumeLaunchSpec, "-summarize\nchanges")
 
     assertThat(launchSpec.command)
-      .containsExactly("claude", "--resume", "session-1", "--", "-summarize\nchanges")
+      .containsExactly("claude", "--resume", "session-1", "--permission-mode", "default", "--", "-summarize\nchanges")
     assertThat(launchSpec.envVariables)
       .containsExactlyEntriesOf(mapOf("DISABLE_AUTOUPDATER" to "1"))
   }
@@ -74,5 +100,43 @@ class ClaudeAgentSessionProviderBridgeTest {
     assertThat(message).doesNotContain("Metadata:")
     assertThat(message).doesNotContain("Items:")
     assertThat(message).doesNotContain("\"schema\"")
+  }
+
+  @Test
+  fun composeInitialMessagePrefixesPlanCommandWhenEnabled() {
+    val plan = bridge.buildInitialMessagePlan(
+      AgentPromptInitialMessageRequest(
+        prompt = "Refactor this",
+        planModeEnabled = true,
+      )
+    )
+    val message = checkNotNull(plan.message)
+
+    assertThat(message).isEqualTo("/plan Refactor this")
+    assertThat(plan.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND)
+    assertThat(plan.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS)
+  }
+
+  @Test
+  fun composeInitialMessageDoesNotDoublePrefixPlanCommand() {
+    val plan = bridge.buildInitialMessagePlan(
+      AgentPromptInitialMessageRequest(
+        prompt = " /plan Refactor this ",
+        planModeEnabled = true,
+      )
+    )
+    val message = checkNotNull(plan.message)
+
+    assertThat(message).isEqualTo("/plan Refactor this")
+  }
+
+  @Test
+  fun initialMessagePlanPoliciesDefaultWithoutPlanMode() {
+    val plan = bridge.buildInitialMessagePlan(
+      AgentPromptInitialMessageRequest(prompt = "Refactor this")
+    )
+
+    assertThat(plan.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND)
+    assertThat(plan.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK)
   }
 }

@@ -15,7 +15,7 @@ class AgentPromptUiSessionStateServiceTest {
       targetMode = PromptTargetMode.EXISTING_TASK,
       existingTaskSearch = "query",
       selectedExistingTaskId = "task-1",
-      codexPlanModeEnabled = false,
+      planModeEnabled = false,
     )
     val snapshot = AgentPromptUiContextRestoreSnapshot(
       contextFingerprint = Hashing.xxh3_128().hashCharsTo128Bits("context"),
@@ -55,7 +55,7 @@ class AgentPromptUiSessionStateServiceTest {
         targetMode = PromptTargetMode.EXISTING_TASK,
         existingTaskSearch = "query",
         selectedExistingTaskId = "task-1",
-        codexPlanModeEnabled = false,
+        planModeEnabled = false,
       )
     )
     service.saveContextRestoreSnapshot(
@@ -87,7 +87,7 @@ class AgentPromptUiSessionStateServiceTest {
         targetMode = PromptTargetMode.NEW_TASK,
         existingTaskSearch = "",
         selectedExistingTaskId = null,
-        codexPlanModeEnabled = true,
+        planModeEnabled = true,
       )
     )
 

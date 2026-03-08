@@ -93,7 +93,7 @@ class CodexAgentSessionProviderBridgeTest {
     val message = messageFor(bridge,
       AgentPromptInitialMessageRequest(
         prompt = "Refactor this",
-        codexPlanModeEnabled = true,
+        planModeEnabled = true,
       )
     )
 
@@ -105,7 +105,7 @@ class CodexAgentSessionProviderBridgeTest {
     val message = messageFor(bridge,
       AgentPromptInitialMessageRequest(
         prompt = " /plan Refactor this ",
-        codexPlanModeEnabled = true,
+        planModeEnabled = true,
       )
     )
 
@@ -123,7 +123,7 @@ class CodexAgentSessionProviderBridgeTest {
     val planModePlan = bridge.buildInitialMessagePlan(
       AgentPromptInitialMessageRequest(
         prompt = "Refactor this",
-        codexPlanModeEnabled = true,
+        planModeEnabled = true,
       )
     )
     assertThat(planModePlan.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.POST_START_ONLY)

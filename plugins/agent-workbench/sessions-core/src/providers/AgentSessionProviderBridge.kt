@@ -64,6 +64,9 @@ interface AgentSessionProviderBridge {
   val supportsArchiveThread: Boolean
     get() = false
 
+  val supportsPlanMode: Boolean
+    get() = false
+
   val supportsUnarchiveThread: Boolean
     get() = false
 

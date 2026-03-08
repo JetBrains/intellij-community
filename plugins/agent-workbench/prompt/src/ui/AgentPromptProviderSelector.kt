@@ -125,7 +125,7 @@ internal class AgentPromptProviderSelector(
   }
 
   private fun updateCodexPlanToggleVisibility() {
-    codexPlanModeCheckBox.isVisible = selectedProvider?.bridge?.provider == AgentSessionProvider.CODEX
+    codexPlanModeCheckBox.isVisible = selectedProvider?.bridge?.supportsPlanMode == true
   }
 
   private fun createProviderSelectionAction(item: AgentSessionProviderMenuItem, onSelected: (ProviderEntry) -> Unit): AnAction {

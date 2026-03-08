@@ -58,7 +58,7 @@ class AgentSessionCliTest {
     assertThat(buildAgentSessionEntryLaunchSpec(AgentSessionProvider.CODEX).command)
       .isEqualTo(listOf("codex", "-c", "check_for_update_on_startup=false"))
     assertThat(buildAgentSessionEntryLaunchSpec(AgentSessionProvider.CLAUDE).command)
-      .isEqualTo(listOf("claude"))
+      .isEqualTo(listOf("claude", "--permission-mode", "default"))
     assertThat(buildAgentSessionEntryLaunchSpec(AgentSessionProvider.CLAUDE).envVariables)
       .isEqualTo(mapOf("DISABLE_AUTOUPDATER" to "1"))
   }
@@ -66,7 +66,7 @@ class AgentSessionCliTest {
   @Test
   fun buildNewClaudeCommands() {
     assertThat(buildAgentSessionNewLaunchSpec(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.STANDARD).command)
-      .isEqualTo(listOf("claude"))
+      .isEqualTo(listOf("claude", "--permission-mode", "default"))
     assertThat(buildAgentSessionNewLaunchSpec(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.STANDARD).envVariables)
       .isEqualTo(mapOf("DISABLE_AUTOUPDATER" to "1"))
     assertThat(buildAgentSessionNewLaunchSpec(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.YOLO).command)
