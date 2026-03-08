@@ -110,7 +110,7 @@ private fun createThreadContainerDescriptors(
     JavaThreadContainerDesc(
       name = container.name,
       containerId = container.treeId,
-      parentContainerId = parentIds[container.treeId],
+      parentId = parentIds[container.treeId],
     )
   }
 }

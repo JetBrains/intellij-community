@@ -340,6 +340,8 @@ private fun buildThreadStates(
   val daemonField = findThreadField<BooleanType>(listOf("daemon", "isDaemon"), jlThreadType, fieldHolderType)
   val priorityField = findThreadField<IntegerType>("priority", jlThreadType, fieldHolderType)
   val tidField = findThreadField<LongType>("tid", jlThreadType, fieldHolderType)
+  val containerField = findThreadField<ClassType>("container", jlThreadType, null)
+  val rootThreadContainer = getRootThreadContainer(vmProxy)
 
   fun getFieldValue(field: Field?, threadReference: ThreadReference, fieldHolder: ObjectReference?): Value? {
     if (field == null) return null
@@ -388,7 +390,6 @@ private fun buildThreadStates(
       threadName = threadName(threadReference)
       stateString = threadStatusToState(threadStatus)
       javaThreadStateString = threadStatusToJavaThreadState(threadStatus)
-      threadContainerId = null // thread container is not provided for platform threads for now
 
       isVirtual = threadReference is ThreadReferenceImpl && threadReference.isVirtual
 
@@ -398,6 +399,10 @@ private fun buildThreadStates(
       isDaemon = getFieldValue(daemonField, threadReference, holderObj)?.let { (it as BooleanValue).booleanValue() } ?: false
       prio = getFieldValue(priorityField, threadReference, holderObj)?.let { (it as IntegerValue).intValue() }
       tid = getFieldValue(tidField, threadReference, holderObj)?.let { (it as LongValue).longValue() }
+      // Extract the thread container that this thread is in,
+      // threads that are not in the container are considered to be in the root container.
+      val container = getFieldValue(containerField, threadReference, null)?.let { it as? ObjectReference }
+      threadContainerId = container?.uniqueID() ?: rootThreadContainer?.uniqueID()
     }
     val threadState = ThreadState(threadName, stateString)
     threadState.javaThreadState = javaThreadStateString
@@ -538,6 +543,23 @@ private fun buildThreadStates(
   return result
 }
 
+private fun getRootThreadContainer(vm: VirtualMachineProxyImpl): ObjectReference? {
+  val type = vm.classesByName("jdk.internal.vm.ThreadContainers").firstOrNull() as? ClassType
+             ?: return null // e.g., in case of pre-Loom Java
+  val field = DebuggerUtils.findField(type, "ROOT_CONTAINER") ?: run {
+    logger<ThreadDumpAction>().error(
+      "ThreadContainers class has no field ROOT_CONTAINER. " +
+      "VM: ${vm.name()}, ${vm.version()}.")
+    return null
+  }
+  return type.getValue(field) as? ObjectReference ?: run {
+    logger<ThreadDumpAction>().error(
+      "ThreadContainers class has an unexpected value of the field ROOT_CONTAINER. " +
+      "VM: ${vm.name()}, ${vm.version()}.")
+    return null
+  }
+}
+
 private fun getStackTrace(threadReference: ThreadReference): String {
   val frames =
     try {
@@ -608,17 +630,21 @@ internal class JavaVirtualThreadsProvider : ThreadDumpItemsProviderFactory() {
       val threadIds = (evaluated.values[1] as ArrayReference).values
       val threadContainerNames = (evaluated.values[2] as ArrayReference).values.map { (it as StringReference).value() }
       val threadContainerRefs = (evaluated.values[3] as ArrayReference).values.map { it as ObjectReference }
-      val parentContainerOrdinals = (evaluated.values[4] as ArrayReference).values.map { (it as IntegerValue).intValue() }
+      val threadContainerOwners = (evaluated.values[4] as ArrayReference).values.map { it as? ObjectReference }
+      val parentContainerOrdinals = (evaluated.values[5] as ArrayReference).values.map { (it as IntegerValue).intValue() }
 
       require(threadContainerNames.size == threadContainerRefs.size) { "The number of thread container names should be equal the number of thread container references." }
+      require(threadContainerNames.size == threadContainerOwners.size) { "The number of thread container names should be equal the number of thread container owners." }
       require(threadContainerNames.size == parentContainerOrdinals.size) { "The number of thread container names should be equal the number of corresponding parent container ordinals." }
 
       val threadStates = buildVirtualThreadStates(packedThreadsAndStackTraces, threadIds, threadContainerRefs)
 
       val threadContainerDescriptors = threadContainerNames.indices.map { i ->
         val parentOrdinal = parentContainerOrdinals[i]
-        val parentContainerId = if (parentOrdinal == -1) null else threadContainerRefs[parentOrdinal].uniqueID()
-        JavaThreadContainerDesc(threadContainerNames[i], threadContainerRefs[i].uniqueID(), parentContainerId)
+        val parentContainerRef = if (parentOrdinal == -1) null else threadContainerRefs[parentOrdinal]
+        val ownerThread = threadContainerOwners[i]
+        // If owner thread of the thread container is null, then use its parent container to display the hierarchy.
+        JavaThreadContainerDesc(threadContainerNames[i], threadContainerRefs[i].uniqueID(), ownerThread?.uniqueID() ?: parentContainerRef?.uniqueID())
       }
       return toDumpItems(threadStates, threadContainerDescriptors)
     }
