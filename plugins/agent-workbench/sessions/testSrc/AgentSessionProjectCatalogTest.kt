@@ -2,13 +2,23 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.sessions.git.GitWorktreeInfo
+import com.intellij.agent.workbench.sessions.model.ProjectBuildSystemBadge
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.model.WorktreeEntry
+import com.intellij.agent.workbench.sessions.service.ProjectBuildSystemBadgeCatalogCache
+import com.intellij.agent.workbench.sessions.service.ProjectOpenProcessorSnapshot
 import com.intellij.agent.workbench.sessions.service.buildRepoProjectEntry
+import com.intellij.agent.workbench.sessions.service.detectProjectBuildSystemBadge
 import com.intellij.agent.workbench.sessions.service.resolveOpenProjectPath
 import com.intellij.agent.workbench.sessions.service.resolveRecentPathCandidate
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.projectImport.ProjectOpenProcessor
+import com.intellij.testFramework.LightVirtualFile
+import com.intellij.util.ui.EmptyIcon
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import javax.swing.Icon
 
 class AgentSessionProjectCatalogTest {
   @Test
@@ -131,4 +141,248 @@ class AgentSessionProjectCatalogTest {
 
     assertThat(entry).isEqualTo(mainRaw.copy(branch = "main", worktreeEntries = worktreeEntries))
   }
+
+  @Test
+  fun detectProjectBuildSystemBadgeUsesSingleIconfulProcessorMatch() {
+    val icon = EmptyIcon.create(16, 16)
+
+    val badge = detectProjectBuildSystemBadge(
+      file = LightVirtualFile("project"),
+      processors = listOf(MatchingGradleProcessor(icon = icon), MatchingNullIconProcessor()),
+    )
+
+    assertThat(badge).isNotNull()
+    assertThat(badge?.id).isEqualTo(MatchingGradleProcessor::class.java.name)
+    assertThat(badge?.icon).isSameAs(icon)
+  }
+
+  @Test
+  fun detectProjectBuildSystemBadgeFallsBackToGenericWhenMultipleProcessorsMatch() {
+    val badge = detectProjectBuildSystemBadge(
+      file = LightVirtualFile("project"),
+      processors = listOf(
+        MatchingGradleProcessor(icon = EmptyIcon.create(16, 16)),
+        MatchingMavenProcessor(icon = EmptyIcon.create(16, 16)),
+      ),
+    )
+
+    assertThat(badge).isNull()
+  }
+
+  @Test
+  fun buildSystemBadgeCacheReusesDetectedBadgeForResolvedPath() {
+    val cache = ProjectBuildSystemBadgeCatalogCache()
+    val snapshot = ProjectOpenProcessorSnapshot(emptyList())
+    val file = LightVirtualFile("project")
+    val badge = ProjectBuildSystemBadge("gradle", EmptyIcon.create(16, 16))
+    var resolveCalls = 0
+    var detectCalls = 0
+
+    val first = cache.getOrDetect(
+      normalizedPath = "/work/project-a",
+      snapshot = snapshot,
+      fileResolver = {
+        resolveCalls++
+        file
+      },
+      detector = { _, _ ->
+        detectCalls++
+        badge
+      },
+    )
+    val second = cache.getOrDetect(
+      normalizedPath = "/work/project-a",
+      snapshot = snapshot,
+      fileResolver = {
+        resolveCalls++
+        file
+      },
+      detector = { _, _ ->
+        detectCalls++
+        error("detector should not be called after cache hit")
+      },
+    )
+
+    assertThat(first).isSameAs(badge)
+    assertThat(second).isSameAs(badge)
+    assertThat(resolveCalls).isEqualTo(1)
+    assertThat(detectCalls).isEqualTo(1)
+  }
+
+  @Test
+  fun buildSystemBadgeCacheReusesNegativeResultForResolvedPath() {
+    val cache = ProjectBuildSystemBadgeCatalogCache()
+    val snapshot = ProjectOpenProcessorSnapshot(emptyList())
+    val file = LightVirtualFile("project")
+    var resolveCalls = 0
+    var detectCalls = 0
+
+    val first = cache.getOrDetect(
+      normalizedPath = "/work/project-a",
+      snapshot = snapshot,
+      fileResolver = {
+        resolveCalls++
+        file
+      },
+      detector = { _, _ ->
+        detectCalls++
+        null
+      },
+    )
+    val second = cache.getOrDetect(
+      normalizedPath = "/work/project-a",
+      snapshot = snapshot,
+      fileResolver = {
+        resolveCalls++
+        file
+      },
+      detector = { _, _ ->
+        detectCalls++
+        error("detector should not be called after negative cache hit")
+      },
+    )
+
+    assertThat(first).isNull()
+    assertThat(second).isNull()
+    assertThat(resolveCalls).isEqualTo(1)
+    assertThat(detectCalls).isEqualTo(1)
+  }
+
+  @Test
+  fun buildSystemBadgeCacheDoesNotCacheMissingVfsPath() {
+    val cache = ProjectBuildSystemBadgeCatalogCache()
+    val snapshot = ProjectOpenProcessorSnapshot(emptyList())
+    val file = LightVirtualFile("project")
+    var resolveCalls = 0
+    var detectCalls = 0
+    var fileAvailable = false
+    val badge = ProjectBuildSystemBadge("gradle", EmptyIcon.create(16, 16))
+
+    val first = cache.getOrDetect(
+      normalizedPath = "/work/project-a",
+      snapshot = snapshot,
+      fileResolver = {
+        resolveCalls++
+        if (fileAvailable) file else null
+      },
+      detector = { _, _ ->
+        detectCalls++
+        badge
+      },
+    )
+    fileAvailable = true
+    val second = cache.getOrDetect(
+      normalizedPath = "/work/project-a",
+      snapshot = snapshot,
+      fileResolver = {
+        resolveCalls++
+        if (fileAvailable) file else null
+      },
+      detector = { _, _ ->
+        detectCalls++
+        badge
+      },
+    )
+
+    assertThat(first).isNull()
+    assertThat(second).isSameAs(badge)
+    assertThat(resolveCalls).isEqualTo(2)
+    assertThat(detectCalls).isEqualTo(1)
+  }
+
+  @Test
+  fun buildSystemBadgeCacheClearsWhenProcessorSnapshotChanges() {
+    val cache = ProjectBuildSystemBadgeCatalogCache()
+    val firstSnapshot = ProjectOpenProcessorSnapshot(emptyList())
+    val secondSnapshot = ProjectOpenProcessorSnapshot(emptyList())
+    val file = LightVirtualFile("project")
+    var detectCalls = 0
+    val firstBadge = ProjectBuildSystemBadge("gradle", EmptyIcon.create(16, 16))
+    val secondBadge = ProjectBuildSystemBadge("maven", EmptyIcon.create(16, 16))
+
+    val first = cache.getOrDetect(
+      normalizedPath = "/work/project-a",
+      snapshot = firstSnapshot,
+      fileResolver = { file },
+      detector = { _, _ ->
+        detectCalls++
+        firstBadge
+      },
+    )
+    val second = cache.getOrDetect(
+      normalizedPath = "/work/project-a",
+      snapshot = secondSnapshot,
+      fileResolver = { file },
+      detector = { _, _ ->
+        detectCalls++
+        secondBadge
+      },
+    )
+
+    assertThat(first).isSameAs(firstBadge)
+    assertThat(second).isSameAs(secondBadge)
+    assertThat(detectCalls).isEqualTo(2)
+  }
+
+  @Test
+  fun buildSystemBadgeCachePrunesPathsOutsideActiveCatalogEntries() {
+    val cache = ProjectBuildSystemBadgeCatalogCache()
+    val snapshot = ProjectOpenProcessorSnapshot(emptyList())
+    val file = LightVirtualFile("project")
+    var removedPathDetectCalls = 0
+
+    cache.getOrDetect(
+      normalizedPath = "/work/project-a",
+      snapshot = snapshot,
+      fileResolver = { file },
+      detector = { _, _ -> ProjectBuildSystemBadge("gradle", EmptyIcon.create(16, 16)) },
+    )
+    cache.getOrDetect(
+      normalizedPath = "/work/project-b",
+      snapshot = snapshot,
+      fileResolver = { file },
+      detector = { _, _ ->
+        removedPathDetectCalls++
+        ProjectBuildSystemBadge("maven", EmptyIcon.create(16, 16))
+      },
+    )
+
+    cache.prune(setOf("/work/project-a"))
+    cache.getOrDetect(
+      normalizedPath = "/work/project-b",
+      snapshot = snapshot,
+      fileResolver = { file },
+      detector = { _, _ ->
+        removedPathDetectCalls++
+        ProjectBuildSystemBadge("maven", EmptyIcon.create(16, 16))
+      },
+    )
+
+    assertThat(removedPathDetectCalls).isEqualTo(2)
+  }
+
+  private abstract class TestProjectOpenProcessor(
+    private val processorName: String,
+    private val matches: Boolean,
+    private val processorIcon: Icon?,
+  ) : ProjectOpenProcessor() {
+    override val name: String
+      get() = processorName
+
+    override fun canOpenProject(file: VirtualFile): Boolean = matches
+
+    override fun getIcon(file: VirtualFile): Icon? = processorIcon
+
+    override suspend fun openProjectAsync(
+      virtualFile: VirtualFile,
+      projectToClose: Project?,
+      forceOpenInNewFrame: Boolean,
+    ): Project? = null
+  }
+
+  private class MatchingGradleProcessor(icon: Icon?) : TestProjectOpenProcessor("Gradle", true, icon)
+
+  private class MatchingMavenProcessor(icon: Icon?) : TestProjectOpenProcessor("Maven", true, icon)
+
+  private class MatchingNullIconProcessor : TestProjectOpenProcessor("Generic", true, null)
 }

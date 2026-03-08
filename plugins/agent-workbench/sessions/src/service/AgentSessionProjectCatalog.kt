@@ -8,23 +8,35 @@ import com.intellij.agent.workbench.sessions.git.GitWorktreeDiscovery
 import com.intellij.agent.workbench.sessions.git.GitWorktreeInfo
 import com.intellij.agent.workbench.sessions.git.shortBranchName
 import com.intellij.agent.workbench.sessions.git.worktreeDisplayName
+import com.intellij.agent.workbench.sessions.model.ProjectBuildSystemBadge
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.model.WorktreeEntry
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.ProjectUtil.isSameProject
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.projectImport.ProjectOpenProcessor
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.name
 
+private val LOG = logger<AgentSessionProjectCatalog>()
+
 internal class AgentSessionProjectCatalog {
+  private val projectBuildSystemBadgeCache = ProjectBuildSystemBadgeCatalogCache()
+
   suspend fun collectProjects(): List<ProjectEntry> {
     val rawEntries = collectRawProjectEntries()
     if (rawEntries.isEmpty()) return emptyList()
@@ -44,7 +56,7 @@ internal class AgentSessionProjectCatalog {
     rawEntries.forEachIndexed { index, entry ->
       val repoRoot = repoRootByPath[entry.path]
       if (repoRoot != null) {
-        val group = repoGroups.getOrPut(repoRoot) {
+        val group = repoGroups.computeIfAbsent(repoRoot) {
           RepoGroup(repoRoot, mutableListOf())
         }
         group.members.add(IndexedValue(index, entry))
@@ -82,9 +94,125 @@ internal class AgentSessionProjectCatalog {
       resultEntries.add(indexed)
     }
 
-    return resultEntries.sortedBy { it.index }.map { it.value }
+    return withProjectBuildSystemBadges(resultEntries.sortedBy { it.index }.map { it.value })
   }
 
+  private suspend fun withProjectBuildSystemBadges(entries: List<ProjectEntry>): List<ProjectEntry> = withContext(Dispatchers.IO) {
+    val snapshot = currentProjectOpenProcessorSnapshot()
+    val entriesWithBadges = ArrayList<ProjectEntry>(entries.size)
+    val activePaths = LinkedHashSet<String>(entries.size)
+
+    for (entry in entries) {
+      val normalizedPath = normalizeAgentWorkbenchPath(entry.path)
+      activePaths.add(normalizedPath)
+      val buildSystemBadge = projectBuildSystemBadgeCache.getOrDetect(
+        normalizedPath = normalizedPath,
+        snapshot = snapshot,
+        fileResolver = ::resolveProjectVirtualFile,
+        detector = ::detectProjectBuildSystemBadge,
+      )
+      entriesWithBadges.add(if (buildSystemBadge == null) entry else entry.copy(buildSystemBadge = buildSystemBadge))
+    }
+
+    projectBuildSystemBadgeCache.prune(activePaths)
+    return@withContext entriesWithBadges
+  }
+}
+
+internal data class ProjectOpenProcessorSnapshot(
+  @JvmField val processors: List<ProjectOpenProcessor>,
+)
+
+private fun currentProjectOpenProcessorSnapshot(): ProjectOpenProcessorSnapshot {
+  return ProjectOpenProcessor.EXTENSION_POINT_NAME.computeIfAbsent(ProjectOpenProcessorSnapshot::class.java) {
+    ProjectOpenProcessorSnapshot(ProjectOpenProcessor.EXTENSION_POINT_NAME.extensionList.toList())
+  }
+}
+
+internal class ProjectBuildSystemBadgeCatalogCache {
+  private sealed interface CachedBadge {
+    fun asBadgeOrNull(): ProjectBuildSystemBadge?
+
+    data class Present(@JvmField val badge: ProjectBuildSystemBadge) : CachedBadge {
+      override fun asBadgeOrNull(): ProjectBuildSystemBadge = badge
+    }
+
+    data object NoBadge : CachedBadge {
+      override fun asBadgeOrNull(): ProjectBuildSystemBadge? = null
+    }
+  }
+
+  private val projectBuildSystemBadgeByPath = ConcurrentHashMap<String, CachedBadge>()
+
+  @Volatile
+  private var cachedProcessorSnapshot: ProjectOpenProcessorSnapshot? = null
+
+  fun getOrDetect(
+    normalizedPath: String,
+    snapshot: ProjectOpenProcessorSnapshot,
+    fileResolver: (String) -> VirtualFile?,
+    detector: (VirtualFile?, Iterable<ProjectOpenProcessor>) -> ProjectBuildSystemBadge?,
+  ): ProjectBuildSystemBadge? {
+    if (cachedProcessorSnapshot !== snapshot) {
+      projectBuildSystemBadgeByPath.clear()
+      cachedProcessorSnapshot = snapshot
+    }
+
+    val cachedBadge = projectBuildSystemBadgeByPath[normalizedPath]
+    if (cachedBadge != null) {
+      return cachedBadge.asBadgeOrNull()
+    }
+
+    val file = fileResolver(normalizedPath) ?: return null
+    val detectedBadge = detector(file, snapshot.processors)
+    val computedBadge = if (detectedBadge == null) CachedBadge.NoBadge else CachedBadge.Present(detectedBadge)
+    val previousBadge = projectBuildSystemBadgeByPath.putIfAbsent(normalizedPath, computedBadge)
+    return previousBadge?.asBadgeOrNull() ?: detectedBadge
+  }
+
+  fun prune(activePaths: Set<String>) {
+    for (cachedPath in projectBuildSystemBadgeByPath.keys) {
+      if (cachedPath !in activePaths) {
+        projectBuildSystemBadgeByPath.remove(cachedPath)
+      }
+    }
+  }
+}
+
+private fun resolveProjectVirtualFile(
+  path: String,
+  fileSystem: LocalFileSystem = LocalFileSystem.getInstance(),
+): VirtualFile? {
+  return fileSystem.findFileByPath(path)
+}
+
+internal fun detectProjectBuildSystemBadge(
+  file: VirtualFile?,
+  processors: Iterable<ProjectOpenProcessor> = ProjectOpenProcessor.EXTENSION_POINT_NAME.extensionList,
+): ProjectBuildSystemBadge? {
+  if (file == null || !file.isValid) {
+    return null
+  }
+
+  var matchedBadge: ProjectBuildSystemBadge? = null
+  for (processor in processors) {
+    val badge = runCatching {
+      if (!processor.canOpenProject(file)) {
+        return@runCatching null
+      }
+      val icon = processor.getIcon(file) ?: return@runCatching null
+      ProjectBuildSystemBadge(id = processor.javaClass.name, icon = icon)
+    }
+      .onFailure { LOG.warn("Failed to resolve project build-system badge for ${file.path} using ${processor.javaClass.name}", it) }
+      .getOrNull()
+      ?: continue
+
+    if (matchedBadge != null) {
+      return null
+    }
+    matchedBadge = badge
+  }
+  return matchedBadge
 }
 
 internal fun buildRepoProjectEntry(
