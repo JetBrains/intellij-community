@@ -222,6 +222,8 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 - Default project visibility must include all open projects and up to 3 closed recent projects; additional closed projects appear behind `More`.
 - Thread rows use a provider-aware leading icon with an overlay badge colored by normalized `AgentThreadActivity`, and rows show a right-aligned relative activity time.
 - Thread rows must not render inline provider status text; badges and tooltip status lines must use normalized `AgentThreadActivity` values (`READY`, `PROCESSING`, `REVIEWING`, `UNREAD`).
+  [@test] ../sessions/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsCodexActivityRenderingIntegrationTest.kt
 - Thread-row archive context menu applies to current multi-selection when invoked from a selected thread and shows `Archive Selected (N)` when `N > 1`.
 - Single-click on normal rows selects only; open happens on Enter or double-click.
 - On rows that are both openable and parents, double-click opens/focuses instead of expanding/collapsing.
