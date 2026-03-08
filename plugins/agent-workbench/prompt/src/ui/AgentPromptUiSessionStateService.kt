@@ -29,6 +29,7 @@ internal data class AgentPromptUiDraft(
   @JvmField val existingTaskSearch: String = "",
   @JvmField val selectedExistingTaskId: String? = null,
   @JvmField val codexPlanModeEnabled: Boolean = true,
+  @JvmField val taskDrafts: Map<String, String> = emptyMap(),
 )
 
 internal data class AgentPromptUiContextRestoreSnapshot(
