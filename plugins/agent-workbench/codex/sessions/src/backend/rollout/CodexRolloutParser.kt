@@ -51,7 +51,7 @@ internal class CodexRolloutParser(
     val normalizedCwd = normalizeRootPath(state.sessionCwd ?: return null)
     val resolvedSessionId = state.sessionId ?: return null
     val hasUnread = state.latestAgentMessageAt > state.latestUserMessageAt
-    val hasPendingUserInput = state.pendingUserInputAt != null
+    val hasPendingUserInput = state.pendingUserInputByCallId.isNotEmpty()
     val activity = resolveCodexSessionActivity(
       CodexActivitySignals(
         statusKind = CodexThreadStatusKind.IDLE,
@@ -108,9 +108,9 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
         "user_message" -> {
           parseState.latestUserMessageAt = maxTimestamp(parseState.latestUserMessageAt, eventTimestamp)
           parseState.title = parseState.title ?: extractTitle(event.payloadMessage)
-          val pendingInputAt = parseState.pendingUserInputAt
+          val pendingInputAt = parseState.latestPendingUserInputAt()
           if (pendingInputAt != null && eventTimestamp != null && eventTimestamp >= pendingInputAt) {
-            parseState.pendingUserInputAt = null
+            parseState.pendingUserInputByCallId.clear()
           }
         }
 
@@ -123,7 +123,7 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
         }
 
         "request_user_input" -> {
-          parseState.pendingUserInputAt = maxTimestamp(parseState.pendingUserInputAt ?: Long.MIN_VALUE, eventTimestamp)
+          parseState.markPendingUserInput(eventTimestamp = eventTimestamp, callId = event.payloadCallId)
         }
 
         "entered_review_mode" -> parseState.reviewing = true
@@ -132,19 +132,31 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
     }
 
     "response_item" -> {
-      if (event.payloadType == "message") {
-        when (event.payloadRole) {
-          "user" -> {
-            parseState.latestUserMessageAt = maxTimestamp(parseState.latestUserMessageAt, eventTimestamp)
-            val pendingInputAt = parseState.pendingUserInputAt
-            if (pendingInputAt != null && eventTimestamp != null && eventTimestamp >= pendingInputAt) {
-              parseState.pendingUserInputAt = null
+      when (event.payloadType) {
+        "message" -> {
+          when (event.payloadRole) {
+            "user" -> {
+              parseState.latestUserMessageAt = maxTimestamp(parseState.latestUserMessageAt, eventTimestamp)
+              val pendingInputAt = parseState.latestPendingUserInputAt()
+              if (pendingInputAt != null && eventTimestamp != null && eventTimestamp >= pendingInputAt) {
+                parseState.pendingUserInputByCallId.clear()
+              }
+            }
+
+            "assistant" -> {
+              parseState.latestAgentMessageAt = maxTimestamp(parseState.latestAgentMessageAt, eventTimestamp)
             }
           }
+        }
 
-          "assistant" -> {
-            parseState.latestAgentMessageAt = maxTimestamp(parseState.latestAgentMessageAt, eventTimestamp)
+        "function_call" -> {
+          if (event.payloadName == "request_user_input") {
+            parseState.markPendingUserInput(eventTimestamp = eventTimestamp, callId = event.payloadCallId)
           }
+        }
+
+        "function_call_output" -> {
+          event.payloadCallId?.let(parseState.pendingUserInputByCallId::remove)
         }
       }
     }
@@ -160,6 +172,8 @@ private fun parseEvent(parser: JsonParser): RolloutEvent? {
     var payloadType: String? = null
     var payloadRole: String? = null
     var payloadMessage: String? = null
+    var payloadName: String? = null
+    var payloadCallId: String? = null
     var payloadThreadName: String? = null
     var sessionId: String? = null
     var sessionCwd: String? = null
@@ -178,6 +192,8 @@ private fun parseEvent(parser: JsonParser): RolloutEvent? {
                 "type" -> payloadType = readStringOrNull(parser)
                 "role" -> payloadRole = readStringOrNull(parser)
                 "message" -> payloadMessage = readStringOrNull(parser)
+                "name" -> payloadName = readStringOrNull(parser)
+                "call_id" -> payloadCallId = readStringOrNull(parser)
                 "thread_name", "threadName" -> payloadThreadName = readStringOrNull(parser)
                 "id" -> sessionId = readStringOrNull(parser)
                 "cwd" -> sessionCwd = readStringOrNull(parser)
@@ -211,6 +227,8 @@ private fun parseEvent(parser: JsonParser): RolloutEvent? {
       payloadType = payloadType,
       payloadRole = payloadRole,
       payloadMessage = payloadMessage,
+      payloadName = payloadName,
+      payloadCallId = payloadCallId,
       payloadThreadName = payloadThreadName,
       sessionId = sessionId,
       sessionCwd = sessionCwd,
@@ -236,6 +254,8 @@ private data class RolloutEvent(
   @JvmField val payloadType: String?,
   @JvmField val payloadRole: String?,
   @JvmField val payloadMessage: String?,
+  @JvmField val payloadName: String?,
+  @JvmField val payloadCallId: String?,
   @JvmField val payloadThreadName: String?,
   @JvmField val sessionId: String?,
   @JvmField val sessionCwd: String?,
@@ -255,8 +275,19 @@ private data class RolloutParseState(
   @JvmField var reviewing: Boolean = false,
   @JvmField var latestUserMessageAt: Long = Long.MIN_VALUE,
   @JvmField var latestAgentMessageAt: Long = Long.MIN_VALUE,
-  @JvmField var pendingUserInputAt: Long? = null,
+  @JvmField val pendingUserInputByCallId: LinkedHashMap<String, Long> = LinkedHashMap(),
+  @JvmField var nextSyntheticPendingUserInputId: Int = 0,
 )
+
+private fun RolloutParseState.latestPendingUserInputAt(): Long? {
+  return pendingUserInputByCallId.values.maxOrNull()
+}
+
+private fun RolloutParseState.markPendingUserInput(eventTimestamp: Long?, callId: String?) {
+  val resolvedTimestamp = eventTimestamp ?: updatedAt
+  val resolvedCallId = callId ?: "pending-user-input-${nextSyntheticPendingUserInputId++}"
+  pendingUserInputByCallId.merge(resolvedCallId, resolvedTimestamp, ::maxOf)
+}
 
 private fun parseIsoTimestamp(value: String?): Long? {
   val text = value?.trim().takeIf { !it.isNullOrEmpty() } ?: return null

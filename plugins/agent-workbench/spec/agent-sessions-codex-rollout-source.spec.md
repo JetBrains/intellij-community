@@ -62,6 +62,10 @@ Define Codex thread-list behavior where discovery and primary status projection 
   [@test] ../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
   [@test] ../codex/sessions/testSrc/CodexSessionSourceRolloutIntegrationTest.kt
 
+- A local-gated real Codex TUI integration suite must verify the production rollout path `codex TUI -> rollout jsonl -> CodexRolloutSessionBackend -> CodexRolloutRefreshHintsProvider -> CodexSessionSource` for passive unread after completed assistant output with read-tracking suppression, stale-`ready` override by fresher `processing`, and `request_user_input` response-required unread.
+  Deterministic rollout parser/backend tests remain the owner for canonical event-shape matrices and review-mode coverage.
+  [@test] ../codex/sessions/testSrc/CodexSessionSourceRealTuiIntegrationTest.kt
+
 - App-server refresh hints must map `thread/read` snapshot status and flags to Codex activity states (`unread`, `reviewing`, `processing`, `ready`) using the normalization rules below.
   [@test] ../codex/sessions/testSrc/backend/CodexSessionActivityResolverTest.kt
   [@test] ../codex/sessions/testSrc/backend/appserver/CodexAppServerRefreshHintsProviderTest.kt
@@ -137,7 +141,7 @@ Define Codex thread-list behavior where discovery and primary status projection 
 - Rollout review-mode signals must come from current Codex `event_msg` payload types `entered_review_mode` and `exited_review_mode`.
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
-- Rollout response-required unread must come from current Codex `event_msg` payload type `request_user_input`.
+- Rollout response-required unread must be detected from current Codex rollout signals: canonical `event_msg` payload type `request_user_input` and persisted `response_item` function calls named `request_user_input`.
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
 - Title normalization must:
@@ -187,7 +191,7 @@ Define Codex thread-list behavior where discovery and primary status projection 
 
 ## Data & Backend
 - `updatedAt` derives from latest event timestamp with file mtime fallback.
-- `response_item` contributes to activity timing but not title source extraction.
+- `response_item` contributes to activity timing and pending user-input detection, but not title source extraction.
 - Branch value comes from rollout session metadata when present; no branch fallback store is used.
 - Listing stays app-server-backed; write operations (`thread/start`, `thread/archive`, `thread/unarchive`, persistence calls) remain app-server RPC.
 - Refresh hints merge app-server and rollout signals after app-server raw status normalization, with rollout able to fill missing activity, raise activity to unread, or override stale non-response-required app-server hints with fresher `processing` or `reviewing` activity.
@@ -201,11 +205,16 @@ Define Codex thread-list behavior where discovery and primary status projection 
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexRolloutSessionBackendTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexRolloutSessionBackendFileWatchIntegrationTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexRolloutSessionsWatcherTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexSessionSourceRealTuiIntegrationTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexSessionBackendSelectorTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivityResolverTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexAppServerSessionBackendTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.backend.appserver.CodexAppServerRefreshHintsProviderTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexSessionSourceRefreshHintsTest'`
+
+Local-gated real TUI suite:
+- `CodexSessionSourceRealTuiIntegrationTest` skips unless a real `codex` CLI is available and PTY support is available on the host platform.
+- The real TUI suite asserts the actual limited-rollout contract written by Codex TUI: completed assistant output is initially passive unread until Workbench read tracking suppresses it, and `request_user_input` is detected from persisted `response_item` tool calls.
 
 ## Open Questions / Risks
 - Cross-platform filesystem event differences can still produce edge-case rescan spikes under heavy write churn.

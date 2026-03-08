@@ -107,6 +107,28 @@ class CodexRolloutSessionBackendTest {
           expectedRequiresResponse = true,
         ),
         ActivityCase(
+          id = "session-pending-input-function-call",
+          eventLines = listOf(
+            responseItemFunctionCall(
+              timestamp = "2026-02-13T11:02:10.000Z",
+              callId = "call-request-user-input",
+            )
+          ),
+          expected = CodexSessionActivity.UNREAD,
+          expectedRequiresResponse = true,
+        ),
+        ActivityCase(
+          id = "session-cleared-input-function-call-output",
+          eventLines = listOf(
+            responseItemFunctionCall(
+              timestamp = "2026-02-13T11:02:20.000Z",
+              callId = "call-cleared-user-input",
+            ),
+            """{"timestamp":"2026-02-13T11:02:21.000Z","type":"response_item","payload":{"type":"function_call_output","call_id":"call-cleared-user-input","output":"ok"}}""",
+          ),
+          expected = CodexSessionActivity.READY,
+        ),
+        ActivityCase(
           id = "session-processing-over-unread",
           eventLines = listOf(
             """{"timestamp":"2026-02-13T11:03:05.000Z","type":"event_msg","payload":{"type":"task_started"}}""",
@@ -736,6 +758,10 @@ private fun drainUpdateChannel(updates: Channel<Unit>) {
 
 private fun sessionMetaLine(timestamp: String, id: String, cwd: Path): String {
   return """{"timestamp":"$timestamp","type":"session_meta","payload":{"id":"$id","timestamp":"$timestamp","cwd":"${cwd.toString().replace("\\", "\\\\")}"}}"""
+}
+
+private fun responseItemFunctionCall(timestamp: String, callId: String): String {
+  return """{"timestamp":"$timestamp","type":"response_item","payload":{"type":"function_call","name":"request_user_input","arguments":"{}","call_id":"$callId"}}"""
 }
 
 private fun sessionMetaLineWithoutId(cwd: Path): String {
