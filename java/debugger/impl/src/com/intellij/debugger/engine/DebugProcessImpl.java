@@ -1010,6 +1010,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return project;
   }
 
+  public @NotNull CoroutineScope childScope(@NotNull String name) {
+    return com.intellij.platform.util.coroutines.CoroutineScopeKt
+      .childScope(myCoroutineScope, name, EmptyCoroutineContext.INSTANCE, true);
+  }
+
   public boolean canRedefineClasses() {
     VirtualMachineProxyImpl vm = getManagerThread().getVmProxy();
     return vm != null && vm.canRedefineClasses();
