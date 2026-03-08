@@ -104,6 +104,81 @@ class AgentSessionSleepPreventionServiceTest {
   }
 
   @Test
+  fun powerSaveModeBlocksAcquireWhileWorkIsActive() {
+    val fixture = sleepPreventionFixture(powerSaveEnabled = true)
+
+    fixture.stateFlow.value = sessionsState(projectThreads = listOf(activeThread(AgentThreadActivity.PROCESSING)))
+    fixture.service.refreshState()
+
+    assertThat(fixture.inhibitor.acquireCalls).isZero()
+    assertThat(fixture.inhibitor.releaseCalls).isZero()
+    fixture.dispose()
+  }
+
+  @Test
+  fun enablingPowerSaveModeReleasesImmediately() {
+    val fixture = sleepPreventionFixture()
+    fixture.stateFlow.value = sessionsState(projectThreads = listOf(activeThread(AgentThreadActivity.PROCESSING)))
+    fixture.service.refreshState()
+
+    fixture.powerSaveModeFlow.value = true
+    fixture.service.refreshState()
+
+    assertThat(fixture.inhibitor.releaseCalls).isEqualTo(1)
+    assertThat(fixture.scheduler.pendingCount()).isZero()
+    fixture.dispose()
+  }
+
+  @Test
+  fun disablingPowerSaveModeReacquiresWhileWorkIsStillActive() {
+    val fixture = sleepPreventionFixture(powerSaveEnabled = true)
+    fixture.stateFlow.value = sessionsState(projectThreads = listOf(activeThread(AgentThreadActivity.PROCESSING)))
+    fixture.service.refreshState()
+    assertThat(fixture.inhibitor.acquireCalls).isZero()
+
+    fixture.powerSaveModeFlow.value = false
+    fixture.service.refreshState()
+
+    assertThat(fixture.inhibitor.acquireCalls).isEqualTo(1)
+    fixture.dispose()
+  }
+
+  @Test
+  fun enablingSettingWhilePowerSaveModeIsOnWaitsUntilPowerSaveModeTurnsOff() {
+    val fixture = sleepPreventionFixture(enabled = false, powerSaveEnabled = true)
+    fixture.stateFlow.value = sessionsState(projectThreads = listOf(activeThread(AgentThreadActivity.PROCESSING)))
+    fixture.service.refreshState()
+
+    fixture.settingFlow.value = true
+    fixture.service.refreshState()
+    assertThat(fixture.inhibitor.acquireCalls).isZero()
+
+    fixture.powerSaveModeFlow.value = false
+    fixture.service.refreshState()
+
+    assertThat(fixture.inhibitor.acquireCalls).isEqualTo(1)
+    fixture.dispose()
+  }
+
+  @Test
+  fun powerSaveModeCancelsPendingReleaseAndReleasesImmediately() {
+    val fixture = sleepPreventionFixture()
+    fixture.stateFlow.value = sessionsState(projectThreads = listOf(activeThread(AgentThreadActivity.PROCESSING)))
+    fixture.service.refreshState()
+
+    fixture.stateFlow.value = sessionsState()
+    fixture.service.refreshState()
+    assertThat(fixture.scheduler.pendingCount()).isEqualTo(1)
+
+    fixture.powerSaveModeFlow.value = true
+    fixture.service.refreshState()
+
+    assertThat(fixture.inhibitor.releaseCalls).isEqualTo(1)
+    assertThat(fixture.scheduler.pendingCount()).isZero()
+    fixture.dispose()
+  }
+
+  @Test
   fun enablingSettingWhileWorkIsAlreadyActiveAcquiresImmediately() {
     val fixture = sleepPreventionFixture(enabled = false)
     fixture.stateFlow.value = sessionsState(projectThreads = listOf(activeThread(AgentThreadActivity.PROCESSING)))
@@ -138,6 +213,24 @@ class AgentSessionSleepPreventionServiceTest {
   }
 
   @Test
+  fun observedPowerSaveModeChangesReleaseAndReacquireWithoutManualRefresh() {
+    val fixture = sleepPreventionFixture(observeStateChanges = true)
+
+    fixture.stateFlow.value = sessionsState(projectThreads = listOf(activeThread(AgentThreadActivity.PROCESSING)))
+    fixture.service.awaitProcessing()
+    assertThat(fixture.inhibitor.acquireCalls).isEqualTo(1)
+
+    fixture.powerSaveModeFlow.value = true
+    fixture.service.awaitProcessing()
+    assertThat(fixture.inhibitor.releaseCalls).isEqualTo(1)
+
+    fixture.powerSaveModeFlow.value = false
+    fixture.service.awaitProcessing()
+    assertThat(fixture.inhibitor.acquireCalls).isEqualTo(2)
+    fixture.dispose()
+  }
+
+  @Test
   fun disposeReleasesImmediately() {
     val fixture = sleepPreventionFixture()
     fixture.stateFlow.value = sessionsState(projectThreads = listOf(activeThread(AgentThreadActivity.PROCESSING)))
@@ -154,6 +247,7 @@ private data class SleepPreventionFixture(
   val scope: CoroutineScope,
   val stateFlow: MutableStateFlow<AgentSessionsState>,
   val settingFlow: MutableStateFlow<Boolean>,
+  val powerSaveModeFlow: MutableStateFlow<Boolean>,
   val inhibitor: RecordingServiceSleepInhibitor,
   val scheduler: ManualSleepReleaseScheduler,
   val service: AgentSessionSleepPreventionService,
@@ -164,11 +258,16 @@ private data class SleepPreventionFixture(
   }
 }
 
-private fun sleepPreventionFixture(enabled: Boolean = true, observeStateChanges: Boolean = false): SleepPreventionFixture {
+private fun sleepPreventionFixture(
+  enabled: Boolean = true,
+  powerSaveEnabled: Boolean = false,
+  observeStateChanges: Boolean = false,
+): SleepPreventionFixture {
   @Suppress("RAW_SCOPE_CREATION")
   val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
   val stateFlow = MutableStateFlow(AgentSessionsState())
   val settingFlow = MutableStateFlow(enabled)
+  val powerSaveModeFlow = MutableStateFlow(powerSaveEnabled)
   val inhibitor = RecordingServiceSleepInhibitor()
   val scheduler = ManualSleepReleaseScheduler()
   val processingContext = TestAgentSleepPreventionExecutionContext()
@@ -176,13 +275,14 @@ private fun sleepPreventionFixture(enabled: Boolean = true, observeStateChanges:
     serviceScope = scope,
     sessionsStateFlow = stateFlow,
     settingFlow = settingFlow,
+    powerSaveModeFlow = powerSaveModeFlow,
     sleepInhibitor = inhibitor,
     releaseSchedulerFactory = { scheduler },
     processingContext = processingContext,
     releaseDebounceMillis = 30_000,
     observeStateChanges = observeStateChanges,
   )
-  return SleepPreventionFixture(scope, stateFlow, settingFlow, inhibitor, scheduler, service)
+  return SleepPreventionFixture(scope, stateFlow, settingFlow, powerSaveModeFlow, inhibitor, scheduler, service)
 }
 
 private fun sessionsState(
