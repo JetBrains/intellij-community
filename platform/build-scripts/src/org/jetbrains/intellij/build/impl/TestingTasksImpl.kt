@@ -334,7 +334,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           excludedRootPaths.addAll(context.outputProvider.getModuleOutputRoots(module, forTests = true))
         }
       }
-      val excludedRoots = replaceAllWithArchivedIfNeeded(excludedRootPaths).map(Path::toString)
+      val excludedRoots = excludedRootPaths.map(Path::toString)
 
       val excludedRootsFile = context.paths.tempDir.resolve("excluded.classpath")
       Files.createDirectories(excludedRootsFile.parent)
@@ -471,17 +471,17 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val moduleInfoFile = JpsJavaExtensionService.getInstance().getJavaModuleIndex(context.project).getModuleInfoFile(mainJpsModule, true)
     val toExistingAbsolutePathConverter: (Path) -> String = { require(Files.exists(it)); it.toAbsolutePath().normalize().toString() }
     if (moduleInfoFile != null) {
-      val outputDir = ModuleBuildTarget(mainJpsModule, JavaModuleBuildTargetType.TEST).outputDir
+      val outputDir = outputProvider.getModuleOutputRoots(mainJpsModule, forTests = true).single().let(Path::toFile)
       val pair = ModulePathSplitter().splitPath(moduleInfoFile, mutableSetOf(outputDir), testRoots.map {
         @Suppress("IO_FILE_USAGE")
         it.toFile()
       })
-      modulePath = replaceAllWithArchivedIfNeeded(pair.first.path.map { it.toPath() }).map(toExistingAbsolutePathConverter)
-      testClasspath = replaceAllWithArchivedIfNeeded(pair.second.map { it.toPath() }).map(toExistingAbsolutePathConverter)
+      modulePath = pair.first.path.map { it.toPath() }.map(toExistingAbsolutePathConverter)
+      testClasspath = pair.second.map { it.toPath() }.map(toExistingAbsolutePathConverter)
     }
     else {
       modulePath = null
-      testClasspath = replaceAllWithArchivedIfNeeded(testRoots).map(toExistingAbsolutePathConverter)
+      testClasspath = testRoots.map(toExistingAbsolutePathConverter)
     }
 
     if (!searchForTestsAcrossModuleDependencies) {  // don't modify testClasspath
@@ -496,7 +496,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val classpathFile = context.paths.tempDir.resolve("junit.classpath")
     Files.createDirectories(classpathFile.parent)
     // this is required to collect tests both on class and module paths
-    Files.writeString(classpathFile, replaceAllWithArchivedIfNeeded(testRoots).joinToString(separator = "\n", transform = toExistingAbsolutePathConverter))
+    Files.writeString(classpathFile, testRoots.joinToString(separator = "\n", transform = toExistingAbsolutePathConverter))
     @Suppress("NAME_SHADOWING")
     val systemProperties = systemProperties.toMutableMap()
     systemProperties.put("io.netty.allocator.type", "pooled")
@@ -555,15 +555,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       devBuildServerSettings = devBuildServerSettings,
     )
     notifySnapshotBuilt(allJvmArgs)
-  }
-
-  private suspend fun replaceAllWithArchivedIfNeeded(files: List<Path>, context: CompilationContext = this.context): List<Path> {
-    return when (context) {
-      is BuildContextImpl -> replaceAllWithArchivedIfNeeded(files, context.compilationContext)
-      is ArchivedCompilationContext -> context.replaceAllWithCompressedIfNeeded(files)
-      is BazelCompilationContext -> context.replaceAllWithCompressedIfNeeded(files)
-      else -> files
-    }
   }
 
   private suspend fun getRuntimeExecutablePath(): Path {

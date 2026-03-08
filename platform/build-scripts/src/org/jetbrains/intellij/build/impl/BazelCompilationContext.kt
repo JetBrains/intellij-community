@@ -28,7 +28,6 @@ import org.jetbrains.jps.model.module.JpsModuleReference
 import java.net.URI
 import java.nio.file.Path
 import kotlin.io.path.inputStream
-import kotlin.io.path.name
 import kotlin.io.path.pathString
 
 @Internal
@@ -121,26 +120,6 @@ class BazelCompilationContext(
   }
 
   override suspend fun withCompilationLock(block: suspend () -> Unit): Unit = delegate.withCompilationLock(block)
-
-  fun replaceAllWithCompressedIfNeeded(files: List<Path>): List<Path> {
-    val out = ArrayList<Path>(files.size)
-    for (path in files) {
-      if (!path.startsWith(classesOutputDirectory)) {
-        out.add(path)
-        continue
-      }
-
-      val module = outputProvider.findModule(path.name)
-      if (module == null) {
-        out.add(path)
-        continue
-      }
-
-      val roots = outputProvider.getModuleOutputRoots(module, path.parent.name == "test")
-      out.addAll(roots)
-    }
-    return out
-  }
 }
 
 internal class BazelTargetsInfo {

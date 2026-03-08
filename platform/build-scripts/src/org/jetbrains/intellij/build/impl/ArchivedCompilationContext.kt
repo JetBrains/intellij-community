@@ -38,20 +38,11 @@ class ArchivedCompilationContext internal constructor(
   override suspend fun getOriginalModuleRepository(): OriginalModuleRepository = originalModuleRepository.await()
 
   override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<Path> {
-    return doReplace(delegate.getModuleRuntimeClasspath(module, forTests))
+    return delegate.getModuleRuntimeClasspath(module, forTests).mapConcurrent { storage.getArchived(it) }.filterNotNull()
   }
 
   override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths): CompilationContext {
     return ArchivedCompilationContext(delegate = delegate.createCopy(messages, options, paths), storage = storage, scope = null)
-  }
-
-  @Suppress("MemberVisibilityCanBePrivate")
-  fun replaceWithCompressedIfNeeded(p: Path): Path? = storage.getArchived(p)
-
-  suspend fun replaceAllWithCompressedIfNeeded(files: List<Path>): List<Path> = doReplace(files)
-
-  private suspend fun doReplace(files: Collection<Path>): List<Path> {
-    return files.mapConcurrent { replaceWithCompressedIfNeeded(it) }.filterNotNull()
   }
 
   fun saveMapping(file: Path) {
