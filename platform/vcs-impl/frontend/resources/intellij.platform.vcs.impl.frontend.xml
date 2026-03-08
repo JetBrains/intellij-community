@@ -21,7 +21,7 @@
     <recentFiles.excluder implementation="com.intellij.platform.vcs.impl.frontend.diff.DiffRecentFilesExcluder"/>
   </extensions>
 
-  <actions>
+  <actions resource-bundle="messages.ActionsBundle">
     <group id="Frontend.Shelve.KeymapGroup" searchable="false">
       <add-to-group group-id="Vcs.KeymapGroup" anchor="first"/>
     </group>

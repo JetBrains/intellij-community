@@ -27,7 +27,7 @@
 
     <postStartupActivity implementation="com.intellij.platform.recentFiles.frontend.model.RecentFileModelSynchronizer"/>
   </extensions>
-  <actions>
+  <actions resource-bundle="messages.ActionsBundle">
     <group id="SwitcherAndRecentFiles">
       <action id="Switcher" class="com.intellij.platform.recentFiles.frontend.Switcher"/>
       <action id="SwitcherForward" class="com.intellij.platform.recentFiles.frontend.ShowSwitcherForwardAction"/>
