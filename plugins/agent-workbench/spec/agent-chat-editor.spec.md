@@ -18,7 +18,7 @@ targets:
 # Agent Chat Editor
 
 Status: Draft
-Date: 2026-02-28
+Date: 2026-03-09
 
 ## Summary
 Define how Agent chat tabs are opened, restored, reused, and rendered in editor tabs. This spec owns tab lifecycle and persistence behavior. Shared command mapping and shared editor-tab popup action semantics are owned by `spec/agent-core-contracts.spec.md`.
@@ -62,6 +62,7 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
   - thread identity/sub-agent and thread id,
   - shell command, title, activity,
   - pending Codex metadata (`pendingCreatedAtMs`, `pendingFirstInputAtMs`, `pendingLaunchMode`),
+  - concrete Codex `/new` rebinding metadata (`newThreadRebindRequestedAtMs`),
   - initial prompt metadata (`initialComposedMessage`, `initialMessageToken`, `initialMessageSent`, `initialMessageTimeoutPolicy`),
   - updated timestamp.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
@@ -96,6 +97,16 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 
 - Pending Codex tabs must capture first user-input timestamp once (on first terminal key event) and persist it for later rebind matching.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
+
+- Concrete top-level Codex tabs must detect execution of exact terminal command `/new`, persist a single rebind anchor timestamp (`newThreadRebindRequestedAtMs`), and request scoped refresh for the tab path.
+- `/new` detection must track the typed command line, handle backspace/delete and escape reset, and must not arm on partial commands or incidental `/new` substrings.
+  [@test] ../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+
+- Concrete top-level Codex tabs armed by `/new` may be rebound to a newly discovered concrete thread for the same normalized path; rebinding must update tab identity, resume command, title, activity, and persisted snapshot, then clear the `/new` anchor.
+- Concrete `/new` rebinding must validate the persisted anchor timestamp before applying so stale refresh work cannot rebind after a newer `/new` request.
+- Concrete `/new` rebinding must skip if the target identity is already open, require a unique in-window target candidate, and clear stale anchors without rebinding.
+  [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
+  [@test] ../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
 - Chat open requests may carry a single initial-message dispatch plan that includes both optional startup launch override and optional post-start metadata.
 - On new-tab opens, startup launch override (when present) is transient and must suppress immediate post-start metadata persistence on creation.

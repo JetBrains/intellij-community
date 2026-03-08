@@ -14,10 +14,10 @@ targets:
 # Codex Sessions Rollout Source
 
 Status: Draft
-Date: 2026-03-07
+Date: 2026-03-09
 
 ## Summary
-Define Codex thread-list behavior where discovery and primary status projection come from app-server (`thread/list` + `thread/read`), while rollout parsing is used only as a refresh-hints fallback (pending-tab rebinding and unread uplift). This spec owns backend selection, app-server sub-agent mapping, rollout hint wiring, and Codex activity derivation.
+Define Codex thread-list behavior where discovery and primary status projection come from app-server (`thread/list` + `thread/read`), while rollout parsing is used only as a refresh-hints fallback (pending-tab rebinding, concrete `/new` rebinding, and unread uplift). This spec owns backend selection, app-server sub-agent mapping, rollout hint wiring, and Codex activity derivation.
 
 ## Goals
 - Keep Codex thread indicators aligned with app-server status snapshots, with rollout fallback limited to missing-thread or unread uplift cases.
@@ -58,9 +58,13 @@ Define Codex thread-list behavior where discovery and primary status projection 
 - Rollout backend scan scope must be limited to `~/.codex/sessions/**/rollout-*.jsonl`.
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
-- Rollout hints must be consumed for pending-tab rebinding and Codex activity projection; rollout-discovered IDs must not create persisted thread rows.
+- Rollout hints must be consumed for pending-tab rebinding, concrete `/new` tab rebinding, and Codex activity projection; rollout-discovered IDs must not create persisted thread rows.
+- Rollout refresh-hint rebind candidates must include only top-level CLI sessions; parsed sub-agent thread-spawn sessions may still contribute hierarchy/activity data but must not become automatic rebind targets.
+- Rollout source parsing must preserve explicit source-kind metadata for refresh-hint consumers, including camel-case `subAgent` payloads and non-CLI top-level source kinds, instead of inferring `CLI` solely from a missing parent-thread id.
+- Rollout parsing must preserve thread source classification for refresh-hint consumers: top-level sessions map to `CLI`, parsed child sessions with `parentThreadId` map to `SUB_AGENT_THREAD_SPAWN`.
   [@test] ../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
   [@test] ../codex/sessions/testSrc/CodexSessionSourceRolloutIntegrationTest.kt
+  [@test] ../codex/sessions/testSrc/backend/rollout/CodexRolloutRefreshHintsProviderTest.kt
 
 - A local-gated real Codex TUI integration suite must verify the production rollout path `codex TUI -> rollout jsonl -> CodexRolloutSessionBackend -> CodexRolloutRefreshHintsProvider -> CodexSessionSource` for passive unread after completed assistant output with read-tracking suppression, stale-`ready` override by fresher `processing`, and `request_user_input` response-required unread.
   Deterministic rollout parser/backend tests remain the owner for canonical event-shape matrices and review-mode coverage.

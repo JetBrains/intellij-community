@@ -2,6 +2,7 @@
 
 package com.intellij.agent.workbench.codex.sessions.backend.rollout
 
+import com.intellij.agent.workbench.codex.common.CodexThreadSourceKind
 import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshActivityHint
 import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHints
 import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHintsProvider
@@ -50,7 +51,11 @@ internal class CodexRolloutRefreshHintsProvider(
           }
         }
 
-        if (knownThreadIds == null || threadId in knownThreadIds) {
+        if (
+          knownThreadIds == null ||
+          threadId in knownThreadIds ||
+          rolloutThread.thread.sourceKind != CodexThreadSourceKind.CLI
+        ) {
           continue
         }
 

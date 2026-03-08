@@ -2,7 +2,7 @@
 package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
-import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindTarget
+import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
@@ -50,7 +50,7 @@ internal class AgentSessionReadService private constructor(
 
   fun isRefreshing(): Boolean = stateSnapshot().projects.any { project -> project.isLoading }
 
-  fun resolvePendingCodexRebindTarget(context: AgentChatEditorTabActionContext): AgentChatPendingTabRebindTarget? {
+  fun resolvePendingCodexRebindTarget(context: AgentChatEditorTabActionContext): AgentChatTabRebindTarget? {
     if (!isPendingCodexEditorContext(context)) {
       return null
     }
@@ -68,7 +68,7 @@ internal class AgentSessionReadService private constructor(
       resumeLaunchSpecProvider(thread.provider, thread.id)
     }.getOrDefault(AgentSessionTerminalLaunchSpec(command = listOf(AgentSessionProvider.CODEX.value, "resume", thread.id)))
 
-    return AgentChatPendingTabRebindTarget(
+    return AgentChatTabRebindTarget(
       threadIdentity = buildAgentSessionIdentity(provider = thread.provider, sessionId = thread.id),
       threadId = thread.id,
       shellCommand = launchSpec.command,
