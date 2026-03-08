@@ -61,6 +61,7 @@ Define project-view prompt context collection from selected files/directories, i
   [@test] ../../prompt/testSrc/ui/AgentPromptContextEntryPathRenderingTest.kt
 
 - `paths` chip rendering shortens path previews (project-relative when under project root); `file:`/`dir:` prefix is stripped by the renderer.
+- Long `paths` chip previews are filename-biased middle-truncated after path normalization.
   [@test] ../../prompt/testSrc/ui/AgentPromptContextEntryPathRenderingTest.kt
 
 ## User Experience
