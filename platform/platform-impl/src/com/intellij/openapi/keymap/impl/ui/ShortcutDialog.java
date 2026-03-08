@@ -101,7 +101,7 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
   T showAndGet(String id, Keymap keymap, @Nullable T selectedShortcut, QuickList... lists) {
     myActionId = id;
     myKeymap = keymap;
-    myGroup = ActionsTreeUtil.createMainGroup(myProject, keymap, lists, null, false, null);
+    myGroup = ActionTreeGroupUtil.createMainGroup(myProject, keymap, lists, null, false, null);
     addSystemActionsIfPresented(myGroup);
     fill(myAction, id, getActionPath(id));
     if (selectedShortcut == null) {

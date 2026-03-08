@@ -7843,9 +7843,6 @@ f:com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 - s:createCorrectedGroup(com.intellij.openapi.actionSystem.ActionGroup,java.lang.String,java.util.List,java.util.List):com.intellij.openapi.keymap.impl.ui.Group
 - s:createGroup(com.intellij.openapi.actionSystem.ActionGroup,java.lang.String,java.util.function.Supplier,Z,java.util.function.Predicate,Z):com.intellij.openapi.keymap.impl.ui.Group
 - s:createGroup(com.intellij.openapi.actionSystem.ActionGroup,java.lang.String,javax.swing.Icon,Z,com.intellij.openapi.util.Condition):com.intellij.openapi.keymap.impl.ui.Group
-- s:createGroup(com.intellij.openapi.actionSystem.ActionGroup,Z,com.intellij.openapi.util.Condition):com.intellij.openapi.keymap.impl.ui.Group
-- s:createMainGroup(com.intellij.openapi.project.Project,com.intellij.openapi.keymap.Keymap,com.intellij.openapi.actionSystem.ex.QuickList[]):com.intellij.openapi.keymap.impl.ui.Group
-- s:createMainGroup(com.intellij.openapi.project.Project,com.intellij.openapi.keymap.Keymap,com.intellij.openapi.actionSystem.ex.QuickList[],java.lang.String,Z,com.intellij.openapi.util.Condition):com.intellij.openapi.keymap.impl.ui.Group
 - s:createNode(com.intellij.openapi.keymap.impl.ui.Group):javax.swing.tree.DefaultMutableTreeNode
 - s:createPluginActionsMap():java.util.Map
 - s:getActions(java.lang.String):com.intellij.openapi.actionSystem.AnAction[]
