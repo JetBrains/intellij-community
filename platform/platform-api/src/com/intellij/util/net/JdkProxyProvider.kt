@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net
 
 import com.intellij.ide.ApplicationInitializedListener
@@ -56,6 +56,7 @@ sealed interface JdkProxyProvider {
     fun ensureDefault(): Unit = ensureDefaultProxyProviderImpl()
 
     private var javaProxyInstallationFlag: Boolean = false
+    private val proxyAuthNotificationSuppressed = AtomicBoolean(true)
     private val proxyAuthNotificationActive = AtomicBoolean(false)
 
     @Synchronized
@@ -94,6 +95,7 @@ sealed interface JdkProxyProvider {
     @ApiStatus.Internal
     @JvmStatic
     fun showProxyAuthNotification() {
+      if (proxyAuthNotificationSuppressed.get()) return
       val app = ApplicationManager.getApplication() ?: return
       if (proxyAuthNotificationActive.getAndSet(true)) return
       val title = UIBundle.message("proxy.auth.notification.title")
@@ -104,6 +106,12 @@ sealed interface JdkProxyProvider {
         }))
         .whenExpired { proxyAuthNotificationActive.set(false) }
       app.invokeLater({ notification.notify(null) }, ModalityState.nonModal())  // workaround for IJPL-223358
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun toggleProxyAuthNotification(suppress: Boolean) {
+      proxyAuthNotificationSuppressed.set(suppress)
     }
   }
 }
