@@ -95,14 +95,14 @@ public class MemoryDiskConflictResolver {
 
     String message = UIBundle.message("file.cache.conflict.message.text", file.getPresentableUrl());
 
-    DialogBuilder builder = new DialogBuilder();
+    Project project = ProjectLocator.getInstance().guessProjectForFile(file);
+    DialogBuilder builder = new DialogBuilder(project);
     builder.setCenterPanel(new JLabel(message, Messages.getQuestionIcon(), SwingConstants.CENTER));
     builder.addOkAction().setText(UIBundle.message("file.cache.conflict.load.fs.changes.button"));
     builder.addCancelAction().setText(UIBundle.message("file.cache.conflict.keep.memory.changes.button"));
     builder.addAction(new AbstractAction(UIBundle.message("file.cache.conflict.show.difference.button")) {
       @Override
       public void actionPerformed(ActionEvent e) {
-        Project project = ProjectLocator.getInstance().guessProjectForFile(file);
         String fsContent = LoadTextUtil.loadText(file).toString();
         DocumentContent content1 = DiffContentFactory.getInstance().create(project, fsContent, file.getFileType());
         DocumentContent content2 = DiffContentFactory.getInstance().create(project, document, file);
