@@ -14,6 +14,7 @@ import com.intellij.agent.workbench.sessions.actions.AgentSessionsOpenDedicatedF
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsPreventSleepWhileWorkingToggleAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsRefreshAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsSelectThreadInToolWindowAction
+import com.intellij.agent.workbench.sessions.frame.OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -56,8 +57,10 @@ class AgentSessionsGearActionsTest {
   }
 
   @Test
-  fun toggleActionUpdatesAdvancedSetting() {
+  fun toggleActionUpdatesAdvancedSetting(@TestDisposable disposable: Disposable) {
     val actionManager = ActionManager.getInstance()
+    val action = AgentSessionsDedicatedFrameToggleAction()
+    val advancedSettings = AdvancedSettings.getInstance() as AdvancedSettingsImpl
     val descriptor = checkNotNull(javaClass.classLoader.getResource("intellij.agent.workbench.sessions.xml")) {
       "Module descriptor intellij.agent.workbench.sessions.xml is missing"
     }.readText()
@@ -68,6 +71,22 @@ class AgentSessionsGearActionsTest {
     assertThat(actionManager.getAction("AgentWorkbenchSessions.ToggleDedicatedFrame"))
       .isNotNull
       .isInstanceOf(AgentSessionsDedicatedFrameToggleAction::class.java)
+
+    advancedSettings.setSetting(OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID, true, disposable)
+    val event = TestActionEvent.createTestEvent(action)
+    assertThat(action.isSelected(event)).isTrue()
+
+    runInEdtAndWait {
+      action.setSelected(event, false)
+    }
+
+    assertThat(AdvancedSettings.getBoolean(OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID)).isFalse()
+
+    runInEdtAndWait {
+      action.setSelected(event, true)
+    }
+
+    assertThat(AdvancedSettings.getBoolean(OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID)).isTrue()
   }
 
   @Test
@@ -141,6 +160,8 @@ class AgentSessionsGearActionsTest {
       .contains("<projectFrameActionExclusion frameType=\"AGENT_DEDICATED\" place=\"MainToolbar\" id=\"ExecutionTargetsToolbarGroup\"/>")
       .contains("<projectFrameActionExclusion frameType=\"AGENT_DEDICATED\" place=\"MainToolbar\" id=\"NewUiRunWidget\"/>")
       .contains("<projectFrameActionExclusion frameType=\"AGENT_DEDICATED\" place=\"MainToolbar\" id=\"AIAssistantHubPopupAction\"/>")
+      .contains("<projectFrameActionExclusion frameType=\"AGENT_DEDICATED\" place=\"MainToolbar\" id=\"BuildSolutionBar\"/>")
+      .contains("<projectFrameActionExclusion frameType=\"AGENT_DEDICATED\" place=\"MainToolbar\" id=\"ActiveDeviceGroup\"/>")
       .doesNotContain("actionConfigurationCustomizer")
   }
 

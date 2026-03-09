@@ -57,8 +57,13 @@ class AgentSessionsOpenModeRoutingTest {
       openInDedicatedFrame = false,
       hasOpenSourceProject = false,
     )
+    val newThreadRoute = resolveAgentChatOpenRoute(
+      openInDedicatedFrame = false,
+      hasOpenSourceProject = false,
+    )
 
     assertThat(threadRoute).isEqualTo(AgentChatOpenRoute.OpenSourceProject)
     assertThat(subAgentRoute).isEqualTo(threadRoute)
+    assertThat(newThreadRoute).isEqualTo(threadRoute)
   }
 }

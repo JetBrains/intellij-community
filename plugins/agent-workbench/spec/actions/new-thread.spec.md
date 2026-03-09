@@ -59,7 +59,9 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
   [@test] ../../sessions/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
 
 - Quick-provider action (when eligible) must launch standard mode with `lastUsedProvider`.
+- Quick-provider action and provider-popup entries must follow the global dedicated-frame routing policy; they do not force the clicked source frame.
   [@test] ../../sessions/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
 
 - Quick-provider eligibility must require:
   - a non-null `lastUsedProvider`,

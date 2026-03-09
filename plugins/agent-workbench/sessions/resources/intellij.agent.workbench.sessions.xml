@@ -37,6 +37,8 @@
     <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="ExecutionTargetsToolbarGroup"/>
     <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="NewUiRunWidget"/>
     <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="AIAssistantHubPopupAction"/>
+    <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="BuildSolutionBar"/>
+    <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="ActiveDeviceGroup"/>
     <statusBarWidgetFactory
       id="claude.quota"
       implementation="com.intellij.agent.workbench.sessions.claude.ClaudeQuotaStatusBarWidgetFactory"/>
