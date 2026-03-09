@@ -26,7 +26,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
@@ -63,20 +62,17 @@ import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.util.Alarm
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
+import com.intellij.util.ui.update.DebouncedUpdates
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.SequentialLifetimes
 import com.jetbrains.rd.util.reactive.Signal
 import com.jetbrains.rd.util.reactive.whenTrue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -393,6 +389,11 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
     return defaultSortedProvidersList.indexOf(id)
   }
 
+  private sealed interface UpdateLensesRequest {
+    data object All : UpdateLensesRequest
+    data class Specific(val providerIds: Collection<String>) : UpdateLensesRequest
+  }
+
   private fun onEditorCreated(editorLifetime: Lifetime, editor: Editor) {
     val context = editor.lensContext
     if (context == null || editor.document !is DocumentImpl) return
@@ -404,19 +405,9 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
     var previousLenses: List<Pair<TextRange, CodeVisionEntry>> = context.zombies
     val openTimeNs = System.nanoTime()
     editor.putUserData(editorTrackingStart, openTimeNs)
-    val mergingQueueFront = MergingUpdateQueue(
-      CodeVisionHost::class.simpleName!!,
-      300,
-      true,
-      null,
-      editorLifetime.createNestedDisposable(),
-      null,
-      Alarm.ThreadToUse.POOLED_THREAD
-    )
-    mergingQueueFront.isPassThrough = false
     var calcRunning = false
 
-    fun recalculateLenses(groupToRecalculate: Collection<String> = emptyList()) {
+    fun recalculateLenses(lensesToUpdate: UpdateLensesRequest = UpdateLensesRequest.All) {
       val editorManager = FileEditorManager.getInstance(project)
       if (!isInlaySettingsEditor(editor) && !editorManager.selectedEditors.any {
           isAllowedFileEditor(it) && (it as TextEditor).editor == editor
@@ -425,12 +416,12 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
         return
       }
       recalculateWhenVisible = false
-      if (calcRunning && groupToRecalculate.isNotEmpty()) {
-        return recalculateLenses(emptyList())
+      if (calcRunning && lensesToUpdate is UpdateLensesRequest.Specific) {
+        return recalculateLenses(UpdateLensesRequest.All)
       }
       calcRunning = true
       val lt = calculationLifetimes.next()
-      calculateFrontendLenses(lt, editor, groupToRecalculate) { lenses, providersToUpdate ->
+      calculateFrontendLenses(lt, editor, lensesToUpdate) { lenses, providersToUpdate ->
         val newLenses = previousLenses.filter { !providersToUpdate.contains(it.second.providerId) } + lenses
 
         context.setResults(newLenses)
@@ -439,23 +430,30 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
       }
     }
 
-    fun pokeEditor(providersToRecalculate: Collection<String> = emptyList()) {
+    fun updateProvidersBatch(batch: List<UpdateLensesRequest>) {
+      val request = if (batch.any { it is UpdateLensesRequest.All }) {
+        UpdateLensesRequest.All
+      } else {
+        val allProviders = batch.filterIsInstance<UpdateLensesRequest.Specific>().flatMap { it.providerIds }.distinct()
+        UpdateLensesRequest.Specific(allProviders)
+      }
+      recalculateLenses(request)
+    }
+
+    val frontLensesUpdateQueue = DebouncedUpdates.forScope<UpdateLensesRequest>(editorLifetime.coroutineScope, CodeVisionHost::class.simpleName!!, 300.milliseconds)
+      .withContext(Dispatchers.EDT + ClientId.coroutineContext())
+      .withComponentModality(editor.contentComponent)
+      .restartTimerOnAdd(true)
+      .runBatched { updateProvidersBatch(it) }
+
+    fun pokeEditor(request: UpdateLensesRequest = UpdateLensesRequest.All) {
       context.notifyPendingLenses()
-      val shouldRecalculateAll = mergingQueueFront.isEmpty.not()
-      mergingQueueFront.cancelAllUpdates()
-      mergingQueueFront.queue(object : Update("") {
-        override fun run() {
-          val modalityState = ModalityState.stateForComponent(editor.contentComponent).asContextElement()
-          coroutineScope.launch(Dispatchers.EDT + modalityState + ClientId.coroutineContext()) {
-            recalculateLenses(if (shouldRecalculateAll) emptyList() else providersToRecalculate)
-          }
-        }
-      })
+      frontLensesUpdateQueue.queue(request)
     }
 
     invalidateProviderSignal.advise(editorLifetime) {
       if (it.editor == null || it.editor === editor) {
-        pokeEditor(it.providerIds)
+        pokeEditor(UpdateLensesRequest.Specific(it.providerIds))
       }
     }
 
@@ -494,14 +492,14 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
   private fun calculateFrontendLenses(
     calcLifetime: Lifetime,
     editor: Editor,
-    groupsToRecalculate: Collection<String> = emptyList(),
+    lensesToUpdate: UpdateLensesRequest = UpdateLensesRequest.All,
     inTestSyncMode: Boolean = false,
     consumer: (newLenses: List<Pair<TextRange, CodeVisionEntry>>, providersToUpdate: List<String>) -> Unit,
   ) {
     val providers = providers
     val precalculatedUiThings = providers.associate {
-      if (groupsToRecalculate.isNotEmpty() && !groupsToRecalculate.contains(it.id)) return@associate it.id to null
-      it.id to it.precomputeOnUiThread(editor)
+      val shouldSkip = lensesToUpdate is UpdateLensesRequest.Specific && !lensesToUpdate.providerIds.contains(it.id)
+      it.id to if (shouldSkip) null else it.precomputeOnUiThread(editor)
     }
     val context = editor.lensContext
     // dropping all lenses if CV disabled
@@ -537,7 +535,7 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
           }
         }
 
-        if (groupsToRecalculate.isNotEmpty() && !groupsToRecalculate.contains(providerId)) {
+        if (lensesToUpdate is UpdateLensesRequest.Specific && !lensesToUpdate.providerIds.contains(providerId)){
           continue
         }
 
