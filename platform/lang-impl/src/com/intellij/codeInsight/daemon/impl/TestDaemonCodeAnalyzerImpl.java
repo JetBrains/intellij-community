@@ -413,6 +413,8 @@ public final class TestDaemonCodeAnalyzerImpl {
             // wait for daemon listeners to be called,
             // since many tests do "waitForFinish(); checkSomeState();", and the state is changed in DaemonListener
             listenersCalled.waitFor();
+            DaemonCodeAnalyzerImpl.LOG.debug("waitForDaemonToFinish finished: indicator was canceled: "+indicator
+                                             +"; "+(trace == null ? indicator.getTraceableDisposableStackTrace() : ExceptionUtil.getThrowableText(trace)));
             indicator.checkCanceled(); // canceled in the middle, throw PCE
           }
         }

@@ -135,10 +135,11 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
 
 
   /**
-   * Please use the more structured {@link #runInDebugMode} instead
+   * @deprecated Please use the more structured {@link #runInDebugMode} instead
    */
   @TestOnly
   @ApiStatus.Internal
+  @Deprecated
   public static void setDebug(boolean debug) {
     DaemonProgressIndicator.debug.set(debug ? 1 : 0);
   }
@@ -173,5 +174,10 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
   public boolean isIndeterminate() {
     // to avoid silly exceptions "this progress is indeterminate" on storing/restoring wrapper states in JobLauncher
     return false;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull String getTraceableDisposableStackTrace() {
+    return myTraceableDisposable.getStackTrace();
   }
 }
