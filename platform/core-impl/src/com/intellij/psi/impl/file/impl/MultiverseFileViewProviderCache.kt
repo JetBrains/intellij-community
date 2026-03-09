@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext
@@ -49,16 +49,17 @@ internal class MultiverseFileViewProviderCache : FileViewProviderCache {
   }
 
   override fun forEachKey(block: Consumer<VirtualFile>) {
-    if (!(cache.isInitialized)) return
-    cache.cache.keys.forEach(block)
+    doIfInitialized { map ->
+      map.keys.forEach(block)
+    }
   }
 
   override fun forEach(block: FileViewProviderCache.CacheEntryConsumer) {
-    if (!(cache.isInitialized)) return
-    val map = cache.cache
-    map.forEach { (file, map) ->
-      map.forEach { context, provider ->
-        block.consume(file, context, provider)
+    doIfInitialized { map ->
+      map.forEach { (file, map) ->
+        map.forEach { context, provider ->
+          block.consume(file, context, provider)
+        }
       }
     }
   }
@@ -96,11 +97,17 @@ internal class MultiverseFileViewProviderCache : FileViewProviderCache {
   }
 
   override fun processQueue() {
-    if (!(cache.isInitialized)) return
+    doIfInitialized { map ->
+      // cache.cache is in fact ConcurrentWeakValueHashMap.
+      // calling cache.cache.remove(unrelated-object) calls ConcurrentWeakValueHashMap#processQueue under the hood
+      map.remove(NullFile)
+    }
+  }
 
-    // cache.cache is in fact ConcurrentWeakValueHashMap.
-    // calling cache.cache.remove(unrelated-object) calls ConcurrentWeakValueHashMap#processQueue under the hood
-    cache.cache.remove(NullFile)
+  private fun doIfInitialized(block: (FullCacheMap) -> Unit) {
+    if (cache.isInitialized) {
+      block(cache.cache)
+    }
   }
 
   override fun trySetContext(viewProvider: FileViewProvider, context: CodeInsightContext): CodeInsightContext? {
