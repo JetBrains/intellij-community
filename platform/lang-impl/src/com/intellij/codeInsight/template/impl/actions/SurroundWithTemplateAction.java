@@ -5,10 +5,9 @@ package com.intellij.codeInsight.template.impl.actions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.template.impl.SurroundWithTemplateHandler;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import org.jetbrains.annotations.NotNull;
 
-public class SurroundWithTemplateAction extends BaseCodeInsightAction implements ActionRemoteBehaviorSpecification.Frontend {
+public class SurroundWithTemplateAction extends BaseCodeInsightAction {
   @Override
   protected @NotNull CodeInsightActionHandler getHandler() {
     return new SurroundWithTemplateHandler();
