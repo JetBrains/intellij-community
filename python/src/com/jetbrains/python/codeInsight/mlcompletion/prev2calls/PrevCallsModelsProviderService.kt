@@ -9,13 +9,15 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
+import com.intellij.util.ui.update.DebouncedUpdates
 import com.jetbrains.python.PythonPluginDisposable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import java.util.concurrent.ExecutionException
+import kotlin.time.Duration.Companion.seconds
 
 @Service
-class PrevCallsModelsProviderService {
+class PrevCallsModelsProviderService(coroutineScope: CoroutineScope) {
   internal class ModelNotFoundException: Exception()
   private val logger = Logger.getInstance(PrevCallsModelsProviderService::class.java)
 
@@ -30,12 +32,10 @@ class PrevCallsModelsProviderService {
       }
     })
 
-  private val modelsLoadingQueue = MergingUpdateQueue("ModelsLoadingQueue", 1000, true, null,
-                                                      PythonPluginDisposable.getInstance(), null, false)
-  private fun createUpdate(identity: Any, runnable: () -> Unit) = object : Update(identity) {
-    override fun canEat(update: Update) = this == update
-    override fun run() = runnable()
-  }
+  private val modelsLoadingQueue = DebouncedUpdates.forScope<String>(coroutineScope, "ModelsLoadingQueue", 1.seconds)
+    .withContext(Dispatchers.Default)
+    .runBatched { moduleNames -> loadModels(moduleNames) }
+    .cancelOnDispose(PythonPluginDisposable.getInstance())
 
   fun loadModelFor(qualifierName: String) {
     val moduleName = qualifierName.substringBefore(".")
@@ -43,22 +43,28 @@ class PrevCallsModelsProviderService {
 
     val modelForPackage = package2model.getIfPresent(moduleName)
 
-    fun tryLoadModel() {
-      try {
-        package2model.get(moduleName)
-      } catch (ex: ExecutionException) {
-        if (ex.cause !is ModelNotFoundException) {
-          logger.error(ex)
-        }
-      }
-    }
-
     if (modelForPackage == null) {
       if (ApplicationManager.getApplication().isUnitTestMode) {
-        tryLoadModel()
+        tryLoadModel(moduleName)
       }
       else {
-        modelsLoadingQueue.queue(createUpdate(moduleName) { tryLoadModel() })
+        modelsLoadingQueue.queue(moduleName)
+      }
+    }
+  }
+
+  private fun loadModels(moduleNames: List<String>) {
+    moduleNames.distinct().forEach { moduleName ->
+      tryLoadModel(moduleName)
+    }
+  }
+
+  private fun tryLoadModel(moduleName: String) {
+    try {
+      package2model.get(moduleName)
+    } catch (ex: ExecutionException) {
+      if (ex.cause !is ModelNotFoundException) {
+        logger.error(ex)
       }
     }
   }
