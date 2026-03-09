@@ -63,6 +63,15 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
     } ?: throw IllegalArgumentException("item with text $itemText not found, all items: ${items.joinToString(", ")}")
   }
 
+  fun clickItemWithIcon(itemText: String, fullMatch: Boolean = true, iconInfo: String) {
+    val itemsByText = items.withIndex().filter { if(fullMatch) it.value == itemText else it.value.contains(itemText) }
+    if(itemsByText.isEmpty()) throw IllegalArgumentException("item with text $itemText not found, all items: ${items.joinToString(", ")}")
+
+    val itemByIconInfo = itemsByText.firstOrNull { collectIconsAtIndex(it.index).any { icon -> icon.contains(iconInfo)} }
+    itemByIconInfo?.let { index -> clickItemAtIndex(index.index) } ?: throw IllegalArgumentException("item with text $itemText and iconInfo $iconInfo not found, " +
+                                        "all icons: ${itemsByText.joinToString(separator = "\n") { "\nitem ${it.value}\nicon info: ${collectIconsAtIndex(it.index)}" }}")
+  }
+
   fun doubleClickItem(itemText: String, fullMatch: Boolean = true) {
     findItemIndex(itemText, fullMatch)?.let { index ->
       val cellBounds = getCellBounds(index)
