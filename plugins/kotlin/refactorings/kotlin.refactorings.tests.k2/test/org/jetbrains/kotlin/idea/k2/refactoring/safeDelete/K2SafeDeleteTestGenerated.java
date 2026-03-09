@@ -1214,6 +1214,11 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInFunctionInvoke.kt");
         }
 
+        @TestMetadata("usedContextParametersInImplicitInvoke.kt")
+        public void testUsedContextParametersInImplicitInvoke() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInImplicitInvoke.kt");
+        }
+
         @TestMetadata("usedContextParametersInNestedFunction.kt")
         public void testUsedContextParametersInNestedFunction() throws Exception {
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInNestedFunction.kt");

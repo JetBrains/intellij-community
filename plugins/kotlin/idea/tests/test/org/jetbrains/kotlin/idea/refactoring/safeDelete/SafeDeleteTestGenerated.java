@@ -1224,6 +1224,11 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
             runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInFunctionInvoke.kt");
         }
 
+        @TestMetadata("usedContextParametersInImplicitInvoke.kt")
+        public void testUsedContextParametersInImplicitInvoke() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInImplicitInvoke.kt");
+        }
+
         @TestMetadata("usedContextParametersInNestedFunction.kt")
         public void testUsedContextParametersInNestedFunction() throws Exception {
             runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInNestedFunction.kt");
