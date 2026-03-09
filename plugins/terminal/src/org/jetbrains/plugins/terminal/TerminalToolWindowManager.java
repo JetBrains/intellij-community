@@ -472,7 +472,7 @@ public final class TerminalToolWindowManager implements Disposable {
 
   private static void updateTabTitle(@NotNull TerminalWidget widget, @NotNull ToolWindow toolWindow, @NotNull Content content) {
     TerminalTitle title = widget.getTerminalTitle();
-    String titleString = title.buildTitle();
+    String titleString = TerminalTitleKt.buildSettingsAwareTitle(title);
     List<String> tabs = toolWindow.getContentManager().getContentsRecursively().stream()
       .filter(c -> c != content)
       .map(c -> c.getDisplayName()).toList();

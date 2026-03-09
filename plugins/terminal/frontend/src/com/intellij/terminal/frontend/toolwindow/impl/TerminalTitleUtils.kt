@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalTabsManagerApi
+import org.jetbrains.plugins.terminal.buildSettingsAwareTitle
 
 internal fun createDefaultTabName(toolWindow: ToolWindow): String {
   val existingNames = toolWindow.contentManager.contentsRecursively.map { it.displayName }
@@ -60,12 +61,12 @@ internal fun updateBackendTabNameOnTitleChange(
 }
 
 private fun TerminalTitle.addListener(coroutineScope: CoroutineScope, onChange: suspend (TitleData) -> Unit) {
-  val initialValue = TitleData(buildTitle(), userDefinedTitle != null)
+  val initialValue = TitleData(buildSettingsAwareTitle(), userDefinedTitle != null)
   val flow = MutableStateFlow(initialValue)
 
   addTitleListener(object : TerminalTitleListener {
     override fun onTitleChanged(terminalTitle: TerminalTitle) {
-      flow.value = TitleData(terminalTitle.buildTitle(), terminalTitle.userDefinedTitle != null)
+      flow.value = TitleData(terminalTitle.buildSettingsAwareTitle(), terminalTitle.userDefinedTitle != null)
     }
   }, parentDisposable = coroutineScope.asDisposable())
 
