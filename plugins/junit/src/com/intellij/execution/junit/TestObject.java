@@ -645,7 +645,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       case "runtime" -> GlobalSearchScope.moduleRuntimeScope(module, true);
       case "module" -> GlobalSearchScope.moduleScope(module);
       case "testsWithDependents" -> GlobalSearchScope.moduleTestsWithDependentsScope(module);
-      case "WithLibraries" -> GlobalSearchScope.moduleWithLibrariesScope(module);
+      case "withLibraries" -> GlobalSearchScope.moduleWithLibrariesScope(module);
       default -> GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, true);
     };
   }
