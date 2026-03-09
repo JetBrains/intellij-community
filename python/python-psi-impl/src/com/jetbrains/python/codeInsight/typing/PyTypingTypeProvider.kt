@@ -86,6 +86,7 @@ import com.jetbrains.python.psi.PyWithAncestors
 import com.jetbrains.python.psi.PyWithItem
 import com.jetbrains.python.psi.impl.PyBuiltinCache.Companion.getInstance
 import com.jetbrains.python.psi.impl.PyEvaluator
+import com.jetbrains.python.psi.impl.PyPsiFacadeImpl
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType
 import com.jetbrains.python.psi.resolve.PyResolveContext
@@ -1157,23 +1158,14 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     }
 
     @JvmStatic
-    fun getType(expression: PyExpression, context: TypeEvalContext): Ref<PyType?>? {
-      return staticWithCustomContext(context) { getType(expression, it) }
-    }
-
-    @JvmStatic
-    fun getTypeForTypeHint(expression: PyExpression, context: TypeEvalContext): Ref<PyType?>? {
-      return staticWithCustomContext(context, true) {
-        getTypeForResolvedElement(expression, null, expression, it)
-      }
-    }
+    fun getType(expression: PyExpression, context: TypeEvalContext): Ref<PyType?>? = getType(expression, context, false)
 
     private fun getType(expression: PyExpression, context: Context, parameterizeTopLevel: Boolean = true): Ref<PyType?>? {
       val knownType = context.getKnownType(expression)
       if (knownType != null) {
         return Ref(knownType)
       }
-      for (pair in tryResolvingWithAliases(expression, context.typeContext)) {
+      for (pair in tryResolvingWithAliases(expression, context.typeContext, context.typeRepresentationMode)) {
         val typeRef = getTypeForResolvedElement(expression, pair.first, pair.second!!, context, parameterizeTopLevel)
         if (typeRef != null) {
           if (typeRef.get() != null) {
@@ -1634,19 +1626,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
 
     private fun getClassType(typeHint: PyExpression, element: PsiElement, parameterizeTopLevel: Boolean, context: Context): Ref<PyType?>? {
       if (typeHint is PyReferenceExpression && element is PyTypedElement) {
-        val typeContext = context.typeContext
-        val type: PyType?
-        if (context.typeRepresentationMode && element is PyReferenceExpression) {
-          val qualifiedName = element.asQualifiedName()
-          val project = element.project
-          val class_ = if (qualifiedName != null) PyPsiFacade.getInstance(project)
-            .createClassByQName(qualifiedName.toString(), element)
-          else null
-          type = class_?.getType(typeContext)
-        }
-        else {
-          type = typeContext.getType(element)
-        }
+        val type = context.typeContext.getType(element)
         if (type is PyClassLikeType) {
           if (type.isDefinition) {
             // If we're interpreting a type hint like "MyGeneric" that is not followed by a list of type arguments (e.g., MyGeneric[int]),
@@ -2697,22 +2677,28 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     }
 
     private fun tryResolving(expression: PyExpression, context: TypeEvalContext): List<PsiElement> {
-      return tryResolvingWithAliases(expression, context).map { it.second!! }
+      return tryResolvingWithAliases(expression, context, false).map { it.second!! }
     }
 
     private fun tryResolvingWithAliases(
       expression: PyExpression,
       context: TypeEvalContext,
+      useFqn: Boolean,
     ): List<Pair<PyQualifiedNameOwner?, PsiElement?>> {
       val elements: MutableList<Pair<PyQualifiedNameOwner?, PsiElement?>> = ArrayList()
       if (expression is PyReferenceExpression) {
-        val results: MutableList<PsiElement?>
-        if (context.maySwitchToAST(expression)) {
-          val resolveContext = PyResolveContext.defaultContext(context)
-          results = PyUtil.multiResolveTopPriority(expression, resolveContext)
+        val results: List<PsiElement?>
+        if (useFqn) {
+          results = resolveFullyQualifiedReference(expression)
         }
         else {
-          results = tryResolvingOnStubs(expression, context)
+          if (context.maySwitchToAST(expression)) {
+            val resolveContext = PyResolveContext.defaultContext(context)
+            results = PyUtil.multiResolveTopPriority(expression, resolveContext)
+          }
+          else {
+            results = tryResolvingOnStubs(expression, context)
+          }
         }
         for (element in results) {
           val cls = PyUtil.turnConstructorIntoClass(element as? PyFunction)
@@ -2756,7 +2742,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       if (expression is PySubscriptionExpression) {
         // Possibly a parameterized type alias
         val operandExpression = expression.operand
-        val results = tryResolvingWithAliases(operandExpression, context)
+        val results = tryResolvingWithAliases(operandExpression, context, useFqn)
         for (pair in results) {
           // If the parameterized type is a type alias
           if (pair.first != null && pair.second != null) {
@@ -2767,10 +2753,16 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       return elements.ifEmpty { listOf(null to expression) }
     }
 
+    private fun resolveFullyQualifiedReference(expression: PyReferenceExpression): List<PsiElement?> {
+      val qualifiedName = expression.asQualifiedName() ?: return emptyList()
+      val contextFile = FileContextUtil.getContextFile(expression) ?: return emptyList()
+      return PyPsiFacadeImpl.resolveQName(qualifiedName, contextFile)
+    }
+
     private fun tryResolvingOnStubs(
       expression: PyReferenceExpression,
       context: TypeEvalContext,
-    ): MutableList<PsiElement?> {
+    ): List<PsiElement?> {
       val qualifiedName = expression.asQualifiedName()
       val pyFile = PyUtil.`as`(FileContextUtil.getContextFile(expression), PyFile::class.java)
 
