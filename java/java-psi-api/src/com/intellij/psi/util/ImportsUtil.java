@@ -32,12 +32,11 @@ import java.util.Objects;
 
 public final class ImportsUtil {
 
-  private ImportsUtil() {
-  }
+  private ImportsUtil() {}
 
   public static List<PsiJavaCodeReferenceElement> collectReferencesThrough(PsiFile file,
-                                                                           final @Nullable PsiJavaCodeReferenceElement refExpr,
-                                                                           final PsiImportStaticStatement staticImport) {
+                                                                           @Nullable PsiJavaCodeReferenceElement refExpr,
+                                                                           PsiImportStaticStatement staticImport) {
     final List<PsiJavaCodeReferenceElement> expressionToExpand = new ArrayList<>();
     file.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
@@ -54,26 +53,24 @@ public final class ImportsUtil {
     return expressionToExpand;
   }
 
-  public static void replaceAllAndDeleteImport(List<PsiJavaCodeReferenceElement> expressionToExpand,
+  public static void replaceAllAndDeleteImport(List<PsiJavaCodeReferenceElement> expressionsToExpand,
                                                @Nullable PsiJavaCodeReferenceElement refExpr,
-                                                PsiImportStaticStatement staticImport) {
+                                               PsiImportStaticStatement staticImport) {
     if (refExpr != null) {
-      expressionToExpand.add(refExpr);
+      expressionsToExpand.add(refExpr);
     }
 
-    expressionToExpand.sort((o1, o2) -> o2.getTextOffset() - o1.getTextOffset());
+    expressionsToExpand.sort((o1, o2) -> o2.getTextOffset() - o1.getTextOffset());
 
     PsiClass targetClass = staticImport.resolveTargetClass();
     assert targetClass != null;
 
-    for (PsiJavaCodeReferenceElement expression : ContainerUtil.filter(expressionToExpand, e -> !(e.getParent() instanceof PsiAnnotation)) ) {
-      if(PsiTreeUtil.isAncestor(staticImport, expression, false)) continue;
+    for (PsiJavaCodeReferenceElement expression : ContainerUtil.filter(expressionsToExpand, e -> !(e.getParent() instanceof PsiAnnotation))) {
+      if (PsiTreeUtil.isAncestor(staticImport, expression, false)) continue;
       expand(expression, targetClass);
     }
-
     staticImport.delete();
-
-    for (PsiJavaCodeReferenceElement expression : ContainerUtil.filter(expressionToExpand, e -> (e.getParent() instanceof PsiAnnotation)) ) {
+    for (PsiJavaCodeReferenceElement expression : ContainerUtil.filter(expressionsToExpand, e -> e.getParent() instanceof PsiAnnotation)) {
       expand(expression, targetClass);
     }
   }
@@ -84,8 +81,7 @@ public final class ImportsUtil {
       ((PsiReferenceExpression)ref).setQualifierExpression(elementFactory.createReferenceExpression(targetClass));
     }
     else if (ref instanceof PsiImportStaticReferenceElement) {
-      ref.replace(
-        Objects.requireNonNull(elementFactory.createImportStaticStatement(targetClass, ref.getText()).getImportReference()));
+      ref.replace(Objects.requireNonNull(elementFactory.createImportStaticStatement(targetClass, ref.getText()).getImportReference()));
     }
     else {
       PsiElement replaced = ref.replace(elementFactory.createReferenceFromText(targetClass.getQualifiedName() + "." + ref.getText(), ref));
@@ -93,12 +89,13 @@ public final class ImportsUtil {
     }
   }
 
-  public static boolean hasStaticImportOn(final PsiElement expr, final PsiMember member, boolean acceptOnDemand) {
-    if (expr.getContainingFile() instanceof PsiJavaFile ) {
+  public static boolean hasStaticImportOn(PsiElement expr, PsiMember member, boolean acceptOnDemand) {
+    if (expr.getContainingFile() instanceof PsiJavaFile) {
       PsiJavaFile file = (PsiJavaFile)expr.getContainingFile();
       final PsiImportList importList = file.getImportList();
       if (importList != null) {
-        List<PsiImportStaticStatement> additionalOnDemandImports = ContainerUtil.filterIsInstance(getAllImplicitImports(file), PsiImportStaticStatement.class);
+        List<PsiImportStaticStatement> additionalOnDemandImports =
+          ContainerUtil.filterIsInstance(getAllImplicitImports(file), PsiImportStaticStatement.class);
         final PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();
         for (PsiImportStaticStatement stmt : ContainerUtil.append(additionalOnDemandImports, importStaticStatements)) {
           final PsiClass containingClass = member.getContainingClass();
