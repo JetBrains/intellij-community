@@ -154,7 +154,7 @@ class AgentPromptEnterHandlersTest {
 
   /**
    * Creates an [EditorTextField], calls [configure] to register settings providers,
-   * then initializes the editor via [addNotify], runs [block], and cleans up via [removeNotify].
+   * then initializes the editor, runs [block], and cleans up the editor instance.
    */
   private inline fun withEditorTextField(
     configure: (EditorTextField) -> Unit,
@@ -172,16 +172,20 @@ class AgentPromptEnterHandlersTest {
   }
 
   private fun invokeKeyAction(promptArea: EditorTextField, keyStroke: KeyStroke) {
-    val editor = checkNotNull(promptArea.editor) { "Editor was not initialized" }
-    val contentComponent = editor.contentComponent
-    val actions: List<AnAction> = ClientProperty.get(contentComponent, AnAction.ACTIONS_KEY) ?: emptyList()
-    val targetShortcut = KeyboardShortcut(keyStroke, null)
-    val matchingAction = actions.firstOrNull { action ->
-      action.shortcutSet.shortcuts.any { shortcut -> shortcut == targetShortcut }
-    }
+    val matchingAction = findMatchingAction(promptArea, keyStroke)
     checkNotNull(matchingAction) { "No action registered for keystroke: $keyStroke" }
     val dataContext = SimpleDataContext.builder().build()
     val event = AnActionEvent.createEvent(matchingAction, dataContext, null, "", ActionUiKind.NONE, null)
     matchingAction.actionPerformed(event)
+  }
+
+  private fun findMatchingAction(promptArea: EditorTextField, keyStroke: KeyStroke): AnAction? {
+    val editor = checkNotNull(promptArea.editor) { "Editor was not initialized" }
+    val contentComponent = editor.contentComponent
+    val actions: List<AnAction> = ClientProperty.get(contentComponent, AnAction.ACTIONS_KEY) ?: emptyList()
+    val targetShortcut = KeyboardShortcut(keyStroke, null)
+    return actions.firstOrNull { action ->
+      action.shortcutSet.shortcuts.any { shortcut -> shortcut == targetShortcut }
+    }
   }
 }
