@@ -1,41 +1,35 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import kotlinx.coroutines.CoroutineName
+import com.intellij.openapi.project.Project
+import com.intellij.platform.util.coroutines.childScope
+import com.jetbrains.python.debugger.PythonDebuggerScope.Companion.childScope
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
-import kotlin.coroutines.CoroutineContext
+import org.jetbrains.annotations.ApiStatus.Internal
 
-internal sealed class PythonDebuggerScope : CoroutineScope, Disposable {
-  override val coroutineContext: CoroutineContext =
-    SupervisorJob() + CoroutineName(javaClass.name)
-
-  override fun dispose() {
-    cancel("Disposed ${javaClass.simpleName}")
-  }
-
+/**
+ * Provides coroutine scopes for Python debugger operations at both application and project levels.
+ * 
+ * Use [childScope] with or without a project parameter for application-level or project-specific operations.
+ */
+@Internal
+@Service(Service.Level.APP, Service.Level.PROJECT)
+class PythonDebuggerScope(private val coroutineScope: CoroutineScope) {
   companion object {
     /**
-     * Schedules a coroutine to run on a given [CoroutineContext].
+     * Creates a child coroutine scope for Python debugger operations.
+     * The child scope prevents cancellation of the parent scope.
+     * 
+     * @param project Optional project for project-level scope. If null, uses application-level scope.
+     * @param name Debug name for the child scope
      */
-    fun launchOn(context: CoroutineContext, action: suspend CoroutineScope.() -> Unit): Job =
-      global.launch(context, block = action)
-
-
-    /**
-     * Retrieves global coroutine scope for the Python Debugger.
-     * Designed to be used in places where the project scope is not available.
-     */
-    val global: PythonDebuggerScope get() = service<GlobalScopeService>()
-
-    @Service
-    private class GlobalScopeService : PythonDebuggerScope()
-
+    @JvmStatic
+    @JvmOverloads
+    fun childScope(project: Project? = null, name: String): CoroutineScope {
+      return project?.service<PythonDebuggerScope>()?.coroutineScope?.childScope(name)
+             ?: service<PythonDebuggerScope>().coroutineScope.childScope(name)
+    }
   }
 }
