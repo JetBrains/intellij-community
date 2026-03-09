@@ -1044,6 +1044,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/jps-plugin/intellij.maven.jps.iml" filepath="$PROJECT_DIR$/plugins/maven/jps-plugin/intellij.maven.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/model/intellij.maven.model.iml" filepath="$PROJECT_DIR$/plugins/maven/model/intellij.maven.model.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/performanceTesting/intellij.maven.performanceTesting.iml" filepath="$PROJECT_DIR$/plugins/maven/performanceTesting/intellij.maven.performanceTesting.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/maven/plugin/intellij.maven.plugin.iml" filepath="$PROJECT_DIR$/plugins/maven/plugin/intellij.maven.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/proofreading/intellij.maven.proofreading.iml" filepath="$PROJECT_DIR$/plugins/maven/proofreading/intellij.maven.proofreading.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven-server-api/intellij.maven.server.iml" filepath="$PROJECT_DIR$/plugins/maven-server-api/intellij.maven.server.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven-event-listener/intellij.maven.server.eventListener.iml" filepath="$PROJECT_DIR$/plugins/maven/maven-event-listener/intellij.maven.server.eventListener.iml" />

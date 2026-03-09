@@ -1435,6 +1435,7 @@ plugins/maven/maven36-server-impl
 plugins/maven/maven40-server-impl
 plugins/maven/model
 plugins/maven/performanceTesting
+plugins/maven/plugin
 plugins/maven/proofreading
 plugins/maven/src/test
 plugins/maven/testFramework

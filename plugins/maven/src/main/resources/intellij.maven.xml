@@ -1,74 +1,4 @@
-<idea-plugin allow-bundled-update="true">
-  <id>org.jetbrains.idea.maven</id>
-  <name>Maven</name>
-  <vendor>JetBrains</vendor>
-  <category>Build Tools</category>
-
-  <description><![CDATA[
-    Provides <a href="https://maven.apache.org/">Maven</a> support.
-    The following features are available:
-    <ul>
-      <li>Maven Projects tool window.</li>
-      <li>Dedicated module type.</li>
-      <li>Maven repositories support.</li>
-      <li>Full editing support for the pom.xml file.</li>
-      <li>Possibility to import Maven projects.</li>
-      <li>Running and debugging Maven goals.</li>
-      <li>Compiling.</li>
-    </ul>
-  ]]></description>
-
-  <resource-bundle>messages.MavenProjectBundle</resource-bundle>
-
-  <extensionPoints>
-    <extensionPoint name="importer" interface="org.jetbrains.idea.maven.importing.MavenImporter" dynamic="true"/>
-    <extensionPoint name="importing.workspaceConfigurator" interface="org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator"
-                    dynamic="true"/>
-    <extensionPoint name="importing.afterImportConfigurator" interface="org.jetbrains.idea.maven.importing.MavenAfterImportConfigurator"
-                    dynamic="true"/>
-
-    <extensionPoint name="projectResolutionContributor" interface="org.jetbrains.idea.maven.project.MavenProjectResolutionContributor"
-                    dynamic="true"/>
-    <extensionPoint name="compiler" interface="org.jetbrains.idea.maven.importing.MavenCompilerExtension" dynamic="true"/>
-    <extensionPoint name="manifestImporter" interface="org.jetbrains.idea.maven.importing.ManifestImporter" dynamic="true"/>
-    <extensionPoint name="additional.importing.settings" interface="org.jetbrains.idea.maven.project.AdditionalMavenImportingSettings"
-                    dynamic="true"/>
-    <extensionPoint name="archetypesProvider" interface="org.jetbrains.idea.maven.indices.MavenArchetypesProvider" dynamic="true"/>
-
-    <extensionPoint name="pluginDescriptor" beanClass="org.jetbrains.idea.maven.plugins.api.MavenPluginDescriptor" dynamic="true"/>
-
-    <extensionPoint name="repositoryProvider" interface="org.jetbrains.idea.maven.indices.MavenRepositoryProvider"
-                    dynamic="true"/>
-
-
-    <extensionPoint name="runner.executionConfigurator"
-                    interface="org.jetbrains.idea.maven.execution.run.MavenExecutionConfiguratorProvider" dynamic="true"/>
-    <extensionPoint name="executionEnvironmentProvider"
-                    interface="org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider" dynamic="true"/>
-    <extensionPoint name="artifactBuilder" interface="org.jetbrains.idea.maven.execution.build.MavenArtifactBuilder" dynamic="true"/>
-    <extensionPoint name="targetConfigurationExtension"
-                    interface="org.jetbrains.idea.maven.execution.target.TargetConfigurationMavenExtension" dynamic="true"/>
-    <extensionPoint name="log.parser" interface="org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLoggedEventParser"
-                    dynamic="true"/>
-    <extensionPoint name="log.spy.parser" interface="org.jetbrains.idea.maven.externalSystemIntegration.output.MavenSpyLoggedEventParser"
-                    dynamic="true"/>
-    <extensionPoint name="mavenServerSupportFactory" interface="org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory"
-                    dynamic="true"/>
-    <extensionPoint name="remotePathTransformerFactory" interface="org.jetbrains.idea.maven.server.RemotePathTransformerFactory"
-                    dynamic="true"/>
-    <extensionPoint name="log.import.parser"
-                    interface="org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.MavenImportLoggedEventParser"
-                    dynamic="true"/>
-    <extensionPoint name="versionAwareMavenSupport" interface="org.jetbrains.idea.maven.MavenVersionAwareSupportExtension" dynamic="true"/>
-
-    <extensionPoint name="mavenAdditionalHighlighter" interface="org.jetbrains.idea.maven.dom.MavenAdditionalHightligher" dynamic="true"/>
-
-    <extensionPoint name="mavenRemoteConnectionCreator" interface="org.jetbrains.idea.maven.execution.MavenRemoteConnectionCreator"
-                    dynamic="true"/>
-
-    <extensionPoint name="dependencySearchContributor" interface="org.jetbrains.idea.maven.completion.MavenDependencySearchContributor"
-                    dynamic="true"/>
-  </extensionPoints>
+<idea-plugin visibility="public">
 
   <dependencies>
     <module name="intellij.java.backend"/>
@@ -78,15 +8,57 @@
     <!-- endregion -->
   </dependencies>
 
-  <content namespace="jetbrains">
-    <module name="intellij.maven.model" loading="embedded"/>
-    <module name="intellij.maven.profiler"/>
-    <module name="intellij.maven.proofreading"/>
-    <module name="intellij.maven.performanceTesting"/>
-    <module name="intellij.maven.errorProne.compiler"/>
-    <module name="intellij.maven.groovy"/>
-    <module name="intellij.maven.completion"/>
-  </content>
+  <resource-bundle>messages.MavenProjectBundle</resource-bundle>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.idea.maven.importer" interface="org.jetbrains.idea.maven.importing.MavenImporter" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.idea.maven.importing.workspaceConfigurator" interface="org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.idea.maven.importing.afterImportConfigurator" interface="org.jetbrains.idea.maven.importing.MavenAfterImportConfigurator"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.idea.maven.projectResolutionContributor" interface="org.jetbrains.idea.maven.project.MavenProjectResolutionContributor"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.idea.maven.compiler" interface="org.jetbrains.idea.maven.importing.MavenCompilerExtension" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.idea.maven.manifestImporter" interface="org.jetbrains.idea.maven.importing.ManifestImporter" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.idea.maven.additional.importing.settings" interface="org.jetbrains.idea.maven.project.AdditionalMavenImportingSettings"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.idea.maven.archetypesProvider" interface="org.jetbrains.idea.maven.indices.MavenArchetypesProvider" dynamic="true"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.idea.maven.pluginDescriptor" beanClass="org.jetbrains.idea.maven.plugins.api.MavenPluginDescriptor" dynamic="true"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.idea.maven.repositoryProvider" interface="org.jetbrains.idea.maven.indices.MavenRepositoryProvider"
+                    dynamic="true"/>
+
+
+    <extensionPoint qualifiedName="org.jetbrains.idea.maven.runner.executionConfigurator"
+                    interface="org.jetbrains.idea.maven.execution.run.MavenExecutionConfiguratorProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.idea.maven.executionEnvironmentProvider"
+                    interface="org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.idea.maven.artifactBuilder" interface="org.jetbrains.idea.maven.execution.build.MavenArtifactBuilder" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.idea.maven.targetConfigurationExtension"
+                    interface="org.jetbrains.idea.maven.execution.target.TargetConfigurationMavenExtension" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.idea.maven.log.parser" interface="org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLoggedEventParser"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.idea.maven.log.spy.parser" interface="org.jetbrains.idea.maven.externalSystemIntegration.output.MavenSpyLoggedEventParser"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.idea.maven.mavenServerSupportFactory" interface="org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.idea.maven.remotePathTransformerFactory" interface="org.jetbrains.idea.maven.server.RemotePathTransformerFactory"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.idea.maven.log.import.parser"
+                    interface="org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.MavenImportLoggedEventParser"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.idea.maven.versionAwareMavenSupport" interface="org.jetbrains.idea.maven.MavenVersionAwareSupportExtension" dynamic="true"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.idea.maven.mavenAdditionalHighlighter" interface="org.jetbrains.idea.maven.dom.MavenAdditionalHightligher" dynamic="true"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.idea.maven.mavenRemoteConnectionCreator" interface="org.jetbrains.idea.maven.execution.MavenRemoteConnectionCreator"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.idea.maven.dependencySearchContributor" interface="org.jetbrains.idea.maven.completion.MavenDependencySearchContributor"
+                    dynamic="true"/>
+  </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="org.jetbrains.idea.maven.project.MavenProjectsManagerProjectActivity"/>

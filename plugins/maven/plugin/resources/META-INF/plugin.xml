@@ -1,0 +1,32 @@
+<idea-plugin allow-bundled-update="true">
+  <id>org.jetbrains.idea.maven</id>
+  <name>Maven</name>
+  <vendor>JetBrains</vendor>
+  <category>Build Tools</category>
+
+  <description><![CDATA[
+    Provides <a href="https://maven.apache.org/">Maven</a> support.
+    The following features are available:
+    <ul>
+      <li>Maven Projects tool window.</li>
+      <li>Dedicated module type.</li>
+      <li>Maven repositories support.</li>
+      <li>Full editing support for the pom.xml file.</li>
+      <li>Possibility to import Maven projects.</li>
+      <li>Running and debugging Maven goals.</li>
+      <li>Compiling.</li>
+    </ul>
+  ]]></description>
+
+  <content namespace="jetbrains">
+    <module name="intellij.maven.model" loading="embedded"/>
+    <module name="intellij.maven" loading="embedded"/>
+    <module name="intellij.maven.profiler"/>
+    <module name="intellij.maven.proofreading"/>
+    <module name="intellij.maven.performanceTesting"/>
+    <module name="intellij.maven.errorProne.compiler"/>
+    <module name="intellij.maven.groovy"/>
+    <module name="intellij.maven.completion"/>
+  </content>
+
+</idea-plugin>

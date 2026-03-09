@@ -77,7 +77,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.tasks.compatibility")
       spec.withModule("intellij.tasks.java")
     },
-    plugin("intellij.maven") { spec ->
+    plugin("intellij.maven.plugin") { spec ->
 
       spec.doNotCopyModuleLibrariesAutomatically(
         listOf(
