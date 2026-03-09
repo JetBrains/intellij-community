@@ -29,6 +29,7 @@ import javax.swing.JComponent
 import javax.swing.JTree
 
 internal class BreakpointListProvider(private val project: Project) : BookmarksListProvider {
+  private data class GroupKey(val group: XBreakpointGroup, val parentKey: Any)
   @Suppress("SpellCheckingInspection")
   @PropertyKey(resourceBundle = XDebuggerBundle.BUNDLE)
   private val rootNameKey = "xbreakpoints.dialog.title"
@@ -71,7 +72,7 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
     private val valid = AtomicBoolean()
     private val icon16x12 = JBUIScale.scaleIcon(SizedIcon(AllIcons.Debugger.Db_set_breakpoint, 16, 12))
     private val cache = AbstractTreeNodeCache<Any, AbstractTreeNode<*>>(this) {
-      if (it is BreakpointItem) ItemNode(project, it) else if (it is XBreakpointGroup) GroupNode(project, it) else null
+      if (it is BreakpointItem) ItemNode(project, it) else if (it is GroupKey) GroupNode(project, it) else null
     }
 
     init {
@@ -90,8 +91,8 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
         val default2 = o2.isDefaultBreakpoint
         if (default1 && !default2) -1 else if (!default1 && default2) 1 else o1.compareTo(o2)
       }
-      o1 is XBreakpointGroup && o2 is XBreakpointGroup -> o1.compareTo(o2)
-      o1 is XBreakpointGroup -> -1
+      o1 is GroupKey && o2 is GroupKey -> o1.group.compareTo(o2.group)
+      o1 is GroupKey -> -1
       else -> 1
     }
 
@@ -120,15 +121,16 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
 
         for (item in items) {
           if (item.canNavigate() || Registry.`is`("ide.bookmark.show.all.breakpoints", false)) {
-            var any = item as Any
-            for (rule in enabledRules) {
+            var parentKey: Any = value  // root
+            for (rule in enabledRules) {  // descending priority: outermost groups first
               val breakpoint = item.breakpoint ?: continue
-              rule.getGroup(breakpoint)?.let {
-                breakpoints[any] = it
-                any = it
+              rule.getGroup(breakpoint)?.let { group ->
+                val groupKey = GroupKey(group, parentKey)
+                breakpoints[groupKey] = parentKey
+                parentKey = groupKey
               }
             }
-            breakpoints[any] = value
+            breakpoints[item] = parentKey
           }
         }
       }
@@ -154,9 +156,9 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
   }
 
 
-  private class GroupNode(project: Project, value: XBreakpointGroup) : AbstractTreeNode<XBreakpointGroup>(project, value) {
+  private class GroupNode(project: Project, value: GroupKey) : AbstractTreeNode<GroupKey>(project, value) {
     private val cache = AbstractTreeNodeCache<Any, AbstractTreeNode<*>>(this) {
-      if (it is BreakpointItem) ItemNode(project, it) else if (it is XBreakpointGroup) GroupNode(project, it) else null
+      if (it is BreakpointItem) ItemNode(project, it) else if (it is GroupKey) GroupNode(project, it) else null
     }
 
     private fun getKeys(): List<Any> {
@@ -171,8 +173,8 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
     override fun getChildren() = cache.getNodes(getKeys())
 
     override fun update(presentation: PresentationData) {
-      presentation.setIcon(value.getIcon(true))
-      presentation.presentableText = value.name
+      presentation.setIcon(value.group.getIcon(true))
+      presentation.presentableText = value.group.name
     }
   }
 
