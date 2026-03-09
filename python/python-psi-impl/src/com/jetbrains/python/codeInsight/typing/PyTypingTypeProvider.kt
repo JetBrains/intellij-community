@@ -629,11 +629,19 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     }
 
     fun getKnownType(expression: PyExpression): PyType? {
+      if (typeContext.isExternal()) {
+        return typeContext.getContextTypeCache()[expression.text to contextStrongHashValue]
+      }
       return typeContext.getContextTypeCache()[expression to contextStrongHashValue]
     }
 
     fun assumeType(expression: PyExpression, type: PyType) {
-      typeContext.getContextTypeCache()[expression to contextStrongHashValue] = type
+      if (typeContext.isExternal()) {
+        typeContext.getContextTypeCache()[expression.text to contextStrongHashValue] = type
+      }
+      else {
+        typeContext.getContextTypeCache()[expression to contextStrongHashValue] = type
+      }
     }
 
     private var myContextStrongHashValue: HashValue128? = null
