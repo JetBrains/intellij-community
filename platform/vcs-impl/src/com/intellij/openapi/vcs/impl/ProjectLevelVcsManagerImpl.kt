@@ -49,6 +49,7 @@ import com.intellij.openapi.vcs.history.VcsHistoryCache
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses
 import com.intellij.openapi.vcs.impl.projectlevelman.MappingsToRoots
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings
+import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings.MappedRoot
 import com.intellij.openapi.vcs.impl.projectlevelman.OptionsAndConfirmations
 import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowConfirmationOption
 import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowSettingOption
@@ -71,6 +72,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.vcs.console.VcsConsoleTabService
 import com.intellij.vcsUtil.VcsImplUtil
+import com.intellij.vcsUtil.VcsUtil
 import kotlinx.coroutines.CoroutineScope
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -132,34 +134,27 @@ class ProjectLevelVcsManagerImpl(
     ?: file.presentableName
 
   override fun getVcsFor(file: VirtualFile?): AbstractVcs? {
-    if (project.isDisposed()) return null
-    return mappingsHolder.getMappedRootFor(file)?.vcs
+    return getMappedRootFor(file)?.vcs
   }
 
   override fun getVcsFor(file: FilePath?): AbstractVcs? {
-    if (project.isDisposed()) return null
-    return mappingsHolder.getMappedRootFor(file)?.vcs
+    return getMappedRootFor(file)?.vcs
   }
 
   override fun getVcsRootFor(file: VirtualFile?): VirtualFile? {
-    if (file == null || project.isDisposed()) return null
-    return mappingsHolder.getMappedRootFor(file)?.root
+    return getMappedRootFor(file)?.root
   }
 
   override fun getVcsRootObjectFor(file: VirtualFile?): VcsRoot? {
-    if (file == null || project.isDisposed()) return null
-    return mappingsHolder.getMappedRootFor(file)?.let { VcsRoot(it.vcs, it.root) }
+    return getMappedRootFor(file)?.let { VcsRoot(it.vcs, it.root) }
   }
 
   override fun getVcsRootFor(file: FilePath?): VirtualFile? {
-    if (file == null || project.isDisposed()) return null
-    return mappingsHolder.getMappedRootFor(file)?.root
+    return getMappedRootFor(file)?.root
   }
 
   override fun getVcsRootObjectFor(file: FilePath?): VcsRoot? {
-    if (file == null || project.isDisposed()) return null
-
-    val root = mappingsHolder.getMappedRootFor(file)
+    val root = getMappedRootFor(file)
     return if (root != null) VcsRoot(root.vcs, root.root) else null
   }
 
@@ -210,13 +205,25 @@ class ProjectLevelVcsManagerImpl(
   }
 
   override fun getDirectoryMappingFor(path: FilePath): VcsDirectoryMapping? {
-    if (project.isDisposed()) return null
-    return mappingsHolder.getMappedRootFor(path)?.mapping
+    return getMappedRootFor(path)?.mapping
   }
 
   private fun getDirectoryMappingFor(file: VirtualFile): VcsDirectoryMapping? {
-    if (project.isDisposed()) return null
-    return mappingsHolder.getMappedRootFor(file)?.mapping
+    return getMappedRootFor(file)?.mapping
+  }
+
+  private fun getMappedRootFor(file: FilePath?): MappedRoot? {
+    if (file == null) return null
+    val root: MappedRoot = mappingsHolder.getMappedRootFor(file) ?: return null
+    if (isIgnored(file)) return null
+    return root
+  }
+
+  private fun getMappedRootFor(file: VirtualFile?): MappedRoot? {
+    if (file == null) return null
+    val root: MappedRoot = mappingsHolder.getMappedRootFor(file) ?: return null
+    if (isIgnored(file)) return null
+    return root
   }
 
   override fun setDirectoryMapping(path: @NonNls String, activeVcsName: @NonNls String?) {
@@ -551,6 +558,11 @@ class ProjectLevelVcsManagerImpl(
         return@ThrowableComputable false
       }
     })
+  }
+
+  @ApiStatus.Internal
+  fun isIgnoredFileRoot(file: VirtualFile): Boolean {
+    return isIgnored(VcsUtil.getFilePath(file))
   }
 
   private fun isInDirectoryBasedRoot(file: VirtualFile): Boolean {
