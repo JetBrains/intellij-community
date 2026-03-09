@@ -389,7 +389,7 @@ private data class PendingCodexMetadata(
 )
 
 private suspend fun openOrFocusProjectInternal(normalizedPath: String) {
-  val project = openProject(normalizedPath) ?: return
+  val project = openOrReuseSourceProjectByPath(normalizedPath) ?: return
   val projectUtilService = project.serviceAsync<ProjectUtilService>()
   withContext(Dispatchers.UI) {
     projectUtilService.focusProjectWindow()
@@ -438,7 +438,7 @@ private suspend fun openAgentSessionChat(
     )
     return
   }
-  val openProject = openProject(normalizedPath) ?: return
+  val openProject = openOrReuseSourceProjectByPath(normalizedPath) ?: return
   openChatInProject(
     project = openProject,
     projectPath = normalizedPath,
@@ -562,7 +562,7 @@ private suspend fun openAgentSessionNewChat(
     )
     return
   }
-  val openProject = openProject(normalizedPath) ?: return
+  val openProject = openOrReuseSourceProjectByPath(normalizedPath) ?: return
   openNewChatInProject(
     project = openProject,
     projectPath = normalizedPath,
