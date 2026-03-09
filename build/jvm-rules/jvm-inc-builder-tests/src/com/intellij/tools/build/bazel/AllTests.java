@@ -14,6 +14,7 @@ import static org.junit.Assert.fail;
   KotlinTests.class,
   JavaTests.class,
   ZipBuilderTest.class,
+  IteratorsTest.class,
   DependencyGraphTest.class,
   KotlinCriTest.class
 })
