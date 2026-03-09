@@ -16,13 +16,13 @@ internal class InvalidFileProcessor(
   private val fileManager: FileManagerImpl,
   private val project: Project,
   private val vFileToViewProviderMap: FileViewProviderCache,
-  private val useFind: Boolean,
+  private val isMove: Boolean,
 ) {
 
-  fun processInvalidFiles() {
+  fun processInvalidFilesAfterVfsMoveOrDelete() {
     val originalFileToPsiFileMap = vFileToViewProviderMap.getAllEntries()
     val fileToPsiFileMap = originalFileToPsiFileMap.toMutableList()
-    if (useFind) {
+    if (isMove) {
       vFileToViewProviderMap.clear()
     }
 
@@ -57,7 +57,7 @@ internal class InvalidFileProcessor(
         continue
       }
 
-      if (useFind) {
+      if (isMove) {
         val psiFile1 = fileManager.findFile(vFile, context)
         if (psiFile1 == null) {
           iterator.remove()
@@ -81,8 +81,10 @@ internal class InvalidFileProcessor(
           }
         }
       }
-      else if (!fileManager.evaluateValidity(viewProvider as AbstractFileViewProvider)) {
-        iterator.remove()
+      else {
+        if (!fileManager.evaluateValidity(viewProvider as AbstractFileViewProvider)) {
+          iterator.remove()
+        }
       }
     }
 

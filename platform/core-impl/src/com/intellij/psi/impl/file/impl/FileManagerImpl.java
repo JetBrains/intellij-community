@@ -676,9 +676,9 @@ public final class FileManagerImpl implements FileManagerEx {
 
   @RequiresWriteLock
   @Override
-  public void removeInvalidFilesAndDirs(boolean useFind) {
+  public void updatePsiAfterVfsMoveOrDelete(boolean isMove) {
     removeInvalidDirs(); // note: important to update directories the map first - findFile uses findDirectory!
-    new InvalidFileProcessor(this, myManager.getProject(), myVFileToViewProviderMap, useFind).processInvalidFiles();
+    new InvalidFileProcessor(this, myManager.getProject(), myVFileToViewProviderMap, isMove).processInvalidFilesAfterVfsMoveOrDelete();
   }
 
   public static boolean areViewProvidersEquivalent(@NotNull FileViewProvider view1, @NotNull FileViewProvider view2) {

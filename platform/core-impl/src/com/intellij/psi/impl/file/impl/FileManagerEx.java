@@ -38,13 +38,10 @@ public interface FileManagerEx extends FileManager {
   List<PsiFile> getCachedPsiFilesInner(@NotNull VirtualFile file);
 
   /**
-   * Removes invalid files and directories from the cache.
-   *
-   * @param useFind pass {@code true} if it's expected that file view providers might have changed.
-   *                In this case, all files will be checked more thoroughly.
+   * Removes invalid files and directories from the cache after VFS move or delete.
    */
   @RequiresWriteLock
-  void removeInvalidFilesAndDirs(boolean useFind);
+  void updatePsiAfterVfsMoveOrDelete(boolean isMove);
 
   void reloadPsiAfterTextChange(@NotNull FileViewProvider viewProvider, @NotNull VirtualFile vFile);
 

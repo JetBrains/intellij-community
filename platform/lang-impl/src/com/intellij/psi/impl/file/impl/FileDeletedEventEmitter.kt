@@ -32,7 +32,7 @@ internal class FileDeletedEventEmitter(
     }
 
     if (needToRemoveInvalidFilesAndDirs) {
-      fileManager.removeInvalidFilesAndDirs(false)
+      fileManager.updatePsiAfterVfsMoveOrDelete(false)
     }
   }
 
