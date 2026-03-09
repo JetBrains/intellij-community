@@ -316,17 +316,13 @@ public final class FileManagerImpl implements FileManagerEx {
 
   private @NotNull @Unmodifiable List<FileViewProvider> getRawCachedViewProviders(@NotNull VirtualFile vFile) {
     List<FileViewProvider> providers = myVFileToViewProviderMap.getAllProviders(vFile);
-    if (!providers.isEmpty()) {
-      if (providers.size() == 1) {
-        return Collections.singletonList(providers.get(0));
-      }
-      else {
-        return new ArrayList<>(providers);
-      }
+    if (providers.isEmpty()) {
+      FileViewProvider provider = vFile.getUserData(myPsiHardRefKey);
+      return ContainerUtil.createMaybeSingletonList(provider);
     }
-
-    FileViewProvider provider = vFile.getUserData(myPsiHardRefKey);
-    return ContainerUtil.createMaybeSingletonList(provider);
+    else {
+      return providers;
+    }
   }
 
   @Override
