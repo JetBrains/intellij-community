@@ -1766,7 +1766,7 @@ public class JavaDocInfoGenerator {
       buffer.append(StringUtil.repeatSymbol(' ', indent));
       PsiParameter parm = parameters[i];
       generateAnnotations(buffer, parm, place, false, false, true);
-      generateType(buffer, parm.getType(), parm, generateLink, isTooltip);
+      generateType(buffer, ((PsiParameter)parm.getOriginalElement()).getType(), parm, generateLink, isTooltip);
       if (!isTooltip) {
         buffer.append(NBSP);
         appendStyledSpan(buffer, getHighlightingManager().getParameterAttributes(), parm.getName());
@@ -3218,7 +3218,11 @@ public class JavaDocInfoGenerator {
 
   String generateTypeParameters(PsiTypeParameterListOwner owner, boolean useShortNames) {
     if (owner.hasTypeParameters()) {
-      PsiTypeParameter[] parameters = owner.getTypeParameters();
+      PsiTypeParameterListOwner originalOwner = owner;
+      if (owner.getOriginalElement() instanceof PsiTypeParameterListOwner originalListOwner && originalListOwner != owner) {
+        originalOwner = originalListOwner;
+      }
+      PsiTypeParameter[] parameters = originalOwner.getTypeParameters();
 
       StringBuilder buffer = new StringBuilder();
       appendStyledSpan(buffer, getHighlightingManager().getOperationSignAttributes(), LT);
@@ -3246,7 +3250,7 @@ public class JavaDocInfoGenerator {
         if (refs.length > 0) {
           appendStyledSpan(buffer, getHighlightingManager().getKeywordAttributes(), " extends ");
           for (int j = 0; j < refs.length; j++) {
-            generateType(buffer, refs[j], owner, true, useShortNames);
+            generateType(buffer, refs[j], originalOwner, true, useShortNames);
             if (j < refs.length - 1) {
               appendStyledSpan(buffer, getHighlightingManager().getOperationSignAttributes(), " & ");
             }
