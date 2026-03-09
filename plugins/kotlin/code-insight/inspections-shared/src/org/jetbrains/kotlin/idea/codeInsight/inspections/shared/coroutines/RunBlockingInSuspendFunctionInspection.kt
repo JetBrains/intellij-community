@@ -13,7 +13,9 @@ import com.intellij.psi.util.parents
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.resources.BUNDLE
@@ -22,6 +24,7 @@ import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.RunBl
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.getCallExpressionSymbol
+import org.jetbrains.kotlin.idea.codeinsight.utils.getImplicitReceiverInfo
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.imports.addImportFor
@@ -35,13 +38,16 @@ import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReturnExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.callExpressionVisitor
+import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.hasSuspendModifier
 
 private val COROUTINE_CONTEXT_FQ_NAME = FqName("kotlin.coroutines.CoroutineContext")
-private val COROUTINE_SCOPE_FQ_NAME = FqName("kotlinx.coroutines.CoroutineScope")
+private val COROUTINE_SCOPE_CLASS_FQ_NAME = FqName("kotlinx.coroutines.CoroutineScope")
+private val COROUTINE_SCOPE_FUNCTION_FQ_NAME = FqName("kotlinx.coroutines.coroutineScope")
 private val RUN_BLOCKING_FQ_NAME = FqName("kotlinx.coroutines.runBlocking")
 private val WITH_CONTEXT_FQ_NAME = FqName("kotlinx.coroutines.withContext")
 private const val RUN_BLOCKING_FUNCTION_NAME = "runBlocking"
@@ -53,6 +59,7 @@ internal class RunBlockingInSuspendFunctionInspection : KotlinApplicableInspecti
         INLINE("fix.replace.run.blocking.with.inline"),
         RUN("fix.replace.run.blocking.with.run"),
         WITH_CONTEXT("fix.replace.run.blocking.with.withContext"),
+        COROUTINE_SCOPE("fix.replace.run.blocking.with.coroutineScope"),
     }
 
     data class Context(
@@ -79,13 +86,18 @@ internal class RunBlockingInSuspendFunctionInspection : KotlinApplicableInspecti
     override fun KaSession.prepareContext(element: KtCallExpression): Context? {
         // Check if we're in a suspend context (either suspend function or suspend lambda)
         if (!isInSuspendContext(element)) return null
-        
+
+        val lambdaArgument = element.lambdaArguments.singleOrNull() ?: return null
+        val functionLiteral = lambdaArgument.getLambdaExpression()?.functionLiteral ?: return null
+
         val fixType = when (element.valueArguments.size) {
             1 -> {
                 val lambdaArgumentExpression = element.singleLambdaArgumentExpression() ?: return null
                 val statements = lambdaArgumentExpression.bodyExpression?.statements ?: return null
-                when (statements.size) {
-                    1 -> FixType.INLINE
+
+                when {
+                    functionLiteral.usesCoroutineScopeReceiver() -> FixType.COROUTINE_SCOPE
+                    statements.size == 1 -> FixType.INLINE
                     else -> FixType.RUN
                 }
             }
@@ -95,10 +107,7 @@ internal class RunBlockingInSuspendFunctionInspection : KotlinApplicableInspecti
         }
 
         val function = element.resolveToFunctionSymbol(this) ?: return null
-
         if (!isRunBlocking(function)) return null
-        val lambdaArgument = element.lambdaArguments.singleOrNull() ?: return null
-        val functionLiteral = lambdaArgument.getLambdaExpression()?.functionLiteral ?: return null
 
         val labelReferenceExpressions = functionLiteral.findRelatedLabelReferences().map { it.createSmartPointer() }
 
@@ -143,6 +152,11 @@ internal class RunBlockingInSuspendFunctionInspection : KotlinApplicableInspecti
                     element.replace(statement)
                     return
                 }
+
+                FixType.COROUTINE_SCOPE -> {
+                    element.containingKtFile.addImportFor(COROUTINE_SCOPE_FUNCTION_FQ_NAME)
+                    COROUTINE_SCOPE_FUNCTION_FQ_NAME.shortName().asString()
+                }
             }
 
             val psiFactory = KtPsiFactory(project)
@@ -173,7 +187,7 @@ private fun KaSession.isRunBlocking(function: KaNamedFunctionSymbol): Boolean {
         val parameterType = parameter.returnType
         if (!parameterType.isSuspendFunctionType) return false
         val receiverSymbol = (parameterType as KaFunctionType).receiverType?.symbol ?: return false
-        return receiverSymbol.importableFqName == COROUTINE_SCOPE_FQ_NAME
+        return receiverSymbol.importableFqName == COROUTINE_SCOPE_CLASS_FQ_NAME
     }
 
     return checkFirstParameter() && checkSecondParameter()
@@ -212,3 +226,29 @@ private fun KaSession.isInSuspendContext(element: KtExpression): Boolean {
     return false
 }
 
+/**
+ * Returns `true` if the lambda body references its receiver, either explicitly via `this`
+ * or implicitly by calling extension functions/properties on it.
+ *
+ * ```
+ * runBlocking { launch { } }          // true  — implicit: launch is an extension on CoroutineScope
+ * runBlocking { this.launch { } }     // true  — explicit: this refers to CoroutineScope
+ * runBlocking { delay(1000) }         // false — delay is a top-level function, receiver unused
+ * ```
+ */
+context(_: KaSession)
+private fun KtFunctionLiteral.usesCoroutineScopeReceiver(): Boolean {
+    val lambdaReceiverParameter = symbol.receiverParameter ?: return false
+    val bodyExpression = bodyExpression ?: return false
+
+    return bodyExpression.anyDescendantOfType<KtExpression> { expression ->
+        when (expression) {
+            is KtThisExpression -> {
+                val resolvedSymbol = expression.instanceReference.mainReference.resolveToSymbol()
+                resolvedSymbol == lambdaReceiverParameter
+            }
+
+            else -> expression.getImplicitReceiverInfo()?.receiverProvidedBy == this
+        }
+    }
+}
