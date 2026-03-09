@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.ImplicitlyImportedElement;
 import com.intellij.psi.JavaPsiFacade;
@@ -24,8 +23,10 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -125,20 +126,17 @@ public final class ImportsUtil {
    * @param file the Java file for which to retrieve implicit import statements.
    * @return a list of implicit import statements associated with the given Java file.
    */
-  public static List<PsiImportStatementBase> getAllImplicitImports(@NotNull PsiJavaFile file) {
-    List<PsiImportStatementBase> cache = CachedValuesManager.getProjectPsiDependentCache(file, javaFile -> {
+  public static @Unmodifiable List<PsiImportStatementBase> getAllImplicitImports(@NotNull PsiJavaFile file) {
+    return CachedValuesManager.getProjectPsiDependentCache(file, javaFile -> {
       List<PsiImportStatementBase> results = new ArrayList<>();
-      Project project = javaFile.getProject();
-      PsiElementFactory factory = PsiElementFactory.getInstance(project);
-      ImplicitlyImportedElement[] elements = javaFile.getImplicitlyImportedElements();
-      for (@NotNull ImplicitlyImportedElement element : elements) {
+      for (ImplicitlyImportedElement element : javaFile.getImplicitlyImportedElements()) {
         results.add(element.createImportStatement());
       }
+      PsiElementFactory factory = PsiElementFactory.getInstance(javaFile.getProject());
       for (String aPackage : javaFile.getImplicitlyImportedPackages()) {
         results.add(factory.createImportStatementOnDemand(aPackage));
       }
-      return results;
+      return Collections.unmodifiableList(results);
     });
-    return new ArrayList<>(cache);
   }
 }
