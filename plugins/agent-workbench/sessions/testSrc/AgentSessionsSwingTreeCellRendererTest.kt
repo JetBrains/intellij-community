@@ -28,6 +28,7 @@ import com.intellij.agent.workbench.sessions.ui.sessionTreeRowActionsRightBounda
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.ProductIcons
 import com.intellij.ide.util.treeView.NodeDescriptor
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.AnimatedIcon
@@ -49,12 +50,14 @@ import javax.swing.tree.TreePath
 class AgentSessionsSwingTreeCellRendererTest {
   @BeforeEach
   fun setUp() {
+    IconLoader.activate()
     IconManager.activate(null)
   }
 
   @AfterEach
   fun tearDown() {
     IconManager.deactivate()
+    IconLoader.deactivate()
   }
 
   @Test
@@ -159,7 +162,8 @@ class AgentSessionsSwingTreeCellRendererTest {
 
   @Test
   fun projectRowsUseBuildSystemIconWhenAvailable() {
-    val buildSystemIcon = EmptyIcon.create(16, 16)
+    val projectNodeIcon = ProductIcons.getInstance().getProjectNodeIcon()
+    val buildSystemIcon = EmptyIcon.create(projectNodeIcon.iconWidth, projectNodeIcon.iconHeight)
     val project = AgentProjectSessions(
       path = "/work/project-a",
       name = "Project A",
@@ -180,8 +184,8 @@ class AgentSessionsSwingTreeCellRendererTest {
 
     val renderedIcon = renderer.icon
     assertThat(renderedIcon).isSameAs(buildSystemIcon)
-    assertThat(renderedIcon?.iconWidth).isEqualTo(ProductIcons.getInstance().getProjectNodeIcon().iconWidth)
-    assertThat(renderedIcon?.iconHeight).isEqualTo(ProductIcons.getInstance().getProjectNodeIcon().iconHeight)
+    assertThat(renderedIcon?.iconWidth).isEqualTo(projectNodeIcon.iconWidth)
+    assertThat(renderedIcon?.iconHeight).isEqualTo(projectNodeIcon.iconHeight)
   }
 
   @Test
