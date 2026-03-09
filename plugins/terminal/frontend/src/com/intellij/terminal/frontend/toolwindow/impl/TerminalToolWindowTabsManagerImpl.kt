@@ -63,6 +63,7 @@ import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalTabsManagerApi
 import org.jetbrains.plugins.terminal.block.reworked.session.toDto
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
+import org.jetbrains.plugins.terminal.buildSettingsAwareTitle
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
@@ -165,6 +166,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     TerminalTabCloseListenerImpl.install(content, project, parentDisposable = content)
 
     val tabScope = coroutineScope.childScope("TerminalToolWindowTab")
+    content.displayName = terminal.title.buildSettingsAwareTitle()
     updateTabNameOnTitleChange(terminal.title, content, tabScope.childScope("Tab name updating"))
 
     // Terminate the session if the tab was closed.
