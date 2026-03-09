@@ -103,6 +103,8 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
       "//div[@class='ActionToolbarImpl' and contains(@myvisibleactions, 'Kotlin Notebook')]",
       KotlinNotebookActionToolBarComponent::class.java
     )
+  val exportPdfButton: UiComponent
+    get() = x { byAttribute("myaction", "Export as PDF (null)") }
   val imagePanel: List<UiComponent>
     get() = xx("//div[@class='FullEditorWidthRenderer']//div[@class='ImagePanel']").list()
   val firstNotebookOutput: String
@@ -387,11 +389,10 @@ fun Driver.closeLeftToolWindow(stripeButtonName: String) {
  * If you need to access other UI components in testBody(), use the `driver.ideFrame {}`.
  *
  * @param testBody A lambda containing the test actions to be executed with the `NotebookEditorUiComponent`.
+ * @return The result of the last expression in testBody.
  */
-fun Driver.withNotebookEditor(testBody: NotebookEditorUiComponent.() -> Unit): IdeaFrameUI = ideFrame {
-  notebookEditor {
-    testBody()
-  }
+fun <T> Driver.withNotebookEditor(testBody: NotebookEditorUiComponent.() -> T): T {
+  return ui.ideFrame().notebookEditor().testBody()
 }
 
 fun Driver.openNotebookWithProjectPanel(fileName: String): IdeaFrameUI = ideFrame {
