@@ -117,7 +117,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
         val testFile = File(path)
         val renameObject = loadTestConfiguration(testFile)
 
-        val testIsEnabledInK2 = renameObject.get(if (isFirPlugin) "enabledInK2" else "enabledInK1")?.asBoolean ?: if (isFirPlugin) error("`enabledInK2` has to be specified explicitly") else true
+        val testIsEnabledInK2 = renameObject.get(if (isFirPlugin) "enabledInK2" else "enabledInK1")?.asBoolean ?: true
 
         val result = runCatching {
             val renameTypeStr = renameObject.getString("type")
