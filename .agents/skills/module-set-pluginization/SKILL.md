@@ -1,0 +1,68 @@
+---
+name: module-set-pluginization
+description: Convert Product DSL module sets into generated plugin wrappers and handle the surrounding generation flow. Use when pluginizing a module set like `recentFiles` or `grid.core`, updating bundled plugin registration, regenerating wrapper artifacts, or fixing validation/build ordering bugs where wrapper plugin descriptors are needed before generated files exist on disk.
+---
+
+# Module Set Pluginization
+
+Use this workflow when a Product DSL `ModuleSet` should become a generated plugin wrapper.
+
+## Before Editing
+
+- Read `community/platform/build-scripts/product-dsl/.claude/rules/product-dsl.md` before changing product-dsl sources.
+- Find an existing pluginized example first, usually `recentFiles()` or `vcsFrontend()`, and mirror its packaging pattern before inventing a new one.
+- Confirm whether the target should stay inlined inside a parent module set. Pluginized wrappers usually stop being emitted through the old generated `intellij.moduleSets.<name>.xml` path.
+
+## Convert the DSL Definition
+
+- Change the module-set function from `moduleSet("name")` to `plugin("name")`.
+- Keep the content modules unchanged unless the product layout itself is also changing.
+- Remove stale `moduleSet(...)` inclusions from aggregate module sets if the wrapper should no longer be inlined there.
+- If the wrapper should be bundled by default, add `intellij.moduleSet.plugin.<name>` to `DEFAULT_BUNDLED_PLUGINS` in `ProductModulesLayout.kt`.
+
+## Fix Ordering Bugs When Validation Runs Before Generation
+
+If pluginization causes failures like "plugin missing" or unresolved dependencies before generated wrapper files exist on disk, preload wrapper plugin content in memory.
+
+- Add a cache path for precomputed plugin content in `PluginContentCache`.
+- Build `PluginContentInfo` objects for pluginized module sets from the same data used by `ModuleSetPluginGenerator`.
+- Inject those precomputed wrapper descriptors in `ModelBuildingStage` before plugin extraction and validation start.
+- Prefer this over reordering the entire pipeline. The goal is to make validation independent from already-generated wrapper files being present on disk.
+
+## Expected Generated Churn
+
+- New wrapper directory under `community/module-set-plugins/generated/intellij.moduleSet.plugin.<name>/` with:
+  - `<module>.iml`
+  - `plugin-content.yaml`
+  - `resources/META-INF/plugin.xml`
+  - `BUILD.bazel` after JPS-to-Bazel sync
+- Update of `community/module-set-plugins/generated/intellij.moduleSet.plugin.main/`
+- Deletion of the legacy generated `community/platform/platform-resources/generated/META-INF/intellij.moduleSets.<name>.xml`
+- Updates to any generated aggregators or xi:include-based product descriptors that previously referenced the legacy module-set XML
+- `.idea/modules.xml` and `community/.idea/modules.xml` updates after generator + JPS-to-Bazel sync
+
+## Required Commands
+
+Run these in order after the source edits:
+
+```bash
+bazel run //platform/buildScripts:plugin-model-tool
+./build/jpsModelToBazel.cmd
+```
+
+`./build/jpsModelToBazel.cmd` is required because generated wrapper `.iml` files and `BUILD.bazel` files change together.
+
+## Verification
+
+- Run `get_file_problems(errorsOnly=false)` on every changed Kotlin source and test file.
+- Add or update a regression test that proves the wrapper exists in memory before generated files are written if you touched pipeline ordering.
+- Use targeted tests with fully qualified names:
+
+```bash
+./tests.cmd -Dintellij.build.test.patterns=org.jetbrains.intellij.build.productLayout.generator.ModuleSetPluginGeneratorTest
+./tests.cmd -Dintellij.build.test.patterns=org.jetbrains.intellij.build.productLayout.pipeline.ModelBuildingStageTest
+./tests.cmd -Dintellij.build.test.patterns=org.jetbrains.intellij.build.productLayout.validator.ModuleSetPluginizationValidatorTest
+./tests.cmd -Dintellij.build.test.patterns=org.jetbrains.intellij.build.productLayout.dependency.PluginDependencyGraphTest
+```
+
+Add product-specific packaging tests only if the generated diff or failing tests show downstream expectations need updates.

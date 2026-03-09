@@ -37,6 +37,7 @@ Preserve IDE-serialized .iml files in canonical form. Do not:
 - add comments
 - auto-format
 - normalize (structure or whitespace)
+- add a trailing newline at end of file
 - prune (remove) empty tags
 - reorder elements or attributes
 
