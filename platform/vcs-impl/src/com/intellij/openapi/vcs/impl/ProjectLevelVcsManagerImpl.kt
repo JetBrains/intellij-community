@@ -72,7 +72,6 @@ import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.text.StringTokenizer
 import com.intellij.vcs.console.VcsConsoleTabService
 import com.intellij.vcsUtil.VcsImplUtil
-import com.intellij.vcsUtil.VcsUtil
 import kotlinx.coroutines.CoroutineScope
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -82,6 +81,7 @@ import org.jetbrains.annotations.SystemIndependent
 import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.util.Collections
+import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
 
@@ -556,7 +556,13 @@ class ProjectLevelVcsManagerImpl(
 
   @ApiStatus.Internal
   fun isIgnoredFileRoot(file: VirtualFile): Boolean {
-    return isIgnored(VcsUtil.getFilePath(file))
+    return ReadAction.nonBlocking(Callable {
+      when {
+        project.isDisposed() || project.isDefault -> false
+        !file.isValid() -> false
+        else -> FileIndexFacade.getInstance(project).isUnderIgnored(file)
+      }
+    }).executeSynchronously()
   }
 
   override fun isIgnoredUnderRoot(vcsRoot: VirtualFile, filePath: FilePath): Boolean {
