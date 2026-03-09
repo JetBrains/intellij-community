@@ -2,6 +2,7 @@
 
 package com.intellij.packageDependencies.ui;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,10 +44,12 @@ public final class FileNode extends PackageDependenciesNode implements Comparabl
   @Override
   public void fillFiles(Set<? super PsiFile> set, boolean recursively) {
     super.fillFiles(set, recursively);
-    final PsiFile file = getFile();
-    if (file != null && file.isValid()) {
-      set.add(file);
-    }
+    ReadAction.runBlocking(() -> {
+      final PsiFile file = getFile();
+      if (file != null && file.isValid()) {
+        set.add(file);
+      }
+    });
   }
 
   @Override
