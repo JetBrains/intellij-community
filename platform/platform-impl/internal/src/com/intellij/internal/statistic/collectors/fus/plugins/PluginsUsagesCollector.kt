@@ -16,10 +16,10 @@ import com.intellij.openapi.extensions.PluginId
 import java.nio.file.Files
 
 internal class PluginsUsagesCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("plugins", 11)
+  private val GROUP = EventLogGroup("plugins", 12)
   private val DISABLED_PLUGIN = GROUP.registerEvent("disabled.plugin", EventFields.PluginInfo)
   private val ENABLED_NOT_BUNDLED_PLUGIN = GROUP.registerEvent("enabled.not.bundled.plugin", EventFields.PluginInfo)
-  private val UNSAFE_PLUGIN = GROUP.registerEvent("unsafe.plugin", EventFields.String("unsafe_id", emptyList()), EventFields.Boolean("enabled"))
+  private val UNSAFE_PLUGIN = GROUP.registerEvent("unsafe.plugin", EventFields.String("unsafe_id", emptyList(), defaultValue = "Unsafe plugin"), EventFields.Boolean("enabled"))
   private val MIGRATION_INSTALLED_PLUGIN = GROUP.registerEvent("migration.installed.plugin", EventFields.PluginInfo)
   private val INCOMPATIBLE_PLUGIN = GROUP.registerEvent("incompatible.plugin", EventFields.PluginInfo)
 
