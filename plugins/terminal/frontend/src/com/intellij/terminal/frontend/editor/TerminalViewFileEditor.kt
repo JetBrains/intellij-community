@@ -13,8 +13,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.terminal.frontend.toolwindow.impl.TITLE_UPDATE_DELAY
-import com.intellij.terminal.frontend.toolwindow.impl.stateFlow
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +21,8 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.TITLE_UPDATE_DELAY
+import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.stateFlow
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
