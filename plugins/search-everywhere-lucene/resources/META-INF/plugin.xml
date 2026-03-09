@@ -2,6 +2,7 @@
   <id>com.intellij.searchEverywhereLucene</id>
   <name>SearchEverywhereLucene</name>
   <vendor>JetBrains</vendor>
+  <description>Enables Lucene based Search-Everywhere Tabs</description>
 
   <!-- Declare split content modules that belong to this plugin -->
   <content namespace="jetbrains">
