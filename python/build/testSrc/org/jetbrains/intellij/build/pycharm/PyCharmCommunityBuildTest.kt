@@ -2,9 +2,11 @@
 package org.jetbrains.intellij.build.pycharm
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.platform.buildScripts.testFramework.runEssentialPluginsTest
 import com.intellij.platform.buildScripts.testFramework.runTestBuild
 import com.intellij.util.io.Compressor
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
@@ -49,5 +51,11 @@ class PyCharmCommunityBuildTest {
       it.classOutDir = System.getProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY) ?: "${homePath}/out/classes"
       stubSkeletons(communityHomePath.communityRoot, it)
     }
+  }
+
+  @Test
+  fun `essential plugins depend only on essential plugins`() {
+    val homePath = PathManager.getHomeDirFor(javaClass)!!
+    runEssentialPluginsTest(homePath, PyCharmCommunityProperties(homePath), ProprietaryBuildTools.DUMMY)
   }
 }
