@@ -126,4 +126,9 @@
   <extensions defaultExtensionNs="org.intellij.markdown">
     <markdownCompatibilityChecker implementation="com.intellij.notebooks.visualization.JupyterMarkdownCompatibilityChecker"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.notebooks.visualization.ui.cell.background.NotebookPowerSaveModeListener"
+              topic="com.intellij.ide.PowerSaveMode$Listener"/>
+  </projectListeners>
 </idea-plugin>
