@@ -50,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -181,7 +182,7 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
     configureByText(JavaFileType.INSTANCE, text);
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
-    int[] creation = {0};
+    AtomicInteger creation = new AtomicInteger();
     class Fac implements TextEditorHighlightingPassFactory {
       @Override
       public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
@@ -193,7 +194,7 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
       final class TestFileStatusMapDirtyCachingWorksPass extends TextEditorHighlightingPass {
         private TestFileStatusMapDirtyCachingWorksPass(Project project) {
           super(project, getEditor().getDocument(), false);
-          creation[0]++;
+          creation.incrementAndGet();
         }
 
         @Override
@@ -208,23 +209,23 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
     TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(getProject());
     registrar.registerTextEditorHighlightingPass(new Fac(), null, null, false, -1);
     myDaemonCodeAnalyzer.restart(getTestName(false));
-    creation[0]=0;
+    creation.set(0);
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
-    assertEquals(1, creation[0]);
+    assertEquals(1, creation.get());
 
     //cached
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
-    assertEquals(1, creation[0]);
+    assertEquals(1, creation.get());
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
-    assertEquals(1, creation[0]);
+    assertEquals(1, creation.get());
 
     type(' ');
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
-    assertEquals(2, creation[0]);
+    assertEquals(2, creation.get());
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
-    assertEquals(2, creation[0]);
+    assertEquals(2, creation.get());
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
-    assertEquals(2, creation[0]);
+    assertEquals(2, creation.get());
   }
 
   public void testFileStatusMapDirtyDocumentRangeWorks() {

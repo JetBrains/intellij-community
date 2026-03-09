@@ -671,11 +671,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
     assertFileFromMyProject(psiFile.getProject(), psiFile);
     Document document = psiFile.getViewProvider().getDocument();
-    CodeInsightContext context = CodeInsightContextUtil.getCodeInsightContext(psiFile);
     return document != null &&
            PsiDocumentManager.getInstance(myProject).isCommitted(document) &&
            document.getModificationStamp() == psiFile.getViewProvider().getModificationStamp() &&
-           myFileStatusMap.allDirtyScopesAreNull(document, context);
+           myFileStatusMap.allDirtyScopesAreNullFor(document);
   }
 
   @ApiStatus.Internal
@@ -699,7 +698,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     });
     return
       !PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments() &&
-      myFileStatusMap.allDirtyScopesAreNullFor(documents) &&
+      ContainerUtil.all(documents, document -> myFileStatusMap.allDirtyScopesAreNullFor(document)) &&
       updateCompleted;
   }
 

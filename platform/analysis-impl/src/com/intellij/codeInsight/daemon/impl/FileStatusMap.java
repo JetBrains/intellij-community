@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -292,23 +291,20 @@ public final class FileStatusMap implements Disposable {
     }
   }
 
-  // todo IJPL-339 do we need context here?
-  @ApiStatus.Experimental
-  public boolean allDirtyScopesAreNull(@NotNull Document document, @NotNull CodeInsightContext context) {
-    synchronized (myFileStatusMapState) {
-      FileStatus status = myFileStatusMapState.getStatusOrNull(document, context);
-      return status != null && !status.isDefensivelyMarkedForAnyPass() && status.isWolfPassFinished() && status.allDirtyScopesAreNull();
-    }
-  }
-
   /**
    * @return true when all registered statuses are clean
    */
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  public boolean allDirtyScopesAreNullFor(@NotNull List<? extends Document> documents) {
+  public boolean allDirtyScopesAreNullFor(@NotNull Document document) {
     synchronized (myFileStatusMapState) {
-      return myFileStatusMapState.allDirtyScopesAreNullFor(documents);
+      return myFileStatusMapState.allDirtyScopesAreNullFor(document);
+    }
+  }
+  @ApiStatus.Internal
+  public boolean allDirtyScopesAreNull() {
+    synchronized (myFileStatusMapState) {
+      return myFileStatusMapState.allDirtyScopesAreNull();
     }
   }
 

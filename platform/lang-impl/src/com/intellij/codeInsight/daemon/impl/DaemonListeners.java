@@ -619,7 +619,7 @@ public final class DaemonListeners implements Disposable {
         if (affectedDocument != null) {
           // prevent Esc key to leave the document in the not-highlighted state
           // todo IJPL-339 investigate this place
-          if (!myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(affectedDocument, CodeInsightContexts.anyContext())) {
+          if (!myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNullFor(affectedDocument)) {
             stopDaemon(true, "Command finish");
           }
         }
