@@ -515,6 +515,7 @@ libraries/xstream
 libraries/xtext-xbase
 libraries/xz
 module-set-plugins/generated/intellij.moduleSet.plugin.debugger.streams
+module-set-plugins/generated/intellij.moduleSet.plugin.grid.core
 module-set-plugins/generated/intellij.moduleSet.plugin.main
 module-set-plugins/generated/intellij.moduleSet.plugin.recentFiles
 module-set-plugins/generated/intellij.moduleSet.plugin.vcs.frontend

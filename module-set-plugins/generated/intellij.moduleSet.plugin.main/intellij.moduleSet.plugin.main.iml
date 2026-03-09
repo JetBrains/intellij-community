@@ -4,6 +4,13 @@
     <exclude-output />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.grid" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.grid.core.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.grid.csv.core.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.grid.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.grid.impl.ide" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.grid.types" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.moduleSet.plugin.grid.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.moduleSet.plugin.recentFiles" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.moduleSet.plugin.vcs.frontend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.recentFiles" scope="RUNTIME" />

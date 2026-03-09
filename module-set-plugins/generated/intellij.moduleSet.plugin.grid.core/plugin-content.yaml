@@ -1,0 +1,21 @@
+- name: lib/moduleSet-plugin-grid-core.jar
+  modules:
+  - name: intellij.moduleSet.plugin.grid.core
+- name: lib/modules/intellij.grid.core.impl.jar
+  contentModules:
+  - name: intellij.grid.core.impl
+- name: lib/modules/intellij.grid.csv.core.impl.jar
+  contentModules:
+  - name: intellij.grid.csv.core.impl
+- name: lib/modules/intellij.grid.impl.ide.jar
+  contentModules:
+  - name: intellij.grid.impl.ide
+- name: lib/modules/intellij.grid.impl.jar
+  contentModules:
+  - name: intellij.grid.impl
+- name: lib/modules/intellij.grid.jar
+  contentModules:
+  - name: intellij.grid
+- name: lib/modules/intellij.grid.types.jar
+  contentModules:
+  - name: intellij.grid.types

@@ -309,15 +309,6 @@
     <module name="intellij.platform.jewel.markdown.core"/>
     <!-- endregion -->
 
-    <!-- region nested: grid.core -->
-    <module name="intellij.grid"/>
-    <module name="intellij.grid.types"/>
-    <module name="intellij.grid.csv.core.impl"/>
-    <module name="intellij.grid.core.impl"/>
-    <module name="intellij.grid.impl"/>
-    <module name="intellij.grid.impl.ide"/>
-    <!-- endregion -->
-
     <!-- region nested: vcs -->
     <!-- region nested: vcs > vcs.shared -->
     <module name="intellij.platform.vcs.core" loading="embedded"/>

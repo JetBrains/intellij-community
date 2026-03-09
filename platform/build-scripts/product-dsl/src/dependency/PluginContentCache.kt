@@ -89,6 +89,14 @@ internal class PluginContentCache(
    * Called for each DSL test plugin during graph building.
    */
   suspend fun addDslTestPlugin(pluginModule: TargetName, content: PluginContentInfo) {
+    addPrecomputedPlugin(pluginModule, content)
+  }
+
+  /**
+   * Adds pre-computed plugin content to the cache.
+   * Used for generated wrapper plugins whose descriptors are not yet present on disk.
+   */
+  suspend fun addPrecomputedPlugin(pluginModule: TargetName, content: PluginContentInfo) {
     cache.getOrPut(pluginModule) { content }
   }
 

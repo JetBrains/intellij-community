@@ -33,8 +33,8 @@ import org.jetbrains.intellij.build.productLayout.TestPluginSpec
 import org.jetbrains.intellij.build.productLayout.appendDefaultProductPluginMetadata
 import org.jetbrains.intellij.build.productLayout.buildContentBlocksAndChainMapping
 import org.jetbrains.intellij.build.productLayout.buildProductContentXml
-import org.jetbrains.intellij.build.productLayout.collectPluginizedModuleSets
 import org.jetbrains.intellij.build.productLayout.collectAndValidateAliases
+import org.jetbrains.intellij.build.productLayout.collectPluginizedModuleSets
 import org.jetbrains.intellij.build.productLayout.config.SuppressionConfig
 import org.jetbrains.intellij.build.productLayout.debug
 import org.jetbrains.intellij.build.productLayout.dependency.ModuleDescriptorCache
@@ -45,10 +45,11 @@ import org.jetbrains.intellij.build.productLayout.discovery.ModuleSetGenerationC
 import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
 import org.jetbrains.intellij.build.productLayout.discovery.PluginXmlOverride
 import org.jetbrains.intellij.build.productLayout.discovery.computePluginContentFromDslSpec
+import org.jetbrains.intellij.build.productLayout.generator.buildModuleSetPluginContentInfos
 import org.jetbrains.intellij.build.productLayout.graph.PluginGraphBuilder
-import org.jetbrains.intellij.build.productLayout.moduleSetPluginModuleName
 import org.jetbrains.intellij.build.productLayout.model.ErrorSink
 import org.jetbrains.intellij.build.productLayout.model.error.DuplicateDslTestPluginIdError
+import org.jetbrains.intellij.build.productLayout.moduleSetPluginModuleName
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionUsage
 import org.jetbrains.intellij.build.productLayout.traversal.collectPluginContentModules
 import org.jetbrains.intellij.build.productLayout.traversal.collectProductModuleNames
@@ -143,6 +144,14 @@ internal object ModelBuildingStage {
       scope = scope,
       errorSink = errorSink,
     )
+    val moduleSetPluginContents = buildModuleSetPluginContentInfos(
+      projectRoot = projectRoot,
+      communityModuleSets = discovery.communityModuleSets,
+      ultimateModuleSets = discovery.ultimateModuleSets,
+    )
+    for ((pluginModule, content) in moduleSetPluginContents) {
+      pluginContentCache.addPrecomputedPlugin(pluginModule, content)
+    }
 
     // Build lookup for DSL-defined test plugins keyed by PluginId (semantically correct)
     // Note: PluginId is the XML plugin identifier, distinct from ModuleName (JPS module)

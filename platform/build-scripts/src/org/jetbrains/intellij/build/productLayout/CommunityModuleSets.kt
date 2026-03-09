@@ -327,7 +327,8 @@ object CommunityModuleSets {
   /**
    * Grid/data viewer core modules.
    */
-  fun gridCore(): ModuleSet = moduleSet("grid.core") {
+  @Suppress("unused")
+  fun gridCore(): ModuleSet = plugin("grid.core") {
     module("intellij.grid")
     module("intellij.grid.types")
     module("intellij.grid.csv.core.impl")
@@ -374,7 +375,7 @@ object CommunityModuleSets {
   }
 
   /**
-   * IDE common modules (includes essential, compose, grid.core, vcs, xml, duplicates).
+   * IDE common modules (includes essential, compose, vcs, xml, duplicates).
    */
   fun ideCommon(): ModuleSet = moduleSet("ide.common") {
     // Include essential first (which includes coreLang from CoreModuleSets)
@@ -416,7 +417,6 @@ object CommunityModuleSets {
     module("intellij.libraries.grpc.netty.shaded")
     module("intellij.libraries.jspecify")
 
-    moduleSet(gridCore())
     moduleSet(vcs())
     moduleSet(xml())
     moduleSet(duplicates())

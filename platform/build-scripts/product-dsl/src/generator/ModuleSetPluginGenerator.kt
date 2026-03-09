@@ -3,10 +3,14 @@
 package org.jetbrains.intellij.build.productLayout.generator
 
 import com.intellij.platform.pluginGraph.PluginId
+import com.intellij.platform.pluginGraph.TargetName
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import org.jetbrains.intellij.build.productLayout.ContentModule
 import org.jetbrains.intellij.build.productLayout.ModuleSet
 import org.jetbrains.intellij.build.productLayout.collectPluginizedModuleSets
+import org.jetbrains.intellij.build.productLayout.discovery.ContentModuleInfo
+import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
+import org.jetbrains.intellij.build.productLayout.discovery.PluginSource
 import org.jetbrains.intellij.build.productLayout.moduleSetPluginModuleName
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
 import org.jetbrains.intellij.build.productLayout.pipeline.GenerationMode
@@ -20,7 +24,6 @@ import org.jetbrains.intellij.build.productLayout.stats.ModuleSetPluginFileResul
 import org.jetbrains.intellij.build.productLayout.util.FileUpdateStrategy
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.Comparator
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.name
 
@@ -121,6 +124,39 @@ internal fun generateModuleSetPlugins(
     legacyGeneratedRoots = MODULE_SET_PLUGIN_LEGACY_GENERATED_ROOTS.mapTo(LinkedHashSet(), projectRoot::resolve),
     emptyDirectoryCandidates = emptyDirectoryCandidates,
   )
+}
+
+internal fun buildModuleSetPluginContentInfos(
+  projectRoot: Path,
+  communityModuleSets: List<ModuleSet>,
+  ultimateModuleSets: List<ModuleSet>,
+): Map<TargetName, PluginContentInfo> {
+  val result = LinkedHashMap<TargetName, PluginContentInfo>()
+  appendModuleSetPluginContentInfos(
+    target = result,
+    wrappers = collectPluginWrappers(communityModuleSets, projectRoot.resolve(COMMUNITY_MODULE_SET_PLUGIN_GENERATED_ROOT)).values,
+  )
+  appendModuleSetPluginContentInfos(
+    target = result,
+    wrappers = collectPluginWrappers(ultimateModuleSets, projectRoot.resolve(ULTIMATE_MODULE_SET_PLUGIN_GENERATED_ROOT)).values,
+  )
+  return result
+}
+
+private fun appendModuleSetPluginContentInfos(
+  target: MutableMap<TargetName, PluginContentInfo>,
+  wrappers: Collection<ModuleSetPluginWrapper>,
+) {
+  for (wrapper in wrappers) {
+    target[TargetName(wrapper.moduleName)] = PluginContentInfo(
+      pluginXmlPath = wrapper.pluginXmlPath,
+      pluginXmlContent = renderPluginXml(wrapper.moduleSet, wrapper.contentModules),
+      pluginId = resolveModuleSetPluginId(wrapper.moduleSet),
+      contentModules = wrapper.contentModules.map { module -> ContentModuleInfo(module.name, module.loading) },
+      source = PluginSource.BUNDLED,
+      pluginAliases = collectAliases(wrapper.moduleSet),
+    )
+  }
 }
 
 internal fun cleanupOrphanedModuleSetPluginFiles(
