@@ -9,13 +9,29 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.IconLoader
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.ui.IconManager
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 @TestApplication
 class AgentSessionsGoToSourceProjectFromToolbarActionTest {
+  @BeforeEach
+  fun setUp() {
+    IconLoader.activate()
+    IconManager.activate(null)
+  }
+
+  @AfterEach
+  fun tearDown() {
+    IconManager.deactivate()
+    IconLoader.deactivate()
+  }
+
   @Test
   fun dedicatedFrameWithSourceProjectIsVisibleAndOpensProject() {
     val sourcePath = "/tmp/source-project"

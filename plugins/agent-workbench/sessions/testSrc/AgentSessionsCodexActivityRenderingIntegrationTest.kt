@@ -18,6 +18,7 @@ import com.intellij.agent.workbench.sessions.ui.SessionTreeCellRenderer
 import com.intellij.icons.AllIcons
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IconLoader
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.IconManager
 import kotlinx.coroutines.Dispatchers
@@ -34,12 +35,14 @@ import javax.swing.JTree
 class AgentSessionsCodexActivityRenderingIntegrationTest {
   @BeforeEach
   fun setUp() {
+    IconLoader.activate()
     IconManager.activate(null)
   }
 
   @AfterEach
   fun tearDown() {
     IconManager.deactivate()
+    IconLoader.deactivate()
   }
 
   @Test

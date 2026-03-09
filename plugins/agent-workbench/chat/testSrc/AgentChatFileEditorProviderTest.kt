@@ -6,6 +6,7 @@ import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.agent.workbench.common.withAgentThreadActivityBadge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.util.IconLoader
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.IconManager
@@ -19,6 +20,7 @@ class AgentChatFileEditorProviderTest {
   @BeforeEach
   fun setUp() {
     clearAgentChatIconCacheForTests()
+    IconLoader.activate()
     IconManager.activate(null)
   }
 
@@ -26,6 +28,7 @@ class AgentChatFileEditorProviderTest {
   fun tearDown() {
     clearAgentChatIconCacheForTests()
     IconManager.deactivate()
+    IconLoader.deactivate()
   }
 
   @Test
