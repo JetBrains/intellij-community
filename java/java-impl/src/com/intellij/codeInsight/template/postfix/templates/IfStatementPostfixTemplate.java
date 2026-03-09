@@ -2,7 +2,9 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.generation.surroundWith.JavaWithIfExpressionSurrounder;
+import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.lang.surroundWith.Surrounder;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -21,6 +23,11 @@ public class IfStatementPostfixTemplate extends IfPostfixTemplateBase implements
   @Override
   protected PsiElement getWrappedExpression(PsiElement expression) {
     return CommonJavaRefactoringUtil.unparenthesizeExpression((PsiExpression)expression);
+  }
+
+  @Override
+  public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
+    return super.isApplicable(context, copyDocument, newOffset) && !JavaPostfixTemplatesUtils.isInExpressionFile(context);
   }
 
   @Override

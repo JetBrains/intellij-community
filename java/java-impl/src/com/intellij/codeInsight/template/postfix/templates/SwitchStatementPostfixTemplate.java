@@ -188,4 +188,9 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
       }
     };
   }
+
+  @Override
+  public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
+    return super.isApplicable(context, copyDocument, newOffset) && !JavaPostfixTemplatesUtils.isInExpressionFile(context);
+  }
 }

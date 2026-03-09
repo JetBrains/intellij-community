@@ -7,7 +7,9 @@ import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
+import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.java.syntax.parser.JavaKeywords;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.pom.java.JavaFeature;
@@ -35,6 +37,11 @@ public abstract class ForIndexedPostfixTemplate extends JavaEditablePostfixTempl
                                    new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition(
                                      CommonClassNames.JAVA_UTIL_LIST)),
           LanguageLevel.JDK_1_3, true, provider);
+  }
+
+  @Override
+  public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
+    return super.isApplicable(context, copyDocument, newOffset) && !JavaPostfixTemplatesUtils.isInExpressionFile(context);
   }
 
 

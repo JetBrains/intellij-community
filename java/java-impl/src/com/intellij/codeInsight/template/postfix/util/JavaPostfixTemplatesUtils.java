@@ -19,6 +19,8 @@ import com.intellij.psi.PsiExpressionStatement;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypes;
+import com.intellij.psi.impl.source.PsiCodeFragmentImpl;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -207,6 +209,11 @@ public final class JavaPostfixTemplatesUtils {
   public static @Nullable PsiExpression getTopmostExpression(PsiElement context) {
     PsiExpressionStatement statement = PsiTreeUtil.getNonStrictParentOfType(context, PsiExpressionStatement.class);
     return statement != null ? statement.getExpression() : null;
+  }
+
+  public static boolean isInExpressionFile(@NotNull PsiElement context) {
+    return context.getContainingFile() instanceof PsiCodeFragmentImpl codeFragment &&
+           codeFragment.getContentElementType() == JavaElementType.EXPRESSION_TEXT;
   }
 }
 

@@ -86,4 +86,28 @@ public class JavaPostfixTemplateInCodeFragmentTest extends LightJavaCodeInsightF
     assertTrue("Expected 'System.out.println' in result, got: " + text,
                text.contains("System.out.println"));
   }
+
+  public void testCastPostfixApplicableInExpressionFragment() {
+    PsiElement context = getContextElement();
+    PsiFile fragment = JavaCodeFragmentFactory.getInstance(getProject())
+      .createExpressionCodeFragment("\"hello\".cast", context, null, true);
+    myFixture.configureFromExistingVirtualFile(fragment.getVirtualFile());
+    myFixture.getEditor().getCaretModel().moveToOffset(myFixture.getEditor().getDocument().getTextLength());
+
+    JavaPostfixTemplateProvider provider = new JavaPostfixTemplateProvider();
+    assertTrue("'.cast' postfix template should be applicable in expression fragment",
+               PostfixLiveTemplate.isApplicableTemplate(provider, ".cast", fragment, myFixture.getEditor()));
+  }
+
+  public void testVarPostfixNotApplicableInExpressionFragment() {
+    PsiElement context = getContextElement();
+    PsiFile fragment = JavaCodeFragmentFactory.getInstance(getProject())
+      .createExpressionCodeFragment("\"hello\".var", context, null, true);
+    myFixture.configureFromExistingVirtualFile(fragment.getVirtualFile());
+    myFixture.getEditor().getCaretModel().moveToOffset(myFixture.getEditor().getDocument().getTextLength());
+
+    JavaPostfixTemplateProvider provider = new JavaPostfixTemplateProvider();
+    assertFalse("'.castvar' postfix template should not be applicable in expression fragment",
+                PostfixLiveTemplate.isApplicableTemplate(provider, ".var", fragment, myFixture.getEditor()));
+  }
 }

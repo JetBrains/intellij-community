@@ -9,7 +9,9 @@ import com.intellij.codeInsight.template.macro.IterableComponentTypeMacro;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
+import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.java.syntax.parser.JavaKeywords;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
@@ -29,6 +31,11 @@ public class ForeachPostfixTemplate extends JavaEditablePostfixTemplate implemen
                                    new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition(
                                      CommonClassNames.JAVA_LANG_ITERABLE)),
           LanguageLevel.JDK_1_5, true, provider);
+  }
+
+  @Override
+  public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
+    return super.isApplicable(context, copyDocument, newOffset) && !JavaPostfixTemplatesUtils.isInExpressionFile(context);
   }
 
   @Override

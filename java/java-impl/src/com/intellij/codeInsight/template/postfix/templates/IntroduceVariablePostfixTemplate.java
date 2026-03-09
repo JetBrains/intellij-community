@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
+import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
@@ -35,7 +36,8 @@ public class IntroduceVariablePostfixTemplate extends PostfixTemplateWithExpress
                               @NotNull Document copyDocument, int newOffset) {
     // Non-inplace mode would require a modal dialog, which is not allowed under postfix templates 
     return EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled() &&
-           super.isApplicable(context, copyDocument, newOffset);
+           super.isApplicable(context, copyDocument, newOffset) &&
+           !JavaPostfixTemplatesUtils.isInExpressionFile(context);
   }
 
   @Override

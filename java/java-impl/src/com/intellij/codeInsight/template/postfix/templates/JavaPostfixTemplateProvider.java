@@ -24,6 +24,7 @@ import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiCodeFragmentImpl;
+import com.intellij.psi.impl.source.PsiExpressionCodeFragmentImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.util.ObjectUtils;
@@ -132,11 +133,22 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
   public @NotNull PsiFile preCheck(@NotNull PsiFile copyFile, final @NotNull Editor realEditor, final int currentOffset) {
     Document document = copyFile.getFileDocument();
     PsiFile originalFile = copyFile.getOriginalFile();
-    if (originalFile instanceof PsiCodeFragmentImpl codeFragment &&
-        codeFragment.getContentElementType() == JavaElementType.STATEMENTS
+    if (originalFile instanceof PsiCodeFragmentImpl codeFragment
         && !(copyFile instanceof PsiCodeFragment)) {
-      JavaCodeFragment copyFragmentFile = JavaCodeFragmentFactory.getInstance(originalFile.getProject())
-        .createCodeBlockCodeFragment(document.getText(), originalFile.getContext(), copyFile.isPhysical());
+      JavaCodeFragment copyFragmentFile = null;
+      if (codeFragment.getContentElementType() == JavaElementType.STATEMENTS) {
+        copyFragmentFile = JavaCodeFragmentFactory.getInstance(originalFile.getProject())
+          .createCodeBlockCodeFragment(document.getText(), originalFile.getContext(), copyFile.isPhysical());
+      }
+      else if (codeFragment.getContentElementType() == JavaElementType.EXPRESSION_TEXT &&
+               codeFragment instanceof PsiExpressionCodeFragmentImpl expressionCodeFragment) {
+        copyFragmentFile = JavaCodeFragmentFactory.getInstance(originalFile.getProject())
+          .createExpressionCodeFragment(document.getText(), originalFile.getContext(), expressionCodeFragment.getExpectedType(),
+                                        copyFile.isPhysical());
+      }
+      if (copyFragmentFile == null) {
+        return copyFile;
+      }
       copyFragmentFile.addImportsFromString(codeFragment.importsToString());
       if (copyFragmentFile instanceof PsiFileImpl fileImpl) {
         fileImpl.setOriginalFile(originalFile);

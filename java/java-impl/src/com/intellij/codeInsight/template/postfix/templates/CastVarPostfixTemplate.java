@@ -11,7 +11,9 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
+import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.java.syntax.parser.JavaKeywords;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -40,6 +42,11 @@ public class CastVarPostfixTemplate extends StringBasedPostfixTemplate implement
 
   public CastVarPostfixTemplate() {
     super("castvar", "T name = (T)expr", selectorTopmost(IS_NON_VOID));
+  }
+
+  @Override
+  public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
+    return super.isApplicable(context, copyDocument, newOffset) && !JavaPostfixTemplatesUtils.isInExpressionFile(context);
   }
 
   @Override

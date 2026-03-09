@@ -1,8 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
+import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
@@ -16,6 +18,11 @@ import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplate
 public class IntroduceFieldPostfixTemplate extends PostfixTemplateWithExpressionSelector implements DumbAware {
   public IntroduceFieldPostfixTemplate() {
     super("field", "myField = expr", selectorAllExpressionsWithCurrentOffset(IS_NON_VOID));
+  }
+
+  @Override
+  public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
+    return super.isApplicable(context, copyDocument, newOffset) && !JavaPostfixTemplatesUtils.isInExpressionFile(context);
   }
 
   @Override
