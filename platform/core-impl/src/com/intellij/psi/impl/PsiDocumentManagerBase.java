@@ -63,9 +63,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
-import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerEx;
-import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -218,14 +216,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
   }
 
   /**
-   * @return associated psi file, it's it cached in {@link FileManagerImpl}.
+   * @return associated psi file, it's it cached in {@link FileManagerEx}.
    * It's guaranteed to not perform any expensive ops like creating files/reparse/resurrecting PsiFile from temp comatose state.
    */
   @ApiStatus.Internal
   @Override
   public final @Nullable PsiFile getRawCachedFile(@NotNull VirtualFile virtualFile, @NotNull CodeInsightContext context) {
-    FileManagerEx manager = ((FileManagerEx)getFileManager());
-    return manager.getRawCachedFile(virtualFile, context);
+    return getFileManager().getRawCachedFile(virtualFile, context);
   }
 
   @ApiStatus.Internal
@@ -246,8 +243,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     return getFileManager().getCachedPsiFile(virtualFile, context);
   }
 
-  private @NotNull FileManager getFileManager() {
-    return ((PsiManagerEx)myPsiManager).getFileManager();
+  private @NotNull FileManagerEx getFileManager() {
+    return ((PsiManagerEx)myPsiManager).getFileManagerEx();
   }
 
   @Override
@@ -603,7 +600,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
       });
     }
     if (virtualFile != null) {
-      ((FileManagerEx)getFileManager()).forceReload(virtualFile);
+      getFileManager().forceReload(virtualFile);
     }
   }
 
@@ -1248,7 +1245,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
 
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile != null) {
-      FileManager fileManager = getFileManager();
+      FileManagerEx fileManager = getFileManager();
       List<FileViewProvider> viewProviders = fileManager.findCachedViewProviders(virtualFile);
       boolean isWriteAccess = ApplicationManager.getApplication().isWriteAccessAllowed();
       if (!viewProviders.isEmpty()) {
@@ -1264,8 +1261,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
         }));
       }
       else if (FileIndexFacade.getInstance(myProject).isInContent(virtualFile)) {
-        ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction(() ->
-                                                                                                           ((FileManagerEx)fileManager).firePropertyChangedForUnloadedPsi()));
+        ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction(() -> {
+          fileManager.firePropertyChangedForUnloadedPsi();
+        }));
       }
     }
 
