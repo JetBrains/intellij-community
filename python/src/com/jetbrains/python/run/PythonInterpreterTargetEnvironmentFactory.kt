@@ -96,8 +96,6 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
   }
 
   companion object {
-    const val UNKNOWN_INTERPRETER_VERSION = "unknown interpreter"
-
     @JvmStatic
     val EP_NAME = ExtensionPointName<PythonInterpreterTargetEnvironmentFactory>("Pythonid.interpreterTargetEnvironmentFactory")
 
@@ -126,8 +124,8 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
     fun by(configuration: TargetEnvironmentConfiguration): PythonInterpreterTargetEnvironmentFactory? =
       EP_NAME.extensionList.find { it.isFor(configuration) }
 
-    private fun getFallbackSdkName(data: PyTargetAwareAdditionalData, version: String?): String =
-      "Remote ${version ?: UNKNOWN_INTERPRETER_VERSION} (${data.interpreterPath})"
+    private fun getFallbackSdkName(data: PyTargetAwareAdditionalData, @Suppress("UNUSED_PARAMETER") version: String?): String =
+      "Remote (${data.interpreterPath})"
 
     /**
      * Note: let the target be immutable by default though this case seems to be invalid.

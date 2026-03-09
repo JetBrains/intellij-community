@@ -270,10 +270,16 @@ suspend fun <P : PathHolder> createSdk(
 ): PyResult<Sdk> {
   val sdkType = PythonSdkType.getInstance()
   val existingSdks = PythonSdkUtil.getAllSdks()
-  existingSdks.find {
-    it.sdkAdditionalData?.javaClass == sdkAdditionalData?.javaClass &&
-    it.homePath == pythonBinaryPath.toString()
-  }?.let { return PyResult.success(it) }
+
+  // for remote sdks we can't distinguish target environment configurations (docker the worst case)
+  if (sdkAdditionalData !is PyTargetAwareAdditionalData) {
+    existingSdks.find {
+      it.sdkAdditionalData?.javaClass == sdkAdditionalData?.javaClass &&
+      it.homePath == pythonBinaryPath.toString()
+    }?.let {
+      return PyResult.success(it)
+    }
+  }
 
   val sdk = when (pythonBinaryPath) {
     is PathHolder.Eel -> {
