@@ -92,8 +92,18 @@ internal class TerminalCompletionFixture(
 
   suspend fun type(text: String) {
     for (c in text) {
+      val textBeforeCursor = outputModel.getText(outputModel.startOffset, outputModel.cursorOffset).toString()
+      val textAfterCursor = outputModel.getText(outputModel.cursorOffset, outputModel.endOffset).toString()
+      val expectedText = textBeforeCursor + c + textAfterCursor
+      val expectedCursor = outputModel.cursorOffset + 1L
+
       typeChar(c)
+
+      awaitOutputModelState(3.seconds) { model ->
+        model.cursorOffset == expectedCursor && model.text == expectedText
+      }
     }
+
     awaitLookupPrefixUpdated()
   }
 
@@ -227,10 +237,49 @@ internal class TerminalCompletionFixture(
     runActionById("Terminal.CommandCompletion.SelectSuggestionAbove")
   }
 
-  /**
-   * Simulates a key press in the active completion popup.
-   */
-  suspend fun pressKey(keycode: Int) {
+  suspend fun pressLeft() {
+    val cursorBefore = outputModel.cursorOffset
+    sendKeyPress(KeyEvent.VK_LEFT)
+    awaitOutputModelState(3.seconds) { it.cursorOffset == cursorBefore - 1L }
+    awaitLookupPrefixUpdated()
+  }
+
+  suspend fun pressRight() {
+    val cursorBefore = outputModel.cursorOffset
+    sendKeyPress(KeyEvent.VK_RIGHT)
+    awaitOutputModelState(3.seconds) { it.cursorOffset == cursorBefore + 1L }
+    awaitLookupPrefixUpdated()
+  }
+
+  suspend fun pressBackspace() {
+    val textBeforeCursor = outputModel.getText(outputModel.startOffset, outputModel.cursorOffset).toString()
+    val textAfterCursor = outputModel.getText(outputModel.cursorOffset, outputModel.endOffset).toString()
+    val expectedText = textBeforeCursor.dropLast(1) + textAfterCursor
+    val expectedCursor = outputModel.cursorOffset - 1L
+
+    sendKeyPress(KeyEvent.VK_BACK_SPACE)
+
+    awaitOutputModelState(3.seconds) { model ->
+      model.cursorOffset == expectedCursor && model.text == expectedText
+    }
+    awaitLookupPrefixUpdated()
+  }
+
+  suspend fun pressEnter() {
+    val textBeforeCursor = outputModel.getText(outputModel.startOffset, outputModel.cursorOffset).toString()
+    val textAfterCursor = outputModel.getText(outputModel.cursorOffset, outputModel.endOffset).toString()
+    val expectedText = textBeforeCursor + "\n" + textAfterCursor
+    val expectedCursor = outputModel.cursorOffset + 1L
+
+    sendKeyPress(KeyEvent.VK_ENTER)
+
+    awaitOutputModelState(3.seconds) { model ->
+      model.cursorOffset == expectedCursor && model.text == expectedText
+    }
+    awaitLookupPrefixUpdated()
+  }
+
+  private fun sendKeyPress(keycode: Int) {
     val keyPressEvent = KeyEvent(
       view.outputEditor.component,
       KeyEvent.KEY_PRESSED,
@@ -241,16 +290,6 @@ internal class TerminalCompletionFixture(
       KeyEvent.KEY_LOCATION_STANDARD
     )
     view.outputEditorEventsHandler.keyPressed(TimedKeyEvent(keyPressEvent, TimeSource.Monotonic.markNow()))
-
-    val offset = outputModel.cursorOffset
-    val newOffset = when (keycode) {
-      KeyEvent.VK_LEFT -> offset - 1
-      KeyEvent.VK_RIGHT -> offset + 1
-      else -> offset
-    }
-    outputModel.updateCursorPosition(newOffset)
-
-    awaitLookupPrefixUpdated()
   }
 
   private fun runActionById(actionId: String) {
@@ -270,7 +309,11 @@ internal class TerminalCompletionFixture(
   }
 
   /** Returns true if the output model state met the condition in the given timeout */
-  suspend fun awaitOutputModelState(timeout: Duration, condition: (TerminalOutputModel) -> Boolean): Boolean {
+  suspend fun awaitOutputModelState(
+    timeout: Duration,
+    waitAdditionally: Boolean = false,
+    condition: (TerminalOutputModel) -> Boolean
+  ): Boolean {
     val result = withTimeoutOrNull(timeout) {
       suspendCancellableCoroutine { continuation ->
         val model = view.activeOutputModel()
@@ -302,7 +345,9 @@ internal class TerminalCompletionFixture(
 
       // Give the output model updates settle down for a moment
       // to ensure that condition is met not in the middle of updates.
-      delay(300)
+      if (waitAdditionally) {
+        delay(300)
+      }
       condition(view.activeOutputModel())
     }
 
@@ -320,7 +365,7 @@ internal class TerminalCompletionFixture(
 
     val blockModel = view.shellIntegrationDeferred.getNow()!!.blocksModel
     val activeBlock = blockModel.activeBlock as TerminalCommandBlock
-    val conditionMet = awaitOutputModelState(3.seconds) { outputModel ->
+    val conditionMet = awaitOutputModelState(3.seconds, waitAdditionally = true) { outputModel ->
       val commandStartOffset = activeBlock.commandStartOffset ?: return@awaitOutputModelState false
       val textBeforeCursor = outputModel.getText(commandStartOffset, outputModel.cursorOffset).toString()
       val textAfterCursor = outputModel.getText(outputModel.cursorOffset, outputModel.endOffset).toString()

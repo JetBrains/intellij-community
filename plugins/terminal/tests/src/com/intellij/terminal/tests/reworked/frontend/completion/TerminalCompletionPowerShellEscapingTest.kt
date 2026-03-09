@@ -14,7 +14,6 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalStartupOptionsImpl
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import java.awt.event.KeyEvent
 
 @RunWith(JUnit4::class)
 internal class TerminalCompletionPowerShellEscapingTest : BasePlatformTestCase() {
@@ -73,8 +72,8 @@ internal class TerminalCompletionPowerShellEscapingTest : BasePlatformTestCase()
         "with spaces",
         "dummy"
       )
-      fixture.type("test_cmd C:/'")
-      fixture.pressKey(KeyEvent.VK_LEFT)
+    fixture.type("test_cmd C:/'")
+      fixture.pressLeft()
       fixture.callCompletionPopup()
       fixture.insertCompletionItem("with spaces")
       fixture.assertCommandTextState("test_cmd 'C:/with spaces<cursor>'")
@@ -89,8 +88,8 @@ internal class TerminalCompletionPowerShellEscapingTest : BasePlatformTestCase()
         "with spaces",
         "dummy"
       )
-      fixture.type("test_cmd 'C:/'")
-      fixture.pressKey(KeyEvent.VK_LEFT)
+    fixture.type("test_cmd 'C:/'")
+      fixture.pressLeft()
       fixture.callCompletionPopup()
       fixture.insertCompletionItem("with spaces")
       fixture.assertCommandTextState("test_cmd 'C:/with spaces<cursor>'")
