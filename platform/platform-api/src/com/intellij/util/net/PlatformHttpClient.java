@@ -67,18 +67,14 @@ import java.util.zip.GZIPInputStream;
 /// @since 2025.2
 @ApiStatus.Experimental
 public final class PlatformHttpClient {
-  /**
-   * Returns a preconfigured {@link HttpClient}. For more customization, use {@link #clientBuilder()}.
-   * The resulting client is expected to be eventually {@link HttpClient#close() closed}.
-   */
+  /// Returns a preconfigured [HttpClient]. For more customization, use [#clientBuilder()].
+  /// The resulting client is expected to be eventually [`closed`][HttpClient#close()].
   public static @NotNull HttpClient client() {
     return clientBuilder().build();
   }
 
-  /**
-   * Returns a preconfigured {@link HttpClient.Builder}.
-   * The resulting client is expected to be eventually {@link HttpClient#close() closed}.
-   */
+  /// Returns a preconfigured [HttpClient.Builder].
+  /// The resulting client is expected to be eventually [`closed`][HttpClient#close()].
   public static HttpClient.@NotNull Builder clientBuilder() {
     var builder = new DelegatingHttpClientBuilder()
       .executor(ExecutorsKt.asExecutor(Dispatchers.getIO()))
@@ -97,16 +93,12 @@ public final class PlatformHttpClient {
     return builder;
   }
 
-  /**
-   * Uses the given URI to construct a preconfigured {@link HttpRequest}. For more customization, use {@link #requestBuilder(URI)}.
-   */
+  /// Uses the given URI to construct a preconfigured [HttpRequest]. For more customization, use [#requestBuilder(URI)].
   public static HttpRequest request(@NotNull URI uri) {
     return requestBuilder(uri).build();
   }
 
-  /**
-   * Uses the given URI to construct a preconfigured {@link HttpRequest.Builder}.
-   */
+  /// Uses the given URI to construct a preconfigured [HttpRequest.Builder].
   public static HttpRequest.@NotNull Builder requestBuilder(@NotNull URI uri) {
     return (uri.getScheme().equals("file") ? new FileRequestBuilder().uri(uri) : HttpRequest.newBuilder(uri))
       .timeout(Duration.ofMillis(HttpRequests.READ_TIMEOUT))
