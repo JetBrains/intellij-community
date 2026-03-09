@@ -12,7 +12,11 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationDa
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayload
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayloadValue
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ToolWindowId
+import javax.swing.JTree
 
 private const val MAX_INCLUDED_SELECTION_PATHS = 5
 
@@ -108,6 +112,17 @@ internal class AgentPromptProjectViewSelectionContextContributor : AgentPromptCo
 
   private fun extractSelectedFiles(invocationData: AgentPromptInvocationData): List<VirtualFile>? {
     val dataContext = invocationData.dataContextOrNull() ?: return null
+
+    // When the context component is a JTree outside the Project View (e.g., Changes tree),
+    // skip — the tree selection contributor will provide richer context.
+    val component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext)
+    if (component is JTree) {
+      val toolWindow = PlatformDataKeys.TOOL_WINDOW.getData(dataContext)
+      if (toolWindow?.id != ToolWindowId.PROJECT_VIEW) {
+        return null
+      }
+    }
+
     val selectedArray = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
     if (!selectedArray.isNullOrEmpty()) {
       return selectedArray.toList()

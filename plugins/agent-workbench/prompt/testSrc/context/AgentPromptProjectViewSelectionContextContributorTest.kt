@@ -7,16 +7,24 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationDa
 import com.intellij.agent.workbench.sessions.core.prompt.number
 import com.intellij.agent.workbench.sessions.core.prompt.objOrNull
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.lang.reflect.Proxy
 import java.nio.file.Files
 import java.nio.file.Path
+import javax.swing.JTree
 
 @TestApplication
 class AgentPromptProjectViewSelectionContextContributorTest {
@@ -99,6 +107,53 @@ class AgentPromptProjectViewSelectionContextContributorTest {
     assertThat(item.body.lineSequence().all { line -> line.contains("real.txt") }).isTrue()
   }
 
+  @Test
+  fun skipsWhenContextIsNonProjectViewTree() {
+    val selected = createPhysicalSelection(listOf("File1.kt" to "fun f1() = 1"))
+    val tree = JTree()
+    val toolWindow = createToolWindow("Commit")
+    val dataContext = testDataContext(
+      CommonDataKeys.VIRTUAL_FILE_ARRAY to selected.toTypedArray(),
+      PlatformCoreDataKeys.CONTEXT_COMPONENT to tree,
+      PlatformDataKeys.TOOL_WINDOW to toolWindow,
+    )
+
+    val result = contributor.collect(invocationData(dataContext))
+
+    assertThat(result).isEmpty()
+  }
+
+  @Test
+  fun skipsWhenContextIsTreeWithoutToolWindow() {
+    val selected = createPhysicalSelection(listOf("File1.kt" to "fun f1() = 1"))
+    val tree = JTree()
+    val dataContext = testDataContext(
+      CommonDataKeys.VIRTUAL_FILE_ARRAY to selected.toTypedArray(),
+      PlatformCoreDataKeys.CONTEXT_COMPONENT to tree,
+    )
+
+    val result = contributor.collect(invocationData(dataContext))
+
+    assertThat(result).isEmpty()
+  }
+
+  @Test
+  fun returnsPathsWhenContextIsProjectViewTree() {
+    val selected = createPhysicalSelection(listOf("File1.kt" to "fun f1() = 1"))
+    val tree = JTree()
+    val toolWindow = createToolWindow(ToolWindowId.PROJECT_VIEW)
+    val dataContext = testDataContext(
+      CommonDataKeys.VIRTUAL_FILE_ARRAY to selected.toTypedArray(),
+      PlatformCoreDataKeys.CONTEXT_COMPONENT to tree,
+      PlatformDataKeys.TOOL_WINDOW to toolWindow,
+    )
+
+    val result = contributor.collect(invocationData(dataContext))
+
+    assertThat(result).hasSize(1)
+    assertThat(result.single().rendererId).isEqualTo(AgentPromptContextRendererIds.PATHS)
+  }
+
   private fun invocationData(dataContext: com.intellij.openapi.actionSystem.DataContext): AgentPromptInvocationData {
     val project = ProjectManager.getInstance().defaultProject
     return AgentPromptInvocationData(
@@ -129,5 +184,20 @@ class AgentPromptProjectViewSelectionContextContributorTest {
     val nioPath = root.resolve(name)
     Files.writeString(nioPath, content)
     return checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(nioPath))
+  }
+
+  private fun createToolWindow(id: String): ToolWindow {
+    return Proxy.newProxyInstance(
+      ToolWindow::class.java.classLoader,
+      arrayOf(ToolWindow::class.java),
+    ) { _, method, _ -> if (method.name == "getId") id else null } as ToolWindow
+  }
+
+  private fun testDataContext(vararg entries: Pair<DataKey<*>, Any>): DataContext {
+    val map = entries.associate { (key, value) -> key.name to value }
+    return DataContext { dataId ->
+      @Suppress("UNCHECKED_CAST")
+      map[dataId]
+    }
   }
 }
