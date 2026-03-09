@@ -212,53 +212,6 @@ private fun AgentPromptInvocationData.dataContextOrNull(): DataContext? {
   return attributes[AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY] as? DataContext
 }
 
-private fun resolveTreeContextProjectPathCandidate(context: AgentSessionsTreePopupActionContext): AgentPromptProjectPathCandidate? {
-  val path = resolveTreeContextPath(context.nodeId)
-    ?.takeIf { it.isNotBlank() }
-    ?.let(::normalizeAgentWorkbenchPath)
-    ?: return null
-  if (AgentWorkbenchDedicatedFrameProjectManager.isDedicatedProjectPath(path)) {
-    return null
-  }
-  return AgentPromptProjectPathCandidate(
-    path = path,
-    displayName = resolveTreeContextDisplayName(context.node),
-  )
-}
-
-private fun resolveTreeContextPath(treeId: SessionTreeId): String? {
-  return when (treeId) {
-    is SessionTreeId.Project -> treeId.path
-    is SessionTreeId.Thread -> treeId.projectPath
-    is SessionTreeId.SubAgent -> treeId.projectPath
-    is SessionTreeId.Warning -> treeId.projectPath
-    is SessionTreeId.Error -> treeId.projectPath
-    is SessionTreeId.Empty -> treeId.projectPath
-    SessionTreeId.MoreProjects -> null
-    is SessionTreeId.MoreThreads -> treeId.projectPath
-    is SessionTreeId.Worktree -> treeId.worktreePath
-    is SessionTreeId.WorktreeThread -> treeId.worktreePath
-    is SessionTreeId.WorktreeSubAgent -> treeId.worktreePath
-    is SessionTreeId.WorktreeWarning -> treeId.worktreePath
-    is SessionTreeId.WorktreeMoreThreads -> treeId.worktreePath
-    is SessionTreeId.WorktreeError -> treeId.worktreePath
-  }
-}
-
-private fun resolveTreeContextDisplayName(node: SessionTreeNode): String {
-  return when (node) {
-    is SessionTreeNode.Project -> node.project.name
-    is SessionTreeNode.Thread -> node.project.name
-    is SessionTreeNode.SubAgent -> node.project.name
-    is SessionTreeNode.Error -> node.project.name
-    is SessionTreeNode.Empty -> node.project.name
-    is SessionTreeNode.MoreThreads -> node.project.name
-    is SessionTreeNode.Worktree -> node.worktree.name
-    is SessionTreeNode.Warning,
-    is SessionTreeNode.MoreProjects -> ""
-  }
-}
-
 private fun buildSnapshot(pathState: AgentSessionPathState?, provider: AgentSessionProvider): AgentPromptExistingThreadsSnapshot {
   if (pathState == null) {
     return AgentPromptExistingThreadsSnapshot(

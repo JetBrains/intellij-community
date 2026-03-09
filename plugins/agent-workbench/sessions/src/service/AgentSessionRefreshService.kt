@@ -19,10 +19,11 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.frame.AGENT_SESSIONS_TOOL_WINDOW_ID
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
+import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
+import com.intellij.agent.workbench.sessions.state.AgentSessionWarmStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
-import com.intellij.agent.workbench.sessions.state.AgentSessionsTreeUiStateService
-import com.intellij.agent.workbench.sessions.state.SessionsTreeUiState
+import com.intellij.agent.workbench.sessions.state.SessionWarmState
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -42,7 +43,7 @@ import kotlinx.coroutines.withContext
 private val LOG = logger<AgentSessionRefreshService>()
 
 @Service(Service.Level.APP)
-internal class AgentSessionRefreshService(
+class AgentSessionRefreshService internal constructor(
   private val serviceScope: CoroutineScope,
   private val sessionSourcesProvider: () -> List<AgentSessionSource>,
   private val projectEntriesProvider: suspend () -> List<ProjectEntry>,
@@ -73,16 +74,21 @@ internal class AgentSessionRefreshService(
     sessionSourcesProvider = AgentSessionProviders::sessionSources,
     projectEntriesProvider = AgentSessionProjectCatalog()::collectProjects,
     stateStore = service<AgentSessionsStateStore>(),
-    treeUiState = service<AgentSessionsTreeUiStateService>(),
+    warmState = service<AgentSessionWarmStateService>(),
     subscribeToProjectLifecycle = true,
+  )
+
+  private val contentRepository = AgentSessionContentRepository(
+    stateStore = stateStore,
+    warmState = warmState,
   )
 
   private val loadingCoordinator = AgentSessionRefreshCoordinator(
     serviceScope = serviceScope,
     sessionSourcesProvider = sessionSourcesProvider,
     projectEntriesProvider = projectEntriesProvider,
-    treeUiState = treeUiState,
     stateStore = stateStore,
+    contentRepository = contentRepository,
     isRefreshGateActive = ::isSourceRefreshGateActive,
     openAgentChatSnapshotProvider = openAgentChatSnapshotProvider,
     scopedRefreshSignalsProvider = scopedRefreshSignalsProvider,
@@ -197,12 +203,12 @@ internal class AgentSessionRefreshService(
     loadingCoordinator.appendProviderUnavailableWarning(path = path, provider = provider)
   }
 
-  fun suppressArchivedThread(path: String, provider: AgentSessionProvider, threadId: String) {
-    loadingCoordinator.suppressArchivedThread(path = path, provider = provider, threadId = threadId)
+  fun suppressArchivedTarget(target: ArchiveThreadTarget) {
+    loadingCoordinator.suppressArchivedTarget(target)
   }
 
-  fun unsuppressArchivedThread(path: String, provider: AgentSessionProvider, threadId: String) {
-    loadingCoordinator.unsuppressArchivedThread(path = path, provider = provider, threadId = threadId)
+  fun unsuppressArchivedTarget(target: ArchiveThreadTarget) {
+    loadingCoordinator.unsuppressArchivedTarget(target)
   }
 
   fun loadProjectThreadsOnDemand(path: String) {

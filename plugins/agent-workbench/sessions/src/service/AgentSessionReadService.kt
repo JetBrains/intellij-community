@@ -2,7 +2,7 @@
 package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
-import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindTarget
+import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
@@ -38,7 +38,7 @@ class AgentSessionReadService private constructor(
     optionalSessionsStateProvider = stateProvider,
   )
 
-  internal fun stateFlow(): StateFlow<AgentSessionsState> = requiredStateStoreProvider().state
+  fun stateFlow(): StateFlow<AgentSessionsState> = requiredStateStoreProvider().state
 
   internal fun stateSnapshot(): AgentSessionsState = stateFlow().value
 

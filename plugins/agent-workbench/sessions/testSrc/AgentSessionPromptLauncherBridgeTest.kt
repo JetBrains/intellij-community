@@ -37,8 +37,8 @@ import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameP
 import com.intellij.agent.workbench.sessions.frame.OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionPromptLauncherBridge
-import com.intellij.agent.workbench.sessions.tree.SessionTreeId
-import com.intellij.agent.workbench.sessions.tree.SessionTreeNode
+import com.intellij.agent.workbench.sessions.service.resolveAgentSessionPathState
+import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
@@ -708,45 +708,11 @@ class AgentSessionPromptLauncherBridgeTest {
                   },
                 )
               )
-            )
-          },
-          projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
-          chatOpenExecutor = chatOpenExecutor,
-        ) { service, launchService ->
-          service.refresh()
-          waitForCondition {
-            val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
-            project.hasLoaded && project.threads.any { thread -> thread.id == "thread-existing" }
-          }
-
-          val existingThread = checkNotNull(
-            service.state.value.projects
-              .firstOrNull { project -> project.path == PROJECT_PATH }
-              ?.threads
-              ?.firstOrNull { thread -> thread.id == "thread-existing" }
-          )
-
-          launchService.openChatThread(path = PROJECT_PATH, thread = existingThread)
-          waitForCondition {
-            firstOpenStarted.isCompleted
-          }
-          assertThat(chatOpenExecutor.openChatCalls.get()).isEqualTo(1)
-
-          val bridge = promptLauncherBridge(service, launchService)
-          val request = promptLaunchRequest(targetThreadId = "thread-existing")
-
-          try {
-            val result = bridge.launch(request)
-
-            assertThat(result.launched).isTrue()
-            assertThat(result.error).isNull()
-            assertThat(providerBridge.createCalls.get()).isZero()
-            assertThat(providerBridge.composeCalls.get()).isEqualTo(1)
-            assertThat(providerBridge.lastComposeRequest.get()).isEqualTo(request.initialMessageRequest)
-            assertThat(providerBridge.startupCommandCalls.get()).isEqualTo(1)
-            assertThat(providerBridge.lastStartupBaseLaunchSpec.get()?.command).containsExactly("test", "resume", "thread-existing")
-            assertThat(providerBridge.lastStartupPrompt.get()).isEqualTo("composed:Refactor selected code")
-
+            },
+            projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
+            chatOpenExecutor = chatOpenExecutor,
+          ) { service, launchService ->
+            service.refresh()
             waitForCondition {
               val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
               project.hasLoaded && project.threads.any { thread -> thread.id == "thread-existing" }
@@ -946,7 +912,8 @@ class AgentSessionPromptLauncherBridgeTest {
           chatOpenExecutor = chatOpenExecutor,
         ) { service, launchService ->
           val bridge = promptLauncherBridge(service, launchService)
-          val result = bridge.launch(promptLaunchRequest(provider = AgentSessionProvider.CODEX))
+          val telemetryEvents = CopyOnWriteArrayList<AgentWorkbenchTelemetryEvent>()
+          val token = AgentWorkbenchTelemetry.pushTestHandler(telemetryEvents::add)
 
           try {
             val result = bridge.launch(promptLaunchRequest(provider = AgentSessionProvider.CODEX))
@@ -990,12 +957,8 @@ class AgentSessionPromptLauncherBridgeTest {
           chatOpenExecutor = chatOpenExecutor,
         ) { service, launchService ->
           val bridge = promptLauncherBridge(service, launchService)
-          val result = bridge.launch(
-            promptLaunchRequest(
-              provider = AgentSessionProvider.CODEX,
-              launchMode = AgentSessionLaunchMode.YOLO,
-            )
-          )
+          val telemetryEvents = CopyOnWriteArrayList<AgentWorkbenchTelemetryEvent>()
+          val token = AgentWorkbenchTelemetry.pushTestHandler(telemetryEvents::add)
 
           try {
             val result = bridge.launch(
@@ -1405,7 +1368,9 @@ private fun promptLauncherBridge(
   providerPreferencesSaver: (AgentPromptLauncherBridge.ProviderPreferences) -> Unit = {},
 ): AgentSessionPromptLauncherBridge {
   return AgentSessionPromptLauncherBridge(
+    launchPromptRequest = { request -> launchService.launchPromptRequest(request) },
     stateFlowProvider = { service.state },
+    pathStateResolver = ::resolveAgentSessionPathState,
     refreshCatalogAndLoadNewlyOpened = { service.refreshCatalogAndLoadNewlyOpened() },
     refreshProviderForPath = { path, provider -> service.refreshProviderForPath(path = path, provider = provider) },
     preferredProviderProvider = preferredProviderProvider,

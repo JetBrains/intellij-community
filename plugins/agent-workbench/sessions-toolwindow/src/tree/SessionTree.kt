@@ -1,4 +1,4 @@
-package com.intellij.agent.workbench.sessions.tree
+package com.intellij.agent.workbench.sessions.toolwindow.tree
 
 // @spec community/plugins/agent-workbench/spec/agent-sessions.spec.md
 // @spec community/plugins/agent-workbench/spec/agent-sessions-thread-visibility.spec.md
@@ -18,9 +18,8 @@ import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_THREAD_COUNT
-import com.intellij.agent.workbench.sessions.state.SessionsTreeUiState
+import com.intellij.agent.workbench.sessions.state.SessionTreeUiState
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
-import com.intellij.agent.workbench.sessions.util.parseAgentSessionIdentity
 import com.intellij.openapi.util.NlsSafe
 
 internal data class SessionTreeModel(

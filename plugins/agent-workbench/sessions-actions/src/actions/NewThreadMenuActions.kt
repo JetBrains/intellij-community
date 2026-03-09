@@ -32,7 +32,7 @@ fun createNewThreadViaService(
   currentProject: Project,
   entryPoint: AgentWorkbenchEntryPoint,
 ) {
-  service<AgentSessionLaunchService>().createNewSession(path, provider, mode, currentProject)
+  service<AgentSessionLaunchService>().createNewSession(path, provider, mode, entryPoint, currentProject)
 }
 
 fun buildNewThreadMenuModel(bridges: List<AgentSessionProviderDescriptor>): AgentSessionProviderMenuModel {

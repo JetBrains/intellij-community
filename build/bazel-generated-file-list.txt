@@ -889,8 +889,8 @@ plugins/agent-workbench/prompt/testrunner
 plugins/agent-workbench/prompt/ui
 plugins/agent-workbench/prompt/vcs
 plugins/agent-workbench/sessions
+plugins/agent-workbench/sessions-actions
 plugins/agent-workbench/sessions-core
-plugins/agent-workbench/sessions-launch-config/backend
 plugins/agent-workbench/sessions-toolwindow
 plugins/ant
 plugins/ant/jps-plugin

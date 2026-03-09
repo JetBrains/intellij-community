@@ -3,7 +3,6 @@ package com.intellij.agent.workbench.sessions.actions
 
 // @spec community/plugins/agent-workbench/spec/agent-dedicated-frame.spec.md
 
-import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.options.advanced.AdvancedSettings

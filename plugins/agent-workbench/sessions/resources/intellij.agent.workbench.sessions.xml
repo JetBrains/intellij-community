@@ -3,8 +3,7 @@
 
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <module name="intellij.agent.workbench.common"/>
+    <plugin id="org.jetbrains.plugins.terminal"/>
     <module name="intellij.agent.workbench.chat"/>
     <module name="intellij.agent.workbench.common"/>
     <module name="intellij.agent.workbench.prompt.core"/>
@@ -14,16 +13,16 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <agent.workbench.promptLauncher implementation="com.intellij.agent.workbench.sessions.service.AgentSessionPromptLauncherBridge"/>
-    <toolWindow
-      id="agent.workbench.sessions"
-      anchor="right"
-      icon="AllIcons.Toolwindows.ToolWindowMessages"
-      canCloseContents="false"
-      factoryClass="com.intellij.agent.workbench.sessions.ui.AgentSessionsToolWindowFactory"/>
+    <postStartupActivity implementation="com.intellij.agent.workbench.sessions.sleep.AgentSessionSleepPreventionStartupActivity"/>
     <notificationGroup id="Agent Workbench Sessions" displayType="BALLOON" bundle="messages.AgentSessionsBundle"
                        key="notification.group.agent.workbench.sessions"/>
     <advancedSetting
       id="agent.workbench.chat.open.in.dedicated.frame"
+      default="true"
+      bundle="messages.AgentSessionsBundle"
+      groupKey="advanced.settings.agent.workbench"/>
+    <advancedSetting
+      id="agent.workbench.prevent.system.sleep.while.working"
       default="true"
       bundle="messages.AgentSessionsBundle"
       groupKey="advanced.settings.agent.workbench"/>
@@ -41,58 +40,4 @@
     <hyperlinkNavigationInterceptor implementation="com.intellij.agent.workbench.sessions.service.AgentWorkbenchTerminalHyperlinkNavigationInterceptor"/>
   </extensions>
 
-  <actions resource-bundle="messages.AgentSessionsBundle">
-    <action
-      id="AgentWorkbenchSessions.OpenDedicatedFrame"
-      icon="AllIcons.Actions.MoveToWindow"
-      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsOpenDedicatedFrameAction">
-      <add-to-group group-id="OpenProjectWindows" anchor="after" relative-to-action="PreviousProjectWindow"/>
-    </action>
-    <action
-      id="AgentWorkbenchSessions.GoToSourceProjectFromToolbar"
-      icon="AllIcons.Nodes.Project"
-      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProjectFromToolbarAction">
-      <add-to-group group-id="MainToolbarRight" anchor="before" relative-to-action="NewUiRunWidget"/>
-    </action>
-    <group id="AgentWorkbenchSessions.ToolWindow.GearActions">
-      <reference ref="OpenFile"/>
-      <separator/>
-      <action id="AgentWorkbenchSessions.ToggleDedicatedFrame" class="com.intellij.agent.workbench.sessions.actions.AgentSessionsDedicatedFrameToggleAction"/>
-      <action id="AgentWorkbenchSessions.TogglePreventSleepWhileWorking" class="com.intellij.agent.workbench.sessions.actions.AgentSessionsPreventSleepWhileWorkingToggleAction"/>
-      <action id="AgentWorkbenchSessions.Refresh" class="com.intellij.agent.workbench.sessions.actions.AgentSessionsRefreshAction"/>
-    </group>
-    <action
-      id="AgentWorkbenchSessions.SelectThreadInAgentThreads"
-      class="com.intellij.agent.workbench.sessions.AgentSessionsSelectThreadInToolWindowAction">
-      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyPaths"/>
-    </action>
-    <action
-      id="AgentWorkbenchSessions.ArchiveThreadFromEditorTab"
-      class="com.intellij.agent.workbench.sessions.AgentSessionsArchiveThreadFromEditorTabAction">
-      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.SelectThreadInAgentThreads"/>
-    </action>
-    <action
-      id="AgentWorkbenchSessions.GoToSourceProjectFromEditorTab"
-      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProjectFromEditorTabAction">
-      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.ArchiveThreadFromEditorTab"/>
-    </action>
-    <group id="AgentWorkbenchSessions.EditorTabPopup.SeparatorBeforeCloseActions">
-      <separator/>
-      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.GoToSourceProjectFromEditorTab"/>
-    </group>
-    <action
-      id="AgentWorkbenchSessions.CopyThreadIdFromEditorTab"
-      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsCopyThreadIdFromEditorTabAction">
-      <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="CopyPaths"/>
-    </action>
-    <action
-      id="AgentWorkbenchSessions.SelectThreadInAgentThreads"
-      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsSelectThreadInToolWindowAction">
-      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.CopyThreadIdFromEditorTab"/>
-    </action>
-    <action
-      id="AgentWorkbenchSessions.ActivateWithProjectShortcut"
-      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsActivateWithProjectShortcutAction"
-      use-shortcut-of="ActivateProjectToolWindow"/>
-  </actions>
 </idea-plugin>

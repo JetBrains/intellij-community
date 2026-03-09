@@ -10,8 +10,9 @@ import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
-import com.intellij.agent.workbench.sessions.model.AgentSessionThreadPreview
-import com.intellij.agent.workbench.sessions.state.InMemorySessionsTreeUiState
+import com.intellij.agent.workbench.sessions.state.AgentSessionWarmPathSnapshot
+import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_THREAD_COUNT
+import com.intellij.agent.workbench.sessions.state.InMemorySessionWarmState
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.CompletableDeferred
@@ -82,9 +83,10 @@ class AgentSessionRefreshServiceIntegrationTest {
   }
 
   @Test
-  fun refreshIgnoresPersistedVisibleThreadCountForKnownPath() = runBlocking {
-    val treeUiState = InMemorySessionsTreeUiState()
-    treeUiState.incrementVisibleThreadCount(PROJECT_PATH, delta = 6)
+  fun refreshKeepsProjectLoadingUntilAllProvidersFinish() = runBlocking(Dispatchers.Default) {
+    val codexStarted = CompletableDeferred<Unit>()
+    val claudeStarted = CompletableDeferred<Unit>()
+    val releaseClaude = CompletableDeferred<Unit>()
 
     withService(
       sessionSourcesProvider = {
@@ -157,8 +159,18 @@ class AgentSessionRefreshServiceIntegrationTest {
         service.state.value.projects.any { it.path == PROJECT_PATH }
       }
 
-      assertThat(service.state.value.visibleThreadCounts)
-        .doesNotContainKey(PROJECT_PATH)
+      service.showMoreThreads(PROJECT_PATH)
+      assertThat(service.state.value.visibleThreadCounts[PROJECT_PATH])
+        .isEqualTo(DEFAULT_VISIBLE_THREAD_COUNT + DEFAULT_VISIBLE_THREAD_COUNT)
+
+      service.refresh()
+      waitForCondition {
+        service.state.value.projects.any { it.path == PROJECT_PATH } &&
+        service.state.value.visibleThreadCounts[PROJECT_PATH] == DEFAULT_VISIBLE_THREAD_COUNT + DEFAULT_VISIBLE_THREAD_COUNT
+      }
+
+      assertThat(service.state.value.visibleThreadCounts[PROJECT_PATH])
+        .isEqualTo(DEFAULT_VISIBLE_THREAD_COUNT + DEFAULT_VISIBLE_THREAD_COUNT)
     }
   }
 
@@ -783,13 +795,102 @@ class AgentSessionRefreshServiceIntegrationTest {
         .containsExactlyInAnyOrder("codex-listed", "codex-open")
     }
   }
+
+  @Test
+  fun markThreadAsReadUpdatesRuntimeAndWarmSnapshotImmediately() = runBlocking(Dispatchers.Default) {
+    val warmState = InMemorySessionWarmState()
+
+    withService(
+      sessionSourcesProvider = {
+        listOf(
+          ScriptedSessionSource(
+            provider = AgentSessionProvider.CLAUDE,
+            listFromOpenProject = { path, _ ->
+              if (path == PROJECT_PATH) {
+                listOf(
+                  thread(
+                    id = "claude-1",
+                    updatedAt = 100,
+                    provider = AgentSessionProvider.CLAUDE,
+                    activity = AgentThreadActivity.UNREAD,
+                  )
+                )
+              }
+              else {
+                emptyList()
+              }
+            },
+          )
+        )
+      },
+      projectEntriesProvider = {
+        listOf(openProjectEntry(PROJECT_PATH, "Project A"))
+      },
+      warmState = warmState,
+    ) { service ->
+      service.refresh()
+      waitForCondition {
+        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
+          ?.threads
+          ?.firstOrNull()
+          ?.activity == AgentThreadActivity.UNREAD
+      }
+
+      service.markThreadAsRead(PROJECT_PATH, AgentSessionProvider.CLAUDE, "claude-1", 100)
+
+      assertThat(
+        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
+          ?.threads
+          ?.firstOrNull()
+          ?.activity
+      ).isEqualTo(AgentThreadActivity.READY)
+      assertThat(warmState.getPathSnapshot(PROJECT_PATH)?.threads?.firstOrNull()?.activity)
+        .isEqualTo(AgentThreadActivity.READY)
+    }
+  }
+
+  @Test
+  fun blockingRefreshFailureKeepsPreviousWarmSnapshot() = runBlocking(Dispatchers.Default) {
+    val warmState = InMemorySessionWarmState()
+    warmState.setPathSnapshot(
+      PROJECT_PATH,
+      AgentSessionWarmPathSnapshot(
+        threads = listOf(thread(id = "cached-1", updatedAt = 100, provider = AgentSessionProvider.CLAUDE)),
+        hasUnknownThreadCount = false,
+        updatedAt = 100,
+      ),
+    )
+
+    withService(
+      sessionSourcesProvider = {
+        listOf(
+          ScriptedSessionSource(
+            provider = AgentSessionProvider.CLAUDE,
+            listFromOpenProject = { _, _ -> throw IllegalStateException("boom") },
+          )
+        )
+      },
+      projectEntriesProvider = {
+        listOf(openProjectEntry(PROJECT_PATH, "Project A"))
+      },
+      warmState = warmState,
+    ) { service ->
+      service.refresh()
+      waitForCondition {
+        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.errorMessage != null
+      }
+
+      assertThat(warmState.getPathSnapshot(PROJECT_PATH)?.threads.orEmpty().map { it.id })
+        .containsExactly("cached-1")
+    }
+  }
 }
 
 private data class ServicePendingCodexRebindInvocation(
-  val path: String,
-  val pendingTabKey: String,
-  val pendingThreadIdentity: String,
-  val target: AgentChatPendingTabRebindTarget,
+  @JvmField val path: String,
+  @JvmField val pendingTabKey: String,
+  @JvmField val pendingThreadIdentity: String,
+  @JvmField val target: AgentChatTabRebindTarget,
 )
 
 private fun successfulPendingCodexRebindReport(

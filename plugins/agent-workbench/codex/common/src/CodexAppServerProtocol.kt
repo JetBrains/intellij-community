@@ -124,6 +124,219 @@ internal class CodexAppServerProtocol {
       ?: throw CodexAppServerException("Codex app-server returned thread/start result without thread data")
   }
 
+  fun parseThreadReadActivityResult(parser: JsonParser): CodexThreadActivitySnapshot? {
+    if (parser.currentToken != JsonToken.START_OBJECT) {
+      parser.skipChildren()
+      return null
+    }
+
+    var snapshot: CodexThreadActivitySnapshot? = null
+    forEachObjectField(parser) { fieldName ->
+      when (fieldName) {
+        "thread", "data" -> {
+          snapshot = parseThreadActivitySnapshot(parser)
+        }
+        else -> parser.skipChildren()
+      }
+      true
+    }
+    return snapshot
+  }
+
+  fun parseTurnStartResult(parser: JsonParser): CodexAppServerTurnStartResult? {
+    if (parser.currentToken != JsonToken.START_OBJECT) {
+      parser.skipChildren()
+      return null
+    }
+
+    return parseTurnFromResultObject(parser)
+  }
+
+  fun parseNotification(payload: String): ParsedCodexAppServerNotification? {
+    jsonFactory.createParser(payload).use { parser ->
+      if (parser.nextToken() != JsonToken.START_OBJECT) return null
+
+      var hasResponseId = false
+      var method: String? = null
+      var params = ParsedNotificationParams()
+      forEachObjectField(parser) { fieldName ->
+        when (fieldName) {
+          "id" -> {
+            hasResponseId = parser.currentToken != JsonToken.VALUE_NULL
+            parser.skipChildren()
+          }
+          "method" -> method = readStringOrNull(parser)
+          "params" -> {
+            if (parser.currentToken == JsonToken.START_OBJECT) {
+              params = parseNotificationParams(parser)
+            }
+            else {
+              parser.skipChildren()
+            }
+          }
+          else -> parser.skipChildren()
+        }
+        true
+      }
+
+      if (hasResponseId) {
+        return null
+      }
+      val notificationMethod = method?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+      val notificationKind = notificationKindFromMethod(notificationMethod)
+      return ParsedCodexAppServerNotification(
+        method = notificationMethod,
+        kind = notificationKind,
+        threadId = params.threadId,
+        startedThread = if (notificationKind == CodexAppServerNotificationKind.THREAD_STARTED) params.startedThread else null,
+        turnId = params.turnId,
+        turnStatus = params.turnStatus,
+        turnErrorMessage = params.turnErrorMessage,
+        agentMessageText = params.agentMessageText,
+      )
+    }
+  }
+
+}
+
+private data class ParsedNotificationParams(
+  @JvmField val threadId: String? = null,
+  @JvmField val startedThread: CodexAppServerStartedThread? = null,
+  @JvmField val turnId: String? = null,
+  @JvmField val turnStatus: String? = null,
+  @JvmField val turnErrorMessage: String? = null,
+  @JvmField val agentMessageText: String? = null,
+)
+
+private data class ParsedNotificationThreadObject(
+  @JvmField val threadId: String?,
+  @JvmField val startedThread: CodexAppServerStartedThread?,
+)
+
+private data class ParsedNotificationTurnObject(
+  @JvmField val turnId: String?,
+  @JvmField val turnStatus: String?,
+  @JvmField val turnErrorMessage: String?,
+)
+
+private data class ParsedNotificationItemObject(
+  @JvmField val type: String?,
+  @JvmField val text: String?,
+)
+
+private fun parseNotificationParams(parser: JsonParser): ParsedNotificationParams {
+  var threadId: String? = null
+  var startedThread: CodexAppServerStartedThread? = null
+  var turnId: String? = null
+  var turnStatus: String? = null
+  var turnErrorMessage: String? = null
+  var agentMessageText: String? = null
+  forEachObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "threadId", "thread_id" -> {
+        threadId = readStringOrNull(parser)?.trim()?.takeIf { it.isNotEmpty() }
+      }
+      "turnId", "turn_id" -> {
+        turnId = readStringOrNull(parser)?.trim()?.takeIf { it.isNotEmpty() }
+      }
+      "thread", "data" -> {
+        if (parser.currentToken == JsonToken.START_OBJECT) {
+          val parsedThreadObject = parseNotificationThreadObject(parser)
+          threadId = parsedThreadObject.threadId ?: threadId
+          startedThread = parsedThreadObject.startedThread ?: startedThread
+        }
+        else {
+          parser.skipChildren()
+        }
+      }
+      "turn" -> {
+        if (parser.currentToken == JsonToken.START_OBJECT) {
+          val parsedTurnObject = parseNotificationTurnObject(parser)
+          turnId = parsedTurnObject.turnId ?: turnId
+          turnStatus = parsedTurnObject.turnStatus ?: turnStatus
+          turnErrorMessage = parsedTurnObject.turnErrorMessage ?: turnErrorMessage
+        }
+        else {
+          parser.skipChildren()
+        }
+      }
+      "item" -> {
+        if (parser.currentToken == JsonToken.START_OBJECT) {
+          val parsedItemObject = parseNotificationItemObject(parser)
+          if (parsedItemObject.type == "agentMessage") {
+            agentMessageText = parsedItemObject.text?.takeIf { it.isNotBlank() }
+          }
+        }
+        else {
+          parser.skipChildren()
+        }
+      }
+      else -> parser.skipChildren()
+    }
+    true
+  }
+  return ParsedNotificationParams(
+    threadId = threadId,
+    startedThread = startedThread,
+    turnId = turnId,
+    turnStatus = turnStatus,
+    turnErrorMessage = turnErrorMessage,
+    agentMessageText = agentMessageText,
+  )
+}
+
+private fun parseNotificationThreadObject(parser: JsonParser): ParsedNotificationThreadObject {
+  val payload = parseThreadPayload(parser, allowNestedThread = false)
+  return ParsedNotificationThreadObject(
+    threadId = resolveThreadId(payload),
+    startedThread = createStartedThread(payload),
+  )
+}
+
+private fun parseNotificationTurnObject(parser: JsonParser): ParsedNotificationTurnObject {
+  var turnId: String? = null
+  var turnStatus: String? = null
+  var turnErrorMessage: String? = null
+  forEachObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "id" -> turnId = readStringOrNull(parser)?.trim()?.takeIf { it.isNotEmpty() }
+      "status" -> turnStatus = readStringOrNull(parser)?.trim()?.takeIf { it.isNotEmpty() }
+      "error" -> turnErrorMessage = parseTurnErrorMessage(parser)
+      else -> parser.skipChildren()
+    }
+    true
+  }
+  return ParsedNotificationTurnObject(
+    turnId = turnId,
+    turnStatus = turnStatus,
+    turnErrorMessage = turnErrorMessage,
+  )
+}
+
+private fun parseNotificationItemObject(parser: JsonParser): ParsedNotificationItemObject {
+  var type: String? = null
+  var text: String? = null
+  forEachObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "type" -> type = readStringOrNull(parser)?.trim()?.takeIf { it.isNotEmpty() }
+      "text" -> text = readStringOrNull(parser)
+      else -> parser.skipChildren()
+    }
+    true
+  }
+  return ParsedNotificationItemObject(type = type, text = text)
+}
+
+private fun notificationKindFromMethod(method: String): CodexAppServerNotificationKind {
+  return when (method) {
+    "thread/started" -> CodexAppServerNotificationKind.THREAD_STARTED
+    "thread/status/changed" -> CodexAppServerNotificationKind.THREAD_STATUS_CHANGED
+    "turn/started" -> CodexAppServerNotificationKind.TURN_STARTED
+    "turn/completed" -> CodexAppServerNotificationKind.TURN_COMPLETED
+    "item/commandExecution/outputDelta" -> CodexAppServerNotificationKind.COMMAND_EXECUTION_OUTPUT_DELTA
+    "item/commandExecution/terminalInteraction" -> CodexAppServerNotificationKind.TERMINAL_INTERACTION
+    else -> CodexAppServerNotificationKind.OTHER
+  }
 }
 
 private fun parseThreadArray(parser: JsonParser, archived: Boolean, threads: MutableList<CodexThread>, cwdFilter: String?) {

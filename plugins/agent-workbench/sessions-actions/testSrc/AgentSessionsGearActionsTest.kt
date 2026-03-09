@@ -10,6 +10,7 @@ import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewTh
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProjectFromEditorTabAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProjectFromToolbarAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsOpenDedicatedFrameAction
+import com.intellij.agent.workbench.sessions.actions.AgentSessionsPreventSleepWhileWorkingToggleAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsRefreshAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsSelectThreadInToolWindowAction
 import com.intellij.icons.AllIcons
@@ -154,14 +155,11 @@ class AgentSessionsGearActionsTest {
   @Test
   fun dedicatedFrameRegistersMainToolbarSourceProjectAction() {
     val actionManager = ActionManager.getInstance()
-    val descriptor = checkNotNull(javaClass.classLoader.getResource("intellij.agent.workbench.sessions.xml")) {
-      "Module descriptor intellij.agent.workbench.sessions.xml is missing"
-    }.readText()
 
     assertThat(actionManager.getAction("AgentWorkbenchSessions.GoToSourceProjectFromToolbar"))
       .isNotNull
       .isInstanceOf(AgentSessionsGoToSourceProjectFromToolbarAction::class.java)
-    assertThat(descriptor)
+    assertThat(actionsDescriptor())
       .contains("id=\"AgentWorkbenchSessions.GoToSourceProjectFromToolbar\"")
       .contains("<add-to-group group-id=\"MainToolbarRight\" anchor=\"before\" relative-to-action=\"NewUiRunWidget\"/>")
   }

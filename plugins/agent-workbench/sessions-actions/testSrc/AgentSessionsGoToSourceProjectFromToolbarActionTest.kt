@@ -54,7 +54,7 @@ class AgentSessionsGoToSourceProjectFromToolbarActionTest {
     assertThat(event.presentation.isEnabled).isTrue()
     assertThat(event.presentation.text).isEqualTo("source-project")
     assertThat(event.presentation.description)
-      .isEqualTo(AgentSessionsBundle.message("action.AgentWorkbenchSessions.GoToSourceProjectFromToolbar.description.path", normalizeAgentWorkbenchPath(sourcePath)))
+      .isEqualTo(AgentSessionsBundle.message("action.AgentWorkbenchSessions.GoToSourceProjectFromToolbar.description.with.path", normalizeAgentWorkbenchPath(sourcePath)))
     assertThat(event.presentation.icon).isEqualTo(ProductIcons.getInstance().getProjectNodeIcon())
 
     action.actionPerformed(event)

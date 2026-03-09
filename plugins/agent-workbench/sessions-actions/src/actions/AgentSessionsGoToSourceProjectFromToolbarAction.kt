@@ -71,7 +71,7 @@ internal class AgentSessionsGoToSourceProjectFromToolbarAction : DumbAwareAction
 
     e.presentation.isEnabled = true
     e.presentation.text = sourceProjectName(sourceProjectPath)
-    e.presentation.description = AgentSessionsBundle.message("action.AgentWorkbenchSessions.GoToSourceProjectFromToolbar.description.path", sourceProjectPath)
+    e.presentation.description = AgentSessionsBundle.message("action.AgentWorkbenchSessions.GoToSourceProjectFromToolbar.description.with.path", sourceProjectPath)
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {

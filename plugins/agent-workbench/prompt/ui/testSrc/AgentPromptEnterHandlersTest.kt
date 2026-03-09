@@ -10,11 +10,14 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.EditorTextField
+import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBTabbedPane
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.KeyStroke
 
@@ -155,6 +158,65 @@ class AgentPromptEnterHandlersTest {
   }
 
   @Test
+  fun existingTaskSelectorEnterInvokesConfirmAction() {
+    runInEdtAndWait {
+      val list = JBList(arrayOf("thread-1"))
+      var confirmCalls = 0
+
+      installConfirmActionOnEnter(list) {
+        confirmCalls++
+        true
+      }
+
+      invokeComponentKeyAction(list, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0))
+
+      assertThat(confirmCalls).isEqualTo(1)
+    }
+  }
+
+  @Test
+  fun confirmActionOnEnterDelegatesToFallbackWhenConfirmationIsNotHandled() {
+    runInEdtAndWait {
+      val component = JPanel()
+      val enter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)
+      var fallbackCalls = 0
+      var confirmCalls = 0
+
+      component.registerKeyboardAction({ fallbackCalls++ }, enter, JComponent.WHEN_FOCUSED)
+      installConfirmActionOnEnter(component) {
+        confirmCalls++
+        false
+      }
+
+      invokeComponentKeyAction(component, enter)
+
+      assertThat(confirmCalls).isEqualTo(1)
+      assertThat(fallbackCalls).isEqualTo(1)
+    }
+  }
+
+  @Test
+  fun confirmActionOnEnterSkipsFallbackWhenConfirmationIsHandled() {
+    runInEdtAndWait {
+      val component = JPanel()
+      val enter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)
+      var fallbackCalls = 0
+      var confirmCalls = 0
+
+      component.registerKeyboardAction({ fallbackCalls++ }, enter, JComponent.WHEN_FOCUSED)
+      installConfirmActionOnEnter(component) {
+        confirmCalls++
+        true
+      }
+
+      invokeComponentKeyAction(component, enter)
+
+      assertThat(confirmCalls).isEqualTo(1)
+      assertThat(fallbackCalls).isZero()
+    }
+  }
+
+  @Test
   fun selectAdjacentPromptTabWrapsForwardToFirstTab() {
     runInEdtAndWait {
       val tabbedPane = JBTabbedPane().apply {
@@ -221,5 +283,10 @@ class AgentPromptEnterHandlersTest {
     return actions.firstOrNull { action ->
       action.shortcutSet.shortcuts.any { shortcut -> shortcut == targetShortcut }
     }
+  }
+
+  private fun invokeComponentKeyAction(component: JComponent, keyStroke: KeyStroke) {
+    val action = checkNotNull(component.getActionForKeyStroke(keyStroke)) { "No action registered for keystroke: $keyStroke" }
+    action.actionPerformed(ActionEvent(component, ActionEvent.ACTION_PERFORMED, keyStroke.toString()))
   }
 }

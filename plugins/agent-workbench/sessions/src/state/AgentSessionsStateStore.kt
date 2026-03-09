@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 @Service(Service.Level.APP)
-internal class AgentSessionsStateStore {
+class AgentSessionsStateStore {
   private val mutableState = MutableStateFlow(AgentSessionsState())
   val state: StateFlow<AgentSessionsState> = mutableState.asStateFlow()
 
@@ -93,45 +93,6 @@ internal class AgentSessionsStateStore {
     }
   }
 
-  fun removeThread(path: String, provider: AgentSessionProvider, threadId: String): Boolean {
-    val normalizedPath = normalizeAgentWorkbenchPath(path)
-    var removed = false
-    update { state ->
-      val nextProjects = state.projects.map { project ->
-        if (project.path == normalizedPath) {
-          val nextThreads = project.threads.filterNot { it.provider == provider && it.id == threadId }
-          if (nextThreads.size != project.threads.size) {
-            removed = true
-            project.copy(threads = nextThreads)
-          }
-          else {
-            project
-          }
-        }
-        else {
-          val nextWorktrees = project.worktrees.map { worktree ->
-            if (worktree.path == normalizedPath) {
-              val nextThreads = worktree.threads.filterNot { it.provider == provider && it.id == threadId }
-              if (nextThreads.size != worktree.threads.size) {
-                removed = true
-                worktree.copy(threads = nextThreads)
-              }
-              else {
-                worktree
-              }
-            }
-            else {
-              worktree
-            }
-          }
-          if (nextWorktrees == project.worktrees) project else project.copy(worktrees = nextWorktrees)
-        }
-      }
-      if (!removed) state else state.copy(projects = nextProjects, lastUpdatedAt = System.currentTimeMillis())
-    }
-    return removed
-  }
-
   fun buildInitialVisibleThreadCounts(knownPaths: List<String>): Map<String, Int> {
     return buildInitialVisibleThreadCounts(
       knownPaths = knownPaths,
@@ -188,25 +149,33 @@ internal class AgentSessionsStateStore {
     return visibleThreadCounts
   }
 
-  private fun findThreadIndex(
-    projects: List<AgentProjectSessions>,
-    normalizedPath: String,
-    provider: AgentSessionProvider,
-    threadId: String,
-  ): Int? {
-    val projectThreads = projects.firstOrNull { it.path == normalizedPath }?.threads
-    if (projectThreads != null) {
-      val index = projectThreads.indexOfFirst { it.provider == provider && it.id == threadId }
-      if (index >= 0) return index
-    }
+}
 
-    projects.forEach { project ->
-      val worktreeThreads = project.worktrees.firstOrNull { it.path == normalizedPath }?.threads ?: return@forEach
-      val index = worktreeThreads.indexOfFirst { it.provider == provider && it.id == threadId }
-      if (index >= 0) return index
+private fun findThreadIndex(
+  projects: List<AgentProjectSessions>,
+  normalizedPath: String,
+  provider: AgentSessionProvider,
+  threadId: String,
+): Int? {
+  val projectThreads = projects.firstOrNull { it.path == normalizedPath }?.threads
+  if (projectThreads != null) {
+    val index = projectThreads.indexOfFirst { thread ->
+      thread.matchesProviderAndThreadOrSubAgent(provider = provider, threadId = threadId)
     }
-
-    return null
+    if (index >= 0) return index
   }
 
+  projects.forEach { project ->
+    val worktreeThreads = project.worktrees.firstOrNull { it.path == normalizedPath }?.threads ?: return@forEach
+    val index = worktreeThreads.indexOfFirst { thread ->
+      thread.matchesProviderAndThreadOrSubAgent(provider = provider, threadId = threadId)
+    }
+    if (index >= 0) return index
+  }
+
+  return null
+}
+
+private fun AgentSessionThread.matchesProviderAndThreadOrSubAgent(provider: AgentSessionProvider, threadId: String): Boolean {
+  return this.provider == provider && (id == threadId || subAgents.any { subAgent -> subAgent.id == threadId })
 }

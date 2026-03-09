@@ -1,7 +1,7 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.chat"/>
     <module name="intellij.agent.workbench.codex.common"/>
     <module name="intellij.agent.workbench.common"/>
     <module name="intellij.agent.workbench.filewatch"/>

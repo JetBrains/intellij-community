@@ -37,9 +37,8 @@ import com.intellij.agent.workbench.sessions.frame.AGENT_SESSIONS_TOOL_WINDOW_ID
 import com.intellij.agent.workbench.sessions.frame.AGENT_WORKBENCH_DEDICATED_FRAME_TYPE_ID
 import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
+import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
-import com.intellij.agent.workbench.sessions.state.AgentSessionsTreeUiStateService
-import com.intellij.agent.workbench.sessions.state.SessionsTreeUiState
 import com.intellij.agent.workbench.sessions.util.SingleFlightActionGate
 import com.intellij.agent.workbench.sessions.util.SingleFlightPolicy
 import com.intellij.agent.workbench.sessions.util.SingleFlightProgressRequest
@@ -68,6 +67,7 @@ import com.intellij.project.ProjectStoreOwner
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
@@ -140,11 +140,11 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
 }
 
 @Service(Service.Level.APP)
-internal class AgentSessionLaunchService(
+class AgentSessionLaunchService internal constructor(
   private val serviceScope: CoroutineScope,
   private val stateStore: AgentSessionsStateStore,
   private val syncService: AgentSessionRefreshService,
-  private val treeUiState: SessionsTreeUiState,
+  private val uiPreferencesState: AgentSessionUiPreferencesStateService = AgentSessionUiPreferencesStateService(),
   private val chatOpenExecutor: AgentSessionChatOpenExecutor = DefaultAgentSessionChatOpenExecutor,
 ) {
   @Suppress("unused")
@@ -152,13 +152,13 @@ internal class AgentSessionLaunchService(
     serviceScope = serviceScope,
     stateStore = service<AgentSessionsStateStore>(),
     syncService = service<AgentSessionRefreshService>(),
-    treeUiState = service<AgentSessionsTreeUiStateService>(),
+    uiPreferencesState = service<AgentSessionUiPreferencesStateService>(),
     chatOpenExecutor = DefaultAgentSessionChatOpenExecutor,
   )
 
   private val actionGate = SingleFlightActionGate()
 
-  fun openOrFocusProject(path: String) {
+  fun openOrFocusProject(path: String, entryPoint: AgentWorkbenchEntryPoint) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
     launchDropAction(
       key = buildOpenProjectActionKey(normalizedPath),
@@ -344,35 +344,12 @@ internal class AgentSessionLaunchService(
         }
         promptLaunchResolved?.invoke(AgentPromptLaunchResult.SUCCESS)
       }
-      if (mode !in bridge.supportedLaunchModes) {
-        LOG.warn("Session provider bridge ${provider.value} does not support launch mode $mode")
-        syncService.appendProviderUnavailableWarning(normalizedPath, provider)
-        return@launchDropAction
-      }
-
-      val createSpec = bridge.createNewSession(path = normalizedPath, mode = mode)
-      val identity = createSpec.sessionId?.let { sessionId ->
-        buildAgentSessionIdentity(provider, sessionId)
-      } ?: buildAgentSessionNewIdentity(provider)
-      val initialMessagePlan = initialMessageRequest
-        ?.let(bridge::buildInitialMessagePlan)
-        ?: AgentInitialMessagePlan.EMPTY
-      val initialMessageDispatchPlan = buildInitialMessageDispatchPlan(
-        bridge = bridge,
-        baseLaunchSpec = createSpec.launchSpec,
-        identity = identity,
-        initialMessagePlan = initialMessagePlan,
-      )
-
-      chatOpenExecutor.openNewChat(
-        normalizedPath = normalizedPath,
-        identity = identity,
-        launchSpec = createSpec.launchSpec,
-        initialMessageDispatchPlan = initialMessageDispatchPlan,
-        preferredDedicatedFrame = preferredDedicatedFrame,
-      )
-      if (AgentSessionProviderBehaviors.find(provider)?.refreshPathAfterCreateNewSession == true) {
-        syncService.refreshProviderForPath(path = normalizedPath, provider = provider)
+      catch (t: Throwable) {
+        if (t is CancellationException) {
+          throw t
+        }
+        promptLaunchResolved?.invoke(AgentPromptLaunchResult.failure(AgentPromptLaunchError.INTERNAL_ERROR))
+        throw t
       }
     }
   }

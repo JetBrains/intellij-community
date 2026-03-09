@@ -39,7 +39,7 @@ internal class AgentSessionsEditorTabNewThreadQuickAction @JvmOverloads construc
 ) : AgentSessionsEditorTabActionBase(resolveContext) {
   override fun update(e: AnActionEvent) {
     val context = resolveEditorTabContext(e)
-    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider())
+    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode())
     val isVisible = context != null && actionModel.quickStartItem != null
     e.presentation.isEnabledAndVisible = isVisible
     e.presentation.icon = actionModel.quickStartItem?.let { providerIconWithMode(it.bridge.provider, it.mode) } ?: templatePresentation.icon

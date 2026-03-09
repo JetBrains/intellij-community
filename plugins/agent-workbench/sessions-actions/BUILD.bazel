@@ -26,7 +26,6 @@ jvm_library(
     "//platform/platform-impl/concurrency",
     "//platform/ide-core-impl",
     "//plugins/agent-workbench/common",
-    "//plugins/agent-workbench/prompt/core",
     "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
     "//platform/projectModel-api:projectModel",
     "//platform/util",
@@ -40,30 +39,42 @@ jvm_library(
 
 jvm_library(
   name = "agent-workbench-sessions-actions_test_lib",
-  module_name = "intellij.agent.workbench.sessions.actions",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":agent-workbench-sessions-actions",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [":agent-workbench-sessions-actions"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/fastutil",
     "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//platform/analysis-api:analysis",
     "//platform/analysis-api:analysis_test_lib",
+    "//platform/lang-api:lang",
     "//platform/lang-api:lang_test_lib",
+    "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
+    "//platform/core-ui",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/platform-api:ide",
     "//platform/platform-api:ide_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/platform-impl/concurrency:concurrency_test_lib",
-    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl/concurrency",
+    "//platform/ide-core-impl",
+    "//plugins/agent-workbench/common",
     "//plugins/agent-workbench/common:common_test_lib",
-    "//plugins/agent-workbench/prompt/core:core_test_lib",
+    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
     "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core_test_lib",
+    "//platform/projectModel-api:projectModel",
     "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util",
     "//platform/util:util_test_lib",
-    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/platform-util-io:ide-util-io",
     "//plugins/agent-workbench/codex/common",
     "//plugins/agent-workbench/codex/common:common_test_lib",
+    "//plugins/agent-workbench/chat",
     "//plugins/agent-workbench/chat:chat_test_lib",
+    "//plugins/agent-workbench/sessions",
     "//plugins/agent-workbench/sessions:sessions_test_lib",
     "//libraries/junit5",
     "//libraries/junit5:junit5_test_lib",
@@ -77,66 +88,16 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//libraries/assertj-core",
     "//libraries/assertj-core:assertj-core_test_lib",
-    "//platform/project-frame:project-frame_test_lib",
-    "//platform/projectModel-impl:projectModel-impl_test_lib",
-  ]
-)
-### auto-generated section `build intellij.agent.workbench.sessions.actions` end
-
-### auto-generated section `iml intellij.agent.workbench.sessions.actions` start
-exports_files([
-  "intellij.agent.workbench.sessions.actions.iml",
-], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.agent.workbench.sessions.actions` end
-
-### auto-generated section `build intellij.agent.workbench.sessions.actions.tests` start
-jvm_library(
-  name = "agent-workbench-sessions-actions-tests",
-  module_name = "intellij.agent.workbench.sessions.actions.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
-)
-
-jvm_library(
-  name = "agent-workbench-sessions-actions-tests_test_lib",
-  visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":agent-workbench-sessions-actions"],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//libraries/fastutil",
-    "//libraries/kotlinx/serialization/core",
-    "//platform/analysis-api:analysis",
-    "//platform/lang-api:lang",
-    "//platform/core-api:core",
-    "//platform/core-ui",
-    "//platform/platform-api:ide",
-    "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl/concurrency",
-    "//platform/ide-core-impl",
-    "//plugins/agent-workbench/common",
-    "//plugins/agent-workbench/common:common_test_lib",
-    "//plugins/agent-workbench/prompt/core",
-    "//plugins/agent-workbench/prompt/core:core_test_lib",
-    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
-    "//platform/projectModel-api:projectModel",
-    "//platform/util",
-    "//platform/platform-util-io:ide-util-io",
-    "//plugins/agent-workbench/codex/common",
-    "//plugins/agent-workbench/chat",
-    "//plugins/agent-workbench/chat:chat_test_lib",
-    "//plugins/agent-workbench/sessions",
-    "//plugins/agent-workbench/sessions:sessions_test_lib",
-    "//libraries/junit5",
-    "//libraries/junit5-params",
-    "//libraries/junit4",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//platform/testFramework/junit5",
-    "//platform/testFramework/junit5:junit5_test_lib",
-    "//libraries/assertj-core",
     "//platform/project-frame",
+    "//platform/project-frame:project-frame_test_lib",
     "//platform/projectModel-impl",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+  ],
+  runtime_deps = [
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/platform-impl/concurrency:concurrency_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
   ]
 )
 ### auto-generated section `build intellij.agent.workbench.sessions.actions` end

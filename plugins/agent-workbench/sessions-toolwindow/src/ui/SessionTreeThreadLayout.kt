@@ -32,29 +32,29 @@ internal data class SessionTreeViewportLayout(
 }
 
 internal data class SessionTreeThreadHorizontalLayout(
-  val reserveWidth: Int,
-  val titleMaxWidth: Int,
-  val statusX: Int,
-  val statusRightBoundary: Int,
-  val timeX: Int,
-  val timeRightBoundary: Int,
+  @JvmField val reserveWidth: Int,
+  @JvmField val titleMaxWidth: Int,
+  @JvmField val statusX: Int,
+  @JvmField val statusRightBoundary: Int,
+  @JvmField val timeX: Int,
+  @JvmField val timeRightBoundary: Int,
 )
 
 internal data class SessionTreeThreadTrailingPaint(
-  val reserveWidth: Int,
-  val statusLabel: @NlsSafe String?,
-  val statusX: Int,
-  val statusRightBoundary: Int,
-  val statusTextWidth: Int,
-  val statusColumnWidth: Int,
-  val statusColor: Color?,
-  val timeLabel: @NlsSafe String,
-  val timeX: Int,
-  val timeRightBoundary: Int,
-  val timeTextWidth: Int,
-  val timeColumnWidth: Int,
-  val actionRightPadding: Int,
-  val selectionRightInset: Int,
+  @JvmField val reserveWidth: Int,
+  @JvmField val statusLabel: @NlsSafe String?,
+  @JvmField val statusX: Int,
+  @JvmField val statusRightBoundary: Int,
+  @JvmField val statusTextWidth: Int,
+  @JvmField val statusColumnWidth: Int,
+  @JvmField val statusColor: Color?,
+  @JvmField val timeLabel: @NlsSafe String,
+  @JvmField val timeX: Int,
+  @JvmField val timeRightBoundary: Int,
+  @JvmField val timeTextWidth: Int,
+  @JvmField val timeColumnWidth: Int,
+  @JvmField val actionRightPadding: Int,
+  @JvmField val selectionRightInset: Int,
 )
 
 internal fun sessionTreeActionSlotSize(): Int = JBUI.scale(SESSION_TREE_ACTION_SLOT_SIZE)

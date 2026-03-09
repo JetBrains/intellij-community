@@ -2,8 +2,8 @@
 package com.intellij.agent.workbench.codex.sessions
 
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity
-import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutChangeSet
 import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutSessionBackend
+import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
@@ -25,7 +25,7 @@ class CodexRolloutSessionBackendTest {
   lateinit var tempDir: Path
 
   @Test
-  fun mapsSessionMetaIdAndUnreadPrecedence() {
+  fun mapsSessionMetaIdAndProcessingBeatsPassiveUnread() {
     runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-a")
       Files.createDirectories(projectDir)
@@ -78,26 +78,71 @@ class CodexRolloutSessionBackendTest {
   }
 
   @Test
-  fun mapsDistinctActivitySignalsWithoutOverlappingMicroTests() {
-    runBlocking {
+  fun mapsCurrentCodexRolloutActivitySignals() {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-activity")
       Files.createDirectories(projectDir)
 
       val activityCases = listOf(
         ActivityCase(
           id = "session-review",
-          eventLine = """{"timestamp":"2026-02-13T11:00:05.000Z","type":"event_msg","payload":{"type":"item_completed","item":{"type":"enteredReviewMode"}}}""",
+          eventLines = listOf(
+            """{"timestamp":"2026-02-13T11:00:05.000Z","type":"event_msg","payload":{"type":"entered_review_mode"}}"""
+          ),
           expected = CodexSessionActivity.REVIEWING,
         ),
         ActivityCase(
           id = "session-processing",
-          eventLine = """{"timestamp":"2026-02-13T11:01:05.000Z","type":"event_msg","payload":{"type":"task_started"}}""",
+          eventLines = listOf(
+            """{"timestamp":"2026-02-13T11:01:05.000Z","type":"event_msg","payload":{"type":"task_started"}}"""
+          ),
           expected = CodexSessionActivity.PROCESSING,
         ),
         ActivityCase(
           id = "session-pending-input",
-          eventLine = """{"timestamp":"2026-02-13T11:02:05.000Z","type":"event_msg","payload":{"type":"requestUserInput"}}""",
+          eventLines = listOf(
+            """{"timestamp":"2026-02-13T11:02:05.000Z","type":"event_msg","payload":{"type":"request_user_input"}}"""
+          ),
           expected = CodexSessionActivity.UNREAD,
+          expectedRequiresResponse = true,
+        ),
+        ActivityCase(
+          id = "session-pending-input-function-call",
+          eventLines = listOf(
+            responseItemFunctionCall(
+              timestamp = "2026-02-13T11:02:10.000Z",
+              callId = "call-request-user-input",
+            )
+          ),
+          expected = CodexSessionActivity.UNREAD,
+          expectedRequiresResponse = true,
+        ),
+        ActivityCase(
+          id = "session-cleared-input-function-call-output",
+          eventLines = listOf(
+            responseItemFunctionCall(
+              timestamp = "2026-02-13T11:02:20.000Z",
+              callId = "call-cleared-user-input",
+            ),
+            """{"timestamp":"2026-02-13T11:02:21.000Z","type":"response_item","payload":{"type":"function_call_output","call_id":"call-cleared-user-input","output":"ok"}}""",
+          ),
+          expected = CodexSessionActivity.READY,
+        ),
+        ActivityCase(
+          id = "session-processing-over-unread",
+          eventLines = listOf(
+            """{"timestamp":"2026-02-13T11:03:05.000Z","type":"event_msg","payload":{"type":"task_started"}}""",
+            """{"timestamp":"2026-02-13T11:03:06.000Z","type":"event_msg","payload":{"type":"agent_message","message":"Still working"}}"""
+          ),
+          expected = CodexSessionActivity.PROCESSING,
+        ),
+        ActivityCase(
+          id = "session-review-over-unread",
+          eventLines = listOf(
+            """{"timestamp":"2026-02-13T11:04:05.000Z","type":"event_msg","payload":{"type":"entered_review_mode"}}""",
+            """{"timestamp":"2026-02-13T11:04:06.000Z","type":"event_msg","payload":{"type":"agent_message","message":"Review result draft"}}"""
+          ),
+          expected = CodexSessionActivity.REVIEWING,
         ),
       )
 
@@ -111,19 +156,46 @@ class CodexRolloutSessionBackendTest {
               id = testCase.id,
               cwd = projectDir,
             ),
-            testCase.eventLine,
-          ),
+          ) + testCase.eventLines,
         )
       }
 
       val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
-      val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
-      val activityById = threads.associate { it.thread.id to it.activity }
+      val threadsById = backend.listThreads(path = projectDir.toString(), openProject = null).associateBy { it.thread.id }
 
-      assertThat(threads).hasSize(activityCases.size)
+      assertThat(threadsById).hasSize(activityCases.size)
       for (testCase in activityCases) {
-        assertThat(activityById[testCase.id]).isEqualTo(testCase.expected)
+        val thread = threadsById.getValue(testCase.id)
+        assertThat(thread.activity).isEqualTo(testCase.expected)
+        assertThat(thread.requiresResponse).isEqualTo(testCase.expectedRequiresResponse)
       }
+    }
+  }
+
+  @Test
+  fun prefersSnakeCaseThreadNameUpdatedEventForTitle() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-thread-rename")
+      Files.createDirectories(projectDir)
+      writeRollout(
+        file = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("14")
+          .resolve("rollout-thread-name-updated.jsonl"),
+        lines = listOf(
+          sessionMetaLine(
+            timestamp = "2026-02-14T12:00:00.000Z",
+            id = "session-title-updated",
+            cwd = projectDir,
+          ),
+          """{"timestamp":"2026-02-14T12:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Initial fallback title"}}""",
+          """{"timestamp":"2026-02-14T12:00:02.000Z","type":"event_msg","payload":{"type":"thread_name_updated","thread_name":"  Renamed   from   Codex  "}}""",
+        ),
+      )
+
+      val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
+      val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
+
+      assertThat(threads).hasSize(1)
+      assertThat(threads.single().thread.title).isEqualTo("Renamed from Codex")
     }
   }
 
@@ -451,7 +523,7 @@ class CodexRolloutSessionBackendTest {
 
   @Test
   fun emitsUpdatesWhenExistingRolloutFileChanges() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-updates-modify")
       Files.createDirectories(projectDir)
 
@@ -465,7 +537,7 @@ class CodexRolloutSessionBackendTest {
         ),
       )
 
-      val sourceUpdates = MutableSharedFlow<CodexRolloutChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
       val backend = CodexRolloutSessionBackend(
         codexHomeProvider = { tempDir },
         rolloutChangeSource = { sourceUpdates },
@@ -490,7 +562,7 @@ class CodexRolloutSessionBackendTest {
             """{"timestamp":"2026-02-16T10:05:00.000Z","type":"event_msg","payload":{"type":"user_message","message":"Updated title"}}""",
           ),
         )
-        sourceUpdates.emit(CodexRolloutChangeSet(changedRolloutPaths = setOf(rollout)))
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(rollout)))
 
         val updated = awaitWatcherUpdate(updates)
         assertThat(updated).isTrue()
@@ -506,7 +578,7 @@ class CodexRolloutSessionBackendTest {
 
   @Test
   fun emitsUpdatesForNonRolloutSessionEventAndRefreshesByStatDiff() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-updates-refresh-ping")
       Files.createDirectories(projectDir)
 
@@ -520,7 +592,7 @@ class CodexRolloutSessionBackendTest {
         ),
       )
 
-      val sourceUpdates = MutableSharedFlow<CodexRolloutChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
       val backend = CodexRolloutSessionBackend(
         codexHomeProvider = { tempDir },
         rolloutChangeSource = { sourceUpdates },
@@ -547,7 +619,7 @@ class CodexRolloutSessionBackendTest {
         )
 
         // Represents non-rollout file events (temp/rename artifacts) where path-level invalidation is unavailable.
-        sourceUpdates.emit(CodexRolloutChangeSet())
+        sourceUpdates.emit(FileBackedSessionChangeSet())
 
         val updated = awaitWatcherUpdate(updates)
         assertThat(updated).isTrue()
@@ -563,11 +635,11 @@ class CodexRolloutSessionBackendTest {
 
   @Test
   fun emitsUpdatesWhenRolloutFileCreatedInNewNestedSessionsDirectory() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-updates-create")
       Files.createDirectories(projectDir)
 
-      val sourceUpdates = MutableSharedFlow<CodexRolloutChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
       val backend = CodexRolloutSessionBackend(
         codexHomeProvider = { tempDir },
         rolloutChangeSource = { sourceUpdates },
@@ -593,7 +665,7 @@ class CodexRolloutSessionBackendTest {
             """{"timestamp":"2026-03-01T09:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Created title"}}""",
           ),
         )
-        sourceUpdates.emit(CodexRolloutChangeSet(changedRolloutPaths = setOf(rollout)))
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(rollout)))
 
         val updated = awaitWatcherUpdate(updates)
         assertThat(updated).isTrue()
@@ -608,7 +680,7 @@ class CodexRolloutSessionBackendTest {
 
   @Test
   fun refreshesThreadAfterSameSizeRewriteWhenLastModifiedTimeIsReset() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-updates-same-size")
       Files.createDirectories(projectDir)
 
@@ -623,7 +695,7 @@ class CodexRolloutSessionBackendTest {
       )
       val originalLastModifiedTime = Files.getLastModifiedTime(rollout)
 
-      val sourceUpdates = MutableSharedFlow<CodexRolloutChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
       val backend = CodexRolloutSessionBackend(
         codexHomeProvider = { tempDir },
         rolloutChangeSource = { sourceUpdates },
@@ -649,7 +721,7 @@ class CodexRolloutSessionBackendTest {
           ),
         )
         Files.setLastModifiedTime(rollout, originalLastModifiedTime)
-        sourceUpdates.emit(CodexRolloutChangeSet(changedRolloutPaths = setOf(rollout)))
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(rollout)))
 
         val updated = awaitWatcherUpdate(updates)
         assertThat(updated).isTrue()
@@ -707,7 +779,8 @@ private fun writeRollout(file: Path, lines: List<String>) {
 }
 
 private data class ActivityCase(
-  val id: String,
-  val eventLine: String,
-  val expected: CodexSessionActivity,
+  @JvmField val id: String,
+  @JvmField val eventLines: List<String>,
+  @JvmField val expected: CodexSessionActivity,
+  @JvmField val expectedRequiresResponse: Boolean = false,
 )
