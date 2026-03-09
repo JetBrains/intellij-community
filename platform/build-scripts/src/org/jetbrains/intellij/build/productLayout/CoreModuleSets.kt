@@ -336,6 +336,7 @@ object CoreModuleSets {
     // Include core IDE (corePlatform + intellij.platform.ide)
     moduleSet(coreIde())
 
+    embeddedModule("intellij.platform.testRunner")
     embeddedModule("intellij.platform.execution")
     embeddedModule("intellij.platform.execution.impl")
 

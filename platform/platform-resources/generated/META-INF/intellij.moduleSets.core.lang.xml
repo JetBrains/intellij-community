@@ -165,6 +165,7 @@
     <!-- endregion -->
 
     <!-- region direct modules -->
+    <module name="intellij.platform.testRunner" loading="embedded"/>
     <module name="intellij.platform.execution" loading="embedded"/>
     <module name="intellij.platform.execution.impl" loading="embedded"/>
     <module name="intellij.platform.lang.core" loading="embedded"/>
