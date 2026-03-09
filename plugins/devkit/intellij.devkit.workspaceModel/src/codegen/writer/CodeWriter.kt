@@ -39,7 +39,6 @@ import com.intellij.workspaceModel.codegen.engine.ObjModuleFileGeneratedCode
 import com.intellij.workspaceModel.codegen.engine.SKIPPED_TYPES
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.io.JsonUtil
@@ -53,7 +52,6 @@ import java.io.IOException
 import java.net.URI
 import java.util.ServiceLoader
 import java.util.jar.Manifest
-import kotlin.time.Duration.Companion.seconds
 
 private val LOG = logger<CodeWriter>()
 
@@ -101,7 +99,8 @@ object CodeWriter {
       return
     }
 
-    waitSmartMode(project)
+    DumbService.getInstance(project).waitForSmartMode()
+
     val generatedFiles = ArrayList<KtFile>()
 
     withContext(Dispatchers.EDT) {
@@ -184,6 +183,8 @@ object CodeWriter {
       file.awaitCodeStyleCalculation()
     }
 
+    DumbService.getInstance(project).waitForSmartMode()
+
     withContext(Dispatchers.EDT) {
       executeCommand(project,
                      DevKitWorkspaceModelBundle.message("command.name.reformat.code.for.workspace.entities.in", sourceFolder.name)) {
@@ -235,21 +236,6 @@ object CodeWriter {
     val sourceClassName = getSourceClassNameForGeneratedFile(file)
     val sourceFile = ktClasses[sourceClassName]?.containingKtFile ?: return
     copyHeaderComment(sourceFile, file)
-  }
-
-  /**
-   * Documentation for [com.intellij.openapi.project.IndexNotReadyException] says that it's enough to run completeJustSubmittedTasks only
-   * once. However, in practice this is not enough.
-   */
-  private suspend fun waitSmartMode(project: Project) {
-    for (i in 1..100) {
-      if (i == 100) error("99 delays were not enough to wait for smart mode")
-      if (DumbService.isDumb(project)) {
-        DumbService.getInstance(project).completeJustSubmittedTasks()
-        delay(1.seconds)
-      }
-      else break
-    }
   }
 
   private fun codegenApiVersionsAreCompatible(project: Project, codeGeneratorFromDownloadedJar: CodeGenerator): Boolean {
