@@ -165,6 +165,12 @@ public interface PyClass
   @Nullable
   PyFunction findMethodByName(final @Nullable @NonNls String name, boolean inherited, TypeEvalContext context);
 
+  @ApiStatus.Internal
+  @Nullable
+  default PyFunction findMethodInImplementations(final @Nullable @NonNls String name, TypeEvalContext context) {
+    return null;
+  }
+
   /**
    * Finds a method with the given name and all its overloads.
    *
