@@ -63,7 +63,7 @@ internal class TerminalInput(
   )
 
   private val inputChannelDeferred: Deferred<SendChannel<TerminalInputEvent>> =
-    coroutineScope.async(Dispatchers.IO + CoroutineName("Get input channel")) {
+    coroutineScope.async(CoroutineName("Get input channel")) {
       terminalSessionDeferred.await().getInputChannel()
     }
 

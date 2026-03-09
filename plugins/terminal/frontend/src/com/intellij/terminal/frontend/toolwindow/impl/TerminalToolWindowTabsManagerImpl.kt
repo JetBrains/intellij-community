@@ -258,7 +258,7 @@ internal class TerminalToolWindowTabsManagerImpl(
   private fun createBackendTabAndStartSession(
     terminal: TerminalViewImpl,
     builder: TerminalToolWindowTabBuilderImpl,
-  ) = terminal.coroutineScope.launch(Dispatchers.IO) {
+  ) = terminal.coroutineScope.launch {
     val backendTabId = builder.backendTabId ?: durable {
       // todo: worth making it idempotent to avoid creating multiple tabs because of network issues
       TerminalTabsManagerApi.getInstance().createNewTerminalTab(project.projectId()).id
@@ -273,7 +273,7 @@ internal class TerminalToolWindowTabsManagerImpl(
       val isProjectClosing = getToolWindow().contentManager.isDisposed
       if (!isProjectClosing) {
         // Do not block frontend terminal scope cancellation by backend session termination request.
-        coroutineScope.launch(Dispatchers.IO) {
+        coroutineScope.launch {
           durable {
             TerminalTabsManagerApi.getInstance().closeTerminalTab(project.projectId(), backendTabId)
           }
@@ -315,7 +315,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     builder: TerminalToolWindowTabBuilderImpl,
     backendTabId: Int,
     calculateSizeFromComponent: Boolean,
-  ) = terminal.coroutineScope.launch(Dispatchers.IO) {
+  ) = terminal.coroutineScope.launch {
     if (builder.sessionId != null) {
       // Session is already started for this tab, reuse it
       connectSessionToTerminal(terminal, builder.sessionId!!, builder.portForwardingId)
@@ -403,7 +403,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     }
 
     private fun scheduleTabsRestoring(manager: TerminalToolWindowTabsManagerImpl) {
-      manager.tabsRestoredDeferred = manager.coroutineScope.async(Dispatchers.IO) {
+      manager.tabsRestoredDeferred = manager.coroutineScope.async {
         val tabs: List<TerminalSessionTab> = durable {
           TerminalTabsManagerApi.getInstance().getTerminalTabs(manager.project.projectId())
         }
