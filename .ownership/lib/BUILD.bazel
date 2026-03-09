@@ -1,11 +1,13 @@
 java_binary(
   name = "generate",
+  visibility = ["//visibility:public"],
   runtime_deps = [":codeowners"],
   main_class = "com.intellij.codeowners.scripts.Generate",
 )
 
 java_binary(
   name = "validate",
+  visibility = ["//visibility:public"],
   runtime_deps = [":codeowners"],
   main_class = "com.intellij.codeowners.scripts.Validate",
 )

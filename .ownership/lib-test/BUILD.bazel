@@ -1,5 +1,6 @@
 java_binary(
   name = "test",
+  visibility = ["//visibility:public"],
   runtime_deps = [":codeowners-test_test_lib"],
   main_class = "org.junit.platform.console.ConsoleLauncher",
   args = [
