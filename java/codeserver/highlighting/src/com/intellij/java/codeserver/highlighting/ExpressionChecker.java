@@ -1306,7 +1306,7 @@ final class ExpressionChecker {
       myVisitor.myModifierChecker.reportAccessProblem(classReference, constructor, result);
       return;
     }
-    if (!applicable) {
+    if (!applicable && result.isTypeArgumentsApplicable()) {
       checkIncompatibleCall(list, result);
       if (myVisitor.hasErrorResults()) return;
     }
