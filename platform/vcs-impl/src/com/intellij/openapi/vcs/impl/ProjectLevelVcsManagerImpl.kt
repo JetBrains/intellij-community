@@ -530,29 +530,29 @@ class ProjectLevelVcsManagerImpl(
   }
 
   override fun isIgnored(vf: VirtualFile): Boolean {
-    return ReadAction.compute(ThrowableComputable {
-      if (project.isDisposed() || project.isDefault) return@ThrowableComputable false
-      if (!vf.isValid()) return@ThrowableComputable false
-      if (Registry.`is`("ide.hide.excluded.files")) {
-        return@ThrowableComputable FileIndexFacade.getInstance(project).isExcludedFile(vf)
-      }
-      else {
-        return@ThrowableComputable FileIndexFacade.getInstance(project).isUnderIgnored(vf)
-      }
-    })
+    if (Registry.`is`("ide.hide.excluded.files")) {
+      return ReadAction.compute(ThrowableComputable {
+        if (project.isDisposed() || project.isDefault) return@ThrowableComputable false
+        if (!vf.isValid()) return@ThrowableComputable false
+        FileIndexFacade.getInstance(project).isExcludedFile(vf)
+      })
+    }
+    else {
+      return isIgnoredFilePath(vf.path)
+    }
   }
 
   override fun isIgnored(filePath: FilePath): Boolean {
-    return ReadAction.compute(ThrowableComputable {
-      if (project.isDisposed() || project.isDefault) return@ThrowableComputable false
-      if (Registry.`is`("ide.hide.excluded.files")) {
+    if (Registry.`is`("ide.hide.excluded.files")) {
+      return ReadAction.compute(ThrowableComputable {
+        if (project.isDisposed() || project.isDefault) return@ThrowableComputable false
         val vf = VcsImplUtil.findValidParentAccurately(filePath)
-        return@ThrowableComputable vf != null && FileIndexFacade.getInstance(project).isExcludedFile(vf)
-      }
-      else {
-        return@ThrowableComputable isIgnoredFilePath(filePath.path)
-      }
-    })
+        vf != null && FileIndexFacade.getInstance(project).isExcludedFile(vf)
+      })
+    }
+    else {
+      return isIgnoredFilePath(filePath.path)
+    }
   }
 
   @ApiStatus.Internal

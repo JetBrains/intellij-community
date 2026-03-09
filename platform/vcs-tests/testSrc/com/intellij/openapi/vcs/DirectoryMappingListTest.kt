@@ -355,22 +355,25 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       val ignoredUnderRootPath = "$externalRootPath/ignored/nested.txt".filePath
       val ignoredUnderRootFile = createFile(ignoredUnderRootPath.path)
 
-      assertFalse(vcsManager.isIgnored(externalRoot))
+      assertTrue(vcsManager.isIgnored(externalRoot))
       assertTrue(vcsManager.isIgnored(externalRootFilePath))
-      assertFalse(vcsManager.isIgnored(versionedFile))
+      assertTrue(vcsManager.isIgnored(versionedFile))
       assertTrue(vcsManager.isIgnored(versionedFilePath))
+      assertTrue(vcsManager.isIgnoredFileRoot(externalRoot))
+      assertTrue(vcsManager.isIgnoredFileRoot(versionedFile))
+      assertTrue(vcsManager.isIgnoredFileRoot(ignoredUnderRootFile))
 
       vcsManager.setDirectoryMappings(listOf(VcsDirectoryMapping(externalRoot.path, MOCK)))
       mappings.waitMappedRootsUpdate()
 
-      assertSame(vcsMock, vcsManager.getVcsFor(externalRoot))
+      assertNull(vcsManager.getVcsFor(externalRoot))
       assertNull(vcsManager.getVcsFor(externalRootFilePath))
-      assertSame(vcsMock, vcsManager.getVcsFor(versionedFile))
+      assertNull(vcsManager.getVcsFor(versionedFile))
       assertNull(vcsManager.getVcsFor(versionedFilePath))
 
-      assertEquals(externalRoot, vcsManager.getVcsRootFor(externalRoot))
+      assertNull(vcsManager.getVcsRootFor(externalRoot))
       assertNull(vcsManager.getVcsRootFor(externalRootFilePath))
-      assertEquals(externalRoot, vcsManager.getVcsRootFor(versionedFile))
+      assertNull(vcsManager.getVcsRootFor(versionedFile))
       assertNull(vcsManager.getVcsRootFor(versionedFilePath))
 
       assertNull(vcsManager.getVcsFor(ignoredUnderRootFile))
