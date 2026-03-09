@@ -498,7 +498,10 @@ private suspend fun restoreEditors(project: Project, fileEditorManager: FileEdit
       for (window in editorComponent.windows().toList()) {
         // clear empty splitters
         if (window.tabCount == 0) {
-          window.removeFromSplitter()
+          withContext(Dispatchers.EDT) {
+            // write-intent lock is required for now because we update actions synchronously here
+            window.removeFromSplitter()
+          }
           window.logEmptyStateIfMainSplitter(cause = EmptyStateCause.PROJECT_OPENED)
         }
       }
