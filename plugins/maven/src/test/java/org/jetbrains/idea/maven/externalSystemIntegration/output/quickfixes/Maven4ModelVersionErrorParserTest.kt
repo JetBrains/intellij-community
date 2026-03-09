@@ -14,6 +14,7 @@ import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.junit.Assume
 import org.junit.Test
 import java.nio.file.Path
+import kotlin.io.path.absolute
 import kotlin.io.path.pathString
 
 class Maven4ModelVersionErrorParserTest : MavenMultiVersionImportingTestCase() {
@@ -54,7 +55,7 @@ class Maven4ModelVersionErrorParserTest : MavenMultiVersionImportingTestCase() {
         }
       }, { true }, listOf())
       .processProjectProblem(project,
-                             MavenProjectProblem.createStructureProblem("/path/to/file:-1:-1",
+                             MavenProjectProblem.createStructureProblem("${Path.of("path", "to", "file").absolute()}:-1:-1",
                                                                         "'subprojects' unexpected subprojects element",
                                                                         false))
     assertEquals(1, issues.size)
