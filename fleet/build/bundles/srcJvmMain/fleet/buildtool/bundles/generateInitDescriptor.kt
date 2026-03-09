@@ -27,6 +27,7 @@ import kotlin.io.path.writeText
 suspend fun generateInitDescriptor(
   moduleName: String,
   runtimeClasspath: List<Path>,
+  alreadyIncludedJars: List<Path>,
   targetJdkVersionFeature: Int,
   shouldPackModuleJars: Boolean,
   logger: Logger,
@@ -50,8 +51,15 @@ suspend fun generateInitDescriptor(
       val uniqueJarsDir = temporaryDir.resolve("unique-jars")
       uniqueJarsDir.deleteIfExists()
       uniqueJarsDir.createDirectories()
-      val uniqueJarsClassPath = runtimeClasspath.map {
+      val alreadyIncludedJarNames = alreadyIncludedJars.map {
+        ModuleFinder.of(it).findAll().single().descriptor().name() + ".jar"
+      }
+
+      println("Module: $outputImmutableJars ; dockClassPath: $alreadyIncludedJarNames")
+
+      val uniqueJarsClassPath = runtimeClasspath.mapNotNull {
         val uniqueJarName = ModuleFinder.of(it).findAll().single().descriptor().name() + ".jar"
+        if (uniqueJarName in alreadyIncludedJarNames) return@mapNotNull null
         it.copyTo(uniqueJarsDir.resolve(uniqueJarName), overwrite = true)
       }
       val packedModulesDir = temporaryDir.resolve("packed-modules")
