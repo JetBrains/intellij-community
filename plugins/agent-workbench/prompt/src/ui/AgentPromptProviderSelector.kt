@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
+import com.intellij.util.ui.DialogUtil
 import org.jetbrains.annotations.Nls
 import javax.swing.JPanel
 
@@ -88,7 +89,7 @@ internal class AgentPromptProviderSelector(
 
   fun applyLegacyPlanModeSelection(provider: AgentSessionProvider?, enabled: Boolean) {
     val entry = findProviderEntry(provider) ?: return
-    if (entry.bridge.promptOptions.none { option -> option.id == AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE }) {
+    if (!entry.bridge.hasPromptOption(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE)) {
       return
     }
 
@@ -239,6 +240,7 @@ internal class AgentPromptProviderSelector(
   ): JBCheckBox {
     val label = sessionsMessageResolver.resolve(option.labelKey, bridge) ?: option.labelFallback
     return JBCheckBox(label, option.id in selectedOptionIds).apply {
+      DialogUtil.registerMnemonic(this)
       isFocusable = false
       addActionListener {
         if (isSelected) {
@@ -266,5 +268,9 @@ internal class AgentPromptProviderSelector(
       .asSequence()
       .filter { optionId -> optionId in validIds }
       .toCollection(LinkedHashSet())
+  }
+
+  private fun AgentSessionProviderBridge.hasPromptOption(optionId: String): Boolean {
+    return promptOptions.any { option -> option.id == optionId }
   }
 }
