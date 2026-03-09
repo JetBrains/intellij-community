@@ -57,20 +57,20 @@ sealed class K2MoveModel(private val observableUiSettings: ObservableUiSettings)
 
     abstract val target: K2MoveTargetModel
 
-    val searchForText: Setting = Setting.SEARCH_FOR_TEXT
-
-    val searchInComments: Setting = Setting.SEARCH_IN_COMMENTS
-
     abstract val inSourceRoot: Boolean
-
-    val searchReferences: Setting = Setting.SEARCH_REFERENCES
-
-    val mppDeclarations: Setting = Setting.MPP_DECLARATIONS
 
     abstract val moveCallBack: MoveCallback?
 
     @RequiresReadLock
     abstract fun toDescriptor(): K2MoveOperationDescriptor<*>
+
+    val searchForText: BoundSetting = BoundSetting(Setting.SEARCH_FOR_TEXT)
+
+    val searchInComments: BoundSetting = BoundSetting(Setting.SEARCH_IN_COMMENTS)
+
+    val searchReferences: BoundSetting = BoundSetting(Setting.SEARCH_REFERENCES)
+
+    val mppDeclarations: BoundSetting = BoundSetting(Setting.MPP_DECLARATIONS)
 
     /**
      * Returns whether running the refactoring is meaningful.
@@ -104,7 +104,7 @@ sealed class K2MoveModel(private val observableUiSettings: ObservableUiSettings)
     override val mppDeclarationsSetting: ObservableProperty<Boolean>
         get() = mppDeclarations.observableProperty
 
-    enum class Setting(private val text: @NlsContexts.Checkbox String) {
+    enum class Setting(internal val text: @NlsContexts.Checkbox String) {
         SEARCH_FOR_TEXT(KotlinBundle.message("search.for.text.occurrences")) {
             override var state: Boolean
                 get() {
@@ -147,8 +147,23 @@ sealed class K2MoveModel(private val observableUiSettings: ObservableUiSettings)
         };
 
         abstract var state: Boolean
+    }
+
+    /**
+     * A wrapper for [Setting] for holding the observable property and UI-generating functions that depend on it.
+     *
+     * Holding the observable property in the [Setting] enum leads to Project leaks through listeners.
+     * Listeners under the hood of [AtomicBooleanProperty] can capture and outlive the Project if the property is stored in the enum.
+     */
+    class BoundSetting(val setting: Setting) {
+        var state: Boolean
+            get() = setting.state
+            set(value) {
+                setting.state = value
+            }
+
         // lazy to avoid service access from constructor
-        internal val observableProperty: MutableBooleanProperty by lazy { AtomicBooleanProperty(state) }
+        internal val observableProperty: MutableBooleanProperty by lazy { AtomicBooleanProperty(setting.state) }
 
         fun createComboBox(
             panel: Panel,
@@ -168,13 +183,13 @@ sealed class K2MoveModel(private val observableUiSettings: ObservableUiSettings)
             visible: ObservableProperty<Boolean>,
         ) {
             panel.row {
-                val checkBox = checkBox(text).enabledIf(enabled).visibleIf(visible)
+                val checkBox = checkBox(setting.text).enabledIf(enabled).visibleIf(visible)
                 checkBox.onChanged { observableProperty.set(it.isSelected) }
                 // reset only is intentional
                 enabled.afterChange { isEnabled -> if (!isEnabled) checkBox.selected(false) }
-                checkBox.bindSelected(::state)
+                checkBox.bindSelected(setting::state)
                 // value set in bindSelected doesn't trigger listeners
-                val initial = enabled.get() && state
+                val initial = enabled.get() && setting.state
                 checkBox.selected(initial)
                 observableProperty.set(initial)
             }.layout(RowLayout.PARENT_GRID)

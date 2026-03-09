@@ -56,7 +56,7 @@ abstract class AbstractK2CheckDescriptorMultiModuleMoveTest : KotlinMultiFileTes
         }
     }
 
-    protected fun setMoveModelSetting(setting: K2MoveModel.Setting, newValue: Boolean) {
+    protected fun setMoveModelSetting(setting: K2MoveModel.BoundSetting, newValue: Boolean) {
         val oldSettingValue = setting.state
         setting.state = newValue
         testRootDisposable.whenDisposed {
