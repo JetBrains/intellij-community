@@ -18,20 +18,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
 
     var typeMetadata: StorageTypeMetadata
 
-    typeMetadata =
-      FinalClassMetadata.ClassMetadata(fqName = "com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlEntitySource",
-                                       properties = listOf(OwnPropertyMetadata(isComputable = false,
-                                                                               isKey = false,
-                                                                               isOpen = false,
-                                                                               name = "virtualFileUrl",
-                                                                               valueType = ValueTypeMetadata.SimpleType.CustomType(
-                                                                                 isNullable = false,
-                                                                                 typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
-                                                                               withDefault = false)),
-                                       supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
-
-    addMetadata(typeMetadata)
-
     typeMetadata = EntityMetadata(fqName = "com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlWorkspaceEntity",
                                   entityDataFqName = "com.intellij.python.pyproject.model.internal.workspaceBridge.impl.PyProjectTomlWorkspaceEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
@@ -117,8 +103,5 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                     metadataHash = 86695699)
     addMetadataHash(typeFqn = "com.intellij.python.common.tools.ToolId", metadataHash = -1193602517)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleId", metadataHash = 369441961)
-    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -298354504)
-    addMetadataHash(typeFqn = "com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlEntitySource",
-                    metadataHash = -732970766)
   }
 }
