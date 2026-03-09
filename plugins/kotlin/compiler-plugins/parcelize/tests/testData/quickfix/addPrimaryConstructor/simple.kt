@@ -10,3 +10,4 @@ import kotlinx.parcelize.Parcelize
 class <caret>Test : Parcelable {
     constructor(a: Int)
 }
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelizeAddPrimaryConstructorQuickFix

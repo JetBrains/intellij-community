@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.k2
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -60,7 +61,11 @@ internal class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotl
         }
 
         val ktPsiFactory = KtPsiFactory(project, markGenerated = true)
-        preparedAction.execute(element, ktPsiFactory)
+        runWriteAction { preparedAction.execute(element, ktPsiFactory) }
+    }
+
+    override fun startInWriteAction(): Boolean {
+        return false
     }
 
     private object Resolver : ParcelMigrateToParcelizeResolver<KaSession> {

@@ -1220,8 +1220,6 @@ plugins/kotlin/compiler-plugins/parcelize/common
 plugins/kotlin/compiler-plugins/parcelize/gradle
 plugins/kotlin/compiler-plugins/parcelize/k1
 plugins/kotlin/compiler-plugins/parcelize/k2
-plugins/kotlin/compiler-plugins/parcelize/tests
-plugins/kotlin/compiler-plugins/parcelize/tests/k1
 plugins/kotlin/compiler-plugins/parcelize/tests/k2
 plugins/kotlin/compiler-plugins/sam-with-receiver/common
 plugins/kotlin/compiler-plugins/sam-with-receiver/gradle

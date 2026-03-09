@@ -10,3 +10,4 @@ class Foo {
     @Parcelize
     <caret>inner class Bar : Parcelable
 }
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase

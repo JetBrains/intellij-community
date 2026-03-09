@@ -40,7 +40,6 @@
     <orderEntry type="module" module-name="kotlin.scripting-support" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.tests.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="RUNTIME" />
@@ -58,7 +57,6 @@
     <orderEntry type="module" module-name="kotlin.completion.tests.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.completion.ml.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.uast.base.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize.common.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.refactorings.common.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.injection.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.scripting.k1" scope="RUNTIME" />

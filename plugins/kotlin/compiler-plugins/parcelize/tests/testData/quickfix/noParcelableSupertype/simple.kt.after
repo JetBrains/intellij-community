@@ -8,3 +8,4 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 class <caret>Test(val s: String) : Parcelable
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelizeAddSupertypeQuickFix

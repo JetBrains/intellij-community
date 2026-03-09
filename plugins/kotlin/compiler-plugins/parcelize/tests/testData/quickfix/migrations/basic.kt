@@ -32,3 +32,4 @@ class Foo(val firstName: String, val age: Int) : Parcelable {
         }
     }
 }
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.compilerPlugin.parcelize.k2.K2ParcelMigrateToParcelizeQuickFix

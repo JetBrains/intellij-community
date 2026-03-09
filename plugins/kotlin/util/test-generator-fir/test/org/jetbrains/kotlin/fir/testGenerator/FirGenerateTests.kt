@@ -215,9 +215,8 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
         }
     }
 
-    // @IJIgnore(issue = "AT-3959")
     testGroup("compiler-plugins/parcelize/tests/k2", testDataPath = "../testData", category = QUICKFIXES) {
-        testClass<AbstractParcelizeK2QuickFixTest>(annotations = listOf(TAnnotation<Ignore>())) {
+        testClass<AbstractParcelizeK2QuickFixTest> {
             model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"))
         }
     }
