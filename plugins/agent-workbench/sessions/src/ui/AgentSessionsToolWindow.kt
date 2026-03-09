@@ -6,9 +6,9 @@ package com.intellij.agent.workbench.sessions.ui
 
 import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
-import com.intellij.agent.workbench.sessions.claude.ClaudeQuotaStatusBarWidgetSettings
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBehaviors
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
@@ -31,6 +31,7 @@ import com.intellij.ui.treeStructure.Tree
 import java.awt.BorderLayout
 import java.awt.Graphics
 import java.util.concurrent.CompletableFuture
+import javax.swing.BoxLayout
 import javax.swing.JPanel
 import javax.swing.ToolTipManager
 import javax.swing.tree.TreePath
@@ -125,16 +126,6 @@ internal class AgentSessionsToolWindowPanel(
     }
   }
 
-  private val quotaHintPanel = ClaudeQuotaHintPanel(
-    onEnable = {
-      ClaudeQuotaStatusBarWidgetSettings.setEnabled(true)
-      uiPreferencesStateService.acknowledgeClaudeQuotaHint()
-    },
-    onDismiss = {
-      uiPreferencesStateService.acknowledgeClaudeQuotaHint()
-    },
-  )
-
   private val stateController = AgentSessionsTreeStateController(
     sessionsStateFlow = readService.stateFlow(),
     chatSelectionService = chatSelectionService,
@@ -156,10 +147,7 @@ internal class AgentSessionsToolWindowPanel(
     selectNode = { id -> structureTreeModel.select(id, tree) { } },
   )
 
-  private val quotaHintController = ClaudeQuotaHintController(
-    uiPreferencesStateService = uiPreferencesStateService,
-    quotaHintPanel = quotaHintPanel,
-  )
+  private val northPanel = buildNorthPanel()
 
   init {
     dataContextProvider = AgentSessionsTreeDataContextProvider(
@@ -199,14 +187,26 @@ internal class AgentSessionsToolWindowPanel(
     )
 
     configureTree()
-    add(quotaHintPanel, BorderLayout.NORTH)
+    northPanel?.let { add(it, BorderLayout.NORTH) }
     add(ScrollPaneFactory.createScrollPane(tree, true), BorderLayout.CENTER)
-    quotaHintPanel.isVisible = false
 
     interactionController.install()
     stateController.start()
-    quotaHintController.start()
     syncService.refresh()
+  }
+
+  private fun buildNorthPanel(): JPanel? {
+    val contributions = AgentSessionProviderBehaviors.allBehaviors()
+      .mapNotNull { behavior -> behavior.createToolWindowNorthComponent(project) }
+    if (contributions.isEmpty()) {
+      return null
+    }
+
+    return JPanel().apply {
+      layout = BoxLayout(this, BoxLayout.Y_AXIS)
+      isOpaque = false
+      contributions.forEach(::add)
+    }
   }
 
   private fun configureTree() {
@@ -258,6 +258,5 @@ internal class AgentSessionsToolWindowPanel(
 
   override fun dispose() {
     stateController.dispose()
-    quotaHintController.dispose()
   }
 }

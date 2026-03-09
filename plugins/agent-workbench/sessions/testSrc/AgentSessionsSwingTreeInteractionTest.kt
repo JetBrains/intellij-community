@@ -42,8 +42,8 @@ class AgentSessionsSwingTreeInteractionTest {
       branch = "feature",
       isOpen = false,
     )
-    val thread = AgentSessionThread(id = "thread-1", title = "Thread 1", updatedAt = 100, archived = false)
-    val pendingThread = AgentSessionThread(id = "new-1", title = "New Thread", updatedAt = 100, archived = false)
+    val thread = AgentSessionThread(id = "thread-1", title = "Thread 1", updatedAt = 100, archived = false, provider = AgentSessionProvider.CODEX)
+    val pendingThread = AgentSessionThread(id = "new-1", title = "New Thread", updatedAt = 100, archived = false, provider = AgentSessionProvider.CODEX)
     val subAgent = AgentSubAgent(id = "sub-1", name = "Sub Agent")
 
     assertThat(shouldOpenOnActivation(SessionTreeNode.Project(project))).isTrue()
@@ -65,8 +65,8 @@ class AgentSessionsSwingTreeInteractionTest {
       branch = "feature",
       isOpen = false,
     )
-    val thread = AgentSessionThread(id = "thread-1", title = "Thread 1", updatedAt = 100, archived = false)
-    val pendingThread = AgentSessionThread(id = "new-1", title = "New Thread", updatedAt = 100, archived = false)
+    val thread = AgentSessionThread(id = "thread-1", title = "Thread 1", updatedAt = 100, archived = false, provider = AgentSessionProvider.CODEX)
+    val pendingThread = AgentSessionThread(id = "new-1", title = "New Thread", updatedAt = 100, archived = false, provider = AgentSessionProvider.CODEX)
     val subAgent = AgentSubAgent(id = "sub-1", name = "Sub Agent")
 
     assertThat(shouldExpandOnDoubleClick(SessionTreeNode.Project(project))).isFalse()

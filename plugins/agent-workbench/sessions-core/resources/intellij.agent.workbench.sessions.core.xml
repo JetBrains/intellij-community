@@ -11,6 +11,10 @@
       interface="com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge"
       dynamic="true"/>
     <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.sessionProviderBehavior"
+      interface="com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBehavior"
+      dynamic="true"/>
+    <extensionPoint
       qualifiedName="com.intellij.agent.workbench.promptLauncher"
       interface="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLauncherBridge"
       dynamic="true"/>

@@ -13,104 +13,102 @@ import javax.swing.SwingUtilities
 
 @TestApplication
 class AgentPromptPaletteViewStructureTest {
-  @Test
-  fun promptAreaIsRenderedExactlyOnceAndSharedAcrossTabs() {
-    runInEdtAndWait {
-      val promptArea = EditorTextField()
-      val view = createAgentPromptPaletteView(
-        promptArea = promptArea,
-        contextChipsPanel = JPanel(),
-        onProviderIconClicked = {},
-        onExistingTaskSelected = {},
-      )
+    @Test
+    fun promptAreaIsRenderedExactlyOnceAndSharedAcrossTabs() {
+        runInEdtAndWait {
+            val promptArea = EditorTextField()
+            val view = createAgentPromptPaletteView(
+                promptArea = promptArea,
+                contextChipsPanel = JPanel(),
+                onProviderIconClicked = {},
+                onExistingTaskSelected = {},
+            )
 
-      val rootPanel = view.rootPanel
-      val promptAreasBeforeSwitch = collectComponentsOfType(rootPanel, EditorTextField::class.java)
-      assertThat(promptAreasBeforeSwitch).containsExactly(promptArea)
+            val rootPanel = view.rootPanel
+            val promptAreasBeforeSwitch = collectComponentsOfType(rootPanel, EditorTextField::class.java)
+            assertThat(promptAreasBeforeSwitch).containsExactly(promptArea)
 
-      view.tabbedPane.selectedIndex = 1
-      view.existingTaskScrollPane.isVisible = true
-      layoutPopupRoot(rootPanel)
+            view.tabbedPane.selectedIndex = 1
+            view.existingTaskScrollPane.isVisible = true
+            layoutPopupRoot(rootPanel)
 
-      val promptAreasAfterSwitch = collectComponentsOfType(rootPanel, EditorTextField::class.java)
-      assertThat(promptAreasAfterSwitch).containsExactly(promptArea)
+            val promptAreasAfterSwitch = collectComponentsOfType(rootPanel, EditorTextField::class.java)
+            assertThat(promptAreasAfterSwitch).containsExactly(promptArea)
+        }
     }
-  }
 
-  @Test
-  fun promptAreaInstanceRemainsStableWhenTargetModeChanges() {
-    runInEdtAndWait {
-      val promptArea = EditorTextField()
-      val view = createAgentPromptPaletteView(
-        promptArea = promptArea,
-        contextChipsPanel = JPanel(),
-        onProviderIconClicked = {},
-        onExistingTaskSelected = {},
-      )
+    @Test
+    fun promptAreaInstanceRemainsStableWhenTargetModeChanges() {
+        runInEdtAndWait {
+            val promptArea = EditorTextField()
+            val view = createAgentPromptPaletteView(
+                promptArea = promptArea,
+                contextChipsPanel = JPanel(),
+                onProviderIconClicked = {},
+                onExistingTaskSelected = {},
+            )
 
-      val rootPanel = view.rootPanel
-      layoutPopupRoot(rootPanel)
-      val initialPromptArea = checkNotNull(findPromptArea(rootPanel, promptArea))
+            val rootPanel = view.rootPanel
+            layoutPopupRoot(rootPanel)
+            val initialPromptArea = checkNotNull(findPromptArea(rootPanel, promptArea))
 
-      view.tabbedPane.selectedIndex = 0
-      view.existingTaskScrollPane.isVisible = false
-      layoutPopupRoot(rootPanel)
-      assertThat(findPromptArea(rootPanel, promptArea)).isSameAs(initialPromptArea)
+            view.tabbedPane.selectedIndex = 0
+            view.existingTaskScrollPane.isVisible = false
+            layoutPopupRoot(rootPanel)
+            assertThat(findPromptArea(rootPanel, promptArea)).isSameAs(initialPromptArea)
 
-      view.tabbedPane.selectedIndex = 1
-      view.existingTaskScrollPane.isVisible = true
-      layoutPopupRoot(rootPanel)
-      assertThat(findPromptArea(rootPanel, promptArea)).isSameAs(initialPromptArea)
+            view.tabbedPane.selectedIndex = 1
+            view.existingTaskScrollPane.isVisible = true
+            layoutPopupRoot(rootPanel)
+            assertThat(findPromptArea(rootPanel, promptArea)).isSameAs(initialPromptArea)
+        }
     }
-  }
 
-  @Test
-  fun planModeCheckBoxIsRenderedOnceWhenProvidedAndNotFocusable() {
-    runInEdtAndWait {
-      val promptArea = EditorTextField()
-      val planModeCheckBox = JBCheckBox("Plan mode").apply {
-        isFocusable = false
-      }
-      val view = createAgentPromptPaletteView(
-        promptArea = promptArea,
-        contextChipsPanel = JPanel(),
-        planModeCheckBox = planModeCheckBox,
-        onProviderIconClicked = {},
-        onExistingTaskSelected = {},
-      )
+    @Test
+    fun providerOptionsPanelIsRenderedOnceWhenProvided() {
+        runInEdtAndWait {
+            val promptArea = EditorTextField()
+            val planModeCheckBox = JBCheckBox("Plan mode").apply { isFocusable = false }
+            val providerOptionsPanel = JPanel().apply { add(planModeCheckBox) }
+            val view = createAgentPromptPaletteView(
+                promptArea = promptArea,
+                contextChipsPanel = JPanel(),
+                providerOptionsPanel = providerOptionsPanel,
+                onProviderIconClicked = {},
+                onExistingTaskSelected = {},
+            )
 
-      val planModeCheckBoxes = collectComponentsOfType(view.rootPanel, JBCheckBox::class.java)
-      assertThat(planModeCheckBoxes).containsExactly(planModeCheckBox)
-      assertThat(view.planModeCheckBox).isSameAs(planModeCheckBox)
-      assertThat(planModeCheckBox.isFocusable).isFalse()
+            val planModeCheckBoxes = collectComponentsOfType(view.rootPanel, JBCheckBox::class.java)
+            assertThat(planModeCheckBoxes).containsExactly(planModeCheckBox)
+            assertThat(view.providerOptionsPanel).isSameAs(providerOptionsPanel)
+            assertThat(planModeCheckBox.isFocusable).isFalse()
+        }
     }
-  }
 
-  @Test
-  fun planModeCheckBoxIsRightAlignedNextToProviderIcon() {
-    runInEdtAndWait {
-      val promptArea = EditorTextField()
-      val planModeCheckBox = JBCheckBox("Plan mode").apply {
-        isFocusable = false
-      }
-      val view = createAgentPromptPaletteView(
-        promptArea = promptArea,
-        contextChipsPanel = JPanel(),
-        planModeCheckBox = planModeCheckBox,
-        onProviderIconClicked = {},
-        onExistingTaskSelected = {},
-      )
+    @Test
+    fun providerOptionsPanelIsRightAlignedNextToProviderIcon() {
+        runInEdtAndWait {
+            val promptArea = EditorTextField()
+            val planModeCheckBox = JBCheckBox("Plan mode").apply { isFocusable = false }
+            val providerOptionsPanel = JPanel().apply { add(planModeCheckBox) }
+            val view = createAgentPromptPaletteView(
+                promptArea = promptArea,
+                contextChipsPanel = JPanel(),
+                providerOptionsPanel = providerOptionsPanel,
+                onProviderIconClicked = {},
+                onExistingTaskSelected = {},
+            )
 
-      layoutPopupRoot(view.rootPanel)
+            layoutPopupRoot(view.rootPanel)
 
-      val checkBoxX = xInRoot(planModeCheckBox, view.rootPanel)
-      val providerIconX = xInRoot(view.providerIconLabel, view.rootPanel)
-      assertThat(checkBoxX).isGreaterThan(view.rootPanel.width / 2)
-      assertThat(providerIconX).isGreaterThan(checkBoxX)
+            val checkBoxX = xInRoot(planModeCheckBox, view.rootPanel)
+            val providerIconX = xInRoot(view.providerIconLabel, view.rootPanel)
+            assertThat(checkBoxX).isGreaterThan(view.rootPanel.width / 2)
+            assertThat(providerIconX).isGreaterThan(checkBoxX)
+        }
     }
-  }
 
-  private fun xInRoot(component: Component, root: JPanel): Int {
-    return SwingUtilities.convertPoint(component.parent, component.location, root).x
-  }
+    private fun xInRoot(component: Component, root: JPanel): Int {
+        return SwingUtilities.convertPoint(component.parent, component.location, root).x
+    }
 }

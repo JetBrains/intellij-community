@@ -11,62 +11,63 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 internal enum class PromptTargetMode {
-  NEW_TASK,
-  EXISTING_TASK,
+    NEW_TASK,
+    EXISTING_TASK,
 }
 
 @Serializable
 internal enum class PromptSendMode {
-  SEND_NOW,
+    SEND_NOW,
 }
 
 @Serializable
 internal data class AgentPromptUiDraft(
-  @JvmField val promptText: String = "",
-  @JvmField val providerId: String? = null,
-  @JvmField val targetMode: PromptTargetMode = PromptTargetMode.NEW_TASK,
-  @JvmField val sendMode: PromptSendMode = PromptSendMode.SEND_NOW,
-  @JvmField val existingTaskSearch: String = "",
-  @JvmField val selectedExistingTaskId: String? = null,
-  @JvmField val planModeEnabled: Boolean = true,
-  @JvmField val taskDrafts: Map<String, String> = emptyMap(),
+    @JvmField val promptText: String = "",
+    @JvmField val providerId: String? = null,
+    @JvmField val targetMode: PromptTargetMode = PromptTargetMode.NEW_TASK,
+    @JvmField val sendMode: PromptSendMode = PromptSendMode.SEND_NOW,
+    @JvmField val existingTaskSearch: String = "",
+    @JvmField val selectedExistingTaskId: String? = null,
+    @JvmField val planModeEnabled: Boolean = true,
+    @JvmField val taskDrafts: Map<String, String> = emptyMap(),
+    @JvmField val providerOptionsByProviderId: Map<String, Set<String>> = emptyMap(),
 )
 
 internal data class AgentPromptUiContextRestoreSnapshot(
-  @JvmField val contextFingerprint: HashValue128? = null,
-  @JvmField val removedContextItemIds: List<String> = emptyList(),
+    @JvmField val contextFingerprint: HashValue128? = null,
+    @JvmField val removedContextItemIds: List<String> = emptyList(),
 )
 
 @Serializable
 internal data class AgentPromptUiState(
-  @JvmField val draft: AgentPromptUiDraft = AgentPromptUiDraft(),
+    @JvmField val draft: AgentPromptUiDraft = AgentPromptUiDraft(),
 )
 
 @Service(Service.Level.PROJECT)
 @State(name = "AgentPromptUiState", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 internal class AgentPromptUiSessionStateService
-  : SerializablePersistentStateComponent<AgentPromptUiState>(AgentPromptUiState()) {
-  // Runtime-only snapshot: intentionally not persisted in AgentPromptUiState.
-  private var contextRestoreSnapshot = AgentPromptUiContextRestoreSnapshot()
+    : SerializablePersistentStateComponent<AgentPromptUiState>(AgentPromptUiState()) {
+    // Runtime-only snapshot: intentionally not persisted in AgentPromptUiState.
+    private var contextRestoreSnapshot = AgentPromptUiContextRestoreSnapshot()
 
-  fun loadDraft(): AgentPromptUiDraft {
-    return state.draft
-  }
+    fun loadDraft(): AgentPromptUiDraft {
+        return state.draft
+    }
 
-  fun saveDraft(newDraft: AgentPromptUiDraft) {
-    updateState { current -> current.copy(draft = newDraft) }
-  }
+    fun saveDraft(newDraft: AgentPromptUiDraft) {
+        updateState { current -> current.copy(draft = newDraft) }
+    }
 
-  fun loadContextRestoreSnapshot(): AgentPromptUiContextRestoreSnapshot {
-    return contextRestoreSnapshot
-  }
+    fun loadContextRestoreSnapshot(): AgentPromptUiContextRestoreSnapshot {
+        return contextRestoreSnapshot
+    }
 
-  fun saveContextRestoreSnapshot(newSnapshot: AgentPromptUiContextRestoreSnapshot) {
-    contextRestoreSnapshot = newSnapshot
-  }
+    fun saveContextRestoreSnapshot(newSnapshot: AgentPromptUiContextRestoreSnapshot) {
+        contextRestoreSnapshot = newSnapshot
+    }
 
-  fun clearDraft() {
-    updateState { current -> current.copy(draft = AgentPromptUiDraft()) }
-    contextRestoreSnapshot = AgentPromptUiContextRestoreSnapshot()
-  }
+    fun clearDraft() {
+        updateState { current -> current.copy(draft = AgentPromptUiDraft()) }
+        contextRestoreSnapshot = AgentPromptUiContextRestoreSnapshot()
+    }
 }

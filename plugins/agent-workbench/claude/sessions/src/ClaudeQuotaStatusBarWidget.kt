@@ -1,10 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.sessions.claude
+package com.intellij.agent.workbench.claude.sessions
 
 import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
-import com.intellij.agent.workbench.sessions.AgentSessionsBundle
+import com.intellij.ide.setToolTipText
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.CustomStatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
@@ -34,7 +35,7 @@ private const val WARNING_QUOTA_PERCENT = 80
 internal class ClaudeQuotaStatusBarWidgetFactory : StatusBarWidgetFactory {
   override fun getId(): String = CLAUDE_QUOTA_WIDGET_ID
 
-  override fun getDisplayName(): String = AgentSessionsBundle.message("status.bar.claude.quota.display.name")
+  override fun getDisplayName(): String = ClaudeSessionsBundle.message("status.bar.claude.quota.display.name")
 
   override fun isEnabledByDefault(): Boolean = false
 
@@ -67,12 +68,12 @@ internal class ClaudeQuotaStatusBarWidget : CustomStatusBarWidget, Activatable {
   override fun getComponent(): JComponent = myComponent.get()
 
   private inner class ClaudeQuotaPanel : JPanel(BorderLayout(JBUI.scale(4), 0)) {
-    private val sessionBarColor = JBColor.namedColor("ClaudeQuota.sessionBarBackground", JBColor(0xE8874B, 0xD4783E))
-    private val weeklyBarColor = JBColor.namedColor("ClaudeQuota.weeklyBarBackground", JBColor(0x4A8FE2, 0x5B9BD5))
-    private val warningBarColor = JBColor.namedColor("ClaudeQuota.warningBarBackground", JBColor(0xE8874B, 0xD4783E))
+    private val sessionBarColor = JBColor(0xE8874B, 0xD4783E)
+    private val weeklyBarColor = JBColor(0x4A8FE2, 0x5B9BD5)
+    private val warningBarColor = JBColor(0xE8874B, 0xD4783E)
 
-    private val sessionBar = createBar(sessionBarColor, stripeWidth = 4)
-    private val weeklyBar = createBar(weeklyBarColor, stripeWidth = 4)
+    private val sessionBar = createBar(sessionBarColor)
+    private val weeklyBar = createBar(weeklyBarColor)
     private val iconLabel = JLabel(AgentWorkbenchCommonIcons.Claude_14x14)
     private val barsBox = JPanel()
     private var shouldDisplay = false
@@ -140,7 +141,7 @@ internal class ClaudeQuotaStatusBarWidget : CustomStatusBarWidget, Activatable {
       }
 
       if (hasError) {
-        toolTipText = AgentSessionsBundle.message("quota.error")
+        setToolTipText(HtmlChunk.text(ClaudeSessionsBundle.message("quota.error")))
         sessionBar.isVisible = false
         weeklyBar.isVisible = false
         repaint()
@@ -164,7 +165,7 @@ internal class ClaudeQuotaStatusBarWidget : CustomStatusBarWidget, Activatable {
       }
 
       val now = System.currentTimeMillis()
-      toolTipText = formatWidgetTooltip(info, now)
+      setToolTipText(HtmlChunk.raw(formatWidgetTooltip(info, now)))
       repaint()
     }
   }
@@ -172,13 +173,13 @@ internal class ClaudeQuotaStatusBarWidget : CustomStatusBarWidget, Activatable {
 
 internal fun isWarningQuota(percent: Int): Boolean = percent > WARNING_QUOTA_PERCENT
 
-private fun createBar(color: JBColor, stripeWidth: Int = 4): JProgressBar {
+private fun createBar(color: JBColor): JProgressBar {
   return JProgressBar(0, 100).apply {
     value = 0
     isOpaque = false
     isStringPainted = false
     foreground = color
-    putClientProperty("ProgressBar.stripeWidth", stripeWidth)
+    putClientProperty("ProgressBar.stripeWidth", 4)
   }
 }
 
@@ -199,14 +200,14 @@ internal fun formatWidgetText(info: ClaudeQuotaInfo): String {
   return when {
     session != null && weekly != null -> {
       if (session >= weekly) {
-        AgentSessionsBundle.message("status.bar.claude.quota.text", session, "5h")
+        ClaudeSessionsBundle.message("status.bar.claude.quota.text", session, "5h")
       }
       else {
-        AgentSessionsBundle.message("status.bar.claude.quota.text", weekly, "7d")
+        ClaudeSessionsBundle.message("status.bar.claude.quota.text", weekly, "7d")
       }
     }
-    session != null -> AgentSessionsBundle.message("status.bar.claude.quota.text", session, "5h")
-    weekly != null -> AgentSessionsBundle.message("status.bar.claude.quota.text", weekly, "7d")
+    session != null -> ClaudeSessionsBundle.message("status.bar.claude.quota.text", session, "5h")
+    weekly != null -> ClaudeSessionsBundle.message("status.bar.claude.quota.text", weekly, "7d")
     else -> ""
   }
 }
@@ -216,11 +217,11 @@ internal fun formatWidgetTooltip(info: ClaudeQuotaInfo, now: Long): @Nls String 
   val parts = mutableListOf<String>()
   if (info.fiveHourPercent != null) {
     val resetText = if (info.fiveHourReset != null) formatQuotaResetTime(info.fiveHourReset, now) else ""
-    parts.add(AgentSessionsBundle.message("status.bar.claude.quota.tooltip.session", info.fiveHourPercent, resetText))
+    parts.add(ClaudeSessionsBundle.message("status.bar.claude.quota.tooltip.session", info.fiveHourPercent, resetText))
   }
   if (info.sevenDayPercent != null) {
     val resetText = if (info.sevenDayReset != null) formatQuotaResetTime(info.sevenDayReset, now) else ""
-    parts.add(AgentSessionsBundle.message("status.bar.claude.quota.tooltip.weekly", info.sevenDayPercent, resetText))
+    parts.add(ClaudeSessionsBundle.message("status.bar.claude.quota.tooltip.weekly", info.sevenDayPercent, resetText))
   }
   return if (parts.size > 1) "<html>${parts.joinToString("<br>")}</html>" else parts.firstOrNull() ?: ""
 }

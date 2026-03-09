@@ -5,6 +5,8 @@ import com.intellij.agent.workbench.prompt.AgentPromptBundle
 import com.intellij.agent.workbench.prompt.context.dataContextOrNull
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationData
+import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
+import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderOption
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuItem
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuModel
@@ -23,16 +25,18 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import org.jetbrains.annotations.Nls
+import javax.swing.JPanel
 
 internal class AgentPromptProviderSelector(
   private val invocationData: AgentPromptInvocationData,
   private val providerIconLabel: JBLabel,
-  private val codexPlanModeCheckBox: JBCheckBox,
+  private val providerOptionsPanel: JPanel,
   private val providersProvider: () -> List<AgentSessionProviderBridge>,
   private val sessionsMessageResolver: AgentPromptSessionsMessageResolver,
 ) {
   private var providerEntries: List<ProviderEntry> = emptyList()
   private var providerMenuModel: AgentSessionProviderMenuModel = AgentSessionProviderMenuModel(emptyList(), emptyList())
+  private val selectedOptionIdsByProvider = LinkedHashMap<AgentSessionProvider, LinkedHashSet<String>>()
 
   var selectedProvider: ProviderEntry? = null
     private set
@@ -41,22 +45,64 @@ internal class AgentPromptProviderSelector(
     get() = providerEntries.map { entry -> entry.bridge.provider }
 
   fun refresh() {
-    val bridges = providersProvider().sortedBy { bridge -> providerPriority(bridge.provider) }
+    val bridges = providersProvider()
     providerMenuModel = buildAgentSessionProviderMenuModel(bridges)
     providerEntries = bridges.map { bridge ->
       ProviderEntry(
         bridge = bridge,
-        displayName = sessionsMessageResolver.resolve(bridge.displayNameKey, bridge) ?: providerDisplayName(bridge.provider),
+        displayName = sessionsMessageResolver.resolve(bridge.displayNameKey, bridge) ?: bridge.displayNameFallback,
         isCliAvailable = bridge.isCliAvailable(),
         icon = bridge.icon,
       )
     }
+    val activeProviders = providerEntries.mapTo(HashSet()) { entry -> entry.bridge.provider }
+    val obsoleteProviders = selectedOptionIdsByProvider.keys.filterNot { provider -> provider in activeProviders }
+    obsoleteProviders.forEach(selectedOptionIdsByProvider::remove)
+    providerEntries.forEach { entry ->
+      val currentSelection = selectedOptionIdsByProvider[entry.bridge.provider] ?: return@forEach
+      selectedOptionIdsByProvider[entry.bridge.provider] = sanitizeSelectedOptionIds(entry.bridge, currentSelection)
+    }
 
     val currentProviderId = selectedProvider?.bridge?.provider
     selectedProvider = findProviderEntry(currentProviderId)
-      ?: findProviderEntry(AgentSessionProvider.CODEX)
-      ?: providerEntries.firstOrNull()
+                       ?: providerEntries.firstOrNull()
     updatePresentation()
+  }
+
+  fun restoreProviderOptionSelections(providerOptionsByProviderId: Map<String, Set<String>>) {
+    selectedOptionIdsByProvider.clear()
+    providerEntries.forEach { entry ->
+      val providerId = entry.bridge.provider.value
+      val storedSelection = providerOptionsByProviderId[providerId] ?: return@forEach
+      selectedOptionIdsByProvider[entry.bridge.provider] = sanitizeSelectedOptionIds(entry.bridge, storedSelection)
+    }
+    updateProviderOptionsPresentation()
+  }
+
+  fun providerOptionSelections(): Map<String, Set<String>> {
+    return providerEntries
+      .asSequence()
+      .filter { entry -> entry.bridge.promptOptions.isNotEmpty() }
+      .associate { entry -> entry.bridge.provider.value to selectedOptionIds(entry.bridge.provider) }
+  }
+
+  fun applyLegacyPlanModeSelection(provider: AgentSessionProvider?, enabled: Boolean) {
+    val entry = findProviderEntry(provider) ?: return
+    if (entry.bridge.promptOptions.none { option -> option.id == AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE }) {
+      return
+    }
+
+    val selectedOptionIds = optionSelectionState(entry.bridge)
+    if (enabled) {
+      selectedOptionIds.add(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE)
+    }
+    else {
+      selectedOptionIds.remove(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE)
+    }
+
+    if (selectedProvider?.bridge?.provider == provider) {
+      updateProviderOptionsPresentation()
+    }
   }
 
   fun selectProvider(provider: AgentSessionProvider?) {
@@ -74,6 +120,11 @@ internal class AgentPromptProviderSelector(
     return providerEntries.firstOrNull { entry -> entry.bridge.provider == provider }
   }
 
+  fun selectedOptionIds(provider: AgentSessionProvider): Set<String> {
+    val entry = findProviderEntry(provider) ?: return emptySet()
+    return optionSelectionState(entry.bridge).toSet()
+  }
+
   fun showChooser(onUnavailable: (@Nls String) -> Unit, onSelected: (ProviderEntry) -> Unit) {
     if (!providerMenuModel.hasEntries()) {
       onUnavailable(AgentPromptBundle.message("popup.error.no.providers"))
@@ -89,7 +140,7 @@ internal class AgentPromptProviderSelector(
         group.add(Separator.getInstance())
       }
       val yoloSectionName = sessionsMessageResolver.resolve("toolwindow.action.new.session.section.auto")
-        ?: AgentPromptBundle.message("popup.provider.section.auto")
+                            ?: AgentPromptBundle.message("popup.provider.section.auto")
       group.add(Separator.create(yoloSectionName))
       providerMenuModel.yoloItems.forEach { item ->
         group.add(createProviderSelectionAction(item, onSelected))
@@ -115,17 +166,33 @@ internal class AgentPromptProviderSelector(
     if (provider == null) {
       providerIconLabel.icon = AllIcons.Toolwindows.ToolWindowMessages
       providerIconLabel.setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.provider.selector.tooltip")))
-      updateCodexPlanToggleVisibility()
+      updateProviderOptionsPresentation()
       return
     }
 
     providerIconLabel.icon = provider.icon
     providerIconLabel.setToolTipText(HtmlChunk.text(provider.displayName))
-    updateCodexPlanToggleVisibility()
+    updateProviderOptionsPresentation()
   }
 
-  private fun updateCodexPlanToggleVisibility() {
-    codexPlanModeCheckBox.isVisible = selectedProvider?.bridge?.supportsPlanMode == true
+  private fun updateProviderOptionsPresentation() {
+    providerOptionsPanel.removeAll()
+    val bridge = selectedProvider?.bridge
+    val options = bridge?.promptOptions.orEmpty()
+    if (bridge == null || options.isEmpty()) {
+      providerOptionsPanel.isVisible = false
+      providerOptionsPanel.revalidate()
+      providerOptionsPanel.repaint()
+      return
+    }
+
+    val selectedOptionIds = optionSelectionState(bridge)
+    options.forEach { option ->
+      providerOptionsPanel.add(createProviderOptionCheckBox(bridge, option, selectedOptionIds))
+    }
+    providerOptionsPanel.isVisible = true
+    providerOptionsPanel.revalidate()
+    providerOptionsPanel.repaint()
   }
 
   private fun createProviderSelectionAction(item: AgentSessionProviderMenuItem, onSelected: (ProviderEntry) -> Unit): AnAction {
@@ -152,7 +219,7 @@ internal class AgentPromptProviderSelector(
   }
 
   private fun AgentSessionProviderMenuItem.displayNameFallback(): @Nls String {
-    return findProviderEntry(bridge.provider)?.displayName ?: providerDisplayName(bridge.provider)
+    return findProviderEntry(bridge.provider)?.displayName ?: bridge.displayNameFallback
   }
 
   private fun disabledProviderReason(item: AgentSessionProviderMenuItem): @Nls String {
@@ -164,22 +231,40 @@ internal class AgentPromptProviderSelector(
     }
     return AgentPromptBundle.message("popup.error.provider.unavailable", item.displayNameFallback())
   }
-}
 
-private fun providerDisplayName(provider: AgentSessionProvider): String {
-  return when (provider) {
-    AgentSessionProvider.CODEX -> AgentPromptBundle.message("provider.codex")
-    AgentSessionProvider.CLAUDE -> AgentPromptBundle.message("provider.claude")
-    else -> provider.value.replaceFirstChar { char ->
-      if (char.isLowerCase()) char.titlecase() else char.toString()
+  private fun createProviderOptionCheckBox(
+    bridge: AgentSessionProviderBridge,
+    option: AgentPromptProviderOption,
+    selectedOptionIds: LinkedHashSet<String>,
+  ): JBCheckBox {
+    val label = sessionsMessageResolver.resolve(option.labelKey, bridge) ?: option.labelFallback
+    return JBCheckBox(label, option.id in selectedOptionIds).apply {
+      isFocusable = false
+      addActionListener {
+        if (isSelected) {
+          selectedOptionIds.add(option.id)
+        }
+        else {
+          selectedOptionIds.remove(option.id)
+        }
+      }
     }
   }
-}
 
-private fun providerPriority(provider: AgentSessionProvider): Int {
-  return when (provider) {
-    AgentSessionProvider.CODEX -> 0
-    AgentSessionProvider.CLAUDE -> 1
-    else -> 2
+  private fun optionSelectionState(bridge: AgentSessionProviderBridge): LinkedHashSet<String> {
+    return selectedOptionIdsByProvider.getOrPut(bridge.provider) {
+      bridge.promptOptions
+        .asSequence()
+        .filter(AgentPromptProviderOption::defaultSelected)
+        .mapTo(LinkedHashSet()) { option -> option.id }
+    }
+  }
+
+  private fun sanitizeSelectedOptionIds(bridge: AgentSessionProviderBridge, optionIds: Set<String>): LinkedHashSet<String> {
+    val validIds = bridge.promptOptions.mapTo(HashSet()) { option -> option.id }
+    return optionIds
+      .asSequence()
+      .filter { optionId -> optionId in validIds }
+      .toCollection(LinkedHashSet())
   }
 }

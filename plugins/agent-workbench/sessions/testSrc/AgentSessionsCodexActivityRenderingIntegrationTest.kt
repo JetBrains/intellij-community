@@ -5,8 +5,6 @@ import com.intellij.agent.workbench.codex.common.CodexAppServerNotification
 import com.intellij.agent.workbench.codex.common.CodexThread
 import com.intellij.agent.workbench.codex.common.CodexThreadActivitySnapshot
 import com.intellij.agent.workbench.codex.common.CodexThreadStatusKind
-import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
-import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
@@ -17,7 +15,6 @@ import com.intellij.agent.workbench.sessions.tree.buildSessionTreeModel
 import com.intellij.agent.workbench.sessions.ui.SessionTreeCellRenderer
 import com.intellij.icons.AllIcons
 import com.intellij.ide.util.treeView.NodeDescriptor
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.IconManager
@@ -26,6 +23,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.lang.reflect.Proxy
@@ -47,10 +45,12 @@ class AgentSessionsCodexActivityRenderingIntegrationTest {
 
   @Test
   fun codexUnreadAssistantSnapshotRendersProcessingThreadBadge() = runBlocking(Dispatchers.Default) {
+    assumeTrue(isCodexSessionsAvailable(), "Codex sessions module is not available")
+
     val source = createCodexSource(
       backendThreads = listOf(
-        CodexBackendThread(
-          thread = CodexThread(
+        createCodexBackendThread(
+          CodexThread(
             id = "thread-1",
             title = "Thread 1",
             updatedAt = 1_000L,
@@ -143,30 +143,45 @@ class AgentSessionsCodexActivityRenderingIntegrationTest {
     )
   }
 
-  // The real Codex source/hint classes are internal to a sibling module, so tests bridge them reflectively.
   private fun createCodexSource(
-    backendThreads: List<CodexBackendThread>,
+    backendThreads: List<Any>,
     snapshotsByThreadId: Map<String, CodexThreadActivitySnapshot>,
   ): AgentSessionSource {
     val refreshHintsProviderClass = Class.forName("com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHintsProvider")
+    val backendClass = Class.forName("com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend")
     val sourceClass = Class.forName("com.intellij.agent.workbench.codex.sessions.CodexSessionSource")
     val constructor = sourceClass.getDeclaredConstructor(
-      CodexSessionBackend::class.java,
+      backendClass,
       refreshHintsProviderClass,
       refreshHintsProviderClass,
     )
     constructor.isAccessible = true
     return constructor.newInstance(
-      staticBackend(backendThreads),
+      createStaticBackend(backendClass, backendThreads),
       createAppServerRefreshHintsProvider(snapshotsByThreadId),
       createEmptyRefreshHintsProvider(refreshHintsProviderClass),
     ) as AgentSessionSource
   }
 
-  private fun staticBackend(backendThreads: List<CodexBackendThread>): CodexSessionBackend {
-    return object : CodexSessionBackend {
-      override suspend fun listThreads(path: String, openProject: Project?): List<CodexBackendThread> {
-        return if (path == PROJECT_PATH) backendThreads else emptyList()
+  private fun createCodexBackendThread(thread: CodexThread): Any {
+    val backendThreadClass = Class.forName("com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread")
+    val activityClass = Class.forName("com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity")
+    val readyActivity = activityClass.enumConstants.single { constant -> (constant as Enum<*>).name == "READY" }
+    val constructor = backendThreadClass.getDeclaredConstructor(CodexThread::class.java, activityClass, Boolean::class.javaPrimitiveType)
+    constructor.isAccessible = true
+    return constructor.newInstance(thread, readyActivity, false)
+  }
+
+  private fun createStaticBackend(backendClass: Class<*>, backendThreads: List<Any>): Any {
+    return Proxy.newProxyInstance(backendClass.classLoader, arrayOf(backendClass)) { proxy, method, args ->
+      when (method.name) {
+        "listThreads" -> if (args?.firstOrNull() == PROJECT_PATH) backendThreads else emptyList<Any?>()
+        "getUpdates" -> emptyFlow<Unit>()
+        "prefetchThreads" -> emptyMap<String, List<Any>>()
+        "toString" -> "StaticCodexSessionBackend"
+        "hashCode" -> System.identityHashCode(proxy)
+        "equals" -> proxy === args?.firstOrNull()
+        else -> throw UnsupportedOperationException("Unexpected method: ${method.name}")
       }
     }
   }
@@ -193,6 +208,10 @@ class AgentSessionsCodexActivityRenderingIntegrationTest {
         else -> throw UnsupportedOperationException("Unexpected method: ${method.name}")
       }
     }
+  }
+
+  private fun isCodexSessionsAvailable(): Boolean {
+    return runCatching { Class.forName("com.intellij.agent.workbench.codex.sessions.CodexSessionSource") }.isSuccess
   }
 
   private fun createTree(): JTree {

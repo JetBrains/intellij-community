@@ -39,9 +39,6 @@
     <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="AIAssistantHubPopupAction"/>
     <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="BuildSolutionBar"/>
     <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="ActiveDeviceGroup"/>
-    <statusBarWidgetFactory
-      id="claude.quota"
-      implementation="com.intellij.agent.workbench.sessions.claude.ClaudeQuotaStatusBarWidgetFactory"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
@@ -66,7 +63,6 @@
       <separator/>
       <action id="AgentWorkbenchSessions.ToggleDedicatedFrame" class="com.intellij.agent.workbench.sessions.actions.AgentSessionsDedicatedFrameToggleAction"/>
       <action id="AgentWorkbenchSessions.TogglePreventSleepWhileWorking" class="com.intellij.agent.workbench.sessions.actions.AgentSessionsPreventSleepWhileWorkingToggleAction"/>
-      <action id="AgentWorkbenchSessions.ToggleClaudeQuotaWidget" class="com.intellij.agent.workbench.sessions.actions.AgentSessionsToggleClaudeQuotaWidgetAction"/>
       <action id="AgentWorkbenchSessions.Refresh" class="com.intellij.agent.workbench.sessions.actions.AgentSessionsRefreshAction"/>
     </group>
     <action
@@ -118,14 +114,9 @@
       class="com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProjectFromEditorTabAction">
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.ArchiveThreadFromEditorTab"/>
     </action>
-    <action
-      id="AgentWorkbenchSessions.BindPendingCodexThreadFromEditorTab"
-      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsBindPendingCodexThreadFromEditorTabAction">
-      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.GoToSourceProjectFromEditorTab"/>
-    </action>
     <group id="AgentWorkbenchSessions.EditorTabPopup.SeparatorBeforeCloseActions">
       <separator/>
-      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.BindPendingCodexThreadFromEditorTab"/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.GoToSourceProjectFromEditorTab"/>
     </group>
     <action
       id="AgentWorkbenchSessions.CopyThreadIdFromEditorTab"

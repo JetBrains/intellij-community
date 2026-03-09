@@ -5,6 +5,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBehaviors
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -60,11 +61,20 @@ internal class AgentChatFileEditor(
   private val component = JPanel(BorderLayout())
   private val editorTabActions: ActionGroup? by lazy {
     val actionManager = ActionManager.getInstance()
-    val actions = listOfNotNull(
-      actionManager.getAction(NEW_THREAD_QUICK_FROM_EDITOR_TAB_ACTION_ID),
-      actionManager.getAction(NEW_THREAD_POPUP_FROM_EDITOR_TAB_ACTION_ID),
-      actionManager.getAction(BIND_PENDING_CODEX_THREAD_FROM_EDITOR_TAB_ACTION_ID),
-    )
+    val providerActionIds = file.provider
+      ?.let { provider -> AgentSessionProviderBehaviors.find(provider)?.editorTabActionIds }
+      .orEmpty()
+    val actions = buildList {
+      listOf(
+        NEW_THREAD_QUICK_FROM_EDITOR_TAB_ACTION_ID,
+        NEW_THREAD_POPUP_FROM_EDITOR_TAB_ACTION_ID,
+      ).forEach { actionId ->
+        actionManager.getAction(actionId)?.let(::add)
+      }
+      providerActionIds.forEach { actionId ->
+        actionManager.getAction(actionId)?.let(::add)
+      }
+    }
     if (actions.isEmpty()) {
       return@lazy null
     }
@@ -78,6 +88,9 @@ internal class AgentChatFileEditor(
   private var initializationStarted: Boolean = false
   private var disposed: Boolean = false
   private var pendingInitialMessageJob: Job? = null
+
+  private val providerBehavior
+    get() = file.provider?.let(AgentSessionProviderBehaviors::find)
 
   override fun getComponent(): JComponent = component
 
@@ -141,7 +154,8 @@ internal class AgentChatFileEditor(
   }
 
   private fun subscribeConcreteCodexNewThreadRebind(createdTab: AgentChatTerminalTab) {
-    if (file.provider != AgentSessionProvider.CODEX || file.isPendingThread || file.subAgentId != null) {
+    val provider = file.provider
+    if (provider == null || providerBehavior?.supportsNewThreadRebind != true || file.isPendingThread || file.subAgentId != null) {
       return
     }
     createdTab.coroutineScope.launch {
@@ -155,7 +169,7 @@ internal class AgentChatFileEditor(
           return@collectLatest
         }
         tabSnapshotWriter.upsert(file.toSnapshot())
-        notifyCodexTerminalOutputForRefresh(file.projectPath)
+        notifyAgentChatTerminalOutputForRefresh(provider = provider, projectPath = file.projectPath)
       }
     }
   }
@@ -166,7 +180,7 @@ internal class AgentChatFileEditor(
   }
 
   private fun subscribePendingFirstInput(createdTab: AgentChatTerminalTab) {
-    if (!file.isPendingThread || file.provider != AgentSessionProvider.CODEX) {
+    if (!file.isPendingThread || providerBehavior?.supportsPendingEditorTabRebind != true) {
       return
     }
     createdTab.coroutineScope.launch {
@@ -259,8 +273,6 @@ private object ApplicationAgentChatTabSnapshotWriter : AgentChatTabSnapshotWrite
 
 private const val NEW_THREAD_QUICK_FROM_EDITOR_TAB_ACTION_ID: String = AgentWorkbenchActionIds.Sessions.EditorTab.NEW_THREAD_QUICK
 private const val NEW_THREAD_POPUP_FROM_EDITOR_TAB_ACTION_ID: String = AgentWorkbenchActionIds.Sessions.EditorTab.NEW_THREAD_POPUP
-private const val BIND_PENDING_CODEX_THREAD_FROM_EDITOR_TAB_ACTION_ID: String =
-  AgentWorkbenchActionIds.Sessions.BIND_PENDING_CODEX_THREAD_FROM_EDITOR_TAB
 
 internal interface AgentChatTerminalTab {
   val component: JComponent
@@ -355,8 +367,8 @@ private class ToolWindowAgentChatTerminalTab(
       timeoutMs = timeoutMs,
       idleMs = idleMs,
       onMeaningfulOutput = {
-        if (provider == AgentSessionProvider.CODEX) {
-          notifyCodexTerminalOutputForRefresh(projectPath)
+        if (provider != null && AgentSessionProviderBehaviors.find(provider)?.emitsScopedRefreshSignals == true) {
+          notifyAgentChatTerminalOutputForRefresh(provider = provider, projectPath = projectPath)
         }
       },
     )

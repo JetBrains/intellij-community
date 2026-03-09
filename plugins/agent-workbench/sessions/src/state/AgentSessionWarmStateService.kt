@@ -168,14 +168,15 @@ private fun normalizeWarmPathSnapshot(snapshot: AgentSessionWarmPathSnapshot): A
 
 private fun AgentSessionWarmStateService.WarmPathSnapshotState.toSnapshot(): AgentSessionWarmPathSnapshot {
   return AgentSessionWarmPathSnapshot(
-    threads = threads.map { thread ->
+    threads = threads.mapNotNull { thread ->
+      val provider = AgentSessionProvider.fromOrNull(thread.provider) ?: return@mapNotNull null
       AgentSessionThread(
         id = thread.id,
         title = threadDisplayTitle(threadId = thread.id, title = thread.title),
         updatedAt = thread.updatedAt,
         archived = false,
         activity = parseWarmStateThreadActivity(thread.activity),
-        provider = AgentSessionProvider.fromOrNull(thread.provider) ?: AgentSessionProvider.CODEX,
+        provider = provider,
         subAgents = thread.subAgents.map { subAgent -> AgentSubAgent(id = subAgent.id, name = subAgent.name) },
         originBranch = thread.originBranch,
       )

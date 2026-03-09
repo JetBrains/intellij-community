@@ -3,10 +3,11 @@ package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.agent.workbench.prompt.AgentPromptBundle
 import com.intellij.icons.AllIcons
+import com.intellij.ide.setToolTipText
 import com.intellij.markdown.utils.convertMarkdownToHtml
-import com.intellij.ui.WindowMoveListener
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.EditorTextField
-import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
@@ -49,22 +50,19 @@ internal data class AgentPromptPaletteView(
   val existingTaskList: JBList<ThreadEntry>,
   val existingTaskScrollPane: JBScrollPane,
   val footerLabel: JBLabel,
-  val planModeCheckBox: JBCheckBox?,
-  val previewToggle: JBLabel,
-  val promptCardPanel: JPanel,
-  val previewPane: JEditorPane,
+  val providerOptionsPanel: JPanel?,
 )
 
 internal fun createAgentPromptPaletteView(
   promptArea: EditorTextField,
   contextChipsPanel: JPanel,
-  planModeCheckBox: JBCheckBox? = null,
+  providerOptionsPanel: JPanel? = null,
   onProviderIconClicked: () -> Unit,
   onExistingTaskSelected: (ThreadEntry) -> Unit,
 ): AgentPromptPaletteView {
   val providerIconLabel = JBLabel().apply {
     cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-    toolTipText = AgentPromptBundle.message("popup.provider.selector.tooltip")
+    setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.provider.selector.tooltip")))
     border = JBUI.Borders.empty()
     addMouseListener(object : MouseAdapter() {
       override fun mouseClicked(e: MouseEvent?) {
@@ -96,7 +94,7 @@ internal fun createAgentPromptPaletteView(
 
   val previewToggle = JBLabel(AllIcons.Actions.Preview).apply {
     cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-    toolTipText = AgentPromptBundle.message("popup.preview.toggle.tooltip")
+    setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.preview.toggle.tooltip")))
     border = JBUI.Borders.empty()
     addMouseListener(object : MouseAdapter() {
       override fun mouseClicked(e: MouseEvent?) {
@@ -139,14 +137,14 @@ internal fun createAgentPromptPaletteView(
       cell(tabbedPane)
       cell(spacer)
         .resizableColumn()
-      if (planModeCheckBox != null) {
-        cell(planModeCheckBox)
+      if (providerOptionsPanel != null) {
+        cell(providerOptionsPanel)
           .align(AlignX.RIGHT)
           .customize(UnscaledGaps(left = controlsLeftGap))
       }
       cell(previewToggle)
         .align(AlignX.RIGHT)
-        .customize(UnscaledGaps(left = if (planModeCheckBox != null) controlToIconGap else controlsLeftGap))
+        .customize(UnscaledGaps(left = if (providerOptionsPanel != null) controlToIconGap else controlsLeftGap))
       cell(providerIconLabel)
         .align(AlignX.RIGHT)
         .customize(UnscaledGaps(left = controlToIconGap))
@@ -234,9 +232,6 @@ internal fun createAgentPromptPaletteView(
     existingTaskList = existingTaskList,
     existingTaskScrollPane = existingTaskScrollPane,
     footerLabel = footerLabel,
-    planModeCheckBox = planModeCheckBox,
-    previewToggle = previewToggle,
-    promptCardPanel = promptCardPanel,
-    previewPane = previewPane,
+    providerOptionsPanel = providerOptionsPanel,
   )
 }

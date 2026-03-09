@@ -1,13 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.sessions
+package com.intellij.agent.workbench.claude.sessions
 
-import com.intellij.agent.workbench.sessions.claude.ClaudeQuotaInfo
-import com.intellij.agent.workbench.sessions.claude.ClaudeQuotaStatusBarWidgetFactory
-import com.intellij.agent.workbench.sessions.claude.dominantPercent
-import com.intellij.agent.workbench.sessions.claude.formatQuotaResetTime
-import com.intellij.agent.workbench.sessions.claude.formatWidgetText
-import com.intellij.agent.workbench.sessions.claude.formatWidgetTooltip
-import com.intellij.agent.workbench.sessions.claude.isWarningQuota
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -21,28 +14,28 @@ class ClaudeQuotaStatusBarWidgetTest {
   fun formatTextShowsSessionWhenHigher() {
     val info = ClaudeQuotaInfo(fiveHourPercent = 45, fiveHourReset = null, sevenDayPercent = 12, sevenDayReset = null)
     val text = formatWidgetText(info)
-    assertThat(text).isEqualTo(AgentSessionsBundle.message("status.bar.claude.quota.text", 45, "5h"))
+    assertThat(text).isEqualTo(ClaudeSessionsBundle.message("status.bar.claude.quota.text", 45, "5h"))
   }
 
   @Test
   fun formatTextShowsWeeklyWhenHigher() {
     val info = ClaudeQuotaInfo(fiveHourPercent = 10, fiveHourReset = null, sevenDayPercent = 80, sevenDayReset = null)
     val text = formatWidgetText(info)
-    assertThat(text).isEqualTo(AgentSessionsBundle.message("status.bar.claude.quota.text", 80, "7d"))
+    assertThat(text).isEqualTo(ClaudeSessionsBundle.message("status.bar.claude.quota.text", 80, "7d"))
   }
 
   @Test
   fun formatTextShowsSessionOnly() {
     val info = ClaudeQuotaInfo(fiveHourPercent = 50, fiveHourReset = null, sevenDayPercent = null, sevenDayReset = null)
     val text = formatWidgetText(info)
-    assertThat(text).isEqualTo(AgentSessionsBundle.message("status.bar.claude.quota.text", 50, "5h"))
+    assertThat(text).isEqualTo(ClaudeSessionsBundle.message("status.bar.claude.quota.text", 50, "5h"))
   }
 
   @Test
   fun formatTextShowsWeeklyOnly() {
     val info = ClaudeQuotaInfo(fiveHourPercent = null, fiveHourReset = null, sevenDayPercent = 30, sevenDayReset = null)
     val text = formatWidgetText(info)
-    assertThat(text).isEqualTo(AgentSessionsBundle.message("status.bar.claude.quota.text", 30, "7d"))
+    assertThat(text).isEqualTo(ClaudeSessionsBundle.message("status.bar.claude.quota.text", 30, "7d"))
   }
 
   @Test

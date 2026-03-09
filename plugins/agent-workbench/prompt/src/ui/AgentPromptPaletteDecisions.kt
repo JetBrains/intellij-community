@@ -3,14 +3,16 @@ package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import org.jetbrains.annotations.NonNls
 
 internal fun resolveDefaultFooterHintMessageKey(
   targetMode: PromptTargetMode,
-  selectedProvider: AgentSessionProvider?,
+  selectedProvider: AgentSessionProviderBridge?,
 ): @NonNls String {
   return if (isTabQueueShortcutEnabled(targetMode = targetMode, selectedProvider = selectedProvider)) {
-    "popup.footer.hint.existing.codex"
+    "popup.footer.hint.existing.queue"
   }
   else {
     "popup.footer.hint"
@@ -19,34 +21,48 @@ internal fun resolveDefaultFooterHintMessageKey(
 
 internal fun isTabQueueShortcutEnabled(
   targetMode: PromptTargetMode,
-  selectedProvider: AgentSessionProvider?,
+  selectedProvider: AgentSessionProviderBridge?,
 ): Boolean {
-  return targetMode == PromptTargetMode.EXISTING_TASK && selectedProvider == AgentSessionProvider.CODEX
+  return targetMode == PromptTargetMode.EXISTING_TASK && selectedProvider?.supportsPromptTabQueueShortcut == true
 }
 
 internal fun shouldShowExistingTaskSelectionHint(
   targetMode: PromptTargetMode,
   selectedExistingTaskId: String?,
-  selectedProvider: AgentSessionProvider?,
+  selectedProvider: AgentSessionProviderBridge?,
 ): Boolean {
   return targetMode == PromptTargetMode.EXISTING_TASK &&
          selectedExistingTaskId.isNullOrBlank() &&
-         selectedProvider != AgentSessionProvider.CODEX
+         selectedProvider?.suppressPromptExistingTaskSelectionHint != true
+}
+
+internal fun resolveEffectiveProviderOptionIds(
+  selectedProvider: AgentSessionProviderBridge?,
+  selectedOptionIds: Set<String>,
+  targetMode: PromptTargetMode,
+  selectedThreadActivity: AgentThreadActivity?,
+): Set<String> {
+  val bridge = selectedProvider ?: return emptySet()
+  return bridge.promptOptions
+    .asSequence()
+    .filter { option -> option.id in selectedOptionIds }
+    .filter { option ->
+      when (targetMode) {
+        PromptTargetMode.NEW_TASK -> option.enabledForNewTask
+        PromptTargetMode.EXISTING_TASK -> {
+          option.enabledForExistingTask && selectedThreadActivity !in option.disabledExistingTaskActivities
+        }
+      }
+    }
+    .map { option -> option.id }
+    .toSet()
 }
 
 internal fun resolveEffectivePlanModeEnabled(
-  supportsPlanMode: Boolean,
-  isPlanModeSelected: Boolean,
-  targetMode: PromptTargetMode,
-  selectedThreadActivity: AgentThreadActivity?,
+  selectedProvider: AgentSessionProviderBridge?,
+  effectiveProviderOptionIds: Set<String>,
 ): Boolean {
-  if (!supportsPlanMode || !isPlanModeSelected) {
-    return false
-  }
-  if (targetMode != PromptTargetMode.EXISTING_TASK) {
-    return true
-  }
-  return selectedThreadActivity != AgentThreadActivity.PROCESSING && selectedThreadActivity != AgentThreadActivity.REVIEWING
+  return selectedProvider?.supportsPlanMode == true && AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE in effectiveProviderOptionIds
 }
 
 internal fun resolveSubmitValidationErrorMessageKey(

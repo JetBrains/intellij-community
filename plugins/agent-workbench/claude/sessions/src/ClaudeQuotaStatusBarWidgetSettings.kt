@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.sessions.claude
+package com.intellij.agent.workbench.claude.sessions
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.ProjectManager
@@ -36,7 +36,6 @@ internal object ClaudeQuotaStatusBarWidgetSettings {
     }
     _enabledFlow.value = enabled
   }
-
 }
 
 private fun readEnabledFromSettings(): Boolean {
@@ -47,3 +46,4 @@ private fun readEnabledFromSettings(): Boolean {
 private fun findFactory(): StatusBarWidgetFactory? {
   return StatusBarWidgetFactory.EP_NAME.extensionList.firstOrNull { it.id == CLAUDE_QUOTA_WIDGET_ID }
 }
+

@@ -2209,14 +2209,14 @@ private suspend fun withLoadingCoordinator(
       contentRepository = contentRepository,
       isRefreshGateActive = isRefreshGateActive,
       openAgentChatProjectPathsProvider = openChatPathsProvider,
-      codexScopedRefreshSignalsProvider = codexScopedRefreshSignalsProvider,
-      openPendingCodexTabsProvider = openPendingCodexTabsProvider,
-      openConcreteCodexTabsAwaitingNewThreadRebindProvider = openConcreteCodexTabsAwaitingNewThreadRebindProvider,
+      codexScopedRefreshSignalsProvider = { _ -> codexScopedRefreshSignalsProvider() },
+      openPendingCodexTabsProvider = { _ -> openPendingCodexTabsProvider() },
+      openConcreteCodexTabsAwaitingNewThreadRebindProvider = { _ -> openConcreteCodexTabsAwaitingNewThreadRebindProvider() },
       openConcreteChatThreadIdentitiesByPathProvider = openConcreteChatThreadIdentitiesByPathProvider,
       openAgentChatTabPresentationUpdater = openChatTabPresentationUpdater,
-      openAgentChatPendingTabsBinder = openChatPendingTabsBinder,
-      openAgentChatConcreteTabsBinder = openChatConcreteTabsBinder,
-      clearOpenConcreteCodexTabAnchors = clearOpenConcreteCodexTabAnchors,
+      openAgentChatPendingTabsBinder = { _, requestsByPath -> openChatPendingTabsBinder(requestsByPath) },
+      openAgentChatConcreteTabsBinder = { _, requestsByPath -> openChatConcreteTabsBinder(requestsByPath) },
+      clearOpenConcreteCodexTabAnchors = { _, tabsByPath -> clearOpenConcreteCodexTabAnchors(tabsByPath) },
     )
     action(coordinator, stateStore)
   }

@@ -14,16 +14,6 @@ class AgentSessionUiPreferencesStateServiceTest {
   }
 
   @Test
-  fun claudeQuotaHintDefaultsToDisabledAndUnacknowledged() {
-    val preferences = AgentSessionUiPreferencesStateService()
-
-    assertThat(preferences.state.claudeQuotaHintEligible).isFalse()
-    assertThat(preferences.state.claudeQuotaHintAcknowledged).isFalse()
-    assertThat(preferences.claudeQuotaHintEligibleFlow.value).isFalse()
-    assertThat(preferences.claudeQuotaHintAcknowledgedFlow.value).isFalse()
-  }
-
-  @Test
   fun setAndGetLastUsedProvider() {
     val preferences = AgentSessionUiPreferencesStateService()
 
@@ -34,23 +24,5 @@ class AgentSessionUiPreferencesStateServiceTest {
     preferences.setLastUsedProvider(AgentSessionProvider.CODEX)
     assertThat(preferences.getLastUsedProvider()).isEqualTo(AgentSessionProvider.CODEX)
     assertThat(preferences.lastUsedProviderFlow.value).isEqualTo(AgentSessionProvider.CODEX)
-  }
-
-  @Test
-  fun claudeQuotaHintStateRoundTrip() {
-    val original = AgentSessionUiPreferencesStateService()
-    original.setLastUsedProvider(AgentSessionProvider.CLAUDE)
-    original.markClaudeQuotaHintEligible()
-    original.acknowledgeClaudeQuotaHint()
-
-    val reloaded = AgentSessionUiPreferencesStateService()
-    reloaded.loadState(original.state)
-
-    assertThat(reloaded.getLastUsedProvider()).isEqualTo(AgentSessionProvider.CLAUDE)
-    assertThat(reloaded.lastUsedProviderFlow.value).isEqualTo(AgentSessionProvider.CLAUDE)
-    assertThat(reloaded.state.claudeQuotaHintEligible).isTrue()
-    assertThat(reloaded.claudeQuotaHintEligibleFlow.value).isTrue()
-    assertThat(reloaded.state.claudeQuotaHintAcknowledged).isTrue()
-    assertThat(reloaded.claudeQuotaHintAcknowledgedFlow.value).isTrue()
   }
 }

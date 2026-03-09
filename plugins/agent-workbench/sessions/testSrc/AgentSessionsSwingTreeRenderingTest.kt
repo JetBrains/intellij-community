@@ -83,8 +83,8 @@ class AgentSessionsSwingTreeRenderingTest {
           hasLoaded = true,
           hasUnknownThreadCount = true,
           threads = listOf(
-            AgentSessionThread(id = "thread-1", title = "Thread 1", updatedAt = 100, archived = false),
-            AgentSessionThread(id = "thread-2", title = "Thread 2", updatedAt = 90, archived = false),
+            AgentSessionThread(id = "thread-1", title = "Thread 1", updatedAt = 100, archived = false, provider = AgentSessionProvider.CODEX),
+            AgentSessionThread(id = "thread-2", title = "Thread 2", updatedAt = 90, archived = false, provider = AgentSessionProvider.CODEX),
           ),
         )
       ),

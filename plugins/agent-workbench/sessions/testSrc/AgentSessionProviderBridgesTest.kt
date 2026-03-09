@@ -76,16 +76,38 @@ class AgentSessionProviderBridgesTest {
   }
 
   @Test
-  fun allBridgesFollowExtensionOrder() {
+  fun allBridgesFollowDisplayPriorityThenProviderId() {
     val disposable = Disposer.newDisposable()
     disposable.use {
-      val lastBridge = TestAgentSessionProviderBridge(provider = AgentSessionProvider.from("aaa"), sourceId = "last")
-      val firstBridge = TestAgentSessionProviderBridge(provider = AgentSessionProvider.from("bbb"), sourceId = "first")
-      extensionPoint.point.registerExtension(lastBridge, LoadingOrder.LAST, disposable)
-      extensionPoint.point.registerExtension(firstBridge, LoadingOrder.FIRST, disposable)
+      val lowPriorityBridge = TestAgentSessionProviderBridge(
+        provider = AgentSessionProvider.from("zzz-low-priority"),
+        sourceId = "low-priority",
+        displayPriority = 300,
+      )
+      val alphaBridge = TestAgentSessionProviderBridge(
+        provider = AgentSessionProvider.from("alpha-priority"),
+        sourceId = "alpha-priority",
+        displayPriority = 200,
+      )
+      val betaBridge = TestAgentSessionProviderBridge(
+        provider = AgentSessionProvider.from("beta-priority"),
+        sourceId = "beta-priority",
+        displayPriority = 200,
+      )
+      val highPriorityBridge = TestAgentSessionProviderBridge(
+        provider = AgentSessionProvider.from("highest-priority"),
+        sourceId = "highest-priority",
+        displayPriority = 100,
+      )
+      extensionPoint.point.registerExtension(lowPriorityBridge, LoadingOrder.FIRST, disposable)
+      extensionPoint.point.registerExtension(alphaBridge, LoadingOrder.LAST, disposable)
+      extensionPoint.point.registerExtension(betaBridge, LoadingOrder.FIRST, disposable)
+      extensionPoint.point.registerExtension(highPriorityBridge, LoadingOrder.LAST, disposable)
 
       val orderedIds = AgentSessionProviderBridges.allBridges().map { it.provider.value }
-      assertThat(orderedIds.indexOf(firstBridge.provider.value)).isLessThan(orderedIds.indexOf(lastBridge.provider.value))
+      assertThat(orderedIds.indexOf(highPriorityBridge.provider.value)).isLessThan(orderedIds.indexOf(alphaBridge.provider.value))
+      assertThat(orderedIds.indexOf(alphaBridge.provider.value)).isLessThan(orderedIds.indexOf(betaBridge.provider.value))
+      assertThat(orderedIds.indexOf(betaBridge.provider.value)).isLessThan(orderedIds.indexOf(lowPriorityBridge.provider.value))
     }
   }
 
@@ -116,6 +138,7 @@ class AgentSessionProviderBridgesTest {
   private class TestAgentSessionProviderBridge(
     override val provider: AgentSessionProvider,
     sourceId: String,
+    override val displayPriority: Int = Int.MAX_VALUE,
   ) : AgentSessionProviderBridge {
     override val sessionSource: AgentSessionSource = TestAgentSessionSource(provider, sourceId)
 

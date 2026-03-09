@@ -50,10 +50,13 @@ private fun buildAgentSessionProviderBridgeSnapshot(bridges: Iterable<AgentSessi
       uniqueBridges += bridge
     }
   }
+  val orderedBridges = uniqueBridges.sortedWith(
+    compareBy({ it.displayPriority }, { it.provider.value })
+  )
   return AgentSessionProviderBridgeSnapshot(
     bridgesByProvider = bridgesByProvider,
-    orderedBridges = uniqueBridges,
-    sessionSources = uniqueBridges.map { it.sessionSource },
+    orderedBridges = orderedBridges,
+    sessionSources = orderedBridges.map { it.sessionSource },
   )
 }
 

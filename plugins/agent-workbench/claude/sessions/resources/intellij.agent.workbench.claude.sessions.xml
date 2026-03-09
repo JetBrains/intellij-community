@@ -1,4 +1,6 @@
 <idea-plugin>
+  <resource-bundle>messages.ClaudeSessionsBundle</resource-bundle>
+
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.agent.workbench.claude.common"/>
@@ -12,5 +14,19 @@
     <agent.workbench.sessionProviderBridge
       id="agentWorkbenchClaude"
       implementation="com.intellij.agent.workbench.claude.sessions.ClaudeAgentSessionProviderBridge"/>
+    <agent.workbench.sessionProviderBehavior
+      id="agentWorkbenchClaudeBehavior"
+      implementation="com.intellij.agent.workbench.claude.sessions.ClaudeAgentSessionProviderBehavior"/>
+    <statusBarWidgetFactory
+      id="claude.quota"
+      implementation="com.intellij.agent.workbench.claude.sessions.ClaudeQuotaStatusBarWidgetFactory"/>
   </extensions>
+
+  <actions resource-bundle="messages.ClaudeSessionsBundle">
+    <action
+      id="AgentWorkbenchSessions.ToggleClaudeQuotaWidget"
+      class="com.intellij.agent.workbench.claude.sessions.AgentSessionsToggleClaudeQuotaWidgetAction">
+      <add-to-group group-id="AgentWorkbenchSessions.ToolWindow.GearActions" anchor="before" relative-to-action="AgentWorkbenchSessions.Refresh"/>
+    </action>
+  </actions>
 </idea-plugin>

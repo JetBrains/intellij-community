@@ -50,13 +50,27 @@ data class AgentInitialMessageDispatchPlan(
 interface AgentSessionProviderBridge {
   val provider: AgentSessionProvider
   val displayNameKey: String
+  val displayNameFallback: String
+    get() = provider.value.replaceFirstChar { char ->
+      if (char.isLowerCase()) char.titlecase() else char.toString()
+    }
+  val displayPriority: Int
+    get() = Int.MAX_VALUE
   val newSessionLabelKey: String
   val yoloSessionLabelKey: String?
     get() = null
   val icon: Icon
+  val promptOptions: List<AgentPromptProviderOption>
+    get() = emptyList()
 
   val supportedLaunchModes: Set<AgentSessionLaunchMode>
     get() = setOf(AgentSessionLaunchMode.STANDARD)
+
+  val supportsPromptTabQueueShortcut: Boolean
+    get() = false
+
+  val suppressPromptExistingTaskSelectionHint: Boolean
+    get() = false
 
   val sessionSource: AgentSessionSource
   val cliMissingMessageKey: String

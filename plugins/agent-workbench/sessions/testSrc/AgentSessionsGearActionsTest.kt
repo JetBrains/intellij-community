@@ -2,7 +2,6 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsActivateWithProjectShortcutAction
-import com.intellij.agent.workbench.sessions.actions.AgentSessionsBindPendingCodexThreadFromEditorTabAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsCopyThreadIdFromEditorTabAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsDedicatedFrameToggleAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabArchiveThreadAction
@@ -193,9 +192,6 @@ class AgentSessionsGearActionsTest {
     assertThat(actionManager.getAction("AgentWorkbenchSessions.GoToSourceProjectFromEditorTab"))
       .isNotNull
       .isInstanceOf(AgentSessionsGoToSourceProjectFromEditorTabAction::class.java)
-    assertThat(actionManager.getAction("AgentWorkbenchSessions.BindPendingCodexThreadFromEditorTab"))
-      .isNotNull
-      .isInstanceOf(AgentSessionsBindPendingCodexThreadFromEditorTabAction::class.java)
     assertThat(actionManager.getAction("AgentWorkbenchSessions.CopyThreadIdFromEditorTab"))
       .isNotNull
       .isInstanceOf(AgentSessionsCopyThreadIdFromEditorTabAction::class.java)
@@ -204,15 +200,13 @@ class AgentSessionsGearActionsTest {
 
     val archiveIndex = entries.requiredIndex("AgentWorkbenchSessions.ArchiveThreadFromEditorTab")
     val goToSourceIndex = entries.requiredIndex("AgentWorkbenchSessions.GoToSourceProjectFromEditorTab")
-    val bindPendingIndex = entries.requiredIndex("AgentWorkbenchSessions.BindPendingCodexThreadFromEditorTab")
     val closeEditorsGroupIndex = entries.requiredIndex("CloseEditorsGroup")
     val copyThreadIdIndex = entries.requiredIndex("AgentWorkbenchSessions.CopyThreadIdFromEditorTab")
     val selectInThreadsIndex = entries.requiredIndex("AgentWorkbenchSessions.SelectThreadInAgentThreads")
     val copyPathsIndex = entries.requiredIndex("CopyPaths")
 
     assertThat(archiveIndex).isLessThan(goToSourceIndex)
-    assertThat(goToSourceIndex).isLessThan(bindPendingIndex)
-    assertThat(bindPendingIndex).isLessThan(closeEditorsGroupIndex)
+    assertThat(goToSourceIndex).isLessThan(closeEditorsGroupIndex)
     assertThat(closeEditorsGroupIndex).isLessThan(copyThreadIdIndex)
     assertThat(copyThreadIdIndex).isLessThan(selectInThreadsIndex)
     assertThat(selectInThreadsIndex).isLessThan(copyPathsIndex)
