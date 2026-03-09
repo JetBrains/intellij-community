@@ -24,6 +24,7 @@ open class DebugToolWindowUi(data: ComponentData) : ToolWindowUiComponent(data) 
   val threadsAndVariablesTab: UiComponent get() = defineDebuggerTabByAccessibleName("Threads & Variables")
   val debuggerConsoleTab: UiComponent get() = defineDebuggerTabByAccessibleName("Debugger Console")
   val memoryView: UiComponent get() = defineDebuggerTabByAccessibleName("Memory View")
+  val liveWatches: UiComponent get() = defineDebuggerTabByAccessibleName("Live Watches")
   val consoleView: UiComponent get() = x { byType("com.intellij.execution.impl.ConsoleViewImpl") }
   val resumeButton: JButtonUiComponent get() = button { byAccessibleName("Resume Program") }
   val stopButton: UiComponent get() = x("//div[@myicon='stop.svg']")
