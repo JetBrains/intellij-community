@@ -68,7 +68,7 @@ class TerminalTitle {
 
   @ApiStatus.Experimental
   fun buildTitle(ignoreAppTitle: Boolean): @Nls String {
-    val title = if (ignoreAppTitle) {
+    val title = if (ignoreAppTitle || applicationTitle.isNullOrBlank()) {
       userDefinedTitle ?: defaultTitle ?: ExecutionBundle.message("terminal.default.title")
     }
     else {
@@ -83,7 +83,7 @@ class TerminalTitle {
 
   @ApiStatus.Experimental
   fun buildFullTitle(ignoreAppTitle: Boolean): @Nls String {
-    return if (ignoreAppTitle) {
+    return if (ignoreAppTitle || applicationTitle.isNullOrBlank()) {
       userDefinedTitle ?: defaultTitle ?: ExecutionBundle.message("terminal.default.title")
     }
     else userDefinedTitle ?: applicationTitle ?: defaultTitle ?: ExecutionBundle.message("terminal.default.title")
