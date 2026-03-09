@@ -15,7 +15,7 @@ GOTO :CMDSCRIPT
 set -eu
 root="$(cd "$(dirname "$0")"; pwd)"
 
-exec "$root/build/run_build_target.sh" "$root" //build:i_build_target "$@"
+exec /bin/bash "$root/bazel.cmd" build --target_pattern_file=./build/targets --disk_cache=
 
 :CMDSCRIPT
 
