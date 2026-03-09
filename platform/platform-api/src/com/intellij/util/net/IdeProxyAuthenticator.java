@@ -10,7 +10,10 @@ import org.jetbrains.annotations.Nullable;
 import java.net.Authenticator;
 import java.net.InetAddress;
 import java.net.PasswordAuthentication;
+import java.net.URI;
 import java.net.URL;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
 
@@ -37,6 +40,21 @@ import static java.util.Objects.requireNonNull;
 @ApiStatus.Internal
 public class IdeProxyAuthenticator extends Authenticator {
   private static final Logger LOG = Logger.getInstance(IdeProxyAuthenticator.class);
+
+  private static final int LRU_SIZE = 100;
+
+  private static final Map<String, Void> proxiedUrls = new LinkedHashMap<>(LRU_SIZE) {
+    @Override
+    protected boolean removeEldestEntry(Map.Entry<String, Void> eldest) {
+      return size() > LRU_SIZE;
+    }
+  };
+
+  static boolean isProxied(@NotNull URI uri) {
+    synchronized (proxiedUrls) {
+      return proxiedUrls.containsKey(uri.toString());
+    }
+  }
 
   private final ProxyAuthentication proxyAuth;
 
@@ -82,6 +100,7 @@ public class IdeProxyAuthenticator extends Authenticator {
       credentials = proxyAuth.getPromptedAuthentication(prompt, hostName, port);
     }
     if (credentials != null && credentials.getUserName() != null) {
+      if (url != null) proxiedUrls.put(url.toString(), null);
       var password = credentials.getPassword();
       return new PasswordAuthentication(credentials.getUserName(), password != null ? password.toCharArray() : new char[0]);
     }
