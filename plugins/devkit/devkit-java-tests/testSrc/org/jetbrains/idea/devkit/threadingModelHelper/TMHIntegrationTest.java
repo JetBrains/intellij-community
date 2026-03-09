@@ -6,171 +6,188 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
-import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.EdtRule;
+import com.intellij.testFramework.LoggedErrorProcessor;
+import com.intellij.testFramework.RunsInEdt;
+import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
-import org.jetbrains.annotations.NotNull;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static com.intellij.util.concurrency.ThreadingAssertions.MUST_EXECUTE_IN_EDT;
 import static com.intellij.util.concurrency.ThreadingAssertions.MUST_EXECUTE_IN_READ_ACTION;
 import static com.intellij.util.concurrency.ThreadingAssertions.MUST_EXECUTE_IN_WRITE_ACTION;
 import static com.intellij.util.concurrency.ThreadingAssertions.MUST_NOT_EXECUTE_IN_READ_ACTION;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/**
- * Ensures that the instrumenter of the Threading Model annotations (such as {@link RequiresEdt}) is in sync with
- * the source code of the Platform.
- * <p/>
- * The instrumenter is a part of the devkit plugin. If you update the source code of the Platform and didn't update
- * the devkit accordingly, the tests here may fail. Specifically, failures might happen if you:
- * <ul>
- * <li> Change {@link RequiresEdt} and similar Threading Model annotations.
- * <li> Change assertion methods of the {@link Application} class, such as {@link Application#assertIsDispatchThread()}.
- * </ul>
- * Note that if this happens, you need to update the instrumenter and install the updated version of the devkit to IDEA.
- * <p/>
- *
- * @see <a href="https://plugins.jetbrains.com/docs/intellij/threading-model.html">Threading Model</a>
- */
-public class TMHIntegrationTest extends LightPlatformTestCase {
+/// Ensures that the instrumenter of the Threading Model annotations (such as [RequiresEdt]) is in sync with
+/// the source code of the Platform.
+///
+/// The instrumenter is a part of the DevKit plugin. If you update the source code of the Platform and didn't update
+/// the DevKit accordingly, the tests here may fail. Specifically, failures might happen if you:
+///
+///   - Change [RequiresEdt] and similar Threading Model annotations.
+///   - Change assertion methods of the [Application] class, such as [Application#assertIsDispatchThread()].
+///
+/// Note that if this happens, you need to update the instrumenter and install the updated version of the DevKit to IDEA.
+///
+/// @see <a href="https://plugins.jetbrains.com/docs/intellij/threading-model.html">Threading Model</a>
+public class TMHIntegrationTest extends BareTestFixtureTestCase {
+  @Rule public EdtRule edtRule = new EdtRule();
+
   private ExecutorService mySingleThreadExecutor;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @Before
+  public void setUp() {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
     mySingleThreadExecutor = Executors.newSingleThreadExecutor(r -> new Thread(r, "Testing thread"));
   }
 
-  @Override
-  protected void tearDown() throws Exception {
+  @After
+  public void tearDown() {
     mySingleThreadExecutor.shutdownNow();
-    super.tearDown();
   }
 
+  @Test
+  @RunsInEdt
   public void testEdtActionOnEdt() {
     runEdtAction();
   }
 
+  @Test
   public void testEdtActionInBackground() {
-    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_IN_EDT, ()-> throwExecutionExceptionCauseFromBackground(
-      () -> runEdtAction()));
+    assertThatThrownBy(() -> runEdtAction())
+      .isInstanceOf(RuntimeExceptionWithAttachments.class)
+      .hasMessageContaining(MUST_EXECUTE_IN_EDT);
   }
 
+  @Test
+  @RunsInEdt
   public void testBackgroundActionOnEdt() {
     ThreadingAssertions.assertEventDispatchThread();
-    assertThrows(RuntimeException.class, ()->runBackgroundAction());
+    assertThatThrownBy(() -> runBackgroundAction()).isInstanceOf(RuntimeException.class);
   }
 
-  public void testBackgroundActionInBackground() throws Throwable {
-    throwExecutionExceptionCauseFromBackground(() -> runBackgroundAction());
+  @Test
+  public void testBackgroundActionInBackground() {
+    runBackgroundAction();
   }
 
+  @Test
+  @RunsInEdt
   public void testReadActionOnEdt() {
     runReadAction();
   }
 
-  public void testReadActionInBackgroundWithReadLock() throws Throwable {
-    throwExecutionExceptionCauseFromBackground(() -> ReadAction.run(() -> runReadAction()));
+  @Test
+  public void testReadActionInBackgroundWithReadLock() {
+    ReadAction.runBlocking(() -> runReadAction());
   }
 
+  @Test
   public void testReadActionInBackground() {
-    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_IN_READ_ACTION, () -> throwExecutionExceptionCauseFromBackground(
-      () -> runReadAction()));
+    assertThat(LoggedErrorProcessor.executeAndReturnLoggedError(() -> runReadAction()))
+      .isInstanceOf(RuntimeExceptionWithAttachments.class)
+      .hasMessageContaining(MUST_EXECUTE_IN_READ_ACTION);
   }
 
+  @Test
+  @RunsInEdt
   public void testWriteActionOnEdtWithWriteLock() {
     WriteAction.run(() -> runWriteAction());
   }
 
+  @Test
+  @RunsInEdt
   public void testWriteActionOnEdt() {
-    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_IN_WRITE_ACTION, () -> runWriteAction());
+    assertThatThrownBy(() -> runWriteAction())
+      .isInstanceOf(RuntimeExceptionWithAttachments.class)
+      .hasMessageContaining(MUST_EXECUTE_IN_WRITE_ACTION);
   }
 
+  @Test
   public void testWriteActionInBackground() {
-    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_IN_WRITE_ACTION, () -> throwExecutionExceptionCauseFromBackground(
-      () -> runWriteAction()));
+    assertThatThrownBy(() -> runWriteAction())
+      .isInstanceOf(RuntimeExceptionWithAttachments.class)
+      .hasMessageContaining(MUST_EXECUTE_IN_WRITE_ACTION);
   }
 
+  @Test
+  @RunsInEdt
   public void testNonReadActionOnEdt() {
-    assertThrows(RuntimeExceptionWithAttachments.class, MUST_NOT_EXECUTE_IN_READ_ACTION, () -> runNonReadAction());
+    assertThatThrownBy(() -> runNonReadAction())
+      .isInstanceOf(RuntimeExceptionWithAttachments.class)
+      .hasMessageContaining(MUST_NOT_EXECUTE_IN_READ_ACTION);
   }
 
-  public void testNonReadActionInBackground() throws Throwable {
-    throwExecutionExceptionCauseFromBackground(() -> runNonReadAction());
+  @Test
+  public void testNonReadActionInBackground() {
+    runNonReadAction();
   }
 
+  @Test
   public void testNonReadActionInBackgroundWithReadLock() {
-    assertThrows(RuntimeExceptionWithAttachments.class, MUST_NOT_EXECUTE_IN_READ_ACTION,
-                 () -> throwExecutionExceptionCauseFromBackground(() -> ReadAction.runBlocking(() -> runNonReadAction())));
+    assertThatThrownBy(() -> ReadAction.runBlocking(() -> runNonReadAction()))
+      .isInstanceOf(RuntimeExceptionWithAttachments.class)
+      .hasMessageContaining(MUST_NOT_EXECUTE_IN_READ_ACTION);
   }
 
-  public void testEdtActionInBackgroundNoAssertion() throws Throwable {
-    throwExecutionExceptionCauseFromBackground(() -> runEdtActionNoAssertion());
+  @Test
+  public void testEdtActionInBackgroundNoAssertion() {
+    runEdtActionNoAssertion();
   }
 
+  @Test
+  @RunsInEdt
   public void testBackgroundActionOnEdtNoAssertion() {
     runBackgroundActionNoAssertion();
   }
 
-  public void testReadActionInBackgroundNoAssertion() throws Throwable {
-    throwExecutionExceptionCauseFromBackground(() -> runReadActionNoAssertion());
+  @Test
+  public void testReadActionInBackgroundNoAssertion() {
+    runReadActionNoAssertion();
   }
 
-  public void testWriteActionInBackgroundNoAssertion() throws Throwable {
-    throwExecutionExceptionCauseFromBackground(() -> runWriteActionNoAssertion());
+  @Test
+  public void testWriteActionInBackgroundNoAssertion() {
+    runWriteActionNoAssertion();
   }
 
   @RequiresEdt
-  private static void runEdtAction() {}
+  private static void runEdtAction() { }
 
   @RequiresBackgroundThread
-  private static void runBackgroundAction() {}
+  private static void runBackgroundAction() { }
 
   @RequiresReadLock
-  private static void runReadAction() {}
+  private static void runReadAction() { }
 
   @RequiresWriteLock
-  private static void runWriteAction() {}
+  private static void runWriteAction() { }
 
   @RequiresReadLockAbsence
-  private static void runNonReadAction() {}
+  private static void runNonReadAction() { }
 
   @RequiresEdt(generateAssertion = false)
-  private static void runEdtActionNoAssertion() {}
+  private static void runEdtActionNoAssertion() { }
 
   @RequiresBackgroundThread(generateAssertion = false)
-  private static void runBackgroundActionNoAssertion() {}
+  private static void runBackgroundActionNoAssertion() { }
 
   @RequiresReadLock(generateAssertion = false)
-  private static void runReadActionNoAssertion() {}
+  private static void runReadActionNoAssertion() { }
 
   @RequiresWriteLock(generateAssertion = false)
-  private static void runWriteActionNoAssertion() {}
-
-  private void throwExecutionExceptionCauseFromBackground(@NotNull Runnable action) throws Throwable {
-    try {
-      Future<?> future = mySingleThreadExecutor.submit(action);
-      try {
-        future.get(10, TimeUnit.MINUTES);
-      }
-      catch (InterruptedException | TimeoutException e) {
-        e.printStackTrace();
-        fail("Background computation didn't finish as expected");
-      }
-    }
-    catch (ExecutionException e) {
-      throw e.getCause();
-    }
-  }
+  private static void runWriteActionNoAssertion() { }
 }
