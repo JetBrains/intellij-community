@@ -24,12 +24,24 @@ class SeAsyncContributorWrapper<I : Any>(val contributor: SearchEverywhereContri
       if (pattern.isEmpty() && !contributor.isEmptyPatternSupported) return@coroutineToIndicator
 
       if (contributor is WeightedSearchEverywhereContributor) {
-        contributor.fetchWeightedElements(pattern, indicator) { t ->
-          runBlockingCancellable {
-            SeLog.log(ITEM_EMIT) {
-              "Provider async wrapper of ${contributor.searchProviderId} emitting: ${t.item.toString().split('\n').firstOrNull()}"
+        if (operationDisposable == null) {
+          contributor.fetchWeightedElements(pattern, indicator) { t ->
+            runBlockingCancellable {
+              SeLog.log(ITEM_EMIT) {
+                "Provider async wrapper of ${contributor.searchProviderId} emitting: ${t.item.toString().split('\n').firstOrNull()}"
+              }
+              consumer.process(t.item, t.weight)
             }
-            consumer.process(t.item, t.weight)
+          }
+        }
+        else {
+          contributor.fetchWeightedElementsWithOperationDisposable(pattern, indicator, operationDisposable) { t ->
+            runBlockingCancellable {
+              SeLog.log(ITEM_EMIT) {
+                "Provider async wrapper of ${contributor.searchProviderId} emitting: ${t.item.toString().split('\n').firstOrNull()}"
+              }
+              consumer.process(t.item, t.weight)
+            }
           }
         }
       }

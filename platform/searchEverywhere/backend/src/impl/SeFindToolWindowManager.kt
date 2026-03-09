@@ -110,11 +110,11 @@ class SeFindToolWindowManager(private val project: Project) {
       }
     }
     catch (e: CancellationException) {
+      Disposer.dispose(untilShowDoneDisposable)
       if (!currentCoroutineContext().isActive) {
         throw e
       }
       SeLog.log { "$tabCaptionText was cancelled" }
-      Disposer.dispose(untilShowDoneDisposable)
     }
 
     val targetsArray = if (targets.isEmpty()) {
