@@ -136,6 +136,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.Dimension;
 import java.awt.Point;
+import java.lang.ref.Reference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -474,24 +475,26 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
       XMLLanguage.INSTANCE.unregisterLanguageExtension(extension);
     }
 
+    List<PsiFile> retained;
     try {
       String location = getTestName(false) + ".xsd";
       final String url = "http://myschema/";
       ExternalResourceManagerExBase.registerResourceTemporarily(url, location, getTestRootDisposable());
 
       configureByFiles(null, BASE_PATH + getTestName(false) + ".xml", BASE_PATH + getTestName(false) + ".xsd");
-
-      assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
-
       Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
       setActiveEditors(allEditors);
+      assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
+
       Editor schemaEditor = null;
+      retained = new ArrayList<>();
       for (Editor editor : allEditors) {
         Document document = editor.getDocument();
         PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
         if (psiFile == null) {
           continue;
         }
+        retained.add(psiFile);
         if (location.equals(psiFile.getName())) {
           schemaEditor = editor;
           break;
@@ -508,6 +511,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
         XMLLanguage.INSTANCE.registerLanguageExtension(extension);
       }
     }
+    Reference.reachabilityFence(retained);
   }
 
 
@@ -882,14 +886,13 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
     ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
-    List<HighlightInfo> warns = myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
-    assertOneElement(warns);
+    assertOneElement(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING));
     Editor editor = getEditor();
     List<HighlightInfo.IntentionActionDescriptor> actions =
       ShowIntentionsPass.getAvailableFixes(editor, getFile(), -1, ((EditorEx)editor).getExpectedCaretOffset());
     HighlightInfo.IntentionActionDescriptor descriptor = assertOneElement(actions);
     CodeInsightTestFixtureImpl.invokeIntention(descriptor.getAction(), getFile(), getEditor());
-
+    myDaemonCodeAnalyzer.restart(getTestName(false));
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
     assertEmpty(ShowIntentionsPass.getAvailableFixes(editor, getFile(), -1, ((EditorEx)editor).getExpectedCaretOffset()));
   }
@@ -997,8 +1000,6 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
   }
 
-
-
   public void testCancelsItSelfOnTypingInAlienProject() throws Throwable {
     String body = StringUtil.repeat("\"String field = null;\"\n", 1000);
     @Language("JAVA")
@@ -1007,35 +1008,33 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
 
     Project alienProject = PlatformTestUtil.loadAndOpenProject(createTempDirectory().toPath().resolve("alien.ipr"), getTestRootDisposable());
 
-    DaemonProgressIndicator.runInDebugMode(() -> {
-      try {
-        Module alienModule = doCreateRealModuleIn("x", alienProject, getModuleType());
-        VirtualFile alienRoot = createTestProjectStructure(alienModule, null, true, getTempDir());
-        PsiDocumentManager.getInstance(alienProject).commitAllDocuments();
-        OpenFileDescriptor alienDescriptor = WriteAction.compute(() -> {
-          VirtualFile alienFile = alienRoot.createChildData(this, "AlienFile.java");
-          setFileText(alienFile, "class Alien { }");
-          return new OpenFileDescriptor(alienProject, alienFile);
-        });
+    try {
+      Module alienModule = doCreateRealModuleIn("x", alienProject, getModuleType());
+      VirtualFile alienRoot = createTestProjectStructure(alienModule, null, true, getTempDir());
+      PsiDocumentManager.getInstance(alienProject).commitAllDocuments();
+      OpenFileDescriptor alienDescriptor = WriteAction.compute(() -> {
+        VirtualFile alienFile = alienRoot.createChildData(this, "AlienFile.java");
+        setFileText(alienFile, "class Alien { }");
+        return new OpenFileDescriptor(alienProject, alienFile);
+      });
 
-        FileEditorManager fe = FileEditorManager.getInstance(alienProject);
-        Editor alienEditor = Objects.requireNonNull(fe.openTextEditor(alienDescriptor, false));
-        ((EditorImpl)alienEditor).setCaretActive();
-        myDaemonCodeAnalyzer.restart(getTestName(false));
-        // start daemon in the main project. should check for its cancel when typing in alien
-        AtomicBoolean checked = new AtomicBoolean();
-        Runnable callbackWhileWaiting = () -> {
-          if (!checked.getAndSet(true)) {
-            typeInAlienEditor(alienEditor, 'x');
-          }
-        };
-        myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getEditor().getDocument(), callbackWhileWaiting);
-      }
-      catch (ProcessCanceledException ignored) {
-        return;
-      }
-      fail("must throw PCE");
-    });
+      FileEditorManager fe = FileEditorManager.getInstance(alienProject);
+      Editor alienEditor = Objects.requireNonNull(fe.openTextEditor(alienDescriptor, false));
+      ((EditorImpl)alienEditor).setCaretActive();
+      myDaemonCodeAnalyzer.restart(getTestName(false));
+      // start daemon in the main project. should check for its cancel when typing in alien
+      AtomicBoolean checked = new AtomicBoolean();
+      Runnable callbackWhileWaiting = () -> {
+        if (!checked.getAndSet(true)) {
+          typeInAlienEditor(alienEditor, 'x');
+        }
+      };
+      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getEditor().getDocument(), callbackWhileWaiting);
+    }
+    catch (ProcessCanceledException ignored) {
+      return;
+    }
+    fail("must throw PCE");
   }
 
   public void testPasteInAnonymousCodeBlock() {
@@ -1933,19 +1932,21 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
                      BASE_PATH+getTestName(true)+"/p1/A1111.java");
     assertEquals("A2222.java", getFile().getName());
 
-    HighlightInfo info = assertOneElement(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING));
-    assertEquals("Class 'A2222' is never used", info.getDescription());
-
     Document document1111 = getFile().getParent().findFile("A1111.java").getFileDocument();
-    PsiDocumentManager.getInstance(getProject()).getPsiFile(document1111); // avoid "cached psiFile is null, cancel all passes"
+    PsiFile psiFile1111 = PsiDocumentManager.getInstance(getProject()).getPsiFile(document1111);// avoid "cached psiFile is null, cancel all passes"
     Editor editor1111 = ((TextEditor)FileEditorManager.getInstance(getProject())
       .getEditors(FileDocumentManager.getInstance().getFile(document1111))[0]).getEditor();
     setActiveEditors(getEditor(), editor1111);
+
+    HighlightInfo info = assertOneElement(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING));
+    assertEquals("Class 'A2222' is never used", info.getDescription());
+
     // uncomment (inside code block) the reference to A2222
     WriteCommandAction.writeCommandAction(myProject).run(()->document1111.deleteString(document1111.getText().indexOf("//"), document1111.getText().indexOf("//")+2));
 
     // now A2222 is no longer unused
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING));
+    Reference.reachabilityFence(psiFile1111);
   }
 
   // test the other type of PSI change: child remove/child add
@@ -1958,7 +1959,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
     assertEquals("A1111.java", getFile().getName());
     makeEditorWindowVisible(new Point(0, 1000), myEditor);
     Document document2222 = getFile().getParent().findFile("A2222.java").getFileDocument();
-    PsiDocumentManager.getInstance(getProject()).getPsiFile(document2222); // avoid "cached psiFile is null, cancel all passes"
+    PsiFile psiFile2222 = PsiDocumentManager.getInstance(getProject()).getPsiFile(document2222);// avoid "cached psiFile is null, cancel all passes"
     Editor editor2222 = ((TextEditor)FileEditorManager.getInstance(getProject())
       .getEditors(FileDocumentManager.getInstance().getFile(document2222))[0]).getEditor();
     setActiveEditors(getEditor(), editor2222);
@@ -1973,6 +1974,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(document2222, HighlightSeverity.ERROR));
     // now foo() is no longer unused
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING));
+    Reference.reachabilityFence(psiFile2222);
   }
 
   public void testTypingDoesNotLeaveInvalidPSIShitBehind() {
@@ -2349,7 +2351,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
     }
   }
 
-  public void testDaemonRestartsEventWhenCanceledDuringRunUpdateMethodCallIsRunning() {
+  public void testDaemonRestartsEvenWhenCanceledDuringRunUpdateMethodCallIsRunning() {
     @Language("JAVA")
     String text = """
         class AClass<caret> {

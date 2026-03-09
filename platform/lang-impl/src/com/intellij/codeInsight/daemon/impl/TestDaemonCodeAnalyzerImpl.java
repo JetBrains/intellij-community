@@ -370,6 +370,8 @@ public final class TestDaemonCodeAnalyzerImpl {
   @RequiresEdt
   public @NotNull Collection<? extends DaemonProgressIndicator> waitForDaemonToFinish(@NotNull Document document, @NotNull Runnable callbackWhileWaiting) {
     ThreadingAssertions.assertEventDispatchThread();
+    PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    assert psiFile != null;
     long start = System.currentTimeMillis();
     long deadline = start + 60_000;
     waitForAllThings(mustWaitForSmartModeByDefault);
@@ -424,6 +426,7 @@ public final class TestDaemonCodeAnalyzerImpl {
     }
     finally {
       Disposer.dispose(disposable);
+      Reference.reachabilityFence(psiFile);
     }
   }
 
