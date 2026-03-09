@@ -4,6 +4,41 @@ package com.intellij.platform.pluginSystem.testFramework
 import com.intellij.openapi.util.JDOMUtil
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.relativeTo
+
+class MissingModuleSetDescriptorException(
+  val moduleSetName: String,
+  val descriptorFileName: String,
+  val communityPath: Path,
+  val licenseCommonPath: Path,
+) : IllegalStateException(
+  "Cannot resolve module set '$moduleSetName': generated descriptor '$descriptorFileName' " +
+  "was not found in '$communityPath' or '$licenseCommonPath'."
+)
+
+fun MissingModuleSetDescriptorException.buildStalePackagingDataMessage(
+  contentYamlPath: Path,
+  projectRoot: Path,
+  generatorTestName: String,
+): String {
+  val displayYamlPath = contentYamlPath.toDisplayPath(projectRoot)
+  return buildString {
+    appendLine("Cannot resolve module set '$moduleSetName' referenced from '$displayYamlPath'.")
+    appendLine(
+      "The generated descriptor '$descriptorFileName' is missing, so the packaging data is out of date."
+    )
+    appendLine("Run '$generatorTestName' to regenerate the packaging data, then re-run this test.")
+    appendLine("Checked descriptor paths:")
+    appendLine("  ${communityPath.toDisplayPath(projectRoot)}")
+    appendLine("  ${licenseCommonPath.toDisplayPath(projectRoot)}")
+  }.trimEnd()
+}
+
+private data class ModuleSetDescriptorPaths(
+  val communityPath: Path,
+  val licenseCommonPath: Path,
+)
 
 /**
  * Checks if the path refers to a module set file.
@@ -18,12 +53,12 @@ fun isModuleSetPath(path: String): Boolean = path.removePrefix("/").startsWith("
  * @return Path to the module set file
  */
 fun resolveModuleSetPath(fileName: String, projectRoot: Path): Path {
-  val communityPath = projectRoot.resolve("community/platform/platform-resources/generated/META-INF/$fileName")
-  if (communityPath.exists()) {
-    return communityPath
+  val descriptorPaths = getModuleSetDescriptorPaths(fileName, projectRoot)
+  if (descriptorPaths.communityPath.exists()) {
+    return descriptorPaths.communityPath
   }
   else {
-    return projectRoot.resolve("licenseCommon/generated/META-INF/$fileName")
+    return descriptorPaths.licenseCommonPath
   }
 }
 
@@ -45,7 +80,8 @@ fun resolveModuleSet(moduleSetName: String, embeddedOnly: Boolean, ultimateRoot:
   }
 
   val xmlFileName = "$moduleSetName.xml"
-  val xmlPath = resolveModuleSetPath(xmlFileName, ultimateRoot)
+  val descriptorPaths = getModuleSetDescriptorPaths(xmlFileName, ultimateRoot)
+  val xmlPath = descriptorPaths.findExistingPath(moduleSetName, xmlFileName)
   return resolveModuleSetRecursive(xmlPath, ultimateRoot, embeddedOnly, HashSet())
 }
 
@@ -74,10 +110,40 @@ private fun resolveModuleSetRecursive(xmlPath: Path, ultimateRoot: Path, embedde
     if (href != null && href.startsWith("/META-INF/intellij.moduleSets.")) {
       // extract module set name from href like "/META-INF/intellij.moduleSets.essential.xml"
       val includedFileName = href.substringAfterLast('/')
-      val includedXmlPath = resolveModuleSetPath(includedFileName, ultimateRoot)
+      val includedModuleSetName = includedFileName.removeSuffix(".xml")
+      val includedDescriptorPaths = getModuleSetDescriptorPaths(includedFileName, ultimateRoot)
+      val includedXmlPath = includedDescriptorPaths.findExistingPath(includedModuleSetName, includedFileName)
       result.addAll(resolveModuleSetRecursive(includedXmlPath, ultimateRoot, embeddedOnly, visited))
     }
   }
 
   return result
+}
+
+private fun getModuleSetDescriptorPaths(fileName: String, projectRoot: Path): ModuleSetDescriptorPaths {
+  return ModuleSetDescriptorPaths(
+    communityPath = projectRoot.resolve("community/platform/platform-resources/generated/META-INF/$fileName"),
+    licenseCommonPath = projectRoot.resolve("licenseCommon/generated/META-INF/$fileName"),
+  )
+}
+
+private fun ModuleSetDescriptorPaths.findExistingPath(moduleSetName: String, descriptorFileName: String): Path {
+  if (communityPath.exists()) {
+    return communityPath
+  }
+  if (licenseCommonPath.exists()) {
+    return licenseCommonPath
+  }
+
+  throw MissingModuleSetDescriptorException(
+    moduleSetName = moduleSetName,
+    descriptorFileName = descriptorFileName,
+    communityPath = communityPath,
+    licenseCommonPath = licenseCommonPath,
+  )
+}
+
+private fun Path.toDisplayPath(projectRoot: Path): String {
+  return runCatching { relativeTo(projectRoot).invariantSeparatorsPathString }
+    .getOrElse { invariantSeparatorsPathString }
 }
