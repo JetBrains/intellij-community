@@ -90,24 +90,25 @@ class LuceneIndex(val project: Project, indexName: String, val log: Logger) : Di
     }
     catch (t: Throwable) {
       // Best-effort rollback of any uncommitted changes
-      try {
-        indexRW.searcherManager.close()
-      }
-      catch (e: Throwable) {
-        t.addSuppressed(e)
-      }
 
-      // This also closes the writer.
-      try {
-        indexRW.writer.rollback()
-      }
-      catch (e: Throwable) {
-        t.addSuppressed(e)
-      }
+
+      // @formatter:off
+      val exception: Throwable? = tryEachAndAccumulateExceptions(accumulator = t, {
+                                                                   indexRW.searcherManager.close()
+                                                                 }, {
+                                                                   indexRW.writer.rollback()
+                                                                 })
+      // @formatter:on
+
       // Reopen writer + searcher infrastructure so the index can continue operating
       atomicIndexRW.store(createIndexReaderWriter())
 
-      log.error(LuceneIndexInsufficientFaultHandlingException(t))
+      if (exception != null) {
+        log.error(LuceneIndexInsufficientFaultHandlingException(exception))
+      }
+      else {
+        log.error(IllegalStateException("Aggregated exception was null. T is not nullable, so the resulting exception (which is just t with optionally added context) cannot be nullable as well."))
+      }
     }
   }
 
@@ -142,28 +143,31 @@ class LuceneIndex(val project: Project, indexName: String, val log: Logger) : Di
   override fun dispose() {
     val indexRW = this.atomicIndexRW.load()
 
-    val exception: Throwable? = tryEachAndAccumulateExceptions({
+    // @formatter:off
+    val exception: Throwable? = tryEachAndAccumulateExceptions(accumulator = null, {
                                                                  indexRW.searcherManager.close()
                                                                }, {
                                                                  indexRW.writer.close()
                                                                }, {
                                                                  directory.close()
                                                                })
+    // @formatter:on
 
     if (exception != null) {
       log.error(LuceneIndexInsufficientFaultHandlingException(exception))
     }
   }
 
-  private fun tryEachAndAccumulateExceptions(vararg blocks: () -> Unit): Throwable? = blocks.fold(null) { accumulator, block ->
-    try {
-      block()
-      accumulator
+  private fun tryEachAndAccumulateExceptions(accumulator: Throwable? = null, vararg blocks: () -> Unit): Throwable? =
+    blocks.fold(accumulator) { accumulator, block ->
+      try {
+        block()
+        accumulator
+      }
+      catch (e: Throwable) {
+        accumulator?.also { it.addSuppressed(e) } ?: e
+      }
     }
-    catch (e: Throwable) {
-      accumulator?.also { it.addSuppressed(e) } ?: e
-    }
-  }
 
 
   companion object {
