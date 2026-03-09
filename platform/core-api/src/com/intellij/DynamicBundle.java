@@ -76,29 +76,30 @@ public class DynamicBundle extends AbstractBundle {
   protected @NotNull ResourceBundle findBundle(@NotNull String pathToBundle,
                                                @NotNull ClassLoader baseLoader,
                                                @NotNull ResourceBundle.Control control) {
+    Locale locale = getResolveLocale();
     return (DefaultBundleService.isDefaultBundle() ? ourDefaultCache : ourCache)
       .computeIfAbsent(baseLoader, __ -> CollectionFactory.createConcurrentSoftValueMap())
-      .computeIfAbsent(pathToBundle, __ ->
+      .computeIfAbsent(new BundleCacheKey(pathToBundle, locale), __ ->
         resolveResourceBundle(
           getBundleClassLoader(),
           baseLoader,
           pathToBundle,
-          getResolveLocale(),
-          (loader, locale) -> super.findBundle(pathToBundle, loader, control, locale)
+          locale,
+          (loader, resolvedLocale) -> super.findBundle(pathToBundle, loader, control, resolvedLocale)
         ));
   }
 
   @Nullable
-  private static ResourceBundle getBundleFromCache(@NotNull ClassLoader loader, @NotNull String pathToBundle) {
-    Map<String, ResourceBundle> loaderCache = ourCache.get(loader);
+  private static ResourceBundle getBundleFromCache(@NotNull ClassLoader loader, @NotNull String pathToBundle, @NotNull Locale locale) {
+    Map<BundleCacheKey, ResourceBundle> loaderCache = ourCache.get(loader);
     if (loaderCache == null) return null;
-    return loaderCache.get(pathToBundle);
+    return loaderCache.get(new BundleCacheKey(pathToBundle, locale));
   }
 
-  private static void removeBundleFromCache(@NotNull ClassLoader loader, @NotNull String pathToBundle) {
-    Map<String, ResourceBundle> loaderCache = ourCache.get(loader);
+  private static void removeBundleFromCache(@NotNull ClassLoader loader, @NotNull String pathToBundle, @NotNull Locale locale) {
+    Map<BundleCacheKey, ResourceBundle> loaderCache = ourCache.get(loader);
     if (loaderCache == null) return;
-    loaderCache.remove(pathToBundle);
+    loaderCache.remove(new BundleCacheKey(pathToBundle, locale));
   }
 
   private static @NotNull ResourceBundle resolveResourceBundle(@NotNull ClassLoader bundleClassLoader,
@@ -112,7 +113,7 @@ public class DynamicBundle extends AbstractBundle {
     Map<LocalizationOrder, ResourceBundle> bundleOrderMap = new HashMap<>();
     if (pluginClassLoader != null) {
       try {
-        ResourceBundle pluginBundle = bundleResolver.apply(pluginClassLoader, Locale.ROOT);
+        ResourceBundle pluginBundle = bundleResolver.apply(pluginClassLoader, locale);
         bundleOrderMap.put(LocalizationOrder.DEFAULT_PLUGIN, pluginBundle);
       }
       catch (MissingResourceException e) {
@@ -244,14 +245,15 @@ public class DynamicBundle extends AbstractBundle {
       LOG.warn("Bundle without name cannot be properly cached: " + bundle);
       return bundle;
     }
-    ResourceBundle bundleFromCache = getBundleFromCache(classLoader, pathToBundle);
+    Locale locale = getResolveLocale();
+    ResourceBundle bundleFromCache = getBundleFromCache(classLoader, pathToBundle, locale);
     if (bundleFromCache == null) {
       // Return null to force findBundle execution which will properly resolve and cache the bundle
       return null;
     }
     if (bundleFromCache != bundle) {
       LOG.info("Cleanup bundle cache for " + pathToBundle);
-      removeBundleFromCache(classLoader, pathToBundle);
+      removeBundleFromCache(classLoader, pathToBundle, locale);
       return null;
     }
     return bundle;
@@ -298,30 +300,50 @@ public class DynamicBundle extends AbstractBundle {
     }
   }
 
-  private static final Map<ClassLoader, Map<String, ResourceBundle>> ourCache = CollectionFactory.createConcurrentWeakMap();
-  private static final Map<ClassLoader, Map<String, ResourceBundle>> ourDefaultCache = CollectionFactory.createConcurrentWeakMap();
+  private static final class BundleCacheKey {
+    private final @NotNull String pathToBundle;
+    private final @NotNull Locale locale;
+
+    private BundleCacheKey(@NotNull String pathToBundle, @NotNull Locale locale) {
+      this.pathToBundle = pathToBundle;
+      this.locale = locale;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) return true;
+      if (!(obj instanceof BundleCacheKey)) return false;
+      BundleCacheKey key = (BundleCacheKey)obj;
+      return pathToBundle.equals(key.pathToBundle) && locale.equals(key.locale);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = pathToBundle.hashCode();
+      result = 31 * result + locale.hashCode();
+      return result;
+    }
+  }
+
+  private static final Map<ClassLoader, Map<BundleCacheKey, ResourceBundle>> ourCache = CollectionFactory.createConcurrentWeakMap();
+  private static final Map<ClassLoader, Map<BundleCacheKey, ResourceBundle>> ourDefaultCache = CollectionFactory.createConcurrentWeakMap();
 
   public static @NotNull ResourceBundle getResourceBundle(@NotNull ClassLoader loader, @NotNull @NonNls String pathToBundle) {
+    Locale locale = getResolveLocale();
     return (DefaultBundleService.isDefaultBundle() ? ourDefaultCache : ourCache)
       .computeIfAbsent(loader, __ -> CollectionFactory.createConcurrentSoftValueMap())
-      .computeIfAbsent(pathToBundle, __ -> resolveResourceBundle(loader, pathToBundle, getResolveLocale()));
+      .computeIfAbsent(new BundleCacheKey(pathToBundle, locale), __ -> resolveResourceBundle(loader, pathToBundle, locale));
   }
 
   public static @NotNull ResourceBundle getResourceBundle(@NotNull ClassLoader loader, @NotNull @NonNls String pathToBundle, @NotNull Locale locale) {
     return (DefaultBundleService.isDefaultBundle() ? ourDefaultCache : ourCache)
       .computeIfAbsent(loader, __ -> CollectionFactory.createConcurrentSoftValueMap())
-      .computeIfAbsent(pathToBundle, __ -> resolveResourceBundle(loader, pathToBundle, locale));
+      .computeIfAbsent(new BundleCacheKey(pathToBundle, locale), __ -> resolveResourceBundle(loader, pathToBundle, locale));
   }
 
   @ApiStatus.Internal
   public static @NotNull ResourceBundle getResourceBundleLocalized(@NotNull ClassLoader loader, @NotNull @NonNls String pathToBundle, @NotNull Locale locale) {
-    ResourceBundle bundle = (DefaultBundleService.isDefaultBundle() ? ourDefaultCache : ourCache)
-      .computeIfAbsent(loader, __ -> CollectionFactory.createConcurrentSoftValueMap())
-      .get(pathToBundle);
-    if (bundle != null && bundle.getLocale().equals(locale)) {
-      return bundle;
-    }
-    return resolveResourceBundle(loader, pathToBundle, locale);
+    return getResourceBundle(loader, pathToBundle, locale);
   }
 
   public static @Nullable ResourceBundle getPluginBundle(@NotNull PluginDescriptor pluginDescriptor) {
