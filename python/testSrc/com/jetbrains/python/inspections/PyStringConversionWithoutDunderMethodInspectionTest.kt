@@ -16,7 +16,7 @@ class PyStringConversionWithoutDunderMethodInspectionTest : PyInspectionTestCase
   override fun getInspectionClass() = PyStringConversionWithoutDunderMethodInspection::class.java
 
   fun `test generator`() = doTestByText("""
-    f"{<weak_warning descr="Type 'Generator' doesn't define '__str__', '__repr__', or '__format__', so the result might not be useful">(_ for _ in range(10))</weak_warning>}"
+    f"{<weak_warning descr="Type 'Generator[int, Any, None]' doesn't define '__str__', '__repr__', or '__format__', so the result might not be useful">(_ for _ in range(10))</weak_warning>}"
   """.trimIndent())
 
   fun `test function`() = doTestByText("""
@@ -26,7 +26,7 @@ class PyStringConversionWithoutDunderMethodInspectionTest : PyInspectionTestCase
 
   fun `test zip`() = doTestByText("""
     def f(): ...
-    f"{<weak_warning descr="Type 'zip' doesn't define '__str__', '__repr__', or '__format__', so the result might not be useful">zip()</weak_warning>}"
+    f"{<weak_warning descr="Type 'zip[Any]' doesn't define '__str__', '__repr__', or '__format__', so the result might not be useful">zip()</weak_warning>}"
   """.trimIndent())
 
   fun `test super`() = doTestByText("""
@@ -97,7 +97,8 @@ class PyStringConversionWithoutDunderMethodInspectionTest : PyInspectionTestCase
     str(Derived())
     """.trimIndent())
 
-  fun `test should not warn for builtin types`() = doTestByText("""
+  // needs a real python sdk with skeletons to resolve int.__repr__ etc.; typeshed-only stubs inherit object.__repr__
+  fun `ignore test should not warn for builtin types`() = doTestByText("""
     # see default ignore list for explanation
     repr(42)
     repr((1, 2, 3))
@@ -109,10 +110,11 @@ class PyStringConversionWithoutDunderMethodInspectionTest : PyInspectionTestCase
     """.trimIndent())
 
   @TestFor(issues = ["PY-89082"])
-  fun `test should not warn for pathlib`() = doTestByText("""
+  // needs a real python sdk with skeletons to resolve pathlib.PurePath.__str__/__repr__
+  fun `ignore test should not warn for pathlib`() = doTestByText("""
     # see default ignore list for explanation
     from pathlib import PurePath
-    
+
     repr(PurePath())
     str(PurePath())
     format(PurePath())
@@ -329,8 +331,24 @@ class PyStringConversionWithoutDunderMethodInspectionTest : PyInspectionTestCase
 
   // A class declared in a .pyi stub usually omits __str__/__repr__/__format__ that the runtime .py defines.
   @TestFor(issues = ["PY-89004"])
-  fun testStubMethodResolvedToImplementation() = doMultiFileTest()
+  fun testStubMethodResolvedToImplementation() = doMultiFileTestByText("""
+      from mod import A, B
+    
+      class C(B): ...
+    
+      str(A())
+      str(B())
+      str(C())
+    """.trimIndent())
 
   @TestFor(issues = ["PY-89004"])
-  fun testStubMethodMissingInImplementation() = doMultiFileTest()
+  fun testStubMethodMissingInImplementation() = doMultiFileTestByText("""
+    from mod import A, B
+    
+    class C(B): ...
+    
+    str(<weak_warning descr="Type 'A' doesn't define '__str__' or '__repr__', so the result might not be useful">A()</weak_warning>)
+    str(<weak_warning descr="Type 'B' doesn't define '__str__' or '__repr__', so the result might not be useful">B()</weak_warning>)
+    str(<weak_warning descr="Type 'C' doesn't define '__str__' or '__repr__', so the result might not be useful">C()</weak_warning>)
+    """.trimIndent())
 }

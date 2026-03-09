@@ -70,13 +70,24 @@ public abstract class PyInspectionTestCase extends PyTestCase {
     assertSdkRootsNotParsed(currentFile);
   }
 
+  protected void doMultiFileTestByText(String text) {
+    var currentFile = myFixture.configureByText("a.py", text);
+    doMultiFileTestImpl(currentFile, null);
+  }
+
   protected void doMultiFileTest() {
     doMultiFileTest("a.py");
   }
 
   protected void doMultiFileTest(@NotNull String filename) {
+    doMultiFileTestImpl(null, filename);
+  }
+
+  private void doMultiFileTestImpl(PsiFile currentFile, String filename) {
     myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
-    PsiFile currentFile = myFixture.configureFromTempProjectFile(filename);
+    if (filename != null) {
+      currentFile = myFixture.configureFromTempProjectFile(filename);
+    }
     configureInspection();
     if (!currentFile.isValid()) {
       VirtualFile virtualFile = currentFile.getVirtualFile();
