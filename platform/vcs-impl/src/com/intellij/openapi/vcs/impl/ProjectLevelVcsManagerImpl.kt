@@ -523,35 +523,17 @@ class ProjectLevelVcsManagerImpl(
                            isInDirectoryBasedRoot(vf) ||
                            hasExplicitMapping(vf) ||
                            fileIndex.isInContent(vf) ||
-                           (!Registry.`is`("ide.hide.excluded.files") && fileIndex.isExcludedFile(vf))
+                           fileIndex.isExcludedFile(vf)
       isUnderProject && !isIgnoredFilePath(vf.path)
     })
   }
 
   override fun isIgnored(vf: VirtualFile): Boolean {
-    if (Registry.`is`("ide.hide.excluded.files")) {
-      return ReadAction.compute(ThrowableComputable {
-        if (project.isDisposed() || project.isDefault) return@ThrowableComputable false
-        if (!vf.isValid()) return@ThrowableComputable false
-        FileIndexFacade.getInstance(project).isExcludedFile(vf)
-      })
-    }
-    else {
-      return isIgnoredFilePath(vf.path)
-    }
+    return isIgnoredFilePath(vf.path)
   }
 
   override fun isIgnored(filePath: FilePath): Boolean {
-    if (Registry.`is`("ide.hide.excluded.files")) {
-      return ReadAction.compute(ThrowableComputable {
-        if (project.isDisposed() || project.isDefault) return@ThrowableComputable false
-        val vf = VcsImplUtil.findValidParentAccurately(filePath)
-        vf != null && FileIndexFacade.getInstance(project).isExcludedFile(vf)
-      })
-    }
-    else {
-      return isIgnoredFilePath(filePath.path)
-    }
+    return isIgnoredFilePath(filePath.path)
   }
 
   @ApiStatus.Internal
