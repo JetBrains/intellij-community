@@ -1718,7 +1718,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       if (resolved is PySubscriptionExpression) {
         if (resolved.operand.resolvesToQualifiedNames(context, LITERAL, LITERAL_EXT)) {
           return resolved.indexExpression
-            ?.let { PyLiteralType.fromLiteralParameter(it, context.typeContext) }
+            ?.let { PyLiteralType.fromLiteralParameter(it, context.typeContext, context.typeRepresentationMode) }
             ?.let { Ref.create(it) }
         }
       }
