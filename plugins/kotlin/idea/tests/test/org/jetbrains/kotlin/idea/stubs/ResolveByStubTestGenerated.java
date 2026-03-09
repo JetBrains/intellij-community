@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.stubs;
 
@@ -1095,31 +1095,6 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
             public void testConstructorVararg() throws Exception {
                 runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/constructor/vararg/ConstructorVararg.kt"));
             }
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/contextReceivers")
-    public static class ContextReceivers extends AbstractResolveByStubTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K1;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @Override
-        protected void setUp() {
-            compilerTestData("compiler/testData/loadJava/compiledKotlin/contextReceivers");
-            super.setUp();
-        }
-
-        @TestMetadata("SimpleContextReceivers.kt")
-        public void testSimpleContextReceivers() throws Exception {
-            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/contextReceivers/SimpleContextReceivers.kt"));
         }
     }
 

@@ -1,13 +1,13 @@
 // WITH_STDLIB
 fun unrelatedTypes(obj : Any) {
     if (obj is X) {
-        if (<warning descr="[USELESS_IS_CHECK] Check for instance is always 'false'.">obj is Y</warning>) { }
-        if (<warning descr="[USELESS_IS_CHECK] Check for instance is always 'true'.">obj !is Y</warning>) { }
+        if (<warning descr="[IMPOSSIBLE_IS_CHECK_WARNING] Check for instance is always 'false'. This will become an error in language version 2.4. See https://youtrack.jetbrains.com/issue/KTLC-365.">obj is Y</warning>) { }
+        if (<warning descr="[IMPOSSIBLE_IS_CHECK_WARNING] Check for instance is always 'true'. This will become an error in language version 2.4. See https://youtrack.jetbrains.com/issue/KTLC-365.">obj !is Y</warning>) { }
     }
 }
 fun nullableTypes(obj : Any?) {
     if (obj is X?) {
-        if (<warning descr="[USELESS_IS_CHECK] Check for instance is always 'false'.">obj is Y?</warning>) {
+        if (<warning descr="[IMPOSSIBLE_IS_CHECK_RELYING_ON_NULL_WARNING] This check only evaluates to 'true' when the left-hand side is null. Consider rewriting it to an explicit null check. This will become an error in language version 2.4. See https://youtrack.jetbrains.com/issue/KTLC-365.">obj is Y?</warning>) {
             if (<warning descr="Condition 'obj == null' is always true">obj == null</warning>) { }
         }
     }

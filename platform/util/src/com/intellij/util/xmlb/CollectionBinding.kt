@@ -260,13 +260,25 @@ internal class CollectionBinding(
       return strategy.deserializeList(currentValue = currentValue, elements = elements, adapter = adapter, binding = this)
     }
 
-    val element = elements.single()
-    return strategy.deserializeList(
-      currentValue = if (currentValue == null && adapter.getName(element) == Constants.SET) HashSet<Any>() else currentValue,
-      elements = adapter.getChildren(element),
-      adapter = adapter,
-      binding = this,
-    )
+    return when {
+      elements.isEmpty() -> {
+        strategy.deserializeList(
+          currentValue = currentValue,
+          elements = emptyList(),
+          adapter = adapter,
+          binding = this,
+        )
+      }
+      else -> {
+        val element = elements.single()
+        strategy.deserializeList(
+          currentValue = if (currentValue == null && adapter.getName(element) == Constants.SET) HashSet<Any>() else currentValue,
+          elements = adapter.getChildren(element),
+          adapter = adapter,
+          binding = this,
+        )
+      }
+    }
   }
 
   private fun serializeItem(value: Any?, parent: Element, filter: SerializationFilter?) {
