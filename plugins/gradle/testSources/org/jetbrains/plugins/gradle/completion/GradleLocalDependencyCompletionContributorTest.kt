@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.completion
 
-import com.intellij.gradle.completion.GradleDependencyCompletionContributor
+import com.intellij.gradle.completion.GradleLocalDependencyCompletionContributor
 import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexer
 import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexerTestImpl
 import com.intellij.openapi.Disposable
@@ -9,11 +9,13 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyCompletionContext
+import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionResult
 import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyPartCompletionResult
 import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
-import com.intellij.repository.search.completion.api.GradleDependencyCompletionContext
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
@@ -21,14 +23,6 @@ import com.intellij.util.application
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.ListAssert
-import org.jetbrains.idea.completion.api.DependencyArtifactCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyCompletionContext
-import org.jetbrains.idea.completion.api.DependencyCompletionContributionSource
-import org.jetbrains.idea.completion.api.DependencyCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyCompletionResult
-import org.jetbrains.idea.completion.api.DependencyGroupCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyPartCompletionResult
-import org.jetbrains.idea.completion.api.DependencyVersionCompletionRequest
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -36,7 +30,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
 @TestApplication
-class GradleDependencyCompletionContributorTest {
+class GradleLocalDependencyCompletionContributorTest {
   @TestDisposable private lateinit var disposable: Disposable
 
   private val eelDescriptor = LocalEelDescriptor
@@ -58,7 +52,7 @@ class GradleDependencyCompletionContributorTest {
 
     val context = GradleDependencyCompletionContext(eelDescriptor)
     val request = DependencyCompletionRequest(searchString, context)
-    val contributor = GradleDependencyCompletionContributor()
+    val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
 
     assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
@@ -87,7 +81,7 @@ class GradleDependencyCompletionContributorTest {
 
     val context = GradleDependencyCompletionContext(eelDescriptor)
     val request = DependencyCompletionRequest(searchString, context)
-    val contributor = GradleDependencyCompletionContributor()
+    val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
 
     assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
@@ -116,7 +110,7 @@ class GradleDependencyCompletionContributorTest {
 
     val context = GradleDependencyCompletionContext(eelDescriptor)
     val request = DependencyCompletionRequest(searchString, context)
-    val contributor = GradleDependencyCompletionContributor()
+    val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
 
     assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
@@ -140,7 +134,7 @@ class GradleDependencyCompletionContributorTest {
 
     val context = GradleDependencyCompletionContext(eelDescriptor)
     val request = DependencyCompletionRequest(searchString, context)
-    val contributor = GradleDependencyCompletionContributor()
+    val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
 
     assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
@@ -167,7 +161,7 @@ class GradleDependencyCompletionContributorTest {
 
     val context = GradleDependencyCompletionContext(eelDescriptor)
     val request = DependencyCompletionRequest(searchString, context)
-    val contributor = GradleDependencyCompletionContributor()
+    val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
 
     assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
@@ -195,7 +189,7 @@ class GradleDependencyCompletionContributorTest {
 
     val context = GradleDependencyCompletionContext(eelDescriptor)
     val request = DependencyCompletionRequest(searchString, context)
-    val contributor = GradleDependencyCompletionContributor()
+    val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
 
     assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
@@ -221,7 +215,7 @@ class GradleDependencyCompletionContributorTest {
 
     val context = GradleDependencyCompletionContext(eelDescriptor)
     val request = DependencyCompletionRequest(searchString, context)
-    val contributor = GradleDependencyCompletionContributor()
+    val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
 
     assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
@@ -255,7 +249,7 @@ class GradleDependencyCompletionContributorTest {
 
     val context = GradleDependencyCompletionContext(eelDescriptor)
     val request = DependencyCompletionRequest(searchString, context)
-    val contributor = GradleDependencyCompletionContributor()
+    val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
 
     assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
@@ -278,7 +272,7 @@ class GradleDependencyCompletionContributorTest {
 
     val context = GradleDependencyCompletionContext(eelDescriptor)
     val request = DependencyCompletionRequest("", context)
-    val contributor = GradleDependencyCompletionContributor()
+    val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
 
     assertThat(results).containsLocalDependenciesExactly(
@@ -308,7 +302,7 @@ class GradleDependencyCompletionContributorTest {
 
     val context = GradleDependencyCompletionContext(eelDescriptor)
     val request = DependencyCompletionRequest("", context)
-    val contributor = GradleDependencyCompletionContributor()
+    val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
 
     assertThat(results).containsLocalDependenciesExactly(
@@ -332,7 +326,7 @@ class GradleDependencyCompletionContributorTest {
 
     val context = GradleDependencyCompletionContext(eelDescriptor)
     val request = DependencyCompletionRequest("", context)
-    val contributor = GradleDependencyCompletionContributor()
+    val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
 
     assertEquals(1, results.size)
@@ -349,7 +343,7 @@ class GradleDependencyCompletionContributorTest {
 
     val context = GradleDependencyCompletionContext(eelDescriptor)
     val request = DependencyCompletionRequest("", context)
-    val contributor = GradleDependencyCompletionContributor()
+    val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
 
     assertThat(results).containsLocalDependenciesExactly(Triple("group", "artifact", "1.0.0"))
@@ -371,7 +365,7 @@ class GradleDependencyCompletionContributorTest {
 
     val context = GradleDependencyCompletionContext(eelDescriptor)
     val request = DependencyCompletionRequest(searchString, context)
-    val contributor = GradleDependencyCompletionContributor()
+    val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
 
     assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
@@ -398,7 +392,7 @@ class GradleDependencyCompletionContributorTest {
 
     val context = GradleDependencyCompletionContext(eelDescriptor)
     val request = DependencyCompletionRequest(searchString, context)
-    val contributor = GradleDependencyCompletionContributor()
+    val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
 
     assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
@@ -419,7 +413,7 @@ class GradleDependencyCompletionContributorTest {
 
     val context = GradleDependencyCompletionContext(eelDescriptor)
     val request = DependencyGroupCompletionRequest(searchString, "", context)
-    val contributor = GradleDependencyCompletionContributor()
+    val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.getGroups(request)
 
     assertThat(results).containsLocalDependenciesExactlyInAnyOrder("group")
@@ -442,7 +436,7 @@ class GradleDependencyCompletionContributorTest {
 
     val context = GradleDependencyCompletionContext(eelDescriptor)
     val request = DependencyGroupCompletionRequest(searchString, "", context)
-    val contributor = GradleDependencyCompletionContributor()
+    val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.getGroups(request)
 
     assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
@@ -468,7 +462,7 @@ class GradleDependencyCompletionContributorTest {
 
     val context = GradleDependencyCompletionContext(eelDescriptor)
     val request = DependencyGroupCompletionRequest(searchString, "correct", context)
-    val contributor = GradleDependencyCompletionContributor()
+    val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.getGroups(request)
 
     assertThat(results).containsLocalDependenciesExactlyInAnyOrder("group")
@@ -486,7 +480,7 @@ class GradleDependencyCompletionContributorTest {
 
     val context = GradleDependencyCompletionContext(eelDescriptor)
     val request = DependencyArtifactCompletionRequest("group", searchString, context)
-    val contributor = GradleDependencyCompletionContributor()
+    val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.getArtifacts(request)
 
     assertThat(results).containsLocalDependenciesExactlyInAnyOrder("artifact")
@@ -509,7 +503,7 @@ class GradleDependencyCompletionContributorTest {
 
     val context = GradleDependencyCompletionContext(eelDescriptor)
     val request = DependencyArtifactCompletionRequest("group", searchString, context)
-    val contributor = GradleDependencyCompletionContributor()
+    val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.getArtifacts(request)
 
     assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
@@ -535,7 +529,7 @@ class GradleDependencyCompletionContributorTest {
 
     val context = GradleDependencyCompletionContext(eelDescriptor)
     val request = DependencyArtifactCompletionRequest("correct", searchString, context)
-    val contributor = GradleDependencyCompletionContributor()
+    val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.getArtifacts(request)
 
     assertThat(results).containsLocalDependenciesExactlyInAnyOrder("artifact")
@@ -552,7 +546,7 @@ class GradleDependencyCompletionContributorTest {
 
     val context = GradleDependencyCompletionContext(eelDescriptor)
     val request = DependencyVersionCompletionRequest("group", "artifact", searchString, context)
-    val contributor = GradleDependencyCompletionContributor()
+    val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.getVersions(request)
 
     assertThat(results).containsLocalDependenciesExactlyInAnyOrder("version")
@@ -573,7 +567,7 @@ class GradleDependencyCompletionContributorTest {
 
     val context = GradleDependencyCompletionContext(eelDescriptor)
     val request = DependencyVersionCompletionRequest("group", "artifact", searchString, context)
-    val contributor = GradleDependencyCompletionContributor()
+    val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.getVersions(request)
 
     assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
@@ -599,7 +593,7 @@ class GradleDependencyCompletionContributorTest {
 
     val context = GradleDependencyCompletionContext(eelDescriptor)
     val request = DependencyVersionCompletionRequest("correct-group", "correct-artifact", searchString, context)
-    val contributor = GradleDependencyCompletionContributor()
+    val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.getVersions(request)
 
     assertThat(results).containsLocalDependenciesExactlyInAnyOrder("version")

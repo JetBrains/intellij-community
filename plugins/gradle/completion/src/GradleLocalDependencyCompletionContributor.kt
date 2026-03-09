@@ -23,7 +23,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.idea.completion.api.*
 
 @ApiStatus.Internal
-class GradleDependencyCompletionContributor : DependencyCompletionContributor {
+class GradleLocalDependencyCompletionContributor : DependencyCompletionContributor {
 
   override val buildSystemId: ProjectSystemId
     get() = GradleConstants.SYSTEM_ID

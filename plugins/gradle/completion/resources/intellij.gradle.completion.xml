@@ -19,6 +19,6 @@
     <lookup.usageDetails implementation="com.intellij.gradle.completion.GradleScriptDependencyCompletionUsageDescriptor"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
-    <contributor implementation="com.intellij.gradle.completion.GradleDependencyCompletionContributor"/>
+    <contributor implementation="com.intellij.gradle.completion.GradleLocalDependencyCompletionContributor"/>
   </extensions>
 </idea-plugin>
