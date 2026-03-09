@@ -3,7 +3,7 @@ package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.agent.workbench.prompt.AgentPromptBundle
 import com.intellij.icons.AllIcons
-
+import com.intellij.ide.setToolTipText
 import com.intellij.markdown.utils.convertMarkdownToHtml
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.EditorTextField
@@ -45,14 +45,14 @@ private const val CARD_EDITOR = "editor"
 private const val CARD_PREVIEW = "preview"
 
 internal data class AgentPromptPaletteView(
-  @JvmField val rootPanel: JPanel,
-  @JvmField val tabbedPane: JBTabbedPane,
-  @JvmField val providerIconLabel: JBLabel,
-  @JvmField val existingTaskListModel: DefaultListModel<ThreadEntry>,
-  @JvmField val existingTaskList: JBList<ThreadEntry>,
-  @JvmField val existingTaskScrollPane: JBScrollPane,
-  @JvmField val footerLabel: JBLabel,
-  @JvmField val providerOptionsPanel: JPanel?,
+  val rootPanel: JPanel,
+  val tabbedPane: JBTabbedPane,
+  val providerIconLabel: JBLabel,
+  val existingTaskListModel: DefaultListModel<ThreadEntry>,
+  val existingTaskList: JBList<ThreadEntry>,
+  val existingTaskScrollPane: JBScrollPane,
+  val footerLabel: JBLabel,
+  val providerOptionsPanel: JPanel?,
 )
 
 internal fun createAgentPromptPaletteView(
@@ -64,7 +64,7 @@ internal fun createAgentPromptPaletteView(
 ): AgentPromptPaletteView {
   val providerIconLabel = JBLabel().apply {
     cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-    toolTipText = AgentPromptBundle.message("popup.provider.selector.tooltip")
+    setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.provider.selector.tooltip")))
     border = JBUI.Borders.empty()
     addMouseListener(object : MouseAdapter() {
       override fun mouseClicked(e: MouseEvent?) {
@@ -96,7 +96,7 @@ internal fun createAgentPromptPaletteView(
 
   val previewToggle = JBLabel(AllIcons.Actions.Preview).apply {
     cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-    toolTipText = AgentPromptBundle.message("popup.preview.toggle.tooltip")
+    setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.preview.toggle.tooltip")))
     border = JBUI.Borders.empty()
     addMouseListener(object : MouseAdapter() {
       override fun mouseClicked(e: MouseEvent?) {

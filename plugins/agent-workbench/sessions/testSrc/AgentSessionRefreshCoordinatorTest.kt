@@ -1708,11 +1708,14 @@ private suspend fun withLoadingCoordinator(
       contentRepository = contentRepository,
       isRefreshGateActive = isRefreshGateActive,
       openAgentChatProjectPathsProvider = openChatPathsProvider,
-      codexScopedRefreshSignalsProvider = codexScopedRefreshSignalsProvider,
-      openPendingCodexTabsProvider = openPendingCodexTabsProvider,
+      codexScopedRefreshSignalsProvider = { _ -> codexScopedRefreshSignalsProvider() },
+      openPendingCodexTabsProvider = { _ -> openPendingCodexTabsProvider() },
+      openConcreteCodexTabsAwaitingNewThreadRebindProvider = { _ -> openConcreteCodexTabsAwaitingNewThreadRebindProvider() },
       openConcreteChatThreadIdentitiesByPathProvider = openConcreteChatThreadIdentitiesByPathProvider,
       openAgentChatTabPresentationUpdater = openChatTabPresentationUpdater,
-      openAgentChatPendingTabsBinder = openChatPendingTabsBinder,
+      openAgentChatPendingTabsBinder = { _, requestsByPath -> openChatPendingTabsBinder(requestsByPath) },
+      openAgentChatConcreteTabsBinder = { _, requestsByPath -> openChatConcreteTabsBinder(requestsByPath) },
+      clearOpenConcreteCodexTabAnchors = { _, tabsByPath -> clearOpenConcreteCodexTabAnchors(tabsByPath) },
     )
     action(coordinator, stateStore)
   }

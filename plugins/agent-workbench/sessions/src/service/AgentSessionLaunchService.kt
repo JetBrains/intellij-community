@@ -41,7 +41,6 @@ import com.intellij.agent.workbench.sessions.util.SingleFlightPolicy
 import com.intellij.agent.workbench.sessions.util.SingleFlightProgressRequest
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionNewIdentity
-import com.intellij.agent.workbench.sessions.util.isAgentSessionNewIdentity
 import com.intellij.agent.workbench.sessions.util.parseAgentSessionIdentity
 import com.intellij.agent.workbench.sessions.util.resolveAgentSessionId
 import com.intellij.ide.impl.OpenProjectTask
@@ -77,8 +76,6 @@ private const val OPEN_DEDICATED_FRAME_ACTION_KEY_PREFIX = "dedicated-frame-open
 private const val CREATE_SESSION_ACTION_KEY_PREFIX = "session-create"
 private const val OPEN_THREAD_ACTION_KEY_PREFIX = "thread-open"
 private const val OPEN_SUB_AGENT_ACTION_KEY_PREFIX = "subagent-open"
-private const val PENDING_LAUNCH_MODE_STANDARD = "standard"
-private const val PENDING_LAUNCH_MODE_YOLO = "yolo"
 private const val MAX_STARTUP_COMMAND_BYTES = 24 * 1024
 
 enum class OpenThreadLaunchOrigin(val keySuffix: String) {
@@ -310,7 +307,7 @@ internal class AgentSessionLaunchService(
         initialMessageDispatchPlan = initialMessageDispatchPlan,
         preferredDedicatedFrame = preferredDedicatedFrame,
       )
-      if (provider == AgentSessionProvider.CODEX) {
+      if (AgentSessionProviderBehaviors.find(provider)?.refreshPathAfterCreateNewSession == true) {
         syncService.refreshProviderForPath(path = normalizedPath, provider = provider)
       }
     }
@@ -426,19 +423,7 @@ internal class AgentSessionLaunchService(
       block = block,
     )
   }
-
-  private fun markClaudeQuotaHintEligible(provider: AgentSessionProvider) {
-    if (provider != AgentSessionProvider.CLAUDE) {
-      return
-    }
-    treeUiState.markClaudeQuotaHintEligible()
-  }
 }
-
-private data class PendingCodexMetadata(
-  @JvmField val createdAtMs: Long,
-  @JvmField val launchMode: String,
-)
 
 private suspend fun openOrFocusProjectInternal(normalizedPath: String) {
   val project = openOrReuseSourceProjectByPath(normalizedPath) ?: return

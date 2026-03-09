@@ -8,7 +8,6 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRende
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayload
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
-import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.testFramework.junit5.TestApplication
@@ -26,11 +25,6 @@ class CodexAgentSessionProviderBridgeTest {
     fun buildResumeLaunchSpec() {
         assertThat(bridge.buildResumeLaunchSpec("thread-1").command)
             .containsExactly("codex", "-c", "check_for_update_on_startup=false", "resume", "thread-1")
-    }
-
-    @Test
-    fun promptOptionsUseSharedPlanModeOption() {
-        assertThat(bridge.promptOptions).containsExactly(AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION)
     }
 
     @Test
@@ -108,9 +102,15 @@ class CodexAgentSessionProviderBridgeTest {
         assertThat(message).isEqualTo("/plan Refactor this")
     }
 
-    assertThat(message).doesNotContain("lang=")
-    assertThat(message).contains("```java\nval answer = 42\n```")
-  }
+    @Test
+    fun composeInitialMessagePrefixesPlanCommandWhenLegacyFlagIsEnabled() {
+        val message = messageFor(
+            bridge,
+            AgentPromptInitialMessageRequest(
+                prompt = "Refactor this",
+                planModeEnabled = true,
+            )
+        )
 
         assertThat(message).isEqualTo("/plan Refactor this")
     }
@@ -179,11 +179,20 @@ class CodexAgentSessionProviderBridgeTest {
             )
         )
 
-    assertThat(message).contains("file: $expectedFile")
-    assertThat(message).contains("paths:")
-    assertThat(message).contains(expectedPathFile)
-    assertThat(message).contains(expectedPathDir)
-  }
+        assertThat(message).startsWith("Refactor this\n\n### IDE Context")
+        assertThat(message).contains("soft-cap: limit=12000 auto-trim=no")
+        assertThat(message).contains("snippet")
+        assertThat(message).doesNotContain("lang=")
+        assertThat(message).contains("```\nval answer = 42\n```")
+        assertThat(message).doesNotContain("```text")
+        assertThat(message).contains("val answer = 42")
+        assertThat(message).doesNotContain("Metadata:")
+        assertThat(message).doesNotContain("####")
+        assertThat(message).doesNotContain("Items:")
+        assertThat(message).doesNotContain("<context_envelope>")
+        assertThat(message).doesNotContain("<context_item>")
+        assertThat(message).doesNotContain("\"schema\"")
+    }
 
     @Test
     fun composeInitialMessageUsesSnippetLanguageWhenProvided() {

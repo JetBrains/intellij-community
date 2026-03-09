@@ -2,8 +2,10 @@
 package com.intellij.agent.workbench.claude.sessions
 
 import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
+import com.intellij.ide.setToolTipText
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.CustomStatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
@@ -139,7 +141,7 @@ internal class ClaudeQuotaStatusBarWidget : CustomStatusBarWidget, Activatable {
       }
 
       if (hasError) {
-        toolTipText = ClaudeSessionsBundle.message("quota.error")
+        setToolTipText(HtmlChunk.text(ClaudeSessionsBundle.message("quota.error")))
         sessionBar.isVisible = false
         weeklyBar.isVisible = false
         repaint()
@@ -163,7 +165,7 @@ internal class ClaudeQuotaStatusBarWidget : CustomStatusBarWidget, Activatable {
       }
 
       val now = System.currentTimeMillis()
-      toolTipText = formatWidgetTooltip(info, now)
+      setToolTipText(HtmlChunk.raw(formatWidgetTooltip(info, now)))
       repaint()
     }
   }

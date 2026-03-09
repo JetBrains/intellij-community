@@ -1,13 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.claude.sessions
 
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
-import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
+import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderOption
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
@@ -43,7 +45,7 @@ internal class ClaudeAgentSessionProviderBridge(
         get() = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO)
 
     override val promptOptions: List<AgentPromptProviderOption>
-        get() = listOf(AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION)
+        get() = listOf(CLAUDE_PLAN_MODE_OPTION)
 
     override val supportsPlanMode: Boolean
         get() = true
@@ -78,17 +80,30 @@ internal class ClaudeAgentSessionProviderBridge(
         baseLaunchSpec: AgentSessionTerminalLaunchSpec,
         prompt: String,
     ): AgentSessionTerminalLaunchSpec {
-        val planMode = prompt.isPlanModeCommand()
-        val effectivePrompt = prompt.stripPlanModePrefix()
+        val planMode = isPlanModeCommand(prompt)
+        val effectivePrompt = if (planMode) prompt.removePrefix(PLAN_MODE_COMMAND).trim() else prompt
         val permissionMode = if (planMode) PERMISSION_MODE_PLAN else PERMISSION_MODE_DEFAULT
         val command = replaceOrAddPermissionMode(baseLaunchSpec.command, permissionMode) + listOf("--", effectivePrompt)
         return baseLaunchSpec.copy(command = command)
     }
 
     override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
-        return buildPlanModeInitialMessagePlan(
-            request = request,
-            startupPolicyWhenPlanModeEnabled = AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND,
+        val basePlan = AgentInitialMessagePlan.composeDefault(request)
+        val normalizedMessage = basePlan.message ?: return basePlan
+        val planModeEnabled = request.planModeEnabled || AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE in request.providerOptionIds
+        val message = if (planModeEnabled) {
+            ensurePlanModePrefix(normalizedMessage)
+        } else {
+            normalizedMessage
+        }
+        return AgentInitialMessagePlan(
+            message = message,
+            startupPolicy = AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND,
+            timeoutPolicy = if (isPlanModeCommand(message)) {
+                AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS
+            } else {
+                AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK
+            },
         )
     }
 
@@ -97,6 +112,25 @@ internal class ClaudeAgentSessionProviderBridge(
             sessionId = null,
             launchSpec = buildNewSessionLaunchSpec(mode),
         )
+    }
+
+    private fun ensurePlanModePrefix(message: String): String {
+        val normalized = message.trim()
+        if (normalized.isEmpty()) {
+            return PLAN_MODE_COMMAND
+        }
+        if (isPlanModeCommand(normalized)) {
+            return normalized
+        }
+        return "$PLAN_MODE_COMMAND $normalized"
+    }
+
+    private fun isPlanModeCommand(message: String): Boolean {
+        if (!message.startsWith(PLAN_MODE_COMMAND)) {
+            return false
+        }
+        val suffix = message.removePrefix(PLAN_MODE_COMMAND)
+        return suffix.isEmpty() || suffix.first().isWhitespace()
     }
 }
 
@@ -113,3 +147,12 @@ private fun replaceOrAddPermissionMode(command: List<String>, mode: String): Lis
 
 private const val CLAUDE_DISABLE_AUTO_UPDATER_ENV: String = "DISABLE_AUTOUPDATER"
 private const val CLAUDE_DISABLE_AUTO_UPDATER_VALUE: String = "1"
+private const val PLAN_MODE_COMMAND: String = "/plan"
+
+private val CLAUDE_PLAN_MODE_OPTION = AgentPromptProviderOption(
+    id = AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE,
+    labelKey = "toolwindow.prompt.option.plan.mode",
+    labelFallback = "Plan mode",
+    defaultSelected = true,
+    disabledExistingTaskActivities = setOf(AgentThreadActivity.PROCESSING, AgentThreadActivity.REVIEWING),
+)

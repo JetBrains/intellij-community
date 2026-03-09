@@ -9,6 +9,7 @@ import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBehaviors
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
@@ -221,8 +222,21 @@ internal class AgentSessionsToolWindowPanel(
 
     interactionController.install()
     stateController.start()
-    quotaHintController.start()
     syncService.refresh()
+  }
+
+  private fun buildNorthPanel(): JPanel? {
+    val contributions = AgentSessionProviderBehaviors.allBehaviors()
+      .mapNotNull { behavior -> behavior.createToolWindowNorthComponent(project) }
+    if (contributions.isEmpty()) {
+      return null
+    }
+
+    return JPanel().apply {
+      layout = BoxLayout(this, BoxLayout.Y_AXIS)
+      isOpaque = false
+      contributions.forEach(::add)
+    }
   }
 
   private fun configureTree() {

@@ -44,16 +44,41 @@ class AgentSessionsSwingTreeInteractionTest {
       branch = "feature",
       isOpen = false,
     )
-    val thread = AgentSessionThread(id = "thread-1", title = "Thread 1", updatedAt = 100, archived = false)
+    val thread = AgentSessionThread(id = "thread-1", title = "Thread 1", updatedAt = 100, archived = false, provider = AgentSessionProvider.CODEX)
+    val pendingThread = AgentSessionThread(id = "new-1", title = "New Thread", updatedAt = 100, archived = false, provider = AgentSessionProvider.CODEX)
     val subAgent = AgentSubAgent(id = "sub-1", name = "Sub Agent")
 
-    assertTrue(shouldOpenOnActivation(SessionTreeNode.Project(project)))
-    assertTrue(shouldOpenOnActivation(SessionTreeNode.Worktree(project, worktree)))
-    assertTrue(shouldOpenOnActivation(SessionTreeNode.Thread(project, thread)))
-    assertTrue(shouldOpenOnActivation(SessionTreeNode.SubAgent(project, thread, subAgent)))
-    assertFalse(shouldOpenOnActivation(SessionTreeNode.MoreProjects(hiddenCount = 1)))
-    assertFalse(shouldOpenOnActivation(SessionTreeNode.MoreThreads(project, hiddenCount = 1)))
-    assertFalse(shouldOpenOnActivation(SessionTreeNode.Warning("warning")))
+    assertThat(shouldOpenOnActivation(SessionTreeNode.Project(project))).isTrue()
+    assertThat(shouldOpenOnActivation(SessionTreeNode.Worktree(project, worktree))).isTrue()
+    assertThat(shouldOpenOnActivation(SessionTreeNode.Thread(project, thread))).isTrue()
+    assertThat(shouldOpenOnActivation(SessionTreeNode.Thread(project, pendingThread))).isFalse()
+    assertThat(shouldOpenOnActivation(SessionTreeNode.SubAgent(project, thread, subAgent))).isTrue()
+    assertThat(shouldOpenOnActivation(SessionTreeNode.MoreProjects(hiddenCount = 1))).isFalse()
+    assertThat(shouldOpenOnActivation(SessionTreeNode.MoreThreads(project, hiddenCount = 1))).isFalse()
+    assertThat(shouldOpenOnActivation(SessionTreeNode.Warning("warning"))).isFalse()
+  }
+
+  @Test
+  fun doubleClickExpandPolicyPrefersOpenForOpenableRows() {
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = false)
+    val worktree = AgentWorktree(
+      path = "/work/project-a-feature",
+      name = "project-a-feature",
+      branch = "feature",
+      isOpen = false,
+    )
+    val thread = AgentSessionThread(id = "thread-1", title = "Thread 1", updatedAt = 100, archived = false, provider = AgentSessionProvider.CODEX)
+    val pendingThread = AgentSessionThread(id = "new-1", title = "New Thread", updatedAt = 100, archived = false, provider = AgentSessionProvider.CODEX)
+    val subAgent = AgentSubAgent(id = "sub-1", name = "Sub Agent")
+
+    assertThat(shouldExpandOnDoubleClick(SessionTreeNode.Project(project))).isFalse()
+    assertThat(shouldExpandOnDoubleClick(SessionTreeNode.Worktree(project, worktree))).isFalse()
+    assertThat(shouldExpandOnDoubleClick(SessionTreeNode.Thread(project, thread))).isFalse()
+    assertThat(shouldExpandOnDoubleClick(SessionTreeNode.SubAgent(project, thread, subAgent))).isFalse()
+    assertThat(shouldExpandOnDoubleClick(SessionTreeNode.Thread(project, pendingThread))).isTrue()
+    assertThat(shouldExpandOnDoubleClick(SessionTreeNode.MoreProjects(hiddenCount = 1))).isTrue()
+    assertThat(shouldExpandOnDoubleClick(SessionTreeNode.MoreThreads(project, hiddenCount = 1))).isTrue()
+    assertThat(shouldExpandOnDoubleClick(SessionTreeNode.Warning("warning"))).isTrue()
   }
 
   @Test

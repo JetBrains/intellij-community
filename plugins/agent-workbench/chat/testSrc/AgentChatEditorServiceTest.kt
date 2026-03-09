@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
@@ -57,8 +57,8 @@ class AgentChatEditorServiceTest {
 
   @AfterEach
   fun tearDown(): Unit = timeoutRunBlocking {
-    runInUi {
-      (VirtualFileManager.getInstance().getFileSystem(AGENT_CHAT_PROTOCOL) as? AgentChatVirtualFileSystem)?.clearFilesForTests()
+    withTimeout(30.seconds) {
+      project.waitForSmartMode()
     }
   }
 
@@ -392,7 +392,7 @@ class AgentChatEditorServiceTest {
   }
 
   @Test
-  fun testCollectOpenPendingProjectPathsIncludesOnlyCodexPendingTabs(): Unit = timeoutRunBlocking {
+  fun testCollectOpenPendingProjectPathsIncludesAnyPendingProvider(): Unit = timeoutRunBlocking {
     openChatInModal(
       threadIdentity = "CLAUDE:new-1",
       shellCommand = claudeCommand,
@@ -401,7 +401,7 @@ class AgentChatEditorServiceTest {
       subAgentId = null,
     )
 
-    assertThat(collectOpenPendingAgentChatProjectPaths()).isEmpty()
+    assertThat(collectOpenPendingAgentChatProjectPaths()).containsExactly(projectPath)
 
     openChatInModal(
       threadIdentity = "CODEX:new-1",
@@ -536,7 +536,13 @@ class AgentChatEditorServiceTest {
     tabsService.upsert(snapshot)
     try {
       val file = agentChatVirtualFileSystem().getOrCreateFile(snapshot)
-      AgentChatRestoreNotificationService.reportTerminalInitializationFailure(project, file, RuntimeException("boom"))
+      LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
+        override fun processWarn(category: String, message: String, t: Throwable?): Boolean {
+          return !message.startsWith("Failed to initialize Agent Chat terminal tab for") || t?.message != "boom"
+        }
+      }) {
+        AgentChatRestoreNotificationService.reportTerminalInitializationFailure(project, file, RuntimeException("boom"))
+      }
 
       assertThat(tabsService.load(snapshot.tabKey.value)).isNull()
     }

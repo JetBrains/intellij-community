@@ -28,7 +28,6 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.DialogUtil
 import org.jetbrains.annotations.Nls
-import javax.swing.Icon
 import javax.swing.JPanel
 
 internal class AgentPromptProviderSelector(
@@ -95,7 +94,7 @@ internal class AgentPromptProviderSelector(
 
   fun applyLegacyPlanModeSelection(provider: AgentSessionProvider?, enabled: Boolean) {
     val entry = findProviderEntry(provider) ?: return
-    if (!entry.bridge.hasPromptOption(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE)) {
+    if (entry.bridge.promptOptions.none { option -> option.id == AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE }) {
       return
     }
 
@@ -112,7 +111,7 @@ internal class AgentPromptProviderSelector(
     }
   }
 
-  fun selectProvider(provider: AgentSessionProvider?, launchMode: AgentSessionLaunchMode? = null) {
+  fun selectProvider(provider: AgentSessionProvider?) {
     if (provider == null) {
       return
     }
@@ -175,13 +174,13 @@ internal class AgentPromptProviderSelector(
     val provider = selectedProvider
     if (provider == null) {
       providerIconLabel.icon = AllIcons.Toolwindows.ToolWindowMessages
-      providerIconLabel.toolTipText = AgentPromptBundle.message("popup.provider.selector.tooltip")
+      providerIconLabel.setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.provider.selector.tooltip")))
       updateProviderOptionsPresentation()
       return
     }
 
-    providerIconLabel.icon = getIcon(provider.icon, selectedLaunchMode)
-    providerIconLabel.toolTipText = provider.displayName
+    providerIconLabel.icon = provider.icon
+    providerIconLabel.setToolTipText(HtmlChunk.text(provider.displayName))
     updateProviderOptionsPresentation()
   }
 
@@ -260,8 +259,6 @@ internal class AgentPromptProviderSelector(
   ): JBCheckBox {
     val label = sessionsMessageResolver.resolve(option.labelKey, bridge) ?: option.labelFallback
     return JBCheckBox(label, option.id in selectedOptionIds).apply {
-      isOpaque = false
-      DialogUtil.registerMnemonic(this)
       isFocusable = false
       addActionListener {
         if (isSelected) {
@@ -289,9 +286,5 @@ internal class AgentPromptProviderSelector(
       .asSequence()
       .filter { optionId -> optionId in validIds }
       .toCollection(LinkedHashSet())
-  }
-
-  private fun AgentSessionProviderBridge.hasPromptOption(optionId: String): Boolean {
-    return promptOptions.any { option -> option.id == optionId }
   }
 }

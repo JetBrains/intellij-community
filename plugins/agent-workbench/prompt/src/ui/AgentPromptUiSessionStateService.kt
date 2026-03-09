@@ -34,8 +34,8 @@ internal data class AgentPromptUiDraft(
 )
 
 internal data class AgentPromptUiContextRestoreSnapshot(
-  @JvmField val contextFingerprint: HashValue128? = null,
-  @JvmField val removedContextItemIds: List<String> = emptyList(),
+    @JvmField val contextFingerprint: HashValue128? = null,
+    @JvmField val removedContextItemIds: List<String> = emptyList(),
 )
 
 @Serializable
@@ -48,7 +48,6 @@ internal data class AgentPromptUiProviderPreferences(
 @Serializable
 internal data class AgentPromptUiState(
     @JvmField val draft: AgentPromptUiDraft = AgentPromptUiDraft(),
-    @JvmField val providerPreferences: AgentPromptUiProviderPreferences = AgentPromptUiProviderPreferences(),
 )
 
 @Service(Service.Level.PROJECT)
@@ -72,14 +71,6 @@ internal class AgentPromptUiSessionStateService
 
     fun saveContextRestoreSnapshot(newSnapshot: AgentPromptUiContextRestoreSnapshot) {
         contextRestoreSnapshot = newSnapshot
-    }
-
-    fun loadProviderPreferences(): AgentPromptUiProviderPreferences {
-        return state.providerPreferences
-    }
-
-    fun saveProviderPreferences(preferences: AgentPromptUiProviderPreferences) {
-        updateState { current -> current.copy(providerPreferences = preferences) }
     }
 
     fun clearDraft() {

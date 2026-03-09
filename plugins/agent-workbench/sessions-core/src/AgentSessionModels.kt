@@ -44,7 +44,7 @@ data class AgentSessionThread(
   @JvmField val updatedAt: Long,
   @JvmField val archived: Boolean,
   @JvmField val activity: AgentThreadActivity = AgentThreadActivity.READY,
-  val provider: AgentSessionProvider = AgentSessionProvider.CODEX,
+  val provider: AgentSessionProvider,
   @JvmField val subAgents: List<AgentSubAgent> = emptyList(),
   @JvmField val originBranch: String? = null,
 )

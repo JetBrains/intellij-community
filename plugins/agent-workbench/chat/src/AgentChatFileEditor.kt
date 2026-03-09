@@ -5,6 +5,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBehaviors
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -31,14 +32,38 @@ internal class AgentChatFileEditor(
 ) : UserDataHolderBase(), FileEditor {
   private val component = JPanel(BorderLayout())
   private val editorTabActions: ActionGroup? by lazy {
-    val action = ActionManager.getInstance().getAction(NEW_THREAD_FROM_EDITOR_TAB_ACTION_ID) ?: return@lazy null
-    action as? ActionGroup ?: DefaultActionGroup(action)
+    val actionManager = ActionManager.getInstance()
+    val providerActionIds = file.provider
+      ?.let { provider -> AgentSessionProviderBehaviors.find(provider)?.editorTabActionIds }
+      .orEmpty()
+    val actions = buildList {
+      listOf(
+        NEW_THREAD_QUICK_FROM_EDITOR_TAB_ACTION_ID,
+        NEW_THREAD_POPUP_FROM_EDITOR_TAB_ACTION_ID,
+      ).forEach { actionId ->
+        actionManager.getAction(actionId)?.let(::add)
+      }
+      providerActionIds.forEach { actionId ->
+        actionManager.getAction(actionId)?.let(::add)
+      }
+    }
+    if (actions.isEmpty()) {
+      return@lazy null
+    }
+    if (actions.size == 1) {
+      val singleAction = actions.single()
+      return@lazy singleAction as? ActionGroup ?: DefaultActionGroup(singleAction)
+    }
+    DefaultActionGroup(actions)
   }
   private var tab: TerminalToolWindowTab? = null
   private var initializationStarted: Boolean = false
   private var disposed: Boolean = false
   private var pendingInitialMessageJob: Job? = null
   private var codexTuiPatchFoldController: CodexTuiPatchFoldController? = null
+
+  private val providerBehavior
+    get() = file.provider?.let(AgentSessionProviderBehaviors::find)
 
   private val providerBehavior
     get() = file.provider?.let(AgentSessionProviderBehaviors::find)
@@ -223,10 +248,18 @@ internal class AgentChatFileEditor(
   }
 }
 
-private val NEW_THREAD_QUICK_FROM_EDITOR_TAB_ACTION_ID: String = AgentWorkbenchActionIds.Sessions.EditorTab.NEW_THREAD_QUICK
-private val NEW_THREAD_POPUP_FROM_EDITOR_TAB_ACTION_ID: String = AgentWorkbenchActionIds.Sessions.EditorTab.NEW_THREAD_POPUP
-private val BIND_PENDING_CODEX_THREAD_FROM_EDITOR_TAB_ACTION_ID: String =
-  AgentWorkbenchActionIds.Sessions.BIND_PENDING_CODEX_THREAD_FROM_EDITOR_TAB
+internal fun interface AgentChatTabSnapshotWriter {
+  suspend fun upsert(snapshot: AgentChatTabSnapshot)
+}
+
+private object ApplicationAgentChatTabSnapshotWriter : AgentChatTabSnapshotWriter {
+  override suspend fun upsert(snapshot: AgentChatTabSnapshot) {
+    serviceAsync<AgentChatTabsService>().upsert(snapshot)
+  }
+}
+
+private const val NEW_THREAD_QUICK_FROM_EDITOR_TAB_ACTION_ID: String = AgentWorkbenchActionIds.Sessions.EditorTab.NEW_THREAD_QUICK
+private const val NEW_THREAD_POPUP_FROM_EDITOR_TAB_ACTION_ID: String = AgentWorkbenchActionIds.Sessions.EditorTab.NEW_THREAD_POPUP
 
 internal interface AgentChatTerminalTab {
   val component: JComponent

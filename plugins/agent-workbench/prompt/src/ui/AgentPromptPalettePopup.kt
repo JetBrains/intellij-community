@@ -799,19 +799,14 @@ internal class AgentPromptPalettePopup(
     val launcher = launcherProvider()
 
     promptArea.text = draft.promptText
-    val effectiveProviderOptions = draft.providerOptionsByProviderId.ifEmpty { providerPrefs.providerOptionsByProviderId }
-    providerSelector.restoreProviderOptionSelections(effectiveProviderOptions)
+    providerSelector.restoreProviderOptionSelections(draft.providerOptionsByProviderId)
     val persistedProvider = resolveRestoredPromptProvider(
       draftProviderId = draft.providerId ?: providerPrefs.providerId,
       preferredProvider = launcher?.preferredProvider(),
       availableProviders = providerSelector.availableProviders,
     )
-    val restoredLaunchMode = providerPrefs.launchModeName?.let { name ->
-      AgentSessionLaunchMode.entries.firstOrNull { it.name == name }
-    }
-    providerSelector.selectProvider(persistedProvider, restoredLaunchMode)
-    selectedLaunchMode = providerSelector.selectedLaunchMode
-    if (effectiveProviderOptions.isEmpty()) {
+    providerSelector.selectProvider(persistedProvider)
+    if (draft.providerOptionsByProviderId.isEmpty()) {
       providerSelector.applyLegacyPlanModeSelection(providerSelector.selectedProvider?.bridge?.provider, draft.planModeEnabled)
     }
     updateProviderOptionsVisibility()

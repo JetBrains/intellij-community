@@ -235,10 +235,10 @@ internal suspend fun withServiceAndArchiveAndLaunch(
       sessionSourcesProvider = sessionSourcesProvider,
       projectEntriesProvider = projectEntriesProvider,
       stateStore = stateStore,
-      treeUiState = treeUiState,
-      openPendingCodexTabsProvider = openPendingCodexTabsProvider,
+      warmState = warmState,
+      openPendingCodexTabsProvider = { _ -> openPendingCodexTabsProvider() },
       openConcreteChatThreadIdentitiesByPathProvider = openConcreteChatThreadIdentitiesByPathProvider,
-      openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinder,
+      openAgentChatPendingTabsBinder = { _, requestsByPath -> openAgentChatPendingTabsBinder(requestsByPath) },
       subscribeToProjectLifecycle = false,
     )
     val service = AgentSessionStateSyncTestFacade(

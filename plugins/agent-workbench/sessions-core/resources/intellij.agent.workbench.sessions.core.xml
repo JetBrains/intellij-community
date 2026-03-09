@@ -8,7 +8,27 @@
   <extensionPoints>
     <extensionPoint
       qualifiedName="com.intellij.agent.workbench.sessionProviderBridge"
-      interface="com.intellij.agent.workbench.sessions.providers.AgentSessionProviderBridge"
+      interface="com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.sessionProviderBehavior"
+      interface="com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBehavior"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.promptLauncher"
+      interface="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLauncherBridge"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.promptContextContributor"
+      interface="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextContributorBridge"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.promptContextRenderer"
+      interface="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererBridge"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.promptPaletteExtension"
+      interface="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPaletteExtension"
       dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

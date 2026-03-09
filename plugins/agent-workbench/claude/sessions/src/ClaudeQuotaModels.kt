@@ -2,16 +2,16 @@
 package com.intellij.agent.workbench.claude.sessions
 
 internal data class ClaudeQuotaState(
-  @JvmField val quotaInfo: ClaudeQuotaInfo? = null,
-  @JvmField val error: ClaudeQuotaError? = null,
-  @JvmField val isLoading: Boolean = false,
+  val quotaInfo: ClaudeQuotaInfo? = null,
+  val error: ClaudeQuotaError? = null,
+  val isLoading: Boolean = false,
 )
 
 internal data class ClaudeQuotaInfo(
-  @JvmField val fiveHourPercent: Int?,
-  @JvmField val fiveHourReset: Long?,
-  @JvmField val sevenDayPercent: Int?,
-  @JvmField val sevenDayReset: Long?,
+  val fiveHourPercent: Int?,
+  val fiveHourReset: Long?,
+  val sevenDayPercent: Int?,
+  val sevenDayReset: Long?,
 )
 
 internal enum class ClaudeQuotaError {
@@ -20,3 +20,4 @@ internal enum class ClaudeQuotaError {
   NETWORK_ERROR,
   UNKNOWN,
 }
+
