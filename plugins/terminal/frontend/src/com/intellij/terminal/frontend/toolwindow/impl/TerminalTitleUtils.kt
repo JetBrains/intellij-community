@@ -1,6 +1,8 @@
 package com.intellij.terminal.frontend.toolwindow.impl
 
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
@@ -14,14 +16,18 @@ import com.intellij.util.text.UniqueNameGenerator
 import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalTabsManagerApi
 import org.jetbrains.plugins.terminal.buildSettingsAwareTitle
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 internal fun createDefaultTabName(toolWindow: ToolWindow): String {
   val existingNames = toolWindow.contentManager.contentsRecursively.map { it.displayName }
@@ -36,14 +42,18 @@ internal fun createDefaultTabName(toolWindow: ToolWindow): String {
   )
 }
 
+@OptIn(FlowPreview::class)
 internal fun updateTabNameOnTitleChange(title: TerminalTitle, content: Content, scope: CoroutineScope) {
-  scope.launch(Dispatchers.UI) {
-    title.stateFlow().collect {
-      content.displayName = it.text
-    }
+  scope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
+    title.stateFlow()
+      .debounce(TITLE_UPDATE_DELAY)
+      .collect {
+        content.displayName = it.text
+      }
   }
 }
 
+@OptIn(FlowPreview::class)
 internal fun updateBackendTabNameOnTitleChange(
   title: TerminalTitle,
   backendTabId: Int,
@@ -51,20 +61,22 @@ internal fun updateBackendTabNameOnTitleChange(
   scope: CoroutineScope,
 ) {
   scope.launch {
-    title.stateFlow().collect {
-      durable {
-        TerminalTabsManagerApi.getInstance().renameTerminalTab(
-          project.projectId(),
-          backendTabId,
-          it.text,
-          it.isUserDefined
-        )
+    title.stateFlow()
+      .debounce(TITLE_UPDATE_DELAY)
+      .collect {
+        durable {
+          TerminalTabsManagerApi.getInstance().renameTerminalTab(
+            project.projectId(),
+            backendTabId,
+            it.text,
+            it.isUserDefined
+          )
+        }
       }
-    }
   }
 }
 
-private fun TerminalTitle.stateFlow(): Flow<TitleData> {
+internal fun TerminalTitle.stateFlow(): Flow<TitleData> {
   val flow = channelFlow {
     val disposable = Disposer.newDisposable()
     addTitleListener(object : TerminalTitleListener {
@@ -80,5 +92,7 @@ private fun TerminalTitle.stateFlow(): Flow<TitleData> {
 
   return flow.distinctUntilChanged()
 }
+
+internal val TITLE_UPDATE_DELAY: Duration = 300.milliseconds
 
 internal data class TitleData(@param:NlsSafe val text: String, val isUserDefined: Boolean)
