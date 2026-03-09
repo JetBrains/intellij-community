@@ -13,6 +13,7 @@
     <agent.workbench.promptContextContributor implementation="com.intellij.agent.workbench.prompt.context.AgentPromptEditorContextContributor"/>
     <agent.workbench.promptContextContributor implementation="com.intellij.agent.workbench.prompt.context.AgentPromptProjectViewSelectionContextContributor"/>
     <agent.workbench.promptContextContributor implementation="com.intellij.agent.workbench.prompt.context.AgentPromptSelectedEditorFallbackContextContributor"/>
+    <agent.workbench.promptContextContributor implementation="com.intellij.agent.workbench.prompt.context.AgentPromptTreeSelectionContextContributor"/>
   </extensions>
 
   <actions resource-bundle="messages.AgentPromptBundle">
