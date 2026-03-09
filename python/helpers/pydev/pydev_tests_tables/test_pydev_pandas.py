@@ -317,6 +317,27 @@ def test_describe_many_columns_check_html(setup_dataframe_many_columns):
 
 
 # 9
+def test_replace_count_row_values_uses_exact_large_count():
+    described_html = (
+        "'<table border=\"1\" class=\"dataframe\">\\n"
+        "  <tbody>\\n"
+        "    <tr>\\n"
+        "      <th>count</th>\\n"
+        "      <td>1.420367e+07</td>\\n"
+        "      <td>4</td>\\n"
+        "    </tr>\\n"
+        "  </tbody>\\n"
+        "</table>'"
+    )
+
+    actual = pandas_tables_helpers.__replace_count_row_values(described_html, [14203673, 4])
+
+    assert "<td>14203673.000000</td>" in actual
+    assert "<td>4</td>" in actual
+    assert "1.420367e+07" not in actual
+
+
+# 10
 def test_describe_shape_numeric_types(setup_dataframe_many_columns):
     df = setup_dataframe_many_columns
     describe_df = pandas_tables_helpers.__get_describe(df)
@@ -327,7 +348,7 @@ def test_describe_shape_numeric_types(setup_dataframe_many_columns):
     assert describe_df.shape[1] == df.shape[1]
 
 
-# 10
+# 11
 def test_describe_shape_all_types(setup_dataframe):
     _, df, _, _, _ = setup_dataframe
 
@@ -347,7 +368,7 @@ def test_describe_shape_all_types(setup_dataframe):
     assert len(describe_df.columns[describe_df.isna().all()].tolist()) == 0
 
 
-# 11
+# 12
 def test_get_describe_save_columns(setup_dataframe):
     _, df, _, _, _ = setup_dataframe
 
@@ -365,7 +386,7 @@ def test_get_describe_save_columns(setup_dataframe):
         assert expected == actual
 
 
-# 12
+# 13
 def test_get_describe_returned_types(setup_dataframe):
     _, df, _, _, _ = setup_dataframe
 
@@ -376,7 +397,7 @@ def test_get_describe_returned_types(setup_dataframe):
     assert type(pandas_tables_helpers.__get_describe(df['A'])) == pd.Series
 
 
-# 13
+# 14
 @pytest.mark.skipif(sys.version_info < (3, 0), reason="Different format for Python2")
 def test_describe_series(setup_dataframe):
     _, df, _, _, _ = setup_dataframe
@@ -398,7 +419,7 @@ def test_describe_series(setup_dataframe):
     )
 
 
-# 14
+# 15
 @pytest.mark.skipif(sys.version_info < (3, 0),
                     reason="The exception will be raised during df creation in Python2")
 def test_overflow_error_is_caught(setup_df_with_big_int_values):
@@ -409,7 +430,7 @@ def test_overflow_error_is_caught(setup_df_with_big_int_values):
     assert (actual_result.values == expected_result.values).all()
 
 
-# 15
+# 16
 def test_vis_data_detecting_column_type(setup_dataframe):
     _, df, _, _, col_name_to_data_type = setup_dataframe
     for column in df.columns:
@@ -428,7 +449,7 @@ def test_vis_data_detecting_column_type(setup_dataframe):
             assert pandas_tables_helpers.__is_numeric(col_type) == False, "column is %s, col_type is %s, col_type_kind is %s"   % (column, col_type, col_type.kind)
 
 
-# 16
+# 17
 def test_vis_data_integer_columns_simple():
     test_data = pd.DataFrame({"ints": list(range(10)) + list(range(10))})
     actual = pandas_tables_helpers.get_value_occurrences_count(test_data)
@@ -438,7 +459,7 @@ def test_vis_data_integer_columns_simple():
     )
 
 
-# 17
+# 18
 @pytest.mark.skipif(sys.version_info < (3, 0),reason="")
 def test_vis_data_integer_columns_with_bins():
     test_data = pd.DataFrame({"ints": list(range(21)) + list(range(21))})
@@ -449,7 +470,7 @@ def test_vis_data_integer_columns_with_bins():
     )
 
 
-# 18
+# 19
 @pytest.mark.skipif(sys.version_info < (3, 0),reason="")
 def test_vis_data_float_columns_simple():
     import numpy as np
@@ -461,7 +482,7 @@ def test_vis_data_float_columns_simple():
     )
 
 
-# 19
+# 20
 @pytest.mark.skipif(sys.version_info < (3, 0),reason="")
 def test_vis_data_float_columns_with_bins():
     import numpy as np
@@ -473,7 +494,7 @@ def test_vis_data_float_columns_with_bins():
     )
 
 
-# 20
+# 21
 def test_vis_data_bool_column():
     test_data_bool = pd.DataFrame({"bools": [True] * 50 + [False] * 25})
     actual = pandas_tables_helpers.get_value_occurrences_count(test_data_bool)
@@ -484,7 +505,7 @@ def test_vis_data_bool_column():
     )
 
 
-# 21
+# 22
 def test_vis_data_bool_with_nan_column():
     test_data_bool = pd.DataFrame({"bools": [True] * 50 + [False] * 25 + [None] * 10})
     actual = pandas_tables_helpers.get_value_occurrences_count(test_data_bool)
@@ -501,7 +522,7 @@ def test_vis_data_bool_with_nan_column():
 
 
 
-# 22
+# 23
 def test_vis_data_categorical_column_percentage():
     test_data_str = pd.DataFrame({"strs": ["First"] * 50 + ["Second"] * 25})
     actual = pandas_tables_helpers.get_value_occurrences_count(test_data_str)
@@ -512,7 +533,7 @@ def test_vis_data_categorical_column_percentage():
     )
 
 
-# 23
+# 24
 def test_vis_data_categorical_column_other():
     test_data_str_other = pd.DataFrame({"strs": ["First"] * 50 + ["Second"] * 25 + ["Third"] * 10 + ["Forth"] * 5})
     actual = pandas_tables_helpers.get_value_occurrences_count(test_data_str_other)
@@ -523,7 +544,7 @@ def test_vis_data_categorical_column_other():
     )
 
 
-# 24
+# 25
 def test_vis_data_categorical_column_unique():
     test_data_str_unique = pd.DataFrame({"strs": [str(i) for i in range(1000)]})
     actual = pandas_tables_helpers.get_value_occurrences_count(test_data_str_unique)
@@ -534,7 +555,7 @@ def test_vis_data_categorical_column_unique():
     )
 
 
-# 25
+# 26
 def test_vis_data_categorical_column_switch_perc_to_unique():
     # we need a column with 49% of unique values
     test_data_other = pd.DataFrame({"str": [str(i) for i in range(49)] + ["48"] * 51})
@@ -545,7 +566,7 @@ def test_vis_data_categorical_column_switch_perc_to_unique():
     assert pandas_tables_helpers.ColumnVisualisationType.UNIQUE in pandas_tables_helpers.get_value_occurrences_count(test_data_unique)
 
 
-# 26
+# 27
 def test_define_format_function():
     assert pandas_tables_helpers.__define_format_function(None) is None
     assert pandas_tables_helpers.__define_format_function('null') is None
@@ -566,7 +587,7 @@ def test_define_format_function():
         assert formatter(float_value) == expected_result
 
 
-# 27
+# 28
 def test_get_tables_display_options():
     max_cols, max_colwidth, max_rows = pandas_tables_helpers.__get_tables_display_options()
     assert max_cols is None
@@ -577,7 +598,7 @@ def test_get_tables_display_options():
         assert max_colwidth is None
 
 
-# 28
+# 29
 def test_get_data_float_values_2f(setup_dataframe_with_float_values):
     df = setup_dataframe_with_float_values
     actual = pandas_tables_helpers.get_data(df, False, 0, 3, format="%.2f")
@@ -588,7 +609,7 @@ def test_get_data_float_values_2f(setup_dataframe_with_float_values):
     )
 
 
-# 29
+# 30
 def test_get_data_float_values_12f(setup_dataframe_with_float_values):
     df = setup_dataframe_with_float_values
     actual = pandas_tables_helpers.get_data(df, False, 0, 3, format="%.12f")
@@ -599,7 +620,7 @@ def test_get_data_float_values_12f(setup_dataframe_with_float_values):
     )
 
 
-# 30
+# 31
 def test_get_data_float_values_2e(setup_dataframe_with_float_values):
     df = setup_dataframe_with_float_values
     actual = pandas_tables_helpers.get_data(df, False, 0, 3, format="%.2e")
@@ -610,7 +631,7 @@ def test_get_data_float_values_2e(setup_dataframe_with_float_values):
     )
 
 
-# 31
+# 32
 @pytest.mark.skipif(sys.version_info < (3, 0), reason="%d doesn't work with np.float('nan')")
 def test_get_data_float_values_d(setup_dataframe_with_float_values):
     df = setup_dataframe_with_float_values
@@ -622,7 +643,7 @@ def test_get_data_float_values_d(setup_dataframe_with_float_values):
     )
 
 
-# 32
+# 33
 @pytest.mark.skipif(sys.version_info < (3, 0), reason="%d doesn't work with np.float('nan')")
 def test_get_data_float_values_d_garbage(setup_dataframe_with_float_values):
     df = setup_dataframe_with_float_values
@@ -634,7 +655,7 @@ def test_get_data_float_values_d_garbage(setup_dataframe_with_float_values):
     )
 
 
-# 33
+# 34
 def test_display_data_html_df(mocker, setup_dataframe):
     _, df, _, _, _ = setup_dataframe
     df = df.drop(columns=['dates'])
@@ -651,7 +672,7 @@ def test_display_data_html_df(mocker, setup_dataframe):
     )
 
 
-# 34
+# 35
 def test_display_data_csv_df(mocker, setup_dataframe):
     _, df, _, _, _ = setup_dataframe
     df = df.drop(columns=['dates'])
@@ -667,7 +688,7 @@ def test_display_data_csv_df(mocker, setup_dataframe):
     )
 
 
-# 35
+# 36
 def test_display_data_html_df_with_float_values(mocker, setup_dataframe_with_float_values):
     df = setup_dataframe_with_float_values
 
@@ -683,7 +704,7 @@ def test_display_data_html_df_with_float_values(mocker, setup_dataframe_with_flo
     )
 
 
-# 36
+# 37
 def test_display_data_csv_df_with_float_values(mocker, setup_dataframe_with_float_values):
     df = setup_dataframe_with_float_values
 

@@ -1,9 +1,11 @@
 #  Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-import numpy as np
-import pandas as pd
+import sys
+import re
 import typing
 from collections import OrderedDict
-import sys
+
+import numpy as np
+import pandas as pd
 if sys.version_info < (3, 0):
     from collections import Iterable
 else:
@@ -124,7 +126,9 @@ def get_column_descriptions(table):
     described_result = __get_describe(table)
 
     if described_result is not None:
-        return get_data(described_result, None, None)
+        described_html = get_data(described_result, None, None)
+        exact_counts = __convert_to_df(described_result).loc["count"].tolist()
+        return __replace_count_row_values(described_html, exact_counts)
     else:
         return ""
 
@@ -141,6 +145,48 @@ def get_value_occurrences_count(table):
 
             bin_counts.append(str({column_visualisation_type:result}))
     return ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_NEXT_COLUMN_SEPARATOR.join(bin_counts)
+
+
+COUNT_ROW_HEADER = "<th>count</th>"
+TABLE_ROW_OPEN_TAG = "<tr>"
+TABLE_ROW_CLOSE_TAG = "</tr>"
+TABLE_CELL_PATTERN = re.compile(r"(<td>)(.*?)(</td>)")
+
+
+def __replace_count_row_values(described_html, exact_counts):
+    # type: (str, list) -> str
+    count_header_index = described_html.find(COUNT_ROW_HEADER)
+    if count_header_index < 0:
+        return described_html
+
+    row_start_index = described_html.rfind(TABLE_ROW_OPEN_TAG, 0, count_header_index)
+    row_end_index = described_html.find(TABLE_ROW_CLOSE_TAG, count_header_index)
+    if row_start_index < 0 or row_end_index < 0:
+        return described_html
+
+    row_end_index += len(TABLE_ROW_CLOSE_TAG)
+    count_row_html = described_html[row_start_index:row_end_index]
+    exact_counts_iter = iter(exact_counts)
+
+    def replace_count_cell(match):
+        try:
+            exact_count = next(exact_counts_iter)
+        except StopIteration:
+            return match.group(0)
+
+        old_value = match.group(2)
+        formatted_count = __format_exact_count_value(old_value, exact_count)
+        return "{}{}{}".format(match.group(1), formatted_count, match.group(3))
+
+    replaced_count_row_html = TABLE_CELL_PATTERN.sub(replace_count_cell, count_row_html)
+    return "{}{}{}".format(described_html[:row_start_index], replaced_count_row_html, described_html[row_end_index:])
+
+
+def __format_exact_count_value(old_value, exact_count):
+    # type: (str, int) -> str
+    if "." in old_value or "e" in old_value.lower():
+        return "{:.6f}".format(float(exact_count))
+    return str(int(exact_count))
 
 
 def get_inspection_none_count(table):
