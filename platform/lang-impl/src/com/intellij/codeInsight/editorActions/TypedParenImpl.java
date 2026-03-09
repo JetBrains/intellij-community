@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DefaultRawTypedHandler;
 import com.intellij.openapi.editor.impl.TypedActionImpl;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -27,8 +28,27 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 
-final class TypedBraceImpl {
-  private static final Logger LOG = Logger.getInstance(TypedBraceImpl.class);
+final class TypedParenImpl {
+  private static final Logger LOG = Logger.getInstance(TypedParenImpl.class);
+
+  private final TypedDelegateImpl delegateNotifier;
+
+  TypedParenImpl() {
+    this(new TypedDelegateImpl());
+  }
+
+  TypedParenImpl(@NotNull TypedDelegateImpl delegateNotifier) {
+    this.delegateNotifier = delegateNotifier;
+  }
+
+  void indentOpenedParen(@NotNull Project project, @NotNull Editor editor, char ch) {
+    if ('{' == ch) {
+      indentOpenedBrace(project, editor);
+    }
+    if ('(' == ch) {
+      indentOpenedParenth(project, editor);
+    }
+  }
 
   void indentOpenedBrace(@NotNull Project project, @NotNull Editor editor) {
     indentBrace(project, editor, '{');
@@ -46,7 +66,25 @@ final class TypedBraceImpl {
     indentBrace(project, editor, ')');
   }
 
-  void handleAfterLParen(
+  void afterParenTyped(
+    @NotNull Project project,
+    @NotNull FileType fileType,
+    @NotNull PsiFile file,
+    @NotNull Editor editor,
+    char charTyped
+  ) {
+    if (('(' == charTyped || '[' == charTyped || '{' == charTyped) &&
+        autoInsertBracket() &&
+        fileType != FileTypes.PLAIN_TEXT) {
+      afterLParenTyped(project, fileType, file, editor, charTyped);
+    } else if ('}' == charTyped) {
+      indentClosingBrace(project, editor);
+    } else if (')' == charTyped) {
+      indentClosingParenth(project, editor);
+    }
+  }
+
+  private void afterLParenTyped(
     @NotNull Project project,
     @NotNull FileType fileType,
     @NotNull PsiFile file,
@@ -94,14 +132,7 @@ final class TypedBraceImpl {
         case '{' -> "}";
         default -> throw new AssertionError("Unknown char '" + lparenChar + '\'');
       };
-      boolean stop = TypedCharImpl.callDelegates(
-        TypedHandlerDelegate::beforeClosingParenInserted,
-        text.charAt(0),
-        project,
-        editor,
-        file
-      );
-      if (stop) {
+      if (delegateNotifier.fireBeforeClosingParenInserted(project, file, editor, text.charAt(0))) {
         return;
       }
       document.insertString(offset, text);
@@ -109,12 +140,23 @@ final class TypedBraceImpl {
     }
   }
 
-  boolean handleRParen(
+  boolean beforeParenTyped(@NotNull FileType fileType, @NotNull Editor editor, char charTyped) {
+    if (')' == charTyped || ']' == charTyped || '}' == charTyped) {
+      if (FileTypes.PLAIN_TEXT != fileType) {
+        if (beforeRParenTyped(fileType, editor, charTyped)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  boolean beforeRParenTyped(
     @NotNull FileType fileType,
     @NotNull Editor editor,
     char charTyped
   ) {
-    if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
+    if (!autoInsertBracket()) {
       return false;
     }
     Document document = editor.getDocument();
@@ -238,5 +280,9 @@ final class TypedBraceImpl {
         });
       }
     }
+  }
+
+  private static boolean autoInsertBracket() {
+    return CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET;
   }
 }

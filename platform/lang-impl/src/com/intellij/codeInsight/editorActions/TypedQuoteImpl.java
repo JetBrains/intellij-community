@@ -24,6 +24,16 @@ final class TypedQuoteImpl {
   private static final Logger LOG = Logger.getInstance(TypedQuoteImpl.class);
   private static final KeyedExtensionCollector<QuoteHandler, String> QUOTE_HANDLERS = new KeyedExtensionCollector<>(QuoteHandlerEP.EP_NAME);
 
+  private final TypedDelegateImpl delegateNotifier;
+
+  TypedQuoteImpl() {
+    this(new TypedDelegateImpl());
+  }
+
+  TypedQuoteImpl(@NotNull TypedDelegateImpl delegateNotifier) {
+    this.delegateNotifier = delegateNotifier;
+  }
+
   static void registerQuoteHandler(@NotNull FileType fileType, @NotNull QuoteHandler quoteHandler) {
     QUOTE_HANDLERS.addExplicitExtension(fileType.getName(), quoteHandler);
   }
@@ -41,6 +51,20 @@ final class TypedQuoteImpl {
       return getLanguageQuoteHandler(file.getViewProvider().getBaseLanguage());
     }
     return quoteHandler;
+  }
+
+  boolean beforeQuoteTyped(
+    @NotNull Project project,
+    @NotNull PsiFile file,
+    @NotNull Editor editor,
+    char charTyped
+  ) {
+    if ('"' == charTyped || '\'' == charTyped || '`' == charTyped) {
+      if (handleQuote(project, file, editor, charTyped)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   boolean handleQuote(
@@ -82,17 +106,15 @@ final class TypedQuoteImpl {
         }
       }
     }
-    TypedCharImpl.type(editor, file.getProject(), quote);
+    TypedCharImpl.typeChar(editor, file.getProject(), quote);
     offset = editor.getCaretModel().getOffset();
     if (quoteHandler instanceof MultiCharQuoteHandler multiChar) {
       CharSequence closingQuote = getClosingQuote(editor, multiChar, offset);
       if (closingQuote != null && hasNonClosedLiterals(editor, quoteHandler, offset - 1)) {
         if (offset == document.getTextLength() ||
             !Character.isUnicodeIdentifierPart(document.getCharsSequence().charAt(offset))) { //any better heuristic or an API?
-          TypedHandler.TypedDelegateFunc beforeClosingQuoteInserted =
-            (delegate, c1, p1, e1, f1) -> delegate.beforeClosingQuoteInserted(closingQuote, p1, e1, f1);
-          boolean stop = TypedCharImpl.callDelegates(beforeClosingQuoteInserted, quote, project, editor, file);
-          if (!stop) {
+          boolean handled = delegateNotifier.fireBeforeClosingQuoteInserted(project, file, editor, quote, closingQuote);
+          if (!handled) {
             multiChar.insertClosingQuote(editor, offset, file, closingQuote);
           }
           return true;
@@ -105,10 +127,8 @@ final class TypedQuoteImpl {
       if (offset == document.getTextLength() ||
           !Character.isUnicodeIdentifierPart(document.getCharsSequence().charAt(offset))) { //any better heuristic or an API?
         String quoteString = String.valueOf(quote);
-        TypedHandler.TypedDelegateFunc beforeClosingQuoteInserted =
-          (delegate, c1, p1, e1, f1) -> delegate.beforeClosingQuoteInserted(quoteString, p1, e1, f1);
-        boolean stop = TypedCharImpl.callDelegates(beforeClosingQuoteInserted, quote, project, editor, file);
-        if (!stop) {
+        boolean handled = delegateNotifier.fireBeforeClosingQuoteInserted(project, file, editor, quote, quoteString);
+        if (!handled) {
           document.insertString(offset, quoteString);
           TabOutScopesTracker.getInstance().registerEmptyScope(editor, offset);
         }
