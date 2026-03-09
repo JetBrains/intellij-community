@@ -48,10 +48,10 @@ open class TypeEvalContextImpl internal constructor(
   private val typeEngine: PyTypeEngine? = constraints.myOrigin?.let { PyTypeEngineProvider.createTypeResolver(it.project) }
   protected val myEvaluated: MutableMap<PyTypedElement?, PyType?> = getConcurrentMapForCaching()
   protected val myEvaluatedReturn: MutableMap<PyCallable?, PyType?> = getConcurrentMapForCaching()
-  protected val contextTypeCache: ConcurrentMap<Pair<PyExpression?, Any?>, PyType> = getConcurrentMapForCaching()
+  protected val contextTypeCache: ConcurrentMap<Pair<Any, Any>, PyType> = getConcurrentMapForCaching()
 
-  internal constructor(allowDataFlow: Boolean, allowStubToAST: Boolean, allowCallContext: Boolean, origin: PsiFile?) : this(
-    TypeEvalConstraints(allowDataFlow, allowStubToAST, allowCallContext, origin)
+  internal constructor(allowDataFlow: Boolean, allowStubToAST: Boolean, allowCallContext: Boolean, isExternal: Boolean, origin: PsiFile?) : this(
+    TypeEvalConstraints(allowDataFlow, allowStubToAST, allowCallContext, isExternal, origin)
   )
 
 
@@ -74,6 +74,8 @@ open class TypeEvalContextImpl internal constructor(
   override fun maySwitchToAST(element: PsiElement): Boolean {
     return constraints.myAllowStubToAST && !element.inPyiFile() || inOrigin(element)
   }
+
+  override fun isExternal(): Boolean = constraints.myIsExternal
 
   override fun withTracing(): TypeEvalContext {
     if (myTrace == null) {
@@ -158,6 +160,7 @@ open class TypeEvalContextImpl internal constructor(
       constraints.myAllowDataFlow,
       constraints.myAllowStubToAST,
       constraints.myAllowCallContext,
+      constraints.myIsExternal,
       origin,
     )
     return project.service<TypeEvalContextCache>()
@@ -242,7 +245,7 @@ open class TypeEvalContextImpl internal constructor(
     get() = typeEngine != null
 
   @ApiStatus.Internal
-  override fun getContextTypeCache(): MutableMap<Pair<PyExpression?, Any?>, PyType?> {
+  override fun getContextTypeCache(): MutableMap<Pair<Any, Any>, PyType?> {
     return contextTypeCache
   }
 
@@ -330,7 +333,7 @@ open class TypeEvalContextImpl internal constructor(
   }
 
   class OptimizedTypeEvalContext(allowDataFlow: Boolean, allowStubToAST: Boolean, allowCallContext: Boolean, origin: PsiFile?) :
-    TypeEvalContextImpl(allowDataFlow, allowStubToAST, allowCallContext, origin) {
+    TypeEvalContextImpl(allowDataFlow, allowStubToAST, allowCallContext, false, origin) {
     @Volatile
     private var codeInsightFallback: TypeEvalContext? = null
 

@@ -4,12 +4,16 @@ package com.jetbrains.python.psi.types
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface TypeEvalContextFactory {
   fun codeCompletion(project: Project, origin: PsiFile?): TypeEvalContext
   fun userInitiated(project: Project, origin: PsiFile?): TypeEvalContext
   fun codeAnalysis(project: Project, origin: PsiFile?): TypeEvalContext
   fun codeInsightFallback(project: Project?): TypeEvalContext
+  fun externalContext(project: Project): TypeEvalContext
+
   fun deepCodeInsight(project: Project): TypeEvalContext
 
   companion object {

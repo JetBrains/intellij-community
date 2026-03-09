@@ -10,14 +10,14 @@ class TypeEvalContextFactoryImpl : TypeEvalContextFactory {
     project: Project,
     origin: PsiFile?,
   ): TypeEvalContext {
-    return getContextFromCache(project, TypeEvalContextImpl(true, true, true, origin))
+    return getContextFromCache(project, TypeEvalContextImpl(true, true, true, false, origin))
   }
 
   override fun userInitiated(
     project: Project,
     origin: PsiFile?,
   ): TypeEvalContext {
-    return getContextFromCache(project, TypeEvalContextImpl(true, true, false, origin))
+    return getContextFromCache(project, TypeEvalContextImpl(true, true, false, false, origin))
   }
 
   override fun codeAnalysis(
@@ -28,15 +28,22 @@ class TypeEvalContextFactoryImpl : TypeEvalContextFactory {
   }
 
   override fun codeInsightFallback(project: Project?): TypeEvalContext {
-    val anchor = TypeEvalContextImpl(false, false, false, null)
+    val anchor = TypeEvalContextImpl(false, false, false, false, null)
     if (project != null) {
       return getContextFromCache(project, anchor)
     }
     return anchor
   }
 
+  override fun externalContext(project: Project): TypeEvalContext {
+    val anchor = TypeEvalContextImpl(false, false, false, true, null)
+    return getContextFromCache(project, anchor)
+  }
+
+
+
   override fun deepCodeInsight(project: Project): TypeEvalContext {
-    return getContextFromCache(project, TypeEvalContextImpl(false, true, false, null))
+    return getContextFromCache(project, TypeEvalContextImpl(false, true, false, false, null))
   }
 
   /**
@@ -55,6 +62,6 @@ class TypeEvalContextFactoryImpl : TypeEvalContextFactory {
     if (Registry.`is`("python.optimized.type.eval.context")) {
       return TypeEvalContextImpl.OptimizedTypeEvalContext(false, false, false, origin)
     }
-    return TypeEvalContextImpl(false, false, false, origin)
+    return TypeEvalContextImpl(false, false, false, false, origin)
   }
 }

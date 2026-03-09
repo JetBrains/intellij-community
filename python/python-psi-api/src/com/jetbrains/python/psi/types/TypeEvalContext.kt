@@ -22,6 +22,7 @@ abstract class TypeEvalContext protected constructor() {
   abstract fun allowReturnTypes(element: PsiElement): Boolean
   abstract fun allowCallContext(element: PsiElement): Boolean
   abstract fun maySwitchToAST(element: PsiElement): Boolean
+  open fun isExternal(): Boolean = false
   abstract fun withTracing(): TypeEvalContext
 
   abstract fun trace(message: String, vararg args: Any?)
@@ -46,7 +47,7 @@ abstract class TypeEvalContext protected constructor() {
   abstract fun getReturnType(callable: PyCallable): PyType?
 
   @ApiStatus.Internal
-  abstract fun getContextTypeCache(): MutableMap<Pair<PyExpression?, Any?>, PyType?>
+  abstract fun getContextTypeCache(): MutableMap<Pair<Any, Any>, PyType?>
   abstract fun getKnownType(element: PyTypedElement): PyType?
   abstract fun getKnownReturnType(callable: PyCallable): PyType?
 
@@ -112,6 +113,15 @@ abstract class TypeEvalContext protected constructor() {
     @JvmStatic
     fun codeInsightFallback(project: Project?): TypeEvalContext {
       return TypeEvalContextFactory.getInstance().codeInsightFallback(project)
+    }
+
+
+    /**
+     * Special context to converting types from an external type checker, more aggressive assumptions can be made.
+     */
+    @JvmStatic
+    fun externalContext(project: Project): TypeEvalContext {
+      return TypeEvalContextFactory.getInstance().externalContext(project)
     }
 
     /**
