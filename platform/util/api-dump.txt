@@ -604,6 +604,8 @@ c:com.intellij.util.system.OS$UnixInfo
 f:com.intellij.util.system.OS$WindowsInfo
 - com.intellij.util.system.OS$OsInfo
 - getBuildNumber():java.lang.Long
+f:com.intellij.util.text.StringTokenizer
+- resetCurrentPosition(I):V
 f:com.intellij.util.text.TextRangeUtil
 - s:mergeRanges(java.util.List):java.util.List
 - s:mergeRanges(java.util.List,I):java.util.List

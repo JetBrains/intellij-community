@@ -167,9 +167,29 @@ abstract class ProjectLevelVcsManager {
 
   abstract fun isFileInContent(vf: VirtualFile?): Boolean
 
+  /**
+   * Checks if VCS shall not work with a file. It is not related to the '.ignore' status in the VCS.
+   *
+   * Prefer using [isIgnoredUnderRoot] if the VCS root is known.
+   */
   abstract fun isIgnored(vf: VirtualFile): Boolean
 
+  /**
+   * Checks if VCS shall not work with a file. It is not related to the '.ignore' status in the VCS.
+   *
+   * Prefer using [isIgnoredUnderRoot] if the VCS root is known.
+   */
   abstract fun isIgnored(filePath: FilePath): Boolean
+
+  /**
+   * Checks if VCS shall not work with a file. It is not related to the '.ignore' status in the VCS.
+   */
+  abstract fun isIgnoredUnderRoot(vcsRoot: VirtualFile, file: VirtualFile): Boolean
+
+  /**
+   * Checks if VCS shall not work with a file. It is not related to the '.ignore' status in the VCS.
+   */
+  abstract fun isIgnoredUnderRoot(vcsRoot: VirtualFile, filePath: FilePath): Boolean
 
   /**
    * Checks if a background VCS operation (commit or update) is currently in progress.

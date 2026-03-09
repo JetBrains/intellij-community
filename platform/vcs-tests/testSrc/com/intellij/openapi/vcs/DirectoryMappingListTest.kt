@@ -2,9 +2,9 @@
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
@@ -362,19 +362,23 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       assertTrue(vcsManager.isIgnoredFileRoot(externalRoot))
       assertTrue(vcsManager.isIgnoredFileRoot(versionedFile))
       assertTrue(vcsManager.isIgnoredFileRoot(ignoredUnderRootFile))
+      assertFalse(vcsManager.isIgnoredUnderRoot(externalRoot, versionedFile))
+      assertFalse(vcsManager.isIgnoredUnderRoot(externalRoot, versionedFilePath))
+      assertTrue(vcsManager.isIgnoredUnderRoot(externalRoot, ignoredUnderRootFile))
+      assertTrue(vcsManager.isIgnoredUnderRoot(externalRoot, ignoredUnderRootPath))
 
       vcsManager.setDirectoryMappings(listOf(VcsDirectoryMapping(externalRoot.path, MOCK)))
       mappings.waitMappedRootsUpdate()
 
-      assertNull(vcsManager.getVcsFor(externalRoot))
-      assertNull(vcsManager.getVcsFor(externalRootFilePath))
-      assertNull(vcsManager.getVcsFor(versionedFile))
-      assertNull(vcsManager.getVcsFor(versionedFilePath))
+      assertSame(vcsMock, vcsManager.getVcsFor(externalRoot))
+      assertSame(vcsMock, vcsManager.getVcsFor(externalRootFilePath))
+      assertSame(vcsMock, vcsManager.getVcsFor(versionedFile))
+      assertSame(vcsMock, vcsManager.getVcsFor(versionedFilePath))
 
-      assertNull(vcsManager.getVcsRootFor(externalRoot))
-      assertNull(vcsManager.getVcsRootFor(externalRootFilePath))
-      assertNull(vcsManager.getVcsRootFor(versionedFile))
-      assertNull(vcsManager.getVcsRootFor(versionedFilePath))
+      assertEquals(externalRoot, vcsManager.getVcsRootFor(externalRoot))
+      assertEquals(externalRoot, vcsManager.getVcsRootFor(externalRootFilePath))
+      assertEquals(externalRoot, vcsManager.getVcsRootFor(versionedFile))
+      assertEquals(externalRoot, vcsManager.getVcsRootFor(versionedFilePath))
 
       assertNull(vcsManager.getVcsFor(ignoredUnderRootFile))
       assertNull(vcsManager.getVcsFor(ignoredUnderRootPath))

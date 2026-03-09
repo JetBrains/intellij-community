@@ -25,7 +25,6 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.FilePath
@@ -217,14 +216,14 @@ class ProjectLevelVcsManagerImpl(
   private fun getMappedRootFor(file: FilePath?): MappedRoot? {
     if (file == null) return null
     val root: MappedRoot = mappingsHolder.getMappedRootFor(file) ?: return null
-    if (isIgnored(file)) return null
+    if (isIgnoredUnderRoot(root.root, file)) return null
     return root
   }
 
   private fun getMappedRootFor(file: VirtualFile?): MappedRoot? {
     if (file == null) return null
     val root: MappedRoot = mappingsHolder.getMappedRootFor(file) ?: return null
-    if (isIgnored(file)) return null
+    if (isIgnoredUnderRoot(root.root, file)) return null
     return root
   }
 
@@ -558,6 +557,27 @@ class ProjectLevelVcsManagerImpl(
   @ApiStatus.Internal
   fun isIgnoredFileRoot(file: VirtualFile): Boolean {
     return isIgnored(VcsUtil.getFilePath(file))
+  }
+
+  override fun isIgnoredUnderRoot(vcsRoot: VirtualFile, filePath: FilePath): Boolean {
+    val tokenizer = StringTokenizer(filePath.getPath(), "/")
+    tokenizer.resetCurrentPosition(vcsRoot.getPath().length)
+    return isIgnoredFileName(tokenizer)
+  }
+
+  override fun isIgnoredUnderRoot(vcsRoot: VirtualFile, file: VirtualFile): Boolean {
+    val fileTypeManager = FileTypeManager.getInstance()
+
+    var curr: VirtualFile? = file
+    while (curr != null && curr != vcsRoot) {
+      val name = curr.getName()
+      if (fileTypeManager.isFileIgnored(name)) {
+        return true
+      }
+
+      curr = curr.getParent()
+    }
+    return false
   }
 
   private fun isIgnoredFilePath(path: @SystemIndependent String): Boolean {

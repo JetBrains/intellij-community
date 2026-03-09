@@ -3123,6 +3123,8 @@ f:com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 - isFileInContent(com.intellij.openapi.vfs.VirtualFile):Z
 - isIgnored(com.intellij.openapi.vcs.FilePath):Z
 - isIgnored(com.intellij.openapi.vfs.VirtualFile):Z
+- isIgnoredUnderRoot(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath):Z
+- isIgnoredUnderRoot(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):Z
 - iterateVcsRoot(com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Processor):V
 - iterateVcsRoot(com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Processor,com.intellij.openapi.vcs.VirtualFileFilter):V
 - iterateVfUnderVcsRoot(com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Processor):V
