@@ -58,8 +58,7 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public void moveToOffset(int offset, boolean locateBeforeSoftWrap) {
-    if (offset < 0)
-      offset = 0;
+    offset = clampWithinDocumentBounds(offset);
     myStart = offset;
     myPos = offset;
     myEnd = offset;
@@ -77,7 +76,7 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
   @Override
   public void moveCaretRelatively(int columnShift, int lineShift, boolean withSelection, boolean scrollToCaret) {
     if (lineShift == 0) {
-      myEnd += columnShift;
+      myEnd = clampWithinDocumentBounds(myEnd + columnShift);
       if (!withSelection) {
         myStart = myEnd;
         myPos = myEnd;
@@ -93,6 +92,10 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
         myEnd = Math.max(oldPos, newPos);
       }
     }
+  }
+
+  private int clampWithinDocumentBounds(int value) {
+    return Math.clamp(value, 0, getEditor().getDocument().getTextLength());
   }
 
   @Override
@@ -156,8 +159,9 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public void setSelection(int startOffset, int endOffset) {
-    if (startOffset < 0) startOffset = 0;
-    if (endOffset < 0) endOffset = 0;
+    startOffset = clampWithinDocumentBounds(startOffset);
+    endOffset = clampWithinDocumentBounds(endOffset);
+
     // mimicking CaretImpl's doSetSelection: removing selection if startOffset == endOffset
     if (startOffset == endOffset) {
       myStart = myPos;
