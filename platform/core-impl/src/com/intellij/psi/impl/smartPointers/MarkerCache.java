@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.Language;
@@ -81,10 +81,10 @@ class MarkerCache {
       FrozenDocument before = frozen;
       frozen = frozen.applyEvent(event, 0);
       DocumentEvent corrected = new DocumentEventImpl(frozen, event.getOffset(), event.getOldFragment(), event.getNewFragment(),
-                                                            event.getOldTimeStamp(), event.isWholeTextReplaced(),
-                                                            ((DocumentEventImpl)event).getInitialStartOffset(),
-                                                            ((DocumentEventImpl)event).getInitialOldLength(),
-                                                            event.getMoveOffset());
+                                                      event.getOldTimeStamp(), event.isWholeTextReplaced(),
+                                                      ((DocumentEventImpl)event).getInitialStartOffset(),
+                                                      ((DocumentEventImpl)event).getInitialOldLength(),
+                                                      event.getMoveOffset());
 
       int i = 0;
       while (i < resultMarkers.length) {
@@ -155,7 +155,7 @@ class MarkerCache {
     boolean greedy = info.isGreedy();
     int start = info.getPsiStartOffset();
     int end = info.getPsiEndOffset();
-    boolean surviveOnExternalChange = events.stream().anyMatch(event-> isWholeDocumentReplace(frozen, (DocumentEventImpl)event));
+    boolean surviveOnExternalChange = events.stream().anyMatch(event -> isWholeDocumentReplace(frozen, (DocumentEventImpl)event));
     ManualRangeMarker marker = new ManualRangeMarker(start, end, greedy, greedy, surviveOnExternalChange, null);
 
     UpdatedRanges ranges = new UpdatedRanges(0, frozen, infos, new ManualRangeMarker[]{marker});
