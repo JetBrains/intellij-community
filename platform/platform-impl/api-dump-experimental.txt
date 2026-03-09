@@ -385,6 +385,17 @@ f:com.intellij.openapi.project.impl.P3SupportKt
 *f:com.intellij.openapi.updateSettings.PluginUpdateInfo$UpdateAvailable
 - com.intellij.openapi.updateSettings.PluginUpdateInfo
 - f:getUpdate():com.intellij.openapi.updateSettings.impl.PluginDownloader
+*f:com.intellij.openapi.util.io.CancellableComputation
+- java.util.function.Function
+- *sf:Companion:com.intellij.openapi.util.io.CancellableComputation$Companion
+- apply(java.lang.Object):java.lang.Object
+- sf:computeCancellable(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- sf:wrapAsCancellable(java.util.function.Function):java.util.function.Function
+*f:com.intellij.openapi.util.io.CancellableComputation$Companion
+- f:computeCancellable(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- f:wrapAsCancellable(java.util.function.Function):java.util.function.Function
+*f:com.intellij.openapi.util.io.CancellableComputationKt
+- *sf:wrapCancellable(kotlin.jvm.functions.Function2):kotlin.jvm.functions.Function2
 a:com.intellij.openapi.wm.impl.FrameTitleBuilder
 - *:getFileTitleAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.wm.impl.IdeBackgroundUtil
