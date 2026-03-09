@@ -27,12 +27,14 @@ import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusSer
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark
 import com.intellij.util.indexing.roots.GenericDependencyIterator
 import com.intellij.util.indexing.roots.IndexableEntityProvider
+import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
 import com.intellij.util.indexing.roots.IndexableEntityProvider.Enforced
 import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.WorkspaceIndexingRootsBuilder
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
+import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder
 import com.intellij.util.indexing.roots.processLibraryEntity
 import com.intellij.util.indexing.roots.processModuleRoot
 import com.intellij.workspaceModel.core.fileIndex.DependencyDescription
@@ -42,6 +44,7 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexChangedEvent
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexListener
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
@@ -191,6 +194,18 @@ class ProjectEntityIndexingService(
             sdkHome = entity.homePath?.url,
             root = fileSet.root
           ))
+        }
+        else if (fileSet.kind == WorkspaceFileKind.CUSTOM) {
+          iterators.add(GenericDependencyIterator.forCustomKindRoot(entityPointer, fileSet.recursive, root))
+        }
+        else {
+          val rootHolder = if (fileSet.kind == WorkspaceFileKind.EXTERNAL_SOURCE) {
+            IndexingSourceRootHolder.fromFiles(emptyList(), listOf(root))
+          }
+          else {
+            IndexingSourceRootHolder.fromFiles(listOf(root), emptyList())
+          }
+          iterators.add(IndexableEntityProviderMethods.createExternalEntityIterators(entityPointer, rootHolder))
         }
       }
     }

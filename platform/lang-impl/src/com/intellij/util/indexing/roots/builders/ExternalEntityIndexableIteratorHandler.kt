@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.roots.builders
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.indexing.roots.ExternalEntityIndexableIteratorImpl
@@ -11,7 +12,8 @@ import com.intellij.util.indexing.roots.origin.MutableIndexingUrlSourceRootHolde
 
 class ExternalEntityIndexableIteratorHandler : IndexableIteratorBuilderHandler {
   override fun accepts(builder: IndexableEntityProvider.IndexableIteratorBuilder): Boolean {
-    return builder is ExternalEntityIteratorBuilder<*>
+    return !Registry.`is`("use.workspace.file.index.for.partial.scanning") &&
+           builder is ExternalEntityIteratorBuilder<*>
   }
 
   override fun instantiate(builders: Collection<IndexableEntityProvider.IndexableIteratorBuilder>,

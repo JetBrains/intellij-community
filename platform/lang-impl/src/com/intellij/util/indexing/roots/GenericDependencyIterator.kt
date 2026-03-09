@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
+import com.intellij.util.indexing.roots.origin.CustomKindEntityOriginImpl
 import com.intellij.util.indexing.roots.origin.GenericContentEntityOriginImpl
 import com.intellij.util.indexing.roots.origin.IndexingRootHolder
 import com.intellij.util.indexing.roots.origin.SdkOriginImpl
@@ -89,6 +90,23 @@ class GenericDependencyIterator(
                                       indexingProgressText = IndexingBundle.message("indexable.files.provider.indexing.sdk", sdkPresentableName, sdkName),
                                       rootsScanningProgressText = IndexingBundle.message("indexable.files.provider.scanning.sdk", sdkPresentableName, sdkName),
                                       debugName = "$sdkPresentableName ${sdkName} ${sdkHome} (${root.name})")
+    }
+
+    fun forCustomKindRoot(entityPointer: EntityPointer<*>, recursive: Boolean, root: VirtualFile): IndexableFilesIterator {
+      val rootHolder = if (recursive) {
+        IndexingRootHolder.fromFile(root)
+      }
+      else {
+        IndexingRootHolder.fromFileNonRecursive(root)
+      }
+      return GenericDependencyIterator(
+        origin = CustomKindEntityOriginImpl(entityPointer, rootHolder),
+        root = root,
+        indexingProgressText = IndexingBundle.message("indexable.files.provider.indexing.additional.dependencies"),
+        rootsScanningProgressText = IndexingBundle.message("indexable.files.provider.scanning.additional.dependencies"),
+        debugName = "Custom kind roots from entity (${rootHolder.getDebugDescription()})",
+        recursive = recursive
+      )
     }
   }
 }
