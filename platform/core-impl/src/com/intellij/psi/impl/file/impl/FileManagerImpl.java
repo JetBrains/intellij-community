@@ -314,19 +314,6 @@ public final class FileManagerImpl implements FileManagerEx {
     return viewProvider == null ? vFile.getUserData(myPsiHardRefKey) : viewProvider;
   }
 
-  /**
-   * @return associated psi file, it's it cached in {@link #myVFileToViewProviderMap}
-   * It tries to not perform any expensive ops like creating files/reparse/resurrecting PsiFile from temp comatose state.
-   */
-  @ApiStatus.Internal
-  @Override
-  public @Nullable PsiFile getRawCachedFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context) {
-    FileViewProvider viewProvider = getRawCachedViewProvider(vFile, context);
-    return viewProvider == null ? null :
-           viewProvider instanceof AbstractFileViewProvider ? ((AbstractFileViewProvider)viewProvider).getCachedPsi(viewProvider.getBaseLanguage())
-                                                            : viewProvider.getPsi(viewProvider.getBaseLanguage());
-  }
-
   private @NotNull @Unmodifiable List<FileViewProvider> getRawCachedViewProviders(@NotNull VirtualFile vFile) {
     List<FileViewProvider> providers = myVFileToViewProviderMap.getAllProviders(vFile);
     if (!providers.isEmpty()) {
@@ -832,7 +819,10 @@ public final class FileManagerImpl implements FileManagerEx {
     if (viewProvider == null || viewProvider.getUserData(IN_COMA) != null) {
       return null;
     }
-    return ((AbstractFileViewProvider)viewProvider).getCachedPsi(viewProvider.getBaseLanguage());
+
+    Language language = viewProvider.getBaseLanguage();
+    return viewProvider instanceof AbstractFileViewProvider ? ((AbstractFileViewProvider)viewProvider).getCachedPsi(language)
+                                                            : viewProvider.getPsi(language);
   }
 
   private @NotNull CodeInsightContext getRawContext(@NotNull FileViewProvider fileViewProvider) {

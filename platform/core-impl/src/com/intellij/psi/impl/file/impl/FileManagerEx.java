@@ -57,8 +57,6 @@ public interface FileManagerEx extends FileManager {
   @RequiresReadLock(generateAssertion = false)
   boolean evaluateValidity(@NotNull PsiFile file);
 
-  @Nullable PsiFile getRawCachedFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context);
-
   void forceReload(@NotNull VirtualFile vFile);
 
   void firePropertyChangedForUnloadedPsi();
@@ -70,6 +68,11 @@ public interface FileManagerEx extends FileManager {
    */
   void processQueue();
 
+  /**
+   * It tries to not perform any expensive ops like creating files/reparse/resurrecting PsiFile from temp comatose state.
+   *
+   * @return associated psi file
+   */
   @RequiresReadLock
   @Nullable PsiFile getFastCachedPsiFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context);
 

@@ -222,7 +222,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
   @ApiStatus.Internal
   @Override
   public final @Nullable PsiFile getRawCachedFile(@NotNull VirtualFile virtualFile, @NotNull CodeInsightContext context) {
-    return getFileManager().getRawCachedFile(virtualFile, context);
+    return getFileManager().getFastCachedPsiFile(virtualFile, context);
   }
 
   @ApiStatus.Internal
