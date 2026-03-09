@@ -352,8 +352,9 @@ abstract class KotlinUastElementFactory(project: Project) : UastElementFactory {
     }
 
     private fun KtPsiFactory.getAnalyzableMethodCall(methodCall: KtCallExpression, context: KtElement): KtCallExpression {
-        val analyzableElement = ((createExpressionCodeFragment("(null)", context).copy() as KtExpressionCodeFragment)
-            .getContentElement()!! as KtParenthesizedExpression).expression!!
+        // call .copy() to get non-physical code fragment which allows modifications without WA
+        val nonPhysicalCodeFragment = createExpressionCodeFragment("(null)", context).copy() as KtExpressionCodeFragment
+        val analyzableElement = (nonPhysicalCodeFragment.getContentElement()!! as KtParenthesizedExpression).expression!!
 
         val isQualified = methodCall.parent is KtQualifiedExpression
         return if (isQualified) {
