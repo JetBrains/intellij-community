@@ -134,6 +134,9 @@ public final class ImageEditorUI extends JPanel implements UiDataProvider, CopyP
   private final JScrollPane myScrollPane;
   private final boolean isEmbedded;
 
+  private final JPanel myTopPanel;
+  private final @Nullable JComponent myActionToolbarPanel;
+
   ImageEditorUI(@Nullable ImageEditor editor) {
     this(editor, false, false);
   }
@@ -181,16 +184,17 @@ public final class ImageEditorUI extends JPanel implements UiDataProvider, CopyP
 
 
     // toolbar is disabled in embedded mode
-    JComponent toolbarPanel = null;
     if (!isEmbedded) {
       ActionManager actionManager = ActionManager.getInstance();
       ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ImageEditorActions.GROUP_TOOLBAR);
       ActionToolbar actionToolbar = actionManager.createActionToolbar(ImageEditorActions.ACTION_PLACE, actionGroup, true);
       actionToolbar.setTargetComponent(this);
 
-      toolbarPanel = actionToolbar.getComponent();
-      toolbarPanel.setBackground(JBColor.lazy(() -> Objects.requireNonNullElse(getBackground(), UIUtil.getPanelBackground())));
-      toolbarPanel.addMouseListener(new FocusRequester());
+      myActionToolbarPanel = actionToolbar.getComponent();
+      myActionToolbarPanel.setBackground(JBColor.lazy(() -> Objects.requireNonNullElse(getBackground(), UIUtil.getPanelBackground())));
+      myActionToolbarPanel.addMouseListener(new FocusRequester());
+    } else {
+      myActionToolbarPanel = null;
     }
 
     JLabel errorLabel = new JLabel(
@@ -206,17 +210,17 @@ public final class ImageEditorUI extends JPanel implements UiDataProvider, CopyP
     contentPanel.add(errorPanel, ERROR_PANEL);
 
     boolean isScientificMode = editor != null && editor.getFile().getUserData(ScientificUtils.SCIENTIFIC_MODE_KEY) != null;
-    JPanel topPanel = new NonOpaquePanel(new BorderLayout());
+    myTopPanel = new NonOpaquePanel(new BorderLayout());
     if (!isEmbedded) {
-      topPanel.add(toolbarPanel, BorderLayout.CENTER);
+      myTopPanel.add(myActionToolbarPanel, BorderLayout.CENTER);
       if (!isScientificMode) {
         infoLabel = new JLabel((String)null, SwingConstants.RIGHT);
         infoLabel.setBorder(JBUI.Borders.emptyRight(2));
-        topPanel.add(infoLabel, BorderLayout.EAST);
+        myTopPanel.add(infoLabel, BorderLayout.EAST);
       }
     }
 
-    add(topPanel, BorderLayout.NORTH);
+    add(myTopPanel, BorderLayout.NORTH);
     add(contentPanel, BorderLayout.CENTER);
 
     myScrollPane.addComponentListener(new ComponentAdapter() {
@@ -724,5 +728,15 @@ public final class ImageEditorUI extends JPanel implements UiDataProvider, CopyP
       imageComponent.setGridLineSpan(gridOptions.getLineSpan());
       imageComponent.setGridLineColor(gridOptions.getLineColor());
     }
+  }
+
+  @ApiStatus.Internal
+  public @NotNull JPanel getTopPanel() {
+    return myTopPanel;
+  }
+
+  @ApiStatus.Internal
+  public @Nullable JComponent getActionToolbarPanel() {
+    return myActionToolbarPanel;
   }
 }
