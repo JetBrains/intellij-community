@@ -1049,6 +1049,8 @@
                                                                 implementation="com.intellij.lang.java.JavaInlineDocumentationProvider" />
     <platform.backend.documentation.linkHandler id="JavaDocumentationLinkHandler"
                                                 implementation="com.intellij.lang.java.JavaDocumentationLinkHandler" />
+    <lang.documentationStubProvider implementation="com.intellij.lang.java.JavadocStubProvider"/>
+
 
     <lang.formatting.extractor language="JAVA" implementationClass="com.intellij.psi.codeStyle.extractor.differ.JavaExtractor"/>
     <encapsulateFields.Helper implementationClass="com.intellij.refactoring.encapsulateFields.JavaEncapsulateFieldHelper" language="JAVA"/>
