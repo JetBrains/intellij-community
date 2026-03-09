@@ -52,6 +52,7 @@ import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.getSdksToInstall
 import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
+import com.jetbrains.python.sdk.impl.resolvePythonHome
 import com.jetbrains.python.sdk.isSystemWide
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import com.jetbrains.python.venvReader.VirtualEnvReader
@@ -62,7 +63,6 @@ import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
-import kotlin.io.path.name
 
 
 private val LOG: Logger = fileLogger()
@@ -94,6 +94,7 @@ sealed interface FileSystem<P : PathHolder> {
   suspend fun detectSelectableVenv(projectPathPrefix: Path): List<DetectedSelectableInterpreter<P>>
   fun preferredInterpreterBasePath(): P? = null
   fun resolvePythonBinary(pythonHome: P): P?
+  fun resolvePythonHome(pythonBinary: P): P
   fun getVenvName(pythonHome: P): String?
 
   fun getBinaryToExec(path: P): BinaryToExec
@@ -242,6 +243,10 @@ sealed interface FileSystem<P : PathHolder> {
       return pythonHome.path.resolvePythonBinary()?.let { PathHolder.Eel(it) }
     }
 
+    override fun resolvePythonHome(pythonBinary: PathHolder.Eel): PathHolder.Eel {
+      return PathHolder.Eel(pythonBinary.path.resolvePythonHome())
+    }
+
     override fun getVenvName(pythonHome: PathHolder.Eel): String? {
       return resolvePythonBinary(pythonHome)?.let { VirtualEnvReader().getVenvName(it.path) }
     }
@@ -362,6 +367,10 @@ sealed interface FileSystem<P : PathHolder> {
       val pythonHomeString = pythonHome.pathString
       val platform = targetEnvironmentConfiguration.getPlatformAndRoot().platform
       return PathHolder.Target(VirtualEnvReader().findPythonInPythonRootForTarget(pythonHomeString, platform))
+    }
+
+    override fun resolvePythonHome(pythonBinary: PathHolder.Target): PathHolder.Target {
+      return PathHolder.Target(pythonBinary.pathString.substringBeforeLast("/bin/"))
     }
 
     override fun getVenvName(pythonHome: PathHolder.Target): String? {
