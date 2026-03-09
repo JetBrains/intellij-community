@@ -313,6 +313,10 @@ com.intellij.modcommand.ModPsiUpdater
 - sf:OVERWRITE:com.intellij.modcompletion.ModCompletionItem$InsertionMode
 - s:valueOf(java.lang.String):com.intellij.modcompletion.ModCompletionItem$InsertionMode
 - s:values():com.intellij.modcompletion.ModCompletionItem$InsertionMode[]
+*:com.intellij.modcompletion.ModCompletionItemFilter
+- sf:EP_NAME:com.intellij.lang.LanguageExtension
+- a:isApplicableFor(com.intellij.modcompletion.ModCompletionItemProvider):Z
+- a:test(com.intellij.modcompletion.ModCompletionItemProvider$CompletionContext,com.intellij.modcompletion.ModCompletionItem):Z
 *f:com.intellij.modcompletion.ModCompletionItemPresentation
 - <init>(com.intellij.openapi.util.text.MarkupText):V
 - detailIcon():javax.swing.Icon
@@ -329,6 +333,7 @@ com.intellij.modcommand.ModPsiUpdater
 - sf:EP_NAME:com.intellij.lang.LanguageExtension
 - s:forLanguage(com.intellij.lang.Language):java.util.List
 - getSorter(com.intellij.modcompletion.ModCompletionItemProvider$CompletionContext):com.intellij.codeInsight.completion.CompletionSorter
+- isEnabled():Z
 - a:provideItems(com.intellij.modcompletion.ModCompletionItemProvider$CompletionContext,com.intellij.modcompletion.ModCompletionResult):V
 *f:com.intellij.modcompletion.ModCompletionItemProvider$CompletionContext
 - java.lang.Record

@@ -34,6 +34,15 @@ public interface ModCompletionItemProvider {
   void provideItems(CompletionContext context, ModCompletionResult sink);
 
   /**
+   * @return true if provider is enabled in general. By default, this is controlled by a registry key 
+   * (see {@link #modCommandCompletionEnabled()}), given the experimental nature of {@link ModCompletionItemProvider}.
+   * One may override this method to return {@code true} unconditionally for contributors that are known to be stable.
+   */
+  default boolean isEnabled() {
+    return modCommandCompletionEnabled();
+  }
+
+  /**
    * @param context context to use
    * @return the completion sorter that should be used to sort the items provided by this provider
    */
