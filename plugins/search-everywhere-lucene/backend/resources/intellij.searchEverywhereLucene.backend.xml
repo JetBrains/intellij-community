@@ -20,6 +20,6 @@
             icon="AllIcons.Actions.BuildLoadChanges"/>
   </actions>
 
-  <resource-bundle>messages.searchEverywhereLuceneFrontendBundle</resource-bundle>
+  <resource-bundle>messages.searchEverywhereLuceneBackendBundle</resource-bundle>
 
 </idea-plugin>
