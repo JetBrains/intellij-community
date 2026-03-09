@@ -20,6 +20,7 @@ import com.intellij.terminal.ui.TerminalWidgetKt;
 import com.jediterm.terminal.ui.TerminalWidgetListener;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.terminal.TerminalTitleKt;
 
 import javax.swing.JComponent;
 import java.beans.PropertyChangeListener;
@@ -53,7 +54,7 @@ public final class ClassicTerminalSessionEditor extends UserDataHolderBase imple
       @Override
       public void onTitleChanged(@NotNull TerminalTitle terminalTitle) {
         try {
-          terminalFile.rename(null, terminalTitle.buildTitle());
+          terminalFile.rename(null, TerminalTitleKt.buildSettingsAwareTitle(terminalTitle));
         }
         catch (IOException exception) {
           throw new RuntimeException("Cannot rename");

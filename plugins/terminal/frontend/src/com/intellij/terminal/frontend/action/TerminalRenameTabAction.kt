@@ -11,13 +11,14 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
+import org.jetbrains.plugins.terminal.buildSettingsAwareFullTitle
 
 internal class TerminalRenameTabAction : ToolWindowTabRenameActionBase(
   TerminalToolWindowFactory.TOOL_WINDOW_ID,
   TerminalBundle.message("action.RenameSession.newSessionName.label")
 ), DumbAware {
   override fun getContentDisplayNameToEdit(content: Content, project: Project): String {
-    return findTerminalTitle(content, project)?.buildFullTitle() ?: content.displayName
+    return findTerminalTitle(content, project)?.buildSettingsAwareFullTitle() ?: content.displayName
   }
 
   override fun applyContentDisplayName(content: Content, project: Project, @Nls newContentName: String) {

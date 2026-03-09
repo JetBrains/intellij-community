@@ -21,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.terminal.buildSettingsAwareTitle
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
@@ -49,7 +50,7 @@ internal class TerminalViewFileEditor(
 
     terminalView.title.addTitleListener(object : TerminalTitleListener {
       override fun onTitleChanged(terminalTitle: TerminalTitle) {
-        file.rename(null, terminalTitle.buildTitle())
+        file.rename(null, terminalTitle.buildSettingsAwareTitle())
         FileEditorManager.getInstance(project).updateFilePresentation(file)
       }
     }, this)

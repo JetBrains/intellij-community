@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
+import org.jetbrains.plugins.terminal.buildSettingsAwareFullTitle
 
 @Deprecated("Please avoid referencing the action class directly, get it by action ID instead: ActionManager.getInstance().getAction(\"Terminal.RenameSession\"")
 class RenameTerminalSessionAction : ToolWindowTabRenameActionBase(
@@ -18,7 +19,7 @@ class RenameTerminalSessionAction : ToolWindowTabRenameActionBase(
 ), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   override fun getContentDisplayNameToEdit(content: Content, project: Project): String {
     val widget = TerminalToolWindowManager.findWidgetByContent(content) ?: return content.displayName
-    return widget.terminalTitle.buildFullTitle()
+    return widget.terminalTitle.buildSettingsAwareFullTitle()
   }
 
   override fun applyContentDisplayName(content: Content, project: Project, @Nls newContentName: String) {
