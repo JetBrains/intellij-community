@@ -1,8 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.ui
 
-import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.components.JBTextArea
+import com.intellij.ui.EditorTextField
 import java.awt.Component
 import java.awt.Container
 import javax.swing.JPanel
@@ -21,9 +20,9 @@ internal fun layoutRecursively(component: Component) {
   component.components.forEach(::layoutRecursively)
 }
 
-internal fun findPromptScrollPane(root: Component, promptArea: JBTextArea): JBScrollPane? {
-  return collectComponentsOfType(root, JBScrollPane::class.java)
-    .firstOrNull { scrollPane -> scrollPane.viewport?.view === promptArea }
+internal fun findPromptArea(root: Component, promptArea: EditorTextField): EditorTextField? {
+  return collectComponentsOfType(root, EditorTextField::class.java)
+    .firstOrNull { it === promptArea }
 }
 
 internal fun <T : Component> collectComponentsOfType(root: Component, targetType: Class<T>): List<T> {

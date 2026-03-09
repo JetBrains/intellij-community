@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.agent.workbench.common"/>
     <module name="intellij.agent.workbench.sessions.core"/>
+    <module name="intellij.markdown"/>
   </dependencies>
   <!-- endregion -->
 
