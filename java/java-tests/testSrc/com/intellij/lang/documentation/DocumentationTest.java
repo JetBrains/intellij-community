@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation;
 
-import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget;
+import com.intellij.lang.java.JavaDocumentationTarget;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -47,13 +47,13 @@ public final class DocumentationTest extends LightJavaCodeInsightTestCase {
 
     List<DocumentationTarget> targets = getAndCheckTargets(editorContext);
 
-    PsiElementDocumentationTarget singleTarget = (PsiElementDocumentationTarget)targets.get(0);
-    assertInstanceOf(singleTarget.getTargetElement(), ClsMethodImpl.class);
+    JavaDocumentationTarget singleTarget = (JavaDocumentationTarget)targets.getFirst();
+    assertInstanceOf(singleTarget.getElement(), ClsMethodImpl.class);
   }
 
   private static @NotNull List<DocumentationTarget> getAndCheckTargets(DataContext dataContext) {
     List<DocumentationTarget> targets = dataContext.getData(DOCUMENTATION_TARGETS);
-    assertInstanceOf(assertOneElement(targets), PsiElementDocumentationTarget.class);
+    assertInstanceOf(assertOneElement(targets), JavaDocumentationTarget.class);
     return targets;
   }
 

@@ -1040,7 +1040,16 @@
     <lang.psiElementExternalizer language="JAVA" implementationClass="com.intellij.lang.java.JavaPsiElementExternalizer"/>
     <lang.importOptimizer language="JAVA" implementationClass="com.intellij.lang.java.JavaImportOptimizer"/>
     <lang.documentationFixer language="JAVA" implementationClass="com.intellij.codeInsight.documentation.JavaDocCommentFixer"/>
-    <lang.documentationProvider language="JAVA" implementationClass="com.intellij.lang.java.JavaDocumentationProvider"/>
+
+    <platform.backend.documentation.targetProvider id="JavaDocumentationTargetProvider"
+                                                   implementation="com.intellij.lang.java.JavaDocumentationTargetProvider" />
+    <platform.backend.documentation.psiTargetProvider id="JavaPsiDocumentationTargetProvider"
+                                                      implementation="com.intellij.lang.java.JavaPsiDocumentationTargetProvider" />
+    <platform.backend.documentation.inlineDocumentationProvider id="JavaInlineDocumentationProvider"
+                                                                implementation="com.intellij.lang.java.JavaInlineDocumentationProvider" />
+    <platform.backend.documentation.linkHandler id="JavaDocumentationLinkHandler"
+                                                implementation="com.intellij.lang.java.JavaDocumentationLinkHandler" />
+
     <lang.formatting.extractor language="JAVA" implementationClass="com.intellij.psi.codeStyle.extractor.differ.JavaExtractor"/>
     <encapsulateFields.Helper implementationClass="com.intellij.refactoring.encapsulateFields.JavaEncapsulateFieldHelper" language="JAVA"/>
     <lang.refactoringSupport.classMembersRefactoringSupport language="JAVA"

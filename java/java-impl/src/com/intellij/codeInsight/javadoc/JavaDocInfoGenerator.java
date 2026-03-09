@@ -697,6 +697,11 @@ public class JavaDocInfoGenerator {
     else if (myElement instanceof PsiPackage pkg) {
       generatePackageJavaDoc(buffer, pkg, generatePrologue);
     }
+    else if (myElement instanceof PsiPackageStatement psiPackage) {
+      PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(psiPackage.getPackageName());
+      if (aPackage == null) return false;
+      generatePackageJavaDoc(buffer, aPackage, generatePrologue);
+    }
     else if (myElement instanceof PsiJavaModule module) {
       generateModuleJavaDoc(buffer, module, generatePrologue);
     }
