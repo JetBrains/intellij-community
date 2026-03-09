@@ -116,7 +116,7 @@ public final class TestDaemonCodeAnalyzerImpl {
     }
     assert application.isUnitTestMode();
 
-    waitForAllThings(mustWaitForSmartMode);
+    waitForAllThings(mustWaitForSmartMode, 10_000);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     myDaemonCodeAnalyzer.clearReferences();
     // previous passes can be canceled but still in flight. wait for them to avoid interference
@@ -141,7 +141,7 @@ public final class TestDaemonCodeAnalyzerImpl {
   }
 
   @RequiresEdt
-  private void waitForAllThings(boolean mustWaitForSmartMode) {
+  private void waitForAllThings(boolean mustWaitForSmartMode, int timeoutMs) {
     ThreadingAssertions.assertEventDispatchThread();
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
     do {
@@ -150,9 +150,9 @@ public final class TestDaemonCodeAnalyzerImpl {
       // heavy ops are bad, but VFS refresh is ok
     }
     while (RefreshQueueImpl.isRefreshInProgress() || DaemonCodeAnalyzerImpl.heavyProcessIsRunning());
-    long dStart = System.currentTimeMillis();
+    long deadline = System.currentTimeMillis() + timeoutMs;
     while (mustWaitForSmartMode && DumbService.getInstance(myProject).isDumb()) {
-      if (System.currentTimeMillis() > dStart + 100_000) {
+      if (System.currentTimeMillis() > deadline) {
         throw new IllegalStateException("Timeout waiting for smart mode. If you absolutely want to be dumb, please use DaemonCodeAnalyzerImpl.mustWaitForSmartMode(false).");
       }
       dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
@@ -373,8 +373,9 @@ public final class TestDaemonCodeAnalyzerImpl {
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     assert psiFile != null;
     long start = System.currentTimeMillis();
-    long deadline = start + 60_000;
-    waitForAllThings(mustWaitForSmartModeByDefault);
+    int timeoutMs = 60_000;
+    long deadline = start + timeoutMs;
+    waitForAllThings(mustWaitForSmartModeByDefault, timeoutMs);
     Collection<? extends DaemonProgressIndicator> progresses = waitForDaemonToStart(document, deadline - System.currentTimeMillis());
     assert myDaemonCodeAnalyzer.isUpdateByTimerEnabled() : "codeAnalyzer.isUpdateByTimerEnabled()=false so waitForDaemonToFinish() will never finish";
     Disposable disposable = Disposer.newDisposable();
@@ -399,10 +400,12 @@ public final class TestDaemonCodeAnalyzerImpl {
           String dump = ThreadDumper.dumpThreadsToString();
           MarkupModelImpl markupModel = (MarkupModelImpl)DocumentMarkupModel.forDocument(document, myProject, true);
           throw new AssertionError("Too long waiting for daemon to finish (" + (System.currentTimeMillis() - start) + "ms already). " +
-             "file status map:" + myDaemonCodeAnalyzer.getFileStatusMap() + "\n" +
-             "progress: "+progresses+
+             "file status map:" + myDaemonCodeAnalyzer.getFileStatusMap() +
+             "\nprogress: "+progresses+
+             "\ndaemonIsWorkingOrPending(document)="+daemonIsWorkingOrPending(document)+
+             "\nPsiDocumentManager.getInstance(myProject).isUncommited(document)="+PsiDocumentManager.getInstance(myProject).isUncommited(document)+
              "\ncurrent highlights:\n" + StringUtil.join(markupModel.getAllHighlighters(), Object::toString, "\n")+
-             "thread dump:"+ dump);
+             "\nthread dump:"+ dump);
         }
         callbackWhileWaiting.run();
         dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();

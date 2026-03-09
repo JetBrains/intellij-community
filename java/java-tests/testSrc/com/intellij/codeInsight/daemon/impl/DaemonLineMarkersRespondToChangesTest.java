@@ -29,7 +29,6 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
@@ -176,7 +175,6 @@ public class DaemonLineMarkersRespondToChangesTest extends ProductionDaemonAnaly
       }
     });
 
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     List<HighlightInfo> infosAfter = myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR);
     assertNotEmpty(infosAfter);
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();

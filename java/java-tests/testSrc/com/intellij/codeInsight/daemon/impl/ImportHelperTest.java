@@ -638,10 +638,8 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
 
     CodeInsightWorkspaceSettings.getInstance(getProject()).setOptimizeImportsOnTheFly(true, getTestRootDisposable());
 
-    List<HighlightInfo> errs =
-      myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR);
     //error corresponding to too short class name
-    assertSize(1, errs);
+    assertOneElement(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR));
 
     assertOneImportAdded("java.util.List");
 

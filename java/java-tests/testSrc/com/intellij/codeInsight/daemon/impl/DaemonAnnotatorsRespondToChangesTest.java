@@ -528,13 +528,13 @@ public class DaemonAnnotatorsRespondToChangesTest extends ProductionDaemonAnalyz
         assertFalse(emptyAnnotator.didIDoIt()); // no highlighting should start
       }
       long typingEnd = System.currentTimeMillis();
-      myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR);
-      long end = System.currentTimeMillis();
-
       long typingElapsed = typingEnd - start;
+      myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR);
+      assertTrue(emptyAnnotator.didIDoIt());
+      long end = System.currentTimeMillis();
       long highlightElapsed = end - typingEnd;
       assertTrue("; typed in " + typingElapsed + "ms; highlighted in " + highlightElapsed + "ms",
-                 typingElapsed > 1000 && highlightElapsed >= 2000);
+                 typingElapsed > 1000 && highlightElapsed >= 3000);
       })
     );
   }
