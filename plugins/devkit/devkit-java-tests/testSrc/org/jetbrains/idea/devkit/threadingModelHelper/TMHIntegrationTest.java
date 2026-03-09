@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.threadingModelHelper;
 
 import com.intellij.openapi.application.Application;
@@ -112,12 +112,7 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
 
   public void testNonReadActionInBackgroundWithReadLock() {
     assertThrows(RuntimeExceptionWithAttachments.class, MUST_NOT_EXECUTE_IN_READ_ACTION,
-                 () -> throwExecutionExceptionCauseFromBackground(() -> ReadAction.run(() -> runNonReadAction())));
-  }
-
-  public void testNonReadActionInBackgroundWithWriteLock() {
-    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_IN_EDT,
-                 () -> throwExecutionExceptionCauseFromBackground(() -> WriteAction.run(() -> runNonReadAction())));
+                 () -> throwExecutionExceptionCauseFromBackground(() -> ReadAction.runBlocking(() -> runNonReadAction())));
   }
 
   public void testEdtActionInBackgroundNoAssertion() throws Throwable {

@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
@@ -410,7 +411,6 @@ public final class DeleteHandler {
     public void run(@NotNull ProgressIndicator indicator) {
       indicator.setIndeterminate(true);
       var toBin = TrashBin.isSupported() && GeneralSettings.getInstance().isDeletingToBin();
-      var app = ApplicationManager.getApplication();
 
       try {
         for (var element : myFileElements) {
@@ -433,7 +433,7 @@ public final class DeleteHandler {
           }
 
           try {
-            app.runWriteAction(() -> element.delete());
+            WriteAction.run(() -> element.delete());
           }
           finally {
             LocalFileSystem.MOVE_TO_TRASH.set(file, null);

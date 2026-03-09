@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -24,7 +24,6 @@ import com.intellij.util.io.TrashBin;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -70,7 +69,6 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
       @SuppressWarnings("DuplicatedCode")
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
-        var app = ApplicationManager.getApplication();
 
         for (var file : files) {
           indicator.checkCanceled();
@@ -89,16 +87,9 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
           }
 
           try {
-            app.runWriteAction(() -> {
-              try {
-                file.delete(this);
-              }
-              catch (IOException e) {
-                throw new UncheckedIOException(e);
-              }
-            });
+            WriteAction.run(() -> file.delete(this));
           }
-          catch (UncheckedIOException e) {
+          catch (IOException e) {
             LOG.info("Error when deleting " + file, e);
             problems.add(file.getName());
           }
