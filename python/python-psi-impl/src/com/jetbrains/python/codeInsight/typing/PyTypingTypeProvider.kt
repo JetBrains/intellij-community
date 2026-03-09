@@ -23,7 +23,6 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.ArrayUtil
-import com.intellij.util.Function
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Stack
 import com.jetbrains.python.PyCustomType
@@ -1700,16 +1699,9 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     private fun getLiteralType(resolved: PsiElement, context: Context): Ref<PyType?>? {
       if (resolved is PySubscriptionExpression) {
         if (resolvesToQualifiedNames(resolved.operand, context, LITERAL, LITERAL_EXT)) {
-          return Optional
-            .ofNullable<PyExpression?>(resolved.indexExpression)
-            .map<PyType?>(Function { index: PyExpression? ->
-              PyLiteralType.fromLiteralParameter(
-                index!!,
-                context.typeContext
-              )
-            })
-            .map(Function { value: PyType? -> Ref.create(value) })
-            .orElse(null)
+          return resolved.indexExpression
+            ?.let { PyLiteralType.fromLiteralParameter(it, context.typeContext, context.typeRepresentationMode) }
+            ?.let { Ref.create(it) }
         }
       }
 
