@@ -45,7 +45,7 @@ internal fun readLazyTreeStyle(): LazyTreeStyle {
                 simpleListItemMetrics =
                     SimpleListItemMetrics(
                         innerPadding = PaddingValues(horizontal = 12.dp),
-                        outerPadding = PaddingValues(4.dp),
+                        outerPadding = PaddingValues(horizontal = 4.dp),
                         selectionBackgroundCornerSize = CornerSize(JBUI.CurrentTheme.Tree.ARC.dp / 2),
                         iconTextGap = 2.dp,
                     ),
