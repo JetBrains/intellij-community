@@ -18,16 +18,16 @@ import javax.swing.JList
 import javax.swing.ListCellRenderer
 
 internal data class ProviderEntry(
-  val bridge: AgentSessionProviderBridge,
-  val displayName: @Nls String,
-  val isCliAvailable: Boolean,
-  val icon: Icon,
+  @JvmField val bridge: AgentSessionProviderBridge,
+  @JvmField val displayName: @Nls String,
+  @JvmField val isCliAvailable: Boolean,
+  @JvmField val icon: Icon,
 )
 
 internal data class ContextEntry(
-  val item: AgentPromptContextItem,
-  val projectBasePath: String? = null,
-  val id: String = item.rendererId + ":" + item.title + ":" + item.body.hashCode(),
+  @JvmField val item: AgentPromptContextItem,
+  @JvmField val projectBasePath: String? = null,
+  @JvmField val id: String = item.rendererId + ":" + item.title + ":" + item.body.hashCode(),
 ) {
   val logicalItemId: String?
     get() = item.itemId
@@ -64,10 +64,10 @@ internal data class ContextEntry(
 }
 
 internal data class ThreadEntry(
-  val id: String,
-  val displayText: @NlsSafe String,
-  val secondaryText: @NlsSafe String,
-  val activity: AgentThreadActivity = AgentThreadActivity.READY,
+  @JvmField val id: String,
+  @JvmField val displayText: @NlsSafe String,
+  @JvmField val secondaryText: @NlsSafe String,
+  @JvmField val activity: AgentThreadActivity = AgentThreadActivity.READY,
 )
 
 internal class ExistingTaskCellRenderer : ListCellRenderer<ThreadEntry> {

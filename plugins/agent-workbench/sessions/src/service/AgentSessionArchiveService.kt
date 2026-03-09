@@ -33,7 +33,7 @@ private const val UNARCHIVE_THREADS_ACTION_KEY_PREFIX = "threads-unarchive"
 private const val AGENT_SESSIONS_NOTIFICATION_GROUP_ID = "Agent Workbench Sessions"
 
 @Service(Service.Level.APP)
-internal class AgentSessionArchiveService(
+class AgentSessionArchiveService internal constructor(
   private val serviceScope: CoroutineScope,
   private val syncService: AgentSessionRefreshService,
   private val contentRepository: AgentSessionContentRepository,

@@ -14,8 +14,8 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 
 private data class AgentChatIconKey(
-  val providerId: String,
-  val activity: AgentThreadActivity,
+  @JvmField val providerId: String,
+  @JvmField val activity: AgentThreadActivity,
 )
 
 private val ICON_CACHE = ConcurrentHashMap<AgentChatIconKey, Icon>()

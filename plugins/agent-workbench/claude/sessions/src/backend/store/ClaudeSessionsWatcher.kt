@@ -14,10 +14,10 @@ private val LOG = logger<ClaudeSessionsWatcher>()
 
 internal data class ClaudeChangeSet(
   // Known JSONL files that must be reparsed regardless of file stat heuristics.
-  val changedJsonlPaths: Set<Path> = emptySet(),
+  @JvmField val changedJsonlPaths: Set<Path> = emptySet(),
 
   // Overflow/ambiguous events where file-level attribution is not reliable.
-  val requiresFullRescan: Boolean = false,
+  @JvmField val requiresFullRescan: Boolean = false,
 
   // `changedJsonlPaths.isEmpty() && !requiresFullRescan` means "refresh ping":
   // re-run stat-based scan without forcing full reparse.
@@ -121,4 +121,3 @@ private fun isJsonlPath(path: Path, normalizedRoot: Path): Boolean {
   val fileName = path.fileName?.toString() ?: return false
   return fileName.endsWith(".jsonl") && isUnderRoot(path, normalizedRoot)
 }
-

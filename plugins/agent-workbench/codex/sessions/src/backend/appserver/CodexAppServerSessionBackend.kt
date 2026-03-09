@@ -294,9 +294,9 @@ private fun foldSessionActivity(base: CodexSessionActivity, children: Sequence<C
 }
 
 private data class PathFilter(
-    val path: String,
-    val cwdFilter: String,
-    val workingDirectory: Path,
+    @JvmField val path: String,
+    @JvmField val cwdFilter: String,
+    @JvmField val workingDirectory: Path,
 )
 
 private fun resolvePathFilters(paths: List<String>): List<PathFilter> {

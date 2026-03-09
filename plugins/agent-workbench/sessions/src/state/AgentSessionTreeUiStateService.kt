@@ -9,7 +9,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import kotlinx.serialization.Serializable
 
-internal interface SessionTreeUiState {
+interface SessionTreeUiState {
   fun isProjectCollapsed(path: String): Boolean
 
   fun setProjectCollapsed(path: String, collapsed: Boolean): Boolean
@@ -21,10 +21,10 @@ internal interface SessionTreeUiState {
   fun resetVisibleThreadCount(path: String): Boolean
 }
 
-internal const val DEFAULT_VISIBLE_CLOSED_PROJECT_COUNT: Int = 3
-internal const val DEFAULT_VISIBLE_THREAD_COUNT: Int = 3
+const val DEFAULT_VISIBLE_CLOSED_PROJECT_COUNT: Int = 3
+const val DEFAULT_VISIBLE_THREAD_COUNT: Int = 3
 
-internal class InMemorySessionTreeUiState : SessionTreeUiState {
+class InMemorySessionTreeUiState : SessionTreeUiState {
   private val collapsedProjectPaths = LinkedHashSet<String>()
   private val visibleThreadCountByProject = LinkedHashMap<String, Int>()
 
@@ -68,7 +68,7 @@ internal class InMemorySessionTreeUiState : SessionTreeUiState {
 
 @Service(Service.Level.APP)
 @State(name = "AgentSessionTreeUiState", storages = [Storage(StoragePathMacros.CACHE_FILE)])
-internal class AgentSessionTreeUiStateService
+class AgentSessionTreeUiStateService
   : SerializablePersistentStateComponent<AgentSessionTreeUiStateService.SessionTreeUiStateState>(SessionTreeUiStateState()),
     SessionTreeUiState {
 
@@ -146,7 +146,7 @@ internal class AgentSessionTreeUiStateService
   }
 
   @Serializable
-  internal data class SessionTreeUiStateState(
+  data class SessionTreeUiStateState(
     @JvmField val collapsedProjectPaths: Set<String> = emptySet(),
     @JvmField val visibleThreadCountByProject: Map<String, Int> = emptyMap(),
   )

@@ -171,7 +171,7 @@ class AgentPromptExistingTaskControllerTest {
   }
 
   private data class ControllerFixture(
-    val controller: AgentPromptExistingTaskController,
-    val list: JBList<ThreadEntry>,
+    @JvmField val controller: AgentPromptExistingTaskController,
+    @JvmField val list: JBList<ThreadEntry>,
   )
 }

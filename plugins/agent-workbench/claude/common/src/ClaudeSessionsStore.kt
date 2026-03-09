@@ -20,11 +20,11 @@ enum class ClaudeSessionActivity {
 }
 
 data class ClaudeSessionThread(
-  val id: String,
-  val title: String,
-  val updatedAt: Long,
-  val gitBranch: String? = null,
-  val activity: ClaudeSessionActivity = ClaudeSessionActivity.READY,
+  @JvmField val id: String,
+  @JvmField val title: String,
+  @JvmField val updatedAt: Long,
+  @JvmField val gitBranch: String? = null,
+  @JvmField val activity: ClaudeSessionActivity = ClaudeSessionActivity.READY,
 )
 
 class ClaudeSessionsStore(
@@ -290,19 +290,19 @@ private fun readBooleanOrFalse(parser: JsonParser): Boolean {
 }
 
 private data class ParsedJsonlLine(
-  val sessionId: String?,
-  val isSidechain: Boolean,
-  val timestampMillis: Long?,
-  val firstPrompt: String?,
-  val hasConversationSignal: Boolean,
-  val eventType: String?,
-  val hasToolUse: Boolean = false,
+  @JvmField val sessionId: String?,
+  @JvmField val isSidechain: Boolean,
+  @JvmField val timestampMillis: Long?,
+  @JvmField val firstPrompt: String?,
+  @JvmField val hasConversationSignal: Boolean,
+  @JvmField val eventType: String?,
+  @JvmField val hasToolUse: Boolean = false,
 )
 
 private data class ParsedMessageObject(
-  val role: String?,
-  val contentPreview: String?,
-  val hasToolUse: Boolean = false,
+  @JvmField val role: String?,
+  @JvmField val contentPreview: String?,
+  @JvmField val hasToolUse: Boolean = false,
 )
 
 private interface ActivityTrackingState {
@@ -333,11 +333,11 @@ private data class JsonlTailScanState(
 ) : ActivityTrackingState
 
 private data class JsonlMetadataScanState(
-  var firstPrompt: String? = null,
-  var sessionId: String? = null,
-  var isSidechain: Boolean = false,
+  @JvmField var firstPrompt: String? = null,
+  @JvmField var sessionId: String? = null,
+  @JvmField var isSidechain: Boolean = false,
   override var updatedAt: Long? = null,
-  var hasConversationSignal: Boolean = false,
+  @JvmField var hasConversationSignal: Boolean = false,
   override var lastEventType: String? = null,
   override var lastAssistantHadToolUse: Boolean? = null,
 ) : ActivityTrackingState

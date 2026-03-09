@@ -44,7 +44,7 @@ class AgentSessionReadService private constructor(
     resumeLaunchSpecProvider = resumeLaunchSpecProvider,
   )
 
-  internal fun stateFlow(): StateFlow<AgentSessionsState> = requiredStateStoreProvider().state
+  fun stateFlow(): StateFlow<AgentSessionsState> = requiredStateStoreProvider().state
 
   internal fun stateSnapshot(): AgentSessionsState = stateFlow().value
 

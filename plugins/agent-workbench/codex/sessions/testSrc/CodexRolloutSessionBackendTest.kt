@@ -779,8 +779,8 @@ private fun writeRollout(file: Path, lines: List<String>) {
 }
 
 private data class ActivityCase(
-  val id: String,
-  val eventLines: List<String>,
-  val expected: CodexSessionActivity,
-  val expectedRequiresResponse: Boolean = false,
+  @JvmField val id: String,
+  @JvmField val eventLines: List<String>,
+  @JvmField val expected: CodexSessionActivity,
+  @JvmField val expectedRequiresResponse: Boolean = false,
 )

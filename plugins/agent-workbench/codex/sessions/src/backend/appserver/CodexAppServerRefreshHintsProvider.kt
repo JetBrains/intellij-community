@@ -215,8 +215,8 @@ internal class CodexAppServerRefreshHintsProvider(
 }
 
 private data class CachedStartedThreadHint(
-  val startedThread: CodexAppServerStartedThread,
-  val recordedAtMs: Long,
+  @JvmField val startedThread: CodexAppServerStartedThread,
+  @JvmField val recordedAtMs: Long,
 )
 
 private const val APP_SERVER_OUTPUT_NOTIFICATION_DEBOUNCE_MS = 250L

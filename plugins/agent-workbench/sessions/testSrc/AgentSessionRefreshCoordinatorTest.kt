@@ -2044,18 +2044,18 @@ class AgentSessionRefreshCoordinatorTest {
 }
 
 private data class PendingCodexRebindInvocation(
-  val path: String,
-  val pendingTabKey: String,
-  val pendingThreadIdentity: String,
-  val target: AgentChatTabRebindTarget,
+  @JvmField val path: String,
+  @JvmField val pendingTabKey: String,
+  @JvmField val pendingThreadIdentity: String,
+  @JvmField val target: AgentChatTabRebindTarget,
 )
 
 private data class ConcreteCodexRebindInvocation(
-  val path: String,
-  val tabKey: String,
-  val currentThreadIdentity: String,
-  val newThreadRebindRequestedAtMs: Long,
-  val target: AgentChatTabRebindTarget,
+  @JvmField val path: String,
+  @JvmField val tabKey: String,
+  @JvmField val currentThreadIdentity: String,
+  @JvmField val newThreadRebindRequestedAtMs: Long,
+  @JvmField val target: AgentChatTabRebindTarget,
 )
 
 private fun pendingCodexTab(

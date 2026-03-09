@@ -887,10 +887,10 @@ class AgentSessionRefreshServiceIntegrationTest {
 }
 
 private data class ServicePendingCodexRebindInvocation(
-  val path: String,
-  val pendingTabKey: String,
-  val pendingThreadIdentity: String,
-  val target: AgentChatTabRebindTarget,
+  @JvmField val path: String,
+  @JvmField val pendingTabKey: String,
+  @JvmField val pendingThreadIdentity: String,
+  @JvmField val target: AgentChatTabRebindTarget,
 )
 
 private fun successfulPendingCodexRebindReport(

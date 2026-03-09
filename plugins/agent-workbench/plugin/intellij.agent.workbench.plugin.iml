@@ -41,6 +41,8 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.vcs" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.testrunner" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.sessions.actions" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.sessions.toolwindow" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.sessions" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.claude.sessions" scope="RUNTIME" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />

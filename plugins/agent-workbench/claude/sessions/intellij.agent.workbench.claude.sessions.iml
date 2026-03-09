@@ -44,6 +44,7 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.filewatch" />
     <orderEntry type="module" module-name="intellij.agent.workbench.claude.common" />
     <orderEntry type="module" module-name="intellij.agent.workbench.common" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.sessions.actions" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" />
     <orderEntry type="module" module-name="intellij.libraries.jackson" />
     <orderEntry type="library" name="jna" level="project" />

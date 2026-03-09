@@ -422,14 +422,14 @@ internal suspend fun <T> eventually(
 }
 
 private data class RolloutSnapshot(
-  val path: Path,
-  val threadId: String,
-  val cwd: Path,
+  @JvmField val path: Path,
+  @JvmField val threadId: String,
+  @JvmField val cwd: Path,
 )
 
 private data class SseEvent(
-  val type: String,
-  val data: String,
+  @JvmField val type: String,
+  @JvmField val data: String,
 )
 
 private fun parseSessionMetaLine(path: Path, line: String): RolloutSnapshot? {
