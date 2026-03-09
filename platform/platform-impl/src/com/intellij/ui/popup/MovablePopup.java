@@ -201,15 +201,6 @@ public final class MovablePopup {
           view.setType(Window.Type.POPUP);
           if (StartupUiUtil.isWaylandToolkit() ||
               AppMode.isRemoteDevHost() /* Needed only with Wayland toolkit on the client, but won't hurt in other cases */) {
-            // Wayland popups *must* know their parent in order to be
-            // placed on the screen relative to it.
-            try {
-              Field field = Window.class.getDeclaredField("popupParent");
-              field.setAccessible(true);
-              field.set(view, owner);
-            }
-            catch (NoSuchFieldException| IllegalAccessException ignore) {
-            }
             WaylandUtilKt.setUnconstrainedPopupPositioning(view, true);
           }
           setAlwaysOnTop(view, myAlwaysOnTop);
