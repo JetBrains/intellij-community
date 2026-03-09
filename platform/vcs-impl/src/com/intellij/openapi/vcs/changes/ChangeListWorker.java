@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -964,6 +963,7 @@ public final class ChangeListWorker {
 
   public static final class ChangeListUpdater implements ChangeListManagerGate {
     private final ChangeListWorker myWorker;
+    private final ProjectLevelVcsManager myVcsManager;
 
     @SuppressWarnings("SSBasedInspection")
     private final Map<String, ObjectOpenHashSet<Change>> myChangesBeforeUpdateMap = FactoryMap.create(it -> new ObjectOpenHashSet<>());
@@ -975,6 +975,7 @@ public final class ChangeListWorker {
 
     public ChangeListUpdater(@NotNull ChangeListWorker worker) {
       myWorker = worker.copy();
+      myVcsManager = ProjectLevelVcsManager.getInstance(worker.getProject());
     }
 
     public @NotNull Project getProject() {
@@ -1051,7 +1052,7 @@ public final class ChangeListWorker {
         boolean isUnderScope = scope == null ||
                                before != null && scope.belongsTo(before.getFile()) ||
                                after != null && scope.belongsTo(after.getFile()) ||
-                               isIgnoredChange(before, after, getProject());
+                               isNotUnderVcs(before) && isNotUnderVcs(after);
         if (isUnderScope) {
           removed.add(change);
         }
@@ -1068,16 +1069,9 @@ public final class ChangeListWorker {
       return removed;
     }
 
-    private static boolean isIgnoredChange(@Nullable ContentRevision before, @Nullable ContentRevision after, @NotNull Project project) {
-      return isIgnoredRevision(before, project) && isIgnoredRevision(after, project);
-    }
-
-    private static boolean isIgnoredRevision(@Nullable ContentRevision revision, final @NotNull Project project) {
+    private boolean isNotUnderVcs(@Nullable ContentRevision revision) {
       if (revision == null) return true;
-      return ReadAction.compute(() -> {
-        if (project.isDisposed()) return false;
-        return ProjectLevelVcsManager.getInstance(project).isIgnored(revision.getFile());
-      });
+      return myVcsManager.getVcsFor(revision.getFile()) == null;
     }
 
 

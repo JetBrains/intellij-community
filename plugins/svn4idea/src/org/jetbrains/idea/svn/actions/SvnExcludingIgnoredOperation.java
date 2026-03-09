@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.actions;
 
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
@@ -66,7 +65,7 @@ public class SvnExcludingIgnoredOperation {
     }
 
     private boolean isIgnoredByVcs(final VirtualFile file) {
-      return ReadAction.compute(() -> myVcsManager.isIgnored(file));
+      return myVcsManager.isIgnored(file);
     }
   }
 

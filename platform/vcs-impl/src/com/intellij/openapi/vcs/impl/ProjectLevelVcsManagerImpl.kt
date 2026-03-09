@@ -524,7 +524,7 @@ class ProjectLevelVcsManagerImpl(
                            hasExplicitMapping(vf) ||
                            fileIndex.isInContent(vf) ||
                            (!Registry.`is`("ide.hide.excluded.files") && fileIndex.isExcludedFile(vf))
-      isUnderProject && !isIgnored(vf)
+      isUnderProject && !isIgnoredFilePath(vf.path)
     })
   }
 

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -99,10 +98,7 @@ public class SvnRecursiveStatusWalker {
   }
 
   public boolean isIgnoredByVcs(final @NotNull VirtualFile vFile) {
-    return ReadAction.compute(() -> {
-      if (myVcs.getProject().isDisposed()) throw new ProcessCanceledException();
-      return myVcsManager.isIgnored(vFile);
-    });
+    return myVcsManager.isIgnored(vFile);
   }
 
   public boolean isIgnoredIdeaLevel(@NotNull VirtualFile vFile) {

@@ -414,7 +414,7 @@ public final class NewMappings implements Disposable {
     Map<VirtualFile, MappedRoot> mappedRoots = new HashMap<>();
     Disposable pointerDisposable = Disposer.newDisposable();
 
-    if (!TrustedProjects.isProjectTrusted(myProject)) {
+    if (!TrustedProjects.isProjectTrusted(myProject) || myProject.isDefault()) {
       return new Mappings(Collections.emptyList(), pointerDisposable);
     }
 
