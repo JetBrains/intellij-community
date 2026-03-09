@@ -30,10 +30,8 @@ class KaptGradleProjectImportHandler : GradleProjectImportHandler {
         val newPluginOptions = (compilerArguments.pluginOptions ?: emptyArray()).filter { !it.startsWith("plugin:$compilerPluginId:") }
         val newPluginClasspath = (compilerArguments.pluginClasspaths ?: emptyArray()).filter { !isKaptCompilerPluginPath(it) }
 
-        fun List<String>.toArrayIfNotEmpty() = takeIf { it.isNotEmpty() }?.toTypedArray()
-
-        compilerArguments.pluginOptions = newPluginOptions.toArrayIfNotEmpty()
-        compilerArguments.pluginClasspaths = newPluginClasspath.toArrayIfNotEmpty()
+        compilerArguments.pluginOptions = newPluginOptions.toTypedArray()
+        compilerArguments.pluginClasspaths = newPluginClasspath.toTypedArray()
 
         facetSettings.compilerArguments = compilerArguments
     }

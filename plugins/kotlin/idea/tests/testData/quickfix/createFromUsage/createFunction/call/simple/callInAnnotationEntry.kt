@@ -1,6 +1,7 @@
 // "Create function 'bar'" "false"
 // ERROR: Unresolved reference: foo
 // ERROR: Unresolved reference: bar
+// K2_AFTER_ERROR: Annotation argument must be a compile-time constant.
 // K2_AFTER_ERROR: Unresolved reference 'bar'.
 // K2_AFTER_ERROR: Unresolved reference 'foo'.
 
