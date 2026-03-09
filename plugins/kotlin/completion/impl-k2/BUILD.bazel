@@ -71,6 +71,7 @@ jvm_library(
     "//plugins/kotlin/formatter/minimal",
     "//platform/code-style-api:codeStyle",
     "//plugins/kotlin/kotlin.searching",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
   ]
 )
 ### auto-generated section `build intellij.kotlin.completion.impl` end
