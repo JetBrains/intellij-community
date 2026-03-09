@@ -13,13 +13,16 @@ import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.components.buildSubstitutor
 import org.jetbrains.kotlin.analysis.api.components.compositeScope
 import org.jetbrains.kotlin.analysis.api.components.defaultType
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.components.isAnyType
 import org.jetbrains.kotlin.analysis.api.components.memberScope
 import org.jetbrains.kotlin.analysis.api.components.namedClassSymbol
 import org.jetbrains.kotlin.analysis.api.components.upperBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
@@ -27,7 +30,9 @@ import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.codeinsight.utils.isOpen
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionContributor
@@ -45,12 +50,15 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirL
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirLookupElementFactory.createAnonymousObjectLookupElement
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.ExpectedTypeWeigher
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.ExpectedTypeWeigher.matchesExpectedType
+import org.jetbrains.kotlin.idea.imports.ImportMapper
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllInheritors
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
@@ -132,7 +140,7 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
 
         val expectedTypeParamMap = expectedType.getTypeParameterMapping()
 
-        val inheritingClasses = expectedType.symbol.psi?.findAllInheritors() ?: return
+        val inheritingClasses = expectedType.symbol.psi?.findAllInheritorsWithJavaAnalogs() ?: return
         for (inheritor in inheritingClasses) {
             completeElementsForSymbol(
                 symbolPsi = inheritor,
@@ -175,13 +183,25 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
             return
         }
 
+        val javaFqName = (symbol.psi as? PsiClass)
+            ?.namedClassSymbol?.classId
+            ?.asSingleFqName()
+
         // If we have an alias in scope, then we do not need to import anything, just use the alias name.
         val importStrategy = if (aliasName == null) {
+            // Note: we explicitly do this for the original symbol rather than the kotlinAlias because
+            // the constructor symbols will belong to Java anyways.
             context.importStrategyDetector.detectImportStrategyForClassifierSymbol(symbol)
         } else ImportStrategy.DoNothing
 
+        val kotlinAliasSymbolOrSelf = javaFqName?.let {
+            val apiVersion = context.completionContext.originalFile.languageVersionSettings.apiVersion
+            val kotlinAliasFqName = ImportMapper.findCorrespondingKotlinFqName(it, apiVersion) ?: return@let null
+            buildClassType(ClassId.topLevel(kotlinAliasFqName)).symbol
+        } ?: symbol
+
         val substitutionResult = substituteTypeArgumentsToMatchExpectedSupertype(
-            inheritorSymbol = symbol,
+            inheritorSymbol = kotlinAliasSymbolOrSelf,
             expectedSuperTypeParameterMapping = expectedTypeParamMap,
             expectedSuperType = expectedType,
         )
@@ -213,12 +233,12 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
         if (canBeInstantiated) {
             val typeArgsRequired = when (substitutionResult) {
                 // If symbol == expectedType.symbol, the type arguments will be inferred correctly and can be omitted
-                is SuccessfulSubstitution -> substitutionResult.typeArguments.isNotEmpty() && symbol != expectedType.symbol
+                is SuccessfulSubstitution -> substitutionResult.typeArguments.isNotEmpty() && kotlinAliasSymbolOrSelf != expectedType.symbol
                 SubstitutionNotPossible -> return // do not show the result
                 UnresolvedParameter -> true
             }
             addConstructorCallLookupElements(
-                symbol = symbol,
+                symbol = kotlinAliasSymbolOrSelf,
                 inputTypeArgumentsAreRequired = typeArgsRequired,
                 importStrategy = importStrategy,
                 aliasName = aliasName,
@@ -240,12 +260,11 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
     @OptIn(KaExperimentalApi::class)
     context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
     private fun substituteTypeArgumentsToMatchExpectedSupertype(
-        inheritorSymbol: KaClassSymbol,
+        inheritorSymbol: KaClassLikeSymbol,
         expectedSuperTypeParameterMapping: Map<KaTypeParameterSymbol, KaTypeProjection>,
         expectedSuperType: KaClassType,
     ): InheritanceSubstitutionResult {
-        // Special case if the expectedSuperType is exactly our type.
-        if (expectedSuperType.symbol == inheritorSymbol) {
+        if (expectedSuperType.expandedSymbol == inheritorSymbol.expandedSymbolOrSelf) {
             val typeArguments = expectedSuperType.typeArguments
 
             // If the expected type contains some type parameters, then we have to let the user fill them in,
@@ -336,7 +355,7 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
 
     context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
     private fun addObjectLookupElement(
-        symbol: KaClassSymbol,
+        symbol: KaClassLikeSymbol,
         importingStrategy: ImportStrategy,
         aliasName: Name?
     ) {
@@ -352,16 +371,18 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
 
     context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
     private fun addConstructorCallLookupElements(
-        symbol: KaNamedClassSymbol,
+        symbol: KaClassLikeSymbol,
         inputTypeArgumentsAreRequired: Boolean,
         importStrategy: ImportStrategy,
         aliasName: Name?
     ) {
-        val constructorSymbols = symbol.memberScope.constructors
+        val originalClassOrSelf = (symbol as? KaTypeAliasSymbol)?.expandedType?.symbol ?: symbol
+        if (originalClassOrSelf !is KaNamedClassSymbol) return
+        val constructorSymbols = originalClassOrSelf.memberScope.constructors
             .filter { context.visibilityChecker.isVisible(it, context.positionContext) }
             .toList()
 
-        if (symbol.isInner) {
+        if (originalClassOrSelf.isInner) {
             // TODO: we do not return inner classes from this contributor, but they are returned by other contributors
             return
         }
@@ -425,4 +446,46 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
         object UnresolvedParameter : InheritanceSubstitutionResult
         class SuccessfulSubstitution(val typeArguments: List<KaTypeProjection>) : InheritanceSubstitutionResult
     }
+
+    /**
+     * Returns a sequence of all inheritors of [this], taking into account that some classes
+     * might be defined in Kotlin source code but actually do not exist during runtime on the JVM.
+     * Such a case is `kotlin.Throwable`, which is defined as its own class in Kotlin stdlib source code,
+     * unrelated to java.lang.Throwable, but will actually always be an instance of `java.lang.Throwable` at runtime.
+     *
+     * Care is taken by this function to avoid duplicates caused by also returning the Java analogs.
+     */
+    context(session: KaSession)
+    private fun PsiElement.findAllInheritorsWithJavaAnalogs(): Sequence<PsiElement> = sequence {
+        val seenFqNames = mutableSetOf<FqName>()
+        for (inheritor in findAllInheritors()) {
+            yield(inheritor)
+            inheritor.kotlinFqName?.let {
+                seenFqNames.add(it)
+            }
+        }
+
+        val componentPlatforms = session.useSiteModule.targetPlatform.componentPlatforms
+        if (componentPlatforms.singleOrNull() !is JvmPlatform) {
+            // The code below is only relevant for JVM
+            return@sequence
+        }
+
+        val kotlinFqName = kotlinFqName
+        // Since the above might not get all inheritors due to what is described in the description of this function,
+        // we need to re-run finding the inheritors for the mapped java class.
+        // Because this might lead to duplicates, we also filter out any duplicates here.
+        val mappedJavaType = kotlinFqName?.let { fqName ->
+            JavaToKotlinClassMap.mapKotlinToJava(fqName.toUnsafe())
+        } ?: return@sequence
+        val originalJavaPsi = buildClassType(mappedJavaType).symbol?.psi ?: return@sequence
+
+        for (inheritor in originalJavaPsi.findAllInheritors()) {
+            if (inheritor.kotlinFqName in seenFqNames) continue
+            yield(inheritor)
+        }
+    }
 }
+
+private val KaClassLikeSymbol.expandedSymbolOrSelf: KaClassLikeSymbol
+    get() = (this as? KaTypeAliasSymbol)?.expandedType?.symbol ?: this

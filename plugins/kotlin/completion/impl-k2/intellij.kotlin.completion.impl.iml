@@ -73,5 +73,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.formatter.minimal" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="module" module-name="intellij.kotlin.searching" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.shared" />
   </component>
 </module>

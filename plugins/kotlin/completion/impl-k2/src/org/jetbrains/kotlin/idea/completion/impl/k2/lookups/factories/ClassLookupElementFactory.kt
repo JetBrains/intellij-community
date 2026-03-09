@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.nameOrAnonymous
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
@@ -111,7 +110,7 @@ internal object ClassLookupElementFactory {
     context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun createConstructorLookup(
-        containingSymbol: KaNamedClassSymbol,
+        containingSymbol: KaClassLikeSymbol,
         constructorSymbols: List<KaConstructorSymbol>,
         inputTypeArgumentsAreRequired: Boolean,
         importingStrategy: ImportStrategy,
