@@ -443,7 +443,6 @@ public final class FileManagerImpl implements FileManagerEx {
 
   private boolean myProcessingFileTypesChange;
 
-  @ApiStatus.Internal
   @Override
   public void processFileTypesChanged(boolean clearViewProviders) {
     if (myProcessingFileTypesChange) return;
@@ -470,7 +469,6 @@ public final class FileManagerImpl implements FileManagerEx {
   }
 
   @RequiresWriteLock
-  @ApiStatus.Internal
   @Override
   public void possiblyInvalidatePhysicalPsi() {
     removeInvalidDirs();
@@ -479,7 +477,6 @@ public final class FileManagerImpl implements FileManagerEx {
     });
   }
 
-  @ApiStatus.Internal
   @Override
   public void dispatchPendingEvents() {
     Project project = myManager.getProject();
@@ -631,7 +628,6 @@ public final class FileManagerImpl implements FileManagerEx {
     return getVFileToPsiDirMap().get(vFile);
   }
 
-  @ApiStatus.Internal
   @Override
   public void removeFilesAndDirsRecursively(@NotNull VirtualFile vFile) {
     DebugUtil.performPsiModification("removeFilesAndDirsRecursively", () -> {
@@ -668,7 +664,6 @@ public final class FileManagerImpl implements FileManagerEx {
     clearPsiCaches(viewProvider);
   }
 
-  @ApiStatus.Internal
   @Override
   public @Nullable PsiFile getCachedPsiFileInner(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
     FileViewProvider viewProvider = findCachedViewProvider(file, context);
@@ -693,14 +688,12 @@ public final class FileManagerImpl implements FileManagerEx {
   }
 
   @RequiresWriteLock
-  @ApiStatus.Internal
   @Override
   public void removeInvalidFilesAndDirs(boolean useFind) {
     removeInvalidDirs(); // note: important to update directories the map first - findFile uses findDirectory!
     new InvalidFileProcessor(this, myManager.getProject(), myVFileToViewProviderMap, useFind).processInvalidFiles();
   }
 
-  @ApiStatus.Internal
   public static boolean areViewProvidersEquivalent(@NotNull FileViewProvider view1, @NotNull FileViewProvider view2) {
     if (view1.getClass() != view2.getClass() || view1.getFileType() != view2.getFileType()) return false;
 
@@ -729,7 +722,6 @@ public final class FileManagerImpl implements FileManagerEx {
     }
   }
 
-  @ApiStatus.Internal
   @Override
   public void reloadPsiAfterTextChange(@NotNull FileViewProvider viewProvider, @NotNull VirtualFile vFile) {
     if (!areViewProvidersEquivalent(viewProvider, createFileViewProvider(vFile, false))) {
