@@ -6,6 +6,7 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvid
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.psi.KtBlockCodeFragment
+import org.jetbrains.kotlin.psi.KtPsiFactory
 
 // K2 PostfixTemplateProvider
 internal class KotlinPostfixTemplateProvider : PostfixTemplateProvider {
@@ -58,12 +59,11 @@ internal class KotlinPostfixTemplateProvider : PostfixTemplateProvider {
         if (originalFile !is KtBlockCodeFragment) {
             return copyFile
         }
-        val fragment = KtBlockCodeFragment(
-            originalFile.project,
-            "fragment.kt", originalFile.text, originalFile.importsToString(), originalFile.context
-        )
-        fragment.setOriginalFile(originalFile)
-        return fragment
+        val codeFragment = KtPsiFactory(originalFile.project, true)
+            .createBlockCodeFragment(originalFile.text, originalFile.context)
+        codeFragment.addImportsFromString(originalFile.importsToString())
+        codeFragment.setOriginalFile(originalFile)
+        return codeFragment
     }
 
     override fun preExpand(file: PsiFile, editor: Editor) {}
