@@ -45,7 +45,7 @@ internal class StreamTracingManager(
   private val objectStorage: DisableCollectionObjectStorage,
   private val handlerFactory: BreakpointBasedHandlerFactory,
 ) {
-  private var sourceOperationBreakpoint: MethodExitRequest? = null
+  private var sourceOperationBreakpoint: MethodExitRequestHandle? = null
   private var intermediateOperationsBreakpoints: List<StreamCallRuntimeInfo> = emptyList()
   private lateinit var terminalOperationBreakpoint: StreamCallRuntimeInfo
 
@@ -118,7 +118,7 @@ internal class StreamTracingManager(
     chain: StreamChain,
     positions: BreakpointResolveResult.Found,
     instrumentation: StreamInstrumentationManager,
-  ): EventRequest {
+  ): RequestHandle<*> {
     val qualifierExpressionBreakpoint = if (positions.qualifierExpressionMethod == null) {
       // if qualifier expression is variable we need to replace it in current stack frame
       instrumentation.replaceQualifierVariable(evaluationContext, chain.qualifierExpression)
@@ -153,7 +153,7 @@ internal class StreamTracingManager(
     methodSignature: JvmMethodSignature,
     instrumentation: StreamInstrumentationManager,
     qualifierSkipCount: Int,
-  ): MethodExitRequest {
+  ): MethodExitRequestHandle {
     val filter = if (qualifierSkipCount > 0) {
       var remainingSkips = qualifierSkipCount
       { _: SuspendContextImpl, _: MethodExitEvent ->
@@ -220,25 +220,15 @@ internal class StreamTracingManager(
   }
 
   private fun disableBreakpointRequests() {
-    if (sourceOperationBreakpoint?.isEnabled == true) {
-      sourceOperationBreakpoint?.disable()
-    }
+    sourceOperationBreakpoint?.disable()
 
     for (intermediateStepBreakpoint in intermediateOperationsBreakpoints) {
-      if (intermediateStepBreakpoint.methodEntryRequest.isEnabled) {
-        intermediateStepBreakpoint.methodEntryRequest.disable()
-      }
-      if (intermediateStepBreakpoint.methodExitRequest.isEnabled) {
-        intermediateStepBreakpoint.methodExitRequest.disable()
-      }
+      intermediateStepBreakpoint.methodEntryRequest.disable()
+      intermediateStepBreakpoint.methodExitRequest.disable()
     }
 
-    if (terminalOperationBreakpoint.methodEntryRequest.isEnabled) {
-      terminalOperationBreakpoint.methodEntryRequest.disable()
-    }
-    if (terminalOperationBreakpoint.methodExitRequest.isEnabled) {
-      terminalOperationBreakpoint.methodExitRequest.disable()
-    }
+    terminalOperationBreakpoint.methodEntryRequest.disable()
+    terminalOperationBreakpoint.methodExitRequest.disable()
   }
 
   private fun enableNextBreakpoint(callNumber: Int) {
@@ -252,8 +242,8 @@ internal class StreamTracingManager(
 }
 
 private data class StreamCallRuntimeInfo(
-  val methodEntryRequest: MethodEntryRequest,
-  val methodExitRequest: MethodExitRequest,
+  val methodEntryRequest: MethodEntryRequestHandle,
+  val methodExitRequest: MethodExitRequestHandle,
 )
 
 /**

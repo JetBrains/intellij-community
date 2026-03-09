@@ -4,13 +4,23 @@ package com.intellij.debugger.streams.trace.breakpoint
 import com.intellij.debugger.engine.DebugProcessAdapterImpl
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerUtils
+import com.intellij.debugger.engine.InstrumentedTechnicalBreakpoint
 import com.intellij.debugger.engine.RequestHint
 import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
+import com.intellij.debugger.requests.Requestor
+import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.debugger.streams.trace.breakpoint.ex.MethodNotFoundException
+import com.intellij.debugger.ui.breakpoints.AnyExceptionBreakpoint
+import com.intellij.debugger.ui.breakpoints.FilteredRequestor
+import com.intellij.debugger.ui.breakpoints.FilteredRequestorImpl
+import com.intellij.debugger.ui.breakpoints.SyntheticBreakpoint
+import com.intellij.debugger.ui.breakpoints.JavaExceptionBreakpointType
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.sun.jdi.ClassNotLoadedException
 import com.sun.jdi.IncompatibleThreadStateException
 import com.sun.jdi.InvalidTypeException
@@ -18,13 +28,22 @@ import com.sun.jdi.Location
 import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.ReferenceType
+import com.sun.jdi.ThreadReference
 import com.sun.jdi.Value
+import com.sun.jdi.event.ExceptionEvent
+import com.sun.jdi.event.LocatableEvent
 import com.sun.jdi.event.MethodEntryEvent
 import com.sun.jdi.event.MethodExitEvent
+import com.sun.jdi.request.EventRequest
 import com.sun.jdi.request.ExceptionRequest
+import com.sun.jdi.request.InvalidRequestStateException
 import com.sun.jdi.request.MethodEntryRequest
 import com.sun.jdi.request.MethodExitRequest
 import com.sun.jdi.request.StepRequest
+import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.XDebuggerUtil
+import com.intellij.xdebugger.breakpoints.XBreakpoint
+import org.jetbrains.java.debugger.breakpoints.properties.JavaExceptionBreakpointProperties
 
 private val LOG = logger<JdiBreakpointFactory>()
 
@@ -42,11 +61,31 @@ typealias ExceptionHandler = (EvaluationContextImpl, Location?, ObjectReference)
  * - All breakpoints are disabled by default
  * - All breakpoints are deleted after hit
  */
+internal class RequestHandle<out T : EventRequest>(
+  private val debugProcess: DebugProcessImpl,
+  private val requestor: Requestor,
+  private val request: T,
+) {
+  fun enable(): Unit = request.enable()
+
+  fun disable() {
+    if (request.isEnabled) {
+      request.disable()
+    }
+  }
+
+  fun delete(): Unit = debugProcess.requestsManager.deleteRequest(requestor)
+}
+
+internal typealias MethodEntryRequestHandle = RequestHandle<MethodEntryRequest>
+internal typealias MethodExitRequestHandle = RequestHandle<MethodExitRequest>
+internal typealias ExceptionRequestHandle = RequestHandle<ExceptionRequest>
+
 internal class JdiBreakpointFactory {
   fun createMethodEntryBreakpoint(evaluationContext: EvaluationContextImpl,
                                   signature: JvmMethodSignature,
                                   filter: ((SuspendContextImpl, MethodEntryEvent) -> Boolean)? = null,
-                                  onMethodEntry: ArgumentsTransformer): MethodEntryRequest {
+                                  onMethodEntry: ArgumentsTransformer): MethodEntryRequestHandle {
     val vmMethod = findVmMethod(evaluationContext, signature) ?: throw MethodNotFoundException(signature)
     // There is no need to request a hit because we just need to replace arguments on the fly
     val requestor = MethodEntryRequestor(evaluationContext.project, vmMethod) { requestor, suspendContext, event ->
@@ -83,13 +122,13 @@ internal class JdiBreakpointFactory {
     val request = evaluationContext.debugProcess.requestsManager.createMethodEntryRequest(requestor)
     request.addClassFilter(vmMethod.declaringType())
 
-    return request
+    return MethodEntryRequestHandle(evaluationContext.debugProcess, requestor, request)
   }
 
   fun createMethodExitBreakpoint(evaluationContext: EvaluationContextImpl,
                                  signature: JvmMethodSignature,
                                  filter: ((SuspendContextImpl, MethodExitEvent) -> Boolean)? = null,
-                                 onMethodExit: ReturnValueTransformer): MethodExitRequest {
+                                 onMethodExit: ReturnValueTransformer): MethodExitRequestHandle {
     val vmMethod = findVmMethod(evaluationContext, signature) ?: throw MethodNotFoundException(signature)
     val requestor = MethodExitRequestor(evaluationContext.project, vmMethod) { requestor, suspendContext, event ->
       if (filter != null && !filter(suspendContext, event)) {
@@ -143,23 +182,39 @@ internal class JdiBreakpointFactory {
     val request = evaluationContext.debugProcess.requestsManager.createMethodExitRequest(requestor)
     request.addClassFilter(vmMethod.declaringType())
 
-    return request
+    return MethodExitRequestHandle(evaluationContext.debugProcess, requestor, request)
   }
 
   fun createExceptionBreakpoint(evaluationContext: EvaluationContextImpl,
                                 exceptionType: ReferenceType? = null,
-                                callback: ExceptionHandler): ExceptionRequest {
-    val requestor = ExceptionBreakpointRequestor(evaluationContext.project) { requestor, suspendContext, event ->
-      val evaluationContext = EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy())
-      val breakpointHit = callback(evaluationContext, event.catchLocation(), event.exception())
-      if (breakpointHit) {
-        event.request().disable()
-        suspendContext.debugProcess.requestsManager.deleteRequest(requestor)
-      }
-      breakpointHit
+                                threadFilter: ThreadReference? = null,
+                                callback: ExceptionHandler): ExceptionRequestHandle {
+    val requestor = createExceptionRequestor(evaluationContext.project, callback)
+
+    val request = evaluationContext.debugProcess.requestsManager.createExceptionRequest(requestor, exceptionType, true, true)
+    if (threadFilter != null) {
+      request.addThreadFilter(threadFilter)
+    }
+    return ExceptionRequestHandle(evaluationContext.debugProcess, requestor, request)
+  }
+
+  private fun createExceptionRequestor(
+    project: Project,
+    callback: ExceptionHandler,
+  ): FilteredRequestor {
+    val defaultExceptionBreakpoint = getDefaultExceptionBreakpoint(project)
+    if (defaultExceptionBreakpoint != null) {
+      return TechnicalExceptionBreakpoint(defaultExceptionBreakpoint, project, callback)
     }
 
-    return evaluationContext.debugProcess.requestsManager.createExceptionRequest(requestor, exceptionType, true, true)
+    LOG.warn("Failed to get default Java exception breakpoint; falling back to a generic requestor")
+    return object : FilteredRequestorImpl(project), SyntheticBreakpoint, InstrumentedTechnicalBreakpoint {
+      override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent?): Boolean {
+        return processExceptionEvent(this, callback, action, event)
+      }
+
+      override fun getSuspendPolicy(): String = DebuggerSettings.SUSPEND_THREAD
+    }
   }
 
   private fun getMethodArguments(suspendContext: SuspendContextImpl, method: Method): List<Value?> {
@@ -217,6 +272,49 @@ internal class JdiBreakpointFactory {
       StepOutRequestHint(thread, suspendContext, onComplete), null,
     )
   }
+}
+
+private fun processExceptionEvent(
+  requestor: Requestor,
+  callback: ExceptionHandler,
+  action: SuspendContextCommandImpl,
+  event: LocatableEvent?,
+): Boolean {
+  if (event !is ExceptionEvent) return false
+  val context = action.suspendContext ?: return false
+  if (context.thread?.isSuspended != true) return false
+
+  val evalCtx = EvaluationContextImpl(context, context.getFrameProxy())
+  val hit = runCatching {
+    callback(evalCtx, event.catchLocation(), event.exception())
+  }.onFailure {
+    LOG.warn("Error occurred during exception breakpoint callback", it)
+  }.getOrDefault(false)
+
+  if (hit) {
+    event.request().disable()
+    context.debugProcess.requestsManager.deleteRequest(requestor)
+  }
+
+  return hit
+}
+
+private fun getDefaultExceptionBreakpoint(project: Project): XBreakpoint<JavaExceptionBreakpointProperties>? {
+  val exceptionType = XDebuggerUtil.getInstance().findBreakpointType(JavaExceptionBreakpointType::class.java)
+                      ?: return null
+  return XDebuggerManager.getInstance(project).breakpointManager.getDefaultBreakpoints(exceptionType).firstOrNull()
+}
+
+private class TechnicalExceptionBreakpoint(
+  xBreakpoint: XBreakpoint<JavaExceptionBreakpointProperties>,
+  project: Project,
+  private val callback: ExceptionHandler,
+) : AnyExceptionBreakpoint(project, xBreakpoint), SyntheticBreakpoint, InstrumentedTechnicalBreakpoint {
+  override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent?): Boolean {
+    return processExceptionEvent(this, callback, action, event)
+  }
+
+  override fun getSuspendPolicy(): String = DebuggerSettings.SUSPEND_THREAD
 }
 
 private class StepOutRequestHint(
