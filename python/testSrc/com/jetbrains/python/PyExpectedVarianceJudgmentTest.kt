@@ -2,10 +2,12 @@
 package com.jetbrains.python
 
 import com.jetbrains.python.fixtures.PyTestCase
+import com.jetbrains.python.fixtures.fixme
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.types.PyExpectedVarianceJudgment.getExpectedVariance
 import com.jetbrains.python.psi.types.PyTypeVarType.Variance
 import com.jetbrains.python.psi.types.TypeEvalContext
+import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language
 
 internal class PyExpectedVarianceJudgmentTest : PyTestCase() {
@@ -331,13 +333,24 @@ internal class PyExpectedVarianceJudgmentTest : PyTestCase() {
       """)
   }
 
-  fun `test String literal type at return`() {
+  fun `test String literal type at return inside callable`() {
     doTest("T\"", Variance.COVARIANT, """
-      from collections.abc import Callable
-      
+      from typing import Callable
       class A[T]:
           def f(self, t: Callable[["T"],None]) : ...
       """)
+  }
+
+  fun `test String literal type at function parameter`() {
+    fixme<AssertionFailedError>("PY-87942: No AST in string literal of type annotation",
+                                "expected:<COVARIANT> but was:<CONTRAVARIANT>"
+    ) {
+      doTest("T],", Variance.COVARIANT, """
+        from typing import Callable
+        class A[T]:
+            def f(self, t: "Callable[[T],None]") : ...
+        """)
+    }
   }
 
   // Expect null to avoid variance compatibility inspection check

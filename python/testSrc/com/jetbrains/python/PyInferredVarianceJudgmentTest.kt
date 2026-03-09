@@ -745,7 +745,9 @@ internal class PyInferredVarianceJudgmentTest : PyTestCase() {
   }
 
   fun `test Type in string literal`() {
-    fixme<AssertionFailedError>("PY-87942: No AST in string literal of type annotation", "expected:<COVARIANT> but was:<BIVARIANT>") {
+    fixme<AssertionFailedError>("PY-87942: No AST in string literal of type annotation",
+                                "expected:<COVARIANT> but was:<BIVARIANT>"
+    ) {
       doTest("T", Variance.COVARIANT, """
         class A[T]:
             def method(self) -> "T": pass
@@ -754,7 +756,9 @@ internal class PyInferredVarianceJudgmentTest : PyTestCase() {
   }
 
   fun `test Type in string literal with Callable`() {
-    fixme<AssertionFailedError>("PY-87942: No AST in string literal of type annotation", "expected:<COVARIANT> but was:<BIVARIANT>") {
+    fixme<AssertionFailedError>("PY-87942: No AST in string literal of type annotation",
+                                "expected:<COVARIANT> but was:<BIVARIANT>"
+    ) {
       doTest("T", Variance.COVARIANT, """
       from typing import Callable
       class A[T]:
