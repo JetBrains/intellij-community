@@ -144,6 +144,40 @@ public class PyCallingNonCallableInspectionTest extends PyInspectionTestCase {
                            pkgs = obj.anything()""");
   }
 
+  // PY-85470
+  public void testExplicitTypeAliasCallability() {
+    doTestByText("""
+                   from typing import TypeAlias as TA
+                   
+                   ExplicitUnionAlias: TA = list | set
+                   ExplicitSingleAlias: TA = list
+                   a = <warning descr="'ExplicitUnionAlias' is not callable">ExplicitUnionAlias()</warning>
+                   b = ExplicitSingleAlias()""");
+  }
+
+  // PY-76839
+  public void testImplicitTypeAliasCallability() {
+    fixme(
+      "PY-76839",
+      AssertionError.class,
+      "'ImplicitUnionAlias' is not callable",
+      () -> doTestByText("""
+                           ImplicitUnionAlias = list | set
+                           ImplicitSingleAlias = list
+                           a = <warning descr="'ImplicitUnionAlias' is not callable">ImplicitUnionAlias()</warning>
+                           b = ImplicitSingleAlias()""")
+    );
+  }
+
+  // PY-76851
+  public void testTypeStatementAliasCallability() {
+    doTestByText("""
+                   type UnionAliasStatement = list | set
+                   type SingleAliasStatement = list
+                   a = <warning descr="'TypeAliasType' object is not callable">UnionAliasStatement()</warning>
+                   b = <warning descr="'TypeAliasType' object is not callable">SingleAliasStatement()</warning>""");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

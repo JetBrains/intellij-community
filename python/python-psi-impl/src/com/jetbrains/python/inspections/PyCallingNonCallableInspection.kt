@@ -20,14 +20,19 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.inspections.quickfix.PyRemoveCallQuickFix
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyDecorator
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyQualifiedExpression
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyCallingNonCallableInspection : PyInspection() {
@@ -74,5 +79,22 @@ class PyCallingNonCallableInspection : PyInspection() {
 private fun isCallable(element: PyExpression, context: TypeEvalContext): Boolean? {
   if (element is PyQualifiedExpression && PyNames.__CLASS__ == element.name) return true
 
+  if (element is PyReferenceExpression) {
+    val resolved = element.getReference(PyResolveContext.defaultContext(context)).resolve()
+    if (resolved is PyTargetExpression) {
+      if (isExplicitTypeAliasWithNonCallableValue(resolved, context)) return false
+      // TODO: Handle implicit aliases
+    }
+  }
+
   return PyTypeChecker.isCallable(context.getType(element))
+}
+
+private fun isExplicitTypeAliasWithNonCallableValue(target: PyTargetExpression, context: TypeEvalContext): Boolean {
+  if (!PyTypingTypeProvider.isExplicitTypeAlias(target, context)) return false
+
+  val aliasExpr = target.findAssignedValue() ?: return false
+
+  // Union type cannot be instantiated: https://docs.python.org/3/library/typing.html#typing.Union
+  return context.getType(aliasExpr) is PyUnionType
 }
