@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -79,20 +80,24 @@ public final class PyPsiFacadeImpl extends PyPsiFacade {
     return PyTypeParser.getTypeByName(anchor, annotation);
   }
 
-  @Override
-  public @Nullable PyClass createClassByQName(final @NotNull String qName, final @NotNull PsiElement anchor) {
-    final QualifiedName qualifiedName = QualifiedName.fromDottedString(qName);
+  public static @NotNull List<@Nullable PsiElement> resolveQName(@NotNull QualifiedName qualifiedName, @NotNull PsiElement anchor) {
     // Only built-in classes can be found by their unqualified names.
     if (qualifiedName.getComponentCount() == 1) {
-      return PyBuiltinCache.getInstance(anchor).getClass(qName);
+      PyClass aClass = PyBuiltinCache.getInstance(anchor).getClass(qualifiedName.toString());
+      return aClass != null ? List.of(aClass) : Collections.emptyList();
     }
 
     final Module module = ModuleUtilCore.findModuleForPsiElement(ObjectUtils.notNull(anchor.getContainingFile(), anchor));
-    if (module == null) return null;
+    if (module == null) return Collections.emptyList();
     // Don't use PyResolveImportUtil.fromFoothold here as setting foothold file is going to affect resolve results
     // particularly if the anchor element happens to be in the same file as the target class.
     final PyQualifiedNameResolveContext resolveContext = PyResolveImportUtil.fromModule(module).copyWithMembers();
-    return StreamEx.of(resolveQualifiedName(qualifiedName, resolveContext))
+    return PyResolveImportUtil.resolveQualifiedName(qualifiedName, resolveContext);
+  }
+
+  @Override
+  public @Nullable PyClass createClassByQName(final @NotNull String qName, final @NotNull PsiElement anchor) {
+    return StreamEx.of(resolveQName(QualifiedName.fromDottedString(qName), anchor))
       .select(PyClass.class)
       .findFirst()
       .orElse(null);
