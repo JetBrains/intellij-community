@@ -43,7 +43,7 @@ import kotlinx.coroutines.withContext
 private val LOG = logger<AgentSessionRefreshService>()
 
 @Service(Service.Level.APP)
-internal class AgentSessionRefreshService(
+class AgentSessionRefreshService internal constructor(
   private val serviceScope: CoroutineScope,
   private val sessionSourcesProvider: () -> List<AgentSessionSource>,
   private val projectEntriesProvider: suspend () -> List<ProjectEntry>,
@@ -190,7 +190,7 @@ internal class AgentSessionRefreshService(
     source.markThreadAsRead(threadId, updatedAt)
   }
 
-  internal fun markThreadAsRead(path: String, provider: AgentSessionProvider, threadId: String, updatedAt: Long) {
+  fun markThreadAsRead(path: String, provider: AgentSessionProvider, threadId: String, updatedAt: Long) {
     contentRepository.markThreadAsRead(path = path, provider = provider, threadId = threadId, updatedAt = updatedAt)
     val source = sessionSourcesProvider().firstOrNull { it.provider == provider } ?: return
     source.markThreadAsRead(threadId, updatedAt)

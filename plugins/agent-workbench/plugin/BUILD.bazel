@@ -22,6 +22,8 @@ jvm_library(
     "//plugins/agent-workbench/prompt-vcs:agent-workbench-prompt-vcs",
     "//plugins/agent-workbench/prompt-testrunner:agent-workbench-prompt-testrunner",
     "//plugins/agent-workbench/sessions",
+    "//plugins/agent-workbench/sessions-actions:agent-workbench-sessions-actions",
+    "//plugins/agent-workbench/sessions-toolwindow:agent-workbench-sessions-toolwindow",
     "//plugins/agent-workbench/codex/sessions",
     "//plugins/agent-workbench/claude/sessions",
   ]
@@ -48,6 +50,8 @@ jvm_library(
     "//plugins/agent-workbench/prompt-vcs:agent-workbench-prompt-vcs_test_lib",
     "//plugins/agent-workbench/prompt-testrunner:agent-workbench-prompt-testrunner_test_lib",
     "//plugins/agent-workbench/sessions:sessions_test_lib",
+    "//plugins/agent-workbench/sessions-actions:agent-workbench-sessions-actions_test_lib",
+    "//plugins/agent-workbench/sessions-toolwindow:agent-workbench-sessions-toolwindow_test_lib",
     "//plugins/agent-workbench/codex/sessions:sessions_test_lib",
     "//plugins/agent-workbench/claude/sessions:sessions_test_lib",
   ]

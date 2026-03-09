@@ -44,7 +44,7 @@ private val fileEditorProviderOverrideForTests: AtomicReference<FileEditorProvid
 
 private data class AgentChatScopedRefreshSignal(
   val provider: AgentSessionProvider,
-  val projectPaths: Set<String>,
+  @JvmField val projectPaths: Set<String>,
 )
 
 private object AgentChatScopedRefreshSignalBus {

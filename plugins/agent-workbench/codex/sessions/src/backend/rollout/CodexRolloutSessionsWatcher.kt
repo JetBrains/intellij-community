@@ -15,10 +15,10 @@ private val LOG = logger<CodexRolloutSessionsWatcher>()
 
 internal data class CodexRolloutChangeSet(
   // Known rollout files that must be reparsed regardless of file stat heuristics.
-  val changedRolloutPaths: Set<Path> = emptySet(),
+  @JvmField val changedRolloutPaths: Set<Path> = emptySet(),
 
   // Overflow/ambiguous events where file-level attribution is not reliable.
-  val requiresFullRescan: Boolean = false,
+  @JvmField val requiresFullRescan: Boolean = false,
 
   // `changedRolloutPaths.isEmpty() && !requiresFullRescan` means "refresh ping":
   // re-run stat-based scan without forcing full reparse.

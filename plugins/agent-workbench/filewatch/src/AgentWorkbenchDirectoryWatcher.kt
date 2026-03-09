@@ -22,11 +22,11 @@ enum class AgentWorkbenchWatchEventType {
 }
 
 data class AgentWorkbenchWatchEvent(
-  val eventType: AgentWorkbenchWatchEventType,
-  val path: Path?,
-  val rootPath: Path?,
-  val isDirectory: Boolean,
-  val count: Int,
+  @JvmField val eventType: AgentWorkbenchWatchEventType,
+  @JvmField val path: Path?,
+  @JvmField val rootPath: Path?,
+  @JvmField val isDirectory: Boolean,
+  @JvmField val count: Int,
 )
 
 class AgentWorkbenchDirectoryWatcher(

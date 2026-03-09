@@ -29,7 +29,8 @@ jvm_library(
     "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
     "//libraries/jackson/jackson",
     "@lib//:jna",
-  ]
+  ],
+  runtime_deps = ["//plugins/agent-workbench/sessions-actions:agent-workbench-sessions-actions"]
 )
 
 jvm_library(
@@ -76,6 +77,7 @@ jvm_library(
   runtime_deps = [
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
+    "//plugins/agent-workbench/sessions-actions:agent-workbench-sessions-actions_test_lib",
   ]
 )
 ### auto-generated section `build intellij.agent.workbench.claude.sessions` end

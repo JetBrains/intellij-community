@@ -10,17 +10,17 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-internal enum class SingleFlightPolicy {
+enum class SingleFlightPolicy {
   DROP,
   RESTART_LATEST,
   QUEUE,
 }
 
 internal data class SingleFlightProgressRequest(
-  val project: Project,
-  val title: @ProgressTitle String,
-  val cancellation: TaskCancellation = TaskCancellation.cancellable(),
-  val visibleInStatusBar: Boolean = true,
+  @JvmField val project: Project,
+  @JvmField val title: @ProgressTitle String,
+  @JvmField val cancellation: TaskCancellation = TaskCancellation.cancellable(),
+  @JvmField val visibleInStatusBar: Boolean = true,
 )
 
 private class SingleFlightActionGateLog

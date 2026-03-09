@@ -9,11 +9,11 @@ import com.intellij.agent.workbench.codex.common.CodexThreadActivitySnapshot
 import com.intellij.agent.workbench.codex.common.CodexThreadStatusKind
 
 internal data class CodexActivitySignals(
-  val statusKind: CodexThreadStatusKind,
-  val activeFlags: Set<CodexThreadActiveFlag>,
-  val hasUnreadAssistantMessage: Boolean,
-  val isReviewing: Boolean,
-  val hasInProgressTurn: Boolean,
+  @JvmField val statusKind: CodexThreadStatusKind,
+  @JvmField val activeFlags: Set<CodexThreadActiveFlag>,
+  @JvmField val hasUnreadAssistantMessage: Boolean,
+  @JvmField val isReviewing: Boolean,
+  @JvmField val hasInProgressTurn: Boolean,
 )
 
 internal fun CodexThread.toCodexActivitySignals(): CodexActivitySignals {

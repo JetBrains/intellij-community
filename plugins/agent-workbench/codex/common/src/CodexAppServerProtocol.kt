@@ -10,8 +10,8 @@ import java.io.Writer
 private const val MAX_TITLE_LENGTH = 120
 
 internal data class ThreadListResult(
-  val threads: List<CodexThread>,
-  val nextCursor: String?,
+  @JvmField val threads: List<CodexThread>,
+  @JvmField val nextCursor: String?,
 )
 
 internal class CodexAppServerProtocol {
@@ -160,13 +160,13 @@ internal class CodexAppServerProtocol {
 }
 
 private data class ParsedNotificationParams(
-  val threadId: String? = null,
-  val startedThread: CodexAppServerStartedThread? = null,
+  @JvmField val threadId: String? = null,
+  @JvmField val startedThread: CodexAppServerStartedThread? = null,
 )
 
 private data class ParsedNotificationThreadObject(
-  val threadId: String?,
-  val startedThread: CodexAppServerStartedThread?,
+  @JvmField val threadId: String?,
+  @JvmField val startedThread: CodexAppServerStartedThread?,
 )
 
 private fun parseNotificationParams(parser: JsonParser): ParsedNotificationParams {
@@ -295,17 +295,17 @@ private fun resolveThreadTitle(payload: ThreadPayload, threadId: String): String
 }
 
 private data class ParsedTurnsActivity(
-  val latestUserItemIndex: Long,
-  val latestAssistantItemIndex: Long,
-  val isReviewing: Boolean,
-  val hasInProgressTurn: Boolean,
+  @JvmField val latestUserItemIndex: Long,
+  @JvmField val latestAssistantItemIndex: Long,
+  @JvmField val isReviewing: Boolean,
+  @JvmField val hasInProgressTurn: Boolean,
 )
 
 private data class ParsedTurnItemsActivity(
-  val latestUserItemIndex: Long,
-  val latestAssistantItemIndex: Long,
-  val isReviewing: Boolean,
-  val nextItemIndex: Long,
+  @JvmField val latestUserItemIndex: Long,
+  @JvmField val latestAssistantItemIndex: Long,
+  @JvmField val isReviewing: Boolean,
+  @JvmField val nextItemIndex: Long,
 )
 
 private fun parseThreadActivitySnapshot(parser: JsonParser): CodexThreadActivitySnapshot? {
@@ -519,34 +519,34 @@ private fun normalizeToken(value: String?): String {
 }
 
 private data class ThreadPayload(
-  val id: String?,
-  val updatedAt: Long?,
-  val updatedAtAlt: Long?,
-  val createdAt: Long?,
-  val createdAtAlt: Long?,
-  val preview: String?,
-  val title: String?,
-  val name: String?,
-  val summary: String?,
-  val cwd: String?,
-  val nestedThread: CodexThread?,
-  val gitBranch: String?,
-  val sourceKind: CodexThreadSourceKind,
-  val parentThreadId: String?,
-  val agentNickname: String?,
-  val agentRole: String?,
-  val statusKind: CodexThreadStatusKind,
-  val activeFlags: List<CodexThreadActiveFlag>,
+  @JvmField val id: String?,
+  @JvmField val updatedAt: Long?,
+  @JvmField val updatedAtAlt: Long?,
+  @JvmField val createdAt: Long?,
+  @JvmField val createdAtAlt: Long?,
+  @JvmField val preview: String?,
+  @JvmField val title: String?,
+  @JvmField val name: String?,
+  @JvmField val summary: String?,
+  @JvmField val cwd: String?,
+  @JvmField val nestedThread: CodexThread?,
+  @JvmField val gitBranch: String?,
+  @JvmField val sourceKind: CodexThreadSourceKind,
+  @JvmField val parentThreadId: String?,
+  @JvmField val agentNickname: String?,
+  @JvmField val agentRole: String?,
+  @JvmField val statusKind: CodexThreadStatusKind,
+  @JvmField val activeFlags: List<CodexThreadActiveFlag>,
 )
 
 private data class ParsedThreadSource(
-  val sourceKind: CodexThreadSourceKind,
-  val parentThreadId: String?,
+  @JvmField val sourceKind: CodexThreadSourceKind,
+  @JvmField val parentThreadId: String?,
 )
 
 private data class ParsedThreadStatus(
-  val statusKind: CodexThreadStatusKind,
-  val activeFlags: List<CodexThreadActiveFlag>,
+  @JvmField val statusKind: CodexThreadStatusKind,
+  @JvmField val activeFlags: List<CodexThreadActiveFlag>,
 )
 
 @Suppress("DuplicatedCode")

@@ -5,15 +5,15 @@ import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 
 internal data class CodexPendingTabBinding(
-  val pendingTabKey: String,
-  val pendingThreadIdentity: String,
-  val target: AgentChatTabRebindTarget,
+  @JvmField val pendingTabKey: String,
+  @JvmField val pendingThreadIdentity: String,
+  @JvmField val target: AgentChatTabRebindTarget,
 )
 
 internal data class CodexPendingTabMatchResult(
-  val bindingsByPath: Map<String, List<CodexPendingTabBinding>>,
-  val ambiguousPendingThreadIdentitiesByPath: Map<String, Set<String>>,
-  val noMatchPendingThreadIdentitiesByPath: Map<String, Set<String>>,
+  @JvmField val bindingsByPath: Map<String, List<CodexPendingTabBinding>>,
+  @JvmField val ambiguousPendingThreadIdentitiesByPath: Map<String, Set<String>>,
+  @JvmField val noMatchPendingThreadIdentitiesByPath: Map<String, Set<String>>,
 )
 
 internal object CodexPendingTabMatcher {
@@ -169,8 +169,8 @@ internal object CodexPendingTabMatcher {
   }
 
   private data class PathMatchResult(
-    val bindings: List<CodexPendingTabBinding>,
-    val ambiguousPendingThreadIdentities: Set<String>,
-    val noMatchPendingThreadIdentities: Set<String>,
+    @JvmField val bindings: List<CodexPendingTabBinding>,
+    @JvmField val ambiguousPendingThreadIdentities: Set<String>,
+    @JvmField val noMatchPendingThreadIdentities: Set<String>,
   )
 }

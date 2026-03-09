@@ -40,7 +40,7 @@ class AgentSessionProjectCatalogTest {
 
   @Test
   fun resolveRecentPathCandidatePrefersDirectPathMatch() {
-    data class Candidate(val id: String, val path: String?)
+    data class Candidate(@JvmField val id: String, @JvmField val path: String?)
 
     val candidates = listOf(
       Candidate(id = "a", path = "/work/project-a"),
@@ -61,7 +61,7 @@ class AgentSessionProjectCatalogTest {
 
   @Test
   fun resolveRecentPathCandidateFallsBackToIdentityMatcher() {
-    data class Candidate(val id: String, val path: String?)
+    data class Candidate(@JvmField val id: String, @JvmField val path: String?)
 
     val candidates = listOf(
       Candidate(id = "a", path = "/other/location"),
@@ -82,7 +82,7 @@ class AgentSessionProjectCatalogTest {
 
   @Test
   fun resolveRecentPathCandidateSkipsConsumedCandidate() {
-    data class Candidate(val id: String, val path: String?)
+    data class Candidate(@JvmField val id: String, @JvmField val path: String?)
 
     val candidates = listOf(
       Candidate(id = "a", path = "/work/project-a"),

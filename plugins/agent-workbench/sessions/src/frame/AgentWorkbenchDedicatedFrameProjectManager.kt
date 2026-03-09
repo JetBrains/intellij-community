@@ -20,7 +20,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 
-internal object AgentWorkbenchDedicatedFrameProjectManager {
+object AgentWorkbenchDedicatedFrameProjectManager {
   private val projectPath: Path by lazy {
     PathManager.getConfigDir().resolve("agent-workbench-chat-frame")
   }

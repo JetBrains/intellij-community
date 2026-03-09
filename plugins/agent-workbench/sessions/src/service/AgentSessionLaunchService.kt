@@ -73,7 +73,7 @@ private const val OPEN_THREAD_ACTION_KEY_PREFIX = "thread-open"
 private const val OPEN_SUB_AGENT_ACTION_KEY_PREFIX = "subagent-open"
 private const val MAX_STARTUP_COMMAND_BYTES = 24 * 1024
 
-internal enum class OpenThreadLaunchOrigin(val keySuffix: String) {
+enum class OpenThreadLaunchOrigin(val keySuffix: String) {
   USER_OPEN(""),
   PROMPT_LAUNCH(":prompt-launch"),
 }
@@ -131,7 +131,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
 }
 
 @Service(Service.Level.APP)
-internal class AgentSessionLaunchService(
+class AgentSessionLaunchService internal constructor(
   private val serviceScope: CoroutineScope,
   private val stateStore: AgentSessionsStateStore,
   private val syncService: AgentSessionRefreshService,

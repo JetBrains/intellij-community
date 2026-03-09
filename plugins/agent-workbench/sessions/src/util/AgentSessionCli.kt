@@ -38,7 +38,7 @@ internal fun buildAgentSessionIdentity(provider: AgentSessionProvider, sessionId
 
 internal data class AgentSessionIdentity(
   val provider: AgentSessionProvider,
-  val sessionId: String,
+  @JvmField val sessionId: String,
 )
 
 internal fun parseAgentSessionIdentity(identity: String): AgentSessionIdentity? {
@@ -52,7 +52,7 @@ internal fun isAgentSessionNewIdentity(identity: String): Boolean {
   return isAgentSessionNewSessionId(sessionId)
 }
 
-internal fun isAgentSessionNewSessionId(sessionId: String): Boolean {
+fun isAgentSessionNewSessionId(sessionId: String): Boolean {
   return sessionId.startsWith("new-")
 }
 

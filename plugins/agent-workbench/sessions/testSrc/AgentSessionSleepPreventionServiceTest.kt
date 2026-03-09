@@ -244,13 +244,13 @@ class AgentSessionSleepPreventionServiceTest {
 }
 
 private data class SleepPreventionFixture(
-  val scope: CoroutineScope,
-  val stateFlow: MutableStateFlow<AgentSessionsState>,
-  val settingFlow: MutableStateFlow<Boolean>,
-  val powerSaveModeFlow: MutableStateFlow<Boolean>,
-  val inhibitor: RecordingServiceSleepInhibitor,
-  val scheduler: ManualSleepReleaseScheduler,
-  val service: AgentSessionSleepPreventionService,
+  @JvmField val scope: CoroutineScope,
+  @JvmField val stateFlow: MutableStateFlow<AgentSessionsState>,
+  @JvmField val settingFlow: MutableStateFlow<Boolean>,
+  @JvmField val powerSaveModeFlow: MutableStateFlow<Boolean>,
+  @JvmField val inhibitor: RecordingServiceSleepInhibitor,
+  @JvmField val scheduler: ManualSleepReleaseScheduler,
+  @JvmField val service: AgentSessionSleepPreventionService,
 ) {
   fun dispose() {
     Disposer.dispose(service)
@@ -369,8 +369,8 @@ private class ManualSleepReleaseScheduler : AgentSleepReleaseScheduler {
 }
 
 private data class ManualScheduledRelease(
-  val action: () -> Unit,
-  var canceled: Boolean = false,
+  @JvmField val action: () -> Unit,
+  @JvmField var canceled: Boolean = false,
 )
 
 private class TestAgentSleepPreventionExecutionContext : AgentSleepPreventionExecutionContext {

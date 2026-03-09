@@ -5,10 +5,10 @@ import com.intellij.ui.JBColor
 import java.awt.Color
 
 data class AgentThreadActivityPresentation(
-  val namedColorKey: String,
-  val lightFallbackRgb: Int,
-  val darkFallbackRgb: Int,
-  val statusMessageKey: String,
+  @JvmField val namedColorKey: String,
+  @JvmField val lightFallbackRgb: Int,
+  @JvmField val darkFallbackRgb: Int,
+  @JvmField val statusMessageKey: String,
 ) {
   val namedColor: JBColor = JBColor.namedColor(namedColorKey, JBColor(lightFallbackRgb, darkFallbackRgb))
 }

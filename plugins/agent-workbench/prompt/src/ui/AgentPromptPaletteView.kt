@@ -43,14 +43,14 @@ private const val CARD_EDITOR = "editor"
 private const val CARD_PREVIEW = "preview"
 
 internal data class AgentPromptPaletteView(
-  val rootPanel: JPanel,
-  val tabbedPane: JBTabbedPane,
-  val providerIconLabel: JBLabel,
-  val existingTaskListModel: DefaultListModel<ThreadEntry>,
-  val existingTaskList: JBList<ThreadEntry>,
-  val existingTaskScrollPane: JBScrollPane,
-  val footerLabel: JBLabel,
-  val providerOptionsPanel: JPanel?,
+  @JvmField val rootPanel: JPanel,
+  @JvmField val tabbedPane: JBTabbedPane,
+  @JvmField val providerIconLabel: JBLabel,
+  @JvmField val existingTaskListModel: DefaultListModel<ThreadEntry>,
+  @JvmField val existingTaskList: JBList<ThreadEntry>,
+  @JvmField val existingTaskScrollPane: JBScrollPane,
+  @JvmField val footerLabel: JBLabel,
+  @JvmField val providerOptionsPanel: JPanel?,
 )
 
 internal fun createAgentPromptPaletteView(

@@ -14,7 +14,7 @@ import kotlinx.serialization.Serializable
 
 @Service(Service.Level.APP)
 @State(name = "AgentSessionUiPreferencesState", storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE)])
-internal class AgentSessionUiPreferencesStateService
+class AgentSessionUiPreferencesStateService
   : SerializablePersistentStateComponent<AgentSessionUiPreferencesStateService.UiPreferencesState>(UiPreferencesState()) {
 
   private val _lastUsedProviderFlow = MutableStateFlow(getLastUsedProvider())
@@ -40,7 +40,7 @@ internal class AgentSessionUiPreferencesStateService
   }
 
   @Serializable
-  internal data class UiPreferencesState(
+  data class UiPreferencesState(
     @JvmField val lastUsedProvider: String? = null,
   )
 }

@@ -8,21 +8,21 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
 
 data class AgentChatEditorTabActionContext(
-  val project: Project,
-  val path: String,
-  val tabKey: String,
-  val threadIdentity: String = "",
-  val threadId: String = "",
+  @JvmField val project: Project,
+  @JvmField val path: String,
+  @JvmField val tabKey: String,
+  @JvmField val threadIdentity: String = "",
+  @JvmField val threadId: String = "",
   val provider: AgentSessionProvider? = null,
-  val sessionId: String = "",
-  val isPendingThread: Boolean = false,
-  val subAgentId: String? = null,
+  @JvmField val sessionId: String = "",
+  @JvmField val isPendingThread: Boolean = false,
+  @JvmField val subAgentId: String? = null,
 )
 
 internal data class AgentChatThreadCoordinates(
   val provider: AgentSessionProvider,
-  val sessionId: String,
-  val isPending: Boolean,
+  @JvmField val sessionId: String,
+  @JvmField val isPending: Boolean,
 )
 
 internal fun resolveAgentChatThreadCoordinates(threadIdentity: String): AgentChatThreadCoordinates? {

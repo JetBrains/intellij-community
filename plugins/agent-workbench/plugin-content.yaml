@@ -13,4 +13,6 @@
   - name: intellij.agent.workbench.prompt.vcs
   - name: intellij.agent.workbench.prompt.testrunner
   - name: intellij.agent.workbench.sessions
+  - name: intellij.agent.workbench.sessions.actions
+  - name: intellij.agent.workbench.sessions.toolwindow
   - name: intellij.agent.workbench

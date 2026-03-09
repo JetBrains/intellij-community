@@ -2,19 +2,19 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
-import com.intellij.agent.workbench.sessions.actions.AgentSessionsTreePopupActionContext
-import com.intellij.agent.workbench.sessions.actions.AgentSessionsTreePopupDataKeys
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.prompt.AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY
+import com.intellij.agent.workbench.sessions.core.prompt.AGENT_PROMPT_PROJECT_PATH_CONTEXT_DATA_KEY
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationData
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchError
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptProjectPathCandidate
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptProjectPathContext
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
@@ -26,14 +26,11 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
-import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.service.AgentSessionChatOpenExecutor
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionPromptLauncherBridge
 import com.intellij.agent.workbench.sessions.service.resolveAgentSessionPathState
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
-import com.intellij.agent.workbench.sessions.tree.SessionTreeId
-import com.intellij.agent.workbench.sessions.tree.SessionTreeNode
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -824,18 +821,9 @@ class AgentSessionPromptLauncherBridgeTest {
     val selectedTreePath = "/work/project-from-tree"
     val invocation = invocationData(
       project = dedicatedProject,
-      treeContext = AgentSessionsTreePopupActionContext(
-        project = dedicatedProject,
-        nodeId = SessionTreeId.Thread(
-          projectPath = selectedTreePath,
-          provider = AgentSessionProvider.CODEX,
-          threadId = "thread-1",
-        ),
-        node = SessionTreeNode.Thread(
-          project = AgentProjectSessions(path = selectedTreePath, name = "Project From Tree", isOpen = true),
-          thread = thread(id = "thread-1", updatedAt = 100, provider = AgentSessionProvider.CODEX),
-        ),
-        archiveTargets = emptyList(),
+      projectPathContext = AgentPromptProjectPathContext(
+        path = selectedTreePath,
+        displayName = "Project From Tree",
       ),
     )
     val bridge = AgentSessionPromptLauncherBridge {
@@ -855,13 +843,9 @@ class AgentSessionPromptLauncherBridgeTest {
     val currentProject = projectProxy(name = "Current Project", basePath = currentProjectPath)
     val invocation = invocationData(
       project = currentProject,
-      treeContext = AgentSessionsTreePopupActionContext(
-        project = currentProject,
-        nodeId = SessionTreeId.Project(path = "/work/project-from-tree"),
-        node = SessionTreeNode.Project(
-          AgentProjectSessions(path = "/work/project-from-tree", name = "Project From Tree", isOpen = true),
-        ),
-        archiveTargets = emptyList(),
+      projectPathContext = AgentPromptProjectPathContext(
+        path = "/work/project-from-tree",
+        displayName = "Project From Tree",
       ),
     )
     val bridge = AgentSessionPromptLauncherBridge {
@@ -885,13 +869,9 @@ class AgentSessionPromptLauncherBridgeTest {
     val dedicatedProject = projectProxy(name = "Agent Dedicated Frame", basePath = dedicatedPath)
     val invocation = invocationData(
       project = dedicatedProject,
-      treeContext = AgentSessionsTreePopupActionContext(
-        project = dedicatedProject,
-        nodeId = SessionTreeId.Project(path = dedicatedPath),
-        node = SessionTreeNode.Project(
-          AgentProjectSessions(path = dedicatedPath, name = "Dedicated", isOpen = true),
-        ),
-        archiveTargets = emptyList(),
+      projectPathContext = AgentPromptProjectPathContext(
+        path = dedicatedPath,
+        displayName = "Dedicated",
       ),
     )
     val bridge = AgentSessionPromptLauncherBridge {
@@ -1026,11 +1006,11 @@ private fun promptLaunchRequest(
 
 private fun invocationData(
   project: Project,
-  treeContext: AgentSessionsTreePopupActionContext?,
+  projectPathContext: AgentPromptProjectPathContext?,
 ): AgentPromptInvocationData {
   val dataContextBuilder = SimpleDataContext.builder()
-  if (treeContext != null) {
-    dataContextBuilder.add(AgentSessionsTreePopupDataKeys.CONTEXT, treeContext)
+  if (projectPathContext != null) {
+    dataContextBuilder.add(AGENT_PROMPT_PROJECT_PATH_CONTEXT_DATA_KEY, projectPathContext)
   }
   val dataContext = dataContextBuilder.build()
   return AgentPromptInvocationData(

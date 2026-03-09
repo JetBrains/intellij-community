@@ -101,6 +101,6 @@ private val START_FAILURE_COMMAND_REGEX = Regex("""Failed to start \[(.+?)] in "
 private val START_FAILURE_PATH_REGEX = Regex("""(?:^|[,{ ])PATH=([^,}]+)""")
 
 private data class TerminalStartDiagnostic(
-  val command: String,
-  val path: String?,
+  @JvmField val command: String,
+  @JvmField val path: String?,
 )

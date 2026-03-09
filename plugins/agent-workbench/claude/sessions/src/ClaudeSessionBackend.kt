@@ -7,11 +7,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 
 data class ClaudeBackendThread(
-  val id: String,
-  val title: String,
-  val updatedAt: Long,
-  val gitBranch: String? = null,
-  val activity: ClaudeSessionActivity = ClaudeSessionActivity.READY,
+  @JvmField val id: String,
+  @JvmField val title: String,
+  @JvmField val updatedAt: Long,
+  @JvmField val gitBranch: String? = null,
+  @JvmField val activity: ClaudeSessionActivity = ClaudeSessionActivity.READY,
 )
 
 interface ClaudeSessionBackend {
@@ -20,4 +20,3 @@ interface ClaudeSessionBackend {
   val updates: Flow<Unit>
     get() = emptyFlow()
 }
-

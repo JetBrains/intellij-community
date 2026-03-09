@@ -188,9 +188,9 @@ internal fun normalizeFilePath(path: Path): Path {
 }
 
 private data class State(
-  val cachedFilesByPath: Map<String, CachedClaudeFile> = emptyMap(),
-  val dirtyPathKeys: Set<String> = emptySet(),
-  val forceFullRescan: Boolean = false,
+  @JvmField val cachedFilesByPath: Map<String, CachedClaudeFile> = emptyMap(),
+  @JvmField val dirtyPathKeys: Set<String> = emptySet(),
+  @JvmField val forceFullRescan: Boolean = false,
 )
 
 private data class JsonlFileStat(
