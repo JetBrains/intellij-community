@@ -2,28 +2,34 @@
 package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.agent.workbench.prompt.AgentPromptBundle
+import com.intellij.icons.AllIcons
+import com.intellij.markdown.utils.convertMarkdownToHtml
 import com.intellij.ui.WindowMoveListener
+import com.intellij.ui.EditorTextField
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTabbedPane
-import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.tabbedPaneHeader
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.BorderLayout
+import java.awt.CardLayout
 import java.awt.Cursor
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.DefaultListModel
+import javax.swing.JEditorPane
 import javax.swing.JPanel
 import javax.swing.ListSelectionModel
 import javax.swing.ScrollPaneConstants
+import javax.swing.text.DefaultCaret
 
 private val POPUP_PREFERRED_SIZE = JBUI.size(680, 380)
 private val POPUP_MINIMUM_SIZE = JBUI.size(680, 260)
@@ -31,6 +37,9 @@ private val EXISTING_TASK_PANEL_PREFERRED_SIZE = JBUI.size(0, 140)
 private val EXISTING_TASK_PANEL_MINIMUM_SIZE = JBUI.size(0, 90)
 private const val EXISTING_TASK_VISIBLE_ROWS = 4
 private val PROMPT_PANEL_MINIMUM_SIZE = JBUI.size(0, 72)
+
+private const val CARD_EDITOR = "editor"
+private const val CARD_PREVIEW = "preview"
 
 internal data class AgentPromptPaletteView(
   val rootPanel: JPanel,
@@ -41,10 +50,13 @@ internal data class AgentPromptPaletteView(
   val existingTaskScrollPane: JBScrollPane,
   val footerLabel: JBLabel,
   val planModeCheckBox: JBCheckBox?,
+  val previewToggle: JBLabel,
+  val promptCardPanel: JPanel,
+  val previewPane: JEditorPane,
 )
 
 internal fun createAgentPromptPaletteView(
-  promptArea: JBTextArea,
+  promptArea: EditorTextField,
   contextChipsPanel: JPanel,
   planModeCheckBox: JBCheckBox? = null,
   onProviderIconClicked: () -> Unit,
@@ -57,6 +69,52 @@ internal fun createAgentPromptPaletteView(
     addMouseListener(object : MouseAdapter() {
       override fun mouseClicked(e: MouseEvent?) {
         onProviderIconClicked()
+      }
+    })
+  }
+
+  val previewPane = JEditorPane().apply {
+    editorKit = HTMLEditorKitBuilder().withWordWrapViewFactory().build()
+    isEditable = false
+    isOpaque = true
+    background = JBUI.CurrentTheme.Popup.BACKGROUND
+    border = JBUI.Borders.empty(4)
+    (caret as? DefaultCaret)?.updatePolicy = DefaultCaret.NEVER_UPDATE
+  }
+  val previewScrollPane = JBScrollPane(previewPane).apply {
+    border = null
+    horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+  }
+
+  val promptCardLayout = CardLayout()
+  val promptCardPanel = JPanel(promptCardLayout).apply {
+    isOpaque = false
+    add(promptArea, CARD_EDITOR)
+    add(previewScrollPane, CARD_PREVIEW)
+  }
+  promptCardLayout.show(promptCardPanel, CARD_EDITOR)
+
+  val previewToggle = JBLabel(AllIcons.Actions.Preview).apply {
+    cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+    toolTipText = AgentPromptBundle.message("popup.preview.toggle.tooltip")
+    border = JBUI.Borders.empty()
+    addMouseListener(object : MouseAdapter() {
+      override fun mouseClicked(e: MouseEvent?) {
+        val showing = promptCardPanel.getClientProperty("previewShowing") == true
+        if (showing) {
+          promptCardLayout.show(promptCardPanel, CARD_EDITOR)
+          promptCardPanel.putClientProperty("previewShowing", false)
+          icon = AllIcons.Actions.Preview
+        }
+        else {
+          val markdown = promptArea.text
+          val html = convertMarkdownToHtml(markdown)
+          previewPane.text = "<html><body>$html</body></html>"
+          previewPane.caretPosition = 0
+          promptCardLayout.show(promptCardPanel, CARD_PREVIEW)
+          promptCardPanel.putClientProperty("previewShowing", true)
+          icon = AllIcons.Actions.Edit
+        }
       }
     })
   }
@@ -86,9 +144,12 @@ internal fun createAgentPromptPaletteView(
           .align(AlignX.RIGHT)
           .customize(UnscaledGaps(left = controlsLeftGap))
       }
-      cell(providerIconLabel)
+      cell(previewToggle)
         .align(AlignX.RIGHT)
         .customize(UnscaledGaps(left = if (planModeCheckBox != null) controlToIconGap else controlsLeftGap))
+      cell(providerIconLabel)
+        .align(AlignX.RIGHT)
+        .customize(UnscaledGaps(left = controlToIconGap))
     }
   }
   headerPanel.apply {
@@ -126,19 +187,9 @@ internal fun createAgentPromptPaletteView(
     minimumSize = EXISTING_TASK_PANEL_MINIMUM_SIZE
   }
 
-  promptArea.emptyText.text = AgentPromptBundle.message("popup.prompt.placeholder")
-  promptArea.background = JBUI.CurrentTheme.Popup.BACKGROUND
-  val promptScrollPane = JBScrollPane(promptArea).apply {
-    border = null
-    horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-    minimumSize = PROMPT_PANEL_MINIMUM_SIZE
-  }
   val promptPanel = JPanel(BorderLayout()).apply {
     border = JBUI.Borders.empty(8, 12)
-    add(
-      promptScrollPane,
-      BorderLayout.CENTER,
-    )
+    add(promptCardPanel, BorderLayout.CENTER)
     minimumSize = PROMPT_PANEL_MINIMUM_SIZE
   }
 
@@ -184,5 +235,8 @@ internal fun createAgentPromptPaletteView(
     existingTaskScrollPane = existingTaskScrollPane,
     footerLabel = footerLabel,
     planModeCheckBox = planModeCheckBox,
+    previewToggle = previewToggle,
+    promptCardPanel = promptCardPanel,
+    previewPane = previewPane,
   )
 }

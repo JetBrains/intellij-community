@@ -3,8 +3,8 @@ package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.ui.EditorTextField
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBTextArea
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.awt.Component
@@ -16,7 +16,7 @@ class AgentPromptPaletteViewStructureTest {
   @Test
   fun promptAreaIsRenderedExactlyOnceAndSharedAcrossTabs() {
     runInEdtAndWait {
-      val promptArea = JBTextArea(6, 100)
+      val promptArea = EditorTextField()
       val view = createAgentPromptPaletteView(
         promptArea = promptArea,
         contextChipsPanel = JPanel(),
@@ -25,22 +25,22 @@ class AgentPromptPaletteViewStructureTest {
       )
 
       val rootPanel = view.rootPanel
-      val promptAreasBeforeSwitch = collectComponentsOfType(rootPanel, JBTextArea::class.java)
+      val promptAreasBeforeSwitch = collectComponentsOfType(rootPanel, EditorTextField::class.java)
       assertThat(promptAreasBeforeSwitch).containsExactly(promptArea)
 
       view.tabbedPane.selectedIndex = 1
       view.existingTaskScrollPane.isVisible = true
       layoutPopupRoot(rootPanel)
 
-      val promptAreasAfterSwitch = collectComponentsOfType(rootPanel, JBTextArea::class.java)
+      val promptAreasAfterSwitch = collectComponentsOfType(rootPanel, EditorTextField::class.java)
       assertThat(promptAreasAfterSwitch).containsExactly(promptArea)
     }
   }
 
   @Test
-  fun promptScrollPaneInstanceRemainsStableWhenTargetModeChanges() {
+  fun promptAreaInstanceRemainsStableWhenTargetModeChanges() {
     runInEdtAndWait {
-      val promptArea = JBTextArea(6, 100)
+      val promptArea = EditorTextField()
       val view = createAgentPromptPaletteView(
         promptArea = promptArea,
         contextChipsPanel = JPanel(),
@@ -50,24 +50,24 @@ class AgentPromptPaletteViewStructureTest {
 
       val rootPanel = view.rootPanel
       layoutPopupRoot(rootPanel)
-      val initialPromptScrollPane = checkNotNull(findPromptScrollPane(rootPanel, promptArea))
+      val initialPromptArea = checkNotNull(findPromptArea(rootPanel, promptArea))
 
       view.tabbedPane.selectedIndex = 0
       view.existingTaskScrollPane.isVisible = false
       layoutPopupRoot(rootPanel)
-      assertThat(findPromptScrollPane(rootPanel, promptArea)).isSameAs(initialPromptScrollPane)
+      assertThat(findPromptArea(rootPanel, promptArea)).isSameAs(initialPromptArea)
 
       view.tabbedPane.selectedIndex = 1
       view.existingTaskScrollPane.isVisible = true
       layoutPopupRoot(rootPanel)
-      assertThat(findPromptScrollPane(rootPanel, promptArea)).isSameAs(initialPromptScrollPane)
+      assertThat(findPromptArea(rootPanel, promptArea)).isSameAs(initialPromptArea)
     }
   }
 
   @Test
   fun planModeCheckBoxIsRenderedOnceWhenProvidedAndNotFocusable() {
     runInEdtAndWait {
-      val promptArea = JBTextArea(6, 100)
+      val promptArea = EditorTextField()
       val planModeCheckBox = JBCheckBox("Plan mode").apply {
         isFocusable = false
       }
@@ -89,7 +89,7 @@ class AgentPromptPaletteViewStructureTest {
   @Test
   fun planModeCheckBoxIsRightAlignedNextToProviderIcon() {
     runInEdtAndWait {
-      val promptArea = JBTextArea(6, 100)
+      val promptArea = EditorTextField()
       val planModeCheckBox = JBCheckBox("Plan mode").apply {
         isFocusable = false
       }

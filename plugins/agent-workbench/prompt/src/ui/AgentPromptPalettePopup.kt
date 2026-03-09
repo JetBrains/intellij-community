@@ -29,6 +29,8 @@ import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopup
@@ -36,26 +38,54 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.ui.ColoredListCellRenderer
+import com.intellij.ui.LanguageTextField
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTabbedPane
-import com.intellij.ui.components.JBTextArea
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.jetbrains.annotations.Nls
 import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.event.ChangeListener
-import javax.swing.event.DocumentEvent
-import javax.swing.event.DocumentListener
 
 private const val CONTEXT_SOFT_CAP_CHARS = AgentPromptContextEnvelopeFormatter.DEFAULT_SOFT_CAP_CHARS
+
+private class AgentPromptTextField(project: Project) : LanguageTextField(
+  MarkdownFileType.INSTANCE.language, project, "", false,
+) {
+  init {
+    setPlaceholder(AgentPromptBundle.message("popup.prompt.placeholder"))
+    setShowPlaceholderWhenFocused(true)
+    addSettingsProvider { editor ->
+      editor.settings.isUseSoftWraps = true
+      editor.settings.isPaintSoftWraps = false
+      editor.settings.isLineNumbersShown = false
+      editor.settings.setGutterIconsShown(false)
+      editor.settings.isFoldingOutlineShown = false
+      editor.settings.isAdditionalPageAtBottom = false
+      editor.settings.isRightMarginShown = false
+      editor.setVerticalScrollbarVisible(true)
+      editor.setHorizontalScrollbarVisible(false)
+    }
+  }
+
+  override fun createEditor(): EditorEx {
+    val ed = super.createEditor()
+    ed.highlighter = EditorHighlighterFactory.getInstance()
+      .createEditorHighlighter(project, MarkdownFileType.INSTANCE)
+    ed.backgroundColor = JBUI.CurrentTheme.Popup.BACKGROUND
+    ed.gutterComponentEx.background = JBUI.CurrentTheme.Popup.BACKGROUND
+    return ed
+  }
+}
 
 internal class AgentPromptPalettePopup(
   private val invocationData: AgentPromptInvocationData,
@@ -67,7 +97,7 @@ internal class AgentPromptPalettePopup(
   private val uiStateService: AgentPromptUiSessionStateService = project.service()
   private val sessionsMessageResolver = AgentPromptSessionsMessageResolver(AgentPromptPalettePopup::class.java.classLoader)
 
-  private val promptArea = JBTextArea(6, 100)
+  private val promptArea = AgentPromptTextField(project)
   private val contextChips = AgentPromptContextChipsComponent(::removeContextEntry)
 
   private lateinit var tabbedPane: JBTabbedPane
@@ -110,9 +140,6 @@ internal class AgentPromptPalettePopup(
   }
 
   fun show() {
-    promptArea.lineWrap = true
-    promptArea.wrapStyleWord = true
-
     val content = createContentPanel()
     refreshProviders()
     loadInitialContext()
@@ -226,10 +253,10 @@ internal class AgentPromptPalettePopup(
       popup?.moveToFitScreen()
     })
 
-    promptArea.document.addDocumentListener(object : DocumentListener {
-      override fun insertUpdate(e: DocumentEvent?) = onPromptChanged()
-      override fun removeUpdate(e: DocumentEvent?) = onPromptChanged()
-      override fun changedUpdate(e: DocumentEvent?) = onPromptChanged()
+    promptArea.addDocumentListener(object : com.intellij.openapi.editor.event.DocumentListener {
+      override fun documentChanged(event: com.intellij.openapi.editor.event.DocumentEvent) {
+        onPromptChanged()
+      }
     })
   }
 
@@ -414,7 +441,7 @@ internal class AgentPromptPalettePopup(
 
   private fun updateSendAvailability() {
     val selectedProviderEntry = providerSelector.selectedProvider
-    val hasPrompt = promptArea.text.trim().isNotEmpty()
+    val hasPrompt = promptArea.document.immutableCharSequence.isNotBlank()
     val hasProjectPath = resolveWorkingProjectPath(launcherProvider()) != null
     val hasExistingTaskTarget = !existingTaskController.selectedExistingTaskId.isNullOrBlank()
 
@@ -765,48 +792,3 @@ private data class ContextSelection(
   @JvmField val summary: AgentPromptContextEnvelopeSummary,
 )
 
-internal fun installPromptEnterHandlers(
-  promptArea: JBTextArea,
-  canSubmit: () -> Boolean,
-  isTabQueueEnabled: () -> Boolean = { false },
-  onSubmit: () -> Unit,
-  onTabFocusTransfer: () -> Unit = promptArea::transferFocus,
-  onTabBackwardFocusTransfer: () -> Unit = promptArea::transferFocusBackward,
-) {
-  val popupSubmitActionKey = "agent.prompt.submit"
-  val popupNewLineActionKey = "agent.prompt.insert.break"
-  val popupQueueActionKey = "agent.prompt.queue"
-  val popupBackwardFocusActionKey = "agent.prompt.focus.backward"
-
-  promptArea.focusTraversalKeysEnabled = false
-
-  promptArea.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), popupSubmitActionKey)
-  promptArea.actionMap.put(popupSubmitActionKey, object : AbstractAction() {
-    override fun actionPerformed(e: ActionEvent?) {
-      canSubmit()
-      onSubmit()
-    }
-  })
-
-  promptArea.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK), popupNewLineActionKey)
-  promptArea.actionMap.put(popupNewLineActionKey, promptArea.actionMap.get(DefaultEditorKit.insertBreakAction))
-
-  promptArea.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), popupQueueActionKey)
-  promptArea.actionMap.put(popupQueueActionKey, object : AbstractAction() {
-    override fun actionPerformed(e: ActionEvent?) {
-      if (isTabQueueEnabled()) {
-        onSubmit()
-      }
-      else {
-        onTabFocusTransfer()
-      }
-    }
-  })
-
-  promptArea.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK), popupBackwardFocusActionKey)
-  promptArea.actionMap.put(popupBackwardFocusActionKey, object : AbstractAction() {
-    override fun actionPerformed(e: ActionEvent?) {
-      onTabBackwardFocusTransfer()
-    }
-  })
-}
