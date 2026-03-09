@@ -1,12 +1,22 @@
 <idea-plugin visibility="public">
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.java.backend"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java"/>
     <module name="intellij.java.aetherDependencyResolver"/>
+    <module name="intellij.java.compiler"/>
+    <module name="intellij.java.compiler.impl"/>
+    <module name="intellij.java.debugger.impl"/>
+    <module name="intellij.java.execution"/>
+    <module name="intellij.java.execution.impl"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.ui"/>
+    <module name="intellij.platform.jps.build"/>
     <module name="intellij.properties.backend"/>
-    <!-- endregion -->
+    <module name="intellij.properties.backend.psi"/>
+    <module name="intellij.spellchecker"/>
   </dependencies>
+  <!-- endregion -->
 
   <resource-bundle>messages.MavenProjectBundle</resource-bundle>
 
