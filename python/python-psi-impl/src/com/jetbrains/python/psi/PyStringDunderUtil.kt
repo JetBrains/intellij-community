@@ -25,7 +25,7 @@ object PyStringDunderUtil {
 
   fun PyType.isAllowedFormatOverride(allowedQNames: Set<String>, context: TypeEvalContext): Boolean {
     if (this !is PyClassType) return false
-    val actualQNames = this.pyClass.getSuperClassTypes(context).mapTo(mutableSetOf()) { it.classQName } + this.classQName
-    return allowedQNames.any {it in actualQNames }
+    val actualQNames = this.pyClass.getAncestorTypes(context).mapTo(mutableSetOf()) { it?.classQName } + this.classQName
+    return allowedQNames.any { it in actualQNames }
   }
 }

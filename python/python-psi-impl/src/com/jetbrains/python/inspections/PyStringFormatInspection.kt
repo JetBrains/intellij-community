@@ -4,6 +4,7 @@ package com.jetbrains.python.inspections
 import com.google.common.collect.ImmutableMap
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.psi.PsiElement
@@ -17,6 +18,7 @@ import com.jetbrains.python.PyStringFormatParser.NewStyleSubstitutionChunk
 import com.jetbrains.python.PyStringFormatParser.PercentSubstitutionChunk
 import com.jetbrains.python.codeInsight.PySubstitutionChunkReference
 import com.jetbrains.python.documentation.PythonDocumentationProvider
+import com.jetbrains.python.inspections.quickfix.PyAddDunderMethodQuickFix
 import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage
 import com.jetbrains.python.inspections.quickfix.PyAddSpecifierToFormatQuickFix
 import com.jetbrains.python.psi.AccessDirection
@@ -24,6 +26,7 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyAssignmentStatement
 import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyComprehensionElement
 import com.jetbrains.python.psi.PyConditionalExpression
 import com.jetbrains.python.psi.PyDictLiteralExpression
@@ -51,7 +54,6 @@ import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyABCUtil
-import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyTupleType
@@ -61,11 +63,12 @@ import com.jetbrains.python.psi.types.PyTypeParser
 import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isAnyOrUnknown
 import com.jetbrains.python.psi.types.isNoneType
+import com.jetbrains.python.pyi.PyiUtil
 import java.math.BigInteger
 import java.util.function.ToIntFunction
 import java.util.stream.Collectors
-import kotlin.collections.mutableSetOf
 import kotlin.math.max
 
 class PyStringFormatInspection : PyInspection() {
@@ -542,12 +545,13 @@ class PyStringFormatInspection : PyInspection() {
 
         // inspect options available only for numeric types
         if (chunk.hasSignOption() || chunk.useAlternateForm() || chunk.hasZeroPadding() || chunk.hasThousandsSeparator()) {
-          specifyTypes(supportedTypes, KNOWN_COMPLEX_TYPES)
+          // TODO: not using "KNOWN_COMPLEX_TYPES" because some of those won't be available at runtime and -> Any, need to check QName
+          specifyTypes(supportedTypes, setOf("complex"))
           hasTypeOptions = true
         }
 
         if (chunk.precision != null) {
-          // TODO: actually availableTypes doesn't reject int, because int is compatible with float and complex
+          // TODO: actually availableTypes doesn't reject int, because int is compatible with float and complex, need to check QName
           specifyTypes(supportedTypes, setOf(PyNames.TYPE_STR, PyNames.TYPE_FLOAT, PyNames.TYPE_COMPLEX))
           hasTypeOptions = true
         }
@@ -662,6 +666,32 @@ class PyStringFormatInspection : PyInspection() {
 
       val formatSpecText = formatPart.text
       if (formatSpecText.isEmpty()) return
+      val actualType = expression.getType(myTypeEvalContext)
+
+      if (node.typeConversion == null) {
+        val hasObjectFormat = actualType.asUnionSequence().firstOrNull {
+          if (it.isAnyOrUnknown || it.hasWellKnownFormatMethod(expression, myTypeEvalContext)) false
+          else (it as? PyClassType)?.pyClass?.let { pyClass ->
+            // Type stubs (.pyi) frequently omit __str__, __repr__, and __format__ even when the runtime
+            // .py module defines them, so fall back to the implementation class to avoid false positives.
+            val implementation = PyiUtil.getOriginalElementOrLeaveAsIs(pyClass, PyClass::class.java)
+            val implementationMethod = implementation.findMethodInImplementations(PyNames.DUNDER_FORMAT, myTypeEvalContext)
+                                       ?: return@firstOrNull true
+            implementationMethod.qualifiedName == "${PyNames.FQN.OBJECT}.${PyNames.DUNDER_FORMAT}"
+          } ?: true
+        }
+        if (hasObjectFormat != null) {
+          if (hasObjectFormat is PyClassType) {
+            registerProblem(formatPart, PyPsiBundle.problemMessage("INSP.str.format.default.object.format", PyInspectionMessages.CodifiedParam.ofType(actualType, formatPart, myTypeEvalContext)),
+                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                            PyAddDunderMethodQuickFix(hasObjectFormat.pyClass, PyNames.DUNDER_FORMAT))
+          }
+          else registerProblem(formatPart, PyPsiBundle.problemMessage("INSP.str.format.default.object.format", PyInspectionMessages.CodifiedParam.ofType(actualType, formatPart, myTypeEvalContext)))
+          return
+        }
+      }
+
+      if (!actualType.asUnionSequence().any { it.hasWellKnownFormatMethod(expression, myTypeEvalContext) }) return
 
       val inspection = NewStyleInspection(formatPart, this, myTypeEvalContext)
       inspection.inspect()
@@ -742,10 +772,9 @@ class PyStringFormatInspection : PyInspection() {
      * so we trust it. It also returns false for a type that merely inherits `object.__format__`, which accepts only an
      * empty spec — a separate concern from format-code mismatches.
      */
-    private fun PyType.hasWellKnownFormatMethod(location: PyExpression, context: TypeEvalContext): Boolean {
+    private fun PyType?.hasWellKnownFormatMethod(location: PyExpression, context: TypeEvalContext): Boolean {
+      if (this == null) return false
       if (this !is PyClassType) return false
-      // Types we explicitly model, regardless of whether the available stubs spell out their `__format__`
-      // (e.g. typeshed's `fractions.Fraction` inherits it rather than declaring its own).
       if (pyClass.qualifiedName in KNOWN_FORMAT_MINI_LANGUAGE_TYPES) return true
       val resolveContext = PyResolveContext.defaultContext(context)
       val results = this.resolveMember(PyNames.DUNDER_FORMAT, location, AccessDirection.READ, resolveContext)

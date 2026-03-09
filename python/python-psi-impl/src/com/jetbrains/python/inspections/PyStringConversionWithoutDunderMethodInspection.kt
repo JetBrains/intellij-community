@@ -18,6 +18,7 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.codeInsight.parseDataclassParameters
+import com.jetbrains.python.inspections.quickfix.PyAddDunderMethodQuickFix
 import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
@@ -46,12 +47,7 @@ import com.jetbrains.python.pyi.PyiUtil
  */
 class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
   @JvmField
-  val ignoredTypes: MutableList<String> = mutableListOf(
-    "types.NoneType", "_io.TextIOWrapper",
-    // the definitions for these types don't include their `__str__`/`__repr__`, so we have to explicitly ignore them
-    "str", "int", "float", "complex", "set", "frozenset", "bytes", "bytearray", "memoryview",
-    "slice", "list", "dict", "bool", "range", "tuple", "pathlib.PurePath", "uuid.UUID", "decimal.Decimal", "fractions.Fraction"
-  )
+  val ignoredTypes: MutableList<String> = mutableListOf()
 
   @JvmField
   val reportedTypes: MutableList<String> = mutableListOf(
@@ -186,7 +182,7 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
         val classQName = PyNames.FQN.unqualifyBuiltinName(type.classQName) ?: return
         registerProblem(this, message,
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                        AddToIgnoredTypesQuickFix(classQName, classQName.split(".").last()))
+                        AddToIgnoredTypesQuickFix(classQName, classQName.split(".").last()), PyAddDunderMethodQuickFix(type.pyClass, requiredMethod))
       }
       else registerProblem(this, message)
     }
@@ -236,9 +232,9 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
 
       // Type stubs (.pyi) frequently omit __str__, __repr__, and __format__ even when the runtime
       // .py module defines them, so fall back to the implementation class to avoid false positives.
-      val implementation = PyiUtil.getOriginalElement(pyClass) as? PyClass ?: return false
-      val implementationMethod = implementation.findMethodByName(methodName, true, myTypeEvalContext) ?: return false
-      return implementationMethod.qualifiedName != objectMethodQName
+      val implementation = PyiUtil.getOriginalElementOrLeaveAsIs(pyClass, PyClass::class.java)
+      val implementationMethod = implementation.findMethodInImplementations(methodName, myTypeEvalContext) ?: return false
+      return implementationMethod.qualifiedName != objectMethodQName && implementationMethod.qualifiedName != "builtins.$objectMethodQName"
     }
   }
 }
