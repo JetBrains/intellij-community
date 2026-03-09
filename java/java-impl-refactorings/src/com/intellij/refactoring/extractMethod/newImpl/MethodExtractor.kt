@@ -311,7 +311,7 @@ class MethodExtractor {
     method.body?.replace(codeBlock)
 
     if (needsNullabilityAnnotations(dependencies.project) && ExtractMethodHelper.isNullabilityAvailable(dependencies)) {
-      updateMethodAnnotations(method, dependencies.inputParameters)
+      updateMethodAnnotations(method, dependencies.inputParameters, extractOptions.targetClass)
     }
 
     val context = PsiTreeUtil.getContextOfType(dependencies.elements.first(), PsiMember::class.java)

@@ -146,11 +146,12 @@ object ExtractMethodHelper {
     return physicalParent ?: throw IllegalArgumentException()
   }
 
-  internal fun addNullabilityAnnotation(psiModifierListOwner: PsiModifierListOwner?, nullability: Nullability) {
+  internal fun addNullabilityAnnotation(psiModifierListOwner: PsiModifierListOwner?, nullability: Nullability, targetClass: PsiClass) {
     if (psiModifierListOwner == null) return
-    if (nullability == Nullability.UNKNOWN) return
     val project = psiModifierListOwner.project
     val nullabilityManager = NullableNotNullManager.getInstance(project)
+    if (nullability == Nullability.UNKNOWN && containerNullability(targetClass) != Nullability.NOT_NULL) return
+    if (nullability == Nullability.NOT_NULL && containerNullability(targetClass) == Nullability.NOT_NULL) return
     val annotation = nullabilityManager.getDefaultAnnotation(nullability, psiModifierListOwner)
     val annotationOwner = AnnotationTargetUtil.getTarget(psiModifierListOwner, annotation) ?: return
     val annotationElement = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(annotation, PsiNameValuePair.EMPTY_ARRAY, annotationOwner)
@@ -158,6 +159,9 @@ object ExtractMethodHelper {
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(annotationElement)
     }
   }
+
+  internal fun containerNullability(targetClass: PsiModifierListOwner): Nullability? =
+    NullableNotNullManager.getInstance(targetClass.project).findContainerAnnotation(targetClass)?.nullability
 
   private fun findVariableReferences(element: PsiElement): Sequence<PsiVariable> {
     val references = PsiTreeUtil.findChildrenOfAnyType(element, PsiReferenceExpression::class.java)

@@ -1758,6 +1758,30 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
+  public void testNotNullContainerNotNullParam() throws Exception {
+    doTest();
+  }
+
+  public void testNotNullContainerNullableParam() throws Exception {
+    doTest();
+  }
+
+  public void testNotNullContainerUnknownParam() throws Exception {
+    doTest();
+  }
+
+  public void testNotNullContainerNotNullResult() throws Exception {
+    doTest();
+  }
+
+  public void testNotNullContainerNullableResult() throws Exception {
+    doTest();
+  }
+
+  public void testNotNullContainerUnknownResult() throws Exception {
+    doTest();
+  }
+
   private void doTestDisabledParam() throws PrepareFailedException {
     final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
