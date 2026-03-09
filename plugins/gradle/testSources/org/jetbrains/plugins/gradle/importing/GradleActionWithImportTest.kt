@@ -3,11 +3,15 @@ package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
+import com.intellij.util.io.systemIndependentPath
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 import java.io.File
+import java.nio.file.Path
 import java.util.Random
+import kotlin.io.path.absolute
+import kotlin.io.path.invariantSeparatorsPathString
 
 class GradleActionWithImportTest : GradleActionWithImportTestCase() {
 
@@ -19,10 +23,10 @@ class GradleActionWithImportTest : GradleActionWithImportTestCase() {
         addModelProviders(TestBuildObjectModelProvider())
       }
 
-      val testFile = File(projectPath, "testFile")
+      val testFile = Path.of(projectPath, "testFile")
       assertThat(testFile).doesNotExist()
 
-      val testFilePath = testFile.absolutePath
+      val testFilePath = testFile.absolute().invariantSeparatorsPathString
       val randomKey = Random().nextLong().toString()
 
       importProject("""

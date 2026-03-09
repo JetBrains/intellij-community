@@ -9,6 +9,7 @@ import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test
+import java.net.URI
 
 class GradleProjectRepositoriesImportingTest : GradleImportingTestCase() {
 
@@ -110,12 +111,15 @@ class GradleProjectRepositoriesImportingTest : GradleImportingTestCase() {
 
     repositories.getFileRepository(FLAT_FILE_REPO_NAME).run {
       assertEquals(1, files.size)
-      assertTrue(files.contains("$projectPath/$FLAT_FILE_REPO_NAME"))
+      assertTrue(files.contains(myProjectRoot.toNioPath().resolve(FLAT_FILE_REPO_NAME).toString()))
     }
   }
 
   private fun UrlRepositoryData.assertRepositoryPath() {
-    assertEquals("file:$projectPath/$name", url)
+    val expectedRepoLocation = myProjectRoot.toNioPath().resolve(name)
+    // Gradle generates a non-standard URL with "null" authority section resulting in single slash in front of a path on Windows
+    val expected = URI("file", null, expectedRepoLocation.toUri().path, null).toString()
+    assertEquals(expected, url)
   }
 
   private fun Map<String, ProjectRepositoryData>.getUrlRepository(name: String): UrlRepositoryData {
