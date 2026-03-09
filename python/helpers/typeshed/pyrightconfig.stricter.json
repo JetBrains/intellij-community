@@ -78,7 +78,6 @@
         "stubs/pycurl",
         "stubs/Pygments",
         "stubs/PyMySQL",
-        "stubs/python-dateutil",
         "stubs/python-jose",
         "stubs/pywin32",
         "stubs/PyYAML",
