@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.logsUploader;
 
 import com.intellij.ide.IdeBundle;
@@ -43,8 +43,8 @@ public final class LogUploader {
         .header("Accept", JSON_CONTENT_TYPE)
         .POST(HttpRequest.BodyPublishers.ofString(requestObj))
         .build();
-      var response = PlatformHttpClient.checkResponse(client.send(request, HttpResponse.BodyHandlers.ofString()));
-      var responseObj = JSON.std.mapFrom(response.body());
+      var response = PlatformHttpClient.send(client, request, HttpResponse.BodyHandlers.ofString());
+      var responseObj = JSON.std.mapFrom(response);
 
       var uploadUrl = responseObj.get("url").toString();
       @SuppressWarnings("unchecked")
@@ -57,7 +57,7 @@ public final class LogUploader {
         .header("Content-Type", BYTES_CONTENT_TYPE)
         .PUT(HttpRequest.BodyPublishers.ofFile(file))
         .build();
-      PlatformHttpClient.checkResponse(client.send(request, HttpResponse.BodyHandlers.discarding()));
+      PlatformHttpClient.send(client, request, HttpResponse.BodyHandlers.discarding());
 
       return id;
     }

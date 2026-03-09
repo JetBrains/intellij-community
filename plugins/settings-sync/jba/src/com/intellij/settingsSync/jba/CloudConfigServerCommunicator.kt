@@ -24,7 +24,6 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
 import java.net.URI
-import java.net.UnknownHostException
 import java.net.http.HttpResponse
 import java.util.concurrent.atomic.AtomicReference
 
@@ -221,8 +220,8 @@ open class CloudConfigServerCommunicator(private val serverUrl: String?, private
         val regionalUrl = RegionUrlMapper.tryMapUrlBlocking(URL_PROVIDER)
         val request = PlatformHttpClient.request(URI(regionalUrl))
         PlatformHttpClient.client().use { client ->
-          val response = PlatformHttpClient.checkResponse(client.send(request, HttpResponse.BodyHandlers.ofByteArray()))
-          val configUrl = JDOMUtil.load(response.body()).getAttributeValue("baseUrl")
+          val bytes = PlatformHttpClient.send(client, request, HttpResponse.BodyHandlers.ofByteArray())
+          val configUrl = JDOMUtil.load(bytes).getAttributeValue("baseUrl")
           LOG.info("Using SettingSync server URL: ${configUrl}")
           configUrl
         }

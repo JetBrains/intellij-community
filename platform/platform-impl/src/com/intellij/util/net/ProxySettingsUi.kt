@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net
 
 import com.intellij.credentialStore.Credentials
@@ -6,7 +6,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.ui.Messages
@@ -26,12 +26,14 @@ import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.layout.and
 import com.intellij.ui.layout.not
 import com.intellij.ui.layout.selected
+import com.intellij.util.io.HttpRequests.HttpStatusException
 import com.intellij.util.net.OverrideCapableProxySettings.State
 import com.intellij.util.net.ProxyConfiguration.ProxyProtocol
 import com.intellij.util.proxy.JavaProxyProperty
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.net.HttpURLConnection
 import java.net.MalformedURLException
 import java.net.URI
 import java.net.URISyntaxException
@@ -113,7 +115,7 @@ internal class ProxySettingsUi(
               SystemProxySettings.getInstance().openProxySettings()
             }
             catch (e: Exception) {
-              logger<ProxySettingsUi>().error("failed to open system proxy settings", e)
+              thisLogger().error("failed to open system proxy settings", e)
             }
           }.applyToComponent {
             setExternalLinkIcon()
@@ -241,10 +243,11 @@ internal class ProxySettingsUi(
         try {
           val client = PlatformHttpClient.client()
           val request = PlatformHttpClient.requestBuilder(URI(url)).timeout(Duration.ofSeconds(3)).build()
-          PlatformHttpClient.checkResponse(client.send(request, HttpResponse.BodyHandlers.discarding()))
+          PlatformHttpClient.send(client, request, HttpResponse.BodyHandlers.discarding())
         }
         catch (e: Exception) {
           exceptionReference.set(e)
+          thisLogger().warn(e)
         }
       }
     }
@@ -253,7 +256,10 @@ internal class ProxySettingsUi(
       Messages.showMessageDialog(mainPanel, IdeBundle.message("message.connection.successful"), title, Messages.getInformationIcon())
     }
     else {
-      lastProxyError = IdeBundle.message("dialog.message.problem.with.connection", StringUtil.removeHtmlTags(exception.message.orEmpty()))
+      lastProxyError = when (exception) {
+        is HttpStatusException if exception.statusCode == HttpURLConnection.HTTP_PROXY_AUTH -> IdeBundle.message("proxy.settings.auth.failed")
+        else -> IdeBundle.message("proxy.settings.connection.problem", StringUtil.removeHtmlTags(exception.message.orEmpty()))
+      }
       Messages.showErrorDialog(mainPanel, lastProxyError, title)
     }
     reset(ProxySettings.getInstance())
@@ -374,7 +380,7 @@ internal class ProxySettingsUi(
       pluginOverrideCheckbox.isSelected = overrideProvider != null && settings.isOverrideEnabled
       if (overrideProvider != null) {
         val pluginName = settings.getProviderPluginName(overrideProvider) ?: "<unknown>".also {
-          logger<ProxySettingsUi>().error("couldn't find plugin descriptor for $overrideProvider")
+          thisLogger().error("couldn't find plugin descriptor for $overrideProvider")
         }
         pluginOverrideCheckbox.text = UIBundle.message("proxy.settings.override.by.plugin.checkbox", pluginName)
       }
