@@ -6,7 +6,7 @@ package org.jetbrains.kotlin.idea.base.facet
 import com.intellij.facet.FacetManager
 import com.intellij.facet.FacetTypeRegistry
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.project.IdeModelsProviderImpl
@@ -105,19 +105,25 @@ class ModulesByLinkedKeyCache(private val project: Project) : Disposable, Worksp
         project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, this)
     }
 
-    operator fun get(key: String): Module? = useCache { cache ->
-        if (cache.isEmpty()) {
-            val stableNameProvider = StableModuleNameProvider.getInstance(project)
+    operator fun get(key: String): Module? = runReadActionBlocking {
+        useCache { cache ->
+            if (cache.isEmpty()) {
+                val stableNameProvider = StableModuleNameProvider.getInstance(project)
 
-            val map = runReadAction {
                 val modules = ModuleManager.getInstance(project).modules
-                modules.associateBy { stableNameProvider.getStableModuleName(it) }
+                val map = modules.associateBy { stableNameProvider.getStableModuleName(it) }
+
+                cache.putAll(map)
             }
-            cache.putAll(map)
+            cache[key]
         }
-        cache[key]
     }
 
+    /**
+     * Runs [block] while holding the cache lock.
+     *
+     * IMPORTANT: don't take read/write locks inside the block as it may lead to a deadlock.
+     */
     private fun <T> useCache(block: (MutableMap<String, Module>) -> T?): T? = synchronized(lock) {
         @Suppress("DEPRECATION_ERROR")
         cache.run(block)
