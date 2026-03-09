@@ -86,6 +86,8 @@ jvm_library(
     "//plugins/editorconfig:editorconfig-plugin",
     "//plugins/editorconfig:editorconfig-plugin_test_lib",
     "@lib//:studio-platform",
+    "//plugins/copyright",
+    "//plugins/copyright:copyright_test_lib",
   ],
   runtime_deps = [
     ":tests",

@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
+import com.intellij.copyright.CopyrightManager
+import com.intellij.copyright.IdeCopyrightManager
 import com.intellij.devkit.workspaceModel.WorkspaceModelGenerator.Companion.RIDER_MODULES_PREFIX
 import com.intellij.devkit.workspaceModel.WorkspaceModelGenerator.Companion.modulesWithAbstractTypes
 import com.intellij.devkit.workspaceModel.codegen.writer.CodeWriter
@@ -17,6 +19,7 @@ import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.findOrCreateDirectory
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -58,6 +61,7 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.SerializationConte
 import com.intellij.workspaceModel.ide.impl.jps.serialization.saveAffectedEntities
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_ROOT_ENTITY_TYPE_ID
+import com.maddyhome.idea.copyright.CopyrightProfile
 import junit.framework.AssertionFailedError
 import kotlinx.coroutines.runBlocking
 import org.editorconfig.Utils
@@ -95,6 +99,7 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
 
   @BeforeEach
   fun setUp(): Unit = runBlocking {
+    setupCopyright()
     IntelliJProjectUtil.markAsIntelliJPlatformProject(project, true)
     EditorConfigCodeStyleSettingsModifier.Handler.setEnabledInTests(true)
     Utils.isEnabledInTests = true
@@ -145,6 +150,18 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
     // Load codegen jar on warm-up phase
     CodegenJarLoader.getInstance(project).getClassLoader()
     PomManager.getModel(project) // initialize PostprocessReformattingAspectImpl to enable reformatting after PSI changes
+  }
+
+  private fun setupCopyright() {
+    val profile = CopyrightProfile().apply {
+      name = "AbstractAllIntellijEntitiesGenerationTest"
+      notice = "This copyright should not appear in the file."
+      }
+    IdeCopyrightManager.getInstance().replaceCopyright(profile.name, profile)
+    CopyrightManager.getInstance(project).defaultCopyright = profile
+    Disposer.register(project) {
+      IdeCopyrightManager.getInstance().removeCopyright(profile)
+    }
   }
 
   @AfterEach
@@ -404,6 +421,7 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
         val moduleEntity = sourceRoot.contentRoot.module
 
         if (moduleEntity.name in skippedModules) continue
+        //if (moduleEntity.name != "intellij.platform.externalSystem") continue
         if (sourceRoot.javaSourceRoots.none { !it.generated }) continue
 
         var toCheck = false

@@ -193,6 +193,7 @@ object CodeWriter {
             for ((i, file) in generatedFiles.withIndex()) {
               DumbService.getInstance(project).completeJustSubmittedTasks()
               indicator.fraction = 0.25 + 0.7 * i / generatedFiles.size
+              deleteAutomaticCopyright(file)
               addCopyright(file, ktClasses)
               LanguageImportStatements.INSTANCE.forFile(file).forEach { it.processFile(file).run() }
               PsiDocumentManager.getInstance(file.project).doPostponedOperationsAndUnblockDocument(file.viewProvider.document!!)
@@ -211,6 +212,17 @@ object CodeWriter {
       latch.complete(Unit)
     }
     latch.await()
+  }
+
+  private fun deleteAutomaticCopyright(file: KtFile) { // delete copyright that is added by CopyrightManagerDocumentListener
+    val firstNonComment = file.fileAnnotationList?.node ?: file.packageDirective?.node ?: return
+    val parent = firstNonComment.treeParent
+    var nodeToRemove = firstNonComment.treePrev
+    while (nodeToRemove != null) {
+      val toRemove = nodeToRemove
+      nodeToRemove = nodeToRemove.treePrev
+      parent.removeChild(toRemove)
+    }
   }
 
   private fun addCopyright(file: KtFile, ktClasses: HashMap<String, KtClassOrObject>) {
