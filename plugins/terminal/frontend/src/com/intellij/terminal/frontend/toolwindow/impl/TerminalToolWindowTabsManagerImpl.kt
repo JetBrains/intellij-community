@@ -68,6 +68,9 @@ import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
+import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.createDefaultTabName
+import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.updateBackendTabNameOnTitleChange
+import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.updateTabNameOnTitleChange
 import java.lang.ref.WeakReference
 import kotlin.time.Duration.Companion.seconds
 
