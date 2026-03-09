@@ -88,6 +88,7 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
 - Dedicated frame receives focus when chat opens there.
 - Dedicated frame can be reopened from explicit action entry points.
 - Sessions tree never shows dedicated frame as a project node.
+- In Rider with per-app toolwindows enabled, dedicated-frame toolwindow layout customization remains independent from normal Rider project frames.
 
 ## Data & Backend
 - Mode state is stored via Advanced Settings.
