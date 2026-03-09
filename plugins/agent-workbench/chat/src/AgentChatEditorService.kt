@@ -11,6 +11,7 @@ import com.intellij.agent.workbench.common.parseAgentThreadIdentity
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBehaviors
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
@@ -30,24 +31,37 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import java.util.Locale
 import java.util.concurrent.atomic.AtomicReference
 
 private class AgentChatEditorServiceLog
 
 private val LOG = logger<AgentChatEditorServiceLog>()
-private const val CODEX_PROVIDER_ID = "codex"
 private val fileEditorProviderOverrideForTests: AtomicReference<FileEditorProvider?> = AtomicReference(null)
 
-private object CodexScopedRefreshSignalBus {
-  private val signalFlow = MutableSharedFlow<Set<String>>(extraBufferCapacity = 64)
+private data class AgentChatScopedRefreshSignal(
+  val provider: AgentSessionProvider,
+  val projectPaths: Set<String>,
+)
 
-  fun signal(projectPath: String): Boolean {
+private object AgentChatScopedRefreshSignalBus {
+  private val signalFlow = MutableSharedFlow<AgentChatScopedRefreshSignal>(extraBufferCapacity = 64)
+
+  fun signal(provider: AgentSessionProvider, projectPath: String): Boolean {
     val normalizedPath = normalizeAgentWorkbenchPath(projectPath)
-    return normalizedPath.isNotBlank() && signalFlow.tryEmit(setOf(normalizedPath))
+    return normalizedPath.isNotBlank() && signalFlow.tryEmit(
+      AgentChatScopedRefreshSignal(provider = provider, projectPaths = setOf(normalizedPath))
+    )
   }
 
-  fun signals(): Flow<Set<String>> = signalFlow.asSharedFlow()
+  fun signals(provider: AgentSessionProvider): Flow<Set<String>> {
+    return signalFlow.asSharedFlow()
+      .filter { signal -> signal.provider == provider }
+      .map { signal -> signal.projectPaths }
+  }
 }
 
 data class AgentChatTabRebindTarget(
@@ -268,8 +282,9 @@ suspend fun openChat(
     "openChat openFile completed(identity=$threadIdentity, subAgentId=$subAgentId, fileName=${file.name}, activity=$threadActivity)"
   }
 
-  if (isPendingCodexThreadIdentity(threadIdentity)) {
-    notifyCodexTerminalOutputForRefresh(projectPath)
+  val pendingProvider = pendingProviderForThreadIdentity(threadIdentity)
+  if (pendingProvider != null && AgentSessionProviderBehaviors.find(pendingProvider)?.emitsScopedRefreshSignals == true) {
+    notifyAgentChatTerminalOutputForRefresh(provider = pendingProvider, projectPath = projectPath)
   }
 }
 
@@ -281,21 +296,31 @@ suspend fun collectOpenPendingAgentChatProjectPaths(): Set<String> {
   return collectOpenAgentChatProjectPaths(includePendingOnly = true)
 }
 
+fun notifyAgentChatTerminalOutputForRefresh(provider: AgentSessionProvider, projectPath: String) {
+  AgentChatScopedRefreshSignalBus.signal(provider, projectPath)
+}
+
+fun agentChatScopedRefreshSignals(provider: AgentSessionProvider): Flow<Set<String>> {
+  return AgentChatScopedRefreshSignalBus.signals(provider)
+}
+
 fun notifyCodexTerminalOutputForRefresh(projectPath: String) {
-  CodexScopedRefreshSignalBus.signal(projectPath)
+  notifyAgentChatTerminalOutputForRefresh(provider = AgentSessionProvider.CODEX, projectPath = projectPath)
 }
 
 fun codexScopedRefreshSignals(): Flow<Set<String>> {
-  return CodexScopedRefreshSignalBus.signals()
+  return agentChatScopedRefreshSignals(AgentSessionProvider.CODEX)
 }
 
-suspend fun collectOpenPendingCodexTabsByPath(): Map<String, List<AgentChatPendingCodexTabSnapshot>> = withContext(Dispatchers.UI) {
+suspend fun collectOpenPendingAgentChatTabsByPath(
+  provider: AgentSessionProvider,
+): Map<String, List<AgentChatPendingCodexTabSnapshot>> = withContext(Dispatchers.UI) {
   val result = LinkedHashMap<String, MutableList<AgentChatPendingCodexTabSnapshot>>()
   for (project in ProjectManager.getInstance().openProjects) {
     val manager = project.serviceIfCreated<FileEditorManager>() ?: continue
     for (openFile in manager.openFiles) {
       val chatFile = openFile as? AgentChatVirtualFile ?: continue
-      if (!isPendingCodexThreadIdentity(chatFile.threadIdentity)) {
+      if (!isPendingThreadIdentityForProvider(chatFile.threadIdentity, provider)) {
         continue
       }
       val normalizedPath = normalizeAgentWorkbenchPath(chatFile.projectPath)
@@ -314,14 +339,20 @@ suspend fun collectOpenPendingCodexTabsByPath(): Map<String, List<AgentChatPendi
   result
 }
 
-suspend fun collectOpenConcreteCodexTabsAwaitingNewThreadRebindByPath(): Map<String, List<AgentChatConcreteCodexTabSnapshot>> = withContext(Dispatchers.UI) {
+suspend fun collectOpenPendingCodexTabsByPath(): Map<String, List<AgentChatPendingCodexTabSnapshot>> {
+  return collectOpenPendingAgentChatTabsByPath(AgentSessionProvider.CODEX)
+}
+
+suspend fun collectOpenConcreteAgentChatTabsAwaitingNewThreadRebindByPath(
+  provider: AgentSessionProvider,
+): Map<String, List<AgentChatConcreteCodexTabSnapshot>> = withContext(Dispatchers.UI) {
   val snapshotsByPathAndTabKey = LinkedHashMap<String, LinkedHashMap<String, AgentChatConcreteCodexTabSnapshot>>()
   for (project in ProjectManager.getInstance().openProjects) {
     val manager = project.serviceIfCreated<FileEditorManager>() ?: continue
     for (openFile in manager.openFiles) {
       val chatFile = openFile as? AgentChatVirtualFile ?: continue
       if (
-        chatFile.provider != AgentSessionProvider.CODEX ||
+        chatFile.provider != provider ||
         chatFile.isPendingThread ||
         chatFile.subAgentId != null
       ) {
@@ -352,6 +383,10 @@ suspend fun collectOpenConcreteCodexTabsAwaitingNewThreadRebindByPath(): Map<Str
   result
 }
 
+suspend fun collectOpenConcreteCodexTabsAwaitingNewThreadRebindByPath(): Map<String, List<AgentChatConcreteCodexTabSnapshot>> {
+  return collectOpenConcreteAgentChatTabsAwaitingNewThreadRebindByPath(AgentSessionProvider.CODEX)
+}
+
 suspend fun collectOpenConcreteAgentChatThreadIdentitiesByPath(): Map<String, Set<String>> = withContext(Dispatchers.UI) {
   val result = LinkedHashMap<String, LinkedHashSet<String>>()
   for (project in ProjectManager.getInstance().openProjects) {
@@ -371,19 +406,20 @@ suspend fun collectOpenConcreteAgentChatThreadIdentitiesByPath(): Map<String, Se
 private suspend fun collectOpenAgentChatProjectPaths(includePendingOnly: Boolean): Set<String> = withContext(Dispatchers.UI) {
   val paths = LinkedHashSet<String>()
   for (project in ProjectManager.getInstance().openProjects) {
-    val manager = project.serviceIfCreated<FileEditorManager>() ?: continue
-    for (openFile in manager.openFiles) {
-      val chatFile = openFile as? AgentChatVirtualFile ?: continue
-      if (includePendingOnly && !isPendingCodexThreadIdentity(chatFile.threadIdentity)) {
-        continue
-      }
-      paths.add(normalizeAgentWorkbenchPath(chatFile.projectPath))
+      val manager = project.serviceIfCreated<FileEditorManager>() ?: continue
+      for (openFile in manager.openFiles) {
+        val chatFile = openFile as? AgentChatVirtualFile ?: continue
+        if (includePendingOnly && !isPendingThreadIdentity(chatFile.threadIdentity)) {
+          continue
+        }
+        paths.add(normalizeAgentWorkbenchPath(chatFile.projectPath))
     }
   }
   paths
 }
 
-fun rebindOpenPendingCodexTabs(
+fun rebindOpenPendingAgentChatTabs(
+  provider: AgentSessionProvider,
   requestsByProjectPath: Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
 ): AgentChatPendingCodexTabRebindReport {
   if (requestsByProjectPath.isEmpty()) {
@@ -411,7 +447,7 @@ fun rebindOpenPendingCodexTabs(
       val chatFile = openFile as? AgentChatVirtualFile ?: continue
       val normalizedPath = normalizeAgentWorkbenchPath(chatFile.projectPath)
       managerByFile.computeIfAbsent(chatFile) { LinkedHashSet() }.add(manager)
-      if (isPendingCodexThreadIdentity(chatFile.threadIdentity)) {
+      if (isPendingThreadIdentityForProvider(chatFile.threadIdentity, provider)) {
         pendingFilesByPathAndTabKey
           .computeIfAbsent(normalizedPath) { LinkedHashMap() }
           .putIfAbsent(chatFile.tabKey, chatFile)
@@ -458,7 +494,7 @@ fun rebindOpenPendingCodexTabs(
       }
 
       if (
-        !isPendingCodexThreadIdentity(pendingFile.threadIdentity) ||
+        !isPendingThreadIdentityForProvider(pendingFile.threadIdentity, provider) ||
         pendingFile.threadIdentity != request.pendingThreadIdentity
       ) {
         outcomes.add(
@@ -551,7 +587,14 @@ fun rebindOpenPendingCodexTabs(
   return report
 }
 
-fun rebindOpenConcreteCodexTabs(
+fun rebindOpenPendingCodexTabs(
+  requestsByProjectPath: Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
+): AgentChatPendingCodexTabRebindReport {
+  return rebindOpenPendingAgentChatTabs(AgentSessionProvider.CODEX, requestsByProjectPath)
+}
+
+fun rebindOpenConcreteAgentChatTabs(
+  provider: AgentSessionProvider,
   requestsByProjectPath: Map<String, List<AgentChatConcreteCodexTabRebindRequest>>,
 ): AgentChatConcreteCodexTabRebindReport {
   if (requestsByProjectPath.isEmpty()) {
@@ -586,7 +629,7 @@ fun rebindOpenConcreteCodexTabs(
           .add(chatFile.threadIdentity)
       }
       if (
-        chatFile.provider == AgentSessionProvider.CODEX &&
+        chatFile.provider == provider &&
         !chatFile.isPendingThread &&
         chatFile.subAgentId == null
       ) {
@@ -630,7 +673,7 @@ fun rebindOpenConcreteCodexTabs(
       }
 
       if (
-        concreteFile.provider != AgentSessionProvider.CODEX ||
+        concreteFile.provider != provider ||
         concreteFile.isPendingThread ||
         concreteFile.subAgentId != null ||
         concreteFile.threadIdentity != request.currentThreadIdentity ||
@@ -728,7 +771,14 @@ fun rebindOpenConcreteCodexTabs(
   return report
 }
 
-fun clearOpenConcreteCodexNewThreadRebindAnchors(
+fun rebindOpenConcreteCodexTabs(
+  requestsByProjectPath: Map<String, List<AgentChatConcreteCodexTabRebindRequest>>,
+): AgentChatConcreteCodexTabRebindReport {
+  return rebindOpenConcreteAgentChatTabs(AgentSessionProvider.CODEX, requestsByProjectPath)
+}
+
+fun clearOpenConcreteAgentChatNewThreadRebindAnchors(
+  provider: AgentSessionProvider,
   tabsByProjectPath: Map<String, List<AgentChatConcreteCodexTabSnapshot>>,
 ): Int {
   if (tabsByProjectPath.isEmpty()) {
@@ -753,7 +803,7 @@ fun clearOpenConcreteCodexNewThreadRebindAnchors(
     for (openFile in manager.openFiles) {
       val chatFile = openFile as? AgentChatVirtualFile ?: continue
       if (
-        chatFile.provider != AgentSessionProvider.CODEX ||
+        chatFile.provider != provider ||
         chatFile.isPendingThread ||
         chatFile.subAgentId != null
       ) {
@@ -783,6 +833,12 @@ fun clearOpenConcreteCodexNewThreadRebindAnchors(
     }
   }
   return cleared
+}
+
+fun clearOpenConcreteCodexNewThreadRebindAnchors(
+  tabsByProjectPath: Map<String, List<AgentChatConcreteCodexTabSnapshot>>,
+): Int {
+  return clearOpenConcreteAgentChatNewThreadRebindAnchors(AgentSessionProvider.CODEX, tabsByProjectPath)
 }
 
 suspend fun updateOpenAgentChatTabPresentation(
@@ -934,21 +990,35 @@ private fun flushPendingInitialMessageForOpenEditors(
 }
 
 private fun isPendingThreadIdentity(threadIdentity: String): Boolean {
-  val separator = threadIdentity.indexOf(':')
-  if (separator <= 0 || separator == threadIdentity.lastIndex) {
-    return false
-  }
-  return threadIdentity.substring(separator + 1).startsWith("new-")
+  return splitAgentThreadIdentity(threadIdentity)?.second?.startsWith("new-") == true
 }
 
-private fun isPendingCodexThreadIdentity(threadIdentity: String): Boolean {
+private fun isPendingThreadIdentityForProvider(threadIdentity: String, provider: AgentSessionProvider): Boolean {
+  val identity = splitAgentThreadIdentity(threadIdentity) ?: return false
+  if (!provider.value.equals(identity.first, ignoreCase = true)) {
+    return false
+  }
+  return identity.second.startsWith("new-")
+}
+
+private fun pendingProviderForThreadIdentity(threadIdentity: String): AgentSessionProvider? {
+  val identity = splitAgentThreadIdentity(threadIdentity) ?: return null
+  if (!identity.second.startsWith("new-")) {
+    return null
+  }
+  return AgentSessionProvider.fromOrNull(identity.first.lowercase(Locale.ROOT))
+}
+
+private fun splitAgentThreadIdentity(threadIdentity: String): Pair<String, String>? {
   val separator = threadIdentity.indexOf(':')
   if (separator <= 0 || separator == threadIdentity.lastIndex) {
-    return false
+    return null
   }
-  val providerId = threadIdentity.substring(0, separator).lowercase()
-  if (providerId != CODEX_PROVIDER_ID) {
-    return false
+
+  val providerId = threadIdentity.substring(0, separator)
+  val threadId = threadIdentity.substring(separator + 1)
+  if (threadId.isBlank()) {
+    return null
   }
-  return threadIdentity.substring(separator + 1).startsWith("new-")
+  return providerId to threadId
 }

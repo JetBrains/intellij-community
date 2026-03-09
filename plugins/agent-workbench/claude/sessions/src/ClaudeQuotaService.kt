@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.sessions.claude
+package com.intellij.agent.workbench.claude.sessions
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonParser
@@ -238,15 +238,15 @@ internal class ClaudeQuotaService(private val serviceScope: CoroutineScope) {
         }
       }
     }
-    val info = ClaudeQuotaInfo(
-      fiveHourPercent = fiveHourPercent,
-      fiveHourReset = fiveHourReset,
-      sevenDayPercent = sevenDayPercent,
-      sevenDayReset = sevenDayReset,
+    return ClaudeQuotaState(
+      quotaInfo = ClaudeQuotaInfo(
+        fiveHourPercent = fiveHourPercent,
+        fiveHourReset = fiveHourReset,
+        sevenDayPercent = sevenDayPercent,
+        sevenDayReset = sevenDayReset,
+      )
     )
-    return ClaudeQuotaState(quotaInfo = info)
   }
-
 }
 
 private fun parseBucket(parser: JsonParser): Pair<Int?, Long?>? {
@@ -312,3 +312,4 @@ private class WinCredential(p: Pointer) : Structure(p) {
   @JvmField var TargetAlias: WString? = null
   @JvmField var UserName: WString? = null
 }
+

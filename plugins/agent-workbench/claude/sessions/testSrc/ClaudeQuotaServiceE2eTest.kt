@@ -1,13 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.sessions
+package com.intellij.agent.workbench.claude.sessions
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonToken
-import com.intellij.agent.workbench.sessions.claude.ClaudeQuotaError
-import com.intellij.agent.workbench.sessions.claude.ClaudeQuotaInfo
-import com.intellij.agent.workbench.sessions.claude.ClaudeQuotaState
-import com.intellij.agent.workbench.sessions.claude.formatWidgetText
-import com.intellij.agent.workbench.sessions.claude.formatWidgetTooltip
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import org.assertj.core.api.Assertions.assertThat
@@ -37,7 +32,7 @@ class ClaudeQuotaServiceE2eTest {
   fun fullPipelineReturnsValidQuotaState() {
     assumeTrue(java.lang.Boolean.getBoolean(RUN_CLAUDE_QUOTA_E2E_PROPERTY), "Set -D$RUN_CLAUDE_QUOTA_E2E_PROPERTY=true to run E2E test")
     val token = readOAuthToken()
-    assumeTrue(token != null, "No Claude OAuth credentials found — skipping E2E test")
+    assumeTrue(token != null, "No Claude OAuth credentials found - skipping E2E test")
 
     val response = fetchUsageRaw(token!!)
     assertThat(response.statusCode())
@@ -58,7 +53,6 @@ class ClaudeQuotaServiceE2eTest {
     val info = state.quotaInfo!!
     val soft = SoftAssertions()
 
-    // At least one bucket should have a non-null utilization
     soft.assertThat(info.fiveHourPercent != null || info.sevenDayPercent != null)
       .describedAs("At least one utilization value must be present")
       .isTrue()
@@ -76,7 +70,6 @@ class ClaudeQuotaServiceE2eTest {
 
     soft.assertAll()
 
-    // Verify the formatting functions don't crash and produce non-empty output
     val text = formatWidgetText(info)
     assertThat(text).describedAs("Widget text").isNotEmpty()
 
@@ -86,8 +79,6 @@ class ClaudeQuotaServiceE2eTest {
 
   @Test
   fun utilizationFieldParsedAsFloat() {
-    // The API returns utilization as a float (e.g. 48.0), not an integer.
-    // This test verifies our parser handles that correctly.
     val json = """{"five_hour":{"utilization":48.0,"resets_at":"2099-01-01T00:00:00+00:00"},"seven_day":{"utilization":1.0,"resets_at":"2099-01-01T00:00:00+00:00"}}"""
     val state = parseUsageResponse(json)
 
@@ -131,8 +122,6 @@ class ClaudeQuotaServiceE2eTest {
     assertThat(state.quotaInfo).isNotNull()
     assertThat(state.quotaInfo!!.fiveHourPercent).isEqualTo(10)
   }
-
-  // --- Helpers (duplicated from ClaudeQuotaService to test parsing independently) ---
 
   private fun readOAuthToken(): String? {
     readTokenFromKeychain()?.let { return it }
@@ -235,7 +224,6 @@ class ClaudeQuotaServiceE2eTest {
       ),
     )
   }
-
 }
 
 private fun fetchUsageRaw(token: String): HttpResponse<String> {
@@ -280,5 +268,5 @@ private fun parseBucket(parser: com.fasterxml.jackson.core.JsonParser): Pair<Int
       else -> parser.skipChildren()
     }
   }
-  return Pair(utilization, resetMillis)
+  return utilization to resetMillis
 }

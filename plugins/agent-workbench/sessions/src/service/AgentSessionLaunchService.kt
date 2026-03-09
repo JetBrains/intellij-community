@@ -21,6 +21,7 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchResult
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBehaviors
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
@@ -35,7 +36,6 @@ import com.intellij.agent.workbench.sessions.util.SingleFlightPolicy
 import com.intellij.agent.workbench.sessions.util.SingleFlightProgressRequest
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionNewIdentity
-import com.intellij.agent.workbench.sessions.util.isAgentSessionNewIdentity
 import com.intellij.agent.workbench.sessions.util.parseAgentSessionIdentity
 import com.intellij.agent.workbench.sessions.util.resolveAgentSessionId
 import com.intellij.ide.impl.OpenProjectTask
@@ -71,8 +71,6 @@ private const val OPEN_DEDICATED_FRAME_ACTION_KEY_PREFIX = "dedicated-frame-open
 private const val CREATE_SESSION_ACTION_KEY_PREFIX = "session-create"
 private const val OPEN_THREAD_ACTION_KEY_PREFIX = "thread-open"
 private const val OPEN_SUB_AGENT_ACTION_KEY_PREFIX = "subagent-open"
-private const val PENDING_LAUNCH_MODE_STANDARD = "standard"
-private const val PENDING_LAUNCH_MODE_YOLO = "yolo"
 private const val MAX_STARTUP_COMMAND_BYTES = 24 * 1024
 
 internal enum class OpenThreadLaunchOrigin(val keySuffix: String) {
@@ -180,7 +178,7 @@ internal class AgentSessionLaunchService(
     launchOrigin: OpenThreadLaunchOrigin = OpenThreadLaunchOrigin.USER_OPEN,
   ) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
-    markClaudeQuotaHintEligible(thread.provider)
+    AgentSessionProviderBehaviors.find(thread.provider)?.onConversationOpened()
     syncService.prepareThreadForOpen(path = normalizedPath, provider = thread.provider, threadId = thread.id, updatedAt = thread.updatedAt)
     launchDropAction(
       key = buildOpenThreadActionKey(path = normalizedPath, thread = thread, launchOrigin = launchOrigin),
@@ -208,7 +206,7 @@ internal class AgentSessionLaunchService(
 
   fun openChatSubAgent(path: String, thread: AgentSessionThread, subAgent: AgentSubAgent, currentProject: Project? = null) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
-    markClaudeQuotaHintEligible(thread.provider)
+    AgentSessionProviderBehaviors.find(thread.provider)?.onConversationOpened()
     launchDropAction(
       key = buildOpenSubAgentActionKey(path = normalizedPath, thread = thread, subAgent = subAgent),
       droppedActionMessage = "Dropped duplicate open sub-agent action for $normalizedPath:${thread.provider}:${thread.id}:${subAgent.id}",
@@ -233,7 +231,7 @@ internal class AgentSessionLaunchService(
     preferredDedicatedFrame: Boolean? = null,
   ) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
-    markClaudeQuotaHintEligible(provider)
+    AgentSessionProviderBehaviors.find(provider)?.onConversationOpened()
     launchDropAction(
       key = buildCreateSessionActionKey(normalizedPath, provider, mode),
       droppedActionMessage = "Dropped duplicate create session action for $normalizedPath:$provider:mode=$mode",
@@ -274,7 +272,7 @@ internal class AgentSessionLaunchService(
         initialMessageDispatchPlan = initialMessageDispatchPlan,
         preferredDedicatedFrame = preferredDedicatedFrame,
       )
-      if (provider == AgentSessionProvider.CODEX) {
+      if (AgentSessionProviderBehaviors.find(provider)?.refreshPathAfterCreateNewSession == true) {
         syncService.refreshProviderForPath(path = normalizedPath, provider = provider)
       }
     }
@@ -374,19 +372,7 @@ internal class AgentSessionLaunchService(
       block = block,
     )
   }
-
-  private fun markClaudeQuotaHintEligible(provider: AgentSessionProvider) {
-    if (provider != AgentSessionProvider.CLAUDE) {
-      return
-    }
-    uiPreferencesState.markClaudeQuotaHintEligible()
-  }
 }
-
-private data class PendingCodexMetadata(
-  @JvmField val createdAtMs: Long,
-  @JvmField val launchMode: String,
-)
 
 private suspend fun openOrFocusProjectInternal(normalizedPath: String) {
   val project = openOrReuseSourceProjectByPath(normalizedPath) ?: return
@@ -528,20 +514,13 @@ private fun dedicatedFrameOpenProgressRequest(currentProject: Project?): SingleF
   )
 }
 
-private fun resolvePendingCodexMetadata(identity: String, launchSpec: AgentSessionTerminalLaunchSpec): PendingCodexMetadata? {
-  if (!isAgentSessionNewIdentity(identity)) {
-    return null
-  }
-  val provider = parseAgentSessionIdentity(identity)?.provider ?: return null
-  if (provider != AgentSessionProvider.CODEX) {
-    return null
-  }
-  val launchMode = if ("--full-auto" in launchSpec.command) PENDING_LAUNCH_MODE_YOLO else PENDING_LAUNCH_MODE_STANDARD
-  return PendingCodexMetadata(
-    createdAtMs = System.currentTimeMillis(),
-    launchMode = launchMode,
-  )
-}
+private fun resolvePendingSessionMetadata(
+  identity: String,
+  launchSpec: AgentSessionTerminalLaunchSpec,
+) = parseAgentSessionIdentity(identity)
+  ?.provider
+  ?.let(AgentSessionProviderBehaviors::find)
+  ?.resolvePendingSessionMetadata(identity = identity, launchSpec = launchSpec)
 
 private suspend fun openAgentSessionNewChat(
   normalizedPath: String,
@@ -627,7 +606,7 @@ private suspend fun openNewChatInProject(
   initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
 ) {
   val threadId = resolveAgentSessionId(identity)
-  val pendingMetadata = resolvePendingCodexMetadata(identity = identity, launchSpec = launchSpec)
+  val pendingMetadata = resolvePendingSessionMetadata(identity = identity, launchSpec = launchSpec)
   openChat(
     project = project,
     projectPath = projectPath,

@@ -6,91 +6,97 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class AgentPromptUiSessionStateServiceTest {
-  @Test
-  fun loadStateRoundTripPersistsDraftButNotContextRestoreSnapshot() {
-    val original = AgentPromptUiSessionStateService()
-    val draft = AgentPromptUiDraft(
-      promptText = "fix",
-      providerId = "codex",
-      targetMode = PromptTargetMode.EXISTING_TASK,
-      existingTaskSearch = "query",
-      selectedExistingTaskId = "task-1",
-      planModeEnabled = false,
-    )
-    val snapshot = AgentPromptUiContextRestoreSnapshot(
-      contextFingerprint = Hashing.xxh3_128().hashCharsTo128Bits("context"),
-      removedContextItemIds = listOf("editor.file"),
-    )
+    @Test
+    fun loadStateRoundTripPersistsDraftButNotContextRestoreSnapshot() {
+        val original = AgentPromptUiSessionStateService()
+        val draft = AgentPromptUiDraft(
+            promptText = "fix",
+            providerId = "codex",
+            targetMode = PromptTargetMode.EXISTING_TASK,
+            existingTaskSearch = "query",
+            selectedExistingTaskId = "task-1",
+            planModeEnabled = false,
+            taskDrafts = mapOf(PromptTargetMode.NEW_TASK.name to "fix"),
+            providerOptionsByProviderId = mapOf("codex" to emptySet()),
+        )
+        val snapshot = AgentPromptUiContextRestoreSnapshot(
+            contextFingerprint = Hashing.xxh3_128().hashCharsTo128Bits("context"),
+            removedContextItemIds = listOf("editor.file"),
+        )
 
-    original.saveDraft(draft)
-    original.saveContextRestoreSnapshot(snapshot)
+        original.saveDraft(draft)
+        original.saveContextRestoreSnapshot(snapshot)
 
-    val reloaded = AgentPromptUiSessionStateService()
-    reloaded.loadState(original.state)
+        val reloaded = AgentPromptUiSessionStateService()
+        reloaded.loadState(original.state)
 
-    assertThat(reloaded.loadDraft()).isEqualTo(draft)
-    assertThat(reloaded.loadContextRestoreSnapshot()).isEqualTo(AgentPromptUiContextRestoreSnapshot())
-  }
+        assertThat(reloaded.loadDraft()).isEqualTo(draft)
+        assertThat(reloaded.loadContextRestoreSnapshot()).isEqualTo(AgentPromptUiContextRestoreSnapshot())
+    }
 
-  @Test
-  fun contextRestoreSnapshotRoundTripWithinSession() {
-    val service = AgentPromptUiSessionStateService()
-    val snapshot = AgentPromptUiContextRestoreSnapshot(
-      contextFingerprint = Hashing.xxh3_128().hashCharsTo128Bits("context"),
-      removedContextItemIds = listOf("editor.file", "editor.symbol"),
-    )
+    @Test
+    fun contextRestoreSnapshotRoundTripWithinSession() {
+        val service = AgentPromptUiSessionStateService()
+        val snapshot = AgentPromptUiContextRestoreSnapshot(
+            contextFingerprint = Hashing.xxh3_128().hashCharsTo128Bits("context"),
+            removedContextItemIds = listOf("editor.file", "editor.symbol"),
+        )
 
-    service.saveContextRestoreSnapshot(snapshot)
+        service.saveContextRestoreSnapshot(snapshot)
 
-    assertThat(service.loadContextRestoreSnapshot()).isEqualTo(snapshot)
-  }
+        assertThat(service.loadContextRestoreSnapshot()).isEqualTo(snapshot)
+    }
 
-  @Test
-  fun clearDraftResetsDraftAndContextRestoreSnapshot() {
-    val service = AgentPromptUiSessionStateService()
-    service.saveDraft(
-      AgentPromptUiDraft(
-        promptText = "fix",
-        providerId = "codex",
-        targetMode = PromptTargetMode.EXISTING_TASK,
-        existingTaskSearch = "query",
-        selectedExistingTaskId = "task-1",
-        planModeEnabled = false,
-      )
-    )
-    service.saveContextRestoreSnapshot(
-      AgentPromptUiContextRestoreSnapshot(
-        contextFingerprint = Hashing.xxh3_128().hashCharsTo128Bits("context"),
-        removedContextItemIds = listOf("editor.file"),
-      )
-    )
+    @Test
+    fun clearDraftResetsDraftAndContextRestoreSnapshot() {
+        val service = AgentPromptUiSessionStateService()
+        service.saveDraft(
+            AgentPromptUiDraft(
+                promptText = "fix",
+                providerId = "codex",
+                targetMode = PromptTargetMode.EXISTING_TASK,
+                existingTaskSearch = "query",
+                selectedExistingTaskId = "task-1",
+                planModeEnabled = false,
+                taskDrafts = mapOf(PromptTargetMode.NEW_TASK.name to "fix"),
+                providerOptionsByProviderId = mapOf("codex" to emptySet()),
+            )
+        )
+        service.saveContextRestoreSnapshot(
+            AgentPromptUiContextRestoreSnapshot(
+                contextFingerprint = Hashing.xxh3_128().hashCharsTo128Bits("context"),
+                removedContextItemIds = listOf("editor.file"),
+            )
+        )
 
-    service.clearDraft()
+        service.clearDraft()
 
-    assertThat(service.loadDraft()).isEqualTo(AgentPromptUiDraft())
-    assertThat(service.loadContextRestoreSnapshot()).isEqualTo(AgentPromptUiContextRestoreSnapshot())
-  }
+        assertThat(service.loadDraft()).isEqualTo(AgentPromptUiDraft())
+        assertThat(service.loadContextRestoreSnapshot()).isEqualTo(AgentPromptUiContextRestoreSnapshot())
+    }
 
-  @Test
-  fun saveDraftDoesNotModifyContextRestoreSnapshot() {
-    val service = AgentPromptUiSessionStateService()
-    val snapshot = AgentPromptUiContextRestoreSnapshot(
-      contextFingerprint = Hashing.xxh3_128().hashCharsTo128Bits("context"),
-      removedContextItemIds = listOf("editor.file"),
-    )
-    service.saveContextRestoreSnapshot(snapshot)
+    @Test
+    fun saveDraftDoesNotModifyContextRestoreSnapshot() {
+        val service = AgentPromptUiSessionStateService()
+        val snapshot = AgentPromptUiContextRestoreSnapshot(
+            contextFingerprint = Hashing.xxh3_128().hashCharsTo128Bits("context"),
+            removedContextItemIds = listOf("editor.file"),
+        )
+        service.saveContextRestoreSnapshot(snapshot)
 
-    service.saveDraft(
-      AgentPromptUiDraft(
-        promptText = "prompt",
-        providerId = "codex",
-        targetMode = PromptTargetMode.NEW_TASK,
-        existingTaskSearch = "",
-        selectedExistingTaskId = null,
-        planModeEnabled = true,
-      )
-    )
+        service.saveDraft(
+            AgentPromptUiDraft(
+                promptText = "prompt",
+                providerId = "codex",
+                targetMode = PromptTargetMode.NEW_TASK,
+                existingTaskSearch = "",
+                selectedExistingTaskId = null,
+                planModeEnabled = true,
+                taskDrafts = mapOf(PromptTargetMode.NEW_TASK.name to "prompt"),
+                providerOptionsByProviderId = mapOf("codex" to setOf("plan_mode")),
+            )
+        )
 
-    assertThat(service.loadContextRestoreSnapshot()).isEqualTo(snapshot)
-  }
+        assertThat(service.loadContextRestoreSnapshot()).isEqualTo(snapshot)
+    }
 }

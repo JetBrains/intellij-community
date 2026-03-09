@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 
-internal abstract class AgentSessionsEditorTabActionBase(
+abstract class AgentSessionsEditorTabActionBase(
   private val resolveContext: (AnActionEvent) -> AgentChatEditorTabActionContext? =
     ::resolveAgentChatEditorTabActionContext,
 ) : DumbAwareAction() {

@@ -25,8 +25,8 @@ class AgentSessionsTreeSnapshotTest {
         isOpen = false,
         hasLoaded = true,
         threads = listOf(
-          AgentSessionThread(id = "thread-1", title = "Thread 1", updatedAt = 100, archived = false),
-          AgentSessionThread(id = "thread-2", title = "Thread 2", updatedAt = 90, archived = false),
+          AgentSessionThread(id = "thread-1", title = "Thread 1", updatedAt = 100, archived = false, provider = AgentSessionProvider.CODEX),
+          AgentSessionThread(id = "thread-2", title = "Thread 2", updatedAt = 90, archived = false, provider = AgentSessionProvider.CODEX),
         ),
       ),
       AgentProjectSessions(path = "/work/project-b", name = "Project B", isOpen = false, hasLoaded = true),
@@ -65,7 +65,7 @@ class AgentSessionsTreeSnapshotTest {
           name = "Project Open",
           isOpen = true,
           hasLoaded = true,
-          threads = listOf(AgentSessionThread(id = "thread-1", title = "Thread 1", updatedAt = 100, archived = false)),
+          threads = listOf(AgentSessionThread(id = "thread-1", title = "Thread 1", updatedAt = 100, archived = false, provider = AgentSessionProvider.CODEX)),
         ),
         AgentProjectSessions(
           path = "/work/project-error",

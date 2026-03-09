@@ -21,6 +21,7 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchers
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPaletteExtension
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPaletteExtensions
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptProjectPathCandidate
+import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
 import com.intellij.ide.DataManager
@@ -40,7 +41,6 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.LanguageTextField
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTabbedPane
@@ -52,6 +52,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.jetbrains.annotations.Nls
+import java.awt.FlowLayout
 import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.event.ChangeListener
@@ -103,7 +104,7 @@ internal class AgentPromptPalettePopup(
   private lateinit var tabbedPane: JBTabbedPane
   private lateinit var providerIconLabel: JBLabel
   private lateinit var existingTaskScrollPane: JBScrollPane
-  private lateinit var planModeCheckBox: JBCheckBox
+  private lateinit var providerOptionsPanel: JPanel
   private lateinit var footerLabel: JBLabel
   private lateinit var providerSelector: AgentPromptProviderSelector
   private lateinit var existingTaskController: AgentPromptExistingTaskController
@@ -191,23 +192,23 @@ internal class AgentPromptPalettePopup(
   }
 
   private fun createContentPanel(): JPanel {
-    val planModeCheckBox = createPlanModeCheckBox()
+    val promptProviderOptionsPanel = createProviderOptionsPanel()
     val view = createAgentPromptPaletteView(
       promptArea = promptArea,
       contextChipsPanel = contextChips.component,
-      planModeCheckBox = planModeCheckBox,
+      providerOptionsPanel = promptProviderOptionsPanel,
       onProviderIconClicked = ::showProviderChooser,
       onExistingTaskSelected = ::onExistingTaskSelected,
     )
     tabbedPane = view.tabbedPane
     providerIconLabel = view.providerIconLabel
     existingTaskScrollPane = view.existingTaskScrollPane
-    this.planModeCheckBox = checkNotNull(view.planModeCheckBox)
+    providerOptionsPanel = checkNotNull(view.providerOptionsPanel)
     footerLabel = view.footerLabel
     providerSelector = AgentPromptProviderSelector(
       invocationData = invocationData,
       providerIconLabel = providerIconLabel,
-      codexPlanModeCheckBox = planModeCheckBox,
+      providerOptionsPanel = providerOptionsPanel,
       providersProvider = providersProvider,
       sessionsMessageResolver = sessionsMessageResolver,
     )
@@ -221,9 +222,10 @@ internal class AgentPromptPalettePopup(
     return view.rootPanel
   }
 
-  private fun createPlanModeCheckBox(): JBCheckBox {
-    return JBCheckBox(AgentPromptBundle.message("popup.plan.checkbox"), true).apply {
-      isFocusable = false
+  private fun createProviderOptionsPanel(): JPanel {
+    return JPanel(FlowLayout(FlowLayout.RIGHT, JBUI.scale(8), 0)).apply {
+      isOpaque = false
+      isVisible = false
     }
   }
 
@@ -240,7 +242,7 @@ internal class AgentPromptPalettePopup(
       isTabQueueEnabled = {
         isTabQueueShortcutEnabled(
           targetMode = currentTargetMode(),
-          selectedProvider = providerSelector.selectedProvider?.bridge?.provider,
+          selectedProvider = providerSelector.selectedProvider?.bridge,
         )
       },
       onSubmit = ::submit,
@@ -272,7 +274,7 @@ internal class AgentPromptPalettePopup(
     if (!isExtensionTab && mode == PromptTargetMode.EXISTING_TASK && !existingTaskController.hasLoadedEntries()) {
       reloadExistingTasks()
     }
-    updatePlanToggleVisibility()
+    updateProviderOptionsVisibility()
     refreshFooterHintForCurrentState()
   }
 
@@ -298,10 +300,13 @@ internal class AgentPromptPalettePopup(
 
   private fun refreshProviders() {
     providerSelector.refresh()
+    updateProviderOptionsVisibility()
   }
 
-  private fun updatePlanToggleVisibility() {
-    planModeCheckBox.isVisible = activeExtensionTab == null && providerSelector.selectedProvider?.bridge?.supportsPlanMode == true
+  private fun updateProviderOptionsVisibility() {
+    providerOptionsPanel.isVisible = activeExtensionTab == null && providerOptionsPanel.componentCount > 0
+    providerOptionsPanel.revalidate()
+    providerOptionsPanel.repaint()
   }
 
   private fun showProviderChooser() {
@@ -310,7 +315,7 @@ internal class AgentPromptPalettePopup(
         existingTaskController.clearSelection()
         reloadExistingTasks()
       }
-      updatePlanToggleVisibility()
+      updateProviderOptionsVisibility()
       updateSendAvailability()
       refreshFooterHintForCurrentState()
     }
@@ -521,15 +526,19 @@ internal class AgentPromptPalettePopup(
         PromptTargetMode.EXISTING_TASK -> existingTaskController.selectedExistingTaskId ?: return
       }
     }
+    val effectiveProviderOptionIds = resolveEffectiveProviderOptionIds(
+      selectedProvider = providerEntry.bridge,
+      selectedOptionIds = providerSelector.selectedOptionIds(providerEntry.bridge.provider),
+      targetMode = currentTargetMode(),
+      selectedThreadActivity = existingTaskController.selectedEntry()?.activity,
+    )
     val effectivePlanModeEnabled = if (activeExtensionTab != null) {
       false
     }
     else {
       resolveEffectivePlanModeEnabled(
-        supportsPlanMode = providerEntry.bridge.supportsPlanMode,
-        isPlanModeSelected = planModeCheckBox.isSelected,
-        targetMode = currentTargetMode(),
-        selectedThreadActivity = existingTaskController.selectedEntry()?.activity,
+        selectedProvider = providerEntry.bridge,
+        effectiveProviderOptionIds = effectiveProviderOptionIds,
       )
     }
 
@@ -543,6 +552,7 @@ internal class AgentPromptPalettePopup(
         contextItems = contextSelection.items,
         contextEnvelopeSummary = contextSelection.summary,
         planModeEnabled = effectivePlanModeEnabled,
+        providerOptionIds = effectiveProviderOptionIds,
       ),
       targetThreadId = targetThreadId,
       preferredDedicatedFrame = null,
@@ -687,13 +697,18 @@ internal class AgentPromptPalettePopup(
     val contextRestoreSnapshot = uiStateService.loadContextRestoreSnapshot()
     val launcher = launcherProvider()
 
-    planModeCheckBox.isSelected = draft.planModeEnabled
+    promptArea.text = draft.promptText
+    providerSelector.restoreProviderOptionSelections(draft.providerOptionsByProviderId)
     val persistedProvider = resolveRestoredPromptProvider(
       draftProviderId = draft.providerId,
       preferredProvider = launcher?.preferredProvider(),
       availableProviders = providerSelector.availableProviders,
     )
     providerSelector.selectProvider(persistedProvider)
+    if (draft.providerOptionsByProviderId.isEmpty()) {
+      providerSelector.applyLegacyPlanModeSelection(providerSelector.selectedProvider?.bridge?.provider, draft.planModeEnabled)
+    }
+    updateProviderOptionsVisibility()
 
     setTargetMode(draft.targetMode)
     existingTaskSearchQuery = draft.existingTaskSearch
@@ -735,8 +750,14 @@ internal class AgentPromptPalettePopup(
         sendMode = PromptSendMode.SEND_NOW,
         existingTaskSearch = existingTaskSearchQuery,
         selectedExistingTaskId = existingTaskController.selectedExistingTaskId,
-        planModeEnabled = planModeCheckBox.isSelected,
         taskDrafts = allTaskDrafts,
+        planModeEnabled = providerSelector.selectedProvider
+                            ?.bridge
+                            ?.provider
+                            ?.let(providerSelector::selectedOptionIds)
+                            ?.contains(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE)
+                          ?: true,
+        providerOptionsByProviderId = providerSelector.providerOptionSelections(),
       )
     )
     uiStateService.saveContextRestoreSnapshot(
@@ -756,7 +777,7 @@ internal class AgentPromptPalettePopup(
       AgentPromptBundle.message(
         resolveDefaultFooterHintMessageKey(
           targetMode = currentTargetMode(),
-          selectedProvider = providerSelector.selectedProvider?.bridge?.provider,
+          selectedProvider = providerSelector.selectedProvider?.bridge,
         )
       )
     }
@@ -767,7 +788,7 @@ internal class AgentPromptPalettePopup(
     if (shouldShowExistingTaskSelectionHint(
         targetMode = currentTargetMode(),
         selectedExistingTaskId = existingTaskController.selectedExistingTaskId,
-        selectedProvider = providerSelector.selectedProvider?.bridge?.provider,
+        selectedProvider = providerSelector.selectedProvider?.bridge,
       )) {
       showInfo(AgentPromptBundle.message("popup.status.existing.select.task"))
       return
@@ -791,4 +812,3 @@ private data class ContextSelection(
   @JvmField val items: List<AgentPromptContextItem>,
   @JvmField val summary: AgentPromptContextEnvelopeSummary,
 )
-

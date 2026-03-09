@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.sessions.actions
+package com.intellij.agent.workbench.claude.sessions
 
-import com.intellij.agent.workbench.sessions.claude.ClaudeQuotaStatusBarWidgetSettings
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareToggleAction
@@ -15,3 +14,4 @@ internal class AgentSessionsToggleClaudeQuotaWidgetAction : DumbAwareToggleActio
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
+

@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.sessions.service
 import com.intellij.agent.workbench.chat.closeAndForgetAgentChatsForThread
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBehaviors
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.archiveThreadTargetKey
@@ -23,14 +24,13 @@ import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<AgentSessionArchiveService>()
 
 private const val ARCHIVE_THREADS_ACTION_KEY_PREFIX = "threads-archive"
 private const val UNARCHIVE_THREADS_ACTION_KEY_PREFIX = "threads-unarchive"
 private const val AGENT_SESSIONS_NOTIFICATION_GROUP_ID = "Agent Workbench Sessions"
-private val CODEX_ARCHIVE_REFRESH_DELAY = 1.seconds
 
 @Service(Service.Level.APP)
 internal class AgentSessionArchiveService(
@@ -72,8 +72,8 @@ internal class AgentSessionArchiveService(
       if (outcome.archivedTargets.isEmpty()) {
         return@launchDropAction
       }
-      if (outcome.requiresCodexRefreshDelay) {
-        delay(CODEX_ARCHIVE_REFRESH_DELAY)
+      if (outcome.refreshDelayMs > 0L) {
+        delay(outcome.refreshDelayMs.milliseconds)
       }
       syncService.refresh()
       showArchiveNotification(outcome)
@@ -90,10 +90,11 @@ internal class AgentSessionArchiveService(
       droppedActionMessage = "Dropped duplicate unarchive threads action for ${normalizedTargets.size} targets",
     ) {
       var anyUnarchived = false
-      var requiresCodexRefreshDelay = false
+      var refreshDelayMs = 0L
       normalizedTargets.forEach { target ->
         val provider = target.provider
         val bridge = AgentSessionProviderBridges.find(provider)
+        val behavior = AgentSessionProviderBehaviors.find(provider)
         if (bridge == null) {
           logMissingProviderBridge(provider)
           return@forEach
@@ -117,16 +118,16 @@ internal class AgentSessionArchiveService(
         }
 
         anyUnarchived = true
-        if (provider == AgentSessionProvider.CODEX) {
+        if (behavior?.suppressArchivedThreadsDuringRefresh == true) {
           syncService.unsuppressArchivedTarget(target)
-          requiresCodexRefreshDelay = true
         }
+        refreshDelayMs = maxOf(refreshDelayMs, behavior?.archiveRefreshDelayMs ?: 0L)
       }
       if (!anyUnarchived) {
         return@launchDropAction
       }
-      if (requiresCodexRefreshDelay) {
-        delay(CODEX_ARCHIVE_REFRESH_DELAY)
+      if (refreshDelayMs > 0L) {
+        delay(refreshDelayMs.milliseconds)
       }
       syncService.refresh()
     }
@@ -135,13 +136,13 @@ internal class AgentSessionArchiveService(
   private suspend fun archiveTargetsInternal(targets: List<ArchiveThreadTarget>): ArchiveBatchOutcome {
     val archivedTargets = ArrayList<ArchiveThreadTarget>(targets.size)
     val undoTargets = ArrayList<ArchiveThreadTarget>()
-    var requiresCodexRefreshDelay = false
+    var refreshDelayMs = 0L
 
     targets.forEach { target ->
       val provider = target.provider
       val cleanupTarget = target.toArchivedChatCleanupTarget()
 
-      if (target.isPendingCodexThread()) {
+      if (target.isPendingThread()) {
         contentRepository.removeArchivedTarget(target)
         try {
           archiveChatCleanup(target.path, cleanupTarget.threadIdentity, cleanupTarget.subAgentId)
@@ -165,6 +166,7 @@ internal class AgentSessionArchiveService(
       if (!bridge.supportsArchiveThread) {
         return@forEach
       }
+      val behavior = AgentSessionProviderBehaviors.find(provider)
 
       val archived = try {
         bridge.archiveThread(path = target.path, threadId = target.threadId)
@@ -183,10 +185,10 @@ internal class AgentSessionArchiveService(
         return@forEach
       }
 
-      if (provider == AgentSessionProvider.CODEX) {
+      if (behavior?.suppressArchivedThreadsDuringRefresh == true) {
         syncService.suppressArchivedTarget(target)
-        requiresCodexRefreshDelay = true
       }
+      refreshDelayMs = maxOf(refreshDelayMs, behavior?.archiveRefreshDelayMs ?: 0L)
       contentRepository.removeArchivedTarget(target)
 
       try {
@@ -210,7 +212,7 @@ internal class AgentSessionArchiveService(
     return ArchiveBatchOutcome(
       archivedTargets = archivedTargets,
       undoTargets = undoTargets,
-      requiresCodexRefreshDelay = requiresCodexRefreshDelay,
+      refreshDelayMs = refreshDelayMs,
     )
   }
 
@@ -271,7 +273,7 @@ internal class AgentSessionArchiveService(
 private data class ArchiveBatchOutcome(
   @JvmField val archivedTargets: List<ArchiveThreadTarget>,
   @JvmField val undoTargets: List<ArchiveThreadTarget>,
-  @JvmField val requiresCodexRefreshDelay: Boolean,
+  @JvmField val refreshDelayMs: Long,
 )
 
 private data class ArchivedChatCleanupTarget(
@@ -307,6 +309,6 @@ private fun ArchiveThreadTarget.toArchivedChatCleanupTarget(): ArchivedChatClean
   }
 }
 
-private fun ArchiveThreadTarget.isPendingCodexThread(): Boolean {
-  return this is ArchiveThreadTarget.Thread && provider == AgentSessionProvider.CODEX && isAgentSessionNewSessionId(threadId)
+private fun ArchiveThreadTarget.isPendingThread(): Boolean {
+  return this is ArchiveThreadTarget.Thread && isAgentSessionNewSessionId(threadId)
 }
