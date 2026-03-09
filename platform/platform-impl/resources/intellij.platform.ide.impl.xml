@@ -87,5 +87,7 @@
       description="Enable Alt key to focus the main menu bar on Windows"
       restartRequired="true"
     />
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.menu.MainMenuCollector"/>
   </extensions>
 </idea-plugin>
