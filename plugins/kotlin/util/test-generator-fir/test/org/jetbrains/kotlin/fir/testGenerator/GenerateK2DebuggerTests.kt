@@ -2,8 +2,6 @@
 package org.jetbrains.kotlin.fir.testGenerator
 
 import org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases.AbstractK2ComposeDebuggerEvaluationTest
-import org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases.AbstractK2IdeK1CodeClassLambdaComposeSteppingTest
-import org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases.AbstractK2IdeK1CodeComposeSteppingTest
 import org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases.AbstractK2IdeK2CodeComposeSteppingTest
 import org.jetbrains.kotlin.idea.fir.debugger.evaluate.AbstractK2CodeFragmentAutoImportTest
 import org.jetbrains.kotlin.idea.fir.debugger.evaluate.AbstractK2CodeFragmentCompletionHandlerTest
@@ -218,13 +216,7 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
 
 internal fun MutableTWorkspace.generateK2DebuggerTestsWithCompilerPlugins() {
     testGroup("jvm-debugger/test/compose", testDataPath = "../testData", category = DEBUGGER) {
-        testClass<AbstractK2IdeK1CodeComposeSteppingTest> {
-            model("stepping/compose")
-        }
         testClass<AbstractK2IdeK2CodeComposeSteppingTest> {
-            model("stepping/compose")
-        }
-        testClass<AbstractK2IdeK1CodeClassLambdaComposeSteppingTest> {
             model("stepping/compose")
         }
         testClass<AbstractK2ComposeDebuggerEvaluationTest> {
