@@ -2,7 +2,7 @@
   <dependencies>
     <module name="intellij.java.backend"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <plugin id="org.jetbrains.idea.maven"/>
+    <module name="intellij.maven"/>
     <module name="intellij.gradle"/>
     <!-- endregion -->
   </dependencies>

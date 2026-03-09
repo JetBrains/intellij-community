@@ -2,7 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.jetbrains.performancePlugin"/>
-    <plugin id="org.jetbrains.idea.maven"/>
+    <module name="intellij.maven"/>
     <module name="intellij.java.impl"/>
     <module name="intellij.repository.search.common"/>
   </dependencies>

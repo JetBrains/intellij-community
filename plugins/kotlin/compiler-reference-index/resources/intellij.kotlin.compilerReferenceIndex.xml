@@ -1,7 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.search.refIndex" visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <plugin id="org.jetbrains.idea.maven"/>
+    <module name="intellij.maven"/>
     <module name="intellij.kotlin.gradle.gradle"/>
   </dependencies>
   <!-- endregion -->
