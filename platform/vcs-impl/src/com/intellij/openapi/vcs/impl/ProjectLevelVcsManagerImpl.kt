@@ -70,6 +70,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.text.DateFormatUtil
+import com.intellij.util.text.StringTokenizer
 import com.intellij.vcs.console.VcsConsoleTabService
 import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.vcsUtil.VcsUtil
@@ -78,6 +79,7 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.SystemIndependent
 import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.util.Collections
@@ -548,14 +550,7 @@ class ProjectLevelVcsManagerImpl(
         return@ThrowableComputable vf != null && FileIndexFacade.getInstance(project).isExcludedFile(vf)
       }
       else {
-        // WARN: might differ from 'myExcludedIndex.isUnderIgnored' if whole content root is under folder with 'ignored' name.
-        val fileTypeManager = FileTypeManager.getInstance()
-        for (name in StringUtil.tokenize(filePath.getPath(), "/")) {
-          if (fileTypeManager.isFileIgnored(name)) {
-            return@ThrowableComputable true
-          }
-        }
-        return@ThrowableComputable false
+        return@ThrowableComputable isIgnoredFilePath(filePath.path)
       }
     })
   }
@@ -563,6 +558,26 @@ class ProjectLevelVcsManagerImpl(
   @ApiStatus.Internal
   fun isIgnoredFileRoot(file: VirtualFile): Boolean {
     return isIgnored(VcsUtil.getFilePath(file))
+  }
+
+  private fun isIgnoredFilePath(path: @SystemIndependent String): Boolean {
+    val tokenizer = StringTokenizer(path, "/")
+    return isIgnoredFileName(tokenizer)
+  }
+
+  /**
+   * WARN: might differ from [FileIndexFacade.isUnderIgnored]
+   */
+  private fun isIgnoredFileName(tokenizer: StringTokenizer): Boolean {
+    val fileTypeManager = FileTypeManager.getInstance()
+    while (tokenizer.hasMoreTokens()) {
+      val name = tokenizer.nextToken()
+      if (name.isEmpty()) continue
+      if (fileTypeManager.isFileIgnored(name)) {
+        return true
+      }
+    }
+    return false
   }
 
   private fun isInDirectoryBasedRoot(file: VirtualFile): Boolean {
