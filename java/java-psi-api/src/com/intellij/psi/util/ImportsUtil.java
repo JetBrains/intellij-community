@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.project.Project;
@@ -7,7 +7,6 @@ import com.intellij.psi.ImplicitlyImportedElement;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiAnnotationOwner;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
@@ -83,21 +82,13 @@ public final class ImportsUtil {
     if (ref instanceof PsiReferenceExpression) {
       ((PsiReferenceExpression)ref).setQualifierExpression(elementFactory.createReferenceExpression(targetClass));
     }
-    else if (ref.getParent() instanceof PsiAnnotation) {
-      PsiAnnotation oldAnnotation = (PsiAnnotation)ref.getParent();
-      PsiAnnotationOwner owner = oldAnnotation.getOwner();
-      if (owner != null) {
-        PsiAnnotation annotation = owner.addAnnotation(targetClass.getQualifiedName() + "." + ref.getText());
-        JavaCodeStyleManager.getInstance(ref.getProject()).shortenClassReferences(annotation);
-        oldAnnotation.delete();
-      }
-    }
     else if (ref instanceof PsiImportStaticReferenceElement) {
       ref.replace(
         Objects.requireNonNull(elementFactory.createImportStaticStatement(targetClass, ref.getText()).getImportReference()));
     }
     else {
-      ref.replace(elementFactory.createReferenceFromText(targetClass.getQualifiedName() + "." + ref.getText(), ref));
+      PsiElement replaced = ref.replace(elementFactory.createReferenceFromText(targetClass.getQualifiedName() + "." + ref.getText(), ref));
+      JavaCodeStyleManager.getInstance(ref.getProject()).shortenClassReferences(replaced);
     }
   }
 
