@@ -6,6 +6,8 @@ import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.TestDaemonCodeAnalyzerImpl;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
@@ -35,9 +37,12 @@ public abstract class ProductionLightDaemonAnalyzerTestCase extends LightDaemonA
       if (!wasUpdateByTimerEnabled) {
         codeAnalyzer.setUpdateByTimerEnabled(true);
       }
+      ((CoreProgressManager)ProgressManager.getInstance()).suppressAllDeprioritizationsDuringLongTestsExecutionIn(()-> {
       DaemonProgressIndicator.runInDebugMode(() ->
       CodeInsightTestFixtureImpl.disableInstantiateAndRunIn(() ->
       TestDaemonCodeAnalyzerImpl.runWithReparseDelay(0, testRunnable)));
+      return null;
+      });
     }
     finally {
       if (!wasUpdateByTimerEnabled) {
