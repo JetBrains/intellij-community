@@ -12,6 +12,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import kotlin.Pair;
@@ -259,20 +260,24 @@ public final class ConsentOptions implements ModificationTracker {
 
   /**
    * Warning: For JetBrains products this setting is relevant for release builds only.
-   * Statistics sending for JetBrains EAP builds is managed by a separate flag.
+   * A separate flag manages statistics sent for JetBrains EAP builds.
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
+  @RequiresBackgroundThread(generateAssertion = false)
   public Permission isSendingUsageStatsAllowed() {
     return getPermission(STATISTICS_OPTION_ID);
   }
 
   /**
    * Warning: For JetBrains products this setting is relevant for release builds only.
-   * Statistics sending for JetBrains EAP builds is managed by a separate flag.
+   * A separate flag manages statistics sent for JetBrains EAP builds.
    */
   public boolean setSendingUsageStatsAllowed(boolean allowed) {
     return setPermission(STATISTICS_OPTION_ID, allowed);
   }
 
+  @RequiresReadLockAbsence(generateAssertion = false)
+  @RequiresBackgroundThread(generateAssertion = false)
   public @NotNull Permission getAiDataCollectionPermission() {
     return getPermission(AI_DATA_COLLECTION_OPTION_ID);
   }
@@ -286,7 +291,12 @@ public final class ConsentOptions implements ModificationTracker {
     setPermission(EA_AUTO_REPORT_OPTION_ID, permitted);
   }
 
+  @RequiresReadLockAbsence(generateAssertion = false)
+  @RequiresBackgroundThread(generateAssertion = false)
   private Permission getPermission(String consentId) {
+    // it reads files and Windows Registry, slow IO
+    SlowOperations.assertNonCancelableSlowOperationsAreAllowed();
+
     var confirmedConsent = getConfirmedConsent(consentId);
     return confirmedConsent == null? Permission.UNDEFINED : confirmedConsent.isAccepted()? Permission.YES : Permission.NO;
   }

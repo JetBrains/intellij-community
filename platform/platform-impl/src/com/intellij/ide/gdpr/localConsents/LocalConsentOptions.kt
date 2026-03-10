@@ -13,6 +13,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.SlowOperations
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
@@ -76,9 +79,15 @@ object LocalConsentOptions {
     setPermission(TRACE_DATA_COLLECTION_COM_OPTION_ID, permitted)
   }
 
+  @RequiresReadLockAbsence(generateAssertion = false)
+  @RequiresBackgroundThread(generateAssertion = false)
   fun getLocalConsents(): Pair<List<Consent>, Boolean> = getLocalConsents { _ -> true }
 
+  @RequiresReadLockAbsence(generateAssertion = false)
+  @RequiresBackgroundThread(generateAssertion = false)
   fun getLocalConsents(filter: Predicate<Consent>): Pair<List<Consent>, Boolean> {
+    SlowOperations.assertNonCancelableSlowOperationsAreAllowed()
+
     val confirmed = loadConfirmedLocalConsents()
     val result = mutableListOf<Consent>()
     val bundled = loadBundledLocalConsents().filter{ (_, consents) ->
