@@ -17,6 +17,7 @@ import com.intellij.ide.starter.utils.replaceSpecialCharactersWithHyphens
 import com.intellij.tools.ide.starter.bus.EventsBus
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
+import com.intellij.util.system.OS
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.CompletableFuture
@@ -101,7 +102,8 @@ internal class DriverWithDetailedLogging(private val driver: Driver, logUiHierar
           logError("screenshot should be a regular file, but it is not: $screenshotPath")
         }
         else if (!CIServer.instance.isBuildRunningOnCI) {
-          append("Screenshot: file://${path.invariantSeparatorsPathString}\n".color(LogColor.BLUE))
+          val prefix = if (OS.CURRENT != OS.Windows) "file:/" else "file://"
+          append("Screenshot: $prefix${path.invariantSeparatorsPathString}\n".color(LogColor.BLUE))
         }
         else {
           runContext?.let { context ->
