@@ -109,6 +109,20 @@ class AndroidStudioProperties : ProductProperties() {
       layout.withModule("intellij.cidr.common.testFramework.core", TEST_FRAMEWORK_JAR)
       layout.withModule("intellij.cidr.common.testFramework.core.nolang", TEST_FRAMEWORK_JAR)
 
+      // TODO(b/490459621): IntelliJ 2026.1 removed testFramework.jar from the distro, so we need
+      //  to find another way to expose these modules in tests. In the meantime, we'll continue
+      //  packaging them in Android Studio.
+      for (moduleName in listOf(
+        "intellij.platform.testFramework",
+        "intellij.platform.testFramework.common",
+        "intellij.java.testFramework",
+        "intellij.java.testFramework.shared",
+        "intellij.platform.testFramework.core",
+        "intellij.platform.testFramework.teamCity",
+      )) {
+        layout.withModule(moduleName, "testFramework.jar")
+      }
+
       // used for compose and jewel related testing in the Android plugin
       layout.withModule("intellij.platform.jewel.intUi.standalone", TEST_FRAMEWORK_JAR)
       layout.withModule("intellij.platform.jewel.markdown.intUiStandaloneStyling", TEST_FRAMEWORK_JAR)
