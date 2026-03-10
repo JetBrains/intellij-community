@@ -2132,72 +2132,74 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     }
 
     private fun getTypeParameterTypeFromDeclaration(element: PsiElement, context: Context): PyTypeParameterType? {
-      if (element is PyCallExpression) {
-        val typeParameterKind: PyAstTypeParameter.Kind? = getTypeParameterKindFromDeclaration(
-          element,
-          context.typeContext
-        )
-        if (typeParameterKind != null) {
-          val arguments = element.arguments
-          val nameArgument = arguments.firstOrNull() as? PyStringLiteralExpression
-          if (nameArgument is PyStringLiteralExpression) {
-            val name: String = nameArgument.stringValue
-            val defaultExpression = element.getKeywordArgument("default")
-            val defaultType: Ref<PyType?>? = if (defaultExpression != null) getType(defaultExpression, context) else null
-            when (typeParameterKind) {
-              PyAstTypeParameter.Kind.TypeVarTuple -> {
-                val defaultType = (Ref.deref(defaultType) as? PyPositionalVariadicType)?.let { Ref(it) }
-                return PyTypeVarTupleTypeImpl(name).withDefaultType(defaultType)
-              }
+      if (element !is PyCallExpression) return null
+      val typeParameterKind: PyAstTypeParameter.Kind? = getTypeParameterKindFromDeclaration(
+        element,
+        context.typeContext
+      )
+      if (typeParameterKind == null) return null
+      val arguments = element.arguments
+      val nameArgument = arguments.firstOrNull() as? PyStringLiteralExpression
+      if (nameArgument !is PyStringLiteralExpression) return null
+      val name: String = nameArgument.stringValue
+      val defaultExpression = element.getKeywordArgument("default")
+      val boundExpression = element.getKeywordArgument("bound")
+      val bound = if (boundExpression == null) PyAnyType.unknown else Ref.deref(getType(boundExpression, context))
+      val defaultType = if (defaultExpression != null) getType(defaultExpression, context) else null
+      val variance: PyTypeParameterType.Variance = getTypeVarVarianceFromDeclaration(element)
+      when (typeParameterKind) {
+        PyAstTypeParameter.Kind.TypeVar -> {
+          // TypeVar __init__ parameters:
+          // (name, *constraints, bound = None, contravariant = False, covariant = False, infer_variance = False, default = ...)
+          val constraints = arguments
+            .drop(1)
+            .takeWhile { it !is PyKeywordArgument }
+            .map { Ref.deref(getType(it, context)) }
+          val assignStmt = element.getParent() as? PyAssignmentStatement
+          val mappingPair = assignStmt?.targetsToValuesMapping?.firstOrNull { pair -> pair.second == element }
+          val declarationElement = mappingPair?.first as? PyQualifiedNameOwner
+          return PyTypeVarTypeImpl(name, constraints, bound, defaultType, variance).withDeclarationElement(declarationElement)
+        }
 
-              PyAstTypeParameter.Kind.TypeVar -> {
-                // TypeVar __init__ parameters:
-                // (name, *constraints, bound = None, contravariant = False, covariant = False, infer_variance = False, default = ...)
-                val constraints = arguments
-                  .drop(1)
-                  .takeWhile { it !is PyKeywordArgument }
-                  .map { Ref.deref(getType(it, context)) }
-                val boundExpression = element.getKeywordArgument("bound")
-                val bound = if (boundExpression == null) PyAnyType.unknown else Ref.deref(getType(boundExpression, context))
-                val variance: PyTypeVarType.Variance = getTypeVarVarianceFromDeclaration(element)
-                val assignStmt = element.getParent() as? PyAssignmentStatement
-                val mappingPair = assignStmt?.targetsToValuesMapping?.firstOrNull { pair -> pair.second == element }
-                val declarationElement = mappingPair?.first as? PyQualifiedNameOwner
-                return PyTypeVarTypeImpl(name, constraints, bound, defaultType, variance).withDeclarationElement(declarationElement)
-              }
+        PyAstTypeParameter.Kind.TypeVarTuple -> {
+          val defaultType = (Ref.deref(defaultType) as? PyPositionalVariadicType)?.let { Ref(it) }
+          return PyTypeVarTupleTypeImpl(name)
+            .withBound(bound)
+            .withDefaultType(defaultType)
+            .withVariance(variance)
+        }
 
-              PyAstTypeParameter.Kind.ParamSpec -> {
-                val defaultType = (Ref.deref(defaultType) as? PyCallableParameterVariadicType)?.let { Ref(it) }
-                return PyParamSpecType(name).withDefaultType(defaultType)
-              }
-            }
-          }
+        PyAstTypeParameter.Kind.ParamSpec -> {
+          val defaultType = (Ref.deref(defaultType) as? PyCallableParameterVariadicType)?.let { Ref(it) }
+          return PyParamSpecType(name)
+            .withBound(bound)
+            .withDefaultType(defaultType)
+            .withVariance(variance)
         }
       }
-      return null
     }
 
     @Suppress("KotlinConstantConditions") // caused by systematical if conditions
-    private fun getTypeVarVarianceFromDeclaration(assignedCall: PyCallExpression): PyTypeVarType.Variance {
+    private fun getTypeVarVarianceFromDeclaration(assignedCall: PyCallExpression): PyTypeParameterType.Variance {
       val covariant = PyEvaluator.evaluateAsBooleanNoResolve(assignedCall.getKeywordArgument("covariant"), false)
       val contravariant = PyEvaluator.evaluateAsBooleanNoResolve(assignedCall.getKeywordArgument("contravariant"), false)
       val inferVariance = PyEvaluator.evaluateAsBooleanNoResolve(assignedCall.getKeywordArgument("infer_variance"), false)
 
       if (covariant && !contravariant) {
-        return PyTypeVarType.Variance.COVARIANT
+        return PyTypeParameterType.Variance.COVARIANT
       }
       else if (contravariant && !covariant) {
-        return PyTypeVarType.Variance.CONTRAVARIANT
+        return PyTypeParameterType.Variance.CONTRAVARIANT
       }
       else if (contravariant && covariant) {
         // Note that Python does not officially support bivariance. Change this to invariant if necessary.
-        return PyTypeVarType.Variance.BIVARIANT
+        return PyTypeParameterType.Variance.BIVARIANT
       }
       else if (inferVariance) {
-        return PyTypeVarType.Variance.INFER_VARIANCE
+        return PyTypeParameterType.Variance.INFER_VARIANCE
       }
       else {
-        return PyTypeVarType.Variance.INVARIANT
+        return PyTypeParameterType.Variance.INVARIANT
       }
     }
 
@@ -2230,74 +2232,67 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       element: PsiElement,
       context: Context,
     ): PyTypeParameterType? {
-      if (element is PyTypeParameter) {
-        val name = element.name
-        if (name == null) {
-          return null
+      if (element !is PyTypeParameter) return null
+      val name = element.name ?: return null
+
+      val typeParameterOwner = ScopeUtil.getScopeOwner(element)
+      val scopeOwner: PyQualifiedNameOwner? = typeParameterOwner as? PyQualifiedNameOwner
+
+      val defaultType = element.defaultExpressionText
+        ?.let {
+          PyUtil.createExpressionFromFragment(it, element)
         }
-
-        val typeParameterOwner = ScopeUtil.getScopeOwner(element)
-        val scopeOwner: PyQualifiedNameOwner? = typeParameterOwner as? PyQualifiedNameOwner
-
-        val defaultExpressionText = element.defaultExpressionText
-        val defaultExpression = if (defaultExpressionText != null)
-          PyUtil.createExpressionFromFragment(defaultExpressionText, element)
-        else
-          null
-        var defaultType: Ref<PyType?>? = null
-        if (defaultExpression != null) {
+        ?.let { defaultExpression ->
           val defaultExprWithoutParens = PyPsiUtils.flattenParens(defaultExpression)
-          defaultType = if (defaultExprWithoutParens != null)
+          if (defaultExprWithoutParens != null) {
             getTypePreventingRecursion(defaultExprWithoutParens, context)
-          else
-            Ref(PyAnyType.unknown)
+          }
+          else Ref<PyType?>(PyAnyType.unknown)
         }
 
-        val declarationElement = element as? PyQualifiedNameOwner
+      val boundExpression = element.boundExpressionText?.let { boundExpressionText ->
+        PyPsiUtils.flattenParens(PyUtil.createExpressionFromFragment(boundExpressionText, element))
+      }
+      val (boundType, constraints) = when (boundExpression) {
+        null -> null to emptyList()
 
-        when (element.kind) {
-          PyAstTypeParameter.Kind.TypeVar -> {
-            var constraints = listOf<PyType?>()
-            var boundType: PyType? = null
-            val boundExpressionText = element.boundExpressionText
-            val boundExpression = if (boundExpressionText != null)
-              PyPsiUtils.flattenParens(PyUtil.createExpressionFromFragment(boundExpressionText, element))
-            else
-              null
-            if (boundExpression is PyTupleExpression) {
-              constraints = boundExpression.elements.map {
-                Ref.deref(
-                  getTypePreventingRecursion(it!!, context)
-                )
-              }
-            }
-            else if (boundExpression != null) {
-              boundType = Ref.deref<PyType?>(getTypePreventingRecursion(boundExpression, context))
-            }
-            val variance = if (scopeOwner is PyFunction) PyTypeVarType.Variance.INVARIANT else PyTypeVarType.Variance.INFER_VARIANCE
-            return PyTypeVarTypeImpl(name, constraints, boundType, defaultType, variance)
-              .withScopeOwner(scopeOwner)
-              .withDeclarationElement(declarationElement)
-          }
+        is PyTupleExpression -> null to boundExpression.elements.map { getTypePreventingRecursion(it, context)?.get() }
 
-          PyAstTypeParameter.Kind.ParamSpec -> {
-            val defaultType = (Ref.deref(defaultType) as? PyCallableParameterVariadicType)?.let { Ref(it) }
-            return PyParamSpecType(name)
-              .withScopeOwner(scopeOwner)
-              .withDefaultType(defaultType)
-              .withDeclarationElement(declarationElement)
-          }
+        else -> getTypePreventingRecursion(boundExpression, context)?.get() to emptyList()
+      }
 
-          PyAstTypeParameter.Kind.TypeVarTuple -> {
-            val defaultType = (Ref.deref(defaultType) as? PyPositionalVariadicType)?.let { Ref(it) }
-            return PyTypeVarTupleTypeImpl(name)
-              .withScopeOwner(scopeOwner)
-              .withDefaultType(defaultType)
-              .withDeclarationElement(declarationElement)
-          }
+      val variance =
+        if (scopeOwner is PyFunction) PyTypeParameterType.Variance.INVARIANT else PyTypeParameterType.Variance.INFER_VARIANCE
+
+      val declarationElement = element as? PyQualifiedNameOwner
+
+      return when (element.kind) {
+        PyAstTypeParameter.Kind.TypeVar -> {
+          PyTypeVarTypeImpl(name, constraints, boundType, defaultType, variance)
+            .withScopeOwner(scopeOwner)
+            .withDeclarationElement(declarationElement)
+        }
+
+        PyAstTypeParameter.Kind.TypeVarTuple -> {
+          val defaultType = (defaultType?.get() as? PyPositionalVariadicType)?.let { Ref(it) }
+          PyTypeVarTupleTypeImpl(name)
+            .withScopeOwner(scopeOwner)
+            .withBound(boundType)
+            .withDefaultType(defaultType)
+            .withVariance(variance)
+            .withDeclarationElement(declarationElement)
+        }
+
+        PyAstTypeParameter.Kind.ParamSpec -> {
+          val defaultType = (defaultType?.get() as? PyCallableParameterVariadicType)?.let { Ref(it) }
+          PyParamSpecType(name)
+            .withScopeOwner(scopeOwner)
+            .withBound(boundType)
+            .withDefaultType(defaultType)
+            .withVariance(variance)
+            .withDeclarationElement(declarationElement)
         }
       }
-      return null
     }
 
     private fun getTypePreventingRecursion(expression: PyExpression, context: Context): Ref<PyType?>? {

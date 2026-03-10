@@ -46,7 +46,6 @@ import com.jetbrains.python.psi.types.PyLiteralType.Companion.match
 import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser
 import com.jetbrains.python.psi.types.PyTypeChecker.match
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
-import com.jetbrains.python.psi.types.PyTypeUtil.getEffectiveBound
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
@@ -469,9 +468,23 @@ object PyTypeChecker {
           context
         )
       }
+      if (expected is PyTypeVarTupleType && actual is PyUnpackedTupleType) {
+        val bound = expected.bound
+        val match = if (bound is PyUnpackedTupleType) {
+           match(bound, actual, context)
+        }
+        else {
+          actual.elementTypes.all {
+            match(bound, it, context).get()
+          }
+        }
+        if (!match) {
+          return false
+        }
+      }
       val normalizedActual =
         if (actual is PyUnpackedTupleType)
-          // TODO: consider how widening should work with more complex types like: `tuple[Sequence[Literal[1]]`
+        // TODO: consider how widening should work with more complex types like: `tuple[Sequence[Literal[1]]`
           PyUnpackedTupleTypeImpl(actual.elementTypes.map { PyLiteralType.upcastLiteralToClass(it) }, actual.isUnbound)
         else actual
       context.mySubstitutions.putTypeVarTuple(expected as PyTypeVarTupleType, normalizedActual, KeyImpl)
@@ -509,6 +522,17 @@ object PyTypeChecker {
   private fun match(expected: PyParamSpecType, actual: PyType?, context: MatchContext): Boolean {
     if (actual == null) return true
     if (actual !is PyCallableParameterVariadicType) return false
+
+    val bound = expected.bound
+
+    // Remove value-specific components from the actual type to make it safe to propagate
+    val safeActual = if (bound is PyLiteralStringType) actual else replaceLiteralStringWithStr(actual)
+
+    val match = match(bound, safeActual, context)
+    if (match.isPresent && !match.get()) {
+      return false
+    }
+
     context.mySubstitutions.putParamSpec(expected, actual, KeyImpl)
     return true
   }
@@ -1851,14 +1875,14 @@ object PyTypeChecker {
         .select(PyClassType::class.java)
         .map { collectTypeSubstitutions(it, context) }
         .forEach { newSubstitutions ->
-          for (typeVarMapping in newSubstitutions.typeVars.entries) {
-            substitutions.putTypeVar(typeVarMapping.key, typeVarMapping.value, KeyImpl, true)
+          for ((key, value) in newSubstitutions.typeVars) {
+            substitutions.putTypeVar(key, value, KeyImpl, true)
           }
-          for (typeVarMapping in newSubstitutions.typeVarTuples.entries) {
-            substitutions.putTypeVarTuple(typeVarMapping.key, typeVarMapping.value, KeyImpl, true)
+          for ((key, value) in newSubstitutions.typeVarTuples) {
+            substitutions.putTypeVarTuple(key, value, KeyImpl, true)
           }
-          for (paramSpecMapping in newSubstitutions.paramSpecs.entries) {
-            substitutions.putParamSpec(paramSpecMapping.key, paramSpecMapping.value, KeyImpl, true)
+          for ((key, value) in newSubstitutions.paramSpecs) {
+            substitutions.putParamSpec(key, value, KeyImpl, true)
           }
         }
     }
@@ -2127,7 +2151,7 @@ object PyTypeChecker {
     var qualifierType: PyType? = null
     private var frozenTypeVars: Set<PyTypeVarType> = emptySet()
 
-    constructor(typeParameters: Map<out PyTypeParameterType, PyType?>) : this() {
+    constructor(typeParameters: Map<PyTypeParameterType, PyType?>) : this() {
       for ((key, value) in typeParameters) {
         when (key) {
           is PyTypeVarType -> myTypeVars[key] = Ref(value)

@@ -20,33 +20,47 @@ import java.util.Objects;
 public final class PyParamSpecType implements PyTypeParameterType, PyCallableParameterVariadicType {
   private final @NotNull String myName;
   private final @Nullable PyQualifiedNameOwner myDeclarationElement;
+  private final @Nullable PyType myBound;
   private final @Nullable Ref<PyCallableParameterVariadicType> myDefaultType;
+  private final @NotNull PyTypeVarType.Variance myVariance;
   private final @Nullable PyQualifiedNameOwner myScopeOwner;
 
   public PyParamSpecType(@NotNull String name) {
-    this(name, null, null, null);
+    this(name, null, null, null, Variance.INVARIANT, null);
   }
 
   private PyParamSpecType(@NotNull String name,
                           @Nullable PyQualifiedNameOwner declarationElement,
+                          @Nullable PyType bound,
                           @Nullable Ref<PyCallableParameterVariadicType> defaultType,
+                          @NotNull PyTypeVarType.Variance variance,
                           @Nullable PyQualifiedNameOwner scopeOwner) {
     myName = name;
     myDeclarationElement = declarationElement;
+    myBound = bound;
     myDefaultType = defaultType;
+    myVariance = variance;
     myScopeOwner = scopeOwner;
   }
 
   public @NotNull PyParamSpecType withDeclarationElement(@Nullable PyQualifiedNameOwner declarationElement) {
-    return new PyParamSpecType(myName, declarationElement, myDefaultType, myScopeOwner);
+    return new PyParamSpecType(myName, declarationElement, myBound, myDefaultType, myVariance, myScopeOwner);
   }
 
   public @NotNull PyParamSpecType withScopeOwner(@Nullable PyQualifiedNameOwner scopeOwner) {
-    return new PyParamSpecType(myName, myDeclarationElement, myDefaultType, scopeOwner);
+    return new PyParamSpecType(myName, myDeclarationElement, myBound, myDefaultType, myVariance, scopeOwner);
+  }
+
+  public @NotNull PyParamSpecType withBound(@Nullable PyType bound) {
+    return new PyParamSpecType(myName, myDeclarationElement, bound, myDefaultType, myVariance, myScopeOwner);
   }
 
   public @NotNull PyParamSpecType withDefaultType(@Nullable Ref<PyCallableParameterVariadicType> defaultType) {
-    return new PyParamSpecType(myName, myDeclarationElement, defaultType, myScopeOwner);
+    return new PyParamSpecType(myName, myDeclarationElement, myBound, defaultType, myVariance, myScopeOwner);
+  }
+
+  public @NotNull PyParamSpecType withVariance(@NotNull Variance variance) {
+    return new PyParamSpecType(myName, myDeclarationElement, myBound, myDefaultType, variance, myScopeOwner);
   }
 
   @Override
@@ -57,6 +71,16 @@ public final class PyParamSpecType implements PyTypeParameterType, PyCallablePar
   @Override
   public @NotNull String getName() {
     return "**" + myName;
+  }
+
+  @Override
+  public @Nullable PyType getBound() {
+    return myBound;
+  }
+
+  @Override
+  public @NotNull PyTypeVarType.Variance getVariance() {
+    return myVariance;
   }
 
   @Override

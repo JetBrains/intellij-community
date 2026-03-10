@@ -20,13 +20,13 @@ import com.jetbrains.python.psi.impl.resolveCalleeClass
 import com.jetbrains.python.psi.types.PyExpectedVarianceJudgment
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment
 import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.PyTypeParameterType.Variance
+import com.jetbrains.python.psi.types.PyTypeParameterType.Variance.BIVARIANT
+import com.jetbrains.python.psi.types.PyTypeParameterType.Variance.CONTRAVARIANT
+import com.jetbrains.python.psi.types.PyTypeParameterType.Variance.COVARIANT
+import com.jetbrains.python.psi.types.PyTypeParameterType.Variance.INFER_VARIANCE
+import com.jetbrains.python.psi.types.PyTypeParameterType.Variance.INVARIANT
 import com.jetbrains.python.psi.types.PyTypeVarType
-import com.jetbrains.python.psi.types.PyTypeVarType.Variance
-import com.jetbrains.python.psi.types.PyTypeVarType.Variance.BIVARIANT
-import com.jetbrains.python.psi.types.PyTypeVarType.Variance.CONTRAVARIANT
-import com.jetbrains.python.psi.types.PyTypeVarType.Variance.COVARIANT
-import com.jetbrains.python.psi.types.PyTypeVarType.Variance.INFER_VARIANCE
-import com.jetbrains.python.psi.types.PyTypeVarType.Variance.INVARIANT
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 

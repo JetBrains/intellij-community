@@ -44,6 +44,11 @@ public final class PyCallableParameterListTypeImpl implements PyCallableParamete
   }
 
   @Override
+  public String toString() {
+    return "PyCallableParameterListType: " + getName();
+  }
+
+  @Override
   public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
     return visitor.visitPyCallableParameterListType(this);
   }

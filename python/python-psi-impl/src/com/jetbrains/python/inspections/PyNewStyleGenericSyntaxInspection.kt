@@ -17,6 +17,7 @@ import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyListLiteralExpression
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyParenthesizedExpression
 import com.jetbrains.python.psi.PyRecursiveElementVisitor
@@ -55,7 +56,9 @@ class PyNewStyleGenericSyntaxInspection : PyInspection() {
       boundExpression?.accept(object : PyRecursiveElementVisitor() {
         override fun visitPyElement(node: PyElement) {
           if (!(node is PyParenthesizedExpression && node === boundExpression) &&
-              !(node is PyTupleExpression && node.parent === boundExpression)
+              !(node is PyTupleExpression && node.parent === boundExpression) &&
+              !(node is PyListLiteralExpression && node === boundExpression &&
+                node.parent !is PyTypeParameter && (node.parent as PyTypeParameter).kind != PyAstTypeParameter.Kind.TypeVar)
           ) {
             if (node is PyExpression) {
               if (!PyTypeHintsInspection.Helper.isValidTypeHint(node, myTypeEvalContext)) {

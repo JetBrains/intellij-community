@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inlayHints
 
 import com.intellij.codeInsight.hints.declarative.EndOfLinePosition
@@ -27,8 +27,8 @@ import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment
-import com.jetbrains.python.psi.types.PyTypeVarType
-import com.jetbrains.python.psi.types.PyTypeVarType.Variance
+import com.jetbrains.python.psi.types.PyTypeParameterType
+import com.jetbrains.python.psi.types.PyTypeParameterType.Variance
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyTypeInlayHintsProvider : InlayHintsProvider {
@@ -123,7 +123,7 @@ class PyTypeInlayHintsProvider : InlayHintsProvider {
       val qualifier = subscriptionExpr.qualifier as? PyReferenceExpression ?: return
       val qualifierType = resolveContext.typeEvalContext.getType(qualifier) as? PyClassLikeType ?: return
       if (PyTypingTypeProvider.GENERIC != qualifierType.classQName) return
-      val typeVarType = PyTypingTypeProvider.getType(refExpr, resolveContext.typeEvalContext)?.get() as? PyTypeVarType ?: return
+      val typeVarType = PyTypingTypeProvider.getType(refExpr, resolveContext.typeEvalContext)?.get() as? PyTypeParameterType ?: return
       if (typeVarType.variance == Variance.INVARIANT) return
 
       val inferredVariance = PyInferredVarianceJudgment.getInferredVariance(typeVarType, resolveContext.typeEvalContext)

@@ -20,12 +20,12 @@ import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTypeAliasStatement
 import com.jetbrains.python.psi.PyTypeParameter
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.functionIgnoresVariance
-import com.jetbrains.python.psi.types.PyTypeVarType.Variance
-import com.jetbrains.python.psi.types.PyTypeVarType.Variance.BIVARIANT
-import com.jetbrains.python.psi.types.PyTypeVarType.Variance.CONTRAVARIANT
-import com.jetbrains.python.psi.types.PyTypeVarType.Variance.COVARIANT
-import com.jetbrains.python.psi.types.PyTypeVarType.Variance.INFER_VARIANCE
-import com.jetbrains.python.psi.types.PyTypeVarType.Variance.INVARIANT
+import com.jetbrains.python.psi.types.PyTypeParameterType.Variance
+import com.jetbrains.python.psi.types.PyTypeParameterType.Variance.BIVARIANT
+import com.jetbrains.python.psi.types.PyTypeParameterType.Variance.CONTRAVARIANT
+import com.jetbrains.python.psi.types.PyTypeParameterType.Variance.COVARIANT
+import com.jetbrains.python.psi.types.PyTypeParameterType.Variance.INFER_VARIANCE
+import com.jetbrains.python.psi.types.PyTypeParameterType.Variance.INVARIANT
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -56,24 +56,24 @@ object PyInferredVarianceJudgment {
         -> PyTypingTypeProvider.getType(element, context)?.get()
       else -> return null
     }
-    val typeVarType = typeParamType as? PyTypeVarType ?: return null
+    val typeVarType = typeParamType as? PyTypeParameterType ?: return null
     return guardedGetInferredVariance(typeVarType, context)
   }
 
   /** Returns the variance inferred from the use of a type parameter */
   @JvmStatic
-  fun getInferredVariance(typeVarType: PyTypeVarType, context: TypeEvalContext): Variance {
-    return guardedGetInferredVariance(typeVarType, context)
+  fun getInferredVariance(typeParameterType: PyTypeParameterType, context: TypeEvalContext): Variance {
+    return guardedGetInferredVariance(typeParameterType, context)
   }
 
-  private fun guardedGetInferredVariance(typeVarType: PyTypeVarType, context: TypeEvalContext): Variance {
+  private fun guardedGetInferredVariance(typeParameterType: PyTypeParameterType, context: TypeEvalContext): Variance {
     // only infer variance if implicitly/explicitly declared as INFER_VARIANCE
-    val scopeOwner = typeVarType.scopeOwner
+    val scopeOwner = typeParameterType.scopeOwner
     if (scopeOwner is PyFunction) return INVARIANT
-    if (typeVarType.variance != INFER_VARIANCE) return typeVarType.variance
+    if (typeParameterType.variance != INFER_VARIANCE) return typeParameterType.variance
     if (scopeOwner == null) return INVARIANT
 
-    val tvId = TypeVariableId(typeVarType.name, scopeOwner)
+    val tvId = TypeVariableId(typeParameterType.name, scopeOwner)
 
     // Notes on recursive situations: Returning BIVARIANT is most permitting and avoids incorrect results.
     // Also, returning BIVARIANT guarantees stable variance inferences independent of the entry point.
@@ -172,7 +172,7 @@ object PyInferredVarianceJudgment {
       val refExpressions = PsiTreeUtil.findChildrenOfType(element, PyReferenceExpression::class.java)
       for (refExpression in refExpressions) {
         val refType = PyTypingTypeProvider.getType(refExpression, context) ?: continue
-        val typeVarType = refType.get() as? PyTypeVarType ?: continue
+        val typeVarType = refType.get() as? PyTypeParameterType ?: continue
         if (typeVarType.name == tvId.name && typeVarType.scopeOwner == tvId.scopeOwner) {
           val exprVariance = PyExpectedVarianceJudgment.getExpectedVariance(refExpression, context) ?: continue
           usages.add(exprVariance)
