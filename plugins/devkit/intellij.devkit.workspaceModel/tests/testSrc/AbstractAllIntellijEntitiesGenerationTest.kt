@@ -308,8 +308,10 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
     //  VfsUtil.copyDirectory(this, newSrcRoot, vfExpectedSrcDir, null)
     //}
 
+    val filePathFilter: (String) -> Boolean = { it.endsWith(".kt") && !it.endsWith("GradleJvmSupportDefaultData.kt") }
     if (genIsInsideSrc) {
-      Path.of(newSrcRoot.presentableUrl).assertMatches(directoryContentOf(dir = ultimateSrcPath), filePathFilter = { it.endsWith(".kt") }, ignoreEmptyDirectories = true)
+      Path.of(newSrcRoot.presentableUrl)
+        .assertMatches(directoryContentOf(dir = ultimateSrcPath), filePathFilter = filePathFilter, ignoreEmptyDirectories = true)
     }
     else {
       //val expectedGenDir = FileUtil.createTempDirectory(CodeGenerationTestBase::class.java.simpleName, "${testDirectoryName}_impl", true)
@@ -318,8 +320,10 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
       //  val vfExpectedGenDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(expectedGenDir.toPath())!!
       //  VfsUtil.copyDirectory(this, newGenRoot, vfExpectedGenDir, null)
       //}
-      Path.of(newSrcRoot.presentableUrl).assertMatches(directoryContentOf(dir = ultimateSrcPath), filePathFilter = { it.endsWith(".kt") }, ignoreEmptyDirectories = true)
-      Path.of(newGenRoot.presentableUrl).assertMatches(directoryContentOf(dir = ultimateGenPath), filePathFilter = { it.endsWith(".kt") }, ignoreEmptyDirectories = true)
+      Path.of(newSrcRoot.presentableUrl)
+        .assertMatches(directoryContentOf(dir = ultimateSrcPath), filePathFilter = filePathFilter, ignoreEmptyDirectories = true)
+      Path.of(newGenRoot.presentableUrl)
+        .assertMatches(directoryContentOf(dir = ultimateGenPath), filePathFilter = filePathFilter, ignoreEmptyDirectories = true)
     }
 
     return false
