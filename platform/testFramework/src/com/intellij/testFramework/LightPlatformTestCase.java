@@ -616,6 +616,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   public static synchronized void closeAndDeleteProject() {
     Project project = ourProject;
+    Module module = ourModule;
     if (project == null) {
       return;
     }
@@ -624,7 +625,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
 
     if (!project.isDisposed()) {
-      assertEquals(project, ourModule.getProject());
+      if (module != null) {
+        assertEquals(project, module.getProject());
+      }
 
       @SuppressWarnings("ConstantConditions")
       Path ioFile = Paths.get(project.getProjectFilePath());
@@ -643,7 +646,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       assertTrue(ProjectManagerEx.getInstanceEx().forceCloseProject(project));
       assertTrue(project.isDisposed());
 
-      assertTrue(ourModule.isDisposed());
+      if (module != null) {
+        assertTrue(module.isDisposed());
+      }
       if (ourPsiManager != null) {
         assertTrue(ourPsiManager.isDisposed());
       }
