@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleJava.run
 
 import com.intellij.openapi.externalSystem.model.DataNode
@@ -33,7 +33,7 @@ class KotlinJvmRunTaskData(
          * is omitted in order to keep it simple.
          */
         fun findSuitableKotlinJvmRunTask(module: Module): KotlinJvmRunTaskData? {
-            val mainModuleDataNode = CachedModuleDataFinder.findMainModuleData(module) ?: return null
+            val mainModuleDataNode = module.getModuleDataNode() ?: return null
 
             val kotlinGradlePluginType = KotlinGradlePluginType.getPluginType(mainModuleDataNode) ?: return null
             val kotlinRunClassName = when (kotlinGradlePluginType) {
@@ -41,9 +41,7 @@ class KotlinJvmRunTaskData(
                     KOTLIN_JVM_RUN_CLASS_NAME.takeIf {
                         // For modules using jvm plugin, only continue if CMP plugin is also used,
                         // since CMP plugin adds the required Gradle tasks
-                        getGradleExtensions(mainModuleDataNode)?.any {
-                            it.name == "compose" && it.typeFqn == "org.jetbrains.compose.ComposeExtension"
-                        } == true
+                        usesCmpGradlePlugin(mainModuleDataNode)
                     } ?: return null
                 }
 
