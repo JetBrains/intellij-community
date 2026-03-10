@@ -138,10 +138,11 @@ open class PluginConfigurator(val testContext: IDETestContext) {
   private fun findPluginXmlByPluginIdInAGivenDir(pluginId: String, bundledPluginsDir: Path): Boolean = bundledPluginsDir.walk()
     .filter { it.extension == "jar" }
     .any { file ->
-      val jarFile = JarFile(file.toString())
-      return@any when (val entry = jarFile.getJarEntry("META-INF/plugin.xml")) {
-        null -> false
-        else -> jarFile.getInputStream(entry).bufferedReader(Charsets.UTF_8).use { it.readText() }.contains("<id>$pluginId</id>")
+      JarFile(file.toString()).use { jarFile ->
+        return@any when (val entry = jarFile.getJarEntry("META-INF/plugin.xml")) {
+          null -> false
+          else -> jarFile.getInputStream(entry).bufferedReader(Charsets.UTF_8).use { it.readText() }.contains("<id>$pluginId</id>")
+        }
       }
     }
 
