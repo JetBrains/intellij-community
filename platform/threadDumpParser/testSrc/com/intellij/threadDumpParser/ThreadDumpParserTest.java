@@ -798,8 +798,47 @@ public class ThreadDumpParserTest {
     List<ThreadState> threads = ThreadDumpParser.parse(text);
     assertEquals(4, threads.size());
 
-    assertTrue(threads.get(3).getName().endsWith("@957"));
+    assertEquals("main", threads.get(0).getName());
+    assertEquals(1L, threads.get(0).getUniqueId());
+    assertEquals("ForkJoinPool-1-worker-1", threads.get(1).getName());
+    assertEquals(934L, threads.get(1).getUniqueId());
+    assertEquals("{unnamed}@960", threads.get(2).getName());
+    assertEquals(0L, threads.get(2).getUniqueId());
+    assertEquals("{unnamed}@957", threads.get(3).getName());
+    assertEquals(0L, threads.get(3).getUniqueId());
     assertTrue(threads.get(3).isVirtual());
+  }
+
+  @Test
+  public void testOurDebuggerExportFormatUsesLastAtForSerializedUniqueId() {
+    String text = """
+      "scope@worker@957" tid=0x1c nid=NA virtual runnable
+        java.lang.Thread.State: RUNNABLE
+      	at java.base/java.lang.VirtualThread.run(VirtualThread.java:309)
+      """;
+    List<ThreadState> threads = ThreadDumpParser.parse(text);
+    assertEquals(1, threads.size());
+
+    ThreadState thread = threads.getFirst();
+    assertEquals("scope@worker", thread.getName());
+    assertEquals(957L, thread.getUniqueId());
+    assertTrue(thread.isVirtual());
+  }
+
+  @Test
+  public void testThreadNameStartingWithAtIsNotInterpretedAsSerializedUniqueId() {
+    String text = """
+      "@4343" tid=0x1c nid=NA virtual runnable
+        java.lang.Thread.State: RUNNABLE
+      	at java.base/java.lang.VirtualThread.run(VirtualThread.java:309)
+      """;
+    List<ThreadState> threads = ThreadDumpParser.parse(text);
+    assertEquals(1, threads.size());
+
+    ThreadState thread = threads.getFirst();
+    assertEquals("{unnamed}@4343", thread.getName());
+    assertEquals(0L, thread.getUniqueId());
+    assertTrue(thread.isVirtual());
   }
 
   @PerformanceUnitTest

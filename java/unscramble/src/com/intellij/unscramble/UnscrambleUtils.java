@@ -10,12 +10,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.threadDumpParser.ThreadDumpParser;
 import com.intellij.threadDumpParser.ThreadState;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -81,9 +83,24 @@ public final class UnscrambleUtils {
                                                 final List<ThreadState> threadDump,
                                                 String unscrambledTrace,
                                                 Boolean withExecutor) {
+    return addConsole(project, new ThreadDumpState(threadDump, Collections.emptyList()), unscrambledTrace, withExecutor);
+  }
+
+  @ApiStatus.Internal
+  public static RunContentDescriptor addConsole(final Project project, final ThreadDumpState threadDump, String unscrambledTrace) {
+    return addConsole(project, threadDump, unscrambledTrace, true);
+  }
+
+  private static RunContentDescriptor addConsole(
+    final Project project,
+    final ThreadDumpState threadDump,
+    String unscrambledTrace,
+    Boolean withExecutor
+  ) {
+    List<ThreadState> threadStates = threadDump.getThreadStates();
     Icon icon = null;
     String message = JavaBundle.message("unscramble.unscrambled.stacktrace.tab");
-    if (!threadDump.isEmpty()) {
+    if (!threadStates.isEmpty()) {
       message = JavaBundle.message("unscramble.unscrambled.threaddump.tab");
       icon = AllIcons.Actions.Dump;
     }
@@ -94,11 +111,11 @@ public final class UnscrambleUtils {
         icon = AllIcons.Actions.Lightning;
       }
     }
-    if (ContainerUtil.find(threadDump, DEADLOCK_CONDITION) != null) {
+    if (ContainerUtil.find(threadStates, DEADLOCK_CONDITION) != null) {
       message = JavaBundle.message("unscramble.unscrambled.deadlock.tab");
       icon = AllIcons.Debugger.KillProcess;
     }
-    return AnalyzeStacktraceUtil.addConsole(project, threadDump.size() > 1 ? new ThreadDumpConsoleFactory(project, threadDump) : null,
+    return AnalyzeStacktraceUtil.addConsole(project, threadStates.size() > 1 ? new ThreadDumpConsoleFactory(project, threadDump) : null,
                                             message, unscrambledTrace, icon, withExecutor);
   }
 
