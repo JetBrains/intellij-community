@@ -34,6 +34,5 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.gradle" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.gradle" />
-    <orderEntry type="module" module-name="intellij.maven" />
   </component>
 </module>

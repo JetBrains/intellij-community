@@ -38,7 +38,6 @@ jvm_library(
     "//platform/external-system-impl:externalSystem-impl",
     "//plugins/gradle",
     "//plugins/kotlin/gradle/gradle",
-    "//plugins/maven",
   ],
   runtime_deps = [
     "@lib//:kotlinc-kotlin-build-tools-impl",
@@ -72,7 +71,6 @@ jvm_library(
     "//platform/external-system-impl:externalSystem-impl_test_lib",
     "//plugins/gradle:gradle_test_lib",
     "//plugins/kotlin/gradle/gradle:gradle_test_lib",
-    "//plugins/maven:maven_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.compilerReferenceIndex` end
