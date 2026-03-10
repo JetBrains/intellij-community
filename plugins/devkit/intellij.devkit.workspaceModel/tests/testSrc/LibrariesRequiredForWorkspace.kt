@@ -15,6 +15,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.PathUtil
 import com.jetbrains.rd.framework.RdId
 import com.jetbrains.rd.util.string.IPrintable
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.config.KotlinModuleKind
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertNotNull
 import kotlin.script.experimental.api.SourceCode
@@ -22,6 +23,7 @@ import kotlin.script.experimental.api.SourceCode
 internal object LibrariesRequiredForWorkspace {
   val workspaceStorage = ModuleLibrary("intellij.platform.workspace.storage")
   val workspaceJpsEntities = ModuleLibrary("intellij.platform.workspace.jps")
+  val jetbrainsAnnotations = JarLibrary("jetbrains-annotations", ApiStatus::class.java)
   private val intellijJava = ModuleLibrary("intellij.java")
 
   private val rider = ModuleLibrary("intellij.rider")

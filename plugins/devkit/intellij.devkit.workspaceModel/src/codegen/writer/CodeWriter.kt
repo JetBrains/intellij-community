@@ -312,6 +312,7 @@ object CodeWriter {
   ): List<GenerationResult> {
     val generatorSettings = GeneratorSettings(explicitApiEnabled = explicitApiEnabled, testModeEnabled = isTestModule)
     val entitiesImplementations = objModules.map { codeGenerator.generateEntitiesImplementation(it, generatorSettings) }
+      .filter { it.generatedCode.isNotEmpty() || it.problems.isNotEmpty() }
     val metadataStorageImplementation = codeGenerator.generateMetadataStoragesImplementation(objModules, generatorSettings)
     return entitiesImplementations + metadataStorageImplementation
   }

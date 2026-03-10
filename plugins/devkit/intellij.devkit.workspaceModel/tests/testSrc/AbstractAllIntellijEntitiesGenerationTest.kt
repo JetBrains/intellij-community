@@ -139,6 +139,7 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
 
     LibrariesRequiredForWorkspace.workspaceStorage.add(model)
     LibrariesRequiredForWorkspace.workspaceJpsEntities.add(model)
+    LibrariesRequiredForWorkspace.jetbrainsAnnotations.add(model)
 
     writeAction {
       model.sdk = jdk
