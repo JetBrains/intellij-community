@@ -56,9 +56,13 @@ data class ParameterDescriptor(val parameterName: String, val parameterKind: Rem
 data class RpcSignature(val methodName: String, val parameters: Array<ParameterDescriptor>, val returnType: RemoteKind)
 
 interface RemoteApiDescriptor<T : RemoteApi<*>> {
+  @ApiStatus.Internal
   fun getSignature(methodName: String): RpcSignature
+  @ApiStatus.Internal
   fun clientStub(proxy: suspend (String, Array<Any?>) -> Any?): T
+  @ApiStatus.Internal
   fun getApiFqn(): String
+  @ApiStatus.Internal
   suspend fun call(impl: T, methodName: String, args: Array<Any?>): Any?
 }
 
