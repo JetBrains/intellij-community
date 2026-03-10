@@ -17,10 +17,13 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import org.jetbrains.annotations.ApiStatus
+import kotlin.concurrent.Volatile
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 import kotlin.concurrent.Volatile
 
+@ApiStatus.Internal
 data class Call(val route: UID,
                 val service: InstanceId,
                 val signature: RpcSignature,
@@ -35,6 +38,7 @@ internal data class RpcStrategyContextElement(val awaitConnection: Boolean = tru
   override val key: CoroutineContext.Key<*> get() = RpcStrategyContextElement
 }
 
+@ApiStatus.Internal
 suspend fun <T> withoutAwaitingForReconnect(body: suspend CoroutineScope.() -> T): T {
   val strategy = coroutineContext[RpcStrategyContextElement]?.copy(awaitConnection = false)
                  ?: RpcStrategyContextElement(awaitConnection = false)
@@ -43,6 +47,7 @@ suspend fun <T> withoutAwaitingForReconnect(body: suspend CoroutineScope.() -> T
   }
 }
 
+@ApiStatus.Internal
 suspend fun <T> withPrefetchStrategy(prefetchStrategy: PrefetchStrategy, body: suspend CoroutineScope.() -> T): T {
   val strategy = coroutineContext[RpcStrategyContextElement]?.copy(prefetchStrategy = prefetchStrategy)
                  ?: RpcStrategyContextElement(prefetchStrategy = prefetchStrategy)
@@ -51,10 +56,12 @@ suspend fun <T> withPrefetchStrategy(prefetchStrategy: PrefetchStrategy, body: s
   }
 }
 
+@ApiStatus.Internal
 interface IRpcClient {
   suspend fun call(call: Call, publish: (SuspendInvocationHandler.CallResult) -> Unit)
 }
 
+@ApiStatus.Internal
 fun promisingRpcClient(promise: Deferred<IRpcClient>): IRpcClient {
   return object : IRpcClient {
     override suspend fun call(call: Call, publish: (SuspendInvocationHandler.CallResult) -> Unit) {
@@ -63,6 +70,7 @@ fun promisingRpcClient(promise: Deferred<IRpcClient>): IRpcClient {
   }
 }
 
+@ApiStatus.Internal
 fun IRpcClient.asHandlerFactory(): InvocationHandlerFactory<ProxyClosure> =
   object : InvocationHandlerFactory<ProxyClosure> {
     override fun handler(arg: ProxyClosure): SuspendInvocationHandler {
