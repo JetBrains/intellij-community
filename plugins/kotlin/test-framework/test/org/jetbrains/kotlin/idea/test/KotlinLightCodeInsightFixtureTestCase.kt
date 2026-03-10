@@ -61,6 +61,7 @@ import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.CompilerSettings.Companion.DEFAULT_ADDITIONAL_ARGUMENTS
+import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -154,6 +155,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
                     options = parseExtraLibraryCompileOptions(libraryDir),
                 )
             }
+
             else -> error("Only one library directive is allowed")
         }
     }
@@ -181,8 +183,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
             }) {
                 super.runBare(testRunnable)
             }
-        }
-        else {
+        } else {
             super.runBare(testRunnable)
         }
     }
@@ -429,7 +430,7 @@ fun <T> withCustomCompilerOptions(fileText: String, project: Project, module: Mo
 
 fun withRegistry(registryKey: String, value: Any, parentDisposable: Disposable, body: () -> Unit) {
     val registryValue = Registry.get(registryKey)
-    when(value) {
+    when (value) {
         is Boolean -> registryValue.setValue(value, parentDisposable)
         is Int -> registryValue.setValue(value, parentDisposable)
         else -> registryValue.setValue(value.toString(), parentDisposable)
@@ -469,7 +470,7 @@ private fun configureCompilerOptions(fileText: String, project: Project, module:
     val jvmTarget = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $JVM_TARGET_DIRECTIVE ")
     // We can have several such directives in quickFixMultiFile tests
     // TODO: refactor such tests or add sophisticated check for the directive
-    val options = InTextDirectivesUtils.findListWithPrefixes(fileText, "// $COMPILER_ARGUMENTS_DIRECTIVE ").firstOrNull()
+    val options = InTextDirectivesUtils.findListWithPrefixes(fileText, "// $COMPILER_ARGUMENTS_DIRECTIVE ")
 
     val compilerVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $KOTLIN_COMPILER_VERSION_DIRECTIVE ")
         ?.let(IdeKotlinVersion.Companion::opt)
@@ -485,8 +486,8 @@ private fun configureCompilerOptions(fileText: String, project: Project, module:
             KotlinCommonCompilerArgumentsHolder.getInstance(project).update { this.pluginOptions = it }
         }
 
-    if (compilerVersion != null || languageVersion != null || apiVersion != null || jvmTarget != null || options != null ||
-        projectLanguageVersion != null
+    if (compilerVersion != null || languageVersion != null || apiVersion != null || jvmTarget != null || projectLanguageVersion != null
+        || options.isNotEmpty()
     ) {
         configureLanguageAndApiVersion(
             project,
@@ -508,31 +509,41 @@ private fun configureCompilerOptions(fileText: String, project: Project, module:
             }
         }
 
-        if (options != null) {
-            val compilerSettings = facetSettings.compilerSettings ?: CompilerSettings().also {
-                facetSettings.compilerSettings = it
-            }
-
-            val expandedOptions =
-                // it is allowed to use KOTLIN_BUNDLE path macros in test data in the same way as project import does
-                // TEST_* path macros work for tests only
-                if (options.contains($$"$KOTLIN_BUNDLED$") || options.contains($$"$TEST_")) {
-                    val pathMacroManager = PathMacroManager.getInstance(project)
-                    pathMacroManager.expandPath(options)
-                } else {
-                    options
-                }
-
-            compilerSettings.additionalArguments = expandedOptions
-            facetSettings.updateMergedArguments()
-
-            KotlinCompilerSettings.getInstance(project).update { this.additionalArguments = expandedOptions }
+        if (options.isNotEmpty()) {
+            configureCompilerOptions(options, facetSettings, project)
         }
 
         return true
     }
 
     return false
+}
+
+private fun configureCompilerOptions(
+    options: List<String>,
+    facetSettings: IKotlinFacetSettings,
+    project: Project
+) {
+    val compilerSettings = facetSettings.compilerSettings ?: CompilerSettings().also {
+        facetSettings.compilerSettings = it
+    }
+
+    val expandedOptions =
+    // it is allowed to use KOTLIN_BUNDLE path macros in test data in the same way as project import does
+        // TEST_* path macros work for tests only
+        options.joinToString(" ") {
+            if (it.contains($$"$KOTLIN_BUNDLED$") || it.contains($$"$TEST_")) {
+                val pathMacroManager = PathMacroManager.getInstance(project)
+                pathMacroManager.expandPath(it)
+            } else {
+                it
+            }
+        }
+
+    compilerSettings.additionalArguments = expandedOptions
+    facetSettings.updateMergedArguments()
+
+    KotlinCompilerSettings.getInstance(project).update { this.additionalArguments = expandedOptions }
 }
 
 fun configureRegistryAndRun(project: Project, fileText: String, body: () -> Unit) {
