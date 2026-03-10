@@ -3,10 +3,8 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.KaSymbolBasedReference
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
@@ -34,7 +32,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.castAll
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 
 internal object KotlinReferenceRestoringHelper {
-    @OptIn(KaImplementationDetail::class)
     fun collectSourceReferenceInfos(sourceFile: KtFile, startOffsets: IntArray, endOffsets: IntArray): List<KotlinSourceReferenceInfo> {
         var currentStartOffsetInPastedText = 0
 
@@ -42,11 +39,10 @@ internal object KotlinReferenceRestoringHelper {
             // delta between the source text offset and the offset in the text to be pasted
             val deltaBetweenStartOffsets = currentStartOffsetInPastedText - startOffset
 
-            val elements = sourceFile.collectElementsOfTypeInRange<KtElement>(startOffset, endOffset)
-                .filterNot { it is KtSimpleNameExpression && !it.canBeUsedInImport() }
-                .filter { element ->
-                    element.mainReference.let { it is KaSymbolBasedReference && it !is KtDefaultAnnotationArgumentReference }
-                }
+            val elements = sourceFile.collectElementsOfTypeInRange<KtElement>(startOffset, endOffset).filterNot { element ->
+                element is KtSimpleNameExpression && !element.canBeUsedInImport() ||
+                        element.mainReference.let { it == null || it is KtDefaultAnnotationArgumentReference }
+            }
 
             val infos = elements.map { element ->
                 KotlinSourceReferenceInfo(
