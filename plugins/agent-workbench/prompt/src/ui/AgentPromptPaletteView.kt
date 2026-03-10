@@ -23,6 +23,8 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.BorderLayout
 import java.awt.CardLayout
 import java.awt.Cursor
+import java.awt.event.ContainerAdapter
+import java.awt.event.ContainerEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.DefaultListModel
@@ -212,6 +214,11 @@ internal fun createAgentPromptPaletteView(
     addToCenter(existingTaskScrollPane)
     addToBottom(footerLabel)
   }
+  installContextRowVisibilitySync(
+    contextChipsPanel = contextChipsPanel,
+    contextRow = contextRow,
+    layoutParent = bottomPanel,
+  )
 
   val rootPanel = BorderLayoutPanel().apply {
     background = JBUI.CurrentTheme.Popup.BACKGROUND
@@ -234,4 +241,33 @@ internal fun createAgentPromptPaletteView(
     footerLabel = footerLabel,
     providerOptionsPanel = providerOptionsPanel,
   )
+}
+
+private fun installContextRowVisibilitySync(
+  contextChipsPanel: JPanel,
+  contextRow: JPanel,
+  layoutParent: JPanel,
+) {
+  fun syncVisibility() {
+    val hasContextChips = contextChipsPanel.componentCount > 0
+    if (contextRow.isVisible == hasContextChips) {
+      return
+    }
+
+    contextRow.isVisible = hasContextChips
+    layoutParent.revalidate()
+    layoutParent.repaint()
+  }
+
+  contextChipsPanel.addContainerListener(object : ContainerAdapter() {
+    override fun componentAdded(event: ContainerEvent?) {
+      syncVisibility()
+    }
+
+    override fun componentRemoved(event: ContainerEvent?) {
+      syncVisibility()
+    }
+  })
+
+  syncVisibility()
 }
