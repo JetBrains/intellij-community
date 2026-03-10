@@ -54,11 +54,15 @@ internal class BreakpointBasedStreamTracer(
         chain
       )
       when (result) {
-        is EvaluationStatus.Error -> StreamTracer.Result.EvaluationFailed("", result.errorMessage)
-        is EvaluationStatus.Success -> {
+        is TracingResult.Success -> {
           val xValue = createXValue(result.evaluationContext, result.rawTrace)
           interpretStreamResult(xValue, chain, streamTraceExpression = "")
         }
+        is TracingResult.TargetVmException -> {
+          val xValue = createXValue(result.evaluationContext, result.exception)
+          interpretStreamResult(xValue, chain, streamTraceExpression = "")
+        }
+        is TracingResult.Error -> StreamTracer.Result.EvaluationFailed("", result.errorMessage)
       }
     } finally {
       withDebugContext(xDebugProcess.debuggerSession.contextManager.context.managerThread!!) {

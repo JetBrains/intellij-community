@@ -16,28 +16,40 @@ import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedHandlerFactory
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.StreamInstrumentationManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.sun.jdi.InvocationException
-import com.sun.jdi.Value
+import com.sun.jdi.Location
+import com.sun.jdi.ArrayReference
+import com.sun.jdi.ObjectReference
 import com.sun.jdi.event.BreakpointEvent
 import com.sun.jdi.event.MethodExitEvent
-import com.sun.jdi.request.EventRequest
-import com.sun.jdi.request.MethodEntryRequest
-import com.sun.jdi.request.MethodExitRequest
 import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.annotations.Nls
 
 private val LOG = logger<StreamTracingManager>()
 
-internal sealed interface EvaluationStatus {
+internal sealed class TracingResult {
+  data class Success(
+    val evaluationContext: EvaluationContextImpl,
+    val rawTrace: ArrayReference,
+  ) : TracingResult()
+
+  data class TargetVmException(
+    val exception: ObjectReference,
+    val evaluationContext: EvaluationContextImpl,
+  ) : TracingResult()
+
+  data class Error(
+    val errorMessage: @Nls String,
+    val cause: Throwable? = null,
+  ) : TracingResult()
+}
+
+private sealed interface EvaluationStatus {
   data class EvaluationStarted(
     val resumer: DebugProcessListener,
-    val instrumentation: StreamInstrumentationManager,
   ) : EvaluationStatus
 
-  sealed interface Evaluated : EvaluationStatus
-  data class Success(val evaluationContext: EvaluationContextImpl, val rawTrace: Value) : Evaluated
-  data class Error(val errorMessage: @Nls String, val cause: Throwable? = null) : Evaluated
+  data class EvaluationFinished(val result: TracingResult) : EvaluationStatus
 }
 
 internal class StreamTracingManager(
@@ -48,28 +60,28 @@ internal class StreamTracingManager(
   private var sourceOperationBreakpoint: MethodExitRequestHandle? = null
   private var intermediateOperationsBreakpoints: List<StreamCallRuntimeInfo> = emptyList()
   private lateinit var terminalOperationBreakpoint: StreamCallRuntimeInfo
+  private var exceptionBreakpointRequest: ExceptionRequestHandle? = null
 
-  private val evaluationFinished = CompletableDeferred<EvaluationContextImpl>()
+  private val evaluationFinished = CompletableDeferred<TracingResult>()
 
   suspend fun evaluateChain(
     debuggerContext: DebuggerContextImpl,
     breakpointPositions: BreakpointResolveResult.Found,
     chain: StreamChain,
-  ): EvaluationStatus.Evaluated {
+  ): TracingResult {
     val started = when (val setupResult = startTracingAndResume(debuggerContext, breakpointPositions, chain)) {
-      is EvaluationStatus.Evaluated -> return setupResult
+      is EvaluationStatus.EvaluationFinished -> return setupResult.result
       is EvaluationStatus.EvaluationStarted -> setupResult
     }
 
-    val debugProcess = debuggerContext.debugProcess!!
-    val evalCtx = try {
+    return try {
       evaluationFinished.await()
     } finally {
-      debugProcess.removeDebugProcessListener(started.resumer)
-      disableBreakpointRequests()
+      withDebugContext(debuggerContext.managerThread!!) {
+        debuggerContext.debugProcess!!.removeDebugProcessListener(started.resumer)
+        deleteBreakpointRequests()
+      }
     }
-
-    return gatherTracingResults(started.instrumentation, evalCtx)
   }
 
   private suspend fun startTracingAndResume(
@@ -79,10 +91,10 @@ internal class StreamTracingManager(
   ): EvaluationStatus = withDebugContext(debuggerContext.managerThread!!) {
     val debugProcess = debuggerContext.debugProcess!!
     val evaluationContext = debuggerContext.createEvaluationContext()
-                            ?: return@withDebugContext EvaluationStatus.Error(
-                              StreamDebuggerBundle.message("program.is.not.suspended"))
+                            ?: return@withDebugContext EvaluationStatus.EvaluationFinished(
+                              TracingResult.Error(StreamDebuggerBundle.message("program.is.not.suspended")))
 
-    val instrumentation = withDebugContext(evaluationContext.suspendContext) {
+    withDebugContext(evaluationContext.suspendContext) {
       val mgr = StreamInstrumentationManager.create(handlerFactory, objectStorage, chain, evaluationContext)
       createRequestors(evaluationContext, chain, breakpointPositions, mgr).enable()
       mgr
@@ -91,23 +103,21 @@ internal class StreamTracingManager(
     val resumer = SpuriousBreakpointResumer(evaluationContext.suspendContext.thread)
     debugProcess.addDebugProcessListener(resumer)
     debugProcess.suspendManager.resume(evaluationContext.suspendContext)
-    EvaluationStatus.EvaluationStarted(resumer, instrumentation)
+    EvaluationStatus.EvaluationStarted(resumer)
   }
 
-  private suspend fun gatherTracingResults(
+  private fun gatherTracingResults(
     instrumentation: StreamInstrumentationManager,
-    evalCtx: EvaluationContextImpl,
-  ): EvaluationStatus.Evaluated = withDebugContext(evalCtx.suspendContext) {
-    try {
-      instrumentation.restoreQualifierVariableIfReplaced(evalCtx)
-      EvaluationStatus.Success(evalCtx, instrumentation.collectResults(evalCtx))
-    }
-    catch (e: EvaluateException) {
-      val cause = e.cause as? InvocationException
-      if (cause != null) EvaluationStatus.Success(evalCtx, cause.exception())
-      else {
-        thisLogger().error(e)
-        EvaluationStatus.Error(StreamDebuggerBundle.message("program.is.not.suspended"))
+    evaluationContext: EvaluationContextImpl,
+  ): TracingResult {
+    return try {
+      TracingResult.Success(evaluationContext, instrumentation.collectResults(evaluationContext))
+    } catch (t: Throwable) {
+      if (t is EvaluateException && t.cause is InvocationException) {
+        val clientException = (t.cause as InvocationException).exception()
+        TracingResult.TargetVmException(clientException, evaluationContext)
+      } else {
+        TracingResult.Error(StreamDebuggerBundle.message("stream.tracing.failed.due.to.internal.error"), t)
       }
     }
   }
@@ -143,6 +153,8 @@ internal class StreamTracingManager(
       instrumentation,
     )
 
+    exceptionBreakpointRequest = setupExceptionBreakpoint(evaluationContext, instrumentation)
+
     return qualifierExpressionBreakpoint
            ?: intermediateOperationsBreakpoints.firstOrNull()?.methodEntryRequest
            ?: terminalOperationBreakpoint.methodEntryRequest
@@ -166,9 +178,11 @@ internal class StreamTracingManager(
 
     return breakpointFactory.createMethodExitBreakpoint(evaluationContext, methodSignature, filter) { evalContext, _, value ->
       LOG.debug("Source operation exit request hit")
-      val result = instrumentation.onSourceOperationExit(evalContext, value)
-      enableNextBreakpoint(-1)
-      result
+      withFinishTracingOnException(value) {
+        val result = instrumentation.onSourceOperationExit(evalContext, value)
+        enableNextBreakpoint(-1)
+        result
+      }
     }
   }
 
@@ -182,15 +196,19 @@ internal class StreamTracingManager(
     // create exit request first to be able to activate it in entry request
     val exitRequest = breakpointFactory.createMethodExitBreakpoint(evaluationContext, methodSignature) { evalContext, _, value ->
       LOG.debug("Intermediate operation ${call.name} exit request hit")
-      val result = instrumentation.onIntermediateOperationExit(evalContext, callOrder, value)
-      enableNextBreakpoint(callOrder)
-      result
+      withFinishTracingOnException(value) {
+        val result = instrumentation.onIntermediateOperationExit(evalContext, callOrder, value)
+        enableNextBreakpoint(callOrder)
+        result
+      }
     }
     val entryRequest = breakpointFactory.createMethodEntryBreakpoint(evaluationContext, methodSignature) { evalContext, method, args ->
       LOG.debug("Intermediate operation ${call.name} entry request hit")
-      val result = instrumentation.onIntermediateOperationEntry(evalContext, callOrder, method, args)
-      exitRequest.enable()
-      result
+      withFinishTracingOnException(args) {
+        val result = instrumentation.onIntermediateOperationEntry(evalContext, callOrder, method, args)
+        exitRequest.enable()
+        result
+      }
     }
     return StreamCallRuntimeInfo(entryRequest, exitRequest)
   }
@@ -203,35 +221,108 @@ internal class StreamTracingManager(
   ): StreamCallRuntimeInfo {
     val exitRequest = breakpointFactory.createMethodExitBreakpoint(evaluationContext, methodSignature) { evalContext, _, value ->
       LOG.debug("Terminal operation ${call.name} exit request hit")
-      instrumentation.onTerminalOperationExit(evalContext, value)
-
-      // Step out of the terminal method so VM lands on the next statement in user code.
-      breakpointFactory.stepOut(evalContext, evaluationFinished::complete)
-
-      value
+      withFinishTracingOnException(value) {
+        instrumentation.onTerminalOperationExit(evalContext, value)
+        // Step out of the terminal method so VM lands on the next statement in user code.
+        breakpointFactory.stepOut(evalContext) { ctx ->
+          try {
+            instrumentation.restoreQualifierVariableIfReplaced(ctx)
+            evaluationFinished.complete(gatherTracingResults(instrumentation, ctx))
+          }
+          catch (e: Throwable) {
+            LOG.error("Failed to gather stream tracing results", e)
+            evaluationFinished.complete(TracingResult.Error(StreamDebuggerBundle.message("stream.tracing.failed.due.to.internal.error"), e))
+          }
+        }
+        value
+      }
     }
     val entryRequest = breakpointFactory.createMethodEntryBreakpoint(evaluationContext, methodSignature) { evalContext, method, args ->
       LOG.debug("Terminal operation ${call.name} entry request hit")
-      val result = instrumentation.onTerminalOperationEntry(evalContext, method, args)
-      exitRequest.enable()
-      result
+      withFinishTracingOnException(args) {
+        val result = instrumentation.onTerminalOperationEntry(evalContext, method, args)
+        exitRequest.enable()
+        result
+      }
     }
     return StreamCallRuntimeInfo(entryRequest, exitRequest)
   }
 
-  private fun disableBreakpointRequests() {
-    sourceOperationBreakpoint?.disable()
-
-    for (intermediateStepBreakpoint in intermediateOperationsBreakpoints) {
-      intermediateStepBreakpoint.methodEntryRequest.disable()
-      intermediateStepBreakpoint.methodExitRequest.disable()
+  private fun deleteBreakpointRequests() {
+    sourceOperationBreakpoint?.delete()
+    for (bp in intermediateOperationsBreakpoints) {
+      bp.methodEntryRequest.delete()
+      bp.methodExitRequest.delete()
     }
+    terminalOperationBreakpoint.methodEntryRequest.delete()
+    terminalOperationBreakpoint.methodExitRequest.delete()
+    exceptionBreakpointRequest?.delete()
+  }
 
-    terminalOperationBreakpoint.methodEntryRequest.disable()
-    terminalOperationBreakpoint.methodExitRequest.disable()
+  /**
+   * Runs [block]; on any throwable completes [evaluationFinished] with [TracingResult.Error]
+   * and returns [fallback] so the JDI requestor can safely resume the VM.
+   */
+  private inline fun <R> withFinishTracingOnException(fallback: R, block: () -> R): R {
+    return try {
+      if (evaluationFinished.isCompleted) fallback else block()
+    }
+    catch (e: Throwable) {
+      LOG.error("Stream tracing handler error", e)
+      evaluationFinished.complete(TracingResult.Error(StreamDebuggerBundle.message("stream.tracing.failed.due.to.internal.error"), e))
+      fallback
+    }
+  }
+
+  private fun setupExceptionBreakpoint(
+    evaluationContext: EvaluationContextImpl,
+    instrumentation: StreamInstrumentationManager,
+  ): ExceptionRequestHandle {
+    val streamCallerFrameCount = evaluationContext.suspendContext.thread?.frameCount() ?: 0
+    val threadRef = evaluationContext.suspendContext.thread?.getThreadReference()
+    val handle = breakpointFactory.createExceptionBreakpoint(
+      evaluationContext,
+      threadFilter = threadRef,
+    ) { evalContext, catchLoc, exception ->
+      val shouldStop = runCatching {
+        isStreamInterruptingException(evalContext.suspendContext, catchLoc, streamCallerFrameCount)
+      }.getOrDefault(false)
+      if (shouldStop) {
+        instrumentation.onException(evalContext, exception)
+        evaluationFinished.complete(gatherTracingResults(instrumentation, evalContext))
+        true
+      }
+      else {
+        false
+      }
+    }
+    handle.enable()
+    return handle
+  }
+
+  private fun isStreamInterruptingException(
+    suspendContext: SuspendContextImpl,
+    catchLocation: Location?,
+    streamCallerFrameCount: Int,
+  ): Boolean {
+    catchLocation ?: return true
+    val thread = suspendContext.thread ?: return false
+    // ignore exceptions from evaluation - they will be reported by the debugger engine as EvaluateException
+    if (thread.isEvaluating) return false
+    val throwFrameCount = thread.frameCount()
+    val streamCallerIdx = throwFrameCount - streamCallerFrameCount
+    if (streamCallerIdx < 0) return false
+    val frames = thread.frames()
+    val catchMethod = catchLocation.method()
+    val catchType = catchLocation.declaringType()
+    return frames.drop(streamCallerIdx).any { frame ->
+      frame.location().method() == catchMethod &&
+      frame.location().declaringType() == catchType
+    }
   }
 
   private fun enableNextBreakpoint(callNumber: Int) {
+    if (evaluationFinished.isCompleted) return
     if (callNumber + 1 >= intermediateOperationsBreakpoints.size) {
       terminalOperationBreakpoint.methodEntryRequest.enable()
     }

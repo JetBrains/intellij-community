@@ -62,6 +62,9 @@ internal class StreamInstrumentationManager private constructor(
 
   // State for qualifier variable replacement and restoration
   private var originalQualifierValue: ObjectReference? = null
+  // Stores Throwable[]{ex} in objectStorage when a user-space exception interrupts the execution
+  private var exception: ArrayReference? = null
+
   private var qualifierVariableName: String? = null
   private var stackDepthWhenReplaced: Int = -1
 
@@ -235,7 +238,7 @@ internal class StreamInstrumentationManager private constructor(
    *
    * @return result value containing trace data from all operations
    */
-  fun collectResults(evaluationContext: EvaluationContextImpl): Value {
+  fun collectResults(evaluationContext: EvaluationContextImpl): ArrayReference {
     DebuggerManagerThreadImpl.assertIsManagerThread()
 
     return objectStorage.watch(evaluationContext) {
@@ -243,15 +246,21 @@ internal class StreamInstrumentationManager private constructor(
       val terminalResult = terminalHandler.result(evaluationContext) as ArrayReference
 
       val terminalBeforeAfter = terminalResult.getValue(0)
-      val evaluationResult = terminalResult.getValue(1)
+      val evaluationResult = exception ?: terminalResult.getValue(1)
 
-      // Format: [intermediateResults[], evaluationResult, evaluationTiming[]]
-      // Note: timing is already included in terminal result, so we pass a placeholder
       array(
         array(*intermediateResults.toTypedArray(), terminalBeforeAfter),
         evaluationResult,
-        array(0L.mirror)  // Placeholder for timing
+        array(0L.mirror)
       )
+    }
+  }
+
+  fun onException(evaluationContext: EvaluationContextImpl, exception: ObjectReference) {
+    this.exception = objectStorage.watch(evaluationContext) {
+      val wrapper = array("java.lang.Throwable", 1)
+      wrapper.setValue(0, exception)
+      wrapper
     }
   }
 

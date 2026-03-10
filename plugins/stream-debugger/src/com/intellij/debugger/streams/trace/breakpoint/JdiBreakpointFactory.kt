@@ -4,7 +4,6 @@ package com.intellij.debugger.streams.trace.breakpoint
 import com.intellij.debugger.engine.DebugProcessAdapterImpl
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerUtils
-import com.intellij.debugger.engine.InstrumentedTechnicalBreakpoint
 import com.intellij.debugger.engine.RequestHint
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
@@ -208,7 +207,7 @@ internal class JdiBreakpointFactory {
     }
 
     LOG.warn("Failed to get default Java exception breakpoint; falling back to a generic requestor")
-    return object : FilteredRequestorImpl(project), SyntheticBreakpoint, InstrumentedTechnicalBreakpoint {
+    return object : FilteredRequestorImpl(project), SyntheticBreakpoint {
       override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent?): Boolean {
         return processExceptionEvent(this, callback, action, event)
       }
@@ -309,7 +308,7 @@ private class TechnicalExceptionBreakpoint(
   xBreakpoint: XBreakpoint<JavaExceptionBreakpointProperties>,
   project: Project,
   private val callback: ExceptionHandler,
-) : AnyExceptionBreakpoint(project, xBreakpoint), SyntheticBreakpoint, InstrumentedTechnicalBreakpoint {
+) : AnyExceptionBreakpoint(project, xBreakpoint), SyntheticBreakpoint {
   override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent?): Boolean {
     return processExceptionEvent(this, callback, action, event)
   }
