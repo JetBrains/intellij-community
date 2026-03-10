@@ -790,60 +790,93 @@ public abstract class K1JvmSmartCompletionTestGenerated extends AbstractK1JvmSma
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/smart/inheritors")
-    public static class Inheritors extends AbstractK1JvmSmartCompletionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K1;
+    public abstract static class Inheritors extends AbstractK1JvmSmartCompletionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/smart/inheritors/throwable")
+        public static class Throwable extends AbstractK1JvmSmartCompletionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("JavaStdlib.kt")
+            public void testJavaStdlib() throws Exception {
+                runTest("../testData/smart/inheritors/throwable/JavaStdlib.kt");
+            }
+
+            @TestMetadata("KotlinAndJava.kt")
+            public void testKotlinAndJava() throws Exception {
+                runTest("../testData/smart/inheritors/throwable/KotlinAndJava.kt");
+            }
+
+            @TestMetadata("KotlinOnly.kt")
+            public void testKotlinOnly() throws Exception {
+                runTest("../testData/smart/inheritors/throwable/KotlinOnly.kt");
+            }
         }
 
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/smart/inheritors")
+        public static class Uncategorized extends AbstractK1JvmSmartCompletionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
 
-        @TestMetadata("1.kt")
-        public void test1() throws Exception {
-            runTest("../testData/smart/inheritors/1.kt");
-        }
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("2.kt")
-        public void test2() throws Exception {
-            runTest("../testData/smart/inheritors/2.kt");
-        }
+            @TestMetadata("1.kt")
+            public void test1() throws Exception {
+                runTest("../testData/smart/inheritors/1.kt");
+            }
 
-        @TestMetadata("3.kt")
-        public void test3() throws Exception {
-            runTest("../testData/smart/inheritors/3.kt");
-        }
+            @TestMetadata("2.kt")
+            public void test2() throws Exception {
+                runTest("../testData/smart/inheritors/2.kt");
+            }
 
-        @TestMetadata("GenericClass1.kt")
-        public void testGenericClass1() throws Exception {
-            runTest("../testData/smart/inheritors/GenericClass1.kt");
-        }
+            @TestMetadata("3.kt")
+            public void test3() throws Exception {
+                runTest("../testData/smart/inheritors/3.kt");
+            }
 
-        @TestMetadata("GenericClass2.kt")
-        public void testGenericClass2() throws Exception {
-            runTest("../testData/smart/inheritors/GenericClass2.kt");
-        }
+            @TestMetadata("GenericClass1.kt")
+            public void testGenericClass1() throws Exception {
+                runTest("../testData/smart/inheritors/GenericClass1.kt");
+            }
 
-        @TestMetadata("GenericClass3.kt")
-        public void testGenericClass3() throws Exception {
-            runTest("../testData/smart/inheritors/GenericClass3.kt");
-        }
+            @TestMetadata("GenericClass2.kt")
+            public void testGenericClass2() throws Exception {
+                runTest("../testData/smart/inheritors/GenericClass2.kt");
+            }
 
-        @TestMetadata("GenericClass4.kt")
-        public void testGenericClass4() throws Exception {
-            runTest("../testData/smart/inheritors/GenericClass4.kt");
-        }
+            @TestMetadata("GenericClass3.kt")
+            public void testGenericClass3() throws Exception {
+                runTest("../testData/smart/inheritors/GenericClass3.kt");
+            }
 
-        @TestMetadata("GenericClass5.kt")
-        public void testGenericClass5() throws Exception {
-            runTest("../testData/smart/inheritors/GenericClass5.kt");
-        }
+            @TestMetadata("GenericClass4.kt")
+            public void testGenericClass4() throws Exception {
+                runTest("../testData/smart/inheritors/GenericClass4.kt");
+            }
 
-        @TestMetadata("GenericClass6.kt")
-        public void testGenericClass6() throws Exception {
-            runTest("../testData/smart/inheritors/GenericClass6.kt");
+            @TestMetadata("GenericClass5.kt")
+            public void testGenericClass5() throws Exception {
+                runTest("../testData/smart/inheritors/GenericClass5.kt");
+            }
+
+            @TestMetadata("GenericClass6.kt")
+            public void testGenericClass6() throws Exception {
+                runTest("../testData/smart/inheritors/GenericClass6.kt");
+            }
         }
     }
 
