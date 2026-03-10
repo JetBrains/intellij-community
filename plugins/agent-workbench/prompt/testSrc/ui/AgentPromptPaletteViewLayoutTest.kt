@@ -11,6 +11,37 @@ import javax.swing.JPanel
 @TestApplication
 class AgentPromptPaletteViewLayoutTest {
   @Test
+  fun contextRowIsHiddenWhenNoContextChipsArePresent() {
+    runInEdtAndWait {
+      val promptArea = EditorTextField()
+      val contextChipsPanel = JPanel()
+      val view = createPaletteView(promptArea = promptArea, contextChipsPanel = contextChipsPanel)
+
+      layoutPopupRoot(view.rootPanel)
+
+      val contextRow = checkNotNull(contextChipsPanel.parent as? JPanel)
+      assertThat(contextRow.isVisible).isFalse()
+    }
+  }
+
+  @Test
+  fun contextRowIsShownWhenContextChipsExist() {
+    runInEdtAndWait {
+      val promptArea = EditorTextField()
+      val contextChipsPanel = JPanel().apply {
+        add(JPanel())
+      }
+      val view = createPaletteView(promptArea = promptArea, contextChipsPanel = contextChipsPanel)
+
+      layoutPopupRoot(view.rootPanel)
+
+      val contextRow = checkNotNull(contextChipsPanel.parent as? JPanel)
+      assertThat(contextRow.isVisible).isTrue()
+      assertThat(contextRow.height).isGreaterThan(0)
+    }
+  }
+
+  @Test
   fun firstSwitchToExistingKeepsPromptAreaVisible() {
     runInEdtAndWait {
       val promptArea = EditorTextField()
@@ -67,10 +98,37 @@ class AgentPromptPaletteViewLayoutTest {
     }
   }
 
-  private fun createPaletteView(promptArea: EditorTextField): AgentPromptPaletteView {
+  @Test
+  fun removingLastContextChipCollapsesContextRowWithoutHidingPrompt() {
+    runInEdtAndWait {
+      val promptArea = EditorTextField()
+      val contextChipsPanel = JPanel().apply {
+        add(JPanel())
+      }
+      val view = createPaletteView(promptArea = promptArea, contextChipsPanel = contextChipsPanel)
+      val foundPromptArea = checkNotNull(findPromptArea(view.rootPanel, promptArea))
+      val contextRow = checkNotNull(contextChipsPanel.parent as? JPanel)
+
+      layoutPopupRoot(view.rootPanel)
+      assertThat(contextRow.isVisible).isTrue()
+      val promptHeightWithContext = foundPromptArea.height
+      assertThat(promptHeightWithContext).isGreaterThan(0)
+
+      contextChipsPanel.removeAll()
+      layoutPopupRoot(view.rootPanel)
+
+      assertThat(contextRow.isVisible).isFalse()
+      assertThat(foundPromptArea.height).isGreaterThan(promptHeightWithContext)
+    }
+  }
+
+  private fun createPaletteView(
+    promptArea: EditorTextField,
+    contextChipsPanel: JPanel = JPanel(),
+  ): AgentPromptPaletteView {
     return createAgentPromptPaletteView(
       promptArea = promptArea,
-      contextChipsPanel = JPanel(),
+      contextChipsPanel = contextChipsPanel,
       onProviderIconClicked = {},
       onExistingTaskSelected = {},
     )
