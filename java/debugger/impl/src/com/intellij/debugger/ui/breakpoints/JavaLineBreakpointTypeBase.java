@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImplicitClass;
 import com.intellij.psi.PsiImportStatementBase;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiManager;
@@ -119,6 +120,10 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
             if (element instanceof PsiModifierList) {
               element = element.getParent();
               continue;
+            }
+            if (element instanceof PsiImplicitClass) {
+              // don't go up, nothing interesting there, stop at main method
+              break;
             }
 
             final int offset = element.getTextOffset();
