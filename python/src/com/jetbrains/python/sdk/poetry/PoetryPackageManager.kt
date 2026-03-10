@@ -25,7 +25,7 @@ import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 
 @ApiStatus.Internal
-class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
+class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk, installedMightBeTransitive = true) {
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
 
   override suspend fun syncCommand(): PyResult<Unit> {

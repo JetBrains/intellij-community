@@ -59,7 +59,17 @@ import kotlin.jvm.Throws
  * @see com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI to execute commands with UI handlers
  */
 @ApiStatus.Experimental
-abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Disposable.Default {
+abstract class PythonPackageManager @ApiStatus.Internal constructor(
+  val project: Project,
+  val sdk: Sdk,
+  /**
+   * Whether this manager has an explicit list of top-level dependencies (e.g. from pyproject.toml).
+   * When true, only packages from [extractDependenciesCached] are treated as "declared" in the UI,
+   * and the rest are shown as transitive.
+   * When false (default), all installed packages are considered declared.
+   */
+  internal val installedMightBeTransitive: Boolean = false,
+) : Disposable.Default {
   private val isInited = AtomicBoolean(false)
   private val initializationJob = PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT, start = CoroutineStart.LAZY) {
     initInstalledPackages()
