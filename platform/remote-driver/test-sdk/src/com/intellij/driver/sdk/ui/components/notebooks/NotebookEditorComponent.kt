@@ -144,11 +144,11 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
       service<PsiManager>(singleProject()).findFile(editor.getVirtualFile())
     }
 
-  fun addEmptyCodeCell(): Unit {
-    driver.invokeActionWithRetries("NotebookInsertCodeCellAction")
+  fun addEmptyCodeCell(maxAttempts: Int = 10, delay: Duration = 500.milliseconds) {
+    driver.invokeActionWithRetries("NotebookInsertCodeCellAction", maxAttempts, delay)
   }
 
-  fun addEmptyMarkdownCell(): Unit {
+  fun addEmptyMarkdownCell() {
     driver.invokeActionWithRetries("NotebookInsertMarkdownCellAction")
   }
 
@@ -161,8 +161,8 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     pasteToCurrentCell(text)
   }
 
-  fun addCodeCellWithRetry(text: String) {
-    addEmptyCodeCell()
+  fun addCodeCellWithRetry(text: String, maxAttempts: Int = 20, delay: Duration = 1.seconds) {
+    addEmptyCodeCell(maxAttempts, delay)
     pasteToCellWithRetry(LastCell, text)
   }
 
