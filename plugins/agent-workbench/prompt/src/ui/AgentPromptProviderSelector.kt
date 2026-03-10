@@ -262,6 +262,7 @@ internal class AgentPromptProviderSelector(
   ): JBCheckBox {
     val label = sessionsMessageResolver.resolve(option.labelKey, bridge) ?: option.labelFallback
     return JBCheckBox(label, option.id in selectedOptionIds).apply {
+      isOpaque = false
       DialogUtil.registerMnemonic(this)
       isFocusable = false
       addActionListener {
