@@ -1163,7 +1163,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     }
 
     private fun typeHasOverloadedBitwiseOr(
-      type: PyType, expression: PyExpression,
+      type: PyType, expression: PyExpression, operator: String = "__or__",
       context: Context,
     ): Boolean {
       if (type !is PyClassType) {
@@ -1175,7 +1175,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         return false
       }
       val resolved = metaClassType
-        .resolveMember("__or__", expression, AccessDirection.READ, PyResolveContext.defaultContext(typeContext))
+        .resolveMember(operator, expression, AccessDirection.READ, PyResolveContext.defaultContext(typeContext))
       if (resolved.isNullOrEmpty()) return false
 
       return StreamEx.of(resolved)
@@ -1253,11 +1253,11 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         if (neverType != null) {
           return Ref(neverType)
         }
-        val unionType: Ref<PyType?>? = getUnionType(resolved, context)
+        val unionType = getUnionType(resolved, context)
         if (unionType != null) {
           return unionType
         }
-        val intersectionType: Ref<PyType?>? = getIntersectionType(resolved, context)
+        val intersectionType = getIntersectionType(resolved, context)
         if (intersectionType != null) {
           return intersectionType
         }
@@ -1441,19 +1441,16 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     }
 
     private fun getIntersectionType(resolved: PsiElement, context: Context): Ref<PyType?>? {
-      if (resolved is PyBinaryExpression && resolved.operator === PyTokenTypes.AND) {
-        val left = resolved.leftExpression
-        val right = resolved.rightExpression
-        if (left == null || right == null) return null
+      if (resolved !is PyBinaryExpression || resolved.operator !== PyTokenTypes.AND) return null
+      val left = resolved.leftExpression ?: return null
+      val right = resolved.rightExpression ?: return null
 
-        val leftTypeRef: Ref<PyType?>? = getType(left, context)
-        val rightTypeRef: Ref<PyType?>? = getType(right, context)
-        if (leftTypeRef == null || rightTypeRef == null) return null
+      val leftTypeRef = getType(left, context)
+      val rightTypeRef = getType(right, context)
+      if (leftTypeRef == null && rightTypeRef == null) return null
 
-        val intersection = intersection(leftTypeRef.get(), rightTypeRef.get())
-        return if (intersection != null) Ref(intersection) else null
-      }
-      return null
+      val intersection = intersection(leftTypeRef?.get(), rightTypeRef?.get())
+      return intersection?.let { Ref(it) }
     }
 
     private fun getNoneType(typeHint: PyExpression, resolved: PsiElement): Ref<PyType?>? {
@@ -2054,18 +2051,20 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         }
       }
       else if (element is PyBinaryExpression && element.operator === PyTokenTypes.OR) {
-        val left = element.leftExpression
-        val right = element.rightExpression
-        if (left == null || right == null) return null
+        val left = element.leftExpression ?: return null
+        val right = element.rightExpression ?: return null
 
-        val leftTypeRef: Ref<PyType?>? = getType(left, context)
-        val rightTypeRef: Ref<PyType?>? = getType(right, context)
-        if (leftTypeRef == null || rightTypeRef == null) return null
+        val leftTypeRef = getType(left, context)
+        val rightTypeRef = getType(right, context)
+        if (leftTypeRef == null && rightTypeRef == null) return null
 
-        val leftType = leftTypeRef.get()
-        if (leftType != null && typeHasOverloadedBitwiseOr(leftType, left, context)) return null
+        // if the class type defines __or__ then don't create a union
+        val leftType = leftTypeRef?.get()
+        if (leftType != null && typeHasOverloadedBitwiseOr(leftType, left, context = context)) return null
+        val rightType = rightTypeRef?.get()
+        if (rightType != null && typeHasOverloadedBitwiseOr(rightType, left, "__ror__", context)) return null
 
-        val union = PyUnionType.union(leftType, rightTypeRef.get())
+        val union = PyUnionType.union(leftType, rightType)
         return if (union != null) Ref(union) else null
       }
       return null

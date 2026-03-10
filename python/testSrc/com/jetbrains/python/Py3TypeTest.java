@@ -5491,6 +5491,32 @@ public class Py3TypeTest extends PyTestCase {
     );
   }
 
+  @TestFor(issues = "PY-88281")
+  public void testUnionPartialUnresolved() {
+    doTest("int | Any", """
+      expr: int | asdf
+      """);
+  }
+
+  @TestFor(issues = "PY-88281")
+  public void testIntersectionPartialUnresolved() {
+    doTest("int & Any", """
+      expr: int & asdf
+      """);
+  }
+
+  public void testRightHandOrClass() {
+    doTest("UnionType | type[str] | int", """
+      class M(type):
+          def __ror__(self, other: object) -> int:
+              return 1
+      
+      class A(metaclass=M): ...
+      
+      expr = str | A
+      """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
