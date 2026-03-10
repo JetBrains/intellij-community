@@ -46,6 +46,13 @@ open class TestingOptions {
   var testPatterns: String? = System.getProperty("intellij.build.test.patterns").nullize(nullizeSpaces = true) ?: OLD_TEST_PATTERNS
 
   /**
+   * Semicolon-separated JUnit 5 tag expressions to include; only tests tagged with at least one of these are executed.
+   * Supports JUnit Platform tag expressions (e.g. `"slow"`, `"slow;integration"`).
+   * If not specified, no tag filtering is applied.
+   */
+  var testTags: String? = System.getProperty("intellij.build.test.tags").nullize(nullizeSpaces = true)
+
+  /**
    * Semicolon-separated names of JUnit run configurations in the project which need to be executed. If this option is specified,
    * [testGroups], [testPatterns] and [mainModule] will be ignored.
    */
