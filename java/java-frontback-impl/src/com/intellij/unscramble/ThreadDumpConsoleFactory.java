@@ -22,6 +22,7 @@ import com.intellij.threadDumpParser.ThreadState;
 import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.JComponent;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -41,6 +42,8 @@ public class ThreadDumpConsoleFactory implements AnalyzeStacktraceUtil.ConsoleFa
 
   @Override
   public JComponent createConsoleComponent(ConsoleView consoleView, DefaultActionGroup toolbarActions) {
-    return ThreadDumpPanel.createFromDumpItems(myProject, consoleView, toolbarActions, IntelliJThreadDumpParserKt.dumpItems(myThreadDump));
+    List<MergeableDumpItem> dumpItems = new ArrayList<>(IntelliJThreadDumpParserKt.dumpItems(myThreadDump));
+    dumpItems.sort(DumpItem.BY_INTEREST);
+    return ThreadDumpPanel.createFromDumpItems(myProject, consoleView, toolbarActions, dumpItems);
   }
 }
