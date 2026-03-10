@@ -617,8 +617,8 @@ internal class JavaVirtualThreadsProvider : ThreadDumpItemsProviderFactory() {
 
       val threadContainerDescriptors = threadContainerNames.indices.map { i ->
         val parentOrdinal = parentContainerOrdinals[i]
-        val parentContainerRef = if (parentOrdinal == -1) null else threadContainerRefs[parentOrdinal]
-        JavaThreadContainerDesc(threadContainerNames[i], threadContainerRefs[i], parentContainerRef)
+        val parentContainerId = if (parentOrdinal == -1) null else threadContainerRefs[parentOrdinal].uniqueID()
+        JavaThreadContainerDesc(threadContainerNames[i], threadContainerRefs[i].uniqueID(), parentContainerId)
       }
       return toDumpItems(threadStates, threadContainerDescriptors)
     }

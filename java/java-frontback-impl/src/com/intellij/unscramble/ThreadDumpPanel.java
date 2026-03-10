@@ -71,6 +71,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
+import static java.util.Collections.emptyList;
+
 /**
  * @author Jeka
  * @author Konstantin Bulenkov
@@ -418,13 +420,10 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       boolean isTruncated = myDumpItemsTruncated > 0;
-      StringBuilder buf = new StringBuilder();
-      String firstLine = isTruncated ? "Truncated thread dump" : "Full thread dump";
-      buf.append(firstLine).append("\n\n");
-      for (DumpItem state : myThreadDump) {
-        buf.append(state.getStackTrace()).append("\n\n");
-      }
-      CopyPasteManager.getInstance().setContents(new StringSelection(buf.toString()));
+      List<String> additionalComments = List.of(isTruncated ? "Truncated thread dump" : "Full thread dump");
+      CopyPasteManager.getInstance().setContents(new StringSelection(
+        IntelliJThreadDumpSerializationKt.serializeIntelliJThreadDump(new ArrayList<>(myThreadDump), additionalComments)
+      ));
 
       String message = isTruncated
                        ? JavaFrontbackBundle.message("notification.text.truncated.thread.dump.was.successfully.copied.to.clipboard")
@@ -549,11 +548,7 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
 
     @Override
     public @NotNull String getReportText() {
-      StringBuilder sb = new StringBuilder();
-      for (DumpItem state : myThreadStates) {
-        sb.append(state.getStackTrace()).append("\n\n");
-      }
-      return sb.toString();
+      return IntelliJThreadDumpSerializationKt.serializeIntelliJThreadDump(new ArrayList<>(myThreadStates), emptyList());
     }
 
     private static final @NonNls String DEFAULT_REPORT_FILE_NAME = "threads_report.txt";

@@ -7,7 +7,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.threadDumpParser.ThreadOperation
 import com.intellij.threadDumpParser.ThreadState
 import com.intellij.ui.SimpleTextAttributes
-import com.sun.jdi.ObjectReference
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
@@ -149,17 +148,13 @@ fun toDumpItems(threadStates: List<ThreadState>, threadContainerDescriptors: Lis
   }
 
   val threadContainerDumpItems = threadContainerDescriptors.map {
-    JavaVirtualThreadContainerItem(it.name, it.containerRef.uniqueID(), it.parentContainerRef?.uniqueID())
+    JavaVirtualThreadContainerItem(it.name, it.containerId, it.parentContainerId)
   }
   return threadDumpItems + threadContainerDumpItems
 }
 
 @ApiStatus.Internal
-data class JavaThreadContainerDesc(
-  val name: String,
-  val containerRef: ObjectReference,
-  val parentContainerRef: ObjectReference?
-)
+data class JavaThreadContainerDesc(val name: String, val containerId: Long, val parentContainerId: Long?)
 
 private class JavaThreadDumpItem(private val threadState: ThreadState) : MergeableDumpItem {
   override val name: String = threadState.name

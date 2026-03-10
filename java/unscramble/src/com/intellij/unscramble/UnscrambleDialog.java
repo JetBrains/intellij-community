@@ -19,7 +19,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.configurable.VcsContentAnnotationConfigurable;
 import com.intellij.threadDumpParser.ThreadDumpParser;
-import com.intellij.threadDumpParser.ThreadState;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.TextFieldWithHistory;
@@ -470,8 +469,11 @@ public class UnscrambleDialog extends DialogWrapper {
     String unscrambledTrace =
       unscrambleSupport == null ? textToUnscramble : unscrambleSupport.unscramble(project, textToUnscramble, logName, settings);
     if (unscrambledTrace == null) return null;
-    List<ThreadState> threadStates = ThreadDumpParser.parse(unscrambledTrace);
-    return UnscrambleUtils.addConsole(project, threadStates, unscrambledTrace);
+    ThreadDumpState threadDumpState = IntelliJThreadDumpParserKt.parseIntelliJThreadDump(unscrambledTrace);
+    if (threadDumpState != null) {
+      return UnscrambleUtils.addConsole(project, threadDumpState, unscrambledTrace);
+    }
+    return UnscrambleUtils.addConsole(project, ThreadDumpParser.parse(unscrambledTrace), unscrambledTrace);
   }
 
   @Override

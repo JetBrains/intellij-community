@@ -1,0 +1,27 @@
+# This dump may be opened in IntelliJ IDEA using Analyze Stack Trace or Thread Dump...
+# Full thread dump
+
+"main@101" #1 prio=5 tid=0x1 nid=0x1 runnable
+   java.lang.Thread.State: RUNNABLE
+	at example.main.run(main.java:1)
+
+"worker-1@201" #2 tid=0x2 nid=0x2 virtual runnable
+   java.lang.Thread.State: RUNNABLE
+	at example.worker-1.run(worker-1.java:2)
+
+============ INTELLIJ META_DATA ============
+{
+    "version": 1,
+    "tree_links": [
+        {
+            "tree_id": 201,
+            "parent_tree_id": 300
+        }
+    ],
+    "containers": [
+        {
+            "name": "Scope A",
+            "tree_id": 300
+        }
+    ]
+}
