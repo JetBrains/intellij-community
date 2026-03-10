@@ -14,7 +14,8 @@ import kotlinx.serialization.builtins.serializer
 @Serializable(with = InstanceIdSerializer::class)
 data class InstanceId(val id: String) {
   companion object {
-    fun random(): InstanceId = InstanceId(UID.random().toString())
+    fun random(prefix: String? = null): InstanceId =
+      prefix?.let { InstanceId("$it#${UID.random()}") } ?: InstanceId(UID.random().toString())
   }
 }
 
