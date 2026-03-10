@@ -32,6 +32,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.InplaceButton;
+import com.intellij.ui.IslandsState;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.ui.awt.RelativePoint;
@@ -237,6 +238,21 @@ public final class WindowTabsComponent extends JBTabsImpl {
       }
 
       @Override
+      protected int getDropTargetArc() {
+        return JBUI.scale(JBUI.getInt("Island.arc", 10));
+      }
+
+      @Override
+      public int getDropTargetTopOffset() {
+        return 0;
+      }
+
+      @Override
+      public int getDropTargetBottomOffset() {
+        return 0;
+      }
+
+      @Override
       public Dimension getPreferredSize() {
         return new Dimension(super.getPreferredSize().width, JBUI.scale(TAB_HEIGHT));
       }
@@ -311,6 +327,13 @@ public final class WindowTabsComponent extends JBTabsImpl {
   protected @NotNull TabPainterAdapter createTabPainterAdapter() {
     return new TabPainterAdapter() {
       private final JBTabPainter myTabPainter = new JBDefaultTabPainter(new DefaultTabTheme() {
+        @Override
+        public @Nullable Color getBackground() {
+          return IslandsState.Companion.isEnabled()
+                 ? JBColor.namedColor("MainWindow.background", JBColor.PanelBackground)
+                 : super.getBackground();
+        }
+
         @Override
         public int getTopBorderThickness() {
           return 0;
