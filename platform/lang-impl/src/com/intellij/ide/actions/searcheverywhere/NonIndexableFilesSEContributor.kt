@@ -26,6 +26,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.NameUtil
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
 import com.intellij.util.indexing.FilesDeque
 import com.intellij.util.text.matching.MatchingMode
@@ -169,8 +170,9 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
     else filterByType.and { file -> scope.contains(file) }
 
 
+    val searchInLibraries = (scope as? GlobalSearchScope)?.isSearchInLibraries ?: true
     val filesDeque = ReadAction.nonBlocking<FilesDeque> {
-      FilesDeque.nonIndexableDequeue(project, filter)
+      FilesDeque.nonIndexableDequeue(project, searchInLibraries, filter)
     }.executeSynchronously()
     while (true) {
       progressIndicator.checkCanceled()

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.ApiStatus
 
 
 /**
- * @return all workspace model's roots that are not indexable.
+ * @return all workspace model's roots that are not indexable from fileSets matching [fileSetFilter].
  * Method tries to return those roots as [com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFile]s, so tree-traversal starting
  * from them won't trash VFS cache with useless entries
  * @see WorkspaceFileKind.CONTENT_NON_INDEXABLE
@@ -35,11 +35,11 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @RequiresBackgroundThread
 @RequiresReadLock
-fun WorkspaceFileIndexEx.nonIndexableRoots(): Set<VirtualFile> {
+fun WorkspaceFileIndexEx.nonIndexableRoots(fileSetFilter: (WorkspaceFileSet) -> Boolean = { true }): Set<VirtualFile> {
   val roots = mutableSetOf<VirtualFile>()
   visitFileSets { fileSet, _ ->
     val root = fileSet.root
-    if (!fileSet.kind.isIndexable) {
+    if (!fileSet.kind.isIndexable && fileSetFilter(fileSet)) {
       //Wrap the root in cache-avoiding, so file-tree hierarchy walking starting from this root will not trash VFS cache with
       // new entries -- it makes perfect sense for non-indexable because such file-sets are rarely accessed.
       roots.add(NewVirtualFile.asCacheAvoiding(root))
@@ -123,8 +123,17 @@ interface FilesDeque {
     @JvmOverloads
     @RequiresReadLock
     @RequiresBackgroundThread
-    fun nonIndexableDequeue(project: Project, filter: VirtualFileFilter = VirtualFileFilter.ALL): FilesDeque {
-      return NonIndexableFilesDequeImpl(project, WorkspaceFileIndexEx.getInstance(project).nonIndexableRoots(), filter)
+    fun nonIndexableDequeue(
+      project: Project,
+      searchInLibraries: Boolean = true,
+      filter: VirtualFileFilter = VirtualFileFilter.ALL,
+    ): FilesDeque {
+      val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
+      val roots = when {
+          searchInLibraries -> workspaceFileIndex.nonIndexableRoots()
+          else -> workspaceFileIndex.nonIndexableRoots { fileSet -> fileSet.kind.isContent }
+      }
+      return NonIndexableFilesDequeImpl(project, roots, filter)
     }
   }
 }

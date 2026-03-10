@@ -3,30 +3,53 @@ package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.mock.MockProgressIndicator
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.SearchScope
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PerformanceUnitTest
+import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.StressTestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.tools.ide.metrics.benchmark.Benchmark.newBenchmark
 import com.intellij.tools.ide.metrics.benchmark.Benchmark.newBenchmarkWithVariableInputSize
+import com.intellij.util.indexing.testEntities.NonIndexableKindFileSetTestContributor
+import com.intellij.util.indexing.testEntities.NonIndexableTestEntity
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
+import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.registerProjectRootBlocking
+import com.intellij.workspaceModel.ide.unregisterProjectRoot
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.DisabledOnOs
+import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.api.extension.RegisterExtension
 import kotlin.io.path.Path
+import kotlin.io.path.createSymbolicLinkPointingTo
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
 
 /**
  * Performance test for [NonIndexableFilesSEContributor].
@@ -80,6 +103,34 @@ open class NonIndexableFileSearchPerformanceTest {
     }.start()
   }
 
+  @DisabledOnOs(OS.WINDOWS)
+  @Test
+  fun `do not search in libraries with scope 'Project Files'`(@TestDisposable disposable: Disposable): Unit = runBlocking {
+    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonIndexableExternalKindFileSetTestContributor(), disposable)
+    val virtualFileManager = project.workspaceModel.getVirtualFileUrlManager()
+    val externalRoot = TemporaryDirectory
+      .generateTemporaryPath("library")
+      .createSymbolicLinkPointingTo(communityPath)
+      .toVirtualFileUrl(virtualFileManager)
+
+    unregisterProjectRoot(project, communityVirtualFile.toVirtualFileUrl(virtualFileManager))
+    project.workspaceModel.update("create EXTERNAL_NON_INEXABLE root") { storage ->
+      storage.addEntity(NonIndexableTestEntity(externalRoot, NonPersistentEntitySource))
+    }
+
+    IndexingTestUtil.waitUntilIndexesAreReady(project, 10.seconds.toJavaDuration())
+
+    val searchPattern = "ProjectRootEntity"
+    val searchScope = readAction { GlobalSearchScope.projectScope(project) }
+    val contributor = createContributor(searchScope)
+    newBenchmarkWithVariableInputSize("search \"$searchPattern\", only libraries, 'Project' scope", nonIndexableFilesCount) {
+      val items = contributor.search(searchPattern, MockProgressIndicator())
+      assertThat(items).isEmpty()
+      nonIndexableFilesCount
+    }.start()
+  }
+
+
   @Test
   fun `search for one file deep inside`() {
     val searchPattern = "ProjectRootEntity"
@@ -119,12 +170,19 @@ open class NonIndexableFileSearchPerformanceTest {
   }
 
 
-  private fun createContributor(): NonIndexableFilesSEContributor {
+  private fun createContributor(scope: SearchScope = GlobalSearchScope.projectScope(project)): NonIndexableFilesSEContributor {
     val event = TestActionEvent.createTestEvent(SimpleDataContext.getProjectContext(project))
     return NonIndexableFilesSEContributor(event).also { contributor ->
-      val scope = runReadAction { GlobalSearchScope.projectScope(project) }
       contributor.setScope(ScopeDescriptor(scope))
       Disposer.register(projectModel.disposableRule.disposable, contributor)
     }
+  }
+}
+
+private class NonIndexableExternalKindFileSetTestContributor : WorkspaceFileIndexContributor<NonIndexableTestEntity> {
+  override val entityClass: Class<NonIndexableTestEntity> = NonIndexableTestEntity::class.java
+
+  override fun registerFileSets(entity: NonIndexableTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
+    registrar.registerFileSet(entity.root, WorkspaceFileKind.EXTERNAL_NON_INDEXABLE, entity, null)
   }
 }
