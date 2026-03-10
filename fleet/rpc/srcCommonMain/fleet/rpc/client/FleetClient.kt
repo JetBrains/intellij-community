@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus
-import kotlin.concurrent.Volatile
 import kotlin.coroutines.CoroutineContext
 import kotlin.concurrent.Volatile
 
@@ -49,9 +48,11 @@ class FleetClient internal constructor(
   }
 }
 
+@ApiStatus.Internal
 fun <A : RemoteApi<*>> FleetClient.proxy(remoteApiDescriptor: RemoteApiDescriptor<A>, route: UID, instanceId: InstanceId): A =
   asServiceProxy().proxy(remoteApiDescriptor, route, instanceId)
 
+@ApiStatus.Internal
 fun fleetClient(
   clientId: ClientId,
   transportFactory: FleetTransportFactory,
@@ -78,6 +79,7 @@ fun fleetClient(
     }
   }.onContext(CoroutineName("fleetClient"))
 
+@ApiStatus.Internal
 @Deprecated("the only difference with fleetClient() is that this one puts in on coroutineContext. you can do it yourself. but better don't")
 suspend fun withFleetClient(
   clientId: ClientId,
