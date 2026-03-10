@@ -5320,19 +5320,6 @@ f:com.intellij.codeInspection.actions.ViewOfflineResultsAction
 - s:showOfflineView(com.intellij.openapi.project.Project,java.lang.String,java.util.Map,java.lang.String):com.intellij.codeInspection.ui.InspectionResultsView
 - s:showOfflineView(com.intellij.openapi.project.Project,java.util.Map,com.intellij.codeInspection.ex.InspectionProfileImpl,java.lang.String):com.intellij.codeInspection.ui.InspectionResultsView
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-c:com.intellij.codeInspection.ex.ApplicationInspectionProfileManager
-- com.intellij.codeInspection.ex.ApplicationInspectionProfileManagerBase
-- com.intellij.openapi.components.PersistentStateComponent
-- sf:Companion:com.intellij.codeInspection.ex.ApplicationInspectionProfileManager$Companion
-- <init>():V
-- <init>(com.intellij.openapi.options.SchemeManagerFactory):V
-- fireProfileChanged(com.intellij.codeInspection.ex.InspectionProfileImpl):V
-- f:forceInitProfilesInTestUntil(com.intellij.openapi.Disposable):V
-- sf:getInstanceImpl():com.intellij.codeInspection.ex.ApplicationInspectionProfileManager
-- f:getRootProfileName():java.lang.String
-- getState():org.jdom.Element
-- loadProfile(java.lang.String):com.intellij.codeInspection.ex.InspectionProfileImpl
-- loadState(org.jdom.Element):V
 f:com.intellij.codeInspection.ex.ApplicationInspectionProfileManager$Companion
 - f:getInstanceImpl():com.intellij.codeInspection.ex.ApplicationInspectionProfileManager
 c:com.intellij.codeInspection.ex.CustomEditInspectionToolsSettingsAction

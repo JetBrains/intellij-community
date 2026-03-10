@@ -508,6 +508,19 @@ com.intellij.codeInspection.actions.CleanupInspectionUtil
 - applyFixesNoSort(com.intellij.openapi.project.Project,java.lang.String,java.util.List,java.lang.Class,Z,Z):com.intellij.codeInspection.actions.AbstractPerformFixesTask
 - s:getInstance():com.intellij.codeInspection.actions.CleanupInspectionUtil
 - sortDescriptions(java.util.List):java.util.List
+f:com.intellij.codeInspection.ex.ApplicationInspectionProfileManager
+- com.intellij.codeInspection.ex.ApplicationInspectionProfileManagerBase
+- com.intellij.openapi.components.PersistentStateComponent
+- sf:Companion:com.intellij.codeInspection.ex.ApplicationInspectionProfileManager$Companion
+- <init>():V
+- <init>(com.intellij.openapi.options.SchemeManagerFactory):V
+- fireProfileChanged(com.intellij.codeInspection.ex.InspectionProfileImpl):V
+- f:forceInitProfilesInTestUntil(com.intellij.openapi.Disposable):V
+- sf:getInstanceImpl():com.intellij.codeInspection.ex.ApplicationInspectionProfileManager
+- f:getRootProfileName():java.lang.String
+- getState():org.jdom.Element
+- loadProfile(java.lang.String):com.intellij.codeInspection.ex.InspectionProfileImpl
+- loadState(org.jdom.Element):V
 com.intellij.conversion.ArtifactsSettings
 - a:getArtifacts():java.util.Collection
 com.intellij.conversion.ComponentManagerSettings

@@ -25,9 +25,10 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.serviceContainer.NonInjectable
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jdom.Element
 import org.jdom.JDOMException
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Path
@@ -36,11 +37,11 @@ import java.nio.file.Path
        category = SettingsCategory.CODE,
        storages = [Storage(value = "editor.xml")],
        additionalExportDirectory = InspectionProfileManager.INSPECTION_DIR)
-open class ApplicationInspectionProfileManager @TestOnly @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory)
-  : ApplicationInspectionProfileManagerBase(schemeManagerFactory), PersistentStateComponent<Element> {
+class ApplicationInspectionProfileManager @TestOnly @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory) :
+  ApplicationInspectionProfileManagerBase(schemeManagerFactory), PersistentStateComponent<Element> {
 
-  open val converter: InspectionProfileConvertor
-    @ApiStatus.Internal
+  val converter: InspectionProfileConvertor
+    @Internal
     get() = InspectionProfileConvertor(this)
 
   val rootProfileName: String
@@ -51,6 +52,7 @@ open class ApplicationInspectionProfileManager @TestOnly @NonInjectable construc
 
   companion object {
     @JvmStatic
+    @RequiresBlockingContext
     fun getInstanceImpl(): ApplicationInspectionProfileManager {
       return InspectionProfileManager.getInstance() as ApplicationInspectionProfileManager
     }
@@ -90,9 +92,13 @@ open class ApplicationInspectionProfileManager @TestOnly @NonInjectable construc
     try {
       return super.loadProfile(path)
     }
-    catch (e: IOException) { throw e }
-    catch (e: JDOMException) { throw e }
-    catch (ignored: Exception) {
+    catch (e: IOException) {
+      throw e
+    }
+    catch (e: JDOMException) {
+      throw e
+    }
+    catch (_: Exception) {
       val message = InspectionsBundle.message("inspection.error.loading.message", 0, Path.of(path))
       ApplicationManager.getApplication().invokeLater(
         { Messages.showErrorDialog(message, InspectionsBundle.message("inspection.errors.occurred.dialog.title")) },
