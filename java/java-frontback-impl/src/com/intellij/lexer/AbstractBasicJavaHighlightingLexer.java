@@ -6,8 +6,10 @@ import com.intellij.java.syntax.lexer.JavaLexer;
 import com.intellij.platform.syntax.psi.ElementTypeConverter;
 import com.intellij.platform.syntax.psi.lexer.LexerAdapter;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractBasicJavaHighlightingLexer extends LayeredLexer {
@@ -38,7 +40,17 @@ public abstract class AbstractBasicJavaHighlightingLexer extends LayeredLexer {
     registerSelfStoppingLayer(new JavaStringLiteralLexer(StringLiteralLexer.NO_QUOTE_CHAR, JavaTokenType.STRING_TEMPLATE_END, true, "s"),
                               new IElementType[]{JavaTokenType.STRING_TEMPLATE_END}, IElementType.EMPTY_ARRAY);
 
-    LayeredLexer docLexer = new LayeredLexer(new LexerAdapter(new JavaDocLexer(languageLevel), converter));
+    LayeredLexer docLexer = new LayeredLexer(new FuseMergingLexer(
+      new LexerAdapter(new JavaDocLexer(languageLevel), converter),
+      JavaDocTokenType.DOC_COMMENT_DATA,
+      TokenSet.create(
+        JavaDocTokenType.DOC_CODE_FENCE,
+        JavaDocTokenType.DOC_SHARP,
+        JavaDocTokenType.DOC_DOUBLE_SHARP,
+        JavaDocTokenType.DOC_COMMA,
+        JavaDocTokenType.DOC_TAG_VALUE_SLASH
+      )
+    ));
 
     //noinspection AbstractMethodCallInConstructor
     registerDocLayers(docLexer);
