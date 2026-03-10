@@ -1,14 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 
 /**
- * Region codes used for external settings, must never be changed.
+ * Region codes used for external settings must never be changed.
  * Only add new and deprecated existing.
  */
-@ApiStatus.Experimental
 public enum Region {
   NOT_SET("not_set", "title.region.not_set", 1000),
   AFRICA("africa", "title.region.africa", 0),

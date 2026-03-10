@@ -15,25 +15,9 @@ f:com.intellij.execution.filters.HyperlinkInfoBaseKt
 *:com.intellij.featureStatistics.FeaturesRegistryListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:featureUsed(com.intellij.featureStatistics.FeatureDescriptor):V
-*e:com.intellij.ide.Region
-- java.lang.Enum
-- sf:AFRICA:com.intellij.ide.Region
-- sf:AMERICAS:com.intellij.ide.Region
-- sf:APAC:com.intellij.ide.Region
-- sf:CHINA:com.intellij.ide.Region
-- sf:EUROPE:com.intellij.ide.Region
-- sf:MIDDLE_EAST:com.intellij.ide.Region
-- sf:NOT_SET:com.intellij.ide.Region
-- sf:OCEANIA:com.intellij.ide.Region
-- externalName():java.lang.String
-- s:fromExternalName(java.lang.String):com.intellij.ide.Region
-- getDisplayKey():java.lang.String
-- getDisplayName():java.lang.String
-- getDisplayOrdinal():I
-- s:valueOf(java.lang.String):com.intellij.ide.Region
-- s:values():com.intellij.ide.Region[]
-*f:com.intellij.ide.RegionSettings
-- s:getRegion():com.intellij.ide.Region
+*:com.intellij.ide.RegionSettings$RegionSettingsListener
+- sf:UPDATE_TOPIC:com.intellij.util.messages.Topic
+- a:regionChanged():V
 a:com.intellij.ide.SaveAndSyncHandler
 - *f:getExternalChangesTracker():com.intellij.openapi.util.ModificationTracker
 f:com.intellij.ide.dnd.SmoothAutoScroller

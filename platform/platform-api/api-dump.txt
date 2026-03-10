@@ -634,6 +634,25 @@ f:com.intellij.ide.Prefs
 - s:putLong(java.lang.String,J):V
 - s:remove(java.lang.String):V
 - s:sync(java.lang.String):V
+e:com.intellij.ide.Region
+- java.lang.Enum
+- sf:AFRICA:com.intellij.ide.Region
+- sf:AMERICAS:com.intellij.ide.Region
+- sf:APAC:com.intellij.ide.Region
+- sf:CHINA:com.intellij.ide.Region
+- sf:EUROPE:com.intellij.ide.Region
+- sf:MIDDLE_EAST:com.intellij.ide.Region
+- sf:NOT_SET:com.intellij.ide.Region
+- sf:OCEANIA:com.intellij.ide.Region
+- externalName():java.lang.String
+- s:fromExternalName(java.lang.String):com.intellij.ide.Region
+- getDisplayKey():java.lang.String
+- getDisplayName():java.lang.String
+- getDisplayOrdinal():I
+- s:valueOf(java.lang.String):com.intellij.ide.Region
+- s:values():com.intellij.ide.Region[]
+f:com.intellij.ide.RegionSettings
+- s:getRegion():com.intellij.ide.Region
 a:com.intellij.ide.RemoteDesktopService
 - <init>():V
 - s:getInstance():com.intellij.ide.RemoteDesktopService
