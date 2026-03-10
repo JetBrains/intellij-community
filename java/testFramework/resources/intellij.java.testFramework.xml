@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.java.debugger.impl"/>
     <module name="intellij.java.execution.impl"/>
+    <module name="intellij.java.indexing"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
     <module name="intellij.java.testFramework.backend"/>
