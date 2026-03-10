@@ -80,7 +80,7 @@ public class SimpleSurroundDescriptor implements SurroundDescriptor {
     return new Surrounder[]{
       new GroupSurrounder(RegExpBundle.message("surrounder.capturing.group.pattern"), "("),
       new GroupSurrounder(RegExpBundle.message("surrounder.non.capturing.group.pattern"), "(?:"),
-      new GroupSurrounder(RegExpBundle.message("surrounder.atomic.group.pattern"), "(?:"),
+      new GroupSurrounder(RegExpBundle.message("surrounder.atomic.group.pattern"), "(?>"),
       new GroupSurrounder(RegExpBundle.message("surrounder.positive.lookbehind.pattern"), "(?<="),
       new GroupSurrounder(RegExpBundle.message("surrounder.negative.lookbehind.pattern"), "(?<!"),
       new GroupSurrounder(RegExpBundle.message("surrounder.positive.lookahead.pattern"), "(?="),
@@ -95,7 +95,6 @@ public class SimpleSurroundDescriptor implements SurroundDescriptor {
 
   private static @Nullable <T extends RegExpElement> T findElementAtStrict(PsiFile file, int startOffset, int endOffset, Class<T> clazz) {
     T element = PsiTreeUtil.findElementOfClassAtRange(file, startOffset, endOffset, clazz);
-    if (element == null || element.getTextRange().getEndOffset() < endOffset) return null;
-    return element;
+    return (element == null || element.getTextRange().getEndOffset() < endOffset) ? null : element;
   }
 }
