@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.DynamicBundle;
@@ -6,8 +6,8 @@ import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.UtilBundle;
+import com.intellij.util.system.OS;
 import com.intellij.util.text.DateTimeFormatManager.Formats;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
@@ -277,8 +277,8 @@ public final class DateFormatUtil {
 
     if (locale == null) {
       try {
-        if (SystemInfo.isMac && JnaLoader.isLoaded()) return getMacFormats();
-        if (SystemInfo.isWindows && JnaLoader.isLoaded()) return getWindowsFormats();
+        if (OS.CURRENT == OS.macOS && JnaLoader.isLoaded()) return getMacFormats();
+        if (OS.CURRENT == OS.Windows && JnaLoader.isLoaded()) return getWindowsFormats();
       }
       catch (Throwable t) {
         LOG.error(t);
@@ -375,7 +375,7 @@ public final class DateFormatUtil {
     p = localeStr.indexOf('@');
     if (p > 0) localeStr = localeStr.substring(0, p);
     p = localeStr.indexOf('_');
-    return p < 0 ? new Locale(localeStr) : new Locale(localeStr.substring(0, p), localeStr.substring(p + 1));
+    return p < 0 ? Locale.of(localeStr) : Locale.of(localeStr.substring(0, p), localeStr.substring(p + 1));
   }
 
   @SuppressWarnings("SpellCheckingInspection")
