@@ -1589,7 +1589,6 @@ a:com.intellij.psi.AbstractFileViewProvider
 - pf:isIgnored():Z
 - isPhysical():Z
 - f:markInvalidated():V
-- f:markPossiblyInvalidated():V
 - f:onContentReload():V
 - f:registerAsCopy(com.intellij.psi.AbstractFileViewProvider):V
 - rootChanged(com.intellij.psi.PsiFile):V
