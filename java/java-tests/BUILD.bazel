@@ -260,6 +260,8 @@ jvm_library(
     "//platform/navbar/testFramework:testFramework_test_lib",
     "//java/unscramble",
     "//java/unscramble:unscramble_test_lib",
+    "//platform/threadDumpParser",
+    "//platform/threadDumpParser:threadDumpParser_test_lib",
     "//libraries/asm",
     "//libraries/asm:asm_test_lib",
     "//plugins/gradle",

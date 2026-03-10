@@ -232,9 +232,6 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
     String text = myFilterPanel.isVisible() ? myFilterField.getText() : "";
     var path = myThreadTree.getSelectionPath();
     var selection = path != null ? (DumpItem)((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject() : null;
-    int selectedIndex = 0;
-    int index = 0;
-    ArrayList<DumpItem> filteredThreadStates = new ArrayList<>();
     var uiSettings = UISettings.getInstance().getState();
     boolean useMerged = uiSettings.getMergeEqualStackTraces();
     boolean showVirtualThreadContainers = uiSettings.getShowVirtualThreadContainers();
@@ -244,6 +241,7 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
     // Add all of them in a single call, otherwise it works too slow recalculating UI layout.
     var model = (DefaultTreeModel)myThreadTree.getModel();
     var treeRoot = ((DefaultMutableTreeNode)model.getRoot());
+    DefaultMutableTreeNode selectedNode = null;
 
     if (treeRoot != null) {
       treeRoot.removeAllChildren();
@@ -269,22 +267,27 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
             buildDumpItemsTree(rootNode, parentIdToChildren);
           }
         }
+        // Find previously selected node in the hierarchical tree
+        if (selection != null) {
+          var enumeration = treeRoot.depthFirstEnumeration();
+          while (enumeration.hasMoreElements()) {
+            var node = (DefaultMutableTreeNode)enumeration.nextElement();
+            if (node.getUserObject() == selection) {
+              selectedNode = node;
+              break;
+            }
+          }
+        }
       } else {
         // Show flat dump
         for (DumpItem state : threadStates) {
+          if (state.isContainer()) continue;
+          if (showOnlyPlatformThreads && state.getCanBeHidden()) continue;
           if (StringUtil.containsIgnoreCase(state.getStackTrace(), text) || StringUtil.containsIgnoreCase(state.getName(), text)) {
-            filteredThreadStates.add(state);
-            if (selection == state) {
-              selectedIndex = index;
-            }
-            index++;
+            var node = new DefaultMutableTreeNode(state);
+            treeRoot.add(node);
+            if (selection == state) selectedNode = node;
           }
-        }
-
-        for (DumpItem threadState : filteredThreadStates) {
-          if (threadState.isContainer()) continue;
-          if (showOnlyPlatformThreads && threadState.getCanBeHidden()) continue;
-          treeRoot.add(new DefaultMutableTreeNode(threadState));
         }
       }
     }
@@ -299,7 +302,15 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
       myNotificationPanel.setVisible(false);
     }
     if (treeRoot != null && treeRoot.getChildCount() > 0) {
-      myThreadTree.setSelectionRow(selectedIndex);
+      if (selectedNode != null) {
+        var selectionPath = new TreePath(selectedNode.getPath());
+        myThreadTree.expandPath(selectionPath.getParentPath());
+        myThreadTree.setSelectionPath(selectionPath);
+        myThreadTree.scrollPathToVisible(selectionPath);
+      }
+      else {
+        myThreadTree.setSelectionRow(0);
+      }
     }
     myThreadTree.revalidate();
     myThreadTree.repaint();
