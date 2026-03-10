@@ -61,13 +61,13 @@ import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer.Ligh
 import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.EditorLockFreeTyping
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.isEditorLockFreeTypingEnabled
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
@@ -1157,7 +1157,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     lastTimeEditorWasTypedIn = System.currentTimeMillis()
     //maybe readaction
     EditorThreading.runWritable {
-      if (!isEditorLockFreeTypingEnabled) {
+      if (!EditorLockFreeTyping.isEnabled()) {
         publisher().beforeEditorTyping(c, dataContext)
       }
     }
@@ -1166,7 +1166,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   override fun fireAfterEditorTyping(c: Char, dataContext: DataContext) {
     //maybe readaction
     EditorThreading.runWritable {
-      if (!isEditorLockFreeTypingEnabled) {
+      if (!EditorLockFreeTyping.isEnabled()) {
         publisher().afterEditorTyping(c, dataContext)
       }
     }

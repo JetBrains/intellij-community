@@ -1,9 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.RuntimeFlagsKt;
+import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -348,7 +348,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   private static @NotNull DocumentEx getLockFreeDocumentIfEnabled(@NotNull DocumentEx realDocument) {
-    if (RuntimeFlagsKt.isEditorLockFreeTypingEnabled()) {
+    if (EditorLockFreeTyping.isEnabled()) {
       DocumentImpl uiDocument = UiDocumentManager.getInstance().getUiDocument(realDocument);
       if (uiDocument != null) {
         return uiDocument;

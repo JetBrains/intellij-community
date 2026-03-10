@@ -7,7 +7,7 @@ import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.application.RuntimeFlagsKt;
+import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
@@ -23,7 +23,7 @@ public class XmlCharFilter extends CharFilter {
   public static boolean isInXmlContext(Lookup lookup) {
     if (!lookup.isCompletion()) return false;
 
-    if (RuntimeFlagsKt.isEditorLockFreeTypingEnabled()) {
+    if (EditorLockFreeTyping.isEnabled()) {
       // TODO: rework for lock-free typing, getContainingFile requires RA on EDT
       return false;
     }

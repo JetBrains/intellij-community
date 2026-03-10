@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.uiDocument
 
-import com.intellij.openapi.application.isEditorLockFreeTypingEnabled
+import com.intellij.openapi.application.EditorLockFreeTyping
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
@@ -82,7 +82,7 @@ class UiDocumentManager(private val coroutineScope: CoroutineScope) {
   }
 
   private fun isLockFreeEnabled(): Boolean {
-    return isEditorLockFreeTypingEnabled
+    return EditorLockFreeTyping.isEnabled()
   }
 
   companion object {

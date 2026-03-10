@@ -7,7 +7,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.openapi.application.RuntimeFlagsKt;
+import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -72,7 +72,7 @@ final class TypedAutoPopupImpl {
       if (element == null) {
         return false;
       }
-      language = RuntimeFlagsKt.isEditorLockFreeTypingEnabled()
+      language = EditorLockFreeTyping.isEnabled()
                  ? file.getLanguage() // TODO: rework for lock-free typing, element.getLanguage() requires RA on EDT
                  : element.getLanguage();
     }
@@ -107,7 +107,7 @@ final class TypedAutoPopupImpl {
     if (element == null) {
       return false;
     }
-    boolean lockFreeTypingEnabled = RuntimeFlagsKt.isEditorLockFreeTypingEnabled();
+    boolean lockFreeTypingEnabled = EditorLockFreeTyping.isEnabled();
     Language language;
     if (lockFreeTypingEnabled) {
       // TODO: rework for lock-free typing, element.getLanguage() requires RA on EDT

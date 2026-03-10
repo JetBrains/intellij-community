@@ -6,7 +6,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.lexer.RestartableLexer;
 import com.intellij.lexer.TokenIterator;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.RuntimeFlagsKt;
+import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
@@ -104,7 +104,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   protected final @Nullable Document getDocument() {
-    if (RuntimeFlagsKt.isEditorLockFreeTypingEnabled() && myEditor instanceof Editor editor) {
+    if (EditorLockFreeTyping.isEnabled() && myEditor instanceof Editor editor) {
       return editor.getUiDocument();
     }
     return myEditor != null ? myEditor.getDocument() : null;

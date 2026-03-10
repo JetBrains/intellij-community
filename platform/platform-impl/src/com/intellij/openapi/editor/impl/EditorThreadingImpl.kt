@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
+import com.intellij.openapi.application.EditorLockFreeTyping
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteIntentReadAction
-import com.intellij.openapi.application.isEditorLockFreeTypingEnabled
 import com.intellij.openapi.editor.EditorThreading
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.application
@@ -72,7 +72,7 @@ class EditorThreadingImpl : EditorThreading {
   }
 
   private fun isLockFreeTypingAllowed(): Boolean {
-    return isEditorLockFreeTypingEnabled && EDT.isCurrentThreadEdt()
+    return EditorLockFreeTyping.isEnabled() && EDT.isCurrentThreadEdt()
   }
 
   /**

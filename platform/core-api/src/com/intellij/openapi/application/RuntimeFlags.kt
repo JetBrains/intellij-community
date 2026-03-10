@@ -45,11 +45,3 @@ val setUserInteractiveQosForEdt: Boolean = System.getProperty("ide.set.qos.for.e
  */
 @get:ApiStatus.Internal
 val isRhizomeAdEnabled: Boolean = System.getProperty("ijpl.rhizome.ad.enabled", "false").toBoolean()
-
-
-/**
- * - `false` means old reliable behavior with typing within the global write lock
- * - `true` means new experimental behavior with typing without the global write lock
- */
-@get:ApiStatus.Internal
-val isEditorLockFreeTypingEnabled: Boolean = System.getProperty("editor.lockfree.typing.enabled", "false").toBoolean()

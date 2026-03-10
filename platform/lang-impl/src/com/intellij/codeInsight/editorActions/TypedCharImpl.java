@@ -3,7 +3,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.RuntimeFlagsKt;
+import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -51,7 +51,7 @@ final class TypedCharImpl {
 
   static @NotNull FileType getFileType(@NotNull PsiFile file, @NotNull Editor editor) {
     FileType fileType = file.getFileType();
-    if (RuntimeFlagsKt.isEditorLockFreeTypingEnabled()) {
+    if (EditorLockFreeTyping.isEnabled()) {
       // TODO: rework for lock-free typing, getLanguageInEditor (findLanguageFromElement) requires RA on EDT
       return fileType;
     }
