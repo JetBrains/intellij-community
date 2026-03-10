@@ -9,6 +9,9 @@
 # Limit the server memory usage as per https://youtrack.jetbrains.com/issue/IJI-3103#focus=Comments-27-12862178.0-0
 startup --host_jvm_args=-Xmx12g
 
+# Remove when migrated to Bazel 9
+startup --host_jvm_args=-DBAZEL_TRACK_SOURCE_DIRECTORIES=1
+
 # IJI-2767 Bazel: move bazel output root to a standard location
 startup:macos --output_user_root=~/Library/Caches/JetBrains/MonorepoBazel
 startup:linux --output_user_root=~/.cache/JetBrains/MonorepoBazel
