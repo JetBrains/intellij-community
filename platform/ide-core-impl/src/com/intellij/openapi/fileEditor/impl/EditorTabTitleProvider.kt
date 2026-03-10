@@ -53,6 +53,6 @@ interface EditorTabTitleProvider : DumbAware {
     return HtmlChunk.raw(text)
   }
 
-  @Deprecated("Use getEditorTabTooltipHtmlText instead to avoid accidental HTML injections")
+  @Deprecated("Use getEditorTabTooltipHtml instead to avoid accidental HTML injections")
   fun getEditorTabTooltipText(project: Project, virtualFile: VirtualFile): @NlsContexts.Tooltip String? = null
 }
