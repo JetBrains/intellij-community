@@ -965,7 +965,7 @@ public final class ListPluginComponent extends JPanel {
     updateColors(mySelection);
     removeButtons(needRestartForUninstall);
 
-    if (!needRestartForUninstall && pluginInstallationState.getStatus() == PluginStatus.UNINSTALLED_WITHOUT_RESTART) {
+    if (!needRestartForUninstall && pluginInstallationState.getStatus() == PluginStatus.UNINSTALLED_WITHOUT_RESTART && !myRestartButton.isVisible()) {
       myLayout.addButtonComponent(myInstallButton = createInstallButton());
       myInstallButton.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"));
     }
