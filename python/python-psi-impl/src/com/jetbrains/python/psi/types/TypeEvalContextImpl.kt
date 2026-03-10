@@ -193,13 +193,13 @@ open class TypeEvalContextImpl internal constructor(
         val startTime = System.currentTimeMillis()
         type = Ref.deref(typeEngine!!.resolveType(element, this is LibraryTypeEvalContext))
         val duration = System.currentTimeMillis() - startTime
-        PyTypeEvaluationStatisticsService.getInstance().logHybridTypeEngineTime(duration)
+        PyTypeEvaluationCollector.logHybridTypeEngineTime(duration)
       }
       else {
         val startTime = System.currentTimeMillis()
         type = element.getType(this, KeyImpl)
         val duration = System.currentTimeMillis() - startTime
-        PyTypeEvaluationStatisticsService.getInstance().logJBTypeEngineTime(duration)
+        PyTypeEvaluationCollector.logJBTypeEngineTime(duration)
       }
 
       assertValid(type, element)

@@ -7,23 +7,6 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class PyTypeEvaluationStatisticsServiceImpl : PyTypeEvaluationStatisticsService {
-  override fun logJBTypeEngineTime(durationMs: Long) {
-    PyTypeEvaluationCollector.logJBTypeEngineTime(durationMs)
-  }
-
-  override fun logHybridTypeEngineTime(durationMs: Long) {
-    PyTypeEvaluationCollector.logHybridTypeEngineTime(durationMs)
-  }
-}
-
-/**
- * FUS collector for Python type evaluation statistics.
- *
- * This collector is registered separately from [PyTypeEvaluationStatisticsServiceImpl]
- * to avoid dual registration as both a service and an extension.
- */
-@ApiStatus.Internal
 object PyTypeEvaluationCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -44,3 +27,4 @@ object PyTypeEvaluationCollector : CounterUsagesCollector() {
     HYBRID_TYPE_ENGINE_TIME.log(getDurationBasket(durationMs))
   }
 }
+
