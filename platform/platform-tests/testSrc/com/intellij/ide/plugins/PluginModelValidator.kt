@@ -38,6 +38,7 @@ data class CorePluginDescription(
 val COMMUNITY_CORE_PLUGINS = listOf(
   CorePluginDescription(mainModuleName = "intellij.idea.community.customization", rootPluginXmlName = "IdeaPlugin.xml"),
   CorePluginDescription(mainModuleName = "intellij.pycharm.community", rootPluginXmlName = "PyCharmCorePlugin.xml"),
+  CorePluginDescription(mainModuleName = "intellij.mps.resources"),
 )
 
 /**
