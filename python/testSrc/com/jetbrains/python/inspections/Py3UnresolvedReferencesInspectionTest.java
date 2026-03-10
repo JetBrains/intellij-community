@@ -601,4 +601,18 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
                    val: MyId | None = None
                    """);
   }
+
+  // PY-40883
+  public void testStrictClassAttributes() {
+    final PyUnresolvedReferencesInspection inspection = new PyUnresolvedReferencesInspection();
+    inspection.strictClassAttributes = true;
+    myFixture.enableInspections(inspection);
+    myFixture.configureByFile(getTestCaseDirectory() + getTestName(true) + ".py");
+    myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
+  }
+
+  // PY-40883
+  public void testStrictClassAttributesOff() {
+    doTest();
+  }
 }
