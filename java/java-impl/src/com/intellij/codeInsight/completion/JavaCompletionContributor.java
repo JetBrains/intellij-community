@@ -144,7 +144,6 @@ import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
-import com.intellij.psi.impl.source.PsiLabelReference;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.scope.ElementClassFilter;
@@ -591,12 +590,6 @@ public final class JavaCompletionContributor extends CompletionContributor imple
             JavaKeywordCompletion.addPrimitiveTypes(result, position, session);
           }
         }
-      }
-
-      PsiReference ref = position.getContainingFile().findReferenceAt(parameters.getOffset());
-      if (ref instanceof PsiLabelReference labelRef) {
-        session.registerBatchItems(processLabelReference(labelRef));
-        result.stopHere();
       }
 
       List<LookupElement> refSuggestions = Collections.emptyList();
@@ -1085,11 +1078,6 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   static boolean shouldInsertSemicolon(PsiElement position) {
     return position.getParent() instanceof PsiMethodReferenceExpression &&
            JavaFrontendCompletionUtil.insertSemicolon(position.getParent().getParent());
-  }
-
-  private static @Unmodifiable List<LookupElement> processLabelReference(PsiLabelReference reference) {
-    return ContainerUtil.map(reference.getVariants(), s -> TailTypeDecorator.withTail(LookupElementBuilder.create(s),
-                                                                                      TailTypes.semicolonType()));
   }
 
   static boolean isClassNamePossible(CompletionParameters parameters) {

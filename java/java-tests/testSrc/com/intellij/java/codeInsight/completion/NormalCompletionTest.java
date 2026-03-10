@@ -613,7 +613,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
         foo: while (true) break <caret>
       }}""");
     complete();
-    assertEquals(myFixture.getLookupElementStrings(), List.of("foo"));
+    assertEquals(List.of("foo"), myFixture.getLookupElementStrings());
   }
 
   public void testContinueLabel() {
@@ -622,7 +622,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
         foo: while (true) continue <caret>
       }}""");
     complete();
-    assertEquals(myFixture.getLookupElementStrings(), List.of("foo"));
+    assertEquals(List.of("foo"), myFixture.getLookupElementStrings());
   }
 
   public void testContinueLabelTail() {
