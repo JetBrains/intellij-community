@@ -1,60 +1,38 @@
 fleet.rpc.RemoteApi
 fleet.rpc.RemoteApiDescriptor
-- a:call(fleet.rpc.RemoteApi,java.lang.String,java.lang.Object[],kotlin.coroutines.Continuation):java.lang.Object
-- a:clientStub(kotlin.jvm.functions.Function3):fleet.rpc.RemoteApi
-- a:getApiFqn():java.lang.String
-- a:getSignature(java.lang.String):fleet.rpc.RpcSignature
 @:fleet.rpc.Rpc
 - java.lang.annotation.Annotation
 f:fleet.rpc.client.DurableKt
 - sf:durable(Z,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - bs:durable$default(Z,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-f:fleet.rpc.client.FleetClientKt
-- sf:fleetClient(fleet.rpc.client.ClientId,fleet.rpc.core.TransportFactory,Z,fleet.util.async.DelayStrategy,fleet.rpc.client.RpcInterceptor,java.lang.String):fleet.util.async.Resource
-- bs:fleetClient$default(fleet.rpc.client.ClientId,fleet.rpc.core.TransportFactory,Z,fleet.util.async.DelayStrategy,fleet.rpc.client.RpcInterceptor,java.lang.String,I,java.lang.Object):fleet.util.async.Resource
-- sf:proxy(fleet.rpc.client.FleetClient,fleet.rpc.RemoteApiDescriptor,fleet.util.UID,fleet.rpc.core.InstanceId):fleet.rpc.RemoteApi
 f:fleet.rpc.client.RemoteIsCancelledException
 - fleet.rpc.client.RpcClientException
 - kotlinx.coroutines.CopyableThrowable
-- <init>(java.lang.String,java.lang.Throwable):V
 - createCopy():fleet.rpc.client.RemoteIsCancelledException
 f:fleet.rpc.client.RouteClosedException
 - fleet.rpc.client.RpcClientException
 - kotlinx.coroutines.CopyableThrowable
-- <init>(fleet.util.UID,java.lang.String,java.lang.Throwable):V
-- b:<init>(fleet.util.UID,java.lang.String,java.lang.Throwable,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - createCopy():fleet.rpc.client.RouteClosedException
-- f:getRoute():fleet.util.UID
 f:fleet.rpc.client.RpcCausalityTimeout
 - fleet.rpc.client.RpcClientException
 - kotlinx.coroutines.CopyableThrowable
-- <init>(java.lang.String,java.lang.Throwable):V
 - createCopy():fleet.rpc.client.RpcCausalityTimeout
 f:fleet.rpc.client.RpcClientDisconnectedException
 - fleet.rpc.client.RpcClientException
 - kotlinx.coroutines.CopyableThrowable
-- <init>(java.lang.String,java.lang.Throwable):V
 - createCopy():fleet.rpc.client.RpcClientDisconnectedException
 a:fleet.rpc.client.RpcClientException
 - java.lang.RuntimeException
-- <init>(java.lang.String,java.lang.Throwable):V
 f:fleet.rpc.client.RpcServiceNotReady
 - fleet.rpc.client.RpcClientException
 - kotlinx.coroutines.CopyableThrowable
-- <init>(fleet.rpc.core.RpcMessage$CallRequest,java.lang.Throwable):V
-- b:<init>(fleet.rpc.core.RpcMessage$CallRequest,java.lang.Throwable,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - createCopy():fleet.rpc.client.RpcServiceNotReady
 f:fleet.rpc.client.RpcTimeoutException
 - fleet.rpc.client.RpcClientException
 - kotlinx.coroutines.CopyableThrowable
-- <init>(java.lang.String,java.lang.Throwable):V
-- b:<init>(java.lang.String,java.lang.Throwable,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - createCopy():fleet.rpc.client.RpcTimeoutException
 - f:getMsg():java.lang.String
 f:fleet.rpc.client.UnresolvedServiceException
 - fleet.rpc.client.RpcClientException
 - kotlinx.coroutines.CopyableThrowable
-- <init>(fleet.rpc.core.InstanceId,java.lang.Throwable):V
-- b:<init>(fleet.rpc.core.InstanceId,java.lang.Throwable,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - createCopy():fleet.rpc.client.UnresolvedServiceException
-- f:getServiceId():fleet.rpc.core.InstanceId
