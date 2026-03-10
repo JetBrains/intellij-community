@@ -246,8 +246,15 @@ internal class TerminalToolWindowTabsManagerImpl(
 
   private fun createTerminalViewAndStartSession(builder: TerminalToolWindowTabBuilderImpl): TerminalView {
     val terminal = createTerminalView(builder.startupFusInfo)
-    val tabName = builder.tabName ?: createDefaultTabName(getToolWindow())
-    terminal.title.change { defaultTitle = tabName }
+    terminal.title.change {
+      if (builder.isUserDefinedName) {
+        userDefinedTitle = builder.tabName
+      }
+      else {
+        defaultTitle = builder.tabName ?: createDefaultTabName(getToolWindow())
+      }
+    }
+
     createBackendTabAndStartSession(terminal, builder)
 
     project.messageBus.syncPublisher(TerminalTabsManagerListener.TOPIC).terminalViewCreated(terminal)
