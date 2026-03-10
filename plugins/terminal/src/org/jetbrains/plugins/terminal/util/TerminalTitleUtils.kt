@@ -4,10 +4,12 @@ package org.jetbrains.plugins.terminal.util
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.platform.project.projectId
 import com.intellij.terminal.TerminalTitle
@@ -33,9 +35,12 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
 object TerminalTitleUtils {
-  fun createDefaultTabName(toolWindow: ToolWindow): String {
+  @JvmStatic
+  fun createDefaultTabName(
+    toolWindow: ToolWindow,
+    defaultName: String = TerminalOptionsProvider.instance.tabName,
+  ): @NlsSafe String {
     val existingNames = toolWindow.contentManager.contentsRecursively.map { it.displayName }
-    val defaultName = TerminalOptionsProvider.instance.tabName
     return UniqueNameGenerator.generateUniqueName(
       defaultName,
       "",
@@ -46,6 +51,7 @@ object TerminalTitleUtils {
     )
   }
 
+  @JvmStatic
   @OptIn(FlowPreview::class)
   fun updateTabNameOnTitleChange(title: TerminalTitle, content: Content, scope: CoroutineScope) {
     scope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
@@ -53,6 +59,24 @@ object TerminalTitleUtils {
         .debounce(TITLE_UPDATE_DELAY)
         .collect {
           content.displayName = it.text
+        }
+    }
+  }
+
+  @JvmStatic
+  @OptIn(FlowPreview::class)
+  fun updateFileNameOnTitleChange(
+    title: TerminalTitle,
+    file: VirtualFile,
+    project: Project,
+    scope: CoroutineScope,
+  ) {
+    scope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
+      title.stateFlow()
+        .debounce(TITLE_UPDATE_DELAY)
+        .collect {
+          file.rename(null, it.text)
+          FileEditorManager.getInstance(project).updateFilePresentation(file)
         }
     }
   }
@@ -80,7 +104,7 @@ object TerminalTitleUtils {
     }
   }
 
-  fun TerminalTitle.stateFlow(): Flow<TitleData> {
+  private fun TerminalTitle.stateFlow(): Flow<TitleData> {
     val flow = channelFlow {
       val disposable = Disposer.newDisposable()
       addTitleListener(object : TerminalTitleListener {
@@ -97,7 +121,7 @@ object TerminalTitleUtils {
     return flow.distinctUntilChanged()
   }
 
-  val TITLE_UPDATE_DELAY: Duration = 300.milliseconds
+  private val TITLE_UPDATE_DELAY: Duration = 300.milliseconds
 
   data class TitleData(@param:NlsSafe val text: String, val isUserDefined: Boolean)
 }
