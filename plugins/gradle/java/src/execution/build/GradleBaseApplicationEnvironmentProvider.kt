@@ -28,13 +28,9 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.eel.provider.LocalEelDescriptor
-import com.intellij.platform.eel.provider.asEelPath
-import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.task.ExecuteRunConfigurationTask
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.java.JavaSourceRootType
-import java.nio.file.Path
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetup
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
@@ -127,7 +123,7 @@ abstract class GradleBaseApplicationEnvironmentProvider : GradleExecutionEnviron
     val gradlePath = getGradleIdentityPathOrNull(module) ?: return null
     val sourceSetName = GradleProjectResolverUtil.getSourceSetName(module) ?: return null
     val workingDir = ProgramParametersUtil.getWorkingDir(runProfile, module.project, module)?.let {
-      convertPathForEel(project, it)
+      FileUtil.toSystemIndependentName(it)
     }
     val builder = GradleInitScriptParametersBuilder(runProfile, module)
       .withWorkingDirectory(workingDir)
@@ -164,7 +160,7 @@ abstract class GradleBaseApplicationEnvironmentProvider : GradleExecutionEnviron
 
       val javaExePath = type.getVMExecutablePath(jdk)
                         ?: throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))
-      withJavaExePath(convertPathForEel(project, javaExePath))
+      withJavaExePath(FileUtil.toSystemIndependentName(javaExePath))
     }
   }
 
@@ -180,11 +176,6 @@ abstract class GradleBaseApplicationEnvironmentProvider : GradleExecutionEnviron
       }
       throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))
     }
-  }
-
-  private fun convertPathForEel(project: Project, path: String): String {
-    return FileUtil.toSystemIndependentName(
-      if (project.getEelDescriptor() is LocalEelDescriptor) path else Path.of(path).asEelPath().toString())
   }
 
   protected open fun customiseTaskExecutionsSettings(taskSettings: ExternalSystemTaskExecutionSettings, module: Module) {}
