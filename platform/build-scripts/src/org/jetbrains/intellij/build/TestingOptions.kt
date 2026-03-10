@@ -48,7 +48,7 @@ open class TestingOptions {
 
   /**
    * Semicolon-separated JUnit 5 tag expressions to include; only tests tagged with at least one of these are executed.
-   * Supports JUnit Platform tag expressions (e.g. `"slow"`, `"slow;integration"`, `"slow | integration"`).
+   * Supports JUnit Platform tag expressions (e.g. `"slow"`, `"slow;integration"`).
    * If not specified, no tag filtering is applied.
    */
   var testTags: String? = System.getProperty("intellij.build.test.tags").nullize(nullizeSpaces = true)
