@@ -163,6 +163,8 @@
     <codeInsight.completion.command.provider language="Properties" implementationClass="com.intellij.lang.properties.command.completion.PropertiesRenameActionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="Properties" implementationClass="com.intellij.lang.properties.command.completion.PropertiesGoToDeclarationOrUsagesActionCompletionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="Properties" implementationClass="com.intellij.lang.properties.command.completion.PropertiesFormatCodeCompletionCommandProvider" order="last"/>
+    <codeInsight.completion.command.provider language="Properties" implementationClass="com.intellij.lang.properties.command.completion.PropertiesMoveLineUpCommandProvider" order="last"/>
+    <codeInsight.completion.command.provider language="Properties" implementationClass="com.intellij.lang.properties.command.completion.PropertiesMoveLineDownCommandProvider" order="last"/>
 
   </extensions>
   <projectListeners>
