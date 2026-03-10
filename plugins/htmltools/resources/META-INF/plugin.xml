@@ -8,8 +8,9 @@
   <vendor>JetBrains</vendor>
 
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.intellij.platform.images"/>
-    <module name="intellij.xml.impl"/>
+    <!-- endregion -->
   </dependencies>
 
 

@@ -19,11 +19,12 @@
     <module name="intellij.tasks.jira"/>
   </content>
   <dependencies>
-    <plugin id="com.intellij.modules.xml" />
-    <module name="intellij.platform.vcs.impl"/>
+    <plugin id="com.intellij.modules.xml"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.tasks"/>
     <module name="intellij.platform.tasks.impl"/>
-    <module name="intellij.libraries.gson"/>
-    <module name="intellij.regexp"/>
+    <module name="intellij.platform.vcs.impl"/>
+    <!-- endregion -->
   </dependencies>
 
   <depends optional="true" config-file="java-contexts.xml">com.intellij.java</depends>
