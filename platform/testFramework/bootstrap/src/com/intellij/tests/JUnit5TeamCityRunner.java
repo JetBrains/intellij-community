@@ -32,6 +32,7 @@ import org.junit.platform.engine.support.descriptor.EngineDescriptor;
 import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.EngineFilter;
 import org.junit.platform.launcher.Launcher;
+import org.junit.platform.launcher.TagFilter;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.PostDiscoveryFilter;
 import org.junit.platform.launcher.TestExecutionListener;
@@ -86,6 +87,7 @@ import java.util.logging.LogRecord;
 public final class JUnit5TeamCityRunner {
   private static final String ENGINE_VINTAGE = System.getProperty("intellij.build.test.engine.vintage");
   private static final String REVERSE_ORDER = System.getProperty("intellij.build.test.reverse.order");
+  private static final String INCLUDE_TAGS = System.getProperty("intellij.build.test.tags");
 
   public static void main(String[] args) throws ClassNotFoundException {
     if (args.length != 1 && args.length != 2) {
@@ -122,6 +124,7 @@ public final class JUnit5TeamCityRunner {
         if (!"false".equals(ENGINE_VINTAGE)) filters.add(new IgnorePostDiscoveryFilter());            // IJIgnore and Ignore support in JUnit 3/4
         filters.add(new PerformancePostDiscoveryFilter());                                            // PerformanceUnitTest support
         if (!"false".equals(ENGINE_VINTAGE)) filters.add(new HeadlessPostDiscoveryFilter());          // SkipInHeadlessEnvironment support in JUnit 3/4
+        if (INCLUDE_TAGS != null) filters.add(TagFilter.includeTags(INCLUDE_TAGS.split(";")));        // JUnit 5 tag filter
 
         // filter engines
         if ("false".equals(ENGINE_VINTAGE)) {  // JUnit 5 tests only

@@ -334,6 +334,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         mainModule = mainModule,
         testGroups = options.testGroups,
         testPatterns = options.testPatterns,
+        testTags = options.testTags,
         jvmArgs = additionalJvmOptions,
         systemProperties = systemProperties,
         remoteDebugging = false,
@@ -428,6 +429,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     mainModule: String,
     testGroups: String?,
     testPatterns: String?,
+    testTags: String? = null,
     jvmArgs: List<String>,
     systemProperties: Map<String, String>,
     envVariables: Map<String, String> = emptyMap(),
@@ -491,6 +493,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     testPatterns?.let { systemProperties.putIfAbsent("intellij.build.test.patterns", it) }
     testGroups?.let { systemProperties.putIfAbsent("intellij.build.test.groups", it) }
     systemProperties.putIfAbsent("intellij.build.test.sorter", System.getProperty("intellij.build.test.sorter"))
+    testTags?.let { systemProperties.putIfAbsent("intellij.build.test.tags", it) }
     systemProperties.putIfAbsent(TestingTasks.BOOTSTRAP_TESTCASES_PROPERTY, "com.intellij.AllTests")
     systemProperties.putIfAbsent(TestingOptions.PERFORMANCE_TESTS_ONLY_FLAG, options.isPerformanceTestsOnly.toString())
     val allJvmArgs = ArrayList(jvmArgs)
