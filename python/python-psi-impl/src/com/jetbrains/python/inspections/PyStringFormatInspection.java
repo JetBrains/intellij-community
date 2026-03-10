@@ -167,12 +167,15 @@ public final class PyStringFormatInspection extends PyInspection {
         else if (PsiTreeUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS)) {
           if (s != null) {
             final PyType rightType = myTypeEvalContext.getType(rightExpression);
-            if (rightType instanceof PyTupleType tupleType) {
-              matchEntireTupleTypes(problemTarget, tupleType);
-              return tupleType.getElementCount();
-            }
-            else {
-              checkExpressionType(rightExpression, s, problemTarget);
+
+            for (var member : PyTypeUtil.toStream(rightType)) {
+              if (member instanceof PyTupleType tupleType) {
+                matchEntireTupleTypes(problemTarget, tupleType);
+                return tupleType.getElementCount();
+              }
+              else {
+                checkExpressionType(rightExpression, s, problemTarget);
+              }
             }
           }
           return 1;
