@@ -210,7 +210,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     if (base.getModel() instanceof ChooseByNameModelEx chooseByNameModelEx) {
       indicator.checkCanceled();
       final var started = System.currentTimeMillis();
-      final var qualifiedNameMatcher = qualifiedNamePattern != null && qualifiedNamePattern.equals(namePattern)
+      final var qualifiedNameMatcher = qualifiedNamePattern != null && !qualifiedNamePattern.equals(namePattern)
                                        ? buildPatternMatcher(qualifiedNamePattern, preferStartMatches) : null;
       final var nameMatcher = buildPatternMatcher(namePattern, preferStartMatches);
       chooseByNameModelEx.processNames(name -> {
