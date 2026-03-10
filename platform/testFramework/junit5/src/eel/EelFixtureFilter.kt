@@ -38,6 +38,22 @@ class EelFixtureFilter(
   @ExtendWith(WslEnabledCondition::class)
   annotation class OnlyWhenWslEnabled
 
+  /**
+   * For tests that verify behavior of code with [com.intellij.platform.eel.provider.localEel].
+   */
+  @TestOnly
+  @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
+  @ExtendWith(LocalEelEnabledCondition::class)
+  annotation class OnlyWhenLocalEelEnabled
+
+  /**
+   * This annotation is for testing IJent itself. Maybe you need [OnlyWhenLocalEelEnabled] instead.
+   */
+  @TestOnly
+  @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
+  @ExtendWith(LocalIjentEnabledCondition::class)
+  annotation class OnlyWhenLocalIjentEnabled
+
   override fun equals(other: Any?): Boolean =
     other is EelFixtureFilter &&
     isLocalEelEnabled == other.isLocalEelEnabled &&
@@ -139,6 +155,30 @@ private class WslEnabledCondition : ExecutionCondition {
     }
     else {
       ConditionEvaluationResult.disabled("WSL is disabled")
+    }
+  }
+}
+
+@TestOnly
+private class LocalEelEnabledCondition : ExecutionCondition {
+  override fun evaluateExecutionCondition(context: ExtensionContext): ConditionEvaluationResult {
+    return if (EelFixtureFilter.instance.isLocalEelEnabled) {
+      ConditionEvaluationResult.enabled("Local Eel is enabled")
+    }
+    else {
+      ConditionEvaluationResult.disabled("Local Eel is disabled")
+    }
+  }
+}
+
+@TestOnly
+private class LocalIjentEnabledCondition : ExecutionCondition {
+  override fun evaluateExecutionCondition(context: ExtensionContext): ConditionEvaluationResult {
+    return if (EelFixtureFilter.instance.isLocalIjentEnabled) {
+      ConditionEvaluationResult.enabled("Local IJent is enabled")
+    }
+    else {
+      ConditionEvaluationResult.disabled("Local IJent is disabled")
     }
   }
 }
