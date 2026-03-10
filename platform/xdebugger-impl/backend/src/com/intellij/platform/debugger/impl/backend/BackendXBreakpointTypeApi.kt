@@ -157,6 +157,11 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
              "Request details: hasBreakpoints=${request.hasBreakpoints}, isTemporary=${request.isTemporary}, isLogging=${request.isLogging}," +
              "  line breakpoint types: ${lineTypes.map { it.id }}" }
 
+    if (lineTypes.isEmpty()) {
+      LOG.debug { "[$requestId] No line breakpoint types found, returning XNoBreakpointPossibleResponse" }
+      return XNoBreakpointPossibleResponse
+    }
+
     val variants = readAction { XDebuggerUtilImpl.getLineBreakpointVariants(project, lineTypes, position) }.await()
 
     if (variants.isEmpty()) {
