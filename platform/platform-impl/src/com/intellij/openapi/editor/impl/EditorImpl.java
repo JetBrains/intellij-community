@@ -46,7 +46,9 @@ import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretState;
@@ -5878,5 +5880,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return myElfDocument;
     }
     return getDocument();
+  }
+
+  @ApiStatus.Internal
+  public void assertOrDumpState(boolean condition, String message) {
+    if (!condition) {
+      throw new RuntimeExceptionWithAttachments(message, AttachmentFactory.createContext(dumpState()));
+    }
   }
 }
