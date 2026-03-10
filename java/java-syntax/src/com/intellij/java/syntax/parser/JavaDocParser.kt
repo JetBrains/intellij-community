@@ -169,7 +169,7 @@ class JavaDocParser(
       parseCodeBlock()
     }
     else if (tokenType === JavaDocSyntaxTokenType.DOC_LBRACKET) {
-      parseMarkdownReferenceChecked()
+      parseMarkdownReferenceOrLink()
     }
     else if (tokenType === JavaDocSyntaxTokenType.DOC_COMMENT_DATA || (isWhiteSpace(tokenType) && !isEolToken(tokenType, builder.tokenText))) {
       parseCommentData()
@@ -253,8 +253,8 @@ class JavaDocParser(
     tag.done(JavaDocSyntaxElementType.DOC_MARKDOWN_CODE_BLOCK)
   }
 
-  /** Ensure a reference link is good before parsing it  */
-  private fun parseMarkdownReferenceChecked() {
+  /** Ensure a link is good before parsing it  */
+  private fun parseMarkdownReferenceOrLink() {
     var hasLabel = true
     var tag = builder.mark()
 
@@ -288,10 +288,10 @@ class JavaDocParser(
     val firstReferenceToken = findInlineToken(JavaDocSyntaxTokenType.DOC_LBRACKET, JavaDocSyntaxTokenType.DOC_SPACE, false)
     if (firstReferenceToken !== JavaDocSyntaxTokenType.DOC_LBRACKET) {
       hasLabel = false
-      // The label is actually a reference, verify brackets balance or if we have a normal markdown link
+      // The label may actually be a reference, verify brackets balance or if we have a normal Markdown link
       if (leftBracketCount > 1 || firstReferenceToken === JavaDocSyntaxTokenType.DOC_LPAREN) {
         tag.rollbackTo()
-        builder.advanceLexer()
+        parseMarkdownLink()
         return
       }
     }
@@ -452,6 +452,42 @@ class JavaDocParser(
     }
   }
 
+  /** Simple parse function that will wrap a Markdown link in an element */
+  private fun parseMarkdownLink() {
+    val fallback = builder.mark()
+    if (builder.tokenType !== JavaDocSyntaxTokenType.DOC_LBRACKET) {
+      fallback.rollbackTo()
+      return builder.advanceLexer()
+    }
+    builder.advanceLexer()
+    val label = builder.mark()
+    findInlineToken(JavaDocSyntaxTokenType.DOC_RBRACKET, JavaDocSyntaxTokenType.DOC_LBRACKET, true)
+    fakeCollapse(label, JavaDocSyntaxTokenType.DOC_COMMENT_DATA)
+
+    if (builder.tokenType !== JavaDocSyntaxTokenType.DOC_RBRACKET) {
+      fallback.rollbackTo()
+      return builder.advanceLexer()
+    }
+
+    builder.advanceLexer()
+    if (builder.tokenType !== JavaDocSyntaxTokenType.DOC_LPAREN) {
+      fallback.rollbackTo()
+      return builder.advanceLexer()
+    }
+
+    builder.advanceLexer()
+    val link = builder.mark()
+    findInlineToken(JavaDocSyntaxTokenType.DOC_RPAREN)
+
+    if (builder.tokenType !== JavaDocSyntaxTokenType.DOC_RPAREN) {
+      fallback.rollbackTo()
+      return builder.advanceLexer()
+    }
+
+    fakeCollapse(link, JavaDocSyntaxTokenType.DOC_COMMENT_DATA)
+    builder.advanceLexer()
+    fallback.done(JavaDocSyntaxElementType.DOC_MARKDOWN_LINK)
+  }
 
   private fun findInlineToken(needle: SyntaxElementType?): SyntaxElementType? {
     return findInlineToken(needle, null, false)

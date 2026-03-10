@@ -23,6 +23,7 @@ import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.impl.source.javadoc.PsiDocTagImpl;
 import com.intellij.psi.impl.source.javadoc.PsiInlineDocTagImpl;
 import com.intellij.psi.impl.source.javadoc.PsiMarkdownCodeBlockImpl;
+import com.intellij.psi.impl.source.javadoc.PsiMarkdownLinkImpl;
 import com.intellij.psi.impl.source.javadoc.PsiMarkdownReferenceLabelImpl;
 import com.intellij.psi.impl.source.javadoc.PsiMarkdownReferenceLinkImpl;
 import com.intellij.psi.impl.source.javadoc.PsiSnippetAttributeImpl;
@@ -84,6 +85,7 @@ public interface JavaDocElementType {
   IElementType DOC_MARKDOWN_CODE_BLOCK = new JavaDocCompositeElementType("DOC_CODE_BLOCK", () -> new PsiMarkdownCodeBlockImpl());
   IElementType DOC_MARKDOWN_REFERENCE_LINK = new JavaDocCompositeElementType("DOC_REFERENCE_LINK", () -> new PsiMarkdownReferenceLinkImpl());
   IElementType DOC_MARKDOWN_REFERENCE_LABEL = new JavaDocCompositeElementType("DOC_REFERENCE_LABEL", () -> new PsiMarkdownReferenceLabelImpl());
+  IElementType DOC_MARKDOWN_LINK = new JavaDocCompositeElementType("DOC_MARKDOWN_LINK", () -> new PsiMarkdownLinkImpl());
 
   ILazyParseableElementType DOC_REFERENCE_HOLDER = new DocReferenceHolderElementType();
   ILazyParseableElementType DOC_TYPE_HOLDER = new DocTypeHolderElementType();
