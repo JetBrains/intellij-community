@@ -374,7 +374,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
         }
         catch (IOException ex) {
           LOG.error(ex);
-          FileUtil.asyncDelete(e.second);
+          FileUtil.delete(e.second);
         }
         it.remove();
       }
@@ -382,7 +382,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     if (myStorageForUndo != null) {
       final File[] files = myStorageForUndo.listFiles();
       if (files == null || files.length == 0) {
-        FileUtil.asyncDelete(myStorageForUndo);
+        FileUtil.delete(myStorageForUndo);
         myStorageForUndo = null;
       }
     }

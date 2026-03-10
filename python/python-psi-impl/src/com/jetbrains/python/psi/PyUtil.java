@@ -25,8 +25,8 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiComment;
@@ -74,7 +74,6 @@ import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PyLiteralKind;
 import com.jetbrains.python.psi.stubs.PySetuptoolsNamespaceIndex;
-import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -96,7 +95,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.JComponent;
-import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -359,27 +361,28 @@ public final class PyUtil {
   }
 
   public static void deletePycFiles(String pyFilePath) {
-    if (pyFilePath.endsWith(PyNames.DOT_PY)) {
-      List<File> filesToDelete = new ArrayList<>();
-      File pyc = new File(pyFilePath + "c");
-      if (pyc.exists()) {
-        filesToDelete.add(pyc);
+    try {
+      if (pyFilePath.endsWith(PyNames.DOT_PY)) {
+        Files.deleteIfExists(Path.of(pyFilePath + "c"));
+        Files.deleteIfExists(Path.of(pyFilePath + "o"));
+        var file = Path.of(pyFilePath);
+        var pycache = file.resolveSibling(PyNames.PYCACHE);
+        if (Files.isDirectory(pycache)) {
+          var shortName = FileUtilRt.getNameWithoutExtension(NioFiles.getFileName(file));
+          for (var cacheFile : NioFiles.list(pycache)) {
+            var cacheFileName = NioFiles.getFileName(cacheFile);
+            if (FileUtilRt.extensionEquals(cacheFileName, "pyc")) {
+              var nameWithMagic = FileUtilRt.getNameWithoutExtension(cacheFileName);
+              if (FileUtilRt.getNameWithoutExtension(nameWithMagic).equals(shortName)) {
+                Files.deleteIfExists(cacheFile);
+              }
+            }
+          }
+        }
       }
-      File pyo = new File(pyFilePath + "o");
-      if (pyo.exists()) {
-        filesToDelete.add(pyo);
-      }
-      final File file = new File(pyFilePath);
-      File pycache = new File(file.getParentFile(), PyNames.PYCACHE);
-      if (pycache.isDirectory()) {
-        final String shortName = FileUtilRt.getNameWithoutExtension(file.getName());
-        Collections.addAll(filesToDelete, pycache.listFiles(pathname -> {
-          if (!FileUtilRt.extensionEquals(pathname.getName(), "pyc")) return false;
-          String nameWithMagic = FileUtilRt.getNameWithoutExtension(pathname.getName());
-          return FileUtilRt.getNameWithoutExtension(nameWithMagic).equals(shortName);
-        }));
-      }
-      FileUtil.asyncDelete(filesToDelete);
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
     }
   }
 

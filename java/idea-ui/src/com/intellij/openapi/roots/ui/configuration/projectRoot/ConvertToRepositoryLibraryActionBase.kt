@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot
 
 import com.intellij.ide.JavaUiBundle
@@ -253,7 +253,7 @@ private class ComparingJarFilesTask(project: Project, private val downloadedFile
   }
 
   fun deleteTemporaryFiles() {
-    FileUtil.asyncDelete(filesToDelete)
+    filesToDelete.forEach { FileUtil.delete(it) }
   }
 
   override fun onCancel() {

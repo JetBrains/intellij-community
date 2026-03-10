@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.concurrency.ContextAwareRunnable;
@@ -8,7 +8,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Formats;
 import com.intellij.openapi.util.text.StringUtil;
@@ -137,7 +136,6 @@ public final class IncProjectBuilder {
 
   private static final int FLUSH_INVOCATIONS_TO_SKIP = 10;
 
-  private static final boolean SYNC_DELETE = Boolean.parseBoolean(System.getProperty("jps.sync.delete", "false"));
   private static final GlobalContextKey<Set<BuildTarget<?>>> TARGET_WITH_CLEARED_OUTPUT = GlobalContextKey.create("_targets_with_cleared_output_");
   public static final int MAX_BUILDER_THREADS;
   static {
@@ -691,30 +689,7 @@ public final class IncProjectBuilder {
     final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
     ProjectBuildException projectBuildException = null;
 
-    var targetCleanup = new Consumer<BuildTarget<?>>() {
-      final ExecutorService executor = SharedThreadPool.getInstance().createBoundedExecutor("IncProjectBuilder Output Cleanup Pool", MAX_BUILDER_THREADS);
-      final List<Future<?>> tasks = new ArrayList<>();
-      @Override
-      public void accept(BuildTarget<?> target) {
-        if (SYNC_DELETE) {
-          clearOutputFilesUninterruptibly(context, target);
-        }
-        else {
-          tasks.add(executor.submit(() -> clearOutputFilesUninterruptibly(context, target)));
-        }
-      }
-
-      void waitForTasks() {
-        for (Future<?> task : tasks) {
-          try {
-            task.get();
-          }
-          catch (Throwable e) {
-            LOG.info(e);
-          }
-        }
-      }
-    };
+    var targetCleanup = (Consumer<BuildTarget<?>>)(target -> clearOutputFilesUninterruptibly(context, target));
 
     final long cleanStart = System.nanoTime();
     try {
@@ -750,8 +725,6 @@ public final class IncProjectBuilder {
       projectBuildException = e;
     }
     finally {
-      targetCleanup.waitForTasks();
-
       LOG.info("Cleaned output directories in " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - cleanStart) + " ms");
       if (cleanCaches) {
         try {
@@ -1067,14 +1040,9 @@ public final class IncProjectBuilder {
 
     if (!filesToDelete.isEmpty()) {
       context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.cleaning.output.directories")));
-      if (SYNC_DELETE) {
-        for (var file : filesToDelete) {
-          context.checkCanceled();
-          FileUtilRt.delete(file);
-        }
-      }
-      else {
-        myAsyncTasks.add(FileUtil.asyncDelete(filesToDelete));
+      for (var file : filesToDelete) {
+        context.checkCanceled();
+        FileUtilRt.delete(file);
       }
     }
   }
