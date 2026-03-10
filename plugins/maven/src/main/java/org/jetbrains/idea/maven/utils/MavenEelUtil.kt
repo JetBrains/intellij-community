@@ -53,6 +53,7 @@ import com.intellij.platform.util.progress.withProgressText
 import com.intellij.ui.navigation.Place
 import com.intellij.util.SystemProperties
 import com.intellij.util.text.VersionComparatorUtil
+import com.intellij.util.text.nullize
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -240,6 +241,24 @@ object MavenEelUtil {
                                                            mavenConfig?.toProperties())
                                })
     return mavenConfig?.getAbsolutePath(path) ?: path
+  }
+
+  suspend fun getToolchainsFile(
+    project: Project?,
+    overridenToolchainsPathString: String?,
+    config: MavenConfig?,
+  ): Path {
+    val toolchainsPath = (overridenToolchainsPathString ?: config?.getOptionValue(MavenConfigSettings.ALTERNATE_TOOLCHAINS_SETTINGS))
+      .nullize(true)
+    return resolveUsingEel(project,
+                           {
+                             toolchainsPath?.let { Path.of(it) } ?: Path.of(SystemProperties.getUserHome())
+                               .resolve(DOT_M2_DIR)
+                               .resolve(MavenUtil.TOOLCHAINS_XML)
+                           },
+                           { api ->
+                             toolchainsPath?.let { api.fs.getPath(it).asNioPath() } ?: api.resolveM2Dir().resolve(MavenUtil.TOOLCHAINS_XML)
+                           })
   }
 
   @JvmStatic

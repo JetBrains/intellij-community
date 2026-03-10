@@ -302,7 +302,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
       if (!sourceBuildOutput.exists()) {
         error(
           """
-          Event listener does not exist at $alreadyCalculatedEventListenerJar
+          Event listener does not exist at $sourceBuildOutput
           
           Please run rebuild for maven modules:
           community/plugins/maven/maven-event-listener

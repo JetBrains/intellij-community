@@ -13,13 +13,13 @@ import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.buildtool.MavenSyncSession
 import org.jetbrains.idea.maven.importing.workspaceModel.StaticWorkspaceProjectImporter
 import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceProjectImporter
 import org.jetbrains.idea.maven.project.MavenEmbeddersManager
 import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask
-import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.idea.maven.statistics.MavenImportCollector
 import org.jetbrains.idea.maven.utils.MavenLog
 import java.util.concurrent.TimeUnit
@@ -32,31 +32,29 @@ interface MavenProjectImporter {
 
   companion object {
     internal fun createStaticImporter(
-      project: Project,
-      projectsTree: MavenProjectsTree,
+      syncSession: MavenSyncSession,
       projectsToImport: List<MavenProject>,
       modelsProvider: IdeModifiableModelsProvider,
       importingSettings: MavenImportingSettings,
       parentImportingActivity: StructuredIdeActivity,
     ): MavenProjectImporter {
 
-      val importer = StaticWorkspaceProjectImporter(projectsTree, projectsToImport,
-                                                    importingSettings, modelsProvider, project)
-      return wrapWithFUS(project, parentImportingActivity, importer)
+      val importer = StaticWorkspaceProjectImporter(syncSession, projectsToImport,
+                                                    importingSettings, modelsProvider)
+      return wrapWithFUS(syncSession.project, parentImportingActivity, importer)
     }
 
     internal fun createImporter(
-      project: Project,
-      projectsTree: MavenProjectsTree,
+      syncSession: MavenSyncSession,
       projectsToImport: List<MavenProject>,
       modelsProvider: IdeModifiableModelsProvider,
       importingSettings: MavenImportingSettings,
       previewModule: Module?,
       parentImportingActivity: StructuredIdeActivity,
     ): MavenProjectImporter {
-      val importer = createImporter(project, projectsTree, projectsToImport,
+      val importer = createImporter(syncSession, projectsToImport,
                                     modelsProvider, importingSettings, previewModule)
-      return wrapWithFUS(project, parentImportingActivity, importer)
+      return wrapWithFUS(syncSession.project, parentImportingActivity, importer)
     }
 
     private fun wrapWithFUS(
@@ -121,14 +119,13 @@ interface MavenProjectImporter {
     }
 
     private fun createImporter(
-      project: Project,
-      projectsTree: MavenProjectsTree,
+      syncSession: MavenSyncSession,
       projectsToImport: List<MavenProject>,
       modelsProvider: IdeModifiableModelsProvider,
       importingSettings: MavenImportingSettings,
       previewModule: Module?,
     ): MavenProjectImporter {
-      return WorkspaceProjectImporter(projectsTree, projectsToImport, importingSettings, modelsProvider, project)
+      return WorkspaceProjectImporter(syncSession, projectsToImport, importingSettings, modelsProvider)
     }
 
     @JvmStatic

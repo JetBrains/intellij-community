@@ -12,6 +12,7 @@ import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.openapi.module.impl.ModuleManagerEx
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.JDOMUtil
@@ -35,6 +36,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
 import com.intellij.platform.workspace.jps.entities.SdkDependency
+import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.platform.workspace.jps.entities.exModuleOptions
 import com.intellij.platform.workspace.jps.entities.libraryProperties
 import com.intellij.platform.workspace.jps.entities.modifyLibraryEntity
@@ -157,8 +159,8 @@ internal class WorkspaceModuleImporter(
     // With the new workspace model we can make this process working out of the box. For that we need to extract module
     //   dependencies as separate entities and add the SDK dependency with the user defined EntitySource. However, this will require
     //   the refactoring of the ModuleEntity
-    val moduleSdk = originalModule?.dependencies?.find { it is SdkDependency }
-                    ?: InheritedSdkDependency
+    val originalSdk = originalModule?.dependencies?.filterIsInstance<SdkDependency>()?.firstOrNull()
+    val moduleSdk = getModuleSdk(originalSdk)
     result.add(moduleSdk)
     result.add(ModuleSourceDependency)
 
@@ -190,6 +192,12 @@ internal class WorkspaceModuleImporter(
       result.addIfNotNull(created)
     }
     return result
+  }
+
+  private fun getModuleSdk(originalSdk: SdkDependency?): ModuleDependencyItem {
+    val jdkName = importData.moduleData.jdkName
+    if(jdkName != null) return SdkDependency(SdkId(jdkName, JavaSdk.getInstance().name))
+    return InheritedSdkDependency
   }
 
   private fun pathToUrl(it: String) = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, it) + JarFileSystem.JAR_SEPARATOR

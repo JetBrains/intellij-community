@@ -46,6 +46,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
+import org.jetbrains.idea.maven.buildtool.MavenSyncSession
 import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.buildtool.incrementalMode
 import org.jetbrains.idea.maven.importing.MavenImportStats
@@ -54,7 +55,6 @@ import org.jetbrains.idea.maven.importing.importActivityStarted
 import org.jetbrains.idea.maven.importing.runMavenConfigurationTask
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
-import org.jetbrains.idea.maven.model.MavenWorkspaceMap
 import org.jetbrains.idea.maven.project.preimport.MavenProjectStaticImporter
 import org.jetbrains.idea.maven.project.preimport.SimpleStructureProjectVisitor
 import org.jetbrains.idea.maven.server.*
@@ -235,18 +235,18 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
   override suspend fun importMavenProjects(projects: List<MavenProject>) {
     reapplyModelStructureOnly {
-      importMavenProjects(projectsTree, projects, null, it)
+      importMavenProjects(projects, null, it, MavenSyncSession(project, MavenSyncSpec.incremental("reapply"), projectsTree))
     }
   }
 
   private suspend fun importMavenProjects(
-    tree: MavenProjectsTree,
     projectsToImport: List<MavenProject>,
     modelsProvider: IdeModifiableModelsProvider?,
     parentActivity: StructuredIdeActivity,
+    syncSession: MavenSyncSession,
   ): List<Module> {
     return tracer.spanBuilder("importMavenProjects").useWithScope {
-      val createdModules = doImportMavenProjects(tree, projectsToImport, modelsProvider, parentActivity)
+      val createdModules = doImportMavenProjects(projectsToImport, modelsProvider, parentActivity, syncSession)
       fireProjectImportCompleted()
       createdModules
     }
@@ -254,10 +254,10 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
   @RequiresBackgroundThread
   private suspend fun doImportMavenProjects(
-    tree: MavenProjectsTree,
     projectsToImport: List<MavenProject>,
     optionalModelsProvider: IdeModifiableModelsProvider?,
     parentActivity: StructuredIdeActivity,
+    syncSession: MavenSyncSession,
   ): List<Module> {
     val modelsProvider = optionalModelsProvider ?: ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
 
@@ -268,7 +268,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
       false
     ) {
       ApplicationManager.getApplication().messageBus.syncPublisher(MavenSyncListener.TOPIC).importStarted(myProject)
-      val importResult = runImportProjectActivity(tree, projectsToImport, modelsProvider, parentActivity)
+      val importResult = runImportProjectActivity(projectsToImport, modelsProvider, parentActivity, syncSession)
       tracer.spanBuilder("importFinished").use {
         ApplicationManager.getApplication().messageBus.syncPublisher(MavenSyncListener.TOPIC)
           .importFinished(myProject, projectsToImport, importResult.createdModules)
@@ -298,13 +298,12 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   }
 
   private suspend fun runImportProjectActivity(
-    tree: MavenProjectsTree,
     projectsToImport: List<MavenProject>,
     modelsProvider: IdeModifiableModelsProvider,
     parentActivity: StructuredIdeActivity,
+    syncSession: MavenSyncSession,
   ): ImportResult {
-    val projectImporter = MavenProjectImporter.createImporter(
-      project, tree, projectsToImport,
+    val projectImporter = MavenProjectImporter.createImporter(syncSession, projectsToImport,
       modelsProvider, importingSettings, myPreviewModule, parentActivity
     )
     val postTasks = tracer.spanBuilder("importProject").useWithScope {
@@ -468,6 +467,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     mavenEmbedderWrappers: MavenEmbedderWrappers,
     read: MavenSyncFileReader,
   ): List<Module> {
+    val session = MavenSyncSession(project, spec, tree)
     return tracer.spanBuilder("syncMavenProject").useWithScope doUpdateMavenProjects@{
       // display all import activities using the same build progress
       logDebug("Start update ${project.name}, $spec ${myProject.name}")
@@ -483,6 +483,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
           val result = tracer.spanBuilder("doStaticSync").useWithScope doStaticSync@{
             MavenProjectStaticImporter.getInstance(myProject)
               .syncStatic(
+                session,
                 tree.existingManagedFiles,
                 modelsProvider,
                 importingSettings,
@@ -511,7 +512,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
           return@doUpdateMavenProjects emptyList()
         }
         val result = tracer.spanBuilder("doDynamicSync").useWithScope {
-          doDynamicSync(tree, syncActivity, read, spec, modelsProvider, mavenEmbedderWrappers)
+          doDynamicSync(tree, session, syncActivity, read, modelsProvider, mavenEmbedderWrappers)
         }
 
         return@doUpdateMavenProjects result
@@ -546,12 +547,14 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
   private suspend fun doDynamicSync(
     tree: MavenProjectsTree,
+    session: MavenSyncSession,
     syncActivity: StructuredIdeActivity,
     read: MavenSyncFileReader,
-    spec: MavenSyncSpec,
     modelsProvider: IdeModifiableModelsProvider?,
     mavenEmbedderWrappers: MavenEmbedderWrappers,
   ): List<Module> {
+
+    val spec = session.spec
     val readingResult = readMavenProjectsActivity(syncActivity) { read(mavenEmbedderWrappers) }
 
     fireImportAndResolveScheduled()
@@ -564,15 +567,15 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     }
 
     val result = tracer.spanBuilder("importModules").useWithScope {
-      importModules(tree,  syncActivity, resolutionResult, modelsProvider, mavenEmbedderWrappers)
+      importModules(tree, syncActivity, resolutionResult, modelsProvider, mavenEmbedderWrappers, session)
     }
 
     tracer.spanBuilder("collectMavenProblems").useWithScope {
-      tree.collectProblems()
+      tree.collectProblems(session)
     }
 
     tracer.spanBuilder("notifyMavenProblems").useWithScope {
-      MavenResolveResultProblemProcessor.notifyMavenProblems(tree, myProject)
+      MavenResolveResultProblemProcessor.notifyMavenProblems(session)
     }
     setNewTreeFromSync(tree)
     return result
@@ -584,6 +587,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     resolutionResult: MavenProjectResolutionResult,
     modelsProvider: IdeModifiableModelsProvider?,
     mavenEmbedderWrappers: MavenEmbedderWrappers,
+    syncSession: MavenSyncSession,
   ): List<Module> {
 
     val projectsToImport = resolutionResult.mavenProjectMap.entries
@@ -628,7 +632,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
         }
       }
 
-      importMavenProjects(tree, projectsToImport, modelsProvider, syncActivity)
+      importMavenProjects(projectsToImport, modelsProvider, syncActivity, syncSession)
     }
 
   }

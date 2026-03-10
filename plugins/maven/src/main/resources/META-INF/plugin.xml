@@ -208,6 +208,7 @@
     <dom.fileMetaData implementation="org.jetbrains.idea.maven.dom.MavenDomOldProfilesModelDescription" rootTagName="profiles"/>
     <dom.fileMetaData implementation="org.jetbrains.idea.maven.dom.MavenDomSettingsModelDescription" rootTagName="settings"/>
     <dom.fileMetaData implementation="org.jetbrains.idea.maven.dom.MavenDomPluginModelDescription" rootTagName="plugin"/>
+    <dom.fileMetaData implementation="org.jetbrains.idea.maven.dom.toolchains.MavenDomToolchainModelDescription" rootTagName="toolchains"/>
 
     <lang.documentationProvider language="XML" implementationClass="org.jetbrains.idea.maven.dom.MavenModelDocumentationProvider"
                                 order="first"/>
@@ -436,6 +437,9 @@
 
     <registryKey key="maven.import.separate.main.and.test.modules.when.multiReleaseOutput" defaultValue="true"
                  description="IntelliJ IDEA will create multiple modules for a Maven project when multiReleaseOutput or compileSourceRoots are used."/>
+
+    <registryKey key="maven.import.separate.main.and.test.modules.when.toolchains" defaultValue="true"
+                 description="IntelliJ IDEA will create multiple modules for a Maven project when main and test Java language have different toolchains."/>
 
     <registryKey key="maven.import.compiler.arguments" defaultValue="true"
                  description="Enable importing of the maven compiler plugin arguments"/>
@@ -809,6 +813,9 @@
     <action id="Maven.OpenSettingsXml"
             class="org.jetbrains.idea.maven.project.actions.OpenOrCreateSettingsXmlAction"/>
 
+    <action id="Maven.OpenToolchainsXml"
+            class="org.jetbrains.idea.maven.project.actions.OpenOrCreateToolchainsXmlAction"/>
+
     <action id="Maven.IgnoreProjects"
             class="org.jetbrains.idea.maven.project.actions.ToggleIgnoredProjectsAction">
     </action>
@@ -971,6 +978,7 @@
       <reference ref="Maven.RemoveManagedFiles"/>
       <separator/>
       <reference ref="Maven.OpenSettingsXml"/>
+      <reference ref="Maven.OpenToolchainsXml"/>
       <separator/>
       <reference ref="Maven.DownloadAllGroup"/>
       <separator/>

@@ -147,6 +147,7 @@ object MavenUtil {
   val SYSTEM_ID: ProjectSystemId = ProjectSystemId(MAVEN_NAME_UPCASE)
   const val MAVEN_NOTIFICATION_GROUP: String = MAVEN_NAME
   const val SETTINGS_XML: String = "settings.xml"
+  const val TOOLCHAINS_XML: String = "toolchains.xml"
   const val DOT_M2_DIR: String = ".m2"
   const val ENV_M2_HOME: String = "M2_HOME"
   const val M2_DIR: String = "m2"

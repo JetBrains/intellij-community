@@ -30,6 +30,8 @@ import org.jdom.output.Format
 import org.jdom.output.XMLOutputter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.idea.maven.buildtool.MavenSyncSession
+import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenProjectsTreeUpdater.UpdateSpec
@@ -1112,7 +1114,7 @@ class MavenProjectsTree(val project: Project) {
 
   }
 
-  internal suspend fun collectProblems() {
+  internal suspend fun collectProblems(session: MavenSyncSession) {
     val existingFiles = ConcurrentHashMap<File, Boolean>()
     val fileExistsPredicate = Predicate { f: File -> existingFiles.computeIfAbsent(f) { file: File -> Files.exists(file.toPath()) } }
 
