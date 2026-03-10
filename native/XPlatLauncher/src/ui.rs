@@ -71,14 +71,15 @@ fn show_alert_impl(title: &str, text: &str) {
 fn show_alert_impl(title: &str, text: &str) {
     use {
         log::error,
-        native_dialog::{MessageDialog, MessageType}
+        native_dialog::{DialogBuilder, MessageLevel}
     };
 
-    let result = MessageDialog::new()
+    let result = DialogBuilder::message()
         .set_title(title)
         .set_text(text)
-        .set_type(MessageType::Error)
-        .show_alert();
+        .set_level(MessageLevel::Error)
+        .alert()
+        .show();
     if let Err(e) = result {
         error!("Failed to show error message: {e:?}");
         eprintln!("{title}\n{text}");
