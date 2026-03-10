@@ -604,15 +604,15 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
 
   // PY-40883
   public void testStrictClassAttributes() {
-    final PyUnresolvedReferencesInspection inspection = new PyUnresolvedReferencesInspection();
-    inspection.strictClassAttributes = true;
-    myFixture.enableInspections(inspection);
-    myFixture.configureByFile(getTestCaseDirectory() + getTestName(true) + ".py");
-    myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
+    doTest();
   }
 
   // PY-40883
   public void testStrictClassAttributesOff() {
-    doTest();
+    final PyUnresolvedReferencesInspection inspection = new PyUnresolvedReferencesInspection();
+    inspection.strictClassAttributes = false;
+    myFixture.enableInspections(inspection);
+    myFixture.configureByFile(getTestCaseDirectory() + getTestName(true) + ".py");
+    myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
   }
 }

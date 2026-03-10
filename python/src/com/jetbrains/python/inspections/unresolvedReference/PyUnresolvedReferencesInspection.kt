@@ -77,7 +77,7 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
   var ignoredIdentifiers: List<String> = ArrayList()
 
   @JvmField
-  var strictClassAttributes: Boolean = false
+  var strictClassAttributes: Boolean = true
 
   override fun createVisitor(holder: ProblemsHolder, session: LocalInspectionToolSession): PyUnresolvedReferencesVisitor =
     Visitor(holder,
