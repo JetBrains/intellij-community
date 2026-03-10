@@ -154,6 +154,12 @@ internal class SelectionLinePainter(
   private val selectionBg = editor.selectionModel.textAttributes.backgroundColor
   private val leftExtensionWidth = if (editor.isRightAligned) lineExtensionWidth else 0.0
   private val rightExtensionWidth = if (editor.isRightAligned) 0.0 else lineExtensionWidth
+  private val visibleScrollArea = editor.scrollingModel.visibleArea.let {
+    val startOffset = editor.visualLineStartOffset(editor.yToVisualLine(it.y) - 1)
+    val endOffset = editor.visualLineStartOffset(editor.yToVisualLine(it.y + it.height) + 1)
+
+    startOffset to endOffset
+  }
 
   private val caretSelections by lazy {
     editor.caretModel.allCarets.map { caret ->
@@ -193,7 +199,12 @@ internal class SelectionLinePainter(
     val foldingModel = editor.foldingModel
     val regions = foldingModel.fetchTopLevel() ?: emptyArray()
 
-    regions.filterIsInstance<CustomFoldRegion>().filter { isCFRInSelection(it) }
+    regions.filterIsInstance<CustomFoldRegion>()
+      .filter { isCFRInSelection(it) }
+      .filter {
+        val (visibleStart, visibleEnd) = visibleScrollArea
+        visibleStart <= it.startOffset && it.endOffset <= visibleEnd
+      }
   }
 
   private fun caretSelectionsForLine(line: Int): CaretLineSelections {
@@ -262,7 +273,7 @@ internal class SelectionLinePainter(
 
     return caretSelectionsForLine(visualLine - 1).selectionEndDistance(left, x, precision)
   }
-  
+
   private fun selectionEndDistanceBelowLine(visualLine: Int, x: Double, left: Boolean, checkBlockInlays: Boolean = true, precision: Double = EPSILON): Double? {
     if (visualLine >= editor.view.visibleLineCount) return null
 
@@ -467,7 +478,7 @@ internal class SelectionLinePainter(
       signedDistance != null && abs(signedDistance) < EPSILON -> CornerType.Straight
       signedDistance != null -> {
         val radius = abs(signedDistance) / 2
-        
+
         val thisLineExtendsFurther = if (isLeftCorner) signedDistance > 0 else signedDistance < 0
         if (thisLineExtendsFurther) CornerType.Rounded(radius) else CornerType.InvertedRounded(radius)
       }
