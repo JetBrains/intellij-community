@@ -19,7 +19,6 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.replaceService
 import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -125,9 +124,7 @@ internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
   protected suspend fun <State, Component : PersistentStateComponent<State>> initModifyAndSave(component: Component, modifier: State.() -> Unit): Component {
     init(component)
     component.state!!.modifier()
-    runBlocking {
-      componentStore.save()
-    }
+    componentStore.save()
     return component
   }
 
