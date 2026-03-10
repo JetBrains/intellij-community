@@ -9,8 +9,8 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.AFTER_ERROR_DIRECTIVE
+import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.ERROR_DIRECTIVE
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
@@ -22,27 +22,28 @@ object K2DirectiveBasedActionUtils {
     const val K2_ERROR_DIRECTIVE: String = "// K2_ERROR:"
     const val K2_AFTER_ERROR_DIRECTIVE: String = "// K2_AFTER_ERROR:"
 
+    private fun isErrorChecksSuppressed(fileText: String): Boolean =
+        InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, DISABLE_ERRORS_DIRECTIVE, DISABLE_K2_ERRORS_DIRECTIVE).isNotEmpty()
+
     fun checkForUnexpectedErrors(
         mainFile: File,
         ktFile: KtFile,
         fileText: String,
         vararg directives: String = arrayOf(K2_ERROR_DIRECTIVE, ERROR_DIRECTIVE)
     ) {
-        if (InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, DISABLE_K2_ERRORS_DIRECTIVE).isNotEmpty()) {
-            return
-        }
+        if (isErrorChecksSuppressed(fileText)) return
 
         checkForUnexpected(mainFile, ktFile, fileText, "errors", KaSeverity.ERROR, *directives)
     }
 
     fun checkForErrorsBefore(mainFile: File, ktFile: KtFile, fileText: String) {
+        if (isErrorChecksSuppressed(fileText)) return
+
         checkForUnexpected(mainFile, ktFile, fileText, "errors", KaSeverity.ERROR, K2_ERROR_DIRECTIVE, ERROR_DIRECTIVE)
     }
 
     fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
-        if (InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, DISABLE_K2_ERRORS_DIRECTIVE, DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE).isNotEmpty()) {
-            return
-        }
+        if (isErrorChecksSuppressed(fileText)) return
 
         checkForUnexpected(mainFile, ktFile, fileText, "errors", KaSeverity.ERROR, K2_AFTER_ERROR_DIRECTIVE, AFTER_ERROR_DIRECTIVE)
     }

@@ -12,7 +12,7 @@ import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.util.Comparing
@@ -91,9 +91,9 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
 
         val loggerProvider = FilterableTestStatisticsEventLoggerProvider("FUS") { it == "called" }
         statisticsEventLoggerProvider = loggerProvider
-        StatisticsEventLoggerProvider.Companion.EP_NAME.point.registerExtension(
+        StatisticsEventLoggerProvider.EP_NAME.point.registerExtension(
             loggerProvider,
-            LoadingOrder.Companion.FIRST,
+            LoadingOrder.FIRST,
             newDisposable
         )
         (myFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
@@ -235,7 +235,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
             fixtureClasses = InTextDirectivesUtils.findListWithPrefixes(fileText, "// $FIXTURE_CLASS_DIRECTIVE: ")
             runInEdtAndWait {
                 for (fixtureClass in fixtureClasses) {
-                    TestFixtureExtension.Companion.loadFixture(fixtureClass, module)
+                    TestFixtureExtension.loadFixture(fixtureClass, module)
                 }
             }
 
@@ -256,11 +256,16 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
 
                 // The script configuration must not be loaded during highlighting. It should also be loaded as soon as possible, so we run
                 // it together with the fixture's file configuration in the EDT.
-                if (myFixture.file is KtFile) {
-                    loadScriptConfiguration(myFixture.file as KtFile)
+                val ktFile = myFixture.file as? KtFile
+                if (ktFile != null) {
+                    loadScriptConfiguration(ktFile)
                 }
 
                 checkForUnexpectedActions()
+
+                if (ktFile != null) {
+                    checkForErrorsBefore(testFile, ktFile, fileText)
+                }
             }
 
             configExtra(fileText)
@@ -279,9 +284,9 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                     return
                 }
 
-                runReadAction {
+                runReadActionBlocking {
                     if (intention.isAvailable(project, myFixture.editor, file)) {
-                        IntentionManagerSettings.Companion.getInstance().isShowLightBulb(intention)
+                        IntentionManagerSettings.getInstance().isShowLightBulb(intention)
                     }
                 }
 
@@ -313,7 +318,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         } finally {
             runInEdtAndWait {
                 for (fixtureClass in fixtureClasses) {
-                    TestFixtureExtension.Companion.unloadFixture(fixtureClass)
+                    TestFixtureExtension.unloadFixture(fixtureClass)
                 }
                 ConfigLibraryUtil.unconfigureLibrariesByDirective(myFixture.module, fileText)
             }
@@ -385,13 +390,13 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
 
     private fun checkForUnexpectedActions() {
         val text = myFixture.editor.document.text
-        val actionHint = myFixture.file.actionHint(text)
         val actionDirective = pluginMode.actionsListDirectives.firstNotNullOfOrNull {
             if (!InTextDirectivesUtils.isDirectiveDefined(text, it)) it else null
         } ?: return
+        val actionHint = myFixture.file.actionHint(text)
 
         myFixture.doHighlighting()
-        val cachedIntentions = ShowIntentionActionsHandler.Companion.calcCachedIntentions(project, editor, file)
+        val cachedIntentions = ShowIntentionActionsHandler.calcCachedIntentions(project, editor, file)
         cachedIntentions.wrapAndUpdateGutters()
         val actions = cachedIntentions.allActions.map { it.action }.toMutableList()
 
@@ -456,6 +461,8 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
             myFixture.file,dataFile(), actions, actionsListDirectives = pluginMode.actionsListDirectives
         )
     }
+
+    protected open fun checkForErrorsBefore(mainFile: File, ktFile: KtFile, fileText: String) {}
 
     protected open fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {}
 
