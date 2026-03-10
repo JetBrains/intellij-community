@@ -159,7 +159,7 @@ open class MultipleFileMergeDialog(
     toggleGroupByDirectory = ::toggleGroupByDirectory,
     getGroupByDirectory = { groupByDirectory },
     iterativeDataHolder = iterativeDataHolder,
-    resolveAutomatically = { resolveAutomatically(project, iterativeDataHolder, files) },
+    resolveAutomatically = { resolveAutomatically(project, iterativeDataHolder) },
     updateTable = ::updateModelFromFiles
   )
   else OneShotMergeFlowDelegate(
@@ -233,15 +233,55 @@ open class MultipleFileMergeDialog(
 
   @NonNls
   override fun getDimensionServiceKey(): String = "MultipleFileMergeDialog"
+  override fun getPreferredFocusedComponent(): JComponent = table
 
   @JvmSuppressWildcards
   protected open fun beforeResolve(files: Collection<VirtualFile>): Boolean {
     return true
   }
 
-  private fun acceptForResolution(resolution: MergeSession.Resolution, files: List<VirtualFile>) {
-    assert(resolution.yoursOrTheirs())
+  @Throws(ProcessCanceledException::class)
+  @RequiresBlockingContext
+  @RequiresEdt
+  private fun resolveAutomatically(
+    project: Project,
+    iterativeDataHolder: MergeConflictIterativeDataHolder,
+  ) {
+    val files = unresolvedFiles - iterativeDataHolder.getResolvedFiles()
+    if (files.isEmpty()) return
+    if (!beforeResolve(files)) return
 
+    runWithErrorHandling {
+      val requests = createMergeRequests(files, callback = null)
+      for (i in files.indices) {
+        val file = files[i]
+        val request = requests[i]
+        val model = runWithModalProgressBlocking(ModalTaskOwner.component(contentPanel),
+                                                 VcsBundle.message("multiple.file.merge.dialog.progress.title.loading.revisions")) {
+          iterativeDataHolder.prepareModelIfSupported(file, request)
+        } ?: continue
+        val affected = model.getAutoResolvableChanges().mapTo(IntArrayList()) { it.index }
+
+        model.executeMergeCommand(
+          DiffBundle.message("action.presentation.merge.resolve.automatically.text"),
+          null,
+          UndoConfirmationPolicy.DEFAULT,
+          true,
+          affected
+        ) {
+          model.resolveAllChangesAutomatically()
+        }
+
+        saveDocument(file)
+        checkMarkModifiedProject(project, file)
+      }
+    }
+    updateTree(SetDefaultTreeStateStrategy())
+    updateModelFromFiles()
+  }
+
+  private fun acceptForResolution(resolution: MergeSession.Resolution, files: List<VirtualFile> = table.selectedFiles) {
+    assert(resolution.yoursOrTheirs())
     val (binaryFiles, textFiles) = files.partition(mergeProvider::isBinary)
     acceptRevision(resolution, binaryFiles)
 
@@ -253,11 +293,14 @@ open class MultipleFileMergeDialog(
       runWithErrorHandling {
         val filesWithMergeModels = runWithModalProgressBlocking(ModalTaskOwner.component(contentPanel),
                                                                 VcsBundle.message("multiple.file.merge.dialog.progress.title.resolving.conflicts")) {
-
-          files.map { file ->
-            val request = withContext(Dispatchers.EDT) { createMergeRequest(file, null) }
-            file to iterativeDataHolder.prepareModelIfSupported(file, request)
+          val requests = withContext(Dispatchers.EDT) { createMergeRequests(files, callback = null) }
+          val result = ArrayList<Pair<VirtualFile, MergeConflictModel?>>(files.size)
+          for (i in files.indices) {
+            val file = files[i]
+            val request = requests[i]
+            result.add(file to iterativeDataHolder.prepareModelIfSupported(file, request))
           }
+          result
         }
         val iterativeFilesWithModel = filesWithMergeModels.mapNotNull { (file, model) -> model?.let { file to it } }
         val normalFiles = filesWithMergeModels.filter { (_, model) -> model == null }.map { it.first }
@@ -405,11 +448,12 @@ open class MultipleFileMergeDialog(
 
   private fun finishResolution() {
     val iterativelyResolved = iterativeDataHolder?.getResolvedFiles() ?: return
-    runWithModalProgressBlocking(ModalTaskOwner.component(contentPanel),
-                                 VcsBundle.message("multiple.file.merge.dialog.progress.title.resolving.conflicts")) {
-      iterativelyResolved.forEach { file ->
-        saveDocument(file)
-        checkMarkModifiedProject(project, file)
+    iterativelyResolved.forEach { file ->
+      saveDocument(file)
+      checkMarkModifiedProject(project, file)
+
+      runWithModalProgressBlocking(ModalTaskOwner.component(contentPanel),
+                                   VcsBundle.message("multiple.file.merge.dialog.progress.title.resolving.conflicts")) {
         markFileProcessed(file, getSessionResolution(MergeResult.RESOLVED))
       }
     }
@@ -434,7 +478,7 @@ open class MultipleFileMergeDialog(
   @RequiresBlockingContext
   @RequiresEdt
   private fun showMergeDialogForFile(file: VirtualFile) {
-    val request = createMergeRequest(file) { result: MergeResult ->
+    val request = createMergeRequests(listOf(file)) { result: MergeResult ->
       saveDocument(file)
       checkMarkModifiedProject(project, file)
 
@@ -448,7 +492,7 @@ open class MultipleFileMergeDialog(
           }
         }
       }
-    }
+    }.single()
 
     if (iterativeDataHolder != null) {
       runWithModalProgressBlocking(ModalTaskOwner.component(contentPanel),
@@ -494,52 +538,61 @@ open class MultipleFileMergeDialog(
 
   @RequiresBlockingContext
   @RequiresEdt
-  private fun createMergeRequest(
-    file: VirtualFile,
+  private fun createMergeRequests(
+    files: List<VirtualFile>,
+    requestFactory: DiffRequestFactory = DiffRequestFactory.getInstance(),
     callback: ((MergeResult) -> Unit)?,
-  ): MergeRequest {
-    val (mergeData, title, contentTitles, contentTitleCustomizers) = loadConflictData(file)
-    val byteContents = listOf(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST)
+  ): List<MergeRequest> {
+    val conflictDataList = loadConflictData(files)
+    val result = ArrayList<MergeRequest>(files.size)
+    for (i in files.indices) {
+      val file = files[i]
+      val conflictData = conflictDataList[i]
+      val mergeData = conflictData.mergeData
+      val byteContents = listOf(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST)
+      val contentTitles = conflictData.contentTitles
+      val title = conflictData.title
 
-    val requestFactory = DiffRequestFactory.getInstance()
-    val request = if (mergeProvider.isBinary(file)) { // respect MIME-types in svn
-      requestFactory.createBinaryMergeRequest(project, file, byteContents, title, contentTitles, callback)
-    }
-    else {
-      requestFactory.createMergeRequest(project, file, byteContents, mergeData.CONFLICT_TYPE, title, contentTitles, callback)
-    }
+      val request: MergeRequest = if (mergeProvider.isBinary(file)) { // respect MIME-types in svn
+        requestFactory.createBinaryMergeRequest(project, file, byteContents, title, contentTitles, callback)
+      }
+      else {
+        requestFactory.createMergeRequest(project, file, byteContents, mergeData.CONFLICT_TYPE, title, contentTitles, callback)
+      }
 
-    MergeUtils.putRevisionInfos(request, mergeData)
+      MergeUtils.putRevisionInfos(request, mergeData)
 
-    contentTitleCustomizers.run {
-      DiffUtil.addTitleCustomizers(request, listOf(leftTitleCustomizer, centerTitleCustomizer, rightTitleCustomizer))
+      conflictData.contentTitleCustomizers.run {
+        DiffUtil.addTitleCustomizers(request, listOf(leftTitleCustomizer, centerTitleCustomizer, rightTitleCustomizer))
+      }
+      result.add(request)
     }
-    return request
+    return result
   }
 
   @RequiresBlockingContext
   @RequiresEdt
-  private fun loadConflictData(file: VirtualFile): ConflictData =
+  private fun loadConflictData(files: List<VirtualFile>): List<ConflictData> =
     runWithModalProgressBlocking(ModalTaskOwner.component(contentPanel),
                                  VcsBundle.message("multiple.file.merge.dialog.progress.title.loading.revisions")) {
-      val mergeData = mergeProvider.loadRevisions(file)
+      files.map { file ->
+        val filePath = VcsUtil.getFilePath(file)
+        val mergeData = mergeProvider.loadRevisions(file)
 
-      val title = tryCompute { mergeDialogCustomizer.getMergeWindowTitle(file) }
+        val title = tryCompute { mergeDialogCustomizer.getMergeWindowTitle(file) }
 
-      val conflictTitles = listOf(
-        tryCompute { mergeDialogCustomizer.getLeftPanelTitle(file) },
-        tryCompute { mergeDialogCustomizer.getCenterPanelTitle(file) },
-        tryCompute { mergeDialogCustomizer.getRightPanelTitle(file, mergeData.LAST_REVISION_NUMBER) }
-      )
+        val conflictTitles = listOf(
+          tryCompute { mergeDialogCustomizer.getLeftPanelTitle(file) },
+          tryCompute { mergeDialogCustomizer.getCenterPanelTitle(file) },
+          tryCompute { mergeDialogCustomizer.getRightPanelTitle(file, mergeData.LAST_REVISION_NUMBER) }
+        )
 
-      val filePath = VcsUtil.getFilePath(file)
-      val titleCustomizer = tryCompute { mergeDialogCustomizer.getTitleCustomizerList(filePath) }
-                            ?: MergeDialogCustomizer.DEFAULT_CUSTOMIZER_LIST
+        val titleCustomizer = tryCompute { mergeDialogCustomizer.getTitleCustomizerList(filePath) }
+                              ?: MergeDialogCustomizer.DEFAULT_CUSTOMIZER_LIST
 
-      ConflictData(mergeData, title, conflictTitles, titleCustomizer)
+        ConflictData(mergeData, title, conflictTitles, titleCustomizer)
+      }
     }
-
-  override fun getPreferredFocusedComponent(): JComponent = table
 }
 
 private fun <T> tryCompute(task: () -> T): T? {
@@ -597,7 +650,9 @@ private val TreeTable.selectedFiles: List<VirtualFile>
 private object CustomColumns {
   fun createColumns(customizer: MergeDialogCustomizer, session: MergeSession?): Array<ColumnInfo<*, *>> {
     val columns = ArrayList<ColumnInfo<*, *>>()
-    columns.add(object : ColumnInfo<DefaultMutableTreeNode, Any>(VcsBundle.message("multiple.file.merge.column.name")) {
+    val name = if (MergeConflictIterativeResolution.isEnabled()) "" else VcsBundle.message("multiple.file.merge.column.name")
+
+    columns.add(object : ColumnInfo<DefaultMutableTreeNode, Any>(name) {
       override fun valueOf(node: DefaultMutableTreeNode) = node.userObject
       override fun getColumnClass(): Class<*> = TreeTableModel::class.java
     })

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge
 
 import com.intellij.diff.InvalidDiffRequestException
@@ -150,6 +150,14 @@ class MergeConflictModel(
     else {
       markChangeResolved(change, side)
     }
+  }
+
+  @RequiresWriteLock
+  fun resolveAllChangesAutomatically() {
+    val allChanges = getAutoResolvableChanges()
+    if (allChanges.isEmpty()) return
+    allChanges.forEach { change: TextMergeChange -> resolveChangeAutomatically(change.index, ThreeSide.BASE) }
+    contentModified = true
   }
 
   @RequiresWriteLock
@@ -365,8 +373,11 @@ class MergeConflictModel(
     affectedIndexes: IntList?,
     task: () -> Unit,
   ): Boolean {
-    contentModified = true
-    return resultModel.executeMergeCommand(commandName, commandGroupId, undoConfirmationPolicy, bulkUpdate, affectedIndexes, task)
+    return resultModel.executeMergeCommand(commandName, commandGroupId, undoConfirmationPolicy, bulkUpdate, affectedIndexes, task).also {
+      if (it) {
+        contentModified = true
+      }
+    }
   }
 
   private fun getByIndex(index: Int): TextMergeChange {

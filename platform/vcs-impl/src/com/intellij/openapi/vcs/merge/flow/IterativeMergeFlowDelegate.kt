@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
@@ -25,22 +26,31 @@ import com.intellij.openapi.vcs.merge.MergeConflictsTreeTable
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vcs.merge.MergeSession
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.treeStructure.treetable.TreeTable
+import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.initOnShow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.awt.Graphics
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JButton
 import javax.swing.JComponent
+import javax.swing.JLayer
 import javax.swing.JRootPane
+import javax.swing.plaf.LayerUI
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeCellRenderer
@@ -62,10 +72,13 @@ internal class IterativeMergeFlowDelegate(
   private val updateTable: () -> Unit,
 ) : MergeFlowDelegate {
 
-  private lateinit var resolveAutomaticallyButton: JComponent
+  private lateinit var resolveAutomaticallyButton: JButton
   private lateinit var acceptYoursButton: JButton
   private lateinit var acceptTheirsButton: JButton
   private lateinit var mergeButton: JButton
+  private var wasResolveAutomaticallyPressedOnce = false
+  private var isResolveAutomaticallyPressed = false
+  private var isResolvingConflicts = false
 
   override fun createCenterPanel(): JComponent {
     table.toolTipTextProvider = { file ->
@@ -92,20 +105,26 @@ internal class IterativeMergeFlowDelegate(
             text = title
           }
         }
-      }
-      row {
-        resolveAutomaticallyButton = button(VcsBundle.message("multiple.file.merge.resolve.automatically")) {
-          resolveAutomatically()
-        }.align(AlignX.LEFT).component
+      }.customize(UnscaledGapsY(bottom = 24, top = 12))
+      customizeSpacingConfiguration(EmptySpacingConfiguration()) {
+        row {
+          resolveAutomaticallyButton =
+            button(VcsBundle.message(if (isResolvingConflicts) "multiple.file.merge.dialog.progress.title.resolving.conflicts"
+                                     else "multiple.file.iterative.merge.resolve.automatically"),
+                   actionListener = { onResolveAutomaticallyClick() }).applyToComponent {
+              icon = AllIcons.Diff.MagicResolve
+            }.align(AlignX.LEFT).customize(UnscaledGaps(left = 2)).component
 
         cell(createToolbar().component)
           .align(AlignX.RIGHT)
+          .customize(UnscaledGaps(right = 4, top = 4, bottom = 4))
       }
-      row {
-        scrollCell(table)
-          .align(Align.FILL)
-          .resizableColumn()
-      }.resizableRow()
+        row {
+          scrollCell(JLayer(table, DisabledStateLayerUI(table)))
+            .align(Align.FILL)
+            .resizableColumn()
+        }.resizableRow()
+      }
     }
   }
 
@@ -166,9 +185,35 @@ internal class IterativeMergeFlowDelegate(
       unmergeableFileSelected = unmergeableFileSelected,
       unacceptableFileSelected = unacceptableFileSelected,
       resolvedFilesSelected = selectedFiles.any { iterativeDataHolder.isFileResolved(it) },
-      onlyRevertableFilesSelected = selectedFiles.all {
+      onlyRevertableFilesSelected = selectedFiles.isNotEmpty() && selectedFiles.all {
         iterativeDataHolder.getMergeConflictModel(it)?.getResolvedChanges()?.isNotEmpty() == true
       })
+    updateResolveAutomaticallyButtonState()
+  }
+
+  private fun updateResolveAutomaticallyButtonState() {
+    val autoResolvableFiles =
+      files.any { iterativeDataHolder.getMergeConflictModel(it)?.getAutoResolvableChanges()?.isNotEmpty() == true }
+    val allFilesResolved = files.all { iterativeDataHolder.getMergeConflictModel(it)?.getUnresolvedChanges()?.isEmpty() == true }
+    resolveAutomaticallyButton.apply {
+      // Initially enable the button regardless of resolvable changes
+      isEnabled = when {
+        autoResolvableFiles -> true
+        allFilesResolved -> false
+        !wasResolveAutomaticallyPressedOnce -> true
+        isResolveAutomaticallyPressed -> false
+        isResolvingConflicts -> false
+        else -> true
+      }
+      icon = if (isResolvingConflicts) AnimatedIcon.Default() else AllIcons.Diff.MagicResolve
+      text = if (isResolvingConflicts) VcsBundle.message("multiple.file.merge.dialog.progress.title.resolving.conflicts")
+      else VcsBundle.message("multiple.file.iterative.merge.resolve.automatically")
+
+      toolTipText =
+        if (!isEnabled && !isResolvingConflicts) VcsBundle.message("multiple.file.iterative.merge.resolve.automatically.disabled.tooltip") else null
+    }
+
+    table.isEnabled = !isResolvingConflicts
   }
 
   override fun buildTreeModel(
@@ -186,7 +231,7 @@ internal class IterativeMergeFlowDelegate(
         insertSubtreeRoot(unresolvedNode)
         insertFilesIntoNode(unresolvedFiles, unresolvedNode)
       }
-      if (resolvedFiles.isNotEmpty()) {
+      if (resolvedFiles.isNotEmpty() || wasResolveAutomaticallyPressedOnce) {
         insertSubtreeRoot(resolvedNode)
         insertFilesIntoNode(resolvedFiles, resolvedNode)
       }
@@ -248,6 +293,24 @@ internal class IterativeMergeFlowDelegate(
     }
     PopupHandler.installPopupMenu(this, group, ActionPlaces.POPUP)
   }
+
+  private fun onResolveAutomaticallyClick() {
+    wasResolveAutomaticallyPressedOnce = true
+    isResolveAutomaticallyPressed = true
+    isResolvingConflicts = true
+    updateResolveAutomaticallyButtonState()
+    try {
+      resolveAutomatically()
+    }
+    catch (e: ProcessCanceledException) {
+      isResolveAutomaticallyPressed = false
+      throw e
+    }
+    finally {
+      isResolvingConflicts = false
+      updateResolveAutomaticallyButtonState()
+    }
+  }
 }
 
 private enum class ConflictsNodeType {
@@ -287,3 +350,15 @@ private data class IterativeMergeDialogState(
   val resolvedFilesSelected: Boolean,
   val onlyRevertableFilesSelected: Boolean,
 )
+
+private class DisabledStateLayerUI(private val table: MergeConflictsTreeTable) : LayerUI<MergeConflictsTreeTable>() {
+  override fun paint(g: Graphics, layer: JComponent) {
+    super.paint(g, layer)
+    if (!table.isEnabled) {
+      g.color = JBUI.CurrentTheme.Banner.INFO_BACKGROUND
+      GraphicsUtil.paintWithAlpha(g, 0.4f) {
+        g.fillRect(0, 0, layer.width, layer.height)
+      }
+    }
+  }
+}
