@@ -323,9 +323,9 @@ open class TabLabel @Internal constructor(
         g.color = JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND
 
         if (IslandsPainterProvider.getInstance()?.isRoundedTabDuringDrag() == true) {
-          val arc = JBUI.CurrentTheme.MainToolbar.Button.hoverArc().get()
-          val offsetTop = JBUI.scale(6)
-          val offsetBottom = offsetTop * 2 + JBUI.scale(1)
+          val arc = getDropTargetArc()
+          val offsetTop = getDropTargetTopOffset()
+          val offsetBottom = getDropTargetBottomOffset()
 
           (g as Graphics2D).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
           g.fillRoundRect(0, offsetTop, width, height - offsetBottom, arc, arc)
@@ -342,6 +342,14 @@ open class TabLabel @Internal constructor(
       paintFadeout(g)
     }
   }
+  @Internal
+  protected open fun getDropTargetArc(): Int = JBUI.CurrentTheme.MainToolbar.Button.hoverArc().get()
+
+  @Internal
+  protected open fun getDropTargetTopOffset(): Int = JBUI.scale(6)
+
+  @Internal
+  protected open fun getDropTargetBottomOffset(): Int = getDropTargetTopOffset() * 2 + JBUI.scale(1)
 
   protected open fun shouldPaintFadeout(): Boolean = !Registry.`is`("ui.simplified", false) && tabs.isSingleRow
 
