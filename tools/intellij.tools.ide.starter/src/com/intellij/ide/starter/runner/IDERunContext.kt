@@ -21,6 +21,7 @@ import com.intellij.ide.starter.profiler.ProfilerType
 import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
 import com.intellij.ide.starter.screenRecorder.IDEScreenRecorder
+import com.intellij.ide.starter.utils.FileSystem.listDirectoryEntriesQuietly
 import com.intellij.ide.starter.utils.JvmUtils
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.ide.starter.utils.formatArtifactName
@@ -49,7 +50,6 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.bufferedReader
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
-import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.io.path.readText
 import kotlin.io.path.walk
@@ -345,9 +345,9 @@ data class IDERunContext(
       val home = System.getProperty("user.home")
       val savedAppStateDir = Path.of(home).resolve("Library/Saved Application State")
       savedAppStateDir
-        .listDirectoryEntries()
-        .filter { file -> filesToBeDeleted.any { fileToBeDeleted -> file.name == fileToBeDeleted } }
-        .forEach { it.deleteRecursively() }
+        .listDirectoryEntriesQuietly()
+        ?.filter { file -> filesToBeDeleted.any { fileToBeDeleted -> file.name == fileToBeDeleted } }
+        ?.forEach { it.deleteRecursively() }
     }
   }
 
