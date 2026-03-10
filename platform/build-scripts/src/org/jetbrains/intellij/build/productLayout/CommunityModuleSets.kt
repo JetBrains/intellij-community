@@ -285,6 +285,7 @@ object CommunityModuleSets {
   /**
    * Stream debugger modules.
    */
+  @Suppress("unused")
   fun debuggerStreams(): ModuleSet = plugin("debugger.streams", addToMainModule = false) {
     module("intellij.debugger.streams.core")
     module("intellij.debugger.streams.shared")
