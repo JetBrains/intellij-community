@@ -39,6 +39,7 @@ import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics;
 import com.intellij.xdebugger.impl.hotswap.HotSwapStatusNotificationManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -68,7 +69,8 @@ public final class HotSwapUIImpl extends HotSwapUI {
    * @see ProjectTaskContext#withUserData(Key, Object)
    */
   public static final Key<Boolean> SKIP_HOT_SWAP_KEY = KeyWithDefaultValue.create("skip_hotswap_after_this_compilation", false);
-  private static final Key<HotSwapStatusListener> HOT_SWAP_CALLBACK_KEY = Key.create("hot_swap_callback");
+  @ApiStatus.Internal
+  public static final Key<HotSwapStatusListener> HOT_SWAP_CALLBACK_KEY = Key.create("hot_swap_callback");
 
   private final List<HotSwapVetoableListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myAskBeforeHotswap = true;
