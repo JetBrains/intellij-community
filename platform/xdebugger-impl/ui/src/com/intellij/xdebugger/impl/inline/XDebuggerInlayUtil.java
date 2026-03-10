@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.xdebugger.XDebuggerUtil;
@@ -28,12 +29,15 @@ import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @ApiStatus.Internal
@@ -142,6 +146,33 @@ public final class XDebuggerInlayUtil {
 
   public void clearInlays() {
     ApplicationManager.getApplication().invokeLater(() -> clearInlaysInt(myProject), ModalityState.nonModal(), myProject.getDisposed());
+  }
+
+  @RequiresEdt
+  public void clearInlays(@NotNull Collection<? extends XValueContainerNode<?>> nodes) {
+    EDT.assertIsEdt();
+    List<Editor> editors = getEditors();
+    for (Editor editor : editors) {
+      List<Inlay<? extends InlineDebugRenderer>> inlays = editor.getInlayModel()
+        .getAfterLineEndElementsInRange(0, editor.getDocument().getTextLength(), InlineDebugRenderer.class);
+      for (Inlay<? extends InlineDebugRenderer> inlay : inlays) {
+        InlineDebugRenderer renderer = inlay.getRenderer();
+        if (nodes.contains(renderer.getValueNode())) {
+          Disposer.dispose(inlay);
+        }
+      }
+    }
+  }
+
+  private List<Editor> getEditors() {
+    List<Editor> result = new ArrayList<>();
+    FileEditor[] fileEditors = FileEditorManager.getInstance(myProject).getAllEditors();
+    for (FileEditor fileEditor : fileEditors) {
+      if (fileEditor instanceof TextEditor textEditor) {
+        result.add(textEditor.getEditor());
+      }
+    }
+    return result;
   }
 
   private static List<Inlay> clearInlaysInEditor(@NotNull Editor editor) {
