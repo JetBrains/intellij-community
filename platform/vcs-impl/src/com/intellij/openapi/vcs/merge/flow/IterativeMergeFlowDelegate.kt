@@ -10,9 +10,12 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper.DEFAULT_ACTION
+import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
@@ -22,6 +25,7 @@ import com.intellij.openapi.vcs.merge.MergeConflictsTreeTable
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vcs.merge.MergeSession
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.PopupHandler
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.dsl.builder.Align
@@ -42,8 +46,10 @@ import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeCellRenderer
 
 internal class IterativeMergeFlowDelegate(
+  private val project: Project,
   private val iterativeDataHolder: MergeConflictIterativeDataHolder,
   private val table: MergeConflictsTreeTable,
+  private val columnNames: List<String>,
   private val mergeDialogCustomizer: MergeDialogCustomizer,
   private val rootPane: JRootPane,
   private val files: List<VirtualFile>,
@@ -53,6 +59,7 @@ internal class IterativeMergeFlowDelegate(
   private val toggleGroupByDirectory: (Boolean) -> Unit,
   private val resolveAutomatically: () -> Unit,
   private val getGroupByDirectory: () -> Boolean,
+  private val updateTable: () -> Unit,
 ) : MergeFlowDelegate {
 
   private lateinit var resolveAutomaticallyButton: JComponent
@@ -66,6 +73,7 @@ internal class IterativeMergeFlowDelegate(
         VcsBundle.message("multiple.file.iterative.merge.tooltip", it.getResolvedChanges().size, it.getAllChanges().size)
       }
     }
+    table.installTableContextMenu()
     table.installNameDecorator {
       iterativeDataHolder.getMergeConflictModel(it)?.let { model ->
         VcsBundle.message("multiple.file.iterative.merge.files.resolved.changes.count",
@@ -151,14 +159,16 @@ internal class IterativeMergeFlowDelegate(
     return listOf(cancelAction, resolveAction, acceptAndFinishAction)
   }
 
+  private lateinit var state: IterativeMergeDialogState
   override fun onTreeChanged(selectedFiles: List<VirtualFile>, unmergeableFileSelected: Boolean, unacceptableFileSelected: Boolean) {
-    val onlyResolvedFiles = selectedFiles.all { iterativeDataHolder.isFileResolved(it) }
-    val haveSelection = selectedFiles.any()
-    acceptYoursButton.isEnabled = haveSelection && !unacceptableFileSelected
-    acceptTheirsButton.isEnabled = haveSelection && !unacceptableFileSelected
-    mergeButton.isEnabled = haveSelection && !unmergeableFileSelected
-    mergeButton.text =
-      if (!onlyResolvedFiles || !haveSelection) VcsBundle.message("multiple.file.merge.merge") else VcsBundle.message("multiple.file.merge.open")
+    state = IterativeMergeDialogState(
+      selectedFiles = selectedFiles,
+      unmergeableFileSelected = unmergeableFileSelected,
+      unacceptableFileSelected = unacceptableFileSelected,
+      resolvedFilesSelected = selectedFiles.any { iterativeDataHolder.isFileResolved(it) },
+      onlyRevertableFilesSelected = selectedFiles.all {
+        iterativeDataHolder.getMergeConflictModel(it)?.getResolvedChanges()?.isNotEmpty() == true
+      })
   }
 
   override fun buildTreeModel(
@@ -181,6 +191,62 @@ internal class IterativeMergeFlowDelegate(
         insertFilesIntoNode(resolvedFiles, resolvedNode)
       }
     }.build()
+  }
+
+  private fun TreeTable.installTableContextMenu() {
+    val group = DefaultActionGroup().apply {
+      add(object : DumbAwareAction(VcsBundle.message("multiple.file.iterative.merge.accept", columnNames[1])) {
+        override fun actionPerformed(e: AnActionEvent) {
+          acceptForResolution(MergeSession.Resolution.AcceptedYours)
+        }
+
+        override fun update(e: AnActionEvent) {
+          super.update(e)
+          e.presentation.isEnabled = !state.unacceptableFileSelected && !state.resolvedFilesSelected
+        }
+
+        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+      })
+      add(object : DumbAwareAction(VcsBundle.message("multiple.file.iterative.merge.accept", columnNames[2])) {
+        override fun actionPerformed(e: AnActionEvent) {
+          acceptForResolution(MergeSession.Resolution.AcceptedTheirs)
+        }
+
+        override fun update(e: AnActionEvent) {
+          super.update(e)
+          e.presentation.isEnabled = !state.unacceptableFileSelected && !state.resolvedFilesSelected
+        }
+
+        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+      })
+      addSeparator()
+      add(object : DumbAwareAction(VcsBundle.message("multiple.file.iterative.merge.revert.resolution"),
+                                   VcsBundle.message("multiple.file.iterative.merge.revert.resolution"),
+                                   AllIcons.Actions.Rollback) {
+        override fun actionPerformed(e: AnActionEvent) {
+          val confirmed = MessageDialogBuilder
+            .yesNo(VcsBundle.message("multiple.file.iterative.merge.revert.confirmation.title"),
+                   VcsBundle.message("multiple.file.iterative.merge.revert.confirmation.message", state.selectedFiles.size))
+            .yesText(CommonBundle.message("button.revert"))
+            .noText(CommonBundle.getCancelButtonText())
+            .icon(Messages.getQuestionIcon())
+            .ask(project)
+          if (confirmed) {
+            iterativeDataHolder.removeFiles(state.selectedFiles)
+            isResolveAutomaticallyPressed = false
+            updateTable()
+          }
+        }
+
+        override fun update(e: AnActionEvent) {
+          super.update(e)
+          e.presentation.isEnabled = state.onlyRevertableFilesSelected
+        }
+
+        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+      })
+    }
+    PopupHandler.installPopupMenu(this, group, ActionPlaces.POPUP)
   }
 }
 
@@ -213,3 +279,11 @@ private fun TreeTable.installNameDecorator(extra: (VirtualFile) -> String?) {
     component
   }
 }
+
+private data class IterativeMergeDialogState(
+  val selectedFiles: List<VirtualFile>,
+  val unmergeableFileSelected: Boolean,
+  val unacceptableFileSelected: Boolean,
+  val resolvedFilesSelected: Boolean,
+  val onlyRevertableFilesSelected: Boolean,
+)

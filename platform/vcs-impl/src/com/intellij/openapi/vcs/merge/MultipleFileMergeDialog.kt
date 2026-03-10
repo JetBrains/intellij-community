@@ -92,8 +92,9 @@ open class MultipleFileMergeDialog(
   private val _processedFiles = mutableListOf<VirtualFile>()
   private val mergeSession = (mergeProvider as? MergeProvider2)?.createMergeSession(files)
   val processedFiles: List<VirtualFile> get() = _processedFiles
-  private val tableModel = ListTreeTableModelOnColumns(DefaultMutableTreeNode(),
-                                                       CustomColumns.createColumns(mergeDialogCustomizer, mergeSession))
+  private val columns = CustomColumns.createColumns(mergeDialogCustomizer, mergeSession)
+  private val tableModel = ListTreeTableModelOnColumns(DefaultMutableTreeNode(), columns)
+
   private val table = MergeConflictsTreeTable(tableModel).apply {
     val virtualFileRenderer = object : ChangesBrowserNodeRenderer(project, { !groupByDirectory }, false) {
       override fun calcFocusedState() = UIUtil.isAncestor(this@MultipleFileMergeDialog.peer.window,
@@ -146,7 +147,9 @@ open class MultipleFileMergeDialog(
   private var popupCloseListener: ComponentAdapter? = null
 
   private val mergeFlowDelegate: MergeFlowDelegate = if (project != null && iterativeDataHolder != null) IterativeMergeFlowDelegate(
+    project = project,
     table = table,
+    columnNames = columns.map { it.name },
     files = files,
     mergeDialogCustomizer = mergeDialogCustomizer,
     rootPane = rootPane,
@@ -156,7 +159,8 @@ open class MultipleFileMergeDialog(
     toggleGroupByDirectory = ::toggleGroupByDirectory,
     getGroupByDirectory = { groupByDirectory },
     iterativeDataHolder = iterativeDataHolder,
-    resolveAutomatically = { resolveAutomatically(project, iterativeDataHolder, table.selectedFiles) }
+    resolveAutomatically = { resolveAutomatically(project, iterativeDataHolder, files) },
+    updateTable = ::updateModelFromFiles
   )
   else OneShotMergeFlowDelegate(
     project = project,

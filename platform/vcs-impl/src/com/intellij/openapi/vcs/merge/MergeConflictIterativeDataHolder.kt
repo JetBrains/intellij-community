@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.merge
 
 import com.intellij.diff.DiffManagerEx
@@ -12,11 +12,15 @@ import com.intellij.diff.tools.util.base.TextDiffSettingsHolder
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import it.unimi.dsi.fastutil.ints.IntList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -42,6 +46,22 @@ internal class MergeConflictIterativeDataHolder(
   @RequiresEdt
   fun getResolvedFiles(): Set<VirtualFile> {
     return mergeConflictModels.filter { it.value.getUnresolvedChanges().isEmpty() }.keys
+  }
+
+  @RequiresEdt
+  fun removeFiles(files: List<VirtualFile>) {
+    val removedModels = files.mapNotNull { mergeConflictModels.remove(it) }
+    runWriteAction {
+      removedModels.forEach { model ->
+        val affected = model.getAllChanges().map { it.index }
+        model.executeMergeCommand(DiffBundle.message("merge.dialog.reset.change.command"), null,
+                                  UndoConfirmationPolicy.DEFAULT,
+                                  true,
+                                  IntList.of(*affected.toIntArray())) {
+          model.resetAllChanges()
+        }
+      }
+    }
   }
 
   suspend fun prepareModelIfSupported(file: VirtualFile, request: MergeRequest): MergeConflictModel? =
