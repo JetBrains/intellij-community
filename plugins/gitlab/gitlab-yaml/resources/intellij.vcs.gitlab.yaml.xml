@@ -6,5 +6,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <yaml.tagRecogniser implementation="org.jetbrains.plugins.gitlab.yaml.GitlabYamlTagRecogniser"/>
+
+    <statistics.applicationUsagesCollector
+      implementation="org.jetbrains.plugins.gitlab.yaml.codeInsight.include.fus.GitLabCiIncludeApplicationMetricsCollector"/>
   </extensions>
 </idea-plugin>
