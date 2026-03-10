@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.util;
 
 import org.gradle.util.GradleVersion;
@@ -38,20 +38,21 @@ public final class VersionMatcher {
 
     if (targetVersions.endsWith("+")) {
       String minVersion = targetVersions.substring(0, targetVersions.length() - 1);
-      return compare(current, minVersion, checkBaseVersions) >= 0;
+      return compare(current, anyPatchToLowerBound(minVersion), checkBaseVersions) >= 0;
     }
     else if (targetVersions.startsWith("!")) {
       String version = targetVersions.substring(1);
-      return compare(current, version, checkBaseVersions) != 0;
+      return compare(current, anyPatchToLowerBound(version), checkBaseVersions) < 0 ||
+             compare(current, anyPatchToUpperBound(version), checkBaseVersions) > 0;
     }
     else if (targetVersions.startsWith("<")) {
       if (targetVersions.startsWith("<=")) {
         String maxVersion = targetVersions.substring(2);
-        return compare(current, maxVersion, checkBaseVersions) <= 0;
+        return compare(current, anyPatchToUpperBound(maxVersion), checkBaseVersions) <= 0;
       }
       else {
         String maxVersion = targetVersions.substring(1);
-        return compare(current, maxVersion, checkBaseVersions) < 0;
+        return compare(current, anyPatchToLowerBound(maxVersion), checkBaseVersions) < 0;
       }
     }
     else {
@@ -59,11 +60,12 @@ public final class VersionMatcher {
       if (rangeIndex != -1) {
         String minVersion = targetVersions.substring(0, rangeIndex);
         String maxVersion = targetVersions.substring(rangeIndex + RANGE_TOKEN.length());
-        return compare(current, minVersion, checkBaseVersions) >= 0 &&
-          compare(current, maxVersion, checkBaseVersions) <= 0;
+        return compare(current, anyPatchToLowerBound(minVersion), checkBaseVersions) >= 0 &&
+               compare(current, anyPatchToUpperBound(maxVersion), checkBaseVersions) <= 0;
       }
       else {
-        return compare(current, targetVersions, checkBaseVersions) == 0;
+        return compare(current, anyPatchToLowerBound(targetVersions), checkBaseVersions) >= 0 &&
+               compare(current, anyPatchToUpperBound(targetVersions), checkBaseVersions) <= 0;
       }
     }
   }
@@ -75,5 +77,13 @@ public final class VersionMatcher {
 
   private static GradleVersion adjust(@NotNull GradleVersion version, boolean checkBaseVersions) {
     return checkBaseVersions ? version.getBaseVersion() : version;
+  }
+
+  private static String anyPatchToLowerBound(@NotNull String version) {
+    return version.replaceFirst("\\.[xX]", "");
+  }
+
+  private static String anyPatchToUpperBound(@NotNull String version) {
+    return version.replaceFirst("[xX]", "99");
   }
 }
