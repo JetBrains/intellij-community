@@ -5,7 +5,6 @@ package com.intellij.ide.bookmark.actions
 import com.intellij.ide.bookmark.BookmarkBundle
 import com.intellij.ide.bookmark.BookmarkType
 import com.intellij.openapi.application.WriteIntentReadAction
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor.namedColor
 import com.intellij.ui.components.JBTextField
@@ -240,7 +239,7 @@ private class BookmarkLayoutGrid(
   private fun next(source: Component, dx: Int, dy: Int): Component? {
     val point = SwingUtilities.convertPoint(source, offset(dx, source.width), offset(dy, source.height), this)
     val component = next(source, dx, dy, point)
-    if (component != null || !Registry.`is`("ide.bookmark.mnemonic.chooser.cyclic.scrolling.allowed")) return component
+    if (component != null) return component
     if (dx > 0) point.x = 0
     if (dx < 0) point.x = dx + width
     if (dy > 0) point.y = 0

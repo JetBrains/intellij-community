@@ -4,7 +4,6 @@ package com.intellij.ui.stripe;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ShortcutSet;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.scale.JBUIScale;
@@ -51,7 +50,7 @@ public abstract class Updater<Painter extends ErrorStripePainter> implements Dis
     ComponentUtil.putClientProperty(myScrollBar, JBScrollBar.TRACK, (g, x, y, width, height, object) -> {
       DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
       myPainter.setMinimalThickness(settings == null ? 2 : Math.min(settings.getErrorStripeMarkMinHeight(), JBUIScale.scale(4)));
-      myPainter.setErrorStripeGap(Registry.intValue("error.stripe.gap", 0));
+      myPainter.setErrorStripeGap(1);
       if (myPainter instanceof ExtraErrorStripePainter extra) {
         extra.setGroupSwap(!myScrollBar.getComponentOrientation().isLeftToRight());
       }

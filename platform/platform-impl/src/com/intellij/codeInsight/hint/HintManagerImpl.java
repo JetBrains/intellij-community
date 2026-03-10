@@ -23,7 +23,6 @@ import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts.HintText;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.HintHint;
@@ -57,6 +56,7 @@ public class HintManagerImpl extends HintManager {
 
   private static final Logger LOG = Logger.getInstance(HintManager.class);
 
+  private static final boolean EDITOR_BALLOON_HINTS = true;
   private final MyEditorManagerListener myEditorManagerListener;
 
   @ApiStatus.Internal
@@ -422,7 +422,7 @@ public class HintManagerImpl extends HintManager {
                                       @NotNull RelativePoint point,
                                       @PositionFlags short constraint) {
     Point p = point.getPoint(editor.getContentComponent());
-    return getHintPosition(hint, editor, p, p, constraint, Registry.is("editor.balloonHints"));
+    return getHintPosition(hint, editor, p, p, constraint, EDITOR_BALLOON_HINTS);
   }
 
   /**
@@ -451,7 +451,7 @@ public class HintManagerImpl extends HintManager {
                                        @NotNull VisualPosition pos1,
                                        @NotNull VisualPosition pos2,
                                        @PositionFlags short constraint) {
-    return getHintPosition(hint, editor, pos1, pos2, constraint, Registry.is("editor.balloonHints"));
+    return getHintPosition(hint, editor, pos1, pos2, constraint, EDITOR_BALLOON_HINTS);
   }
 
   private static Point getHintPosition(@NotNull LightweightHint hint,
@@ -734,8 +734,7 @@ public class HintManagerImpl extends HintManager {
 
     JLayeredPane lp = rootPane.getLayeredPane();
     HintHint hintInfo = new HintHint(editor, SwingUtilities.convertPoint(lp, p, editor.getContentComponent()));
-    boolean showByBalloon = Registry.is("editor.balloonHints");
-    if (showByBalloon) {
+    if (EDITOR_BALLOON_HINTS) {
       if (!createInEditorComponent) {
         hintInfo = new HintHint(lp, p);
       }
@@ -744,7 +743,7 @@ public class HintManagerImpl extends HintManager {
 
 
     hintInfo.initStyleFrom(hint.getComponent());
-    if (showByBalloon) {
+    if (EDITOR_BALLOON_HINTS) {
       if (!hintInfo.isBorderColorSet()) {
         hintInfo.setBorderColor(new JBColor(Color.gray, Gray._140));
       }

@@ -248,7 +248,7 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
               switchAlarm.cancelAllRequests();
               switchAlarm.addRequest(() -> {
                 switchLafAndUpdateUI(LafManager.getInstance(), action.myLookAndFeelInfo);
-              }, Registry.get("ide.instant.theme.switch.delay").asInteger());
+              }, 500);
             }
           }
         });

@@ -38,8 +38,7 @@ public final class EditSourceOnEnterKeyHandler {
 
   public static void install(@NotNull JComponent component, @Nullable Runnable whenPerformed) {
     onEnterKey(component, () -> {
-      if (Registry.is("edit.source.on.enter.key.disabled") ||
-          isOverriddenByAction(IdeActions.ACTION_EDIT_SOURCE) ||
+      if (isOverriddenByAction(IdeActions.ACTION_EDIT_SOURCE) ||
           isOverriddenByAction(IdeActions.ACTION_VIEW_SOURCE)) {
         return false;
       }
