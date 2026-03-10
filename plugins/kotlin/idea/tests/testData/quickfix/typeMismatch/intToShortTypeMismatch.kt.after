@@ -1,4 +1,5 @@
 // "Change type of 'x' to 'Int'" "true"
+// K2_ERROR: Initializer type mismatch: expected 'Short', actual 'Int'.
 
 fun foo() {
     val x: Int = 100000

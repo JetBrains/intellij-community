@@ -1,4 +1,5 @@
 // "Add 'infix' modifier" "true"
+// K2_ERROR: 'infix' modifier is required on 'fun xyzzy(i: Int): Unit'.
 class A {
     infix fun xyzzy(i: Int) {}
 }

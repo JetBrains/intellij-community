@@ -1,6 +1,10 @@
 // "Replace ',' with '||' in when" "true"
 // ERROR: Expected condition of type Boolean
 // ERROR: Expected condition of type Boolean
+// K2_ERROR: Condition of type 'Boolean' expected.
+// K2_ERROR: Condition of type 'Boolean' expected.
+// K2_ERROR: Use '||' instead of commas in conditions of 'when' without a subject.
+// K2_ERROR: Use '||' instead of commas in conditions of 'when' without a subject.
 // K2_AFTER_ERROR: Condition of type 'Boolean' expected.
 // K2_AFTER_ERROR: Condition of type 'Boolean' expected.
 fun test(i: Int, j: Int) {

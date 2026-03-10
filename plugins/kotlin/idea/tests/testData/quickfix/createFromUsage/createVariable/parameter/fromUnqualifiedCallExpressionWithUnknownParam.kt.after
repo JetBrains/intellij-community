@@ -1,4 +1,6 @@
 // "Create parameter 'foo'" "true"
+// K2_ERROR: Unresolved reference 'a'.
+// K2_ERROR: Unresolved reference 'foo'.
 // K2_AFTER_ERROR: Unresolved reference 'a'.
 
 fun bar(foo: (Any) -> String) {

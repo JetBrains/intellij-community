@@ -1,4 +1,5 @@
 // "Add else branch" "true"
+// K2_ERROR: 'if' must have both main and 'else' branches when used as an expression.
 fun foo(x: String?) {
     val a = if (x == null) {
         4

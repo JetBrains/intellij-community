@@ -1,4 +1,8 @@
 // "Add constructor parameters from Base(T, String, Base<T, String>?)" "true"
+// K2_ERROR: No value passed for parameter 'p1'.
+// K2_ERROR: No value passed for parameter 'p2'.
+// K2_ERROR: No value passed for parameter 'p3'.
+// K2_ERROR: This type has a constructor, so it must be initialized here.
 interface I
 
 open class Base<T1, T2>(p1: T1, p2: T2, p3: Base<T1, T2>?)

@@ -1,5 +1,6 @@
 // "Make 'prop' public" "true"
 // COMPILER_ARGUMENTS: -Xexplicit-backing-fields
+// K2_ERROR: Private properties cannot have explicit backing fields.
 
 class Point {
     val prop: List<Int>

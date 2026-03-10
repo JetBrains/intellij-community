@@ -1,4 +1,5 @@
 // "Create class 'Foo'" "true"
+// K2_ERROR: Unresolved reference 'Foo'.
 
 class A(n: Int)
 

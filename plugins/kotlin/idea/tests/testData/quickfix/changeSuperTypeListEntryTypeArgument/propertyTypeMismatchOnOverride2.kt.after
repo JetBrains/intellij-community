@@ -1,4 +1,5 @@
 // "Change type argument to Long" "true"
+// K2_ERROR: Type of 'val bar1: Long' is not a subtype of overridden property 'val bar1: Int' defined in 'Test'.
 abstract class Foo<T1, T2> {
     abstract fun foo1(): T1
     abstract val foo2: T2

@@ -1,4 +1,6 @@
 // "Add name to argument: 'b = 42'" "true"
+// K2_ERROR: Mixing named and positional arguments is not allowed unless the order of the arguments matches the order of the parameters.
+// K2_ERROR: No value passed for parameter 'b'.
 
 class A(a: Int, b: Int, c: Int) {}
 

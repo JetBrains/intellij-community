@@ -1,5 +1,6 @@
 // "Change to constructor invocation" "true"
 // PRIORITY: HIGH
+// K2_ERROR: This type has a constructor, so it must be initialized here.
 open class A(x : Int = 42, vararg y : Int) {}
 class B() : A<caret> {}
 

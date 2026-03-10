@@ -1,5 +1,6 @@
 // "Make 'foo' 'final'" "true"
 // COMPILER_ARGUMENTS: -XXLanguage:+ProhibitOpenValDeferredInitialization
+// K2_ERROR: Property must be initialized or be final.
 open class Base {
     open val foo: Int = 2
 }

@@ -1,4 +1,6 @@
 // "Specify 'SomeType' return type for enclosing function" "true"
+// K2_ERROR: Return type mismatch: expected 'Unit', actual 'SomeType'.
+// K2_ERROR: Return type mismatch: expected 'Unit', actual 'SomeType'.
 package test
 
 class SomeType

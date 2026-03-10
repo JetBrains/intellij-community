@@ -1,5 +1,6 @@
 // "Import property 'localStorage'" "true"
 // JS_WITH_DOM_API_COMPAT
+// K2_ERROR: Unresolved reference 'localStorage'.
 
 package test
 

@@ -1,4 +1,5 @@
 // "Replace with 'java.util.Random'" "true"
+// K2_ERROR: Too many arguments for 'constructor(): OldClass'.
 
 @Deprecated("", ReplaceWith("java.util.Random"))
 class OldClass

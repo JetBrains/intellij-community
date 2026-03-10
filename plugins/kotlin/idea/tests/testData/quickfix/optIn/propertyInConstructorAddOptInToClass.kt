@@ -1,5 +1,6 @@
 // "Opt in for 'PropertyTypeMarker' on containing class 'PropertyTypeContainer'" "true"
 // PRIORITY: HIGH
+// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@PropertyTypeMarker' or '@OptIn(PropertyTypeMarker::class)'
 
 @RequiresOptIn
 annotation class PropertyTypeMarker

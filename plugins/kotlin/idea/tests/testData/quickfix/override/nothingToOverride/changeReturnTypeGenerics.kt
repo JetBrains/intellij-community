@@ -1,5 +1,7 @@
 // "Change function signature to 'fun f(t: Int): Int'" "true"
 // ERROR: A 'return' expression required in a function with a block body ('{...}')
+// K2_ERROR: 'f' overrides nothing. Potential signatures for overriding:<br>fun f(t: Int): Int
+// K2_ERROR: Class 'B' is not abstract and does not implement abstract base class member:<br>fun f(t: T): T
 // K2_AFTER_ERROR: Missing return statement.
 abstract class A<T> {
     abstract fun f(t: T): T

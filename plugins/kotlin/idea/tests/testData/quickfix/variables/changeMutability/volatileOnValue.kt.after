@@ -1,5 +1,6 @@
 // "Change to 'var'" "true"
 // WITH_STDLIB
+// K2_ERROR: '@Volatile' annotation cannot be used on immutable properties.
 class Foo {
     @Volatile
     var bar: String = ""

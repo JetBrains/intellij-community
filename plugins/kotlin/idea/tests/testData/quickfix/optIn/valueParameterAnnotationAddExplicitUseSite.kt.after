@@ -1,4 +1,5 @@
 // "Move 'SomeOptInAnnotation' opt-in requirement from value parameter to property" "true"
+// K2_ERROR: Opt-in requirement marker annotation cannot be used on parameter.
 
 @RequiresOptIn
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.VALUE_PARAMETER)

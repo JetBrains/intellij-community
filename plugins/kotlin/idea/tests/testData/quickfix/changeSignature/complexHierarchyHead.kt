@@ -1,4 +1,5 @@
 // "Remove parameter 'a'" "true"
+// K2_ERROR: No value passed for parameter 'a'.
 interface OA {
     fun f(a: Int)
 }

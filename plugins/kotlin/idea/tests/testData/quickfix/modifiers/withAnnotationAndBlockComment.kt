@@ -1,4 +1,5 @@
 // "Remove 'final' modifier" "true"
+// K2_ERROR: Modifier 'final' is not applicable to 'top level property with backing field'.
 
 @Deprecated("")
 /* some comment */

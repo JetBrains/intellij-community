@@ -1,4 +1,6 @@
 // "Replace ',' with '||' in when" "true"
+// K2_ERROR: Use '||' instead of commas in conditions of 'when' without a subject.
+// K2_ERROR: Use '||' instead of commas in conditions of 'when' without a subject.
 fun test(i: Int, j: Int) {
     var b = false
     when {

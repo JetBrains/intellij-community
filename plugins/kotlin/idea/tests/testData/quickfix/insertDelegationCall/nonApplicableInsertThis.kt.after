@@ -1,4 +1,5 @@
 // "Insert 'this()' call" "true"
+// K2_ERROR: Explicit 'this' or 'super' call is required. There is no constructor in the superclass that can be called without arguments.
 
 open class B(val x: Int)
 

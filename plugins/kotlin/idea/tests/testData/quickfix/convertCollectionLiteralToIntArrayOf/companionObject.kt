@@ -1,4 +1,5 @@
 // "Replace with 'arrayOf'" "true"
+// K2_ERROR: Array literals outside of annotations are unsupported.
 annotation class Ann(val x: IntArray = [1, 2, 3]) {
     companion object {
         val y1: IntArray = [

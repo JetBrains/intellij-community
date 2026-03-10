@@ -1,5 +1,6 @@
 // "Wrap element with 'arrayOf' call" "false"
 // ERROR: Type mismatch: inferred type is String but Array<String> was expected
+// K2_ERROR: Argument type mismatch: actual type is 'String', but 'Array<String>' was expected.
 // K2_AFTER_ERROR: Argument type mismatch: actual type is 'String', but 'Array<String>' was expected.
 // ACTION: Add arrayOf wrapper
 // ACTION: Change parameter 'value' type of primary constructor of class 'Foo' to 'String'

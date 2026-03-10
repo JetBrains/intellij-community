@@ -1,5 +1,6 @@
 // "Implement members" "true"
 // WITH_STDLIB
+// K2_ERROR: Class 'C' is not abstract and does not implement abstract member:<br>fun foo(): Unit
 interface I {
     fun foo()
 }

@@ -1,4 +1,5 @@
 // "Change setter parameter type to Int" "true"
+// K2_ERROR: Setter parameter type must be equal to the type of the property, i.e. 'Int'.
 class A() {
     var i: Int = 0
         set(v: <caret>Any) {}

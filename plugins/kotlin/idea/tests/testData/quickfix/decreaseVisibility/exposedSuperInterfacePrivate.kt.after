@@ -6,6 +6,7 @@
 // ACTION: Make 'Derived' internal
 // ACTION: Make 'Derived' private
 // ACTION: Make 'Outer' public
+// K2_ERROR: 'public' sub-interface exposes its 'internal' supertype containing declaration 'Outer'.
 
 import Outer.Base
 

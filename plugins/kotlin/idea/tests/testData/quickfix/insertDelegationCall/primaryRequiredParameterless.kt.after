@@ -1,4 +1,5 @@
 // "Insert 'this()' call" "true"
+// K2_ERROR: Primary constructor call expected.
 
 class A() {
     constructor(x: String)<caret> : this()

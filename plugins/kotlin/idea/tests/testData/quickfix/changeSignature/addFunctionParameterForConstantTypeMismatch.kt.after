@@ -1,4 +1,6 @@
 // "Add 1st parameter to function 'foo'" "true"
+// K2_ERROR: Argument type mismatch: actual type is 'Int', but 'String' was expected.
+// K2_ERROR: Too many arguments for 'fun foo(name: String): Unit'.
 
 fun foo(name1: Int, name: String) = Unit
 

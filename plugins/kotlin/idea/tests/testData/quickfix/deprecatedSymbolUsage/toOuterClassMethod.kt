@@ -1,5 +1,6 @@
 // "Replace with 'newFun(this)'" "true"
 // ERROR: Unresolved reference: @Outer
+// K2_ERROR:
 // K2_AFTER_ERROR: Unresolved label.
 
 class Outer {

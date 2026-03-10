@@ -1,5 +1,6 @@
 // "Create local variable 'abc'" "true"
 // WITH_STDLIB
+// K2_ERROR: Unresolved reference 'abc'.
 class Test {
     fun outer() {
         fun testMethod(x:Int = <caret>abc) {

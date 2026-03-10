@@ -1,4 +1,5 @@
 // "Change type argument to String" "true"
+// K2_ERROR: Type of 'val x: String' is not a subtype of overridden property 'val x: Int' defined in 'Outer.FooImpl'.
 
 interface Foo<T> { val x: T}
 

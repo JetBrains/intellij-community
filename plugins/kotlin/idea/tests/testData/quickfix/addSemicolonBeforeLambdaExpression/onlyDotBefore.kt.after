@@ -1,4 +1,5 @@
 // "Terminate preceding call with semicolon" "true"
+// K2_ERROR: Expression is treated as a trailing lambda argument; consider separating it from the call with semicolon.
 
 fun foo() {
     15.hashCode();

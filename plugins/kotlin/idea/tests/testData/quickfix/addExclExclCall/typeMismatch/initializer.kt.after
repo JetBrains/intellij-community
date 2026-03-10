@@ -1,4 +1,5 @@
 // "Add non-null asserted (s!!) call" "true"
+// K2_ERROR: Initializer type mismatch: expected 'String', actual 'String?'.
 fun test(s: String?) {
     val z: String = s!!
 }

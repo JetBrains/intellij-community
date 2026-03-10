@@ -1,5 +1,6 @@
 // "Change type of 'x' to 'String?'" "true"
 // K2_ACTION: "Specify 'String?' type for 'x'" "true"
+// K2_ERROR: Assignment type mismatch: actual type is 'String', but 'Nothing?' was expected.
 fun foo(condition: Boolean) {
     var x: String? = null
     if (condition) {

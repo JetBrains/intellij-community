@@ -1,5 +1,6 @@
 // "Import class 'FromBarCompanion'" "true"
 // LANGUAGE_VERSION: 1.3
+// K2_ERROR: Unresolved reference 'FromBarCompanion'.
 
 package foo
 

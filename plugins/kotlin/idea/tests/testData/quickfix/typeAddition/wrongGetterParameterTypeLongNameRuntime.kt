@@ -1,4 +1,5 @@
 // "Change getter type to HashSet<Int>" "true"
+// K2_ERROR: Getter return type must be equal to the type of the property, i.e. 'HashSet<Int>'.
 
 class A() {
     val i: java.util.HashSet<Int>

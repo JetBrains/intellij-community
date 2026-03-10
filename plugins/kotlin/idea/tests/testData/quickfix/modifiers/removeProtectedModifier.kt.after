@@ -1,4 +1,6 @@
 // "Remove 'protected' modifier" "true"
+// K2_ERROR: Modifier 'private' is incompatible with 'protected'.
+// K2_ERROR: Modifier 'protected' is incompatible with 'private'.
 
 class A private constructor() {
 

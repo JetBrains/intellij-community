@@ -1,4 +1,5 @@
 // "Create parameter 'foo'" "true"
+// K2_ERROR: Unresolved reference 'foo'.
 fun expressionBody() = fo<caret>o
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateParameterFromUsageFix

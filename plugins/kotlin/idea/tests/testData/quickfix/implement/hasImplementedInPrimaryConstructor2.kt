@@ -1,5 +1,6 @@
 // "Implement members" "true"
 // WITH_STDLIB
+// K2_ERROR: Class 'MyImpl2' is not abstract and does not implement abstract base class member:<br>fun test(): Unit
 abstract class B {
     abstract val p: String?
     abstract fun test()

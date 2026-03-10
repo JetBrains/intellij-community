@@ -1,4 +1,5 @@
 // "Surround with null check" "true"
+// K2_ERROR: Argument type mismatch: actual type is 'String?', but 'String' was expected.
 
 fun foo(x: String?) {
     bar(<caret>x)

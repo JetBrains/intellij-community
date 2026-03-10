@@ -1,5 +1,6 @@
 // "Add interpolation prefix" "true"
 // COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
+// K2_ERROR: Unresolved reference 'unresolved'.
 
 fun test() {
     $$"""$unresolved"""

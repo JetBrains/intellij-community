@@ -1,4 +1,5 @@
 // "Change to '1L'" "true"
+// K2_ERROR: Argument type mismatch: actual type is 'Double', but 'Long' was expected.
 val a = foo(1L<caret>)
 fun foo(l: Long) = l
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.WrongPrimitiveLiteralFix

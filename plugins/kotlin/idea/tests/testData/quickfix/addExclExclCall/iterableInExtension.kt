@@ -1,5 +1,6 @@
 // "Add non-null asserted (list!!) call" "true"
 // WITH_STDLIB
+// K2_ERROR: Non-nullable value required to call an 'iterator()' method in a for-loop.
 
 class C {
     val list: List<String>? = null

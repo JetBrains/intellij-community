@@ -1,5 +1,6 @@
 // "Change type of 'b' to 'Array<Array<Int>>'" "true"
 // WITH_STDLIB
+// K2_ERROR: Initializer type mismatch: expected 'Array<Int>', actual 'Array<Array<Int>>'.
 val a: Array<Int> = arrayOf(1)
 val b: Array<Array<Int>> = arrayOf(a)
 

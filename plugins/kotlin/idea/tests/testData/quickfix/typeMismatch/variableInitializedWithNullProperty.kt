@@ -1,5 +1,6 @@
 // "Change type of 'Foo.x' to 'String?'" "true"
 // K2_ACTION: "Specify 'String?' type for 'Foo.x'" "true"
+// K2_ERROR: Assignment type mismatch: actual type is 'String', but 'Nothing?' was expected.
 class Foo {
     var x = null
 

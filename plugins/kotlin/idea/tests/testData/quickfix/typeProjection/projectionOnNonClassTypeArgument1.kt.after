@@ -1,4 +1,5 @@
 // "Remove 'out' modifier" "true"
+// K2_ERROR: Projections are not allowed on type arguments of functions calls.
 fun <T> foo(x : T) {}
 
 fun bar() {

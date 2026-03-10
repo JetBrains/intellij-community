@@ -2,6 +2,9 @@
 // COMPILER_ARGUMENTS: -Xexplicit-api=strict
 // ERROR: Visibility must be specified in explicit API mode
 // ERROR: Visibility must be specified in explicit API mode
+// K2_ERROR: Return type must be specified in explicit API mode.
+// K2_ERROR: Visibility must be specified in explicit API mode.
+// K2_ERROR: Visibility must be specified in explicit API mode.
 // K2_AFTER_ERROR: Visibility must be specified in explicit API mode.
 // K2_AFTER_ERROR: Visibility must be specified in explicit API mode.
 package a

@@ -1,5 +1,6 @@
 // "Make 'x' public" "true"
 // PRIORITY: HIGH
+// K2_ERROR: Cannot access 'val x: Int': it is private in 'First'.
 class First(private val x: Int)
 
 class Second(f: First) {

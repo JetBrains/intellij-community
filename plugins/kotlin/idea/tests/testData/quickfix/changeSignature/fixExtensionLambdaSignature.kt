@@ -1,4 +1,5 @@
 // "Change the signature of lambda expression" "true"
+// K2_ERROR: Argument type mismatch: actual type is 'Int.(Int) -> Int', but 'Int.(Int, Int) -> Int' was expected.
 
 fun foo(f: Int.(Int, Int) -> Int) {
 

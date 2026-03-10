@@ -1,4 +1,5 @@
 // "Change parameter 't' type of function 'foo' to 'T'" "true"
+// K2_ERROR: Argument type mismatch: actual type is '<anonymous>', but 'Int' was expected.
 interface T
 
 infix fun Int.foo(t: Int) = this

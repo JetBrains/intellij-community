@@ -1,4 +1,5 @@
 // "Remove else branch" "true"
+// K2_ERROR: No value passed for parameter 'message'.
 
 fun foo(b: Boolean) {
     when (b) {

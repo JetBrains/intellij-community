@@ -1,4 +1,5 @@
 // "Add 'fun' modifier to 'I'" "true"
+// K2_ERROR: Interface 'interface I : Any' does not have constructors.
 interface I {
     fun f()
 }

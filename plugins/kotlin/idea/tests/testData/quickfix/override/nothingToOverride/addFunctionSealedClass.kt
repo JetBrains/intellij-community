@@ -1,4 +1,5 @@
 // "Add 'abstract fun f()' to 'A'" "true"
+// K2_ERROR: 'f' overrides nothing.
 sealed class A {
 }
 class B : A() {

@@ -1,6 +1,7 @@
 // "Replace with 'this.minByOrNull(selector)'" "true"
 // WITH_STDLIB
 // LANGUAGE_VERSION: 1.5
+// K2_ERROR: 'fun <T, R : Comparable<R>> Iterable<T>.minBy(selector: (T) -> R): T?' is deprecated. Use minByOrNull instead.
 class C<T> {
     fun test() {
         listOf(1).minByOrNull { it }

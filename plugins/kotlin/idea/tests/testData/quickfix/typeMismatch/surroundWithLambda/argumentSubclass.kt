@@ -1,5 +1,6 @@
 // "Surround with lambda" "true"
 // PRIORITY: HIGH
+// K2_ERROR: Argument type mismatch: actual type is 'Leaf', but '() -> Base' was expected.
 fun subclass() {
     base(<caret>Leaf())
 }

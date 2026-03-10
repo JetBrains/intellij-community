@@ -1,4 +1,5 @@
 // "Add 'Any' as upper bound for E" "true"
+// K2_ERROR: Type argument is not within its bounds: must be subtype of 'Any'.
 
 fun <T : Any> foo() = 1
 

@@ -1,6 +1,12 @@
 // "Rename reference" "true"
 // ERROR: Unresolved reference: x
 // ERROR: Unresolved reference: x
+// K2_ERROR: Argument type mismatch: actual type is 'Unit', but 'Int' was expected.
+// K2_ERROR: Argument type mismatch: actual type is 'Unit', but 'Int' was expected.
+// K2_ERROR: Expression expected, but package name found.
+// K2_ERROR: Expression expected, but package name found.
+// K2_ERROR: Unresolved reference 'x'.
+// K2_ERROR: Unresolved reference 'x'.
 // K2_AFTER_ERROR: Unresolved reference 'x'.
 // K2_AFTER_ERROR: Unresolved reference 'x'.
 package x

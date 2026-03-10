@@ -1,4 +1,5 @@
 // "Create object 'A'" "true"
+// K2_ERROR: Unresolved reference 'A'.
 package p
 
 import p.<caret>A

@@ -1,5 +1,6 @@
 // "Convert expression to 'Byte'" "true"
 // WITH_STDLIB
+// K2_ERROR: Argument type mismatch: actual type is 'Char', but 'Byte' was expected.
 fun byte(x: Byte) {}
 
 fun test(c: Char) {

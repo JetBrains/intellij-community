@@ -1,5 +1,6 @@
 // "Create extension property 'Unit.foo'" "true"
 // WITH_STDLIB
+// K2_ERROR: Unresolved reference 'foo'.
 // K2_AFTER_ERROR: Extension property must have accessors or be abstract.
 
 fun test() {

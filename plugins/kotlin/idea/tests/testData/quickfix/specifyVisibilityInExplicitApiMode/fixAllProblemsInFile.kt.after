@@ -1,5 +1,10 @@
 // "Apply all 'Make public explicitly' fixes in file" "true"
 // COMPILER_ARGUMENTS: -Xexplicit-api=strict
+// K2_ERROR: Return type must be specified in explicit API mode.
+// K2_ERROR: Return type must be specified in explicit API mode.
+// K2_ERROR: Visibility must be specified in explicit API mode.
+// K2_ERROR: Visibility must be specified in explicit API mode.
+// K2_ERROR: Visibility must be specified in explicit API mode.
 // K2_AFTER_ERROR: Return type must be specified in explicit API mode.
 // K2_AFTER_ERROR: Return type must be specified in explicit API mode.
 

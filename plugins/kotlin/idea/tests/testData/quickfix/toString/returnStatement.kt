@@ -1,5 +1,6 @@
 // "Add 'toString()' call" "true"
 // PRIORITY: LOW
+// K2_ERROR: Return type mismatch: expected 'String', actual 'Int'.
 
 fun test(): String {
     return 1 <caret>+ 2 * 3

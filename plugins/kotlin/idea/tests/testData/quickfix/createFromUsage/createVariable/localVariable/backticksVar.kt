@@ -1,4 +1,5 @@
 // "Create local variable '`my-var`'" "true"
+// K2_ERROR: Unresolved reference 'my-var'.
 
 fun test() {
     println(<caret>`my-var`) // ← undefined variable with backticks

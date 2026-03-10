@@ -1,4 +1,6 @@
 // "Let the anonymous object implement interface 'Runnable'" "true"
+// K2_ERROR: Return type mismatch: expected 'Runnable', actual '<anonymous>'.
+// K2_ERROR: Syntax error: Incomplete code.
 
 fun bar(): Runnable {
     return object: {}<caret>

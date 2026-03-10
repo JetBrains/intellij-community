@@ -10,6 +10,7 @@
 // ACTION: Move to companion object
 // ACTION: Move to constructor
 // ACTION: Specify type explicitly
+// K2_ERROR: 'public' property exposes its 'private-in-file' type 'Data'.
 
 data class Data(val x: Int)
 

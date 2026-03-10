@@ -1,4 +1,5 @@
 // "Move annotation to receiver type" "true"
+// K2_ERROR: This annotation is not applicable to target 'declaration' and use-site target '@receiver'. Applicable targets: class, annotation class, property, field, local variable, value parameter, constructor, function, getter, setter, backing field
 
 annotation class Ann
 

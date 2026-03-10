@@ -1,5 +1,6 @@
 // "Convert expression to 'Array' by inserting '.toList().toTypedArray()'" "true"
 // WITH_STDLIB
+// K2_ERROR: Argument type mismatch: actual type is 'Sequence<String>', but 'Array<String>' was expected.
 
 fun foo(a: Sequence<String>) {
     bar(a<caret>)

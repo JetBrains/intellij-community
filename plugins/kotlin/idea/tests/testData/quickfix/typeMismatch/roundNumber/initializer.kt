@@ -1,6 +1,7 @@
 // "Round using roundToLong()" "true"
 // PRIORITY: LOW
 // WITH_STDLIB
+// K2_ERROR: Initializer type mismatch: expected 'Long', actual 'Double'.
 fun test(d: Double) {
     val x: Long = d<caret>
 }

@@ -1,5 +1,6 @@
 // "Assign to property" "true"
 // WITH_STDLIB
+// K2_ERROR: 'val' cannot be reassigned.
 class Test {
     var foo = 1
 

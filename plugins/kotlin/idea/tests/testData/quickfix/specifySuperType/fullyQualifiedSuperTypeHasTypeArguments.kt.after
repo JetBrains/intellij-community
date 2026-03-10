@@ -1,5 +1,6 @@
 // "Specify supertype" "true"
 // SHOULD_DIFFER_FROM_FE10
+// K2_ERROR: Multiple supertypes available. Specify the intended supertype in angle brackets, e.g. 'super<Foo>'.
 package a.b.c
 
 interface X {}

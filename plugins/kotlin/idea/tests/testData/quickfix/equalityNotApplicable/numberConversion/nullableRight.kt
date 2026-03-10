@@ -1,4 +1,5 @@
 // "Convert right-hand side to 'Short'" "true"
+// K2_ERROR: Operator '==' cannot be applied to 'Short?' and 'Long?'.
 fun test(s: Short?, l: Long?): Boolean {
     return <caret>s == l
 }

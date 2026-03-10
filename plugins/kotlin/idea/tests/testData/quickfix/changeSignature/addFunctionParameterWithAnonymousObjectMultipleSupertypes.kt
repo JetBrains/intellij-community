@@ -1,4 +1,5 @@
 // "Add parameter to function 'process'" "true"
+// K2_ERROR: Too many arguments for 'fun process(): Unit'.
 interface A {
     fun foo()
 }

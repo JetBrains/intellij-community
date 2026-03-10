@@ -1,4 +1,5 @@
 // "Convert expression to 'Char'" "true"
+// K2_ERROR: Initializer type mismatch: expected 'Char', actual 'Byte'.
 fun test(b: Byte) {
     val char: Char = b<caret>
 }

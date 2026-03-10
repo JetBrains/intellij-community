@@ -1,4 +1,5 @@
 // "Create property 'foobs' as constructor parameter" "true"
+// K2_ERROR: No parameter with name 'foobs' found.
 
 data class Foo(val bar: Int)
 

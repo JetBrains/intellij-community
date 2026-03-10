@@ -1,4 +1,5 @@
 // "Remove 'private' modifier" "true"
+// K2_ERROR: Private setters for open properties are prohibited.
 interface Foo {
     val bar: String
 }

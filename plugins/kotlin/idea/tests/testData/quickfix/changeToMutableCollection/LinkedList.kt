@@ -1,5 +1,6 @@
 // "Change type to MutableList" "true"
 // WITH_STDLIB
+// K2_ERROR: No 'set' operator method providing array access.
 fun main() {
     val list: List<Int> = java.util.LinkedList()
     list[1]<caret> = 10

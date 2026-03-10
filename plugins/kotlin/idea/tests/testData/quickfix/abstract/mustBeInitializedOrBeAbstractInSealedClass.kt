@@ -1,4 +1,5 @@
 // "Make 'i' 'abstract'" "true"
+// K2_ERROR: Function 'i' without a body must be abstract.
 sealed class A() {
     fun <caret>i() : Int
 }

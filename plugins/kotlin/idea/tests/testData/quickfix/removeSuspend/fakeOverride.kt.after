@@ -1,4 +1,5 @@
 // "Remove 'suspend' modifier from all functions in hierarchy" "true"
+// K2_ERROR: Suspend function 'foo' cannot override non-suspend function 'fun foo(): Unit' defined in 'B'.
 open class A {
     open fun foo() {
 

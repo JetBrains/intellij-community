@@ -1,4 +1,5 @@
 // "Change to function invocation" "true"
+// K2_ERROR: Function invocation 'bar(...)' expected.
 fun bar(i: Int, j: Int) {}
 
 fun test(){

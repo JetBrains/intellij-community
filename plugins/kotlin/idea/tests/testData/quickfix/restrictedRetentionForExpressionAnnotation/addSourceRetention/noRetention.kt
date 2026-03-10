@@ -1,4 +1,5 @@
 // "Add SOURCE retention" "true"
+// K2_ERROR: Expression annotations with retention other than SOURCE are prohibited.
 <caret>@Target(AnnotationTarget.EXPRESSION)
 annotation class Ann
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddSourceRetentionFix

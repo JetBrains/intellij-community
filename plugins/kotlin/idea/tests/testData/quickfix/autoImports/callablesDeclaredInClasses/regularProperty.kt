@@ -1,4 +1,5 @@
 // "Import property 'RegObject.regularProperty'" "true"
+// K2_ERROR: Unresolved reference 'regularProperty'.
 package p
 
 open class Reg {

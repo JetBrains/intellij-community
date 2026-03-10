@@ -1,4 +1,5 @@
 // "Create annotation 'foo'" "true"
+// K2_ERROR: Unresolved reference 'foo'.
 
 @[<caret>foo(1, "2")] fun test() {
 

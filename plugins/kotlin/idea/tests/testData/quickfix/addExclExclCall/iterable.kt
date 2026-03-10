@@ -1,4 +1,5 @@
 // "Add non-null asserted (test!!) call" "true"
+// K2_ERROR: Non-nullable value required to call an 'iterator()' method in a for-loop.
 fun foo() {
     val test : Collection<Int>? = null!!
     for (i in <caret>test) { }

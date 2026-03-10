@@ -1,4 +1,5 @@
 // "Add 'crossinline' to parameter 'x'" "true"
+// K2_ERROR: Suspend inline lambda parameters of non-suspend function type are not supported. Add 'noinline' or 'crossinline' modifier.
 
 inline fun foo(<caret>x: suspend () -> Unit) {}
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddInlineModifierFix

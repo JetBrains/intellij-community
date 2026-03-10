@@ -1,5 +1,6 @@
 // "Change type of 'list' to 'List<Any>'" "false"
 // WITH_STDLIB
+// K2_ERROR: Initializer type mismatch: expected 'List<Any>', actual 'List<Comparable<*>? & Serializable?>'.
 // K2_AFTER_ERROR: Initializer type mismatch: expected 'List<Any>', actual 'List<Comparable<*>? & Serializable?>'.
 
 

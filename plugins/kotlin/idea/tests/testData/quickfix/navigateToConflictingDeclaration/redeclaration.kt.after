@@ -1,5 +1,7 @@
 // "Show conflicting 'myProperty' declarations" "true"
 // SHOULD_BE_AVAILABLE_AFTER_EXECUTION
+// K2_ERROR: Conflicting declarations:<br>val myProperty: Int
+// K2_ERROR: Conflicting declarations:<br>val myProperty: String
 // K2_AFTER_ERROR: Conflicting declarations:<br>val myProperty: Int
 // K2_AFTER_ERROR: Conflicting declarations:<br>val myProperty: String
 // IGNORE_K1

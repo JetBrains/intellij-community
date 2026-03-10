@@ -1,4 +1,5 @@
 // "Add 'return' before the expression" "true"
+// K2_ERROR: Missing return statement.
 fun test(): Boolean {
     return true
 }

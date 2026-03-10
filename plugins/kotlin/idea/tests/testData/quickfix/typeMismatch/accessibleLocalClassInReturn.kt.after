@@ -1,4 +1,5 @@
 // "Change return type of enclosing function 'bar' to 'A'" "true"
+// K2_ERROR: Return type mismatch: expected 'Int', actual '<anonymous>'.
 fun foo() {
     open class A
 

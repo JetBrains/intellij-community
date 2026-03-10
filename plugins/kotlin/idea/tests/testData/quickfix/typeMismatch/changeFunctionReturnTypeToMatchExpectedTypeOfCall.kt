@@ -1,4 +1,5 @@
 // "Change return type of called function 'bar' to 'String'" "true"
+// K2_ERROR: Return type mismatch: expected 'String', actual 'Any'.
 fun bar(): Any = ""
 fun foo(): String = bar(<caret>)
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForCalled

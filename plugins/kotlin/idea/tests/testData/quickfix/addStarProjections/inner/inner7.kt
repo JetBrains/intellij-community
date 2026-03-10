@@ -1,4 +1,5 @@
 // "Add star projections" "true"
+// K2_ERROR: One type argument expected. Use 'A.B.C<*>.D' if you do not intend to pass type arguments.
 class A {
     class B<T> {
         class C<U> {

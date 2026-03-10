@@ -1,6 +1,7 @@
 // "Annotate containing class with '@Parcelize'" "true"
-// ERROR: No 'Parcelable' supertype
 // WITH_STDLIB
+// ERROR: No 'Parcelable' supertype
+// K2_ERROR: Class 'Foo' must be annotated with '@Parcelize'.
 // K2_AFTER_ERROR: No 'Parcelable' supertype.
 
 package com.myapp.activity

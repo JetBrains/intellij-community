@@ -1,6 +1,8 @@
 // Difference with K1: K2 renderer can handle enhanced nullability annotations
 // "Add constructor parameters from DataInputStream(InputStream)" "true"
 // RUNTIME_WITH_FULL_JDK
+// K2_ERROR: No value passed for parameter 'in'.
+// K2_ERROR: This type has a constructor, so it must be initialized here.
 import java.io.DataInputStream
 
 class C : DataInputStream<caret>

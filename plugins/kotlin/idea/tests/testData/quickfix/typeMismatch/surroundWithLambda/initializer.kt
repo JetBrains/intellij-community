@@ -1,5 +1,6 @@
 // "Surround with lambda" "true"
 // PRIORITY: HIGH
+// K2_ERROR: Initializer type mismatch: expected '() -> String', actual 'String'.
 fun foo() {
     val block: () -> String = <caret>"foo"
 }

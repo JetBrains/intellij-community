@@ -1,4 +1,5 @@
 // "Change function signature to 'fun f(y: Int, x: String)'" "true"
+// K2_ERROR: 'f' overrides nothing. Potential signatures for overriding:<br>fun f(a: Int, b: String): Unit
 open class A {
     open fun f(a: Int, b: String) {}
 }

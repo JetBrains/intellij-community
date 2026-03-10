@@ -1,4 +1,5 @@
 // "Make 'foo' 'abstract'" "true"
+// K2_ERROR: Function 'foo' without a body must be abstract.
 abstract class B() {
     abstract fun <caret>foo()
 }

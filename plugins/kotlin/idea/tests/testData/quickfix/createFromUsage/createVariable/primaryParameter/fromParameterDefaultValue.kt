@@ -1,5 +1,6 @@
 // "Create property 'foo' as constructor parameter" "true"
 // ERROR: Parameter 'foo' is uninitialized here
+// K2_ERROR: Unresolved reference 'foo'.
 
 class CtorAccess(val prop: Int = fo<caret>o)
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateParameterFromUsageFix

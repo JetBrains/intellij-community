@@ -1,4 +1,5 @@
 // "Add non-null asserted (foo?.bar!!) call" "true"
+// K2_ERROR: Bound callable reference cannot be created on nullable receiver of type 'Bar?'.
 class Foo {
     val bar = Bar()
 }

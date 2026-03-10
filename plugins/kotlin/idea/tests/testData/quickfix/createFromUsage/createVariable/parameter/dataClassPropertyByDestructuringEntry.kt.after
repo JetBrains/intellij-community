@@ -1,4 +1,5 @@
 // "Create property 'address' as constructor parameter" "true"
+// K2_ERROR: Destructuring of type 'Person' requires operator function 'component3()'.
 data class Person(val name: String, val age: Int, val address: Any)
 
 fun person(): Person = TODO()

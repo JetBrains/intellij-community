@@ -1,4 +1,5 @@
 // "Change type arguments to <*>" "true"
+// K2_ERROR: Cannot check for instance of erased type 'Array<String>'.
 fun test(a: Any) = when (a) {
     is <caret>Array<String> -> 1
     else -> 2

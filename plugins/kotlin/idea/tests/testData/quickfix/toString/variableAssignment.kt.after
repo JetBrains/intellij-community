@@ -1,5 +1,6 @@
 // "Add 'toString()' call" "true"
 // PRIORITY: LOW
+// K2_ERROR: Assignment type mismatch: actual type is 'Int', but 'String' was expected.
 
 fun test() {
     var s: String = ""

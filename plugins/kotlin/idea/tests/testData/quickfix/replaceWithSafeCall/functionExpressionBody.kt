@@ -1,6 +1,7 @@
 // "Replace with safe (?.) call" "true"
 // WITH_STDLIB
 // ERROR: Type mismatch: inferred type is Int? but Int was expected
+// K2_ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'String?'.
 
 // Note: There should be no error in FIR but errors are not currently checked for FIR
 class T {

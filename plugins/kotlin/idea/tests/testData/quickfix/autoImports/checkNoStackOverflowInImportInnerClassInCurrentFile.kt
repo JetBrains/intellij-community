@@ -1,5 +1,7 @@
 // "Import" "false"
 // IGNORE_IRRELEVANT_ACTIONS
+// K2_ERROR: Unresolved reference 'Bar'.
+// K2_ERROR: Unresolved reference 'SomeImpossibleName'.
 // K2_AFTER_ERROR: Unresolved reference 'Bar'.
 // K2_AFTER_ERROR: Unresolved reference 'SomeImpossibleName'.
 

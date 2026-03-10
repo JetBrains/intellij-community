@@ -1,4 +1,5 @@
 // "Convert expression to 'Short'" "true"
+// K2_ERROR: Argument type mismatch: actual type is 'Double', but 'Short' was expected.
 fun short(x: Short) {}
 
 fun test(d: Double) {

@@ -1,4 +1,5 @@
 // "Add parameter to function 'handle'" "true"
+// K2_ERROR: Too many arguments for 'fun handle(): Unit'.
 interface Callback {
     fun onEvent()
 }

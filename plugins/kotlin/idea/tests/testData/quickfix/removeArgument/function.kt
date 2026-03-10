@@ -1,4 +1,5 @@
 // "Remove argument" "true"
+// K2_ERROR: Too many arguments for 'fun foo(s: String): Unit'.
 class Bar(s: String, i: Int) {
     fun foo(s: String) {
     }

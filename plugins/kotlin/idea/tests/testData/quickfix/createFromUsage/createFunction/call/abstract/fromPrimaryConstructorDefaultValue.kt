@@ -1,4 +1,5 @@
 // "Create abstract function 'foo'" "false"
+// K2_ERROR: Unresolved reference 'foo'.
 // K2_AFTER_ERROR: Unresolved reference 'foo'.
 
 abstract class AbstractWithPrimaryParameter(val prop: Int = fo<caret>o())

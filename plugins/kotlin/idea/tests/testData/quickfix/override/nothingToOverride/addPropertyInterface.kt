@@ -1,4 +1,5 @@
 // "Add 'abstract val hoge: Int' to 'Foo'" "true"
+// K2_ERROR: 'hoge' overrides nothing.
 interface Foo
 
 class Bar: Foo {

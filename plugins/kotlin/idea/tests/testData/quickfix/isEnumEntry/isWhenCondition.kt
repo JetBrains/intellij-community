@@ -1,4 +1,5 @@
 // "Remove 'is'" "true"
+// K2_ERROR: 'is' over enum entry is prohibited. Use comparison instead.
 enum class Foo { A }
 
 fun test(foo: Foo): Int = when (foo) {

@@ -1,4 +1,7 @@
 // "Add constructor parameters from Base(Int, Int)" "true"
+// K2_ERROR: No value passed for parameter 'p1'.
+// K2_ERROR: No value passed for parameter 'p2'.
+// K2_ERROR: This type has a constructor, so it must be initialized here.
 open class Base(p1: Int, val p2: Int)
 
 class C : Base<caret>

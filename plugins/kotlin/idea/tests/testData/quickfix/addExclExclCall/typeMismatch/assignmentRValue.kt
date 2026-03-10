@@ -1,4 +1,5 @@
 // "Add non-null asserted (s!!) call" "true"
+// K2_ERROR: Assignment type mismatch: actual type is 'String?', but 'String' was expected.
 fun test(s: String?) {
     var z: String = ""
     z = <caret>s

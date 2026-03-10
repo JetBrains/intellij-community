@@ -1,4 +1,5 @@
 // "Replace with generated @PublishedApi bridge call '`access$prop`'" "true"
+// K2_ERROR: Protected function call from public-API inline function is prohibited.
 annotation class Z
 
 open class ABase {

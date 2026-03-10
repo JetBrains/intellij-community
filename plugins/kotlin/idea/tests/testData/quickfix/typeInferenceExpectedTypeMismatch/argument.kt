@@ -1,6 +1,7 @@
 // "Remove '.java'" "true"
 // PRIORITY: HIGH
 // WITH_STDLIB
+// K2_ERROR: Argument type mismatch: actual type is 'Class<Foo>', but 'KClass<Foo>' was expected.
 fun foo() {
     bar(Foo::class.java<caret>)
 }

@@ -1,5 +1,6 @@
 // "Add 'noinline' to parameter 'lambda'" "true"
 // WITH_STDLIB
+// K2_ERROR: Illegal usage of inline parameter 'lambda: () -> Unit'. Add 'noinline' modifier to the parameter declaration.
 
 inline fun inlineFun(lambda: () -> Unit) {
     <caret>lambda.let { }

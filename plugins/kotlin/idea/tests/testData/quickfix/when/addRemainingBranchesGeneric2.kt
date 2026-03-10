@@ -1,6 +1,7 @@
 // "Add remaining branches" "true"
 // ERROR: Unresolved reference: TODO
 // ERROR: Unresolved reference: TODO
+// K2_ERROR: 'when' expression must be exhaustive. Add the 'is Generic<*, *>' branch or an 'else' branch.
 
 sealed class Base<U, V, W> {
     fun bar(it: TA) {

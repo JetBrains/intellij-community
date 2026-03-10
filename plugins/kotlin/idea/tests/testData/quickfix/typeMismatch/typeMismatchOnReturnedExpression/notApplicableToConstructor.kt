@@ -4,6 +4,7 @@
 // ACTION: Convert property initializer to getter
 // ACTION: Let 'A' implement interface 'B'
 // ERROR: Type mismatch: inferred type is A but B was expected
+// K2_ERROR: Initializer type mismatch: expected 'B', actual 'A'.
 // K2_AFTER_ERROR: Initializer type mismatch: expected 'B', actual 'A'.
 
 class A constructor() {}

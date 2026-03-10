@@ -1,4 +1,5 @@
 // "Change to 'var'" "true"
+// K2_ERROR: 'lateinit' modifier is allowed only on mutable properties.
 
 class A() {
     <caret>lateinit val foo: String

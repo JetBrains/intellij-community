@@ -1,5 +1,6 @@
 // "Wrap with '?.let { ... }' call" "true"
 // WITH_STDLIB
+// K2_ERROR: Argument type mismatch: actual type is 'A?', but 'A' was expected.
 
 interface A
 

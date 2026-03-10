@@ -1,6 +1,7 @@
 // "Make 'bar' public explicitly" "true"
 // PRIORITY: HIGH
 // COMPILER_ARGUMENTS: -Xexplicit-api=strict
+// K2_ERROR: Visibility must be specified in explicit API mode.
 
 public class Foo(public val bar: Int, private var bar2: String, internal var bar3: Long, public var bar4: Int)
 

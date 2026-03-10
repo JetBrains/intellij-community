@@ -1,4 +1,5 @@
 // "Change type of 't' to 'T'" "true"
+// K2_ERROR: Initializer type mismatch: expected 'Int', actual '<anonymous>'.
 interface T
 
 fun foo() {

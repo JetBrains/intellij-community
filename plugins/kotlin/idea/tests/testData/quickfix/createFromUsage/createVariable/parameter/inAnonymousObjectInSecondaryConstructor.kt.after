@@ -1,4 +1,5 @@
 // "Create parameter 'name'" "true"
+// K2_ERROR: Unresolved reference 'name'.
 class B {
     constructor(name: String) {
         object : A(name) {

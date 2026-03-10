@@ -1,4 +1,5 @@
 // "Add initializer" "true"
+// K2_ERROR: Property must be initialized or be abstract.
 class Foo {
     <caret>var foo: Int
 }

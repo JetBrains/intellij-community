@@ -1,4 +1,6 @@
 // "Replace with safe (?.) call" "true"
+// K2_ERROR: 'infix' modifier is required on 'fun compareTo(other: Int): Int'.
+// K2_ERROR: Infix call is prohibited on a nullable receiver of type 'Int?'. Use '?.'-qualified call instead.
 fun test(a : Int?) : Int? {
     return a <caret>compareTo 6;
 }

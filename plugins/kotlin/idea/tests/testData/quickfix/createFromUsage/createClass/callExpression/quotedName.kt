@@ -1,4 +1,5 @@
 // "Create class 'A!u00A0'" "true"
+// K2_ERROR: Unresolved reference 'A!u00A0'.
 fun test() {
     val t = <caret>`A!u00A0`(1)
 }

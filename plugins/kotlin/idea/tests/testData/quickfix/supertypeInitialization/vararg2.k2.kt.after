@@ -1,4 +1,6 @@
 // "Add constructor parameters from Base(Int, vararg Int)" "true"
+// K2_ERROR: No value passed for parameter 'p1'.
+// K2_ERROR: This type has a constructor, so it must be initialized here.
 open class Base(p1: Int, vararg p2: Int)
 
 class C(p2: IntArray, p1: Int) : Base<caret>(p1, *p2)

@@ -1,5 +1,6 @@
 // "Convert expression to 'Short'" "true"
 // API_VERSION: 1.4
+// K2_ERROR: Argument type mismatch: actual type is 'Char', but 'Short' was expected.
 fun short(x: Short) {}
 
 fun test(c: Char) {

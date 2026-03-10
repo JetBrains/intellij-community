@@ -1,4 +1,5 @@
 // "Add parameter to function 'execute'" "true"
+// K2_ERROR: Too many arguments for 'fun execute(): Unit'.
 open class Base {
     open fun action() {}
 }

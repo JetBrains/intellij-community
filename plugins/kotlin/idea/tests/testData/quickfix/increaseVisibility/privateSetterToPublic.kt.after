@@ -3,6 +3,7 @@
 // ACTION: Converts the assignment statement to an expression
 // ACTION: Make '<set-attribute>' internal
 // ACTION: Make '<set-attribute>' public
+// K2_ERROR: Cannot access 'attribute': it is private in 'Demo'.
 
 class Demo {
     var attribute = "a"

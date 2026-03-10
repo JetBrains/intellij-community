@@ -1,4 +1,5 @@
 // "Make B.foo open" "true"
+// K2_ERROR: 'foo' in 'B' is final and cannot be overridden.
 abstract class A {
     abstract fun foo()
 }

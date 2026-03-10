@@ -1,5 +1,7 @@
 // "Change return type of enclosing function 'foo' to 'Any'" "true"
 // WITH_STDLIB
+// K2_ERROR: Return type mismatch: expected 'Boolean', actual 'Int'.
+// K2_ERROR: Return type mismatch: expected 'Boolean', actual 'String'.
 fun foo(n: Int): Any {
     if (true) return "foo"
     n.let {

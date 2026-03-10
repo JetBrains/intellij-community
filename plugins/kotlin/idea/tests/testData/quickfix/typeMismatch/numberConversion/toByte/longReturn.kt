@@ -1,4 +1,5 @@
 // "Convert expression to 'Byte'" "true"
+// K2_ERROR: Return type mismatch: expected 'Byte', actual 'Long'.
 fun test(l: Long): Byte {
     return l<caret>
 }

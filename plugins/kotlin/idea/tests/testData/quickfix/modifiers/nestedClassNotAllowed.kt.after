@@ -1,4 +1,5 @@
 // "Add 'inner' modifier" "true"
+// K2_ERROR: 'Class' is prohibited here.
 class A() {
     inner class B() {
         inner class <caret>C() {

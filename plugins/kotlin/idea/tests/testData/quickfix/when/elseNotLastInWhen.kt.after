@@ -1,4 +1,5 @@
 // "Move else branch to the end" "true"
+// K2_ERROR: 'else' entry must be the last one in a 'when' expression.
 fun test() {
     val a = 12
     when (a) {

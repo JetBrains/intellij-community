@@ -3,6 +3,7 @@
 // ACTION: Add full qualifier
 // ACTION: Change to constructor invocation
 // ACTION: Introduce import alias
+// K2_ERROR: This type has a constructor, so it must be initialized here.
 
 class My {
     sealed class A

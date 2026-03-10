@@ -4,5 +4,6 @@
 // ACTION: Introduce local variable
 // ACTION: Expand boolean expression to 'if else'
 // ERROR: Cannot check for instance of erased type: List<Int>
+// K2_ERROR: Cannot check for instance of erased type 'List<Int>'.
 // K2_AFTER_ERROR: Cannot check for instance of erased type 'List<Int>'.
 fun test(a: List<Any>) = a is List<Int><caret>

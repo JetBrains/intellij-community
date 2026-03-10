@@ -1,4 +1,6 @@
 // "Propagate 'TopMarker' opt-in requirement to 'topUserVal'" "true"
+// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@TopMarker' or '@OptIn(TopMarker::class)'
+// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@TopMarker' or '@OptIn(TopMarker::class)'
 
 @RequiresOptIn
 annotation class TopMarker

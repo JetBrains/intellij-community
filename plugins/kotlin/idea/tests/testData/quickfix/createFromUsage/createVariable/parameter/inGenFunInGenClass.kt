@@ -1,4 +1,5 @@
 // "Create parameter 'foo'" "true"
+// K2_ERROR: Unresolved reference 'foo'.
 
 class A<T> {
     fun <T> test(n: Int) {

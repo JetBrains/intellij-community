@@ -4,6 +4,7 @@
 // ACTION: Introduce import alias
 // ACTION: Make 'SealedClass' public
 // ACTION: Make 'Test' private
+// K2_ERROR: 'public' subclass exposes its 'private-in-file' supertype 'SealedClass'.
 
 private sealed class SealedClass
 

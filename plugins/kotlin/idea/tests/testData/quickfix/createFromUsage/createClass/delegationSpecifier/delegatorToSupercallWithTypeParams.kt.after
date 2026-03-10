@@ -1,4 +1,5 @@
 // "Create class 'A'" "true"
+// K2_ERROR: Unresolved reference 'A'.
 // K2_AFTER_ERROR: No type arguments expected for 'class A : Any'.
 package p
 

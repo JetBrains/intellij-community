@@ -1,4 +1,5 @@
 // "Initialize with constructor parameter" "true"
+// K2_ERROR: Property must be initialized or be abstract.
 open class A(s: String) {
     <caret>val n: Int
 

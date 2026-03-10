@@ -1,4 +1,5 @@
 // "Import infix extension function 'Int.ext'" "true"
+// K2_ERROR: Unresolved reference 'ext'.
 package p
 
 open class A {

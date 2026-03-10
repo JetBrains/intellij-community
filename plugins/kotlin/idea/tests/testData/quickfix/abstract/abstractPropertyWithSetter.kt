@@ -1,4 +1,5 @@
 // "Make 'j' not abstract" "true"
+// K2_ERROR: Abstract property 'j' in non-abstract class 'B'.
 class B {
     abstract<caret> var j: Int = 0
         set(v: Int) {}

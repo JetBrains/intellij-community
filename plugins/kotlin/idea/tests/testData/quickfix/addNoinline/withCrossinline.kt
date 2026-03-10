@@ -1,5 +1,6 @@
 // "Add 'noinline' to parameter 'lambda'" "true"
 // WITH_STDLIB
+// K2_ERROR: Illegal usage of inline parameter 'crossinline lambda: () -> Unit'. Add 'noinline' modifier to the parameter declaration.
 inline fun inlineFun(crossinline lambda: () -> Unit) {
     <caret>lambda.toString()
 }

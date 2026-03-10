@@ -1,4 +1,5 @@
 // "Create object 'Foo'" "true"
+// K2_ERROR: Unresolved reference 'Foo'.
 
 fun test() {
     <caret>Foo

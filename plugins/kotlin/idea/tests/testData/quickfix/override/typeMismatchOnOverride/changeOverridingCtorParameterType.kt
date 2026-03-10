@@ -1,4 +1,5 @@
 // "Change type to 'CharSequence'" "true"
+// K2_ERROR: Type of 'val x: Any' is not a subtype of overridden property 'val x: CharSequence' defined in 'A'.
 interface A {
     val x: CharSequence
 }

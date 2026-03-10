@@ -7,6 +7,8 @@
 // ERROR: Unresolved reference: TODO
 // ERROR: Unresolved reference: TODO
 // ERROR: Unresolved reference: TODO
+// K2_ERROR: Class 'C' must override 'bar' because it inherits multiple interface methods for it.
+// K2_ERROR: Class 'C' must override 'foo' because it inherits multiple interface methods for it.
 // K2_AFTER_ERROR: Conflicting overloads:<br>fun bar(): Unit
 // K2_AFTER_ERROR: Conflicting overloads:<br>fun bar(): Unit
 // K2_AFTER_ERROR: Conflicting overloads:<br>fun foo(): Unit

@@ -1,4 +1,5 @@
 // "Change return type of called function 'A.component2' to 'Int'" "true"
+// K2_ERROR: Operator call 'component2()' returns 'String', but 'Int' is expected.
 abstract class A {
     abstract operator fun component1(): Int
     abstract operator fun component2(): String

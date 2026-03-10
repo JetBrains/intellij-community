@@ -1,4 +1,5 @@
 // "Import extension property 'foobar'" "true"
+// K2_ERROR: Unresolved reference 'foobar'.
 package p
 
 class T
