@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" />
     <orderEntry type="module" module-name="intellij.maven" />
+    <orderEntry type="module" module-name="intellij.maven.plugin" />
     <orderEntry type="module-library">
       <library name="io.takari.maven.wrapper" type="repository">
         <properties maven-id="io.takari:maven-wrapper:0.5.5">
