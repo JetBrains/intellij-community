@@ -128,11 +128,6 @@ object CodeWriter {
           WorkspaceCodegenProblemsProvider.getInstance(project).reportProblems(problems)
 
           if (generatedCode.isEmpty() || problems.any { it.level == GenerationProblem.Level.ERROR }) {
-            val genFolder = existingTargetFolder.invoke()
-            if (genFolder != null) {
-              indicator.text = DevKitWorkspaceModelBundle.message("progress.text.removing.old.code")
-              removeGeneratedCode(genFolder)
-            }
             return@runWriteActionWithCancellableProgressInDispatchThread
           }
 
