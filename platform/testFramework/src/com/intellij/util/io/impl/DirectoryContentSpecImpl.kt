@@ -137,11 +137,6 @@ class JarSpec : ZipSpecBase("jar") {
 }
 
 class FileSpec(val content: ByteArray?, override val originalFile: Path? = null) : DirectoryContentSpecImpl() {
-  init {
-      if (content != null && originalFile == null) {
-        println("hello")
-      }
-  }
   override fun generate(path: Path) {
     path.write(content ?: ByteArray(0))
   }
