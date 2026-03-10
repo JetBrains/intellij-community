@@ -6,11 +6,12 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.psi.PsiFile
+import com.intellij.testFramework.GlobalState
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory
-import junit.framework.TestCase
+import com.intellij.testFramework.registerExtension
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
@@ -20,9 +21,11 @@ import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
+import java.io.File
 import kotlin.jvm.java
+import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 
-abstract class AbstractK2ScriptHighlightingTest : AbstractHighlightingMetaInfoTest() {
+abstract class AbstractScriptHighlightingMetaInfoTest : AbstractHighlightingMetaInfoTest() {
     override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {
         runBlocking {
             KotlinScriptResolutionService.getInstance(project).process(files.map { it.virtualFile })
@@ -33,11 +36,14 @@ abstract class AbstractK2ScriptHighlightingTest : AbstractHighlightingMetaInfoTe
 
     override fun runInDispatchThread(): Boolean = false
 
+    protected open val customDefinitionsProvider: CustomDefinitionProviderForTest? = null
+
     override fun setUp() {
         setUpWithKotlinPlugin {
             val projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name)
             myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture())
-            projectBuilder.addModule(JavaModuleFixtureBuilder::class.java)
+            val javaModuleFixtureBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder::class.java)
+            javaModuleFixtureBuilder.addContentRoot(myFixture.tempDirPath)
             myFixture.setUp()
         }
 
@@ -48,6 +54,10 @@ abstract class AbstractK2ScriptHighlightingTest : AbstractHighlightingMetaInfoTe
             edtWriteAction {
                 ProjectRootManager.getInstance(project).projectSdk = IdeaTestUtil.getMockJdk17()
             }
+        }
+
+        customDefinitionsProvider?.let {
+            project.registerExtension(ScriptDefinitionsProvider.EP_NAME, it, testRootDisposable)
         }
     }
 
@@ -61,5 +71,11 @@ abstract class AbstractK2ScriptHighlightingTest : AbstractHighlightingMetaInfoTe
         ) {
             super.doTest(testDataPath)
         }
+    }
+
+    protected open class CustomDefinitionProviderForTest(override val id: String) : ScriptDefinitionsProvider {
+        override fun getDefinitionClasses(): Iterable<String> = emptyList()
+        override fun getDefinitionsClassPath(): Iterable<File> = emptyList()
+        override fun useDiscovery(): Boolean = false
     }
 }

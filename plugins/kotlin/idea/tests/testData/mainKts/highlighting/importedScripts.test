@@ -1,7 +1,8 @@
+// FIR_IDENTICAL
 // CHECK_SYMBOL_NAMES
 // HIGHLIGHTER_ATTRIBUTES_KEY
 
-// FILE: mainFile.main.kts
+// FILE: resources/mainFile.main.kts
 @file:Import("imported.main.kts")
 
 getImportedKtsText()
@@ -12,7 +13,7 @@ getImportedMainKtsText()
 importedMainKts
 ImportedMainKts()
 
-// FILE: imported.main.kts
+// FILE: resources/imported.main.kts
 @file:Import("imported.kts")
 
 fun getImportedMainKtsText() = "fromImportedKts"
@@ -23,7 +24,7 @@ ImportedKts()
 getImportedKtsText()
 importedKts
 
-// FILE: imported.kts
+// FILE: resources/imported.kts
 fun getImportedKtsText() = "fromImportedKts"
 val importedKts = "fromImportedKts"
 

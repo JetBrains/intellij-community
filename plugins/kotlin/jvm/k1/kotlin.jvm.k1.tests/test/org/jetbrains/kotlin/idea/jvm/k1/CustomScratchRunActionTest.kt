@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.scratch
+package org.jetbrains.kotlin.idea.jvm.k1
 
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
@@ -9,7 +9,7 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
-class CustomScratchRunActionTest : AbstractScratchRunActionTest() {
+class CustomScratchRunActionTest : AbstractK1ScratchRunActionTest() {
 
     override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K1

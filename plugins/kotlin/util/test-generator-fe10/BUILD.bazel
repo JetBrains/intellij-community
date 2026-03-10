@@ -33,8 +33,6 @@ jvm_library(
     "//plugins/kotlin/jvm-debugger/testFramework:testFramework_test_lib",
     "//plugins/kotlin/idea/tests",
     "//plugins/kotlin/idea/tests:tests_test_lib",
-    "//plugins/kotlin/scripting-support",
-    "//plugins/kotlin/scripting-support:scripting-support_test_lib",
     "//java/testFramework",
     "//java/testFramework:testFramework_test_lib",
     "//plugins/kotlin/gradle/gradle-java/k1",
@@ -79,6 +77,12 @@ jvm_library(
     "//plugins/kotlin/gradle/gradle-java/k1:kotlin-gradle-gradle-java-k1-tests_test_lib",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k1:kotlin-gradle-scripting-k1-tests",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k1:kotlin-gradle-scripting-k1-tests_test_lib",
+    "//plugins/kotlin/base/scripting/scripting.k1",
+    "//plugins/kotlin/base/scripting/scripting.k1:scripting.k1_test_lib",
+    "//plugins/kotlin/jvm/k1",
+    "//plugins/kotlin/jvm/k1:k1_test_lib",
+    "//plugins/kotlin/jvm/k1:kotlin-jvm-k1-tests",
+    "//plugins/kotlin/jvm/k1:kotlin-jvm-k1-tests_test_lib",
   ],
   runtime_deps = [":test-generator-fe10"]
 )

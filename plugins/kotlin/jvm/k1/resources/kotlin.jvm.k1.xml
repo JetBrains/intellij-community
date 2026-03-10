@@ -2,6 +2,7 @@
   <dependencies>
     <module name="kotlin.jvm.shared"/>
     <module name="kotlin.base.scripting.k1"/>
+    <module name="kotlin.base.fe10.plugin"/>
   </dependencies>
 
   <extensionPoints>

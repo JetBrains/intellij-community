@@ -1,6 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.scratch
+package org.jetbrains.kotlin.idea.jvm.k1
 
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -27,6 +28,7 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.jvm.k1.scratch.actions.RunScratchAction
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
@@ -46,17 +48,17 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestDataFileName
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.idea.test.TestMetadataUtil
+import org.jetbrains.kotlin.idea.base.plugin.useK2Plugin
+import org.jetbrains.kotlin.idea.jvm.k1.scratch.K1KotlinScratchFile
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_SUFFIX
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.junit.Assert
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase(),
-                                              ExpectedPluginModeProvider {
+abstract class AbstractK1ScratchRunActionTest : FileEditorManagerTestCase(), ExpectedPluginModeProvider {
 
     private val scratchFiles: MutableList<VirtualFile> = ArrayList()
     private var vfsDisposable: Ref<Disposable>? = null
@@ -287,7 +289,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase(),
     protected fun stopReplProcess() {
         if (myFixture.file != null) {
             val scratchFile = getScratchEditorForSelectedFile(manager!!, myFixture.file.virtualFile)?.scratchFile
-                    as? org.jetbrains.kotlin.idea.jvm.k1.scratch.K1KotlinScratchFile ?: error("Couldn't find scratch panel")
+                    as? K1KotlinScratchFile ?: error("Couldn't find scratch panel")
             scratchFile.replScratchExecutor?.stopAndWait()
         }
 
@@ -300,7 +302,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase(),
     }
 
     protected fun doTestScratchText(): String {
-        return File(testDataPath, "scripting-support/testData/scratch/custom/test_scratch.kts").readText()
+        return File(testDataPath, "jvm/k1/testData/scratch/custom/test_scratch.kts").readText()
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor {

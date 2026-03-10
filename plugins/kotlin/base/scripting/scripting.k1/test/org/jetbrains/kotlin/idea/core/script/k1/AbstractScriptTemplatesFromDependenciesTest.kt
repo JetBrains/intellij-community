@@ -1,6 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-package org.jetbrains.kotlin.idea.script
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.core.script.k1
 
 import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.openapi.application.runWriteAction
@@ -19,7 +18,6 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.ZipUtil
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.core.script.k1.ScriptTemplatesFromDependenciesProvider
 import org.jetbrains.kotlin.idea.core.script.shared.definition.ScriptDefinitionMarkerFileType
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
@@ -36,8 +34,7 @@ import java.util.zip.ZipOutputStream
 import kotlin.io.path.invariantSeparatorsPathString
 
 @RunWith(JUnit3RunnerWithInners::class)
-abstract class AbstractScriptTemplatesFromDependenciesTest : HeavyPlatformTestCase(),
-                                                             ExpectedPluginModeProvider {
+abstract class AbstractScriptTemplatesFromDependenciesTest : HeavyPlatformTestCase(), ExpectedPluginModeProvider {
 
     companion object {
         private const val testFileName = "test.kts"

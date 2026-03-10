@@ -29,7 +29,7 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
         }
 
         if (this is KMPTest) {
-            KMPProjectDescriptorTestUtilities.validateTest(files, testPlatform)
+            runReadAction { KMPProjectDescriptorTestUtilities.validateTest(files, testPlatform) }
         }
 
         val mainFileText = runReadAction { psiFile.text }

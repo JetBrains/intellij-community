@@ -1376,7 +1376,6 @@ plugins/kotlin/run-configurations/jvm
 plugins/kotlin/run-configurations/testng
 plugins/kotlin/scripting
 plugins/kotlin/scripting-plugin
-plugins/kotlin/scripting-support
 plugins/kotlin/spellchecker
 plugins/kotlin/test-framework
 plugins/kotlin/tests-common

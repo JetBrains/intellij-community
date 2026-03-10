@@ -93,6 +93,7 @@ import org.jetbrains.kotlin.idea.completion.test.weighers.AbstractSmartCompletio
 import org.jetbrains.kotlin.idea.configuration.gradle.AbstractGradleConfigureProjectByChangingFileTest
 import org.jetbrains.kotlin.idea.conversion.copy.AbstractK1LiteralTextToKotlinCopyPasteTest
 import org.jetbrains.kotlin.idea.conversion.copy.AbstractLiteralKotlinToKotlinCopyPasteTest
+import org.jetbrains.kotlin.idea.core.script.k1.AbstractScriptTemplatesFromDependenciesTest
 import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractK1CodeFragmentAutoImportTest
 import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractK1CodeFragmentCompletionHandlerTest
 import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractK1CodeFragmentCompletionTest
@@ -225,14 +226,11 @@ import org.jetbrains.kotlin.idea.resolve.AbstractReferenceResolveWithLibTest
 import org.jetbrains.kotlin.idea.resolve.AbstractReferenceToCompiledKotlinResolveInJavaTest
 import org.jetbrains.kotlin.idea.resolve.AbstractReferenceToJavaWithWrongFileStructureTest
 import org.jetbrains.kotlin.idea.resolve.AbstractResolveModeComparisonTest
-import org.jetbrains.kotlin.idea.scratch.AbstractScratchLineMarkersTest
-import org.jetbrains.kotlin.idea.scratch.AbstractScratchRunActionTest
 import org.jetbrains.kotlin.idea.script.AbstractScriptConfigurationCompletionTest
 import org.jetbrains.kotlin.idea.script.AbstractScriptConfigurationHighlightingTest
 import org.jetbrains.kotlin.idea.script.AbstractScriptConfigurationInsertImportOnPasteTest
 import org.jetbrains.kotlin.idea.script.AbstractScriptConfigurationNavigationTest
 import org.jetbrains.kotlin.idea.script.AbstractScriptDefinitionsOrderTest
-import org.jetbrains.kotlin.idea.script.AbstractScriptTemplatesFromDependenciesTest
 import org.jetbrains.kotlin.idea.search.refIndex.AbstractK1FindUsagesWithCompilerReferenceIndexTest
 import org.jetbrains.kotlin.idea.search.refIndex.AbstractKotlinCompilerReferenceByReferenceTest
 import org.jetbrains.kotlin.idea.search.refIndex.AbstractKotlinCompilerReferenceTest
@@ -305,6 +303,8 @@ import org.jetbrains.uast.test.kotlin.comparison.AbstractFE1LegacyUastValuesTest
 import org.jetbrains.uast.test.kotlin.comparison.AbstractFE1UastDeclarationTest
 import org.jetbrains.uast.test.kotlin.comparison.AbstractFE1UastTypesTest
 import org.jetbrains.uast.test.kotlin.comparison.AbstractFE1UastValuesTest
+import org.jetbrains.kotlin.idea.jvm.k1.AbstractK1ScratchLineMarkersTest
+import org.jetbrains.kotlin.idea.jvm.k1.AbstractK1ScratchRunActionTest
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     generateK1Tests()
@@ -1411,9 +1411,8 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             model("refactoring/extractFunctionInplace")
         }
     }
-
-    testGroup("scripting-support", category = SCRIPTS) {
-        testClass<AbstractScratchRunActionTest> {
+    testGroup("jvm/k1", category = SCRIPTS) {
+        testClass<AbstractK1ScratchRunActionTest> {
             model("scratch", pattern = KTS, testMethodName = "doScratchCompilingTest", testClassName = "ScratchCompiling", isRecursive = false)
             // TODO: uncomment once KTIJ-33711 fixed
 //            model("scratch", pattern = KTS, testMethodName = "doScratchReplTest", testClassName = "ScratchRepl", isRecursive = false)
@@ -1421,10 +1420,12 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             model("scratch/rightPanelOutput", pattern = KTS, testMethodName = "doRightPreviewPanelOutputTest", testClassName = "ScratchRightPanelOutput", isRecursive = false)
         }
 
-        testClass<AbstractScratchLineMarkersTest> {
+        testClass<AbstractK1ScratchLineMarkersTest> {
             model("scratch/lineMarker", testMethodName = "doScratchTest", pattern = KT_OR_KTS)
         }
+    }
 
+    testGroup("base/scripting/scripting.k1", category = SCRIPTS) {
         testClass<AbstractScriptTemplatesFromDependenciesTest> {
             model("script/templatesFromDependencies", pattern = DIRECTORY, isRecursive = false)
         }

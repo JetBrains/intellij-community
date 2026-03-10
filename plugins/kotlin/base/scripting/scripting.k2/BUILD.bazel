@@ -248,6 +248,10 @@ jvm_library(
     "//plugins/kotlin/tests-common:common-tests",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
     "@lib//:kotlinc-kotlin-compiler-tests",
+    "//plugins/kotlin/scripting",
+    "//plugins/kotlin/scripting:scripting_test_lib",
+    "//plugins/kotlin/base/facet/tests",
+    "//plugins/kotlin/base/facet/tests:tests_test_lib",
   ],
   runtime_deps = [
     ":kotlin-base-scripting-tests",

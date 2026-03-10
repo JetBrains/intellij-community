@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.analysis.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.jvm.k1.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.core.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.eval4j" scope="RUNTIME" />
@@ -37,7 +38,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.featuresTrainer.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.compose" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.scripting-support" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.tests.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.tests" scope="RUNTIME" />
