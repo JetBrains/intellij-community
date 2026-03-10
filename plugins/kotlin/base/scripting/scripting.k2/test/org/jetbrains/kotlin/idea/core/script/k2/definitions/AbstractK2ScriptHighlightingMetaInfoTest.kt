@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.k2.highlighting
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.core.script.k2.definitions
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolut
 import org.jetbrains.kotlin.idea.core.script.shared.SCRIPT_DEFINITIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.shared.definition.defaultDefinition
 import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
+import org.jetbrains.kotlin.idea.k2.highlighting.AbstractK2HighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
@@ -50,7 +51,7 @@ abstract class AbstractK2ScriptHighlightingMetaInfoTest : AbstractK2Highlighting
     }
 
     /**
-     * If a custom script definition is required, see [org.jetbrains.kotlin.idea.k2.highlighting.TestCustomScriptDefinition].
+     * If a custom script definition is required, see [TestCustomScriptDefinition].
      */
     private class RefinedDefinitionSource(private val targetDefinition: ScriptDefinition) : ScriptDefinitionsSource {
         override val definitions: Sequence<ScriptDefinition>

@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.k2.highlighting
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.core.script.k2.definitions
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
@@ -11,6 +11,8 @@ import com.intellij.testFramework.registerExtension
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolutionService
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptAdditionalIdeaDependenciesProvider
+import org.jetbrains.kotlin.idea.k2.highlighting.K2TestMetaDataWithBundledPluginsDefaultDirsMacrosHelper
+import org.jetbrains.kotlin.idea.k2.highlighting.ProjectDescriptorWithStdlibSourcesAndExtraLibraries
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.COMPILER_ARGUMENTS_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources

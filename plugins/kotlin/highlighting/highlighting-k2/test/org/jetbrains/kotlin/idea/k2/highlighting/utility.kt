@@ -11,7 +11,7 @@ import java.io.File
  * Since we do not use Junit 5, an alternative approach to test fixtures would be
  * logic encapsulation.
  */
-internal object K2TestMetaDataWithBundledPluginsDefaultDirsMacrosHelper {
+object K2TestMetaDataWithBundledPluginsDefaultDirsMacrosHelper {
     /**
      * Test cases reference fake compiler plugins' jars which lay in the test data directory. This directory is located differently
      * in local and CI (TeamCity) environments.

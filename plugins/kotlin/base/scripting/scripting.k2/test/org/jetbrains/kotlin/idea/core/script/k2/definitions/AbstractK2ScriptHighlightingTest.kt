@@ -1,7 +1,6 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.k2.highlighting
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.core.script.k2.definitions
 
-import com.intellij.codeInsight.daemon.impl.EditorTracker
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.roots.ProjectRootManager
@@ -11,6 +10,7 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory
+import junit.framework.TestCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
+import kotlin.jvm.java
 
 abstract class AbstractK2ScriptHighlightingTest : AbstractHighlightingMetaInfoTest() {
     override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {
@@ -41,7 +42,6 @@ abstract class AbstractK2ScriptHighlightingTest : AbstractHighlightingMetaInfoTe
         }
 
         VfsRootAccess.allowRootAccess(myFixture.testRootDisposable, KotlinRoot.DIR.path)
-        EditorTracker.getInstance(project)
         invalidateLibraryCache(project)
 
         runBlocking(Dispatchers.EDT) {
@@ -51,16 +51,15 @@ abstract class AbstractK2ScriptHighlightingTest : AbstractHighlightingMetaInfoTe
         }
     }
 
-
-    override fun doTest(unused: String) {
+    override fun doTest(testDataPath: String) {
         val testKtFile = dataFile()
 
         IgnoreTests.runTestIfNotDisabledByFileDirective(
             testKtFile.toPath(),
             disableTestDirective = IgnoreTests.DIRECTIVES.IGNORE_K2,
             additionalFilesExtensions = arrayOf(HIGHLIGHTING_EXTENSION)
-        ) { // warnings are not supported yet
-            super.doTest(unused)
+        ) {
+            super.doTest(testDataPath)
         }
     }
 }
