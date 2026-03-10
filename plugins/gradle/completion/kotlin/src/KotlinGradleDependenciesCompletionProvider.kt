@@ -17,6 +17,8 @@ import com.intellij.gradle.completion.GradleDependencyCompletionMatcher
 import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition
 import com.intellij.gradle.completion.getCompletionContext
 import com.intellij.gradle.completion.removeDummySuffix
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginManagerCore.isDisabled
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.backend.workspace.workspaceModel
@@ -29,15 +31,9 @@ import com.intellij.repository.search.completion.api.DependencyCompletionService
 import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
 import com.intellij.psi.PsiElement
+import com.intellij.repository.search.completion.statistics.BT_COMPLETION_IS_AUTO_POPUP
 import com.intellij.util.ProcessingContext
 import kotlinx.coroutines.flow.flowOf
-import org.jetbrains.idea.completion.api.DependencyArtifactCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyCompletionResult
-import org.jetbrains.idea.completion.api.DependencyCompletionService
-import org.jetbrains.idea.completion.api.DependencyGroupCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyVersionCompletionRequest
-import org.jetbrains.idea.completion.statistics.BT_COMPLETION_IS_AUTO_POPUP
 import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
 
 private val exclude = setOf(
@@ -58,8 +54,8 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
         when {
             // server-side completion only
             // dependencies { juni<caret> }
-            //positionElement.isOnTheTopLevelOfScriptBlock(DEPENDENCIES) ->
-            //    suggestDependencyCompletions(result, parameters, DependencyConfigurationInsertHandler, TopLevelLookupStringProvider, DependenciesCompletionInvokePosition.TOP_LEVEL)
+            !isFreeMode() && positionElement.isOnTheTopLevelOfScriptBlock(DEPENDENCIES) ->
+                suggestDependencyCompletions(result, parameters, DependencyConfigurationInsertHandler, TopLevelLookupStringProvider)
 
             // dependencies { implementation(...) { exclude("<caret>") } }
             positionElement.isDependencyArgument(exclude) -> {
@@ -236,22 +232,26 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
         val snapshot = this.originalFile.manager.project.workspaceModel.currentSnapshot
         return snapshot.entities<FacetEntity>().any { it.name == "Android" }
     }
+
+  private fun isFreeMode(): Boolean {
+    return isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)
+  }
 }
 
-/*private object TopLevelLookupStringProvider : (DependencyCompletionResult) -> String {
+private object TopLevelLookupStringProvider : (DependencyCompletionResult) -> String {
     override fun invoke(it: DependencyCompletionResult): String {
         val scope = it.scope
-        if (!scope.isNullOrEmpty() && scope.contains(":")) {
+/*        if (!scope.isNullOrEmpty() && scope.contains(":")) {
             val items = scope.split(":")
             val configurationName = items[0]
             val dependencyNotation = items[1]
             if (configurationName in configurationNames && dependencyNotation in dependencyNotations)
                 return "$configurationName($dependencyNotation(\"${it.groupId}:${it.artifactId}:${it.version}\"))"
-        }
-        val configurationName = if (scope in configurationNames) scope else defaultConfigurationName
+        }*/
+        val configurationName = if (scope.isNullOrBlank()) "implementation" else scope
         return "$configurationName(\"${it.groupId}:${it.artifactId}:${it.version}\")"
     }
-}*/
+}
 
 private object SimpleLookupStringProvider : (DependencyCompletionResult) -> String {
     override fun invoke(it: DependencyCompletionResult): String {
