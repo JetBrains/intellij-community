@@ -1610,6 +1610,9 @@
                  description="Enable groups in completions" restartRequired="false"/>
     <registryKey key="ide.completion.group.mode.enabled" defaultValue="false"
                  description="Enable groups in completions for any mode. ide.completion.group.enabled should be enabled" restartRequired="false"/>
+    <registryKey key="ide.completion.hide.empty.documentation" defaultValue="true"
+                 description="Hide the documentation popup during code completion when there is no documentation instead of showing 'No Documentation Found'"
+                 restartRequired="false"/>
 
     <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.SyntheticLibraryIndexableIteratorHandler"/>
     <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.ExternalEntityIndexableIteratorHandler"/>
