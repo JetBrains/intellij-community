@@ -2,9 +2,17 @@
 package com.intellij.openapi.vcs.merge.flow
 
 import com.intellij.CommonBundle
+import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper.DEFAULT_ACTION
-import com.intellij.openapi.ui.DialogWrapper.createJButtonForAction
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
@@ -15,9 +23,7 @@ import com.intellij.openapi.vcs.merge.MergeSession
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.util.ui.initOnShow
 import kotlinx.coroutines.Dispatchers
@@ -62,54 +68,45 @@ internal class IterativeMergeFlowDelegate(
           }
         }
       }
+      row {
+        resolveAutomaticallyButton = button(VcsBundle.message("multiple.file.merge.resolve.automatically")) {
+          resolveAutomatically()
+        }.align(AlignX.LEFT).component
 
+        cell(createToolbar().component)
+          .align(AlignX.RIGHT)
+      }
       row {
         scrollCell(table)
           .align(Align.FILL)
           .resizableColumn()
-
-        panel {
-          row {
-            acceptYoursButton = button(VcsBundle.message("multiple.file.merge.accept.yours")) {
-              acceptForResolution(MergeSession.Resolution.AcceptedYours)
-            }.align(AlignX.FILL)
-              .component
-          }
-          row {
-            acceptTheirsButton = button(VcsBundle.message("multiple.file.merge.accept.theirs")) {
-              acceptForResolution(MergeSession.Resolution.AcceptedTheirs)
-            }.align(AlignX.FILL)
-              .component
-          }
-          row {
-            resolveAutomaticallyButton = button(VcsBundle.message("multiple.file.merge.resolve.automatically")) {
-              resolveAutomatically()
-            }.align(AlignX.FILL)
-              .component
-          }
-          row {
-            val mergeAction = object : AbstractAction(VcsBundle.message("multiple.file.merge.merge")) {
-              override fun actionPerformed(e: ActionEvent) {
-                showMergeDialog()
-              }
-            }.apply {
-              putValue(DEFAULT_ACTION, true)
-            }
-            mergeButton = createJButtonForAction(mergeAction, rootPane)
-            cell(mergeButton)
-              .align(AlignX.FILL)
-          }
-        }.align(AlignY.TOP)
       }.resizableRow()
-
-      row {
-        checkBox(VcsBundle.message("multiple.file.merge.group.by.directory.checkbox"))
-          .selected(getGroupByDirectory())
-          .applyToComponent {
-            addChangeListener { toggleGroupByDirectory(isSelected) }
-          }
-      }
     }
+  }
+
+  private fun createToolbar(): ActionToolbar {
+    val viewOptionsGroup = DefaultActionGroup(IdeBundle.message("group.view.options"), true).apply {
+      templatePresentation.icon = AllIcons.Actions.Show
+      add(object : DumbAwareToggleAction(VcsBundle.messagePointer("multiple.file.merge.group.by.directory.checkbox"),
+                                         VcsBundle.messagePointer("multiple.file.merge.group.by.directory.checkbox"),
+                                         AllIcons.Actions.ToggleVisibility) {
+
+        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+        override fun isSelected(e: AnActionEvent): Boolean = getGroupByDirectory()
+
+        override fun setSelected(e: AnActionEvent, state: Boolean) {
+          toggleGroupByDirectory(state)
+        }
+      })
+    }
+
+    val toolbarGroup = DefaultActionGroup().apply { add(viewOptionsGroup) }
+    return ActionManager.getInstance()
+      .createActionToolbar(ActionPlaces.TOOLBAR, toolbarGroup, true)
+      .apply {
+        setTargetComponent(table)
+      }
   }
 
   override fun createActions(): List<Action> {

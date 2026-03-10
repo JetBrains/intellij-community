@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.merge
 
 import com.intellij.configurationStore.StoreReloadManager
@@ -72,10 +72,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import java.awt.Color
+import java.awt.event.ComponentAdapter
 import java.awt.event.MouseEvent
 import java.io.IOException
 import javax.swing.Action
 import javax.swing.JComponent
+import javax.swing.SwingUtilities
 import javax.swing.table.AbstractTableModel
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeNode
@@ -141,6 +143,8 @@ open class MultipleFileMergeDialog(
   private val iterativeDataHolder =
     if (MergeConflictIterativeResolution.isEnabled()) MergeConflictIterativeDataHolder(project, disposable) else null
 
+  private var popupCloseListener: ComponentAdapter? = null
+
   private val mergeFlowDelegate: MergeFlowDelegate = if (project != null && iterativeDataHolder != null) IterativeMergeFlowDelegate(
     table = table,
     files = files,
@@ -172,6 +176,7 @@ open class MultipleFileMergeDialog(
     init()
 
     updateTree(SetDefaultTreeStateStrategy())
+    popupCloseListener = MergeUIUtil.installPopupAutoCloseOnResize(rootPane)
   }
 
   override fun createCenterPanel(): JComponent {
@@ -218,6 +223,7 @@ open class MultipleFileMergeDialog(
 
   override fun dispose() {
     project?.unblockReloadingProjectOnExternalChanges()
+    SwingUtilities.getWindowAncestor(rootPane)?.removeComponentListener(popupCloseListener)
     super.dispose()
   }
 

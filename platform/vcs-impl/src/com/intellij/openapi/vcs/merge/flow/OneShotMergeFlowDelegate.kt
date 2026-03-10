@@ -130,4 +130,6 @@ internal class OneShotMergeFlowDelegate(
     grouping: ChangesGroupingPolicyFactory,
     unresolvedFiles: List<VirtualFile>,
   ): DefaultTreeModel = TreeModelBuilder.buildFromVirtualFiles(project, grouping, unresolvedFiles)
+
+  override fun createSouthPanel(): JComponent? = null
 }
