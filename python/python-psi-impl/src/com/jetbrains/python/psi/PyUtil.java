@@ -447,7 +447,7 @@ public final class PyUtil {
   }
 
   /**
-   * Finds element declaration by resolving its references top the top but not further than file (to prevent un-stubbing)
+   * Finds element declaration by resolving its references to the top but not further than file (to prevent un-stubbing)
    *
    * @param elementToResolve element to resolve
    * @return its declaration

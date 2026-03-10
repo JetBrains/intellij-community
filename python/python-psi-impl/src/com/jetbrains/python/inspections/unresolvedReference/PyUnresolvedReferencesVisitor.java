@@ -150,7 +150,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     final String attrName = node.getReferencedName();
     if (qualifier != null && attrName != null) {
       final PyType type = replaceSelfWithItsScopeClass(myTypeEvalContext.getType(qualifier));
-      if (type instanceof PyClassType classType &&
+      if (type instanceof PyClassLikeType classType &&
           !classType.isAttributeWritable(attrName, myTypeEvalContext)) {
         final ASTNode nameNode = node.getNameElement();
         final PsiElement e = nameNode != null ? nameNode.getPsi() : node;
@@ -382,7 +382,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
             return;
           }
           ContainerUtil.addAll(fixes, getCreateMemberFromUsageFixes(type, reference, refText));
-          if (type instanceof PyClassType classType) {
+          if (type instanceof PyClassLikeType classType) {
             if (reference instanceof PyOperatorReference) {
               String className = type.getName();
               if (classType.isDefinition()) {

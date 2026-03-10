@@ -79,7 +79,7 @@ abstract class TypeEvalContext protected constructor() {
      * Create the most detailed type evaluation context for user-initiated actions.
      *
      *
-     * Should be used go to definition, find usages, refactorings, documentation.
+     * Should be used for "goto definition", "find usages", refactorings, documentation.
      *
      *
      * For code completion see [TypeEvalContext.codeCompletion].
