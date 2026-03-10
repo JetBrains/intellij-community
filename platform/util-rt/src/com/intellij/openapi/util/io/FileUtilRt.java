@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
@@ -48,9 +48,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import static java.lang.System.getProperty;
 
 /**
- * A stripped-down version of {@link com.intellij.openapi.util.io.FileUtil}.
- * Intended to use by external (out-of-IDE-process) runners and helpers, so it should not contain any library dependencies.
+ * Obsolete; please use NIO API instead ({@link Path}, {@link Files}, {@link NioFiles}, etc.)
  */
+@SuppressWarnings({"IO_FILE_USAGE", "IOStreamConstructor"})
+@ApiStatus.Obsolete
 public final class FileUtilRt {
   private static final int KILOBYTE = 1024;
   private static final int DEFAULT_INTELLISENSE_LIMIT = 2500 * KILOBYTE;
@@ -535,7 +536,6 @@ public final class FileUtilRt {
 
   @NotNull
   private static File doCreateTempFile(@NotNull File dir, @NotNull String prefix, @Nullable String suffix, boolean isDirectory) throws IOException {
-    //noinspection ResultOfMethodCallIgnored
     dir.mkdirs();
 
     if (prefix.length() < 3) {
@@ -748,7 +748,7 @@ public final class FileUtilRt {
   }
 
   /**
-   * @deprecated Prefer using @link {@link com.intellij.openapi.vfs.limits.FileSizeLimit#isTooLarge}
+   * @deprecated Prefer using @link {@link com.intellij.openapi.vfs.limits.FileSizeLimit#isTooLargeForContentLoading}
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated

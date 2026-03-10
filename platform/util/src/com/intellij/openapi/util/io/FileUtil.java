@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
@@ -73,6 +72,7 @@ import static java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE;
  */
 @ApiStatus.NonExtendable
 @ApiStatus.Obsolete
+@SuppressWarnings({"NonFinalUtilityClass", "IO_FILE_USAGE", "IOStreamConstructor"})
 public class FileUtil {
   /** @deprecated async delete is no longer used */
   @Deprecated
@@ -229,6 +229,7 @@ public class FileUtil {
         throw new IOException("File length reported negative, probably doesn't exist");
       }
 
+      //noinspection deprecation
       if (FileUtilRt.isTooLarge(len)) {
         throw new FileTooBigException("Attempt to load '" + file + "' in memory buffer, file length is " + len + " bytes.");
       }
@@ -236,22 +237,6 @@ public class FileUtil {
       bytes = loadBytes(stream, (int)len);
     }
     return bytes;
-  }
-
-  /**
-   * use {@link com.intellij.openapi.vfs.VfsUtilCore#loadNBytes}
-   * or {@link InputStream#readNBytes(int)}
-   */
-  @Deprecated
-  public static byte @NotNull [] loadFirstAndClose(@NotNull InputStream stream, int maxLength) throws IOException {
-    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-    try {
-      copy(stream, maxLength, buffer);
-    }
-    finally {
-      stream.close();
-    }
-    return buffer.toByteArray();
   }
 
   public static @NotNull String loadTextAndClose(@NotNull InputStream stream) throws IOException {
@@ -640,6 +625,7 @@ public class FileUtil {
     return FileUtilRt.toCanonicalPath(path, separatorChar, true);
   }
 
+  @SuppressWarnings("unused")
   @Contract("null -> null; !null->!null")
   public static String toCanonicalUriPath(@Nullable String path) {
     return FileUtilRt.toCanonicalPath(path, '/', false);
@@ -1012,7 +998,6 @@ public class FileUtil {
       File toFile = new File(toDir, fromFile.getName());
       success = success && fromFile.renameTo(toFile);
     }
-    //noinspection ResultOfMethodCallIgnored
     fromDir.delete();
 
     return success;
@@ -1558,8 +1543,9 @@ public class FileUtil {
       try {
         // If there is no trove4j library in the classpath, we will fail with ClassNotFoundException
         // and FILE_HASHING_STRATEGY will not be initialized
-        Class<?> clazz = Class.forName("gnu.trove.TObjectHashingStrategy");
+        Class.forName("gnu.trove.TObjectHashingStrategy");
 
+        //noinspection deprecation
         FILE_HASHING_STRATEGY_temp = new TObjectHashingStrategy<File>() {
           @Override
           public int computeHashCode(File object) {
@@ -1577,7 +1563,7 @@ public class FileUtil {
       } finally {
         //We cannot use TObjectHashingStrategy explicitly to declare the variable, as NoClassDefFoundError could be thrown 
         // if trove4j is not available
-        //noinspection CastCanBeRemovedNarrowingVariableType,unchecked
+        //noinspection CastCanBeRemovedNarrowingVariableType,unchecked,deprecation
         FILE_HASHING_STRATEGY = (TObjectHashingStrategy<File>)FILE_HASHING_STRATEGY_temp;
       }
   }

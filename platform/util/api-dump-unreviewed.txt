@@ -1066,7 +1066,6 @@ Fc:com.intellij.openapi.util.io.FileUtil
 - s:loadFileText(java.io.File):C[]
 - s:loadFileText(java.io.File,java.lang.String):C[]
 - s:loadFileText(java.io.File,java.nio.charset.Charset):C[]
-- s:loadFirstAndClose(java.io.InputStream,I):B[]
 - s:loadLines(java.io.BufferedReader):java.util.List
 - s:loadLines(java.io.File):java.util.List
 - s:loadLines(java.io.File,java.lang.String):java.util.List
