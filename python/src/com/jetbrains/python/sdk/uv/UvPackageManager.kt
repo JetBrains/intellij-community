@@ -31,7 +31,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-internal class UvPackageManager(project: Project, sdk: Sdk, uvExecutionContextDeferred: Deferred<UvExecutionContext<*>>) : PythonPackageManager(project, sdk) {
+internal class UvPackageManager(project: Project, sdk: Sdk, uvExecutionContextDeferred: Deferred<UvExecutionContext<*>>) : PythonPackageManager(project, sdk, installedMightBeTransitive = true) {
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
   private lateinit var uvLowLevel: PyResult<UvLowLevel<*>>
   private val uvExecutionContextDeferred = uvExecutionContextDeferred.also { it.cancelOnDispose(this) }
