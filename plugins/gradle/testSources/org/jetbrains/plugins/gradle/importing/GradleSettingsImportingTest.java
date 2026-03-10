@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -436,7 +436,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   @Test
   // The idea ext plugin is only compatible with Gradle 4.7+
   // The idea ext plugin uses API that was deprecated in Gradle 6.0.
-  @TargetVersions({"4.7+", "!6.0"})
+  @TargetVersions({"4.7+", "!6.0.x"})
   public void testIdeaPostProcessingHook() throws Exception {
     File testOutputFile = new File(getProjectPath(), "test_output.txt");
     assertThat(testOutputFile).doesNotExist();
@@ -476,7 +476,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   @Test
   // The idea ext plugin is only compatible with Gradle 4.7+
   // The idea ext plugin uses API that was deprecated in Gradle 6.0.
-  @TargetVersions({"4.7+", "!6.0"})
+  @TargetVersions({"4.7+", "!6.0.x"})
   public void testImportEncodingSettings() throws IOException {
     {
       importProject(
@@ -537,7 +537,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   @Test
   // The idea ext plugin is only compatible with Gradle 4.7+
   // The idea ext plugin uses API that was deprecated in Gradle 6.0.
-  @TargetVersions({"4.7+", "!6.0"})
+  @TargetVersions({"4.7+", "!6.0.x"})
   public void testImportFileEncodingSettings() throws IOException {
     VirtualFile aDir = createProjectSubDir("src/main/java/a");
     VirtualFile bDir = createProjectSubDir("src/main/java/b");
@@ -808,7 +808,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   @Test
   // The idea ext plugin is only compatible with Gradle 4.7+
   // The idea ext plugin uses API that was deprecated in Gradle 6.0.
-  @TargetVersions({"4.7+", "!6.0"})
+  @TargetVersions({"4.7+", "!6.0.x"})
   public void testChangeImportPackagePrefix() throws IOException {
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(

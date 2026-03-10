@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -37,10 +37,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl;
-
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.util.JpsPathUtil;
@@ -48,7 +45,6 @@ import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScri
 import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogsLocator;
 import org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource;
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase;
-import org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeFinalizerDataService;
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetJavaVersion;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
@@ -276,7 +272,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
   
   @Test
-  @TargetVersions("<=6.9")
+  @TargetVersions("<=6.9.x")
   public void testTransitiveNonTransitiveDependencyScopeMerge() throws Exception {
     createSettingsFile(including("project1", "project2"));
 
@@ -1162,7 +1158,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("6.8 <=> 7.5")
+  @TargetVersions("6.8 <=> 7.5.x")
   @TargetJavaVersion(value = "<22", reason = "Spring Boot 2 Compatibility")
   @TestFor(issues = "IDEA-339492")
   public void testProjectDependencyOnBootJar2Artifact() throws Exception {
@@ -1354,7 +1350,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("<=6.9")
+  @TargetVersions("<=6.9.x")
   public void testDependencyOnDefaultConfigurationWithAdditionalArtifact() throws Exception {
     createSettingsFile(including("project1", "project2"));
     createProjectSubFile("project1/build.gradle",
@@ -1787,7 +1783,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
 
   @Test
-  @TargetVersions("<=6.9")
+  @TargetVersions("<=6.9.x")
   public void testNonTransitiveConfiguration() throws Exception {
     importProject(
       createBuildScriptBuilder()
