@@ -380,15 +380,21 @@ public final class JUnitUtil {
             MetaAnnotationUtil.isMetaAnnotated(method, CUSTOM_TESTABLE_ANNOTATION_LIST)) {
           return CachedValueProvider.Result.create(true, PsiModificationTracker.MODIFICATION_COUNT);
         }
-        if (method.hasModifierProperty(PsiModifier.ABSTRACT) && hasInheritedTest(psiClass, method)) {
-          return CachedValueProvider.Result.create(true, PsiModificationTracker.MODIFICATION_COUNT);
-        }
       }
       for (PsiClass aClass : psiClass.getAllInnerClasses()) {
+        ProgressManager.checkCanceled();
         if (!aClass.hasModifierProperty(PsiModifier.PRIVATE) &&
             !aClass.hasModifierProperty(PsiModifier.STATIC) &&
             MetaAnnotationUtil.isMetaAnnotated(aClass, Collections.singleton(JUNIT5_NESTED))) {
           return CachedValueProvider.Result.create(true, PsiModificationTracker.MODIFICATION_COUNT);
+        }
+      }
+      if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        for (PsiMethod method : psiClass.getMethods()) {
+          ProgressManager.checkCanceled();
+          if (method.hasModifierProperty(PsiModifier.ABSTRACT) && hasInheritedTest(psiClass, method)) {
+            return CachedValueProvider.Result.create(true, PsiModificationTracker.MODIFICATION_COUNT);
+          }
         }
       }
       return CachedValueProvider.Result.create(false, PsiModificationTracker.MODIFICATION_COUNT);
@@ -399,8 +405,9 @@ public final class JUnitUtil {
     if (psiClass == null) return false;
     return ClassInheritorsSearch.search(psiClass)
       .filtering(subClass -> !subClass.hasModifierProperty(PsiModifier.ABSTRACT))
-      .anyMatch(subClass -> ContainerUtil.exists(subClass.findMethodsBySignature(method, false),
-                                                 override -> isTestAnnotated(override)));
+      .mapping(subClass -> subClass.findMethodBySignature(method, false))
+      .filtering(override -> override != null && !override.hasModifierProperty(PsiModifier.ABSTRACT))
+      .anyMatch(override -> isTestAnnotated(override));
   }
 
   public static boolean isJUnit5(@NotNull PsiElement element) {
