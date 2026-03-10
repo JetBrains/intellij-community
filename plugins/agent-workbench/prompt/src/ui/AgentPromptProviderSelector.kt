@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.agent.workbench.prompt.AgentPromptBundle
 import com.intellij.agent.workbench.prompt.context.dataContextOrNull
+import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationData
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
@@ -22,10 +23,14 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.ui.BadgeDotProvider
+import com.intellij.ui.BadgeIcon
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.DialogUtil
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
+import javax.swing.Icon
 import javax.swing.JPanel
 
 internal class AgentPromptProviderSelector(
@@ -40,6 +45,9 @@ internal class AgentPromptProviderSelector(
   private val selectedOptionIdsByProvider = LinkedHashMap<AgentSessionProvider, LinkedHashSet<String>>()
 
   var selectedProvider: ProviderEntry? = null
+    private set
+
+  var selectedLaunchMode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD
     private set
 
   val availableProviders: List<AgentSessionProvider>
@@ -171,7 +179,7 @@ internal class AgentPromptProviderSelector(
       return
     }
 
-    providerIconLabel.icon = provider.icon
+    providerIconLabel.icon = getIcon(provider.icon, selectedLaunchMode)
     providerIconLabel.setToolTipText(HtmlChunk.text(provider.displayName))
     updateProviderOptionsPresentation()
   }
@@ -198,7 +206,8 @@ internal class AgentPromptProviderSelector(
 
   private fun createProviderSelectionAction(item: AgentSessionProviderMenuItem, onSelected: (ProviderEntry) -> Unit): AnAction {
     val text = sessionsMessageResolver.resolve(item.labelKey, item.bridge) ?: item.displayNameFallback()
-    return object : AnAction(text, null, item.bridge.icon) {
+    val icon = getIcon(item)
+    return object : AnAction(text, null, icon) {
       override fun update(e: AnActionEvent) {
         e.presentation.isEnabled = item.isEnabled
         e.presentation.description = if (item.isEnabled) null else disabledProviderReason(item)
@@ -211,12 +220,22 @@ internal class AgentPromptProviderSelector(
 
         val entry = findProviderEntry(item.bridge.provider) ?: return
         selectedProvider = entry
+        selectedLaunchMode = item.mode
         updatePresentation()
         onSelected(entry)
       }
 
       override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
     }
+  }
+
+  private fun getIcon(item: AgentSessionProviderMenuItem): Icon = getIcon(item.bridge.icon, item.mode)
+
+  private fun getIcon(baseIcon: Icon, mode: AgentSessionLaunchMode): Icon {
+    if (mode == AgentSessionLaunchMode.YOLO) {
+      return BadgeIcon(baseIcon, JBUI.CurrentTheme.IconBadge.ERROR, BadgeDotProvider())
+    }
+    return baseIcon
   }
 
   private fun AgentSessionProviderMenuItem.displayNameFallback(): @Nls String {
