@@ -311,6 +311,7 @@ internal class AgentPromptPalettePopup(
 
   private fun showProviderChooser() {
     providerSelector.showChooser(onUnavailable = ::showError) {
+      selectedLaunchMode = providerSelector.selectedLaunchMode
       if (currentTargetMode() == PromptTargetMode.EXISTING_TASK) {
         existingTaskController.clearSelection()
         reloadExistingTasks()
