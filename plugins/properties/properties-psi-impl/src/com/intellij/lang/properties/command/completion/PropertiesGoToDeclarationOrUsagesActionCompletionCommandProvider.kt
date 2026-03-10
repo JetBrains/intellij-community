@@ -7,7 +7,6 @@ import com.intellij.codeInsight.completion.command.getCommandContext
 import com.intellij.idea.ActionsBundle
 import com.intellij.lang.properties.psi.impl.PropertyKeyImpl
 import com.intellij.openapi.editor.Editor
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 
 class PropertiesGoToDeclarationOrUsagesActionCompletionCommandProvider :
@@ -26,10 +25,6 @@ class PropertiesGoToDeclarationOrUsagesActionCompletionCommandProvider :
 
   private fun hasToShow(offset: Int, psiFile: PsiFile): Boolean {
     val context = (getCommandContext(offset, psiFile)) ?: return false
-    return canNavigateToDeclaration(context)
-  }
-
-  private fun canNavigateToDeclaration(context: PsiElement): Boolean {
     return context is PropertyKeyImpl
   }
 
