@@ -6,6 +6,7 @@ import com.intellij.modcompletion.ModCompletionItemFilter;
 import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.modcompletion.ModCompletionResult;
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +17,7 @@ import java.util.List;
  * A wrapper for {@link ModCompletionItemProvider} to be used as a {@link CompletionContributor}.
  */
 @NotNullByDefault
-final class CompletionItemContributor extends CompletionContributor implements ReportingClassSubstitutor {
+final class CompletionItemContributor extends CompletionContributor implements ReportingClassSubstitutor, PossiblyDumbAware {
   private final ModCompletionItemProvider myProvider;
   private final List<ModCompletionItemFilter> myFilters;
 
@@ -50,6 +51,11 @@ final class CompletionItemContributor extends CompletionContributor implements R
   @Override
   public Class<?> getSubstitutedClass() {
     return myProvider.getClass();
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return myProvider.isDumbAware();
   }
 
   @Override

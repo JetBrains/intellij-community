@@ -9,6 +9,7 @@ import com.intellij.modcompletion.CommonCompletionItem;
 import com.intellij.modcompletion.ModCompletionItemPresentation;
 import com.intellij.modcompletion.ModCompletionResult;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,7 +35,7 @@ import java.util.Objects;
  * A completion provider for annotation attributes like {@code @Anno(va|lue = true)}.
  */
 @NotNullByDefault
-public final class AnnotationAttributeItemProvider extends JavaModCompletionItemProvider {
+public final class AnnotationAttributeItemProvider extends JavaModCompletionItemProvider implements DumbAware {
 
   @Override
   public void provideItems(CompletionContext context, ModCompletionResult sink) {

@@ -330,6 +330,7 @@ com.intellij.modcommand.ModPsiUpdater
 - withMainIcon(java.util.function.Supplier):com.intellij.modcompletion.ModCompletionItemPresentation
 - withMainText(com.intellij.openapi.util.text.MarkupText):com.intellij.modcompletion.ModCompletionItemPresentation
 *:com.intellij.modcompletion.ModCompletionItemProvider
+- com.intellij.openapi.project.PossiblyDumbAware
 - sf:EP_NAME:com.intellij.lang.LanguageExtension
 - s:forLanguage(com.intellij.lang.Language):java.util.List
 - getSorter(com.intellij.modcompletion.ModCompletionItemProvider$CompletionContext):com.intellij.codeInsight.completion.CompletionSorter
