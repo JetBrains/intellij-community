@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
@@ -1549,7 +1549,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                    from typing import Self
 
-                   something: <warning descr="Invalid type annotation"><warning descr="Cannot use 'Self' outside class">Self</warning> | None</warning> = None
+                   something: <warning descr="Cannot use 'Self' outside class">Self</warning> | None = None
                    """);
   }
 
