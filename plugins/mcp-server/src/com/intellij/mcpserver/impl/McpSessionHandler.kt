@@ -110,13 +110,14 @@ private fun getTracer(): IJTracer =
 internal class McpSessionHandler(
     parentScope: CoroutineScope,
     private val sessionOptions: McpServerService.McpSessionOptions,
-    private val getMcpTools: (clientInfo: Implementation?, sessionOptions: McpServerService.McpSessionOptions?) -> List<McpTool>,
+    private val mcpServerService: McpServerService,
     private val mcpServer: Server,
     private val projectPathFromInitialRequest: String?,
+    private val useFiltersFromEP: Boolean,
 ) {
   private val sessionScope = parentScope.childScope("SessionMcpToolsManager")
   private val clientInfo = MutableStateFlow<Implementation?>(null)
-  val mcpTools = MutableStateFlow(getMcpTools(null, sessionOptions))
+  val mcpTools = MutableStateFlow(mcpServerService.getMcpTools(clientInfo = null, sessionOptions = sessionOptions, useFiltersFromEP = useFiltersFromEP))
 
   private val filterProvidersScope = AtomicReference<CoroutineScope?>(null)
   private var previousTools: List<McpTool>? = null
@@ -179,7 +180,7 @@ internal class McpSessionHandler(
       "Emitting MCP tools update: reason=$reason, clientName=${currentClientInfo?.name}, " +
       "localAgentId=${sessionOptions.localAgentId}"
     }
-    mcpTools.tryEmit(getMcpTools(currentClientInfo, sessionOptions))
+    mcpTools.tryEmit(mcpServerService.getMcpTools(clientInfo = currentClientInfo, sessionOptions = sessionOptions, useFiltersFromEP = useFiltersFromEP))
   }
 
   private fun subscribeToFilterProviders(clientInfoValue: Implementation?, sessionOptionsValue: McpServerService.McpSessionOptions?) {
@@ -228,74 +229,74 @@ internal class McpSessionHandler(
    * Sets up onClose handler, onInitialized handler and launches the tool updates collector.
    */
   suspend fun createAndInitializeSession(transport: Transport): ServerSession = coroutineScope {
-      val session = mcpServer.createSession(transport)
-      sessionAwaiter.complete(session)
+    val session = mcpServer.createSession(transport)
+    sessionAwaiter.complete(session)
 
-      session.onClose {
-          dispose()
+    session.onClose {
+      sessionScope.cancel()
+    }
+
+    launch {
+      logger.trace { "Subscribing to MCP tools updates for session ${session.sessionId}" }
+      mcpTools.collectLatest { updatedTools ->
+        processToolsUpdate(updatedTools)
+      }
+    }
+
+    session.onInitialized {
+      logger.trace {
+        "Session initialized: sessionId=${session.sessionId}, clientVersion=${session.clientVersion?.name}, " +
+        "localAgentId=${sessionOptions.localAgentId}"
+      }
+      // Update clientInfo when session is initialized
+      val clientVersion = session.clientVersion
+      if (clientVersion != null) {
+        // Update session tools manager with client info
+        updateClientInfo(clientVersion)
       }
 
-      launch {
-          logger.trace { "Subscribing to MCP tools updates for session ${session.sessionId}" }
-          mcpTools.collectLatest { updatedTools ->
-              processToolsUpdate(updatedTools)
-          }
-      }
-
-      session.onInitialized {
+      val clientCapabilities = session.clientCapabilities
+      if (clientCapabilities?.roots != null) {
+        session.onClose {
           logger.trace {
-              "Session initialized: sessionId=${session.sessionId}, clientVersion=${session.clientVersion?.name}, " +
-                      "localAgentId=${sessionOptions.localAgentId}"
+            "Roots for session ${session.sessionId} cleared"
           }
-          // Update clientInfo when session is initialized
-          val clientVersion = session.clientVersion
-          if (clientVersion != null) {
-              // Update session tools manager with client info
-              updateClientInfo(clientVersion)
+          sessionRoots.set(null)
+        }
+        session.setNotificationHandler<RootsListChangedNotification>(Method.Defined.NotificationsRootsListChanged) {
+          async {
+            val roots = session.roots()
+            logger.trace {
+              "Received roots list changed notification for session ${session.sessionId}: $roots roots"
+            }
+            sessionRoots.set(roots)
           }
-
-          val clientCapabilities = session.clientCapabilities
-          if (clientCapabilities?.roots != null) {
-              session.onClose {
-                  logger.trace {
-                      "Roots for session ${session.sessionId} cleared"
-                  }
-                  sessionRoots.set(null)
-              }
-              session.setNotificationHandler<RootsListChangedNotification>(Method.Defined.NotificationsRootsListChanged) {
-                  async {
-                      val roots = session.roots()
-                      logger.trace {
-                          "Received roots list changed notification for session ${session.sessionId}: $roots roots"
-                      }
-                      sessionRoots.set(roots)
-                  }
-              }
-              launch {
-                  val roots = session.roots()
-                  logger.trace {
-                      "Initialized roots for session ${session.sessionId}: $roots roots"
-                  }
-                  sessionRoots.set(roots)
-              }
+        }
+        launch {
+          val roots = session.roots()
+          logger.trace {
+            "Initialized roots for session ${session.sessionId}: $roots roots"
           }
-
-          // Log available tools via OpenTelemetry
-          val span = getTracer().spanBuilder("mcp.session.initialized", TracerLevel.DEFAULT)
-              .setAllAttributes(
-                  Attributes.builder()
-                      .put("mcp.session.id", session.sessionId)
-                      .put("mcp.client.name", clientVersion?.name ?: "unknown")
-                      .put("mcp.client.version", clientVersion?.version ?: "unknown")
-                      .put("mcp.tools.count", mcpTools.value.size.toLong())
-                      .put("mcp.tools.list", mcpTools.value.joinToString(", ") { it.descriptor.name })
-                      .build()
-              )
-              .startSpan()
-          span.end()
+          sessionRoots.set(roots)
+        }
       }
 
-      return@coroutineScope session
+      // Log available tools via OpenTelemetry
+      val span = getTracer().spanBuilder("mcp.session.initialized", TracerLevel.DEFAULT)
+        .setAllAttributes(
+          Attributes.builder()
+            .put("mcp.session.id", session.sessionId)
+            .put("mcp.client.name", clientVersion?.name ?: "unknown")
+            .put("mcp.client.version", clientVersion?.version ?: "unknown")
+            .put("mcp.tools.count", mcpTools.value.size.toLong())
+            .put("mcp.tools.list", mcpTools.value.joinToString(", ") { it.descriptor.name })
+            .build()
+        )
+        .startSpan()
+      span.end()
+    }
+
+    return@coroutineScope session
   }
 
   private fun mcpToolToRegisteredTool(mcpTool: McpTool): RegisteredTool {
@@ -568,11 +569,6 @@ internal class McpSessionHandler(
         val callToolResult = callResult.toSdkToolCallResult()
         return@RegisteredTool callToolResult
     }
-  }
-
-  private fun dispose() {
-    filterProvidersScope.get()?.cancel()
-    sessionScope.cancel()
   }
 }
 

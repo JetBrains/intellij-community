@@ -255,9 +255,10 @@ open class McpServerService(val cs: CoroutineScope) {
 
         // Merge filters: auth-based session options take precedence over header
         val baseSessionOptions = getSessionOptions(authToken)
+        val useFiltersFromEP = allowedToolsFromHeader.isNullOrEmpty()
         // if no header provided, use the existing filter from sessionOptions
         val sessionOptions = if (headerFilter != null) {
-          McpSessionOptions(baseSessionOptions.commandExecutionMode, headerFilter)
+          McpSessionOptions(baseSessionOptions.commandExecutionMode, headerFilter, baseSessionOptions.localAgentId)
         } else {
           baseSessionOptions
         }
@@ -280,13 +281,13 @@ open class McpServerService(val cs: CoroutineScope) {
         )
 
         // Create session-specific MCP tools manager
-        val useFiltersFromEP = allowedToolsFromHeader.isNullOrEmpty()
         val sessionToolsManager = McpSessionHandler(
           parentScope = cs,
           sessionOptions = sessionOptions,
-          getMcpTools = { clientInfo, options -> getMcpTools(clientInfo = clientInfo, sessionOptions = options, useFiltersFromEP = useFiltersFromEP) },
+          mcpServerService = this@McpServerService,
           mcpServer = mcpServer,
           projectPathFromInitialRequest = projectPath,
+          useFiltersFromEP = useFiltersFromEP,
         )
 
         val session = sessionToolsManager.createAndInitializeSession(transport)
