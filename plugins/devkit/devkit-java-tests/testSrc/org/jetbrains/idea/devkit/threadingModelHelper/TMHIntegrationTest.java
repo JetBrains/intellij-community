@@ -16,13 +16,9 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static com.intellij.util.concurrency.ThreadingAssertions.MUST_EXECUTE_IN_EDT;
 import static com.intellij.util.concurrency.ThreadingAssertions.MUST_EXECUTE_IN_READ_ACTION;
@@ -46,17 +42,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class TMHIntegrationTest extends BareTestFixtureTestCase {
   @Rule public EdtRule edtRule = new EdtRule();
 
-  private ExecutorService mySingleThreadExecutor;
-
   @Before
   public void setUp() {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
-    mySingleThreadExecutor = Executors.newSingleThreadExecutor(r -> new Thread(r, "Testing thread"));
-  }
-
-  @After
-  public void tearDown() {
-    mySingleThreadExecutor.shutdownNow();
   }
 
   @Test
