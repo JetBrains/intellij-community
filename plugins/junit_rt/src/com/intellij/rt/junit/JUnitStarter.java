@@ -157,6 +157,15 @@ public final class JUnitStarter {
     switch (runner) {
       case JUNIT6:
         if (JUnitRunner.JUNIT6.check()) return JUnitRunner.JUNIT6;
+        if (JUnitRunner.JUNIT5.check()) {
+          System.err.println("JUnit 6 cannot be used with the current test runtime classpath. Falling back to JUnit 5.");
+          System.err.println("If you expected JUnit 6, please check the test runtime dependencies.");
+          System.err.flush();
+          return JUnitRunner.JUNIT5;
+        }
+        System.err.println("!!! JUnit Platform is not available on the classpath");
+        System.err.flush();
+        System.exit(-3);
       case JUNIT5:
         if (JUnitRunner.JUNIT5.check()) return JUnitRunner.JUNIT5;
         System.err.println("!!! JUnit Platform is not available on the classpath");
