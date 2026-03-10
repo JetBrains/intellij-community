@@ -48,7 +48,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -80,7 +79,6 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,9 +103,6 @@ import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
 public final class FindInProjectUtil {
   private static final int USAGES_PER_READ_ACTION = 100;
-
-  @ApiStatus.Experimental
-  public static final Key<Boolean> FIND_IN_FILES_SEARCH_IN_NON_INDEXABLE = Key.create("find.in.files.non.indexable");
 
   private FindInProjectUtil() {}
 

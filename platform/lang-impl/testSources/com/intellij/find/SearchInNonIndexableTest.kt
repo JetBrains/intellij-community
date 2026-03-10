@@ -2,7 +2,6 @@
 package com.intellij.find
 
 import com.intellij.find.impl.FindInProjectUtil
-import com.intellij.find.impl.FindInProjectUtil.FIND_IN_FILES_SEARCH_IN_NON_INDEXABLE
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.vfs.VirtualFile
@@ -12,6 +11,7 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.testFramework.IndexingTestUtil.Companion.waitUntilIndexesAreReady
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
@@ -39,6 +39,7 @@ import java.util.Collections.synchronizedList
  * Run with `-cp intellij.idea.ultimate.test.main`
  */
 @TestApplication
+@RegistryKey("find.in.files.in.non.indexable.enable", "true")
 class SearchInNonIndexableTest() {
   @RegisterExtension
   private val projectModel: ProjectModelExtension = ProjectModelExtension()
@@ -56,8 +57,6 @@ class SearchInNonIndexableTest() {
     WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonIndexableKindFileSetTestContributor(), disposable)
     WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(IndexableKindFileSetTestContributor(), disposable)
     WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonRecursiveFileSetContributor(), disposable)
-
-    project.putUserData(FIND_IN_FILES_SEARCH_IN_NON_INDEXABLE, true)
 
     val nonIndexableDir = baseDir.newVirtualDirectory("non-indexable").toVirtualFileUrl(urlManager)
     baseDir.newVirtualFile("non-indexable/file1", "this is a file with some data".toByteArray())
@@ -117,8 +116,8 @@ class SearchInNonIndexableTest() {
 
 
   @Test
+  @RegistryKey("find.in.files.in.non.indexable.enable", "false")
   fun `find 'data' only in indexable`(): Unit = runBlocking {
-    project.putUserData(FIND_IN_FILES_SEARCH_IN_NON_INDEXABLE, false)
     val model = model(stringToFind = "data")
 
     val usages = synchronizedList<UsageInfo?>(ArrayList())
