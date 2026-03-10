@@ -18,11 +18,9 @@ import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.TITLE_UPDATE_DELAY
-import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.stateFlow
+import org.jetbrains.plugins.terminal.util.TerminalTitleUtils
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
@@ -50,14 +48,12 @@ internal class TerminalViewFileEditor(
       }
     }
 
-    coroutineScope.launch {
-      terminalView.title.stateFlow()
-        .debounce(TITLE_UPDATE_DELAY)
-        .collect {
-          file.rename(null, it.text)
-          FileEditorManager.getInstance(project).updateFilePresentation(file)
-        }
-    }
+    TerminalTitleUtils.updateFileNameOnTitleChange(
+      terminalView.title,
+      file,
+      project,
+      coroutineScope,
+    )
   }
 
   override fun getComponent(): JComponent {
