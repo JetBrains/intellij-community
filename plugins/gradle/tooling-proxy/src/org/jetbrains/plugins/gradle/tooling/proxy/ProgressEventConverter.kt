@@ -34,6 +34,16 @@ import org.gradle.tooling.events.test.TestOutputEvent
 import org.gradle.tooling.events.test.TestSkippedResult
 import org.gradle.tooling.events.test.TestStartEvent
 import org.gradle.tooling.events.test.TestSuccessResult
+import org.gradle.tooling.events.test.internal.source.DefaultMethodSource
+import org.gradle.tooling.events.test.internal.source.DefaultOtherSource
+import org.gradle.tooling.events.test.source.ClassSource
+import org.gradle.tooling.events.test.source.ClasspathResourceSource
+import org.gradle.tooling.events.test.source.DirectorySource
+import org.gradle.tooling.events.test.source.FileSource
+import org.gradle.tooling.events.test.source.MethodSource
+import org.gradle.tooling.events.test.source.NoSource
+import org.gradle.tooling.events.test.source.OtherSource
+import org.gradle.tooling.events.test.source.TestSource
 import org.gradle.tooling.model.UnsupportedMethodException
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.InternalBinaryPluginIdentifier
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.InternalFinishEvent
@@ -54,6 +64,13 @@ import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.event
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.task.InternalTaskSkippedResult
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.task.InternalTaskStartEvent
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.task.InternalTaskSuccessResult
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.test.InternalDefaultClassSource
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.test.InternalDefaultClasspathResourceSource
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.test.InternalDefaultDirectorySource
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.test.InternalDefaultFileSource
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.test.InternalDefaultMethodSource
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.test.InternalDefaultNoSource
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.test.InternalDefaultOtherSource
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.test.InternalJvmTestOperationDescriptor
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.test.InternalTestFailureResult
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.test.InternalTestFinishEvent
@@ -153,7 +170,7 @@ class ProgressEventConverter {
         }
         is JvmTestOperationDescriptor -> operationDescriptor.run {
           InternalJvmTestOperationDescriptor(id, name, displayName, convert(parent),
-                                             jvmTestKind, suiteName, className, methodName, source)
+                                             jvmTestKind, suiteName, className, methodName, convert(source))
         }
         is TestOperationDescriptor -> operationDescriptor.run {
           InternalTestOperationDescriptor(id, name, displayName, convert(parent))
@@ -163,6 +180,19 @@ class ProgressEventConverter {
         }
         else -> operationDescriptor.run { InternalOperationDescriptor(id, name, displayName, convert(parent)) }
       }
+    }
+  }
+
+  private fun convert(source: TestSource): TestSource {
+    return when (source) {
+      is ClassSource -> InternalDefaultClassSource(source.className)
+      is DirectorySource -> InternalDefaultDirectorySource(source.file)
+      is FileSource -> InternalDefaultFileSource(source.file, source.position)
+      is MethodSource -> InternalDefaultMethodSource(source.className, source.methodName)
+      is NoSource -> InternalDefaultNoSource()
+      is DefaultOtherSource -> InternalDefaultOtherSource()
+      is ClasspathResourceSource -> InternalDefaultClasspathResourceSource(source.classpathResourceName, source.position)
+      else -> source
     }
   }
 
