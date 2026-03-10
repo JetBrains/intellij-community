@@ -9,5 +9,6 @@
     <module name="intellij.platform.testFramework.core"/>
     <module name="intellij.platform.testFramework.impl"/>
     <module name="intellij.platform.testFramework.teamCity"/>
+    <module name="intellij.codeowners.runtime.resolver"/>
   </content>
 </idea-plugin>

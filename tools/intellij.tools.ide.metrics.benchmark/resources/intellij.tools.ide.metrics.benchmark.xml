@@ -1,6 +1,7 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.codeowners.runtime.resolver"/>
     <module name="intellij.libraries.jackson"/>
     <module name="intellij.libraries.jackson.databind"/>
     <module name="intellij.libraries.jackson.module.kotlin"/>
@@ -12,6 +13,6 @@
     <module name="intellij.platform.testFramework.junit5"/>
     <module name="intellij.tools.ide.metrics.collector"/>
     <module name="intellij.tools.ide.util.common"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 </idea-plugin>
