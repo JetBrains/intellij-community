@@ -111,7 +111,9 @@ public class JUnitVersionSwitchingIntegrationTest extends AbstractTestFrameworkC
 
     ProcessOutput output = doStartTestsProcess(configuration,
                                                params -> replaceJUnitVersion(params, JUnitStarter.JUNIT6_PARAMETER));
-    assertEmpty(output.err);
+
+    assertTrue("stderr must contain the 'JUnit 6 cannot be used with the current test runtime classpath. Falling back to JUnit 5.' error message",
+               ContainerUtil.exists(output.err, s -> s.contains("JUnit 6 cannot be used with the current test runtime classpath. Falling back to JUnit 5.")));
 
     assertTrue(output.sys.toString().contains("-junit6"));
     assertTrue("Test output must report that JUnit6 classes are absent (junit6.classes.present=false)",
@@ -152,7 +154,9 @@ public class JUnitVersionSwitchingIntegrationTest extends AbstractTestFrameworkC
     assertNotNull(configuration);
 
     ProcessOutput output = doStartTestsProcess(configuration, params -> replaceJUnitVersion(params, JUnitStarter.JUNIT6_PARAMETER));
-    assertEmpty(output.err);
+
+    assertTrue("stderr must contain the 'JUnit 6 cannot be used with the current test runtime classpath. Falling back to JUnit 5.' error message",
+               ContainerUtil.exists(output.err, s -> s.contains("JUnit 6 cannot be used with the current test runtime classpath. Falling back to JUnit 5.")));
 
     assertTrue(output.sys.toString().contains("-junit6"));
     assertTrue("Test output must report that JUnit6 classes are absent (junit6.classes.present=false)",
