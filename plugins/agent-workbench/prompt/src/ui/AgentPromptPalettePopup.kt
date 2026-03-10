@@ -178,6 +178,7 @@ internal class AgentPromptPalettePopup(
         popup = null
         existingTaskController.dispose()
         popupScope.cancel("Agent prompt popup closed")
+        saveProviderPreferences()
         if (clearDraftOnClose) {
           uiStateService.clearDraft()
         }
@@ -695,18 +696,24 @@ internal class AgentPromptPalettePopup(
 
   private fun restoreDraft(): AgentPromptUiDraft {
     val draft = uiStateService.loadDraft()
+    val providerPrefs = uiStateService.loadProviderPreferences()
     val contextRestoreSnapshot = uiStateService.loadContextRestoreSnapshot()
     val launcher = launcherProvider()
 
     promptArea.text = draft.promptText
-    providerSelector.restoreProviderOptionSelections(draft.providerOptionsByProviderId)
+    val effectiveProviderOptions = draft.providerOptionsByProviderId.ifEmpty { providerPrefs.providerOptionsByProviderId }
+    providerSelector.restoreProviderOptionSelections(effectiveProviderOptions)
     val persistedProvider = resolveRestoredPromptProvider(
-      draftProviderId = draft.providerId,
+      draftProviderId = draft.providerId ?: providerPrefs.providerId,
       preferredProvider = launcher?.preferredProvider(),
       availableProviders = providerSelector.availableProviders,
     )
-    providerSelector.selectProvider(persistedProvider)
-    if (draft.providerOptionsByProviderId.isEmpty()) {
+    val restoredLaunchMode = providerPrefs.launchModeName?.let { name ->
+      AgentSessionLaunchMode.entries.firstOrNull { it.name == name }
+    }
+    providerSelector.selectProvider(persistedProvider, restoredLaunchMode)
+    selectedLaunchMode = providerSelector.selectedLaunchMode
+    if (effectiveProviderOptions.isEmpty()) {
       providerSelector.applyLegacyPlanModeSelection(providerSelector.selectedProvider?.bridge?.provider, draft.planModeEnabled)
     }
     updateProviderOptionsVisibility()
@@ -735,6 +742,16 @@ internal class AgentPromptPalettePopup(
     }
 
     return draft
+  }
+
+  private fun saveProviderPreferences() {
+    uiStateService.saveProviderPreferences(
+      AgentPromptUiProviderPreferences(
+        providerId = providerSelector.selectedProvider?.bridge?.provider?.value,
+        launchModeName = providerSelector.selectedLaunchMode.name,
+        providerOptionsByProviderId = providerSelector.providerOptionSelections(),
+      )
+    )
   }
 
   private fun saveDraft() {

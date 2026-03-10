@@ -114,11 +114,14 @@ internal class AgentPromptProviderSelector(
     }
   }
 
-  fun selectProvider(provider: AgentSessionProvider?) {
+  fun selectProvider(provider: AgentSessionProvider?, launchMode: AgentSessionLaunchMode? = null) {
     if (provider == null) {
       return
     }
     selectedProvider = findProviderEntry(provider) ?: selectedProvider
+    if (launchMode != null) {
+      selectedLaunchMode = launchMode
+    }
     updatePresentation()
   }
 
