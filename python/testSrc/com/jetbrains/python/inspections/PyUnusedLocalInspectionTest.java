@@ -53,6 +53,33 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-88041
+  public void testUnusedInitParameterWithNew() {
+    doTestByText("""
+                   class A:
+                       def __new__(cls, a: str):
+                           instance = object.__new__(cls)
+                           return instance
+                   
+                       def __init__(self, a: str):
+                           pass
+                   """);
+  }
+
+  // PY-88041
+  public void testUnusedInitParameterWithInheritedNew() {
+    doTestByText("""
+                   class Base:
+                       def __new__(cls, a):
+                           instance = object.__new__(cls)
+                           return instance
+                   
+                   class Derived(Base):
+                       def __init__(self, a):
+                           pass
+                   """);
+  }
+
   // PY-20805
   public void testFStringReferences() {
     doTest();

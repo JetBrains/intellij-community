@@ -5,8 +5,6 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.psi.PyClass;
@@ -21,14 +19,12 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
  * Detect and report incompatibilities between __new__ and __init__ signatures.
  */
 public final class PyInitNewSignatureInspection extends PyInspection {
-
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                                  boolean isOnTheFly,
@@ -46,7 +42,7 @@ public final class PyInitNewSignatureInspection extends PyInspection {
       final PyClass cls = PyUtil.turnConstructorIntoClass(node);
       if (cls == null || !cls.isNewStyleClass(myTypeEvalContext)) return;
 
-      final List<PyFunction> complementaryMethods = findComplementaryMethods(cls, node);
+      final List<PyFunction> complementaryMethods = PyConstructorSignatureUtil.findComplementaryConstructors(node, myTypeEvalContext);
 
       for (PyFunction complementaryMethod : complementaryMethods) {
         if (matchSignatures(node, complementaryMethod) || matchSignatures(complementaryMethod, node)) {
@@ -73,23 +69,6 @@ public final class PyInitNewSignatureInspection extends PyInspection {
       return PyTypeChecker.match(currentInputSignature, otherInputSignature, myTypeEvalContext);
     }
 
-    private @NotNull List<PyFunction> findComplementaryMethods(@NotNull PyClass cls, @NotNull PyFunction original) {
-      final String complementaryName = PyUtil.isNewMethod(original) ? PyNames.INIT : PyNames.NEW;
-      final List<PyFunction> complementaryMethods = cls.multiFindMethodByName(complementaryName, true, myTypeEvalContext);
-
-      for (PyFunction complementaryMethod : complementaryMethods) {
-        final PyClass complementaryMethodClass = complementaryMethod.getContainingClass();
-
-        if (complementaryMethodClass == null ||
-            PyUtil.isObjectClass(complementaryMethodClass) ||
-            ContainerUtil.exists(PyInspectionExtension.EP_NAME.getExtensionList(),
-                                 extension -> extension.ignoreInitNewSignatures(original, complementaryMethod))) {
-          return Collections.emptyList();
-        }
-      }
-
-      return complementaryMethods;
-    }
 
     private void registerIncompatibilityProblem(@NotNull PyFunction function, @Nullable LocalQuickFix quickFix) {
       final PyParameterList parameterList = function.getParameterList();

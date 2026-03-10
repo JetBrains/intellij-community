@@ -26,6 +26,7 @@ import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.inspections.PyConstructorSignatureUtil;
 import com.jetbrains.python.inspections.PyInspectionExtension;
 import com.jetbrains.python.inspections.PyInspectionVisitor;
 import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
@@ -440,6 +441,13 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           PyClass containingClass = null;
           PyParameterList paramList = PsiTreeUtil.getParentOfType(element, PyParameterList.class);
           if (paramList != null && paramList.getParent() instanceof PyFunction func) {
+            if (PyUtil.isInitMethod(func)) {
+              final List<PyFunction> complementaryMethods =
+                PyConstructorSignatureUtil.findComplementaryConstructors(func, myTypeEvalContext);
+              if (!complementaryMethods.isEmpty()) {
+                continue;
+              }
+            }
             containingClass = func.getContainingClass();
             if (containingClass != null &&
                 PyUtil.isInitMethod(func) &&
