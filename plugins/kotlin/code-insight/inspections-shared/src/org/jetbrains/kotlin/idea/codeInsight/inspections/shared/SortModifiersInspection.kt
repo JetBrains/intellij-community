@@ -7,6 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.util.elementType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -93,6 +94,6 @@ class SortModifiersInspection : KotlinApplicableInspectionBase.Simple<KtModifier
         return modifiersBeforeAnnotations
     }
 
-    private fun KtModifierList.modifierBeforeContextParameterList() = contextParameterList?.let { it != allChildren.first } ?: false
+    private fun KtModifierList.modifierBeforeContextParameterList() = allChildren.last.elementType !is KtModifierKeywordToken
 
 }
