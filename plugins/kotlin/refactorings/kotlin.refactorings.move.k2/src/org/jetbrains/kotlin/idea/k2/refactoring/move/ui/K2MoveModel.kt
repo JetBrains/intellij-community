@@ -217,16 +217,59 @@ sealed class K2MoveModel(private val observableUiSettings: ObservableUiSettings)
             }
         }
 
+        private fun shouldMoveDeclarationsAsFile(source: K2MoveSourceModel.ElementSource, target: K2MoveTargetModel): Boolean {
+            val declarations = source.elements
+            val singleSourceFileOrNull = declarations.map { it.containingKtFile }.toSet().singleOrNull()
+            val allDeclarationsInFileAreMoved = singleSourceFileOrNull?.let { singleFile ->
+                singleFile.declarations.all { it in declarations }
+            } ?: false
+            val targetFileName = (target as? K2MoveTargetModel.FileChooser)?.fileName
+            val fileNamesMatch = targetFileName == singleSourceFileOrNull?.name
+            val targetFileExists = (target as? K2MoveTargetModel.FileChooser)?.directory?.files?.find { it.name == targetFileName } != null
+
+            return !mppDeclarations.state && allDeclarationsInFileAreMoved && fileNamesMatch && !targetFileExists
+        }
+
         override fun isValidRefactoring(): Boolean {
             return super.isValidRefactoring() && isValidDeclarationsRefactoring()
         }
 
-        override fun toDescriptor(): K2MoveOperationDescriptor.Declarations {
+        /**
+         * Creates a move descriptor from a move model for declarations.
+         *
+         * — If the move is non-KMP and all declarations from a single file are selected without the file name being changed,
+         *   [K2MoveOperationDescriptor.Files] move is used instead of the move for declarations to better preserve VCS history.
+         *
+         * — If the KMP move option is enabled and some declarations are `expect` or `actual`,
+         *   a descriptor for multiplatform move is created. KMP declarations are moved in their
+         *   corresponding source sets via a set of move descriptors.
+         *
+         * — Otherwise, a regular move for declarations with a single descriptor is created.
+         */
+        override fun toDescriptor(): K2MoveOperationDescriptor<*> {
             val declarations = source.elements
             val searchForReferences = if (inSourceRoot) searchReferences.state else false
             val searchForText = searchForText.state
             val searchInComments = searchInComments.state
-            if (mppDeclarations.state && declarations.any { it.isExpectOrActual() }) {
+
+            if (shouldMoveDeclarationsAsFile(source, target)) {
+                val moveDescriptor = K2MoveDescriptor.Files(
+                    project = project,
+                    source = K2MoveSourceDescriptor.FileSource(listOf(declarations.first().containingFile)),
+                    target = K2MoveTargetDescriptor.Directory(target.pkgName, target.directory, target.isMoveToExplicitPackage()),
+                )
+
+                return K2MoveOperationDescriptor.Files(
+                    project = project,
+                    moveDescriptors = listOf(moveDescriptor),
+                    searchForText = searchForText,
+                    searchInComments = searchInComments,
+                    searchReferences = searchForReferences,
+                    dirStructureMatchesPkg = true,
+                    isMoveToExplicitPackage = target.isMoveToExplicitPackage(),
+                    moveCallBack = moveCallBack,
+                )
+            } else if (mppDeclarations.state && declarations.any { it.isExpectOrActual() }) {
                 val descriptors = declarations.flatMap { elem ->
                     ExpectActualUtils.withExpectedActuals(elem).filterIsInstance<KtNamedDeclaration>()
                 }.groupBy { elem ->
