@@ -189,6 +189,10 @@ open class MultipleFileMergeDialog(
     return mergeFlowDelegate.createCenterPanel()
   }
 
+  override fun createSouthPanel(): JComponent? {
+    return mergeFlowDelegate.createSouthPanel() ?: super.createSouthPanel()
+  }
+
   private fun updateButtonState() {
     val selectedFiles = table.selectedFiles
     val haveUnmergeableFiles = selectedFiles.any { mergeSession?.canMerge(it) == false }
@@ -490,7 +494,7 @@ open class MultipleFileMergeDialog(
     val request = createMergeRequests(listOf(file)) { result: MergeResult ->
       saveDocument(file)
       checkMarkModifiedProject(project, file)
-
+      iterativeDataHolder?.getMergeConflictModel(file)?.markReviewed()
       if (result != MergeResult.CANCEL) {
         val iterativelyResolved = iterativeDataHolder?.isFileResolved(file) ?: false
 

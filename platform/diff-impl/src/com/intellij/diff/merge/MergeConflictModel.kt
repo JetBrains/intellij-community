@@ -62,6 +62,8 @@ class MergeConflictModel(
     private set
 
   var contentModified: Boolean = false
+  var wasReviewed: Boolean = false
+    private set
 
   @RequiresBlockingContext
   @Throws(DiffTooBigException::class, InvalidDiffRequestException::class)
@@ -157,7 +159,12 @@ class MergeConflictModel(
     val allChanges = getAutoResolvableChanges()
     if (allChanges.isEmpty()) return
     allChanges.forEach { change: TextMergeChange -> resolveChangeAutomatically(change.index, ThreeSide.BASE) }
+    wasReviewed = false
     contentModified = true
+  }
+
+  fun markReviewed() {
+    wasReviewed = true
   }
 
   @RequiresWriteLock

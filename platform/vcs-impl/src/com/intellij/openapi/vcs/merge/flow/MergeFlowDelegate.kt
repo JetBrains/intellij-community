@@ -10,6 +10,7 @@ import javax.swing.tree.DefaultTreeModel
 
 internal interface MergeFlowDelegate {
   fun createCenterPanel(): JComponent
+  fun createSouthPanel(): JComponent?
   fun createActions(): List<Action>
   fun onTreeChanged(selectedFiles: List<VirtualFile>, unmergeableFileSelected: Boolean, unacceptableFileSelected: Boolean)
   fun buildTreeModel(project: Project?, grouping: ChangesGroupingPolicyFactory, unresolvedFiles: List<VirtualFile>): DefaultTreeModel
