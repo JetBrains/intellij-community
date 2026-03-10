@@ -208,4 +208,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
   @Test public void testAnnotationExtendWildcard() { doTest("pkg/TestAnnotationExtendWildcard"); }
   @Test public void testTernaryBoxingStatement() { doTest("pkg/TestTernaryBoxingStatement"); }
   @Test public void testDoubleCompoundOr() { doTest("pkg/TestDoubleCompoundOr"); }
+  @Test public void testDoubleCompoundXor() { doTest("pkg/TestDoubleCompoundXor"); }
 }
