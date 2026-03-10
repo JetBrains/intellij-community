@@ -28,6 +28,9 @@ internal open class PeekTerminalCallHandler(
     value: Value?
   ): Value? {
     DebuggerManagerThreadImpl.assertIsManagerThread()
+    if (value is ObjectReference) {
+      objectStorage.store(value)
+    }
     streamResult = value  // Capture terminal result
     return value
   }

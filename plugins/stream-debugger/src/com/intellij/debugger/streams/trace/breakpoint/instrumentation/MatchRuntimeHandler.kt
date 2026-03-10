@@ -72,6 +72,9 @@ internal class MatchRuntimeHandler(
 
   override fun afterCall(evaluationContextImpl: EvaluationContextImpl, value: Value?): Value? {
     DebuggerManagerThreadImpl.assertIsManagerThread()
+    if (value is ObjectReference) {
+      objectStorage.store(value)
+    }
     streamResult = value
     return value
   }
