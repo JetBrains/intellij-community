@@ -81,23 +81,25 @@ public final class MainRuntimeModuleGroup implements RuntimeModuleGroup {
     List<IncludedRuntimeModule> result = new ArrayList<>(rootIncludedModules);
     Set<RuntimeModuleDescriptor> visited = new HashSet<>();
     for (IncludedRuntimeModule rootModule : rootIncludedModules) {
-      collectDependencies(rootModule.getModuleDescriptor(), rootModules, visited, result);
+      if (rootModule.getLoadingRule().equals(RuntimeModuleLoadingRule.EMBEDDED)) {
+        collectDependenciesOfEmbeddedModule(rootModule.getModuleDescriptor(), rootModules, visited, result);
+      }
     }
 
     this.myIncludedModules = result;
     this.myNotIncludedModules = rootNotIncludedModules;
   }
 
-  private static void collectDependencies(RuntimeModuleDescriptor descriptor,
-                                          Set<RuntimeModuleDescriptor> rootModules,
-                                          Set<RuntimeModuleDescriptor> visited,
-                                          List<IncludedRuntimeModule> result) {
+  private static void collectDependenciesOfEmbeddedModule(RuntimeModuleDescriptor descriptor,
+                                                          Set<RuntimeModuleDescriptor> rootModules,
+                                                          Set<RuntimeModuleDescriptor> visited,
+                                                          List<IncludedRuntimeModule> result) {
     for (RuntimeModuleDescriptor dependency : descriptor.getDependencies()) {
       if (!visited.add(dependency)) continue;
       if (!rootModules.contains(dependency)) {
-        result.add(new IncludedRuntimeModuleImpl(dependency, RuntimeModuleLoadingRule.ON_DEMAND));
+        result.add(new IncludedRuntimeModuleImpl(dependency, RuntimeModuleLoadingRule.EMBEDDED));
       }
-      collectDependencies(dependency, rootModules, visited, result);
+      collectDependenciesOfEmbeddedModule(dependency, rootModules, visited, result);
     }
   }
 

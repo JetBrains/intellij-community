@@ -2,10 +2,10 @@
 package com.intellij.platform.runtime.product.serialization
 
 import com.intellij.platform.runtime.product.ProductMode
-import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.product.impl.ServiceModuleMapping
 import com.intellij.platform.runtime.repository.MalformedRepositoryException
 import com.intellij.platform.runtime.repository.RuntimeModuleId
+import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.repository.createModuleDescriptor
 import com.intellij.platform.runtime.repository.createRepository
 import com.intellij.platform.runtime.repository.writePluginXml
@@ -38,12 +38,10 @@ class ProductModulesLoaderTest {
     val xml = generateProductModulesWithPlugin()
     val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.MONOLITH, repository)
     val mainGroupModules = productModules.mainModuleGroup.includedModules.sortedBy { it.moduleDescriptor.moduleId.stringId }
-    assertEquals(2, mainGroupModules.size)
-    val (root, util) = mainGroupModules
+    assertEquals(1, mainGroupModules.size)
+    val root = mainGroupModules.single()
     assertEquals("root", root.moduleDescriptor.moduleId.stringId)
     assertEquals(RuntimeModuleLoadingRule.REQUIRED, root.loadingRule)
-    assertEquals("util", util.moduleDescriptor.moduleId.stringId)
-    assertEquals(RuntimeModuleLoadingRule.ON_DEMAND, util.loadingRule)
     assertEquals(emptySet<RuntimeModuleId>(), productModules.mainModuleGroup.optionalModuleIds)
 
     val pluginGroup = productModules.bundledPluginModuleGroups.single()
@@ -81,6 +79,36 @@ class ProductModulesLoaderTest {
     assertEquals("optional", optional.moduleDescriptor.moduleId.stringId)
     assertEquals(RuntimeModuleLoadingRule.OPTIONAL, optional.loadingRule)
     assertEquals(setOf("optional", "unknown-optional"), productModules.mainModuleGroup.optionalModuleIds.mapTo(HashSet()) { it.stringId })
+  }
+
+  @Test
+  fun `transitive dependencies are included only for embedded modules`() {
+    val repository = createRepository(tempDirectory.rootPath,
+                                      createModuleDescriptor("util", emptyList(), emptyList()),
+                                      createModuleDescriptor("root", emptyList(), listOf("util")),
+                                      createModuleDescriptor("plugin.module", emptyList(), emptyList()),
+                                      createModuleDescriptor("optional", emptyList(), listOf("root", "plugin.module")),
+    )
+    val xml = directoryContent {
+      xml(FILE_NAME, """
+        <product-modules>
+          <main-root-modules>
+            <module loading="embedded">root</module>
+            <module loading="optional">optional</module>
+          </main-root-modules>
+        </product-modules>
+      """.trimIndent())
+    }.generateInTempDir().resolve(FILE_NAME)
+    val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.MONOLITH, repository)
+    val mainGroupModules = productModules.mainModuleGroup.includedModules.sortedBy { it.moduleDescriptor.moduleId.stringId }
+    assertEquals(3, mainGroupModules.size)
+    val (optional, root, util) = mainGroupModules
+    assertEquals("optional", optional.moduleDescriptor.moduleId.stringId)
+    assertEquals(RuntimeModuleLoadingRule.OPTIONAL, optional.loadingRule)
+    assertEquals("root", root.moduleDescriptor.moduleId.stringId)
+    assertEquals(RuntimeModuleLoadingRule.EMBEDDED, root.loadingRule)
+    assertEquals("util", util.moduleDescriptor.moduleId.stringId)
+    assertEquals(RuntimeModuleLoadingRule.EMBEDDED, util.loadingRule)
   }
   
   @Test
