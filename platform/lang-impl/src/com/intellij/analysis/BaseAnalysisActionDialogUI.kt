@@ -4,6 +4,7 @@ package com.intellij.analysis
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.Nls
@@ -50,12 +51,10 @@ internal class BaseAnalysisActionDialogUI {
       }
 
       if (additionalPanel != null) {
-        panel {
-          row {
-            cell(additionalPanel)
-              .align(AlignX.FILL)
-          }
-        }
+        row {
+          cell(additionalPanel)
+            .align(AlignX.FILL).align(AlignY.FILL).resizableColumn()
+        }.resizableRow()
       }
     }
   }
