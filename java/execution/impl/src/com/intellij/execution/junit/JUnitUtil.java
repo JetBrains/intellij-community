@@ -173,7 +173,6 @@ public final class JUnitUtil {
     if (psiMethod.hasModifierProperty(PsiModifier.PRIVATE)) return false;
     if (isTestAnnotated(psiMethod, true)) return !psiMethod.hasModifierProperty(PsiModifier.STATIC);
     if (AnnotationUtil.isAnnotated(psiMethod, CONFIGURATIONS_ANNOTATION_NAME, 0)) return false;
-    if (aClass != null && MetaAnnotationUtil.isMetaAnnotatedInHierarchy(aClass, Collections.singletonList(CUSTOM_TESTABLE_ANNOTATION))) return true;
     if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) return hasInheritedTest(aClass, psiMethod);
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
     if (checkClass && checkRunWith) {
