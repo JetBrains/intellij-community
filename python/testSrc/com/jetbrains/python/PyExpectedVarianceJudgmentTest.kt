@@ -5,7 +5,7 @@ import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.fixtures.fixme
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.types.PyExpectedVarianceJudgment.getExpectedVariance
-import com.jetbrains.python.psi.types.PyTypeVarType.Variance
+import com.jetbrains.python.psi.types.PyTypeParameterType.Variance
 import com.jetbrains.python.psi.types.TypeEvalContext
 import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language

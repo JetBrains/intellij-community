@@ -5,13 +5,14 @@ import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.inspections.PyVarianceInspection
 import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeVarType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import org.intellij.lang.annotations.Language
 
 internal class PyVarianceTest : PyTestCase() {
 
-  private fun doTestTypeVarVariance(variance: PyTypeVarType.Variance?, @Language("Python") text: String) {
+  private fun doTestTypeVarVariance(variance: PyTypeParameterType.Variance?, @Language("Python") text: String) {
     myFixture.configureByText(PythonFileType.INSTANCE, text.trimIndent())
     val expr = myFixture.findElementByText("expr", PyExpression::class.java)
     assertNotNull(expr)
@@ -24,36 +25,36 @@ internal class PyVarianceTest : PyTestCase() {
 
   @TestFor(issues = ["PY-80166", "PY-80167"])
   fun `test Variance obtained from TypeVar declaration`() {
-    doTestTypeVarVariance(PyTypeVarType.Variance.INVARIANT, """
+    doTestTypeVarVariance(PyTypeParameterType.Variance.INVARIANT, """
       from typing import TypeVar
       T = TypeVar("T")
       expr: T
       """)
-    doTestTypeVarVariance(PyTypeVarType.Variance.COVARIANT, """
+    doTestTypeVarVariance(PyTypeParameterType.Variance.COVARIANT, """
       from typing import TypeVar
       T_co = TypeVar("T_co", covariant=True)
       expr: T_co
       """)
-    doTestTypeVarVariance(PyTypeVarType.Variance.CONTRAVARIANT, """
+    doTestTypeVarVariance(PyTypeParameterType.Variance.CONTRAVARIANT, """
       from typing import TypeVar
       T_contra = TypeVar("T_contra", contravariant=True)
       expr: T_contra
       """)
-    doTestTypeVarVariance(PyTypeVarType.Variance.INFER_VARIANCE, """
+    doTestTypeVarVariance(PyTypeParameterType.Variance.INFER_VARIANCE, """
       from typing import TypeVar
       T_inf = TypeVar("T_inf", infer_variance=True)
       expr: T_inf
       """)
-    doTestTypeVarVariance(PyTypeVarType.Variance.BIVARIANT, """
+    doTestTypeVarVariance(PyTypeParameterType.Variance.BIVARIANT, """
       from typing import TypeVar
       T_wrong = TypeVar("T_wrong", covariant=True, contravariant=True)
       expr: T_wrong
       """)
-    doTestTypeVarVariance(PyTypeVarType.Variance.INVARIANT, """
+    doTestTypeVarVariance(PyTypeParameterType.Variance.INVARIANT, """
       def foo[T]():
         expr: T
       """)
-    doTestTypeVarVariance(PyTypeVarType.Variance.INFER_VARIANCE, """
+    doTestTypeVarVariance(PyTypeParameterType.Variance.INFER_VARIANCE, """
       class C[T]:
         def foo(self):
           expr: T

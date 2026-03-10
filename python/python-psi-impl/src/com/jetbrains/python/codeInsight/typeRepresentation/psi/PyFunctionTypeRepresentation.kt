@@ -36,6 +36,7 @@ import com.jetbrains.python.psi.types.PyCallableTypeImpl
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl
 import com.jetbrains.python.psi.types.PyFunctionTypeImpl
 import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeVarType
 import com.jetbrains.python.psi.types.PyTypeVarTypeImpl
@@ -119,7 +120,7 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
         emptyList(), // constraints
         boundType, // bound
         null, // defaultType (Ref<PyType>?)
-        PyTypeVarType.Variance.INVARIANT // variance
+        PyTypeParameterType.Variance.INVARIANT // variance
       )
 
       result[paramName] = typeVar

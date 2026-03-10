@@ -280,12 +280,6 @@ object PyTypeUtil {
 
   @JvmStatic
   @ApiStatus.Internal
-  fun PyTypeVarType.getEffectiveBound(): PyType? {
-    return if (this.constraints.isEmpty()) this.bound else PyUnionType.union(this.constraints)
-  }
-
-  @JvmStatic
-  @ApiStatus.Internal
   fun PyType?.convertToType(
     superTypeName: String,
     anchor: PsiElement,

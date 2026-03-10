@@ -3014,6 +3014,31 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                """);
   }
 
+  @TestFor(issues="PY-88277")
+  public void testClassTypeVarTupleBoundMismatch() {
+    doTestByText("""
+                   from typing import Unpack
+                   
+                   class C[*Ts: <error descr="Type variable tuples cannot have constraints or upper bounds">str</error>]: ...
+                   c = C[str, str]()
+                   c = C[<warning descr="Expected type '*Ts ≤: str', got '*tuple[str, int]' instead">str, int</warning>]()
+                   c = C[<warning descr="Expected type '*Ts ≤: str', got '*tuple[int, str]' instead">int, str</warning>]()
+                   
+                   class D[*Ts: <error descr="Type variable tuples cannot have constraints or upper bounds">Unpack[tuple[str]]</error>]: ...
+                   d = D[str]()
+                   d = D[<warning descr="Expected type '*Ts ≤: *tuple[str]', got '*tuple[str, str]' instead">str, str</warning>]()
+                   d = D[<warning descr="Expected type '*Ts ≤: *tuple[str]', got '*tuple[int, str]' instead">int, str</warning>]()
+                   """);
+  }
+
+  @TestFor(issues="PY-88277")
+  public void testClassParamSpecBoundMismatch() {
+    doTestByText("""
+                   class C[**P: <error descr="Parameter specifications cannot have constraints or upper bounds">[str]</error>]: ...
+                   c = C[<warning descr="Expected type '**P ≤: [str]', got '[int]' instead">int</warning>]()
+                   """);
+  }
+
   // PY-76851
   public void testTypeAliasVariadicTypeParameters() {
     doTestByText("""

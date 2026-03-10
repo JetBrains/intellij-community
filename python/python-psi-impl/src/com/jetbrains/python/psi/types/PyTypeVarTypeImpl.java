@@ -77,7 +77,9 @@ public final class PyTypeVarTypeImpl implements PyTypeVarType {
   }
 
   @Override
-  public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
+  public Object @NotNull [] getCompletionVariants(String completionPrefix,
+                                                  @NotNull PsiElement location,
+                                                  @NotNull ProcessingContext context) {
     PyType bound = getBoundPromotedToClassObjectTypesIfNeeded();
     if (bound != null) {
       return bound.getCompletionVariants(completionPrefix, location, context);
@@ -155,6 +157,11 @@ public final class PyTypeVarTypeImpl implements PyTypeVarType {
   @Override
   public @Nullable PyType getBound() {
     return myBound;
+  }
+
+  @Override
+  public @Nullable PyType getEffectiveBound() {
+    return myConstraints.isEmpty() ? myBound : PyUnionType.union(myConstraints);
   }
 
   @Override
