@@ -14,13 +14,14 @@ import com.intellij.repository.search.completion.api.GradleDependencyCompletionC
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.completion.api.DependencyArtifactCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyCompletionContributionSource
 import org.jetbrains.idea.completion.api.DependencyCompletionContributor
 import org.jetbrains.idea.completion.api.DependencyCompletionRequest
 import org.jetbrains.idea.completion.api.DependencyCompletionResult
 import org.jetbrains.idea.completion.api.DependencyGroupCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyPartCompletionResult
 import org.jetbrains.idea.completion.api.DependencyVersionCompletionRequest
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.idea.completion.api.*
 
 @ApiStatus.Internal
 class GradleLocalDependencyCompletionContributor : DependencyCompletionContributor {
