@@ -334,7 +334,7 @@ fn call_main_method(mut jni_env: EnvUnowned<'_>, main_class_name: &str, args: Ve
     }).into_outcome()
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(not(target_os = "macos"))]
 fn run_event_loop(join_handle: JoinHandle<()>) -> thread::Result<()> {
     debug!("Joining the JVM thread");
     join_handle.join()
@@ -361,10 +361,4 @@ fn run_event_loop(_join_handle: JoinHandle<()>) -> thread::Result<()> {
     }
 
     Ok(())
-}
-
-#[cfg(target_os = "linux")]
-fn run_event_loop(join_handle: JoinHandle<()>) -> thread::Result<()> {
-    debug!("Joining the JVM thread");
-    join_handle.join()
 }
