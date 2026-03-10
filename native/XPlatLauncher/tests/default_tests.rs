@@ -352,8 +352,9 @@ mod tests {
         assert!(!result.exit_status.success(), "Expected to fail: {result:?}");
 
         let exception = "java.lang.UnsupportedOperationException: aw, snap";
-        assert!(result.stdout.contains(exception), "Exception message ('{exception}') is missing: {result:?}");
-        assert!(result.stdout.contains("0: com.intellij.idea.TestMain.exception"), "Stacktrace is missing: {result:?}");
+        assert!(result.stderr.contains(exception), "Exception message ('{exception}') is missing: {result:?}");
+        assert!(result.stderr.contains("at com.intellij.idea.TestMain.exception"), "Stacktrace is missing: {result:?}");
+        assert!(result.stderr.contains("Caused by:"), "'caused by' is missing: {result:?}");
     }
 
     #[test]

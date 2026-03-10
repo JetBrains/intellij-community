@@ -125,12 +125,7 @@ pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, main_cla
                 std::process::exit(0);
             }
             Outcome::Err(e) => {
-                if let jni::errors::Error::CaughtJavaException {name, msg, stack, .. } = e {
-                    let stack = stack.trim();
-                    error!("[JVM] main method threw an exception:\n{name}: {msg}\n{stack}");
-                } else {
-                    error!("[JVM] main method failed: {e:?}");
-                }
+                error!("[JVM] main method failed: {e:?}");
                 std::process::exit(1);
             }
             Outcome::Panic(e) => {
@@ -330,7 +325,11 @@ fn call_main_method(mut jni_env: EnvUnowned<'_>, main_class_name: &str, args: Ve
         debug!("[JVM] Calling '{main_class_name}#main'");
         let main_class = env.find_class(JNIString::new(main_class_name.replace('.', "/")))?;
         let result = env.call_static_method(main_class, MAIN_METHOD_NAME, MAIN_METHOD_SIGNATURE, &main_args).map(|_| ());
-        env.exception_catch()?;
+        if let Err(e) = &result {
+            if let jni::errors::Error::JavaException = e {
+                env.exception_describe();
+            }
+        }
         result
     }).into_outcome()
 }

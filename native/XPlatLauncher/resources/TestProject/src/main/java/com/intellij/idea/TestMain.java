@@ -112,6 +112,15 @@ public class TestMain {
   }
 
   private static void exception() {
+    try {
+      nestedException();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static void nestedException() {
     throw new UnsupportedOperationException("aw, snap");
   }
 
