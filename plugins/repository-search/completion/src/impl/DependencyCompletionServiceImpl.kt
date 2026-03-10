@@ -13,22 +13,17 @@ import kotlinx.coroutines.supervisorScope
 import com.intellij.repository.search.completion.util.logWarn
 import com.intellij.repository.search.completion.api.DependencyCompletionService
 import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyPartCompletionResult
 import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
-import org.jetbrains.idea.completion.api.BaseDependencyCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyArtifactCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyCompletionResult
-import org.jetbrains.idea.completion.api.DependencyCompletionService
-import org.jetbrains.idea.completion.api.DependencyGroupCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyPartCompletionResult
-import org.jetbrains.idea.completion.api.DependencyVersionCompletionRequest
-import org.jetbrains.idea.completion.util.logWarn
 import kotlin.coroutines.cancellation.CancellationException
 
 internal class DependencyCompletionServiceImpl : DependencyCompletionService {
-  private val allContributors = DependencyCompletionService.EP_NAME.extensionList
+  private val allContributors get() = DependencyCompletionService.EP_NAME.extensionList
 
-  private fun contributors(request: BaseDependencyCompletionRequest) = allContributors.filter { it.buildSystemId == request.context.buildSystemId }
+  private fun contributors(request: BaseDependencyCompletionRequest) = allContributors.filter {
+    it.isEnabled()
+    && it.buildSystemId == request.context.buildSystemId
+  }
 
   override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionResult> =
     parallelStream(contributors(request)) { it.search(request) }

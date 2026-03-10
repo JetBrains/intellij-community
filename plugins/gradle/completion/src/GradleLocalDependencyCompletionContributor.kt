@@ -4,23 +4,16 @@ package com.intellij.gradle.completion
 import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexer
 import com.intellij.openapi.components.service
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
-import com.intellij.repository.search.completion.api.DependencyCompletionContext
 import com.intellij.repository.search.completion.api.DependencyCompletionContributor
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionResult
 import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
-import com.intellij.repository.search.completion.api.GradleDependencyCompletionContext
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
+import com.intellij.repository.search.completion.api.DependencyPartCompletionResult
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.idea.completion.api.DependencyArtifactCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyCompletionContributionSource
-import org.jetbrains.idea.completion.api.DependencyCompletionContributor
-import org.jetbrains.idea.completion.api.DependencyCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyCompletionResult
-import org.jetbrains.idea.completion.api.DependencyGroupCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyPartCompletionResult
-import org.jetbrains.idea.completion.api.DependencyVersionCompletionRequest
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 @ApiStatus.Internal
@@ -28,6 +21,10 @@ class GradleLocalDependencyCompletionContributor : DependencyCompletionContribut
 
   override val buildSystemId: ProjectSystemId
     get() = GradleConstants.SYSTEM_ID
+
+  override fun isEnabled(): Boolean {
+    return Registry.`is`("gradle.dependency.completion.contributor.local")
+  }
 
   override suspend fun search(request: DependencyCompletionRequest): List<DependencyCompletionResult> {
     val searchString = request.searchString.trim()

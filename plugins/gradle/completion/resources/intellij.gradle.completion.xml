@@ -17,7 +17,11 @@
     <lookup.charFilter id="GradleCompletionCharFilter" order="first" implementation="com.intellij.gradle.completion.GradleCompletionCharFilter" />
     <statistics.collectorExtension implementation="com.intellij.gradle.completion.GradleScriptDependencyCompletionUsageCollectorExtension"/>
     <lookup.usageDetails implementation="com.intellij.gradle.completion.GradleScriptDependencyCompletionUsageDescriptor"/>
+
+    <registryKey key="gradle.dependency.completion.contributor.local" defaultValue="true"
+                 description="Gradle local repository dependency completion contributor enabled"/>
   </extensions>
+
   <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
     <contributor implementation="com.intellij.gradle.completion.GradleLocalDependencyCompletionContributor"/>
   </extensions>
