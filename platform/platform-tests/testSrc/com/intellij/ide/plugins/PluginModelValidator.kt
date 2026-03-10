@@ -75,6 +75,8 @@ data class PluginValidationOptions(
    */
   val componentImplementationClassesToIgnore: Set<String> = emptySet(),
 
+  val filesNamedLikeContentModuleDescriptorsButIncludedViaXiInclude: Set<String> = emptySet(),
+
   /**
    * Names of service interfaces that are overridden by plugins which sources are located outside the current project, and therefore need
    * to be registered as `open`.
@@ -249,9 +251,9 @@ internal class PluginModelValidator(
 
     for (contentModuleDescriptor in simplifiedPluginModel.contentModuleDescriptorsIncludedViaXiInclude) {
       val moduleName = contentModuleDescriptor.nameWithoutExtension
-      val moduleInfo = moduleNameToInfo[moduleName]
+      val moduleInfo = moduleNameToInfo[moduleName] ?: continue
       val pluginInfo = contentModuleToContainingPlugins[moduleName]?.firstOrNull()
-      if (moduleInfo != null && pluginInfo != null) {
+      if (pluginInfo != null) {
         //todo: this case is already fixed in khbminus/ij-light/IJPL-222430-unmbed-thin-client branch, remove this condition after it's merged to master
         if (moduleName == "intellij.rider.rdclient.languages") {
           continue
@@ -266,6 +268,18 @@ internal class PluginModelValidator(
           """.trimMargin(),
           moduleInfo.sourceModule,
           mapOf("descriptorFile" to moduleInfo.descriptorFile),
+        )
+      }
+      else if (contentModuleDescriptor.name !in validationOptions.filesNamedLikeContentModuleDescriptorsButIncludedViaXiInclude) {
+        reportError(
+          message = """
+                    |File '${contentModuleDescriptor.name}' is named as a content module descriptor, but actually it's included via xi:include tag.
+                    |Such configuration causes confusion, and it's better to avoid it.
+                    |If it's really hard to register it as a real plugin content module (even with loading=embedded), rename the file and 
+                    |move it to META-INF directory to avoid confusion.
+                  """.trimMargin(),
+          moduleInfo.sourceModule,
+          params = mapOf("descriptorFile" to moduleInfo.descriptorFile)
         )
       }
     }

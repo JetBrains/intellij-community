@@ -46,6 +46,18 @@ class CommunityPluginModelTest {
       // There are a number of platform services that are overridden in ultimate only. Instead of declaring all of them here, we
       // only perform the check once in UltimatePluginModelTest
       skipServicesOverridesCheck = true,
+      filesNamedLikeContentModuleDescriptorsButIncludedViaXiInclude = setOf(
+        "intellij.platform.project.xml",
+        "intellij.platform.ide.progress.xml",
+        "intellij.platform.experiment.xml",
+        "intellij.platform.feedback.xml",
+        "intellij.platform.bookmarks.xml",
+        "intellij.platform.syntax.psi.xml",
+        "intellij.platform.remoteServers.impl.xml",
+        "intellij.vcs.git.xml",
+        "kotlin.plugin.k2.xml",
+        "kotlin.plugin.k1.xml",
+      ),
       referencedPluginIdsOfExternalPlugins = setOf(
         //these modules are defined in the ultimate part
         "com.intellij.marketplace",
