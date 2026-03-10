@@ -25,10 +25,11 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus
 import kotlin.concurrent.Volatile
 import kotlin.coroutines.CoroutineContext
 
+@ApiStatus.Internal
 class FleetClient internal constructor(
   val connectionStatus: StateFlow<ConnectionStatus<IRpcClient>>,
   val stats: MutableStateFlow<TransportStats>,
@@ -41,7 +42,7 @@ class FleetClient internal constructor(
   @Volatile
   private var poison: CancellationException? = null
 
-  @Internal
+  @ApiStatus.Internal
   val invocationHandlerFactory: InvocationHandlerFactory<ProxyClosure> =
     reconnectingRpcClient(connectionStatus)
       .asHandlerFactory()
