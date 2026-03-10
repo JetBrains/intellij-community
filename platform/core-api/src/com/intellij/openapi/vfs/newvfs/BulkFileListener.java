@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +30,10 @@ import java.util.List;
  * <p>Please note that the VFS events are project-agnostic so all listeners will be notified about events from all open projects.
  * For filtering the events use {@link com.intellij.openapi.roots.ProjectRootManager#getFileIndex} with
  * {@link com.intellij.openapi.roots.FileIndex#isInContent}.</p>
+ *
+ * <p>Also note that if a directory with other files/directories inside is created, this listener will receive {@link VFileCreateEvent} only for the topmost directory.
+ * To iterate over all the created files use {@link com.intellij.openapi.roots.FileIndex#iterateContentUnderDirectory} and provide the file from the {@link VFileCreateEvent}.
+ * Otherwise, excluded files might be added to the VFS which may lead to performance problems.</p>
  */
 public interface BulkFileListener {
   @RequiresWriteLock
