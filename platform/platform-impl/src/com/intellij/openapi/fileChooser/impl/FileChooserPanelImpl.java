@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -6,6 +6,7 @@ import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.HelpTooltipKt;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
@@ -28,6 +29,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.Formats;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -958,7 +960,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       @SuppressWarnings("unchecked") var item = ((TableView<FsItem>)table).getRow(row);
       label.setIcon(column == 0 ? item.icon : null);
       label.setHorizontalAlignment(SwingConstants.LEFT);
-      label.setToolTipText(column == 1 ? DateFormatUtil.formatDateTime(item.lastUpdated) : null);
+      HelpTooltipKt.setToolTipText(label, column == 2 ? HtmlChunk.text(DateFormatUtil.formatDateTime(item.lastUpdated)) : null);
       label.setEnabled(item.selectable);
     }
   }
