@@ -10,6 +10,7 @@ jvm_library(
     "//libraries/kotlin/reflect",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-cli",
+    "@lib//:kotlinc-kotlin-compiler-tests",
     "//libraries/guava",
     "//platform/ide-core-impl",
     "@lib//:kotlin-test",

@@ -19,6 +19,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlinx-serialization-compiler-plugin",
     "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/base/fe10/analysis",
     "//plugins/kotlin/core",
     "//plugins/kotlin/idea",

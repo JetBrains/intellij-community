@@ -22,6 +22,7 @@ jvm_library(
     "//java/testFramework",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-low-level-api-fir",
+    "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:kotlinc-analysis-api-platform-interface",
     "//platform/usageView",
     "//platform/core-api:core",
