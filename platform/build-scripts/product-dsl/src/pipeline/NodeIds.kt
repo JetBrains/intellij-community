@@ -100,6 +100,9 @@ internal object NodeIds {
   /** Product module set validation */
   @JvmField val PRODUCT_MODULE_SET_VALIDATION = NodeId("productModuleSetValidation", NodeCategory.VALIDATION)
 
+  /** Pluginized module-set reference validation */
+  @JvmField val PLUGINIZED_MODULE_SET_REFERENCE_VALIDATION = NodeId("pluginizedModuleSetReferenceValidation", NodeCategory.VALIDATION)
+
   /** Module set pluginization constraints validation */
   @JvmField val MODULE_SET_PLUGINIZATION_VALIDATION = NodeId("moduleSetPluginizationValidation", NodeCategory.VALIDATION)
 

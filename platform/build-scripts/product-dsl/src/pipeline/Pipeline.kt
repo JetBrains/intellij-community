@@ -30,8 +30,8 @@ import org.jetbrains.intellij.build.productLayout.stats.DependencyGenerationResu
 import org.jetbrains.intellij.build.productLayout.stats.GenerationStats
 import org.jetbrains.intellij.build.productLayout.stats.ModuleSetFileResult
 import org.jetbrains.intellij.build.productLayout.stats.ModuleSetGenerationResult
-import org.jetbrains.intellij.build.productLayout.stats.ModuleSetPluginGenerationResult
 import org.jetbrains.intellij.build.productLayout.stats.ModuleSetPluginFileResult
+import org.jetbrains.intellij.build.productLayout.stats.ModuleSetPluginGenerationResult
 import org.jetbrains.intellij.build.productLayout.stats.PluginDependencyGenerationResult
 import org.jetbrains.intellij.build.productLayout.stats.ProductGenerationResult
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionConfigStats
@@ -40,13 +40,14 @@ import org.jetbrains.intellij.build.productLayout.validator.ContentModuleBacking
 import org.jetbrains.intellij.build.productLayout.validator.ContentModuleDependencyValidator
 import org.jetbrains.intellij.build.productLayout.validator.ContentModulePluginDependencyValidator
 import org.jetbrains.intellij.build.productLayout.validator.LibraryModuleValidator
+import org.jetbrains.intellij.build.productLayout.validator.ModuleSetPluginizationValidator
 import org.jetbrains.intellij.build.productLayout.validator.PluginContentDependencyValidator
 import org.jetbrains.intellij.build.productLayout.validator.PluginContentDuplicatesValidator
 import org.jetbrains.intellij.build.productLayout.validator.PluginContentStructureValidator
 import org.jetbrains.intellij.build.productLayout.validator.PluginDependencyDeclarationValidator
 import org.jetbrains.intellij.build.productLayout.validator.PluginDescriptorIdConflictValidator
 import org.jetbrains.intellij.build.productLayout.validator.PluginPluginDependencyValidator
-import org.jetbrains.intellij.build.productLayout.validator.ModuleSetPluginizationValidator
+import org.jetbrains.intellij.build.productLayout.validator.PluginizedModuleSetReferenceValidator
 import org.jetbrains.intellij.build.productLayout.validator.ProductModuleSetValidator
 import org.jetbrains.intellij.build.productLayout.validator.SelfContainedModuleSetValidator
 import org.jetbrains.intellij.build.productLayout.validator.SuppressionConfigValidator
@@ -554,6 +555,7 @@ internal class GenerationPipeline(
           SuppressionConfigGenerator,
           SuppressionConfigValidator,
           TestLibraryScopeValidator,
+          PluginizedModuleSetReferenceValidator,
           ModuleSetPluginizationValidator,
           SelfContainedModuleSetValidator,
           ContentModuleBackingValidator,

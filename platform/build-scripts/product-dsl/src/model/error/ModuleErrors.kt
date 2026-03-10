@@ -7,6 +7,7 @@ import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginGraph
 import org.jetbrains.intellij.build.productLayout.model.ModuleSourceInfo
 import org.jetbrains.intellij.build.productLayout.model.getModuleSourceInfo
+import org.jetbrains.intellij.build.productLayout.moduleSetPluginModuleName
 import org.jetbrains.intellij.build.productLayout.stats.AnsiStyle
 
 data class SelfContainedValidationError(
@@ -61,6 +62,42 @@ data class ModuleSetPluginizationError(
     }
     appendLine()
     appendLine("${s.yellow}Fix:${s.reset} keep pluginized module sets free of embedded modules and nested pluginized sets")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+}
+
+data class PluginizedModuleSetReferenceError(
+  override val context: String,
+  @JvmField val pluginizedModuleSetName: String,
+  @JvmField val ownerKind: OwnerKind,
+  override val ruleName: String = "PluginizedModuleSetReferenceValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.MODULE_SET_PLUGINIZATION
+
+  enum class OwnerKind {
+    PRODUCT,
+    MODULE_SET,
+  }
+
+  override fun format(s: AnsiStyle): String = buildString {
+    when (ownerKind) {
+      OwnerKind.PRODUCT -> appendLine(
+        "${s.red}${s.bold}Product '$context' references pluginized module set '$pluginizedModuleSetName' as a regular module set${s.reset}"
+      )
+      OwnerKind.MODULE_SET -> appendLine(
+        "${s.red}${s.bold}Module set '$context' nests pluginized module set '$pluginizedModuleSetName' as a regular module set${s.reset}"
+      )
+    }
+    appendLine()
+    appendLine(
+      "  ${s.red}*${s.reset} Pluginized module sets are standalone bundled plugin wrappers and are not inlined through moduleSet(...) references"
+    )
+    appendLine()
+    appendLine("${s.yellow}Fix:${s.reset}")
+    appendLine("1. Remove the moduleSet(...) reference to '$pluginizedModuleSetName'")
+    appendLine("2. Bundle '${moduleSetPluginModuleName(pluginizedModuleSetName).value}' in products that should ship it")
     appendLine()
     appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
     appendLine()

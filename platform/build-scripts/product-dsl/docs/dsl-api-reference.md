@@ -406,6 +406,7 @@ fun plugin(
 
 Creates a module set and marks it to be materialized as a standalone bundled plugin wrapper.
 The Product DSL pipeline generates the wrapper module files, `plugin-content.yaml`, and `modules.xml` entries during generation.
+Do not pass the result to product-level or nested `moduleSet(...)` composition APIs; bundle the generated wrapper plugin module instead.
 
 **Example:**
 ```kotlin

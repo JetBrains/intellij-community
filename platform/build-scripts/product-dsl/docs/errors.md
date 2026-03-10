@@ -14,6 +14,7 @@ Complete reference of validation errors, their causes, and fixes.
 | [PluginDependencyNotBundledError](#plugin-to-plugin-dependency-error) | Error | No | Plugin depends on another plugin not bundled in same product |
 | [XIncludeResolutionError](#xinclude-resolution-error) | Error | No | xi:include path cannot be resolved |
 | [MissingModuleSetsError](#missing-module-sets) | Error | No | Referenced module set not found |
+| [PluginizedModuleSetReferenceError](#pluginized-module-set-reference) | Error | No | Pluginized module set used through `moduleSet()` |
 | [Structural Violations](#structural-loading-violations) | Error | Yes* | Loading mode constraint violations |
 | [MissingContentModulePluginDep](#missing-content-module-plugin-dependency) | Error | No | Content module missing plugin dep |
 | [MissingTestPluginPluginDep](#missing-test-plugin-plugin-dependency) | Error | No | Test plugin missing plugin dep |
@@ -230,6 +231,24 @@ Emitted by `PluginContentStructureValidator` (ruleName `pluginContentStructureVa
 **Cause**: Product references a module set that doesn't exist.
 
 **Fix**: Either create the module set or remove the reference.
+
+---
+
+## Pluginized Module-Set Reference
+
+```
+❌ Product 'IDEA' references pluginized module set 'debugger.streams' as a regular module set
+
+  * Pluginized module sets are standalone bundled plugin wrappers and are not inlined through moduleSet(...) references
+
+Fix:
+1. Remove the moduleSet(...) reference to 'debugger.streams'
+2. Bundle 'intellij.moduleSet.plugin.debugger.streams' in products that should ship it
+```
+
+**Cause**: A module set created via `plugin(...)` is still being used through `moduleSet(...)` in a product spec or nested under a regular module set.
+
+**Fix**: Remove the `moduleSet()` reference and bundle the generated wrapper plugin module instead.
 
 ---
 
