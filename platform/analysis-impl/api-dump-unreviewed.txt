@@ -550,7 +550,6 @@ f:com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 - readExternal(org.jdom.Element):V
 - registerSeverity(com.intellij.codeInsight.daemon.impl.SeverityRegistrar$SeverityBasedTextAttributes,java.awt.Color):V
 - s:registerStandard(com.intellij.codeInsight.daemon.impl.HighlightInfoType,com.intellij.lang.annotation.HighlightSeverity):V
-- s:registerStandard(java.util.Map):V
 - setOrder(java.util.List):V
 - s:standardSeverities():java.util.Collection
 - unregisterSeverity(com.intellij.lang.annotation.HighlightSeverity):com.intellij.codeInsight.daemon.impl.SeverityRegistrar$SeverityBasedTextAttributes
@@ -2149,7 +2148,6 @@ c:com.intellij.codeInspection.ex.InspectionProfileImpl
 - scopesChanged():V
 - setDescription(java.lang.String):V
 - setEditorAttributesKey(java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.project.Project):V
-- setEditorAttributesKey(java.util.List,com.intellij.openapi.editor.colors.TextAttributesKey,java.lang.String,com.intellij.openapi.project.Project):V
 - setErrorLevel(com.intellij.codeInsight.daemon.HighlightDisplayKey,com.intellij.codeHighlighting.HighlightDisplayLevel,com.intellij.openapi.project.Project):V
 - setErrorLevel(com.intellij.codeInsight.daemon.HighlightDisplayKey,com.intellij.codeHighlighting.HighlightDisplayLevel,java.lang.String,com.intellij.openapi.project.Project):V
 - setErrorLevel(java.util.List,com.intellij.codeHighlighting.HighlightDisplayLevel,java.lang.String,com.intellij.openapi.project.Project):V

@@ -2,39 +2,45 @@
 package com.intellij.codeInspection.ex
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType
+import com.intellij.codeInsight.daemon.impl.SeveritiesProvider
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
+import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeState
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.ProjectRule
-import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.rules.InMemoryFsExtension
 import com.intellij.testFramework.runInInitMode
 import com.intellij.util.io.write
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.assertj.core.api.Assertions
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.io.ByteArrayInputStream
 import java.io.InputStream
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.readText
 
+@TestApplication
 class InspectionSchemeTest {
   companion object {
-    @JvmField
-    @ClassRule
-    val projectRule = ProjectRule()
-    @JvmField
-    @ClassRule
-    val testRootDisposable = DisposableRule()
+    private val projectFixture = projectFixture(openAfterCreation = true)
   }
 
-  @JvmField
-  @Rule
-  val fsRule = InMemoryFsRule()
+  private val project get() = projectFixture.get()
 
-  @Test fun loadSchemes() {
+  @JvmField
+  @RegisterExtension
+  val fsRule = InMemoryFsExtension()
+
+  @Test
+  fun loadSchemes(@TestDisposable testRootDisposable: Disposable): Unit = runBlocking(Dispatchers.Default) {
     val schemeFile = fsRule.fs.getPath("inspection/Bar.xml")
     val schemeData = """
     <inspections version="1.0">
@@ -43,8 +49,8 @@ class InspectionSchemeTest {
     "</inspections>""".trimIndent()
     schemeFile.write(schemeData)
     val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
-    val profileManager = ApplicationInspectionProfileManager(schemeManagerFactory)
-    profileManager.forceInitProfilesInTestUntil(testRootDisposable.disposable)
+    val profileManager = ApplicationInspectionProfileManager(this@runBlocking, schemeManagerFactory)
+    profileManager.forceInitProfilesInTestUntil(testRootDisposable)
     profileManager.initProfiles()
 
     assertThat(profileManager.profiles).hasSize(1)
@@ -54,9 +60,7 @@ class InspectionSchemeTest {
 
     runInInitMode { scheme.initInspectionTools(null) }
 
-    runBlocking {
-      schemeManagerFactory.save()
-    }
+    schemeManagerFactory.save()
 
     assertThat(scheme.schemeState).isEqualTo(SchemeState.UNCHANGED)
 
@@ -71,7 +75,31 @@ class InspectionSchemeTest {
     assertThat(profileManager.profiles).hasSize(1)
   }
 
-  @Test fun bundledProfileUsesSelfAsBaseAndResetsToBundled() {
+  @Test
+  fun preloadedSeverityProviderDoesNotPublishEventsDuringProfileManagerInit(@TestDisposable disposable: Disposable): Unit =
+    runBlocking(Dispatchers.Default) {
+      val infoType = HighlightInfoType.HighlightInfoTypeImpl(
+        HighlightSeverity("PRELOADED_DYNAMIC", 400),
+        TextAttributesKey.createTextAttributesKey("PRELOADED_DYNAMIC_KEY"),
+      )
+      SeveritiesProvider.EP_NAME.point.registerExtension(object : SeveritiesProvider() {
+        override fun getSeveritiesHighlightInfoTypes(): List<HighlightInfoType> = listOf(infoType)
+      }, disposable)
+
+      val notifications = AtomicInteger()
+      project.messageBus.connect(disposable).subscribe(SeverityRegistrar.SEVERITIES_CHANGED_TOPIC, Runnable { notifications.incrementAndGet() })
+
+      val profileManager = ApplicationInspectionProfileManager(
+        this@runBlocking,
+        SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath("")),
+      )
+
+      assertThat(profileManager.severityRegistrar.getSeverity("PRELOADED_DYNAMIC")).isNotNull()
+      assertThat(notifications.get()).isZero()
+  }
+
+  @Test
+  fun bundledProfileUsesSelfAsBaseAndResetsToBundled() {
     val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
 
     class TestAppIPM : ApplicationInspectionProfileManagerBase(schemeManagerFactory) {
@@ -104,18 +132,18 @@ class InspectionSchemeTest {
     val schemeManager = profileManager.schemeManagerPublic
     val bundledProfile = schemeManager.loadBundledScheme(resourcePath, cl, null)?.modifiableModel
 
-    Assertions.assertThat(bundledProfile).isNotNull()
-    Assertions.assertThat(bundledProfile?.name).isEqualTo(profileName)
+    assertThat(bundledProfile).isNotNull()
+    assertThat(bundledProfile?.name).isEqualTo(profileName)
 
     runInInitMode<Any?> {
-      bundledProfile?.initInspectionTools(projectRule.project)
+      bundledProfile?.initInspectionTools(project)
     }
 
-    bundledProfile?.enableTool("AssignmentToForLoopParameter", projectRule.project)
+    bundledProfile?.enableTool("AssignmentToForLoopParameter", project)
     val key = HighlightDisplayKey.find("AssignmentToForLoopParameter")
-    Assertions.assertThat(bundledProfile?.isToolEnabled(key, null)).isTrue()
+    assertThat(bundledProfile?.isToolEnabled(key, null)).isTrue()
 
-    bundledProfile?.resetToBase(projectRule.project)
-    Assertions.assertThat(bundledProfile?.isToolEnabled(key, null)).isFalse()
+    bundledProfile?.resetToBase(project)
+    assertThat(bundledProfile?.isToolEnabled(key, null)).isFalse()
   }
 }

@@ -3,7 +3,8 @@
 
   <extensionPoints>
     <extensionPoint name="severitiesProvider"
-                    interface="com.intellij.codeInsight.daemon.impl.SeveritiesProvider"/>
+                    interface="com.intellij.codeInsight.daemon.impl.SeveritiesProvider"
+                    dynamic="true"/>
 
     <extensionPoint name="fileRankerMlService" interface="com.intellij.psi.search.FileRankerMlService" dynamic="true"/>
 

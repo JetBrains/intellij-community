@@ -17,15 +17,19 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.options.SchemeManagerFactory
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.IconLoader
 import com.intellij.profile.codeInspection.InspectionProfileManager
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import kotlinx.coroutines.CoroutineScope
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -37,7 +41,7 @@ import java.nio.file.Path
        category = SettingsCategory.CODE,
        storages = [Storage(value = "editor.xml")],
        additionalExportDirectory = InspectionProfileManager.INSPECTION_DIR)
-class ApplicationInspectionProfileManager @TestOnly @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory) :
+class ApplicationInspectionProfileManager @TestOnly @NonInjectable @Internal constructor(coroutineScope: CoroutineScope, schemeManagerFactory: SchemeManagerFactory) :
   ApplicationInspectionProfileManagerBase(schemeManagerFactory), PersistentStateComponent<Element> {
 
   val converter: InspectionProfileConvertor
@@ -48,7 +52,8 @@ class ApplicationInspectionProfileManager @TestOnly @NonInjectable constructor(s
     get() = schemeManager.currentSchemeName ?: InspectionProfile.DEFAULT_PROFILE_NAME
 
   @Suppress("TestOnlyProblems")
-  constructor() : this(SchemeManagerFactory.getInstance())
+  @Internal
+  constructor(coroutineScope: CoroutineScope) : this(coroutineScope, SchemeManagerFactory.getInstance())
 
   companion object {
     @JvmStatic
@@ -59,7 +64,16 @@ class ApplicationInspectionProfileManager @TestOnly @NonInjectable constructor(s
   }
 
   init {
-    registerProvidedSeverities()
+    syncProvidedSeverities(notifyListeners = false)
+    SeveritiesProvider.EP_NAME.point.addExtensionPointListener(coroutineScope, false, object : ExtensionPointListener<SeveritiesProvider> {
+      override fun extensionAdded(extension: SeveritiesProvider, pluginDescriptor: PluginDescriptor) {
+        syncProvidedSeverities(notifyListeners = true)
+      }
+
+      override fun extensionRemoved(extension: SeveritiesProvider, pluginDescriptor: PluginDescriptor) {
+        syncProvidedSeverities(notifyListeners = true)
+      }
+    })
   }
 
   @TestOnly
@@ -71,7 +85,7 @@ class ApplicationInspectionProfileManager @TestOnly @NonInjectable constructor(s
     }
   }
 
-  override fun getState(): Element? {
+  override fun getState(): Element {
     val state = Element("state")
     severityRegistrar.writeExternal(state)
     return state
@@ -107,19 +121,50 @@ class ApplicationInspectionProfileManager @TestOnly @NonInjectable constructor(s
 
     return getProfile(path, false)
   }
-}
 
-private fun registerProvidedSeverities() {
-  val map = HashMap<String, HighlightInfoType>()
-  SeveritiesProvider.EP_NAME.forEachExtensionSafe { provider ->
-    for (t in provider.severitiesHighlightInfoTypes) {
-      val highlightSeverity = t.getSeverity(null)
-      val icon = if (t is HighlightInfoType.Iconable) IconLoader.createLazy { t.icon } else null
-      map.put(highlightSeverity.name, t)
-      HighlightDisplayLevel.registerSeverity(highlightSeverity, t.attributesKey, icon)
+  private fun syncProvidedSeverities(notifyListeners: Boolean) {
+    val providedSeverities = LinkedHashMap<String, HighlightDisplayLevel.SeverityDescriptor>()
+    SeveritiesProvider.EP_NAME.forEachExtensionSafe { provider ->
+      for (highlightInfoType in provider.severitiesHighlightInfoTypes) {
+        val severity = highlightInfoType.getSeverity(null)
+        val severityName = severity.name
+        val icon = if (highlightInfoType is HighlightInfoType.Iconable) highlightInfoType.icon else null
+        providedSeverities.remove(severityName)
+        providedSeverities[severityName] = HighlightDisplayLevel.SeverityDescriptor(
+          severity = severity,
+          attributesKey = highlightInfoType.attributesKey,
+          icon = icon,
+        )
+      }
+    }
+
+    HighlightDisplayLevel.syncProvidedSeverities(providedSeverities)
+    val providedTypes = LinkedHashMap<String, HighlightInfoType>()
+    for ((severityName, descriptor) in providedSeverities) {
+      providedTypes[severityName] = HighlightInfoType.HighlightInfoTypeImpl(descriptor.severity, descriptor.attributesKey)
+    }
+    val removedSeverities = if (notifyListeners) SeverityRegistrar.syncProvidedSeverities(providedTypes)
+    else SeverityRegistrar.syncProvidedSeveritiesSilently(providedTypes)
+    if (notifyListeners && removedSeverities.isNotEmpty()) {
+      normalizeRemovedProvidedSeverities(removedSeverities.toSet())
     }
   }
-  if (map.isNotEmpty()) {
-    SeverityRegistrar.registerStandard(map)
+
+  private fun normalizeRemovedProvidedSeverities(removedSeverities: Set<String>) {
+    val projectManagers = (ProjectManager.getInstanceIfCreated()?.openProjects ?: emptyArray()).asSequence().filterNot { it.isDisposed }.mapNotNull {
+      it.getServiceIfCreated(InspectionProjectProfileManager::class.java) as? ProjectInspectionProfileManager
+    }.toList()
+
+    for (profile in normalizeRemovedSeverities(removedSeverities)) {
+      for (projectManager in projectManagers) {
+        projectManager.fireProfileChanged(profile)
+      }
+    }
+
+    for (projectManager in projectManagers) {
+      for (profile in projectManager.normalizeRemovedSeverities(removedSeverities)) {
+        projectManager.fireProfileChanged(profile)
+      }
+    }
   }
 }

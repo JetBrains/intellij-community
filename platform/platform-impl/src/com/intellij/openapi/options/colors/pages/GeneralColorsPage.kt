@@ -58,11 +58,11 @@ open class GeneralColorsPage : ColorSettingsPage, InspectionColorSettingsPage, D
   }
 
   override fun getDemoText(): String {
-    return DEMO_TEXT
+    return BASE_DEMO_TEXT + customSeveritiesDemoText
   }
 
   override fun getAdditionalHighlightingTagToDescriptorMap(): Map<String, TextAttributesKey>? {
-    return ADDITIONAL_HIGHLIGHT_DESCRIPTORS
+    return additionalHighlightDescriptors
   }
 
   override fun getAdditionalHighlightingTagToColorKeyMap(): Map<String, ColorKey> {
@@ -86,7 +86,7 @@ open class GeneralColorsPage : ColorSettingsPage, InspectionColorSettingsPage, D
 
   companion object {
     private val STRING_TO_FOLD = OptionsBundle.message("settings.color_scheme.general.demo.folded.text.highlighted")
-    private val DEMO_TEXT = """<todo>${OptionsBundle.message("settings.color_scheme.general.demo.todo")}</todo>
+    private val BASE_DEMO_TEXT = """<todo>${OptionsBundle.message("settings.color_scheme.general.demo.todo")}</todo>
 ${OptionsBundle.message("settings.color_scheme.general.demo.link.jetbrains.homePage")} <hyperlink_f>http://www.jetbrains.com</hyperlink_f>
 ${OptionsBundle.message("settings.color_scheme.general.demo.link.jetbrains.developerCommunity")} <hyperlink>https://www.jetbrains.com/devnet</hyperlink>
 <ref_hyperlink>${OptionsBundle.message("settings.color_scheme.general.demo.hyperlink.reference")}</ref_hyperlink>
@@ -114,7 +114,7 @@ ${OptionsBundle.message("settings.color_scheme.general.demo.code_inspections.tit
   <runtime_error>${OptionsBundle.message("settings.color_scheme.general.demo.code_inspections.runtime_error")}</runtime_error>
   <server_error>${OptionsBundle.message("settings.color_scheme.general.demo.code_inspections.server_error")}</server_error>
   <server_duplicate>${OptionsBundle.message("settings.color_scheme.general.demo.code_inspections.server_duplicate")}</server_duplicate>
-$customSeveritiesDemoText"""
+"""
     private val ATT_DESCRIPTORS = arrayOf(
       AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.default.text"), HighlighterColors.TEXT),
       AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.folded.text"), EditorColors.FOLDED_TEXT_ATTRIBUTES),
@@ -256,44 +256,48 @@ $customSeveritiesDemoText"""
       ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.preview.border.color"), EditorColors.PREVIEW_BORDER_COLOR,
                       ColorDescriptor.Kind.BACKGROUND))
     private val NEW_COLOR_DESCRIPTORS by lazy { patchDescriptorsForNewUI(COLOR_DESCRIPTORS) }
-    private val ADDITIONAL_HIGHLIGHT_DESCRIPTORS: @NonNls MutableMap<String, TextAttributesKey>? = HashMap()
-
-    init {
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS!!["folded_text"] = EditorColors.FOLDED_TEXT_ATTRIBUTES
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS["folded_text_with_highlighting"] = CodeInsightColors.WARNINGS_ATTRIBUTES
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS["deleted_text"] = EditorColors.DELETED_TEXT_ATTRIBUTES
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS["search_result"] = EditorColors.SEARCH_RESULT_ATTRIBUTES
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS["search_result_wr"] = EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS["search_text"] = EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS["identifier"] = EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS["identifier_write"] = EditorColors.WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS["template_active"] = EditorColors.LIVE_TEMPLATE_ATTRIBUTES
-      if (Registry.`is`("live.templates.highlight.all.variables")) {
-        ADDITIONAL_HIGHLIGHT_DESCRIPTORS["template_inactive"] = EditorColors.LIVE_TEMPLATE_INACTIVE_SEGMENT
-      }
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS["template_var"] = TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS["injected_lang"] = EditorColors.INJECTED_LANGUAGE_FRAGMENT
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS["todo"] = CodeInsightColors.TODO_DEFAULT_ATTRIBUTES
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS["hyperlink"] = CodeInsightColors.HYPERLINK_ATTRIBUTES
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS["hyperlink_f"] = CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS["ref_hyperlink"] = EditorColors.REFERENCE_HYPERLINK_COLOR
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS["inactive_hyperlink"] = CodeInsightColors.INACTIVE_HYPERLINK_ATTRIBUTES
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS["wrong_ref"] = CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS["deprecated"] = CodeInsightColors.DEPRECATED_ATTRIBUTES
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS["for_removal"] = CodeInsightColors.MARKED_FOR_REMOVAL_ATTRIBUTES
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS["unused"] = CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS["error"] = CodeInsightColors.ERRORS_ATTRIBUTES
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS["warning"] = CodeInsightColors.WARNINGS_ATTRIBUTES
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS["weak_warning"] = CodeInsightColors.WEAK_WARNING_ATTRIBUTES
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS["server_error"] = CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS["server_duplicate"] = CodeInsightColors.DUPLICATE_FROM_SERVER
-      ADDITIONAL_HIGHLIGHT_DESCRIPTORS["runtime_error"] = CodeInsightColors.RUNTIME_ERROR
-      for (provider in SeveritiesProvider.EP_NAME.extensionList) {
-        for (highlightInfoType in provider.severitiesHighlightInfoTypes) {
-          ADDITIONAL_HIGHLIGHT_DESCRIPTORS[getHighlightDescTagName(highlightInfoType)] = highlightInfoType.attributesKey
-        }
-      }
+    private val BASE_ADDITIONAL_HIGHLIGHT_DESCRIPTORS: Map<String, TextAttributesKey> = LinkedHashMap<String, TextAttributesKey>().apply {
+      put("folded_text", EditorColors.FOLDED_TEXT_ATTRIBUTES)
+      put("folded_text_with_highlighting", CodeInsightColors.WARNINGS_ATTRIBUTES)
+      put("deleted_text", EditorColors.DELETED_TEXT_ATTRIBUTES)
+      put("search_result", EditorColors.SEARCH_RESULT_ATTRIBUTES)
+      put("search_result_wr", EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES)
+      put("search_text", EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES)
+      put("identifier", EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES)
+      put("identifier_write", EditorColors.WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES)
+      put("template_active", EditorColors.LIVE_TEMPLATE_ATTRIBUTES)
+      put("template_var", TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES)
+      put("injected_lang", EditorColors.INJECTED_LANGUAGE_FRAGMENT)
+      put("todo", CodeInsightColors.TODO_DEFAULT_ATTRIBUTES)
+      put("hyperlink", CodeInsightColors.HYPERLINK_ATTRIBUTES)
+      put("hyperlink_f", CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES)
+      put("ref_hyperlink", EditorColors.REFERENCE_HYPERLINK_COLOR)
+      put("inactive_hyperlink", CodeInsightColors.INACTIVE_HYPERLINK_ATTRIBUTES)
+      put("wrong_ref", CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES)
+      put("deprecated", CodeInsightColors.DEPRECATED_ATTRIBUTES)
+      put("for_removal", CodeInsightColors.MARKED_FOR_REMOVAL_ATTRIBUTES)
+      put("unused", CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES)
+      put("error", CodeInsightColors.ERRORS_ATTRIBUTES)
+      put("warning", CodeInsightColors.WARNINGS_ATTRIBUTES)
+      put("weak_warning", CodeInsightColors.WEAK_WARNING_ATTRIBUTES)
+      put("server_error", CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING)
+      put("server_duplicate", CodeInsightColors.DUPLICATE_FROM_SERVER)
+      put("runtime_error", CodeInsightColors.RUNTIME_ERROR)
     }
+
+    private val additionalHighlightDescriptors: @NonNls Map<String, TextAttributesKey>
+      get() {
+        val descriptors = LinkedHashMap(BASE_ADDITIONAL_HIGHLIGHT_DESCRIPTORS)
+        if (Registry.`is`("live.templates.highlight.all.variables")) {
+          descriptors["template_inactive"] = EditorColors.LIVE_TEMPLATE_INACTIVE_SEGMENT
+        }
+        for (provider in SeveritiesProvider.EP_NAME.extensionList) {
+          for (highlightInfoType in provider.severitiesHighlightInfoTypes) {
+            descriptors[getHighlightDescTagName(highlightInfoType)] = highlightInfoType.attributesKey
+          }
+        }
+        return descriptors
+      }
 
     private val ADDITIONAL_COLOR_KEY_MAPPING: MutableMap<String, ColorKey> = HashMap()
 

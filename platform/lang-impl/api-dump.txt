@@ -512,8 +512,6 @@ f:com.intellij.codeInspection.ex.ApplicationInspectionProfileManager
 - com.intellij.codeInspection.ex.ApplicationInspectionProfileManagerBase
 - com.intellij.openapi.components.PersistentStateComponent
 - sf:Companion:com.intellij.codeInspection.ex.ApplicationInspectionProfileManager$Companion
-- <init>():V
-- <init>(com.intellij.openapi.options.SchemeManagerFactory):V
 - fireProfileChanged(com.intellij.codeInspection.ex.InspectionProfileImpl):V
 - f:forceInitProfilesInTestUntil(com.intellij.openapi.Disposable):V
 - sf:getInstanceImpl():com.intellij.codeInspection.ex.ApplicationInspectionProfileManager
