@@ -50,15 +50,15 @@ public final class TypedHandler extends TypedActionHandlerBase {
   }
 
   public static boolean handleRParen(@NotNull Editor editor, @NotNull FileType fileType, char charTyped) {
-    return new TypedParenImpl().beforeRParenTyped(fileType, editor, charTyped);
+    return TypedParenImpl.beforeRParenTyped(fileType, editor, charTyped);
   }
 
   public static void indentOpenedBrace(@NotNull Project project, @NotNull Editor editor) {
-    new TypedParenImpl().indentOpenedBrace(project, editor);
+    TypedParenImpl.indentOpenedBrace(project, editor);
   }
 
   public static void indentBrace(@NotNull Project project, @NotNull Editor editor, char braceChar) {
-    new TypedParenImpl().indentBrace(project, editor, braceChar);
+    TypedParenImpl.indentBrace(project, editor, braceChar);
   }
 
   /**
@@ -97,12 +97,8 @@ public final class TypedHandler extends TypedActionHandlerBase {
 
   @ApiStatus.Internal
   public static boolean handleQuote(@NotNull Project project, @NotNull Editor editor, char quote, @NotNull PsiFile file) {
-    return new TypedQuoteImpl().handleQuote(project, file, editor, quote);
+    return TypedQuoteImpl.handleQuote(project, file, editor, quote);
   }
-
-  private final TypedDelegateImpl myDelegateNotifier = new TypedDelegateImpl();
-  private final TypedQuoteImpl myQuoteHandler = new TypedQuoteImpl(myDelegateNotifier);
-  private final TypedParenImpl myParenHandler = new TypedParenImpl(myDelegateNotifier);
 
   public TypedHandler(TypedActionHandler originalHandler) {
     super(originalHandler);
@@ -137,7 +133,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
     }
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     Document originalDocument = originalEditor.getDocument();
-    myDelegateNotifier.fireNewTypingStarted(originalEditor, dataContext, charTyped);
+    TypedDelegateImpl.fireNewTypingStarted(originalEditor, dataContext, charTyped);
     originalEditor.getCaretModel().runForEachCaret(caret -> {
       doExecutePerCaret(
         project,
@@ -152,7 +148,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
     });
   }
 
-  private void doExecutePerCaret(
+  private static void doExecutePerCaret(
     @NotNull Project project,
     @NotNull PsiDocumentManager psiDocumentManager,
     @NotNull PsiFile originalFile,
@@ -169,7 +165,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
     PsiFile file = editor == originalEditor ? originalFile : Objects.requireNonNull(psiDocumentManager.getPsiFile(editor.getDocument()));
     try {
       if (caret == originalEditor.getCaretModel().getPrimaryCaret()) {
-        boolean handled = myDelegateNotifier.fireCheckAutoPopup(project, file, editor, charTyped);
+        boolean handled = TypedDelegateImpl.fireCheckAutoPopup(project, file, editor, charTyped);
         if (!handled) {
           TypedAutoPopupImpl.autoPopupCompletion(editor, charTyped, project, file);
           TypedAutoPopupImpl.autoPopupParameterInfo(editor, charTyped, project, file);
@@ -184,18 +180,18 @@ public final class TypedHandler extends TypedActionHandlerBase {
         TypedCharImpl.typeChar(originalEditor, project, charTyped);
         return;
       }
-      if (myDelegateNotifier.fireBeforeSelectionRemoved(project, file, editor, charTyped)) {
+      if (TypedDelegateImpl.fireBeforeSelectionRemoved(project, file, editor, charTyped)) {
         return;
       }
       deleteSelectedText(project, file, editor);
       FileType fileType = TypedCharImpl.getFileType(file, editor);
-      if (myDelegateNotifier.fireBeforeCharTyped(project, fileType, originalFile, file, originalEditor, editor, charTyped)) {
+      if (TypedDelegateImpl.fireBeforeCharTyped(project, fileType, originalFile, file, originalEditor, editor, charTyped)) {
         return;
       }
-      if (myParenHandler.beforeParenTyped(fileType, editor, charTyped)) {
+      if (TypedParenImpl.beforeParenTyped(fileType, editor, charTyped)) {
         return;
       }
-      if (myQuoteHandler.beforeQuoteTyped(project, file, editor, charTyped)) {
+      if (TypedQuoteImpl.beforeQuoteTyped(project, file, editor, charTyped)) {
         return;
       }
       long modStampBefore = editor.getDocument().getModificationStamp();
@@ -204,13 +200,13 @@ public final class TypedHandler extends TypedActionHandlerBase {
       if (editor.isDisposed()) { // can be that injected editor disappear
         return;
       }
-      myParenHandler.afterParenTyped(project, fileType, file, editor, charTyped);
-      if (myDelegateNotifier.fireCharTyped(project, file, editor, charTyped)) {
+      TypedParenImpl.afterParenTyped(project, fileType, file, editor, charTyped);
+      if (TypedDelegateImpl.fireCharTyped(project, file, editor, charTyped)) {
         return;
       }
-      myParenHandler.indentOpenedParen(project, editor, charTyped);
+      TypedParenImpl.indentOpenedParen(project, editor, charTyped);
     } finally {
-      myDelegateNotifier.resetCompletionPhase(editor);
+      TypedDelegateImpl.resetCompletionPhase(editor);
     }
   }
 

@@ -24,16 +24,6 @@ final class TypedQuoteImpl {
   private static final Logger LOG = Logger.getInstance(TypedQuoteImpl.class);
   private static final KeyedExtensionCollector<QuoteHandler, String> QUOTE_HANDLERS = new KeyedExtensionCollector<>(QuoteHandlerEP.EP_NAME);
 
-  private final TypedDelegateImpl delegateNotifier;
-
-  TypedQuoteImpl() {
-    this(new TypedDelegateImpl());
-  }
-
-  TypedQuoteImpl(@NotNull TypedDelegateImpl delegateNotifier) {
-    this.delegateNotifier = delegateNotifier;
-  }
-
   static void registerQuoteHandler(@NotNull FileType fileType, @NotNull QuoteHandler quoteHandler) {
     QUOTE_HANDLERS.addExplicitExtension(fileType.getName(), quoteHandler);
   }
@@ -53,7 +43,7 @@ final class TypedQuoteImpl {
     return quoteHandler;
   }
 
-  boolean beforeQuoteTyped(
+  static boolean beforeQuoteTyped(
     @NotNull Project project,
     @NotNull PsiFile file,
     @NotNull Editor editor,
@@ -67,7 +57,7 @@ final class TypedQuoteImpl {
     return false;
   }
 
-  boolean handleQuote(
+  static boolean handleQuote(
     @NotNull Project project,
     @NotNull PsiFile file,
     @NotNull Editor editor,
@@ -113,7 +103,7 @@ final class TypedQuoteImpl {
       if (closingQuote != null && hasNonClosedLiterals(editor, quoteHandler, offset - 1)) {
         if (offset == document.getTextLength() ||
             !Character.isUnicodeIdentifierPart(document.getCharsSequence().charAt(offset))) { //any better heuristic or an API?
-          boolean handled = delegateNotifier.fireBeforeClosingQuoteInserted(project, file, editor, quote, closingQuote);
+          boolean handled = TypedDelegateImpl.fireBeforeClosingQuoteInserted(project, file, editor, quote, closingQuote);
           if (!handled) {
             multiChar.insertClosingQuote(editor, offset, file, closingQuote);
           }
@@ -127,7 +117,7 @@ final class TypedQuoteImpl {
       if (offset == document.getTextLength() ||
           !Character.isUnicodeIdentifierPart(document.getCharsSequence().charAt(offset))) { //any better heuristic or an API?
         String quoteString = String.valueOf(quote);
-        boolean handled = delegateNotifier.fireBeforeClosingQuoteInserted(project, file, editor, quote, quoteString);
+        boolean handled = TypedDelegateImpl.fireBeforeClosingQuoteInserted(project, file, editor, quote, quoteString);
         if (!handled) {
           document.insertString(offset, quoteString);
           TabOutScopesTracker.getInstance().registerEmptyScope(editor, offset);

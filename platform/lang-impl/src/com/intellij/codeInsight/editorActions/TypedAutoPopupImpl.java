@@ -28,7 +28,7 @@ final class TypedAutoPopupImpl {
    * Note: If you want to implement autopopup for an arbitrary character, consider adding your own {@link TypedHandlerDelegate}
    * and implement {@link TypedHandlerDelegate#checkAutoPopup}
    */
-  public static void autoPopupCompletion(@NotNull Editor editor, char charTyped, @NotNull Project project, @NotNull PsiFile file) {
+  static void autoPopupCompletion(@NotNull Editor editor, char charTyped, @NotNull Project project, @NotNull PsiFile file) {
     if (charTyped == '.' ||
         (charTyped == '/' && Boolean.TRUE.equals(editor.getUserData(AutoPopupController.ALLOW_AUTO_POPUP_FOR_SLASHES_IN_PATHS))) ||// todo rewrite with TypedHandlerDelegate#checkAutoPopup
         isAutoPopup(editor, file, charTyped)

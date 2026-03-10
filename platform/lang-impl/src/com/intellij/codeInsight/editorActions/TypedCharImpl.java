@@ -33,7 +33,7 @@ final class TypedCharImpl {
     if (COMPLEX_CHARS.contains(ch) || Character.isSurrogate(ch)) {
       return false;
     }
-    if (isImmediatePaintingDisabled(editor, ch, context)) {
+    if (TypedDelegateImpl.isImmediatePaintingDisabled(editor, context, ch)) {
       return false;
     }
     if (editor.isInsertMode()) {
@@ -43,9 +43,9 @@ final class TypedCharImpl {
     return true;
   }
 
-  static void typeChar(@NotNull Editor editor, @NotNull Project project, char charTyped) {
+  static void typeChar(@NotNull Editor editor, @NotNull Project project, char ch) {
     CommandProcessor.getInstance().setCurrentCommandName(EditorBundle.message("typing.in.editor.command.name"));
-    EditorModificationUtilEx.insertStringAtCaret(editor, String.valueOf(charTyped), true, true);
+    EditorModificationUtilEx.insertStringAtCaret(editor, String.valueOf(ch), true, true);
     ((UndoManagerImpl)UndoManager.getInstance(project)).addDocumentAsAffected(editor.getDocument());
   }
 
@@ -63,14 +63,5 @@ final class TypedCharImpl {
       }
     }
     return fileType;
-  }
-
-  private static boolean isImmediatePaintingDisabled(@NotNull Editor editor, char c, @NotNull DataContext context) {
-    for (TypedHandlerDelegate delegate : TypedHandlerDelegate.EP_NAME.getExtensionList()) {
-      if (!delegate.isImmediatePaintingEnabled(editor, c, context)) {
-        return true;
-      }
-    }
-    return false;
   }
 }

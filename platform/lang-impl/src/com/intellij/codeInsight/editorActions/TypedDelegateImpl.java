@@ -23,17 +23,17 @@ import org.jetbrains.annotations.NotNull;
  * <p> fireBeforeSelectionRemoved
  * <p> fireBeforeCharTyped
  * <p> fireBeforeClosingQuoteInserted
- * <p> fireCharTyped
  * <p> fireBeforeClosingParenInserted
+ * <p> fireCharTyped
  */
 final class TypedDelegateImpl {
   private static final Logger LOG = Logger.getInstance(TypedDelegateImpl.class);
 
-  void resetCompletionPhase(@NotNull Editor editor) {
+  static void resetCompletionPhase(@NotNull Editor editor) {
     editor.putUserData(CompletionPhase.AUTO_POPUP_TYPED_EVENT, null);
   }
 
-  void fireNewTypingStarted(
+  static void fireNewTypingStarted(
     @NotNull Editor originalEditor,
     @NotNull DataContext dataContext,
     char charTyped
@@ -43,7 +43,7 @@ final class TypedDelegateImpl {
     }
   }
 
-  boolean fireCheckAutoPopup(
+  static boolean fireCheckAutoPopup(
     @NotNull Project project,
     @NotNull PsiFile file,
     @NotNull Editor editor,
@@ -63,7 +63,7 @@ final class TypedDelegateImpl {
     return handled;
   }
 
-  boolean fireBeforeSelectionRemoved(
+  static boolean fireBeforeSelectionRemoved(
     @NotNull Project project,
     @NotNull PsiFile file,
     @NotNull Editor editor,
@@ -79,7 +79,7 @@ final class TypedDelegateImpl {
     );
   }
 
-  boolean fireBeforeCharTyped(
+  static boolean fireBeforeCharTyped(
     @NotNull Project project,
     @NotNull FileType fileType,
     @NotNull PsiFile originalFile,
@@ -97,7 +97,7 @@ final class TypedDelegateImpl {
     return callDelegates(beforeCharTyped, charTyped, project, editor, file);
   }
 
-  boolean fireBeforeClosingQuoteInserted(
+  static boolean fireBeforeClosingQuoteInserted(
     @NotNull Project project,
     @NotNull PsiFile file,
     @NotNull Editor editor,
@@ -109,7 +109,7 @@ final class TypedDelegateImpl {
     return callDelegates(beforeClosingQuoteInserted, quote, project, editor, file);
   }
 
-  boolean fireCharTyped(
+  static boolean fireCharTyped(
     @NotNull Project project,
     @NotNull PsiFile file,
     @NotNull Editor editor,
@@ -125,7 +125,7 @@ final class TypedDelegateImpl {
     );
   }
 
-  boolean fireBeforeClosingParenInserted(
+  static boolean fireBeforeClosingParenInserted(
     @NotNull Project project,
     @NotNull PsiFile file,
     @NotNull Editor editor,
@@ -138,6 +138,19 @@ final class TypedDelegateImpl {
       editor,
       file
     );
+  }
+
+  static boolean isImmediatePaintingDisabled(
+    @NotNull Editor editor,
+    @NotNull DataContext context,
+    char ch
+  ) {
+    for (TypedHandlerDelegate delegate : TypedHandlerDelegate.EP_NAME.getExtensionList()) {
+      if (!delegate.isImmediatePaintingEnabled(editor, ch, context)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

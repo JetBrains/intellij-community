@@ -31,42 +31,7 @@ import org.jetbrains.annotations.NotNull;
 final class TypedParenImpl {
   private static final Logger LOG = Logger.getInstance(TypedParenImpl.class);
 
-  private final TypedDelegateImpl delegateNotifier;
-
-  TypedParenImpl() {
-    this(new TypedDelegateImpl());
-  }
-
-  TypedParenImpl(@NotNull TypedDelegateImpl delegateNotifier) {
-    this.delegateNotifier = delegateNotifier;
-  }
-
-  void indentOpenedParen(@NotNull Project project, @NotNull Editor editor, char ch) {
-    if ('{' == ch) {
-      indentOpenedBrace(project, editor);
-    }
-    if ('(' == ch) {
-      indentOpenedParenth(project, editor);
-    }
-  }
-
-  void indentOpenedBrace(@NotNull Project project, @NotNull Editor editor) {
-    indentBrace(project, editor, '{');
-  }
-
-  void indentClosingBrace(@NotNull Project project, @NotNull Editor editor) {
-    indentBrace(project, editor, '}');
-  }
-
-  void indentOpenedParenth(@NotNull Project project, @NotNull Editor editor) {
-    indentBrace(project, editor, '(');
-  }
-
-  void indentClosingParenth(@NotNull Project project, @NotNull Editor editor) {
-    indentBrace(project, editor, ')');
-  }
-
-  void afterParenTyped(
+  static void afterParenTyped(
     @NotNull Project project,
     @NotNull FileType fileType,
     @NotNull PsiFile file,
@@ -84,63 +49,7 @@ final class TypedParenImpl {
     }
   }
 
-  private void afterLParenTyped(
-    @NotNull Project project,
-    @NotNull FileType fileType,
-    @NotNull PsiFile file,
-    @NotNull Editor editor,
-    char lparenChar
-  ) {
-    int offset = editor.getCaretModel().getOffset();
-    HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
-    Document document = editor.getUiDocument();
-    boolean atEndOfDocument = offset == document.getTextLength();
-    if (!atEndOfDocument) {
-      iterator.retreat();
-    }
-    if (iterator.atEnd()) {
-      return;
-    }
-    BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator);
-    if (iterator.atEnd()) {
-      return;
-    }
-    IElementType braceTokenType = iterator.getTokenType();
-    CharSequence fileText = document.getCharsSequence();
-    if (!braceMatcher.isLBraceToken(iterator, fileText, fileType)) {
-      return;
-    }
-    if (!iterator.atEnd()) {
-      iterator.advance();
-      if (!iterator.atEnd() &&
-          !BraceMatchingUtil.isPairedBracesAllowedBeforeTypeInFileType(braceTokenType, iterator.getTokenType(), fileType)) {
-        return;
-      }
-      iterator.retreat();
-    }
-    int lparenOffset = BraceMatchingUtil.findLeftmostLParen(iterator, braceTokenType, fileText, fileType);
-    if (lparenOffset < 0) {
-      lparenOffset = 0;
-    }
-    iterator = editor.getHighlighter().createIterator(lparenOffset);
-    boolean matched = BraceMatchingUtil.matchBrace(fileText, fileType, iterator, true, true);
-    if (!matched) {
-      String text = switch (lparenChar) {
-        case '(' -> ")";
-        case '[' -> "]";
-        case '<' -> ">";
-        case '{' -> "}";
-        default -> throw new AssertionError("Unknown char '" + lparenChar + '\'');
-      };
-      if (delegateNotifier.fireBeforeClosingParenInserted(project, file, editor, text.charAt(0))) {
-        return;
-      }
-      document.insertString(offset, text);
-      TabOutScopesTracker.getInstance().registerEmptyScope(editor, offset);
-    }
-  }
-
-  boolean beforeParenTyped(@NotNull FileType fileType, @NotNull Editor editor, char charTyped) {
+  static boolean beforeParenTyped(@NotNull FileType fileType, @NotNull Editor editor, char charTyped) {
     if (')' == charTyped || ']' == charTyped || '}' == charTyped) {
       if (FileTypes.PLAIN_TEXT != fileType) {
         if (beforeRParenTyped(fileType, editor, charTyped)) {
@@ -151,7 +60,7 @@ final class TypedParenImpl {
     return false;
   }
 
-  boolean beforeRParenTyped(
+  static boolean beforeRParenTyped(
     @NotNull FileType fileType,
     @NotNull Editor editor,
     char charTyped
@@ -209,7 +118,20 @@ final class TypedParenImpl {
     return true;
   }
 
-  void indentBrace(@NotNull Project project, @NotNull Editor editor, char braceChar) {
+  static void indentOpenedParen(@NotNull Project project, @NotNull Editor editor, char ch) {
+    if ('{' == ch) {
+      indentOpenedBrace(project, editor);
+    }
+    if ('(' == ch) {
+      indentOpenedParenth(project, editor);
+    }
+  }
+
+  static void indentOpenedBrace(@NotNull Project project, @NotNull Editor editor) {
+    indentBrace(project, editor, '{');
+  }
+
+  static void indentBrace(@NotNull Project project, @NotNull Editor editor, char braceChar) {
     int offset = editor.getCaretModel().getOffset() - 1;
     Document document = editor.getDocument();
     CharSequence chars = document.getCharsSequence();
@@ -280,6 +202,74 @@ final class TypedParenImpl {
         });
       }
     }
+  }
+
+  private static void afterLParenTyped(
+    @NotNull Project project,
+    @NotNull FileType fileType,
+    @NotNull PsiFile file,
+    @NotNull Editor editor,
+    char lparenChar
+  ) {
+    int offset = editor.getCaretModel().getOffset();
+    HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
+    Document document = editor.getUiDocument();
+    boolean atEndOfDocument = offset == document.getTextLength();
+    if (!atEndOfDocument) {
+      iterator.retreat();
+    }
+    if (iterator.atEnd()) {
+      return;
+    }
+    BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator);
+    if (iterator.atEnd()) {
+      return;
+    }
+    IElementType braceTokenType = iterator.getTokenType();
+    CharSequence fileText = document.getCharsSequence();
+    if (!braceMatcher.isLBraceToken(iterator, fileText, fileType)) {
+      return;
+    }
+    if (!iterator.atEnd()) {
+      iterator.advance();
+      if (!iterator.atEnd() &&
+          !BraceMatchingUtil.isPairedBracesAllowedBeforeTypeInFileType(braceTokenType, iterator.getTokenType(), fileType)) {
+        return;
+      }
+      iterator.retreat();
+    }
+    int lparenOffset = BraceMatchingUtil.findLeftmostLParen(iterator, braceTokenType, fileText, fileType);
+    if (lparenOffset < 0) {
+      lparenOffset = 0;
+    }
+    iterator = editor.getHighlighter().createIterator(lparenOffset);
+    boolean matched = BraceMatchingUtil.matchBrace(fileText, fileType, iterator, true, true);
+    if (!matched) {
+      String text = switch (lparenChar) {
+        case '(' -> ")";
+        case '[' -> "]";
+        case '<' -> ">";
+        case '{' -> "}";
+        default -> throw new AssertionError("Unknown char '" + lparenChar + '\'');
+      };
+      if (TypedDelegateImpl.fireBeforeClosingParenInserted(project, file, editor, text.charAt(0))) {
+        return;
+      }
+      document.insertString(offset, text);
+      TabOutScopesTracker.getInstance().registerEmptyScope(editor, offset);
+    }
+  }
+
+  private static void indentClosingBrace(@NotNull Project project, @NotNull Editor editor) {
+    indentBrace(project, editor, '}');
+  }
+
+  private static void indentOpenedParenth(@NotNull Project project, @NotNull Editor editor) {
+    indentBrace(project, editor, '(');
+  }
+
+  private static void indentClosingParenth(@NotNull Project project, @NotNull Editor editor) {
+    indentBrace(project, editor, ')');
   }
 
   private static boolean autoInsertBracket() {
