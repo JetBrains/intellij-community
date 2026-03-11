@@ -620,6 +620,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
   private void doUpdateSignature() {
     LOG.assertTrue(!PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments());
     ReadAction.nonBlocking(() -> calculateSignature())
+      .expireWhen(() -> myProject.isDisposed() || !myMethod.getMethod().isValid())
       .finishOnUiThread(ModalityState.current(), signature -> mySignatureArea.setSignature(signature))
       .submit(AppExecutorUtil.getAppExecutorService());
   }
