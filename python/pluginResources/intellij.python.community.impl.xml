@@ -86,6 +86,14 @@
                                           nameKey="INLAY.positional.args.patterns"
                                           providerId="python.pseudo.keyword.pattern.inlays"/>
 
+    <codeInsight.declarativeInlayProvider group="TYPES_GROUP"
+                                          bundle="messages.PyPsiBundle"
+                                          implementationClass="com.jetbrains.python.inlayHints.PyNumericPromotionInlayHintsProvider"
+                                          isEnabledByDefault="true"
+                                          language="Python"
+                                          nameKey="INLAY.numeric.promotion"
+                                          providerId="python.numeric.promotion.inlays"/>
+
     <codeInsight.declarativeInlayProvider group="PARAMETERS_GROUP"
                                           bundle="messages.PyPsiBundle"
                                           implementationClass="com.jetbrains.python.inlayHints.PyTestParametrizeInlayHintsProvider"
