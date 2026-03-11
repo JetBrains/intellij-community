@@ -1455,6 +1455,7 @@
                     serviceImplementation="com.intellij.lang.OuterModelsModificationTrackerManagerImpl"/>
     <optionController implementation="com.intellij.codeInsight.NullableNotNullManagerImpl$Provider"/>
     <lang.jvm.annotations.marker.suppressor implementation="com.intellij.java.JavaNonCodeAnnotationsMarkerSuppressor"/>
+    <scratchLanguageFilter implementation="com.intellij.ui.JshellScratchFileTypeFilter"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

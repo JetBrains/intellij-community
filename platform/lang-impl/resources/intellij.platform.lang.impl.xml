@@ -59,6 +59,9 @@
     <extensionPoint qualifiedName="com.intellij.canBeSelectedInProjectPaneProvider"
                     interface="com.intellij.ide.projectView.impl.canBeSelected.CanBeSelectedInProjectPaneProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.scratchLanguageFilter"
+                    interface="com.intellij.ide.scratch.ScratchFileTypeFilter"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

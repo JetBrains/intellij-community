@@ -60,7 +60,6 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.IntStream;
 
@@ -254,7 +253,7 @@ final class ScratchImplUtil {
       .append(JBIterable.of(fileTypeManager.getRegisteredFileTypes())
                 .filter(AbstractFileType.class)
                 .map(o -> LanguageItem.fromAbstractFileType(o, getFileTypeExtensions(o, true, fileTypeManager).first())))
-      .filter(Objects::nonNull)
+      .filter(item -> item != null && ScratchFileTypeFilter.isEnabled(item.fileType()))
       .toList();
 
     Comparator<LanguageItem> comparator = (o1, o2) -> StringUtil.naturalCompare(o1.getDisplayName(), o2.getDisplayName());
