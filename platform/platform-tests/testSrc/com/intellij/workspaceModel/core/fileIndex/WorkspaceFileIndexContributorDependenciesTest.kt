@@ -128,13 +128,7 @@ class WorkspaceFileIndexContributorDependenciesTest {
       it.removeEntity(siblingEntity)
     }
 
-    // call from WorkspaceFileIndexData:
-    // first call changed parent
-    // second call to remove file sets
-
-    // two calls through ProjectEntityIndexingService - removed and added file sets
-    // case with changed parent is not handled through ProjectEntityIndexingService
-    assertEquals(4, childWorkspaceFileIndexContributor.numberOfCalls.get(), "ChildWorkspaceFileIndexContributor should be called after relative removed")
+    assertNull(childWorkspaceFileIndexContributor.latestSiblingProperty)
   }
 
   @Test
@@ -159,7 +153,6 @@ class WorkspaceFileIndexContributorDependenciesTest {
     }
 
     assertEquals("new sibling property", childWorkspaceFileIndexContributor.latestSiblingProperty)
-    assertEquals(3, childWorkspaceFileIndexContributor.numberOfCalls.get(), "ChildWorkspaceFileIndexContributor should be called after relative added")
   }
 
   // we need SkipAddingToWatchedRoots to pass filter WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors()

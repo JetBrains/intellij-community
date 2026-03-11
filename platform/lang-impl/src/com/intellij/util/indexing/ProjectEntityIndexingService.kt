@@ -162,7 +162,6 @@ class ProjectEntityIndexingService(
     storage: EntityStorage,
     iterators: MutableList<IndexableFilesIterator>,
   ) {
-    val useWfi = Registry.`is`("use.workspace.file.index.for.partial.scanning")
     val libraryOrigins = HashSet<LibraryOrigin>()
 
     for (fileSet in fileSets) {
@@ -172,10 +171,10 @@ class ProjectEntityIndexingService(
       val customData = fileSet.data
       val root = fileSet.root
 
-      if (useWfi && customData is ModuleRelatedRootData) {
+      if (customData is ModuleRelatedRootData) {
         processModuleRoot(fileSet, project, true)?.let(iterators::add)
       }
-      else if (useWfi && fileSet.kind.isContent) {
+      else if (fileSet.kind.isContent) {
         iterators.add(GenericDependencyIterator.forContentRoot(entityPointer, fileSet.recursive, root))
       }
       else {
@@ -246,25 +245,27 @@ class ProjectEntityIndexingService(
       }
 
       val entityStorage = project.serviceAsync<WorkspaceModel>().currentSnapshot
-      for (change in changes) {
-        if (change === RootsChangeRescanningInfo.NO_RESCAN_NEEDED || change === RootsChangeRescanningInfo.RESCAN_DEPENDENCIES_IF_NEEDED) {
-          continue
-        }
-        if (change is WorkspaceEventRescanningInfo) {
-          builders.addAll(getBuildersOnWorkspaceChange(project, change.events, entityStorage))
-        }
-        else if (change is WorkspaceEntitiesRootsChangedRescanningInfo) {
-          val pointers = change.pointers
-          val entities = pointers.mapNotNull { ref ->
-            ref.resolve(entityStorage)
+      if (!Registry.`is`("use.workspace.file.index.for.partial.scanning")) {
+        for (change in changes) {
+          if (change === RootsChangeRescanningInfo.NO_RESCAN_NEEDED || change === RootsChangeRescanningInfo.RESCAN_DEPENDENCIES_IF_NEEDED) {
+            continue
           }
-          builders.addAll(getBuildersOnWorkspaceEntitiesRootsChange(project, entities, entityStorage))
-        }
-        else {
-          LOG.warn("Unexpected change " + change.javaClass + " " + change + ", full reindex requested")
-          return@async ScanningIterators(
-            "Reindex on unexpected change in EntityIndexingServiceImpl",
-          )
+          if (change is WorkspaceEventRescanningInfo) {
+            builders.addAll(getBuildersOnWorkspaceChange(project, change.events, entityStorage))
+          }
+          else if (change is WorkspaceEntitiesRootsChangedRescanningInfo) {
+            val pointers = change.pointers
+            val entities = pointers.mapNotNull { ref ->
+              ref.resolve(entityStorage)
+            }
+            builders.addAll(getBuildersOnWorkspaceEntitiesRootsChange(project, entities, entityStorage))
+          }
+          else {
+            LOG.warn("Unexpected change " + change.javaClass + " " + change + ", full reindex requested")
+            return@async ScanningIterators(
+              "Reindex on unexpected change in EntityIndexingServiceImpl",
+            )
+          }
         }
       }
       if (!builders.isEmpty()) {
