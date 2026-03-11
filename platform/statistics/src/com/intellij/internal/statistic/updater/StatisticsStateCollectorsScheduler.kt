@@ -28,41 +28,41 @@ internal class StatisticsStateCollectorsScheduler : ApplicationActivity {
     // init service
     serviceAsync<FUStateUsagesLogger>()
   }
+}
 
-  class MyStartupActivity : ProjectActivity {
-    init {
-      if (ApplicationManager.getApplication().isUnitTestMode) {
-        throw ExtensionNotApplicableException.create()
-      }
+internal class StatisticsStateCollectorsSchedulerProjectActivity : ProjectActivity {
+  init {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
+  override suspend fun execute(project: Project) {
+    // smart mode is not available when LightEdit is active
+    if (isBackgroundActivitiesSuppressed(project)) {
+      return
     }
 
-    override suspend fun execute(project: Project) {
-      // smart mode is not available when LightEdit is active
-      if (isBackgroundActivitiesSuppressed(project)) {
-        return
-      }
+    // init service
+    serviceAsync<FUCounterUsageLogger>()
+    // init service
+    project.serviceAsync<ProjectFUStateUsagesLogger>()
 
-      // init service
-      serviceAsync<FUCounterUsageLogger>()
-      // init service
-      project.serviceAsync<ProjectFUStateUsagesLogger>()
+    if (!allowExecution.get()) {
+      return
+    }
 
-      if (!allowExecution.get()) {
-        return
-      }
+    project.waitForSmartMode()
 
-      project.waitForSmartMode()
+    // wait until all projects exit dumb mode
+    if (serviceAsync<ProjectManager>().openProjects.any { p -> !p.isDisposed && p.isInitialized && DumbService.getInstance(p).isDumb }) {
+      return
+    }
 
-      // wait until all projects exit dumb mode
-      if (serviceAsync<ProjectManager>().openProjects.any { p -> !p.isDisposed && p.isInitialized && DumbService.getInstance(p).isDumb }) {
-        return
-      }
-
-      // check and execute only once because several projects can exit dumb mode at the same time
-      if (allowExecution.getAndSet(false)) {
-        delay(LOG_APPLICATION_STATE_SMART_MODE_DELAY)
-        serviceAsync<FUStateUsagesLogger>().logApplicationStatesOnStartup()
-      }
+    // check and execute only once because several projects can exit dumb mode at the same time
+    if (allowExecution.getAndSet(false)) {
+      delay(LOG_APPLICATION_STATE_SMART_MODE_DELAY)
+      serviceAsync<FUStateUsagesLogger>().logApplicationStatesOnStartup()
     }
   }
 }
