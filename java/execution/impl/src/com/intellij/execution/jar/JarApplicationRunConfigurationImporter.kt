@@ -21,17 +21,16 @@ class JarApplicationRunConfigurationImporter : RunConfigurationImporter {
     }
     val moduleName = cfg["moduleName"] as? String
     val module = moduleName?.let(modelsProvider.modifiableModuleModel::findModuleByName)
-
     if (module != null) {
       runConfiguration.module = module
     }
     val jrePath = (cfg["alternativeJrePath"] as? String)?.takeIf { it.isNotEmpty() }
     with(runConfiguration) {
-      jarPath = cfg["jarPath"] as? String ?: ""
-      vmParameters = cfg["jvmArgs"] as? String ?: ""
-      programParameters = cfg["programParameters"] as? String ?: ""
-      workingDirectory = cfg["workingDirectory"] as? String ?: ""
-      envs = cfg["envs"] as? Map<String, String> ?: emptyMap()
+      (cfg["jarPath"] as? String)?.let { jarPath = it }
+      (cfg["jvmArgs"] as? String)?.let { vmParameters = it }
+      (cfg["programParameters"] as? String)?.let { programParameters = it }
+      (cfg["workingDirectory"] as? String)?.let { workingDirectory = it }
+      (cfg["envs"] as? Map<String, String>)?.let { envs = it }
       isAlternativeJrePathEnabled = jrePath != null
       alternativeJrePath = jrePath
     }

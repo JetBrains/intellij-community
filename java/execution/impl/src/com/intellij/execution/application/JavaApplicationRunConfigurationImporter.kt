@@ -11,7 +11,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter
 import com.intellij.openapi.project.Project
-import com.intellij.util.ObjectUtils.consumeIfCast
 
 class JavaApplicationRunConfigurationImporter : RunConfigurationImporter {
   @Suppress("UNCHECKED_CAST")
@@ -30,19 +29,19 @@ class JavaApplicationRunConfigurationImporter : RunConfigurationImporter {
     if (module != null) {
       runConfiguration.setModule(module)
     }
-
     val jrePath = (cfg["alternativeJrePath"] as? String)?.takeIf { it.isNotEmpty() }
     val shortenCmdLine = cfg["shortenCommandLine"] as? String
     with(runConfiguration) {
-      mainClassName = cfg["mainClass"] as? String
-      vmParameters = cfg["jvmArgs"] as? String
-      programParameters = cfg["programParameters"] as? String
-      envs = cfg["envs"] as? MutableMap<String, String> ?: mutableMapOf()
-      workingDirectory = cfg["workingDirectory"] as? String
-      setIncludeProvidedScope(cfg["includeProvidedDependencies"] as? Boolean ?: false)
+      (cfg["mainClass"] as? String)?.let { mainClassName = it }
+      (cfg["jvmArgs"] as? String)?.let { vmParameters = it }
+      (cfg["programParameters"] as? String)?.let { programParameters = it }
+      (cfg["envs"] as? MutableMap<String, String>)?.let { envs = it }
+      (cfg["workingDirectory"] as? String)?.let { workingDirectory = it }
+      (cfg["includeProvidedDependencies"] as? Boolean)?.let {
+        setIncludeProvidedScope(it)
+      }
       isAlternativeJrePathEnabled = jrePath != null
       alternativeJrePath = jrePath
-
       if (shortenCmdLine != null) {
         try {
           shortenCommandLine = ShortenCommandLine.valueOf(shortenCmdLine)
