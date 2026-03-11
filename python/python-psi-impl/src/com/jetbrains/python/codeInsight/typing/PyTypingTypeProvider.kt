@@ -22,8 +22,7 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
-import com.intellij.util.ArrayUtil
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.Function
 import com.intellij.util.containers.Stack
 import com.jetbrains.python.PyCustomType
 import com.jetbrains.python.PyNames
@@ -1531,8 +1530,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         val containingClass = typeHintContext as? PyClass ?: PsiTreeUtil.getStubOrPsiParentOfType(typeHintContext, PyClass::class.java)
         if (containingClass == null) return null
 
-        val scopeClassType = PyUtil.`as`(containingClass.getType(context.typeContext), PyClassType::class.java)
-        if (scopeClassType == null) return null
+        val scopeClassType = containingClass.getType(context.typeContext) as? PyClassType ?: return null
 
         return Ref(PySelfType(scopeClassType).toInstance())
       }
@@ -2238,7 +2236,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
             Ref()
         }
 
-        val declarationElement = PyUtil.`as`(element, PyQualifiedNameOwner::class.java)
+        val declarationElement = element as? PyQualifiedNameOwner
 
         when (element.kind) {
           PyAstTypeParameter.Kind.TypeVar -> {
@@ -2764,7 +2762,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       context: TypeEvalContext,
     ): List<PsiElement?> {
       val qualifiedName = expression.asQualifiedName()
-      val pyFile = PyUtil.`as`(FileContextUtil.getContextFile(expression), PyFile::class.java)
+      val pyFile = FileContextUtil.getContextFile(expression) as? PyFile
 
       val anchor = expression.containingFile.context
       val scopeOwner: ScopeOwner?
@@ -2881,19 +2879,15 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
 
     @JvmStatic
     fun coroutineOrGeneratorElementType(coroutineOrGeneratorType: PyType?): Ref<PyType?>? {
-      val genericType = PyUtil.`as`(coroutineOrGeneratorType, PyCollectionType::class.java)
-      val classType = PyUtil.`as`(coroutineOrGeneratorType, PyClassType::class.java)
+      if (coroutineOrGeneratorType !is PyCollectionType) return null
+      val qName = coroutineOrGeneratorType.classQName
 
-      if (genericType != null && classType != null) {
-        val qName = classType.classQName
+      if (AWAITABLE == qName) {
+        return Ref(coroutineOrGeneratorType.elementTypes.getOrNull(0))
+      }
 
-        if (AWAITABLE == qName) {
-          return Ref(ContainerUtil.getOrElse<PyType?>(genericType.elementTypes, 0, null))
-        }
-
-        if (ArrayUtil.contains(qName, COROUTINE, GENERATOR)) {
-          return Ref(ContainerUtil.getOrElse<PyType?>(genericType.elementTypes, 2, null))
-        }
+      if (qName in arrayOf(COROUTINE, PyNames.TYPES_COROUTINE_TYPE, GENERATOR)) {
+        return Ref(coroutineOrGeneratorType.elementTypes.getOrNull(2))
       }
 
       return null
