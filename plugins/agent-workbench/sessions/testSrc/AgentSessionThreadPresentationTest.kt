@@ -3,6 +3,9 @@ package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.sessions.core.formatAgentSessionRelativeTimeShort
 import com.intellij.agent.workbench.sessions.core.formatAgentSessionThreadTitle
+import com.intellij.agent.workbench.sessions.core.formatCompactAgentSessionThreadTitle
+import com.intellij.agent.workbench.sessions.core.formatCompactAgentSessionTitle
+import com.intellij.openapi.util.text.StringUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -38,6 +41,28 @@ class AgentSessionThreadPresentationTest {
     )
 
     assertThat(result).isEqualTo("Thread unknown")
+  }
+
+  @Test
+  fun compactTitleUsesMiddleTruncationForLongTitles() {
+    val longTitle = "Project setup: " + "a".repeat(180) + " tail"
+
+    val result = formatCompactAgentSessionTitle(longTitle)
+
+    assertThat(result).isEqualTo(StringUtil.trimMiddle(longTitle, 50))
+  }
+
+  @Test
+  fun compactThreadTitleUsesFallbackBeforeTruncation() {
+    val fallback = "Thread " + "abcdefgh".repeat(10)
+
+    val result = formatCompactAgentSessionThreadTitle(
+      threadId = "thread-1234",
+      title = "\n\t",
+      fallbackTitle = { fallback },
+    )
+
+    assertThat(result).isEqualTo(StringUtil.trimMiddle(fallback, 50))
   }
 
   @Test

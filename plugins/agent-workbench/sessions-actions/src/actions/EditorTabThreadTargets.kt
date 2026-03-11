@@ -2,7 +2,10 @@
 package com.intellij.agent.workbench.sessions.actions
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
+import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.formatCompactAgentSessionThreadTitle
+import com.intellij.agent.workbench.sessions.core.formatCompactAgentSessionTitle
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 
 internal data class AgentSessionsEditorTabThreadCoordinates(
@@ -66,5 +69,26 @@ internal fun resolveArchiveThreadTargetFromEditorTabContext(context: AgentChatEd
       parentThreadId = threadCoordinates.parentThreadId,
       subAgentId = threadCoordinates.subAgentId,
     )
+  }
+}
+
+internal fun resolvePreferredArchiveNotificationLabelFromEditorTabContext(context: AgentChatEditorTabActionContext): String? {
+  val threadCoordinates = resolveAgentSessionsEditorTabThreadCoordinates(context) ?: return null
+  val title = context.threadTitle.trim()
+  if (title.isEmpty()) {
+    return null
+  }
+
+  return if (threadCoordinates.subAgentId == null) {
+    formatCompactAgentSessionThreadTitle(
+      threadId = threadCoordinates.threadId,
+      title = title,
+      fallbackTitle = { idPrefix ->
+        AgentSessionsBundle.message("toolwindow.thread.fallback.title", idPrefix)
+      },
+    )
+  }
+  else {
+    formatCompactAgentSessionTitle(title)
   }
 }

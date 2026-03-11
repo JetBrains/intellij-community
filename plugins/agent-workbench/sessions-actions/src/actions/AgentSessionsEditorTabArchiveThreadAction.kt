@@ -13,8 +13,8 @@ internal class AgentSessionsEditorTabArchiveThreadAction @JvmOverloads construct
   private val canArchiveProvider: (AgentSessionProvider) -> Boolean = { provider ->
     service<AgentSessionArchiveService>().canArchiveProvider(provider)
   },
-  private val archiveThreads: (List<ArchiveThreadTarget>) -> Unit = { targets ->
-    service<AgentSessionArchiveService>().archiveThreads(targets)
+  private val archiveThreads: (List<ArchiveThreadTarget>, String?) -> Unit = { targets, preferredSingleArchivedLabel ->
+    service<AgentSessionArchiveService>().archiveThreads(targets, preferredSingleArchivedLabel)
   },
   resolveContext: (AnActionEvent) -> AgentChatEditorTabActionContext? = ::resolveAgentChatEditorTabActionContext,
 ) : AgentSessionsEditorTabActionBase(resolveContext) {
@@ -31,9 +31,10 @@ internal class AgentSessionsEditorTabArchiveThreadAction @JvmOverloads construct
   override fun actionPerformed(e: AnActionEvent) {
     val context = resolveEditorTabContext(e) ?: return
     val archiveTarget = resolveArchiveThreadTargetFromEditorTabContext(context) ?: return
+    val preferredSingleArchivedLabel = resolvePreferredArchiveNotificationLabelFromEditorTabContext(context)
     if (!canArchiveProvider(archiveTarget.provider)) {
       return
     }
-    archiveThreads(listOf(archiveTarget))
+    archiveThreads(listOf(archiveTarget), preferredSingleArchivedLabel)
   }
 }

@@ -2,11 +2,32 @@
 package com.intellij.agent.workbench.sessions.core
 
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.roundToLong
 
+private const val COMPACT_AGENT_SESSION_TITLE_LENGTH = 50
 private val THREAD_TITLE_WHITESPACE = Regex("\\s+")
+
+fun formatCompactAgentSessionTitle(
+  title: String,
+  maxLength: Int = COMPACT_AGENT_SESSION_TITLE_LENGTH,
+): @NlsSafe String {
+  return StringUtil.trimMiddle(title, maxLength)
+}
+
+fun formatCompactAgentSessionThreadTitle(
+  threadId: String,
+  title: String,
+  fallbackTitle: (idPrefix: String) -> String,
+  maxLength: Int = COMPACT_AGENT_SESSION_TITLE_LENGTH,
+): @NlsSafe String {
+  return formatCompactAgentSessionTitle(
+    title = formatAgentSessionThreadTitle(threadId = threadId, title = title, fallbackTitle = fallbackTitle),
+    maxLength = maxLength,
+  )
+}
 
 fun formatAgentSessionThreadTitle(
   threadId: String,

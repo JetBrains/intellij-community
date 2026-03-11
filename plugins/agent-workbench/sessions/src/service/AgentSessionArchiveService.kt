@@ -21,6 +21,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -59,7 +61,7 @@ class AgentSessionArchiveService internal constructor(
     return bridge.supportsArchiveThread
   }
 
-  fun archiveThreads(targets: List<ArchiveThreadTarget>) {
+  fun archiveThreads(targets: List<ArchiveThreadTarget>, preferredSingleArchivedLabel: @NlsSafe String? = null) {
     val normalizedTargets = normalizeArchiveTargets(targets)
     if (normalizedTargets.isEmpty()) {
       return
@@ -68,7 +70,7 @@ class AgentSessionArchiveService internal constructor(
       key = buildArchiveThreadsActionKey(normalizedTargets),
       droppedActionMessage = "Dropped duplicate archive threads action for ${normalizedTargets.size} targets",
     ) {
-      val outcome = archiveTargetsInternal(normalizedTargets)
+      val outcome = archiveTargetsInternal(normalizedTargets, preferredSingleArchivedLabel)
       if (outcome.archivedTargets.isEmpty()) {
         return@launchDropAction
       }
@@ -133,7 +135,12 @@ class AgentSessionArchiveService internal constructor(
     }
   }
 
-  private suspend fun archiveTargetsInternal(targets: List<ArchiveThreadTarget>): ArchiveBatchOutcome {
+  private suspend fun archiveTargetsInternal(
+    targets: List<ArchiveThreadTarget>,
+    preferredSingleArchivedLabel: @NlsSafe String?,
+  ): ArchiveBatchOutcome {
+    val singleArchivedLabel = preferredSingleArchivedLabel?.takeIf(String::isNotBlank)
+                              ?: targets.singleOrNull()?.let(contentRepository::findArchiveNotificationLabel)
     val archivedTargets = ArrayList<ArchiveThreadTarget>(targets.size)
     val undoTargets = ArrayList<ArchiveThreadTarget>()
     var refreshDelayMs = 0L
@@ -210,7 +217,9 @@ class AgentSessionArchiveService internal constructor(
     }
 
     return ArchiveBatchOutcome(
+      requestedCount = targets.size,
       archivedTargets = archivedTargets,
+      singleArchivedLabel = singleArchivedLabel,
       undoTargets = undoTargets,
       refreshDelayMs = refreshDelayMs,
     )
@@ -231,14 +240,20 @@ class AgentSessionArchiveService internal constructor(
       return
     }
     runCatching {
+      val presentation = buildArchiveNotificationPresentation(
+        requestedCount = outcome.requestedCount,
+        archivedCount = outcome.archivedTargets.size,
+        singleArchivedLabel = outcome.singleArchivedLabel,
+        canUndo = outcome.undoTargets.isNotEmpty(),
+      )
       val notification = NotificationGroupManager.getInstance()
         .getNotificationGroup(AGENT_SESSIONS_NOTIFICATION_GROUP_ID)
         .createNotification(
-          AgentSessionsBundle.message("toolwindow.notification.archive.title"),
-          AgentSessionsBundle.message("toolwindow.notification.archive.body", outcome.archivedTargets.size),
+          presentation.title,
+          presentation.body,
           NotificationType.INFORMATION,
         )
-      if (outcome.undoTargets.isNotEmpty()) {
+      if (presentation.showUndoAction) {
         val undoTargets = outcome.undoTargets.toList()
         notification.addAction(
           NotificationAction.createSimpleExpiring(
@@ -271,9 +286,17 @@ class AgentSessionArchiveService internal constructor(
 }
 
 private data class ArchiveBatchOutcome(
+  @JvmField val requestedCount: Int,
   @JvmField val archivedTargets: List<ArchiveThreadTarget>,
+  @JvmField val singleArchivedLabel: String?,
   @JvmField val undoTargets: List<ArchiveThreadTarget>,
   @JvmField val refreshDelayMs: Long,
+)
+
+internal data class ArchiveNotificationPresentation(
+  @JvmField val title: @NlsContexts.NotificationTitle String,
+  @JvmField val body: @NlsContexts.NotificationContent String,
+  @JvmField val showUndoAction: Boolean,
 )
 
 private data class ArchivedChatCleanupTarget(
@@ -311,4 +334,39 @@ private fun ArchiveThreadTarget.toArchivedChatCleanupTarget(): ArchivedChatClean
 
 private fun ArchiveThreadTarget.isPendingThread(): Boolean {
   return this is ArchiveThreadTarget.Thread && isAgentSessionNewSessionId(threadId)
+}
+
+internal fun buildArchiveNotificationPresentation(
+  requestedCount: Int,
+  archivedCount: Int,
+  singleArchivedLabel: @NlsSafe String?,
+  canUndo: Boolean,
+): ArchiveNotificationPresentation {
+  val title = AgentSessionsBundle.message(
+    if (requestedCount == 1 && archivedCount == 1) {
+      "toolwindow.notification.archive.title.single"
+    }
+    else {
+      "toolwindow.notification.archive.title.multiple"
+    }
+  )
+  val body = when {
+    requestedCount == 1 && archivedCount == 1 -> {
+      singleArchivedLabel?.takeIf(String::isNotBlank)
+      ?: AgentSessionsBundle.message("toolwindow.notification.archive.body.single.generic")
+    }
+
+    archivedCount == requestedCount -> {
+      AgentSessionsBundle.message("toolwindow.notification.archive.body.multiple", archivedCount)
+    }
+
+    else -> {
+      AgentSessionsBundle.message("toolwindow.notification.archive.body.partial", archivedCount, requestedCount)
+    }
+  }
+  return ArchiveNotificationPresentation(
+    title = title,
+    body = body,
+    showUndoAction = canUndo,
+  )
 }
