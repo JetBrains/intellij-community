@@ -8,6 +8,8 @@ import com.intellij.threadDumpParser.ThreadState
 import com.intellij.unscramble.IntelliJThreadDumpMetadata.ThreadDumpMetadata
 import org.jetbrains.annotations.ApiStatus
 
+private val serializedThreadNamePattern = Regex("^(.+)@(-?\\d+)$")
+
 /**
  * Parsed IntelliJ thread dump payload represented as plain thread states and container descriptors.
  */
@@ -33,6 +35,7 @@ fun parseIntelliJThreadDump(text: String): ThreadDumpState? {
   val payload = parseIntelliJThreadDumpPayload(text) ?: return null
   val metadata = IntelliJThreadDumpMetadata.parse(payload.rawMetadata)
   val threadStates = ThreadDumpParser.parse(payload.rawThreads)
+  processUniqueIds(threadStates)
   applyThreadMetadata(threadStates, metadata)
   return ThreadDumpState(threadStates, createThreadContainerDescriptors(metadata))
 }
@@ -61,6 +64,16 @@ private data class RawIntelliJThreadDump(
   val rawThreads: String,
   val rawMetadata: String,
 )
+
+/**
+ * Restores serialized `@<tree_id>` suffix from IntelliJ-formatted thread names into [ThreadState.uniqueId]
+ */
+private fun processUniqueIds(threadStates: List<ThreadState>) {
+  for (threadState in threadStates) {
+    val match = serializedThreadNamePattern.matchEntire(threadState.name) ?: continue
+    threadState.uniqueId = match.groupValues[2].toLong()
+  }
+}
 
 /**
  * Builds hierarchy from given [threadStates] using [metadata] by modifying [ThreadState.threadContainerUniqueId].

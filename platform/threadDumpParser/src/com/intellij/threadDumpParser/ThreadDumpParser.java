@@ -28,7 +28,6 @@ public final class ThreadDumpParser {
   private static final Pattern ourYourkitThreadStartPattern = Pattern.compile("(.+) \\[([A-Z_, ]*)]");
   private static final Pattern ourYourkitThreadStartPattern2 = Pattern.compile("(.+) (?:State:)? (.+) CPU usage on sample: .+");
   private static final Pattern ourJcmdThreadStartPattern = Pattern.compile("#\\d+ \"(.*)\"(.*)");
-  private static final Pattern ourSerializedThreadNamePattern = Pattern.compile("^(.+)@(-?\\d+)$");
   private static final Pattern ourJcmdStackTraceElement = Pattern.compile("\\S+\\(.+\\)");
   private static final Pattern ourThreadStatePattern = Pattern.compile("java\\.lang\\.Thread\\.State: (.+) \\((.+)\\)");
   private static final Pattern ourThreadStatePattern2 = Pattern.compile("java\\.lang\\.Thread\\.State: (.+)");
@@ -312,7 +311,7 @@ public final class ThreadDumpParser {
   private static @Nullable ThreadState tryParseThreadStart(String line) {
     Matcher m = ourThreadStartPattern.matcher(line);
     if (m.find()) {
-      final ThreadState state = createThreadState(m.group(1), m.group(3));
+      final ThreadState state = new ThreadState(m.group(1), m.group(3));
       if (line.contains(" daemon ")) {
         state.setDaemon(true);
       }
@@ -324,12 +323,12 @@ public final class ThreadDumpParser {
 
     m = ourForcedThreadStartPattern.matcher(line);
     if (m.matches()) {
-      return createThreadState(m.group(1), m.group(2));
+      return new ThreadState(m.group(1), m.group(2));
     }
 
     m = ourJcmdThreadStartPattern.matcher(line);
     if (m.matches()) {
-      var state = createThreadState(m.group(1), "unknown");
+      var state = new ThreadState(m.group(1), "unknown");
       var suffix = m.group(2);
       state.setVirtual(suffix.contains(" virtual"));
       return state;
@@ -342,22 +341,11 @@ public final class ThreadDumpParser {
 
     m = matchYourKit(line);
     if (m != null) {
-      ThreadState state = createThreadState(m.group(1), m.group(2));
+      ThreadState state = new ThreadState(m.group(1), m.group(2));
       state.setDaemon(daemon);
       return state;
     }
     return null;
-  }
-
-  private static @NotNull ThreadState createThreadState(@NotNull String rawName, @NotNull String state) {
-    Matcher matcher = ourSerializedThreadNamePattern.matcher(rawName);
-    if (!matcher.matches()) {
-      return new ThreadState(rawName, state);
-    }
-
-    ThreadState threadState = new ThreadState(matcher.group(1), state);
-    threadState.setUniqueId(Long.parseLong(matcher.group(2)));
-    return threadState;
   }
 
   private static @Nullable Matcher matchYourKit(String line) {

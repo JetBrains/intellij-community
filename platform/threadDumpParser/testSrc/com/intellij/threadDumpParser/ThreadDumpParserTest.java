@@ -798,10 +798,10 @@ public class ThreadDumpParserTest {
     List<ThreadState> threads = ThreadDumpParser.parse(text);
     assertEquals(4, threads.size());
 
-    assertEquals("main", threads.get(0).getName());
-    assertEquals(1L, threads.get(0).getUniqueId());
-    assertEquals("ForkJoinPool-1-worker-1", threads.get(1).getName());
-    assertEquals(934L, threads.get(1).getUniqueId());
+    assertEquals("main@1", threads.get(0).getName());
+    assertEquals(0L, threads.get(0).getUniqueId());
+    assertEquals("ForkJoinPool-1-worker-1@934", threads.get(1).getName());
+    assertEquals(0L, threads.get(1).getUniqueId());
     assertEquals("{unnamed}@960", threads.get(2).getName());
     assertEquals(0L, threads.get(2).getUniqueId());
     assertEquals("{unnamed}@957", threads.get(3).getName());
@@ -810,7 +810,7 @@ public class ThreadDumpParserTest {
   }
 
   @Test
-  public void testOurDebuggerExportFormatUsesLastAtForSerializedUniqueId() {
+  public void testOurDebuggerExportFormatKeepsSerializedUniqueIdInThreadName() {
     String text = """
       "scope@worker@957" tid=0x1c nid=NA virtual runnable
         java.lang.Thread.State: RUNNABLE
@@ -820,8 +820,8 @@ public class ThreadDumpParserTest {
     assertEquals(1, threads.size());
 
     ThreadState thread = threads.getFirst();
-    assertEquals("scope@worker", thread.getName());
-    assertEquals(957L, thread.getUniqueId());
+    assertEquals("scope@worker@957", thread.getName());
+    assertEquals(0L, thread.getUniqueId());
     assertTrue(thread.isVirtual());
   }
 
