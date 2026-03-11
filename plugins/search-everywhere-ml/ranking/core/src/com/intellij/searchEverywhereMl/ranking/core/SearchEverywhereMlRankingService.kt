@@ -10,6 +10,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.openapi.diagnostic.ThrottledLogger
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.CeProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.searchEverywhereMl.SearchEverywhereTab
 import com.intellij.searchEverywhereMl.ranking.core.adapters.SearchResultAdapter
@@ -18,6 +19,7 @@ import com.intellij.searchEverywhereMl.ranking.core.adapters.toSearchStateChange
 import org.jetbrains.annotations.ApiStatus
 import java.util.UUID
 import java.util.concurrent.TimeUnit.MINUTES
+import kotlin.coroutines.cancellation.CancellationException
 
 
 @ApiStatus.Internal
@@ -44,6 +46,10 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     val processedSearchResult = try {
       SearchEverywhereMlFacade.processSearchResult(searchResultAdapter)
     }
+    catch (e: CancellationException) {
+      throw e
+    }
+    // CancellationException is an IllegalStateException; if it is caught here, the execution won't cancel properly and will deadlock.
     catch (e: IllegalStateException) {
       THROTTLED_LOG.warn(
         "Missing active Search Everywhere ML session/state. Falling back to default ranking for contributor ${contributor.searchProviderId}",
