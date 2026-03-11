@@ -564,11 +564,25 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   private void fireAvailableConfigurationsUpdated() {
+    // Build a reverse map from RunConfiguration to existing RunDashboardConfigurationId
+    // to avoid calling storeGlobally for already stored configurations (it always creates a new ID).
+    // Note: stored RunDashboardConfigurationId might change if a configuration is removed from Services and then added again.
+    Map<RunConfiguration, RunDashboardConfigurationId> existingConfigurationIds = new HashMap<>();
+    for (RunDashboardConfigurationDto dto : mySharedState.getCurrentAvailableConfigurations()) {
+      RunConfiguration configuration = RunDashboardConfigurationIdKt.findConfigurationValue(dto.getConfigurationId());
+      if (configuration != null) {
+        existingConfigurationIds.put(configuration, dto.getConfigurationId());
+      }
+    }
+
     List<RunDashboardConfigurationDto> availableConfigurations =
       ContainerUtil.map(RunManager.getInstance(myProject).getAllSettings(), configurationSettings -> {
-        RunDashboardConfigurationId configurationId =
-          RunDashboardConfigurationIdKt.storeGlobally(configurationSettings.getConfiguration(),
-                                                      RunDashboardCoroutineScopeProvider.getInstance(myProject).getCs());
+        RunConfiguration configuration = configurationSettings.getConfiguration();
+        RunDashboardConfigurationId configurationId = existingConfigurationIds.get(configuration);
+        if (configurationId == null) {
+          configurationId = RunDashboardConfigurationIdKt.storeGlobally(configuration,
+                                                                        RunDashboardCoroutineScopeProvider.getInstance(myProject).getCs());
+        }
 
         return new RunDashboardConfigurationDto(
           configurationSettings.getType().getId(),
