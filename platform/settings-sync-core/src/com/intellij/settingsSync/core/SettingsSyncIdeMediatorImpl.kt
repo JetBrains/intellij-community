@@ -5,7 +5,7 @@ import com.intellij.configurationStore.ComponentStoreImpl
 import com.intellij.configurationStore.StreamProvider
 import com.intellij.configurationStore.getExportableComponentsMap
 import com.intellij.configurationStore.getExportableItemsFromLocalStorage
-import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
+import com.intellij.configurationStore.getFileRelativeToRootConfig
 import com.intellij.configurationStore.reloadComponents
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY
@@ -256,17 +256,6 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     catch (e: Exception) {
       LOG.error("Couldn't delete ${file.pathString}", e)
       return false
-    }
-  }
-
-  private fun getFileRelativeToRootConfig(fileSpecPassedToProvider: String): String {
-    // For PersistentStateComponents the fileSpec is passed without the 'options' folder, e.g. 'editor.xml' or 'mac/keymaps.xml'
-    // OTOH for schemas it is passed together with the containing folder, e.g. 'keymaps/mykeymap.xml'
-    return if (!fileSpecPassedToProvider.contains("/") || fileSpecPassedToProvider.startsWith(getPerOsSettingsStorageFolderName() + "/")) {
-      "$OPTIONS_DIRECTORY/$fileSpecPassedToProvider"
-    }
-    else {
-      fileSpecPassedToProvider
     }
   }
 
