@@ -230,8 +230,18 @@ internal fun composeChipText(title: String?, preview: String): String {
   if (trimmedPreview.isEmpty()) {
     return resolvedTitle
   }
-  val shortPreview = StringUtil.shortenPathWithEllipsis(trimmedPreview, CHIP_PREVIEW_MAX_LENGTH, true)
+  val shortPreview = if (trimmedPreview.length <= CHIP_PREVIEW_MAX_LENGTH) trimmedPreview else trimmedPreview.take(CHIP_PREVIEW_MAX_LENGTH) + "\u2026"
   return "$resolvedTitle: $shortPreview"
+}
+
+internal fun composePathChipText(title: String?, preview: String): String {
+  val resolvedTitle = title?.takeIf { it.isNotBlank() }
+  val trimmedPreview = preview.trim()
+  if (trimmedPreview.isEmpty()) {
+    return resolvedTitle ?: "Context"
+  }
+  val shortPreview = StringUtil.shortenPathWithEllipsis(trimmedPreview, CHIP_PREVIEW_MAX_LENGTH, true)
+  return if (resolvedTitle == null) shortPreview else "$resolvedTitle: $shortPreview"
 }
 
 internal fun shortenPathForChip(value: String, projectBasePath: String?): String {

@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.ui
 
+import com.intellij.agent.workbench.prompt.context.MANUAL_PROJECT_PATHS_SOURCE_ID
+import com.intellij.agent.workbench.prompt.context.ManualPathSelectionEntry
+import com.intellij.agent.workbench.prompt.context.buildManualPathsContextItem
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayload
@@ -178,6 +181,59 @@ class AgentPromptContextNormalizationDecisionsTest {
     assertThat(visibleWithProject.single().origin).isEqualTo(ContextEntryOrigin.AUTO)
     assertThat(visibleWithProject.single().projectBasePath).isEqualTo(projectPath)
     assertThat(visibleWithProject.single().item.body).isEqualTo("file: $filePath")
+  }
+
+  @Test
+  fun manualProjectPathsMaterializeIntoSeparateVisibleEntries() {
+    val projectPath = systemPath("agent-workbench-manual-visible-paths")
+    val dirPath = Path.of(projectPath, "src").toString()
+    val filePath = Path.of(projectPath, "src", "Main.kt").toString()
+    val visibleEntries = materializeVisibleContextEntries(
+      autoEntries = emptyList(),
+      manualItemsBySourceId = linkedMapOf(
+        MANUAL_PROJECT_PATHS_SOURCE_ID to buildManualPathsContextItem(
+          listOf(
+            ManualPathSelectionEntry(path = dirPath, isDirectory = true),
+            ManualPathSelectionEntry(path = filePath, isDirectory = false),
+          )
+        )
+      ),
+      projectPath = projectPath,
+    )
+
+    assertThat(visibleEntries).hasSize(2)
+    assertThat(visibleEntries.map(ContextEntry::id)).containsExactly(
+      manualPathContextEntryId(MANUAL_PROJECT_PATHS_SOURCE_ID, dirPath),
+      manualPathContextEntryId(MANUAL_PROJECT_PATHS_SOURCE_ID, filePath),
+    )
+    assertThat(visibleEntries.map { it.item.body }).containsExactly(
+      "dir: $dirPath",
+      "file: $filePath",
+    )
+    assertThat(visibleEntries.map(ContextEntry::manualSourceId)).containsOnly(MANUAL_PROJECT_PATHS_SOURCE_ID)
+    assertThat(visibleEntries.map(ContextEntry::origin)).containsOnly(ContextEntryOrigin.MANUAL)
+  }
+
+  @Test
+  fun manualProjectPathsSplitAfterProjectRootNormalization() {
+    val projectPath = systemPath("agent-workbench-manual-visible-filtered")
+    val filePath = Path.of(projectPath, "src", "Main.kt").toString()
+    val visibleEntries = materializeVisibleContextEntries(
+      autoEntries = emptyList(),
+      manualItemsBySourceId = linkedMapOf(
+        MANUAL_PROJECT_PATHS_SOURCE_ID to buildManualPathsContextItem(
+          listOf(
+            ManualPathSelectionEntry(path = projectPath, isDirectory = true),
+            ManualPathSelectionEntry(path = filePath, isDirectory = false),
+          )
+        )
+      ),
+      projectPath = projectPath,
+    )
+
+    assertThat(visibleEntries).hasSize(1)
+    assertThat(visibleEntries.single().id).isEqualTo(manualPathContextEntryId(MANUAL_PROJECT_PATHS_SOURCE_ID, filePath))
+    assertThat(visibleEntries.single().item.body).isEqualTo("file: $filePath")
   }
 
   private fun systemPath(projectName: String): String {

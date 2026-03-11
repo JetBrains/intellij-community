@@ -136,6 +136,7 @@ Provider/source-specific context rules are defined in separate specs under `spec
 ## References
 - `../actions/global-prompt-entry.spec.md`
 - `prompt-context-editor.spec.md`
+- `prompt-context-files.spec.md`
 - `prompt-context-project-view.spec.md`
 - `prompt-context-vcs.spec.md`
 - `prompt-context-test-runner.spec.md`

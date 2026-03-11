@@ -183,7 +183,8 @@ Prompt-context collection and rendering contracts are specified separately in `s
 - Context chips are removable before submit.
 - Context row is shown when at least one context chip is present or when `Add Context` is available; it collapses only when both chips and the `Add Context` affordance are absent.
 - Chip-removal hierarchy is provider-defined via context item relations (`itemId`/`parentItemId`); removing a parent chip may remove all descendant chips recursively.
-- When manual context sources are available, the context row exposes `Add Context` as the single entry point for adding source-specific context.
+- The context row exposes `Add Context` as the single entry point for adding source-specific context.
+- `Files and Folders…` is the default manual context source for any resolved project and may be accompanied by source-specific additions such as VCS commits.
 - Manual context chips share the same row and submit path as auto context chips.
 
 ## Data & Backend
@@ -205,6 +206,7 @@ Prompt-context collection and rendering contracts are specified separately in `s
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptPaletteViewStructureTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptPaletteViewLayoutTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptUiSessionStateServiceTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.context.AgentPromptProjectPathsManualContextSourceTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.vcs.context.AgentPromptVcsCommitManualContextSourceTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionPromptLauncherBridgeTest'`
 
@@ -214,6 +216,7 @@ Prompt-context collection and rendering contracts are specified separately in `s
 ## References
 - `../prompt-context/prompt-context-contracts.spec.md`
 - `../prompt-context/prompt-context-editor.spec.md`
+- `../prompt-context/prompt-context-files.spec.md`
 - `../prompt-context/prompt-context-project-view.spec.md`
 - `../prompt-context/prompt-context-vcs.spec.md`
 - `../prompt-context/prompt-context-test-runner.spec.md`

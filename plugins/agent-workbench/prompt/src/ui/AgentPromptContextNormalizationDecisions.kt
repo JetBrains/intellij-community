@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.ui
 
+import com.intellij.agent.workbench.prompt.context.MANUAL_PROJECT_PATHS_SOURCE_ID
+import com.intellij.agent.workbench.prompt.context.buildManualPathsContextItem
+import com.intellij.agent.workbench.prompt.context.extractCurrentPaths
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextTruncation
@@ -42,18 +45,47 @@ internal fun materializeVisibleContextEntries(
       projectBasePath = projectPath,
     )
   }
-  val visibleManualEntries = manualItemsBySourceId.entries.mapNotNull { (sourceId, item) ->
-    val normalizedItem = normalizeContextItemForProject(item, projectPath) ?: return@mapNotNull null
-    ContextEntry(
+  val visibleManualEntries = manualItemsBySourceId.entries.flatMap { (sourceId, item) ->
+    val normalizedItem = normalizeContextItemForProject(item, projectPath) ?: return@flatMap emptyList()
+    materializeVisibleManualEntries(
+      sourceId = sourceId,
       item = normalizedItem,
-      projectBasePath = projectPath,
-      id = "manual:$sourceId",
-      origin = ContextEntryOrigin.MANUAL,
-      manualSourceId = sourceId,
+      projectPath = projectPath,
     )
   }
   return visibleAutoEntries + visibleManualEntries
 }
+
+private fun materializeVisibleManualEntries(
+  sourceId: String,
+  item: AgentPromptContextItem,
+  projectPath: String?,
+): List<ContextEntry> {
+  if (sourceId != MANUAL_PROJECT_PATHS_SOURCE_ID) {
+    return listOf(
+      ContextEntry(
+        item = item,
+        projectBasePath = projectPath,
+        id = "manual:$sourceId",
+        origin = ContextEntryOrigin.MANUAL,
+        manualSourceId = sourceId,
+      )
+    )
+  }
+
+  return extractCurrentPaths(item).map { entry ->
+    val singleItem = buildManualPathsContextItem(listOf(entry))
+    ContextEntry(
+      item = singleItem.copy(title = null),
+      projectBasePath = projectPath,
+      id = manualPathContextEntryId(sourceId, entry.path),
+      origin = ContextEntryOrigin.MANUAL,
+      manualSourceId = sourceId,
+    )
+  }
+}
+
+internal fun manualPathContextEntryId(sourceId: String, path: String): String = "manual:$sourceId:$path"
 
 internal fun normalizeContextItemForProject(
   item: AgentPromptContextItem,

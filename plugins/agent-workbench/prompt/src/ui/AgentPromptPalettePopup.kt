@@ -615,10 +615,16 @@ internal class AgentPromptPalettePopup(
 
   private fun removeContextEntry(entry: ContextEntry) {
     if (entry.origin == ContextEntryOrigin.MANUAL) {
-      val sourceId = entry.manualSourceId ?: return
-      if (manualContextItemsBySourceId.remove(sourceId) == null) {
+      val updatedManualItems = resolveManualContextItemsAfterRemoval(
+        manualItemsBySourceId = manualContextItemsBySourceId,
+        removedEntry = entry,
+        projectPath = resolveContextProjectBasePath(launcherProvider()),
+      )
+      if (updatedManualItems == manualContextItemsBySourceId) {
         return
       }
+      manualContextItemsBySourceId.clear()
+      manualContextItemsBySourceId.putAll(updatedManualItems)
     }
     else {
       val beforeEntries = autoContextEntries
@@ -788,7 +794,8 @@ internal class AgentPromptPalettePopup(
       AgentPromptLaunchError.TARGET_THREAD_NOT_FOUND -> AgentPromptBundle.message("popup.error.launch.thread.not.found")
       AgentPromptLaunchError.CANCELLED,
       AgentPromptLaunchError.DROPPED_DUPLICATE,
-      AgentPromptLaunchError.INTERNAL_ERROR -> AgentPromptBundle.message("popup.error.launch.internal")
+      AgentPromptLaunchError.INTERNAL_ERROR,
+        -> AgentPromptBundle.message("popup.error.launch.internal")
       null -> AgentPromptBundle.message("popup.error.launch.internal")
     }
     showError(errorMessage)
