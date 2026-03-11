@@ -61,20 +61,20 @@ class DebouncedUpdatesTest {
 
         // Queue values with delays shorter than the debounce window - timer should keep restarting
         queue.queue(1)
-        delay(50) // Less than 100ms - timer restarts
+        delay(50.milliseconds) // Less than 100ms - timer restarts
         queue.queue(2)
-        delay(50) // Less than 100ms - timer restarts again
+        delay(50.milliseconds) // Less than 100ms - timer restarts again
         queue.queue(3)
         
         // Now wait for the debounce delay to complete
-        delay(150)
+        delay(150.milliseconds)
 
         // With debounce (restartTimerOnAdd = true), only the last value should execute
         assertEquals(listOf(3), executedValues, "Should execute only the last value after inactivity")
         
         // Queue another value and verify it also executes
         queue.queue(4)
-        delay(150)
+        delay(150.milliseconds)
         
         assertEquals(listOf(3, 4), executedValues, "Should execute the second batch")
       }
@@ -103,19 +103,19 @@ class DebouncedUpdatesTest {
         queue.queue(3)
         
         // With throttle mode, it should wait 100ms from first item, then process latest (3)
-        delay(150)
+        delay(150.milliseconds)
 
         assertEquals(listOf(3), executedValues, "Should execute latest value after fixed interval")
         
         // Queue more values quickly (all within throttle window)
         queue.queue(4)
-        delay(30) // Less than 100ms
+        delay(30.milliseconds) // Less than 100ms
         queue.queue(5)
-        delay(30) // Less than 100ms
+        delay(30.milliseconds) // Less than 100ms
         queue.queue(6)
         
         // Wait for throttle interval to complete (100ms from queue(4))
-        delay(150)
+        delay(150.milliseconds)
         
         // Unlike debounce, throttle doesn't restart timer - it processes after 100ms from first item (4)
         // So it should process 6 (the latest when the 100ms expired)
@@ -123,7 +123,7 @@ class DebouncedUpdatesTest {
         
         // Verify another batch
         queue.queue(7)
-        delay(150)
+        delay(150.milliseconds)
         
         assertEquals(listOf(3, 6, 7), executedValues, "Should execute third batch")
       }
@@ -144,7 +144,7 @@ class DebouncedUpdatesTest {
           .restartTimerOnAdd(false)
           .runLatest { value ->
             executionOrder.add("start-$value")
-            delay(200) // Long-running operation
+            delay(200.milliseconds) // Long-running operation
             executionOrder.add("end-$value")
           }
 
@@ -154,7 +154,7 @@ class DebouncedUpdatesTest {
         queue.queue(3)
 
         // Wait for first batch to be picked up and executed
-        delay(100) // Debounce delay + time to start first execution
+        delay(100.milliseconds) // Debounce delay + time to start first execution
         
         // At this point, first action should be running
         assertTrue(executionOrder.contains("start-3"), "First batch should have started with latest value (3)")
@@ -164,7 +164,7 @@ class DebouncedUpdatesTest {
         queue.queue(5)
 
         // Wait for all to complete
-        delay(1000)
+        delay(1000.milliseconds)
 
         // Verify sequential execution: each action completes before next starts
         assertTrue(executionOrder.size >= 4, "Should have at least 2 complete executions: $executionOrder")
@@ -210,10 +210,10 @@ class DebouncedUpdatesTest {
         }
 
       queue.queue(Unit)
-      delay(50) // Task is waiting in debounce delay
+      delay(50.milliseconds) // Task is waiting in debounce delay
 
       scope.cancel()
-      delay(200) // Wait past the debounce period
+      delay(200.milliseconds) // Wait past the debounce period
 
       assertEquals(0, executions.get(), "Task should not execute after cancellation during debounce")
     }
@@ -239,11 +239,11 @@ class DebouncedUpdatesTest {
         }
 
       queue.queue(1) // First task - will run and block
-      delay(100) // Let first task start
+      delay(100.milliseconds) // Let first task start
       queue.queue(2) // Second task - goes to buffer, waiting for first to finish
 
       scope.cancel() // Cancel while second is waiting
-      delay(100)
+      delay(100.milliseconds)
 
       assertEquals(1, startedFirst.get(), "First task should have started")
       assertEquals(0, startedSecond.get(), "Second task should not start after cancellation")
@@ -262,7 +262,7 @@ class DebouncedUpdatesTest {
         .runLatest {
           started.incrementAndGet()
           try {
-            delay(200) // Suspension point where cancellation will be noticed
+            delay(200.milliseconds) // Suspension point where cancellation will be noticed
             completed.incrementAndGet()
           }
           catch (e: CancellationException) {
@@ -272,10 +272,10 @@ class DebouncedUpdatesTest {
         }
 
       queue.queue(Unit)
-      delay(100) // Let task start and reach suspension point
+      delay(100.milliseconds) // Let task start and reach suspension point
 
       scope.cancel()
-      delay(100)
+      delay(100.milliseconds)
 
       assertEquals(1, started.get(), "Task should have started")
       assertEquals(1, cancelled.get(), "Task should be cancelled at suspension point")
@@ -296,7 +296,7 @@ class DebouncedUpdatesTest {
 
       // Cancel the scope
       scope.cancel()
-      delay(50) // Give time for cancellation to propagate
+      delay(50.milliseconds) // Give time for cancellation to propagate
 
       // Try to queue after cancellation - should throw
       try {
@@ -323,13 +323,13 @@ class DebouncedUpdatesTest {
       val queue = DebouncedUpdates.forScope<QueuedValue>(scope, "test-no-retention", 50.milliseconds)
         .runLatest { value ->
           processedIds.add(value.id)
-          delay(10)
+          delay(10.milliseconds)
         }
 
       // Process several values over time to verify no accumulation
       repeat(5) { i ->
         queue.queue(QueuedValue(i))
-        delay(100) // Give enough time to process each one (50ms delay + 10ms action + margin)
+        delay(100.milliseconds) // Give enough time to process each one (50ms delay + 10ms action + margin)
       }
 
       // Should process most or all values (allowing for some timing variance)
@@ -337,7 +337,7 @@ class DebouncedUpdatesTest {
 
       // Cancel scope - this should close the channel and release all values
       scope.cancel()
-      delay(100)
+      delay(100.milliseconds)
 
       // After scope cancellation, NO values should be retained by the scope
       // (not in the channel, not in flow operators, not in collectLatest)
@@ -363,13 +363,13 @@ class DebouncedUpdatesTest {
 
         // Queue multiple values, one of which will throw
         queue.queue(1)
-        delay(100) // Wait for first value to process
+        delay(100.milliseconds) // Wait for first value to process
 
         queue.queue(2) // This will throw
-        delay(100) // Wait for exception to be thrown and logged
+        delay(100.milliseconds) // Wait for exception to be thrown and logged
 
         queue.queue(3) // This should still be processed despite previous exception
-        delay(100) // Wait for third value to process
+        delay(100.milliseconds) // Wait for third value to process
 
         scope.cancel()
       }
@@ -398,17 +398,17 @@ class DebouncedUpdatesTest {
 
         // Queue first value and let it execute
         queue.queue(1)
-        delay(150) // Wait for debounce delay + execution
+        delay(150.milliseconds) // Wait for debounce delay + execution
 
         assertEquals(1, executions.get(), "First value should have executed")
 
         // Queue second value but don't let it execute yet
         queue.queue(2)
-        delay(25) // Wait a bit but less than the debounce delay (100ms)
+        delay(25.milliseconds) // Wait a bit but less than the debounce delay (100ms)
 
         // Dispose the disposable - should cancel the queue while second value is waiting
         Disposer.dispose(disposable)
-        delay(150) // Wait past the debounce period
+        delay(150.milliseconds) // Wait past the debounce period
 
         // Second value should not execute after disposal
         assertEquals(1, executions.get(), "Second value should not execute after disposal")
@@ -441,17 +441,17 @@ class DebouncedUpdatesTest {
             batches.add(batch)
           }
 
-        delay(40)
+        delay(40.milliseconds)
         queue.queue(1)
-        delay(40)
+        delay(40.milliseconds)
         queue.queue(2)
-        delay(120) // First batch should be emitted: [1, 2] (timer started at queue(1))
+        delay(120.milliseconds) // First batch should be emitted: [1, 2] (timer started at queue(1))
         
         queue.queue(3)
-        delay(120) // Second batch: [3]
+        delay(120.milliseconds) // Second batch: [3]
         
         queue.queue(4)
-        delay(120) // Third batch: [4]
+        delay(120.milliseconds) // Third batch: [4]
 
         assertEquals(3, batches.size, "Should have 3 batches")
         assertEquals(listOf(1, 2), batches[0], "First batch should contain [1, 2]")
@@ -478,24 +478,24 @@ class DebouncedUpdatesTest {
 
         // Queue items rapidly (all within throttle window)
         queue.queue(1)
-        delay(30)
+        delay(30.milliseconds)
         queue.queue(2)
-        delay(30)
+        delay(30.milliseconds)
         queue.queue(3)
         
         // Timer starts at queue(1), after 100ms it should process [1, 2, 3]
-        delay(100)
+        delay(100.milliseconds)
 
         assertEquals(1, batches.size, "Should have 1 batch")
         assertEquals(listOf(1, 2, 3), batches[0], "Batch should contain all items within delay window")
         
         // Queue more items after first batch processes
         queue.queue(4)
-        delay(30)
+        delay(30.milliseconds)
         queue.queue(5)
-        delay(30)
+        delay(30.milliseconds)
         queue.queue(6)
-        delay(150)
+        delay(150.milliseconds)
         
         assertEquals(2, batches.size, "Should have 2 batches")
         assertEquals(listOf(4, 5, 6), batches[1], "Second batch should contain [4, 5, 6]")
@@ -519,7 +519,7 @@ class DebouncedUpdatesTest {
 
       // Queue value when component is not showing - should not execute
       queue.queue(1)
-      delay(100)
+      delay(100.milliseconds)
       assertEquals(emptyList<Int>(), awaitValue(emptyList()) { executedValues.toList() })
 
       // Show component - execution should start
@@ -529,7 +529,7 @@ class DebouncedUpdatesTest {
 
       // Queue another value while showing - should execute
       queue.queue(2)
-      delay(100)
+      delay(100.milliseconds)
       assertEquals(listOf(1, 2), awaitValue(listOf(1, 2)) { executedValues.toList() })
 
       // Hide component
@@ -538,7 +538,7 @@ class DebouncedUpdatesTest {
 
       // Queue value while hidden - should not execute
       queue.queue(3)
-      delay(100)
+      delay(100.milliseconds)
       assertEquals(listOf(1, 2), awaitValue(listOf(1, 2)) { executedValues.toList() })
 
       // Show component again - queued value should execute
@@ -561,23 +561,23 @@ class DebouncedUpdatesTest {
 
       // Queue items when not showing
       queue.queue(1)
-      delay(40)
+      delay(40.milliseconds)
       queue.queue(2)
-      delay(120)
+      delay(120.milliseconds)
       assertEquals(emptyList<List<Int>>(), awaitValue(emptyList()) { batches.toList() })
 
       // Show component - batched items should execute
       withShowingChanged { container.add(component) }
       yield()
-      delay(120)
+      delay(120.milliseconds)
       assertEquals(1, awaitValue(1) { batches.size })
       assertEquals(listOf(1, 2), awaitValue(listOf(1, 2)) { batches[0] })
 
       // Queue more items while showing
       queue.queue(3)
-      delay(40)
+      delay(40.milliseconds)
       queue.queue(4)
-      delay(120)
+      delay(120.milliseconds)
       assertEquals(2, awaitValue(2) { batches.size })
       assertEquals(listOf(3, 4), awaitValue(listOf(3, 4)) { batches[1] })
     }
@@ -600,11 +600,11 @@ class DebouncedUpdatesTest {
 
       // Queue values with delays shorter than debounce window
       queue.queue(1)
-      delay(50)
+      delay(50.milliseconds)
       queue.queue(2)
-      delay(50)
+      delay(50.milliseconds)
       queue.queue(3)
-      delay(150)
+      delay(150.milliseconds)
 
       // Only last value should execute (debouncing)
       assertEquals(listOf(3), awaitValue(listOf(3)) { executedValues.toList() })
