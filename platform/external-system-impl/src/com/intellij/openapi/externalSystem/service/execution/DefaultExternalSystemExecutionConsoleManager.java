@@ -31,9 +31,15 @@ public class DefaultExternalSystemExecutionConsoleManager
                                                            @NotNull ExternalSystemTask task,
                                                            @Nullable ExecutionEnvironment env,
                                                            @Nullable ProcessHandler processHandler) {
-    ConsoleView executionConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
+    ConsoleView executionConsole = createConsoleView(project, task, env);
     executionConsole.attachToProcess(processHandler);
     return executionConsole;
+  }
+
+  protected @NotNull ConsoleView createConsoleView(@NotNull Project project,
+                                                   @NotNull ExternalSystemTask task,
+                                                   @Nullable ExecutionEnvironment env) {
+    return TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
   }
 
   @Override

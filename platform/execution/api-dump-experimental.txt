@@ -235,6 +235,8 @@ f:com.intellij.execution.target.value.TargetEnvironmentFunctions
 - sf:invoke(kotlin.jvm.functions.Function1):com.intellij.execution.target.value.TraceableTargetEnvironmentFunction
 *f:com.intellij.execution.target.value.TraceableTargetEnvironmentFunction$Companion
 - f:invoke(kotlin.jvm.functions.Function1):com.intellij.execution.target.value.TraceableTargetEnvironmentFunction
+*f:com.intellij.execution.ui.ConsoleViewWithDelegateKt
+- *sf:unwrapDelegate(com.intellij.execution.ui.ExecutionConsole):com.intellij.execution.ui.ExecutionConsole
 *c:com.intellij.execution.ui.ExecutionUiService
 - <init>():V
 - createSettingsEditorFragmentWrapper(java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.options.SettingsEditor,java.util.function.Predicate):com.intellij.openapi.options.SettingsEditor

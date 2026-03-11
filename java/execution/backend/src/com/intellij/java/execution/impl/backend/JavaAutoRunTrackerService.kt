@@ -15,6 +15,7 @@ import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.execution.ui.RunContentManager.getInstanceIfCreated
+import com.intellij.execution.ui.unwrapDelegate
 import com.intellij.java.execution.impl.shared.JavaAutoRunFloatingToolbarStatus
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -101,9 +102,8 @@ class JavaAutoRunTrackerService(val project: Project, val scope: CoroutineScope)
   }
 
   private fun getSMTRunnerConsoleView(console: ExecutionConsole): SMTRunnerConsoleView? {
-    return when (console) {
+    return when (val console = console.unwrapDelegate()) {
       is SMTRunnerConsoleView -> console
-      is ConsoleViewWithDelegate -> getSMTRunnerConsoleView(console.delegate)
       is BuildView -> console.consoleView?.let { getSMTRunnerConsoleView(it) }
       else -> null
     }

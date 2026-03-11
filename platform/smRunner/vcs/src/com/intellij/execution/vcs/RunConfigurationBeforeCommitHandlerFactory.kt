@@ -28,6 +28,7 @@ import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer
 import com.intellij.execution.ui.ConsoleViewWithDelegate
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.execution.ui.unwrapDelegate
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
@@ -199,8 +200,7 @@ private class RunConfigurationBeforeCommitHandler(private val project: Project) 
     val handler = descriptor.processHandler
     if (handler != null) {
       val executionConsole = descriptor.console
-      val testResultForm = getTestRunnerResultsForm(executionConsole)
-                           ?: getTestRunnerResultsForm((executionConsole as? ConsoleViewWithDelegate)?.delegate)
+      val testResultForm = getTestRunnerResultsForm(executionConsole?.unwrapDelegate())
       val processListener = object : ProcessListener {
         override fun processTerminated(event: ProcessEvent) {
           val result = RunConfigurationResult(

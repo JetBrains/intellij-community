@@ -177,6 +177,7 @@ c:com.intellij.openapi.externalSystem.service.execution.DefaultExternalSystemExe
 - com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager
 - <init>():V
 - attachExecutionConsole(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.task.ExternalSystemTask,com.intellij.execution.runners.ExecutionEnvironment,com.intellij.execution.process.ProcessHandler):com.intellij.execution.ui.ExecutionConsole
+- p:createConsoleView(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.task.ExternalSystemTask,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.execution.ui.ConsoleView
 - getExternalSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
 - getRestartActions(com.intellij.execution.ui.ExecutionConsole):com.intellij.openapi.actionSystem.AnAction[]
 - isApplicableFor(com.intellij.openapi.externalSystem.model.task.ExternalSystemTask):Z

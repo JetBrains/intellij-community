@@ -94,6 +94,8 @@
 
     <externalSystemExecutionConsoleManager
         implementation="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager" id="gradleTest" order="before gradle"/>
+    <externalSystemExecutionConsoleManager
+        implementation="org.jetbrains.plugins.gradle.execution.GradleJavaExecutionConsoleManager" id="gradleJava" order="before gradle"/>
     <runConfigurationProducer id="allInPackageGradleConfigurationProducer"
                               implementation="org.jetbrains.plugins.gradle.execution.test.runner.AllInPackageGradleConfigurationProducer"
                               order="last"/>
