@@ -41,6 +41,7 @@ import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import com.intellij.platform.ijent.community.impl.nio.fsBlocking
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.toByteArray
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.AccessDeniedException
 import java.nio.file.AccessMode
@@ -149,8 +150,9 @@ internal fun fetchCaseSensitivityUsingEel(eelPath: EelPath): FileAttributes.Case
   }
 }
 
+@ApiStatus.Internal
 @Throws(IOException::class)
-internal fun readAttributesUsingEel(nioPath: Path): FileAttributes {
+fun readAttributesUsingEel(nioPath: Path): FileAttributes {
   val eelDescriptor = nioPath.getEelDescriptor()
   if (eelDescriptor == LocalEelDescriptor) {
     val nioAttributes = Files.readAttributes(nioPath, BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS)

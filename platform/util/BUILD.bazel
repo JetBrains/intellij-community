@@ -116,6 +116,7 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     "@lib//:kotlin-test",
+    "//platform/eel-provider",
     "//platform/core-impl",
     "//libraries/kotlinx/coroutines/debug",
   ]
@@ -132,6 +133,8 @@ jvm_library(
   ],
   deps = [
     "@lib//:kotlin-test",
+    "//platform/eel-provider",
+    "//platform/eel-provider:eel-provider_test_lib",
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-ui",
@@ -146,7 +149,6 @@ jvm_library(
     "//platform/core-impl:core-impl_test_lib",
     "@lib//:kotlin-stdlib",
     "@lib//:assert_j",
-    "@lib//:junit4",
     "@lib//:jna",
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
@@ -203,6 +205,8 @@ jvm_library(
     "//platform/analysis-api:analysis_test_lib",
     "//platform/code-style-api:codeStyle",
     "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/testFramework/junit5/eel",
+    "//platform/testFramework/junit5/eel:eel_test_lib",
   ],
   runtime_deps = [
     ":util-tests",
