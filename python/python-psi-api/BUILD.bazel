@@ -24,7 +24,6 @@ jvm_library(
     "//python/python-ast:ast",
     "//python/python-syntax-core:syntax-core",
     "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-kotlin-annotations-jvm",
     "//platform/editor-ui-api:editor-ui",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],

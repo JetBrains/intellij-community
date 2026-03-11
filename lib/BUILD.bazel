@@ -7757,21 +7757,6 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-annotations-jvm-2.2.21.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-annotations-jvm-2_2_21_http//file",
-  out = "org.jetbrains.kotlin/kotlin-annotations-jvm-2.2.21.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "jetbrains-kotlin-annotations-jvm",
-  jar = "@org_jetbrains_kotlin-kotlin-annotations-jvm-2_2_21_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-annotations-jvm-2_2_21-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
   name = "org.jetbrains.kotlin/kotlin-compose-compiler-plugin-2.3.20-RC2.jar_copy",
   src = "@org_jetbrains_kotlin-kotlin-compose-compiler-plugin-2_3_20-RC2_http//file",
   out = "org.jetbrains.kotlin/kotlin-compose-compiler-plugin-2.3.20-RC2.jar",

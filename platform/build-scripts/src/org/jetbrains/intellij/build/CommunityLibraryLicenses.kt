@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.LibraryLicense.Companion.jetbrainsLibrary
@@ -810,10 +810,6 @@ object CommunityLibraryLicenses {
 
     LibraryLicense("Kodein-DI", libraryName = "kodein-di-jvm", url = "https://github.com/kosi-libs/Kodein")
       .mit("https://github.com/kosi-libs/Kodein/blob/master/LICENSE.txt"),
-
-    LibraryLicense("kotlin-annotations-jvm", libraryName = "jetbrains.kotlin.annotations.jvm", url = "https://github.com/JetBrains/kotlin")
-      .apache("https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt")
-      .suppliedByOrganizations(Suppliers.JETBRAINS),
 
     LibraryLicense("kotlin-metadata", libraryName = "kotlin-metadata", url = "https://github.com/JetBrains/kotlin")
       .apache("https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt")
