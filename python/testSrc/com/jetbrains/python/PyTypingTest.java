@@ -1152,7 +1152,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testCoroutineReturnsGenerator() {
-    doTest("Coroutine[Any, Any, Generator[int, Any, Any]]",
+    doTest("CoroutineType[Any, Any, Generator[int, Any, Any]]",
            """
              from typing import Generator
              
@@ -6273,7 +6273,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-36416
   public void testReturnTypeOfNonAnnotatedAsyncOverride() {
-    doTest("Coroutine[Any, Any, str]", """
+    doTest("CoroutineType[Any, Any, str]", """
       class Base:
           async def get(self) -> str:
               ...
