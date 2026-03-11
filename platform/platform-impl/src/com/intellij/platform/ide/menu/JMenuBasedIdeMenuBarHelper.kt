@@ -195,7 +195,7 @@ internal object WinAltKeyProcessor : KeyEventPostProcessor, AWTEventListener {
       KeyEvent.KEY_PRESSED -> {
         if (!altPressed) {
           altPressed = true
-          altPressedOnly = true
+          altPressedOnly = e.modifiersEx and (InputEvent.SHIFT_DOWN_MASK or InputEvent.CTRL_DOWN_MASK or InputEvent.META_DOWN_MASK) == 0
         }
       }
       KeyEvent.KEY_RELEASED -> {
