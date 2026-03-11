@@ -168,7 +168,7 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
   }
 
   @DisplayName("test generation of all entities in intellij codebase")
-  @ParameterizedTest(name = "{0}")
+  @ParameterizedTest(name = "Module {0}")
   @MethodSource("modules")
   open fun `test generation of all entities in intellij codebase`(
     moduleName: String,
@@ -185,7 +185,7 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
   }
 
   //@IJIgnore(issue = "IDEA-364751")
-  @ParameterizedTest(name = "{0}")
+  @ParameterizedTest(name = "Module {0}")
   @MethodSource("modules")
   @DisplayName("test update code")
   fun `test update code`(
