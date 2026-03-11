@@ -1,10 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.ui
 
+// @spec community/plugins/agent-workbench/spec/agent-workbench-telemetry.spec.md
+
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelemetry
 import org.jetbrains.annotations.NonNls
 
 internal fun resolveDefaultFooterHintMessageKey(
@@ -93,6 +97,25 @@ internal fun resolveSubmitValidationErrorMessageKey(
     return "popup.error.existing.select.task"
   }
   return null
+}
+
+internal fun shouldRetrySubmitAfterWorkingProjectPathSelection(
+  validationErrorKey: String,
+  requestWorkingProjectPathSelection: (() -> Boolean)? = null,
+): Boolean {
+  return validationErrorKey == "popup.error.project.path" && requestWorkingProjectPathSelection?.invoke() == true
+}
+
+internal fun reportPromptSubmitBlocked(
+  validationErrorKey: String,
+  provider: AgentSessionProvider?,
+  launchMode: AgentSessionLaunchMode,
+) {
+  AgentWorkbenchTelemetry.logPromptSubmitBlocked(
+    validationErrorKey = validationErrorKey,
+    provider = provider,
+    launchMode = launchMode,
+  )
 }
 
 internal fun resolveRestoredPromptProvider(

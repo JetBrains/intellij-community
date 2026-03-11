@@ -37,6 +37,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <statistics.counterUsagesCollector implementationClass="com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchFusCollector"/>
     <agent.workbench.promptContextRenderer implementation="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptSnippetContextRendererBridge"/>
     <agent.workbench.promptContextRenderer implementation="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptFileContextRendererBridge"/>
     <agent.workbench.promptContextRenderer implementation="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptSymbolContextRendererBridge"/>

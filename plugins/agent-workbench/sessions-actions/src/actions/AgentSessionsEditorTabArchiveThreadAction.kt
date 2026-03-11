@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.sessions.actions
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.chat.resolveAgentChatEditorTabActionContext
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveService
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -13,8 +14,8 @@ internal class AgentSessionsEditorTabArchiveThreadAction @JvmOverloads construct
   private val canArchiveProvider: (AgentSessionProvider) -> Boolean = { provider ->
     service<AgentSessionArchiveService>().canArchiveProvider(provider)
   },
-  private val archiveThreads: (List<ArchiveThreadTarget>, String?) -> Unit = { targets, preferredSingleArchivedLabel ->
-    service<AgentSessionArchiveService>().archiveThreads(targets, preferredSingleArchivedLabel)
+  private val archiveThreads: (List<ArchiveThreadTarget>, String?, AgentWorkbenchEntryPoint) -> Unit = { targets, preferredSingleArchivedLabel, entryPoint ->
+    service<AgentSessionArchiveService>().archiveThreads(targets, entryPoint, preferredSingleArchivedLabel)
   },
   resolveContext: (AnActionEvent) -> AgentChatEditorTabActionContext? = ::resolveAgentChatEditorTabActionContext,
 ) : AgentSessionsEditorTabActionBase(resolveContext) {
@@ -35,6 +36,6 @@ internal class AgentSessionsEditorTabArchiveThreadAction @JvmOverloads construct
     if (!canArchiveProvider(archiveTarget.provider)) {
       return
     }
-    archiveThreads(listOf(archiveTarget), preferredSingleArchivedLabel)
+    archiveThreads(listOf(archiveTarget), preferredSingleArchivedLabel, AgentWorkbenchEntryPoint.EDITOR_TAB_POPUP)
   }
 }

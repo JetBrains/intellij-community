@@ -29,7 +29,7 @@ import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -266,8 +266,9 @@ internal suspend fun withServiceAndArchiveAndLaunch(
   ) -> AgentChatPendingCodexTabRebindReport = ::rebindOpenPendingCodexTabs,
   action: suspend (AgentSessionStateSyncTestFacade, AgentSessionArchiveService, AgentSessionLaunchService) -> Unit,
 ) {
+  val job = SupervisorJob()
   @Suppress("RAW_SCOPE_CREATION")
-  val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+  val scope = CoroutineScope(job + Dispatchers.Default)
   try {
     val stateStore = AgentSessionsStateStore()
     val contentRepository = AgentSessionContentRepository(
@@ -315,7 +316,7 @@ internal suspend fun withServiceAndArchiveAndLaunch(
     action(service, archiveService, launchService)
   }
   finally {
-    scope.cancel()
+    job.cancelAndJoin()
   }
 }
 

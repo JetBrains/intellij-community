@@ -1,9 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.toolwindow
 
+import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
+import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
+import com.intellij.agent.workbench.sessions.toolwindow.ui.dispatchTreeRowOverlayQuickCreate
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
@@ -62,6 +67,35 @@ class AgentSessionsToolWindowFactorySwingTest {
       .isNotNull
     assertThat(actionManager.getAction("AgentWorkbenchSessions.TreePopup.NewThread")?.templatePresentation?.icon)
       .isEqualTo(AllIcons.General.Add)
+  }
+
+  @Test
+  fun treeRowOverlayQuickCreateUsesOverlayEntryPoint() {
+    val project = ProjectManager.getInstance().defaultProject
+    var capturedPath: String? = null
+    var capturedProvider: AgentSessionProvider? = null
+    var capturedMode: AgentSessionLaunchMode? = null
+    var capturedEntryPoint: AgentWorkbenchEntryPoint? = null
+    var capturedProject = false
+
+    dispatchTreeRowOverlayQuickCreate(
+      project = project,
+      path = "/work/project",
+      provider = AgentSessionProvider.CODEX,
+      createNewSession = { path, provider, mode, entryPoint, currentProject ->
+        capturedPath = path
+        capturedProvider = provider
+        capturedMode = mode
+        capturedEntryPoint = entryPoint
+        capturedProject = currentProject === project
+      },
+    )
+
+    assertThat(capturedPath).isEqualTo("/work/project")
+    assertThat(capturedProvider).isEqualTo(AgentSessionProvider.CODEX)
+    assertThat(capturedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
+    assertThat(capturedEntryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_ROW_OVERLAY)
+    assertThat(capturedProject).isTrue()
   }
 
   private fun ActionManager.childActionIds(groupId: String): List<String> {

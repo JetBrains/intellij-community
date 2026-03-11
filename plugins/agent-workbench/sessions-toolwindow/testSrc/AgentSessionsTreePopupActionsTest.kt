@@ -7,6 +7,7 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.AgentSubAgent
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupActionContext
@@ -37,12 +38,24 @@ class AgentSessionsTreePopupActionsTest {
     var openedProjectPath: String? = null
     var openedThreadPath: String? = null
     var openedSubAgentPath: String? = null
+    var projectEntryPoint: AgentWorkbenchEntryPoint? = null
+    var threadEntryPoint: AgentWorkbenchEntryPoint? = null
+    var subAgentEntryPoint: AgentWorkbenchEntryPoint? = null
     val openAction = AgentSessionsTreePopupOpenAction(
       resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
       isDedicatedProject = { dedicatedFrame },
-      openProject = { path -> openedProjectPath = path },
-      openThread = { path, _, _ -> openedThreadPath = path },
-      openSubAgent = { path, _, _, _ -> openedSubAgentPath = path },
+      openProject = { path, entryPoint ->
+        openedProjectPath = path
+        projectEntryPoint = entryPoint
+      },
+      openThread = { path, _, _, entryPoint ->
+        openedThreadPath = path
+        threadEntryPoint = entryPoint
+      },
+      openSubAgent = { path, _, _, _, entryPoint ->
+        openedSubAgentPath = path
+        subAgentEntryPoint = entryPoint
+      },
     )
 
     val closedProject = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = false)
@@ -55,6 +68,7 @@ class AgentSessionsTreePopupActionsTest {
     assertThat(projectEvent.presentation.isEnabledAndVisible).isTrue()
     openAction.actionPerformed(projectEvent)
     assertThat(openedProjectPath).isEqualTo("/work/project-a")
+    assertThat(projectEntryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_POPUP)
 
     val openProjectContext = popupContext(
       nodeId = SessionTreeId.Project("/work/project-open"),
@@ -70,6 +84,7 @@ class AgentSessionsTreePopupActionsTest {
     openedProjectPath = null
     openAction.actionPerformed(openProjectEvent)
     assertThat(openedProjectPath).isEqualTo("/work/project-open")
+    assertThat(projectEntryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_POPUP)
 
     val threadProject = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
     val thread = thread(id = "thread-1", provider = AgentSessionProvider.CODEX)
@@ -88,6 +103,8 @@ class AgentSessionsTreePopupActionsTest {
     openAction.actionPerformed(threadEvent)
     assertThat(openedThreadPath).isEqualTo("/work/project-feature")
     assertThat(openedSubAgentPath).isNull()
+    assertThat(threadEntryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_POPUP)
+    assertThat(subAgentEntryPoint).isNull()
   }
 
   @Test
@@ -130,10 +147,14 @@ class AgentSessionsTreePopupActionsTest {
   @Test
   fun archiveActionUsesCapabilityGateAndSelectedCountLabel() {
     var archivedTargets: List<ArchiveThreadTarget>? = null
+    var entryPoint: AgentWorkbenchEntryPoint? = null
     val archiveAction = AgentSessionsTreePopupArchiveThreadAction(
       resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
       canArchiveProvider = { provider -> provider == AgentSessionProvider.CODEX },
-      archiveThreads = { targets -> archivedTargets = targets },
+      archiveThreads = { targets, capturedEntryPoint ->
+        archivedTargets = targets
+        entryPoint = capturedEntryPoint
+      },
     )
 
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
@@ -163,6 +184,7 @@ class AgentSessionsTreePopupActionsTest {
 
     archiveAction.actionPerformed(archiveEvent)
     assertThat(archivedTargets).containsExactly(codexTarget, claudeTarget)
+    assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_POPUP)
 
     val unsupportedContext = popupContext(
       nodeId = SessionTreeId.Thread(
@@ -181,6 +203,7 @@ class AgentSessionsTreePopupActionsTest {
   @Test
   fun archiveActionArchivesTreeContextTargets() {
     var archivedTargets: List<ArchiveThreadTarget>? = null
+    var entryPoint: AgentWorkbenchEntryPoint? = null
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
     val treeTarget = ArchiveThreadTarget.Thread(
       path = "/work/project-a",
@@ -199,12 +222,16 @@ class AgentSessionsTreePopupActionsTest {
     val archiveAction = AgentSessionsTreePopupArchiveThreadAction(
       resolveContext = { treeContext },
       canArchiveProvider = { true },
-      archiveThreads = { targets -> archivedTargets = targets },
+      archiveThreads = { targets, capturedEntryPoint ->
+        archivedTargets = targets
+        entryPoint = capturedEntryPoint
+      },
     )
 
     archiveAction.actionPerformed(TestActionEvent.createTestEvent(archiveAction))
 
     assertThat(archivedTargets).containsExactly(treeTarget)
+    assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_POPUP)
   }
 
   @Test
@@ -213,6 +240,7 @@ class AgentSessionsTreePopupActionsTest {
     var launchedProvider: AgentSessionProvider? = null
     var launchedMode: AgentSessionLaunchMode? = null
     var launchedProject: Project? = null
+    var entryPoint: AgentWorkbenchEntryPoint? = null
     val codexBridge = TestAgentSessionProviderBridge(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
@@ -228,11 +256,12 @@ class AgentSessionsTreePopupActionsTest {
       resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
       allBridges = { listOf(codexBridge, claudeBridge) },
       lastUsedProvider = { AgentSessionProvider.CLAUDE },
-      createNewSession = { path, provider, mode, project ->
+      createNewSession = { path, provider, mode, project, capturedEntryPoint ->
         launchedPath = path
         launchedProvider = provider
         launchedMode = mode
         launchedProject = project
+        entryPoint = capturedEntryPoint
       },
     )
 
@@ -264,6 +293,7 @@ class AgentSessionsTreePopupActionsTest {
     assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CLAUDE)
     assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
     assertThat(launchedProject).isEqualTo(projectContext.project)
+    assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_POPUP)
 
     launchedPath = null
     launchedProvider = null
@@ -289,6 +319,7 @@ class AgentSessionsTreePopupActionsTest {
     assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CODEX)
     assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.YOLO)
     assertThat(launchedProject).isEqualTo(projectContext.project)
+    assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_POPUP)
   }
 
   @Test
@@ -297,6 +328,7 @@ class AgentSessionsTreePopupActionsTest {
     var launchedProvider: AgentSessionProvider? = null
     var launchedMode: AgentSessionLaunchMode? = null
     var launchedProject: Project? = null
+    var entryPoint: AgentWorkbenchEntryPoint? = null
     val codexBridge = TestAgentSessionProviderBridge(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
@@ -312,11 +344,12 @@ class AgentSessionsTreePopupActionsTest {
       resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
       allBridges = { listOf(codexBridge, claudeBridge) },
       lastUsedProvider = { AgentSessionProvider.CLAUDE },
-      createNewSession = { path, provider, mode, project ->
+      createNewSession = { path, provider, mode, project, capturedEntryPoint ->
         launchedPath = path
         launchedProvider = provider
         launchedMode = mode
         launchedProject = project
+        entryPoint = capturedEntryPoint
       },
     )
     val projectContext = popupContext(
@@ -335,6 +368,7 @@ class AgentSessionsTreePopupActionsTest {
     assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CODEX)
     assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
     assertThat(launchedProject).isEqualTo(projectContext.project)
+    assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_POPUP)
 
     launchedPath = null
     launchedProvider = null
@@ -362,6 +396,7 @@ class AgentSessionsTreePopupActionsTest {
   fun newThreadGroupFallsBackToFirstStandardWhenLastUsedProviderIsNotEligibleForQuickStart() {
     var launchedProvider: AgentSessionProvider? = null
     var launchedMode: AgentSessionLaunchMode? = null
+    var entryPoint: AgentWorkbenchEntryPoint? = null
     val fallbackProvider = AgentSessionProvider.from("fallback")
     val codexYoloOnlyBridge = TestAgentSessionProviderBridge(
       provider = AgentSessionProvider.CODEX,
@@ -378,9 +413,10 @@ class AgentSessionsTreePopupActionsTest {
       resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
       allBridges = { listOf(codexYoloOnlyBridge, fallbackBridge) },
       lastUsedProvider = { AgentSessionProvider.CODEX },
-      createNewSession = { _, provider, mode, _ ->
+      createNewSession = { _, provider, mode, _, capturedEntryPoint ->
         launchedProvider = provider
         launchedMode = mode
+        entryPoint = capturedEntryPoint
       },
     )
     val projectContext = popupContext(
@@ -397,6 +433,7 @@ class AgentSessionsTreePopupActionsTest {
 
     assertThat(launchedProvider).isEqualTo(fallbackProvider)
     assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
+    assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_POPUP)
 
     val children = group.getChildren(event)
     assertThat(children).hasSize(4)
@@ -408,6 +445,7 @@ class AgentSessionsTreePopupActionsTest {
 
     assertThat(launchedProvider).isEqualTo(fallbackProvider)
     assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
+    assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_POPUP)
   }
 
 }

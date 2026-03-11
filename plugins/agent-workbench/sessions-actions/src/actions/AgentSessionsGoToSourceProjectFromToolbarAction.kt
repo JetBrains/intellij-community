@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.sessions.actions
 import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.ide.ui.ProductIcons
@@ -23,19 +24,19 @@ import javax.swing.JComponent
 internal class AgentSessionsGoToSourceProjectFromToolbarAction : DumbAwareAction, CustomComponentAction {
   private val selectedSourcePath: (Project) -> String?
   private val isDedicatedProject: (Project) -> Boolean
-  private val openProject: (String) -> Unit
+  private val openProject: (String, AgentWorkbenchEntryPoint) -> Unit
 
   @Suppress("unused")
   constructor() {
     selectedSourcePath = { project -> project.service<AgentChatTabSelectionService>().selectedChatTab.value?.projectPath }
     isDedicatedProject = AgentWorkbenchDedicatedFrameProjectManager::isDedicatedProject
-    openProject = { path -> service<AgentSessionLaunchService>().openOrFocusProject(path) }
+    openProject = { path, entryPoint -> service<AgentSessionLaunchService>().openOrFocusProject(path, entryPoint) }
   }
 
   internal constructor(
     selectedSourcePath: (Project) -> String?,
     isDedicatedProject: (Project) -> Boolean,
-    openProject: (String) -> Unit,
+    openProject: (String, AgentWorkbenchEntryPoint) -> Unit,
   ) {
     this.selectedSourcePath = selectedSourcePath
     this.isDedicatedProject = isDedicatedProject
@@ -48,7 +49,7 @@ internal class AgentSessionsGoToSourceProjectFromToolbarAction : DumbAwareAction
       return
     }
     val sourceProjectPath = resolveSourceProjectPath(project) ?: return
-    openProject(sourceProjectPath)
+    openProject(sourceProjectPath, AgentWorkbenchEntryPoint.TOOLBAR)
   }
 
   override fun update(e: AnActionEvent) {

@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.prompt.ui
 
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-entry.spec.md
+// @spec community/plugins/agent-workbench/spec/agent-workbench-telemetry.spec.md
 
 import com.dynatrace.hash4j.hashing.HashValue128
 import com.intellij.CommonBundle
@@ -639,9 +640,12 @@ internal class AgentPromptPalettePopup(
       selectedExistingTaskId = existingTaskController.selectedExistingTaskId,
     )
     if (validationErrorKey != null) {
-      if (validationErrorKey == "popup.error.project.path" &&
-          launcher != null &&
-          promptWorkingProjectPathSelection(launcher) { submit() }) {
+      if (shouldRetrySubmitAfterWorkingProjectPathSelection(
+          validationErrorKey = validationErrorKey,
+          requestWorkingProjectPathSelection = launcher?.let { promptLauncher ->
+            { promptWorkingProjectPathSelection(promptLauncher) { submit() } }
+          },
+        )) {
         return
       }
       val message = if (validationErrorKey == "popup.error.provider.unavailable") {
@@ -650,6 +654,11 @@ internal class AgentPromptPalettePopup(
       else {
         AgentPromptBundle.message(validationErrorKey)
       }
+      reportPromptSubmitBlocked(
+        validationErrorKey = validationErrorKey,
+        provider = selectedProviderEntry?.bridge?.provider,
+        launchMode = selectedLaunchMode,
+      )
       showError(message)
       return
     }
@@ -714,6 +723,8 @@ internal class AgentPromptPalettePopup(
       AgentPromptLaunchError.PROVIDER_UNAVAILABLE -> AgentPromptBundle.message("popup.error.launch.provider")
       AgentPromptLaunchError.UNSUPPORTED_LAUNCH_MODE -> AgentPromptBundle.message("popup.error.launch.mode")
       AgentPromptLaunchError.TARGET_THREAD_NOT_FOUND -> AgentPromptBundle.message("popup.error.launch.thread.not.found")
+      AgentPromptLaunchError.CANCELLED,
+      AgentPromptLaunchError.DROPPED_DUPLICATE,
       AgentPromptLaunchError.INTERNAL_ERROR -> AgentPromptBundle.message("popup.error.launch.internal")
       null -> AgentPromptBundle.message("popup.error.launch.internal")
     }

@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.sessions.actions
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.chat.resolveAgentChatEditorTabActionContext
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -11,7 +12,8 @@ import com.intellij.openapi.project.Project
 
 internal class AgentSessionsGoToSourceProjectFromEditorTabAction @JvmOverloads constructor(
   private val isDedicatedProject: (Project) -> Boolean = AgentWorkbenchDedicatedFrameProjectManager::isDedicatedProject,
-  private val openProject: (String) -> Unit = { path -> service<AgentSessionLaunchService>().openOrFocusProject(path) },
+  private val openProject: (String, AgentWorkbenchEntryPoint) -> Unit =
+    { path, entryPoint -> service<AgentSessionLaunchService>().openOrFocusProject(path, entryPoint) },
   resolveContext: (AnActionEvent) -> AgentChatEditorTabActionContext? = ::resolveAgentChatEditorTabActionContext,
 ) : AgentSessionsEditorTabActionBase(resolveContext) {
 
@@ -23,7 +25,7 @@ internal class AgentSessionsGoToSourceProjectFromEditorTabAction @JvmOverloads c
     if (AgentWorkbenchDedicatedFrameProjectManager.isDedicatedProjectPath(context.path)) {
       return
     }
-    openProject(context.path)
+    openProject(context.path, AgentWorkbenchEntryPoint.EDITOR_TAB_POPUP)
   }
 
   override fun update(e: AnActionEvent) {

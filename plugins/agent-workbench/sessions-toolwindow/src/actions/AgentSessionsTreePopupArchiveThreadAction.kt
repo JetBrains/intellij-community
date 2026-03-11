@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.sessions.toolwindow.actions
 
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveService
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -13,19 +14,19 @@ import com.intellij.openapi.project.DumbAwareAction
 internal class AgentSessionsTreePopupArchiveThreadAction : DumbAwareAction {
   private val resolveContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext?
   private val canArchiveProvider: (AgentSessionProvider) -> Boolean
-  private val archiveThreads: (List<ArchiveThreadTarget>) -> Unit
+  private val archiveThreads: (List<ArchiveThreadTarget>, AgentWorkbenchEntryPoint) -> Unit
 
   @Suppress("unused")
   constructor() {
     resolveContext = ::resolveAgentSessionsTreePopupActionContext
     canArchiveProvider = { provider -> service<AgentSessionArchiveService>().canArchiveProvider(provider) }
-    archiveThreads = { targets -> service<AgentSessionArchiveService>().archiveThreads(targets) }
+    archiveThreads = { targets, entryPoint -> service<AgentSessionArchiveService>().archiveThreads(targets, entryPoint) }
   }
 
   internal constructor(
     resolveContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext?,
     canArchiveProvider: (AgentSessionProvider) -> Boolean,
-    archiveThreads: (List<ArchiveThreadTarget>) -> Unit,
+    archiveThreads: (List<ArchiveThreadTarget>, AgentWorkbenchEntryPoint) -> Unit,
   ) {
     this.resolveContext = resolveContext
     this.canArchiveProvider = canArchiveProvider
@@ -57,7 +58,7 @@ internal class AgentSessionsTreePopupArchiveThreadAction : DumbAwareAction {
     if (context.archiveTargets.none { target -> canArchiveProvider(target.provider) }) {
       return
     }
-    archiveThreads(context.archiveTargets)
+    archiveThreads(context.archiveTargets, AgentWorkbenchEntryPoint.TREE_POPUP)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

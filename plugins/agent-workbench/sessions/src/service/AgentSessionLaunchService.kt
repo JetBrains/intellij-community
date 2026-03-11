@@ -5,6 +5,7 @@ package com.intellij.agent.workbench.sessions.service
 // @spec community/plugins/agent-workbench/spec/agent-dedicated-frame.spec.md
 // @spec community/plugins/agent-workbench/spec/actions/new-thread.spec.md
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-entry.spec.md
+// @spec community/plugins/agent-workbench/spec/agent-workbench-telemetry.spec.md
 
 import com.intellij.agent.workbench.chat.openChat
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
@@ -25,6 +26,9 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTargetKind
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelemetry
 import com.intellij.agent.workbench.sessions.frame.AGENT_SESSIONS_TOOL_WINDOW_ID
 import com.intellij.agent.workbench.sessions.frame.AGENT_WORKBENCH_DEDICATED_FRAME_TYPE_ID
 import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
@@ -59,6 +63,7 @@ import com.intellij.project.ProjectStoreOwner
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
@@ -149,22 +154,24 @@ class AgentSessionLaunchService internal constructor(
 
   private val actionGate = SingleFlightActionGate()
 
-  fun openOrFocusProject(path: String) {
+  fun openOrFocusProject(path: String, entryPoint: AgentWorkbenchEntryPoint) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
     launchDropAction(
       key = buildOpenProjectActionKey(normalizedPath),
       droppedActionMessage = "Dropped duplicate open project action for $normalizedPath",
     ) {
+      AgentWorkbenchTelemetry.logProjectFocusRequested(entryPoint)
       openOrFocusProjectInternal(normalizedPath)
     }
   }
 
-  fun openOrFocusDedicatedFrame(currentProject: Project? = null) {
+  fun openOrFocusDedicatedFrame(entryPoint: AgentWorkbenchEntryPoint, currentProject: Project? = null) {
     launchDropAction(
       key = OPEN_DEDICATED_FRAME_ACTION_KEY_PREFIX,
       droppedActionMessage = "Dropped duplicate open dedicated frame action",
       progress = dedicatedFrameOpenProgressRequest(currentProject),
     ) {
+      AgentWorkbenchTelemetry.logDedicatedFrameFocusRequested(entryPoint)
       openOrFocusDedicatedFrameInternal()
     }
   }
@@ -172,10 +179,12 @@ class AgentSessionLaunchService internal constructor(
   fun openChatThread(
     path: String,
     thread: AgentSessionThread,
+    entryPoint: AgentWorkbenchEntryPoint,
     currentProject: Project? = null,
     initialMessageDispatchPlan: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
     singleFlightPolicy: SingleFlightPolicy = SingleFlightPolicy.DROP,
     launchOrigin: OpenThreadLaunchOrigin = OpenThreadLaunchOrigin.USER_OPEN,
+    promptLaunchResolved: ((AgentPromptLaunchResult) -> Unit)? = null,
   ) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
     AgentSessionProviderBehaviors.find(thread.provider)?.onConversationOpened()
@@ -186,25 +195,45 @@ class AgentSessionLaunchService internal constructor(
       progress = dedicatedFrameOpenProgressRequest(currentProject),
       policy = singleFlightPolicy,
     ) {
-      val worktreeBranch = stateStore.findWorktreeBranch(normalizedPath)
-      val originBranch = thread.originBranch
-      if (worktreeBranch != null && originBranch != null && originBranch != worktreeBranch && !isBranchMismatchDialogSuppressed()) {
-        val proceed = withContext(Dispatchers.EDT) {
-          showBranchMismatchDialog(originBranch, worktreeBranch)
+      try {
+        val worktreeBranch = stateStore.findWorktreeBranch(normalizedPath)
+        val originBranch = thread.originBranch
+        if (worktreeBranch != null && originBranch != null && originBranch != worktreeBranch && !isBranchMismatchDialogSuppressed()) {
+          val proceed = withContext(Dispatchers.EDT) {
+            showBranchMismatchDialog(originBranch, worktreeBranch)
+          }
+          if (!proceed) {
+            promptLaunchResolved?.invoke(AgentPromptLaunchResult.failure(AgentPromptLaunchError.CANCELLED))
+            return@launchDropAction
+          }
         }
-        if (!proceed) return@launchDropAction
+        AgentWorkbenchTelemetry.logThreadOpenRequested(entryPoint, thread.provider, AgentWorkbenchTargetKind.THREAD)
+        chatOpenExecutor.openChat(
+          normalizedPath = normalizedPath,
+          thread = thread,
+          subAgent = null,
+          launchSpecOverride = null,
+          initialMessageDispatchPlan = initialMessageDispatchPlan,
+        )
+        promptLaunchResolved?.invoke(AgentPromptLaunchResult.SUCCESS)
       }
-      chatOpenExecutor.openChat(
-        normalizedPath = normalizedPath,
-        thread = thread,
-        subAgent = null,
-        launchSpecOverride = null,
-        initialMessageDispatchPlan = initialMessageDispatchPlan,
-      )
+      catch (t: Throwable) {
+        if (t is CancellationException) {
+          throw t
+        }
+        promptLaunchResolved?.invoke(AgentPromptLaunchResult.failure(AgentPromptLaunchError.INTERNAL_ERROR))
+        throw t
+      }
     }
   }
 
-  fun openChatSubAgent(path: String, thread: AgentSessionThread, subAgent: AgentSubAgent, currentProject: Project? = null) {
+  fun openChatSubAgent(
+    path: String,
+    thread: AgentSessionThread,
+    subAgent: AgentSubAgent,
+    entryPoint: AgentWorkbenchEntryPoint,
+    currentProject: Project? = null,
+  ) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
     AgentSessionProviderBehaviors.find(thread.provider)?.onConversationOpened()
     launchDropAction(
@@ -212,6 +241,7 @@ class AgentSessionLaunchService internal constructor(
       droppedActionMessage = "Dropped duplicate open sub-agent action for $normalizedPath:${thread.provider}:${thread.id}:${subAgent.id}",
       progress = dedicatedFrameOpenProgressRequest(currentProject),
     ) {
+      AgentWorkbenchTelemetry.logThreadOpenRequested(entryPoint, thread.provider, AgentWorkbenchTargetKind.SUB_AGENT)
       chatOpenExecutor.openChat(
         normalizedPath = normalizedPath,
         thread = thread,
@@ -226,9 +256,11 @@ class AgentSessionLaunchService internal constructor(
     path: String,
     provider: AgentSessionProvider,
     mode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
+    entryPoint: AgentWorkbenchEntryPoint,
     currentProject: Project? = null,
     initialMessageRequest: AgentPromptInitialMessageRequest? = null,
     preferredDedicatedFrame: Boolean? = null,
+    promptLaunchResolved: ((AgentPromptLaunchResult) -> Unit)? = null,
   ) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
     AgentSessionProviderBehaviors.find(provider)?.onConversationOpened()
@@ -236,102 +268,130 @@ class AgentSessionLaunchService internal constructor(
       key = buildCreateSessionActionKey(normalizedPath, provider, mode),
       droppedActionMessage = "Dropped duplicate create session action for $normalizedPath:$provider:mode=$mode",
       progress = dedicatedFrameOpenProgressRequest(currentProject),
+      onDrop = promptLaunchResolved?.let { handler ->
+        { handler(AgentPromptLaunchResult.failure(AgentPromptLaunchError.DROPPED_DUPLICATE)) }
+      },
     ) {
-      uiPreferencesState.setLastUsedProvider(provider)
+      try {
+        uiPreferencesState.setLastUsedProvider(provider)
 
-      val bridge = AgentSessionProviderBridges.find(provider)
-      if (bridge == null) {
-        logMissingProviderBridge(provider)
-        syncService.appendProviderUnavailableWarning(normalizedPath, provider)
-        return@launchDropAction
+        val bridge = AgentSessionProviderBridges.find(provider)
+        if (bridge == null) {
+          logMissingProviderBridge(provider)
+          syncService.appendProviderUnavailableWarning(normalizedPath, provider)
+          promptLaunchResolved?.invoke(AgentPromptLaunchResult.failure(AgentPromptLaunchError.PROVIDER_UNAVAILABLE))
+          return@launchDropAction
+        }
+        if (mode !in bridge.supportedLaunchModes) {
+          LOG.warn("Session provider bridge ${provider.value} does not support launch mode $mode")
+          syncService.appendProviderUnavailableWarning(normalizedPath, provider)
+          promptLaunchResolved?.invoke(AgentPromptLaunchResult.failure(AgentPromptLaunchError.UNSUPPORTED_LAUNCH_MODE))
+          return@launchDropAction
+        }
+
+        val createSpec = bridge.createNewSession(path = normalizedPath, mode = mode)
+        val identity = createSpec.sessionId?.let { sessionId ->
+          buildAgentSessionIdentity(provider, sessionId)
+        } ?: buildAgentSessionNewIdentity(provider)
+        val initialMessagePlan = initialMessageRequest
+          ?.let(bridge::buildInitialMessagePlan)
+          ?: AgentInitialMessagePlan.EMPTY
+        val initialMessageDispatchPlan = buildInitialMessageDispatchPlan(
+          bridge = bridge,
+          baseLaunchSpec = createSpec.launchSpec,
+          identity = identity,
+          initialMessagePlan = initialMessagePlan,
+        )
+
+        AgentWorkbenchTelemetry.logThreadCreateRequested(entryPoint, provider, mode)
+        chatOpenExecutor.openNewChat(
+          normalizedPath = normalizedPath,
+          identity = identity,
+          launchSpec = createSpec.launchSpec,
+          initialMessageDispatchPlan = initialMessageDispatchPlan,
+          preferredDedicatedFrame = preferredDedicatedFrame,
+        )
+        if (AgentSessionProviderBehaviors.find(provider)?.refreshPathAfterCreateNewSession == true) {
+          syncService.refreshProviderForPath(path = normalizedPath, provider = provider)
+        }
+        promptLaunchResolved?.invoke(AgentPromptLaunchResult.SUCCESS)
       }
-      if (mode !in bridge.supportedLaunchModes) {
-        LOG.warn("Session provider bridge ${provider.value} does not support launch mode $mode")
-        syncService.appendProviderUnavailableWarning(normalizedPath, provider)
-        return@launchDropAction
-      }
-
-      val createSpec = bridge.createNewSession(path = normalizedPath, mode = mode)
-      val identity = createSpec.sessionId?.let { sessionId ->
-        buildAgentSessionIdentity(provider, sessionId)
-      } ?: buildAgentSessionNewIdentity(provider)
-      val initialMessagePlan = initialMessageRequest
-        ?.let(bridge::buildInitialMessagePlan)
-        ?: AgentInitialMessagePlan.EMPTY
-      val initialMessageDispatchPlan = buildInitialMessageDispatchPlan(
-        bridge = bridge,
-        baseLaunchSpec = createSpec.launchSpec,
-        identity = identity,
-        initialMessagePlan = initialMessagePlan,
-      )
-
-      chatOpenExecutor.openNewChat(
-        normalizedPath = normalizedPath,
-        identity = identity,
-        launchSpec = createSpec.launchSpec,
-        initialMessageDispatchPlan = initialMessageDispatchPlan,
-        preferredDedicatedFrame = preferredDedicatedFrame,
-      )
-      if (AgentSessionProviderBehaviors.find(provider)?.refreshPathAfterCreateNewSession == true) {
-        syncService.refreshProviderForPath(path = normalizedPath, provider = provider)
+      catch (t: Throwable) {
+        if (t is CancellationException) {
+          throw t
+        }
+        promptLaunchResolved?.invoke(AgentPromptLaunchResult.failure(AgentPromptLaunchError.INTERNAL_ERROR))
+        throw t
       }
     }
   }
 
   fun launchPromptRequest(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
-    val bridge = AgentSessionProviderBridges.find(request.provider)
-      ?: return AgentPromptLaunchResult.failure(AgentPromptLaunchError.PROVIDER_UNAVAILABLE)
-    if (request.launchMode !in bridge.supportedLaunchModes) {
-      return AgentPromptLaunchResult.failure(AgentPromptLaunchError.UNSUPPORTED_LAUNCH_MODE)
+    fun reportPromptLaunchResolved(result: AgentPromptLaunchResult): AgentPromptLaunchResult {
+      AgentWorkbenchTelemetry.logPromptLaunchResolved(request, result)
+      return result
     }
 
-    val targetThreadId = request.targetThreadId?.trim()
-    if (targetThreadId != null && targetThreadId.isEmpty()) {
-      return AgentPromptLaunchResult.failure(AgentPromptLaunchError.TARGET_THREAD_NOT_FOUND)
-    }
-
-    return try {
-      if (targetThreadId == null) {
-        createNewSession(
-          path = request.projectPath,
-          provider = request.provider,
-          mode = request.launchMode,
-          initialMessageRequest = request.initialMessageRequest,
-          preferredDedicatedFrame = request.preferredDedicatedFrame,
-        )
+    val result = run {
+      val bridge = AgentSessionProviderBridges.find(request.provider)
+        ?: return@run reportPromptLaunchResolved(AgentPromptLaunchResult.failure(AgentPromptLaunchError.PROVIDER_UNAVAILABLE))
+      if (request.launchMode !in bridge.supportedLaunchModes) {
+        return@run reportPromptLaunchResolved(AgentPromptLaunchResult.failure(AgentPromptLaunchError.UNSUPPORTED_LAUNCH_MODE))
       }
-      else {
-        val normalizedPath = normalizeAgentWorkbenchPath(request.projectPath)
-        val targetThread = findPromptTargetThread(
-          normalizedPath = normalizedPath,
-          provider = request.provider,
-          threadId = targetThreadId,
-        ) ?: return AgentPromptLaunchResult.failure(AgentPromptLaunchError.TARGET_THREAD_NOT_FOUND)
-        uiPreferencesState.setLastUsedProvider(request.provider)
 
-        val initialMessagePlan = bridge.buildInitialMessagePlan(request.initialMessageRequest)
-        val targetIdentity = buildAgentSessionIdentity(provider = request.provider, sessionId = targetThread.id)
-        val initialMessageDispatchPlan = buildInitialMessageDispatchPlan(
-          bridge = bridge,
-          baseLaunchSpec = bridge.buildResumeLaunchSpec(targetThread.id),
-          identity = targetIdentity,
-          initialMessagePlan = initialMessagePlan,
-        )
-
-        openChatThread(
-          path = normalizedPath,
-          thread = targetThread,
-          initialMessageDispatchPlan = initialMessageDispatchPlan,
-          singleFlightPolicy = SingleFlightPolicy.RESTART_LATEST,
-          launchOrigin = OpenThreadLaunchOrigin.PROMPT_LAUNCH,
-        )
+      val targetThreadId = request.targetThreadId?.trim()
+      if (request.targetThreadId != null && targetThreadId.isNullOrEmpty()) {
+        return@run reportPromptLaunchResolved(AgentPromptLaunchResult.failure(AgentPromptLaunchError.TARGET_THREAD_NOT_FOUND))
       }
-      AgentPromptLaunchResult.SUCCESS
+
+      try {
+        if (targetThreadId == null) {
+          createNewSession(
+            path = request.projectPath,
+            provider = request.provider,
+            mode = request.launchMode,
+            entryPoint = AgentWorkbenchEntryPoint.PROMPT,
+            initialMessageRequest = request.initialMessageRequest,
+            preferredDedicatedFrame = request.preferredDedicatedFrame,
+            promptLaunchResolved = ::reportPromptLaunchResolved,
+          )
+        }
+        else {
+          val normalizedPath = normalizeAgentWorkbenchPath(request.projectPath)
+          val targetThread = findPromptTargetThread(
+            normalizedPath = normalizedPath,
+            provider = request.provider,
+            threadId = targetThreadId,
+          ) ?: return@run reportPromptLaunchResolved(AgentPromptLaunchResult.failure(AgentPromptLaunchError.TARGET_THREAD_NOT_FOUND))
+          uiPreferencesState.setLastUsedProvider(request.provider)
+
+          val initialMessagePlan = bridge.buildInitialMessagePlan(request.initialMessageRequest)
+          val targetIdentity = buildAgentSessionIdentity(provider = request.provider, sessionId = targetThread.id)
+          val initialMessageDispatchPlan = buildInitialMessageDispatchPlan(
+            bridge = bridge,
+            baseLaunchSpec = bridge.buildResumeLaunchSpec(targetThread.id),
+            identity = targetIdentity,
+            initialMessagePlan = initialMessagePlan,
+          )
+
+          openChatThread(
+            path = normalizedPath,
+            thread = targetThread,
+            entryPoint = AgentWorkbenchEntryPoint.PROMPT,
+            initialMessageDispatchPlan = initialMessageDispatchPlan,
+            singleFlightPolicy = SingleFlightPolicy.RESTART_LATEST,
+            launchOrigin = OpenThreadLaunchOrigin.PROMPT_LAUNCH,
+            promptLaunchResolved = ::reportPromptLaunchResolved,
+          )
+        }
+        AgentPromptLaunchResult.SUCCESS
+      }
+      catch (t: Throwable) {
+        LOG.warn("Failed to launch prompt request for ${request.provider}:${request.projectPath}", t)
+        reportPromptLaunchResolved(AgentPromptLaunchResult.failure(AgentPromptLaunchError.INTERNAL_ERROR))
+      }
     }
-    catch (t: Throwable) {
-      LOG.warn("Failed to launch prompt request for ${request.provider}:${request.projectPath}", t)
-      AgentPromptLaunchResult.failure(AgentPromptLaunchError.INTERNAL_ERROR)
-    }
+    return result
   }
 
   private fun findPromptTargetThread(
@@ -361,14 +421,18 @@ class AgentSessionLaunchService internal constructor(
     droppedActionMessage: String,
     policy: SingleFlightPolicy = SingleFlightPolicy.DROP,
     progress: SingleFlightProgressRequest? = null,
+    onDrop: (() -> Unit)? = null,
     block: suspend () -> Unit,
-  ) {
-    actionGate.launch(
+  ): Job? {
+    return actionGate.launch(
       scope = serviceScope,
       key = key,
       policy = policy,
       progress = progress,
-      onDrop = { LOG.debug(droppedActionMessage) },
+      onDrop = {
+        LOG.debug(droppedActionMessage)
+        onDrop?.invoke()
+      },
       block = block,
     )
   }
