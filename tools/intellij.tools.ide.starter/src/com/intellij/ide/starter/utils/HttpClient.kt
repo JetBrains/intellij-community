@@ -6,10 +6,19 @@ import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.tools.ide.util.common.withRetry
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import org.apache.http.HttpHost
 import org.apache.http.HttpResponse
+import org.apache.http.auth.AuthScope
+import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpUriRequest
+import org.apache.http.client.protocol.HttpClientContext
+import org.apache.http.impl.auth.BasicScheme
+import org.apache.http.impl.client.BasicAuthCache
+import org.apache.http.impl.client.BasicCredentialsProvider
 import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.util.EntityUtils
+import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
@@ -28,6 +37,8 @@ import kotlin.time.Duration.Companion.minutes
 // TODO: migrate on okhttp ?
 object HttpClient {
   private val locks = ConcurrentHashMap<String, ReentrantLock>()
+
+  var credentialsProvider: ((String) -> Pair<String, String>?)? = null
 
   fun <Y> sendRequest(request: HttpUriRequest, processor: (HttpResponse) -> Y): Y {
     HttpClientBuilder.create().build().use { client ->
@@ -50,41 +61,77 @@ object HttpClient {
       withTimeout(timeout = timeout) {
         withRetry(messageOnFailure = "Failure during downloading $encodeUrl to $outPath", retries = retries) {
           val request = HttpGet(encodeUrl)
-          sendRequest(request) { response ->
-            if (response.statusLine.statusCode == 404) {
-              throw HttpNotFound("Server returned 404 Not Found: $encodeUrl")
-            }
 
-            if (response.statusLine.statusCode == 403 && url.startsWith("https://cache-redirector.jetbrains.com/")) {
-              // all downloads from https://cache-redirector.jetbrains.com should be public, but some endpoints return 403 instead of 404
-              // due to blocking of files listing on S3 bucket
-              throw HttpNotFound("Server returned 403 which we interpret as not found for cache-redirector urls: $url")
-            }
+          val uri = URI(encodeUrl)
+          val targetHost = HttpHost(uri.host, uri.port, uri.scheme)
+          val context = HttpClientContext.create()
 
-            if (response.statusLine.statusCode == 403) throw HttpForbidden("Server returned 403 Forbidden: $encodeUrl")
-
-            check(response.statusLine.statusCode == 200) { "Failed to download $url: $response" }
-
-            if (!outPath.parent.exists()) {
-              outPath.parent.createDirectories()
-            }
-            outPath.deleteIfExists()
-
-            val tempFile = Files.createTempFile(outPath.parent, outPath.name, "-download.tmp")
-            try {
-              tempFile.outputStream().buffered(10 * 1024 * 1024).use { stream ->
-                response.entity?.writeTo(stream)
-              }
-
-              // there could a parallel download to the same destination, handle it gracefully (both will succeed)
-              tempFile.moveTo(outPath, overwrite = true)
-            }
-            finally {
-              tempFile.deleteIfExists()
-            }
+          // Use host-scoped credentials so that auth is NOT forwarded on cross-origin
+          // redirects (e.g. packages.jetbrains.team → pre-signed S3 URL).
+          val credsProvider = BasicCredentialsProvider()
+          credentialsProvider?.invoke(encodeUrl)?.let { (username, password) ->
+            credsProvider.setCredentials(AuthScope(targetHost), UsernamePasswordCredentials(username, password))
+            // Preemptive auth: send credentials on first request without waiting for 401 challenge
+            context.authCache = BasicAuthCache().apply { put(targetHost, BasicScheme()) }
           }
+
+          HttpClientBuilder.create()
+            .setDefaultCredentialsProvider(credsProvider)
+            .build().use { client ->
+              client.execute(request, context).use { response ->
+                processDownloadResponse(response, encodeUrl, url, outPath)
+              }
+            }
         }
       }
+    }
+  }
+
+  private fun processDownloadResponse(response: HttpResponse, encodeUrl: String, originalUrl: String, outPath: Path) {
+    val statusCode = response.statusLine.statusCode
+
+    if (statusCode != 200) {
+      val errorBody = try {
+        EntityUtils.toString(response.entity, Charsets.UTF_8).take(2000)
+      }
+      catch (_: Exception) {
+        "<could not read body>"
+      }
+      logOutput("Download failed for $encodeUrl: HTTP $statusCode ${response.statusLine.reasonPhrase}")
+      logOutput("  Response headers: ${response.allHeaders.joinToString { "${it.name}: ${it.value}" }}")
+      logOutput("  Error response body: $errorBody")
+    }
+
+    if (statusCode == 404) {
+      throw HttpNotFound("Server returned 404 Not Found: $encodeUrl")
+    }
+
+    if (statusCode == 403 && originalUrl.startsWith("https://cache-redirector.jetbrains.com/")) {
+      // all downloads from https://cache-redirector.jetbrains.com should be public, but some endpoints return 403 instead of 404
+      // due to blocking of files listing on S3 bucket
+      throw HttpNotFound("Server returned 403 which we interpret as not found for cache-redirector urls: $originalUrl")
+    }
+
+    if (statusCode == 403) throw HttpForbidden("Server returned 403 Forbidden: $encodeUrl")
+
+    check(statusCode == 200) { "Failed to download $originalUrl: HTTP $statusCode ${response.statusLine.reasonPhrase}" }
+
+    if (!outPath.parent.exists()) {
+      outPath.parent.createDirectories()
+    }
+    outPath.deleteIfExists()
+
+    val tempFile = Files.createTempFile(outPath.parent, outPath.name, "-download.tmp")
+    try {
+      tempFile.outputStream().buffered(10 * 1024 * 1024).use { stream ->
+        response.entity?.writeTo(stream)
+      }
+
+      // there could a parallel download to the same destination, handle it gracefully (both will succeed)
+      tempFile.moveTo(outPath, overwrite = true)
+    }
+    finally {
+      tempFile.deleteIfExists()
     }
   }
 
