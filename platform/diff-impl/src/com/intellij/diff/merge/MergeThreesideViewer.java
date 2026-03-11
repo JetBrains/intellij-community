@@ -273,7 +273,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   }
 
   @Override
-  protected @Nullable List<AnAction> createPopupActions() {
+  protected @NotNull List<AnAction> createPopupActions() {
     List<AnAction> group = new ArrayList<>(myTextDiffProvider.getPopupActions());
     group.add(Separator.getInstance());
     group.add(new MyToggleAutoScrollAction());
@@ -281,7 +281,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     return group;
   }
 
-  public @Nullable Action getResolveAction(final @NotNull MergeResult result) {
+  private @NotNull Action getResolveAction(final @NotNull MergeResult result) {
     String caption = MergeUtil.getResolveActionTitle(result, myMergeRequest, myMergeContext);
     return new AbstractAction(caption) {
       @Override
