@@ -629,9 +629,15 @@ final class FindInProjectTask {
       searchItems.addAll(indexes.getIndexableFilesProviders(project));
 
       if (Registry.is("find.in.files.in.non.indexable.enable")) {
+        boolean searchInLibraries = switch (customScope) {
+          case null -> false; // default scope is 'Project', no libraries there
+          case GlobalSearchScope globalSearchScope -> globalSearchScope.isSearchInLibraries();
+          default -> true;
+        };
+
         //MAYBE RC: currently nonIndexableFiles() returns transient files already -- but maybe it is safer to return _regular_ files
         //          from nonIndexableFiles(), and wrap them all into transient here, in a unified way?
-        searchItems.add(ReadAction.nonBlocking(() -> FilesDeque.nonIndexableDequeue(project)).executeSynchronously());
+        searchItems.add(ReadAction.nonBlocking(() -> FilesDeque.nonIndexableDequeue(project, searchInLibraries)).executeSynchronously());
       }
     }
 
