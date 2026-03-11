@@ -365,6 +365,12 @@
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.IncorrectServiceRetrievingInspection"
                      key="inspection.incorrect.service.retrieving.display.name"/>
+    <localInspection language="UAST" shortName="UnsafeOpenServiceCast"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.UnsafeOpenServiceCastInspection"
+                     key="inspection.unsafe.open.service.cast.display.name"/>
     <localInspection language="UAST"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
