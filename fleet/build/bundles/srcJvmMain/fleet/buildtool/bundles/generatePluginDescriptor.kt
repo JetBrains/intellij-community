@@ -84,6 +84,7 @@ suspend fun generatePluginDescriptor(
   val temporaryDir = createTempDirectory("resolvedConfigurationCache")
 
   logger.info("[fleet-dependencies] Resolving Marketplace and project plugins dependencies for requirements map...")
+  logger.warn("[fleet-dependencies] Descriptors: $projectPluginsPluginDescriptors ; $projectPluginResolvedPluginConfigurations")
   val resolvedDependencies = resolvePluginsDependencies(
     // we cannot use the resolved configuration built by [GenerateResolvedPluginsConfigurationTask] as it includes that plugin itself, it has a different purpose all together, see [GenerateResolvedPluginsConfigurationTask]'s description
     cacheDirectory = temporaryDir,

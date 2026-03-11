@@ -68,7 +68,7 @@ fun generateDescriptorMetadata(
   val iconCoordinates = defaultIcon?.toCoordinates(pluginName, pluginVersion, marketplaceUrl, remoteName = defaultIcon.name)?.coordinates
   val iconDarkCoordinates = darkIcon?.toCoordinates(pluginName, pluginVersion, marketplaceUrl, remoteName = darkIcon.name)?.coordinates
 
-  return originalMetadata + listOfNotNull(
+  return defaultMetadata(pluginName) + originalMetadata + listOfNotNull(
     KnownMeta.PartsCoordinates to Json.encodeToString(Coordinates.serializer(), partsCoordinates),
     iconCoordinates?.let { KnownMeta.DefaultIconCoordinates to Json.encodeToString(Coordinates.serializer(), it) },
     iconDarkCoordinates?.let { KnownMeta.DarkIconCoordinates to Json.encodeToString(Coordinates.serializer(), it) },
@@ -184,3 +184,10 @@ private fun moduleIsRelevantToFleetRuntime(jar: Path): Boolean {
     else -> false
   }
 }
+
+private fun defaultMetadata(pluginName: PluginName) = mapOf(
+  "readableName" to pluginName.name,
+  "description" to "No description was specified by the owner of this plugin.",
+  "vendorName" to "JetBrains",
+  "vendor" to "JetBrains s.r.o.",
+)
