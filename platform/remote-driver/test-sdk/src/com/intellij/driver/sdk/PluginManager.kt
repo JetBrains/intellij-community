@@ -4,6 +4,8 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.utility
 import com.intellij.driver.model.OnDispatcher
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration
 
 fun Driver.getPlugin(id: String): PluginDescriptor? {
   return utility<PluginManagerCore>().getPlugin(utility(PluginId::class).getId(id))
@@ -69,13 +71,18 @@ interface DynamicPlugins {
  * Enables and loads a plugin dynamically without requiring IDE restart.
  *
  * @param id Plugin ID string
+ * @param initTimeout Timeout for waiting until plugins are initialized before loading.
+ *   Defaults to 2 minutes.
  * @return true if plugin was enabled and loaded successfully
  */
-fun Driver.loadPluginDynamically(id: String): Boolean = withContext(OnDispatcher.EDT) {
-    val pluginId = utility(PluginId::class).getId(id)
-    val descriptor = utility<PluginManagerCore>().getPlugin(pluginId)!!
-    utility<DynamicPlugins>().loadPlugins(listOf(descriptor), null)
+fun Driver.loadPluginDynamically(id: String, initTimeout: Duration = 2.minutes): Boolean = withContext {
+  val pluginId = utility(PluginId::class).getId(id)
+  val descriptor = utility<PluginManagerCore>().getPlugin(pluginId)!!
+  waitFor("Plugins initialization", timeout = initTimeout) { arePluginsInitialized() }
+  withContext(OnDispatcher.EDT) {
+    utility<DynamicPlugins>().loadPlugins(listOf(descriptor), guessOpenedProject())
   }
+}
 
 /**
  * Enables the Ultimate module plugin (subscription mode) dynamically.
