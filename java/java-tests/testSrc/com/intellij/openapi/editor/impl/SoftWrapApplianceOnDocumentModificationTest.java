@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapParsingListener
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.EditorTestUtil;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertArrayEquals;
 
@@ -1029,10 +1031,11 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     verifySoftWrapPositions(8, 15, 21);
     
     final IncrementalCacheUpdateEvent[] event = new IncrementalCacheUpdateEvent[1];
+    final var eventCount = new AtomicInteger(0);
     ((SoftWrapModelImpl)getEditor().getSoftWrapModel()).addSoftWrapParsingListener(new SoftWrapParsingListener() {
       @Override
       public void onRegionReparseEnd(@NotNull IncrementalCacheUpdateEvent e) {
-        assertNull(event[0]);
+        eventCount.incrementAndGet();
         event[0] = e;
       }
     });
@@ -1043,6 +1046,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     assertNotNull(event[0]);
     assertEquals(8, event[0].getStartOffset());
     assertEquals(22, event[0].getActualEndOffset());
+    assertEquals(1, eventCount.get());
   }
   
   public void testPositionsAreCorrectAfterIncrementalRecalculation() {
