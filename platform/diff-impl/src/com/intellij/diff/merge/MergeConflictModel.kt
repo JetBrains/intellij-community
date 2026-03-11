@@ -31,6 +31,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -156,11 +157,21 @@ class MergeConflictModel(
 
   @RequiresWriteLock
   fun resolveAllChangesAutomatically() {
-    val allChanges = getAutoResolvableChanges()
-    if (allChanges.isEmpty()) return
-    allChanges.forEach { change: TextMergeChange -> resolveChangeAutomatically(change.index, ThreeSide.BASE) }
-    wasReviewed = false
-    contentModified = true
+    val autoResolvableChanges = getAutoResolvableChanges()
+    if (autoResolvableChanges.isEmpty()) return
+    val affected = autoResolvableChanges.mapTo(IntArrayList()) { it.index }
+    val success = executeMergeCommand(
+      DiffBundle.message("action.presentation.merge.resolve.automatically.text"),
+      null,
+      UndoConfirmationPolicy.DEFAULT,
+      true,
+      affected
+    ) {
+      autoResolvableChanges.forEach { change: TextMergeChange -> resolveChangeAutomatically(change.index, ThreeSide.BASE) }
+    }
+    if (success) {
+      wasReviewed = false
+    }
   }
 
   fun markReviewed() {

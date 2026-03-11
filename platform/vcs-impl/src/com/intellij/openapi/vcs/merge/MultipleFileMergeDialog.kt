@@ -254,17 +254,7 @@ open class MultipleFileMergeDialog(
                                                  VcsBundle.message("multiple.file.merge.dialog.progress.title.loading.revisions")) {
           iterativeDataHolder.prepareModelIfSupported(file, request)
         } ?: continue
-        val affected = model.getAutoResolvableChanges().mapTo(IntArrayList()) { it.index }
-
-        model.executeMergeCommand(
-          DiffBundle.message("action.presentation.merge.resolve.automatically.text"),
-          null,
-          UndoConfirmationPolicy.DEFAULT,
-          true,
-          affected
-        ) {
-          model.resolveAllChangesAutomatically()
-        }
+        model.resolveAllChangesAutomatically()
 
         saveDocument(file)
         checkMarkModifiedProject(project, file)
