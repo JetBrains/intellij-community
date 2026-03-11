@@ -2,7 +2,7 @@
 // K2_ERROR: Unresolved reference 'Foo'.
 
 class A<T>(val n: T) {
-    inner class Foo<U>(u: U) {
+    inner class Foo(u: T) {
 
     }
 

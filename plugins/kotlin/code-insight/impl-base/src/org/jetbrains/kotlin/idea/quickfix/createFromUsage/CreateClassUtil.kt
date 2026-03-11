@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService
@@ -70,7 +69,7 @@ enum class ClassKind(@NonNls val keyword: String, @Nls val description: String) 
 
 object CreateClassUtil {
     fun createClassDeclaration(
-        project: Project,
+        containingFile: KtFile,
         paramList: String,
         returnTypeString: String,
         kind: ClassKind,
@@ -81,7 +80,7 @@ object CreateClassUtil {
         isInsideInnerOrLocalClass: Boolean,
         primaryConstructorVisibilityModifier: String?
     ): KtClassOrObject {
-        val psiFactory = KtPsiFactory(project)
+        val psiFactory = KtPsiFactory.contextual(containingFile)
         val classBody = when (kind) {
             ClassKind.ANNOTATION_CLASS, ClassKind.ENUM_ENTRY -> ""
             else -> "{\n\n}"

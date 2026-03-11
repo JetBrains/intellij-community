@@ -3870,9 +3870,9 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createClass/callExpression/inReturn2.kt");
             }
 
-            @TestMetadata("notApplicableInReturn.kt")
-            public void testNotApplicableInReturn() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createClass/callExpression/notApplicableInReturn.kt");
+            @TestMetadata("inReturnWithInapplicableFunctionType.kt")
+            public void testInReturnWithInapplicableFunctionType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createClass/callExpression/inReturnWithInapplicableFunctionType.kt");
             }
 
             @TestMetadata("parameterClassIsInternal.kt")

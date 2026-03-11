@@ -1,6 +1,7 @@
-// "Create class 'BookKeeper'" "false"
-// ERROR: Unresolved reference: BookKeeper
-// IGNORE_K2
+// "Create class 'BookKeeper'" "true"
+// K2_AFTER_ERROR: Return type mismatch: expected 'Man', actual 'BookKeeper'.
+// IGNORE_K1
+// K2_ERROR: Unresolved reference 'BookKeeper'.
 package pack
 
 import pack.Currrency.EUR
@@ -14,3 +15,4 @@ fun place(): Man {
     val transactions = listOf(Transaction(Item(10.0, EUR), Item(10.0, EUR)))
     return BookKee<caret>per(transactions)
 }
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinClassAction

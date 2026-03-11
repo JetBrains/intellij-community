@@ -75,7 +75,7 @@ internal class CreateKotlinClassAction(
         applicableParents: List<PsiElement>
     ) {
         val declaration = CreateClassUtil.createClassDeclaration(
-            file.project,
+            file,
             paramList,
             returnTypeString,
             kind,
