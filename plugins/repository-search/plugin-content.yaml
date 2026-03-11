@@ -1,6 +1,3 @@
-- name: lib/maven-model.jar
-  modules:
-  - name: intellij.maven.model
 - name: lib/modules/intellij.repository.search.common.jar
   contentModules:
   - name: intellij.repository.search.common

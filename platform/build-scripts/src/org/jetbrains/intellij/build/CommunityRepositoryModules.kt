@@ -233,7 +233,6 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.compilation.charts.jps")
     },
     plugin("intellij.repository.search") { spec ->
-      spec.withModule("intellij.maven.model", relativeJarPath = "maven-model.jar")
       spec.withProjectLibrary("package-search-api-client")
     },
     pluginAuto("intellij.java.jshell") { spec ->
