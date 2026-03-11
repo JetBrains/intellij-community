@@ -74,6 +74,10 @@ public class CommonTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testMoveInnerClassToTopLevel() {
+    doTest();
+  }
+
   public void testNoResourceDelete() {
     doTest();
   }

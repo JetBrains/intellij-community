@@ -884,6 +884,10 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
   @Override
   public boolean processNodesWithErrors(DifferentiateContext context, Iterable<JVMClassNode<?, ?>> nodes, Utils present) {
     for (JvmClass jvmClass : Graph.getNodesOfType(nodes, JvmClass.class)) {
+      if (!jvmClass.isPrivate() && jvmClass.isInnerClass()) {
+        context.affectUsage(new ClassUsage(jvmClass.getReferenceID()));
+        debug(context, "Affect usages of inner class defined in a source compiled with errors", jvmClass.getName());
+      }
       for (JvmField field : filter(jvmClass.getFields(), f -> !f.isPrivate() && f.isInlinable() && f.getValue() != null)) {
         if (context.getParams().isProcessConstantsIncrementally()) {
           debug(context, "Potentially inlined field is contained in a source compiled with errors => affecting field usages and static member import usages");

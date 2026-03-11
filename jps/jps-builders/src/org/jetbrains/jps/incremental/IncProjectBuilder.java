@@ -1526,9 +1526,12 @@ public final class IncProjectBuilder {
                 long start = System.nanoTime();
                 int processedSourcesBefore = outputConsumer.getNumberOfProcessedSources();
                 ErrorsCapture errCapture = null;
+                OutputsCapture outsCapture = null;
                 ModuleLevelBuilder.ExitCode buildResult = ModuleLevelBuilder.ExitCode.NOTHING_DONE;
                 try {
-                  buildResult = builder.build(roundCount == 0 && !isFullRebuild? errCapture = ErrorsCapture.wrap(context) : context, chunk, dirtyFilesHolder, outputConsumer);
+                  CompileContext builderContext = roundCount == 0 && !isFullRebuild? errCapture = ErrorsCapture.wrap(context) : context;
+                  ModuleLevelBuilder.OutputConsumer buildOutputConsumer = errCapture != null? outsCapture = OutputsCapture.wrap(outputConsumer) : outputConsumer;
+                  buildResult = builder.build(builderContext, chunk, dirtyFilesHolder, buildOutputConsumer);
                 }
                 catch (StopBuildException e) {
                   if (errCapture != null) {
@@ -1554,6 +1557,10 @@ public final class IncProjectBuilder {
                       return true;
                     });
                     nextPassRequired = true;
+                    // clean partially generated outputs to ensure consistent clean state
+                    if (outsCapture != null) {
+                      outsCapture.clearGeneratedOutputs();
+                    }
                     break BUILDER_CATEGORY_LOOP;
                   }
                   else { // no additional files were marked
@@ -1677,6 +1684,64 @@ public final class IncProjectBuilder {
         MethodHandle mh = ourLookup.unreflect(method).bindTo(delegate);
         return args == null? mh.invoke() : mh.asSpreader(Object[].class, args.length).invoke(args);  // delegate further
       });
+    }
+  }
+
+  private interface OutputsCapture extends ModuleLevelBuilder.OutputConsumer {
+
+    void clearGeneratedOutputs();
+
+    static OutputsCapture wrap(ModuleLevelBuilder.OutputConsumer delegate) {
+      return new OutputsCapture() {
+        private final Set<File> generated = new HashSet<>();
+
+        @Override
+        public void clearGeneratedOutputs() {
+          try {
+            for (var file : generated) {
+              FileUtilRt.delete(file);
+            }
+          }
+          finally {
+            generated.clear();
+          }
+        }
+
+        @Override
+        public void registerOutputFile(@NotNull BuildTarget<?> target, File outputFile, Collection<String> sourcePaths) throws IOException {
+          try {
+            delegate.registerOutputFile(target, outputFile, sourcePaths);
+          }
+          finally {
+            generated.add(outputFile);
+          }
+        }
+
+        @Override
+        public void registerCompiledClass(@Nullable BuildTarget<?> target, CompiledClass compiled) throws IOException {
+          try {
+            delegate.registerCompiledClass(target, compiled);
+          }
+          finally {
+            generated.add(compiled.getOutputFile());
+          }
+        }
+
+        @Override
+        public Collection<CompiledClass> getTargetCompiledClasses(@NotNull BuildTarget<?> target) {
+          return delegate.getTargetCompiledClasses(target);
+        }
+
+        @Override
+        public @NotNull Map<String, CompiledClass> getCompiledClasses() {
+          return delegate.getCompiledClasses();
+        }
+
+        @Override
+        public @Nullable BinaryContent lookupClassBytes(String className) {
+          return delegate.lookupClassBytes(className);
+        }
+      };
     }
   }
 

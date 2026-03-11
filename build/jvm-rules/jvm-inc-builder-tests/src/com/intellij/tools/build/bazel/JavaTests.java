@@ -16,6 +16,11 @@ public class JavaTests extends BazelIncBuildTest {
   }
 
   @Test
+  public void testMoveInnerClassToTopLevel() throws Exception {
+    performTest("java/common/moveInnerClassToTopLevel").assertSuccessful();
+  }
+
+  @Test
   public void testAnonymous() throws Exception {
     performTest("java/common/anonymous").assertFailure();
   }
