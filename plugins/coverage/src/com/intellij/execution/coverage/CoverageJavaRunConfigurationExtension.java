@@ -1,4 +1,4 @@
-// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.coverage;
 
 import com.intellij.coverage.CoverageBundle;
@@ -12,7 +12,6 @@ import com.intellij.execution.Location;
 import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.JavaTargetDependentParameters;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.configurations.coverage.CoverageConfigurable;
@@ -28,23 +27,14 @@ import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -59,10 +49,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * Registers "Coverage" tab in Java run configurations
@@ -186,90 +174,11 @@ final class CoverageJavaRunConfigurationExtension extends RunConfigurationExtens
 
   @Override
   public void extendCreatedConfiguration(@NotNull RunConfigurationBase runJavaConfiguration, @NotNull Location location) {
-    if (!(runJavaConfiguration instanceof CommonJavaRunConfigurationParameters commonParams)) return;
-    JavaCoverageEnabledConfiguration coverageEnabledConfiguration = JavaCoverageEnabledConfiguration.getFrom(runJavaConfiguration);
-    if (coverageEnabledConfiguration == null) return;
-    String runClass = commonParams.getRunClass();
-    String packageName = commonParams.getPackage();
-
-    if (!StringUtil.isEmpty(runClass) ||
-        !StringUtil.isEmpty(packageName) ||
-        !(location.getPsiElement() instanceof PsiDirectory directory) ||
-        coverageEnabledConfiguration.getCoveragePatterns() != null) {
-      coverageEnabledConfiguration.setUpCoverageFilters(runClass, packageName);
-      return;
-    }
-
-    PsiPackage pkg = JavaDirectoryService.getInstance().getPackage(directory);
-    if (pkg != null && !pkg.getQualifiedName().isEmpty()) {
-      coverageEnabledConfiguration.setUpCoverageFilters("", pkg.getQualifiedName());
-      return;
-    }
-
-    InstrumentationScope scope = InstrumentationScope.of(Registry.stringValue("idea.coverage.instrumentation.scope"));
-    ClassFilter[] filters = VirtualFileFiltersVisitor.calculate(runJavaConfiguration.getProject(), runJavaConfiguration, scope);
-    coverageEnabledConfiguration.setCoveragePatterns(filters);
-  }
-
-  private static class VirtualFileFiltersVisitor extends VirtualFileVisitor<Void> {
-    private final List<ClassFilter> filters = new ArrayList<>();
-    private final VirtualFile output;
-
-    VirtualFileFiltersVisitor(VirtualFile output) {
-      this.output = output;
-    }
-
-    @Override
-    public boolean visitFile(@NotNull VirtualFile file) {
-      if (!file.isDirectory()) return false;
-      String pkg = VfsUtilCore.getRelativePath(file, output, '.');
-      if (pkg == null || pkg.isEmpty()) return true;
-      for (VirtualFile child : file.getChildren()) {
-        if (child.isDirectory()) continue;
-        // Any non-directory file means this is a real package, not just a namespace directory.
-        filters.add(new ClassFilter(pkg + ".*"));
-        return false;
-      }
-      return true;
-    }
-
-    static ClassFilter[] calculate(@NotNull Project project, @NotNull RunConfigurationBase<?> config, @NotNull InstrumentationScope scope) {
-      Set<ClassFilter> filters = new HashSet<>();
-      Module[] modules = switch (scope) {
-        case ALL -> Module.EMPTY_ARRAY;
-        case PROJECT -> ModuleManager.getInstance(project).getModules();
-        case MODULE -> {
-          Module module = config instanceof ModuleBasedConfiguration<?, ?> mc ? mc.getConfigurationModule().getModule() : null;
-          yield module == null ? Module.EMPTY_ARRAY : new Module[]{module};
-        }
-      };
-      for (Module module : modules) {
-        CompilerModuleExtension ext = CompilerModuleExtension.getInstance(module);
-        if (ext == null) continue;
-        for (VirtualFile output : new VirtualFile[]{ext.getCompilerOutputPath(), ext.getCompilerOutputPathForTests()}) {
-          if (output == null || !output.isValid()) continue;
-          VirtualFileFiltersVisitor visitor = new VirtualFileFiltersVisitor(output);
-          VfsUtilCore.visitChildrenRecursively(output, visitor);
-          filters.addAll(visitor.filters);
-        }
-      }
-      return filters.isEmpty() ? new ClassFilter[]{new ClassFilter(".*")} : filters.toArray(ClassFilter.EMPTY_ARRAY);
-    }
-  }
-
-  enum InstrumentationScope {
-    ALL("all"), MODULE("module"), PROJECT("project");
-
-    private final String myScope;
-    InstrumentationScope(String scope) {
-      myScope = scope;
-    }
-
-    public static InstrumentationScope of(String scope) {
-      for (InstrumentationScope value : values()) {
-        if (value.myScope.equals(scope)) return value;
-      }
-      return PROJECT;
+    final JavaCoverageEnabledConfiguration coverageEnabledConfiguration = JavaCoverageEnabledConfiguration.getFrom(runJavaConfiguration);
+    assert coverageEnabledConfiguration != null;
+    if (runJavaConfiguration instanceof CommonJavaRunConfigurationParameters) {
+      coverageEnabledConfiguration.setUpCoverageFilters(((CommonJavaRunConfigurationParameters)runJavaConfiguration).getRunClass(),
+                                                        ((CommonJavaRunConfigurationParameters)runJavaConfiguration).getPackage());
     }
   }
 
