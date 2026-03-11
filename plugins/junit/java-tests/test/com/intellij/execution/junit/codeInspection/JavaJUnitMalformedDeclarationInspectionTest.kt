@@ -157,6 +157,23 @@ class JavaJUnitMalformedDeclarationInspectionTest {
     """.trimIndent())
     }
 
+    fun `test abstract class with inherited jupiter test no highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+      abstract class AbstractTest {
+        @org.junit.jupiter.api.BeforeEach
+        public void setUp() {}
+
+        public abstract void testMethod();
+      }
+
+      class ConcreteTest extends AbstractTest {
+        @org.junit.jupiter.api.Test
+        @Override
+        public void testMethod() {}
+      }
+      """.trimIndent())
+    }
+
     fun `test malformed nested class highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class A {

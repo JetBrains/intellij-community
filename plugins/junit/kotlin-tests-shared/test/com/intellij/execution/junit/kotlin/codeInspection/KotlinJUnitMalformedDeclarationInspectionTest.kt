@@ -68,6 +68,22 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
     """.trimIndent())
   }
 
+  fun `test abstract class with inherited jupiter test no highlighting`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      abstract class AbstractTest {
+        @org.junit.jupiter.api.BeforeEach
+        fun setUp() {}
+
+        abstract fun testMethod()
+      }
+
+      class ConcreteTest : AbstractTest() {
+        @org.junit.jupiter.api.Test
+        override fun testMethod() {}
+      }
+    """.trimIndent())
+  }
+
   fun `test malformed nested interface no highlighting`() {
     myFixture.testHighlighting(
       JvmLanguage.KOTLIN, """
@@ -2445,17 +2461,35 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
   }
 
   fun `test suite with selector no highlighting`() {
-    myFixture.testHighlighting(
-      JvmLanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.junit.platform.suite.api.*
 
       @Suite
       @SelectClasses
       class MySuite1
-      
+
       @Suite
       @SelectPackages("com.example")
       class MySuite2
+
+      @Suite
+      abstract class MyAbstractSuite
+
+      @Suite
+      interface MyInterfaceSuite
+
+      @SelectPackages("com.example")
+      interface MySelector
+
+      @Suite
+      class MySuite3 : MySelector
+
+      @SelectPackages("com.example")
+      annotation class CustomSelector
+
+      @Suite
+      @CustomSelector
+      class MySuite4
     """.trimIndent())
   }
 
