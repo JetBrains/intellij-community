@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2;
 
@@ -66,6 +66,11 @@ public abstract class K2JavaAgainstKotlinSourceCheckerTestGenerated extends Abst
         @TestMetadata("EnumEntriesInSwitch.kt")
         public void testEnumEntriesInSwitch() throws Exception {
             runTest("../../idea/tests/testData/kotlinAndJavaChecker/javaAgainstKotlin/EnumEntriesInSwitch.kt");
+        }
+
+        @TestMetadata("enumEntryAndCompanionProperty.kt")
+        public void testEnumEntryAndCompanionProperty() throws Exception {
+            runTest("../../idea/tests/testData/kotlinAndJavaChecker/javaAgainstKotlin/enumEntryAndCompanionProperty.kt");
         }
 
         @TestMetadata("EnumStaticImportInJava.kt")
