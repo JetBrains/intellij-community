@@ -45,7 +45,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("removal")
-public class JavaLiveTemplateTest extends LiveTemplateTestCase {
+public class
+
+JavaLiveTemplateTest extends LiveTemplateTestCase {
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
     return JAVA_LATEST_WITH_LATEST_JDK;
@@ -1001,6 +1003,17 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
       assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
     });
+  }
+
+  public void testSoutNotAvailableAfterDot() {
+    final TemplateImpl template =
+      TemplateSettings.getInstance().getTemplate("sout", "Java");
+      assertFalse(isApplicable("""
+                                 class A{
+                                  public static void main(){
+                                    .<caret>
+                                  }
+                                 }""", template));
   }
 
   public void testModCommandSout() {

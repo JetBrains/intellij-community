@@ -15,6 +15,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.LambdaUtil;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiDocumentManager;
@@ -27,6 +28,7 @@ import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiImplicitClass;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
@@ -49,6 +51,7 @@ import com.intellij.util.ProcessingContext;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.instanceOf;
@@ -142,6 +145,9 @@ public abstract class JavaCodeContextType extends TemplateContextType {
       if (isInJShellContext(element)) {
         return true;
       }
+      if (isAfterDot(element)) {
+        return false;
+      }
       if (isAfterExpression(element) || JavaStringContextType.isStringLiteral(element)) {
         return false;
       }
@@ -154,6 +160,14 @@ public abstract class JavaCodeContextType extends TemplateContextType {
       }
 
       return statement != null && statement.getTextRange().getStartOffset() == element.getTextRange().getStartOffset();
+    }
+
+    private static boolean isAfterDot(@Nullable PsiElement element) {
+      if (element == null) return false;
+      PsiElement prevVisibleLeaf = PsiTreeUtil.prevVisibleLeaf(element);
+      if (prevVisibleLeaf == null) return false;
+      return prevVisibleLeaf instanceof PsiJavaToken javaToken &&
+             javaToken.getTokenType() == JavaTokenType.DOT;
     }
   }
 
