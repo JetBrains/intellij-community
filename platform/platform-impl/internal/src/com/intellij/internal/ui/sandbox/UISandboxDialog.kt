@@ -7,6 +7,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.treeView.NodeRenderer
 import com.intellij.internal.Module
 import com.intellij.internal.showSources
+import com.intellij.internal.ui.sandbox.components.BadgePanel
 import com.intellij.internal.ui.sandbox.components.ComboBoxPanel
 import com.intellij.internal.ui.sandbox.components.ComboBoxWithWidePopupPanel
 import com.intellij.internal.ui.sandbox.components.JBIntSpinnerPanel
@@ -133,6 +134,7 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
   )
 
   private fun createComponentsNode() = Group("Components", children = listOf(
+    BadgePanel(),
     ComboBoxPanel(),
     ComboBoxWithWidePopupPanel(),
     JBIntSpinnerPanel(),

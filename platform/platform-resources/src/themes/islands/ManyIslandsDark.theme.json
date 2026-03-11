@@ -439,7 +439,21 @@
 
     "Badge": {
       "greenOutlineForeground": "text-success",
-      "greenOutlineBorderColor": "control-success-border"
+      "greenOutlineBorderColor": "control-success-border",
+      "blueSecondaryBackground": "#2E4D89CC",
+      "blueSecondaryForeground": "blue-140",
+      "blueBackground": "blue-90",
+      "blueForeground": "gray-20",
+      "greenSecondaryBackground": "#29583CCC",
+      "greenSecondaryForeground": "green-140",
+      "greenBackground": "green-90",
+      "greenForeground": "gray-20",
+      "purpleSecondaryBackground": "#574092CC",
+      "purpleSecondaryForeground": "purple-140",
+      "graySecondaryBackground": "#B5B7BD33",
+      "graySecondaryForeground": "gray-110",
+      "disabledBackground": "#B5B7BD33",
+      "disabledForeground": "gray-90"
     },
 
     "Banner": {
