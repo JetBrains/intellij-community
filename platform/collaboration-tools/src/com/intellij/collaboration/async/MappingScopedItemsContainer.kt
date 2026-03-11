@@ -106,8 +106,8 @@ class MappingScopedItemsContainer<T, V> internal constructor(
         }
       }
 
-      // cancel scopes that are no longer included in the list
-      val deletedKeys = currentMap.keys.toSet() - resultMap.keys.toSet()
+      // cancel scopes that are no longer included in the map
+      val deletedKeys = currentMap.keys - resultMap.keys
       for (key in deletedKeys) {
         val scopedValue = currentMap[key] ?: continue
         scopedValue.cancel()
@@ -131,15 +131,15 @@ class MappingScopedItemsContainer<T, V> internal constructor(
 
   companion object {
     fun <T, V> byIdentity(cs: CoroutineScope, mapper: CoroutineScope.(T) -> V): MappingScopedItemsContainer<T, V> =
-      MappingScopedItemsContainer(cs, HashingStrategy.identity(), mapper, {})
+      MappingScopedItemsContainer(cs, HashingStrategy.identity(), mapper) {}
 
     fun <T, V> byEquality(cs: CoroutineScope, mapper: CoroutineScope.(T) -> V): MappingScopedItemsContainer<T, V> =
-      MappingScopedItemsContainer(cs, HashingStrategy.canonical(), mapper, {})
+      MappingScopedItemsContainer(cs, HashingStrategy.canonical(), mapper) {}
   }
 
   private inner class MappingState(private val hashingStrategy: HashingStrategy<T>) {
     private val _map: MutableMap<T, ScopingWrapper<V>> = CollectionFactory.createLinkedCustomHashingStrategyMap(hashingStrategy)
-    val keys: List<T> get() = _map.keys.toList()
+    val keys: Set<T> get() = _map.keys
     val values: List<ScopingWrapper<V>> get() = _map.values.toList()
 
     operator fun get(key: T): ScopingWrapper<V>? = _map[key]
@@ -156,14 +156,28 @@ class MappingScopedItemsContainer<T, V> internal constructor(
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
       if (other !is MappingScopedItemsContainer<*, *>.MappingState) return false
-      if (keys != other.keys) return false
-      return keys.all { _map[it] == other._map[it] }
+      if (_map.size != other._map.size) return false
+
+      val iterator = _map.iterator()
+      val otherIterator = other._map.iterator()
+
+      while (iterator.hasNext() && otherIterator.hasNext()) {
+        val entry = iterator.next()
+        val otherEntry = otherIterator.next()
+
+        if (entry.key != otherEntry.key || entry.value != otherEntry.value) {
+          return false
+        }
+      }
+
+      return true
     }
 
     override fun hashCode(): Int {
-      var result = keys.hashCode()
-      for (key in keys) {
-        result = 31 * result + (_map[key].hashCode())
+      var result = 1
+      for ((key, value) in _map) {
+        result = 31 * result + (key?.hashCode() ?: 0)
+        result = 31 * result + value.hashCode()
       }
       return result
     }
