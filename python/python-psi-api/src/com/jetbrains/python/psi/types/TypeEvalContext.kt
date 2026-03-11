@@ -22,6 +22,7 @@ abstract class TypeEvalContext protected constructor() {
   abstract fun allowReturnTypes(element: PsiElement): Boolean
   abstract fun allowCallContext(element: PsiElement): Boolean
   abstract fun maySwitchToAST(element: PsiElement): Boolean
+  @ApiStatus.Internal
   open fun isExternal(): Boolean = false
   abstract fun withTracing(): TypeEvalContext
 
@@ -119,6 +120,7 @@ abstract class TypeEvalContext protected constructor() {
     /**
      * Special context to converting types from an external type checker, more aggressive assumptions can be made.
      */
+    @ApiStatus.Internal
     @JvmStatic
     fun externalContext(project: Project): TypeEvalContext {
       return TypeEvalContextFactory.getInstance().externalContext(project)

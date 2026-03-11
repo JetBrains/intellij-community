@@ -75,6 +75,7 @@ open class TypeEvalContextImpl internal constructor(
     return constraints.myAllowStubToAST && !element.inPyiFile() || inOrigin(element)
   }
 
+  @ApiStatus.Internal
   override fun isExternal(): Boolean = constraints.myIsExternal
 
   override fun withTracing(): TypeEvalContext {
