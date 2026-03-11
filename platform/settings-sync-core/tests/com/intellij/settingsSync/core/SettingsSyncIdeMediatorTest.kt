@@ -2,6 +2,7 @@ package com.intellij.settingsSync.core
 
 import com.intellij.configurationStore.ComponentStoreImpl
 import com.intellij.configurationStore.StateStorageManager
+import com.intellij.configurationStore.getFileRelativeToRootConfig
 import com.intellij.configurationStore.getStateSpec
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.TestFor
@@ -234,6 +235,22 @@ class SettingsSyncIdeMediatorTest : BasePlatformTestCase() {
         loadStateCallback()
       }
     }
+  }
+
+  @TestFor(issues = ["IJPL-222935"])
+  @Test
+  fun `getFileRelativeToRootConfig prepends options for environment-specific file specs`() {
+    // Plain option files (no slash) → options/ prefix added
+    assertThat(getFileRelativeToRootConfig("jdk.table.xml")).isEqualTo("options/jdk.table.xml")
+    assertThat(getFileRelativeToRootConfig("applicationLibraries.xml")).isEqualTo("options/applicationLibraries.xml")
+    assertThat(getFileRelativeToRootConfig("editor.xml")).isEqualTo("options/editor.xml")
+
+    // Environment-specific subdirectory prefix → options/ prefix must be added too
+    assertThat(getFileRelativeToRootConfig("WSL-Ubuntu/jdk.table.xml")).isEqualTo("options/WSL-Ubuntu/jdk.table.xml")
+    assertThat(getFileRelativeToRootConfig("WSL-Ubuntu/applicationLibraries.xml")).isEqualTo("options/WSL-Ubuntu/applicationLibraries.xml")
+
+    // Schema paths (folder/file that is not an env-specific options file) → returned as-is
+    assertThat(getFileRelativeToRootConfig("keymaps/my_keymap.xml")).isEqualTo("keymaps/my_keymap.xml")
   }
 
   @State(
