@@ -37,6 +37,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.text.MessageFormat;
 import java.util.concurrent.ExecutorService;
 
 import static com.intellij.openapi.editor.colors.EditorColors.REFERENCE_HYPERLINK_COLOR;
@@ -270,5 +271,10 @@ public abstract class InlineDebugRendererBase implements EditorCustomElementRend
   @ApiStatus.Internal
   public String getSpecialRenderId() {
     return specialRenderId;
+  }
+
+  @Override
+  public String toString() {
+    return MessageFormat.format("{0} {1}", getIcon(), getPresentation());
   }
 }
