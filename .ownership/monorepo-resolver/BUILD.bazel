@@ -1,15 +1,22 @@
 ### auto-generated section `build intellij.codeowners.monorepo.resolver` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "codeowners-monorepo-resolver_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "codeowners-monorepo-resolver",
   module_name = "intellij.codeowners.monorepo.resolver",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":codeowners-monorepo-resolver_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:codeowners-monorepo-resolver-ownership-kotlinx-serialization-json-okio",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//.ownership/lib:codeowners",
   ]
 )
@@ -21,6 +28,8 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     ":codeowners-monorepo-resolver",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
     "//.ownership/lib:codeowners_test_lib",
   ]
 )

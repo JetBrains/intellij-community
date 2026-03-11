@@ -469,48 +469,6 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_kotlinx-kotlinx-serialization-json-okio-jvm-1_9_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-okio-jvm/1.9.0/kotlinx-serialization-json-okio-jvm-1.9.0.jar",
-  sha256 = "ab772ae19a4f5b2f83c8b6a422b62047642b894984bb6244d04ffeb8bdc261bd",
-  downloaded_file_path = "kotlinx-serialization-json-okio-jvm-1.9.0.jar"
-)
-
-http_file(
-  name = "org_jetbrains_kotlinx-kotlinx-serialization-json-jvm-1_9_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-jvm/1.9.0/kotlinx-serialization-json-jvm-1.9.0.jar",
-  sha256 = "d94cc34cae39246a1af74fda63f9c4812ce12216ef641d5fa3bbbb539a6922d8",
-  downloaded_file_path = "kotlinx-serialization-json-jvm-1.9.0.jar"
-)
-
-http_file(
-  name = "com_squareup_okio-okio-jvm-3_9_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.9.0/okio-jvm-3.9.0.jar",
-  sha256 = "ddc386ff14bd25d5c934167196eaf45b18de4f28e1c55a4db37ae594cbfd37e4",
-  downloaded_file_path = "okio-jvm-3.9.0.jar"
-)
-
-http_file(
-  name = "org_jetbrains_kotlinx-kotlinx-serialization-json-okio-jvm-1_9_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-okio-jvm/1.9.0/kotlinx-serialization-json-okio-jvm-1.9.0-sources.jar",
-  sha256 = "ac638145ceb59331b5e47cf367315a5efcb0c958a95be4296033332f686dd857",
-  downloaded_file_path = "kotlinx-serialization-json-okio-jvm-1.9.0-sources.jar"
-)
-
-http_file(
-  name = "org_jetbrains_kotlinx-kotlinx-serialization-json-jvm-1_9_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-jvm/1.9.0/kotlinx-serialization-json-jvm-1.9.0-sources.jar",
-  sha256 = "6c231ddcd95b1023ffb72cfd98023a035f666e46b4479d68eff83cc30892396c",
-  downloaded_file_path = "kotlinx-serialization-json-jvm-1.9.0-sources.jar"
-)
-
-http_file(
-  name = "com_squareup_okio-okio-jvm-3_9_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.9.0/okio-jvm-3.9.0-sources.jar",
-  sha256 = "b8ab886c9ed94b6d22fe177efab23f66b2fe0cbcfbf9902d226667038410e0b1",
-  downloaded_file_path = "okio-jvm-3.9.0-sources.jar"
-)
-
-http_file(
   name = "io_github_java-diff-utils-java-diff-utils-4_12_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/java-diff-utils/java-diff-utils/4.12/java-diff-utils-4.12.jar",
   sha256 = "9990a2039778f6b4cc94790141c2868864eacee0620c6c459451121a901cd5b5",
@@ -8113,6 +8071,20 @@ http_file(
 )
 
 http_file(
+  name = "org_jetbrains_kotlinx-kotlinx-serialization-json-jvm-1_9_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-jvm/1.9.0/kotlinx-serialization-json-jvm-1.9.0.jar",
+  sha256 = "d94cc34cae39246a1af74fda63f9c4812ce12216ef641d5fa3bbbb539a6922d8",
+  downloaded_file_path = "kotlinx-serialization-json-jvm-1.9.0.jar"
+)
+
+http_file(
+  name = "org_jetbrains_kotlinx-kotlinx-serialization-json-jvm-1_9_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-jvm/1.9.0/kotlinx-serialization-json-jvm-1.9.0-sources.jar",
+  sha256 = "6c231ddcd95b1023ffb72cfd98023a035f666e46b4479d68eff83cc30892396c",
+  downloaded_file_path = "kotlinx-serialization-json-jvm-1.9.0-sources.jar"
+)
+
+http_file(
   name = "org_jetbrains_kotlinx-kotlinx-serialization-json-io-jvm-1_9_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-io-jvm/1.9.0/kotlinx-serialization-json-io-jvm-1.9.0.jar",
   sha256 = "98abb132b03e11b80318d45350ec9ebbb5453d26505e81331bf2eea7143b6fbe",
@@ -13902,10 +13874,24 @@ http_file(
 )
 
 http_file(
+  name = "com_squareup_okio-okio-jvm-3_9_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.9.0/okio-jvm-3.9.0.jar",
+  sha256 = "ddc386ff14bd25d5c934167196eaf45b18de4f28e1c55a4db37ae594cbfd37e4",
+  downloaded_file_path = "okio-jvm-3.9.0.jar"
+)
+
+http_file(
   name = "com_squareup_okhttp3-okhttp-5_0_0-alpha_14-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okhttp3/okhttp/5.0.0-alpha.14/okhttp-5.0.0-alpha.14-sources.jar",
   sha256 = "f596d92475c49de809a3ca7a5f2558f06a3b51c00c96ee8037c18b6618ac9d41",
   downloaded_file_path = "okhttp-5.0.0-alpha.14-sources.jar"
+)
+
+http_file(
+  name = "com_squareup_okio-okio-jvm-3_9_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.9.0/okio-jvm-3.9.0-sources.jar",
+  sha256 = "b8ab886c9ed94b6d22fe177efab23f66b2fe0cbcfbf9902d226667038410e0b1",
+  downloaded_file_path = "okio-jvm-3.9.0-sources.jar"
 )
 
 http_file(

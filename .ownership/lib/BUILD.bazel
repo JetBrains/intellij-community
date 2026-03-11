@@ -13,18 +13,25 @@ java_binary(
 )
 
 ### auto-generated section `build intellij.codeowners` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "codeowners_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "codeowners",
   module_name = "intellij.codeowners",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":codeowners_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kaml",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:codeowners-ownership-kotlinx-serialization-json-okio",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "@lib//:jetbrains-intellij-deps-eclipse-jgit",
     "@lib//:slf4j-api",
     "@lib//:tc_service_messages",
@@ -37,6 +44,10 @@ jvm_library(
   module_name = "intellij.codeowners",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  runtime_deps = [":codeowners"]
+  runtime_deps = [
+    ":codeowners",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.codeowners` end

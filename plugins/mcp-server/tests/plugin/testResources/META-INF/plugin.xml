@@ -19,6 +19,8 @@
     <module name="intellij.platform.testFramework.common"/>
     <module name="intellij.platform.testFramework.core"/>
     <module name="intellij.platform.testFramework.impl"/>
+    <module name="intellij.codeowners"/>
+    <module name="intellij.codeowners.monorepo.resolver"/>
     <module name="intellij.codeowners.runtime.resolver"/>
     <module name="intellij.platform.testFramework.junit5"/>
     <module name="intellij.tools.testsBootstrap"/>
