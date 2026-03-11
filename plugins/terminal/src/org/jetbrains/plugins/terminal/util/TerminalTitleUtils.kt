@@ -121,7 +121,7 @@ object TerminalTitleUtils {
     return flow.distinctUntilChanged()
   }
 
-  private val TITLE_UPDATE_DELAY: Duration = 300.milliseconds
+  val TITLE_UPDATE_DELAY: Duration = 300.milliseconds
 
   data class TitleData(@param:NlsSafe val text: String, val isUserDefined: Boolean)
 }
