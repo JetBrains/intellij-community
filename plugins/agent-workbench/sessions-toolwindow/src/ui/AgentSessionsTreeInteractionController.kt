@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions.toolwindow.ui
 
 import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
@@ -228,26 +229,26 @@ internal class AgentSessionsTreeInteractionController(
         if (!includeOpenActions) return false
         if (isAgentSessionNewSessionId(treeNode.thread.id)) return false
         val path = pathForThreadNode(id, treeNode.project.path)
-        launchService.openChatThread(path, treeNode.thread, project)
+        launchService.openChatThread(path, treeNode.thread, AgentWorkbenchEntryPoint.TREE_ROW, project)
         true
       }
 
       is SessionTreeNode.SubAgent -> {
         if (!includeOpenActions) return false
         val path = pathForThreadNode(id, treeNode.project.path)
-        launchService.openChatSubAgent(path, treeNode.thread, treeNode.subAgent, project)
+        launchService.openChatSubAgent(path, treeNode.thread, treeNode.subAgent, AgentWorkbenchEntryPoint.TREE_ROW, project)
         true
       }
 
       is SessionTreeNode.Project -> {
         if (!includeOpenActions) return false
-        launchService.openOrFocusProject(treeNode.project.path)
+        launchService.openOrFocusProject(treeNode.project.path, AgentWorkbenchEntryPoint.TREE_ROW)
         true
       }
 
       is SessionTreeNode.Worktree -> {
         if (!includeOpenActions) return false
-        launchService.openOrFocusProject(treeNode.worktree.path)
+        launchService.openOrFocusProject(treeNode.worktree.path, AgentWorkbenchEntryPoint.TREE_ROW)
         true
       }
 

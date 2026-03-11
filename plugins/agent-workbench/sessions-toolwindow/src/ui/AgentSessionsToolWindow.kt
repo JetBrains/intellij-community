@@ -3,12 +3,14 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 
 // @spec community/plugins/agent-workbench/spec/agent-sessions.spec.md
 // @spec community/plugins/agent-workbench/spec/agent-sessions-thread-visibility.spec.md
+// @spec community/plugins/agent-workbench/spec/agent-workbench-telemetry.spec.md
 
 import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBehaviors
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
@@ -35,6 +37,27 @@ import javax.swing.BoxLayout
 import javax.swing.JPanel
 import javax.swing.ToolTipManager
 import javax.swing.tree.TreePath
+
+internal fun dispatchTreeRowOverlayQuickCreate(
+  project: Project,
+  path: String,
+  provider: AgentSessionProvider,
+  createNewSession: (
+    path: String,
+    provider: AgentSessionProvider,
+    mode: AgentSessionLaunchMode,
+    entryPoint: AgentWorkbenchEntryPoint,
+    currentProject: Project,
+  ) -> Unit,
+) {
+  createNewSession(
+    path,
+    provider,
+    AgentSessionLaunchMode.STANDARD,
+    AgentWorkbenchEntryPoint.TREE_ROW_OVERLAY,
+    project,
+  )
+}
 
 internal class AgentSessionsToolWindowPanel(
   private val project: Project,
@@ -174,11 +197,19 @@ internal class AgentSessionsToolWindowPanel(
       nodeResolver = ::sessionTreeNode,
       lastUsedProvider = { lastUsedProvider },
       onQuickCreate = { path, provider ->
-        launchService.createNewSession(
+        dispatchTreeRowOverlayQuickCreate(
+          project = project,
           path = path,
           provider = provider,
-          mode = AgentSessionLaunchMode.STANDARD,
-          currentProject = project,
+          createNewSession = { quickPath, quickProvider, mode, entryPoint, currentProject ->
+            launchService.createNewSession(
+              path = quickPath,
+              provider = quickProvider,
+              mode = mode,
+              entryPoint = entryPoint,
+              currentProject = currentProject,
+            )
+          },
         )
       },
       onShowPopup = { nodeId, node, anchorRect, row ->

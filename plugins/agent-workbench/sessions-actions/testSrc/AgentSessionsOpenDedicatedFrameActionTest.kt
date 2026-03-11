@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsOpenDedicatedFrameAction
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.ProjectManager
@@ -15,9 +16,13 @@ class AgentSessionsOpenDedicatedFrameActionTest {
   @Test
   fun visibleInNonDedicatedProjectAndInvokesOpenCallback() {
     var openedProjectName: String? = null
+    var entryPoint: AgentWorkbenchEntryPoint? = null
     val action = AgentSessionsOpenDedicatedFrameAction(
       isDedicatedProject = { false },
-      openDedicatedFrame = { project -> openedProjectName = project.name },
+      openDedicatedFrame = { project, capturedEntryPoint ->
+        openedProjectName = project.name
+        entryPoint = capturedEntryPoint
+      },
     )
     val event = testEventWithProject(action)
 
@@ -28,6 +33,7 @@ class AgentSessionsOpenDedicatedFrameActionTest {
     action.actionPerformed(event)
 
     assertThat(openedProjectName).isEqualTo(event.project?.name)
+    assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.WINDOW_MENU)
   }
 
   @Test
@@ -35,7 +41,7 @@ class AgentSessionsOpenDedicatedFrameActionTest {
     var invocations = 0
     val action = AgentSessionsOpenDedicatedFrameAction(
       isDedicatedProject = { true },
-      openDedicatedFrame = { _ -> invocations++ },
+      openDedicatedFrame = { _, _ -> invocations++ },
     )
     val event = testEventWithProject(action)
 
@@ -53,7 +59,7 @@ class AgentSessionsOpenDedicatedFrameActionTest {
     var invocations = 0
     val action = AgentSessionsOpenDedicatedFrameAction(
       isDedicatedProject = { false },
-      openDedicatedFrame = { _ -> invocations++ },
+      openDedicatedFrame = { _, _ -> invocations++ },
     )
     val dataContext = SimpleDataContext.builder().build()
     val event = TestActionEvent.createTestEvent(action, dataContext)

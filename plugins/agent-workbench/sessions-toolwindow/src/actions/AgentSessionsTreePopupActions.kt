@@ -13,6 +13,7 @@ import com.intellij.agent.workbench.sessions.core.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
@@ -54,27 +55,27 @@ internal fun resolveAgentSessionsTreePopupActionContext(event: AnActionEvent): A
 internal class AgentSessionsTreePopupOpenAction : DumbAwareAction {
   private val resolveContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext?
   private val isDedicatedProject: (Project) -> Boolean
-  private val openProject: (String) -> Unit
-  private val openThread: (String, AgentSessionThread, Project) -> Unit
-  private val openSubAgent: (String, AgentSessionThread, AgentSubAgent, Project) -> Unit
+  private val openProject: (String, AgentWorkbenchEntryPoint) -> Unit
+  private val openThread: (String, AgentSessionThread, Project, AgentWorkbenchEntryPoint) -> Unit
+  private val openSubAgent: (String, AgentSessionThread, AgentSubAgent, Project, AgentWorkbenchEntryPoint) -> Unit
 
   @Suppress("unused")
   constructor() {
     resolveContext = ::resolveAgentSessionsTreePopupActionContext
     isDedicatedProject = AgentWorkbenchDedicatedFrameProjectManager::isDedicatedProject
-    openProject = { path -> service<AgentSessionLaunchService>().openOrFocusProject(path) }
-    openThread = { path, thread, project -> service<AgentSessionLaunchService>().openChatThread(path, thread, project) }
-    openSubAgent = { path, thread, subAgent, project ->
-      service<AgentSessionLaunchService>().openChatSubAgent(path, thread, subAgent, project)
+    openProject = { path, entryPoint -> service<AgentSessionLaunchService>().openOrFocusProject(path, entryPoint) }
+    openThread = { path, thread, project, entryPoint -> service<AgentSessionLaunchService>().openChatThread(path, thread, entryPoint, project) }
+    openSubAgent = { path, thread, subAgent, project, entryPoint ->
+      service<AgentSessionLaunchService>().openChatSubAgent(path, thread, subAgent, entryPoint, project)
     }
   }
 
   internal constructor(
     resolveContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext?,
     isDedicatedProject: (Project) -> Boolean = AgentWorkbenchDedicatedFrameProjectManager::isDedicatedProject,
-    openProject: (String) -> Unit,
-    openThread: (String, AgentSessionThread, Project) -> Unit,
-    openSubAgent: (String, AgentSessionThread, AgentSubAgent, Project) -> Unit,
+    openProject: (String, AgentWorkbenchEntryPoint) -> Unit,
+    openThread: (String, AgentSessionThread, Project, AgentWorkbenchEntryPoint) -> Unit,
+    openSubAgent: (String, AgentSessionThread, AgentSubAgent, Project, AgentWorkbenchEntryPoint) -> Unit,
   ) {
     this.resolveContext = resolveContext
     this.isDedicatedProject = isDedicatedProject
@@ -99,15 +100,15 @@ internal class AgentSessionsTreePopupOpenAction : DumbAwareAction {
   override fun actionPerformed(e: AnActionEvent) {
     val context = resolveContext(e) ?: return
     when (val node = context.node) {
-      is SessionTreeNode.Project -> openProject(node.project.path)
-      is SessionTreeNode.Worktree -> openProject(node.worktree.path)
+      is SessionTreeNode.Project -> openProject(node.project.path, AgentWorkbenchEntryPoint.TREE_POPUP)
+      is SessionTreeNode.Worktree -> openProject(node.worktree.path, AgentWorkbenchEntryPoint.TREE_POPUP)
       is SessionTreeNode.Thread -> {
         val path = pathForThreadNode(context.nodeId, node.project.path)
-        openThread(path, node.thread, context.project)
+        openThread(path, node.thread, context.project, AgentWorkbenchEntryPoint.TREE_POPUP)
       }
       is SessionTreeNode.SubAgent -> {
         val path = pathForThreadNode(context.nodeId, node.project.path)
-        openSubAgent(path, node.thread, node.subAgent, context.project)
+        openSubAgent(path, node.thread, node.subAgent, context.project, AgentWorkbenchEntryPoint.TREE_POPUP)
       }
       else -> Unit
     }
@@ -169,7 +170,7 @@ internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
     private val resolveContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext? =
     ::resolveAgentSessionsTreePopupActionContext,
     private val allBridges: () -> List<AgentSessionProviderBridge> = AgentSessionProviderBridges::allBridges,
-    private val createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project) -> Unit = ::createNewThreadViaService,
+    private val createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit = ::createNewThreadViaService,
   private val lastUsedProvider: () -> AgentSessionProvider? = { service<AgentSessionUiPreferencesStateService>().getLastUsedProvider() },
 ) : ActionGroup(), DumbAware {
 
@@ -192,7 +193,7 @@ internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
     val context = resolveContext(e) ?: return
     val path = newThreadPathFromNode(context) ?: return
     val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider())
-    launchQuickStartThread(path, context.project, actionModel.quickStartItem, createNewSession)
+    launchQuickStartThread(path, context.project, actionModel.quickStartItem, AgentWorkbenchEntryPoint.TREE_POPUP, createNewSession)
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
@@ -203,6 +204,7 @@ internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
       path = path,
       project = context.project,
       menuModel = actionModel.menuModel,
+      entryPoint = AgentWorkbenchEntryPoint.TREE_POPUP,
       createNewSession = createNewSession,
     )
   }

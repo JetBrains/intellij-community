@@ -12,6 +12,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderActionModel
 import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderMenuModel
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -28,8 +29,9 @@ fun createNewThreadViaService(
   provider: AgentSessionProvider,
   mode: AgentSessionLaunchMode,
   currentProject: Project,
+  entryPoint: AgentWorkbenchEntryPoint,
 ) {
-  service<AgentSessionLaunchService>().createNewSession(path, provider, mode, currentProject)
+  service<AgentSessionLaunchService>().createNewSession(path, provider, mode, entryPoint, currentProject)
 }
 
 fun buildNewThreadMenuModel(bridges: List<AgentSessionProviderBridge>): AgentSessionProviderMenuModel {
@@ -47,17 +49,19 @@ fun launchQuickStartThread(
   path: String,
   project: Project,
   quickStartItem: AgentSessionProviderMenuItem?,
-  createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project) -> Unit,
+  entryPoint: AgentWorkbenchEntryPoint,
+  createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit,
 ) {
   val item = quickStartItem ?: return
-  createNewSession(path, item.bridge.provider, AgentSessionLaunchMode.STANDARD, project)
+  createNewSession(path, item.bridge.provider, AgentSessionLaunchMode.STANDARD, project, entryPoint)
 }
 
 fun buildNewThreadMenuActions(
   path: String,
   project: Project,
   menuModel: AgentSessionProviderMenuModel,
-  createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project) -> Unit,
+  entryPoint: AgentWorkbenchEntryPoint,
+  createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit,
 ): Array<AnAction> {
   if (!menuModel.hasEntries()) {
     return emptyArray()
@@ -66,11 +70,12 @@ fun buildNewThreadMenuActions(
   val actions = ArrayList<AnAction>(menuModel.standardItems.size + menuModel.yoloItems.size + 2)
   menuModel.standardItems.forEach { item ->
     actions += AgentSessionsCreateThreadAction(
-      path = path,
-      item = item,
-      project = project,
-      createNewSession = createNewSession,
-    )
+        path = path,
+        item = item,
+        project = project,
+        entryPoint = entryPoint,
+        createNewSession = createNewSession,
+      )
   }
   if (menuModel.yoloItems.isNotEmpty()) {
     if (menuModel.standardItems.isNotEmpty()) {
@@ -82,6 +87,7 @@ fun buildNewThreadMenuActions(
         path = path,
         item = item,
         project = project,
+        entryPoint = entryPoint,
         createNewSession = createNewSession,
       )
     }
@@ -93,7 +99,8 @@ private class AgentSessionsCreateThreadAction(
   private val path: String,
   private val item: AgentSessionProviderMenuItem,
   private val project: Project,
-  private val createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project) -> Unit,
+  private val entryPoint: AgentWorkbenchEntryPoint,
+  private val createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit,
 ) : DumbAwareAction(AgentSessionsBundle.message(item.labelKey), null, providerIcon(item.bridge.provider)) {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = item.isEnabled
@@ -116,7 +123,7 @@ private class AgentSessionsCreateThreadAction(
 
   override fun actionPerformed(e: AnActionEvent) {
     if (!item.isEnabled) return
-    createNewSession(path, item.bridge.provider, item.mode, project)
+    createNewSession(path, item.bridge.provider, item.mode, project, entryPoint)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

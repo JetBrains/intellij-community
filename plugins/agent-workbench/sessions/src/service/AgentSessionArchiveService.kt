@@ -1,11 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.service
 
+// @spec community/plugins/agent-workbench/spec/agent-workbench-telemetry.spec.md
+
 import com.intellij.agent.workbench.chat.closeAndForgetAgentChatsForThread
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBehaviors
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelemetry
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.archiveThreadTargetKey
 import com.intellij.agent.workbench.sessions.model.normalizeArchiveThreadTarget
@@ -61,7 +65,11 @@ class AgentSessionArchiveService internal constructor(
     return bridge.supportsArchiveThread
   }
 
-  fun archiveThreads(targets: List<ArchiveThreadTarget>, preferredSingleArchivedLabel: @NlsSafe String? = null) {
+  fun archiveThreads(
+    targets: List<ArchiveThreadTarget>,
+    entryPoint: AgentWorkbenchEntryPoint,
+    preferredSingleArchivedLabel: @NlsSafe String? = null,
+  ) {
     val normalizedTargets = normalizeArchiveTargets(targets)
     if (normalizedTargets.isEmpty()) {
       return
@@ -70,6 +78,7 @@ class AgentSessionArchiveService internal constructor(
       key = buildArchiveThreadsActionKey(normalizedTargets),
       droppedActionMessage = "Dropped duplicate archive threads action for ${normalizedTargets.size} targets",
     ) {
+      AgentWorkbenchTelemetry.logThreadArchiveRequested(entryPoint, normalizedTargets.singleProviderOrNull())
       val outcome = archiveTargetsInternal(normalizedTargets, preferredSingleArchivedLabel)
       if (outcome.archivedTargets.isEmpty()) {
         return@launchDropAction
@@ -233,6 +242,10 @@ class AgentSessionArchiveService internal constructor(
       normalizedByKey.putIfAbsent(key, normalizedTarget)
     }
     return normalizedByKey.values.toList()
+  }
+
+  private fun List<ArchiveThreadTarget>.singleProviderOrNull(): AgentSessionProvider? {
+    return map(ArchiveThreadTarget::provider).distinct().singleOrNull()
   }
 
   private fun showArchiveNotification(outcome: ArchiveBatchOutcome) {

@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProjectFromToolbarAction
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.ide.ui.ProductIcons
 import com.intellij.openapi.actionSystem.AnAction
@@ -36,10 +37,14 @@ class AgentSessionsGoToSourceProjectFromToolbarActionTest {
   fun dedicatedFrameWithSourceProjectIsVisibleAndOpensProject() {
     val sourcePath = "/tmp/source-project"
     var openedPath: String? = null
+    var entryPoint: AgentWorkbenchEntryPoint? = null
     val action = AgentSessionsGoToSourceProjectFromToolbarAction(
       selectedSourcePath = { sourcePath },
       isDedicatedProject = { true },
-      openProject = { path -> openedPath = path },
+      openProject = { path, capturedEntryPoint ->
+        openedPath = path
+        entryPoint = capturedEntryPoint
+      },
     )
     val event = testEventWithProject(action)
 
@@ -55,6 +60,7 @@ class AgentSessionsGoToSourceProjectFromToolbarActionTest {
     action.actionPerformed(event)
 
     assertThat(openedPath).isEqualTo(normalizeAgentWorkbenchPath(sourcePath))
+    assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.TOOLBAR)
   }
 
   @Test
@@ -63,7 +69,7 @@ class AgentSessionsGoToSourceProjectFromToolbarActionTest {
     val action = AgentSessionsGoToSourceProjectFromToolbarAction(
       selectedSourcePath = { "/tmp/source-project" },
       isDedicatedProject = { false },
-      openProject = { _ -> openCalls++ },
+      openProject = { _, _ -> openCalls++ },
     )
     val event = testEventWithProject(action)
 
@@ -82,7 +88,7 @@ class AgentSessionsGoToSourceProjectFromToolbarActionTest {
     val action = AgentSessionsGoToSourceProjectFromToolbarAction(
       selectedSourcePath = { null },
       isDedicatedProject = { true },
-      openProject = { _ -> openCalls++ },
+      openProject = { _, _ -> openCalls++ },
     )
     val event = testEventWithProject(action)
 
@@ -107,7 +113,7 @@ class AgentSessionsGoToSourceProjectFromToolbarActionTest {
     val action = AgentSessionsGoToSourceProjectFromToolbarAction(
       selectedSourcePath = { AgentWorkbenchDedicatedFrameProjectManager.dedicatedProjectPath() },
       isDedicatedProject = { true },
-      openProject = { _ -> openCalls++ },
+      openProject = { _, _ -> openCalls++ },
     )
     val event = testEventWithProject(action)
 
