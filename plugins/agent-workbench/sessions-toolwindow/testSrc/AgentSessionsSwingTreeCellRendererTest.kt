@@ -2,10 +2,13 @@
 package com.intellij.agent.workbench.sessions.toolwindow
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
-import com.intellij.agent.workbench.common.withAgentThreadActivityBadge
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
+import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
+import com.intellij.agent.workbench.sessions.core.providers.agentSessionThreadStatusIcon
+import com.intellij.agent.workbench.sessions.core.providers.clearAgentSessionThreadStatusIconCacheForTests
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.model.ProjectBuildSystemBadge
@@ -44,6 +47,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.awt.Rectangle
+import javax.swing.Icon
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 
@@ -51,12 +55,14 @@ import javax.swing.tree.TreePath
 class AgentSessionsSwingTreeCellRendererTest {
   @BeforeEach
   fun setUp() {
+    clearAgentSessionThreadStatusIconCacheForTests()
     IconLoader.activate()
     IconManager.activate(null)
   }
 
   @AfterEach
   fun tearDown() {
+    clearAgentSessionThreadStatusIconCacheForTests()
     IconManager.deactivate()
     IconLoader.deactivate()
   }
@@ -573,7 +579,6 @@ class AgentSessionsSwingTreeCellRendererTest {
       archived = false,
       activity = AgentThreadActivity.READY,
     )
-    val providerBaseIcon = AllIcons.Toolwindows.ToolWindowMessages
     val readyThreadId = SessionTreeId.Thread(project.path, readyThread.provider, readyThread.id)
     val renderer = SessionTreeCellRenderer(
       nowProvider = { now },
@@ -596,14 +601,11 @@ class AgentSessionsSwingTreeCellRendererTest {
           else -> null
         }
       },
-      providerIconProvider = { providerBaseIcon },
     )
 
     renderer.getTreeCellRendererComponent(tree, descriptorValue(readyThreadId), false, false, true, 0, false)
     val readyIcon = renderer.icon
-    assertThat(readyIcon).isNotNull()
-    readyIcon ?: return
-    assertThat(readyIcon).isNotEqualTo(providerBaseIcon)
+    assertScaledThreadStatusIcon(readyIcon, AgentSessionProvider.CODEX, AgentThreadActivity.READY)
 
     renderer.getTreeCellRendererComponent(
       tree,
@@ -614,7 +616,9 @@ class AgentSessionsSwingTreeCellRendererTest {
       0,
       false,
     )
-    assertThat(renderer.icon).isNotSameAs(readyIcon)
+    val processingIcon = renderer.icon
+    assertScaledThreadStatusIcon(processingIcon, AgentSessionProvider.CODEX, AgentThreadActivity.PROCESSING)
+    assertThat(processingIcon).isNotSameAs(readyIcon)
 
     renderer.getTreeCellRendererComponent(
       tree,
@@ -625,7 +629,9 @@ class AgentSessionsSwingTreeCellRendererTest {
       0,
       false,
     )
-    assertThat(renderer.icon).isNotSameAs(readyIcon)
+    val reviewingIcon = renderer.icon
+    assertScaledThreadStatusIcon(reviewingIcon, AgentSessionProvider.CODEX, AgentThreadActivity.REVIEWING)
+    assertThat(reviewingIcon).isNotSameAs(readyIcon)
 
     renderer.getTreeCellRendererComponent(
       tree,
@@ -636,8 +642,9 @@ class AgentSessionsSwingTreeCellRendererTest {
       0,
       false,
     )
-    assertThat(renderer.icon).isNotNull()
-    assertThat(renderer.icon).isNotSameAs(readyIcon)
+    val unreadIcon = renderer.icon
+    assertScaledThreadStatusIcon(unreadIcon, AgentSessionProvider.CODEX, AgentThreadActivity.UNREAD)
+    assertThat(unreadIcon).isNotSameAs(readyIcon)
   }
 
   @Test
@@ -659,21 +666,16 @@ class AgentSessionsSwingTreeCellRendererTest {
       nodeResolver = { id ->
         if (id == threadId) SessionTreeNode.Thread(project, thread) else null
       },
-      providerIconProvider = { null },
     )
 
-    renderer.getTreeCellRendererComponent(tree, descriptorValue(threadId), false, false, true, 0, false)
+    AgentSessionProviderBridges.withRegistryForTest(InMemoryAgentSessionProviderRegistry(emptyList())) {
+      clearAgentSessionThreadStatusIconCacheForTests()
 
-    val renderedIcon = renderer.icon
-    assertThat(renderedIcon).isNotNull()
-    renderedIcon ?: return
+      renderer.getTreeCellRendererComponent(tree, descriptorValue(threadId), false, false, true, 0, false)
 
-    val expectedFallback = withAgentThreadActivityBadge(
-      IconUtil.toSize(AllIcons.Toolwindows.ToolWindowMessages, JBUI.scale(12), JBUI.scale(12)),
-      AgentThreadActivity.READY,
-    )
-    assertThat(renderedIcon.javaClass).isEqualTo(expectedFallback.javaClass)
-    assertThat(renderer.getCharSequence(true).toString()).doesNotContain("\u25CF")
+      assertScaledThreadStatusIcon(renderer.icon, provider = null, activity = AgentThreadActivity.READY)
+      assertThat(renderer.getCharSequence(true).toString()).doesNotContain("\u25CF")
+    }
   }
 
   @Test
@@ -983,6 +985,20 @@ class AgentSessionsSwingTreeCellRendererTest {
       setSize(width, 320)
       doLayout()
     }
+  }
+
+  private fun assertScaledThreadStatusIcon(renderedIcon: Icon?, provider: AgentSessionProvider?, activity: AgentThreadActivity) {
+    assertThat(renderedIcon).isNotNull()
+    renderedIcon ?: return
+
+    val expected = IconUtil.toSize(
+      agentSessionThreadStatusIcon(provider, activity),
+      JBUI.scale(12),
+      JBUI.scale(12),
+    )
+    assertThat(renderedIcon.javaClass).isEqualTo(expected.javaClass)
+    assertThat(renderedIcon.iconWidth).isEqualTo(expected.iconWidth)
+    assertThat(renderedIcon.iconHeight).isEqualTo(expected.iconHeight)
   }
 
   private fun descriptorValue(id: SessionTreeId): NodeDescriptor<Any?> = TestDescriptor(id)

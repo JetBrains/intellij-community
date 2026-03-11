@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.codex.sessions
 
+import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity
 import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutSessionBackend
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin
@@ -136,6 +137,68 @@ class CodexRolloutSessionBackendFileWatchIntegrationTest {
   }
 
   @Test
+  fun backendWatcherRefreshesProcessingThreadToUnreadAfterCompletionRewrite() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-watch-complete")
+      Files.createDirectories(projectDir)
+      val rollout = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("18")
+        .resolve("rollout-watch-complete.jsonl")
+      writeRollout(
+        file = rollout,
+        lines = listOf(
+          sessionMetaLine(timestamp = "2026-02-18T12:30:00.000Z", id = "session-watch-complete", cwd = projectDir),
+          """{"timestamp":"2026-02-18T12:30:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Investigate stale working badge"}}""",
+          """{"timestamp":"2026-02-18T12:30:02.000Z","type":"event_msg","payload":{"type":"task_started"}}""",
+          """{"timestamp":"2026-02-18T12:30:03.000Z","type":"event_msg","payload":{"type":"agent_message","message":"Still working"}}""",
+        ),
+      )
+
+      val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
+      val updates = Channel<Unit>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.updates.collect {
+          updates.trySend(Unit)
+        }
+      }
+
+      try {
+        val initialThreads = backend.listThreads(path = projectDir.toString(), openProject = null)
+        assertThat(initialThreads).hasSize(1)
+        assertThat(initialThreads.single().activity).isEqualTo(CodexSessionActivity.PROCESSING)
+
+        primeWatcher(
+          updates = updates,
+          sessionsDirectory = rollout.parent,
+        )
+        writeRollout(
+          file = rollout,
+          lines = listOf(
+            sessionMetaLine(timestamp = "2026-02-18T12:30:00.000Z", id = "session-watch-complete", cwd = projectDir),
+            """{"timestamp":"2026-02-18T12:30:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Investigate stale working badge"}}""",
+            """{"timestamp":"2026-02-18T12:30:02.000Z","type":"event_msg","payload":{"type":"task_started"}}""",
+            """{"timestamp":"2026-02-18T12:30:03.000Z","type":"event_msg","payload":{"type":"agent_message","message":"Still working"}}""",
+            """{"timestamp":"2026-02-18T12:30:04.000Z","type":"event_msg","payload":{"type":"agent_message","message":"Final assistant output"}}""",
+            """{"timestamp":"2026-02-18T12:30:05.000Z","type":"event_msg","payload":{"type":"task_complete"}}""",
+          ),
+        )
+
+        awaitWatcherUpdate(updates)
+
+        val refreshedActivity = awaitThreadActivity(
+          backend = backend,
+          projectPath = projectDir.toString(),
+          threadId = "session-watch-complete",
+          expectedActivity = CodexSessionActivity.UNREAD,
+        )
+        assertThat(refreshedActivity).isEqualTo(CodexSessionActivity.UNREAD)
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
   fun updatesCollectorCancelsPromptlyDuringWatcherStartup() {
     runBlocking(Dispatchers.Default) {
       val sessionsRoot = tempDir.resolve("sessions")
@@ -195,6 +258,27 @@ private suspend fun awaitThreadTitle(
     }
   }
   return requireNotNull(resolvedTitle) { "Timed out waiting for thread $threadId title" }
+}
+
+private suspend fun awaitThreadActivity(
+  backend: CodexRolloutSessionBackend,
+  projectPath: String,
+  threadId: String,
+  expectedActivity: CodexSessionActivity,
+): CodexSessionActivity {
+  var resolvedActivity: CodexSessionActivity? = null
+  withTimeoutOrNull(FILE_WATCH_UPDATE_TIMEOUT) {
+    while (true) {
+      val threads = backend.listThreads(path = projectPath, openProject = null)
+      val thread = threads.firstOrNull { it.thread.id == threadId }
+      if (thread?.activity == expectedActivity) {
+        resolvedActivity = thread.activity
+        break
+      }
+      delay(100.milliseconds)
+    }
+  }
+  return requireNotNull(resolvedActivity) { "Timed out waiting for thread $threadId activity $expectedActivity" }
 }
 
 private fun drainUpdateChannel(updates: Channel<Unit>) {

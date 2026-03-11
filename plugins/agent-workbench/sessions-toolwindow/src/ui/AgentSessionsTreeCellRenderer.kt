@@ -2,9 +2,9 @@
 package com.intellij.agent.workbench.sessions.toolwindow.ui
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
-import com.intellij.agent.workbench.common.withAgentThreadActivityBadge
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.agentSessionThreadStatusIcon
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
@@ -30,7 +30,7 @@ internal class SessionTreeCellRenderer(
   private val nowProvider: () -> Long,
   private val rowActionsProvider: (row: Int, node: SessionTreeNode, selected: Boolean) -> SessionTreeRowActionPresentation?,
   private val nodeResolver: (SessionTreeId) -> SessionTreeNode?,
-  private val providerIconProvider: (AgentSessionProvider) -> Icon? = ::providerIcon,
+  private val providerIconProvider: ((AgentSessionProvider) -> Icon?)? = null,
   private val duplicateProjectNamesProvider: () -> Set<String> = { emptySet() },
 ) : ColoredTreeCellRenderer() {
   private data class SharedTimeColumnWidthCacheKey(
@@ -52,8 +52,7 @@ internal class SessionTreeCellRenderer(
   private var threadTrailingPaint: SessionTreeThreadTrailingPaint? = null
   private var sharedTimeColumnWidthCacheKey: SharedTimeColumnWidthCacheKey? = null
   private var sharedTimeColumnWidthCacheValue: Int = 0
-  private var cachedProviderIconSize: Int = -1
-  private val providerIconCache = LinkedHashMap<AgentSessionProvider, Icon>()
+  private var cachedThreadIconSize: Int = -1
   private val threadCompositeIconCache = LinkedHashMap<ThreadCompositeIconCacheKey, Icon>()
   private val projectCompositeIconCache = LinkedHashMap<ProjectCompositeIconCacheKey, Icon>()
 
@@ -264,24 +263,17 @@ internal class SessionTreeCellRenderer(
     return width
   }
 
-  private fun scaledProviderIcon(provider: AgentSessionProvider): Icon {
+  private fun threadCompositeIcon(provider: AgentSessionProvider, activity: AgentThreadActivity): Icon {
     val iconSize = JBUI.scale(SESSION_TREE_THREAD_PROVIDER_ICON_SIZE)
-    if (cachedProviderIconSize != iconSize) {
-      cachedProviderIconSize = iconSize
-      providerIconCache.clear()
+    if (cachedThreadIconSize != iconSize) {
+      cachedThreadIconSize = iconSize
       threadCompositeIconCache.clear()
     }
-    return providerIconCache.getOrPut(provider) {
-      val baseIcon = providerIconProvider(provider) ?: AllIcons.Toolwindows.ToolWindowMessages
-      IconUtil.toSize(baseIcon, iconSize, iconSize)
-    }
-  }
-
-  private fun threadCompositeIcon(provider: AgentSessionProvider, activity: AgentThreadActivity): Icon {
     val key = ThreadCompositeIconCacheKey(provider = provider, activity = activity)
     return threadCompositeIconCache.getOrPut(key) {
-      val baseIcon = scaledProviderIcon(provider)
-      withAgentThreadActivityBadge(baseIcon, activity)
+      val threadStatusIcon = providerIconProvider?.let { agentSessionThreadStatusIcon(it(provider), activity) }
+                             ?: agentSessionThreadStatusIcon(provider, activity)
+      IconUtil.toSize(threadStatusIcon, iconSize, iconSize)
     }
   }
 

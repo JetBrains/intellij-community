@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.toolwindow
 
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
@@ -152,6 +153,63 @@ class AgentSessionsTreeModelDiffTest {
 
     assertThat(diff.rootChanged).isFalse()
     assertThat(diff.structureChangedIds.isEmpty()).isTrue()
+    assertThat(diff.contentChangedIds)
+      .isEqualTo(setOf(SessionTreeId.Thread("/work/project-a", AgentSessionProvider.CODEX, "thread-1")))
+  }
+
+  @Test
+  fun detectsContentChangesWhenThreadActivityChanges() {
+    val oldModel = buildSessionTreeModel(
+      projects = listOf(
+        AgentProjectSessions(
+          path = "/work/project-a",
+          name = "Project A",
+          isOpen = true,
+          hasLoaded = true,
+          threads = listOf(
+            AgentSessionThread(
+              id = "thread-1",
+              title = "Thread 1",
+              updatedAt = 100,
+              archived = false,
+              activity = AgentThreadActivity.READY,
+              provider = AgentSessionProvider.CODEX,
+            )
+          ),
+        )
+      ),
+      visibleClosedProjectCount = Int.MAX_VALUE,
+      visibleThreadCounts = mapOf("/work/project-a" to 10),
+      treeUiState = InMemorySessionTreeUiState(),
+    )
+    val newModel = buildSessionTreeModel(
+      projects = listOf(
+        AgentProjectSessions(
+          path = "/work/project-a",
+          name = "Project A",
+          isOpen = true,
+          hasLoaded = true,
+          threads = listOf(
+            AgentSessionThread(
+              id = "thread-1",
+              title = "Thread 1",
+              updatedAt = 100,
+              archived = false,
+              activity = AgentThreadActivity.PROCESSING,
+              provider = AgentSessionProvider.CODEX,
+            )
+          ),
+        )
+      ),
+      visibleClosedProjectCount = Int.MAX_VALUE,
+      visibleThreadCounts = mapOf("/work/project-a" to 10),
+      treeUiState = InMemorySessionTreeUiState(),
+    )
+
+    val diff = diffSessionTreeModels(oldModel, newModel)
+
+    assertThat(diff.rootChanged).isFalse()
+    assertThat(diff.structureChangedIds).isEmpty()
     assertThat(diff.contentChangedIds)
       .isEqualTo(setOf(SessionTreeId.Thread("/work/project-a", AgentSessionProvider.CODEX, "thread-1")))
   }

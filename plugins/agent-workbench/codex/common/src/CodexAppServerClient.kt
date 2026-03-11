@@ -12,11 +12,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
@@ -72,11 +71,11 @@ class CodexAppServerClient(
   private val workingDirectoryPath = workingDirectory
   private val idleShutdownTimeoutMs = idleShutdownTimeoutMs.coerceAtLeast(0)
   private val protocol = CodexAppServerProtocol()
-  private val notificationsFlow = MutableSharedFlow<CodexAppServerNotification>(
-    replay = 0,
-    extraBufferCapacity = 256,
-    onBufferOverflow = BufferOverflow.DROP_OLDEST,
-  )
+  // Queue notifications until the refresh pipeline is ready to consume them.
+  // SharedFlow with replay=0 drops events when no collector is active, which leaves
+  // stale working states behind until some unrelated refresh occurs.
+  private val notificationsChannel = Channel<CodexAppServerNotification>(capacity = Channel.UNLIMITED)
+  private val notificationsFlow = notificationsChannel.receiveAsFlow()
 
   @Volatile
   private var process: Process? = null
@@ -128,7 +127,7 @@ class CodexAppServerClient(
   }
 
   val notifications: Flow<CodexAppServerNotification>
-    get() = notificationsFlow.asSharedFlow()
+    get() = notificationsFlow
 
   suspend fun listThreads(archived: Boolean, cwdFilter: String? = null): List<CodexThread> {
     val threads = mutableListOf<CodexThread>()
@@ -515,8 +514,9 @@ class CodexAppServerClient(
       null
     } ?: return
 
-    if (!notificationsFlow.tryEmit(notification)) {
-      LOG.debug { "Dropped Codex app-server notification due to backpressure: ${notification.method}" }
+    val result = notificationsChannel.trySend(notification)
+    if (result.isFailure) {
+      LOG.warn("Failed to enqueue Codex app-server notification: ${notification.method}")
     }
   }
 
