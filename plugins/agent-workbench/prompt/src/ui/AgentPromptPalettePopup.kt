@@ -185,15 +185,9 @@ internal class AgentPromptPalettePopup(
     val draft = restoreDraft()
     activeTaskKey = resolveTaskKey(tabbedPane.selectedComponent as? JPanel)
     restoreTaskDrafts(draft)
-    refreshExtensionTaskDraftsFromContext()
     val preferExtensions = invocationData.attributes[AGENT_PROMPT_INVOCATION_PREFER_EXTENSIONS_KEY] == true
     if (preferExtensions) {
       selectAutoSelectExtensionTab()
-    }
-    val initialText = invocationData.dataContextOrNull()?.getData(AGENT_PROMPT_INITIAL_TEXT_DATA_KEY)
-    if (!initialText.isNullOrBlank()) {
-      val newTaskKey = PromptTargetMode.NEW_TASK.name
-      taskPromptStates[newTaskKey] = restoredTaskPromptDraftState(initialText)
     }
     loadPromptTextForSelectedTab()
     clearStatus()
