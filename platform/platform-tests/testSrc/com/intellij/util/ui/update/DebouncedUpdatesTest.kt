@@ -465,40 +465,37 @@ class DebouncedUpdatesTest {
   }
 
   @Test
-  fun `test batched queue with throttle mode collects all items within window`() {
+  fun `test batched queue with debounce mode restarts timer on each item`() {
     timeoutRunBlocking {
       val batches = CopyOnWriteArrayList<List<Int>>()
       val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
       try {
-        val queue = DebouncedUpdates.forScope<Int>(scope, "test-batched-collect", 100.milliseconds)
+        val queue = DebouncedUpdates.forScope<Int>(scope, "test-batched-debounce", 100.milliseconds)
+          .restartTimerOnAdd(true)
           .runBatched { batch ->
             batches.add(batch)
           }
 
-        // Queue items rapidly (all within throttle window)
+        // Queue items with delays shorter than debounce window - timer keeps restarting
         queue.queue(1)
-        delay(30.milliseconds)
+        delay(50.milliseconds)
         queue.queue(2)
-        delay(30.milliseconds)
+        delay(50.milliseconds)
         queue.queue(3)
-        
-        // Timer starts at queue(1), after 100ms it should process [1, 2, 3]
-        delay(100.milliseconds)
+        delay(150.milliseconds) // Only now should batch be emitted: [1, 2, 3]
 
-        assertEquals(1, batches.size, "Should have 1 batch")
-        assertEquals(listOf(1, 2, 3), batches[0], "Batch should contain all items within delay window")
+        assertEquals(1, batches.size, "Should have 1 batch (debounced)")
+        assertEquals(listOf(1, 2, 3), batches[0], "Batch should contain all items [1, 2, 3]")
         
-        // Queue more items after first batch processes
+        // Queue another batch to verify it works multiple times
         queue.queue(4)
-        delay(30.milliseconds)
+        delay(50.milliseconds)
         queue.queue(5)
-        delay(30.milliseconds)
-        queue.queue(6)
-        delay(150.milliseconds)
+        delay(150.milliseconds) // Second batch: [4, 5]
         
         assertEquals(2, batches.size, "Should have 2 batches")
-        assertEquals(listOf(4, 5, 6), batches[1], "Second batch should contain [4, 5, 6]")
+        assertEquals(listOf(4, 5), batches[1], "Second batch should contain [4, 5]")
       }
       finally {
         scope.cancel()
@@ -580,6 +577,37 @@ class DebouncedUpdatesTest {
       delay(120.milliseconds)
       assertEquals(2, awaitValue(2) { batches.size })
       assertEquals(listOf(3, 4), awaitValue(listOf(3, 4)) { batches[1] })
+    }
+  }
+
+  @Test
+  fun `test zero delay processes immediately`() {
+    edtTest {
+      val executedValues = CopyOnWriteArrayList<Int>()
+      val scope = CoroutineScope(SupervisorJob())
+      
+      try {
+        val queue = DebouncedUpdates.forScope<Int>(scope, "test-zero-delay", 0.milliseconds)
+          .runLatest { value ->
+            executedValues.add(value)
+          }
+
+        // Queue a value and measure how quickly it's processed
+        val start = TimeSource.Monotonic.markNow()
+        queue.queue(1)
+        
+        // Wait for processing with zero delay - should be very fast
+        awaitValue(listOf(1)) { executedValues.toList() }
+        val elapsed = start.elapsedNow()
+        
+        // Should process much faster than typical delays (< 10ms)
+        assertTrue(elapsed < 10.milliseconds, "Zero delay should process in < 10ms, took $elapsed")
+        
+        // Verify the value was processed correctly
+        assertEquals(listOf(1), executedValues.toList())
+      } finally {
+        scope.cancel()
+      }
     }
   }
 

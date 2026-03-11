@@ -23,12 +23,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
+import java.util.Collections.synchronizedList
 import java.util.function.Consumer
 import javax.swing.JComponent
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.nanoseconds
 
 /**
  * Builder-based API for creating debounced/throttled update queues.
@@ -263,8 +265,9 @@ object DebouncedUpdates {
      * Creates a queue that batches all items during the delay window.
      *
      * Collects all items queued within the delay period and processes them together as a batch.
+     * Supports both throttle mode (default) and debounce mode via [restartTimerOnAdd].
      *
-     * Example:
+     * Throttle mode example:
      * ```kotlin
      * val queue = DebouncedUpdates.forScope<Int>(scope, "batch", 100.milliseconds)
      *   .runBatched { items -> processBatch(items) }
@@ -276,8 +279,24 @@ object DebouncedUpdates {
      * delay(120)  // First batch emitted: [1, 2]
      * queue.queue(3)
      * delay(120)  // Second batch emitted: [3]
+     * ```
+     *
+     * Debounce mode example:
+     * ```kotlin
+     * val queue = DebouncedUpdates.forScope<Int>(scope, "batch", 100.milliseconds)
+     *   .restartTimerOnAdd(true)
+     *   .runBatched { items -> processBatch(items) }
+     *
+     * queue.queue(1)
+     * delay(50)
+     * queue.queue(2)  // Timer resets
+     * delay(50)
+     * queue.queue(3)  // Timer resets
+     * delay(150)  // First batch emitted: [1, 2, 3]
      * queue.queue(4)
-     * // Final batch emitted: [4]
+     * delay(50)
+     * queue.queue(5)  // Timer resets
+     * delay(150)  // Second batch emitted: [4, 5]
      * ```
      *
      * @param action The action to perform for each batch of items
@@ -286,8 +305,8 @@ object DebouncedUpdates {
     @JvmSynthetic
     fun runBatched(action: suspend (List<T>) -> Unit): UpdateQueue<T> {
       return when (owner) {
-        is ScopeOwner -> BatchedScopeQueue(owner.scope, name, delay, context, action)
-        is ComponentOwner -> BatchedComponentQueue(owner.component, name, delay, context, action)
+        is ScopeOwner -> BatchedScopeQueue(owner.scope, name, delay, context, restartTimerOnAdd, action)
+        is ComponentOwner -> BatchedComponentQueue(owner.component, name, delay, context, restartTimerOnAdd, action)
       }
     }
 
@@ -347,19 +366,19 @@ private suspend fun <T> Channel<T>.processWithDelay(
 
     if (restartTimerOnAdd) {
       // Debounce mode: restart timer on each new item
-      var lastItemTime = System.currentTimeMillis()
+      var lastItemTime = System.nanoTime()
       
       while (true) {
-        val remainingDelay = delay.inWholeMilliseconds - (System.currentTimeMillis() - lastItemTime)
+        val remainingDelay = delay.inWholeNanoseconds - (System.nanoTime() - lastItemTime)
         if (remainingDelay <= 0) {
           // Timer expired, process collected items
           break
         }
         
         // Wait for remaining delay or new item, whichever comes first
-        withTimeoutOrNull(remainingDelay.milliseconds) {
+        withTimeoutOrNull(remainingDelay.nanoseconds) {
           onReceive(receive())
-          lastItemTime = System.currentTimeMillis()
+          lastItemTime = System.nanoTime()
         } ?: break // Timeout - process collected items
       }
     } else {
@@ -418,15 +437,16 @@ private suspend fun <T> Channel<T>.processBatched(
   name: String,
   delay: Duration,
   context: CoroutineContext,
+  restartTimerOnAdd: Boolean,
   action: suspend (List<T>) -> Unit
 ) {
-  val buffer = mutableListOf<T>()
+  val buffer = synchronizedList(mutableListOf<T>())
   
   processWithDelay(
     name = name,
     delay = delay,
     context = context,
-    restartTimerOnAdd = false, // Batched always uses throttle mode
+    restartTimerOnAdd = restartTimerOnAdd,
     onReceive = { buffer.add(it) },
     onProcess = {
       val batch = buffer.toList()
@@ -492,11 +512,12 @@ private class BatchedScopeQueue<T>(
   name: String,
   delay: Duration,
   context: CoroutineContext,
+  restartTimerOnAdd: Boolean,
   action: suspend (List<T>) -> Unit
 ) : BaseUpdateQueue<T>(name, context, channelCapacity = Channel.UNLIMITED) {
 
   override val job: Job = scope.launch(CoroutineName(name)) {
-    channel.processBatched(name, delay, context, action)
+    channel.processBatched(name, delay, context, restartTimerOnAdd, action)
   }
 }
 
@@ -527,10 +548,11 @@ private class BatchedComponentQueue<T>(
   name: String,
   delay: Duration,
   context: CoroutineContext,
+  restartTimerOnAdd: Boolean,
   action: suspend (List<T>) -> Unit
 ) : BaseUpdateQueue<T>(name, context, channelCapacity = Channel.UNLIMITED) {
 
   override val job: Job = component.launchOnShow(name) {
-    channel.processBatched(name, delay, context, action)
+    channel.processBatched(name, delay, context, restartTimerOnAdd, action)
   }
 }
