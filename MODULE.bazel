@@ -10,41 +10,42 @@ archive_override(
     strip_prefix = "rules_kotlin-30e89b8f9a246952e14eb6f56c2265a46bf4dc54",
     url = "https://github.com/JetBrains/rules_kotlin/archive/30e89b8f9a246952e14eb6f56c2265a46bf4dc54.zip",
 )
+
 bazel_dep(name = "rules_java", version = "9.3.0")
 bazel_dep(name = "rules_jvm", version = "0.0.1")
 bazel_dep(name = "protobuf", version = "33.4")
 single_version_override(
     module_name = "protobuf",
-    version = "33.4",
     patch_strip = 1,
     patches = [
-      "//:build/jvm-rules/protobuf-33.4-reuse-win64-for-arm.patch",
+        "//:build/jvm-rules/protobuf-33.4-reuse-win64-for-arm.patch",
     ],
+    version = "33.4",
 )
 
 single_version_override(
     module_name = "rules_jvm_external",
-    version = "6.10",
     patches = [
-      "//:build/jvm-rules/rules-jvm-external-6.10-make-coursier-repo-targets-shell-free-and-hermetic.patch",
-      "//:build/jvm-rules/rules-jvm-external-6.10-default-to-maven-resolver.patch",
+        "//:build/jvm-rules/rules-jvm-external-6.10-make-coursier-repo-targets-shell-free-and-hermetic.patch",
+        "//:build/jvm-rules/rules-jvm-external-6.10-default-to-maven-resolver.patch",
     ],
+    version = "6.10",
 )
 
 single_version_override(
     module_name = "rules_android",
-    version = "0.7.1",
     patches = [
-      "//:build/jvm-rules/rules-android-0.7.1-pin-maven-installs.patch",
+        "//:build/jvm-rules/rules-android-0.7.1-pin-maven-installs.patch",
     ],
+    version = "0.7.1",
 )
 
 single_version_override(
     module_name = "bazel_worker_java",
-    version = "0.0.10",
     patches = [
-      "//:build/jvm-rules/worker-java-0.0.9-pin-bazel-worker-maven.patch",
+        "//:build/jvm-rules/worker-java-0.0.9-pin-bazel-worker-maven.patch",
     ],
+    version = "0.0.10",
 )
 
 bazel_dep(name = "lib")
@@ -85,6 +86,7 @@ register_toolchains(
 bazel_dep(name = "rules_python", version = "1.7.0")
 
 kotlin_test_deps = use_repo_rule("//plugins/kotlin:kotlin_test_dependencies.bzl", "kotlin_test_deps")
+
 kotlin_test_deps(name = "kotlin_test_deps")
 
 http_file(

@@ -11,40 +11,41 @@ archive_override(
     strip_prefix = "rules_kotlin-30e89b8f9a246952e14eb6f56c2265a46bf4dc54",
     url = "https://github.com/JetBrains/rules_kotlin/archive/30e89b8f9a246952e14eb6f56c2265a46bf4dc54.zip",
 )
+
 bazel_dep(name = "rules_jvm_external", version = "6.10")
 single_version_override(
-  module_name = "rules_jvm_external",
-  version = '6.10',
-  patches = [
-    "rules-jvm-external-6.10-make-coursier-repo-targets-shell-free-and-hermetic.patch",
-    "rules-jvm-external-6.10-default-to-maven-resolver.patch",
-  ],
+    module_name = "rules_jvm_external",
+    patches = [
+        "rules-jvm-external-6.10-make-coursier-repo-targets-shell-free-and-hermetic.patch",
+        "rules-jvm-external-6.10-default-to-maven-resolver.patch",
+    ],
+    version = "6.10",
 )
 
 single_version_override(
-  module_name = "rules_android",
-  version = "0.7.1",
-  patches = [
-    "rules-android-0.7.1-pin-maven-installs.patch",
-  ],
+    module_name = "rules_android",
+    patches = [
+        "rules-android-0.7.1-pin-maven-installs.patch",
+    ],
+    version = "0.7.1",
 )
 
 single_version_override(
-  module_name = "bazel_worker_java",
-  version = "0.0.10",
-  patches = [
-    "worker-java-0.0.9-pin-bazel-worker-maven.patch",
-  ],
+    module_name = "bazel_worker_java",
+    patches = [
+        "worker-java-0.0.9-pin-bazel-worker-maven.patch",
+    ],
+    version = "0.0.10",
 )
 
 bazel_dep(name = "protobuf", version = "33.4")
 single_version_override(
     module_name = "protobuf",
-    version = "33.4",
     patch_strip = 1,
     patches = [
-      "protobuf-33.4-reuse-win64-for-arm.patch",
+        "protobuf-33.4-reuse-win64-for-arm.patch",
     ],
+    version = "33.4",
 )
 
 intellij_version = "253.29346.138"
@@ -75,11 +76,13 @@ bazel_dep(name = "rules_python", version = "1.7.0")
 
 # Use custom remote_java_tools_windows with vc_redist .dll files due to https://github.com/bazelbuild/rules_java/issues/316
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
 http_archive(
     name = "remote_java_tools_windows_with_vc_redist",
     sha256 = "9ec4e41ebbb2b7259eb14f1ad708e8ee60087f33515bdec4876c675205e6950f",
     url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/rules-java/java_tools_windows-v13.18-with-vc_redist.zip",
 )
+
 override_repo(
     use_extension("@rules_java//java:extensions.bzl", "toolchains"),
     remote_java_tools_windows = "remote_java_tools_windows_with_vc_redist",

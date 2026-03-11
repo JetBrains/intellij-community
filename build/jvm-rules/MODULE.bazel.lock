@@ -194,7 +194,7 @@
     "//:test_bazel_tool.bzl%extension": {
       "general": {
         "bzlTransitiveDigest": "qGkIs/3yNSU+RyxsUfa8+9i0jlmnXoYwohYDio9VQt8=",
-        "usagesDigest": "72Yjd41koIDo7bjxOhFy1wsVyFisT9jzD5VAFPXSRoY=",
+        "usagesDigest": "KQUr4GdJxXEUbaolbdZkkNzIaooOBSwXLJsmv7bPIdc=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},

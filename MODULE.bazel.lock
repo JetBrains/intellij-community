@@ -452,7 +452,7 @@
     "@@rules_jvm+//:test_bazel_tool.bzl%extension": {
       "general": {
         "bzlTransitiveDigest": "qGkIs/3yNSU+RyxsUfa8+9i0jlmnXoYwohYDio9VQt8=",
-        "usagesDigest": "W8DfOeyDZF6L7pySiHBbDCXlAWCUd2mYD/Tnijjo5/o=",
+        "usagesDigest": "/Lup0pRuwL4hDwOA6Wupt7R8XpSNxhDldSRoMCZdMPQ=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},

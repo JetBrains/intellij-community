@@ -6,33 +6,34 @@ module(
 bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "bazel_worker_api", version = "0.0.10")
 bazel_dep(name = "hermetic_cc_toolchain", version = "4.0.1")
-bazel_dep(name = "rules_apple", version = "4.3.3") # added explicitly to fix `No 'swiftc' executable found in $PATH` error
+bazel_dep(name = "rules_apple", version = "4.3.3")  # added explicitly to fix `No 'swiftc' executable found in $PATH` error
 bazel_dep(name = "rules_java", version = "9.3.0")
 bazel_dep(name = "rules_jvm_external", version = "6.10")
 single_version_override(
     module_name = "rules_jvm_external",
-    version = "6.10",
     patches = [
         "rules-jvm-external-6.10-make-coursier-repo-targets-shell-free-and-hermetic.patch",
         "rules-jvm-external-6.10-default-to-maven-resolver.patch",
     ],
+    version = "6.10",
 )
 
 single_version_override(
     module_name = "rules_android",
-    version = "0.7.1",
     patches = [
         "rules-android-0.7.1-pin-maven-installs.patch",
     ],
+    version = "0.7.1",
 )
 
 single_version_override(
     module_name = "bazel_worker_java",
-    version = "0.0.10",
     patches = [
         "worker-java-0.0.9-pin-bazel-worker-maven.patch",
     ],
+    version = "0.0.10",
 )
+
 bazel_dep(name = "rules_kotlin", version = "2.2.2")
 archive_override(
     module_name = "rules_kotlin",
@@ -40,45 +41,44 @@ archive_override(
     strip_prefix = "rules_kotlin-30e89b8f9a246952e14eb6f56c2265a46bf4dc54",
     url = "https://github.com/JetBrains/rules_kotlin/archive/30e89b8f9a246952e14eb6f56c2265a46bf4dc54.zip",
 )
+
 bazel_dep(name = "rules_pkg", version = "1.2.0")
 bazel_dep(name = "rules_python", version = "1.7.0")
-bazel_dep(name = "rules_swift", version = "3.4.1") # same as above
+bazel_dep(name = "rules_swift", version = "3.4.1")  # same as above
 
 # bazel tool to be used in jvm builder tests
 test_bazel_tool = use_extension("//:test_bazel_tool.bzl", "extension")
+
 test_bazel_version = "8.4.2-jb_20251027_92"
+
 test_bazel_tool.config(
-  url_darwin_arm64 = "https://github.com/JetBrains/bazel/releases/download/{ver}/bazel-{ver}-darwin-arm64".format(ver = test_bazel_version),
-  sha256_darwin_arm64 = "ac07be2a25647be6ecdcf780cd9ebded1048149ebadd7a81087e19f7372da706",
-
-  url_darwin_x86_64 = "https://github.com/JetBrains/bazel/releases/download/{ver}/bazel-{ver}-darwin-x86_64".format(ver = test_bazel_version),
-  sha256_darwin_x86_64 = "681ed55cac703c63a31ae46b94f5dcf283c002ce989ab893d230572b4d913ee7",
-
-  url_linux_arm64 = "https://github.com/JetBrains/bazel/releases/download/{ver}/bazel-{ver}-linux-arm64".format(ver = test_bazel_version),
-  sha256_linux_arm64 = "06513528cff8eacc8674585463bce6e72dd229c52fe53fd14dc1bdbc83e38977",
-
-  url_linux_x86_64 = "https://github.com/JetBrains/bazel/releases/download/{ver}/bazel-{ver}-linux-x86_64".format(ver = test_bazel_version),
-  sha256_linux_x86_64 = "b85195356864e3a6dbaf21ab438e66b6e686229f83e3d4e08ac2fb9b79d57d45",
-
-  url_windows_arm64 = "https://github.com/JetBrains/bazel/releases/download/{ver}/bazel-{ver}-windows-arm64.exe".format(ver = test_bazel_version),
-  sha256_windows_arm64 = "35857356462fd05ebee367278c3008c3da43300a122cc25d5d246406404de07e",
-
-  url_windows_x86_64 = "https://github.com/JetBrains/bazel/releases/download/{ver}/bazel-{ver}-windows-x86_64.exe".format(ver = test_bazel_version),
-  sha256_windows_x86_64 = "3f1922b13c84a6ccb0f2c738bc80e0eb90cefd118fa066109d1d3aaa0d44a828",
+    sha256_darwin_arm64 = "ac07be2a25647be6ecdcf780cd9ebded1048149ebadd7a81087e19f7372da706",
+    sha256_darwin_x86_64 = "681ed55cac703c63a31ae46b94f5dcf283c002ce989ab893d230572b4d913ee7",
+    sha256_linux_arm64 = "06513528cff8eacc8674585463bce6e72dd229c52fe53fd14dc1bdbc83e38977",
+    sha256_linux_x86_64 = "b85195356864e3a6dbaf21ab438e66b6e686229f83e3d4e08ac2fb9b79d57d45",
+    sha256_windows_arm64 = "35857356462fd05ebee367278c3008c3da43300a122cc25d5d246406404de07e",
+    sha256_windows_x86_64 = "3f1922b13c84a6ccb0f2c738bc80e0eb90cefd118fa066109d1d3aaa0d44a828",
+    url_darwin_arm64 = "https://github.com/JetBrains/bazel/releases/download/{ver}/bazel-{ver}-darwin-arm64".format(ver = test_bazel_version),
+    url_darwin_x86_64 = "https://github.com/JetBrains/bazel/releases/download/{ver}/bazel-{ver}-darwin-x86_64".format(ver = test_bazel_version),
+    url_linux_arm64 = "https://github.com/JetBrains/bazel/releases/download/{ver}/bazel-{ver}-linux-arm64".format(ver = test_bazel_version),
+    url_linux_x86_64 = "https://github.com/JetBrains/bazel/releases/download/{ver}/bazel-{ver}-linux-x86_64".format(ver = test_bazel_version),
+    url_windows_arm64 = "https://github.com/JetBrains/bazel/releases/download/{ver}/bazel-{ver}-windows-arm64.exe".format(ver = test_bazel_version),
+    url_windows_x86_64 = "https://github.com/JetBrains/bazel/releases/download/{ver}/bazel-{ver}-windows-x86_64.exe".format(ver = test_bazel_version),
 )
 use_repo(test_bazel_tool, "test_bazel_tool")
 
 protoc_java_version = "4.33.4"
-protobuf_version = ".".join(protoc_java_version.split(".")[-2:]) # Last 2 parts
+
+protobuf_version = ".".join(protoc_java_version.split(".")[-2:])  # Last 2 parts
 
 bazel_dep(name = "protobuf", version = protobuf_version)
 single_version_override(
     module_name = "protobuf",
-    version = protobuf_version,
     patch_strip = 1,
     patches = [
-      "protobuf-33.4-reuse-win64-for-arm.patch",
+        "protobuf-33.4-reuse-win64-for-arm.patch",
     ],
+    version = protobuf_version,
 )
 
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
@@ -87,10 +87,11 @@ kotlin_compiler_version = "2.3.20-RC2"
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.toolchain(
-    python_version = "3.14",
     is_default = True,
+    python_version = "3.14",
 )
 use_repo(python, "python_3_14")
+
 register_toolchains("@python_3_14//:all")
 
 toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains", dev_dependency = True)  # `dev_dependency = True` to avoid leaking the extension in modules using that module
@@ -103,17 +104,17 @@ register_toolchains(
 )  # `dev_dependency = True` to avoid registering toolchains in modules using that module
 
 http_file(
-  name = "protobuf-java_http",
-  downloaded_file_path = "protobuf-java-{}.jar".format(protoc_java_version),
-  sha256 = "3ca892fd6ea8b37d01bb6917dbc0bf2637548b756753f65a28d4f1d4d982347f",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java/{}/protobuf-java-{}.jar".format(protoc_java_version, protoc_java_version)
+    name = "protobuf-java_http",
+    downloaded_file_path = "protobuf-java-{}.jar".format(protoc_java_version),
+    sha256 = "3ca892fd6ea8b37d01bb6917dbc0bf2637548b756753f65a28d4f1d4d982347f",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java/{}/protobuf-java-{}.jar".format(protoc_java_version, protoc_java_version),
 )
 
 http_file(
     name = "protobuf-java-sources_http",
     downloaded_file_path = "protobuf-java-{}-sources.jar".format(protoc_java_version),
     sha256 = "ed30fe6a51c7c15a6f123448304c97185f2039f2aeca9d5e3b4f53de3a4c813c",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java/{}/protobuf-java-{}-sources.jar".format(protoc_java_version, protoc_java_version)
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java/{}/protobuf-java-{}-sources.jar".format(protoc_java_version, protoc_java_version),
 )
 
 http_file(
@@ -250,10 +251,10 @@ http_file(
 )
 
 http_file(
-  name = "junit-junit-4_13_2_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/junit/junit/4.13.2/junit-4.13.2.jar",
-  sha256 = "8e495b634469d64fb8acfa3495a065cbacc8a0fff55ce1e31007be4c16dc57d3",
-  downloaded_file_path = "junit-4.13.2.jar"
+    name = "junit-junit-4_13_2_http",
+    downloaded_file_path = "junit-4.13.2.jar",
+    sha256 = "8e495b634469d64fb8acfa3495a065cbacc8a0fff55ce1e31007be4c16dc57d3",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/junit/junit/4.13.2/junit-4.13.2.jar",
 )
 
 http_file(
@@ -586,8 +587,8 @@ http_file(
 )
 
 http_file(
-  name = "org_opentest4j-opentest4j-1_3_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar",
-  sha256 = "48e2df636cab6563ced64dcdff8abb2355627cb236ef0bf37598682ddf742f1b",
-  downloaded_file_path = "opentest4j-1.3.0.jar"
+    name = "org_opentest4j-opentest4j-1_3_0_http",
+    downloaded_file_path = "opentest4j-1.3.0.jar",
+    sha256 = "48e2df636cab6563ced64dcdff8abb2355627cb236ef0bf37598682ddf742f1b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar",
 )
