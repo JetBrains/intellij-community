@@ -5,17 +5,17 @@ public class ReturnOfInnerClass {
   }
 
   public Object one() {
-    <warning descr="Return of instance of anonymous class">return</warning> new Object() {};
+    <warning descr="Return of anonymous class instance">return</warning> new Object() {};
   }
 
   public Object two() {
     class A {}
-    <warning descr="Return of instance of local class 'A'">return</warning> new A();
+    <warning descr="Return of local class 'A' instance">return</warning> new A();
   }
 
   class B {}
   public Object three() {
-    <warning descr="Return of instance of non-static inner class 'B'">return</warning> new B();
+    <warning descr="Return of non-static inner class 'B' instance">return</warning> new B();
   }
 
   private Object four() {
