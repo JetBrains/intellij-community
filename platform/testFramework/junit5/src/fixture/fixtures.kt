@@ -5,6 +5,7 @@ package com.intellij.testFramework.junit5.fixture
 
 import com.intellij.execution.RunManager
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.UiWithModelAccess
@@ -180,11 +181,25 @@ fun projectFixture(
   openAfterCreation: Boolean = false,
 ): TestFixture<Project> = testFixture {
   // Background service preloading might trigger service loading after a project gets disposed leading to a test failure.
-  val openProjectTask = openProjectTask.copy(preloadServices = false)
   val path = pathFixture.init()
-  val project = ProjectManagerEx.getInstanceEx().newProjectAsync(path, openProjectTask)
-  if (openAfterCreation) {
-    ProjectManagerEx.getInstanceEx().openProject(path, openProjectTask.withProject(project))
+  // if project already contains .idea folder we should open it instead of creating a new project
+  val isValidIdeaProject = ProjectUtil.isValidProjectPath(path)
+  // we should respect if user explicitly set isNewProject
+  val isNewProject = !isValidIdeaProject || openProjectTask.isNewProject
+  val openProjectTask = openProjectTask.copy(preloadServices = false, isNewProject = isNewProject)
+
+  val projectManager = ProjectManagerEx.getInstanceEx()
+
+  val project = if (!isNewProject) {
+    projectManager.openProjectAsync(path, openProjectTask)!!
+  } else {
+    val newProject = projectManager.newProjectAsync(path, openProjectTask)
+
+    if (openAfterCreation) {
+      projectManager.openProjectAsync(path, openProjectTask.withProject(newProject))
+    }
+
+    newProject
   }
   // Wait until components fully loaded. Otherwise, we might start loading then when a project is already disposed when a test is too fast.
   project.serviceAsync<RunManager>()
