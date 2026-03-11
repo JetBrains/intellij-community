@@ -486,7 +486,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     systemProperties.put("test.roots", testRoots.joinToString(File.pathSeparator, transform = toExistingAbsolutePathConverter))
     testPatterns?.let { systemProperties.putIfAbsent("intellij.build.test.patterns", it) }
     testGroups?.let { systemProperties.putIfAbsent("intellij.build.test.groups", it) }
-    systemProperties.putIfAbsent("intellij.build.test.sorter", System.getProperty("intellij.build.test.sorter"))
     systemProperties.putIfAbsent(TestingTasks.BOOTSTRAP_TESTCASES_PROPERTY, "com.intellij.AllTests")
     systemProperties.putIfAbsent(TestingOptions.PERFORMANCE_TESTS_ONLY_FLAG, options.isPerformanceTestsOnly.toString())
     val allJvmArgs = ArrayList(jvmArgs)

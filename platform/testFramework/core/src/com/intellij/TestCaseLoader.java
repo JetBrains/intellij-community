@@ -10,14 +10,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.SelfSeedingTestCase;
 import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.testFramework.TestFrameworkUtil;
-import com.intellij.testFramework.TestSorter;
 import com.intellij.testFramework.bucketing.BucketingScheme;
 import com.intellij.testFramework.bucketing.CyclicCounterBucketingScheme;
 import com.intellij.testFramework.bucketing.HashingBucketingScheme;
 import com.intellij.testFramework.bucketing.NastradamusBucketingScheme;
 import com.intellij.testFramework.bucketing.NastradamusDataCollectingBucketingScheme;
 import com.intellij.testFramework.bucketing.TestsDurationBucketingScheme;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import junit.framework.Test;
@@ -47,7 +45,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.function.ToIntFunction;
 import java.util.stream.Stream;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace", "TestOnlyProblems"})
@@ -99,13 +96,6 @@ public class TestCaseLoader {
    * An implicit group which includes all tests from all defined groups and tests which don't belong to any group.
    */
   private static final String ALL_TESTS_GROUP = "ALL";
-
-  /**
-   * By default, test classes run in alphabetical order.
-   * Pass {@code "reversed"} to this property to run test classes in reversed alphabetical order.
-   * This helps to find problems when test A modifies the global state, causing test B to fail if it runs after A.
-   */
-  private static final boolean REVERSE_ORDER = SystemProperties.getBooleanProperty("intellij.build.test.reverse.order", false);
 
   public static final String COMMON_TEST_GROUPS_RESOURCE_NAME = "tests/testGroups.properties";
 
@@ -431,10 +421,6 @@ public class TestCaseLoader {
     return myClassLoadingErrors;
   }
 
-  public static int getRank(Class<?> aClass) {
-    return 1;
-  }
-
   public int getClassesCount() {
     return myClassSet.size();
   }
@@ -454,7 +440,7 @@ public class TestCaseLoader {
       result.add(myFirstTestClass);
     }
 
-    result.addAll(loadTestSorter().sorted(myClassSet.stream().toList(), TestCaseLoader::getRank));
+    result.addAll(ContainerUtil.sorted(myClassSet.stream().toList(), Comparator.comparing(Class::getName, Comparator.naturalOrder())));
 
     if (includeFirstAndLast && myLastTestClass != null) {
       result.add(myLastTestClass);
@@ -465,40 +451,6 @@ public class TestCaseLoader {
       result.forEach(clazz -> System.out.println(clazz.getName()));
     }
     return result;
-  }
-
-  private static TestSorter loadTestSorter() {
-    String sorter = System.getProperty("intellij.build.test.sorter");
-
-    // use Nastradamus test sorter if no other is specified
-    if (sorter == null && IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED) {
-      sorter = "com.intellij.nastradamus.NastradamusTestCaseSorter";
-    }
-
-    if (sorter != null) {
-      try {
-        var testSorter = (TestSorter)Class.forName(sorter, true, getClassLoader()).getConstructor().newInstance();
-        System.out.printf("Using test sorter from %s%n", sorter);
-        return testSorter;
-      }
-      catch (Throwable t) {
-        System.err.println("Sorter initialization failed: " + sorter);
-        t.printStackTrace();
-      }
-    }
-
-    if (IS_VERBOSE_LOG_ENABLED) {
-      System.out.println("Using default test sorter (natural order)");
-    }
-
-    Comparator<String> classNameComparator = REVERSE_ORDER ? Comparator.reverseOrder() : Comparator.naturalOrder();
-    return new TestSorter() {
-      @Override
-      public @Unmodifiable @NotNull List<Class<?>> sorted(@NotNull List<Class<?>> testClasses, @NotNull ToIntFunction<? super Class<?>> ranker) {
-        return ContainerUtil.sorted(testClasses,
-                                    Comparator.<Class<?>>comparingInt(ranker).thenComparing(Class::getName, classNameComparator));
-      }
-    };
   }
 
   private void clearClasses() {
