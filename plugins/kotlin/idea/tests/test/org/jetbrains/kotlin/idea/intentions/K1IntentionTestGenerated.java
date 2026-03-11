@@ -17462,6 +17462,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/samConversionToAnonymousObject/notSam.kt");
         }
 
+        @TestMetadata("nullableReturnType.kt")
+        public void testNullableReturnType() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/nullableReturnType.kt");
+        }
+
         @TestMetadata("parameterError.kt")
         public void testParameterError() throws Exception {
             runTest("testData/intentions/samConversionToAnonymousObject/parameterError.kt");

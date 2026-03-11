@@ -11226,7 +11226,124 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/samConversionToAnonymousObject")
+    public static class SamConversionToAnonymousObject extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("funInterface.kt")
+        public void testFunInterface() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/funInterface.kt");
+        }
+
+        @TestMetadata("labeledReturn.kt")
+        public void testLabeledReturn() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/labeledReturn.kt");
+        }
+
+        @TestMetadata("nestedClass.kt")
+        public void testNestedClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/nestedClass.kt");
+        }
+
+        @TestMetadata("notJavaInterface.kt")
+        public void testNotJavaInterface() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/notJavaInterface.kt");
+        }
+
+        @TestMetadata("notSam.kt")
+        public void testNotSam() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/notSam.kt");
+        }
+
+        @TestMetadata("nullableReturnType.kt")
+        public void testNullableReturnType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/nullableReturnType.kt");
+        }
+
+        @TestMetadata("parameterError.kt")
+        public void testParameterError() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/parameterError.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/simple.kt");
+        }
+
+        @TestMetadata("simple2.kt")
+        public void testSimple2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/simple2.kt");
+        }
+
+        @TestMetadata("simple3.kt")
+        public void testSimple3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/simple3.kt");
+        }
+
+        @TestMetadata("typeArgument.kt")
+        public void testTypeArgument() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/typeArgument.kt");
+        }
+
+        @TestMetadata("typeArgument2.kt")
+        public void testTypeArgument2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/typeArgument2.kt");
+        }
+
+        @TestMetadata("typeArgument3.kt")
+        public void testTypeArgument3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/typeArgument3.kt");
+        }
+
+        @TestMetadata("typeArgument4.kt")
+        public void testTypeArgument4() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/typeArgument4.kt");
+        }
+
+        @TestMetadata("typeArgument5.kt")
+        public void testTypeArgument5() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/typeArgument5.kt");
+        }
+
+        @TestMetadata("typeArgument6.kt")
+        public void testTypeArgument6() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/typeArgument6.kt");
+        }
+
+        @TestMetadata("typeArgument7.kt")
+        public void testTypeArgument7() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/typeArgument7.kt");
+        }
+
+        @TestMetadata("underScoreParameters.kt")
+        public void testUnderScoreParameters() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/underScoreParameters.kt");
+        }
+
+        @TestMetadata("underScoreParameters2.kt")
+        public void testUnderScoreParameters2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/underScoreParameters2.kt");
+        }
+
+        @TestMetadata("underScoreParameters3.kt")
+        public void testUnderScoreParameters3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/underScoreParameters3.kt");
+        }
+
+        @TestMetadata("usedSameFunction.kt")
+        public void testUsedSameFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/usedSameFunction.kt");
+        }
+    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/convertFunctionTypeReceiverToParameter")

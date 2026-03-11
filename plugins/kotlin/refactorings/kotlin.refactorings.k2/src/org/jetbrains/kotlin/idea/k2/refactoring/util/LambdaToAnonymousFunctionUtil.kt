@@ -7,8 +7,10 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
@@ -30,7 +32,11 @@ object LambdaToAnonymousFunctionUtil {
      * So it should not be used during highlighting or other non-explicitly started activities
      */
     @OptIn(KaExperimentalApi::class)
-    fun prepareFunctionText(lambda: KtLambdaExpression, functionName: String = "") : String? {
+    fun prepareFunctionText(
+        lambda: KtLambdaExpression,
+        functionName: String = "",
+        parameterNames: List<String> = emptyList(),
+    ): String? {
         val functionLiteral = lambda.functionLiteral
         val psiFactory = KtPsiFactory.contextual(lambda)
         val bodyExpression = functionLiteral.bodyExpression ?: return null
@@ -60,11 +66,32 @@ object LambdaToAnonymousFunctionUtil {
                 }
 
                 name(functionName)
-                for (parameter in functionSymbol.valueParameters) {
+
+                val nameValidator = CollectingNameValidator(
+                    functionSymbol.valueParameters
+                        .map { it.name }
+                        .filter { !it.isSpecial }
+                        .map { it.asString() }
+                )
+
+                for ((index, parameter) in functionSymbol.valueParameters.withIndex()) {
                     val parameterType = parameter.returnType
                     val renderType = parameterType.render(position = Variance.IN_VARIANCE)
                     val parameterName = parameter.name
-                    param(if (parameterName.isSpecial) "_" else parameterName.asString().quoteIfNeeded(), renderType)
+
+                    val nameToUse = when {
+                        // An underscore is suitable only for anonymous functions
+                        parameterName.isSpecial && functionName.isEmpty() -> "_"
+
+                        parameterName.isSpecial -> {
+                            val suggestedName = parameterNames.getOrNull(index) ?: parameterName.asString()
+                            KotlinNameSuggester.suggestNameByName(suggestedName, nameValidator)
+                        }
+
+                        else -> parameterName.asString()
+                    }
+
+                    param(nameToUse.quoteIfNeeded(), renderType)
                 }
 
                 functionSymbol.returnType.takeIf { !it.isUnitType && it !is KaErrorType }?.let {
