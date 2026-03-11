@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.prompt.ui
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.EditorTextField
+import com.intellij.ui.components.ActionLink
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import javax.swing.JPanel
@@ -36,6 +37,23 @@ class AgentPromptPaletteViewLayoutTest {
       layoutPopupRoot(view.rootPanel)
 
       val contextRow = checkNotNull(contextChipsPanel.parent as? JPanel)
+      assertThat(contextRow.isVisible).isTrue()
+      assertThat(contextRow.height).isGreaterThan(0)
+    }
+  }
+
+  @Test
+  fun contextRowIsShownWhenAddContextLinkIsTheOnlyVisibleControl() {
+    runInEdtAndWait {
+      val promptArea = EditorTextField()
+      val chips = AgentPromptContextChipsComponent {}
+      chips.trailingComponent = ActionLink("Add Context") {}
+      chips.render(emptyList())
+      val view = createPaletteView(promptArea = promptArea, contextChipsPanel = chips.component)
+
+      layoutPopupRoot(view.rootPanel)
+
+      val contextRow = checkNotNull(chips.component.parent as? JPanel)
       assertThat(contextRow.isVisible).isTrue()
       assertThat(contextRow.height).isGreaterThan(0)
     }

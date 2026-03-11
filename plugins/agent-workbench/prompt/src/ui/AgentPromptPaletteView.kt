@@ -142,7 +142,7 @@ internal fun createAgentPromptPaletteView(
       if (providerOptionsPanel != null) {
         cell(providerOptionsPanel)
           .align(AlignX.RIGHT)
-          .customize(UnscaledGaps(left = controlsLeftGap))
+          .customize(UnscaledGaps(left = controlToIconGap))
       }
       cell(previewToggle)
         .align(AlignX.RIGHT)

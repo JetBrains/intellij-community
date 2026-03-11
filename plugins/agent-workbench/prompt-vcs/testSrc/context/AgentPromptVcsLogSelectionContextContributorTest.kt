@@ -48,7 +48,7 @@ class AgentPromptVcsLogSelectionContextContributorTest {
   }
 
   @Test
-  fun collectsSelectedRevisionsAsHashOnlyContext() {
+  fun collectsSelectedCommitsAsHashOnlyContext() {
     val firstHash = "1111111111111111111111111111111111111111"
     val secondHash = "2222222222222222222222222222222222222222"
     val selection = TestVcsLogCommitSelection(
@@ -68,8 +68,10 @@ class AgentPromptVcsLogSelectionContextContributorTest {
     val payload = item.payload.objOrNull()!!
     val entries = payload.array("entries")!!.map { value -> value.objOrNull()!! }
 
-    assertThat(item.rendererId).isEqualTo(AgentPromptContextRendererIds.VCS_REVISIONS)
+    assertThat(item.rendererId).isEqualTo(AgentPromptContextRendererIds.VCS_COMMITS)
     assertThat(item.title).isEqualTo(AgentPromptVcsBundle.message("context.vcs.title"))
+    assertThat(item.itemId).isEqualTo("vcsLog.commits")
+    assertThat(item.parentItemId).isNull()
     assertThat(item.source).isEqualTo("vcsLog")
     assertThat(item.body.lineSequence().toList()).containsExactly(firstHash, secondHash)
     assertThat(payload.number("selectedCount")).isEqualTo("2")
@@ -106,7 +108,7 @@ class AgentPromptVcsLogSelectionContextContributorTest {
   }
 
   @Test
-  fun fallsBackToRevisionNumbersWhenCommitSelectionIsMissing() {
+  fun fallsBackToRevisionNumbersWhenLogCommitSelectionIsMissing() {
     val dataContext = SimpleDataContext.builder()
       .add(
         VcsDataKeys.VCS_REVISION_NUMBERS,
@@ -134,7 +136,7 @@ class AgentPromptVcsLogSelectionContextContributorTest {
   }
 
   @Test
-  fun fallsBackToSingleRevisionNumberWhenArrayIsMissing() {
+  fun fallsBackToSingleRevisionNumberWhenArrayAndLogSelectionAreMissing() {
     val dataContext = SimpleDataContext.builder()
       .add(VcsDataKeys.VCS_REVISION_NUMBER, TextRevisionNumber("single987"))
       .build()

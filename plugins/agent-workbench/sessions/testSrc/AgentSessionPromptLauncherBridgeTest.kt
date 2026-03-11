@@ -1090,6 +1090,57 @@ class AgentSessionPromptLauncherBridgeTest {
   }
 
   @Test
+  fun dedicatedInvocationResolvesSourceProjectFromSelectedTreePath() {
+    val dedicatedProject = projectProxy(
+      name = "Agent Dedicated Frame",
+      basePath = AgentWorkbenchDedicatedFrameProjectManager.dedicatedProjectPath(),
+    )
+    val selectedTreePath = "/work/project-from-tree"
+    val sourceProject = projectProxy(name = "Project From Tree", basePath = selectedTreePath)
+    val invocation = invocationData(
+      project = dedicatedProject,
+      projectPathContext = AgentPromptProjectPathContext(
+        path = selectedTreePath,
+        displayName = "Project From Tree",
+      ),
+    )
+    val resolvedPaths = CopyOnWriteArrayList<String>()
+    val bridge = AgentSessionPromptLauncherBridge(
+      launchPromptRequest = {
+        throw UnsupportedOperationException("Not used in source-project resolution test")
+      },
+      stateFlowProvider = {
+        error("stateFlowProvider is unavailable in this test setup")
+      },
+      pathStateResolver = ::resolveAgentSessionPathState,
+      refreshCatalogAndLoadNewlyOpened = {},
+      refreshProviderForPath = { _, _ -> },
+      preferredProviderProvider = { null },
+      sourceProjectResolver = { path ->
+        resolvedPaths.add(path)
+        sourceProject.takeIf { path == selectedTreePath }
+      },
+    )
+
+    assertThat(bridge.resolveSourceProject(invocation)).isSameAs(sourceProject)
+    assertThat(resolvedPaths).containsExactly(selectedTreePath)
+  }
+
+  @Test
+  fun nonDedicatedInvocationUsesCurrentProjectAsSourceProject() {
+    val currentProject = projectProxy(name = "Current Project", basePath = "/work/current-project")
+    val invocation = invocationData(
+      project = currentProject,
+      projectPathContext = null,
+    )
+    val bridge = AgentSessionPromptLauncherBridge {
+      throw UnsupportedOperationException("Not used in source-project resolution test")
+    }
+
+    assertThat(bridge.resolveSourceProject(invocation)).isSameAs(currentProject)
+  }
+
+  @Test
   fun dedicatedWorkingProjectCandidatesNeverContainDedicatedFramePath() {
     val dedicatedPath = AgentWorkbenchDedicatedFrameProjectManager.dedicatedProjectPath()
     val dedicatedProject = projectProxy(name = "Agent Dedicated Frame", basePath = dedicatedPath)

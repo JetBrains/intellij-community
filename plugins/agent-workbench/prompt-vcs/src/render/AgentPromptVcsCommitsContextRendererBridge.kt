@@ -12,30 +12,30 @@ import com.intellij.agent.workbench.sessions.core.prompt.array
 import com.intellij.agent.workbench.sessions.core.prompt.objOrNull
 import com.intellij.agent.workbench.sessions.core.prompt.string
 
-class AgentPromptVcsRevisionsContextRendererBridge : AgentPromptContextRendererBridge {
+class AgentPromptVcsCommitsContextRendererBridge : AgentPromptContextRendererBridge {
   override val rendererId: String
-    get() = AgentPromptContextRendererIds.VCS_REVISIONS
+    get() = AgentPromptContextRendererIds.VCS_COMMITS
 
   override fun renderEnvelope(input: AgentPromptEnvelopeRenderInput): String {
     val item = input.item
-    val revisions = extractRevisions(item)
+    val commits = extractCommits(item)
     return buildString {
-      append("vcs revisions:")
+      append("commits:")
       append(renderTruncationSuffix(item))
-      if (revisions.isNotEmpty()) {
+      if (commits.isNotEmpty()) {
         append('\n')
-        append(revisions.joinToString(separator = "\n"))
+        append(commits.joinToString(separator = "\n"))
       }
     }
   }
 
   override fun renderChip(input: AgentPromptChipRenderInput): AgentPromptChipRender {
-    val firstRevision = extractRevisions(input.item).firstOrNull().orEmpty()
-    return AgentPromptChipRender(text = composeChipText(input.item.title, firstRevision))
+    val firstCommit = extractCommits(input.item).firstOrNull().orEmpty()
+    return AgentPromptChipRender(text = composeChipText(input.item.title, firstCommit))
   }
 
-  private fun extractRevisions(item: AgentPromptContextItem): List<String> {
-    val payloadRevisions = item.payload.objOrNull()
+  private fun extractCommits(item: AgentPromptContextItem): List<String> {
+    val payloadCommits = item.payload.objOrNull()
       ?.array("entries")
       ?.mapNotNull { value ->
         value.objOrNull()
@@ -44,8 +44,8 @@ class AgentPromptVcsRevisionsContextRendererBridge : AgentPromptContextRendererB
           ?.takeIf { it.isNotEmpty() }
       }
       .orEmpty()
-    if (payloadRevisions.isNotEmpty()) {
-      return payloadRevisions
+    if (payloadCommits.isNotEmpty()) {
+      return payloadCommits
     }
 
     return item.body

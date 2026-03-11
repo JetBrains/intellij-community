@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.prompt.ui
 
 import com.dynatrace.hash4j.hashing.HashValue128
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
 import com.intellij.openapi.components.SerializablePersistentStateComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
@@ -36,6 +37,7 @@ internal data class AgentPromptUiDraft(
 internal data class AgentPromptUiContextRestoreSnapshot(
     @JvmField val contextFingerprint: HashValue128? = null,
     @JvmField val removedContextItemIds: List<String> = emptyList(),
+    @JvmField val manualContextItemsBySourceId: Map<String, AgentPromptContextItem> = emptyMap(),
 )
 
 @Serializable

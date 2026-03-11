@@ -2,6 +2,8 @@
 package com.intellij.agent.workbench.prompt.ui
 
 import com.dynatrace.hash4j.hashing.Hashing
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererIds
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -22,6 +24,7 @@ class AgentPromptUiSessionStateServiceTest {
         val snapshot = AgentPromptUiContextRestoreSnapshot(
             contextFingerprint = Hashing.xxh3_128().hashCharsTo128Bits("context"),
             removedContextItemIds = listOf("editor.file"),
+            manualContextItemsBySourceId = mapOf("manual.vcs.commits" to manualContextItem()),
         )
 
         original.saveDraft(draft)
@@ -40,6 +43,7 @@ class AgentPromptUiSessionStateServiceTest {
         val snapshot = AgentPromptUiContextRestoreSnapshot(
             contextFingerprint = Hashing.xxh3_128().hashCharsTo128Bits("context"),
             removedContextItemIds = listOf("editor.file", "editor.symbol"),
+            manualContextItemsBySourceId = mapOf("manual.vcs.commits" to manualContextItem()),
         )
 
         service.saveContextRestoreSnapshot(snapshot)
@@ -66,6 +70,7 @@ class AgentPromptUiSessionStateServiceTest {
             AgentPromptUiContextRestoreSnapshot(
                 contextFingerprint = Hashing.xxh3_128().hashCharsTo128Bits("context"),
                 removedContextItemIds = listOf("editor.file"),
+                manualContextItemsBySourceId = mapOf("manual.vcs.commits" to manualContextItem()),
             )
         )
 
@@ -81,6 +86,7 @@ class AgentPromptUiSessionStateServiceTest {
         val snapshot = AgentPromptUiContextRestoreSnapshot(
             contextFingerprint = Hashing.xxh3_128().hashCharsTo128Bits("context"),
             removedContextItemIds = listOf("editor.file"),
+            manualContextItemsBySourceId = mapOf("manual.vcs.commits" to manualContextItem()),
         )
         service.saveContextRestoreSnapshot(snapshot)
 
@@ -98,5 +104,15 @@ class AgentPromptUiSessionStateServiceTest {
         )
 
         assertThat(service.loadContextRestoreSnapshot()).isEqualTo(snapshot)
+    }
+
+    private fun manualContextItem(): AgentPromptContextItem {
+        return AgentPromptContextItem(
+            rendererId = AgentPromptContextRendererIds.VCS_COMMITS,
+            title = "Picked Commits",
+            body = "abc12345",
+            itemId = "manual.vcs.commits",
+            source = "manualVcs",
+        )
     }
 }

@@ -95,7 +95,7 @@ class AgentPromptContextResolverServiceTest {
   }
 
   @Test
-  fun vcsRevisionsWinOverProjectSelectionWhenBothArePresent() {
+  fun vcsCommitsWinOverProjectSelectionWhenBothArePresent() {
     val project = ProjectManager.getInstance().defaultProject
     val expectedHashes = listOf("a1b2c3d4", "e5f6g7h8")
     val dataContext = SimpleDataContext.builder()
@@ -107,7 +107,7 @@ class AgentPromptContextResolverServiceTest {
         listOf(
           AgentPromptEditorContextContributor(),
           testContributor(contributorPhase = AgentPromptContextContributorPhase.INVOCATION, contributorOrder = 50) {
-            listOf(contextItem(AgentPromptContextRendererIds.VCS_REVISIONS, expectedHashes.joinToString(separator = "\n")))
+            listOf(contextItem(AgentPromptContextRendererIds.VCS_COMMITS, expectedHashes.joinToString(separator = "\n")))
           },
           AgentPromptProjectViewSelectionContextContributor(),
           AgentPromptSelectedEditorFallbackContextContributor(),
@@ -118,8 +118,40 @@ class AgentPromptContextResolverServiceTest {
     val resolved = service.collectDefaultContext(invocationData(dataContext = dataContext))
 
     assertThat(resolved).hasSize(1)
-    assertThat(resolved.single().rendererId).isEqualTo(AgentPromptContextRendererIds.VCS_REVISIONS)
+    assertThat(resolved.single().rendererId).isEqualTo(AgentPromptContextRendererIds.VCS_COMMITS)
     assertThat(resolved.single().body.lineSequence().toList()).containsExactlyElementsOf(expectedHashes)
+  }
+
+  @Test
+  fun testFailuresWinOverVcsAndProjectSelectionWhenBothArePresent() {
+    val project = ProjectManager.getInstance().defaultProject
+    val expectedTestLine = "failed: java:test://Suite.testFailed"
+    val expectedVcsHash = "deadbeef"
+    val dataContext = SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .add(CommonDataKeys.VIRTUAL_FILE, LightVirtualFile("selected.txt", ""))
+      .build()
+    val service = AgentPromptContextResolverService(
+      contributorsProvider = {
+        listOf(
+          AgentPromptEditorContextContributor(),
+          testContributor(contributorPhase = AgentPromptContextContributorPhase.INVOCATION, contributorOrder = 40) {
+            listOf(contextItem(AgentPromptContextRendererIds.TEST_FAILURES, expectedTestLine))
+          },
+          testContributor(contributorPhase = AgentPromptContextContributorPhase.INVOCATION, contributorOrder = 50) {
+            listOf(contextItem(AgentPromptContextRendererIds.VCS_COMMITS, expectedVcsHash))
+          },
+          AgentPromptProjectViewSelectionContextContributor(),
+          AgentPromptSelectedEditorFallbackContextContributor(),
+        )
+      }
+    )
+
+    val resolved = service.collectDefaultContext(invocationData(dataContext = dataContext))
+
+    assertThat(resolved).hasSize(1)
+    assertThat(resolved.single().rendererId).isEqualTo(AgentPromptContextRendererIds.TEST_FAILURES)
+    assertThat(resolved.single().body).isEqualTo(expectedTestLine)
   }
 
   private fun invocationData(dataContext: com.intellij.openapi.actionSystem.DataContext? = null): AgentPromptInvocationData {

@@ -1,6 +1,6 @@
 ---
 name: Global Prompt Entry
-description: Requirements for global prompt action behavior, target routing, keyboard semantics, validation, and launcher handoff.
+description: Requirements for global prompt action behavior, target routing, manual context selection, keyboard semantics, validation, and launcher handoff.
 targets:
   - ../../prompt/src/actions/AgentWorkbenchGlobalPromptAction.kt
   - ../../prompt/src/actions/AgentWorkbenchGlobalPromptAutoSelectAction.kt
@@ -8,6 +8,7 @@ targets:
   - ../../prompt/src/ui/AgentPromptPaletteView.kt
   - ../../prompt/src/ui/AgentPromptPaletteModels.kt
   - ../../prompt/src/ui/AgentPromptUiSessionStateService.kt
+  - ../../prompt-vcs/src/context/AgentPromptVcsCommitManualContextSource.kt
   - ../../prompt/resources/intellij.agent.workbench.prompt.xml
   - ../../prompt/resources/messages/AgentPromptBundle.properties
   - ../../sessions-core/src/prompt/AgentPromptLauncherBridge.kt
@@ -19,13 +20,15 @@ targets:
   - ../../prompt/testSrc/ui/AgentPromptEnterHandlersTest.kt
   - ../../prompt/testSrc/ui/AgentPromptPaletteViewStructureTest.kt
   - ../../prompt/testSrc/ui/AgentPromptPaletteViewLayoutTest.kt
+  - ../../prompt/testSrc/ui/AgentPromptUiSessionStateServiceTest.kt
+  - ../../prompt-vcs/testSrc/context/AgentPromptVcsCommitManualContextSourceTest.kt
   - ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 ---
 
 # Global Prompt Entry
 
 Status: Draft
-Date: 2026-03-03
+Date: 2026-03-11
 
 ## Summary
 Define the global prompt entrypoint opened by `Cmd+\\` (macOS) / `Ctrl+\\` (Windows/Linux), including popup behavior, target mode switching, submit validation, and launch handoff.
@@ -84,6 +87,12 @@ Prompt-context collection and rendering contracts are specified separately in `s
    - language source is PSI language id,
    - if snippet language is missing or invalid, snippet descriptor omits `lang=...` and snippet code fence is unlabeled (plain triple backticks),
    - legacy metadata key `language` is not supported.
+
+- Context row must show an `Add Context` affordance only when at least one manual context source is available for the current project.
+- When shown, `Add Context` must be rendered once, after existing context chips, in the context row rather than the header.
+- `Add Context` must expose inline mnemonic activation consistent with other prompt controls.
+  [@test] ../../prompt/testSrc/ui/AgentPromptPaletteViewStructureTest.kt
+  [@test] ../../prompt/testSrc/ui/AgentPromptPaletteViewLayoutTest.kt
 
 - Existing-task pane must stay bounded and must not starve prompt editor layout.
   [@test] ../../prompt/testSrc/ui/AgentPromptPaletteViewLayoutTest.kt
@@ -156,17 +165,33 @@ Prompt-context collection and rendering contracts are specified separately in `s
   - When an extension tab is active, submit delegates to the action returned by `AgentPromptPaletteExtension.getSubmitActionId()`.
   - Provider options, plan mode, and existing-task routing are bypassed for extension tabs.
 
+- Manual context contract:
+  - manual context is additive to automatically resolved prompt context,
+  - manual context removal affects only the selected manual source item,
+  - submit uses the combined auto + manual context list through `AgentPromptLaunchRequest.initialMessageRequest.contextItems`,
+  - re-running the same manual source replaces that source's previous manual item instead of appending duplicates.
+
+- Prompt draft persistence contract:
+  - persisted `AgentPromptUiDraft` must not serialize manual context items,
+  - runtime-only restore snapshot may keep manual context items keyed by source id for the current IDE session,
+  - successful submit or explicit draft clear must clear both removed-auto context state and manual context state.
+    [@test] ../../prompt/testSrc/ui/AgentPromptUiSessionStateServiceTest.kt
+
 ## User Experience
 - Popup opens as a project-scoped launcher for both new and existing task targets.
 - Existing-task mode exposes provider-scoped thread list with loading/empty/error states.
 - Context chips are removable before submit.
-- Context row is shown only when at least one context chip is present; it collapses immediately after the last chip is removed.
+- Context row is shown when at least one context chip is present or when `Add Context` is available; it collapses only when both chips and the `Add Context` affordance are absent.
 - Chip-removal hierarchy is provider-defined via context item relations (`itemId`/`parentItemId`); removing a parent chip may remove all descendant chips recursively.
+- When manual context sources are available, the context row exposes `Add Context` as the single entry point for adding source-specific context.
+- Manual context chips share the same row and submit path as auto context chips.
 
 ## Data & Backend
 - Existing-task list comes from launcher `observeExistingThreads(...)` stream with background refresh.
 - Existing-task list must be scoped to resolved working project path.
 - On successful launch, popup closes and draft is cleared; otherwise popup remains and shows error feedback.
+- `AgentPromptContextResolverService.collectDefaultContext(...)` remains the auto-context source of truth; manual context is merged later in popup state.
+- Manual context sources are discovered via `com.intellij.agent.workbench.promptManualContextSource` and invoked from popup-owned UI state.
 
 ## Error Handling
 - Validation errors are shown inline in footer using message keys.
@@ -179,6 +204,8 @@ Prompt-context collection and rendering contracts are specified separately in `s
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptEnterHandlersTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptPaletteViewStructureTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptPaletteViewLayoutTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptUiSessionStateServiceTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.vcs.context.AgentPromptVcsCommitManualContextSourceTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionPromptLauncherBridgeTest'`
 
 ## Open Questions / Risks

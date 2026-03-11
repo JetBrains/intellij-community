@@ -30,5 +30,9 @@
       qualifiedName="com.intellij.agent.workbench.promptPaletteExtension"
       interface="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPaletteExtension"
       dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.promptManualContextSource"
+      interface="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptManualContextSourceBridge"
+      dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.sessions.core.prompt
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
@@ -33,6 +34,10 @@ interface AgentPromptLauncherBridge {
 
   fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String? {
     return null
+  }
+
+  fun resolveSourceProject(invocationData: AgentPromptInvocationData): Project? {
+    return invocationData.project
   }
 
   fun listWorkingProjectPathCandidates(invocationData: AgentPromptInvocationData): List<AgentPromptProjectPathCandidate> {
