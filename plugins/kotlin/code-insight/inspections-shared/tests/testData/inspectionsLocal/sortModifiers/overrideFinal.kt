@@ -1,3 +1,4 @@
+// PROBLEM: Non-canonical modifiers order
 open class Base {
     open fun foo() {}
 }

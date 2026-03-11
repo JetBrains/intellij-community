@@ -6940,6 +6940,21 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/sortModifiers/contextParametersAndAnnotation.kt");
         }
 
+        @TestMetadata("contextParametersAndAnnotation2.kt")
+        public void testContextParametersAndAnnotation2() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/contextParametersAndAnnotation2.kt");
+        }
+
+        @TestMetadata("contextParametersAndAnnotation3.kt")
+        public void testContextParametersAndAnnotation3() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/contextParametersAndAnnotation3.kt");
+        }
+
+        @TestMetadata("contextParametersAndAnnotation4.kt")
+        public void testContextParametersAndAnnotation4() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/contextParametersAndAnnotation4.kt");
+        }
+
         @TestMetadata("contextParametersOverride.kt")
         public void testContextParametersOverride() throws Exception {
             runTest("../testData/inspectionsLocal/sortModifiers/contextParametersOverride.kt");
@@ -6948,6 +6963,11 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("overrideFinal.kt")
         public void testOverrideFinal() throws Exception {
             runTest("../testData/inspectionsLocal/sortModifiers/overrideFinal.kt");
+        }
+
+        @TestMetadata("parameterAnnotation.kt")
+        public void testParameterAnnotation() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/parameterAnnotation.kt");
         }
 
         @TestMetadata("simple.kt")

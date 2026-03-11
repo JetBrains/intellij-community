@@ -12,6 +12,7 @@ interface A {
 }
 
 class B: A {
-    context(x: Int)
-    override fun test() { }
+    override context(x: Int)
+    @Deprecated("message")
+    <caret>inline fun test() { }
 }

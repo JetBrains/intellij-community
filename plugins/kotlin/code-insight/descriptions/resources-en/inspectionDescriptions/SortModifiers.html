@@ -1,6 +1,7 @@
 <html>
 <body>
 Reports modifiers that do not follow the order recommended by the <a href="https://kotlinlang.org/docs/coding-conventions.html#modifiers-order">style guide</a>.
+If annotations and/or context parameters are present, proves that modifiers follow them and that annotations precede context parameters.
 <p><b>Sort modifiers</b> quick-fix can be used to amend the code automatically.</p>
 <p>Examples:</p>
 <pre><code>
@@ -8,5 +9,17 @@ Reports modifiers that do not follow the order recommended by the <a href="https
 
   infix private fun Int.wrongOrder(expr: Int) {} // &lt;== wrong order, quick-fix amends the modifiers to "private infix"
 </code></pre>
+
+<pre><code>
+    @Deprecated("message")
+    context(str: String)
+    private fun doThis() { } // <== Ok
+
+
+    context(str: String)
+    @Deprecated("message")
+    fun doThis() { } // <== wrong order, quick-fix moves the annotation to the top
+</code></pre>
+
 </body>
 </html>

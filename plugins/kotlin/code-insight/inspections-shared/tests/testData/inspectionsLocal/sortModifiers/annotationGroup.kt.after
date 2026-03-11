@@ -1,8 +1,8 @@
-// PROBLEM: Modifiers should follow annotations
+// PROBLEM: Modifiers should be placed directly before the relevant element
 annotation class Inject
 annotation class VisibleForTesting
 
 class Example {
-    <caret>@set:[Inject VisibleForTesting]
+    @set:[Inject VisibleForTesting]
     public var x: String = ""
 }

@@ -4,6 +4,6 @@
 // K2_ERROR:
 // K2_AFTER_ERROR:
 // PROBLEM: none
-@Deprecated("oh no")
+@Deprecated("message")
 context(str: String)
 private<caret> fun doThis() {}

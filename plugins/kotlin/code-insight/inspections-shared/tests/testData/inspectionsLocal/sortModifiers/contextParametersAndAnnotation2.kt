@@ -3,6 +3,7 @@
 // AFTER_ERROR: Context parameters are not supported in K1 mode. Consider using a more recent language version and switching to K2 mode.
 // K2_ERROR:
 // K2_AFTER_ERROR:
-// PROBLEM: Modifiers should be placed directly before the relevant element
-private<caret> context(x: Int)
-fun getCandidateMembers() { }
+// PROBLEM: Context parameters should follow annotations
+context(str: String)
+<caret>@Deprecated("message")
+fun doThis() {}
