@@ -1,5 +1,6 @@
 package com.intellij.xdebugger.impl.ui
 
+import com.intellij.openapi.Disposable
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
 import com.intellij.xdebugger.XDebugProcess
@@ -25,15 +26,15 @@ fun XDebugProcess.allowFramesViewCustomization(): Boolean {
 @Deprecated("Use getSessionTabCustomer().getBottomLocalsComponentProvider(). If you need to find a session proxy, use XDebugManagerProxy, XDebuggerEntityConverter.asProxy")
 fun XDebugProcess.getBottomLocalsComponentProvider(): SessionTabComponentProvider? {
   val newProvider = (this as? XDebugSessionTabCustomizer)?.getBottomLocalsComponentProvider() ?: return null
-  return object: SessionTabComponentProvider {
+  return object : SessionTabComponentProvider {
     @Deprecated("Use createBottomLocalsComponent(session: XDebugSessionProxy)")
     override fun createBottomLocalsComponent(): JComponent {
       val session = this@getBottomLocalsComponentProvider.session
       val proxy = XDebuggerEntityConverter.asProxy(session)
-      return newProvider.createBottomLocalsComponent(proxy)
+      return newProvider.createBottomLocalsComponent(proxy, null).component
     }
 
-    override fun createBottomLocalsComponent(session: XDebugSessionProxy): JComponent {
+    override fun createBottomLocalsComponent(session: XDebugSessionProxy, disposable: Disposable?): SessionTabComponentProvider.BottomComponentInfo {
       error("Should be unreachable")
     }
   }

@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.frame
 
 import com.intellij.ide.dnd.DnDNativeTarget
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.ui.Splitter
 import com.intellij.platform.debugger.impl.rpc.XMixedModeApi
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
@@ -10,6 +11,7 @@ import com.intellij.ui.OnePixelSplitter
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.impl.ui.SessionTabComponentProvider
+import com.intellij.xdebugger.impl.util.createEdtDisposable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
@@ -19,6 +21,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.time.Duration.Companion.milliseconds
@@ -95,14 +98,23 @@ class XSplitterWatchesViewImpl(
       return
     }
 
-    val evaluatorComponent = SessionTabComponentProvider.getInstance().createBottomLocalsComponent(sessionProxy!!)
+    val evaluatorComponent = SessionTabComponentProvider.getInstance().createBottomLocalsComponent(sessionProxy!!, createEdtDisposable(this))
 
     splitter = OnePixelSplitter(true, proportionKey, 0.01f, 0.99f)
 
     splitter.firstComponent = localsPanel
-    splitter.secondComponent = evaluatorComponent
+    splitter.secondComponent = evaluatorComponent.component
 
     myPanel.addToCenter(splitter)
+
+    if (evaluatorComponent.initialHeight != null)
+      splitter.apply {
+        secondComponent.minimumSize = Dimension(secondComponent.minimumSize.width, evaluatorComponent.initialHeight.toInt())
+        // assign a maximum proportion for locals first component and make the minimum size for the second one fixed
+        proportion = 1f
+        dividerPositionStrategy = Splitter.DividerPositionStrategy.KEEP_SECOND_SIZE
+        setResizeEnabled(false)
+      }
   }
 
   private fun addMixedModeListenerIfNeeded() {

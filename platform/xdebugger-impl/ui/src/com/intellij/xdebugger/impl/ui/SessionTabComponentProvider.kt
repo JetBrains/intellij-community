@@ -1,5 +1,6 @@
 package com.intellij.xdebugger.impl.ui
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import org.jetbrains.annotations.ApiStatus
@@ -11,7 +12,10 @@ interface SessionTabComponentProvider {
   fun createBottomLocalsComponent(): JComponent;
 
   @ApiStatus.Internal
-  fun createBottomLocalsComponent(session: XDebugSessionProxy): JComponent
+  data class BottomComponentInfo(val component: JComponent, val initialHeight: Float?)
+
+  @ApiStatus.Internal
+  fun createBottomLocalsComponent(session: XDebugSessionProxy, disposable : Disposable?): BottomComponentInfo
 
   @ApiStatus.Internal
   companion object {
