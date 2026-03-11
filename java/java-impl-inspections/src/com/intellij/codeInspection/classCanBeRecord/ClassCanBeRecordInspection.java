@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.classCanBeRecord;
 
 import com.intellij.codeInspection.AddToInspectionOptionListFix;
@@ -18,7 +18,6 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiIdentifier;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -42,6 +41,7 @@ import static com.intellij.codeInspection.options.OptPane.stringList;
 
 @NotNullByDefault
 public final class ClassCanBeRecordInspection extends BaseInspection implements CleanupLocalInspectionTool {
+  @SuppressWarnings("SpellCheckingInspection")
   private static final List<String> IGNORED_ANNOTATIONS = List.of("io.micronaut.*", "jakarta.*", "javax.*", "org.springframework.*");
 
   public ConversionStrategy myConversionStrategy = DO_NOT_SUGGEST;
@@ -82,24 +82,17 @@ public final class ClassCanBeRecordInspection extends BaseInspection implements 
     boolean suggestQuickFix = (boolean)infos[0];
     if (suggestQuickFix) {
       fixes.add(new ConvertToRecordFix(suggestAccessorsRenaming, myIgnoredAnnotations));
-      fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(
-        this,
-        "noHighlightingFixAvailable",
-        JavaBundle.message("class.can.be.record.record.highlight.when.semantics.change.fix.name"),
-        true
-      ), false));
-      PsiClass psiClass = ObjectUtils.tryCast(infos[1], PsiClass.class);
-      if (psiClass != null) {
+      String message = JavaBundle.message("class.can.be.record.record.highlight.when.semantics.change.fix.name");
+      fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(this, "noHighlightingFixAvailable", message, true), false));
+      if (infos[1] instanceof PsiClass psiClass) {
         PsiAnnotation[] annotations = psiClass.getAnnotations();
         // rare corner case: we don't want to make a quick-fix list too wide
         if (annotations.length > 0 && annotations.length < 4) {
           for (PsiAnnotation annotation : annotations) {
             String fqn = annotation.getQualifiedName();
             if (fqn != null) {
-              fixes.add(new AddToInspectionOptionListFix<>(
-                this, JavaBundle.message("class.can.be.record.suppress.conversion.if.annotated.fix.name", fqn),
-                fqn, tool -> tool.myIgnoredAnnotations)
-              );
+              String suppressMessage = JavaBundle.message("class.can.be.record.suppress.conversion.if.annotated.fix.name", fqn);
+              fixes.add(new AddToInspectionOptionListFix<>(this, suppressMessage, fqn, tool -> tool.myIgnoredAnnotations));
             }
           }
         }
@@ -125,9 +118,7 @@ public final class ClassCanBeRecordInspection extends BaseInspection implements 
       .onValue(
         "noHighlightingFixAvailable",
         () -> myConversionStrategy == DO_NOT_SUGGEST,
-        (newValue) -> {
-          myConversionStrategy = newValue ? DO_NOT_SUGGEST : SHOW_AFFECTED_MEMBERS;
-        }
+        (newValue) -> myConversionStrategy = newValue ? DO_NOT_SUGGEST : SHOW_AFFECTED_MEMBERS
       );
   }
 

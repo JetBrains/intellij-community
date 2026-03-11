@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.classCanBeRecord;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -13,6 +13,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnnotation.TargetType;
@@ -28,7 +29,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiMethodReferenceExpression;
-import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiReferenceExpression;
@@ -40,7 +41,6 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -61,13 +61,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
-import static com.intellij.psi.PsiModifier.ABSTRACT;
-import static com.intellij.psi.PsiModifier.FINAL;
-import static com.intellij.psi.PsiModifier.NATIVE;
-import static com.intellij.psi.PsiModifier.SEALED;
-import static com.intellij.psi.PsiModifier.STATIC;
 
 public final class ConvertToRecordFix implements LocalQuickFix {
   private final boolean mySuggestAccessorsRenaming;
@@ -115,8 +108,7 @@ public final class ConvertToRecordFix implements LocalQuickFix {
   private @Nullable ConvertToRecordProcessor getRecordProcessor(ProblemDescriptor descriptor) {
     PsiElement psiElement = descriptor.getPsiElement();
     if (psiElement == null || !psiElement.isValid()) return null;
-    PsiClass psiClass = ObjectUtils.tryCast(psiElement.getParent(), PsiClass.class);
-    if (psiClass == null) return null;
+    if (!(psiElement.getParent() instanceof PsiClass psiClass)) return null;
 
     RecordCandidate recordCandidate = tryCreateRecordCandidate(psiClass, mySuggestAccessorsRenaming, myIgnoredAnnotations);
     if (recordCandidate == null) return null;
@@ -138,15 +130,14 @@ public final class ConvertToRecordFix implements LocalQuickFix {
                                        psiClass.isRecord();
     if (isNotAppropriatePsiClass) return null;
 
-    PsiModifierList modifierList = psiClass.getModifierList();
-    if (modifierList == null || modifierList.hasModifierProperty(ABSTRACT) || modifierList.hasModifierProperty(SEALED)) return null;
+    if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT) || psiClass.hasModifierProperty(PsiModifier.SEALED)) return null;
     if (PsiUtil.isLocalClass(psiClass) && containsOuterNonStaticReferences(psiClass)) return null;
-    if (psiClass.getContainingClass() != null && !psiClass.hasModifierProperty(STATIC)) return null;
+    if (psiClass.getContainingClass() != null && !psiClass.hasModifierProperty(PsiModifier.STATIC)) return null;
 
     PsiClass superClass = psiClass.getSuperClass();
-    if (superClass == null || !JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) return null;
+    if (superClass == null || !CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) return null;
 
-    if (ContainerUtil.exists(psiClass.getInitializers(), initializer -> !initializer.hasModifierProperty(STATIC))) return null;
+    if (ContainerUtil.exists(psiClass.getInitializers(), initializer -> !initializer.hasModifierProperty(PsiModifier.STATIC))) return null;
 
     if (AnnotationUtil.checkAnnotatedUsingPatterns(psiClass, ignoredAnnotations)) return null;
 
@@ -173,8 +164,8 @@ public final class ConvertToRecordFix implements LocalQuickFix {
    */
   static class RecordCandidate {
     private static final CallMatcher OBJECT_METHOD_CALLS =
-      CallMatcher.anyOf(CallMatcher.exactInstanceCall(JAVA_LANG_OBJECT, "equals").parameterCount(1),
-                        CallMatcher.exactInstanceCall(JAVA_LANG_OBJECT, "hashCode", "toString").parameterCount(0));
+      CallMatcher.anyOf(CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_OBJECT, "equals").parameterCount(1),
+                        CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_OBJECT, "hashCode", "toString").parameterCount(0));
     private final boolean mySuggestAccessorsRenaming;
     private final @NotNull PsiClass myClass;
     private final MultiMap<PsiField, FieldAccessorCandidate> myFieldsToAccessorCandidates = new MultiMap<>(new LinkedHashMap<>());
@@ -277,7 +268,7 @@ public final class ConvertToRecordFix implements LocalQuickFix {
       if (myFieldsToAccessorCandidates.size() == 0) return false;
       for (var entry : myFieldsToAccessorCandidates.entrySet()) {
         PsiField field = entry.getKey();
-        if (!field.hasModifierProperty(FINAL)) return false;
+        if (!field.hasModifierProperty(PsiModifier.FINAL)) return false;
         if (field.hasInitializer()) return false;
         if (JavaPsiRecordUtil.ILLEGAL_RECORD_COMPONENT_NAMES.contains(field.getName())) return false;
         if (entry.getValue().size() > 1) return false;
@@ -286,7 +277,7 @@ public final class ConvertToRecordFix implements LocalQuickFix {
         if (containsObjectMethodCalls(firstAccessor.method())) return false;
       }
       for (PsiMethod ordinaryMethod : myOrdinaryMethods) {
-        if (ordinaryMethod.hasModifierProperty(NATIVE)) return false;
+        if (ordinaryMethod.hasModifierProperty(PsiModifier.NATIVE)) return false;
         boolean conflictsWithPotentialAccessor = ordinaryMethod.getParameterList().isEmpty() &&
                                                  ContainerUtil.exists(myFieldsToAccessorCandidates.keySet(),
                                                                       field -> field.getName().equals(ordinaryMethod.getName()));
@@ -298,7 +289,7 @@ public final class ConvertToRecordFix implements LocalQuickFix {
 
     private void prepare() {
       for (PsiField field : myClass.getFields()) {
-        if (!field.hasModifierProperty(STATIC)) myFieldsToAccessorCandidates.put(field, new ArrayList<>());
+        if (!field.hasModifierProperty(PsiModifier.STATIC)) myFieldsToAccessorCandidates.put(field, new ArrayList<>());
       }
 
       for (PsiMethod method : myClass.getMethods()) {
@@ -627,7 +618,7 @@ public final class ConvertToRecordFix implements LocalQuickFix {
      */
     private static boolean hasAnnotationConflict(PsiModifierListOwner first, PsiModifierListOwner second, TargetType targetType) {
       boolean result = false;
-      for (final PsiAnnotation firstAnn : first.getAnnotations()) {
+      for (PsiAnnotation firstAnn : first.getAnnotations()) {
         final TargetType firstAnnTarget = AnnotationTargetUtil.findAnnotationTarget(firstAnn, targetType);
         final boolean hasDesiredTarget = firstAnnTarget != null && firstAnnTarget != TargetType.UNKNOWN;
         if (!hasDesiredTarget) continue;
