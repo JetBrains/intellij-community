@@ -168,13 +168,15 @@ class MainMenuButton(coroutineScope: CoroutineScope, icon: Icon = AllIcons.Gener
   inner class ShowMenuAction(icon: Icon, val getItemToSelect: () -> Int) : LightEditCompatible, DumbAwareAction(IdeBundle.messagePointer("main.toolbar.menu.button"), icon) {
 
     override fun actionPerformed(e: AnActionEvent) {
+      var isMenuOpening = true
       if (expandableMenu?.isEnabled() == true) {
+        isMenuOpening = !expandableMenu!!.isShowing()
         expandableMenu!!.switchState(itemInd = getItemToSelect.invoke())
       } else {
         showPopup(e.dataContext)
       }
-      if (e.inputEvent is KeyEvent) {
-        MainMenuCollector.logOpenedByShortcut(e.inputEvent)
+      if (isMenuOpening && e.inputEvent is KeyEvent) {
+        MainMenuCollector.logOpenedByShortcut(e.inputEvent, e.place)
       }
     }
   }
@@ -212,13 +214,20 @@ class MainMenuButton(coroutineScope: CoroutineScope, icon: Icon = AllIcons.Gener
 
     override fun actionPerformed(e: ActionEvent?) {
       if (!UISettings.getInstance().disableMnemonics) {
+        var isMenuOpening = true
         if (expandableMenu?.isEnabled() == true) {
+          isMenuOpening = !expandableMenu!!.isShowing()
           expandableMenu!!.switchState(actionMenu)
         } else {
           val component = IdeFocusManager.getGlobalInstance().focusOwner ?: button
           showPopup(DataManager.getInstance().getDataContext(component), actionToShow)
         }
-        MainMenuCollector.logOpenedByMnemonic(IdeEventQueue.getInstance().trueCurrentEvent as? KeyEvent?)
+        if (isMenuOpening) {
+          // Need to use trueCurrentEvent instead of e because FusInputEvent.from(ActionEvent) uses EventQueue.getCurrentEvent()
+          // which can return a wrong event.
+          MainMenuCollector.logOpenedByMnemonic(IdeEventQueue.getInstance().trueCurrentEvent as? KeyEvent?,
+                                                ActionPlaces.KEYBOARD_SHORTCUT)
+        }
       }
     }
 

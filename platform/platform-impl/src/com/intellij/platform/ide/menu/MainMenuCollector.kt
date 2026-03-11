@@ -14,10 +14,10 @@ internal object MainMenuCollector : CounterUsagesCollector() {
   fun logFocusedByAlt(): Unit = FOCUSED_BY_ALT.log()
 
   private val OPENED_BY_SHORTCUT = GROUP.registerEvent("opened.by.shortcut",  EventFields.InputEvent)
-  fun logOpenedByShortcut(inputEvent: InputEvent?): Unit = OPENED_BY_SHORTCUT.log(FusInputEvent(inputEvent, null))
+  fun logOpenedByShortcut(inputEvent: InputEvent?, place: String?): Unit = OPENED_BY_SHORTCUT.log(FusInputEvent(inputEvent, place))
 
   private val OPENED_BY_MNEMONIC = GROUP.registerEvent("opened.by.mnemonic", EventFields.InputEvent)
-  fun logOpenedByMnemonic(inputEvent: InputEvent?): Unit = OPENED_BY_MNEMONIC.log(FusInputEvent(inputEvent, null))
+  fun logOpenedByMnemonic(inputEvent: InputEvent?, place: String?): Unit = OPENED_BY_MNEMONIC.log(FusInputEvent(inputEvent, place))
 
   override fun getGroup(): EventLogGroup = GROUP
 }
