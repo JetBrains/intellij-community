@@ -3,6 +3,7 @@ name: Global Prompt Entry
 description: Requirements for global prompt action behavior, target routing, keyboard semantics, validation, and launcher handoff.
 targets:
   - ../../prompt/src/actions/AgentWorkbenchGlobalPromptAction.kt
+  - ../../prompt/src/actions/AgentWorkbenchGlobalPromptAutoSelectAction.kt
   - ../../prompt/src/ui/AgentPromptPalettePopup.kt
   - ../../prompt/src/ui/AgentPromptPaletteView.kt
   - ../../prompt/src/ui/AgentPromptPaletteModels.kt
@@ -10,6 +11,7 @@ targets:
   - ../../prompt/resources/intellij.agent.workbench.prompt.xml
   - ../../prompt/resources/messages/AgentPromptBundle.properties
   - ../../sessions-core/src/prompt/AgentPromptLauncherBridge.kt
+  - ../../sessions-core/src/prompt/AgentPromptPaletteExtension.kt
   - ../../sessions/src/service/AgentSessionPromptLauncherBridge.kt
   - ../../prompt/testSrc/ui/AgentPromptProviderSelectionDecisionsTest.kt
   - ../../prompt/testSrc/ui/AgentPromptSubmitValidationDecisionsTest.kt
@@ -43,6 +45,8 @@ Prompt-context collection and rendering contracts are specified separately in `s
 
 ## Requirements
 - Global action id `AgentWorkbenchPrompt.OpenGlobalPalette` must be available only when a project is open.
+
+- Global action id `AgentWorkbenchPrompt.OpenGlobalPaletteAutoSelect` must be available only when a project is open. It opens the same popup but with EP-driven extension tab auto-selection (see below).
 
 - Prompt target mode must support exactly:
   - `PromptTargetMode.NEW_TASK`,
@@ -111,6 +115,18 @@ Prompt-context collection and rendering contracts are specified separately in `s
   [@test] ../../prompt/testSrc/ui/AgentPromptPlanModeDecisionsTest.kt
 
 - Context block soft-cap limit is `12_000` characters. When exceeded, user must explicitly choose send-full, auto-trim, or cancel before launch.
+
+- Extension tab auto-selection (`Alt+Cmd+\` / `Alt+Ctrl+\`):
+  - When the popup is opened via `AgentWorkbenchPrompt.OpenGlobalPaletteAutoSelect`, the `AGENT_PROMPT_INVOCATION_PREFER_EXTENSIONS_KEY` attribute is set to `true`.
+  - When `preferExtensions` is true, the popup calls `AgentPromptPaletteExtension.shouldAutoSelect(contextItems)` on each active extension tab in order.
+  - The first extension that returns `true` from `shouldAutoSelect` has its tab auto-selected.
+  - If no extension returns `true`, the default "New Task" tab remains selected.
+  - `shouldAutoSelect` defaults to `false` in the EP interface; each extension opts in independently.
+  - When the popup is opened via the standard `AgentWorkbenchPrompt.OpenGlobalPalette` (`Cmd+\` / `Ctrl+\`), no auto-selection occurs regardless of extension tab state.
+
+- Extension tab submit flow:
+  - When an extension tab is active, submit delegates to the action returned by `AgentPromptPaletteExtension.getSubmitActionId()`.
+  - Provider options, plan mode, and existing-task routing are bypassed for extension tabs.
 
 ## User Experience
 - Popup opens as a project-scoped launcher for both new and existing task targets.

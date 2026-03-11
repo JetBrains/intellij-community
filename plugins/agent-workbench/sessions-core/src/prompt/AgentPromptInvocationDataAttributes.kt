@@ -2,3 +2,4 @@
 package com.intellij.agent.workbench.sessions.core.prompt
 
 const val AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY: String = "dataContext"
+const val AGENT_PROMPT_INVOCATION_PREFER_EXTENSIONS_KEY: String = "preferExtensionTabs"
