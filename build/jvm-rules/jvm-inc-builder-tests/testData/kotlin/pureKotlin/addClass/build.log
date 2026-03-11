@@ -7,9 +7,11 @@ Compiling files:
 End of files
 Cleaning output files:
   META-INF/kotlin_pureKotlin_addClass-a.kotlin_module
+  foo/FunAKt.class
   use/UseAKt.class
 End of files
 Compiling files:
+  kotlin/pureKotlin/addClass/a/funA.kt
   kotlin/pureKotlin/addClass/a/useA.kt
 End of files
 ------------------------------------------

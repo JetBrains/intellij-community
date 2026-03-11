@@ -4,9 +4,11 @@ Cleaning output files:
 End of files
 Cleaning output files:
   META-INF/kotlin_pureKotlin_renameFileWithFunctionOverload-a.kotlin_module
+  foo/Foo1Kt.class
   use/UseFKt.class
 End of files
 Compiling files:
+  kotlin/pureKotlin/renameFileWithFunctionOverload/a/foo1.kt
   kotlin/pureKotlin/renameFileWithFunctionOverload/a/foo3.kt
   kotlin/pureKotlin/renameFileWithFunctionOverload/a/useF.kt
 End of files

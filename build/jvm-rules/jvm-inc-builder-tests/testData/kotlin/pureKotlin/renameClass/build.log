@@ -8,10 +8,12 @@ Compiling files:
 End of files
 Cleaning output files:
   META-INF/kotlin_pureKotlin_renameClass-a.kotlin_module
+  foo/FunsKt.class
   use/UseAKt.class
   use/UseBKt.class
 End of files
 Compiling files:
+  kotlin/pureKotlin/renameClass/a/funs.kt
   kotlin/pureKotlin/renameClass/a/useA.kt
   kotlin/pureKotlin/renameClass/a/useB.kt
 End of files
