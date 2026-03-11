@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInsight.options.JavaInspectionButtons;
 import com.intellij.codeInsight.options.JavaInspectionControls;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.IncorrectLazyConstantUsageInspection;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.canBeFinal.CanBeFinalHandler;
@@ -110,7 +111,10 @@ public final class FieldMayBeFinalInspection extends BaseInspection implements C
 
     private static boolean isLazyConstantField(@NotNull PsiField field) {
       PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(field.getType());
-      return aClass != null && JAVA_LANG_LAZY_CONSTANT.equals(aClass.getQualifiedName());
+      if (aClass != null && JAVA_LANG_LAZY_CONSTANT.equals(aClass.getQualifiedName())) {
+        return true;
+      }
+      return IncorrectLazyConstantUsageInspection.isLazyCollectionInitializer(field);
     }
   }
 }
