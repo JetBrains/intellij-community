@@ -77,6 +77,7 @@ import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteIntentReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -247,6 +248,8 @@ public final class TableResultView extends JBTableWithResizableCells
   private final TableFloatingToolbar myFloatingToolbar;
 
   private StatisticsTableHeader myStatisticsHeader;
+
+  private static final Logger LOG = Logger.getInstance(TableResultView.class);
 
   public TableResultView(@NotNull DataGrid resultPanel,
                          @NotNull ActionGroup columnHeaderPopupActions,
@@ -2566,6 +2569,12 @@ public final class TableResultView extends JBTableWithResizableCells
     }
 
     private void setPlaceholderIntoHeaderLine(int headerLineIdx) {
+      if (headerLineIdx < 0 || headerLineIdx >= myNameLabels.size()) {
+        LOG.error("Header line index out of bounds: idx=" + headerLineIdx +
+                  ", myNameLabels.size()=" + myNameLabels.size() +
+                  ", myHeaderLinePanels.size()=" + myHeaderLinePanels.size());
+        return;
+      }
       myNameLabels.get(headerLineIdx).setText(HEADER_PLACEHOLDER);
     }
 
