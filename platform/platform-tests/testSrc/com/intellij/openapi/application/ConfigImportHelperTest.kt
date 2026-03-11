@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
@@ -7,7 +7,6 @@ import com.intellij.ide.ConfigImportOptions
 import com.intellij.ide.ConfigImportSettings
 import com.intellij.ide.SpecialConfigFiles
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.saveDisabledPluginsAndInvalidate
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService
@@ -34,11 +33,11 @@ import com.intellij.testFramework.junit5.http.url
 import com.intellij.testFramework.replaceService
 import com.intellij.util.SystemProperties
 import com.intellij.util.queryParameters
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.sun.net.httpserver.HttpServer
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.Condition
 import org.junit.Assume.assumeTrue
 import org.junit.Test
@@ -66,7 +65,7 @@ import kotlin.io.path.writeText
 
 private val LOG = logger<ConfigImportHelperTest>()
 
-@OptIn(ExperimentalPathApi::class)
+@OptIn(ExperimentalPathApi::class, LowLevelLocalMachineAccess::class)
 class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
   val options = ConfigImportOptions(LOG).apply { headless = true }
 
@@ -385,8 +384,9 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
 
   @Test fun `filtering custom VM options`() {
     val oldConfigDir = newTempDir("oldConfig")
-    @Suppress("SpellCheckingInspection") val outlaws = listOf(
-      "-XX:MaxJavaStackTraceDepth=-1", "-Xverify:none", "-noverify", "-agentlib:yjpagent=opts", "-agentpath:/path/to/lib-yjpagent.so=opts")
+    val outlaws = listOf(
+      "-XX:MaxJavaStackTraceDepth=-1", "-Xverify:none", "-noverify", "-agentlib:yjpagent=opts", "-agentpath:/path/to/lib-yjpagent.so=opts"
+    )
     oldConfigDir.resolve(VMOptions.getFileName()).writeLines(outlaws)
     val newConfigDir = newTempDir("newConfig")
 
@@ -417,7 +417,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
   }
 
   @Test fun `filtering FLS VM option when importing from CE`() {
-    val oldICConfigDir = createConfigDir(version = "2025.2", product = "IdeaIC")
+    val oldICConfigDir = createConfigDir(version = "2025.2", product = @Suppress("SpellCheckingInspection") "IdeaIC")
     val oldIUConfigDir = createConfigDir(version = "2025.2", product = "IntelliJIdea")
     listOf(oldICConfigDir, oldIUConfigDir).forEach {
       it.resolve(VMOptions.getFileName())
@@ -571,7 +571,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val oldConfigDir = newTempDir("oldConfig")
     oldConfigDir.resolve(PathManager.OPTIONS_DIRECTORY + '/' + StoragePathMacros.NON_ROAMABLE_FILE)
       .createParentDirectories()
-      .writeLines(listOf("aaaa"))
+      .writeLines(listOf("a-a-a-a"))
     oldConfigDir.resolve(VMOptions.getFileName()).writeLines(listOf("-Xmx2048m", "-Dsome.prop=old.val"))
 
     val newConfigDir = newTempDir("newConfig")
@@ -582,7 +582,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
       .writeLines(listOf("-Xmx2048m", "-Dsome.another.prop=another.val"))
 
     CustomConfigMigrationOption.MigrateFromCustomPlace(oldConfigDir).writeConfigMarkerFile(newConfigDir)
-    ConfigImportHelper.importConfigsTo(false, newConfigDir, emptyList(), LOG)
+    ConfigImportHelper.importConfigsTo(newConfigDir, emptyList())
     assertThat(newVmOptionsFile.readLines()).containsExactly("-Xmx3G", "-Dsome.prop=new.val")
   }
 
@@ -594,7 +594,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     assertThat(findInheritedDirectory(newConfigDir, newConfigDir.toString())).isNull()
     assertThat(findInheritedDirectory(newConfigDir, newConfigDir.resolveSibling("_missing").toString())).isNull()
 
-    assertThat(findInheritedDirectory(newConfigDir, oldConfigDir.toString())!!.paths).containsExactly(oldConfigDir)
+    assertThat(findInheritedDirectory(newConfigDir, oldConfigDir.toString())).isEqualTo(oldConfigDir)
   }
 
   @Test fun `automatic import`() {
@@ -602,8 +602,8 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val markerFile = createTempFile(oldConfigDir.resolve(PathManager.OPTIONS_DIRECTORY), "test.", ".xml")
     val newConfigDir = createConfigDir(version = "2025.3")
 
-    withSystemProperty<RuntimeException>("intellij.startup.wizard", "false") {
-      ConfigImportHelper.importConfigsTo(false, newConfigDir, emptyList(), LOG)
+    withSystemProperty<RuntimeException>(PathManager.PROPERTY_CONFIG_PATH, null) {
+      ConfigImportHelper.importConfigsTo(newConfigDir, emptyList())
     }
 
     assertThat(newConfigDir.resolve(PathManager.OPTIONS_DIRECTORY)).isDirectoryContaining { it.name == markerFile.name }
@@ -613,80 +613,19 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     createConfigDir("2025.2", storageTS = LocalDateTime.now())
     val newConfigDir = createConfigDir(version = "", modern = true, product = "newConfig")
 
-    // NB: currently, it works even without the property because of the `PluginManagerCore.isRunningFromSources()` condition
     withSystemProperty<RuntimeException>(PathManager.PROPERTY_CONFIG_PATH, newConfigDir.toString()) {
-      ConfigImportHelper.importConfigsTo(false, newConfigDir, emptyList(), LOG)
+      ConfigImportHelper.importConfigsTo(newConfigDir, emptyList())
     }
 
     assertThat(newConfigDir).isEmptyDirectory
-  }
-
-  @Test fun `skipping automatic import when running from sources`() {
-    assumeTrue(PluginManagerCore.isRunningFromSources())
-
-    val oldConfigDir = createConfigDir("2025.2", storageTS = LocalDateTime.now())
-    val newConfigDir = createConfigDir(version = "2025.3")
-    assertThat(findConfigDirectories(newConfigDir).paths).containsExactly(oldConfigDir)
-
-    withSystemProperty<RuntimeException>(PathManager.PROPERTY_CONFIG_PATH, null) {
-      ConfigImportHelper.importConfigsTo(false, newConfigDir, emptyList(), LOG)
-    }
-
-    assertThat(newConfigDir).isEmptyDirectory
-  }
-
-  @Test fun `explicit settings import dialog`() {
-    val oldConfigDir = createConfigDir("2025.2", storageTS = LocalDateTime.now())
-    val newConfigDir = createConfigDir(version = "2025.3")
-    assertThat(findConfigDirectories(newConfigDir).paths).containsExactly(oldConfigDir)
-
-    assertThatThrownBy {
-      withSystemProperty<RuntimeException>("intellij.startup.wizard", "false") {
-        withSystemProperty<RuntimeException>("idea.initially.ask.config", "true") {
-          ConfigImportHelper.importConfigsTo(false, newConfigDir, emptyList(), LOG)
-        }
-      }
-    }.isInstanceOf(UnsupportedOperationException::class.java).hasMessage("Unit test mode")
-  }
-
-  @Test fun `settings import dialog when no candidates`() {
-    val newConfigDir = createConfigDir(version = "2025.3")
-
-    assertThatThrownBy {
-      withSystemProperty<RuntimeException>("intellij.startup.wizard", "false") {
-        ConfigImportHelper.importConfigsTo(false, newConfigDir, emptyList(), LOG)
-      }
-    }.isInstanceOf(UnsupportedOperationException::class.java).hasMessage("Unit test mode")
   }
 
   @Test fun `skipping automatic import from an old directory`() {
     createConfigDir("2024.2", storageTS = LocalDateTime.now().minusYears(1))
     val newConfigDir = createConfigDir(version = "2025.3")
 
-    assertThatThrownBy {
-      withSystemProperty<RuntimeException>("intellij.startup.wizard", "false") {
-        ConfigImportHelper.importConfigsTo(false, newConfigDir, emptyList(), LOG)
-      }
-    }.isInstanceOf(UnsupportedOperationException::class.java).hasMessage("Unit test mode")
-  }
-
-  @Test fun `avoiding settings import dialog on the very first start`() {
-    val newConfigDir = createConfigDir(version = "2025.3")
-
-    withSystemProperty<RuntimeException>("intellij.startup.wizard", "false") {
-      ConfigImportHelper.importConfigsTo(true, newConfigDir, emptyList(), LOG)
-    }
-
-    assertThat(newConfigDir).isEmptyDirectory
-  }
-
-  @Test fun `avoiding settings import dialog when suppressed`() {
-    val newConfigDir = createConfigDir(version = "2025.3")
-
-    withSystemProperty<RuntimeException>("intellij.startup.wizard", "false") {
-      withSystemProperty<RuntimeException>("idea.initially.ask.config", "never") {
-        ConfigImportHelper.importConfigsTo(false, newConfigDir, emptyList(), LOG)
-      }
+    withSystemProperty<RuntimeException>(PathManager.PROPERTY_CONFIG_PATH, null) {
+      ConfigImportHelper.importConfigsTo(newConfigDir, emptyList())
     }
 
     assertThat(newConfigDir).isEmptyDirectory

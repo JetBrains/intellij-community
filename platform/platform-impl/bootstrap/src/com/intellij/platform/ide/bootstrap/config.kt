@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.accessibility.enableScreenReaderSupportIfNecessary
@@ -9,7 +9,6 @@ import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
@@ -120,12 +119,9 @@ private suspend fun importConfig(
 
   span("config importing") {
     appStarter.beforeImportConfigs()
-
-    val euaDocumentStatus = euaDocumentDeferred.await()
-    val veryFirstStartOnThisComputer = euaDocumentStatus is EndUserAgreementStatus.Required
-    val log = logger<ConfigImportHelper>()
+    euaDocumentDeferred.await()
     withContext(RawSwingDispatcher) {
-      ConfigImportHelper.importConfigsTo(veryFirstStartOnThisComputer, targetDirectoryToImportConfig, args, log)
+      ConfigImportHelper.importConfigsTo(targetDirectoryToImportConfig, args)
     }
     appStarter.importFinished(targetDirectoryToImportConfig)
     EarlyAccessRegistryManager.invalidate()
