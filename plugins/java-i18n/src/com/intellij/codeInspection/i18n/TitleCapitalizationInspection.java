@@ -251,7 +251,7 @@ public final class TitleCapitalizationInspection extends AbstractBaseJavaLocalIn
   }
 
   interface Value {
-    Pattern HTML_PATTERN = Pattern.compile("(?><[^>]*>)", Pattern.MULTILINE);
+    Pattern HTML_PATTERN = Pattern.compile("<[^>]*+>", Pattern.MULTILINE);
     
     @Override
     @NotNull String toString();
