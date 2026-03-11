@@ -70,7 +70,6 @@ import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.createDefaultTabName
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.updateBackendTabNameOnTitleChange
-import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.updateTabNameOnTitleChange
 import java.lang.ref.WeakReference
 import kotlin.time.Duration.Companion.seconds
 
@@ -170,7 +169,7 @@ internal class TerminalToolWindowTabsManagerImpl(
 
     val tabScope = coroutineScope.childScope("TerminalToolWindowTab")
     content.displayName = terminal.title.buildSettingsAwareTitle()
-    updateTabNameOnTitleChange(terminal.title, content, tabScope.childScope("Tab name updating"))
+    updateTabNameOnTitleChange(terminal, content, tabScope.childScope("Tab name updating"))
 
     // Terminate the session if the tab was closed.
     // But if the tab was detached, leave the session alive.

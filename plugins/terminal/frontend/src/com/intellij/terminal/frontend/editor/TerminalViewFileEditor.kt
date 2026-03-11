@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.terminal.frontend.toolwindow.impl.updateFileNameOnTitleChange
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +21,6 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.terminal.util.TerminalTitleUtils
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
@@ -48,8 +48,8 @@ internal class TerminalViewFileEditor(
       }
     }
 
-    TerminalTitleUtils.updateFileNameOnTitleChange(
-      terminalView.title,
+    updateFileNameOnTitleChange(
+      terminalView,
       file,
       project,
       coroutineScope,
