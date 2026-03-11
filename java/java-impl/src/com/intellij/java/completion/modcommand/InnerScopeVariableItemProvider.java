@@ -4,12 +4,13 @@ package com.intellij.java.completion.modcommand;
 import com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcompletion.ModCompletionResult;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
 import org.jetbrains.annotations.NotNullByDefault;
 
 @NotNullByDefault
-final class InnerScopeVariableItemProvider extends JavaModCompletionItemProvider {
+final class InnerScopeVariableItemProvider extends JavaModCompletionItemProvider implements DumbAware {
   @Override
   public void provideItems(CompletionContext context, ModCompletionResult sink) {
     if (context.invocationCount() < 1) return;
@@ -18,5 +19,10 @@ final class InnerScopeVariableItemProvider extends JavaModCompletionItemProvider
       sink.accept(new VariableCompletionItem(
         variable, JavaBundle.message("completion.inner.scope.tail.text", BringVariableIntoScopeFix.getVariableDeclarationPlace(variable))));
     }
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return true;
   }
 }

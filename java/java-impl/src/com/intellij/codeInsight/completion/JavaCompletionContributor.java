@@ -9,7 +9,6 @@ import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
-import com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -19,7 +18,6 @@ import com.intellij.codeInsight.lookup.LookupElementRenderer;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
-import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.java.JavaBundle;
@@ -166,7 +164,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
@@ -996,10 +993,6 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       ContainerUtil.addIfNotNull(items, ArrayMemberAccess.accessFirstElement(position, element));
     }
 
-    if (parameters.getInvocationCount() > 0) {
-      items.addAll(getInnerScopeVariables(position));
-    }
-
     if (ref.getQualifier() instanceof PsiExpression qualifierExpression &&
         parameters.getInvocationCount() <= 2 &&
         AdvancedSettings.getBoolean("java.completion.qualifier.as.argument")) {
@@ -1043,14 +1036,6 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       return TailTypes.semicolonType();
     }
     return null;
-  }
-
-  private static @Unmodifiable Collection<LookupElement> getInnerScopeVariables(PsiElement position) {
-    List<PsiLocalVariable> list = BringVariableIntoScopeFix.findInnerScopeVariables(position);
-    return ContainerUtil.map(list, variable -> 
-      new VariableLookupItem(
-        variable, JavaBundle.message("completion.inner.scope.tail.text", BringVariableIntoScopeFix.getVariableDeclarationPlace(variable)))
-        .setPriority(-1));
   }
 
   private static @NotNull List<LookupElement> completePermitsListReference(@NotNull CompletionParameters parameters,

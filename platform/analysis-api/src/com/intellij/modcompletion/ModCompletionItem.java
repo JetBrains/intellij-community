@@ -46,7 +46,8 @@ public interface ModCompletionItem {
   ModCompletionItemPresentation presentation();
 
   /**
-   * @return explicit item priority; can be positive or negative. Default is 0.
+   * @return explicit item priority; can be positive or negative. 
+   * Higher priority means the item will appear closer to the top of the list. Default is 0.
    */
   default double priority() {
     return 0;
