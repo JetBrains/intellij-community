@@ -6,7 +6,6 @@ import com.intellij.openapi.ui.playback.PlaybackContext
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import org.jetbrains.idea.maven.indices.MavenClassSearchResult
 import org.jetbrains.idea.maven.indices.MavenClassSearcher
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 
 /**
  * The command validates if maven indexes have an artifact and if not you can call [MavenIndexUpdateCommand]
@@ -25,7 +24,7 @@ class CheckIfMavenIndexesHaveArtefactCommand(text: String, line: Int) : Performa
     MavenClassSearcher()
       .search(project, "", 1000)
       .any {
-        val actualInfo = ((it as MavenClassSearchResult).searchResults as MavenRepositoryArtifactInfo);
+        val actualInfo = (it as MavenClassSearchResult).searchResults
         actualInfo.artifactId == expectedArtifact.artefactId &&
         actualInfo.groupId == expectedArtifact.groupId &&
         actualInfo.version == expectedArtifact.version
