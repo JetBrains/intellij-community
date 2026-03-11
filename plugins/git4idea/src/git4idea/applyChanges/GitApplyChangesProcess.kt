@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.applyChanges
 
 import com.intellij.dvcs.DvcsUtil
@@ -130,16 +130,18 @@ internal abstract class GitApplyChangesProcess(
     val localChangesOverwrittenDetector = GitLocalChangesConflictDetector()
     val untrackedFilesDetector = GitUntrackedFilesOverwrittenByOperationDetector(repository.root)
 
-    val base = commits.first()
-    val commitMessage = generateDefaultMessage(repository, base)
-
     val strategy: GitApplyChangesCommitStrategy = when {
-      isStagingAreaAvailable(project) -> StagingAreaGitApplyChangesCommit(repository.project, commitMessage)
-
-      changeListManager.areChangeListsEnabled() && VcsApplicationSettings.getInstance().CREATE_CHANGELISTS_AUTOMATICALLY ->
+      isStagingAreaAvailable(project) -> {
+        StagingAreaGitApplyChangesCommit(repository.project)
+      }
+      changeListManager.areChangeListsEnabled() && VcsApplicationSettings.getInstance().CREATE_CHANGELISTS_AUTOMATICALLY -> {
+        val base = commits.first()
+        val commitMessage = generateDefaultMessage(repository, base)
         ChangeListGitApplyChangesCommit(repository, this, base, commitMessage, preserveCommitMetadata)
-
-      else -> SimplifiedGitApplyChangesCommit(repository, this, base, commitMessage, preserveCommitMetadata)
+      }
+      else -> {
+        SimplifiedGitApplyChangesCommit(repository, this, preserveCommitMetadata)
+      }
     }
 
     val action = LocalHistory.getInstance().startAction(activityName, activityId)
@@ -169,11 +171,12 @@ internal abstract class GitApplyChangesProcess(
             refreshStagedVfs(repository.root) // `ConflictResolver` only refreshes conflicted files
             VcsDirtyScopeManager.getInstance(project).rootDirty(repository.root)
             changeListManager.waitForUpdate()
-            strategy.afterChangesRefreshed()
+            val stoppedAtMessage = generateDefaultMessage(repository, stoppedAtCommit)
+            strategy.afterChangesRefreshed(stoppedAtCommit, stoppedAtMessage)
 
             if (mergeCompleted) {
               LOG.debug("All conflicts resolved, will show commit dialog.")
-              return strategy.doUserCommit(onSuccessfulCommit = {
+              return strategy.doUserCommit(stoppedAtCommit, stoppedAtMessage, onSuccessfulCommit = {
                 addSuccessfulCommits(successfulCommits, listOf(it))
               }, onSkippedCommit = alreadyPicked::add, onCancelledCommit = {
                 // don't notify about canceled commit. Notify just in the case when there were already successful commits in the queue.
