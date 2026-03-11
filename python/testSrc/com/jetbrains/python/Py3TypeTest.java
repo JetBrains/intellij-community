@@ -4937,6 +4937,37 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  // PY-88326
+  public void testGenericProtocolUnificationFromClassMethodSelfAnnotation() {
+    doTest("list[int]", """
+      from typing import Protocol, TypeVar
+      
+      T = TypeVar("T")
+      
+      class ProtoA(Protocol[T]):
+          @classmethod
+          def method1(cls, value: T) -> None:
+              ...
+      
+      class ProtoB(Protocol[T]):
+          def method2(self) -> T:
+              ...
+      
+      class ImplB:
+          def method2(self) -> int:
+              return 0
+      
+          @classmethod
+          def method1(cls: type[ProtoB[T]], value: list[T]) -> None:
+              pass
+      
+      def func1(x: ProtoA[T]) -> T:
+          raise NotImplementedError
+      
+      expr = func1(ImplB())
+      """);
+  }
+
   // PY-85030
   public void testStructuralTypesAttributeAccessAfterTypeNarrowingAndReassignmentInIf() {
     doTest("(p: Any) -> None", """

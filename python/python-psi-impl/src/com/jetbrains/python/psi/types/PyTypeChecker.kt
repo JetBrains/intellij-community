@@ -21,6 +21,7 @@ import com.jetbrains.python.codeInsight.typing.inspectProtocolSubclass
 import com.jetbrains.python.codeInsight.typing.isProtocol
 import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyCallable
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFile
@@ -797,12 +798,50 @@ object PyTypeChecker {
     if (elementType !is PyCallableType) return elementType
     val parameters = elementType.getParameters(context)
     if (parameters.isNullOrEmpty() || !parameters.first().isSelf) return elementType
-    val selfParamType = parameters.first().getType(context)
-    if (selfParamType !is PyTypeVarType) return elementType
+    val selfParamType = parameters.first().getType(context) ?: return elementType
+    val selfBindingTarget = prepareSelfBindingTarget(classType, elementType.callable, context)
     val selfSubstitutions = GenericSubstitutions()
-    match(selfParamType, classType, MatchContext(context, selfSubstitutions, false))
-    if (selfSubstitutions.typeVars.isEmpty()) return elementType
+    val selfMatchContext = MatchContext(context, selfSubstitutions, false)
+    if (!match(selfParamType, selfBindingTarget, selfMatchContext).orElse(true)) return elementType
     return substitute(elementType, selfSubstitutions, context) as? PyCallableType ?: elementType
+  }
+
+  private fun prepareSelfBindingTarget(actualType: PyType?, callable: PyCallable?, context: TypeEvalContext): PyType? {
+    val function = callable as? PyFunction ?: return actualType
+    var actualType = when {
+      function.modifier == PyAstFunction.Modifier.CLASSMETHOD -> {
+        actualType.toStream()
+          .select(PyClassLikeType::class.java)
+          .map { obj: PyClassLikeType? -> obj!!.toClass() }
+          .select(PyType::class.java)
+          .foldLeft { type1: PyType?, type2: PyType? -> PyUnionType.union(type1, type2) }
+          .orElse(actualType)
+      }
+      PyUtil.isInitMethod(function) -> {
+        actualType.toStream()
+          .select(PyInstantiableType::class.java)
+          .map { obj -> obj!!.toInstance() }
+          .select(PyType::class.java)
+          .foldLeft { type1, type2 -> PyUnionType.union(type1, type2) }
+          .orElse(actualType)
+      }
+      else -> actualType
+    }
+
+    if (PyUnionType.isStrictSemanticsEnabled()) {
+      val pyClass: PyClass = checkNotNull(function.containingClass)
+      val classType: PyClassLikeType = context.getType(pyClass) as PyClassLikeType
+      val superType: PyClassLikeType =
+        (if (function.modifier == PyAstFunction.Modifier.CLASSMETHOD || PyUtil.isNewMethod(function)) classType else classType.toInstance())
+      // In a union receiver type, leave only members that actually have this function
+      // TODO how does it work with qualified calls, e.g. SomeClass.method(receiver, arg1, arg2)
+      // TODO how does it work with @classmethods?
+      actualType = actualType.toStream()
+        .filter { type: PyType? -> match(superType, type, context) }
+        .collect(PyTypeUtil.toUnion(actualType))
+    }
+
+    return actualType
   }
 
   // https://typing.python.org/en/latest/spec/tuples.html#type-compatibility-rules
@@ -1677,37 +1716,9 @@ object PyTypeChecker {
     context: TypeEvalContext,
   ): PyType? {
     // TODO find out a better way to pass the corresponding function inside
-    var actualType = actualType
     val param = paramWrapper.parameter
     val function: PyFunction = ScopeUtil.getScopeOwner(param) as PyFunction
-    if (function.modifier == PyAstFunction.Modifier.CLASSMETHOD) {
-      actualType = actualType.toStream()
-        .select(PyClassLikeType::class.java)
-        .map { obj: PyClassLikeType? -> obj!!.toClass() }
-        .select(PyType::class.java)
-        .foldLeft { type1: PyType?, type2: PyType? -> PyUnionType.union(type1, type2) }
-        .orElse(actualType)
-    }
-    else if (PyUtil.isInitMethod(function)) {
-      actualType = actualType.toStream()
-        .select(PyInstantiableType::class.java)
-        .map { obj -> obj!!.toInstance() }
-        .select(PyType::class.java)
-        .foldLeft { type1, type2 -> PyUnionType.union(type1, type2) }
-        .orElse(actualType)
-    }
-    if (PyUnionType.isStrictSemanticsEnabled()) {
-      val pyClass: PyClass = checkNotNull(function.containingClass)
-      val classType: PyClassLikeType = context.getType(pyClass) as PyClassLikeType
-      val superType: PyClassLikeType =
-        (if (function.modifier == PyAstFunction.Modifier.CLASSMETHOD || PyUtil.isNewMethod(function)) classType else classType.toInstance())
-      // In a union receiver type, leave only members that actually have this function
-      // TODO how does it work with qualified calls, e.g. SomeClass.method(receiver, arg1, arg2)
-      // TODO how does it work with @classmethods?
-      actualType = actualType.toStream()
-        .filter { type: PyType? -> match(superType, type, context) }
-        .collect(PyTypeUtil.toUnion(actualType))
-    }
+    val actualType = prepareSelfBindingTarget(actualType, function, context)
 
     val containingClass: PyClass = checkNotNull(function.containingClass)
     var genericClass: PyType? = findGenericDefinitionType(containingClass, context)

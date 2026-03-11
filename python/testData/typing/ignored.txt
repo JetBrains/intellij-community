@@ -33,7 +33,6 @@ protocols_class_objects.py
 protocols_definition.py
 protocols_explicit.py
 protocols_generic.py
-protocols_recursive.py
 protocols_variance.py
 qualifiers_annotated.py
 specialtypes_any.py
