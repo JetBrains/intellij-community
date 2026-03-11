@@ -5387,6 +5387,13 @@ public class Py3TypeTest extends PyTestCase {
               expr = set(cls)
       """);
   }
+  
+  // PY-88321
+  public void testListLiteralOfClassFloat() {
+    doTest("list[type[float]]", """
+      expr = [float]
+    """);
+  }
 
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);

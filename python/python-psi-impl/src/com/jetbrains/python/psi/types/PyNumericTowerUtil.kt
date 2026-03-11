@@ -23,6 +23,7 @@ object PyNumericTowerUtil {
 
   private fun expand(clsType: PyType?): PyType? {
     if (clsType !is PyClassType || clsType.classQName !in ALLOWED_CLASSES) return clsType
+    if (clsType.isDefinition) return clsType
 
     val source = clsType.pyClass
     val classQName = clsType.classQName
