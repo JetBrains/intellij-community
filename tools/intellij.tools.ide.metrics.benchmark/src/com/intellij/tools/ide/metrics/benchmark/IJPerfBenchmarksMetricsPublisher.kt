@@ -60,7 +60,7 @@ internal class IJPerfBenchmarksMetricsPublisher {
       try {
         TestClassCodeOwnerResolverImpl()
       }
-      catch (_: Exception) {
+      catch (_: Throwable) {
         null
       }
     }
