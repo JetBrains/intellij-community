@@ -3,13 +3,12 @@ package com.intellij.openapi.util.io
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.util.SystemProperties
 import com.intellij.util.TimeoutUtil
-import org.assertj.core.api.Assertions
-import org.junit.Assume
-import org.junit.Rule
-import org.junit.Test
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -19,6 +18,7 @@ import java.nio.file.attribute.FileTime
 import java.nio.file.attribute.PosixFilePermissions
 import java.time.Instant
 import java.util.function.Consumer
+import kotlin.io.path.absolutePathString
 import kotlin.math.max
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -27,9 +27,9 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class FileAttributesReadingTest {
-  @JvmField
-  @Rule
-  var tempDir: TempDirectory = TempDirectory()
+  private val tempDirFixture = tempPathFixture()
+  private val tempDir: Path
+    get() = tempDirFixture.get()
 
   private val myTestData = byteArrayOf('t'.code.toByte(), 'e'.code.toByte(), 's'.code.toByte(), 't'.code.toByte())
 
@@ -88,7 +88,7 @@ class FileAttributesReadingTest {
 
   @Test
   fun missingFile() {
-    val file = File(tempDir.root, "missing.txt")
+    val file = tempDir.resolve("missing.txt").toFile()
     assertFalse(file.exists())
     val attributes = getAttributes(file.path)
     assertNull(attributes)
@@ -99,13 +99,13 @@ class FileAttributesReadingTest {
 
   @Test
   fun regularFile() {
-    val file = tempDir.newFile("file.txt")
-    Files.write(file.toPath(), myTestData)
+    val path = tempDir.resolve("file.txt")
+    Files.write(path, myTestData)
 
-    assertFileAttributes(file)
+    assertFileAttributes(path.toFile())
 
-    val target = resolveSymLink(file)
-    assertEquals(file.path, target)
+    val target = resolveSymLink(path.toFile())
+    assertEquals(path.toFile().path, target)
   }
 
   @Test
@@ -164,7 +164,7 @@ class FileAttributesReadingTest {
     assertFileAttributes(File(file.path.replace(File.separator, StringUtil.repeat(File.separator, 3))))
     assertFileAttributes(File(file.path.replace(File.separator, File.separator + "." + File.separator)))
     assertFileAttributes(
-      File(tempDir.root, File.separator + ".." + File.separator + tempDir.root.getName() + File.separator + file.getName())
+      File(tempDir.toFile(), File.separator + ".." + File.separator + tempDir.toFile().getName() + File.separator + file.getName())
     )
 
     if (SystemInfo.isUnix) {
@@ -199,10 +199,8 @@ class FileAttributesReadingTest {
     Files.write(file.toPath(), myTestData)
     assertTrue(file.setLastModified(file.lastModified() - 5000))
     assertTrue(file.setWritable(false, false))
-    val link = File(tempDir.root, "link")
-    val link1 = link.toPath()
-    val target1 = file.toPath()
-    Files.createSymbolicLink(link1, target1)
+    val link = tempDir.resolve("link").toFile()
+    Files.createSymbolicLink(link.toPath(), file.toPath())
 
     val attributes = getAttributes(link)
     assertEquals(FileAttributes.Type.FILE, attributes.getType())
@@ -226,14 +224,10 @@ class FileAttributesReadingTest {
     Files.write(file.toPath(), myTestData)
     assertTrue(file.setLastModified(file.lastModified() - 5000))
     assertTrue(file.setWritable(false, false))
-    val link1 = File(tempDir.root, "link1")
-    val link3 = link1.toPath()
-    val target2 = file.toPath()
-    Files.createSymbolicLink(link3, target2)
-    val link2 = File(tempDir.root, "link2")
-    val link = link2.toPath()
-    val target1 = link1.toPath()
-    Files.createSymbolicLink(link, target1)
+    val link1 = tempDir.resolve("link1").toFile()
+    Files.createSymbolicLink(link1.toPath(), file.toPath())
+    val link2 = tempDir.resolve("link2").toFile()
+    Files.createSymbolicLink(link2.toPath(), link1.toPath())
 
     val attributes = getAttributes(link2)
     assertEquals(FileAttributes.Type.FILE, attributes.getType())
@@ -256,10 +250,8 @@ class FileAttributesReadingTest {
     val dir = tempDir.newDirectory("dir")
     if (SystemInfo.isUnix) assertTrue(dir.setWritable(false, false))
     assertTrue(dir.setLastModified(dir.lastModified() - 5000))
-    val link = File(tempDir.root, "link")
-    val link1 = link.toPath()
-    val target1 = dir.toPath()
-    Files.createSymbolicLink(link1, target1)
+    val link = tempDir.resolve("link").toFile()
+    Files.createSymbolicLink(link.toPath(), dir.toPath())
 
     val attributes = getAttributes(link)
     assertEquals(FileAttributes.Type.DIRECTORY, attributes.getType())
@@ -280,9 +272,9 @@ class FileAttributesReadingTest {
   fun missingLink() {
     IoTestUtil.assumeSymLinkCreationIsSupported()
 
-    val file = File(tempDir.root, "file.txt")
+    val file = tempDir.resolve("file.txt").toFile()
     assertFalse(file.exists())
-    val link = File(tempDir.root, "link")
+    val link = tempDir.resolve("link").toFile()
     assertFalse(link.exists())
     val link1 = link.toPath()
     val target1 = file.toPath()
@@ -303,7 +295,7 @@ class FileAttributesReadingTest {
   fun selfLink() {
     IoTestUtil.assumeSymLinkCreationIsSupported()
 
-    val link = File(tempDir.root, "self_link")
+    val link = tempDir.resolve("self_link").toFile()
     val link1 = link.toPath()
     val target = link.toPath()
     Files.createSymbolicLink(link1, target)
@@ -322,7 +314,7 @@ class FileAttributesReadingTest {
     IoTestUtil.assumeSymLinkCreationIsSupported()
 
     val file = tempDir.newFile("dir/file.txt")
-    val link = File(tempDir.root, "link")
+    val link = tempDir.resolve("link").toFile()
     val link1 = link.toPath()
     val target1 = file.getParentFile().toPath()
     Files.createSymbolicLink(link1, target1)
@@ -336,7 +328,7 @@ class FileAttributesReadingTest {
     IoTestUtil.assumeWindows()
 
     val target = tempDir.newDirectory("dir")
-    val junction = IoTestUtil.createJunction(target.path, tempDir.root.toString() + "/junction.dir")
+    val junction = IoTestUtil.createJunction(target.path, tempDir.toFile().toString() + "/junction.dir")
 
     try {
       var attributes = getAttributes(junction)
@@ -369,7 +361,7 @@ class FileAttributesReadingTest {
     IoTestUtil.assumeWindows()
 
     val file = tempDir.newFile("dir/file.txt")
-    val junction = File(tempDir.root, "junction")
+    val junction = tempDir.resolve("junction").toFile()
     IoTestUtil.createJunction(file.getParent(), junction.path)
 
     val target = resolveSymLink(File(junction.path + '/' + file.getName()))
@@ -409,7 +401,7 @@ class FileAttributesReadingTest {
   fun wellHiddenFile() {
     IoTestUtil.assumeWindows()
     val file = File("C:\\Documents and Settings\\desktop.ini")
-    Assume.assumeTrue("$file is not there", file.exists())
+    Assumptions.assumeTrue(file.exists(), "$file is not there")
 
     val attributes = getAttributes(file)
     assertEquals(FileAttributes.Type.FILE, attributes.getType())
@@ -423,8 +415,7 @@ class FileAttributesReadingTest {
   @Test
   fun extraLongName() {
     val prefix = StringUtil.repeatSymbol('a', 128) + "."
-    var file =
-      tempDir.newFile("$prefix.dir/$prefix.dir/$prefix.dir/$prefix.dir/$prefix.dir/$prefix.txt")
+    var file = tempDir.newFile("$prefix.dir/$prefix.dir/$prefix.dir/$prefix.dir/$prefix.dir/$prefix.txt")
     Files.write(file.toPath(), myTestData)
 
     assertFileAttributes(file)
@@ -433,7 +424,7 @@ class FileAttributesReadingTest {
     assertEquals(file.path, target)
 
     if (SystemInfo.isWindows) {
-      val path = StringBuilder(tempDir.root.path)
+      val path = StringBuilder(tempDir.toFile().path)
       val length = 250 - path.length
       path.append("\\x_x_x_x_x".repeat(max(0, length / 10)))
 
@@ -462,7 +453,7 @@ class FileAttributesReadingTest {
     IoTestUtil.assumeWindows()
 
     tempDir.newFile("file.txt") // just to populate a directory
-    IoTestUtil.performTestOnWindowsSubst(tempDir.root.path, Consumer { substRoot: File? ->
+    IoTestUtil.performTestOnWindowsSubst(tempDir.root.absolutePathString(), Consumer { substRoot: File? ->
       val attributes = getAttributes(substRoot!!)
       assertEquals(FileAttributes.Type.DIRECTORY, attributes.getType(), "$substRoot $attributes")
       assertFalse(attributes.isSymLink, "$substRoot $attributes")
@@ -480,10 +471,11 @@ class FileAttributesReadingTest {
   fun hardLink() {
     IoTestUtil.assumeSymLinkCreationIsSupported()
     val target = tempDir.newFile("file.txt")
-    val link = File(tempDir.root, "link")
-    Files.createLink(link.toPath(), target.toPath())
+    val link = tempDir.resolve("link")
+    Files.createLink(link, target.toPath())
+    val linkFile = link.toFile()
 
-    var attributes = getAttributes(link)
+    var attributes = getAttributes(linkFile)
     assertEquals(FileAttributes.Type.FILE, attributes.getType())
     assertEquals(target.length(), attributes.length)
     assertEquals(target.lastModified(), attributes.lastModified)
@@ -494,25 +486,25 @@ class FileAttributesReadingTest {
     assertEquals(attributes.lastModified - 5000, target.lastModified())
 
     if (SystemInfo.isWindows) {
-      val bytes = Files.readAllBytes(link.toPath())
+      val bytes = Files.readAllBytes(linkFile.toPath())
       assertEquals(myTestData.size.toLong(), bytes.size.toLong())
     }
 
-    attributes = getAttributes(link)
+    attributes = getAttributes(linkFile)
     assertEquals(FileAttributes.Type.FILE, attributes.getType())
     assertEquals(target.length(), attributes.length)
     assertEquals(target.lastModified(), attributes.lastModified)
 
-    val resolved = resolveSymLink(link)
-    assertEquals(link.path, resolved)
+    val resolved = resolveSymLink(linkFile)
+    assertEquals(linkFile.path, resolved)
   }
 
   @Test
   fun stamps() {
-    var attributes = getAttributes(tempDir.root)
-    Assume.assumeTrue(
-      "expected FS has millisecond resolution but got lastModified: " + attributes.lastModified,
-      attributes.lastModified > attributes.lastModified / 1000 * 1000
+    var attributes = getAttributes(tempDir.toFile())
+    Assumptions.assumeTrue(
+      attributes.lastModified > attributes.lastModified / 1000 * 1000,
+      "expected FS has millisecond resolution but got lastModified: " + attributes.lastModified
     )
 
     var t1 = System.currentTimeMillis()
@@ -521,7 +513,7 @@ class FileAttributesReadingTest {
     TimeoutUtil.sleep(10)
     var t2 = System.currentTimeMillis()
     attributes = getAttributes(file)
-    Assertions.assertThat(attributes.lastModified).isBetween(t1, t2)
+    assertThat(attributes.lastModified).isBetween(t1, t2)
 
     t1 = System.currentTimeMillis()
     TimeoutUtil.sleep(10)
@@ -529,7 +521,7 @@ class FileAttributesReadingTest {
     TimeoutUtil.sleep(10)
     t2 = System.currentTimeMillis()
     attributes = getAttributes(file)
-    Assertions.assertThat(attributes.lastModified).isBetween(t1, t2)
+    assertThat(attributes.lastModified).isBetween(t1, t2)
 
     val cmd = if (SystemInfo.isWindows)
       ProcessBuilder("attrib", "-A", file.path)
@@ -537,7 +529,7 @@ class FileAttributesReadingTest {
       ProcessBuilder("chmod", "644", file.path)
     assertEquals(0, cmd.start().waitFor().toLong())
     attributes = getAttributes(file)
-    Assertions.assertThat(attributes.lastModified).isBetween(t1, t2)
+    assertThat(attributes.lastModified).isBetween(t1, t2)
   }
 
   @Test
@@ -572,7 +564,7 @@ class FileAttributesReadingTest {
   @Test
   fun unicodeName() {
     val name = IoTestUtil.getUnicodeName()
-    Assume.assumeTrue("Unicode names not supported", name != null)
+    Assumptions.assumeTrue(name != null, "Unicode names not supported")
     val file = tempDir.newFile("$name.txt")
     Files.write(file.toPath(), myTestData)
 
@@ -583,6 +575,20 @@ class FileAttributesReadingTest {
   }
 
   companion object {
+    // Extension methods to minimize diff when creating test files/directories
+    private fun Path.newFile(name: String): File {
+      val path = resolve(name)
+      path.parent?.let { Files.createDirectories(it) }
+      Files.createFile(path)
+      return path.toFile()
+    }
+
+    private fun Path.newDirectory(name: String): File {
+      val path = resolve(name)
+      Files.createDirectories(path)
+      return path.toFile()
+    }
+
     private fun resolveSymLink(file: File): String? {
       val realPath = FileSystemUtil.resolveSymLink(file.absolutePath)
       if (realPath != null && (SystemInfo.isWindows && realPath.startsWith("\\\\") || File(realPath).exists())) {
