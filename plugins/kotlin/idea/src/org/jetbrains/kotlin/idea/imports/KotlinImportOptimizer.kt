@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.imports
 
@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptModuleInfo
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
+import org.jetbrains.kotlin.idea.references.KtDefaultAnnotationArgumentReference
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.SyntheticPropertyAccessorReference
@@ -170,7 +171,9 @@ class KotlinImportOptimizer : ImportOptimizer {
                 abstractRefs.add(AbstractReferenceImpl(reference))
 
                 val names = reference.resolvesByNames
-                if (!isResolved) {
+                // Default annotation argument references expectedly might be "unresolved" since they are created always,
+                // but have result only if the target element has `value` name
+                if (!isResolved && reference !is KtDefaultAnnotationArgumentReference) {
                     unresolvedNames += names
                 }
 
