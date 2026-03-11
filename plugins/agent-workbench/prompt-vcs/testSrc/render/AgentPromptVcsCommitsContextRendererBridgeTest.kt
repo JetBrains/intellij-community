@@ -12,8 +12,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 @TestApplication
-class AgentPromptVcsRevisionsContextRendererBridgeTest {
-  private val renderer = AgentPromptVcsRevisionsContextRendererBridge()
+class AgentPromptVcsCommitsContextRendererBridgeTest {
+  private val renderer = AgentPromptVcsCommitsContextRendererBridge()
 
   @Test
   fun renderEnvelopeUsesPayloadHashes() {
@@ -29,7 +29,7 @@ class AgentPromptVcsRevisionsContextRendererBridgeTest {
 
     val rendered = renderer.renderEnvelope(AgentPromptEnvelopeRenderInput(item = item, projectPath = null))
 
-    assertThat(rendered).isEqualTo("vcs revisions:\nabc12345\ndef67890")
+    assertThat(rendered).isEqualTo("commits:\nabc12345\ndef67890")
   }
 
   @Test
@@ -41,11 +41,11 @@ class AgentPromptVcsRevisionsContextRendererBridgeTest {
 
     val rendered = renderer.renderEnvelope(AgentPromptEnvelopeRenderInput(item = item, projectPath = null))
 
-    assertThat(rendered).isEqualTo("vcs revisions:\nabc12345\ndef67890")
+    assertThat(rendered).isEqualTo("commits:\nabc12345\ndef67890")
   }
 
   @Test
-  fun renderChipUsesFirstRevisionFromPayload() {
+  fun renderChipUsesFirstCommitFromPayload() {
     val item = contextItem(
       body = "",
       payload = AgentPromptPayload.obj(
@@ -58,7 +58,7 @@ class AgentPromptVcsRevisionsContextRendererBridgeTest {
 
     val chip = renderer.renderChip(AgentPromptChipRenderInput(item = item, projectBasePath = null))
 
-    assertThat(chip.text).isEqualTo("VCS Revisions: abc12345")
+    assertThat(chip.text).isEqualTo("Commits: abc12345")
   }
 
   private fun contextItem(
@@ -66,8 +66,8 @@ class AgentPromptVcsRevisionsContextRendererBridgeTest {
     payload: AgentPromptPayloadValue,
   ): AgentPromptContextItem {
     return AgentPromptContextItem(
-      rendererId = AgentPromptContextRendererIds.VCS_REVISIONS,
-      title = "VCS Revisions",
+      rendererId = AgentPromptContextRendererIds.VCS_COMMITS,
+      title = "Commits",
       body = body,
       payload = payload,
       source = "test",

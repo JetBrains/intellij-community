@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nls
 /**
  * Extension point that allows contributing custom tabs to the prompt palette popup.
  *
- * When context items match (e.g., VCS Revisions), a dynamic tab is added with the given title.
+ * When context items match (e.g., Commits), a dynamic tab is added with the given title.
  * The extension can provide initial prompt text, a custom submit action, and a footer hint.
  */
 interface AgentPromptPaletteExtension {

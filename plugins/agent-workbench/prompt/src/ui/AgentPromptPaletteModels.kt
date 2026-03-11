@@ -28,6 +28,8 @@ internal data class ContextEntry(
   @JvmField val item: AgentPromptContextItem,
   @JvmField val projectBasePath: String? = null,
   @JvmField val id: String = item.rendererId + ":" + item.title + ":" + item.body.hashCode(),
+  @JvmField val origin: ContextEntryOrigin = ContextEntryOrigin.AUTO,
+  @JvmField val manualSourceId: String? = null,
 ) {
   val logicalItemId: String?
     get() = item.itemId
@@ -61,6 +63,11 @@ internal data class ContextEntry(
     val preview = if (firstLine.length <= 60) firstLine else firstLine.take(60) + "\u2026"
     return "$title: $preview"
   }
+}
+
+internal enum class ContextEntryOrigin {
+  AUTO,
+  MANUAL,
 }
 
 internal data class ThreadEntry(

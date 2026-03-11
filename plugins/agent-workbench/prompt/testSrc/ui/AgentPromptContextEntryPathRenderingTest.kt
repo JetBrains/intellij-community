@@ -156,10 +156,10 @@ class AgentPromptContextEntryPathRenderingTest {
   }
 
   @Test
-  fun vcsRevisionsChipUsesFirstRevisionFromPayload() {
+  fun vcsCommitsChipUsesFirstCommitFromPayload() {
     val entry = contextEntry(
-      rendererId = AgentPromptContextRendererIds.VCS_REVISIONS,
-      title = "VCS Revisions",
+      rendererId = AgentPromptContextRendererIds.VCS_COMMITS,
+      title = "Commits",
       body = "",
       projectBasePath = null,
       payload = AgentPromptPayload.obj(
@@ -172,8 +172,8 @@ class AgentPromptContextEntryPathRenderingTest {
       ),
     )
 
-    assertThat(entry.displayText).isEqualTo("VCS Revisions: abc12345")
-    assertThat(entry.tooltipText).isEqualTo("vcs revisions:\nabc12345")
+    assertThat(entry.displayText).isEqualTo("Commits: abc12345")
+    assertThat(entry.tooltipText).isEqualTo("commits:\nabc12345")
     assertThat(entry.tooltipText).doesNotContain("source=")
   }
 

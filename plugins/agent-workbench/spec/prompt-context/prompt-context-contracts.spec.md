@@ -1,25 +1,30 @@
 ---
 name: Prompt Context Contracts
-description: Canonical contracts for prompt-context contributor and renderer extension points, resolver ordering, and envelope/chip formatting behavior.
+description: Canonical contracts for prompt-context contributor, manual context source, and renderer extension points, resolver ordering, and envelope/chip formatting behavior.
 targets:
   - ../../sessions-core/src/prompt/AgentPromptContextContributorBridge.kt
   - ../../sessions-core/src/prompt/AgentPromptContextRendererBridge.kt
   - ../../sessions-core/src/prompt/AgentPromptContextEnvelopeFormatter.kt
   - ../../sessions-core/src/prompt/AgentPromptBuiltinContextRenderers.kt
   - ../../sessions-core/src/prompt/AgentPromptContextPayloads.kt
+  - ../../sessions-core/src/prompt/AgentPromptManualContextSourceBridge.kt
   - ../../sessions-core/src/prompt/AgentPromptModels.kt
   - ../../sessions-core/resources/intellij.agent.workbench.sessions.core.xml
   - ../../prompt/src/context/AgentPromptContextResolverService.kt
+  - ../../prompt/src/ui/AgentPromptContextNormalizationDecisions.kt
   - ../../prompt/src/ui/AgentPromptPaletteModels.kt
+  - ../../prompt/src/ui/AgentPromptUiSessionStateService.kt
   - ../../prompt/testSrc/context/AgentPromptContextResolverServiceTest.kt
+  - ../../prompt/testSrc/ui/AgentPromptContextNormalizationDecisionsTest.kt
   - ../../prompt/testSrc/ui/AgentPromptContextSoftCapPolicyTest.kt
   - ../../prompt/testSrc/ui/AgentPromptContextEntryPathRenderingTest.kt
+  - ../../prompt/testSrc/ui/AgentPromptUiSessionStateServiceTest.kt
 ---
 
 # Prompt Context Contracts
 
 Status: Draft
-Date: 2026-03-03
+Date: 2026-03-11
 
 ## Summary
 Define the shared prompt-context contract used by global prompt entry: extension-point lifecycle, contributor resolution order, renderer lookup/fallback, envelope serialization, truncation metadata, and chip rendering behavior.
@@ -36,7 +41,11 @@ Provider/source-specific context rules are defined in separate specs under `spec
 - Defining global prompt popup validation and mode switching UX.
 
 ## Requirements
-- `com.intellij.agent.workbench.promptContextContributor` and `com.intellij.agent.workbench.promptContextRenderer` extension points are canonical integration points for prompt context.
+- `com.intellij.agent.workbench.promptContextContributor` and `com.intellij.agent.workbench.promptContextRenderer` extension points are canonical integration points for automatically resolved prompt context.
+
+- `com.intellij.agent.workbench.promptManualContextSource` is the canonical integration point for popup-invoked manual context pickers.
+  - Manual sources expose stable `sourceId`, display name, availability gating, and a picker callback that returns a replacement context item for that source.
+  - Manual sources are additive to auto context and do not change contributor resolution precedence.
 
 - Resolver phase ordering must be deterministic:
   - evaluate `INVOCATION` contributors first,
@@ -49,6 +58,8 @@ Provider/source-specific context rules are defined in separate specs under `spec
 
 - Resolver must attach phase metadata to returned items when contributor did not set it explicitly.
   [@test] ../../prompt/testSrc/context/AgentPromptContextResolverServiceTest.kt
+
+- `AgentPromptContextResolverService.collectDefaultContext(...)` returns auto context only; manual context items are merged later by popup UI state.
 
 - In invocation phase, lower contributor order wins precedence for mutually exclusive sources (for example test-runner before VCS before project-view).
   [@test] ../../prompt/testSrc/context/AgentPromptContextResolverServiceTest.kt
@@ -77,14 +88,26 @@ Provider/source-specific context rules are defined in separate specs under `spec
   - long path-like previews use filename-biased middle truncation after that normalization.
   [@test] ../../prompt/testSrc/ui/AgentPromptContextEntryPathRenderingTest.kt
 
+- Popup context normalization contract:
+  - before chips are rendered or context is submitted, popup UI must remove path-like context items that resolve to the effective working project root and would otherwise render as `.`,
+  - for `paths` items, remove only the redundant root entry and keep remaining entries when present,
+  - for `file` items, remove the whole item when it resolves to the effective working project root.
+  [@test] ../../prompt/testSrc/ui/AgentPromptContextNormalizationDecisionsTest.kt
+
 - Hierarchical context item contract:
   - `itemId` and `parentItemId` are optional relation fields on `AgentPromptContextItem`,
   - `parentItemId` references another item's `itemId` within the same resolved context set,
   - removal consumers may remove descendants recursively when a parent item is removed,
   - missing or unknown parent links are treated as non-fatal and do not block context usage.
 
+- Manual context persistence contract:
+  - popup runtime state may store manual context items keyed by source id for same-session restore,
+  - persisted `AgentPromptUiDraft` state must not serialize manual context items,
+  - manual context restore is independent from auto-context fingerprint matching used for removed auto context.
+  [@test] ../../prompt/testSrc/ui/AgentPromptUiSessionStateServiceTest.kt
+
 - Canonical built-in renderer ids are:
-  - `snippet`, `file`, `symbol`, `paths`, `vcsRevisions`, `testFailures`.
+  - `snippet`, `file`, `symbol`, `paths`, `vcsCommits`, `testFailures`.
 
 ## User Experience
 - Context chips should stay concise and identifiable.
@@ -93,15 +116,19 @@ Provider/source-specific context rules are defined in separate specs under `spec
 ## Data & Backend
 - Context item shape (`rendererId`, `title`, `body`, `payload`, `itemId`, `parentItemId`, `source`, `phase`, `truncation`) is the shared data contract across all contributors and renderers.
 - Renderer registry is id-keyed; duplicate ids resolve to first registration.
+- Manual source items reuse the same `AgentPromptContextItem` shape and renderer registry as auto-contributed items.
 
 ## Error Handling
 - Contributor and renderer failures are logged and degraded gracefully.
 - Missing renderer id support never blocks launch; generic envelope/chip rendering is used.
+- Manual source picker failures degrade to inline popup error feedback and do not mutate existing context state.
 
 ## Testing / Local Run
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.context.AgentPromptContextResolverServiceTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptContextSoftCapPolicyTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptContextNormalizationDecisionsTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptContextEntryPathRenderingTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptUiSessionStateServiceTest'`
 
 ## Open Questions / Risks
 - Built-in renderer contracts currently rely mostly on integration-style tests rather than per-renderer unit tests.

@@ -6,7 +6,7 @@ object AgentPromptContextRendererIds {
   const val FILE: String = "file"
   const val SYMBOL: String = "symbol"
   const val PATHS: String = "paths"
-  const val VCS_REVISIONS: String = "vcsRevisions"
+  const val VCS_COMMITS: String = "vcsCommits"
   const val TEST_FAILURES: String = "testFailures"
 }
 

@@ -19,6 +19,7 @@ import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -31,6 +32,7 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
   private val refreshCatalogAndLoadNewlyOpened: () -> Unit
   private val refreshProviderForPath: (String, AgentSessionProvider) -> Unit
   private val preferredProviderProvider: () -> AgentSessionProvider?
+  private val sourceProjectResolver: (String) -> Project?
 
   @Suppress("unused")
   constructor() : this(
@@ -40,6 +42,7 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
     refreshCatalogAndLoadNewlyOpened = { service<AgentSessionRefreshService>().refreshCatalogAndLoadNewlyOpened() },
     refreshProviderForPath = { path, provider -> service<AgentSessionRefreshService>().refreshProviderForPath(path = path, provider = provider) },
     preferredProviderProvider = { service<AgentSessionUiPreferencesStateService>().getLastUsedProvider() },
+    sourceProjectResolver = ::findOpenSourceProjectByPath,
   )
 
   internal constructor(
@@ -53,6 +56,7 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
     refreshCatalogAndLoadNewlyOpened = {},
     refreshProviderForPath = { _, _ -> },
     preferredProviderProvider = { null },
+    sourceProjectResolver = ::findOpenSourceProjectByPath,
   )
 
   internal constructor(
@@ -62,6 +66,7 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
     refreshCatalogAndLoadNewlyOpened: () -> Unit,
     refreshProviderForPath: (String, AgentSessionProvider) -> Unit,
     preferredProviderProvider: () -> AgentSessionProvider?,
+    sourceProjectResolver: (String) -> Project? = ::findOpenSourceProjectByPath,
   ) {
     this.launchPromptRequest = launchPromptRequest
     this.stateFlowProvider = stateFlowProvider
@@ -69,6 +74,7 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
     this.refreshCatalogAndLoadNewlyOpened = refreshCatalogAndLoadNewlyOpened
     this.refreshProviderForPath = refreshProviderForPath
     this.preferredProviderProvider = preferredProviderProvider
+    this.sourceProjectResolver = sourceProjectResolver
   }
 
   override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
@@ -81,6 +87,16 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
 
   override fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String? {
     return listWorkingProjectPathCandidates(invocationData).firstOrNull()?.path
+  }
+
+  override fun resolveSourceProject(invocationData: AgentPromptInvocationData): Project? {
+    val project = invocationData.project
+    if (!AgentWorkbenchDedicatedFrameProjectManager.isDedicatedProject(project)) {
+      return project
+    }
+
+    val projectPath = resolveWorkingProjectPath(invocationData) ?: return null
+    return sourceProjectResolver(projectPath)
   }
 
   override fun listWorkingProjectPathCandidates(invocationData: AgentPromptInvocationData): List<AgentPromptProjectPathCandidate> {

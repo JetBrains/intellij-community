@@ -17,7 +17,7 @@ import com.intellij.vcs.log.VcsLogDataKeys
 
 private const val MAX_INCLUDED_SELECTION_COMMITS = 20
 
-private data class SelectedRevision(
+private data class SelectedCommit(
   @JvmField val hash: String,
   @JvmField val rootPath: String?,
 )
@@ -30,24 +30,24 @@ internal class AgentPromptVcsLogSelectionContextContributor : AgentPromptContext
     get() = 50
 
   override fun collect(invocationData: AgentPromptInvocationData): List<AgentPromptContextItem> {
-    val selectedRevisions = extractSelectedRevisions(invocationData)
-    if (selectedRevisions.isEmpty()) {
+    val selectedCommits = extractSelectedCommits(invocationData)
+    if (selectedCommits.isEmpty()) {
       return emptyList()
     }
 
-    val totalSelected = selectedRevisions.size
-    val included = selectedRevisions.take(MAX_INCLUDED_SELECTION_COMMITS)
-    val fullContent = selectedRevisions.joinToString(separator = "\n") { it.hash }
+    val totalSelected = selectedCommits.size
+    val included = selectedCommits.take(MAX_INCLUDED_SELECTION_COMMITS)
+    val fullContent = selectedCommits.joinToString(separator = "\n") { it.hash }
     val content = included.joinToString(separator = "\n") { it.hash }
     if (content.isBlank()) {
       return emptyList()
     }
 
-    val payloadEntries = included.map { revision ->
+    val payloadEntries = included.map { commit ->
       val fields = linkedMapOf<String, AgentPromptPayloadValue>(
-        "hash" to AgentPromptPayload.str(revision.hash),
+        "hash" to AgentPromptPayload.str(commit.hash),
       )
-      revision.rootPath?.let { rootPath ->
+      commit.rootPath?.let { rootPath ->
         fields["rootPath"] = AgentPromptPayload.str(rootPath)
       }
       AgentPromptPayloadValue.Obj(fields)
@@ -60,11 +60,11 @@ internal class AgentPromptVcsLogSelectionContextContributor : AgentPromptContext
 
     return listOf(
       AgentPromptContextItem(
-        rendererId = AgentPromptContextRendererIds.VCS_REVISIONS,
+        rendererId = AgentPromptContextRendererIds.VCS_COMMITS,
         title = AgentPromptVcsBundle.message("context.vcs.title"),
         body = content,
         payload = payload,
-        itemId = "vcsLog.revisions",
+        itemId = "vcsLog.commits",
         source = "vcsLog",
         truncation = AgentPromptContextTruncation(
           originalChars = fullContent.length,
@@ -80,58 +80,58 @@ internal class AgentPromptVcsLogSelectionContextContributor : AgentPromptContext
     )
   }
 
-  private fun extractSelectedRevisions(invocationData: AgentPromptInvocationData): List<SelectedRevision> {
+  private fun extractSelectedCommits(invocationData: AgentPromptInvocationData): List<SelectedCommit> {
     val dataContext = invocationData.dataContextOrNull() ?: return emptyList()
     val fromCommitSelection = VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION
       .getData(dataContext)
       ?.commits
-      ?.map { commit -> SelectedRevision(hash = commit.hash.asString(), rootPath = commit.root.path) }
+      ?.map { commit -> SelectedCommit(hash = commit.hash.asString(), rootPath = commit.root.path) }
       .orEmpty()
     if (fromCommitSelection.isNotEmpty()) {
-      return normalizeSelectedRevisions(fromCommitSelection)
+      return normalizeSelectedCommits(fromCommitSelection)
     }
 
     val fromRevisionNumbers = VcsDataKeys.VCS_REVISION_NUMBERS
       .getData(dataContext)
-      ?.mapNotNull(::toSelectedRevision)
+      ?.mapNotNull(::toSelectedCommit)
       .orEmpty()
     if (fromRevisionNumbers.isNotEmpty()) {
-      return normalizeSelectedRevisions(fromRevisionNumbers)
+      return normalizeSelectedCommits(fromRevisionNumbers)
     }
 
     val fromSingleRevision = VcsDataKeys.VCS_REVISION_NUMBER
       .getData(dataContext)
-      ?.let(::toSelectedRevision)
+      ?.let(::toSelectedCommit)
       ?.let(::listOf)
       .orEmpty()
-    return normalizeSelectedRevisions(fromSingleRevision)
+    return normalizeSelectedCommits(fromSingleRevision)
   }
 
-  private fun toSelectedRevision(revisionNumber: VcsRevisionNumber): SelectedRevision? {
+  private fun toSelectedCommit(revisionNumber: VcsRevisionNumber): SelectedCommit? {
     val hash = revisionNumber.asString().trim()
     if (hash.isEmpty()) {
       return null
     }
-    return SelectedRevision(hash = hash, rootPath = null)
+    return SelectedCommit(hash = hash, rootPath = null)
   }
 
-  private fun normalizeSelectedRevisions(revisions: List<SelectedRevision>): List<SelectedRevision> {
-    if (revisions.isEmpty()) {
+  private fun normalizeSelectedCommits(commits: List<SelectedCommit>): List<SelectedCommit> {
+    if (commits.isEmpty()) {
       return emptyList()
     }
 
-    val unique = LinkedHashMap<String, SelectedRevision>()
-    revisions.forEach { revision ->
-      val normalizedHash = revision.hash.trim()
+    val unique = LinkedHashMap<String, SelectedCommit>()
+    commits.forEach { commit ->
+      val normalizedHash = commit.hash.trim()
       if (normalizedHash.isEmpty()) {
         return@forEach
       }
 
-      val normalized = if (normalizedHash == revision.hash) {
-        revision
+      val normalized = if (normalizedHash == commit.hash) {
+        commit
       }
       else {
-        revision.copy(hash = normalizedHash)
+        commit.copy(hash = normalizedHash)
       }
       val previous = unique.putIfAbsent(normalized.hash, normalized)
       if (previous != null && previous.rootPath == null && normalized.rootPath != null) {
