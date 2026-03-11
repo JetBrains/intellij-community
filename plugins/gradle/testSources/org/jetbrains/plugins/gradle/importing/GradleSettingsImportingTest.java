@@ -470,7 +470,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
 
     assertThat(testOutputFile)
       .exists()
-      .hasContent("Expected file content\nFiles: [project, testIdeaPostProcessingHook.ipr, testIdeaPostProcessingHook.iws]");
+      .hasContent("Expected file content\nFiles: [project, test.ipr, test.iws]");
   }
 
   @Test
