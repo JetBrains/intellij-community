@@ -268,7 +268,7 @@ public final class ConvertToRecordFix implements LocalQuickFix {
       if (myFieldsToAccessorCandidates.size() == 0) return false;
       for (var entry : myFieldsToAccessorCandidates.entrySet()) {
         PsiField field = entry.getKey();
-        if (!field.hasModifierProperty(PsiModifier.FINAL)) return false;
+        if (!field.hasModifierProperty(PsiModifier.FINAL) || field.hasModifierProperty(PsiModifier.TRANSIENT)) return false;
         if (field.hasInitializer()) return false;
         if (JavaPsiRecordUtil.ILLEGAL_RECORD_COMPONENT_NAMES.contains(field.getName())) return false;
         if (entry.getValue().size() > 1) return false;
