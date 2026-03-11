@@ -3,10 +3,10 @@ package com.jetbrains.python.psi.types
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.RecursionManager
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -45,7 +45,10 @@ open class TypeEvalContextImpl internal constructor(
 
   private val myProcessingContext = ThreadLocal.withInitial { ProcessingContext() }
 
-  private val typeEngine: PyTypeEngine? = constraints.myOrigin?.let { PyTypeEngineProvider.createTypeResolver(it.project) }
+  private val typeEngine: PyTypeEngine? = constraints.myOrigin?.let {
+    ModuleUtilCore.findModuleForFile(it) }?.let { module ->
+    PyTypeEngineProvider.createTypeResolver(module)
+  }
   protected val myEvaluated: MutableMap<PyTypedElement?, PyType?> = getConcurrentMapForCaching()
   protected val myEvaluatedReturn: MutableMap<PyCallable?, PyType?> = getConcurrentMapForCaching()
   protected val contextTypeCache: ConcurrentMap<Pair<Any, Any>, PyType> = getConcurrentMapForCaching()

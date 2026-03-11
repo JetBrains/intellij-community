@@ -2,7 +2,7 @@
 package com.jetbrains.python.psi.types.engine
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.module.Module
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface PyTypeEngineProvider {
-  fun createResolver(project: Project): PyTypeEngine? = null
+  fun createResolver(module: Module): PyTypeEngine? = null
 
   companion object {
     private val EP_NAME =
@@ -19,8 +19,8 @@ interface PyTypeEngineProvider {
 
     @JvmStatic
     @ApiStatus.Internal
-    fun createTypeResolver(project: Project): PyTypeEngine? {
-      return EP_NAME.extensionList.firstNotNullOfOrNull { it.createResolver(project) }
+    fun createTypeResolver(module: Module): PyTypeEngine? {
+      return EP_NAME.extensionList.firstNotNullOfOrNull { it.createResolver(module) }
     }
   }
 }
