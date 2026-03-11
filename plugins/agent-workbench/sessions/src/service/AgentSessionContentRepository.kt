@@ -3,8 +3,11 @@ package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
+import com.intellij.agent.workbench.sessions.core.formatCompactAgentSessionThreadTitle
+import com.intellij.agent.workbench.sessions.core.formatCompactAgentSessionTitle
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
@@ -52,6 +55,17 @@ internal class AgentSessionContentRepository(
       changed = syncWarmSnapshotFromRuntime(path) || changed
     }
     return changed
+  }
+
+  fun findArchiveNotificationLabel(target: ArchiveThreadTarget): String? {
+    val normalizedTarget = normalizeArchiveThreadTarget(target)
+    val runtimeThreads = stateStore.snapshot().findPathContent(normalizedTarget.path)?.threads
+    if (runtimeThreads != null) {
+      return runtimeThreads.resolveArchiveNotificationLabel(normalizedTarget)
+    }
+
+    val warmThreads = warmState.getPathSnapshot(normalizedTarget.path)?.threads ?: return null
+    return warmThreads.resolveArchiveNotificationLabel(normalizedTarget)
   }
 
   fun removeArchivedTarget(target: ArchiveThreadTarget): Boolean {
@@ -192,6 +206,33 @@ private fun AgentWorktree.toPathContent(): PathContent {
     hasUnknownThreadCount = hasUnknownThreadCount,
     errorMessage = errorMessage,
   )
+}
+
+private fun List<AgentSessionThread>.resolveArchiveNotificationLabel(target: ArchiveThreadTarget): String? {
+  return when (target) {
+    is ArchiveThreadTarget.Thread -> {
+      firstOrNull { thread ->
+        thread.provider == target.provider && thread.id == target.threadId
+      }?.let { thread ->
+        formatCompactAgentSessionThreadTitle(threadId = thread.id, title = thread.title, fallbackTitle = { idPrefix ->
+          AgentSessionsBundle.message("toolwindow.thread.fallback.title", idPrefix)
+        })
+      }
+    }
+
+    is ArchiveThreadTarget.SubAgent -> {
+      firstOrNull { thread ->
+        thread.provider == target.provider && thread.id == target.parentThreadId
+      }?.subAgents?.firstOrNull { subAgent ->
+        subAgent.id == target.subAgentId
+      }?.let { subAgent ->
+        subAgent.name.ifBlank { subAgent.id }
+          .trim()
+          .takeIf(String::isNotEmpty)
+          ?.let(::formatCompactAgentSessionTitle)
+      }
+    }
+  }
 }
 
 private fun removeArchivedTarget(

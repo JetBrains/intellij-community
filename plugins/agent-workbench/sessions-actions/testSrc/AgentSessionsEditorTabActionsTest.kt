@@ -180,7 +180,7 @@ class AgentSessionsEditorTabActionsTest {
     val unsupported = AgentSessionsEditorTabArchiveThreadAction(
       resolveContext = { context },
       canArchiveProvider = { false },
-      archiveThreads = { _ -> },
+      archiveThreads = { _, _ -> },
     )
     val unsupportedEvent = TestActionEvent.createTestEvent(unsupported)
     unsupported.update(unsupportedEvent)
@@ -190,7 +190,7 @@ class AgentSessionsEditorTabActionsTest {
     val supported = AgentSessionsEditorTabArchiveThreadAction(
       resolveContext = { context },
       canArchiveProvider = { true },
-      archiveThreads = { _ -> },
+      archiveThreads = { _, _ -> },
     )
     val supportedEvent = TestActionEvent.createTestEvent(supported)
     supported.update(supportedEvent)
@@ -199,19 +199,51 @@ class AgentSessionsEditorTabActionsTest {
   }
 
   @Test
-  fun archiveThreadActionUsesSubAgentTargetWhenContextCarriesSubAgentId() {
+  fun archiveThreadActionUsesThreadTargetAndPreferredLabelFromEditorTabContext() {
+    val context = editorContext(threadTitle = "Refactor session setup")
+    var archivedTargets: List<ArchiveThreadTarget>? = null
+    var preferredSingleArchivedLabel: String? = null
+
+    val action = AgentSessionsEditorTabArchiveThreadAction(
+      resolveContext = { context },
+      canArchiveProvider = { true },
+      archiveThreads = { targets, label ->
+        archivedTargets = targets
+        preferredSingleArchivedLabel = label
+      },
+    )
+
+    action.actionPerformed(TestActionEvent.createTestEvent(action))
+
+    assertThat(checkNotNull(archivedTargets)).containsExactly(
+      ArchiveThreadTarget.Thread(
+        path = context.path,
+        provider = checkNotNull(context.provider),
+        threadId = context.threadId,
+      )
+    )
+    assertThat(preferredSingleArchivedLabel).isEqualTo("Refactor session setup")
+  }
+
+  @Test
+  fun archiveThreadActionUsesSubAgentTargetAndPreferredLabelWhenContextCarriesSubAgentId() {
     val context = editorContext(
       threadIdentity = "codex:thread-1",
       sessionId = "thread-1",
       threadId = "sub-agent-1",
       subAgentId = "sub-agent-1",
+      threadTitle = "Sub-agent label",
     )
     var archivedTargets: List<ArchiveThreadTarget>? = null
+    var preferredSingleArchivedLabel: String? = null
 
     val action = AgentSessionsEditorTabArchiveThreadAction(
       resolveContext = { context },
       canArchiveProvider = { true },
-      archiveThreads = { targets -> archivedTargets = targets },
+      archiveThreads = { targets, label ->
+        archivedTargets = targets
+        preferredSingleArchivedLabel = label
+      },
     )
 
     action.actionPerformed(TestActionEvent.createTestEvent(action))
@@ -225,6 +257,7 @@ class AgentSessionsEditorTabActionsTest {
         subAgentId = checkNotNull(context.subAgentId),
       )
     )
+    assertThat(preferredSingleArchivedLabel).isEqualTo("Sub-agent label")
   }
 
   @Test
@@ -374,6 +407,7 @@ private fun editorContext(
   tabKey: String = "tab-pending-1",
   threadIdentity: String = "codex:thread-1",
   threadId: String = "thread-1",
+  threadTitle: String = "Thread title",
   provider: AgentSessionProvider? = AgentSessionProvider.CODEX,
   sessionId: String = "thread-1",
   isPendingThread: Boolean = false,
@@ -385,6 +419,7 @@ private fun editorContext(
     tabKey = tabKey,
     threadIdentity = threadIdentity,
     threadId = threadId,
+    threadTitle = threadTitle,
     provider = provider,
     sessionId = sessionId,
     isPendingThread = isPendingThread,
