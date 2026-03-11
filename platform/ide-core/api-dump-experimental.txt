@@ -98,4 +98,7 @@ f:com.intellij.util.ui.update.UiNotifyConnector$Companion
 - *f:forceNotifyIsShown(java.awt.Component):V
 *:com.intellij.util.ui.update.UpdateQueue
 - a:cancelOnDispose(com.intellij.openapi.Disposable):com.intellij.util.ui.update.UpdateQueue
+- a:isAllExecuted():Z
 - a:queue(java.lang.Object):V
+- a:waitForAllExecuted(J):V
+- a:waitForAllExecuted-LRDsOJo(J):V

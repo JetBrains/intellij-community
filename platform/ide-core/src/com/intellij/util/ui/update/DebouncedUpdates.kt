@@ -1,6 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Experimental
-@file:OptIn(FlowPreview::class)
 
 package com.intellij.util.ui.update
 
@@ -8,22 +7,28 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.util.cancelOnDispose
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.util.Collections.synchronizedList
+import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 import javax.swing.JComponent
 import kotlin.coroutines.CoroutineContext
@@ -341,119 +346,52 @@ sealed interface UpdateQueue<T> {
    * Cancels the queue when the given [Disposable] is disposed.
    */
   fun cancelOnDispose(disposable: Disposable): UpdateQueue<T>
-}
 
-/**
- * Core function for processing channel items with manual channel processing.
- * 
- * @param restartTimerOnAdd If true, uses debounce mode (timer resets on each new item).
- *                          If false, uses throttle mode (timer starts on the first item, collects items during delay).
- * @param onReceive Called when a new item is received. Should either add to the buffer or replace the current item.
- * @param onProcess Called to process collected items after delay expires.
- */
-@OptIn(ExperimentalCoroutinesApi::class)
-private suspend fun <T> Channel<T>.processWithDelay(
-  name: String,
-  delay: Duration,
-  context: CoroutineContext,
-  restartTimerOnAdd: Boolean,
-  onReceive: (T) -> Unit,
-  onProcess: suspend () -> Unit
-) {
-  while (true) {
-    // Wait for first item and add it
-    onReceive(receive())
+  /**
+   * Waits for all queued items to be processed.
+   * This is a blocking call intended for testing.
+   *
+   * **WARNING:** This method uses `runBlockingCancellable` which is forbidden on EDT.
+   * When calling from EDT, use `PlatformTestUtil.waitWithEventsDispatching` with [isAllExecuted] condition.
+   *
+   * @param timeout timeout duration
+   * @throws TimeoutException if the timeout is exceeded
+   */
+  @TestOnly
+  @RequiresBackgroundThread
+  @Throws(TimeoutException::class)
+  fun waitForAllExecuted(timeout: Duration)
 
-    if (restartTimerOnAdd) {
-      // Debounce mode: restart timer on each new item
-      var lastItemTime = System.nanoTime()
-      
-      while (true) {
-        val remainingDelay = delay.inWholeNanoseconds - (System.nanoTime() - lastItemTime)
-        if (remainingDelay <= 0) {
-          // Timer expired, process collected items
-          break
-        }
-        
-        // Wait for remaining delay or new item, whichever comes first
-        withTimeoutOrNull(remainingDelay.nanoseconds) {
-          onReceive(receive())
-          lastItemTime = System.nanoTime()
-        } ?: break // Timeout - process collected items
-      }
-    } else {
-      // Throttle/sample mode: fixed interval
-      delay(delay)
-      
-      // Collect all remaining items
-      var extraItem = tryReceive().getOrNull()
-      while (extraItem != null) {
-        onReceive(extraItem)
-        extraItem = tryReceive().getOrNull()
-      }
-    }
+  /**
+   * Java-friendly overload: Waits for all queued items to be processed.
+   *
+   * @param timeoutMillis timeout in milliseconds
+   * @throws TimeoutException if the timeout is exceeded
+   */
+  @TestOnly
+  @RequiresBackgroundThread
+  @Throws(TimeoutException::class)
+  fun waitForAllExecuted(timeoutMillis: Long)
 
-    // Process the collected items
-    try {
-      withContext(context) {
-        onProcess()
-      }
-    } catch (e: CancellationException) {
-      throw e
-    } catch (e: Throwable) {
-      logger<DebouncedUpdates>().error("Exception in DebouncedUpdates '$name'", e)
-    }
-  }
-}
-
-/**
- * Process latest item only (replaces previous item with new one).
- */
-@OptIn(ExperimentalCoroutinesApi::class)
-private suspend fun <T> Channel<T>.processLatest(
-  name: String,
-  delay: Duration,
-  context: CoroutineContext,
-  restartTimerOnAdd: Boolean,
-  action: suspend (T) -> Unit
-) {
-  var latestItem: T? = null
-  
-  processWithDelay(
-    name = name,
-    delay = delay,
-    context = context,
-    restartTimerOnAdd = restartTimerOnAdd,
-    onReceive = { latestItem = it },
-    onProcess = { action(latestItem!!) }
-  )
-}
-
-/**
- * Process all items as a batch (collects all items into a list).
- */
-@OptIn(ExperimentalCoroutinesApi::class)
-private suspend fun <T> Channel<T>.processBatched(
-  name: String,
-  delay: Duration,
-  context: CoroutineContext,
-  restartTimerOnAdd: Boolean,
-  action: suspend (List<T>) -> Unit
-) {
-  val buffer = synchronizedList(mutableListOf<T>())
-  
-  processWithDelay(
-    name = name,
-    delay = delay,
-    context = context,
-    restartTimerOnAdd = restartTimerOnAdd,
-    onReceive = { buffer.add(it) },
-    onProcess = {
-      val batch = buffer.toList()
-      buffer.clear()
-      action(batch)
-    }
-  )
+  /**
+   * EDT-safe condition for use with `PlatformTestUtil.waitWithEventsDispatching`.
+   *
+   * Returns true when all queued items are processed and no job is currently running.
+   *
+   * Example usage from EDT:
+   * ```kotlin
+   * PlatformTestUtil.waitWithEventsDispatching(
+   *   "Timed out waiting for queue",
+   *   { updateQueue.isAllExecuted },
+   *   10
+   * )
+   * ```
+   *
+   * This is the EDT-safe alternative to [waitForAllExecuted] which uses `runBlockingCancellable`
+   * and is forbidden on EDT.
+   */
+  @get:TestOnly
+  val isAllExecuted: Boolean
 }
 
 /**
@@ -462,7 +400,7 @@ private suspend fun <T> Channel<T>.processBatched(
 @ApiStatus.Experimental
 private abstract class BaseUpdateQueue<T>(
   protected val name: String,
-  protected val context: CoroutineContext,
+  context: CoroutineContext,
   channelCapacity: Int
 ) : UpdateQueue<T> {
 
@@ -472,16 +410,239 @@ private abstract class BaseUpdateQueue<T>(
 
   protected val channel: Channel<T> = Channel(capacity = channelCapacity, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   protected abstract val job: Job
+  
+  // Track the currently running processing job for tests
+  protected val processingJob = AtomicReference<Job?>(null)
+  
+  // Track whether we're collecting items - set after receive(), cleared before starting processing job
+  @Volatile
+  protected var isCollecting: Boolean = false
 
   override fun queue(item: T) {
-    require(job.isActive) { "Cannot queue to cancelled DebouncedUpdates '$name'" }
+    require(job.isActive) { "Cannot queue to cancelled UpdateQueue '$name'" }
     val result = channel.trySend(item)
-    check(result.isSuccess) { "Failed to send value to channel in DebouncedUpdates '$name': $result" }
+    check(result.isSuccess) { "Failed to send value to channel in UpdateQueue '$name': $result" }
   }
 
   override fun cancelOnDispose(disposable: Disposable): UpdateQueue<T> {
     job.cancelOnDispose(disposable)
     return this
+  }
+  
+  /**
+   * Returns true if there are no pending items in the channel AND we're not collecting.
+   * Returns false if channel has items OR we just received the first item and are collecting.
+   */
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val isEmpty: Boolean
+    get() = channel.isEmpty && !isCollecting
+  
+  /**
+   * Returns true if a job is currently processing items.
+   */
+  private val isProcessing: Boolean
+    get() {
+      val job = processingJob.get()
+      return job != null && !job.isCompleted
+    }
+  
+  /**
+   * Waits for all queued items to be processed.
+   * This is a blocking call intended for testing.
+   * 
+   * **WARNING:** This method uses `runBlockingCancellable` which is forbidden on EDT.
+   * When calling from EDT, use `PlatformTestUtil.waitWithEventsDispatching` with [isAllExecuted] condition.
+   * 
+   * @param timeout timeout duration
+   * @throws TimeoutException if the timeout is exceeded
+   */
+  @TestOnly
+  @RequiresBackgroundThread
+  @Throws(TimeoutException::class)
+  override fun waitForAllExecuted(timeout: Duration) {
+    val deadline = System.currentTimeMillis() + timeout.inWholeMilliseconds
+    
+    // Loop until both channel is empty AND no processing job is running
+    // This handles nested queuing (items queued during batch processing)
+    while (!isAllExecuted) {
+      if (System.currentTimeMillis() > deadline) {
+        throw TimeoutException("Timed out waiting for DebouncedUpdates '$name'")
+      }
+      
+      val currentJob = processingJob.get()
+      if (currentJob != null && !currentJob.isCompleted) {
+        runBlockingCancellable {
+          withTimeout((deadline - System.currentTimeMillis()).milliseconds) {
+            currentJob.join()
+          }
+        }
+      } else {
+        // Avoid busy-waiting when item is queued but processing hasn't started yet
+        Thread.sleep(10)
+      }
+    }
+  }
+  
+  /**
+   * Java-friendly overload: Waits for all queued items to be processed.
+   * 
+   * @param timeoutMillis timeout in milliseconds
+   * @throws TimeoutException if the timeout is exceeded
+   */
+  @TestOnly
+  @RequiresBackgroundThread
+  @Throws(TimeoutException::class)
+  override fun waitForAllExecuted(timeoutMillis: Long) {
+    waitForAllExecuted(timeoutMillis.milliseconds)
+  }
+  
+  /**
+   * EDT-safe condition for use with `PlatformTestUtil.waitWithEventsDispatching`.
+   * 
+   * Returns true when all queued items are processed and no job is currently running.
+   * 
+   * Example usage from EDT:
+   * ```kotlin
+   * PlatformTestUtil.waitWithEventsDispatching(
+   *   "Timed out waiting for queue",
+   *   { updateQueue.isAllExecuted },
+   *   10
+   * )
+   * ```
+   * 
+   * This is the EDT-safe alternative to [waitForAllExecuted] which uses `runBlockingCancellable`
+   * and is forbidden on EDT.
+   */
+  override val isAllExecuted: Boolean
+    get() = isEmpty && !isProcessing
+  
+  /**
+   * Core function for processing channel items with manual channel processing.
+   * 
+   * @param delay The delay duration
+   * @param context The coroutine context for executing actions
+   * @param restartTimerOnAdd If true, uses debounce mode (timer resets on each new item).
+   *                          If false, uses throttle mode (timer starts on the first item, collects items during delay).
+   * @param onReceive Called when a new item is received. Should either add to the buffer or replace the current item.
+   * @param onProcess Called to process collected items after delay expires.
+   */
+  @OptIn(ExperimentalCoroutinesApi::class)
+  protected suspend fun processWithDelay(
+    delay: Duration,
+    context: CoroutineContext,
+    restartTimerOnAdd: Boolean,
+    onReceive: (T) -> Unit,
+    onProcess: suspend () -> Unit
+  ) {
+    while (true) {
+      // Wait for first item and add it
+      onReceive(channel.receive())
+      
+      // Mark as collecting - we received an item and are collecting the batch
+      isCollecting = true
+
+      if (restartTimerOnAdd) {
+        // Debounce mode: restart timer on each new item
+        var lastItemTime = System.nanoTime()
+        
+        while (true) {
+          val remainingDelay = delay.inWholeNanoseconds - (System.nanoTime() - lastItemTime)
+          if (remainingDelay <= 0) {
+            // Timer expired, process collected items
+            break
+          }
+          
+          // Wait for remaining delay or new item, whichever comes first
+          withTimeoutOrNull(remainingDelay.nanoseconds) {
+            onReceive(channel.receive())
+            lastItemTime = System.nanoTime()
+          } ?: break // Timeout - process collected items
+        }
+      } else {
+        // Throttle/sample mode: fixed interval
+        delay(delay)
+        
+        // Collect all remaining items
+        var extraItem = channel.tryReceive().getOrNull()
+        while (extraItem != null) {
+          onReceive(extraItem)
+          extraItem = channel.tryReceive().getOrNull()
+        }
+      }
+
+      // Process the collected items
+      coroutineScope {
+        val job = launch {
+          try {
+            withContext(context) {
+              onProcess()
+            }
+          } catch (e: CancellationException) {
+            throw e
+          } catch (e: Throwable) {
+            logger<DebouncedUpdates>().error("Exception in DebouncedUpdates '$name'", e)
+          }
+        }
+        
+        // Track the processing job and clear collecting flag
+        // IMPORTANT: Must set processingJob before clearing isCollecting to avoid race condition
+        // where both would be false/null even though processing is about to start
+        processingJob.set(job)
+        isCollecting = false
+        
+        try {
+          job.join()
+        } finally {
+          processingJob.set(null)
+        }
+      }
+    }
+  }
+  
+  /**
+   * Process latest item only (replaces previous item with new one).
+   */
+  @OptIn(ExperimentalCoroutinesApi::class)
+  protected suspend fun processLatest(
+    delay: Duration,
+    context: CoroutineContext,
+    restartTimerOnAdd: Boolean,
+    action: suspend (T) -> Unit
+  ) {
+    var latestItem: T? = null
+    
+    processWithDelay(
+      delay = delay,
+      context = context,
+      restartTimerOnAdd = restartTimerOnAdd,
+      onReceive = { latestItem = it },
+      onProcess = { action(latestItem!!) }
+    )
+  }
+  
+  /**
+   * Process all items as a batch (collects all items into a list).
+   */
+  @OptIn(ExperimentalCoroutinesApi::class)
+  protected suspend fun processBatched(
+    delay: Duration,
+    context: CoroutineContext,
+    restartTimerOnAdd: Boolean,
+    action: suspend (List<T>) -> Unit
+  ) {
+    val buffer = synchronizedList(mutableListOf<T>())
+    
+    processWithDelay(
+      delay = delay,
+      context = context,
+      restartTimerOnAdd = restartTimerOnAdd,
+      onReceive = { buffer.add(it) },
+      onProcess = {
+        val batch = buffer.toList()
+        buffer.clear()
+        action(batch)
+      }
+    )
   }
 }
 
@@ -499,7 +660,7 @@ private class SingleScopeQueue<T>(
 ) : BaseUpdateQueue<T>(name, context, channelCapacity = 1) {
 
   override val job: Job = scope.launch(CoroutineName(name)) {
-    channel.processLatest(name, delay, context, restartTimerOnAdd, action)
+    processLatest(delay, context, restartTimerOnAdd, action)
   }
 }
 
@@ -517,7 +678,7 @@ private class BatchedScopeQueue<T>(
 ) : BaseUpdateQueue<T>(name, context, channelCapacity = Channel.UNLIMITED) {
 
   override val job: Job = scope.launch(CoroutineName(name)) {
-    channel.processBatched(name, delay, context, restartTimerOnAdd, action)
+    processBatched(delay, context, restartTimerOnAdd, action)
   }
 }
 
@@ -535,7 +696,7 @@ private class SingleComponentQueue<T>(
 ) : BaseUpdateQueue<T>(name, context, channelCapacity = 1) {
 
   override val job: Job = component.launchOnShow(name) {
-    channel.processLatest(name, delay, context, restartTimerOnAdd, action)
+    processLatest(delay, context, restartTimerOnAdd, action)
   }
 }
 
@@ -553,6 +714,6 @@ private class BatchedComponentQueue<T>(
 ) : BaseUpdateQueue<T>(name, context, channelCapacity = Channel.UNLIMITED) {
 
   override val job: Job = component.launchOnShow(name) {
-    channel.processBatched(name, delay, context, restartTimerOnAdd, action)
+    processBatched(delay, context, restartTimerOnAdd, action)
   }
 }

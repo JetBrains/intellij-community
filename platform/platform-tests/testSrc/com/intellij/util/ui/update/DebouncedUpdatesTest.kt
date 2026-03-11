@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -465,6 +466,48 @@ class DebouncedUpdatesTest {
   }
 
   @Test
+  fun `test batched queue with throttle mode collects all items within window`() {
+    timeoutRunBlocking {
+      val batches = CopyOnWriteArrayList<List<Int>>()
+      val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+      try {
+        val queue = DebouncedUpdates.forScope<Int>(scope, "test-batched-collect", 100.milliseconds)
+          .runBatched { batch ->
+            batches.add(batch)
+          }
+
+        // Queue items rapidly (all within throttle window)
+        queue.queue(1)
+        delay(30.milliseconds)
+        queue.queue(2)
+        delay(30.milliseconds)
+        queue.queue(3)
+        
+        // Timer starts at queue(1), after 100ms it should process [1, 2, 3]
+        delay(100.milliseconds)
+
+        assertEquals(1, batches.size, "Should have 1 batch")
+        assertEquals(listOf(1, 2, 3), batches[0], "Batch should contain all items within delay window")
+        
+        // Queue more items after first batch processes
+        queue.queue(4)
+        delay(30.milliseconds)
+        queue.queue(5)
+        delay(30.milliseconds)
+        queue.queue(6)
+        delay(150.milliseconds)
+        
+        assertEquals(2, batches.size, "Should have 2 batches")
+        assertEquals(listOf(4, 5, 6), batches[1], "Second batch should contain [4, 5, 6]")
+      }
+      finally {
+        scope.cancel()
+      }
+    }
+  }
+
+  @Test
   fun `test batched queue with debounce mode restarts timer on each item`() {
     timeoutRunBlocking {
       val batches = CopyOnWriteArrayList<List<Int>>()
@@ -648,6 +691,138 @@ class DebouncedUpdatesTest {
       value = getter()
     }
     return value
+  }
+
+  @Test
+  fun `test waitForAllExecuted waits for processing to complete`() {
+    timeoutRunBlocking {
+      val executedValues = CopyOnWriteArrayList<Int>()
+      val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+      try {
+        val queue = DebouncedUpdates.forScope<Int>(scope, "test-wait", 100.milliseconds)
+          .runLatest { value ->
+            delay(50.milliseconds) // Simulate slow processing
+            executedValues.add(value)
+          }
+
+        // Queue some items
+        queue.queue(1)
+        queue.queue(2)
+        queue.queue(3)
+
+        // Wait for all to be executed
+        withContext(Dispatchers.IO) {
+          queue.waitForAllExecuted(2.seconds)
+        }
+
+        // All items should be processed (only latest value due to runLatest)
+        assertEquals(listOf(3), executedValues.toList())
+      } finally {
+        scope.cancel()
+      }
+    }
+  }
+
+  @Test
+  fun `test queue inside queue must not interfere with waitForAllExecuted`() {
+    timeoutRunBlocking {
+      val executedValues = CopyOnWriteArrayList<Int>()
+      val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+      try {
+        lateinit var queue: UpdateQueue<Int>
+        queue = DebouncedUpdates.forScope<Int>(scope, "test-nested-wait", 50.milliseconds)
+          .runLatest { value ->
+            executedValues.add(value)
+            // Queue another item during processing (nested queuing)
+            if (value < 5) {
+              queue.queue(value + 1)
+            }
+          }
+
+        // Queue initial item - this will trigger nested queuing
+        queue.queue(1)
+
+        // Wait for all to be executed (including nested items)
+        withContext(Dispatchers.IO) {
+          queue.waitForAllExecuted(5.seconds)
+        }
+
+        // Should have processed 1, 2, 3, 4, 5 (nested queuing)
+        assertEquals(listOf(1, 2, 3, 4, 5), executedValues.toList())
+      } finally {
+        scope.cancel()
+      }
+    }
+  }
+
+  @Test
+  fun `test waitForAllExecuted with batched queue`() {
+    timeoutRunBlocking {
+      val batches = CopyOnWriteArrayList<List<Int>>()
+      val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+      try {
+        val queue = DebouncedUpdates.forScope<Int>(scope, "test-wait-batched", 100.milliseconds)
+          .runBatched { batch ->
+            delay(30.milliseconds) // Simulate processing
+            batches.add(batch)
+          }
+
+        // Queue items rapidly
+        queue.queue(1)
+        queue.queue(2)
+        queue.queue(3)
+
+        // Wait for all to be executed
+        withContext(Dispatchers.IO) {
+          queue.waitForAllExecuted(2.seconds)
+        }
+
+        // Should have processed one batch with all items
+        assertEquals(1, batches.size)
+        assertEquals(listOf(1, 2, 3), batches[0])
+      } finally {
+        scope.cancel()
+      }
+    }
+  }
+
+  @Test
+  fun `test waitForAllExecuted timeout`() {
+    timeoutRunBlocking {
+      val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+      try {
+        val queue = DebouncedUpdates.forScope<Int>(scope, "test-wait-timeout", 100.milliseconds)
+          .runLatest { value ->
+            // Very slow processing
+            delay(10.seconds)
+          }
+
+        queue.queue(1)
+
+        // Should timeout - waitForAllExecuted uses runBlockingCancellable which wraps exceptions
+        var caughtException: Exception? = null
+        try {
+          withContext(Dispatchers.IO) {
+            queue.waitForAllExecuted(200.milliseconds)
+          }
+          fail("Expected timeout exception")
+        } catch (e: com.intellij.openapi.progress.CeProcessCanceledException) {
+          // runBlockingCancellable wraps the TimeoutException
+          caughtException = e
+        } catch (e: TimeoutException) {
+          // In case the implementation changes to not use runBlockingCancellable
+          caughtException = e
+        }
+
+        assertTrue(caughtException != null, "Expected a timeout exception")
+      } finally {
+        scope.cancel()
+      }
+    }
   }
 
   private fun edtTest(block: suspend CoroutineScope.() -> Unit) {
