@@ -959,11 +959,16 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
         ApplicationManager.getApplication().invokeLater(() -> {
           if (Disposer.isDisposed(content)) {
             AnAction[] actions = myViewActions.getChildren(ActionManager.getInstance());
+            boolean modified = false;
             for (AnAction action : actions) {
               if (action instanceof ViewLayoutModificationAction && ((ViewLayoutModificationAction)action).getContent() == content) {
                 myViewActions.remove(action);
+                modified = true;
                 break;
               }
+            }
+            if (modified) {
+              rebuildMinimizedActions();
             }
           }
         });

@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.frame.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -10,6 +11,10 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import org.jetbrains.annotations.NotNull;
 
 final class XSeparateWatchesAndVariables extends ToggleAction implements SplitDebuggerAction {
+  XSeparateWatchesAndVariables() {
+    getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.Never);
+  }
+
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(DebuggerUIUtil.getSessionProxy(e) != null);
