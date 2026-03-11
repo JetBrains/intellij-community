@@ -19,6 +19,7 @@ class TestAgentSessionProviderBridge(
   private val supportedModes: Set<AgentSessionLaunchMode>,
   private val cliAvailable: Boolean,
   private val resumeEnvVariables: Map<String, String> = emptyMap(),
+  private val iconOverride: Icon? = null,
   override val yoloSessionLabelKey: String? = null,
 ) : AgentSessionProviderBridge {
   override val displayNameKey: String
@@ -28,7 +29,7 @@ class TestAgentSessionProviderBridge(
     get() = if (provider == AgentSessionProvider.CLAUDE) "toolwindow.action.new.session.claude" else "toolwindow.action.new.session.codex"
 
   override val icon: Icon
-    get() = if (provider == AgentSessionProvider.CLAUDE) AgentWorkbenchCommonIcons.Claude_14x14 else AgentWorkbenchCommonIcons.Codex_14x14
+    get() = iconOverride ?: if (provider == AgentSessionProvider.CLAUDE) AgentWorkbenchCommonIcons.Claude_14x14 else AgentWorkbenchCommonIcons.Codex_14x14
 
   override val supportedLaunchModes: Set<AgentSessionLaunchMode>
     get() = supportedModes

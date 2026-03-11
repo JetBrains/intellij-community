@@ -41,17 +41,16 @@ class CodexAppServerClientTest {
   @TempDir
   lateinit var tempDir: Path
 
-  // Use UNDISPATCHED so the collector reaches SharedFlow.first() before thread/read triggers
-  // the mock app-server notification. notificationsFlow has no replay, so a scheduled async
-  // collector can miss the event and make the test flaky.
+  // Start the collector eagerly in tests that assert a notification from a single request.
+  // That keeps the request under test from racing with collector startup.
   private fun CoroutineScope.awaitNextNotification(client: CodexAppServerClient) = async(start = CoroutineStart.UNDISPATCHED) {
     withTimeout(2.seconds) {
       client.notifications.first()
     }
   }
 
-  // Keep the same eager subscription behavior for negative assertions so an unexpected early
-  // notification cannot be lost before the timeout window starts.
+  // Keep negative assertions eagerly subscribed as well so unexpected notifications are observed
+  // inside the timeout window instead of racing past collector startup.
   private fun CoroutineScope.awaitNoNotification(client: CodexAppServerClient) = async(start = CoroutineStart.UNDISPATCHED) {
     withTimeoutOrNull(500.milliseconds) {
       client.notifications.first()
@@ -422,6 +421,103 @@ class CodexAppServerClientTest {
       val event = notification.await()
       assertThat(event.method).isEqualTo("thread/status/changed")
       assertThat(event.threadId).isEqualTo("thread-notify-1")
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
+  fun appServerNotificationsRemainAvailableUntilCollectorStarts(): Unit = runBlocking(Dispatchers.Default) {
+    val project = tempDir.resolve("project-notifications-buffered")
+    Files.createDirectories(project)
+    val configPath = tempDir.resolve("codex-notifications-buffered.json")
+    writeConfig(
+      path = configPath,
+      threads = listOf(
+        ThreadSpec(
+          id = "thread-notify-buffered",
+          title = "Thread notify buffered",
+          cwd = project.toString(),
+          statusType = "idle",
+          updatedAt = 1_700_000_050_500L,
+          archived = false,
+        )
+      )
+    )
+    val backendDir = tempDir.resolve("backend-notifications-buffered")
+    Files.createDirectories(backendDir)
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+      environmentOverrides = mapOf(
+        "CODEX_TEST_NOTIFY_METHOD" to "thread/status/changed",
+        "CODEX_TEST_NOTIFY_ON_METHOD" to "thread/read",
+        "CODEX_TEST_NOTIFY_THREAD_ID" to "thread-notify-buffered",
+      ),
+    )
+    try {
+      val snapshot = client.readThreadActivitySnapshot("thread-notify-buffered")
+      assertThat(snapshot).isNotNull
+
+      val event = withTimeout(2.seconds) {
+        client.notifications.first()
+      }
+      assertThat(event.method).isEqualTo("thread/status/changed")
+      assertThat(event.threadId).isEqualTo("thread-notify-buffered")
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
+  fun appServerNotificationsQueueBurstBeforeCollection(): Unit = runBlocking(Dispatchers.Default) {
+    val project = tempDir.resolve("project-notifications-burst")
+    Files.createDirectories(project)
+    val configPath = tempDir.resolve("codex-notifications-burst.json")
+    writeConfig(
+      path = configPath,
+      threads = listOf(
+        ThreadSpec(
+          id = "thread-notify-burst",
+          title = "Thread notify burst",
+          cwd = project.toString(),
+          statusType = "idle",
+          updatedAt = 1_700_000_050_600L,
+          archived = false,
+        )
+      )
+    )
+    val backendDir = tempDir.resolve("backend-notifications-burst")
+    Files.createDirectories(backendDir)
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+      environmentOverrides = mapOf(
+        "CODEX_TEST_NOTIFY_METHOD" to "thread/status/changed",
+        "CODEX_TEST_NOTIFY_ON_METHOD" to "thread/read",
+        "CODEX_TEST_NOTIFY_THREAD_ID" to "thread-notify-burst",
+      ),
+    )
+    try {
+      repeat(3) {
+        val snapshot = client.readThreadActivitySnapshot("thread-notify-burst")
+        assertThat(snapshot).isNotNull
+      }
+
+      val events = buildList {
+        repeat(3) {
+          add(withTimeout(2.seconds) {
+            client.notifications.first()
+          })
+        }
+      }
+      assertThat(events).hasSize(3)
+      assertThat(events.map { it.method }).containsOnly("thread/status/changed")
+      assertThat(events.map { it.threadId }).containsOnly("thread-notify-burst")
     }
     finally {
       client.shutdown()

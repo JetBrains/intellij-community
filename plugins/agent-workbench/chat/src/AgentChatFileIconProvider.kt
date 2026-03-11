@@ -2,48 +2,41 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
-import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.agent.workbench.common.parseAgentThreadIdentity
-import com.intellij.agent.workbench.common.withAgentThreadActivityBadge
-import com.intellij.icons.AllIcons
+import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.agentSessionThreadStatusIcon
+import com.intellij.agent.workbench.sessions.core.providers.clearAgentSessionThreadStatusIconCacheForTests
 import com.intellij.ide.FileIconProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.TestOnly
-import java.util.concurrent.ConcurrentHashMap
+import java.util.Locale
 import javax.swing.Icon
-
-private data class AgentChatIconKey(
-  @JvmField val providerId: String,
-  @JvmField val activity: AgentThreadActivity,
-)
-
-private val ICON_CACHE = ConcurrentHashMap<AgentChatIconKey, Icon>()
 
 @TestOnly
 internal fun clearAgentChatIconCacheForTests() {
-  ICON_CACHE.clear()
+  clearAgentSessionThreadStatusIconCacheForTests()
 }
 
 internal class AgentChatFileIconProvider : FileIconProvider {
   override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? {
     val chatFile = file as? AgentChatVirtualFile ?: return null
-    return providerIcon(threadIdentity = chatFile.threadIdentity, threadActivity = chatFile.threadActivity)
+    return providerIcon(provider = chatFile.provider, threadActivity = chatFile.threadActivity)
   }
+}
+
+internal fun providerIcon(
+  provider: AgentSessionProvider?,
+  threadActivity: AgentThreadActivity = AgentThreadActivity.READY,
+): Icon {
+  return agentSessionThreadStatusIcon(provider, threadActivity)
 }
 
 internal fun providerIcon(
   threadIdentity: String,
   threadActivity: AgentThreadActivity = AgentThreadActivity.READY,
 ): Icon {
-  val providerId = parseAgentThreadIdentity(threadIdentity)?.providerId ?: threadIdentity.substringBefore(':').lowercase()
-  val key = AgentChatIconKey(providerId = providerId, activity = threadActivity)
-  return ICON_CACHE.computeIfAbsent(key) {
-    val baseIcon = when (providerId) {
-      "codex" -> AgentWorkbenchCommonIcons.Codex_14x14
-      "claude" -> AgentWorkbenchCommonIcons.Claude_14x14
-      else -> AllIcons.Toolwindows.ToolWindowMessages
-    }
-    withAgentThreadActivityBadge(baseIcon, threadActivity)
-  }
+  val providerId = parseAgentThreadIdentity(threadIdentity)?.providerId ?: threadIdentity.substringBefore(':')
+  val provider = AgentSessionProvider.fromOrNull(providerId.lowercase(Locale.ROOT))
+  return providerIcon(provider = provider, threadActivity = threadActivity)
 }
