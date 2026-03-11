@@ -98,9 +98,11 @@ fun validatePluginModel(
   validationOptions: PluginValidationOptions = PluginValidationOptions(),
 ): PluginValidationResult {
   val builder = SimplifiedPluginModelBuilder(project, validationOptions.pluginModelBuilderOptions)
-  return PluginModelValidator(builder.buildSimplifiedPluginModel(),
-                              projectHomePath = projectHomePath,
-                              validationOptions = validationOptions).validate()
+  return PluginModelValidator(
+    simplifiedPluginModel = builder.buildSimplifiedPluginModel(),
+    projectHomePath = projectHomePath,
+    validationOptions = validationOptions,
+  ).validate()
 }
 
 class PluginValidationResult internal constructor(
@@ -110,10 +112,7 @@ class PluginValidationResult internal constructor(
   val errors: List<Throwable>
     get() = java.util.List.copyOf(validationErrors)
 
-  val namedFailures: List<NamedFailure>
-    get() {
-      return validationErrors.groupFailures { it.sourceModule.name }
-    }
+  fun getNamedFailures(): Sequence<NamedFailure> = validationErrors.groupFailures { it.sourceModule.name }
 
   fun graphAsString(projectHomePath: Path): CharSequence {
     val stringWriter = StringWriter()

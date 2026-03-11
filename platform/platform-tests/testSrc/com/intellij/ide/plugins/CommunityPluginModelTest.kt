@@ -44,7 +44,7 @@ class CommunityPluginModelTest {
       pluginModelBuilderOptions = communityPluginModelBuilderOptions,
       skipUnresolvedOptionalContentModules = true,
       // There are a number of platform services that are overridden in ultimate only. Instead of declaring all of them here, we
-      // only perform the check once in UltimatePluginModelTest
+      // only perform the check once in IdeaUltimatePackagingTest.pluginModel
       skipServicesOverridesCheck = true,
       filesNamedLikeContentModuleDescriptorsButIncludedViaXiInclude = setOf(
         "intellij.platform.project.xml",
@@ -73,7 +73,6 @@ class CommunityPluginModelTest {
       ),
     )
     val result = validatePluginModel(communityPath, options)
-    return result.namedFailures.asDynamicTests("problems in plugin configuration")
+    return result.getNamedFailures().toList().asDynamicTests("problems in plugin configuration")
   }
 }
-

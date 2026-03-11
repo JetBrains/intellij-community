@@ -18,7 +18,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerializationException
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ModuleOutputProvider
@@ -38,6 +38,7 @@ import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestInfo
+import org.opentest4j.MultipleFailuresError
 import org.opentest4j.TestAbortedException
 import java.nio.file.Path
 
@@ -62,7 +63,14 @@ private data class ContentReportList(
  */
 typealias GeneratorValidator = suspend (projectHome: Path, outputProvider: ModuleOutputProvider) -> GenerationResult
 
-@ApiStatus.Internal
+data class ProjectValidationFailure(
+  @JvmField val name: String,
+  @JvmField val error: Throwable,
+)
+
+typealias ProjectValidator = suspend (project: JpsProject, projectHome: Path) -> Sequence<ProjectValidationFailure>
+
+@Internal
 fun createContentCheckTests(
   scope: CoroutineScope,
   homePath: Path,
@@ -73,37 +81,50 @@ fun createContentCheckTests(
   checkPlugins: Boolean = true,
   suggestedReviewer: String? = null,
   modelValidator: GeneratorValidator? = null,
+  projectValidator: ProjectValidator? = null,
+  projectValidatorProblemMessage: String = "project validation problems",
+  projectValidatorThreshold: Int = 50,
 ): Iterator<DynamicTest> {
   productProperties.buildDocAuthoringAssets = false
 
-  // Setup is async - validation and packaging tasks will await it
+  // Setup is async - validation and packaging tasks will await it.
   val compilationContextDeferred = scope.async {
-    val context = createCompilationContext(
+    createCompilationContext(
       projectHome = homePath,
       productProperties = productProperties,
       scope = scope,
       options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homePath, testInfo = testInfo).also { it.customizeBuildOptions() },
       setupTracer = false,
     )
-    // needed for TC, otherwise modelValidator will fail (as no module compilation outputs)
-    context.compileProductionModules()
-    context
   }
 
-  // Start both tasks immediately in caller's scope (parallel after context is ready)
-  val validationDeferred: Deferred<GenerationResult?> = scope.async {
+  val compileProductionModulesDeferred = scope.async {
     val context = compilationContextDeferred.await()
-    modelValidator?.invoke(homePath, context.outputProvider)
+    // needed for TC, otherwise modelValidator will fail (as no module compilation outputs)
+    context.compileProductionModules()
+  }
+
+  val projectValidationDeferred = projectValidator?.let { validator ->
+    scope.async {
+      validator(compilationContextDeferred.await().project, homePath)
+    }
+  }
+
+  // Start both tasks immediately in caller's scope once production outputs are ready.
+  val validationDeferred: Deferred<GenerationResult?> = scope.async {
+    compileProductionModulesDeferred.await()
+    modelValidator?.invoke(homePath, compilationContextDeferred.await().outputProvider)
   }
 
   val packagingDeferred: Deferred<PackageResult> = scope.async {
-    val buildContext = createBuildContext(
+    compileProductionModulesDeferred.await()
+    val context = createBuildContext(
       compilationContext = compilationContextDeferred.await(),
       projectHome = homePath,
       productProperties = productProperties,
       proprietaryBuildTools = buildTools,
     )
-    computePackageResult(testInfo = testInfo, context = buildContext)
+    computePackageResult(testInfo = testInfo, context = context)
   }
 
   return sequence {
@@ -111,6 +132,12 @@ fun createContentCheckTests(
     yield(DynamicTest.dynamicTest("model-generation") {
       runBlocking { validationDeferred.await() }
     })
+
+    @Suppress("RunBlockingInSuspendFunction")
+    val projectValidationFailures = projectValidationDeferred?.let { runBlocking { it.await() } }
+    if (projectValidationFailures != null) {
+      yieldAll(toDynamicTests(projectValidationFailures.toList(), projectValidatorProblemMessage, threshold = projectValidatorThreshold).asSequence())
+    }
 
     @Suppress("RunBlockingInSuspendFunction")
     val validationResult = runBlocking { validationDeferred.await() }
@@ -158,6 +185,23 @@ fun createContentCheckTests(
       )
     }
   }.iterator()
+}
+
+private fun toDynamicTests(failures: List<ProjectValidationFailure>, problemMessage: String, threshold: Int): List<DynamicTest> {
+  if (failures.isEmpty()) {
+    return emptyList()
+  }
+  if (failures.size <= threshold) {
+    return failures.map { failure ->
+      DynamicTest.dynamicTest(failure.name) {
+        throw failure.error
+      }
+    }
+  }
+
+  return listOf(DynamicTest.dynamicTest("too many $problemMessage") {
+    throw MultipleFailuresError("${failures.size} failures", failures.map { it.error })
+  })
 }
 
 private suspend fun SequenceScope<DynamicTest>.producePackagingTests(

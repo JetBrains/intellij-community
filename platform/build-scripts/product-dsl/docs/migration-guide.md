@@ -187,7 +187,7 @@ Before committing changes:
 
 3. **Verify tests pass**
    ```bash
-   bazel test //platform/build-scripts/tests/testSrc/org/jetbrains/intellij/build:UltimatePluginModelTest
+   ./tests.cmd -Dintellij.build.test.patterns=com.intellij.idea.ultimate.build.smokeTests.IdeaUltimatePackagingTest
    ```
 
 4. **Use MCP to analyze transitive dependencies**
