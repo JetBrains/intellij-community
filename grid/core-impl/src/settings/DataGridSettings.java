@@ -155,4 +155,10 @@ public interface DataGridSettings {
   default int getFirstRowIndex() {
     return 1;
   }
+
+  default boolean isEditArrayAsText() {
+    return false;
+  }
+
+  default void setEditArrayAsText(boolean value) { }
 }

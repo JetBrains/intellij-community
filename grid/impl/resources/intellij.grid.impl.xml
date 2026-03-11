@@ -48,6 +48,8 @@
     <database.datagrid.valueEditorTab implementation="com.intellij.database.run.ui.EditorValueEditorTab"/>
     <database.datagrid.valueEditorTab implementation="com.intellij.database.run.ui.RecordViewTab"/>
 
+    <database.datagrid.cellViewerFactory implementation="com.intellij.database.run.ui.ArrayGridCellViewerFactory"/>
+
     <colorSettingsPage implementation="com.intellij.database.editor.DataGridColorSettingsPage"/>
 
     <applicationConfigurable id="database.data.csv.formats" groupId="tools"

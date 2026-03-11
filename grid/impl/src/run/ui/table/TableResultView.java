@@ -1445,7 +1445,8 @@ public final class TableResultView extends JBTableWithResizableCells
     var tableModel = getModel();
     var cellValue = tableModel.getValueAt(row, column);
     return (cellValue instanceof LobInfo.ClobInfo clob && clob.isFullyReloaded()) ||
-           (cellValue instanceof LobInfo.BlobInfo blob && blob.isFullyReloaded());
+           (cellValue instanceof LobInfo.BlobInfo blob && blob.isFullyReloaded()) ||
+           (Registry.is("database.new.arrays.editor") && cellValue.getClass().isArray());
   }
 
   private void showValueEditor(EventObject e) {
