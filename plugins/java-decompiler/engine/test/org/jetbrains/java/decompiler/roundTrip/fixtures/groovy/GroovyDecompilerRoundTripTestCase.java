@@ -4,11 +4,20 @@ package org.jetbrains.java.decompiler.roundTrip.fixtures.groovy;
 import org.jetbrains.java.decompiler.roundTrip.fixtures.Compiler;
 import org.jetbrains.java.decompiler.roundTrip.fixtures.DecompilerRoundTripTestCase;
 
+import java.util.List;
+
 public abstract class GroovyDecompilerRoundTripTestCase extends DecompilerRoundTripTestCase {
   /**
-   * @see DecompilerRoundTripTestCase#doTest(Compiler, String, String...)
+   * @see DecompilerRoundTripTestCase#doTest(Compiler, String, List, String...)
    */
   protected void doTest(String sourceFile, String... companionFileSystemItems) {
-    doTest(Compiler.GROOVYC, sourceFile, companionFileSystemItems);
+    doTest(sourceFile, List.of(), companionFileSystemItems);
+  }
+
+  /**
+   * @see DecompilerRoundTripTestCase#doTest(Compiler, String, List, String...)
+   */
+  protected void doTest(String sourceFile, List<String> compilerOptions, String... companionFileSystemItems) {
+    doTest(Compiler.GROOVYC, sourceFile, compilerOptions, companionFileSystemItems);
   }
 }

@@ -25,20 +25,20 @@ import java.util.Set;
 public enum Compiler {
   JAVAC("javac", ".java") {
     @Override
-    public Map<String, byte[]> compile(Set<Path> sourceFiles) {
-      return compileJava(ToolProvider.getSystemJavaCompiler(), sourceFiles);
+    public Map<String, byte[]> compile(Set<Path> sourceFiles, List<String> compilerOptions) {
+      return compileJava(ToolProvider.getSystemJavaCompiler(), sourceFiles, compilerOptions);
     }
   },
   ECJ("ecj", ".java") {
     @Override
-    public Map<String, byte[]> compile(Set<Path> sourceFiles) {
-      return compileJava(new EclipseCompiler(), sourceFiles);
+    public Map<String, byte[]> compile(Set<Path> sourceFiles, List<String> compilerOptions) {
+      return compileJava(new EclipseCompiler(), sourceFiles, compilerOptions);
     }
   },
   GROOVYC("groovyc", ".groovy") {
     @Override
-    public Map<String, byte[]> compile(Set<Path> sourceFiles) {
-      return compileGroovy(sourceFiles);
+    public Map<String, byte[]> compile(Set<Path> sourceFiles, List<String> compilerOptions) {
+      return compileGroovy(sourceFiles, compilerOptions);
     }
   };
 
@@ -50,7 +50,7 @@ public enum Compiler {
     this.sourceExtension = sourceExtension;
   }
 
-  public abstract Map<String, byte[]> compile(Set<Path> sourceFiles);
+  public abstract Map<String, byte[]> compile(Set<Path> sourceFiles, List<String> compilerOptions);
 
   public String getId() {
     return id;
@@ -60,11 +60,10 @@ public enum Compiler {
     return sourceExtension;
   }
 
-  private static Map<String, byte[]> compileJava(JavaCompiler javaCompiler, Set<Path> sourceFiles) {
+  private static Map<String, byte[]> compileJava(JavaCompiler javaCompiler, Set<Path> sourceFiles, List<String> compilerOptions) {
     StringWriter errors = new StringWriter();
     StandardJavaFileManager standardFM = javaCompiler.getStandardFileManager(null, null, StandardCharsets.UTF_8);
     try (InMemoryFileManager memFM = new InMemoryFileManager(standardFM)) {
-      List<String> compilerOptions = List.of("-g");
       Iterable<? extends JavaFileObject> units = standardFM.getJavaFileObjectsFromPaths(sourceFiles);
       JavaCompiler.CompilationTask task = javaCompiler.getTask(errors, memFM, null, compilerOptions, null, units);
       if (!task.call()) {
@@ -77,8 +76,9 @@ public enum Compiler {
     }
   }
 
-  private static Map<String, byte[]> compileGroovy(Set<Path> sourceFiles) {
+  private static Map<String, byte[]> compileGroovy(Set<Path> sourceFiles, List<String> compilerOptions) {
     CompilerConfiguration config = new CompilerConfiguration();
+    applyGroovyOptions(config, compilerOptions);
     GroovyClassLoader classLoader = new GroovyClassLoader(Compiler.class.getClassLoader(), config);
     CompilationUnit unit = new CompilationUnit(config, null, classLoader);
     for (Path src : sourceFiles) {
@@ -92,5 +92,20 @@ public enum Compiler {
       result.put(gc.getName().replace('.', '/'), gc.getBytes());
     }
     return result;
+  }
+
+  private static void applyGroovyOptions(CompilerConfiguration config, List<String> compilerOptions) {
+    int i = 0;
+    while (i < compilerOptions.size()) {
+      switch (compilerOptions.get(i++)) {
+        case "-parameters" -> config.setParameters(true);
+        case "--enable-preview" -> config.setPreviewFeatures(true);
+        case "--release", "-target" -> {
+          if (i < compilerOptions.size()) {
+            config.setTargetBytecode(compilerOptions.get(i++));
+          }
+        }
+      }
+    }
   }
 }

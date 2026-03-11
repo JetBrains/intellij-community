@@ -7,6 +7,8 @@ import org.junit.jupiter.params.Parameter;
 import org.junit.jupiter.params.ParameterizedClass;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
+import java.util.List;
+
 @ParameterizedClass
 @ArgumentsSource(JavaCompilerArgumentsProvider.class)
 public abstract class JavaDecompilerRoundTripTestCase extends DecompilerRoundTripTestCase {
@@ -14,9 +16,16 @@ public abstract class JavaDecompilerRoundTripTestCase extends DecompilerRoundTri
   protected Compiler compiler;
 
   /**
-   * @see DecompilerRoundTripTestCase#doTest(Compiler, String, String...)
+   * @see DecompilerRoundTripTestCase#doTest(Compiler, String, List, String...)
    */
   protected void doTest(String sourceFile, String... companionFileSystemItems) {
-    doTest(compiler, sourceFile, companionFileSystemItems);
+    doTest(sourceFile, List.of("-g"), companionFileSystemItems);
+  }
+
+  /**
+   * @see DecompilerRoundTripTestCase#doTest(Compiler, String, List, String...)
+   */
+  protected void doTest(String sourceFile, List<String> compilerOptions, String... companionFileSystemItems) {
+    doTest(compiler, sourceFile, compilerOptions, companionFileSystemItems);
   }
 }
