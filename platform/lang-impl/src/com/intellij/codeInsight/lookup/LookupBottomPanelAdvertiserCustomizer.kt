@@ -18,17 +18,12 @@ interface LookupBottomPanelAdvertiserCustomizer {
 
   companion object {
     @JvmField
-    val EP_NAME = ExtensionPointName<LookupBottomPanelAdvertiserCustomizer>("com.intellij.lookup.bottomPanelAdvertiserCustomizer")
+    val EP_NAME: ExtensionPointName<LookupBottomPanelAdvertiserCustomizer> =
+      ExtensionPointName("com.intellij.lookup.bottomPanelAdvertiserCustomizer")
 
     @JvmStatic
     fun getAdvertiserComponent(lookup: Lookup, advertiserComponent: JComponent): JComponent? {
-      for (extension in EP_NAME.extensionList) {
-        val component = extension.createAdvertiserComponent(lookup, advertiserComponent)
-        if (component != null) {
-          return component
-        }
-      }
-      return null
+      return EP_NAME.computeSafeIfAny { it.createAdvertiserComponent(lookup, advertiserComponent) }
     }
   }
 }
