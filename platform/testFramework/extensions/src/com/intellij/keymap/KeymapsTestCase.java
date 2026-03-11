@@ -458,6 +458,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
                                    "Git.Rename.Local.Branch", "ShelvedChanges.Rename", "ChangesView.Rename", "Terminal.SearchInCommandHistory"},
       {"control U",                SECOND_STROKE, "CommanderSwapPanels", "org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"},
       {"control W",                "CloseContent", "Terminal.DeletePreviousWord"},
+      {"ctrl alt BACK_SLASH",      "AgentWorkbenchPrompt.OpenGlobalPaletteAutoSelect", "ClassNameCompletion"},
       {"control alt DOWN",         "MethodDown", "NextOccurence", "Console.TableResult.NextPage"},
       {"control alt E",            "Console.History.Browse", "ExecuteInPyConsoleAction", "PerforceDirect.Edit", "ToggleFindInSelection"},
       {"shift alt U",              "ActivateFindToolWindow", "ToggleCamelSnakeCase"},

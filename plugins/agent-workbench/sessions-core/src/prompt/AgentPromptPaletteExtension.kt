@@ -60,6 +60,13 @@ interface AgentPromptPaletteExtension {
    * or `null` to use the default hint.
    */
   fun getFooterHint(): @Nls String?
+
+  /**
+   * Returns `true` if this extension's tab should be auto-selected when the popup
+   * is invoked with the "prefer extensions" shortcut and this extension [matches] the context.
+   * When multiple extensions return `true`, the first one wins.
+   */
+  fun shouldAutoSelect(contextItems: List<AgentPromptContextItem>): Boolean = matches(contextItems)
 }
 
 object AgentPromptPaletteExtensions {

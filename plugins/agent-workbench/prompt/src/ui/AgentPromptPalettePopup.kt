@@ -17,6 +17,7 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextEnvel
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationData
+import com.intellij.agent.workbench.sessions.core.prompt.AGENT_PROMPT_INVOCATION_PREFER_EXTENSIONS_KEY
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchError
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLauncherBridge
@@ -185,8 +186,8 @@ internal class AgentPromptPalettePopup(
     restoreTaskDrafts(draft)
     refreshExtensionTaskDraftsFromContext()
     val preferExtensions = invocationData.attributes[AGENT_PROMPT_INVOCATION_PREFER_EXTENSIONS_KEY] == true
-    if (preferExtensions && activeExtensionTabs.isNotEmpty()) {
-      selectFirstExtensionTab()
+    if (preferExtensions) {
+      selectAutoSelectExtensionTab()
     }
     val initialText = invocationData.dataContextOrNull()?.getData(AGENT_PROMPT_INITIAL_TEXT_DATA_KEY)
     if (!initialText.isNullOrBlank()) {
@@ -412,9 +413,10 @@ internal class AgentPromptPalettePopup(
     }
   }
 
-  private fun selectFirstExtensionTab() {
-    val firstExtension = activeExtensionTabs.firstOrNull() ?: return
-    val index = (0 until tabbedPane.tabCount).firstOrNull { tabbedPane.getComponentAt(it) === firstExtension.tabPanel }
+  private fun selectAutoSelectExtensionTab() {
+    val items = contextEntries.map { it.item }
+    val target = activeExtensionTabs.firstOrNull { it.extension.shouldAutoSelect(items) } ?: return
+    val index = (0 until tabbedPane.tabCount).firstOrNull { tabbedPane.getComponentAt(it) === target.tabPanel }
     if (index != null) {
       tabbedPane.selectedIndex = index
     }
