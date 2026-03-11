@@ -49,7 +49,7 @@ class CoroutineUtilTest {
 
   @Test
   fun `flatMapLatestEach correctly handles many items`() = runTest {
-    val input = flowOf(listOf(), listOf(1), listOf(1, 3)).onEach { delay(100) }
+    val input = flowOf(listOf(), listOf(1), listOf(1, 3)).onEach { delay(100.milliseconds) }
     val output = input.flatMapLatestEach { flowOf(it + 1) }.toList()
 
     assertThat(output)
@@ -69,9 +69,7 @@ class CoroutineUtilTest {
     data class Emit<T>(val value: T) : Action<T>
   }
 
-  private data object SomeException : Exception() {
-    private fun readResolve(): Any = SomeException
-  }
+  private val testException = Exception()
 
   /**
    * Tries to make sure the actions given to this function are executed in-order,
@@ -90,12 +88,12 @@ class CoroutineUtilTest {
         var prevSize = mutActions.size + 1
         while (mutActions.isNotEmpty()) {
           while ((mutActions.isNotEmpty() && mutActions.first() !is Action.Emit) || mutActions.size == prevSize) {
-            delay(200)
+            delay(200.milliseconds)
           }
 
           if (mutActions.isEmpty()) {
             currentCoroutineContext().cancel()
-            ensureActive()
+            this@launchNow.ensureActive()
             return@flow
           }
 
@@ -110,7 +108,7 @@ class CoroutineUtilTest {
     }
 
     while (mutActions.isNotEmpty()) {
-      delay(200)
+      delay(200.milliseconds)
     }
     job.cancel()
 
@@ -122,7 +120,7 @@ class CoroutineUtilTest {
     val actions = listOf(
       Action.Emit(Result.success(listOf(1))),
       Action.Emit(Result.success(listOf(2))),
-      Action.Emit(Result.failure(SomeException)),
+      Action.Emit(Result.failure(testException)),
       Action.Emit(Result.success(listOf(3))),
     )
 
@@ -133,7 +131,7 @@ class CoroutineUtilTest {
     assertContentEquals(listOf(
       Result.success(listOf(1)),
       Result.success(listOf(1, 2)),
-      Result.failure(SomeException),
+      Result.failure(testException),
       Result.success(listOf(3)),
     ), results.toList())
   }
@@ -143,7 +141,7 @@ class CoroutineUtilTest {
     val actions = listOf(
       Action.Emit(Result.success(listOf(1))),
       Action.Emit(Result.success(listOf(2))),
-      Action.Emit(Result.failure(SomeException)),
+      Action.Emit(Result.failure(testException)),
       Action.Emit(Result.success(listOf(3))),
     )
 
@@ -154,7 +152,7 @@ class CoroutineUtilTest {
     assertContentEquals(listOf(
       Result.success(listOf(1)),
       Result.success(listOf(1, 2)),
-      Result.failure(SomeException),
+      Result.failure(testException),
       Result.success(listOf(1, 2, 3)),
     ), results.toList())
   }
@@ -163,12 +161,12 @@ class CoroutineUtilTest {
   fun `Transforming consecutive successes resets after every failure`() = runTest {
     val actions = listOf(
       Action.Emit(Result.success(listOf(1))),
-      Action.Emit(Result.failure(SomeException)),
+      Action.Emit(Result.failure(testException)),
       Action.Emit(Result.success(listOf(2))),
-      Action.Emit(Result.failure(SomeException)),
+      Action.Emit(Result.failure(testException)),
       Action.Emit(Result.success(listOf(3))),
       Action.Emit(Result.success(listOf(4))),
-      Action.Emit(Result.failure(SomeException)),
+      Action.Emit(Result.failure(testException)),
       Action.Emit(Result.success(listOf(5))),
     )
 
@@ -178,12 +176,12 @@ class CoroutineUtilTest {
 
     assertContentEquals(listOf(
       Result.success(listOf(1)),
-      Result.failure(SomeException),
+      Result.failure(testException),
       Result.success(listOf(2)),
-      Result.failure(SomeException),
+      Result.failure(testException),
       Result.success(listOf(3)),
       Result.success(listOf(3, 4)),
-      Result.failure(SomeException),
+      Result.failure(testException),
       Result.success(listOf(5)),
     ), results.toList())
   }
@@ -547,7 +545,7 @@ class CoroutineUtilTest {
       return l
     }
 
-    (1..10).forEach {
+    (1..10).forEach { _ ->
       val underlying = MutableStateFlow(randomList())
       val nUpdates = rand.nextInt(until = 10)
 
