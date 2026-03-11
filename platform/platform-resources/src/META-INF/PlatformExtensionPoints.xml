@@ -602,7 +602,7 @@
 
     <extensionPoint name="idePerformanceListener" interface="com.intellij.diagnostic.PerformanceListener" dynamic="true"/>
 
-    <extensionPoint name="mac.dockMenuActions" interface="com.intellij.ui.mac.MacDockMenuActions" dynamic="false"/>
+    <extensionPoint name="mac.dockMenuActions" interface="com.intellij.ui.mac.MacDockMenuActions" dynamic="true"/>
 
     <extensionPoint name="textEditorNecromancerAwaker" interface="com.intellij.openapi.editor.impl.zombie.NecromancerAwaker" dynamic="true"/>
 
