@@ -74,7 +74,7 @@ internal abstract class OptionAction(
     ActionRemoteBehavior.FrontendOnly
   }
   else {
-    (legacyAction as ActionRemoteBehaviorSpecification?)?.getBehavior()
+    (legacyAction as? ActionRemoteBehaviorSpecification)?.getBehavior()
   }
 }
 
@@ -96,7 +96,7 @@ internal abstract class SortKeyAction(
     ActionRemoteBehavior.FrontendOnly
   }
   else {
-    (legacyAction as ActionRemoteBehaviorSpecification?)?.getBehavior()
+    (legacyAction as? ActionRemoteBehaviorSpecification)?.getBehavior()
   }
 
   override fun update(e: AnActionEvent) {
