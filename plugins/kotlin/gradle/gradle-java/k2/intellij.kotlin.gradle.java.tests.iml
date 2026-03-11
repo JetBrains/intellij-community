@@ -40,6 +40,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.gradle.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.toolingExtension.tests" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.kotlin.gradle.java" />
 </module>
