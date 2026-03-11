@@ -145,6 +145,8 @@ public final class ConfigImportHelper {
   private static final long PLUGIN_UPDATES_TIMEOUT_MS = 7000L;
   private static final long BROKEN_PLUGINS_TIMEOUT_MS = 3000L;
 
+  private static boolean isUnitTestMode = false;
+
   private ConfigImportHelper() { }
 
   public static void importConfigsTo(
@@ -155,6 +157,9 @@ public final class ConfigImportHelper {
   ) {
     log.info("Importing configs to '" + newConfigDir + "'; veryFirstStart=" + veryFirstStartOnThisComputer);
     System.setProperty(InitialConfigImportState.FIRST_SESSION_KEY, Boolean.TRUE.toString());
+
+    var app = ApplicationManager.getApplication();
+    isUnitTestMode = app != null && app.isUnitTestMode();
 
     var migrationOption = CustomConfigMigrationOption.readCustomConfigMigrationOptionAndRemoveMarkerFile(newConfigDir);
     log.info("Custom migration option: " + migrationOption);
@@ -1022,7 +1027,9 @@ public final class ConfigImportHelper {
       }
     }
 
-    migrateGlobalPlugins(newConfigDir, oldConfigDir, pluginsToMigrate, pluginsToDownload, options.log);
+    if (!isUnitTestMode) {
+      migrateGlobalPlugins(newConfigDir, oldConfigDir, pluginsToMigrate, pluginsToDownload, options.log);
+    }
 
     pluginsToMigrate.removeIf(hasPendingUpdate);
     if (!pluginsToMigrate.isEmpty()) {
@@ -1145,7 +1152,7 @@ public final class ConfigImportHelper {
       Files.writeString(resultFile, downloadIds);
     }
     catch (IOException e) {
-      options.getLog().error("Unable to write auto install result", e);
+      log.error("Unable to write auto install result", e);
     }
   }
 
