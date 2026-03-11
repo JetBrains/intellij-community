@@ -174,6 +174,8 @@ class FileStructurePopup(
   private var myCanClose = true
 
   init {
+    myProject.getMessageBus().syncPublisher<FileStructurePopupListener>(FileStructurePopupListener.TOPIC).stateChanged(true)
+
     //Stop code analyzer to speed up the EDT
     DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(this)
     myTreeStructure = object : StructureViewTreeStructure(myProject, myModel) {
