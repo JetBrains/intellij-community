@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.base.compilerPreferences.configuration;
 
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.icons.AllIcons;
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,7 +12,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.RootsChangeRescanningInfo;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -22,14 +20,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.MutableCollectionComboBoxModel;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.ui.ThreeStateCheckBox;
@@ -80,20 +74,10 @@ import org.jetbrains.kotlin.platform.impl.JsIdePlatformUtil;
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind;
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform;
 
-import javax.swing.AbstractButton;
-import javax.swing.BorderFactory;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.border.TitledBorder;
 import javax.swing.event.PopupMenuEvent;
-import java.awt.Dimension;
-import java.awt.Insets;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -101,7 +85,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.ResourceBundle;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Consumer;
@@ -139,6 +122,9 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
                                                "configuration.description.when.inlining.a.function.from.other.module.with.embedded.sources"));
   }
 
+  private final KotlinCompilerConfigurableUi ui = new KotlinCompilerConfigurableUi(() -> {
+      updateOutputDirEnabled();
+  });
   private final @Nullable KotlinCompilerWorkspaceSettings compilerWorkspaceSettings;
   private final Project project;
   private final boolean isProjectSettings;
@@ -147,30 +133,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
   private K2JVMCompilerArguments k2jvmCompilerArguments;
   private CompilerSettings compilerSettings;
   private final @Nullable JpsPluginSettings jpsPluginSettings;
-  private final JPanel contentPane;
-  private final ThreeStateCheckBox reportWarningsCheckBox;
-  private final RawCommandLineEditor additionalArgsOptionsField;
-  private final JLabel additionalArgsLabel;
-  private final ThreeStateCheckBox generateSourceMapsCheckBox;
-  private final JLabel labelForOutputDirectory;
-  private final TextFieldWithBrowseButton outputDirectory;
-  private final ThreeStateCheckBox copyRuntimeFilesCheckBox;
-  private final ThreeStateCheckBox keepAliveCheckBox;
-  private final JCheckBox enableIncrementalCompilationForJvmCheckBox;
-  private final JCheckBox enableIncrementalCompilationForJsCheckBox;
-  private final JComboBox<String> moduleKindComboBox;
-  private final JPanel k2jvmPanel;
-  private final JPanel k2jsPanel;
-  private final JComboBox<String> jvmVersionComboBox;
-  private final JPanel kotlinJpsPluginVersionPanel;
-  private final JComboBox<JpsVersionItem> kotlinJpsPluginVersionComboBox;
-  private ComboBoxModelWithPossiblyDisabledItems jpsPluginComboBoxModel;
   private JpsVersionItem defaultJpsVersionItem;
-  private final JComboBox<VersionView> languageVersionComboBox;
-  private final JComboBox<VersionView> apiVersionComboBox;
-  private final JLabel warningLabel;
-  private final JTextField sourceMapPrefix;
-  private final JComboBox<String> sourceMapEmbedSources;
   private boolean isEnabled = true;
 
   private @Nullable Disposable validatorsDisposable = null;
@@ -189,239 +152,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
     this.commonCompilerArguments = commonCompilerArguments;
     this.k2jsCompilerArguments = k2jsCompilerArguments;
     this.compilerSettings = compilerSettings;
-    {
-      // Explicit use of MutableCollectionComboBoxModel guarantees that setSelectedItem() can make safe cast.
-      languageVersionComboBox = new ComboBox<>(new MutableCollectionComboBoxModel<>());
-      jpsPluginComboBoxModel = new ComboBoxModelWithPossiblyDisabledItems();
-      kotlinJpsPluginVersionComboBox = new ComboBox<>(jpsPluginComboBoxModel);
-      apiVersionComboBox = new ComboBox<>(new MutableCollectionComboBoxModel<>());
-
-      // Workaround: ThreeStateCheckBox doesn't send suitable notification on state change
-      // TODO: replace with PropertyChangerListener after fix is available in IDEA
-      copyRuntimeFilesCheckBox = new ThreeStateCheckBox() {
-        @Override
-        public void setState(State state) {
-          super.setState(state);
-          updateOutputDirEnabled();
-        }
-      };
-    }
-    {
-      // GUI initializer generated by IntelliJ IDEA GUI Designer
-      // >>> IMPORTANT!! <<<
-      // DO NOT EDIT OR ADD ANY CODE HERE!
-      contentPane = new JPanel();
-      contentPane.setLayout(new GridLayoutManager(12, 2, new Insets(0, 0, 0, 0), -1, -1));
-      contentPane.setBorder(
-        BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), null, TitledBorder.DEFAULT_JUSTIFICATION,
-                                         TitledBorder.DEFAULT_POSITION, null, null));
-      final Spacer spacer1 = new Spacer();
-      contentPane.add(spacer1, new GridConstraints(11, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
-                                                   GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
-      k2jsPanel = new JPanel();
-      k2jsPanel.setLayout(new GridLayoutManager(7, 2, new Insets(0, 0, 0, 0), -1, -1));
-      k2jsPanel.setVisible(true);
-      k2jsPanel.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent");
-      contentPane.add(k2jsPanel, new GridConstraints(9, 0, 1, 2, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL,
-                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
-                                                     null, null, 0, true));
-      k2jsPanel.setBorder(IdeBorderFactory.PlainSmallWithoutIndent.createTitledBorder(BorderFactory.createEtchedBorder(),
-                                                                                      this.$$$getMessageFromBundle$$$(
-                                                                                        "messages/KotlinBaseCompilerConfigurationUiBundle",
-                                                                                        "kotlin.compiler.js.option.panel.title"),
-                                                                                      TitledBorder.DEFAULT_JUSTIFICATION,
-                                                                                      TitledBorder.DEFAULT_POSITION, null, null));
-      labelForOutputDirectory = new JLabel();
-      this.$$$loadLabelText$$$(labelForOutputDirectory, this.$$$getMessageFromBundle$$$("messages/KotlinBaseCompilerConfigurationUiBundle",
-                                                                                        "destination.directory"));
-      k2jsPanel.add(labelForOutputDirectory, new GridConstraints(5, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
-                                                                 GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null,
-                                                                 null, null, 2, false));
-      outputDirectory = new TextFieldWithBrowseButton();
-      outputDirectory.setText(this.$$$getMessageFromBundle$$$("messages/KotlinBaseCompilerConfigurationUiBundle", "kotlin.compiler.lib"));
-      k2jsPanel.add(outputDirectory, new GridConstraints(5, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
-                                                         GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
-                                                         new Dimension(150, -1), null, 0, false));
-      copyRuntimeFilesCheckBox.setState(ThreeStateCheckBox.State.NOT_SELECTED);
-      this.$$$loadButtonText$$$(copyRuntimeFilesCheckBox,
-                                this.$$$getMessageFromBundle$$$("messages/KotlinBaseCompilerConfigurationUiBundle",
-                                                                "kotlin.compiler.js.option.output.copy.files"));
-      k2jsPanel.add(copyRuntimeFilesCheckBox, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
-                                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK |
-                                                                  GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
-                                                                  null, null, null, 0, false));
-      final JLabel label1 = new JLabel();
-      this.$$$loadLabelText$$$(label1, this.$$$getMessageFromBundle$$$("messages/KotlinBaseCompilerConfigurationUiBundle", "module.kind"));
-      k2jsPanel.add(label1, new GridConstraints(6, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
-                                                GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0,
-                                                false));
-      moduleKindComboBox = new JComboBox();
-      final DefaultComboBoxModel defaultComboBoxModel1 = new DefaultComboBoxModel();
-      moduleKindComboBox.setModel(defaultComboBoxModel1);
-      k2jsPanel.add(moduleKindComboBox, new GridConstraints(6, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
-                                                            GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
-                                                            null, null, 0, false));
-      generateSourceMapsCheckBox = new ThreeStateCheckBox();
-      generateSourceMapsCheckBox.setState(ThreeStateCheckBox.State.NOT_SELECTED);
-      this.$$$loadButtonText$$$(generateSourceMapsCheckBox,
-                                this.$$$getMessageFromBundle$$$("messages/KotlinBaseCompilerConfigurationUiBundle",
-                                                                "kotlin.compiler.js.option.generate.sourcemaps"));
-      k2jsPanel.add(generateSourceMapsCheckBox, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
-                                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK |
-                                                                    GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
-                                                                    null, null, null, 0, false));
-      sourceMapPrefix = new JTextField();
-      k2jsPanel.add(sourceMapPrefix, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
-                                                         GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
-                                                         new Dimension(150, -1), null, 0, false));
-      final JLabel label2 = new JLabel();
-      this.$$$loadLabelText$$$(label2, this.$$$getMessageFromBundle$$$("messages/KotlinBaseCompilerConfigurationUiBundle",
-                                                                       "embed.source.code.into.source.map"));
-      k2jsPanel.add(label2, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
-                                                GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0,
-                                                false));
-      sourceMapEmbedSources = new JComboBox();
-      k2jsPanel.add(sourceMapEmbedSources, new GridConstraints(3, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
-                                                               GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
-                                                               null, null, 0, false));
-      enableIncrementalCompilationForJsCheckBox = new JCheckBox();
-      this.$$$loadButtonText$$$(enableIncrementalCompilationForJsCheckBox,
-                                this.$$$getMessageFromBundle$$$("messages/KotlinBaseCompilerConfigurationUiBundle",
-                                                                "enable.incremental.compilation"));
-      k2jsPanel.add(enableIncrementalCompilationForJsCheckBox,
-                    new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
-                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-                                        GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-      final JPanel panel1 = new JPanel();
-      panel1.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
-      contentPane.add(panel1, new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
-                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
-                                                  null, 0, false));
-      warningLabel = new JLabel();
-      warningLabel.setFocusable(false);
-      warningLabel.setInheritsPopupMenu(false);
-      warningLabel.setText("");
-      warningLabel.setVisible(false);
-      panel1.add(warningLabel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, 1,
-                                                   GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-      final Spacer spacer2 = new Spacer();
-      panel1.add(spacer2, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
-                                              GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
-      k2jvmPanel = new JPanel();
-      k2jvmPanel.setLayout(new GridLayoutManager(2, 2, new Insets(0, 0, 0, 0), -1, -1));
-      k2jvmPanel.setVisible(true);
-      k2jvmPanel.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent");
-      contentPane.add(k2jvmPanel, new GridConstraints(8, 0, 1, 2, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL,
-                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
-                                                      null, null, 0, true));
-      k2jvmPanel.setBorder(IdeBorderFactory.PlainSmallWithoutIndent.createTitledBorder(BorderFactory.createEtchedBorder(),
-                                                                                       this.$$$getMessageFromBundle$$$(
-                                                                                         "messages/KotlinBaseCompilerConfigurationUiBundle",
-                                                                                         "kotlin.compiler.jvm.option.panel.title"),
-                                                                                       TitledBorder.DEFAULT_JUSTIFICATION,
-                                                                                       TitledBorder.DEFAULT_POSITION, null, null));
-      final JLabel label3 = new JLabel();
-      this.$$$loadLabelText$$$(label3,
-                               this.$$$getMessageFromBundle$$$("messages/KotlinBaseCompilerConfigurationUiBundle", "target.jvm.version"));
-      k2jvmPanel.add(label3, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
-                                                 GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0,
-                                                 false));
-      enableIncrementalCompilationForJvmCheckBox = new JCheckBox();
-      this.$$$loadButtonText$$$(enableIncrementalCompilationForJvmCheckBox,
-                                this.$$$getMessageFromBundle$$$("messages/KotlinBaseCompilerConfigurationUiBundle",
-                                                                "enable.incremental.compilation"));
-      k2jvmPanel.add(enableIncrementalCompilationForJvmCheckBox,
-                     new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
-                                         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-                                         GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-      jvmVersionComboBox = new JComboBox();
-      k2jvmPanel.add(jvmVersionComboBox, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
-                                                             GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
-                                                             null, null, 0, false));
-      final JPanel panel2 = new JPanel();
-      panel2.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
-      contentPane.add(panel2, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
-                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
-                                                  null, 0, true));
-      reportWarningsCheckBox = new ThreeStateCheckBox();
-      reportWarningsCheckBox.setSelected(false);
-      reportWarningsCheckBox.setState(ThreeStateCheckBox.State.NOT_SELECTED);
-      this.$$$loadButtonText$$$(reportWarningsCheckBox, this.$$$getMessageFromBundle$$$("messages/KotlinBaseCompilerConfigurationUiBundle",
-                                                                                        "kotlin.compiler.option.generate.no.warnings"));
-      panel2.add(reportWarningsCheckBox, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, 1,
-                                                             GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-      kotlinJpsPluginVersionPanel = new JPanel();
-      kotlinJpsPluginVersionPanel.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
-      contentPane.add(kotlinJpsPluginVersionPanel, new GridConstraints(2, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
-                                                                       GridConstraints.SIZEPOLICY_CAN_SHRINK |
-                                                                       GridConstraints.SIZEPOLICY_CAN_GROW,
-                                                                       GridConstraints.SIZEPOLICY_CAN_SHRINK |
-                                                                       GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, true));
-      final JLabel label4 = new JLabel();
-      this.$$$loadLabelText$$$(label4, this.$$$getMessageFromBundle$$$("messages/KotlinBaseCompilerConfigurationUiBundle",
-                                                                       "kotlin.compiler.version"));
-      kotlinJpsPluginVersionPanel.add(label4, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
-                                                                  GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null,
-                                                                  null, null, 0, false));
-      kotlinJpsPluginVersionPanel.add(kotlinJpsPluginVersionComboBox,
-                                      new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
-                                                          GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null,
-                                                          null, 0, false));
-      final JPanel panel3 = new JPanel();
-      panel3.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
-      contentPane.add(panel3, new GridConstraints(3, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
-                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
-                                                  null, 0, true));
-      final JLabel label5 = new JLabel();
-      this.$$$loadLabelText$$$(label5,
-                               this.$$$getMessageFromBundle$$$("messages/KotlinBaseCompilerConfigurationUiBundle", "language.version"));
-      panel3.add(label5,
-                 new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
-                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-      panel3.add(languageVersionComboBox, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
-                                                              GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
-                                                              null, null, 0, false));
-      final JPanel panel4 = new JPanel();
-      panel4.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
-      contentPane.add(panel4, new GridConstraints(4, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
-                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
-                                                  null, 0, true));
-      final JLabel label6 = new JLabel();
-      this.$$$loadLabelText$$$(label6, this.$$$getMessageFromBundle$$$("messages/KotlinBaseCompilerConfigurationUiBundle", "api.version"));
-      panel4.add(label6,
-                 new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
-                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-      panel4.add(apiVersionComboBox, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
-                                                         GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null,
-                                                         null, 0, false));
-      additionalArgsLabel = new JLabel();
-      this.$$$loadLabelText$$$(additionalArgsLabel, this.$$$getMessageFromBundle$$$("messages/KotlinBaseCompilerConfigurationUiBundle",
-                                                                                    "kotlin.compiler.option.additional.command.line.parameters"));
-      contentPane.add(additionalArgsLabel, new GridConstraints(6, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
-                                                               GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null,
-                                                               null, null, 0, false));
-      additionalArgsOptionsField = new RawCommandLineEditor();
-      additionalArgsOptionsField.setDialogCaption(
-        this.$$$getMessageFromBundle$$$("messages/KotlinBaseCompilerConfigurationUiBundle", "additional.command.line.parameters"));
-      contentPane.add(additionalArgsOptionsField,
-                      new GridConstraints(6, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
-                                          GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
-                                          GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-      keepAliveCheckBox = new ThreeStateCheckBox();
-      keepAliveCheckBox.setState(ThreeStateCheckBox.State.NOT_SELECTED);
-      this.$$$loadButtonText$$$(keepAliveCheckBox, this.$$$getMessageFromBundle$$$("messages/KotlinBaseCompilerConfigurationUiBundle",
-                                                                                   "keep.compiler.process.alive.between.invocations"));
-      contentPane.add(keepAliveCheckBox, new GridConstraints(7, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
-                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-                                                             GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-      label1.setLabelFor(moduleKindComboBox);
-    }
     this.jpsPluginSettings = Optional.ofNullable(isProjectSettings ? KotlinJpsPluginSettings.getInstance(project) : null)
       .map(KotlinJpsPluginSettings::getSettings)
       .map(FreezableKt::unfrozen)
@@ -430,26 +160,23 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
     this.k2jvmCompilerArguments = k2jvmCompilerArguments;
     this.isProjectSettings = isProjectSettings;
 
-    warningLabel.setIcon(AllIcons.General.WarningDialog);
-
-    additionalArgsOptionsField.attachLabel(additionalArgsLabel);
     if (isJpsCompilerVisible()) {
-      kotlinJpsPluginVersionComboBox.addActionListener(
+      ui.kotlinJpsPluginVersionComboBox.addActionListener(
         e -> onLanguageLevelChanged(getSelectedKotlinJpsPluginVersionView()));
     }
 
     fillVersions();
 
     if (KotlinPlatformUtils.isCidr()) {
-      keepAliveCheckBox.setVisible(false);
-      k2jvmPanel.setVisible(false);
-      k2jsPanel.setVisible(false);
+      ui.keepAliveCheckBox.setVisible(false);
+      ui.k2jvmGroup.visible(false);
+      ui.k2jsGroup.visible(false);
     }
     else {
       initializeNonCidrSettings(isMultiEditor);
     }
 
-    reportWarningsCheckBox.setThirdStateEnabled(isMultiEditor);
+    ui.reportWarningsCheckBox.setThirdStateEnabled(isMultiEditor);
 
     if (isProjectSettings) {
       List<String> modulesOverridingProjectSettings = ArraysKt.mapNotNull(
@@ -464,8 +191,8 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
       );
       CollectionsKt.sort(modulesOverridingProjectSettings);
       if (!modulesOverridingProjectSettings.isEmpty()) {
-        warningLabel.setVisible(true);
-        warningLabel.setText(buildOverridingModulesWarning(modulesOverridingProjectSettings));
+          ui.warningLabel.setVisible(true);
+          ui.warningLabel.setText(buildOverridingModulesWarning(modulesOverridingProjectSettings));
       }
     }
   }
@@ -482,80 +209,8 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
          false);
   }
 
-  private static Method $$$cachedGetBundleMethod$$$ = null;
-
-  /** @noinspection ALL */
-  private String $$$getMessageFromBundle$$$(String path, String key) {
-    ResourceBundle bundle;
-    try {
-      Class<?> thisClass = this.getClass();
-      if ($$$cachedGetBundleMethod$$$ == null) {
-        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
-        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
-      }
-      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
-    }
-    catch (Exception e) {
-      bundle = ResourceBundle.getBundle(path);
-    }
-    return bundle.getString(key);
-  }
-
-  /** @noinspection ALL */
-  private void $$$loadLabelText$$$(JLabel component, String text) {
-    StringBuffer result = new StringBuffer();
-    boolean haveMnemonic = false;
-    char mnemonic = '\0';
-    int mnemonicIndex = -1;
-    for (int i = 0; i < text.length(); i++) {
-      if (text.charAt(i) == '&') {
-        i++;
-        if (i == text.length()) break;
-        if (!haveMnemonic && text.charAt(i) != '&') {
-          haveMnemonic = true;
-          mnemonic = text.charAt(i);
-          mnemonicIndex = result.length();
-        }
-      }
-      result.append(text.charAt(i));
-    }
-    component.setText(result.toString());
-    if (haveMnemonic) {
-      component.setDisplayedMnemonic(mnemonic);
-      component.setDisplayedMnemonicIndex(mnemonicIndex);
-    }
-  }
-
-  /** @noinspection ALL */
-  private void $$$loadButtonText$$$(AbstractButton component, String text) {
-    StringBuffer result = new StringBuffer();
-    boolean haveMnemonic = false;
-    char mnemonic = '\0';
-    int mnemonicIndex = -1;
-    for (int i = 0; i < text.length(); i++) {
-      if (text.charAt(i) == '&') {
-        i++;
-        if (i == text.length()) break;
-        if (!haveMnemonic && text.charAt(i) != '&') {
-          haveMnemonic = true;
-          mnemonic = text.charAt(i);
-          mnemonicIndex = result.length();
-        }
-      }
-      result.append(text.charAt(i));
-    }
-    component.setText(result.toString());
-    if (haveMnemonic) {
-      component.setMnemonic(mnemonic);
-      component.setDisplayedMnemonicIndex(mnemonicIndex);
-    }
-  }
-
-  /** @noinspection ALL */
-  public JComponent $$$getRootComponent$$$() { return contentPane; }
-
   private void initializeNonCidrSettings(boolean isMultiEditor) {
-    setupFileChooser(labelForOutputDirectory, outputDirectory,
+    setupFileChooser(ui.outputDirectory,
                      KotlinBaseCompilerConfigurationUiBundle.message("configuration.title.choose.output.directory"),
                      false, project);
 
@@ -563,16 +218,14 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
     fillSourceMapSourceEmbeddingList();
     fillJvmVersionList();
 
-    generateSourceMapsCheckBox.setThirdStateEnabled(isMultiEditor);
-    generateSourceMapsCheckBox.addActionListener(event -> sourceMapPrefix.setEnabled(generateSourceMapsCheckBox.isSelected()));
-
-    copyRuntimeFilesCheckBox.setThirdStateEnabled(isMultiEditor);
-    keepAliveCheckBox.setThirdStateEnabled(isMultiEditor);
+    ui.generateSourceMapsCheckBox.setThirdStateEnabled(isMultiEditor);
+    ui.copyRuntimeFilesCheckBox.setThirdStateEnabled(isMultiEditor);
+    ui.keepAliveCheckBox.setThirdStateEnabled(isMultiEditor);
 
     if (compilerWorkspaceSettings == null) {
-      keepAliveCheckBox.setVisible(false);
-      k2jvmPanel.setVisible(false);
-      enableIncrementalCompilationForJsCheckBox.setVisible(false);
+      ui.keepAliveCheckBox.setVisible(false);
+      ui.k2jvmGroup.visible(false);
+      ui.enableIncrementalCompilationForJsCheckBox.setVisible(false);
     }
 
     updateOutputDirEnabled();
@@ -662,13 +315,11 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
   }
 
   private static void setupFileChooser(
-    @NotNull JLabel label,
     @NotNull TextFieldWithBrowseButton fileChooser,
     @NotNull @NlsContexts.DialogTitle String title,
     boolean forFiles,
     @Nullable Project project
   ) {
-    label.setLabelFor(fileChooser);
     var descriptor = new FileChooserDescriptor(forFiles, !forFiles, false, false, false, false).withTitle(title);
     fileChooser.addBrowseFolderListener(project, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
   }
@@ -678,9 +329,8 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
   }
 
   private void updateOutputDirEnabled() {
-    if (isEnabled && copyRuntimeFilesCheckBox != null) {
-      outputDirectory.setEnabled(copyRuntimeFilesCheckBox.isSelected());
-      labelForOutputDirectory.setEnabled(copyRuntimeFilesCheckBox.isSelected());
+    if (isEnabled) {
+        ui.outputDirectoryRow.enabled(ui.copyRuntimeFilesCheckBox.isSelected());
     }
   }
 
@@ -722,16 +372,16 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
       permittedAPIVersions.add(latestStable);
     }
 
-    apiVersionComboBox.setModel(new MutableCollectionComboBoxModel<>(permittedAPIVersions));
-    languageVersionComboBox.setModel(new MutableCollectionComboBoxModel<>(permittedAPIVersions));
+    ui.apiVersionComboBox.setModel(new MutableCollectionComboBoxModel<>(permittedAPIVersions));
+    ui.languageVersionComboBox.setModel(new MutableCollectionComboBoxModel<>(permittedAPIVersions));
 
     VersionView selectedItem =
       VersionComparatorUtil.compare(selectedAPIVersion.getVersionString(), upperBound.getVersionString()) <= 0
       ? selectedAPIView
       : upperBoundView;
-    apiVersionComboBox.setSelectedItem(selectedItem);
+    ui.apiVersionComboBox.setSelectedItem(selectedItem);
     if (isJpsCompilerVisible()) {
-      languageVersionComboBox.setSelectedItem(selectedItem);
+        ui.languageVersionComboBox.setSelectedItem(selectedItem);
     }
   }
 
@@ -743,7 +393,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         description += " " + KotlinBaseCompilerConfigurationUiBundle.message("deprecated.jvm.version");
       }
 
-      jvmVersionComboBox.addItem(description);
+      ui.jvmVersionComboBox.addItem(description);
     }
   }
 
@@ -794,30 +444,30 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         KotlinJpsPluginSettingsKt.getVersionWithFallback(jpsPluginSettings)
       );
 
-      kotlinJpsPluginVersionComboBox.addItem(defaultJpsVersionItem);
+      ui.kotlinJpsPluginVersionComboBox.addItem(defaultJpsVersionItem);
 
       IdeKotlinVersion bundledVersion = KotlinJpsPluginSettings.getBundledVersion();
       IdeKotlinVersion defaultVersion = defaultJpsVersionItem.getVersion();
       Integer compare = defaultVersion != null ? defaultVersion.compareTo(bundledVersion) : null;
       if (compare == null || compare > 0) {
-        jpsPluginComboBoxModel.add(new JpsVersionItem(bundledVersion));
+        ui.jpsPluginComboBoxModel.add(new JpsVersionItem(bundledVersion));
       }
       else if (compare < 0) {
-        jpsPluginComboBoxModel.add(0, new JpsVersionItem(bundledVersion));
+        ui.jpsPluginComboBoxModel.add(0, new JpsVersionItem(bundledVersion));
       }
 
       JpsVersionItem loadingItem =
         JpsVersionItem.createLabel(KotlinBaseCompilerConfigurationUiBundle.message("loading.available.versions.from.maven"));
-      kotlinJpsPluginVersionComboBox.addItem(loadingItem);
+      ui.kotlinJpsPluginVersionComboBox.addItem(loadingItem);
       PopupMenuListenerAdapter popupListener = new PopupMenuListenerAdapter() {
         @Override
         public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-          kotlinJpsPluginVersionComboBox.removePopupMenuListener(this);
+          ui.kotlinJpsPluginVersionComboBox.removePopupMenuListener(this);
           fetchAvailableJpsCompilersAsync(
             availableVersions -> {
-              kotlinJpsPluginVersionComboBox.removeItem(loadingItem);
+              ui.kotlinJpsPluginVersionComboBox.removeItem(loadingItem);
               if (availableVersions == null) {
-                kotlinJpsPluginVersionComboBox.addItem(
+                ui.kotlinJpsPluginVersionComboBox.addItem(
                   JpsVersionItem.createLabel(
                     KotlinBaseCompilerConfigurationUiBundle.message("failed.fetching.all.available.versions.from.maven")
                   )
@@ -825,31 +475,31 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
               }
               else {
                 SortedSet<IdeKotlinVersion> newItems = new TreeSet<>(availableVersions);
-                for (JpsVersionItem item : jpsPluginComboBoxModel.getItems()) {
+                for (JpsVersionItem item : ui.jpsPluginComboBoxModel.getItems()) {
                   IdeKotlinVersion ideKotlinVersion = item.getVersion();
                   if (ideKotlinVersion != null) {
                     newItems.add(ideKotlinVersion);
                   }
                 }
 
-                Object selectedItem = jpsPluginComboBoxModel.getSelectedItem();
-                jpsPluginComboBoxModel.update(
+                Object selectedItem = ui.jpsPluginComboBoxModel.getSelectedItem();
+                ui.jpsPluginComboBoxModel.update(
                   ContainerUtil.reverse(ContainerUtil.map(newItems, it -> new JpsVersionItem(it))));
-                kotlinJpsPluginVersionComboBox.setSelectedItem(selectedItem);
+                ui.kotlinJpsPluginVersionComboBox.setSelectedItem(selectedItem);
               }
 
-              if (kotlinJpsPluginVersionComboBox.isPopupVisible()) {
-                kotlinJpsPluginVersionComboBox.hidePopup();
-                kotlinJpsPluginVersionComboBox.showPopup();
+              if (ui.kotlinJpsPluginVersionComboBox.isPopupVisible()) {
+                ui.kotlinJpsPluginVersionComboBox.hidePopup();
+                ui.kotlinJpsPluginVersionComboBox.showPopup();
               }
             });
         }
       };
 
-      kotlinJpsPluginVersionComboBox.addPopupMenuListener(popupListener);
+      ui.kotlinJpsPluginVersionComboBox.addPopupMenuListener(popupListener);
     }
     else {
-      kotlinJpsPluginVersionPanel.setVisible(false);
+      ui.kotlinJpsPluginVersionRow.visible(false);
     }
 
     VersionView latestStable = getLatestStableVersion();
@@ -869,17 +519,17 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
       ApiVersion apiVersion = ApiVersion.createByLanguageVersion(languageVersion);
 
       if (!apiVersion.isUnsupported()) {
-        apiVersionComboBox.addItem(new VersionView.Specific(languageVersion));
+        ui.apiVersionComboBox.addItem(new VersionView.Specific(languageVersion));
       }
       if (!languageVersion.isUnsupported()) {
-        languageVersionComboBox.addItem(new VersionView.Specific(languageVersion));
+        ui.languageVersionComboBox.addItem(new VersionView.Specific(languageVersion));
       }
       index++;
     }
 
-    languageVersionComboBox.setRenderer(createDescriptionAwareRenderer());
-    kotlinJpsPluginVersionComboBox.setRenderer(createDescriptionAwareRenderer());
-    apiVersionComboBox.setRenderer(createDescriptionAwareRenderer());
+    ui.languageVersionComboBox.setRenderer(createDescriptionAwareRenderer());
+    ui.kotlinJpsPluginVersionComboBox.setRenderer(createDescriptionAwareRenderer());
+    ui.apiVersionComboBox.setRenderer(createDescriptionAwareRenderer());
   }
 
   private static VersionView latestStableVersion = null;
@@ -909,23 +559,23 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
   }
 
   public void setTargetPlatform(@Nullable IdePlatformKind targetPlatform) {
-    k2jsPanel.setVisible(JsIdePlatformUtil.isJavaScript(targetPlatform));
+    ui.k2jsGroup.visible(JsIdePlatformUtil.isJavaScript(targetPlatform));
   }
 
   private void fillModuleKindList() {
     for (@Nls String moduleKind : moduleKindDescriptions.keySet()) {
-      moduleKindComboBox.addItem(moduleKind);
+        ui.moduleKindComboBox.addItem(moduleKind);
     }
 
-    moduleKindComboBox.setRenderer(BuilderKt.textListCellRenderer("", o -> getModuleKindDescription(o)));
+    ui.moduleKindComboBox.setRenderer(BuilderKt.textListCellRenderer("", o -> getModuleKindDescription(o)));
   }
 
   private void fillSourceMapSourceEmbeddingList() {
     for (@Nls String moduleKind : sourceMapSourceEmbeddingDescriptions.keySet()) {
-      sourceMapEmbedSources.addItem(moduleKind);
+        ui.sourceMapEmbedSources.addItem(moduleKind);
     }
 
-    sourceMapEmbedSources.setRenderer(BuilderKt.textListCellRenderer("", o -> getSourceMapSourceEmbeddingDescription(o)));
+    ui.sourceMapEmbedSources.setRenderer(BuilderKt.textListCellRenderer("", o -> getSourceMapSourceEmbeddingDescription(o)));
   }
 
   @Override
@@ -940,61 +590,61 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
       Disposer.dispose(validatorsDisposable);
     }
     validatorsDisposable = Disposer.newDisposable();
-    createVersionValidator(languageVersionComboBox, "configuration.warning.text.language.version.unsupported", validatorsDisposable);
-    createVersionValidator(apiVersionComboBox, "configuration.warning.text.api.version.unsupported", validatorsDisposable);
+    createVersionValidator(ui.languageVersionComboBox, "configuration.warning.text.language.version.unsupported", validatorsDisposable);
+    createVersionValidator(ui.apiVersionComboBox, "configuration.warning.text.api.version.unsupported", validatorsDisposable);
 
-    return contentPane;
+    return ui.panel;
   }
 
   @Override
   public boolean isModified() {
-    return isCheckboxModified(reportWarningsCheckBox, !commonCompilerArguments.getSuppressWarnings()) ||
+    return isCheckboxModified(ui.reportWarningsCheckBox, !commonCompilerArguments.getSuppressWarnings()) ||
            !getSelectedLanguageVersionView().equals(KotlinFacetSettingsKt.getLanguageVersionView(commonCompilerArguments)) ||
            !getSelectedAPIVersionView().equals(KotlinFacetSettingsKt.getApiVersionView(commonCompilerArguments)) ||
            jpsPluginSettings != null &&
            !getSelectedKotlinJpsPluginVersion().equals(KotlinJpsPluginSettingsKt.getVersionWithFallback(jpsPluginSettings)) ||
-           !additionalArgsOptionsField.getText().equals(compilerSettings.getAdditionalArguments()) ||
-           isCheckboxModified(copyRuntimeFilesCheckBox, compilerSettings.getCopyJsLibraryFiles()) ||
-           isBrowseFieldModified(outputDirectory, compilerSettings.getOutputDirectoryForJsLibraryFiles()) ||
+           !ui.additionalArgsOptionsField.getText().equals(compilerSettings.getAdditionalArguments()) ||
+           isCheckboxModified(ui.copyRuntimeFilesCheckBox, compilerSettings.getCopyJsLibraryFiles()) ||
+           isBrowseFieldModified(ui.outputDirectory, compilerSettings.getOutputDirectoryForJsLibraryFiles()) ||
 
            (compilerWorkspaceSettings != null &&
-            (isCheckboxModified(enableIncrementalCompilationForJvmCheckBox, compilerWorkspaceSettings.getPreciseIncrementalEnabled()) ||
-             isCheckboxModified(enableIncrementalCompilationForJsCheckBox,
+            (isCheckboxModified(ui.enableIncrementalCompilationForJvmCheckBox, compilerWorkspaceSettings.getPreciseIncrementalEnabled()) ||
+             isCheckboxModified(ui.enableIncrementalCompilationForJsCheckBox,
                                 compilerWorkspaceSettings.getIncrementalCompilationForJsEnabled()) ||
-             isCheckboxModified(keepAliveCheckBox, compilerWorkspaceSettings.getEnableDaemon()))) ||
+             isCheckboxModified(ui.keepAliveCheckBox, compilerWorkspaceSettings.getEnableDaemon()))) ||
 
-           isCheckboxModified(generateSourceMapsCheckBox, k2jsCompilerArguments.getSourceMap()) ||
+           isCheckboxModified(ui.generateSourceMapsCheckBox, k2jsCompilerArguments.getSourceMap()) ||
            !getSelectedModuleKind().equals(getModuleKindOrDefault(k2jsCompilerArguments.getModuleKind())) ||
-           isFieldModified(sourceMapPrefix, StringUtil.notNullize(k2jsCompilerArguments.getSourceMapPrefix())) ||
+           isFieldModified(ui.sourceMapPrefix, StringUtil.notNullize(k2jsCompilerArguments.getSourceMapPrefix())) ||
            !getSelectedSourceMapSourceEmbedding().equals(
              getSourceMapSourceEmbeddingOrDefault(k2jsCompilerArguments.getSourceMapEmbedSources())) ||
            !getSelectedJvmVersion().equals(getJvmVersionOrDefault(k2jvmCompilerArguments.getJvmTarget()));
   }
 
   private @NotNull String getSelectedModuleKind() {
-    return getModuleKindOrDefault((String)moduleKindComboBox.getSelectedItem());
+    return getModuleKindOrDefault((String)ui.moduleKindComboBox.getSelectedItem());
   }
 
   private String getSelectedSourceMapSourceEmbedding() {
-    return getSourceMapSourceEmbeddingOrDefault((String)sourceMapEmbedSources.getSelectedItem());
+    return getSourceMapSourceEmbeddingOrDefault((String)ui.sourceMapEmbedSources.getSelectedItem());
   }
 
   public @NotNull String getSelectedJvmVersion() {
-    return getJvmVersionOrDefault((String)jvmVersionComboBox.getSelectedItem());
+    return getJvmVersionOrDefault((String)ui.jvmVersionComboBox.getSelectedItem());
   }
 
   public @NotNull VersionView getSelectedLanguageVersionView() {
-    Object item = languageVersionComboBox.getSelectedItem();
+    Object item = ui.languageVersionComboBox.getSelectedItem();
     return item != null ? (VersionView)item : getLatestStableVersion();
   }
 
   private @NotNull VersionView getSelectedAPIVersionView() {
-    Object item = apiVersionComboBox.getSelectedItem();
+    Object item = ui.apiVersionComboBox.getSelectedItem();
     return item != null ? (VersionView)item : getLatestStableVersion();
   }
 
   public VersionView getSelectedKotlinJpsPluginVersionView() {
-    JpsVersionItem selectedItem = (JpsVersionItem)kotlinJpsPluginVersionComboBox.getSelectedItem();
+    JpsVersionItem selectedItem = (JpsVersionItem)ui.kotlinJpsPluginVersionComboBox.getSelectedItem();
     IdeKotlinVersion version = selectedItem != null ? selectedItem.getVersion() : null;
     LanguageVersion languageVersion = version != null ? LanguageVersion.fromFullVersionString(version.toString()) : null;
     VersionView versionView;
@@ -1009,7 +659,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
   }
 
   private @NotNull String getSelectedKotlinJpsPluginVersion() {
-    JpsVersionItem item = (JpsVersionItem)kotlinJpsPluginVersionComboBox.getSelectedItem();
+    JpsVersionItem item = (JpsVersionItem)ui.kotlinJpsPluginVersionComboBox.getSelectedItem();
     return normalizeKotlinJpsPluginVersion(item != null ? item.getRawVersion() : null);
   }
 
@@ -1033,7 +683,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         !getSelectedAPIVersionView().equals(KotlinFacetSettingsKt.getApiVersionView(commonCompilerArguments)) ||
         jpsPluginSettings != null &&
         !getSelectedKotlinJpsPluginVersion().equals(KotlinJpsPluginSettingsKt.getVersionWithFallback(jpsPluginSettings)) ||
-        !additionalArgsOptionsField.getText().equals(compilerSettings.getAdditionalArguments());
+        !ui.additionalArgsOptionsField.getText().equals(compilerSettings.getAdditionalArguments());
 
       if (!project.isDefault() && shouldInvalidateCaches) {
         ApplicationUtilsKt.runWriteAction(
@@ -1048,32 +698,32 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
       }
     }
 
-    commonCompilerArguments.setSuppressWarnings(!reportWarningsCheckBox.isSelected());
+    commonCompilerArguments.setSuppressWarnings(!ui.reportWarningsCheckBox.isSelected());
     KotlinFacetSettingsKt.setLanguageVersionView(commonCompilerArguments, getSelectedLanguageVersionView());
     KotlinFacetSettingsKt.setApiVersionView(commonCompilerArguments, getSelectedAPIVersionView());
 
-    compilerSettings.setAdditionalArguments(additionalArgsOptionsField.getText());
-    compilerSettings.setCopyJsLibraryFiles(copyRuntimeFilesCheckBox.isSelected());
-    compilerSettings.setOutputDirectoryForJsLibraryFiles(outputDirectory.getText());
+    compilerSettings.setAdditionalArguments(ui.additionalArgsOptionsField.getText());
+    compilerSettings.setCopyJsLibraryFiles(ui.copyRuntimeFilesCheckBox.isSelected());
+    compilerSettings.setOutputDirectoryForJsLibraryFiles(ui.outputDirectory.getText());
 
     if (compilerWorkspaceSettings != null) {
-      compilerWorkspaceSettings.setPreciseIncrementalEnabled(enableIncrementalCompilationForJvmCheckBox.isSelected());
-      compilerWorkspaceSettings.setIncrementalCompilationForJsEnabled(enableIncrementalCompilationForJsCheckBox.isSelected());
+      compilerWorkspaceSettings.setPreciseIncrementalEnabled(ui.enableIncrementalCompilationForJvmCheckBox.isSelected());
+      compilerWorkspaceSettings.setIncrementalCompilationForJsEnabled(ui.enableIncrementalCompilationForJsCheckBox.isSelected());
       compilerWorkspaceSettings.setDaemonVmOptions(extractDaemonVmOptions());
 
       boolean oldEnableDaemon = compilerWorkspaceSettings.getEnableDaemon();
-      compilerWorkspaceSettings.setEnableDaemon(keepAliveCheckBox.isSelected());
-      if (keepAliveCheckBox.isSelected() != oldEnableDaemon) {
+      compilerWorkspaceSettings.setEnableDaemon(ui.keepAliveCheckBox.isSelected());
+      if (ui.keepAliveCheckBox.isSelected() != oldEnableDaemon) {
         PluginStartupApplicationService.getInstance().resetAliveFlag();
       }
     }
 
-    k2jsCompilerArguments.setSourceMap(generateSourceMapsCheckBox.isSelected());
+    k2jsCompilerArguments.setSourceMap(ui.generateSourceMapsCheckBox.isSelected());
     k2jsCompilerArguments.setModuleKind(getSelectedModuleKind());
 
-    k2jsCompilerArguments.setSourceMapPrefix(sourceMapPrefix.getText());
+    k2jsCompilerArguments.setSourceMapPrefix(ui.sourceMapPrefix.getText());
     k2jsCompilerArguments
-      .setSourceMapEmbedSources(generateSourceMapsCheckBox.isSelected() ? getSelectedSourceMapSourceEmbedding() : null);
+      .setSourceMapEmbedSources(ui.generateSourceMapsCheckBox.isSelected() ? getSelectedSourceMapSourceEmbedding() : null);
 
     k2jvmCompilerArguments.setJvmTarget(getSelectedJvmVersion());
 
@@ -1082,7 +732,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         String jpsPluginVersion = getSelectedKotlinJpsPluginVersion();
         if (!jpsPluginSettings.getVersion().isEmpty() ||
             !jpsPluginVersion.equals(KotlinJpsPluginSettingsKt.getVersionWithFallback(jpsPluginSettings))) {
-          defaultJpsVersionItem = (JpsVersionItem)kotlinJpsPluginVersionComboBox.getSelectedItem();
+          defaultJpsVersionItem = (JpsVersionItem)ui.kotlinJpsPluginVersionComboBox.getSelectedItem();
           jpsPluginSettings.setVersion(jpsPluginVersion);
           KotlinJpsPluginSettings.getInstance(project).setSettings(jpsPluginSettings);
         }
@@ -1106,44 +756,44 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
 
   @Override
   public void reset() {
-    reportWarningsCheckBox.setSelected(!commonCompilerArguments.getSuppressWarnings());
+    ui.reportWarningsCheckBox.setSelected(!commonCompilerArguments.getSuppressWarnings());
     if (jpsPluginSettings != null) {
-      setSelectedItem(kotlinJpsPluginVersionComboBox, defaultJpsVersionItem);
+      setSelectedItem(ui.kotlinJpsPluginVersionComboBox, defaultJpsVersionItem);
     }
     // This call adds the correct values to the language/apiVersion dropdown based on the compiler version.
     // It also selects some values of the dropdown, but we want to choose the values reflecting the current settings afterward.
     onLanguageLevelChanged(getSelectedKotlinJpsPluginVersionView()); // getSelectedLanguageVersionView() replaces null
 
     if (!commonCompilerArguments.getAutoAdvanceLanguageVersion()) {
-      setSelectedItem(languageVersionComboBox, KotlinFacetSettingsKt.getLanguageVersionView(commonCompilerArguments));
+      setSelectedItem(ui.languageVersionComboBox, KotlinFacetSettingsKt.getLanguageVersionView(commonCompilerArguments));
     }
     else {
-      setSelectedItem(languageVersionComboBox, getLatestStableVersion());
+      setSelectedItem(ui.languageVersionComboBox, getLatestStableVersion());
     }
     if (!commonCompilerArguments.getAutoAdvanceApiVersion()) {
-      setSelectedItem(apiVersionComboBox, KotlinFacetSettingsKt.getApiVersionView(commonCompilerArguments));
+      setSelectedItem(ui.apiVersionComboBox, KotlinFacetSettingsKt.getApiVersionView(commonCompilerArguments));
     }
     else {
-      setSelectedItem(apiVersionComboBox, getLatestStableVersion());
+      setSelectedItem(ui.apiVersionComboBox, getLatestStableVersion());
     }
-    additionalArgsOptionsField.setText(compilerSettings.getAdditionalArguments());
-    copyRuntimeFilesCheckBox.setSelected(compilerSettings.getCopyJsLibraryFiles());
-    outputDirectory.setText(compilerSettings.getOutputDirectoryForJsLibraryFiles());
+    ui.additionalArgsOptionsField.setText(compilerSettings.getAdditionalArguments());
+    ui.copyRuntimeFilesCheckBox.setSelected(compilerSettings.getCopyJsLibraryFiles());
+    ui.outputDirectory.setText(compilerSettings.getOutputDirectoryForJsLibraryFiles());
 
     if (compilerWorkspaceSettings != null) {
-      enableIncrementalCompilationForJvmCheckBox.setSelected(compilerWorkspaceSettings.getPreciseIncrementalEnabled());
-      enableIncrementalCompilationForJsCheckBox.setSelected(compilerWorkspaceSettings.getIncrementalCompilationForJsEnabled());
-      keepAliveCheckBox.setSelected(compilerWorkspaceSettings.getEnableDaemon());
+      ui.enableIncrementalCompilationForJvmCheckBox.setSelected(compilerWorkspaceSettings.getPreciseIncrementalEnabled());
+      ui.enableIncrementalCompilationForJsCheckBox.setSelected(compilerWorkspaceSettings.getIncrementalCompilationForJsEnabled());
+      ui.keepAliveCheckBox.setSelected(compilerWorkspaceSettings.getEnableDaemon());
     }
 
-    generateSourceMapsCheckBox.setSelected(k2jsCompilerArguments.getSourceMap());
+    ui.generateSourceMapsCheckBox.setSelected(k2jsCompilerArguments.getSourceMap());
 
-    moduleKindComboBox.setSelectedItem(getModuleKindOrDefault(k2jsCompilerArguments.getModuleKind()));
-    sourceMapPrefix.setText(k2jsCompilerArguments.getSourceMapPrefix());
-    sourceMapPrefix.setEnabled(k2jsCompilerArguments.getSourceMap());
-    sourceMapEmbedSources.setSelectedItem(getSourceMapSourceEmbeddingOrDefault(k2jsCompilerArguments.getSourceMapEmbedSources()));
+    ui.moduleKindComboBox.setSelectedItem(getModuleKindOrDefault(k2jsCompilerArguments.getModuleKind()));
+    ui.sourceMapPrefix.setText(k2jsCompilerArguments.getSourceMapPrefix());
+    ui.sourceMapPrefix.setEnabled(k2jsCompilerArguments.getSourceMap());
+    ui.sourceMapEmbedSources.setSelectedItem(getSourceMapSourceEmbeddingOrDefault(k2jsCompilerArguments.getSourceMapEmbedSources()));
 
-    jvmVersionComboBox.setSelectedItem(getJvmVersionOrDefault(k2jvmCompilerArguments.getJvmTarget()));
+    ui.jvmVersionComboBox.setSelectedItem(getJvmVersionOrDefault(k2jvmCompilerArguments.getJvmTarget()));
   }
 
   private static <T> void setSelectedItem(JComboBox<T> comboBox, T versionView) {
@@ -1179,43 +829,43 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
   }
 
   public JPanel getContentPane() {
-    return contentPane;
+    return ui.panel;
   }
 
   public ThreeStateCheckBox getReportWarningsCheckBox() {
-    return reportWarningsCheckBox;
+    return ui.reportWarningsCheckBox;
   }
 
   public RawCommandLineEditor getAdditionalArgsOptionsField() {
-    return additionalArgsOptionsField;
+    return ui.additionalArgsOptionsField;
   }
 
   public ThreeStateCheckBox getGenerateSourceMapsCheckBox() {
-    return generateSourceMapsCheckBox;
+    return ui.generateSourceMapsCheckBox;
   }
 
   public TextFieldWithBrowseButton getOutputDirectory() {
-    return outputDirectory;
+    return ui.outputDirectory;
   }
 
   public ThreeStateCheckBox getCopyRuntimeFilesCheckBox() {
-    return copyRuntimeFilesCheckBox;
+    return ui.copyRuntimeFilesCheckBox;
   }
 
   public ThreeStateCheckBox getKeepAliveCheckBox() {
-    return keepAliveCheckBox;
+    return ui.keepAliveCheckBox;
   }
 
   public JComboBox<String> getModuleKindComboBox() {
-    return moduleKindComboBox;
+    return ui.moduleKindComboBox;
   }
 
   public JComboBox<VersionView> getLanguageVersionComboBox() {
-    return languageVersionComboBox;
+    return ui.languageVersionComboBox;
   }
 
   public JComboBox<VersionView> getApiVersionComboBox() {
-    return apiVersionComboBox;
+    return ui.apiVersionComboBox;
   }
 
   public void setEnabled(boolean value) {
@@ -1253,22 +903,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
 
   public void setCompilerSettings(CompilerSettings compilerSettings) {
     this.compilerSettings = compilerSettings;
-  }
-
-  private static class ComboBoxModelWithPossiblyDisabledItems extends MutableCollectionComboBoxModel<JpsVersionItem> {
-    @Override
-    public void setSelectedItem(@Nullable Object item) {
-      if (item == null) return;
-
-      if (!(item instanceof JpsVersionItem)) {
-        throw new IllegalStateException(item + "is supposed to be JpsVersionItem");
-      }
-
-      if (!((JpsVersionItem)item).myEnabled) {
-        return;
-      }
-      super.setSelectedItem(item);
-    }
   }
 
   private static void createVersionValidator(JComboBox<VersionView> component, String messageKey, Disposable parentDisposable) {
