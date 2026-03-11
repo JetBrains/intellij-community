@@ -1,9 +1,11 @@
 <!-- Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.backend"/>
     <module name="intellij.editorconfig.common"/>
+    <module name="intellij.platform.backend"/>
   </dependencies>
+  <!-- endregion -->
   <actions resource-bundle="messages.EditorConfigBundle">
     <action id="NewEditorConfigFile" class="org.editorconfig.language.codeinsight.actions.CreateEditorConfigFileAction"/>
     <action id="CreateEditorConfigFile" class="org.editorconfig.configmanagement.create.CreateEditorConfigAction">

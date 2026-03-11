@@ -24,6 +24,7 @@ jvm_library(
   ],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/backend",
     "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/core-impl",
@@ -52,7 +53,6 @@ jvm_library(
     "//platform/settings",
     "//libraries/kotlinx/serialization/core",
     "//plugins/editorconfig/common",
-    "//platform/backend",
     "//platform/forms_rt:java-guiForms-rt",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
@@ -66,6 +66,8 @@ jvm_library(
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/analysis-api:analysis_test_lib",
+    "//platform/backend",
+    "//platform/backend:backend_test_lib",
     "//platform/code-style-api:codeStyle",
     "//platform/code-style-api:codeStyle_test_lib",
     "//platform/util/concurrency",
@@ -125,8 +127,6 @@ jvm_library(
     "//libraries/kotlinx/serialization/core:core_test_lib",
     "//plugins/editorconfig/common",
     "//plugins/editorconfig/common:common_test_lib",
-    "//platform/backend",
-    "//platform/backend:backend_test_lib",
     "//platform/forms_rt:java-guiForms-rt",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
