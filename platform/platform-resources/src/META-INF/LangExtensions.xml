@@ -98,6 +98,8 @@
                  description="Calculation of LibraryScopeCache using WorkspaceModel entities"/>
     <registryKey defaultValue="true" key="se.enable.non.indexable.files.contributor" restartRequired="false"
                  description="Search files in non-indexable filesets with NonIndexableFilesSEContributor"/>
+    <registryKey defaultValue="true" key="find.in.files.in.non.indexable.enable" restartRequired="false"
+                 description="Enables search over non-indexable files in Find-in-Files"/>
     <registryKey defaultValue="true" key="rename.files.in.dumb.mode.enable" restartRequired="false"
                  description="Allow renaming files in dumb mode"/>
     <registryKey defaultValue="false"
