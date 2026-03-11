@@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.roundTrip.fixtures;
 
 import org.jetbrains.java.decompiler.DecompilerTestDataUtil;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.DecompilerFileComparisonFailedError;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Timeout;
 
@@ -50,8 +51,7 @@ public abstract class DecompilerRoundTripTestCase {
     String actual = compileDecompile(baseDir, compiler, sourceFile, compileOptions, companionFileSystemItems);
     try {
       if (Files.exists(expectedFile)) {
-        String expectedContent = Files.readString(expectedFile);
-        Assertions.assertEquals(expectedContent, actual);
+        DecompilerFileComparisonFailedError.assertContent(expectedFile, actual);
       } else {
         Files.createDirectories(resultsDir);
         Files.writeString(resultsDir.resolve(sourceFile + "." + compiler.getId() + ".dec"), actual, StandardOpenOption.CREATE_NEW);

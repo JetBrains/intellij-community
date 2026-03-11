@@ -23,6 +23,8 @@ jvm_library(
   associates = [":engine"],
   deps = [
     "@lib//:jetbrains-annotations",
+    "//java/java-runtime:rt",
+    "//java/java-runtime:rt_test_lib",
     "@lib//:junit6",
     "@lib//:junit6Params",
     "@lib//:junit6Launcher",

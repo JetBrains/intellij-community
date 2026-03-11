@@ -10,6 +10,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit6" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit6Params" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit6Launcher" level="project" />

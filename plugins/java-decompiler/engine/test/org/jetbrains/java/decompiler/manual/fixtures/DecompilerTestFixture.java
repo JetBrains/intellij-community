@@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.manual.fixtures;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.decompiler.DecompilerFileComparisonFailedError;
 import org.jetbrains.java.decompiler.DecompilerTestDataUtil;
 import org.jetbrains.java.decompiler.main.CancellationManager;
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
@@ -23,8 +24,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DecompilerTestFixture {
   private Path testDataDir;
@@ -121,7 +120,7 @@ public class DecompilerTestFixture {
           @Override
           public FileVisitResult visitFile(Path expectedFile, BasicFileAttributes attrs) throws IOException {
             Path actualFile = actual.resolve(expected.relativize(expectedFile));
-            assertEquals(Files.readString(expectedFile, StandardCharsets.UTF_8).replace("\r\n", "\n").stripTrailing(), Files.readString(actualFile, StandardCharsets.UTF_8).replace("\r\n", "\n").stripTrailing());
+            DecompilerFileComparisonFailedError.assertContent(expectedFile, Files.readString(actualFile, StandardCharsets.UTF_8));
             return FileVisitResult.CONTINUE;
           }
         });
@@ -132,7 +131,7 @@ public class DecompilerTestFixture {
     }
     else {
       try {
-        assertEquals(Files.readString(expected, StandardCharsets.UTF_8).replace("\r\n", "\n").stripTrailing(), Files.readString(actual, StandardCharsets.UTF_8).replace("\r\n", "\n").stripTrailing());
+        DecompilerFileComparisonFailedError.assertContent(expected, Files.readString(actual, StandardCharsets.UTF_8));
       }
       catch (IOException e) {
         throw new UncheckedIOException(e);
