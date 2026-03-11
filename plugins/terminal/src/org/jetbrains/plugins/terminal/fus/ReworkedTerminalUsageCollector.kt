@@ -25,7 +25,7 @@ private const val GROUP_ID = "terminal"
 object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 13)
+  private val GROUP = EventLogGroup(GROUP_ID, 14)
 
   private val OS_VERSION_FIELD = EventFields.StringValidatedByRegexpReference("os-version", "version")
   private val SHELL_STR_FIELD = EventFields.String("shell", KNOWN_SHELLS.toList())
@@ -35,6 +35,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val TERMINAL_OPENING_WAY = EventFields.Enum<TerminalOpeningWay>("opening_way")
   private val TABS_COUNT = EventFields.Int("tab_count")
   private val FOCUS = StringEventField.ValidatedByCustomValidationRule("counterpart", TerminalFocusRule::class.java)
+  private val AGENT_WORKBENCH_PROVIDER_FIELD = EventFields.String("provider", listOf("codex", "claude"))
 
   // Latency measurement related fields
   private val DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "duration_ms")
@@ -121,6 +122,21 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   )
 
   private val tabClosingCheckLatency = GROUP.registerVarargEvent("tab.closing.check.latency", DURATION_FIELD)
+
+  private val agentWorkbenchPromoShownEvent = GROUP.registerEvent(
+    "agent.workbench.promo.shown",
+    AGENT_WORKBENCH_PROVIDER_FIELD,
+  )
+
+  private val agentWorkbenchPromoInstallClickedEvent = GROUP.registerEvent(
+    "agent.workbench.promo.install.clicked",
+    AGENT_WORKBENCH_PROVIDER_FIELD,
+  )
+
+  private val agentWorkbenchPromoActivationSucceededEvent = GROUP.registerEvent(
+    "agent.workbench.promo.activation.succeeded",
+    AGENT_WORKBENCH_PROVIDER_FIELD,
+  )
 
   @JvmStatic
   fun logTabOpened(project: Project, tabCount: Int) {
@@ -257,6 +273,18 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
 
   fun logTabClosingCheckLatency(duration: Duration) {
     tabClosingCheckLatency.log(DURATION_FIELD with duration)
+  }
+
+  fun logAgentWorkbenchPromoShown(project: Project, provider: String) {
+    agentWorkbenchPromoShownEvent.log(project, provider)
+  }
+
+  fun logAgentWorkbenchPromoInstallClicked(project: Project, provider: String) {
+    agentWorkbenchPromoInstallClickedEvent.log(project, provider)
+  }
+
+  fun logAgentWorkbenchPromoActivationSucceeded(project: Project, provider: String) {
+    agentWorkbenchPromoActivationSucceededEvent.log(project, provider)
   }
 }
 

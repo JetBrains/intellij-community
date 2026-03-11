@@ -56,6 +56,8 @@
                  description="Enable new terminal for Fish"/>
     <registryKey key="terminal.new.ui.show.promotion" defaultValue="false"
                  description="Whether to show the GotIt tooltip with a proposal to try the New Terminal"/>
+    <registryKey key="terminal.agent.workbench.promotion.enabled" defaultValue="true"
+                 description="Enable Agent Workbench promotion in the reworked terminal when supported AI CLIs are used"/>
     <registryKey key="terminal.new.ui.autocompletion" defaultValue="true"
                  description="Whether to run autocompletion in the New Terminal"/>
     <registryKey key="terminal.classic.refresh.vfs.on.shell.command.finished" defaultValue="true"

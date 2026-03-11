@@ -33,6 +33,7 @@ import com.intellij.terminal.frontend.view.completion.ShellDataGeneratorsExecuto
 import com.intellij.terminal.frontend.view.completion.ShellRuntimeContextProviderReworkedImpl
 import com.intellij.terminal.frontend.view.hyperlinks.FrontendTerminalHyperlinkFacade
 import com.intellij.ui.components.JBLayeredPane
+import com.intellij.ui.components.panels.ListLayout
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
@@ -105,6 +106,7 @@ import java.awt.event.ComponentEvent
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
 import javax.swing.JComponent
+import javax.swing.JPanel
 import kotlin.math.min
 
 @Suppress("TestOnlyProblems")
@@ -412,7 +414,7 @@ class TerminalViewImpl(
 
     Disposer.register(disposable) {
       component.removeComponentListener(resizeListener)
-      terminalPanel.remoteTopComponent(component)
+      terminalPanel.removeTopComponent(component)
     }
   }
 
@@ -639,6 +641,7 @@ class TerminalViewImpl(
   private inner class TerminalPanel(initialContent: Editor) : BorderLayoutPanel(), UiDataProvider, TerminalPanelMarker {
     private val layeredPane = TerminalLayeredPane(initialContent)
     private var curEditor: Editor = initialContent
+    private var topComponentsPanel: JPanel? = null
 
     val preferredFocusableComponent: JComponent
       get() = layeredPane.preferredFocusableComponent
@@ -701,13 +704,22 @@ class TerminalViewImpl(
     }
 
     fun setTopComponent(component: JComponent) {
-      addToTop(component)
+      val panel = topComponentsPanel ?: JPanel(ListLayout.vertical(0)).also {
+        topComponentsPanel = it
+        addToTop(it)
+      }
+      panel.add(component)
       revalidate()
       repaint()
     }
 
-    fun remoteTopComponent(component: JComponent) {
-      remove(component)
+    fun removeTopComponent(component: JComponent) {
+      val panel = topComponentsPanel ?: return
+      panel.remove(component)
+      if (panel.componentCount == 0) {
+        remove(panel)
+        topComponentsPanel = null
+      }
       revalidate()
       repaint()
     }
