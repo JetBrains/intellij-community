@@ -234,7 +234,7 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
     var selection = path != null ? (DumpItem)((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject() : null;
     var uiSettings = UISettings.getInstance().getState();
     boolean useMerged = uiSettings.getMergeEqualStackTraces();
-    boolean showVirtualThreadContainers = uiSettings.getShowVirtualThreadContainers();
+    boolean showDumpItemsHierarchy = uiSettings.getShowDumpItemsHierarchy();
     boolean showOnlyPlatformThreads = uiSettings.getShowOnlyPlatformThreads();
     List<DumpItem> threadStates = useMerged ? myMergedThreadDump : myThreadDump;
 
@@ -246,7 +246,7 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
     if (treeRoot != null) {
       treeRoot.removeAllChildren();
 
-      if (showVirtualThreadContainers && !showOnlyPlatformThreads) {
+      if (showDumpItemsHierarchy && !showOnlyPlatformThreads) {
         // Build map from parent item name to the list of it's child items
         var rootItems = new ArrayList<DumpItem>();
         var parentIdToChildren = new HashMap<Long, List<DumpItem>>();
@@ -503,7 +503,7 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-      return UISettings.getInstance().getState().getShowVirtualThreadContainers();
+      return UISettings.getInstance().getState().getShowDumpItemsHierarchy();
     }
 
     @Override
@@ -513,7 +513,7 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      UISettings.getInstance().getState().setShowVirtualThreadContainers(state);
+      UISettings.getInstance().getState().setShowDumpItemsHierarchy(state);
       updateThreadsTree();
     }
   }
