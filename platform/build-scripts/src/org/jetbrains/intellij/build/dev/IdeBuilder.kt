@@ -55,6 +55,7 @@ import org.jetbrains.intellij.build.impl.generateRuntimeModuleRepositoryForDevBu
 import org.jetbrains.intellij.build.impl.getOsDistributionBuilder
 import org.jetbrains.intellij.build.impl.layoutPlatformDistribution
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.toBazelIfNeeded
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
@@ -262,16 +263,6 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
         request.platformClassPathConsumer?.invoke(context.ideMainClassName, classPath, runDir)
       }
 
-      if (context.generateRuntimeModuleRepository) {
-        launch(CoroutineName("generate runtime repository")) {
-          val allDistributionEntries = platformLayoutResultDeferred.await().distributionEntries.asSequence() +
-                                       pluginDistributionEntriesDeferred.await().pluginEntries.asSequence().flatMap { it.distribution }
-          spanBuilder("generate runtime repository").use(Dispatchers.IO) {
-            generateRuntimeModuleRepositoryForDevBuild(entries = allDistributionEntries, targetDirectory = runDir, context = context)
-          }
-        }
-      }
-
       launch(CoroutineName("compute IDE fingerprint")) {
         computeIdeFingerprint(
           platformDistributionEntriesDeferred = platformLayoutResultDeferred,
@@ -295,7 +286,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
           }
         }
 
-        launch {
+        val pluginClasspathJob = launch {
           val (pluginEntries, additionalEntries) = pluginDistributionEntries
           val cachedDescriptorContainer = platformLayout.descriptorCacheContainer
           spanBuilder("generate plugin classpath").use(Dispatchers.IO) {
@@ -323,6 +314,25 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
             additionalData?.let { out.write(it) }
             out.close()
             Files.write(runDir.resolve(PLUGIN_CLASSPATH), byteOut.toByteArray())
+          }
+        }
+        if (context.generateRuntimeModuleRepository) {
+          launch(CoroutineName("generate runtime repository")) {
+            val contentReport = ContentReport(
+              platform = platformFileEntries,
+              bundledPlugins = pluginDistributionEntries.pluginEntries,
+              nonBundledPlugins = emptyList()
+            )
+            pluginClasspathJob.join() //this is necessary to have full data in DescriptorCacheContainer
+
+            spanBuilder("generate runtime repository").use(Dispatchers.IO) {
+              generateRuntimeModuleRepositoryForDevBuild(
+                contentReport = contentReport,
+                targetDirectory = runDir,
+                context = context,
+                platformLayout = platformLayout,
+              )
+            }
           }
         }
 

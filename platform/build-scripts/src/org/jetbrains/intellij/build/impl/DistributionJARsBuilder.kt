@@ -152,7 +152,7 @@ internal suspend fun buildDistribution(
     if (context.useModularLoader || context.generateRuntimeModuleRepository) {
       launch(CoroutineName("generate runtime module repository")) {
         spanBuilder("generate runtime module repository").use {
-          generateRuntimeModuleRepositoryForDistribution(contentReport.bundled(), context)
+          generateRuntimeModuleRepositoryForDistribution(contentReport, context, platformLayout)
         }
       }
     }

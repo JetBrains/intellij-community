@@ -29,7 +29,7 @@ object RuntimeModuleRepositoryGenerator {
   /**
    * Generates the runtime module descriptors for all modules and libraries in [project].
    */
-  fun generateRuntimeModuleDescriptorsForWholeProject(project: JpsProject, resourcePathsSchema: ResourcePathsSchema): List<RawRuntimeModuleDescriptor> {
+  fun generateRuntimeModuleDescriptorsForWholeProject(project: JpsProject, resourcePathsSchema: ResourcePathsSchema, contentModuleDetector: ContentModuleDetector): List<RawRuntimeModuleDescriptor> {
     val projectLibraries = LinkedHashSet<JpsLibrary>()
     for (module in project.modules) {
       projectLibraries.addAll(enumerateRuntimeDependencies(module).libraries.filter { it.isProjectLevel })
@@ -38,7 +38,8 @@ object RuntimeModuleRepositoryGenerator {
       includedProduction = project.modules,
       includedTests = project.modules,
       includedProjectLibraries = projectLibraries,
-      resourcePathsSchema = resourcePathsSchema
+      resourcePathsSchema = resourcePathsSchema,
+      contentModuleDetector = contentModuleDetector,
     )
   }
 
@@ -46,12 +47,15 @@ object RuntimeModuleRepositoryGenerator {
    * Generates the runtime module descriptors for production parts of [includedProduction], test parts of [includedTests] and 
    * [includedProjectLibraries].
    */
-  fun generateRuntimeModuleDescriptors(includedProduction: Collection<JpsModule>,
-                                       includedTests: Collection<JpsModule>,
-                                       includedProjectLibraries: Collection<JpsLibrary>,
-                                       resourcePathsSchema: ResourcePathsSchema): List<RawRuntimeModuleDescriptor> {
+  fun generateRuntimeModuleDescriptors(
+    includedProduction: Collection<JpsModule>,
+    includedTests: Collection<JpsModule>,
+    includedProjectLibraries: Collection<JpsLibrary>,
+    resourcePathsSchema: ResourcePathsSchema,
+    contentModuleDetector: ContentModuleDetector,
+  ): List<RawRuntimeModuleDescriptor> {
     val descriptors = ArrayList<RawRuntimeModuleDescriptor>()
-    generateDescriptorsForModules(descriptors, includedProduction, includedTests, resourcePathsSchema)
+    generateDescriptorsForModules(descriptors, includedProduction, includedTests, resourcePathsSchema, contentModuleDetector)
     for (library in includedProjectLibraries) {
       val moduleId = getProjectLibraryId(library) ?: error("Project-level library expected, but found: $library")
       descriptors.add(RawRuntimeModuleDescriptor.create(moduleId, resourcePathsSchema.libraryPaths(library), emptyList()))
@@ -82,6 +86,7 @@ private fun generateDescriptorsForModules(
   includedProduction: Collection<JpsModule>,
   includedTests: Collection<JpsModule>,
   resourcePathsSchema: ResourcePathsSchema,
+  contentModuleDetector: ContentModuleDetector,
 ) {
   //it's better to get rid of such modules, but until it's done, we need to have this workaround to avoid duplicating IDs 
   val productionModulesWithTestRoots = HashSet<String>()

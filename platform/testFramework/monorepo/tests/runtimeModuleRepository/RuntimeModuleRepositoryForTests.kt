@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.monorepo.runtimeModuleRepository
 
+import com.intellij.devkit.runtimeModuleRepository.generator.NoContentModuleDetector
 import com.intellij.devkit.runtimeModuleRepository.generator.ResourcePathsSchema
 import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator
 import com.intellij.devkit.runtimeModuleRepository.generator.isProjectLevel
@@ -38,6 +39,7 @@ fun generateRuntimeModuleRepositoryForTests(monorepoProject: JpsProject): Runtim
     includedTests = emptyList(),
     includedProjectLibraries = allProjectLibraries,
     resourcePathsSchema = ResourcePathsSchemaForTests,
+    contentModuleDetector = NoContentModuleDetector,
   )
   
   //the repository won't be saved on disk so the actual location of the directory doesn't matter much

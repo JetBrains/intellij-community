@@ -2,6 +2,7 @@
 package com.intellij.devkit.runtimeModuleRepository.jps.build
 
 import com.intellij.devkit.runtimeModuleRepository.generator.JpsCompilationResourcePathsSchema
+import com.intellij.devkit.runtimeModuleRepository.generator.NoContentModuleDetector
 import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator
 import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryValidator
 import com.intellij.devkit.runtimeModuleRepository.jps.impl.DevkitRuntimeModuleRepositoryJpsBundle
@@ -50,7 +51,7 @@ internal class RuntimeModuleRepositoryBuilder
     context.processMessage(ProgressMessage(DevkitRuntimeModuleRepositoryJpsBundle.message("progress.message.generating.intellij.modules.repository"), BuildTargetChunk(setOf(target))))
     val timeToCreateDescriptors = measureTimeMillis {
       val resourcePathsSchema = JpsCompilationResourcePathsSchema(project)
-      descriptors = RuntimeModuleRepositoryGenerator.generateRuntimeModuleDescriptorsForWholeProject(project, resourcePathsSchema)
+      descriptors = RuntimeModuleRepositoryGenerator.generateRuntimeModuleDescriptorsForWholeProject(project, resourcePathsSchema, NoContentModuleDetector)
     }
     LOG.info("${descriptors.size} descriptors are created in ${timeToCreateDescriptors}ms")
     

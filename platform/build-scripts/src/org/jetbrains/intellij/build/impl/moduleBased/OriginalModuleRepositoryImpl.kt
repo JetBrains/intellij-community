@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.moduleBased
 
+import com.intellij.devkit.runtimeModuleRepository.generator.NoContentModuleDetector
 import com.intellij.devkit.runtimeModuleRepository.generator.ResourcePathsSchema
 import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator
 import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator.COMPACT_REPOSITORY_FILE_NAME
@@ -29,7 +30,7 @@ internal suspend fun buildOriginalModuleRepository(context: CompilationContext):
       val moduleOutputs = context.project.modules.associateBy({ it.name }, { outputProvider.getModuleOutputRoots(it, forTests = false) })
       val testModuleOutputs = context.project.modules.associateBy({ it.name }, { outputProvider.getModuleOutputRoots(it, forTests = true) })
       val resourcePathsSchema = AbsolutePathsResourcePathsSchema(moduleOutputs, testModuleOutputs)
-      val moduleDescriptors = RuntimeModuleRepositoryGenerator.generateRuntimeModuleDescriptorsForWholeProject(context.project, resourcePathsSchema)
+      val moduleDescriptors = RuntimeModuleRepositoryGenerator.generateRuntimeModuleDescriptorsForWholeProject(context.project, resourcePathsSchema, NoContentModuleDetector)
       withContext(Dispatchers.IO) {
         RuntimeModuleRepositoryGenerator.saveModuleRepository(moduleDescriptors, targetDirectory)
       }

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.devkit.runtimeModuleRepository.generator.ContentModuleDetector
 import com.intellij.devkit.runtimeModuleRepository.generator.ResourcePathsSchema
 import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator
 import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator.COMPACT_REPOSITORY_FILE_NAME
@@ -15,8 +16,8 @@ import com.intellij.util.containers.MultiMap
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
@@ -42,11 +43,16 @@ import kotlin.io.path.pathString
  * (along with information from plugin.xml files and other files describing custom layouts of plugins if necessary) to determine which
  * resources should be included in the distribution, instead of taking this information from the project model.
  */
-internal suspend fun generateRuntimeModuleRepositoryForDistribution(entries: Sequence<DistributionFileEntry>, context: BuildContext) {
+internal suspend fun generateRuntimeModuleRepositoryForDistribution(
+  contentReport: ContentReport,
+  context: BuildContext,
+  platformLayout: PlatformLayout,
+) {
   val repositoryEntries = ArrayList<RuntimeModuleRepositoryEntry>()
   val osSpecificDistPaths = listOf(null to context.paths.distAllDir) +
                             SUPPORTED_DISTRIBUTIONS.map { it to getOsAndArchSpecificDistDirectory(osFamily = it.os, arch = it.arch, libc = it.libcImpl, context = context) }
-  for (entry in entries) {
+  val contentModuleDetector = ContentModuleDetectorImpl(platformLayout, contentReport)
+  for (entry in contentReport.bundled()) {
     val (distribution, rootPath) = osSpecificDistPaths.find { entry.path.startsWith(it.second) } ?: continue
 
     val pathInDist = rootPath.relativize(entry.path).invariantSeparatorsPathString
@@ -58,6 +64,7 @@ internal suspend fun generateRuntimeModuleRepositoryForDistribution(entries: Seq
       targetDirectory = context.paths.distAllDir,
       entries = repositoryEntries,
       context = context,
+      contentModuleDetector = contentModuleDetector,
     )
   }
   else {
@@ -68,6 +75,7 @@ internal suspend fun generateRuntimeModuleRepositoryForDistribution(entries: Seq
         targetDirectory = targetDirectory,
         entries = actualEntries,
         context = context,
+        contentModuleDetector = contentModuleDetector,
       )
     }
   }
@@ -77,9 +85,13 @@ internal suspend fun generateRuntimeModuleRepositoryForDistribution(entries: Seq
  * A variant of [generateRuntimeModuleRepositoryForDistribution] which should be used for 'dev build', when all [entries] correspond to the current OS,
  * and distribution files are generated under [targetDirectory].
  */
-@ApiStatus.Internal
-suspend fun generateRuntimeModuleRepositoryForDevBuild(entries: Sequence<DistributionFileEntry>, targetDirectory: Path, context: BuildContext) {
-  val actualEntries = entries.map { entry ->
+internal suspend fun generateRuntimeModuleRepositoryForDevBuild(
+  contentReport: ContentReport,
+  targetDirectory: Path,
+  context: BuildContext,
+  platformLayout: PlatformLayout
+) {
+  val actualEntries = contentReport.bundled().map { entry ->
     RuntimeModuleRepositoryEntry(
       distribution = null,
       relativePath = targetDirectory.relativize(entry.path).invariantSeparatorsPathString,
@@ -90,6 +102,7 @@ suspend fun generateRuntimeModuleRepositoryForDevBuild(entries: Sequence<Distrib
     targetDirectory = targetDirectory,
     entries = actualEntries.toList(),
     context = context,
+    contentModuleDetector = ContentModuleDetectorImpl(platformLayout, contentReport),
   )
 }
 
@@ -138,7 +151,8 @@ private data class RuntimeModuleRepositoryEntry(
 private suspend fun generateRepositoryForDistribution(
   targetDirectory: Path,
   entries: List<RuntimeModuleRepositoryEntry>,
-  context: BuildContext
+  context: BuildContext,
+  contentModuleDetector: ContentModuleDetector,
 ) {
   val mainPathsForResources = computeMainPathsForResourcesCopiedToMultiplePlaces(entries, context)
   fun isMainPath(element: JpsNamedElement, path: String): Boolean {
@@ -185,7 +199,8 @@ private suspend fun generateRepositoryForDistribution(
     includedProduction = moduleProductionPaths.keySet(),
     includedTests = moduleTestPaths.keySet(),
     includedProjectLibraries = libraryPaths.keySet().filter { it.isProjectLevel },
-    resourcePathsSchema = DistributionResourcePathsSchema(moduleProductionPaths, moduleTestPaths, libraryPaths), 
+    resourcePathsSchema = DistributionResourcePathsSchema(moduleProductionPaths, moduleTestPaths, libraryPaths),
+    contentModuleDetector = contentModuleDetector,
   ).map { descriptor ->
     //this is a temporary workaround to skip optional dependencies which aren't included in the distribution
     val dependenciesToSkip = dependenciesToSkip[descriptor.moduleId] ?: return@map descriptor
