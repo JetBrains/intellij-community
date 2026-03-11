@@ -25,7 +25,8 @@ import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPl
 import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
 import org.jetbrains.intellij.build.productLayout.generator.PluginGraphDeps
 import org.jetbrains.intellij.build.productLayout.generator.collectPluginGraphDeps
-import org.jetbrains.intellij.build.productLayout.generator.computeEffectiveSuppressedDeps
+import org.jetbrains.intellij.build.productLayout.generator.computeAliasPreservedPluginDeps
+import org.jetbrains.intellij.build.productLayout.generator.computeExistingDependencyHandling
 import org.jetbrains.intellij.build.productLayout.generator.embeddedCheckProductNames
 import org.jetbrains.intellij.build.productLayout.generator.filterPluginDependencies
 import org.jetbrains.intellij.build.productLayout.generator.planContentModuleDependenciesWithBothSets
@@ -252,18 +253,21 @@ private suspend fun generatePluginDependency(
   val effectiveJpsPluginDependencies = graphDeps.jpsPluginDependencies - graphDeps.legacyConfigFilePluginDependencies
   val suppressedModules = effectiveConfig.getPluginSuppressedModules(pluginContentModuleName)
   val suppressedPlugins = effectiveConfig.getPluginSuppressedPlugins(pluginContentModuleName)
-  val effectiveSuppressedModules = computeEffectiveSuppressedDeps(
+  val moduleHandling = computeExistingDependencyHandling(
     updateSuppressions = updateSuppressions,
     existingXmlDeps = existingXmlModuleDeps,
     jpsDeps = graphDeps.jpsModuleDependencies,
     suppressedDeps = suppressedModules,
   )
-  val effectiveSuppressedPlugins = computeEffectiveSuppressedDeps(
+  val pluginHandling = computeExistingDependencyHandling(
     updateSuppressions = updateSuppressions,
     existingXmlDeps = existingXmlPluginDeps,
     jpsDeps = effectiveJpsPluginDependencies,
     suppressedDeps = suppressedPlugins,
+    semanticallyPreservedExistingDeps = computeAliasPreservedPluginDeps(graph, existingXmlPluginDeps),
   )
+  val effectiveSuppressedModules = moduleHandling.effectiveSuppressedDeps
+  val effectiveSuppressedPlugins = pluginHandling.effectiveSuppressedDeps
 
   val deps = filterPluginDependencies(
     graphDeps = graphDeps,
@@ -278,8 +282,8 @@ private suspend fun generatePluginDependency(
     content = info.pluginXmlContent,
     moduleDependencies = deps.moduleDependencies.map { it.value },
     pluginDependencies = deps.pluginDependencies.map { it.value },
-    preserveExistingModule = { moduleName -> ContentModuleName(moduleName) in effectiveSuppressedModules },
-    preserveExistingPlugin = { pluginName -> PluginId(pluginName) in effectiveSuppressedPlugins },
+    preserveExistingModule = { moduleName -> ContentModuleName(moduleName) in moduleHandling.preserveExistingDeps },
+    preserveExistingPlugin = { pluginName -> PluginId(pluginName) in pluginHandling.preserveExistingDeps },
     strategy = effectiveStrategy,
   )
 
@@ -374,7 +378,7 @@ private fun writeContentModulePlan(plan: ContentModuleDependencyPlan, strategy: 
     moduleDependencies = plan.moduleDependencies.map { it.value },
     pluginDependencies = plan.pluginDependencies.map { it.value },
     preserveExistingModule = { moduleName -> plan.suppressedModules.contains(ContentModuleName(moduleName)) },
-    preserveExistingPlugin = { pluginName -> plan.suppressedPlugins.contains(PluginId(pluginName)) },
+    preserveExistingPlugin = { pluginName -> plan.preserveExistingPluginDependencies.contains(PluginId(pluginName)) },
     strategy = strategy,
   )
 

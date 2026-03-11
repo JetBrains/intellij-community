@@ -697,10 +697,9 @@ internal object ModelBuildingStage {
     //
     // DEPENDS ON: Phase 2 (product edges) + Phase 4 (module sets added)
     // ───────────────────────────────────────────────────────────────────────────────
-    fun aliasNodeName(alias: PluginId): TargetName = TargetName("__alias__:${alias.value}")
     fun linkProductBundlesAlias(productName: String, alias: PluginId) {
       val productId = builder.addProduct(productName)
-      val aliasNodeId = builder.addPlugin(name = aliasNodeName(alias), isTest = false, pluginId = alias)
+      val aliasNodeId = builder.addAliasPlugin(alias)
       builder.addEdge(productId, aliasNodeId, EDGE_BUNDLES)
     }
 

@@ -5,8 +5,8 @@ package org.jetbrains.intellij.build.productLayout.generator
 
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.ContentSourceKind
-import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.PluginGraph
+import com.intellij.platform.pluginGraph.PluginId
 import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlan
 import org.jetbrains.intellij.build.productLayout.model.error.ErrorCategory
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
@@ -68,7 +68,7 @@ private fun writeContentModuleXml(
     moduleDependencies = plan.moduleDependencies.map { it.value },
     pluginDependencies = plan.pluginDependencies.map { it.value },
     preserveExistingModule = { moduleName -> plan.suppressedModules.contains(ContentModuleName(moduleName)) },
-    preserveExistingPlugin = { pluginName -> plan.suppressedPlugins.contains(PluginId(pluginName)) },
+    preserveExistingPlugin = { pluginName -> plan.preserveExistingPluginDependencies.contains(PluginId(pluginName)) },
     allowInsideSectionRegion = false,
   ) ?: plan.descriptorContent
   val updatedContent = if (needsQualifiedExtensionPointNames(plan.contentModuleName, pluginGraph)) {

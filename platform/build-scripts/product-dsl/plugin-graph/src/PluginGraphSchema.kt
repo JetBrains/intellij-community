@@ -72,6 +72,9 @@ const val NODE_FLAG_IS_TEST_DESCRIPTOR: Int = 1 shl 12
 /** Flag: content module has a descriptor on disk ({moduleName}.xml) */
 const val NODE_FLAG_HAS_DESCRIPTOR: Int = 1 shl 13
 
+/** Flag: plugin node is a synthetic alias target bundled by a product */
+const val NODE_FLAG_IS_ALIAS: Int = 1 shl 14
+
 // endregion
 
 // ============================================================================

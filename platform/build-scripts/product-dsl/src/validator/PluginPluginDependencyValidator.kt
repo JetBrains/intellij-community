@@ -67,9 +67,7 @@ internal fun validatePluginToPluginDependencies(graph: PluginGraph): List<Valida
 
         targetPlugin.bundledByProducts { info.bundledProducts.add(it.name()) }
 
-        var hasMainTarget = false
-        targetPlugin.mainTarget { _ -> hasMainTarget = true }
-        if (hasMainTarget) {
+        if (targetPlugin.hasMainTarget) {
           info.hasMainTarget = true
         }
       }

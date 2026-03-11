@@ -21,7 +21,8 @@ jvm_library(
     "//platform/analysis-impl",
     "//plugins/groovy/groovy-psi:psi",
     "//libraries/fastutil",
-  ]
+  ],
+  runtime_deps = ["//plugins/groovy"]
 )
 
 jvm_library(
@@ -37,6 +38,7 @@ jvm_library(
     "//platform/analysis-api:analysis_test_lib",
     "//platform/analysis-impl:analysis-impl_test_lib",
     "//plugins/groovy/groovy-psi:psi_test_lib",
+    "//plugins/groovy:groovy_test_lib",
     "//libraries/fastutil:fastutil_test_lib",
   ]
 )

@@ -258,6 +258,7 @@ private fun buildContentModuleDependencyPlanFromInfoWithBothSets(
       testDependencies = emptyList(),
       existingXmlModuleDependencies = emptySet(),
       existingXmlPluginDependencies = emptySet(),
+      preserveExistingPluginDependencies = emptySet(),
       writtenPluginDependencies = emptyList(),
       allJpsPluginDependencies = emptySet(),
       suppressedModules = emptySet(),
@@ -314,18 +315,21 @@ private fun buildContentModuleDependencyPlanFromInfoWithBothSets(
   val prodGraphPluginDeps = prodGraphDeps.pluginDeps
   val prodFilteredEmbeddedDeps = prodGraphDeps.filteredEmbeddedModuleDeps.filterTo(LinkedHashSet()) { dep -> dep in prodGraphModuleDeps }
 
-  val effectiveSuppressedModules = computeEffectiveSuppressedDeps(
+  val moduleHandling = computeExistingDependencyHandling(
     updateSuppressions = updateSuppressions,
     existingXmlDeps = existingXmlModulesAsContentModuleName,
     jpsDeps = prodGraphModuleDeps,
     suppressedDeps = suppressedModules,
   )
-  val effectiveSuppressedPlugins = computeEffectiveSuppressedDeps(
+  val pluginHandling = computeExistingDependencyHandling(
     updateSuppressions = updateSuppressions,
     existingXmlDeps = existingXmlPluginsAsPluginId,
     jpsDeps = prodGraphPluginDeps,
     suppressedDeps = suppressedPlugins,
+    semanticallyPreservedExistingDeps = computeAliasPreservedPluginDeps(graph, existingXmlPluginsAsPluginId),
   )
+  val effectiveSuppressedModules = moduleHandling.effectiveSuppressedDeps
+  val effectiveSuppressedPlugins = pluginHandling.effectiveSuppressedDeps
 
   prodModuleDeps = collectModuleDepsWithSuppressions(
     contentModuleName = contentModuleName,
@@ -385,7 +389,7 @@ private fun buildContentModuleDependencyPlanFromInfoWithBothSets(
     }
   }
 
-  val allWrittenPluginDeps = (prodInfo.existingPluginDependencies + pluginDeps).distinct().sorted()
+  val allWrittenPluginDeps = (pluginHandling.preserveExistingDeps.map { it.value } + pluginDeps).distinct().sorted()
 
 
   return ContentModuleDependencyPlan(
@@ -397,6 +401,7 @@ private fun buildContentModuleDependencyPlanFromInfoWithBothSets(
     testDependencies = testModuleDeps.distinct().sorted().map(::ContentModuleName),
     existingXmlModuleDependencies = existingXmlModulesAsContentModuleName,
     existingXmlPluginDependencies = existingXmlPluginsAsPluginId,
+    preserveExistingPluginDependencies = pluginHandling.preserveExistingDeps,
     writtenPluginDependencies = allWrittenPluginDeps.map(::PluginId),
     allJpsPluginDependencies = allJpsPluginDeps.distinct().toSet(),
     suppressedModules = effectiveSuppressedModules,

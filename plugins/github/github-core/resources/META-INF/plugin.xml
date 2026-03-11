@@ -39,7 +39,6 @@
     <module name="intellij.platform.vcs.impl.shared"/>
     <module name="intellij.platform.vcs.log"/>
     <module name="intellij.platform.vcs.log.impl"/>
-    <module name="intellij.vcs.git.shared"/>
     <!-- endregion -->
   </dependencies>
 </idea-plugin>

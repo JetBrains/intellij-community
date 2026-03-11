@@ -21,6 +21,7 @@ import org.jetbrains.intellij.build.productLayout.moduleSetPluginModuleName
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContextImpl
 import org.jetbrains.intellij.build.productLayout.pipeline.Slots
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionType
+import org.jetbrains.intellij.build.productLayout.xml.updateXmlDependencies
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -1191,6 +1192,105 @@ class ContentModuleDependencyGeneratorTest {
     }
 
     @Test
+    fun `manual alias plugin dependency is preserved without suppression`(@TempDir tempDir: Path) {
+      runBlocking(Dispatchers.Default) {
+        val aliasId = PluginId("com.intellij.modules.java")
+        val setup = pluginTestSetup(tempDir) {
+          contentModule("owner.content") {
+            descriptor = """
+              <idea-plugin package="owner.content">
+                <dependencies>
+                  <plugin id="${aliasId.value}"/>
+                </dependencies>
+              </idea-plugin>
+            """.trimIndent()
+          }
+          plugin("owner.plugin") {
+            content("owner.content")
+          }
+        }
+
+        val graph = buildContentModuleAliasGraph(aliasId)
+        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, this)
+        val generation = planContentModuleDependenciesWithBothSets(
+          contentModuleName = ContentModuleName("owner.content"),
+          descriptorCache = descriptorCache,
+          pluginGraph = graph,
+          isTestDescriptor = false,
+          suppressionConfig = SuppressionConfig(),
+          updateSuppressions = false,
+          libraryModuleFilter = { true },
+        )
+        val plan = generation.plan
+        assertThat(plan).isNotNull()
+
+        assertThat(plan!!.preserveExistingPluginDependencies).containsExactly(aliasId)
+        assertThat(plan.suppressedPlugins).doesNotContain(aliasId)
+        assertThat(plan.writtenPluginDependencies).containsExactly(aliasId)
+        assertThat(plan.suppressionUsages)
+          .noneMatch { it.type == SuppressionType.PLUGIN_DEP && it.suppressedDep == aliasId.value }
+
+        updateXmlDependencies(
+          path = plan.descriptorPath,
+          content = plan.descriptorContent,
+          moduleDependencies = plan.moduleDependencies.map { it.value },
+          pluginDependencies = plan.pluginDependencies.map { it.value },
+          preserveExistingModule = { moduleName -> plan.suppressedModules.contains(ContentModuleName(moduleName)) },
+          preserveExistingPlugin = { pluginName -> plan.preserveExistingPluginDependencies.contains(PluginId(pluginName)) },
+          strategy = setup.strategy,
+        )
+
+        assertThat(setup.strategy.getDiffs()).isEmpty()
+      }
+    }
+
+    @Test
+    fun `manual alias plugin dependency is not auto suppressed in updateSuppressions`(@TempDir tempDir: Path) {
+      runBlocking(Dispatchers.Default) {
+        val aliasId = PluginId("com.intellij.modules.java")
+        val setup = pluginTestSetup(tempDir) {
+          contentModule("owner.content") {
+            descriptor = """
+              <idea-plugin package="owner.content">
+                <dependencies>
+                  <plugin id="${aliasId.value}"/>
+                </dependencies>
+              </idea-plugin>
+            """.trimIndent()
+          }
+          plugin("owner.plugin") {
+            content("owner.content")
+          }
+        }
+
+        val graph = buildContentModuleAliasGraph(aliasId)
+        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, this)
+        val generation = planContentModuleDependenciesWithBothSets(
+          contentModuleName = ContentModuleName("owner.content"),
+          descriptorCache = descriptorCache,
+          pluginGraph = graph,
+          isTestDescriptor = false,
+          suppressionConfig = SuppressionConfig(
+            contentModules = mapOf(
+              ContentModuleName("owner.content") to org.jetbrains.intellij.build.productLayout.config.ContentModuleSuppression(
+                suppressPlugins = setOf(aliasId)
+              )
+            )
+          ),
+          updateSuppressions = true,
+          libraryModuleFilter = { true },
+        )
+        val plan = generation.plan
+        assertThat(plan).isNotNull()
+
+        assertThat(plan!!.preserveExistingPluginDependencies).containsExactly(aliasId)
+        assertThat(plan.suppressedPlugins).doesNotContain(aliasId)
+        assertThat(plan.suppressionUsages)
+          .noneMatch { it.type == SuppressionType.PLUGIN_DEP && it.suppressedDep == aliasId.value }
+      }
+    }
+
+    @Test
     fun `pure dsl test owned module auto-suppresses missing plugin deps in updateSuppressions`(@TempDir tempDir: Path) {
       runBlocking(Dispatchers.Default) {
         val setup = pluginTestSetup(tempDir) {
@@ -1301,3 +1401,11 @@ class ContentModuleDependencyGeneratorTest {
     }
   }
 }
+
+private fun buildContentModuleAliasGraph(aliasId: PluginId) = PluginGraphBuilder().apply {
+  val ownerPlugin = TargetName("owner.plugin")
+  addPlugin(ownerPlugin, isTest = false, pluginId = PluginId("owner.plugin"))
+  linkPluginContent(ownerPlugin, ContentModuleName("owner.content"), ModuleLoadingRuleValue.REQUIRED, isTest = false)
+  linkPluginMainTarget(ownerPlugin)
+  addAliasPlugin(aliasId)
+}.build()

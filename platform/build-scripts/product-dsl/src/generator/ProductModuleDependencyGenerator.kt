@@ -77,12 +77,13 @@ internal object ProductModuleDependencyGenerator : PipelineNode {
           val dependencyNames = dependencies.mapTo(HashSet()) { it.value }
           val existingXmlModules = info.existingModuleDependencies.toSet()
           val existingXmlModulesAsContentModuleName = existingXmlModules.mapTo(HashSet(), ::ContentModuleName)
-          val effectiveSuppressedModules = computeEffectiveSuppressedDeps(
+          val moduleHandling = computeExistingDependencyHandling(
             updateSuppressions = updateSuppressions,
             existingXmlDeps = existingXmlModulesAsContentModuleName,
             jpsDeps = dependencies.toSet(),
             suppressedDeps = suppressedModules,
           )
+          val effectiveSuppressedModules = moduleHandling.effectiveSuppressedDeps
           val suppressionUsages = ArrayList<SuppressionUsage>()
           val moduleDeps = collectModuleDepsWithSuppressions(
             contentModuleName = contentModuleName,

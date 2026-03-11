@@ -13,9 +13,6 @@ import org.jetbrains.intellij.build.productLayout.pipeline.DataSlot
 import org.jetbrains.intellij.build.productLayout.pipeline.NodeIds
 import org.jetbrains.intellij.build.productLayout.pipeline.PipelineNode
 
-// Keep in sync with ModelBuildingStage alias node naming.
-private const val ALIAS_NODE_PREFIX = "__alias__:"
-
 /**
  * Validates that test plugins do not declare descriptor IDs already provided by production plugins.
  */
@@ -44,11 +41,11 @@ private fun validateDescriptorIdConflictsForProduct(
     isTest: Boolean,
     target: MutableMap<PluginId, LinkedHashSet<PluginDescriptorIdConflictError.DescriptorOwner>>,
   ) {
-    val pluginName = plugin.name()
-    if (pluginName.value.startsWith(ALIAS_NODE_PREFIX)) {
+    if (plugin.isAlias) {
       return
     }
 
+    val pluginName = plugin.name()
     val pluginIdValue = plugin.pluginIdOrNull ?: return
     target.computeIfAbsent(pluginIdValue) { LinkedHashSet() }
       .add(PluginDescriptorIdConflictError.DescriptorOwner(pluginName, contentModule = null, isTestPlugin = isTest))

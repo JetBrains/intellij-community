@@ -28,7 +28,7 @@ All dependency generation and validation must use **PluginGraph** as the single 
 - For JPS **library** dependencies, resolve library name -> library module via `ModuleSetGenerationConfig.projectLibraryToModuleMap` (built from JPS library modules), not by scanning `.idea` libraries or module libraries.
 - The graph already encodes product/module-set aliases and pseudo-core plugins; do not build parallel maps.
 - Keep generator and validator in sync: if validation expects a dependency to be present, generator must be able to emit it (or mark it implicit/suppressed) so a second run is clean.
-- Suppression config is a contract: if a JPS-derived dep is suppressed, it is intentionally omitted from XML and must not produce validation errors. Existing XML-only deps are removed unless explicitly suppressed. Validation should only consider deps represented in the graph after filtering/suppression.
+- Suppression config is a contract: if a JPS-derived dep is suppressed, it is intentionally omitted from XML and must not produce validation errors. Existing XML-only deps are removed unless explicitly suppressed or graph semantics require preserving them (for example, manual alias-backed plugin deps). Validation should only consider deps represented in the graph after filtering/suppression.
 
 ### Graph Completeness During DSL Test Plugin Expansion
 

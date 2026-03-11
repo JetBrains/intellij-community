@@ -5,6 +5,7 @@ import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginGraph
 import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.TargetName
+import com.intellij.platform.pluginGraph.aliasNodeName
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -239,6 +240,37 @@ class PluginDependencyGraphTest {
 
     val ids = graph.getPluginDependencies(TargetName("plugin.a"))
     assertThat(ids).containsExactlyInAnyOrder(PluginId("alias.c"))
+  }
+
+  @Test
+  fun `pluginsById distinguishes alias nodes from placeholders`() {
+    val builder = PluginGraphBuilder()
+    val aliasId = PluginId("alias.c")
+    val pluginName = TargetName("plugin.a")
+    val pluginInfo = pluginInfo(
+      pluginId = "com.a",
+      pluginDependencies = setOf(aliasId),
+    )
+
+    builder.addPluginWithContent(pluginName, pluginInfo, emptySet())
+    builder.addPluginDependencyEdges(mapOf(pluginName to pluginInfo))
+    builder.addAliasPlugin(aliasId)
+
+    val graph = builder.build()
+
+    graph.query {
+      assertThat(hasAliasPlugin(aliasId)).isTrue()
+      assertThat(hasAliasPlugin(PluginId("alias.missing"))).isFalse()
+
+      val nodes = mutableListOf<Pair<String, Boolean>>()
+      pluginsById(aliasId) { plugin ->
+        nodes.add(plugin.name().value to plugin.isAlias)
+      }
+      assertThat(nodes).containsExactlyInAnyOrder(
+        aliasId.value to false,
+        aliasNodeName(aliasId).value to true,
+      )
+    }
   }
 
   @Test

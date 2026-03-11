@@ -363,6 +363,7 @@ class ContentModulePluginDependencyValidatorTest {
       testDependencies = emptyList(),
       existingXmlModuleDependencies = emptySet(),
       existingXmlPluginDependencies = emptySet(),
+      preserveExistingPluginDependencies = writtenPluginDependencies.toSet(),
       writtenPluginDependencies = writtenPluginDependencies,
       allJpsPluginDependencies = allJpsPluginDependencies,
       suppressedModules = emptySet(),

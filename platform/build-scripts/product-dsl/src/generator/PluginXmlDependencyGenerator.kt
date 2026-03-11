@@ -75,6 +75,7 @@ internal object PluginDependencyPlanner : PipelineNode {
         if (graphDeps.isDslDefined) continue
         tasks.add(async {
           buildPluginDependencyPlan(
+            graph = graph,
             graphDeps = graphDeps,
             pluginContentCache = pluginContentCache,
             suppressionConfig = suppressionConfig,
@@ -199,6 +200,7 @@ internal data class FilteredDependencies(
  * Also migrates legacy `<depends>` entries (v1 format) to `<plugin id="..."/>` (v2 format).
  */
 private suspend fun buildPluginDependencyPlan(
+  graph: PluginGraph,
   graphDeps: PluginGraphDeps,
   pluginContentCache: PluginContentProvider,
   suppressionConfig: SuppressionConfig,
@@ -223,29 +225,26 @@ private suspend fun buildPluginDependencyPlan(
   val effectiveJpsPluginDependencies = graphDeps.jpsPluginDependencies - graphDeps.legacyConfigFilePluginDependencies
   val suppressedModules = suppressionConfig.getPluginSuppressedModules(pluginContentModuleName)
   val suppressedPlugins = suppressionConfig.getPluginSuppressedPlugins(pluginContentModuleName)
-  val effectiveSuppressedModules = if (updateSuppressions) {
-    val missingModulesInXml = graphDeps.jpsModuleDependencies.filterNotTo(LinkedHashSet()) { it in existingXmlModuleDeps }
-    val xmlOnlyModules = existingXmlModuleDeps.filterNotTo(LinkedHashSet()) { it in graphDeps.jpsModuleDependencies }
-    suppressedModules + missingModulesInXml + xmlOnlyModules
-  }
-  else {
-    suppressedModules
-  }
-  val effectiveSuppressedPlugins = if (updateSuppressions) {
-    val missingPluginsInXml = effectiveJpsPluginDependencies.filterNotTo(LinkedHashSet()) { it in existingXmlPluginDeps }
-    val xmlOnlyPlugins = existingXmlPluginDeps.filterNotTo(LinkedHashSet()) { it in effectiveJpsPluginDependencies }
-    suppressedPlugins + missingPluginsInXml + xmlOnlyPlugins
-  }
-  else {
-    suppressedPlugins
-  }
+  val moduleHandling = computeExistingDependencyHandling(
+    updateSuppressions = updateSuppressions,
+    existingXmlDeps = existingXmlModuleDeps,
+    jpsDeps = graphDeps.jpsModuleDependencies,
+    suppressedDeps = suppressedModules,
+  )
+  val pluginHandling = computeExistingDependencyHandling(
+    updateSuppressions = updateSuppressions,
+    existingXmlDeps = existingXmlPluginDeps,
+    jpsDeps = effectiveJpsPluginDependencies,
+    suppressedDeps = suppressedPlugins,
+    semanticallyPreservedExistingDeps = computeAliasPreservedPluginDeps(graph, existingXmlPluginDeps),
+  )
 
   val deps = filterPluginDependencies(
     graphDeps = graphDeps,
     pluginInfo = info,
     jpsPluginDependencies = effectiveJpsPluginDependencies,
-    suppressedModules = effectiveSuppressedModules,
-    suppressedPlugins = effectiveSuppressedPlugins,
+    suppressedModules = moduleHandling.effectiveSuppressedDeps,
+    suppressedPlugins = pluginHandling.effectiveSuppressedDeps,
   )
 
   // Remove duplicate legacy <depends> only when modern deps are present or we are generating a <dependencies> section.
@@ -275,8 +274,8 @@ private suspend fun buildPluginDependencyPlan(
   val xiIncludePluginDeps = info.depsByFile.drop(1).flatMapTo(HashSet()) { it.pluginDependencies }
 
   // Compute deps to preserve during XML update
-  val preserveExistingModuleDeps = existingXmlModuleDeps.filterTo(LinkedHashSet()) { it in effectiveSuppressedModules }
-  val preserveExistingPluginDeps = existingXmlPluginDeps.filterTo(LinkedHashSet()) { it in effectiveSuppressedPlugins }
+  val preserveExistingModuleDeps = moduleHandling.preserveExistingDeps
+  val preserveExistingPluginDeps = pluginHandling.preserveExistingDeps
   val effectiveLegacyDepends = info.legacyDepends.filterNot { it.pluginId in legacyMigration.removedLegacyPluginIds }
 
   return PluginDependencyPlan(
