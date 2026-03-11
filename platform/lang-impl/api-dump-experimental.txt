@@ -365,6 +365,10 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - *sf:Companion:com.intellij.codeInsight.completion.command.commands.ErrorFixCommandProvider$Companion
 - a:getCommands(com.intellij.psi.PsiFile,java.util.List,I):java.util.List
 *f:com.intellij.codeInsight.completion.command.commands.ErrorFixCommandProvider$Companion
+*f:com.intellij.codeInsight.completion.command.commands.InsertLiveTemplateCompletionCommandProvider
+- com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
+- <init>():V
+- supportNewLineCompletion():Z
 *:com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider
 - *sf:Companion:com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider$Companion
 - findOffsets(com.intellij.psi.PsiFile,I):java.util.List
