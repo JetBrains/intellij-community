@@ -114,7 +114,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     final var scrollPane = new JBScrollPane(panel);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.setBorder(null);
-    scrollPane.setPreferredSize(panel.getMinimumSize());
+    scrollPane.setPreferredSize(panel.getPreferredSize());
     return scrollPane;
   }
 
