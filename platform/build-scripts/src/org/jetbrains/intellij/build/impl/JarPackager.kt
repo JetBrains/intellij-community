@@ -782,6 +782,11 @@ class JarPackager private constructor(
 private fun getCanonicalPath(mavenPaths: List<String>, file: Path): String {
   return mavenPaths.singleOrNull()
          ?: mavenPaths.firstOrNull { it.endsWith("/${file.fileName}") }
+         ?: mavenPaths.firstOrNull {
+           // Locally built snapshot libraries have names like "library-name-X.Y.Z-SNAPSHOT-<hash>.jar",
+           // so we need to cut out the hash to make `library-name.X.Y.Z-SNAPSHOT.jar`
+           it.endsWith("/${file.fileName.toString().substringBeforeLast('-')}.jar")
+         }
          ?: throw IllegalStateException("Cannot find canonical path for $file in $mavenPaths")
 }
 
