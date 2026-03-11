@@ -531,7 +531,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testAsyncDefReturnType() {
-    doTest("Coroutine[Any, Any, int]",
+    doTest("CoroutineType[Any, Any, int]",
            """
              async def foo(x):
                  await x
@@ -562,6 +562,18 @@ public class Py3TypeTest extends PyTestCase {
              
              async def bar():
                  expr = await foo()
+             """);
+  }
+
+  public void testAwaitOnTypingCoroutineAnnotation() {
+    doTest("int",
+           """
+             from typing import Any, Coroutine
+             
+             x: Coroutine[Any, Any, int]
+             
+             async def bar():
+                 expr = await x
              """);
   }
 
@@ -1553,7 +1565,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-24067
   public void testAsyncFunctionReturnTypeInDocstring() {
-    doTest("Coroutine[Any, Any, int]",
+    doTest("CoroutineType[Any, Any, int]",
            """
              async def f():
                  ""\"
@@ -1565,7 +1577,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-27518
   public void testAsyncFunctionReturnTypeInNumpyDocstring() {
-    doTest("Coroutine[Any, Any, int]",
+    doTest("CoroutineType[Any, Any, int]",
            """
              async def f():
                  ""\"
@@ -1592,7 +1604,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-26643
   public void testReplaceSelfInCoroutine() {
-    doTest("Coroutine[Any, Any, B]",
+    doTest("CoroutineType[Any, Any, B]",
            """
              class A:
                  async def foo(self):

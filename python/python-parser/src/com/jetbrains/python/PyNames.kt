@@ -109,6 +109,7 @@ object PyNames {
   const val FUNCTION: String = "function"
 
   const val TYPES_FUNCTION_TYPE: String = "types.FunctionType"
+  const val TYPES_COROUTINE_TYPE: String = "types.CoroutineType"
   const val TYPES_METHOD_TYPE: String = "types.UnboundMethodType"
 
   const val FUTURE_MODULE: String = "__future__"

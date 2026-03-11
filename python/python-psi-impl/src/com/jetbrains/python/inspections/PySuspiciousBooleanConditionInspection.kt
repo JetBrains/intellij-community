@@ -86,8 +86,7 @@ class PySuspiciousBooleanConditionInspection : PyInspection() {
       val type = myTypeEvalContext.getType(this) ?: return
 
       // Check if the type is a coroutine
-      // TODO: use `CoroutineType` instead
-      if (type is PyClassType && type.classQName == PyTypingTypeProvider.COROUTINE) {
+      if (type is PyClassType && (type.classQName == PyTypingTypeProvider.COROUTINE || type.classQName == PyNames.TYPES_COROUTINE_TYPE)) {
         registerProblem(this, PyPsiBundle.message("INSP.suspicious.boolean.condition.coroutine"), PyAddAwaitQuickFix())
       }
     }

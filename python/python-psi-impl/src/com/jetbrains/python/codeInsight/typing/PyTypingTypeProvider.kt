@@ -221,7 +221,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         if (typeRef != null) {
           // Do not use toAsyncIfNeeded, as it also converts Generators. Here we do not need it.
           if (callable.isAsync && callable.isAsyncAllowed && !callable.isGenerator) {
-            return Ref(wrapInCoroutineType(typeRef.get(), callable))
+            return Ref(typeRef.get().wrapInCoroutineType(callable))
           }
           return typeRef
         }
@@ -2803,7 +2803,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     fun toAsyncIfNeeded(function: PyFunction, returnType: PyType?): PyType? {
       if (function.isAsync && function.isAsyncAllowed) {
         if (!function.isGenerator) {
-          return wrapInCoroutineType(returnType, function)
+          return returnType.wrapInCoroutineType(function)
         }
         val desc = GeneratorTypeDescriptor.fromGenerator(returnType)
         if (desc != null) {
@@ -2828,9 +2828,17 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       }
     }
 
-    private fun wrapInCoroutineType(returnType: PyType?, resolveAnchor: PsiElement): PyType? {
-      val coroutine = PyPsiFacade.getInstance(resolveAnchor.project).createClassByQName(COROUTINE, resolveAnchor)
-      return if (coroutine != null) PyCollectionTypeImpl(coroutine, false, listOf(null, null, returnType)) else null
+    private fun PyType?.wrapInCoroutineType(anchor: PsiElement): PyType? {
+      val facade = PyPsiFacade.getInstance(anchor.project)
+      val targetClass =
+        facade.createClassByQName(PyNames.TYPES_COROUTINE_TYPE, anchor)
+        ?: facade.createClassByQName(COROUTINE, anchor)
+        ?: return null
+      return PyCollectionTypeImpl(
+        targetClass,
+        false,
+        listOf(null, null, this)
+      )
     }
 
     @JvmStatic
@@ -2851,18 +2859,15 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
 
     @JvmStatic
     fun unwrapCoroutineReturnType(coroutineType: PyType?): Ref<PyType?>? {
-      val genericType = PyUtil.`as`(coroutineType, PyCollectionType::class.java)
+      if (coroutineType !is PyCollectionType) return null
+      val qName = coroutineType.classQName
 
-      if (genericType != null) {
-        val qName = genericType.classQName
+      if (AWAITABLE == qName) {
+        return Ref(coroutineType.elementTypes.getOrNull(0))
+      }
 
-        if (AWAITABLE == qName) {
-          return Ref(ContainerUtil.getOrElse<PyType?>(genericType.elementTypes, 0, null))
-        }
-
-        if (COROUTINE == qName) {
-          return Ref(ContainerUtil.getOrElse<PyType?>(genericType.elementTypes, 2, null))
-        }
+      if (qName in arrayOf(COROUTINE, PyNames.TYPES_COROUTINE_TYPE)) {
+        return Ref(coroutineType.elementTypes.getOrNull(2))
       }
 
       return null
