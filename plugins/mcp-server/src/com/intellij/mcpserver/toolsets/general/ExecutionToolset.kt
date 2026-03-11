@@ -54,7 +54,9 @@ class ExecutionToolset : McpToolset {
     |Run configurations are usually used to define user the way how to run a user application, task or test suite from sources.
     |
     |This tool provides additional info like command line, working directory, environment variables,
-    |and whether the configuration supports dynamic launch overrides (`programArguments`, `workingDirectory`, `envs`).
+    |and `supportsDynamicLaunchOverrides`, which is the source-of-truth capability flag for one-time launch overrides
+    |(`programArguments`, `workingDirectory`, `envs`) in `execute_run_configuration` and `xdebug_start_debugger_session`.
+    |Only pass those override parameters when this flag is `true` for the selected configuration.
     |
     |Use this tool to query the list of available run configurations in the current project.
   """)
@@ -239,7 +241,7 @@ class ExecutionToolset : McpToolset {
     val name: String,
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
     val description: String? = null,
-    @property:McpDescription("Whether this run configuration supports one-time dynamic launch overrides for programArguments, workingDirectory, and envs.")
+    @property:McpDescription("Whether this run configuration supports one-time dynamic launch overrides for `programArguments`, `workingDirectory`, and `envs`. Use this field as the source of truth before passing those override parameters to `execute_run_configuration` or `xdebug_start_debugger_session`.")
     val supportsDynamicLaunchOverrides: Boolean,
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
     val commandLine: String? = null,
