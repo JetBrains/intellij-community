@@ -112,6 +112,8 @@ object DistributedTestModel : Ext(TestRoot) {
   private val RdProductInfo = structdef {
     field("productCode", string)
     field("productVersion", string)
+    field("productName", string)
+    field("productFullName", string)
   }
 
   init {

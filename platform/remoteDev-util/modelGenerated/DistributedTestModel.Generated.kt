@@ -61,7 +61,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = -3762023535056647471L
+        const val serializationHash = 1019449310822351010L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -448,12 +448,16 @@ data class RdAllureUpdateStepInfo (
  */
 data class RdProductInfo (
     val productCode: String,
-    val productVersion: String
+    val productVersion: String,
+    val productName: String,
+    val productFullName: String
 ) : IPrintable {
     //write-marshaller
     private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
         buffer.writeString(productCode)
         buffer.writeString(productVersion)
+        buffer.writeString(productName)
+        buffer.writeString(productFullName)
     }
     //companion
     
@@ -465,7 +469,9 @@ data class RdProductInfo (
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdProductInfo  {
             val productCode = buffer.readString()
             val productVersion = buffer.readString()
-            return RdProductInfo(productCode, productVersion)
+            val productName = buffer.readString()
+            val productFullName = buffer.readString()
+            return RdProductInfo(productCode, productVersion, productName, productFullName)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdProductInfo)  {
@@ -487,6 +493,8 @@ data class RdProductInfo (
         
         if (productCode != other.productCode) return false
         if (productVersion != other.productVersion) return false
+        if (productName != other.productName) return false
+        if (productFullName != other.productFullName) return false
         
         return true
     }
@@ -495,6 +503,8 @@ data class RdProductInfo (
         var __r = 0
         __r = __r*31 + productCode.hashCode()
         __r = __r*31 + productVersion.hashCode()
+        __r = __r*31 + productName.hashCode()
+        __r = __r*31 + productFullName.hashCode()
         return __r
     }
     //pretty print
@@ -503,6 +513,8 @@ data class RdProductInfo (
         printer.indent {
             print("productCode = "); productCode.print(printer); println()
             print("productVersion = "); productVersion.print(printer); println()
+            print("productName = "); productName.print(printer); println()
+            print("productFullName = "); productFullName.print(printer); println()
         }
         printer.print(")")
     }

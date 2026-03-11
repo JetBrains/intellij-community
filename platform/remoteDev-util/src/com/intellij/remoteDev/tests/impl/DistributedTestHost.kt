@@ -17,6 +17,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PathManager
@@ -263,8 +264,14 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
         }
 
         session.getProductCodeAndVersion.setSuspend(sessionBgtDispatcher) { _, _ ->
+          val namesInfo = ApplicationNamesInfo.getInstance()
           ApplicationInfo.getInstance().build.let {
-            RdProductInfo(productCode = it.productCode, productVersion = it.asStringWithoutProductCode())
+            RdProductInfo(
+              productCode = it.productCode,
+              productVersion = it.asStringWithoutProductCode(),
+              productName = namesInfo.productName,
+              productFullName = namesInfo.fullProductName,
+            )
           }
         }
 
