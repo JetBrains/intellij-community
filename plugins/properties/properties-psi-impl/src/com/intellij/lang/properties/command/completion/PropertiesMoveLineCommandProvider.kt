@@ -37,5 +37,9 @@ class PropertiesMoveLineDownCommandProvider :
 
 private fun isAtEndOfProperty(offset: Int, psiFile: PsiFile): Boolean {
   val property = getCommandContext(offset, psiFile)?.parentOfType<Property>() ?: return false
+  val text = property.text
+  if (text.contains("\n")) return false //multiline, it is better to skip
+  if (text.endsWith(" ") &&
+      text.trim().endsWith("\\")) return false // broken multiline property
   return offset == property.textRange.endOffset
 }

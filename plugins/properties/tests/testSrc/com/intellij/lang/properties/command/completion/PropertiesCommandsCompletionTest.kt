@@ -60,6 +60,16 @@ class PropertiesCommandsCompletionTest : LightFixtureCompletionTestCase() {
       """.trimIndent())
   }
 
+  fun testMoveLineUpMultiline() {
+    myFixture.configureByText(PropertiesFileType.INSTANCE, """
+      a.b.c=first
+      d.e.f=second \.<caret>
+        some
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertNull(elements.firstOrNull { element -> element.lookupString.contains("Move line up", ignoreCase = true) })
+  }
+
   fun testMoveLineDown() {
     myFixture.configureByText(PropertiesFileType.INSTANCE, """
       a.b.c=first.<caret>
