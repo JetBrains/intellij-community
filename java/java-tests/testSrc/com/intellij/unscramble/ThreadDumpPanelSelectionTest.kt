@@ -22,7 +22,7 @@ class ThreadDumpPanelSelectionTest : BasePlatformTestCase() {
     val uiState = UISettings.getInstance().state
 
     uiState.mergeEqualStackTraces = false
-    uiState.showVirtualThreadContainers = false
+    uiState.showDumpItemsHierarchy = false
     uiState.showOnlyPlatformThreads = false
   }
 
@@ -81,7 +81,7 @@ class ThreadDumpPanelSelectionTest : BasePlatformTestCase() {
     panel.selectStackFrame(0)
     assertSelectedThread("platform-thread-1")
 
-    UISettings.getInstance().state.showVirtualThreadContainers = true
+    UISettings.getInstance().state.showDumpItemsHierarchy = true
     invokeUpdateThreadsTree()
 
     assertSelectedThread("platform-thread-1")
@@ -97,13 +97,13 @@ class ThreadDumpPanelSelectionTest : BasePlatformTestCase() {
       containers = listOf(container("Container", containerId)),
     )
 
-    UISettings.getInstance().state.showVirtualThreadContainers = true
+    UISettings.getInstance().state.showDumpItemsHierarchy = true
     invokeUpdateThreadsTree()
 
     selectThreadByName("platform-thread-1")
     assertSelectedThread("platform-thread-1")
 
-    UISettings.getInstance().state.showVirtualThreadContainers = false
+    UISettings.getInstance().state.showDumpItemsHierarchy = false
     invokeUpdateThreadsTree()
 
     assertSelectedThread("platform-thread-1")
