@@ -6,7 +6,6 @@ import com.intellij.idea.IJIgnore;
 import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.openapi.application.ArchivedCompilationContextUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.SelfSeedingTestCase;
 import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.bucketing.BucketingScheme;
@@ -216,7 +215,7 @@ public class TestCaseLoader {
       // fair bucketing initialization or warmup caches from nastradamus (if it's not fully initialized)
       if (initializing) return true;
 
-      if (SelfSeedingTestCase.class.isAssignableFrom(testCaseClass) || matchesCurrentBucket(testCaseClass.getName())) {
+      if (matchesCurrentBucket(testCaseClass.getName())) {
         return true;
       }
     }
@@ -450,7 +449,7 @@ public class TestCaseLoader {
     // JUnit 5 might rediscover `@Nested` tests if they were previously filtered out by `isClassNameIncluded`,
     // but their host class was not filtered out. Let's not remove them again based on `ourFilter.matches(className)`,
     // so not checking for `isClassNameIncluded` here.
-    return SelfSeedingTestCase.class.isAssignableFrom(aClass) || matchesCurrentBucket(aClass.getName());
+    return matchesCurrentBucket(aClass.getName());
   }
 
   public void fillTestCases(String rootPackage, List<? extends Path> classesRoots) {
