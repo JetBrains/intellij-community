@@ -6,11 +6,10 @@ import kotlin.text.StringsKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 @ApiStatus.Internal
@@ -42,19 +41,13 @@ public class TestsDurationBucketingScheme implements BucketingScheme {
         TestsDurationBucketingUtils.loadSeasonBucketFilters(TestCaseLoader.getCommonTestClassesFilterArgs(), seasonData);
     }
     else {
-      if (season == null) {
-        System.out.println("Tests duration bucketing without season specified.");
-      }
-      else {
-        System.out.println(
-          "Tests duration bucketing with season specified, but no data found for it, falling back to class-duration bucketing.");
-      }
-      var testCaseClasses = TestCaseLoader.loadClassesForWarmup();
-
-      Set<String> classes = testCaseClasses.stream().map(Class::getName).collect(Collectors.toSet());
+      if (season == null) throw new RuntimeException("Tests duration bucketing without season specified");
+      // Specially formatted error message will fail the build
+      // See https://www.jetbrains.com/help/teamcity/service-messages.html#Reporting+Build+Problems
+      System.out.println("##teamcity[buildProblem description='Tests duration bucketing with season specified, but no data found for it, falling back to hashing bucketing']");
 
       myPutMissingToFirstBucket = false;
-      myBucketFilters = TestsDurationBucketingUtils.calculateBucketFilters(TestCaseLoader.getCommonTestClassesFilterArgs(), classes);
+      myBucketFilters = Collections.emptyList();
     }
     long durationNs = System.nanoTime() - start;
     System.out.printf("Tests duration bucketing initialization finished in %d ms.%n", TimeUnit.NANOSECONDS.toMillis(durationNs));
