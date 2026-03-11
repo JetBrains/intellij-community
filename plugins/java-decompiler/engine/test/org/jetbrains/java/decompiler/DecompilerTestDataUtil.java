@@ -30,6 +30,6 @@ public final class DecompilerTestDataUtil {
         return dir.toAbsolutePath();
       }
     }
-    throw new AssertionError("Cannot find 'testData' directory relative to " + Path.of("").toAbsolutePath());
+    throw new AssertionError("Cannot find 'testData' directory relative to " + Path.of("").toAbsolutePath() + "; searched: " + roots);
   }
 }
