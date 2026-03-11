@@ -3,10 +3,14 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.testFramework.runInEdtAndWait
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.fir.K2DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
+import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
+import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.KEEP_ACTIONS_LIST_ORDER_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.actionsListDirectives
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.util.invalidateCaches
@@ -61,5 +65,19 @@ abstract class AbstractHighLevelQuickFixTest : AbstractQuickFixTest() {
 
     override val actionPrefix: String? = "K2_ACTION:"
 
-    override fun checkAvailableActionsAreExpected(actions: List<IntentionAction>) {}
+    override fun checkAvailableActionsAreExpected(actions: List<IntentionAction>) {
+        val fileText = dataFile().readText()
+        // We only explicitly enable checking that all actions are listed in the directives if the
+        // KEEP_ACTIONS_LIST_ORDER_DIRECTIVE is present.
+        // Most other tests do not list all possible actions and also not their order.
+        if (!InTextDirectivesUtils.isDirectiveDefined(fileText, KEEP_ACTIONS_LIST_ORDER_DIRECTIVE)) {
+            return
+        }
+        DirectiveBasedActionUtils.checkAvailableActionsAreExpected(
+            file,
+            dataFile(), actions,
+            actionsToExclude = emptyList(),
+            actionsListDirectives = pluginMode.actionsListDirectives
+        )
+    }
 }

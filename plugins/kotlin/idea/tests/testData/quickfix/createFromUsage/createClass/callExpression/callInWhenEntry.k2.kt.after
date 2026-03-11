@@ -7,7 +7,9 @@
 // K2_ACTIONS_LIST: Create class 'AAA'
 // K2_ACTIONS_LIST: Create enum 'AAA'
 // K2_ACTIONS_LIST: Create interface 'AAA'
+// K2_ACTIONS_LIST: Create parameter 'AAA'
 // K2_ACTIONS_LIST: Remove braces from 'if' statement
+// K2_ACTIONS_LIST: Rename reference
 // K2_ACTIONS_LIST: Create function 'AAA'
 // K2_ACTIONS_LIST: Enable a trailing comma by default in the formatter
 // K2_ACTIONS_LIST: Replace 'when' with 'if'

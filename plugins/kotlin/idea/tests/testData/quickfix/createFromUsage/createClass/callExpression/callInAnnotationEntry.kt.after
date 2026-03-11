@@ -1,7 +1,10 @@
 // "Create annotation 'bar'" "true"
 // KEEP_ACTIONS_LIST_ORDER
 // K2_ACTIONS_LIST: Change visibility…
+// K2_ACTIONS_LIST: Create parameter 'bar'
+// K2_ACTIONS_LIST: Create test
 // K2_ACTIONS_LIST: Put arguments on separate lines
+// K2_ACTIONS_LIST: Rename reference
 // K2_ACTIONS_LIST: Create annotation 'bar'
 // ERROR: Unresolved reference: foo
 // K2_ERROR: Annotation argument must be a compile-time constant.

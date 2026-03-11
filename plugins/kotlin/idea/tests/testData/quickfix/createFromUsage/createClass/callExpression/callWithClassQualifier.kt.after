@@ -4,6 +4,8 @@
 // K2_ACTIONS_LIST: Create class 'Foo'
 // K2_ACTIONS_LIST: Create enum 'Foo'
 // K2_ACTIONS_LIST: Create interface 'Foo'
+// K2_ACTIONS_LIST: Create parameter 'Foo'
+// K2_ACTIONS_LIST: Rename reference
 // K2_ACTIONS_LIST: Create extension function 'A.Companion.Foo'
 // K2_ACTIONS_LIST: Create member function 'A.Companion.Foo'
 // K2_ERROR: Unresolved reference 'Foo'.
