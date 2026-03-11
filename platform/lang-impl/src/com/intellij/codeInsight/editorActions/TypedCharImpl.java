@@ -51,7 +51,7 @@ final class TypedCharImpl {
 
   static @NotNull FileType getFileType(@NotNull PsiFile file, @NotNull Editor editor) {
     FileType fileType = file.getFileType();
-    if (EditorLockFreeTyping.isEnabled()) {
+    if (!EditorLockFreeTyping.isPsiInteractionAllowed()) {
       // TODO: rework for lock-free typing, getLanguageInEditor (findLanguageFromElement) requires RA on EDT
       return fileType;
     }

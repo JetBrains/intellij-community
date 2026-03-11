@@ -12,4 +12,13 @@ public final class EditorLockFreeTyping {
   public static boolean isEnabled() {
     return IS_ENABLED;
   }
+
+  public static boolean isPsiInteractionAllowed() {
+    return !isEnabled() || isLockFreePsiSupported();
+  }
+
+  private static boolean isLockFreePsiSupported() {
+    // TODO: one day it should become `true`, see IJPL-236269
+    return false;
+  }
 }

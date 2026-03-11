@@ -23,7 +23,7 @@ public class XmlCharFilter extends CharFilter {
   public static boolean isInXmlContext(Lookup lookup) {
     if (!lookup.isCompletion()) return false;
 
-    if (EditorLockFreeTyping.isEnabled()) {
+    if (!EditorLockFreeTyping.isPsiInteractionAllowed()) {
       // TODO: rework for lock-free typing, getContainingFile requires RA on EDT
       return false;
     }

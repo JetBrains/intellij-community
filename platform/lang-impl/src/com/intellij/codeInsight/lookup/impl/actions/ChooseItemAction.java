@@ -93,7 +93,7 @@ public abstract class ChooseItemAction extends EditorAction implements HintManag
     final PsiFile file = lookup.getPsiFile();
     if (file == null) return false;
 
-    if (EditorLockFreeTyping.isEnabled()) {
+    if (!EditorLockFreeTyping.isPsiInteractionAllowed()) {
       // TODO: rework for lock-free typing, commitDocument requires WIL/WL on EDT
       return false;
     }

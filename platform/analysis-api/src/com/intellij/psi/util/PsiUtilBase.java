@@ -114,7 +114,7 @@ public final class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
       return psiFile;
     }
 
-    if (EditorLockFreeTyping.isEnabled()) {
+    if (!EditorLockFreeTyping.isPsiInteractionAllowed()) {
       // TODO: rework for lock-free typing, getLanguageInEditor (findLanguageFromElement) requires RA on EDT
       return psiFile;
     }
