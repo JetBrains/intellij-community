@@ -34,6 +34,11 @@ class CriDiagnosticAction : AnAction(), DumbAware {
                 return@buildString
             }
 
+            if (kotlinCompilerReferenceIndexService.isBuildActive()) {
+                appendLine("Build is in progress, CRI is not available")
+                return@buildString
+            }
+
             appendLine("Dirty Modules (${dirtyModules.size}):")
             if (dirtyModules.isEmpty()) {
                 appendLine("  (none - all modules are up-to-date)")

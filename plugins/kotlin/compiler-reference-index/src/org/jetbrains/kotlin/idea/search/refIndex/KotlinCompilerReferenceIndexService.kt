@@ -49,7 +49,6 @@ import com.intellij.util.indexing.StorageException
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.asJava.syntheticAccessors
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.config.SettingConstants
@@ -237,11 +236,13 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
     private fun allModules(): Array<Module>? = runReadAction { projectIfNotDisposed?.let { ModuleManager.getInstance(it).modules } }
 
     @ApiStatus.Internal
-    @VisibleForTesting
     fun dirtyModules(): Set<Module>? {
         if (!initialized) return null
         return dirtyScopeHolder.allDirtyModules
     }
+
+    @ApiStatus.Internal
+    fun isBuildActive(): Boolean = withReadLock { activeBuildCount == 0 }
 
     private fun markAsUpToDate() {
         val modules = allModules() ?: return
