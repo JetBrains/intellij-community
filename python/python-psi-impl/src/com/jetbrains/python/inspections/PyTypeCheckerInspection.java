@@ -15,6 +15,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider;
 import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.GeneratorTypeDescriptor;
@@ -301,41 +302,59 @@ public class PyTypeCheckerInspection extends PyInspection {
     @Override
     public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
       checkClassAttributeAccess(node);
-      // TODO: Check types in class-level assignments
-      final ScopeOwner owner = ScopeUtil.getScopeOwner(node);
-      if (owner instanceof PyClass) return;
-      final PyExpression value = node.findAssignedValue();
-      if (value == null) return;
+      final PyExpression expr = node.findAssignedValue();
+      if (expr == null) return;
 
-      boolean descriptor = false;
-      PyType expected = myTypeEvalContext.getType(node);
-      if (node.isQualified()) {
-        PyTypeChecker.GenericSubstitutions substitutions = PyTypeChecker.unifyReceiver(node.getQualifier(), myTypeEvalContext);
-        expected = PyTypeChecker.substitute(expected, substitutions, myTypeEvalContext);
+      boolean isDescriptor = false;
+      PyType expected, actual;
+
+      final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(node);
+      if (scopeOwner instanceof PyClass cls && PyStdlibTypeProvider.isCustomEnum(cls, myTypeEvalContext)) {
+        final PyStdlibTypeProvider.EnumAttributeInfo info = PyStdlibTypeProvider.getEnumAttributeInfo(cls, node, myTypeEvalContext);
+        if (info == null || info.attributeKind() != PyStdlibTypeProvider.EnumAttributeKind.MEMBER) return;
+
+        expected = PyStdlibTypeProvider.getEnumValueType(cls, myTypeEvalContext);
+        actual = info.assignedValueType();
       }
-      Ref<PyType> classAttrType = getClassAttributeType(node);
-      if (classAttrType != null) {
-        Ref<PyType> dunderSetValueType =
-          PyDescriptorTypeUtil.getExpectedValueTypeForDunderSet(node, classAttrType.get(), myTypeEvalContext);
-        if (dunderSetValueType != null) {
-          expected = dunderSetValueType.get();
-          descriptor = true;
+      else {
+        expected = myTypeEvalContext.getType(node);
+        if (scopeOwner instanceof PyClass) {
+          if (!hasExplicitType(node)) {
+            PsiElement resolved = node.getReference(PyResolveContext.defaultContext(myTypeEvalContext)).resolve();
+            if (!(resolved instanceof PyTargetExpression resolvedTarget) || !hasExplicitType(resolvedTarget)) return;
+          }
         }
+
+        if (node.isQualified()) {
+          PyTypeChecker.GenericSubstitutions substitutions = PyTypeChecker.unifyReceiver(node.getQualifier(), myTypeEvalContext);
+          expected = PyTypeChecker.substitute(expected, substitutions, myTypeEvalContext);
+        }
+
+        final Ref<PyType> classAttrType = getClassAttributeType(node);
+        if (classAttrType != null) {
+          final Ref<PyType> dunderSetValueType =
+            PyDescriptorTypeUtil.getExpectedValueTypeForDunderSet(node, classAttrType.get(), myTypeEvalContext);
+          if (dunderSetValueType != null) {
+            expected = dunderSetValueType.get();
+            isDescriptor = true;
+          }
+        }
+
+        actual = tryPromotingType(expr, expected);
       }
 
-      if (expected instanceof PyTypedDictType expectedTypedDictType && PyTypedDictType.isDictExpression(value, myTypeEvalContext)) {
-        reportTypedDictProblems(expectedTypedDictType, value);
+      if (expected instanceof PyTypedDictType expectedTypedDictType && PyTypedDictType.isDictExpression(expr, myTypeEvalContext)) {
+        reportTypedDictProblems(expectedTypedDictType, expr);
         return;
       }
 
-      final PyType actual = tryPromotingType(value, expected);
       if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
         String expectedName = PythonDocumentationProvider.getVerboseTypeName(expected, myTypeEvalContext);
         String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
-        registerProblem(value, descriptor ?
-                               PyPsiBundle.message("INSP.type.checker.expected.type.from.dunder.set.got.type.instead",
-                                                   expectedName, actualName) :
-                               PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedName, actualName));
+        registerProblem(expr, isDescriptor ?
+                              PyPsiBundle.message("INSP.type.checker.expected.type.from.dunder.set.got.type.instead",
+                                                  expectedName, actualName) :
+                              PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedName, actualName));
       }
     }
 

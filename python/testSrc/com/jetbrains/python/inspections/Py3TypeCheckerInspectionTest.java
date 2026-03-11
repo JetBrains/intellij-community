@@ -1489,8 +1489,38 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                        c: Literal[True] = True,
                        d: Literal[True] = <warning descr="Expected type 'Literal[True]', got 'Literal[False]' instead">False</warning>
                    ): ...
-                   """
-    );
+                   """);
+  }
+
+  // PY-80837
+  public void testClassAttributeDefaultValueType() {
+    doTestByText("""
+                   from typing import Literal
+                   
+                   class A:
+                       a: str = "ok"
+                       b: int = <warning descr="Expected type 'int', got 'str' instead">"string"</warning>
+                       c: Literal[True] = True
+                       d: Literal[True] = <warning descr="Expected type 'Literal[True]', got 'Literal[False]' instead">False</warning>
+                   
+                       annotated: int
+                       annotated = <warning descr="Expected type 'int', got 'str' instead">"string"</warning>
+                   """);
+  }
+
+  // PY-80837
+  public void testEnumAttributeDefaultValueType() {
+    doTestByText("""
+                   from enum import Enum, IntEnum
+                   
+                   class MyIntEnum(IntEnum):
+                       OK = 1
+                       BAD = <warning descr="Expected type 'int', got 'str' instead">"string"</warning>
+                   
+                   class MyEnum(Enum):
+                       OK = 1
+                       BAD = <warning descr="Expected type 'int', got 'str' instead">"string"</warning>
+                   """);
   }
 
   // PY-53611

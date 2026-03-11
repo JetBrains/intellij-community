@@ -237,7 +237,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     assert isCustomEnum(enumClass, context);
 
     String name = targetExpression.getName();
-    if (name == null || PyUtil.isClassPrivateName(name)) return null;
+    if (name == null || PyUtil.isClassPrivateName(name) || "_ignore_".equals(name)) return null;
 
     if (context.maySwitchToAST(targetExpression)) {
       PyExpression value = targetExpression.findAssignedValue();
@@ -375,7 +375,8 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   // Handle IntEnum/IntFlag, StrEnum, and fall back to assigned type or unknown
-  private static @Nullable PyType getEnumValueType(@NotNull PyClass enumClass, @NotNull TypeEvalContext context) {
+  @ApiStatus.Internal
+  public static @Nullable PyType getEnumValueType(@NotNull PyClass enumClass, @NotNull TypeEvalContext context) {
     PyBuiltinCache cache = PyBuiltinCache.getInstance(enumClass);
 
     if (enumClass.isSubclass("enum.IntEnum", context) ||
