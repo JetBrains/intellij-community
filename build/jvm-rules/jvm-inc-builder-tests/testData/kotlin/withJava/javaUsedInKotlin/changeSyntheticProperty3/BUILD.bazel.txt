@@ -4,7 +4,7 @@ kt_kotlinc_options(
   name = "kt_compile_options",
   language_version = "2.3",
   api_version = "2.3",
-  x_x_language = [
+  x_xlanguage = [
     "+ReferencesToSyntheticJavaProperties",
   ],
 )

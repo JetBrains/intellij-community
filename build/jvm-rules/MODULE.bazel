@@ -37,9 +37,9 @@ single_version_override(
 bazel_dep(name = "rules_kotlin", version = "2.2.2")
 archive_override(
     module_name = "rules_kotlin",
-    sha256 = "45a8f73fd663df02dfd2925cf7be02a03b075dd14f8b473dd454feeaa28e54d0",
-    strip_prefix = "rules_kotlin-30e89b8f9a246952e14eb6f56c2265a46bf4dc54",
-    url = "https://github.com/JetBrains/rules_kotlin/archive/30e89b8f9a246952e14eb6f56c2265a46bf4dc54.zip",
+    sha256 = "6c7550c333f10fd49c59a5c05714c2747802077906822be066bc738c10038324",
+    strip_prefix = "rules_kotlin-2f7b666442f78bfcb5fd6360a3150b2938233cef",
+    url = "https://github.com/JetBrains/rules_kotlin/archive/2f7b666442f78bfcb5fd6360a3150b2938233cef.zip",
 )
 
 bazel_dep(name = "rules_pkg", version = "1.2.0")
@@ -258,10 +258,24 @@ http_file(
 )
 
 http_file(
+  name = "kotlin-build-tools-impl_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-build-tools-impl/%s/kotlin-build-tools-impl-%s.jar" % (kotlin_compiler_version, kotlin_compiler_version),
+  downloaded_file_path = "kotlin-build-tools-impl-%s.jar" % kotlin_compiler_version,
+  sha256 = "8346fdea242bf39b3de404b8bc44fcf211b94c76e78666a4e656e2caa2c354a7",
+)
+
+http_file(
     name = "kotlin-compiler-embeddable_http",
     downloaded_file_path = "kotlin-compiler-embeddable-%s.jar" % kotlin_compiler_version,
     sha256 = "f22846a9a9321384fc1e49181a4bf29f591dd0e70e07f92dd9565b6a6f514fa1",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/%s/kotlin-compiler-embeddable-%s.jar" % (kotlin_compiler_version, kotlin_compiler_version),
+)
+
+http_file(
+    name = "kotlin-daemon-client_http",
+    downloaded_file_path = "kotlin-daemon-client-%s.jar" % kotlin_compiler_version,
+    sha256 = "5ff064c1cb7fbdedd851c0a67cfc712f804b605ceab64e43b5b91842f5b0ddb1",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-daemon-client/%s/kotlin-daemon-client-%s.jar" % (kotlin_compiler_version, kotlin_compiler_version),
 )
 
 http_file(

@@ -73,6 +73,8 @@ kt_jvm_library(
         "//worker-framework",
         "//zip",
         "kotlin-compiler-for-bazel",
+        "//:kotlinx-coroutines-core_import",
+        "//:opentelemetry-context_import",
     ],
 )
 

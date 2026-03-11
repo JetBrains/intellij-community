@@ -6,6 +6,13 @@ module(
 bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "rules_kotlin", version = "2.2.2")
 
+archive_override(
+    module_name = "rules_kotlin",
+    sha256 = "6c7550c333f10fd49c59a5c05714c2747802077906822be066bc738c10038324",
+    strip_prefix = "rules_kotlin-2f7b666442f78bfcb5fd6360a3150b2938233cef",
+    url = "https://github.com/JetBrains/rules_kotlin/archive/2f7b666442f78bfcb5fd6360a3150b2938233cef.zip",
+)
+
 # the module is supposed to always be overridden with the local version
 bazel_dep(name = "rules_jvm", version = "")
 

@@ -89,6 +89,9 @@ common:windows --legacy_external_runfiles
 # which is we don't need for generator
 build:windows --@rules_kotlin//kotlin/settings:jvm_emit_jdeps=False
 
+# Prune transitive deps to match jvm_library behavior and avoid classpath conflicts
+common --@rules_kotlin//kotlin/settings:experimental_prune_transitive_deps=True
+
 # https://bazel.build/docs/bazel-and-java#config-build-tools-java
 # A second pair of JDK and JVM used to build and execute tools, which are used in the build process, but are not in the build results.
 # That JDK and JVM are controlled using --tool_java_language_version and --tool_java_runtime_version

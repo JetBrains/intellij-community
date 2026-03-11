@@ -455,7 +455,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
       arguments.setLanguageVersion(languageVersion);
     }
     arguments.setProgressiveMode(CLFlags.PROGRESSIVE.isFlagSet(flags));
-    String explicitApiMode = CLFlags.X_EXPLICIT_API_MODE.getOptionalScalarValue(flags);
+    String explicitApiMode = CLFlags.X_EXPLICIT_API.getOptionalScalarValue(flags);
     if (explicitApiMode != null) {
       arguments.setExplicitApi(explicitApiMode);
     }
@@ -466,11 +466,6 @@ public class KotlinCompilerRunner implements CompilerRunner {
     String jvmDefault = CLFlags.JVM_DEFAULT.getOptionalScalarValue(flags);
     if (jvmDefault != null) {
       arguments.setJvmDefaultStable(jvmDefault);
-    }
-    else {
-      // try to migrate from the deprecated option
-      jvmDefault = CLFlags.X_JVM_DEFAULT.getOptionalScalarValue(flags);
-      arguments.setJvmDefaultStable(migrateXJvmDefaultValue(jvmDefault));
     }
     arguments.setInlineClasses(CLFlags.X_INLINE_CLASSES.isFlagSet(flags));
     arguments.setContextReceivers(CLFlags.X_CONTEXT_RECEIVERS.isFlagSet(flags));
@@ -488,15 +483,6 @@ public class KotlinCompilerRunner implements CompilerRunner {
     NodeSourcePathMapper pathMapper = context.getPathMapper();
     arguments.setFreeArgs(collect(flat(map(sources, ns -> pathMapper.toPath(ns).toString()), myJavaSources), new ArrayList<>()));
     return arguments;
-  }
-
-  private static String migrateXJvmDefaultValue(String xjvmDefaultValue) {
-    return xjvmDefaultValue == null? null : switch (xjvmDefaultValue) {
-      case "disable" -> "disable";
-      case "all-compatibility" -> "enable";
-      case "all" -> "no-compatibility";
-      default -> null;
-    };
   }
 
   private static <T> Collection<T> ensureCollection(Iterable<T> seq) {

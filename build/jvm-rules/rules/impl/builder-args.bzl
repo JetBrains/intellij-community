@@ -1,7 +1,7 @@
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_java//java:defs.bzl", "JavaInfo")
 load("//:rules/impl/associates.bzl", "get_associates")
-load("//:rules/impl/kotlinc-options.bzl", "KotlincOptions", "kotlinc_options_to_args")
+load("//:rules/impl/kotlinc-options.bzl", "KotlincExtraOptionsInfo", "KotlincOptions", "kotlinc_options_to_args")
 
 visibility("private")
 
@@ -14,7 +14,9 @@ def init_builder_args(ctx, srcs, resources, associates, transitiveInputs, plugin
     args.add("--target_label", ctx.label)
     args.add("--kotlin_module_name", associates.module_name)
 
-    kotlinc_options = ctx.attr.kotlinc_opts[KotlincOptions]
+    kotlinc_opts_target = ctx.attr.kotlinc_opts
+    kotlinc_options = kotlinc_opts_target[KotlincOptions]
+    kotlinc_extra_options = kotlinc_opts_target[KotlincExtraOptionsInfo]
 
     if associates:
         args.add_all("--friends", associates.jars, map_each = _flatten_jars)
@@ -22,7 +24,7 @@ def init_builder_args(ctx, srcs, resources, associates, transitiveInputs, plugin
     if ctx.attr._trace[BuildSettingInfo].value:
         args.add("--trace")
 
-    kotlinc_options_to_args(kotlinc_options, args)
+    kotlinc_options_to_args(kotlinc_options, args, kotlinc_extra_options)
 
     args.add_all("--srcs", srcs.all_srcs)
     args.add_all("--cp", compile_deps.compile_jars)

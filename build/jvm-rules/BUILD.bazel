@@ -1,8 +1,8 @@
 load("//:jvm.bzl", "jvm_import", "jvm_provided_library", "kt_javac_options", "kt_kotlinc_options")
 load("@bazel_skylib//rules:common_settings.bzl", "bool_flag", "int_flag")
 load("@protobuf//bazel/toolchains:proto_lang_toolchain.bzl", "proto_lang_toolchain")
-load("@rules_java//java:defs.bzl", "java_import")
-load("@rules_kotlin//kotlin:core.bzl", _kt_kotlinc_options = "kt_kotlinc_options")
+load("@rules_java//java:defs.bzl", "java_binary", "java_import")
+load("@rules_kotlin//kotlin:core.bzl", "define_kt_toolchain")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_filegroup", "pkg_files", "strip_prefix")
 load("@rules_pkg//pkg:pkg.bzl", "pkg_zip")
@@ -15,12 +15,55 @@ jvm_import(
   visibility = ["//visibility:public"],
 )
 
-_kt_kotlinc_options(
+kt_kotlinc_options(
     name = "rules_jvm_bootstrap_kotlinc_options",
     include_stdlibs = "none",
     jvm_target = "21",
     visibility = ["//visibility:public"],
     x_jdk_release = "21",
+)
+
+# Controls IC for the custom rules_jvm Kotlin toolchain.
+# Disabled by default to avoid stale compiler-plugin bytecode across backend switches.
+bool_flag(
+    name = "rules_kotlin_incremental_compilation",
+    build_setting_default = False,
+    visibility = ["//visibility:public"],
+)
+
+# Kotlin toolchain for rules_kotlin backend
+define_kt_toolchain(
+    name = "kotlin_toolchain",
+    api_version = "2.3",
+    language_version = "2.3",
+    btapi_build_tools_impl = ":kotlin-build-tools-impl_import",
+    btapi_kotlin_compiler_embeddable = ":kotlin-compiler-embeddable_import",
+    btapi_kotlin_daemon_client = ":kotlin-daemon-client_import",
+    btapi_kotlin_stdlib = ":kotlin-stdlib_import",
+    btapi_kotlin_reflect = ":kotlin-reflect_import",
+    btapi_kotlin_coroutines = ":kotlinx-coroutines-core_import",
+    btapi_annotations = ":annotations_import",
+)
+
+java_binary(
+    name = "resource-jar-builder",
+    srcs = ["rules/impl/ResourceJarBuilder.java"],
+    main_class = "com.intellij.tools.build.bazel.rules.ResourceJarBuilder",
+    visibility = ["//visibility:public"],
+)
+
+# Backend selection flag for jvm_library
+# Usage: bazel build //... --@rules_jvm//:use_rules_kotlin=true
+bool_flag(
+    name = "use_rules_kotlin",
+    build_setting_default = False,
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "rules_kotlin_enabled",
+    flag_values = {":use_rules_kotlin": "True"},
+    visibility = ["//visibility:public"],
 )
 
 # --@rules_jvm//:trace
@@ -129,6 +172,18 @@ jvm_import(
     name = "kotlin-compiler-embeddable_import",
     jar = "@kotlin-compiler-embeddable_http//file",
     visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-daemon-client_import",
+    jar = "@kotlin-daemon-client_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+  name = "kotlin-build-tools-impl_import",
+  jar = "@kotlin-build-tools-impl_http//file",
+  visibility = ["//visibility:public"],
 )
 
 jvm_import(
@@ -372,6 +427,7 @@ kt_javac_options(
 kt_kotlinc_options(
     name = "default-kotlinc-opts-value",
     visibility = ["//visibility:public"],
+    x_lambdas = "class",
 )
 
 label_flag(
