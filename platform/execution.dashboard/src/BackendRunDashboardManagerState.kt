@@ -90,6 +90,10 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
     return sharedAvailableConfigurations.asStateFlow()
   }
 
+  fun getCurrentAvailableConfigurations(): List<RunDashboardConfigurationDto> {
+    return sharedAvailableConfigurations.value
+  }
+
   fun fireExcludedTypesUpdated(excludedTypes: Set<String>) {
     scheduleSharedStateUpdate {
       sharedExcludedTypes.value = excludedTypes
