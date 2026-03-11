@@ -2,13 +2,13 @@
   <id>com.intellij.agent.workbench</id>
   <name>Agent Workbench</name>
   <description><![CDATA[
-    AI-first development workflow plugin for IntelliJ-based IDEs.
+    Run and manage AI coding agents — Codex, Claude, and more — directly inside your IDE.
     <ul>
-      <li><b>Global Prompt Palette</b> — press <code>Cmd+\</code> / <code>Ctrl+\</code> from anywhere to start a new task or continue an existing one. Automatically captures invocation context (selection, file, symbol) and attaches it as context chips.</li>
-      <li><b>Agent Threads</b> — provider-agnostic, project-scoped browser that aggregates sessions from multiple AI providers (Codex, Claude) into a single tree view grouped by project and worktree.</li>
-      <li><b>Chat Editor Tabs</b> — each thread opens in a dedicated terminal-backed editor tab with persistent state across restarts.</li>
-      <li><b>Dedicated Frame Mode</b> — optionally routes all AI chat into a separate IDE frame for parallel task orchestration alongside your normal project window.</li>
-      <li><b>Prompt Context Providers</b> — extensible context system that collects editor selections, VCS changes, project-view selections, and test-runner results to enrich prompts automatically.</li>
+      <li><b>Quick Launch</b> — press <code>Cmd+\</code> / <code>Ctrl+\</code> from anywhere to start a new task or continue an existing one. Your current selection, file, and symbol are attached automatically.</li>
+      <li><b>All Sessions in One Place</b> — browse, reopen, and resume AI sessions across providers, grouped by project.</li>
+      <li><b>Persistent Chat Tabs</b> — each session opens in its own editor tab and survives IDE restarts.</li>
+      <li><b>Separate Window Mode</b> — run AI chat in a dedicated frame so you can work on code and manage tasks side by side.</li>
+      <li><b>Automatic Context</b> — editor selections, VCS changes, project-view selections, and test results are collected and sent with your prompt so the agent has the context it needs.</li>
     </ul>
     <em>Experimental — features are under active development and may change without notice.</em>
   ]]></description>
