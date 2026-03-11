@@ -8,22 +8,20 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.util.coroutines.flow.debounceBatch
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.sample
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 import javax.swing.JComponent
@@ -40,11 +38,16 @@ import kotlin.time.Duration.Companion.milliseconds
  * - **forComponent**: Tied to a [JComponent] visibility lifecycle
  *
  * Supports two execution modes:
- * - **runLatest**: Processes only the latest queued item, cancelling previous execution if still running
- * - **runBatched**: Collects and processes all items accumulated during the delay window
+ * - **runLatest**: Processes only the latest queued item (replaces earlier items with newer ones).
+ *   Actions execute sequentially without cancellation.
+ * - **runBatched**: Collects and processes all items accumulated during the delay window.
+ *   Actions execute sequentially without cancellation.
  *
- * By default, queues use throttling behavior (timer starts once). Use [Builder.restartTimerOnAdd] to enable
- * debouncing behavior (timer resets on each queued item).
+ * Supports two timing modes:
+ * - **Throttle mode** (default, `restartTimerOnAdd = false`): Timer starts on first item, waits for delay
+ *   collecting other items, then processes. Subsequent items don't restart the timer.
+ * - **Debounce mode** (`restartTimerOnAdd = true`): Timer resets on each new item. Only processes after
+ *   a period of inactivity (no new items for the full delay duration).
  *
  * Queues can be cancelled early using [UpdateQueue.cancelOnDispose] to tie them to a [Disposable] lifecycle.
  *
@@ -218,8 +221,8 @@ object DebouncedUpdates {
      * Creates a queue that processes only the latest queued item.
      *
      * If multiple items are queued while waiting for the delay, only the most recent one is processed.
-     * If a new item arrives while the previous action is still executing, the previous execution
-     * is cancelled and the new item is processed instead.
+     * Actions execute sequentially - if a new item arrives while the previous action is still executing,
+     * it waits for the previous action to complete before starting.
      *
      * Example:
      * ```kotlin
@@ -322,28 +325,62 @@ sealed interface UpdateQueue<T> {
 }
 
 /**
- * Helper function to process flow with exception handling.
+ * Core function for processing channel items with manual channel processing.
+ * 
+ * @param restartTimerOnAdd If true, uses debounce mode (timer resets on each new item).
+ *                          If false, uses throttle mode (timer starts on the first item, collects items during delay).
+ * @param onReceive Called when a new item is received. Should either add to the buffer or replace the current item.
+ * @param onProcess Called to process collected items after delay expires.
  */
-private suspend fun <T> Channel<T>.processLatest(
+@OptIn(ExperimentalCoroutinesApi::class)
+private suspend fun <T> Channel<T>.processWithDelay(
   name: String,
   delay: Duration,
   context: CoroutineContext,
   restartTimerOnAdd: Boolean,
-  action: suspend (T) -> Unit
+  onReceive: (T) -> Unit,
+  onProcess: suspend () -> Unit
 ) {
-  val flow = if (restartTimerOnAdd) {
-    receiveAsFlow().debounce(delay)
-  } else {
-    receiveAsFlow().sample(delay)
-  }
+  while (true) {
+    // Wait for first item and add it
+    onReceive(receive())
 
-  flow.collectLatest { item ->
+    if (restartTimerOnAdd) {
+      // Debounce mode: restart timer on each new item
+      var lastItemTime = System.currentTimeMillis()
+      
+      while (true) {
+        val remainingDelay = delay.inWholeMilliseconds - (System.currentTimeMillis() - lastItemTime)
+        if (remainingDelay <= 0) {
+          // Timer expired, process collected items
+          break
+        }
+        
+        // Wait for remaining delay or new item, whichever comes first
+        withTimeoutOrNull(remainingDelay.milliseconds) {
+          onReceive(receive())
+          lastItemTime = System.currentTimeMillis()
+        } ?: break // Timeout - process collected items
+      }
+    } else {
+      // Throttle/sample mode: fixed interval
+      delay(delay)
+      
+      // Collect all remaining items
+      var extraItem = tryReceive().getOrNull()
+      while (extraItem != null) {
+        onReceive(extraItem)
+        extraItem = tryReceive().getOrNull()
+      }
+    }
+
+    // Process the collected items
     try {
       withContext(context) {
-        action(item)
+        onProcess()
       }
     } catch (e: CancellationException) {
-      throw e // Propagate cancellation
+      throw e
     } catch (e: Throwable) {
       logger<DebouncedUpdates>().error("Exception in DebouncedUpdates '$name'", e)
     }
@@ -351,27 +388,52 @@ private suspend fun <T> Channel<T>.processLatest(
 }
 
 /**
- * Helper function to process batched flow with exception handling.
+ * Process latest item only (replaces previous item with new one).
  */
+@OptIn(ExperimentalCoroutinesApi::class)
+private suspend fun <T> Channel<T>.processLatest(
+  name: String,
+  delay: Duration,
+  context: CoroutineContext,
+  restartTimerOnAdd: Boolean,
+  action: suspend (T) -> Unit
+) {
+  var latestItem: T? = null
+  
+  processWithDelay(
+    name = name,
+    delay = delay,
+    context = context,
+    restartTimerOnAdd = restartTimerOnAdd,
+    onReceive = { latestItem = it },
+    onProcess = { action(latestItem!!) }
+  )
+}
+
+/**
+ * Process all items as a batch (collects all items into a list).
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
 private suspend fun <T> Channel<T>.processBatched(
   name: String,
   delay: Duration,
   context: CoroutineContext,
   action: suspend (List<T>) -> Unit
 ) {
-  receiveAsFlow()
-    .debounceBatch(delay)
-    .collect { batch ->
-      try {
-        withContext(context) {
-          action(batch)
-        }
-      } catch (e: CancellationException) {
-        throw e // Propagate cancellation
-      } catch (e: Throwable) {
-        logger<DebouncedUpdates>().error("Exception in DebouncedUpdates '$name'", e)
-      }
+  val buffer = mutableListOf<T>()
+  
+  processWithDelay(
+    name = name,
+    delay = delay,
+    context = context,
+    restartTimerOnAdd = false, // Batched always uses throttle mode
+    onReceive = { buffer.add(it) },
+    onProcess = {
+      val batch = buffer.toList()
+      buffer.clear()
+      action(batch)
     }
+  )
 }
 
 /**
