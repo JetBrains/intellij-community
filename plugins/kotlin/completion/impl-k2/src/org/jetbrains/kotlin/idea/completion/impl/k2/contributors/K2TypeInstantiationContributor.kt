@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.allSupertypes
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.components.buildSubstitutor
+import org.jetbrains.kotlin.analysis.api.components.canBeAnalysed
 import org.jetbrains.kotlin.analysis.api.components.compositeScope
 import org.jetbrains.kotlin.analysis.api.components.defaultType
 import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
@@ -142,6 +143,9 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
 
         val inheritingClasses = expectedType.symbol.psi?.findAllInheritorsWithJavaAnalogs() ?: return
         for (inheritor in inheritingClasses) {
+            // findAllInheritorsWithJavaAnalogs may return classes that cannot be analyzed by the
+            // analysis API because they are not part of the loaded project
+            if (!inheritor.canBeAnalysed()) continue
             completeElementsForSymbol(
                 symbolPsi = inheritor,
                 expectedType = expectedType,
