@@ -11,7 +11,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
@@ -168,30 +167,12 @@ public final class PyDebuggerOptionsProvider implements PersistentStateComponent
   }
 
   /**
-   * Switches to {@code newBackend}, prompting the user to confirm a session restart when sessions are active.
-   *
-   * @return {@code true} if the backend was changed (possibly with a restart), {@code false} if the user cancelled.
+   * Switches to {@code newBackend} and restarts active Python debug sessions if any.
    */
-  public static boolean switchBackendWithRestart(@NotNull Project project, @NotNull PyDebuggerBackend newBackend) {
-    PyDebuggerOptionsProvider options = getInstance(project);
-    if (options.getSelectedBackend() == newBackend) return true;
-    boolean hasSessions = hasActivePythonSessions(project);
-    if (hasSessions) {
-      int result = Messages.showDialog(
-        project,
-        PyBundle.message("debugger.backend.switch.during.session.message"),
-        PyBundle.message("debugger.backend.switch.during.session.title"),
-        new String[]{PyBundle.message("debugger.backend.switch.and.restart"), Messages.getCancelButton()},
-        0,
-        Messages.getWarningIcon()
-      );
-      if (result != 0) return false;
-    }
-    options.setSelectedBackend(newBackend);
-    if (hasSessions) {
-      restartAllPythonSessions(project);
-    }
-    return true;
+  @ApiStatus.Internal
+  public static void switchBackendWithRestart(@NotNull Project project, @NotNull PyDebuggerBackend newBackend) {
+    getInstance(project).setSelectedBackend(newBackend);
+    restartAllPythonSessions(project);
   }
 
   public static void restartAllPythonSessions(@NotNull Project project) {
