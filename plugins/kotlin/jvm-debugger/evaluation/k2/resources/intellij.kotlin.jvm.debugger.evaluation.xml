@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.k2.debugger">
+<idea-plugin package="org.jetbrains.kotlin.idea.k2.debugger" visibility="internal">
   <dependencies>
     <module name="intellij.kotlin.codeInsight.inspections"/>
 
