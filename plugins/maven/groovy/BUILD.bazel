@@ -33,6 +33,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//jps/model-api:model",
     "//platform/util/jdom",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
@@ -85,6 +86,8 @@ jvm_library(
     "//plugins/maven/testFramework:testFramework_test_lib",
     "@lib//:assert_j",
     "@lib//:junit4",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ],
   runtime_deps = [
     "//platform/platform-impl:ide-impl_test_lib",

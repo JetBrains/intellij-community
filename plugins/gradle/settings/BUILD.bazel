@@ -28,6 +28,7 @@ jvm_library(
     "//platform/util",
     "//platform/util/jdom",
     "//platform/object-serializer:objectSerializer-annotations",
+    "//libraries/fastutil",
   ]
 )
 
@@ -50,6 +51,7 @@ jvm_library(
     "//platform/util:util_test_lib",
     "//platform/util/jdom:jdom_test_lib",
     "//platform/object-serializer:objectSerializer-annotations_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
   ]
 )
 ### auto-generated section `build intellij.gradle.settings` end
