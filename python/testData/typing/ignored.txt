@@ -12,6 +12,7 @@ dataclasses_order.py
 dataclasses_match_args.py
 dataclasses_transform_converter.py
 dataclasses_usage.py
+dataclasses_hash.py
 directives_deprecated.py
 directives_version_platform.py
 generics_base_class.py
@@ -41,3 +42,4 @@ specialtypes_never.py
 specialtypes_promotions.py
 specialtypes_type.py
 typeddicts_extra_items.py
+typeforms_typeform.py

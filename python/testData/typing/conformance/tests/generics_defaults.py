@@ -24,46 +24,87 @@ T2 = TypeVar("T2")
 class NonDefaultFollowsDefault(Generic[DefaultStrT, T]): ...  # E: non-default TypeVars cannot follow ones with defaults
 
 
-class NoNonDefaults(Generic[DefaultStrT, DefaultIntT]): ...
+class NoNonDefaults(Generic[DefaultStrT, DefaultIntT]):
+    x: DefaultStrT
+    y: DefaultIntT
 
 
-assert_type(NoNonDefaults, type[NoNonDefaults[str, int]])
-assert_type(NoNonDefaults[str], type[NoNonDefaults[str, int]])
-assert_type(NoNonDefaults[str, int], type[NoNonDefaults[str, int]])
+def test_no_non_defaults(a: NoNonDefaults, b: NoNonDefaults[str], c: NoNonDefaults[str, int]):
+    assert_type(a.x, str)
+    assert_type(a.y, int)
+
+    assert_type(b.x, str)
+    assert_type(b.y, int)
+
+    assert_type(c.x, str)
+    assert_type(c.y, int)
 
 
-class OneDefault(Generic[T, DefaultBoolT]): ...
+class OneDefault(Generic[T, DefaultBoolT]):
+    x: T
+    y: DefaultBoolT
 
 
-assert_type(OneDefault[float], type[OneDefault[float, bool]])
-assert_type(OneDefault[float](), OneDefault[float, bool])
+def test_one_default(a: OneDefault[float], b: OneDefault[float, bool]):
+    assert_type(a.x, float)
+    assert_type(a.y, bool)
+
+    assert_type(b.x, float)
+    assert_type(b.y, bool)
 
 
-class AllTheDefaults(Generic[T1, T2, DefaultStrT, DefaultIntT, DefaultBoolT]): ...
+class AllTheDefaults(Generic[T1, T2, DefaultStrT, DefaultIntT, DefaultBoolT]):
+    x1: T1
+    x2: T2
+    x3: DefaultStrT
+    x4: DefaultIntT
+    x5: DefaultBoolT
 
 
-assert_type(AllTheDefaults, type[AllTheDefaults[Any, Any, str, int, bool]])
-assert_type(
-    AllTheDefaults[int, complex], type[AllTheDefaults[int, complex, str, int, bool]]
-)
+def test_all_the_defaults(
+    a: AllTheDefaults,
+    b: AllTheDefaults[int],  # E: expected 2 arguments to AllTheDefaults
+    c: AllTheDefaults[int, complex],
+    d: AllTheDefaults[int, complex, str, int, bool],
+    e: AllTheDefaults[int, complex, str],
+    f: AllTheDefaults[int, complex, str, int],
+    g: AllTheDefaults[int, complex, str, int, bool],
+):
+    assert_type(a.x1, Any)
+    assert_type(a.x2, Any)
+    assert_type(a.x3, str)
+    assert_type(a.x4, int)
+    assert_type(a.x5, bool)
 
-AllTheDefaults[int]  # E: expected 2 arguments to AllTheDefaults
+    assert_type(c.x1, int)
+    assert_type(c.x2, complex)
+    assert_type(c.x3, str)
+    assert_type(c.x4, int)
+    assert_type(c.x5, bool)
 
-assert_type(
-    AllTheDefaults[int, complex], type[AllTheDefaults[int, complex, str, int, bool]]
-)
-assert_type(
-    AllTheDefaults[int, complex, str],
-    type[AllTheDefaults[int, complex, str, int, bool]],
-)
-assert_type(
-    AllTheDefaults[int, complex, str, int],
-    type[AllTheDefaults[int, complex, str, int, bool]],
-)
-assert_type(
-    AllTheDefaults[int, complex, str, int, bool],
-    type[AllTheDefaults[int, complex, str, int, bool]],
-)
+    assert_type(d.x1, int)
+    assert_type(d.x2, complex)
+    assert_type(d.x3, str)
+    assert_type(d.x4, int)
+    assert_type(d.x5, bool)
+
+    assert_type(e.x1, int)
+    assert_type(e.x2, complex)
+    assert_type(e.x3, str)
+    assert_type(e.x4, int)
+    assert_type(e.x5, bool)
+
+    assert_type(f.x1, int)
+    assert_type(f.x2, complex)
+    assert_type(f.x3, str)
+    assert_type(f.x4, int)
+    assert_type(f.x5, bool)
+
+    assert_type(g.x1, int)
+    assert_type(g.x2, complex)
+    assert_type(g.x3, str)
+    assert_type(g.x4, int)
+    assert_type(g.x5, bool)
 
 
 # > ``ParamSpec`` defaults are defined using the same syntax as
@@ -73,12 +114,14 @@ assert_type(
 DefaultP = ParamSpec("DefaultP", default=[str, int])
 
 
-class Class_ParamSpec(Generic[DefaultP]): ...
+class Class_ParamSpec(Generic[DefaultP]):
+    x: Callable[DefaultP, None]
 
 
-assert_type(Class_ParamSpec, type[Class_ParamSpec[str, int]])
-assert_type(Class_ParamSpec(), Class_ParamSpec[str, int])
-assert_type(Class_ParamSpec[[bool, bool]](), Class_ParamSpec[bool, bool])
+def test_param_spec_defaults(a: Class_ParamSpec):
+    assert_type(a.x, Callable[[str, int], None])
+    assert_type(Class_ParamSpec(), Class_ParamSpec[str, int])
+    assert_type(Class_ParamSpec[[bool, bool]](), Class_ParamSpec[bool, bool])
 
 
 # > ``TypeVarTuple`` defaults are defined using the same syntax as
@@ -88,12 +131,14 @@ assert_type(Class_ParamSpec[[bool, bool]](), Class_ParamSpec[bool, bool])
 DefaultTs = TypeVarTuple("DefaultTs", default=Unpack[tuple[str, int]])
 
 
-class Class_TypeVarTuple(Generic[*DefaultTs]): ...
+class Class_TypeVarTuple(Generic[*DefaultTs]):
+    x: tuple[*DefaultTs]
 
 
-assert_type(Class_TypeVarTuple, type[Class_TypeVarTuple[*tuple[str, int]]])
-assert_type(Class_TypeVarTuple(), Class_TypeVarTuple[str, int])
-assert_type(Class_TypeVarTuple[int, bool](), Class_TypeVarTuple[int, bool])
+def test_type_var_tuple_defaults(a: Class_TypeVarTuple):
+    assert_type(a.x, tuple[str, int])
+    assert_type(Class_TypeVarTuple(), Class_TypeVarTuple[str, int])
+    assert_type(Class_TypeVarTuple[int, bool](), Class_TypeVarTuple[int, bool])
 
 
 AnotherDefaultTs = TypeVarTuple("AnotherDefaultTs", default=Unpack[DefaultTs])
@@ -150,11 +195,17 @@ class Foo5(Generic[*Ts, T5]): ...  # E
 P = ParamSpec("P", default=[float, bool])
 
 
-class Foo6(Generic[*Ts, P]): ...  # OK
+class Foo6(Generic[*Ts, P]):
+    x: tuple[*Ts]
+    y: Callable[P, None]
 
 
-assert_type(Foo6[int, str], type[Foo6[int, str, [float, bool]]])
-assert_type(Foo6[int, str, [bytes]], type[Foo6[int, str, [bytes]]])
+def test_foo6(a: Foo6[int, str], b: Foo6[int, str, [bytes]]):
+    assert_type(a.x, tuple[int, str])
+    assert_type(a.y, Callable[[float, bool], None])
+
+    assert_type(b.x, tuple[int, str])
+    assert_type(b.y, Callable[[bytes], None])
 
 
 # > Type parameter defaults should be bound by attribute access
