@@ -115,6 +115,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
+    "@lib//:kotlin-test",
     "//platform/core-impl",
     "//libraries/kotlinx/coroutines/debug",
   ]
@@ -130,6 +131,7 @@ jvm_library(
     ":util-tests_test_resources_1",
   ],
   deps = [
+    "@lib//:kotlin-test",
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-ui",
