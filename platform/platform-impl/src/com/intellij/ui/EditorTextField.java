@@ -840,8 +840,11 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   }
 
   private void updateVisualPaddings(@NotNull UnscaledGaps visualPaddings) {
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, visualPaddings);
+
     var parent = getParent();
     if (parent != null && parent.getLayout() instanceof GridLayout) {
+      // Update padding if the editor text field is already in the view hierarchy
       GridLayoutKt.setVisualPadding(this, visualPaddings);
     }
   }
