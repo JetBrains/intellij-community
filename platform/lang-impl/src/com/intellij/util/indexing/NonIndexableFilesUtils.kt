@@ -5,6 +5,7 @@ package com.intellij.util.indexing
 
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
@@ -13,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
@@ -35,7 +37,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @RequiresBackgroundThread
 @RequiresReadLock
-fun WorkspaceFileIndexEx.nonIndexableRoots(fileSetFilter: (WorkspaceFileSet) -> Boolean = { true }): Set<VirtualFile> {
+fun WorkspaceFileIndexEx.nonIndexableRootsAsCacheAvoiding(fileSetFilter: (WorkspaceFileSet) -> Boolean = { true }): Set<VirtualFile> {
   val roots = mutableSetOf<VirtualFile>()
   visitFileSets { fileSet, _ ->
     val root = fileSet.root
@@ -51,13 +53,15 @@ fun WorkspaceFileIndexEx.nonIndexableRoots(fileSetFilter: (WorkspaceFileSet) -> 
 internal fun iterateNonIndexableFilesImpl(project: Project, inputFilter: VirtualFileFilter?, processor: ContentIterator): Boolean {
   val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
   val roots: Set<VirtualFile> =
-    ReadAction.nonBlocking<Set<VirtualFile>> { workspaceFileIndex.nonIndexableRoots() }.executeSynchronously()
+    ReadAction.nonBlocking<Set<VirtualFile>> { workspaceFileIndex.nonIndexableRootsAsCacheAvoiding() }.executeSynchronously()
   return workspaceFileIndex.iterateNonIndexableFilesImpl(roots, inputFilter ?: VirtualFileFilter.ALL, processor)
 }
 
-private data class AllFileSets(val recursive: List<WorkspaceFileSet>, val nonRecursive: List<WorkspaceFileSet>)
+@ApiStatus.Internal
+data class AllFileSets(val recursive: List<WorkspaceFileSet>, val nonRecursive: List<WorkspaceFileSet>)
 
-private fun WorkspaceFileIndex.allIndexableFileSets(root: VirtualFile): AllFileSets {
+@ApiStatus.Internal
+fun WorkspaceFileIndex.allIndexableFileSets(root: VirtualFile): AllFileSets {
   val indexableFileSets = runReadActionBlocking {
     findFileSets(root, true, true, false, true, true, false, true)
   }
@@ -66,7 +70,8 @@ private fun WorkspaceFileIndex.allIndexableFileSets(root: VirtualFile): AllFileS
     .let { (recursive, nonRecursive) -> AllFileSets(recursive, nonRecursive) }
 }
 
-private fun WorkspaceFileIndexEx.isExcludedOrInvalid(file: VirtualFile): Boolean {
+@ApiStatus.Internal
+fun WorkspaceFileIndexEx.isExcludedOrInvalid(file: VirtualFile): Boolean {
   val info = runReadActionBlocking {
     getFileInfo(file, true, true, true, true, true, true, true)
   }
@@ -130,19 +135,54 @@ interface FilesDeque {
     ): FilesDeque {
       val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
       val roots = when {
-          searchInLibraries -> workspaceFileIndex.nonIndexableRoots()
-          else -> workspaceFileIndex.nonIndexableRoots { fileSet -> fileSet.kind.isContent }
+          searchInLibraries -> workspaceFileIndex.nonIndexableRootsAsCacheAvoiding()
+          else -> workspaceFileIndex.nonIndexableRootsAsCacheAvoiding { fileSet -> fileSet.kind.isContent }
       }
       return NonIndexableFilesDequeImpl(project, roots, filter)
     }
   }
 }
 
-private class NonIndexableFilesDequeImpl(
+@ApiStatus.Internal
+class NonIndexableFilesDequeImpl internal constructor(
   private val project: Project,
   private val roots: Set<VirtualFile>,
   private val filter: VirtualFileFilter,
 ) : FilesDeque {
+
+  companion object {
+    @JvmStatic
+    @ApiStatus.Internal
+    fun shouldProcessFileAndListChildrenIfTheyShouldBe(project: Project, file: VirtualFile, childrenProcessor: (Array<VirtualFile>) -> Unit): Boolean {
+      val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
+      return shouldProcessFileAndListChildrenIfTheyShouldBe(workspaceFileIndex, file, childrenProcessor)
+    }
+
+    @JvmStatic
+    @ApiStatus.Internal
+    fun shouldProcessFileAndListChildrenIfTheyShouldBe(workspaceFileIndex: WorkspaceFileIndexEx, file: VirtualFile, childrenProcessor: (Array<VirtualFile>) -> Unit): Boolean {
+      if (workspaceFileIndex.isExcludedOrInvalid(file)) return false
+      val indexableFileSetsFromFile = workspaceFileIndex.allIndexableFileSets(file)
+      if (indexableFileSetsFromFile.recursive.isNotEmpty()) return false
+
+      // This cancellation is not installed when run from under coroutines
+      // Hence this generally does nothing but enabling the inline execution of DiskQueryRelay
+      // Since we are on a polled thread without global lock model affinity here, we don't care
+      // (vfs has internal consistency)
+      // Would be great but the plaform callsites don't allow this
+      //ThreadingAssertions.assertBackgroundThread()
+      //ThreadingAssertions.assertNoReadAccess()
+      Cancellation.executeInNonCancelableSection {
+        if (file.isValid && !file.isRecursiveOrCircularSymlink) {
+          val children = file.children
+          childrenProcessor(children)
+        }
+      }
+      if (indexableFileSetsFromFile.nonRecursive.isNotEmpty()) return false // skip only the current file, children can be non-indexable
+      return true
+    }
+  }
+
   private val bfsQueue: ArrayDeque<VirtualFile> = ArrayDeque(roots)
   private val visitedRoots: MutableSet<VirtualFile> = mutableSetOf()
 
@@ -153,16 +193,10 @@ private class NonIndexableFilesDequeImpl(
       if (file in visitedRoots) continue
       if (file in roots) visitedRoots.add(file)
 
-      val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
-      if (workspaceFileIndex.isExcludedOrInvalid(file)) continue
-      val indexableFileSets = WorkspaceFileIndexEx.getInstance(project).allIndexableFileSets(file)
-
-      if (indexableFileSets.recursive.isNotEmpty()) continue // skip the current file and their children
-      if (file.isValid && !file.isRecursiveOrCircularSymlink) {
-        val children = file.children
-        if (children != null) bfsQueue.addAll(children)
+      val shouldProcessSelf = shouldProcessFileAndListChildrenIfTheyShouldBe(project, file) { children ->
+        bfsQueue.addAll(children)
       }
-      if (indexableFileSets.nonRecursive.isNotEmpty()) continue // skip only the current file, children can be non-indexable
+      if (!shouldProcessSelf) continue
       if (!runReadActionBlocking { filter.accept(file) }) continue // skip only the current file, children can pass the filter
 
       return file

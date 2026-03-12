@@ -71,6 +71,13 @@ public abstract class SearchScope {
   public abstract boolean contains(@NotNull VirtualFile file);
 
   /**
+   * Some search scopes are defined via a test against the workspace file index in contains(). It lags in NonIndexableFileSEContributor
+   * when mass-listing directories. This function is an opportunity to fix that.
+   */
+  @ApiStatus.Internal
+  public boolean containsNonIndexed(@NotNull VirtualFile file) { return contains(file); }
+
+  /**
    * @return true if the scope is a special constant denoting an empty GlobalSearchScope or LocalSearchScope
    */
   public static boolean isEmptyScope(@NotNull SearchScope scope) {
