@@ -1,10 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -65,6 +67,16 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
         assertFileIsFromCorrectProject(virtualFile);
       }
     }
+    return psiFile;
+  }
+
+  @Override
+  public @Nullable PsiFile getPsiFile(@NotNull Document document, @NotNull CodeInsightContext context) {
+    if (myUiPsiSupport.isUiDocument(document)) {
+      return myUiPsiSupport.getPsiFile(document, context);
+    }
+    PsiFile psiFile = super.getPsiFile(document, context);
+    myUiPsiSupport.recordRealPsiFile(document, psiFile);
     return psiFile;
   }
 
@@ -141,7 +153,7 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
                                               boolean synchronously) {
     boolean success = super.finishCommitInWriteAction(document, finishProcessors, reparseInjectedProcessors, synchronously);
     PsiFile file = getCachedPsiFile(document);
-    myUiPsiSupport.recordRealPsiFile(document, file);
+    recordCachedRealPsiFiles(document);
     if (file != null) {
       InjectedLanguageManagerImpl.clearInvalidInjections(file);
     }
@@ -250,5 +262,15 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
     boolean success = super.commitAllDocumentsUnderProgress();
     IdeEventQueue.getInstance().setEventCount(eventCount);
     return success;
+  }
+
+  private void recordCachedRealPsiFiles(@NotNull Document document) {
+    if (EditorLockFreeTyping.isEnabled()) {
+      List<FileViewProvider> viewProviders = getCachedViewProviders(document);
+      for (FileViewProvider viewProvider : viewProviders) {
+        PsiFile psiFile = viewProvider.getPsi(viewProvider.getBaseLanguage());
+        myUiPsiSupport.recordRealPsiFile(document, psiFile);
+      }
+    }
   }
 }

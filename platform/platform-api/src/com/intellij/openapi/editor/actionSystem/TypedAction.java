@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.actionSystem;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -45,14 +46,24 @@ public abstract class TypedAction {
   public void beforeActionPerformed(@NotNull Editor editor, char c, @NotNull DataContext context, @NotNull ActionPlan plan) {
     assertLocalEditorSupport(editor);
     if (rawHandler instanceof TypedActionHandlerEx rawHandlerEx) {
-      rawHandlerEx.beforeExecute(editor, c, context, plan);
+      useUiPsiForDocument(editor, true);
+      try {
+        rawHandlerEx.beforeExecute(editor, c, context, plan);
+      } finally {
+        useUiPsiForDocument(editor, false);
+      }
     }
   }
 
   public final void actionPerformed(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
     assertLocalEditorSupport(editor);
     try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
-      rawHandler.execute(editor, charTyped, dataContext);
+      useUiPsiForDocument(editor, true);
+      try {
+        rawHandler.execute(editor, charTyped, dataContext);
+      } finally {
+        useUiPsiForDocument(editor, false);
+      }
     }
   }
 
@@ -175,6 +186,12 @@ public abstract class TypedAction {
     catch (Exception e) {
       LOG.error(new PluginException(e, pluginDescriptor.getPluginId()));
       return null;
+    }
+  }
+
+  private static void useUiPsiForDocument(@NotNull Editor editor, boolean value) {
+    if (EditorLockFreeTyping.isEnabled()) {
+      editor.getDocument().putUserData(EditorLockFreeTyping.USE_UI_PSI_FOR_DOCUMENT_KEY, value);
     }
   }
 }

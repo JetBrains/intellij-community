@@ -7,7 +7,6 @@ import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
@@ -111,11 +110,6 @@ public final class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
     ensureValid(psiFile);
 
     if (psiFile instanceof PsiFileWithOneLanguage) {
-      return psiFile;
-    }
-
-    if (!EditorLockFreeTyping.isPsiInteractionAllowed()) {
-      // TODO: rework for lock-free typing, getLanguageInEditor (findLanguageFromElement) requires RA on EDT
       return psiFile;
     }
 
