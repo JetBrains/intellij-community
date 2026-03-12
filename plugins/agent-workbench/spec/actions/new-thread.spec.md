@@ -58,14 +58,14 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 - Loading project/worktree rows must suppress new-session affordances.
   [@test] ../../sessions/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
 
-- Quick-provider action (when eligible) must launch standard mode with `lastUsedProvider`.
+- Quick-provider action (when eligible) must launch with `lastUsedProvider` and `lastUsedLaunchMode`; defaults to `STANDARD` when no launch mode preference is stored.
 - Quick-provider action and provider-popup entries must follow the global dedicated-frame routing policy; they do not force the clicked source frame.
   [@test] ../../sessions/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
   [@test] ../../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
 
 - Quick-provider eligibility must require:
   - a non-null `lastUsedProvider`,
-  - bridge support for `STANDARD`.
+  - bridge support for the resolved launch mode (`STANDARD` or `YOLO`); falls back to `STANDARD` when the last-used provider does not support the stored launch mode.
   [@test] ../../sessions/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
 
 - Provider popup must include Standard entries and YOLO entries (`toolwindow.action.new.session.section.auto`) when launch mode support is available.
@@ -77,7 +77,7 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
   [@test] ../../sessions/testSrc/AgentSessionsTreePopupActionsTest.kt
 
 - Editor-tab new-thread controls must expose two separate actions:
-  - quick-provider action that launches `STANDARD` mode for eligible `lastUsedProvider`,
+  - quick-provider action that launches with `lastUsedProvider` and `lastUsedLaunchMode` (defaults to `STANDARD`),
   - popup-only Add action with provider entries and optional YOLO section.
   [@test] ../../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
   [@test] ../../sessions/testSrc/AgentSessionsGearActionsTest.kt

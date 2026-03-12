@@ -14,6 +14,7 @@ import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionPro
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
+import com.intellij.agent.workbench.sessions.core.providers.withYoloModeBadge
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -41,8 +42,9 @@ fun buildNewThreadMenuModel(bridges: List<AgentSessionProviderBridge>): AgentSes
 fun buildNewThreadActionModel(
   bridges: List<AgentSessionProviderBridge>,
   lastUsedProvider: AgentSessionProvider?,
+  lastUsedLaunchMode: AgentSessionLaunchMode? = null,
 ): AgentSessionProviderActionModel {
-  return buildAgentSessionProviderActionModel(bridges, lastUsedProvider)
+  return buildAgentSessionProviderActionModel(bridges, lastUsedProvider, lastUsedLaunchMode)
 }
 
 fun launchQuickStartThread(
@@ -53,7 +55,7 @@ fun launchQuickStartThread(
   createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit,
 ) {
   val item = quickStartItem ?: return
-  createNewSession(path, item.bridge.provider, AgentSessionLaunchMode.STANDARD, project, entryPoint)
+  createNewSession(path, item.bridge.provider, item.mode, project, entryPoint)
 }
 
 fun buildNewThreadMenuActions(
@@ -101,7 +103,7 @@ private class AgentSessionsCreateThreadAction(
   private val project: Project,
   private val entryPoint: AgentWorkbenchEntryPoint,
   private val createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit,
-) : DumbAwareAction(AgentSessionsBundle.message(item.labelKey), null, providerIcon(item.bridge.provider)) {
+) : DumbAwareAction(AgentSessionsBundle.message(item.labelKey), null, providerIconWithMode(item.bridge.provider, item.mode)) {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = item.isEnabled
     e.presentation.description = if (item.isEnabled) {
@@ -137,4 +139,12 @@ internal fun providerDisplayName(provider: AgentSessionProvider): @NlsSafe Strin
 
 internal fun providerIcon(provider: AgentSessionProvider): Icon? {
   return AgentSessionProviderBridges.find(provider)?.icon
+}
+
+internal fun providerIconWithMode(provider: AgentSessionProvider, mode: AgentSessionLaunchMode): Icon? {
+  val icon = providerIcon(provider) ?: return null
+  if (mode == AgentSessionLaunchMode.YOLO) {
+    return withYoloModeBadge(icon)
+  }
+  return icon
 }

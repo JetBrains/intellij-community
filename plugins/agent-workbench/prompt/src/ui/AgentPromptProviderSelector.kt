@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.agent.workbench.prompt.AgentPromptBundle
 import com.intellij.agent.workbench.prompt.context.dataContextOrNull
+import com.intellij.agent.workbench.sessions.core.providers.withYoloModeBadge
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationData
@@ -23,12 +24,9 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.ui.BadgeDotProvider
-import com.intellij.ui.BadgeIcon
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.DialogUtil
-import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 import javax.swing.JPanel
@@ -236,7 +234,7 @@ internal class AgentPromptProviderSelector(
 
   private fun getIcon(baseIcon: Icon, mode: AgentSessionLaunchMode): Icon {
     if (mode == AgentSessionLaunchMode.YOLO) {
-      return BadgeIcon(baseIcon, JBUI.CurrentTheme.IconBadge.ERROR, BadgeDotProvider())
+      return withYoloModeBadge(baseIcon)
     }
     return baseIcon
   }

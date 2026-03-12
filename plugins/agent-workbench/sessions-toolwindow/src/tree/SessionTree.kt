@@ -449,11 +449,13 @@ internal fun shouldRetargetSelectionForContextMenu(isClickedPathSelected: Boolea
 internal data class NewSessionRowActions(
   @JvmField val path: String,
   val quickProvider: AgentSessionProvider?,
+  val quickLaunchMode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
 )
 
 internal fun resolveNewSessionRowActions(
   node: SessionTreeNode,
   lastUsedProvider: AgentSessionProvider?,
+  lastUsedLaunchMode: AgentSessionLaunchMode? = null,
 ): NewSessionRowActions? {
   val path = when (node) {
     is SessionTreeNode.Project -> node.project.path
@@ -468,24 +470,44 @@ internal fun resolveNewSessionRowActions(
     is SessionTreeNode.MoreProjects,
     is SessionTreeNode.MoreThreads -> return null
   }
+  val (quickProvider, quickLaunchMode) = resolveQuickCreateProviderAndMode(lastUsedProvider, lastUsedLaunchMode)
   return NewSessionRowActions(
     path = path,
-    quickProvider = resolveQuickCreateProvider(lastUsedProvider),
+    quickProvider = quickProvider,
+    quickLaunchMode = quickLaunchMode,
   )
 }
 
-internal fun resolveQuickCreateProvider(lastUsedProvider: AgentSessionProvider?): AgentSessionProvider? {
-  val standardProviders = AgentSessionProviderBridges.allBridges()
+internal fun resolveQuickCreateProvider(lastUsedProvider: AgentSessionProvider?): AgentSessionProvider? =
+  resolveQuickCreateProviderAndMode(lastUsedProvider, null).first
+
+private fun resolveQuickCreateProviderAndMode(
+  lastUsedProvider: AgentSessionProvider?,
+  lastUsedLaunchMode: AgentSessionLaunchMode?,
+): Pair<AgentSessionProvider?, AgentSessionLaunchMode> {
+  val bridges = AgentSessionProviderBridges.allBridges()
+
+  if (lastUsedLaunchMode == AgentSessionLaunchMode.YOLO) {
+    val yoloProviders = bridges
+      .filter { bridge -> AgentSessionLaunchMode.YOLO in bridge.supportedLaunchModes }
+      .map { bridge -> bridge.provider }
+    if (lastUsedProvider != null && lastUsedProvider in yoloProviders) {
+      return lastUsedProvider to AgentSessionLaunchMode.YOLO
+    }
+  }
+
+  val standardProviders = bridges
     .filter { bridge -> AgentSessionLaunchMode.STANDARD in bridge.supportedLaunchModes }
     .map { bridge -> bridge.provider }
-  if (standardProviders.isEmpty()) return null
+  if (standardProviders.isEmpty()) return null to AgentSessionLaunchMode.STANDARD
 
-  return if (lastUsedProvider != null && lastUsedProvider in standardProviders) {
+  val provider = if (lastUsedProvider != null && lastUsedProvider in standardProviders) {
     lastUsedProvider
   }
   else {
     standardProviders.first()
   }
+  return provider to AgentSessionLaunchMode.STANDARD
 }
 
 internal fun pathForMoreThreadsNode(id: SessionTreeId): String? {

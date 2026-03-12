@@ -65,18 +65,28 @@ fun buildAgentSessionProviderMenuModel(bridges: List<AgentSessionProviderBridge>
 fun buildAgentSessionProviderActionModel(
   bridges: List<AgentSessionProviderBridge>,
   lastUsedProvider: AgentSessionProvider?,
+  lastUsedLaunchMode: AgentSessionLaunchMode? = null,
 ): AgentSessionProviderActionModel {
   val menuModel = buildAgentSessionProviderMenuModel(bridges)
   return AgentSessionProviderActionModel(
     menuModel = menuModel,
-    quickStartItem = resolveQuickStartProviderItem(menuModel, lastUsedProvider),
+    quickStartItem = resolveQuickStartProviderItem(menuModel, lastUsedProvider, lastUsedLaunchMode),
   )
 }
 
 private fun resolveQuickStartProviderItem(
   menuModel: AgentSessionProviderMenuModel,
   lastUsedProvider: AgentSessionProvider?,
+  lastUsedLaunchMode: AgentSessionLaunchMode?,
 ): AgentSessionProviderMenuItem? {
+  if (lastUsedLaunchMode == AgentSessionLaunchMode.YOLO) {
+    val yoloItems = menuModel.yoloItems.filter { it.isEnabled }
+    val preferredYoloItem = lastUsedProvider?.let { provider ->
+      yoloItems.firstOrNull { item -> item.bridge.provider == provider }
+    }
+    if (preferredYoloItem != null) return preferredYoloItem
+  }
+
   val standardItems = menuModel.standardItems.filter { it.isEnabled }
   if (standardItems.isEmpty()) return null
 
