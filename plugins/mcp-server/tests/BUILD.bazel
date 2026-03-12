@@ -1,3 +1,9 @@
+### auto-generated section `iml intellij.mcpserver.tests` start
+exports_files([
+  "intellij.mcpserver.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.mcpserver.tests` end
+
 ### auto-generated section `build intellij.mcpserver.tests` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
@@ -41,6 +47,8 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//plugins/terminal",
+    "//platform/execution",
+    "//platform/execution-impl",
   ],
   runtime_deps = [":tests"]
 )
