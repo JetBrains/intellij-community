@@ -336,8 +336,9 @@ object DebouncedUpdates {
 sealed interface UpdateQueue<T> {
   /**
    * Queues an item for processing.
-   *
-   * @throws IllegalArgumentException if the queue is closed (e.g., scope was cancelled, component was removed, or [cancelOnDispose] was triggered)
+   * 
+   * If the queue is closed (e.g., scope was cancelled, component was removed, or [cancelOnDispose] was triggered),
+   * the call is silently ignored and a warning is logged.
    */
   fun queue(item: T)
 
@@ -418,7 +419,10 @@ private abstract class BaseUpdateQueue<T>(
   protected var isCollecting: Boolean = false
 
   override fun queue(item: T) {
-    require(job.isActive) { "Cannot queue to cancelled UpdateQueue '$name'" }
+    if (!job.isActive) {
+      logger<DebouncedUpdates>().warn("Ignoring queue() call to cancelled UpdateQueue '$name'")
+      return
+    }
     val result = channel.trySend(item)
     check(result.isSuccess) { "Failed to send value to channel in UpdateQueue '$name': $result" }
   }

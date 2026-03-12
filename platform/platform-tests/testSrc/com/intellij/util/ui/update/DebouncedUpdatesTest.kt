@@ -285,28 +285,39 @@ class DebouncedUpdatesTest {
   }
 
   @Test
-  fun `test queue after scope cancellation throws`() {
+  fun `test queue after scope cancellation logs warning and skips`() {
     timeoutRunBlocking {
       val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+      var actionExecuted = false
 
-      val queue = DebouncedUpdates.forScope<Int>(scope, "test-throw", 50.milliseconds)
+      val queue = DebouncedUpdates.forScope<Int>(scope, "test-cancelled", 50.milliseconds)
         .runLatest {
-          // Should never execute
-          fail("Should not execute after scope cancellation")
+          actionExecuted = true
         }
 
       // Cancel the scope
       scope.cancel()
       delay(50.milliseconds) // Give time for cancellation to propagate
 
-      // Try to queue after cancellation - should throw
-      try {
+      // Try to queue after cancellation - should log warning and skip silently
+      val warnings = mutableListOf<String>()
+      LoggedErrorProcessor.executeWith<Exception>(object : LoggedErrorProcessor() {
+        override fun processWarn(category: String, message: String, t: Throwable?): Boolean {
+          warnings.add(message)
+          return true
+        }
+      }, {
         queue.queue(1)
-        fail("Expected IllegalArgumentException to be thrown")
-      }
-      catch (e: IllegalArgumentException) {
-        assertTrue(e.message?.contains("cancelled") == true, "Exception message should mention cancellation")
-      }
+      })
+
+      // Verify warning was logged
+      assertTrue(warnings.size == 1, "Expected exactly one warning, got ${warnings.size}")
+      assertTrue(warnings[0].contains("cancelled") && warnings[0].contains("test-cancelled"),
+                 "Warning should mention cancellation and queue name, got: ${warnings[0]}")
+
+      // Verify action was not executed
+      delay(100.milliseconds) // Give time for any potential execution
+      assertTrue(!actionExecuted, "Action should not execute after scope cancellation")
     }
   }
 
@@ -414,14 +425,10 @@ class DebouncedUpdatesTest {
         // Second value should not execute after disposal
         assertEquals(1, executions.get(), "Second value should not execute after disposal")
 
-        // Try to queue after disposal - should throw
-        try {
-          queue.queue(3)
-          fail("Expected IllegalArgumentException to be thrown after disposal")
-        }
-        catch (e: IllegalArgumentException) {
-          assertTrue(e.message?.contains("cancelled") == true, "Exception should mention cancellation")
-        }
+        // Try to queue after disposal - should log warning and skip silently (verified in other test)
+        queue.queue(3)
+        delay(100.milliseconds)
+        assertEquals(1, executions.get(), "Third value should not execute after disposal")
       }
       finally {
         Disposer.dispose(disposable)
