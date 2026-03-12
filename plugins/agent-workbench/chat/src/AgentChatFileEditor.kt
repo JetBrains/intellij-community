@@ -18,6 +18,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
+import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
@@ -88,6 +89,7 @@ internal class AgentChatFileEditor(
   private var initializationStarted: Boolean = false
   private var disposed: Boolean = false
   private var pendingInitialMessageJob: Job? = null
+  private var codexTuiPatchFoldController: CodexTuiPatchFoldController? = null
 
   private val providerBehavior
     get() = file.provider?.let(AgentSessionProviderBehaviors::find)
@@ -120,6 +122,8 @@ internal class AgentChatFileEditor(
 
   override fun dispose() {
     disposed = true
+    codexTuiPatchFoldController?.dispose()
+    codexTuiPatchFoldController = null
     pendingInitialMessageJob?.cancel()
     pendingInitialMessageJob = null
     tab?.let { terminalTab ->
@@ -140,6 +144,15 @@ internal class AgentChatFileEditor(
       subscribePendingFirstInput(createdTab)
       subscribeConcreteCodexNewThreadRebind(createdTab)
       scheduleInitialMessageSend(createdTab)
+      codexTuiPatchFoldController = createdTab.terminalView
+        ?.takeIf { shouldInstallCodexTuiPatchFolding(file.provider) }
+        ?.let { terminalView ->
+          CodexTuiPatchFoldController(
+            terminalView = terminalView,
+            sessionState = createdTab.sessionState,
+            parentScope = createdTab.coroutineScope,
+          )
+        }
       component.removeAll()
       component.add(createdTab.component, BorderLayout.CENTER)
       component.revalidate()
@@ -280,6 +293,8 @@ internal interface AgentChatTerminalTab {
   val coroutineScope: CoroutineScope
   val sessionState: StateFlow<TerminalViewSessionState>
   val keyEventsFlow: Flow<TerminalKeyEvent>
+  val terminalView: TerminalView?
+    get() = null
 
   suspend fun awaitInitialMessageReadiness(timeoutMs: Long, idleMs: Long): AgentChatTerminalInputReadiness
 
@@ -357,6 +372,9 @@ private class ToolWindowAgentChatTerminalTab(
 
   override val keyEventsFlow: Flow<TerminalKeyEvent>
     get() = delegate.view.keyEventsFlow
+
+  override val terminalView: TerminalView
+    get() = delegate.view
 
   override suspend fun awaitInitialMessageReadiness(timeoutMs: Long, idleMs: Long): AgentChatTerminalInputReadiness {
     val outputModels = delegate.view.outputModels

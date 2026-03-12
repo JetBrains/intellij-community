@@ -31,4 +31,10 @@
     <module name="intellij.agent.workbench.chat"/>
     <module name="intellij.agent.workbench.filewatch"/>
   </content>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="agent.workbench.codex.tui.patch.folding"
+                 defaultValue="false"
+                 description="Collapse large Codex TUI patch transcripts in Agent Workbench chat tabs"/>
+  </extensions>
 </idea-plugin>
