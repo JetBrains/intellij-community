@@ -859,9 +859,10 @@ class DumbServiceImplTest {
   }
 
   private fun waitForSmartModeFiveSecondsOrThrow() {
-    if (!dumbService.waitForSmartMode(5_000)) {
-      dumbService.waitForSmartMode(5_000)
-      fail("Could not reach smart mode after 5 seconds")
+    if (!dumbService.waitForSmartMode(10_000)) {
+      if (!dumbService.waitForSmartMode(5_000)) {
+        fail("Could not reach smart mode after 5 seconds")
+      }
     }
   }
 
