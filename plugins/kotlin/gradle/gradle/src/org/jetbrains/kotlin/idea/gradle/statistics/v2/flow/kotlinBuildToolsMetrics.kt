@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradle.statistics.v2.flow
 
 //metric name and enum should be the same: KDoc + test, + version + test
@@ -42,11 +42,25 @@ enum class KotlinBuildToolFusMetricName(val metric: KotlinBuildToolFusMetric<*>)
     KOTLIN_NATIVE_CACHE_DISABLED(KotlinBuildToolBooleanFusMetric("KOTLIN_NATIVE_CACHE_DISABLED")),
     KMP_TOP_LEVEL_DEPENDENCIES_BLOCK(KotlinBuildToolBooleanFusMetric("KMP_TOP_LEVEL_DEPENDENCIES_BLOCK")),
 
+    // JS SPECIFIC
     JS_GENERATE_EXTERNALS(KotlinBuildToolBooleanFusMetric("JS_GENERATE_EXTERNALS")),
 
     JS_SOURCE_MAP(KotlinBuildToolBooleanFusMetric("JS_SOURCE_MAP")),
-
     JS_IR_INCREMENTAL(KotlinBuildToolBooleanFusMetric("JS_IR_INCREMENTAL")),
+    JS_GENERATE_DTS(KotlinBuildToolBooleanFusMetric("JS_GENERATE_DTS")),
+    JS_LONG_AS_BIGINT(KotlinBuildToolBooleanFusMetric("JS_LONG_AS_BIGINT")),
+
+    JS_COMPILER_MODE(ConcatenatedAllowedListValuesStringFusMetric("JS_COMPILER_MODE", listOf("ir", "legacy", "both", "UNKNOWN"))),
+    JS_GENERATE_EXECUTABLE_DEFAULT(ConcatenatedAllowedListValuesStringFusMetric("JS_GENERATE_EXECUTABLE_DEFAULT", listOf("true", "false"))),
+    JS_TARGET_MODE(ConcatenatedAllowedListValuesStringFusMetric("JS_TARGET_MODE", listOf("both", "browser", "nodejs", "none"))),
+    JS_OUTPUT_GRANULARITY(OverrideRegexStringFusMetric("JS_OUTPUT_GRANULARITY", "(whole_program|per_module|per_file)")),
+    JS_BINARY_TYPE(ConcatenatedAllowedListValuesStringFusMetric("JS_BINARY_TYPE", listOf("both", "library", "executable", "none"))),
+    JS_ES_TARGET(ConcatenatedAllowedListValuesStringFusMetric("JS_ES_TARGET", listOf("es5", "es2015", "default"))),
+    JS_MODULE_SYSTEM(ConcatenatedAllowedListValuesStringFusMetric("JS_MODULE_SYSTEM", listOf("plain", "amd", "commonjs", "umd", "es", "default"))),
+
+    NPM_PUBLISH_PLUGIN_ENABLED(KotlinBuildToolBooleanFusMetric("NPM_PUBLISH_PLUGIN_ENABLED")),
+    ENABLED_COMPILER_PLUGIN_JS_PLAIN_OBJECTS(KotlinBuildToolBooleanFusMetric("ENABLED_COMPILER_PLUGIN_JS_PLAIN_OBJECTS")),
+
 
     WASM_IR_INCREMENTAL(KotlinBuildToolBooleanFusMetric("WASM_IR_INCREMENTAL")),
     //Garbage collector
@@ -203,7 +217,6 @@ enum class KotlinBuildToolFusMetricName(val metric: KotlinBuildToolFusMetric<*>)
     )
     )
     ),
-    JS_COMPILER_MODE(ConcatenatedAllowedListValuesStringFusMetric("JS_COMPILER_MODE", listOf("ir", "legacy", "both", "UNKNOWN"))),
 
     // Component versions
     LIBRARY_SPRING_VERSION(IgnoreDefaultVersionStringFusMetric("LIBRARY_SPRING_VERSION")),
@@ -223,9 +236,6 @@ enum class KotlinBuildToolFusMetricName(val metric: KotlinBuildToolFusMetric<*>)
     // Features
     KOTLIN_LANGUAGE_VERSION(VersionStringFusMetric("KOTLIN_LANGUAGE_VERSION")),
     KOTLIN_API_VERSION(VersionStringFusMetric("KOTLIN_API_VERSION")),
-    JS_GENERATE_EXECUTABLE_DEFAULT(ConcatenatedAllowedListValuesStringFusMetric("JS_GENERATE_EXECUTABLE_DEFAULT", listOf("true", "false"))),
-    JS_TARGET_MODE(ConcatenatedAllowedListValuesStringFusMetric("JS_TARGET_MODE", listOf("both", "browser", "nodejs", "none"))),
-    JS_OUTPUT_GRANULARITY(OverrideRegexStringFusMetric("JS_OUTPUT_GRANULARITY", "(whole_program|per_module|per_file)")),
 
     // Compiler parameters
     JVM_DEFAULTS(ConcatenatedAllowedListValuesStringFusMetric("JVM_DEFAULTS", listOf("enable", "no-compatibility", "disable"))),
