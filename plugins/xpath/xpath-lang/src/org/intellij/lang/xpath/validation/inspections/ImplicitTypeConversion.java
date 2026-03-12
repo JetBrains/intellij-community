@@ -22,8 +22,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.lang.Language;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.BitUtil;
 import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.psi.XPathExpression;
@@ -32,11 +31,8 @@ import org.intellij.lang.xpath.psi.XPathType;
 import org.intellij.lang.xpath.validation.ExpectedTypeUtil;
 import org.intellij.lang.xpath.validation.inspections.quickfix.XPathQuickFixFactory;
 import org.intellij.plugins.xpathView.XPathBundle;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.BitSet;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.group;
@@ -50,23 +46,12 @@ public class ImplicitTypeConversion extends XPathInspection {
   private static final String NODESET = "NODESET";
   private static final String NUMBER = "NUMBER";
   private static final String BOOLEAN = "BOOLEAN";
+  private static final int OPTION_COUNT = 12;
 
   public long BITS = 1720;
-    private final BitSet OPTIONS = new BitSet(12);
 
     public boolean FLAG_EXPLICIT_CONVERSION = true;
     public boolean IGNORE_NODESET_TO_BOOLEAN_VIA_STRING = true;
-
-    public ImplicitTypeConversion() {
-        update();
-    }
-
-    private void update() {
-        for (int i=0; i<12; i++) {
-            final boolean b = (BITS & (1 << i)) != 0;
-            OPTIONS.set(i, b);
-        }
-    }
 
   @Override
   public @NotNull @NonNls String getShortName() {
@@ -109,25 +94,14 @@ public class ImplicitTypeConversion extends XPathInspection {
   public @NotNull OptionController getOptionController() {
     return super.getOptionController().onPrefix(
       "c",
-      bindId -> OPTIONS.get(Integer.parseInt(bindId)),
-      (bindId, value) -> OPTIONS.set(Integer.parseInt(bindId), (Boolean) value));
-  }
-
-  @Override
-    public void readSettings(@NotNull Element node) throws InvalidDataException {
-        super.readSettings(node);
-        update();
-    }
-
-    @Override
-    public void writeSettings(@NotNull Element node) throws WriteExternalException {
-        BITS = 0;
-        for (int i=11; i>=0; i--) {
-            BITS <<= 1;
-            if (OPTIONS.get(i)) BITS |= 1;
+      bindId -> isOptionSet(Integer.parseInt(bindId)),
+      (bindId, value) -> {
+        int index = Integer.parseInt(bindId);
+        if (0 <= index && index < OPTION_COUNT) {
+          BITS = BitUtil.set(BITS, 1 << index, (Boolean)value);
         }
-        super.writeSettings(node);
-    }
+      });
+  }
 
     @Override
     protected boolean acceptsLanguage(Language language) {
@@ -183,20 +157,24 @@ public class ImplicitTypeConversion extends XPathInspection {
         private boolean isCheckedConversion(XPathType exprType, XPathType type) {
 
             if (exprType == XPathType.NODESET) {
-                if (type == XPathType.STRING && OPTIONS.get(0)) return true;
-                if (type == XPathType.NUMBER && OPTIONS.get(4)) return true;
-                if (type == XPathType.BOOLEAN && OPTIONS.get(8)) return true;
+                if (type == XPathType.STRING && isOptionSet(0)) return true;
+                if (type == XPathType.NUMBER && isOptionSet(4)) return true;
+                if (type == XPathType.BOOLEAN && isOptionSet(8)) return true;
             } else if (exprType == XPathType.STRING) {
-                if (type == XPathType.NUMBER && OPTIONS.get(5)) return true;
-                if (type == XPathType.BOOLEAN && OPTIONS.get(9)) return true;
+                if (type == XPathType.NUMBER && isOptionSet(5)) return true;
+                if (type == XPathType.BOOLEAN && isOptionSet(9)) return true;
             } else if (exprType == XPathType.NUMBER) {
-                if (type == XPathType.STRING && OPTIONS.get(2)) return true;
-                if (type == XPathType.BOOLEAN && OPTIONS.get(10)) return true;
+                if (type == XPathType.STRING && isOptionSet(2)) return true;
+                if (type == XPathType.BOOLEAN && isOptionSet(10)) return true;
             } else if (exprType == XPathType.BOOLEAN) {
-                if (type == XPathType.STRING && OPTIONS.get(3)) return true;
-                if (type == XPathType.NUMBER && OPTIONS.get(11)) return true;
+                if (type == XPathType.STRING && isOptionSet(3)) return true;
+                if (type == XPathType.NUMBER && isOptionSet(11)) return true;
             }
             return false;
         }
+    }
+
+    private boolean isOptionSet(int index) {
+        return 0 <= index && index < OPTION_COUNT && BitUtil.isSet(BITS, 1 << index);
     }
 }
