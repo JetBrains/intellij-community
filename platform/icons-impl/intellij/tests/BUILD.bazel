@@ -1,0 +1,75 @@
+### auto-generated section `build intellij.platform.icons.impl.intellij.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//platform/icons-api",
+    "//platform/icons-api/rendering",
+    "//platform/icons-impl",
+    "//platform/icons-impl/intellij",
+  ],
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/icons-api",
+    "//platform/icons-api/rendering",
+    "//platform/icons-impl",
+    "//platform/icons-impl/intellij",
+  ]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "intellij.platform.icons.impl.intellij.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/icons-api",
+    "//platform/icons-api:icons-api_test_lib",
+    "//platform/icons-api/rendering",
+    "//platform/icons-api/rendering:rendering_test_lib",
+    "//platform/icons-impl",
+    "//platform/icons-impl:icons-impl_test_lib",
+    "//platform/icons-impl/intellij",
+    "//platform/icons-impl/intellij:intellij_test_lib",
+    "//libraries/junit5",
+    "//libraries/junit5:junit5_test_lib",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "@lib//:assert_j",
+    "@lib//:junit5",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/icons",
+    "//platform/icons:icons_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+  ],
+  exports = [
+    "//platform/icons-api",
+    "//platform/icons-api:icons-api_test_lib",
+    "//platform/icons-api/rendering",
+    "//platform/icons-api/rendering:rendering_test_lib",
+    "//platform/icons-impl",
+    "//platform/icons-impl:icons-impl_test_lib",
+    "//platform/icons-impl/intellij",
+    "//platform/icons-impl/intellij:intellij_test_lib",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build intellij.platform.icons.impl.intellij.tests` end
+
+### auto-generated section `test intellij.platform.icons.impl.intellij.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test intellij.platform.icons.impl.intellij.tests` end

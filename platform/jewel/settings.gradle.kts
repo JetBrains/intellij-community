@@ -51,7 +51,15 @@ include(
     ":samples:standalone",
     ":ui",
     ":ui-tests",
+    ":jb-icons-api",
+    ":jb-icons-api-rendering",
+    ":jb-icons-impl"
 )
+
+project(":jb-icons-api").projectDir = file("../icons-api")
+project(":jb-icons-api-rendering").projectDir = file("../icons-api/rendering")
+project(":jb-icons-impl").projectDir = file("../icons-impl")
+
 
 develocity {
     buildScan {

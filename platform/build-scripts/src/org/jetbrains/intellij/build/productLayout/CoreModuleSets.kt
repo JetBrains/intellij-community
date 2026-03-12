@@ -253,6 +253,8 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.util.ui")
     embeddedModule("intellij.platform.util.coroutines")
 
+    embeddedModule("intellij.platform.icons.impl.intellij")
+
     embeddedModule("intellij.platform.locking.impl")
 
     embeddedModule("intellij.platform.core")

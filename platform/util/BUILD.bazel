@@ -40,6 +40,8 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/util/multiplatform",
     "//platform/eel",
+    "//platform/icons-api",
+    "//platform/icons-api/rendering",
     ":platform_util_troveCompileOnly_provided",
   ],
   exports = [
@@ -47,6 +49,8 @@ jvm_library(
     "//platform/util-rt",
     "//platform/util/base",
     "//platform/util/multiplatform",
+    "//platform/icons-api",
+    "//platform/icons-api/rendering",
   ],
   runtime_deps = [
     "//libraries/commons/io",
@@ -69,6 +73,10 @@ jvm_library(
     "//platform/util/base:base_test_lib",
     "//platform/util/multiplatform",
     "//platform/util/multiplatform:multiplatform_test_lib",
+    "//platform/icons-api",
+    "//platform/icons-api:icons-api_test_lib",
+    "//platform/icons-api/rendering",
+    "//platform/icons-api/rendering:rendering_test_lib",
   ],
   runtime_deps = [
     ":util",
@@ -93,6 +101,8 @@ jvm_library(
     "//platform/util/coroutines:coroutines_test_lib",
     "//platform/util/multiplatform:multiplatform_test_lib",
     "//platform/eel:eel_test_lib",
+    "//platform/icons-api:icons-api_test_lib",
+    "//platform/icons-api/rendering:rendering_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.util` end
