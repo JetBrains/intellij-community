@@ -320,6 +320,34 @@ public final class ConvertToRecordFix implements LocalQuickFix {
             }
           }
         }
+        // Check for reordering ambiguity: if the canonical constructor (field-order types) and
+        // a custom constructor (param-order types) have the same arity, the reordering could create
+        // two signatures where neither is more specific, making overload resolution ambiguous at some call sites.
+        // We only reject when all positions have type overlap (a type assignable to both exists),
+        // but the directionality is mixed — that's true ambiguity.
+        // If any position has no overlap (like "int" and "String"), the signatures are incompatible and no call site can match both.
+        List<PsiField> orderedFields = new ArrayList<>(myFieldsToAccessorCandidates.keySet());
+        for (var constructorCandidate : myMethodsToConstructorCandidates.values()) {
+          if (constructorCandidate == null || constructorCandidate.kind() != RecordConstructorCandidate.Kind.CUSTOM) continue;
+          PsiParameter[] params = constructorCandidate.constructor().getParameterList().getParameters();
+          if (params.length != orderedFields.size()) continue;
+          boolean allPositionsHaveOverlap = true;
+          boolean canonicalMoreSpecific = true;
+          boolean customMoreSpecific = true;
+          for (int i = 0; i < params.length; i++) {
+            PsiType canonicalType = orderedFields.get(i).getType();
+            PsiType customType = params[i].getType();
+            boolean canonicalFitsCustom = TypeConversionUtil.isAssignable(customType, canonicalType);
+            boolean customFitsCanonical = TypeConversionUtil.isAssignable(canonicalType, customType);
+            if (!canonicalFitsCustom && !customFitsCanonical) {
+              allPositionsHaveOverlap = false;
+              break;
+            }
+            if (!canonicalFitsCustom) canonicalMoreSpecific = false;
+            if (!customFitsCanonical) customMoreSpecific = false;
+          }
+          if (allPositionsHaveOverlap && !canonicalMoreSpecific && !customMoreSpecific) return false;
+        }
       }
       if (myFieldsToAccessorCandidates.size() == 0) return false;
       for (var entry : myFieldsToAccessorCandidates.entrySet()) {
