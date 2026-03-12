@@ -26,7 +26,9 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonMockSdk
 import com.jetbrains.python.junit5.framework.pyMockSdkFixture
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.impl.IntentionalUnstubbing
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.Extension
@@ -40,7 +42,7 @@ private const val MOCK_SDK: String = "MOCK_SDK"
 private const val DEFAULT_SOURCE_ROOT: String = "DEFAULT_SOURCE_ROOT"
 private const val DEFAULT_CODE_INSIGHT: String = "DEFAULT_CODE_INSIGHT"
 
-internal class PyCodeInsightFixturesExtension : BeforeAllCallback, BeforeEachCallback, Extension {
+internal class PyCodeInsightFixturesExtension : BeforeAllCallback, BeforeEachCallback, AfterEachCallback, Extension {
 
   override fun beforeAll(context: ExtensionContext) {
     val manager = context.getLookupFixtureManager()
@@ -104,6 +106,10 @@ internal class PyCodeInsightFixturesExtension : BeforeAllCallback, BeforeEachCal
     runBlocking {
       context.registerImplicitFixtures(implicitFixtures, static = false)
     }
+  }
+
+  override fun afterEach(context: ExtensionContext) {
+    IntentionalUnstubbing.resetForciblyUnstubbedFileSet()
   }
 }
 
