@@ -260,15 +260,8 @@ private fun OutputLine(
         ) {
             if (displayTags) {
                 DisableSelection {
-                    val padding = Tag.maxLength + 1
-
                     Text(
-                        text =
-                            if (sectionIndicator != null) {
-                                "${sectionIndicator.tag}:".padStart(padding, ' ')
-                            } else {
-                                " ".repeat(padding)
-                            },
+                        text = sectionIndicator?.tag?.colonTagString ?: Tag.blankColonTagString,
                         style = JewelTheme.consoleTextStyle,
                         fontWeight = FontWeight.Thin,
                         modifier =
@@ -309,7 +302,7 @@ private fun OutputLine(
 }
 
 private data class SectionIndicator(
-    val tag: String,
+    val tag: Tag,
     val copyButtonTestTag: String = OutputSectionTestTags.COPY_OUTPUT_TAG_SECTION_BUTTON,
     val onCopy: () -> Unit,
 )
@@ -430,8 +423,8 @@ private sealed class InfoLine {
 private val OutputKindDto.tag
     get() =
         when (this) {
-            OutputKindDto.OUT -> Tag.ERROR
-            OutputKindDto.ERR -> Tag.OUTPUT
+            OutputKindDto.OUT -> Tag.OUTPUT
+            OutputKindDto.ERR -> Tag.ERROR
         }
 
 internal object OutputSectionTestTags {

@@ -34,6 +34,7 @@ import com.intellij.python.processOutput.frontend.ui.components.OutputSectionTes
 import com.intellij.python.processOutput.frontend.ui.components.TreeSectionTestTags
 import com.intellij.python.processOutput.frontend.ui.shortenedCommandString
 import java.util.WeakHashMap
+import kotlin.enums.enumEntries
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineName
@@ -284,6 +285,8 @@ internal class ProcessOutputControllerService(
         val showTags = processOutputUiState.filters.active.contains(OutputFilter.Item.SHOW_TAGS)
 
         val stringToCopy = buildString {
+            var lastTag: Tag? = null
+
             loggedProcess.lines.forEach { line ->
                 if (showTags) {
                     val tag = when (line.kind) {
@@ -291,11 +294,13 @@ internal class ProcessOutputControllerService(
                         OutputKindDto.ERR -> Tag.ERROR
                     }
 
-                    append("[$tag] ".padStart(Tag.maxLength + 3))
-                } else {
-                    repeat(Tag.maxLength + 3) {
-                        append(' ')
+                    if (lastTag == tag) {
+                        append(Tag.blankBracketTagString)
+                    } else {
+                        append(tag.bracketTagString)
                     }
+
+                    lastTag = tag
                 }
 
                 appendLine(line.text)
@@ -307,7 +312,10 @@ internal class ProcessOutputControllerService(
             }
 
             exitData?.also { exitData ->
-                append("[${Tag.EXIT}] ".padStart(Tag.maxLength + 3))
+                if (showTags) {
+                    append(Tag.EXIT.bracketTagString)
+                }
+
                 append(exitData.exitCode)
 
                 exitData.additionalMessageToUser?.also { message ->
@@ -736,15 +744,27 @@ internal class ProcessOutputControllerService(
     }
 }
 
-internal object Tag {
-    val ERROR = message("process.output.output.tag.stdout")
-    val OUTPUT = message("process.output.output.tag.stderr")
-    val EXIT = message("process.output.output.tag.exit")
+internal enum class Tag(val text: String) {
+    ERROR(message("process.output.output.tag.stderr")),
+    OUTPUT(message("process.output.output.tag.stdout")),
+    EXIT(message("process.output.output.tag.exit"));
 
-    val maxLength: Int =
-        Tag::class.java.declaredFields
-            .filter { it.type == String::class.java }
-            .fastMaxOfOrDefault(0) { (it.get(null) as String).length }
+    override fun toString(): String = text
+
+    val bracketTagString: String
+        get() = "[$text] ".padStart(bracketPadding)
+
+    val colonTagString: String
+        get() = "$text:".padStart(colonPadding)
+
+    companion object {
+        private val maxLength = enumEntries<Tag>().fastMaxOfOrDefault(0) { it.text.length }
+        private val bracketPadding = maxLength + 3 // opening bracket, closing bracket, and space
+        private val colonPadding = maxLength + 1 // colon
+
+        val blankBracketTagString: String = " ".repeat(bracketPadding)
+        val blankColonTagString: String = " ".repeat(colonPadding)
+    }
 }
 
 private fun <K, V> boundedLinkedHashMap(maxSize: Int): LinkedHashMap<K, V> =
