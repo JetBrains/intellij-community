@@ -83,7 +83,7 @@ val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
   "plugins/repository-search/lib/maven-model.jar" to "1.8"
 )
 
-fun configurePropertiesForAllEditionsOfIntelliJIdea(properties: JetBrainsProductProperties) {
+fun configurePropertiesForAllEditionsOfIntelliJIdea(properties: ProductProperties) {
   properties.productLayout.addPlatformSpec { layout, _ ->
     layout.withModule("intellij.java.ide.resources")
 
