@@ -5,6 +5,7 @@
     Run and manage AI coding agents — Codex, Claude, and more — directly inside your IDE.
     <ul>
       <li><b>Quick Launch</b> — press <code>Cmd+\</code> / <code>Ctrl+\</code> from anywhere to start a new task or continue an existing one. Your current selection, file, and symbol are attached automatically.</li>
+      <li><b>AI Review</b> — press <code>Alt+Ctrl+\</code> / <code>Opt+Cmd+\</code> to review local changes or commits with AI and catch bugs, security issues, and style problems before they reach the main branch.</li>
       <li><b>All Sessions in One Place</b> — browse, reopen, and resume AI sessions across providers, grouped by project.</li>
       <li><b>Persistent Chat Tabs</b> — each session opens in its own editor tab and survives IDE restarts.</li>
       <li><b>Separate Window Mode</b> — run AI chat in a dedicated frame so you can work on code and manage tasks side by side.</li>
