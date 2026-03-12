@@ -95,7 +95,7 @@ final class ConstructorBodyProcessor {
     }
 
     // Is it an assignment expression to an instance field?
-    if (Boolean.FALSE.equals(expressionIsAssignmentToInstanceField(expression)) && !delegating) {
+    if (classifyAssignment(expression) == ExpressionType.OTHER && !delegating) {
       // It is NOT an assignment expression to an instance field.
       // This means that:
       //  - all instance variables must be already initialized, OR
@@ -253,17 +253,20 @@ final class ConstructorBodyProcessor {
     return true;
   }
 
-  /// Returns:
-  /// - `true` if expression is an assignment to a non-static field
-  /// - `false` if expression is not an assignment expression
-  /// - `null` if expression is an assignment but the target is unresolved
-  private static @Nullable Boolean expressionIsAssignmentToInstanceField(PsiExpression expr) {
-    if (!(expr instanceof PsiAssignmentExpression assignExpr)) return false;
+  private enum ExpressionType {
+    ASSIGNMENT_TO_FIELD, ASSIGNMENT_TO_UNRESOLVED_TARGET, OTHER
+  }
+
+  /// Returns the kind of assignment expression.
+  private static ExpressionType classifyAssignment(PsiExpression expr) {
+    if (!(expr instanceof PsiAssignmentExpression assignExpr)) return ExpressionType.OTHER;
     PsiExpression leftExpr = assignExpr.getLExpression();
-    if (!(leftExpr instanceof PsiReferenceExpression referenceExpr)) return false;
+    if (!(leftExpr instanceof PsiReferenceExpression referenceExpr)) return ExpressionType.OTHER;
     PsiElement resolved = referenceExpr.resolve();
-    if (resolved == null) return null;
-    return resolved instanceof PsiField psiField && !psiField.hasModifierProperty(STATIC);
+    if (resolved == null) return ExpressionType.ASSIGNMENT_TO_UNRESOLVED_TARGET;
+    return resolved instanceof PsiField psiField && !psiField.hasModifierProperty(STATIC)
+           ? ExpressionType.ASSIGNMENT_TO_FIELD
+           : ExpressionType.OTHER;
   }
 
   private static boolean hasReferenceToContainingClass(PsiClass containingClass, @Nullable PsiExpression expression) {
