@@ -1,0 +1,24 @@
+Subject: [PATCH] Add TODO
+---
+Index: toolchain/sysroot.bzl
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/toolchain/sysroot.bzl b/toolchain/sysroot.bzl
+--- a/toolchain/sysroot.bzl	(revision 27c0bc7378a3f0bce997f582b5d94ec84af606c7)
++++ b/toolchain/sysroot.bzl	(date 1773164736686)
+@@ -1,4 +1,5 @@
+ load("@aspect_bazel_lib//lib:repo_utils.bzl", "repo_utils")
++load("@bazel_tools//tools/build_defs/repo:utils.bzl", "get_auth")
+
+ def _sysroot_impl(rctx):
+     urls = rctx.attr.urls
+@@ -14,6 +15,7 @@
+         urls,
+         archive,
+         integrity = rctx.attr.integrity,
++        auth = get_auth(rctx, urls),
+         sha256 = rctx.attr.sha256,
+     )
+
