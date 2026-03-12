@@ -118,6 +118,7 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
     myFilterField = createSearchTextField();
     myFilterPanel = createFilterPanel();
     myThreadTree = createThreadsTree(consoleView);
+    myThreadTree.getEmptyText().setText(JavaFrontbackBundle.message("thread.dump.nothing.to.show"));
 
     configureToolbar(project, consoleView, toolbarActions);
 
