@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.fixes
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
@@ -8,7 +8,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiBasedModCommandAction
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -24,13 +23,13 @@ import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 internal class ShowDuplicateElementsAction(
     private val duplicateName: String,
     duplicates: List<NavigatablePsiElement>,
-    private val showDuplicatesFamilyName: @IntentionFamilyName String,
-    private val chooseDuplicatePopupTitle: @NlsContexts.PopupTitle String,
-    private val navigateToDuplicateFamilyName: @IntentionFamilyName String
+    private val showDuplicatesFamilyNameKey: String,
+    private val chooseDuplicatePopupTitleKey: String,
+    private val navigateToDuplicateFamilyNameKey: String
 ) : PsiBasedModCommandAction<NavigatablePsiElement>(NavigatablePsiElement::class.java) {
     private val myNavigatablePsiElements = duplicates.map { it.createSmartPointer() }
 
-    override fun getFamilyName(): @IntentionFamilyName String = showDuplicatesFamilyName
+    override fun getFamilyName(): @IntentionFamilyName String = GradleInspectionBundle.message(showDuplicatesFamilyNameKey)
 
     override fun getPresentation(context: ActionContext, section: NavigatablePsiElement): Presentation {
         val showDuplicatesName = GradleInspectionBundle.message("intention.name.show.duplicates", duplicateName)
@@ -38,8 +37,8 @@ internal class ShowDuplicateElementsAction(
     }
 
     override fun perform(context: ActionContext, element: NavigatablePsiElement): ModCommand {
-        val navigateActions = this.duplicatePsiElements.map { NavigateToAction(it, navigateToDuplicateFamilyName) }
-        return ModCommand.chooseAction(chooseDuplicatePopupTitle, navigateActions)
+        val navigateActions = this.duplicatePsiElements.map { NavigateToAction(it, navigateToDuplicateFamilyNameKey) }
+        return ModCommand.chooseAction(GradleInspectionBundle.message(chooseDuplicatePopupTitleKey), navigateActions)
     }
 
     override fun generatePreview(context: ActionContext?, element: NavigatablePsiElement?): IntentionPreviewInfo {
@@ -59,10 +58,10 @@ internal class ShowDuplicateElementsAction(
 
     private class NavigateToAction(
         navigatablePsiElement: NavigatablePsiElement,
-        private val navigateToDuplicateFamilyName: @IntentionFamilyName String
+        private val navigateToDuplicateFamilyName: String
     ) : PsiBasedModCommandAction<NavigatablePsiElement>(navigatablePsiElement) {
 
-        override fun getFamilyName(): @IntentionFamilyName String = navigateToDuplicateFamilyName
+        override fun getFamilyName(): @IntentionFamilyName String = GradleInspectionBundle.message(navigateToDuplicateFamilyName)
 
         override fun getPresentation(context: ActionContext, element: NavigatablePsiElement): Presentation {
             val message = getLineMessage(element.containingFile, element.textRange)
@@ -79,14 +78,30 @@ internal class ShowDuplicateElementsAction(
     }
 
     companion object {
+        fun forDependencies(duplicateName: String, duplicates: List<NavigatablePsiElement>) = ShowDuplicateElementsAction(
+            duplicateName,
+            duplicates,
+            "intention.family.name.show.duplicate.dependencies",
+            "intention.choose.action.name.select.duplicate.dependency",
+            "intention.family.name.navigate.to.duplicate.dependency"
+        )
+
+        fun forRepositories(duplicateName: String, duplicates: List<NavigatablePsiElement>) = ShowDuplicateElementsAction(
+            duplicateName,
+            duplicates,
+            "intention.family.name.show.duplicate.repositories",
+            "intention.choose.action.name.select.duplicate.repository",
+            "intention.family.name.navigate.to.duplicate.repository"
+        )
+
         private fun getLineMessage(file: PsiFile, textRange: TextRange): @IntentionName String {
             val firstLineNumber = file.fileDocument.getLineNumber(textRange.startOffset) + 1
             val lastLineNumber = file.fileDocument.getLineNumber(textRange.endOffset) + 1
             return if (firstLineNumber == lastLineNumber) {
-                GradleInspectionBundle.message("intention.name.duplicate.dependency.line.number", firstLineNumber)
+                GradleInspectionBundle.message("intention.name.duplicate.line.number", firstLineNumber)
             } else {
                 GradleInspectionBundle.message(
-                    "intention.name.duplicate.dependency.line.number.range",
+                    "intention.name.duplicate.line.number.range",
                     firstLineNumber,
                     lastLineNumber
                 )

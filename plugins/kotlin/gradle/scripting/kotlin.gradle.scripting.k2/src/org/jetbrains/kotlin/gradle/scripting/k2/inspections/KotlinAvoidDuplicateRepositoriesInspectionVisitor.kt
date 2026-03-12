@@ -33,15 +33,8 @@ class KotlinAvoidDuplicateRepositoriesInspectionVisitor(
                 holder.problem(
                     repository,
                     GradleInspectionBundle.message("inspection.message.avoid.duplicate.repositories.descriptor", duplicateName)
-                ).fix(
-                    ShowDuplicateElementsAction(
-                        duplicateName,
-                        duplicateRepositories,
-                        GradleInspectionBundle.message("intention.family.name.show.duplicate.repositories"),
-                        GradleInspectionBundle.message("intention.choose.action.name.select.duplicate.repository"),
-                        GradleInspectionBundle.message("intention.family.name.navigate.to.duplicate.repository")
-                    )
-                ).range(repository.calleeExpression?.textRangeInParent ?: repository.textRangeInParent)
+                ).fix(ShowDuplicateElementsAction.forRepositories(duplicateName, duplicateRepositories))
+                    .range(repository.calleeExpression?.textRangeInParent ?: repository.textRangeInParent)
                     .register()
             }
         }
