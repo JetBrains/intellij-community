@@ -26,7 +26,6 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.util.Collections.synchronizedList
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
@@ -524,15 +523,17 @@ private abstract class BaseUpdateQueue<T>(
    * @param restartTimerOnAdd If true, uses debounce mode (timer resets on each new item).
    *                          If false, uses throttle mode (timer starts on the first item, collects items during delay).
    * @param onReceive Called when a new item is received. Should either add to the buffer or replace the current item.
-   * @param onProcess Called to process collected items after delay expires.
+   * @param onPrepare Called to prepare the batch after delay expires. Runs in the collector coroutine to ensure happens-before.
+   * @param onProcess Called to process the prepared batch. Runs in a separate coroutine with the specified context.
    */
   @OptIn(ExperimentalCoroutinesApi::class)
-  protected suspend fun processWithDelay(
+  protected suspend fun <R> processWithDelay(
     delay: Duration,
     context: CoroutineContext,
     restartTimerOnAdd: Boolean,
     onReceive: (T) -> Unit,
-    onProcess: suspend () -> Unit
+    onPrepare: () -> R,
+    onProcess: suspend (R) -> Unit
   ) {
     while (true) {
       // Wait for first item and add it
@@ -570,12 +571,15 @@ private abstract class BaseUpdateQueue<T>(
         }
       }
 
-      // Process the collected items
+      // Prepare the data in the current coroutine (ensures happens-before with onReceive)
+      val data = onPrepare()
+
+      // Process the data in a separate coroutine
       coroutineScope {
         val job = launch {
           try {
             withContext(context) {
-              onProcess()
+              onProcess(data)
             }
           } catch (e: CancellationException) {
             throw e
@@ -616,7 +620,8 @@ private abstract class BaseUpdateQueue<T>(
       context = context,
       restartTimerOnAdd = restartTimerOnAdd,
       onReceive = { latestItem = it },
-      onProcess = { action(latestItem!!) }
+      onPrepare = { latestItem!! },
+      onProcess = { item -> action(item) }
     )
   }
   
@@ -630,18 +635,19 @@ private abstract class BaseUpdateQueue<T>(
     restartTimerOnAdd: Boolean,
     action: suspend (List<T>) -> Unit
   ) {
-    val buffer = synchronizedList(mutableListOf<T>())
+    val buffer = mutableListOf<T>()
     
     processWithDelay(
       delay = delay,
       context = context,
       restartTimerOnAdd = restartTimerOnAdd,
       onReceive = { buffer.add(it) },
-      onProcess = {
+      onPrepare = {
         val batch = buffer.toList()
         buffer.clear()
-        action(batch)
-      }
+        batch
+      },
+      onProcess = { batch -> action(batch) }
     )
   }
 }
