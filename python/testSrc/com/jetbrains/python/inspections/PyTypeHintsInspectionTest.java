@@ -2926,21 +2926,21 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   // PY-76851
   public void testInvalidTypeAliasStatement() {
     doTestByText("""
-               var1 = 1
-               type BadTypeAlias1 = <warning descr="Invalid type annotation">eval(<warning descr="Generics should be specified through square brackets">"".join(<warning descr="Generics should be specified through square brackets">map(chr, [105, 110, 116])</warning>)</warning>)</warning>
-               type BadTypeAlias2 = <warning descr="Invalid type annotation">[int, str]</warning>
-               type BadTypeAlias3 = <warning descr="Invalid type annotation">((int, str),)</warning>
-               type BadTypeAlias4 = <warning descr="Invalid type annotation">[int for i in <warning descr="Generics should be specified through square brackets">range(1)</warning>]</warning>
-               type BadTypeAlias5 = <warning descr="Invalid type annotation">{"a": "b"}</warning>
-               type BadTypeAlias6 = <warning descr="Invalid type annotation">(lambda: int)()</warning>
-               type BadTypeAlias7 = <warning descr="Invalid type annotation">[int][0]</warning>
-               type BadTypeAlias8 = <warning descr="Invalid type annotation">int if 1 < 3 else str</warning>
-               type BadTypeAlias9 = <warning descr="Invalid type annotation">var1</warning>
-               type BadTypeAlias10 = <warning descr="Invalid type annotation">True</warning>
-               type BadTypeAlias11 = <warning descr="Invalid type annotation">1</warning>
-               type BadTypeAlias12 = <warning descr="Invalid type annotation">list or set</warning>
-               type BadTypeAlias13 = <warning descr="Invalid type annotation">f"{'int'}"</warning>
-               """);
+                   var1 = 1
+                   type BadTypeAlias1 = <warning descr="Invalid type annotation">eval(<warning descr="Generics should be specified through square brackets">"".join(<warning descr="Generics should be specified through square brackets">map(chr, [105, 110, 116])</warning>)</warning>)</warning>
+                   type BadTypeAlias2 = <warning descr="Invalid type annotation">[int, str]</warning>
+                   type BadTypeAlias3 = (<warning descr="Invalid type annotation">(int, str),</warning>)
+                   type BadTypeAlias4 = <warning descr="Invalid type annotation">[int for i in <warning descr="Generics should be specified through square brackets">range(1)</warning>]</warning>
+                   type BadTypeAlias5 = <warning descr="Invalid type annotation">{"a": "b"}</warning>
+                   type BadTypeAlias6 = <warning descr="Invalid type annotation">(lambda: int)()</warning>
+                   type BadTypeAlias7 = <warning descr="Invalid type annotation">[int][0]</warning>
+                   type BadTypeAlias8 = <warning descr="Invalid type annotation">int if 1 < 3 else str</warning>
+                   type BadTypeAlias9 = <warning descr="Invalid type annotation">var1</warning>
+                   type BadTypeAlias10 = <warning descr="Invalid type annotation">True</warning>
+                   type BadTypeAlias11 = <warning descr="Invalid type annotation">1</warning>
+                   type BadTypeAlias12 = <warning descr="Invalid type annotation">list or set</warning>
+                   type BadTypeAlias13 = <warning descr="Invalid type annotation">f"{'int'}"</warning>
+                   """);
   }
 
   // PY-76851
@@ -3021,7 +3021,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   // PY-76851
   public void testRecursiveTypeAliasStatementInUnion() {
     doTestByText("""
-                   type TypeAlias = <warning descr="Invalid type annotation">int | TypeAlias</warning>
+                   type TypeAlias = int | str | <warning descr="Circular reference">TypeAlias</warning>
                    type TypeAlias2 = int | str
                    """);
   }
@@ -3029,7 +3029,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   // PY-76851
   public void testUnionRecursiveTypeAliasStatement() {
     doTestByText("""
-                   type TypeAlias = <warning descr="Invalid type annotation">TypeAlias | int</warning>
+                   type TypeAlias = <warning descr="Circular reference">TypeAlias</warning> | int
                    """);
   }
 

@@ -193,17 +193,33 @@ class PyTypeHintsInspection : PyInspection() {
 
       reportTypeParametersUsedByOuterScope(node)
 
-      val typeExpression = node.typeExpression ?: return
+      val typeExpression = node.typeExpression?.let { PyPsiUtils.flattenParens(it) } ?: return
       if (!isValidTypeHint(typeExpression, myTypeEvalContext)) {
         registerProblem(typeExpression, PyPsiBundle.message("INSP.type.hints.type.hint.is.not.valid"))
       }
       else {
-        val typeExpression = node.typeExpression
-        if (typeExpression != null) {
-          if (PyTypingTypeProvider.getType(typeExpression, myTypeEvalContext) == null) {
-            registerProblem(typeExpression, PyPsiBundle.message("INSP.type.hints.type.hint.is.not.valid"))
+        if (PyTypingTypeProvider.getType(typeExpression, myTypeEvalContext) == null) {
+          registerProblem(typeExpression, PyPsiBundle.message("INSP.type.hints.type.hint.is.not.valid"))
+        }
+      }
+
+      if (typeExpression is PyBinaryExpression && typeExpression.operator == PyTokenTypes.OR) {
+        // Check each member of the union to see if it references the type alias itself
+        val typeAliasName = node.name
+        fun PyExpression.checkForCircularReference() {
+          when (val it = PyPsiUtils.flattenParens(this)) {
+            is PyBinaryExpression -> {
+              it.leftExpression?.checkForCircularReference()
+              it.rightExpression?.checkForCircularReference()
+            }
+            is PyParenthesizedExpression -> it.containedExpression?.checkForCircularReference()
+            is PySubscriptionExpression -> it.qualifier?.checkForCircularReference()
+            is PyReferenceExpression -> if (it.name == typeAliasName) {
+              registerProblem(it, PyPsiBundle.message("INSP.type.hints.circular.reference"))
+            }
           }
         }
+        typeExpression.checkForCircularReference()
       }
 
       val scopeOwner = ScopeUtil.getScopeOwner(node)
