@@ -64,7 +64,8 @@ internal fun Driver.waitForIndicators(projectGet: () -> Project?, timeout: Durat
       logger<Driver>().info("The project is not opened.")
     }
     if (indicatorsVisible) {
-      logger<Driver>().info("Running indicators were detected.")
+      logger<Driver>().info("Running indicators were detected:\n" +
+                            "${getProgressIndicators(project).map { it.getFirst()?.getTitle() ?: "Task with no title" }}")
     }
     if (!projectReady || indicatorsVisible) {
       smartLongEnoughStart = null
