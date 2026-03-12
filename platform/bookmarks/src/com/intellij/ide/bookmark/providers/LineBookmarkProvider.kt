@@ -221,6 +221,7 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
         }
         override fun fileContentReloaded(file: VirtualFile, document: Document) {
           reloadingDocs.remove(document)
+          afterDocumentChange(document)
         }
       })
     }
