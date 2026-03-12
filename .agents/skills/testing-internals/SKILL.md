@@ -169,11 +169,10 @@ Then attach debugger to port 5005.
                     ▼                               ▼
 ┌───────────────────────────────────┐ ┌───────────────────────────────────────┐
 │  8a. JUNIT 5 TESTS                │ │  8b. JUNIT 3/4 TESTS (Legacy)         │
-│  JUnit5TeamCityRunnerFor-         │ │  JUnit5TeamCityRunnerFor-             │
-│  TestsOnClasspath.main()          │ │  TestAllSuite.main()                  │
-│  - Uses JUnit Platform Launcher   │ │  - Wraps legacy tests in JUnit 5     │
-│  - ClassNameFilter                │ │  - BootstrapTests.suite()             │
-│  - PostDiscoveryFilter            │ │  - TestAll.run()                      │
+│  JUnit5TeamCityRunner.main()      │ │  JUnit5TeamCityRunner.main()          │
+│  - Uses JUnit Platform Launcher   │ │  - Uses JUnit Platform Launcher       │
+│  - ClassNameFilter                │ │  - ClassNameFilter                    │
+│  - PostDiscoveryFilter            │ │  - PostDiscoveryFilter                │
 └───────────────────────────────────┘ └───────────────────────────────────────┘
                     │                               │
                     └───────────────┬───────────────┘
@@ -226,7 +225,6 @@ Then attach debugger to port 5005.
 |-------|---------|
 | `TestCaseLoader` | Discovers and filters test classes |
 | `TestAll` | JUnit 3 test suite, collects all tests |
-| `BootstrapTests` | Bootstrap suite for JUnit 3/4 tests |
 | `TestClassesFilter` | Pattern/group-based test filtering |
 
 #### Bucketing & Distribution
@@ -306,7 +304,6 @@ testGroups          // -Dintellij.build.test.groups=<group>
 
 // Test execution
 mainModule          // -Dintellij.build.test.main.module=<module>
-bootstrapSuite      // -Dintellij.build.test.bootstrap.suite=<class>
 attemptCount        // -Dintellij.build.test.attempt.count=<n>
 
 // JVM configuration
@@ -358,7 +355,6 @@ java_binary(
 "idea.system.path"   → tempDir/system
 "java.io.tmpdir"     → tempDir
 "classpath.file"     → path to file with test classpath
-"bootstrap.testcases" → "com.intellij.AllTests" (or custom suite)
 
 // JVM options:
 "-XX:+HeapDumpOnOutOfMemoryError"

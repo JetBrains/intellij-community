@@ -5,7 +5,6 @@ import com.intellij.TestCaseLoader
 import com.intellij.util.SystemProperties
 import com.intellij.util.text.nullize
 import org.jetbrains.intellij.build.TestingOptions.Companion.ALL_EXCLUDE_DEFINED_GROUP
-import org.jetbrains.intellij.build.TestingOptions.Companion.BOOTSTRAP_SUITE_DEFAULT
 import org.jetbrains.intellij.build.impl.JUnitRunConfigurationProperties
 
 private val OLD_TEST_GROUP = System.getProperty("idea.test.group", TestingOptions.ALL_EXCLUDE_DEFINED_GROUP)
@@ -25,7 +24,6 @@ private val OLD_MAIN_MODULE = System.getProperty("module.to.make")
 open class TestingOptions {
   companion object {
     const val ALL_EXCLUDE_DEFINED_GROUP: String = "ALL_EXCLUDE_DEFINED"
-    const val BOOTSTRAP_SUITE_DEFAULT: String = "com.intellij.tests.BootstrapTests"
     const val PERFORMANCE_TESTS_ONLY_FLAG: String = "idea.performance.tests"
     const val TEST_JRE_PROPERTY: String = "intellij.build.test.jre"
     const val REDIRECT_STDOUT_TO_FILE: String = "intellij.build.test.redirectStdoutToFile"
@@ -100,11 +98,6 @@ open class TestingOptions {
    * Abort tests execution if [mainModule] does not match the module specified in the Run Configuration from [testConfigurations].
    */
   var validateMainModule: Boolean = System.getProperty("intellij.build.test.main.module.validate")?.toBooleanStrict() ?: false
-
-  /**
-   * Specifies a custom test suite, [BOOTSTRAP_SUITE_DEFAULT] is using by default.
-   */
-  var bootstrapSuite: String = System.getProperty("intellij.build.test.bootstrap.suite", BOOTSTRAP_SUITE_DEFAULT)
 
   /**
    * Specifies path to runtime which will be used to run tests.

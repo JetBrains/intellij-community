@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class ClassFinder {
-  private static final List<String> IGNORED_CLASS_NAMES = Arrays.asList("com.intellij.tests.BootstrapTests", "com.intellij.AllTests");
+  private static final List<String> IGNORED_CLASS_NAMES = List.of("com.intellij.AllTests");
   private final List<String> classNameList;
   private final Path classPathRoot;
   private final boolean includeUnconventionallyNamedTests;

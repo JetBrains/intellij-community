@@ -13,14 +13,6 @@ interface TestingTasks {
     fun create(context: CompilationContext, options: TestingOptions = TestingOptions()): TestingTasks {
       return TestingTasksImpl(context, options)
     }
-
-    /**
-     * Determines whether the current JVM process is a process that runs tests.
-     */
-    val isInTestsProcess: Boolean
-      get() = System.getProperty(BOOTSTRAP_TESTCASES_PROPERTY) != null
-    
-    const val BOOTSTRAP_TESTCASES_PROPERTY: String = "bootstrap.testcases"
   }
 
   /**

@@ -443,11 +443,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     var testClasspath = buildList {
       addAll(context.getModuleRuntimeClasspath(mainJpsModule, forTests = true))
 
-      if (isBootstrapSuiteDefault) {
-        //module with "com.intellij.TestAll" which output should be found in `testClasspath + modulePath`
-        val testFrameworkCoreModule = outputProvider.findRequiredModule("intellij.platform.testFramework.core")
-        addAll(context.getModuleRuntimeClasspath(testFrameworkCoreModule, false) )
-      }
+      //module with "com.intellij.TestAll" which output should be found in `testClasspath + modulePath`
+      val testFrameworkCoreModule = outputProvider.findRequiredModule("intellij.platform.testFramework.core")
+      addAll(context.getModuleRuntimeClasspath(testFrameworkCoreModule, false) )
     }.distinct()
 
     val moduleInfoFile = JpsJavaExtensionService.getInstance().getJavaModuleIndex(context.project).getModuleInfoFile(mainJpsModule, true)
@@ -487,7 +485,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     testPatterns?.let { systemProperties.putIfAbsent("intellij.build.test.patterns", it) }
     testGroups?.let { systemProperties.putIfAbsent("intellij.build.test.groups", it) }
     testTags?.let { systemProperties.putIfAbsent("intellij.build.test.tags", it) }
-    systemProperties.putIfAbsent(TestingTasks.BOOTSTRAP_TESTCASES_PROPERTY, "com.intellij.AllTests")
     systemProperties.putIfAbsent(TestingOptions.PERFORMANCE_TESTS_ONLY_FLAG, options.isPerformanceTestsOnly.toString())
     val allJvmArgs = ArrayList(jvmArgs)
     prepareEnvForTestRun(jvmArgs = allJvmArgs, systemProperties = systemProperties, classPath = bootstrapClasspath, remoteDebugging = remoteDebugging)
@@ -1156,7 +1153,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         appendJUnitStarter(classpath, context)
       }
 
-      if (!isBootstrapSuiteDefault || options.isDedicatedTestRuntime != "false" || suiteName == null || suiteName == "__classpathroot__") {
+      if (options.isDedicatedTestRuntime != "false" || suiteName == null || suiteName == "__classpathroot__") {
         classpath.addAll(testClasspath)
       }
 
@@ -1249,9 +1246,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     }
     return exitCode
   }
-
-  private val isBootstrapSuiteDefault: Boolean
-    get() = options.bootstrapSuite == TestingOptions.BOOTSTRAP_SUITE_DEFAULT
 }
 
 private fun appendJUnitStarter(classPath: MutableList<String>, context: CompilationContext) {
