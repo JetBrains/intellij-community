@@ -24,8 +24,8 @@ internal class PyTestDataExtension: Extension, BeforeEachCallback {
     val sourceRoot = classLevelManager.getRequired<PsiDirectory>()
 
     val testDataPath = context.getTestClassInfo().testDataPath
-    val testCaseFilePath = context.getTestMethodInfo().testCaseFilePath
-    if (testDataPath == null || testCaseFilePath == null) return
+    val testCaseRelativePath = context.getTestMethodInfo().testCaseRelativePath
+    if (testDataPath == null || testCaseRelativePath == null) return
 
     val codeInsightFixture = codeInsightTestFixture.get()
     codeInsightFixture.testDataPath = testDataPath.pathString
@@ -33,17 +33,17 @@ internal class PyTestDataExtension: Extension, BeforeEachCallback {
     val isMultiFile = context.testMethod.get().getAnnotation(MultiFileTest::class.java) != null
 
     if (isMultiFile) {
-      val testSubDir = testCaseFilePath.parent ?: error("Test case file $testCaseFilePath does not have a parent directory")
+      val testSubDir = testCaseRelativePath.parent ?: error("Test case file $testCaseRelativePath does not have a parent directory")
       codeInsightFixture.copyDirectoryToProject(testSubDir.pathString, testSubDir.pathString)
     }
     else {
-      codeInsightFixture.copyFileToProject(testCaseFilePath.pathString, testCaseFilePath.pathString)
+      codeInsightFixture.copyFileToProject(testCaseRelativePath.pathString, testCaseRelativePath.pathString)
     }
 
     // Injects the PSI file that is going to be tested
-    sourceRoot.psiFileFixture(testCaseFilePath).also {
+    sourceRoot.psiFileFixture(testCaseRelativePath).also {
       runBlocking {
-        context.registerImplicitFixtures(listOf(LookupFixture(testCaseFilePath.toString(),
+        context.registerImplicitFixtures(listOf(LookupFixture(testCaseRelativePath.toString(),
                                                               it, true)), static = false)
       }
     }

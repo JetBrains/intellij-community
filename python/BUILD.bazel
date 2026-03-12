@@ -1212,6 +1212,7 @@ jvm_library(
     "//python/conda",
     "//python/conda:conda_test_lib",
     "//platform/testFramework/junit5/codeInsight",
+    "//platform/testFramework/junit5/codeInsight:codeInsight_test_lib",
   ],
   runtime_deps = [
     ":python-community-tests",
