@@ -136,7 +136,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
   @Override
   public boolean handlesElement(PsiElement element) {
-    return element instanceof PsiClass || 
+    return element instanceof PsiClass ||
            element instanceof PsiMethod ||
            element instanceof PsiRecordComponent ||
            element instanceof PsiField ||
@@ -326,7 +326,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       PsiClass recordClass = component.getContainingClass();
       assert recordClass != null;
       PsiMethod constructor = JavaPsiRecordUtil.findCanonicalConstructor(recordClass);
-      if (constructor == null || constructor instanceof SyntheticElement) return additional; 
+      if (constructor == null || constructor instanceof SyntheticElement) return additional;
       PsiRecordHeader header = recordClass.getRecordHeader();
       assert header != null;
       int index = ArrayUtil.indexOf(header.getRecordComponents(), component);
@@ -493,7 +493,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     }
 
     if (!delegatingParams.isEmpty()) {
-      SafeDeleteParameterCallHierarchyUsageInfo parameterHierarchyUsageInfo = delegatingParams.get(0);
+      SafeDeleteParameterCallHierarchyUsageInfo parameterHierarchyUsageInfo = delegatingParams.getFirst();
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         result.addAll(delegatingParams);
       }
@@ -533,7 +533,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         result.addAll(calleesSafeToDelete);
       }
       else {
-        PsiMember member = calleesSafeToDelete.get(0).getCallerMember();
+        PsiMember member = calleesSafeToDelete.getFirst().getCallerMember();
         List<UsageInfo> list = new ArrayList<>();
         SafeDeleteJavaCalleeChooser chooser = new SafeDeleteJavaCalleeChooser(member, project, list) {
           @Override
@@ -1013,7 +1013,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
   private static SafeDeleteParameterCallHierarchyUsageInfo createParameterCallHierarchyUsageInfo(PsiMethod called,
                                                                                                  PsiParameter calledParameter,
-                                                                                                 PsiMethod caller, 
+                                                                                                 PsiMethod caller,
                                                                                                  PsiParameter parameterInCaller) {
     return ApplicationManager.getApplication().isUnitTestMode()
            ? new SafeDeleteParameterCallHierarchyUsageInfo(caller, parameterInCaller, caller, parameterInCaller)
