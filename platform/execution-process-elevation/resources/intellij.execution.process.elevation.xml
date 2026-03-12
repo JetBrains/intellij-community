@@ -1,7 +1,12 @@
 <idea-plugin visibility="internal" package="com.intellij.execution.process.elevation">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.execution.process.mediator.client"/>
     <module name="intellij.execution.process.mediator.common"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
