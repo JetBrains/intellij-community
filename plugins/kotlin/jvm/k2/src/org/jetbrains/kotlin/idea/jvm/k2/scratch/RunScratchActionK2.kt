@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.jvm.shared.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.ScratchAction
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.ScratchCompilationSupport
 
-internal class RunScratchActionK2 : ScratchAction(
+class RunScratchActionK2 : ScratchAction(
   KotlinJvmBundle.messagePointer("scratch.run.button"), AllIcons.Actions.Execute
 ) {
     override fun actionPerformed(e: AnActionEvent) {

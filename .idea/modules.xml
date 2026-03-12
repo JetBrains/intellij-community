@@ -818,6 +818,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-debugger/test/parcelize/testFramework/intellij.kotlin.jvm.debugger.test.parcelize.testFramework.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-debugger/test/parcelize/testFramework/intellij.kotlin.jvm.debugger.test.parcelize.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-debugger/test/k2/testFramework/intellij.kotlin.jvm.debugger.test.testFramework.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-debugger/test/k2/testFramework/intellij.kotlin.jvm.debugger.test.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-decompiler/intellij.kotlin.jvm.decompiler.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-decompiler/intellij.kotlin.jvm.decompiler.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm/k2/intellij.kotlin.jvm.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm/k2/intellij.kotlin.jvm.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/kotlin.lombok.tests/intellij.kotlin.lombok.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/kotlin.lombok.tests/intellij.kotlin.lombok.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/maven/intellij.kotlin.maven.iml" filepath="$PROJECT_DIR$/plugins/kotlin/maven/intellij.kotlin.maven.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/maven/tests/intellij.kotlin.maven.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/maven/tests/intellij.kotlin.maven.tests.iml" />

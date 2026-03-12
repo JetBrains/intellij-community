@@ -22,48 +22,14 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchExpression
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtPsiFactory
-
-/**
- * Method to retrieve shared instance of scratches ToolWindow output handler.
- *
- * [releaseToolWindowHandler] must be called for every output handler received from this method.
- *
- * Can be called from EDT only.
- *
- * @return new toolWindow output handler if one does not exist, otherwise returns the existing one. When application in test mode,
- * returns [TestOutputHandler].
- */
-fun requestToolWindowHandler(): ScratchOutputHandler {
-    return if (isUnitTestMode()) {
-        TestOutputHandler
-    } else {
-        ScratchToolWindowHandlerKeeper.requestOutputHandler()
-    }
-}
-
-/**
- * Should be called once with the output handler received from the [requestToolWindowHandler] call.
- *
- * When release is called for every request, the output handler is actually disposed.
- *
- * When application in test mode, does nothing.
- *
- * Can be called from EDT only.
- */
-fun releaseToolWindowHandler(scratchOutputHandler: ScratchOutputHandler) {
-    if (!isUnitTestMode()) {
-        ScratchToolWindowHandlerKeeper.releaseOutputHandler(scratchOutputHandler)
-    }
-}
 
 /**
  * Implements logic of shared pointer for the toolWindow output handler.
  *
  * Not thread safe! Can be used only from the EDT.
  */
-private object ScratchToolWindowHandlerKeeper {
+object ScratchToolWindowHandlerKeeper {
     private var toolWindowHandler: ScratchOutputHandler? = null
     private var toolWindowDisposable = Disposer.newDisposable()
     private var counter = 0
@@ -194,10 +160,10 @@ private class ToolWindowScratchOutputHandler(private val parentDisposable: Dispo
     }
 }
 
-private fun getLineInfo(psiFile: PsiFile, expression: ScratchExpression) =
+fun getLineInfo(psiFile: PsiFile, expression: ScratchExpression): String =
     "${psiFile.name}:${expression.lineStart + 1}"
 
-private class ScratchToolWindowFactory : ToolWindowFactory {
+class ScratchToolWindowFactory : ToolWindowFactory {
     companion object {
         const val ID = "Scratch Output"
     }
@@ -217,53 +183,5 @@ private class ScratchToolWindowFactory : ToolWindowFactory {
         }
 
         Disposer.register(KotlinPluginDisposable.getInstance(project), consoleView)
-    }
-}
-
-private object TestOutputHandler : ScratchOutputHandlerAdapter() {
-    private val errors = arrayListOf<String>()
-    private val inlays = arrayListOf<Pair<ScratchExpression, String>>()
-
-    override fun handle(file: ScratchFile, expression: ScratchExpression, output: ScratchOutput) {
-        inlays.add(expression to output.text)
-    }
-
-    override fun error(file: ScratchFile, message: String) {
-        errors.add(message)
-    }
-
-    override fun onFinish(file: ScratchFile) {
-        TransactionGuard.submitTransaction(KotlinPluginDisposable.getInstance(file.project), Runnable {
-            val psiFile = file.getPsiFile()
-                ?: error(
-                    "PsiFile cannot be found for scratch to render inlays in tests:\n" +
-                            "project.isDisposed = ${file.project.isDisposed}\n" +
-                            "inlays = ${inlays.joinToString { it.second }}\n" +
-                            "errors = ${errors.joinToString()}"
-                )
-
-            if (inlays.isNotEmpty()) {
-                testPrint(psiFile, inlays.map { (expression, text) ->
-                    "/** ${getLineInfo(psiFile, expression)} $text */"
-                })
-                inlays.clear()
-            }
-
-            if (errors.isNotEmpty()) {
-                testPrint(psiFile, listOf(errors.joinToString(prefix = "/** ", postfix = " */")))
-                errors.clear()
-            }
-        })
-    }
-
-    private fun testPrint(file: PsiFile, comments: List<String>) {
-        WriteCommandAction.runWriteCommandAction(file.project) {
-            for (comment in comments) {
-                file.addAfter(
-                    KtPsiFactory(file.project).createComment(comment),
-                    file.lastChild
-                )
-            }
-        }
     }
 }

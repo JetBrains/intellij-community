@@ -18,8 +18,8 @@
   </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$/kotlin.jvm.k1.tests">
-      <sourceFolder url="file://$MODULE_DIR$/kotlin.jvm.k1.tests/test" isTestSource="true" />
+    <content url="file://$MODULE_DIR$/test">
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

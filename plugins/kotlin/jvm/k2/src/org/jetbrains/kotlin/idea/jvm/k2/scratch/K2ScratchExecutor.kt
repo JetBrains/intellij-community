@@ -18,6 +18,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.io.awaitExit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts

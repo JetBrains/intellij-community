@@ -188,6 +188,8 @@ jvm_library(
     "//plugins/kotlin/jvm-debugger/test/parcelize:parcelize_test_lib",
     "//plugins/kotlin/util/test-generator-fir",
     "//plugins/kotlin/util/test-generator-fir:test-generator-fir_test_lib",
+    "//plugins/kotlin/jvm/k2:kotlin-jvm-tests",
+    "//plugins/kotlin/jvm/k2:kotlin-jvm-tests_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.fir-all-tests` end

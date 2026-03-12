@@ -170,6 +170,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
     generateK2InjectionTests()
     generateProjectStructureTest()
     generateK2GradleTests()
+    generateK2ScratchTests()
 
     testGroup("base/fir/analysis-api-platform") {
         testClass<AbstractProjectWideSourceKotlinModificationTrackerTest> {

@@ -181,7 +181,7 @@ jvm_library(
   name = "kotlin-jvm-k1-tests_test_lib",
   module_name = "kotlin.jvm.k1.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["kotlin.jvm.k1.tests/test/**/*.kt", "kotlin.jvm.k1.tests/test/**/*.java", "kotlin.jvm.k1.tests/test/**/*.form"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_kotlin-jvm-k1-tests",
   deps = [
     "@lib//:kotlin-stdlib",

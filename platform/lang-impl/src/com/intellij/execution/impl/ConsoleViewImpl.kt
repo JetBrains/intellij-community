@@ -573,7 +573,7 @@ open class ConsoleViewImpl protected constructor(
     else {
       for (pair in result) {
         if (pair.first != null) {
-          print(pair.first, (if (pair.second == null) contentType else pair.second)!!, null)
+          print(pair.first, (pair.second ?: contentType), null)
         }
       }
     }

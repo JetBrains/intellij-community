@@ -31,7 +31,7 @@ public class ScriptWithBundledCompilerPluginHighlightingMetaInfoTestGenerated ex
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
-    @TestMetadata("src/dataframeScripting.kts")
+    @TestMetadata("dataframeScripting.kts")
     public void testDataframeScripting() throws Exception {
         runTest("../../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/dataframeScripting.kts");
     }
