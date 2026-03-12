@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl
 
-import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageParserDefinitions
 import com.intellij.openapi.application.EditorLockFreeTyping
@@ -21,15 +20,16 @@ import com.intellij.psi.SingleRootFileViewProvider
 import com.intellij.testFramework.ReadOnlyLightVirtualFile
 import com.intellij.util.ui.EDT
 
+
 class UiPsiSupport(
   private val project: Project,
 ) {
-  fun isUiDocument(document: Document): Boolean {
-    return getTopLevelUiDocument(document) != null
+  fun isUiDocument(uiOrRealDocument: Document): Boolean {
+    return getTopLevelUiDocument(uiOrRealDocument) != null
   }
 
-  fun getPsiFile(document: Document): PsiFile? {
-    val uiDocument = getTopLevelUiDocument(document)
+  fun getPsiFile(uiOrRealDocument: Document): PsiFile? {
+    val uiDocument = getTopLevelUiDocument(uiOrRealDocument)
     if (uiDocument == null) {
       return null
     }
@@ -37,17 +37,11 @@ class UiPsiSupport(
     if (state == null) {
       return null
     }
-    val psiFile = state.psiFile
-    if (psiFile.isValid) {
-      return psiFile
+    if (state.uiPsiFile.isValid) {
+      return state.uiPsiFile
     }
     clearUiPsiState(uiDocument)
     return null
-  }
-
-  @Suppress("UNUSED_PARAMETER")
-  fun getPsiFile(document: Document, context: CodeInsightContext): PsiFile? {
-    return getPsiFile(document)
   }
 
   fun getDocument(psiFile: PsiFile): Document? {
@@ -76,11 +70,11 @@ class UiPsiSupport(
       return
     }
     val state = getStoredUiPsiState(uiDocument)
-    val modificationStamp = uiDocument.modificationStamp
-    if (state != null && state.modificationStamp == modificationStamp && state.psiFile.isValid) {
+    val currentUiDocModStamp = uiDocument.modificationStamp
+    if (state?.isUpToDateForStamp(currentUiDocModStamp) == true) {
       return
     }
-    cacheCommittedUiPsi(uiDocument, template, modificationStamp)
+    cacheCommittedUiPsi(uiDocument, template, currentUiDocModStamp)
   }
 
   fun commitDocument(document: Document) {
@@ -104,7 +98,7 @@ class UiPsiSupport(
     }
     val state = getStoredUiPsiState(uiDocument)
     if (state != null) {
-      return state.lastCommittedDocument
+      return state.frozenUiDocument
     }
     val uiDocumentImpl = uiDocument as DocumentImpl
     return uiDocumentImpl.freeze()
@@ -119,15 +113,15 @@ class UiPsiSupport(
     if (state == null) {
       return false
     }
-    return state.modificationStamp == uiDocument.modificationStamp
+    return state.uiDocModStamp == uiDocument.modificationStamp
   }
 
   fun doPostponedOperationsAndUnblockDocument(document: Document) {
     commitDocument(document)
   }
 
-  private fun getTopLevelUiDocument(document: Document): Document? {
-    val topLevelDocument = PsiDocumentManagerBase.getTopLevelDocument(document)
+  private fun getTopLevelUiDocument(uiOrRealDocument: Document): Document? {
+    val topLevelDocument = PsiDocumentManagerBase.getTopLevelDocument(uiOrRealDocument)
     val uiDocumentManager = UiDocumentManager.getInstance()
     if (uiDocumentManager.isUiDocument(topLevelDocument)) {
       return topLevelDocument
@@ -144,30 +138,29 @@ class UiPsiSupport(
     return uiDocument.modificationStamp == realDocument.modificationStamp
   }
 
-  private fun createUiPsiTemplate(psiFile: PsiFile): UiPsiTemplate? {
-    if (!supportsUiPsi(psiFile)) {
+  private fun createUiPsiTemplate(realPsiFile: PsiFile): UiPsiTemplate? {
+    if (!supportsUiPsi(realPsiFile)) {
       return null
     }
     return UiPsiTemplate(
-      fileName = psiFile.name,
-      language = psiFile.language,
-      originalVirtualFile = psiFile.viewProvider.virtualFile,
-      originalPsiFile = psiFile,
+      fileName = realPsiFile.name,
+      language = realPsiFile.language,
+      realVirtualFile = realPsiFile.viewProvider.virtualFile,
+      realPsiFile = realPsiFile,
     )
   }
 
   private fun cacheCommittedUiPsi(
     uiDocument: Document,
     template: UiPsiTemplate,
-    modificationStamp: Long,
+    uiDocModStamp: Long,
   ) {
     val uiPsiFile = createUiPsiFile(uiDocument, template)
     if (uiPsiFile == null) {
       clearUiPsiState(uiDocument)
-      return
+    } else {
+      cacheUiPsiState(uiDocument, uiDocModStamp, uiPsiFile)
     }
-    uiPsiFile.putUserData(UI_PSI_DOCUMENT_KEY, uiDocument)
-    cacheUiPsiState(uiDocument, modificationStamp, uiPsiFile)
   }
 
   private fun createUiPsiFile(
@@ -175,70 +168,66 @@ class UiPsiSupport(
     template: UiPsiTemplate,
   ): PsiFile? {
     val psiManager = PsiManager.getInstance(project)
-    val virtualFile = createUiPsiVirtualFile(uiDocument, template)
-    val viewProvider = createUiPsiViewProvider(psiManager, virtualFile, template)
-    val baseLanguage = viewProvider.baseLanguage
+    val uiVirtualFile = createUiPsiVirtualFile(uiDocument, template)
+    val uiViewProvider = createUiPsiViewProvider(psiManager, uiVirtualFile, template)
+    val baseLanguage = uiViewProvider.baseLanguage
     val parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(baseLanguage)
     if (parserDefinition == null) {
       return null
     }
-    val uiPsiFile = viewProvider.getPsi(baseLanguage)
+    val uiPsiFile = uiViewProvider.getPsi(baseLanguage)
     if (uiPsiFile == null) {
       return null
     }
     PsiFileFactoryImpl.markGenerated(uiPsiFile)
-    uiPsiFile.putUserData(PsiFileFactory.ORIGINAL_FILE, template.originalPsiFile)
+    uiPsiFile.putUserData(PsiFileFactory.ORIGINAL_FILE, template.realPsiFile)
     return uiPsiFile
   }
 
   private fun createUiPsiViewProvider(
     psiManager: PsiManager,
-    virtualFile: ReadOnlyLightVirtualFile,
+    uiVirtualFile: UiVirtualFile,
     template: UiPsiTemplate,
   ): FileViewProvider {
     val providerFactory = LanguageFileViewProviders.INSTANCE.forLanguage(template.language)
-    val viewProvider: FileViewProvider
+    val uiViewProvider: FileViewProvider
     if (providerFactory != null) {
-      viewProvider = providerFactory.createFileViewProvider(virtualFile, template.language, psiManager, false)
+      uiViewProvider = providerFactory.createFileViewProvider(
+        uiVirtualFile,
+        template.language,
+        psiManager,
+        /* eventSystemEnabled = */ false,
+      )
+    } else {
+      uiViewProvider = SingleRootFileViewProvider(psiManager, uiVirtualFile, false)
     }
-    else {
-      viewProvider = SingleRootFileViewProvider(psiManager, virtualFile, false)
-    }
-    return viewProvider
+    return uiViewProvider
   }
 
   private fun createUiPsiVirtualFile(
     uiDocument: Document,
     template: UiPsiTemplate,
-  ): ReadOnlyLightVirtualFile {
-    val virtualFile = object : ReadOnlyLightVirtualFile(
-      template.fileName,
-      template.language,
-      uiDocument.immutableCharSequence,
-    ) {
-      init {
-        modificationStamp = uiDocument.modificationStamp
-      }
-    }
-    val originalVirtualFile = template.originalVirtualFile
+  ): UiVirtualFile {
+    val uiVirtualFile = UiVirtualFile(uiDocument, template)
+    val originalVirtualFile = template.realVirtualFile
     if (originalVirtualFile != null) {
-      virtualFile.originalFile = originalVirtualFile
-      virtualFile.fileType = originalVirtualFile.fileType
+      uiVirtualFile.originalFile = originalVirtualFile
+      uiVirtualFile.fileType = originalVirtualFile.fileType
     }
-    return virtualFile
+    return uiVirtualFile
   }
 
   private fun cacheUiPsiState(
     uiDocument: Document,
-    modificationStamp: Long,
+    uiDocumentModificationStamp: Long,
     uiPsiFile: PsiFile,
   ) {
-    val uiDocumentImpl = uiDocument as DocumentImpl
-    val lastCommittedDocument = uiDocumentImpl.freeze()
+    uiPsiFile.putUserData(UI_PSI_DOCUMENT_KEY, uiDocument)
+    val lastCommittedDocument = (uiDocument as DocumentImpl).freeze()
     val uiPsiState = UiPsiState(
-      modificationStamp = modificationStamp,
-      psiFile = uiPsiFile,
-      lastCommittedDocument = lastCommittedDocument,
+      uiDocModStamp = uiDocumentModificationStamp,
+      uiPsiFile = uiPsiFile,
+      frozenUiDocument = lastCommittedDocument,
     )
     uiDocument.putUserData(UI_PSI_STATE_KEY, uiPsiState)
   }
@@ -267,25 +256,42 @@ class UiPsiSupport(
     uiDocument.putUserData(UI_PSI_STATE_KEY, null)
   }
 
-  private fun supportsUiPsi(originalPsiFile: PsiFile): Boolean {
-    if (originalPsiFile.viewProvider.languages.size != 1) {
+  private fun supportsUiPsi(realPsiFile: PsiFile): Boolean {
+    if (realPsiFile.viewProvider.languages.size != 1) {
       return false
     }
-    return LanguageParserDefinitions.INSTANCE.forLanguage(originalPsiFile.language) != null
+    return LanguageParserDefinitions.INSTANCE.forLanguage(realPsiFile.language) != null
   }
 
   private data class UiPsiTemplate(
     val fileName: String,
     val language: Language,
-    val originalVirtualFile: VirtualFile?,
-    val originalPsiFile: PsiFile,
+    val realVirtualFile: VirtualFile?,
+    val realPsiFile: PsiFile,
   )
 
   private data class UiPsiState(
-    val modificationStamp: Long,
-    val psiFile: PsiFile,
-    val lastCommittedDocument: DocumentEx,
-  )
+    val uiDocModStamp: Long,
+    val uiPsiFile: PsiFile,
+    val frozenUiDocument: DocumentEx,
+  ) {
+    fun isUpToDateForStamp(currentUiDocModStamp: Long): Boolean {
+      return uiDocModStamp == currentUiDocModStamp && uiPsiFile.isValid
+    }
+  }
+
+  private class UiVirtualFile(
+    uiDocument: Document,
+    template: UiPsiTemplate,
+  ) : ReadOnlyLightVirtualFile(
+    template.fileName,
+    template.language,
+    uiDocument.immutableCharSequence,
+  ) {
+    init {
+      modificationStamp = uiDocument.modificationStamp
+    }
+  }
 
   companion object {
     private val UI_PSI_TEMPLATE_KEY = Key.create<UiPsiTemplate>("UI_PSI_TEMPLATE_KEY")

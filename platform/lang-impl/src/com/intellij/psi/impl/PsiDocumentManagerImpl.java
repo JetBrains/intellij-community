@@ -73,7 +73,7 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
   @Override
   public @Nullable PsiFile getPsiFile(@NotNull Document document, @NotNull CodeInsightContext context) {
     if (myUiPsiSupport.isUiDocument(document)) {
-      return myUiPsiSupport.getPsiFile(document, context);
+      return myUiPsiSupport.getPsiFile(document);
     }
     PsiFile psiFile = super.getPsiFile(document, context);
     myUiPsiSupport.recordRealPsiFile(document, psiFile);
