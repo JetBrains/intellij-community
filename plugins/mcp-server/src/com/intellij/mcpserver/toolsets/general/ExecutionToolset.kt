@@ -134,9 +134,41 @@ class ExecutionToolset : McpToolset {
     workingDirectory: String? = null,
     @McpDescription("Optional environment variable overrides for this launch only. Missing/null keeps existing env unchanged; when provided, values are merged over existing env.")
     envs: Map<String, String>? = null,
-    ): RunConfigurationResult {
+  ): RunConfigurationResult {
+    return executeRunConfiguration(
+      configurationName = configurationName,
+      filePath = filePath,
+      line = line,
+      timeout = timeout,
+      maxLinesCount = maxLinesCount,
+      truncateMode = truncateMode,
+      programArguments = programArguments,
+      workingDirectory = workingDirectory,
+      envs = envs,
+      isDebug = false,
+    )
+  }
+
+  // for start_debug_session
+  suspend fun executeRunConfiguration(
+    configurationName: String? = null,
+    filePath: String? = null,
+    line: Int? = null,
+    timeout: Int,
+    maxLinesCount: Int,
+    truncateMode: TruncateMode,
+    programArguments: String?,
+    workingDirectory: String?,
+    envs: Map<String, String>?,
+    isDebug: Boolean,
+  ): RunConfigurationResult {
     val executionTarget = resolveRunConfigurationExecutionTarget(configurationName = configurationName, filePath = filePath, line = line)
-    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.executing.run.configuration", executionTarget.presentableName))
+    currentCoroutineContext().reportToolActivity(
+      McpServerBundle.message(
+        if (isDebug) "tool.activity.starting.debug.run.configuration" else "tool.activity.executing.run.configuration",
+        executionTarget.presentableName,
+      )
+    )
     val project = currentCoroutineContext().project
 
     val resolvedConfiguration = resolveRunConfigurationForExecution(
@@ -162,6 +194,7 @@ class ExecutionToolset : McpToolset {
       timeout = timeout,
       maxLinesCount = maxLinesCount,
       truncateMode = truncateMode,
+      isDebug = isDebug,
     )
     return RunConfigurationResult(
       exitCode = executionOutput.exitCode,
