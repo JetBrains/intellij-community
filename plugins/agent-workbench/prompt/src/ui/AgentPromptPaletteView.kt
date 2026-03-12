@@ -3,7 +3,7 @@ package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.agent.workbench.prompt.AgentPromptBundle
 import com.intellij.icons.AllIcons
-import com.intellij.ide.setToolTipText
+
 import com.intellij.markdown.utils.convertMarkdownToHtml
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.EditorTextField
@@ -64,7 +64,7 @@ internal fun createAgentPromptPaletteView(
 ): AgentPromptPaletteView {
   val providerIconLabel = JBLabel().apply {
     cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-    setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.provider.selector.tooltip")))
+    toolTipText = AgentPromptBundle.message("popup.provider.selector.tooltip")
     border = JBUI.Borders.empty()
     addMouseListener(object : MouseAdapter() {
       override fun mouseClicked(e: MouseEvent?) {
@@ -96,7 +96,7 @@ internal fun createAgentPromptPaletteView(
 
   val previewToggle = JBLabel(AllIcons.Actions.Preview).apply {
     cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-    setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.preview.toggle.tooltip")))
+    toolTipText = AgentPromptBundle.message("popup.preview.toggle.tooltip")
     border = JBUI.Borders.empty()
     addMouseListener(object : MouseAdapter() {
       override fun mouseClicked(e: MouseEvent?) {
