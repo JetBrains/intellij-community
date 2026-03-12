@@ -22,6 +22,7 @@ import com.intellij.platform.eel.fs.EelWindowsFileInfo
 import com.intellij.platform.eel.fs.listDirectoryWithAttrs
 import com.intellij.platform.eel.fs.readFile
 import com.intellij.platform.eel.fs.stat
+import com.intellij.platform.eel.getOrNull
 import com.intellij.platform.eel.getOr
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
@@ -170,20 +171,31 @@ internal fun readAttributesUsingEel(nioPath: Path): FileAttributes {
     return fsBlocking {
       val eelFsApi = eelPath.descriptor.toEelApi().fs
       val fileInfo = eelFsApi.stat(eelPath).eelIt().getOrThrowFileSystemException()
-      toVfs(fileInfo, eelFsApi)
+      toVfs(eelPath, fileInfo, eelFsApi)
     }
   }
 }
 
-private fun toVfs(eelFileInfo: EelFileInfo, eelFsApi: EelFileSystemApi): FileAttributes {
+private suspend fun toVfs(eelPath: EelPath, eelFileInfo: EelFileInfo, eelFsApi: EelFileSystemApi): FileAttributes {
+  val resolvedFileInfo = if (eelFileInfo.type is EelPosixFileInfo.Type.Symlink) {
+    eelFsApi
+      .stat(eelPath)
+      .symlinkPolicy(EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW)
+      .eelIt().getOrNull() ?: return FileAttributes.BROKEN_SYMLINK
+  }
+  else {
+    eelFileInfo
+  }
+
+  val isSymLink = eelFileInfo.type is EelPosixFileInfo.Type.Symlink
   return when {
-    eelFsApi is EelFileSystemPosixApi && eelFileInfo is EelPosixFileInfo -> {
-      eelFileInfo.toVfs(eelFileInfo.isWritable(eelFsApi))
+    eelFsApi is EelFileSystemPosixApi && resolvedFileInfo is EelPosixFileInfo -> {
+      resolvedFileInfo.toVfs(resolvedFileInfo.isWritable(eelFsApi), isSymLink)
     }
-    eelFsApi is EelFileSystemWindowsApi && eelFileInfo is EelWindowsFileInfo -> {
-      eelFileInfo.toVfs(!eelFileInfo.permissions.isReadOnly)
+    eelFsApi is EelFileSystemWindowsApi && resolvedFileInfo is EelWindowsFileInfo -> {
+      resolvedFileInfo.toVfs(!resolvedFileInfo.permissions.isReadOnly, isSymLink)
     }
-    else -> error("EelFileInfo ${eelFileInfo} does not belong to EelFileSystemApi ${eelFsApi}")
+    else -> error("EelFileInfo ${resolvedFileInfo} does not belong to EelFileSystemApi ${eelFsApi}")
   }
 }
 
@@ -217,7 +229,7 @@ internal fun listWithAttributesUsingEel(
     visitDirectory(eelPath, filter) { file: EelPath, attributes: EelFileInfo, eelFsApi: EelFileSystemApi ->
       try {
         //val attributes = amendAttributes(file, fromNio(file, attributes))
-        childrenWithAttributes[file.fileName] = toVfs(attributes, eelFsApi)
+        childrenWithAttributes[file.fileName] = toVfs(eelPath, attributes, eelFsApi)
       }
       catch (e: Exception) {
         LOG.debug(e)
@@ -246,7 +258,7 @@ internal fun listWithAttributesUsingEel(
 private fun visitDirectory(
   directory: EelPath,
   filter: Set<String>?,
-  consumer: (EelPath, EelFileInfo, EelFileSystemApi) -> Boolean,
+  consumer: suspend (EelPath, EelFileInfo, EelFileSystemApi) -> Boolean,
 ) {
   if (filter != null && filter.isEmpty()) {
     return  //nothing to read
@@ -254,7 +266,7 @@ private fun visitDirectory(
   fsBlocking {
     val eelFsApi = directory.descriptor.toEelApi().fs
     val directoryList =
-      eelFsApi.listDirectoryWithAttrs(directory).symlinkPolicy(EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW).eelIt()
+      eelFsApi.listDirectoryWithAttrs(directory).symlinkPolicy(EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE).eelIt()
         .getOrThrowFileSystemException()
     for ((childName, childStat) in directoryList) {
       val childIjentPath = directory.getChild(childName)
@@ -272,12 +284,11 @@ fun EelPosixFileInfo.isWritable(eelFsApi: EelFileSystemPosixApi): Boolean {
   return EelPathUtils.checkAccess(eelFsApi.user, this, AccessMode.WRITE) == null
 }
 
-fun EelFileInfo.toVfs(isWritable: Boolean): FileAttributes {
+fun EelFileInfo.toVfs(isWritable: Boolean, isSymLink: Boolean): FileAttributes {
   val attrs = this
 
   val isDirectory = attrs.type is EelFileInfo.Type.Directory
   val isSpecial = attrs.type is EelFileInfo.Type.Other
-  val isSymLink = attrs.type is EelPosixFileInfo.Type.Symlink
   val isHidden = false
   val length = (attrs.type as? EelFileInfo.Type.Regular)?.size ?: 0
   val lastModified = FileTime.from(attrs.lastModifiedTime?.toInstant() ?: Instant.MIN).toMillis()
