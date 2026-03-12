@@ -41,16 +41,8 @@ internal data class AgentPromptUiContextRestoreSnapshot(
 )
 
 @Serializable
-internal data class AgentPromptUiProviderPreferences(
-    @JvmField val providerId: String? = null,
-    @JvmField val launchModeName: String? = null,
-    @JvmField val providerOptionsByProviderId: Map<String, Set<String>> = emptyMap(),
-)
-
-@Serializable
 internal data class AgentPromptUiState(
     @JvmField val draft: AgentPromptUiDraft = AgentPromptUiDraft(),
-    @JvmField val providerPreferences: AgentPromptUiProviderPreferences = AgentPromptUiProviderPreferences(),
 )
 
 @Service(Service.Level.PROJECT)
@@ -74,14 +66,6 @@ internal class AgentPromptUiSessionStateService
 
     fun saveContextRestoreSnapshot(newSnapshot: AgentPromptUiContextRestoreSnapshot) {
         contextRestoreSnapshot = newSnapshot
-    }
-
-    fun loadProviderPreferences(): AgentPromptUiProviderPreferences {
-        return state.providerPreferences
-    }
-
-    fun saveProviderPreferences(preferences: AgentPromptUiProviderPreferences) {
-        updateState { current -> current.copy(providerPreferences = preferences) }
     }
 
     fun clearDraft() {

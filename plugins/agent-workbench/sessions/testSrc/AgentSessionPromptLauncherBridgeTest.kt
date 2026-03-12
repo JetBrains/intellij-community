@@ -13,6 +13,7 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessa
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationData
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchError
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchRequest
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptProjectPathContext
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
@@ -1125,12 +1126,41 @@ class AgentSessionPromptLauncherBridgeTest {
 
     assertThat(candidates.none { candidate -> candidate.path == dedicatedPath }).isTrue()
   }
+
+  @Test
+  fun loadAndSaveProviderPreferencesDelegatesToLambdas() {
+    var stored = AgentPromptLauncherBridge.ProviderPreferences()
+    val bridge = AgentSessionPromptLauncherBridge(
+      launchPromptRequest = { error("not used") },
+      stateFlowProvider = { error("not used") },
+      pathStateResolver = ::resolveAgentSessionPathState,
+      refreshCatalogAndLoadNewlyOpened = {},
+      refreshProviderForPath = { _, _ -> },
+      preferredProviderProvider = { null },
+      providerPreferencesLoader = { stored },
+      providerPreferencesSaver = { prefs -> stored = prefs },
+    )
+
+    assertThat(bridge.loadProviderPreferences()).isEqualTo(AgentPromptLauncherBridge.ProviderPreferences())
+
+    val prefs = AgentPromptLauncherBridge.ProviderPreferences(
+      providerId = AgentSessionProvider.CODEX.value,
+      launchMode = AgentSessionLaunchMode.STANDARD,
+      providerOptionsByProviderId = mapOf("codex" to setOf("plan_mode")),
+    )
+    bridge.saveProviderPreferences(prefs)
+
+    assertThat(stored).isEqualTo(prefs)
+    assertThat(bridge.loadProviderPreferences()).isEqualTo(prefs)
+  }
 }
 
 private fun promptLauncherBridge(
   service: AgentSessionStateSyncTestFacade,
   launchService: AgentSessionLaunchService,
   preferredProviderProvider: () -> AgentSessionProvider? = { null },
+  providerPreferencesLoader: () -> AgentPromptLauncherBridge.ProviderPreferences = { AgentPromptLauncherBridge.ProviderPreferences() },
+  providerPreferencesSaver: (AgentPromptLauncherBridge.ProviderPreferences) -> Unit = {},
 ): AgentSessionPromptLauncherBridge {
   return AgentSessionPromptLauncherBridge(
     launchPromptRequest = { request -> launchService.launchPromptRequest(request) },
@@ -1139,6 +1169,8 @@ private fun promptLauncherBridge(
     refreshCatalogAndLoadNewlyOpened = { service.refreshCatalogAndLoadNewlyOpened() },
     refreshProviderForPath = { path, provider -> service.refreshProviderForPath(path = path, provider = provider) },
     preferredProviderProvider = preferredProviderProvider,
+    providerPreferencesLoader = providerPreferencesLoader,
+    providerPreferencesSaver = providerPreferencesSaver,
   )
 }
 

@@ -264,6 +264,7 @@ class AgentSessionLaunchService internal constructor(
   ) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
     AgentSessionProviderBehaviors.find(provider)?.onConversationOpened()
+    uiPreferencesState.updateProviderPreferencesOnLaunch(provider, mode, initialMessageRequest)
     launchDropAction(
       key = buildCreateSessionActionKey(normalizedPath, provider, mode),
       droppedActionMessage = "Dropped duplicate create session action for $normalizedPath:$provider:mode=$mode",
@@ -273,8 +274,6 @@ class AgentSessionLaunchService internal constructor(
       },
     ) {
       try {
-        uiPreferencesState.setLastUsedProvider(provider)
-
         val bridge = AgentSessionProviderBridges.find(provider)
         if (bridge == null) {
           logMissingProviderBridge(provider)
@@ -363,7 +362,7 @@ class AgentSessionLaunchService internal constructor(
             provider = request.provider,
             threadId = targetThreadId,
           ) ?: return@run reportPromptLaunchResolved(AgentPromptLaunchResult.failure(AgentPromptLaunchError.TARGET_THREAD_NOT_FOUND))
-          uiPreferencesState.setLastUsedProvider(request.provider)
+          uiPreferencesState.updateProviderPreferencesOnLaunch(request.provider, request.launchMode, request.initialMessageRequest)
 
           val initialMessagePlan = bridge.buildInitialMessagePlan(request.initialMessageRequest)
           val targetIdentity = buildAgentSessionIdentity(provider = request.provider, sessionId = targetThread.id)
