@@ -16592,6 +16592,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         public void testWithContextWithReturns() throws Exception {
             runTest("testData/quickfix/runBlockingInSuspendFunction/withContextWithReturns.kt");
         }
+
+        @TestMetadata("withTypeParameter.kt")
+        public void testWithTypeParameter() throws Exception {
+            runTest("testData/quickfix/runBlockingInSuspendFunction/withTypeParameter.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

@@ -97,7 +97,7 @@ internal class RunBlockingInSuspendFunctionInspection : KotlinApplicableInspecti
 
                 when {
                     functionLiteral.usesCoroutineScopeReceiver() -> FixType.COROUTINE_SCOPE
-                    statements.size == 1 -> FixType.INLINE
+                    element.typeArgumentList == null && statements.size == 1 -> FixType.INLINE
                     else -> FixType.RUN
                 }
             }
