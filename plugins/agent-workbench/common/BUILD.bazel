@@ -28,13 +28,9 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/util",
-    "//platform/util:util_test_lib",
     "//platform/util:util-ui",
-    "//platform/util:util-ui_test_lib",
     "//libraries/junit5",
-    "//libraries/junit5:junit5_test_lib",
     "//libraries/assertj-core",
-    "//libraries/assertj-core:assertj-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.agent.workbench.common` end
