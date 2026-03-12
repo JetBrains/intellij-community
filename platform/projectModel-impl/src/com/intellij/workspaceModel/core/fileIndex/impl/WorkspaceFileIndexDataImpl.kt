@@ -392,28 +392,38 @@ internal class WorkspaceFileIndexDataImpl(
     val dependantEntitiesInStorageAfter by lazy(LazyThreadSafetyMode.NONE) { event.storageAfter.entities(dependantClass).toSet() }
     val dependantEntitiesInStorageBefore by lazy(LazyThreadSafetyMode.NONE) { event.storageBefore.entities(dependantClass).toSet() }
 
+    val entitiesToRemove: MutableSet<R> = LinkedHashSet()
+    val entitiesToKeep:MutableSet<R> = LinkedHashSet()
+
     event.getChanges(dependency.entityClass).forEach { change ->
       change.oldEntity?.let {
-        val dependantEntities = dependency.dependantEntitiesGetter(it)
-        for (entity in dependantEntities) {
-          removedEntities.add(entity)
-          // We might remove a file set for an entity that is still in the workspace model
-          // in that case we want to register its file sets
-          if (dependantEntitiesInStorageAfter.contains(entity)) {
-            addedEntities.add(entity)
-          }
-        }
+        dependency.dependantEntitiesGetter(it).toCollection(entitiesToRemove)
       }
       change.newEntity?.let {
-        val dependantEntities = dependency.dependantEntitiesGetter(it)
-        for (entity in dependantEntities) {
-          addedEntities.add(entity)
-          // We might register a file set for an entity that is already having registered file sets.
-          // in that case we need to remove its file sets first to avoid duplication
-          if (dependantEntitiesInStorageBefore.contains(entity)) {
-            removedEntities.add(entity)
-          }
-        }
+        dependency.dependantEntitiesGetter(it).toCollection(entitiesToKeep)
+      }
+    }
+
+    // To make sure we process EntityChange.Replaced correctly we need to preserve this order
+    // Consider the following case
+    // Parent has two children types Child and Sibling
+    // After Sibling was changed we need to call Child contributor (exactly why OnArbitraryEntity was added)
+    // Change in Sibling does not lead to change in Child even though Child from old storage and from new storage will have different Parent
+    // Child from old and from new storage would be considered equal
+    // It means that if we first add Child from old storage to addedEntities, we will never add Child from new storage
+    // and the Child from the old storage will have different Parent with different Sibling which means Child contributor will be called, but
+    // it will reference old Parent with old Sibling making OnArbitraryEntity useless for EntityChange.Replaced
+    removedEntities.addAll(entitiesToRemove)
+    addedEntities.addAll(entitiesToKeep)
+
+    for (entity in entitiesToRemove) {
+      if (dependantEntitiesInStorageAfter.contains(entity)) {
+        addedEntities.add(entity)
+      }
+    }
+    for (entity in entitiesToKeep) {
+      if (dependantEntitiesInStorageBefore.contains(entity)) {
+        removedEntities.add(entity)
       }
     }
   }
