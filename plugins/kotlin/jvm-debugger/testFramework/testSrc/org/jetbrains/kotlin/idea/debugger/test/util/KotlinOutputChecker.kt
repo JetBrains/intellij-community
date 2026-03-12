@@ -98,17 +98,4 @@ internal class KotlinOutputChecker(
             }
         }
     }
-
-    private fun buildOutputString(): String {
-        // Call base method with reflection
-        val m = OutputChecker::class.java.getDeclaredMethod("buildOutputString")!!
-        val isAccessible = m.isAccessible
-
-        try {
-            m.isAccessible = true
-            return m.invoke(this) as String
-        } finally {
-            m.isAccessible = isAccessible
-        }
-    }
 }

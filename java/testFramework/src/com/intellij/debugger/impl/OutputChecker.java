@@ -195,7 +195,7 @@ public class OutputChecker {
     }
   }
 
-  private synchronized String buildOutputString() {
+  public final synchronized String buildOutputString() {
     var result = new StringBuilder();
     for (Key<?> key : OUTPUT_ORDER) {
       var buffer = myBuffers.get(key);
