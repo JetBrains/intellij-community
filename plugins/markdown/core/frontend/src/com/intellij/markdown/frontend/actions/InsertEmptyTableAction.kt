@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.editor.tables.actions
+package com.intellij.markdown.frontend.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -7,7 +6,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorModificationUtil
+import com.intellij.openapi.editor.EditorModificationUtilEx
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -25,8 +24,8 @@ import net.miginfocom.swing.MigLayout
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.buildEmptyTable
-import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionPlaces
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
@@ -89,26 +88,26 @@ class InsertEmptyTableAction: DumbAwareAction() {
   }
 
   private fun actuallyInsertTable(project: Project, editor: Editor, file: PsiFile, rows: Int, columns: Int) {
-    runWriteAction {
-      executeCommand(project) {
-        val caret = editor.caretModel.currentCaret
-        val document = editor.document
-        val caretOffset = caret.offset
-        val currentLine = document.getLineNumber(caret.offset)
-        val text = buildEmptyTable(rows, columns, cellWidth = 3)
-        val content = when {
-          currentLine != 0 && !DocumentUtil.isLineEmpty(document, currentLine - 1) -> "\n$text"
-          else -> text
-        }
-        EditorModificationUtil.insertStringAtCaret(editor, content)
-        PsiDocumentManager.getInstance(project).commitDocument(document)
-        val table = TableUtils.findTable(file, caretOffset)
-        val offsetToMove = table?.let { PsiTreeUtil.findChildOfType(it, MarkdownTableCell::class.java) }?.startOffset
-        if (offsetToMove != null) {
-          caret.moveToOffset(offsetToMove)
-        }
+      runWriteAction {
+          executeCommand(project) {
+              val caret = editor.caretModel.currentCaret
+              val document = editor.document
+              val caretOffset = caret.offset
+              val currentLine = document.getLineNumber(caret.offset)
+              val text = buildEmptyTable(rows, columns, cellWidth = 3)
+              val content = when {
+                  currentLine != 0 && !DocumentUtil.isLineEmpty(document, currentLine - 1) -> "\n$text"
+                  else -> text
+              }
+              EditorModificationUtilEx.insertStringAtCaret(editor, content)
+              PsiDocumentManager.getInstance(project).commitDocument(document)
+              val table = TableUtils.findTable(file, caretOffset)
+              val offsetToMove = table?.let { PsiTreeUtil.findChildOfType(it, MarkdownTableCell::class.java) }?.startOffset
+              if (offsetToMove != null) {
+                  caret.moveToOffset(offsetToMove)
+              }
+          }
       }
-    }
   }
 
   @ApiStatus.Internal

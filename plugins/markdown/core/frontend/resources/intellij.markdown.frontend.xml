@@ -10,4 +10,18 @@
                  defaultValue="false"
                  description="Should fallback to Markdown link opening implementation before the split."/>
   </extensions>
+
+  <actions resource-bundle="messages.MarkdownBundle">
+    <action id="Markdown.InsertEmptyTable"
+            class="com.intellij.markdown.frontend.actions.InsertEmptyTableAction"
+            icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Table">
+      <add-to-group group-id="Markdown.InsertGroup"/>
+    </action>
+
+    <action id="Markdown.Insert"
+            class="org.intellij.plugins.markdown.ui.actions.InsertAction"
+            use-shortcut-of="Generate">
+      <add-to-group group-id="Markdown.EditorContextMenuGroup"/>
+    </action>
+  </actions>
 </idea-plugin>

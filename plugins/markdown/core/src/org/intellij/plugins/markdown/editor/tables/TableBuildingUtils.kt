@@ -1,6 +1,7 @@
 package org.intellij.plugins.markdown.editor.tables
 
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
+import org.jetbrains.annotations.ApiStatus
 
 internal fun buildEmptyRow(
   columns: Int,
@@ -23,7 +24,8 @@ internal fun buildHeaderSeparator(columns: Int, width: Int = 5, builder: StringB
   return buildEmptyRow(columns, '-', width, builder)
 }
 
-internal fun buildEmptyTable(contentRows: Int, columns: Int, cellWidth: Int = 5): String {
+@ApiStatus.Internal
+fun buildEmptyTable(contentRows: Int, columns: Int, cellWidth: Int = 5): String {
   val builder = StringBuilder()
   buildEmptyRow(columns, width = cellWidth, builder = builder)
   builder.append('\n')
