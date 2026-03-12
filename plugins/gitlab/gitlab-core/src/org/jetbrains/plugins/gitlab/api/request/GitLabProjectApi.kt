@@ -165,9 +165,7 @@ suspend fun GitLabApi.Rest.getProjectNamespace(namespaceId: String): HttpRespons
 @ApiStatus.Internal
 @SinceGitLab("14.3", note = "Doesn't fetch subgroups before 17.10")
 fun GitLabApi.GraphQL.getMemberNamespacesForShare(glMetadata: GitLabServerMetadata): Flow<List<WithGitLabNamespace>> =
-  ApiPageUtil.createGQLPagesFlow { initialPage ->
-    val page = GraphQLRequestPagination(initialPage.afterCursor, 10)
-
+  ApiPageUtil.createGQLPagesFlow(startPage = GraphQLRequestPagination(10)) { page ->
     val parameters = page.asParameters()
 
     val result = if (glMetadata.version < GitLabVersion(17, 10)) {
@@ -182,14 +180,17 @@ fun GitLabApi.GraphQL.getMemberNamespacesForShare(glMetadata: GitLabServerMetada
       }
     }.body()
 
-    val namespaces = (if (page.afterCursor == null) listOf(result.currentUser.namespace) else listOf()) +
-                     result.groups.nodes.filter { it.userPermissions.createProjects }
-    GraphQLConnectionDTO<WithGitLabNamespace>(result.groups.pageInfo, namespaces)
+    val namespaces = buildList {
+      if (page.afterCursor == null) add(result.currentUser.namespace)
+      if (result.groups != null) addAll(result.groups.nodes.filter { it.userPermissions.createProjects })
+    }
+    val pageInfo = result.groups?.pageInfo ?: GraphQLCursorPageInfoDTO(null, false, null, false)
+    GraphQLConnectionDTO(pageInfo, namespaces)
   }.map { it.nodes }
 
 private data class GitLabUserNamespacesResult(
   val currentUser: CurrentUser,
-  val groups: GraphQLConnectionDTO<GitLabGroupDTO>,
+  val groups: GraphQLConnectionDTO<GitLabGroupDTO>?,
 ) {
   data class CurrentUser(val namespace: GitLabNamespaceDTO)
 }
