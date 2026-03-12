@@ -162,7 +162,7 @@ private class JavaThreadDumpItem(private val threadState: ThreadState) : Mergeab
   override val isContainer: Boolean
     get() = false
 
-  override val treeId: Long
+  override val treeId: Long?
     get() = threadState.uniqueId
 
   override val parentTreeId: Long?
@@ -375,4 +375,3 @@ class InfoDumpItem(private val title: @Nls String, private val details: @NlsSafe
 
   override val mergeableToken: MergeableToken = MergeableToken.Unique(this)
 }
-

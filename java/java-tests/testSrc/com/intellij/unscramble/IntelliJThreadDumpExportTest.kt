@@ -89,7 +89,7 @@ internal class IntelliJThreadDumpExportTest {
   }
 
   @Test
-  fun `serializer writes metadata without body and skips containers without stable ids`() {
+  fun `serializer writes metadata without body and skips containers without ids`() {
     val actualDumpText = serializeIntelliJThreadDump(
       listOf(
         dumpItem(
@@ -116,7 +116,19 @@ internal class IntelliJThreadDumpExportTest {
       
       ${IntelliJThreadDumpMetadata.META_DATA_MARKER}
       {
-          "version": 1
+          "version": 1,
+          "tree_links": [
+              {
+                  "tree_id": 0,
+                  "parent_tree_id": 0
+              }
+          ],
+          "containers": [
+              {
+                  "name": "Zero Id",
+                  "tree_id": 0
+              }
+          ]
       }
       """.trimIndent(),
     )

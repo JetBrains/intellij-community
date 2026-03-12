@@ -80,8 +80,5 @@ private fun serializeThreadDumpBody(dumpItems: List<DumpItem>): String {
 }
 
 private fun serializeTreeId(treeId: Long?): Long? {
-  if (treeId == null || treeId == 0L) {
-    return null
-  }
   return treeId
 }

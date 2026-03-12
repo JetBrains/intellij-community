@@ -12,6 +12,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class ThreadDumpParserTest {
@@ -799,13 +800,13 @@ public class ThreadDumpParserTest {
     assertEquals(4, threads.size());
 
     assertEquals("main@1", threads.get(0).getName());
-    assertEquals(0L, threads.get(0).getUniqueId());
+    assertNull(threads.get(0).getUniqueId());
     assertEquals("ForkJoinPool-1-worker-1@934", threads.get(1).getName());
-    assertEquals(0L, threads.get(1).getUniqueId());
+    assertNull(threads.get(1).getUniqueId());
     assertEquals("{unnamed}@960", threads.get(2).getName());
-    assertEquals(0L, threads.get(2).getUniqueId());
+    assertNull(threads.get(2).getUniqueId());
     assertEquals("{unnamed}@957", threads.get(3).getName());
-    assertEquals(0L, threads.get(3).getUniqueId());
+    assertNull(threads.get(3).getUniqueId());
     assertTrue(threads.get(3).isVirtual());
   }
 
@@ -821,7 +822,7 @@ public class ThreadDumpParserTest {
 
     ThreadState thread = threads.getFirst();
     assertEquals("scope@worker@957", thread.getName());
-    assertEquals(0L, thread.getUniqueId());
+    assertNull(thread.getUniqueId());
     assertTrue(thread.isVirtual());
   }
 
@@ -837,7 +838,7 @@ public class ThreadDumpParserTest {
 
     ThreadState thread = threads.getFirst();
     assertEquals("{unnamed}@4343", thread.getName());
-    assertEquals(0L, thread.getUniqueId());
+    assertNull(thread.getUniqueId());
     assertTrue(thread.isVirtual());
   }
 

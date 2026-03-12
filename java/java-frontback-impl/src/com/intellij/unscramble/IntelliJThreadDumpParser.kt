@@ -85,8 +85,7 @@ private fun applyThreadMetadata(
   val parentIds = metadata?.threadLinks.orEmpty().associate { it.treeId to it.parentTreeId }
   val containerIds = metadata?.containers.orEmpty().mapTo(linkedSetOf()) { it.treeId }
   for (threadState in threadStates) {
-    val treeId = threadState.uniqueId
-    if (treeId == 0L) continue
+    val treeId = threadState.uniqueId ?: continue
     val parentTreeId = parentIds[treeId] ?: continue
     if (parentTreeId !in containerIds) continue
     threadState.threadContainerUniqueId = parentTreeId
