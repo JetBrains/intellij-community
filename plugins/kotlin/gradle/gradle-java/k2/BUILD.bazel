@@ -117,6 +117,10 @@ jvm_library(
     "//jps/model-api:model_test_lib",
     "//plugins/groovy:groovy-tests",
     "//plugins/groovy:groovy-tests_test_lib",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-tests",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
+    "//java/java-runtime:rt",
+    "//java/java-runtime:rt_test_lib",
   ],
   runtime_deps = [":kotlin-gradle-java-tests"]
 )

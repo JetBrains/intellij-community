@@ -6,19 +6,31 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
+import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.base.test.TestRoot
+import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
+import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
+import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 import kotlin.reflect.KMutableProperty0
 
+@UseK2PluginMode
+@GradleProjectTestApplication
+@AssertKotlinPluginMode
+@TestRoot("idea/tests/testData/")
+@TestDataPath("\$CONTENT_ROOT")
+@TestMetadata("../../../idea/tests/testData/gradle/languageFeature/")
 class GradleUpdateConfigurationQuickFixTest : GradleImportingTestCase() {
     private lateinit var codeInsightTestFixture: CodeInsightTestFixture
 
@@ -43,16 +55,18 @@ class GradleUpdateConfigurationQuickFixTest : GradleImportingTestCase() {
         )
     }
 
+    // Duplicated setting of languageVersion in the after file is expected and should be fixed in KTIJ-37923
     @Test
-    @TargetVersions("7.0 <=> 9.0")
+    @TargetVersions("7.6.3 <=> 8.14.4")
     fun testUpdateExistingLanguageVersion() {
-        doTest("Set module language version to 1.9")
+        doTest("Increase language version to 2.2")
     }
 
+    // Duplicated setting of languageVersion in the after file is expected and should be fixed in KTIJ-37923
     @Test
-    @TargetVersions("7.0 <=> 9.0")
+    @TargetVersions("7.6.3 <=> 8.14.4")
     fun testUpdateExistingLanguageVersionKts() {
-        doTest("Set module language version to 1.9")
+        doTest("Increase language version to 2.2")
     }
 
     @Test
