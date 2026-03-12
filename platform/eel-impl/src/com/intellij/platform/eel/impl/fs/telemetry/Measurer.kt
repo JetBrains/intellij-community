@@ -49,6 +49,7 @@ object Measurer {
       private fun fromDelegateClassInternal(clazz: Class<FileSystemProvider>): DelegateType {
         if (clazz.name == "com.intellij.platform.ide.impl.wsl.ijent.nio.IjentWslNioFileSystemProvider") return wsl
         if (clazz.name == "com.intellij.docker.ijent.DockerMountsAwareFileSystemProvider") return docker
+        if (clazz.name == "com.intellij.platform.ijent.community.impl.nio.fs.IjentEphemeralRootAwareFileSystemProvider") return docker
         if (!RoutingAwareFileSystemProvider::class.java.isAssignableFrom(clazz)) return local
         error("Unknown delegate class: ${clazz.name}")
       }
