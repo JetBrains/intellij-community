@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
-import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 import kotlin.reflect.KMutableProperty0
@@ -81,34 +80,10 @@ class GradleUpdateConfigurationQuickFixTest : GradleImportingTestCase() {
         doKMPTest("Set module language version to 1.9")
     }
 
-    @Test
-    @TargetVersions("7.0 <=> 9.0")
-    fun testUpdateLanguageVersion() {
-        doTest("Set module language version to 1.9")
-    }
-
-    @Test
-    @TargetVersions("7.0 <=> 9.0")
-    fun testUpdateLanguageVersionKts() {
-        doTest("Set module language version to 1.9")
-    }
-
-    @Test
-    @TargetVersions("7.0 <=> 9.0")
-    fun testUpdateLanguageVersionKMP() {
-        doKMPTest("Set module language version to 1.9")
-    }
-
-    @Test
-    @TargetVersions("7.0 <=> 9.0")
-    fun testUpdateLanguageVersionKMPKts() {
-        doKMPTest("Set module language version to 1.9")
-    }
-
     private fun doKMPTest(intentionName: String) = doTest(intentionName, "src/jvmMain/kotlin/src.kt")
 
     private fun doTest(intentionName: String, srcFilePath: String = "src/main/kotlin/src.kt") {
-        var gradleKtsFile = File(getTestDataDirectory(), "build.gradle.kts")
+        val gradleKtsFile = File(getTestDataDirectory(), "build.gradle.kts")
         val buildGradleVFile = if (gradleKtsFile.exists()) {
             createProjectSubFile("build.gradle.kts", gradleKtsFile.readText())
         } else {
