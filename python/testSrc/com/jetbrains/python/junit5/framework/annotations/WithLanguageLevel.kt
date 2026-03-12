@@ -10,5 +10,5 @@ import org.jetbrains.annotations.TestOnly
  */
 @ApiStatus.Experimental
 @TestOnly
-@Target(AnnotationTarget.FUNCTION)
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 annotation class WithLanguageLevel(val level: LanguageLevel)

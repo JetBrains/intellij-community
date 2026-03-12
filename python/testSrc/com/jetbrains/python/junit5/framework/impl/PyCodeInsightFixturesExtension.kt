@@ -82,8 +82,10 @@ internal class PyCodeInsightFixturesExtension : BeforeAllCallback, BeforeEachCal
       }
     }
 
-    codeInsightFixture(project, tempDirFixture).also {
-      implicitFixtures += LookupFixture(DEFAULT_CODE_INSIGHT, it, true)
+    manager.getOrDefault {
+      codeInsightFixture(project, tempDirFixture).also {
+        implicitFixtures += LookupFixture(DEFAULT_CODE_INSIGHT, it, true)
+      }
     }
 
     runBlocking {
