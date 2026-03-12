@@ -105,20 +105,6 @@ class GradleUpdateConfigurationQuickFixTest : GradleImportingTestCase() {
         doKMPTest("Set module language version to 1.9")
     }
 
-    @Test
-    @Ignore // Import failed: Could not initialize class org.jetbrains.kotlin.gradle.internal.KotlinSourceSetProviderImplKt
-    @TargetVersions("4.7 <=> 6.0")
-    fun testUpdateApiVersion() {
-        doTest("Set module API version to 1.1")
-    }
-
-    @Test
-    @Ignore // Import failed: A problem occurred evaluating root project 'project'
-    @TargetVersions("4.7 <=> 6.0")
-    fun testUpdateLanguageAndApiVersion() {
-        doTest("Set module language version to 1.1")
-    }
-
     private fun doKMPTest(intentionName: String) = doTest(intentionName, "src/jvmMain/kotlin/src.kt")
 
     private fun doTest(intentionName: String, srcFilePath: String = "src/main/kotlin/src.kt") {
