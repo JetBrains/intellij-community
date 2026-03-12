@@ -1,0 +1,10 @@
+open class OpenClass {
+    open fun greet(): String = "hello"
+}
+
+fun test(): OpenClass {
+    return object : OpenClass() {}
+}
+
+// ELEMENT: object
+// IGNORE_K1

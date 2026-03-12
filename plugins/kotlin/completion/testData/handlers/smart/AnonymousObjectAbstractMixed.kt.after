@@ -1,0 +1,14 @@
+abstract class AbstractMixed {
+    abstract fun required(): String
+    fun provided(): Int = 42
+}
+
+fun test(): AbstractMixed {
+    return object : AbstractMixed() {
+        override fun required(): String {
+            TODO("Not yet implemented")
+        }
+    }
+}
+
+// ELEMENT: object
