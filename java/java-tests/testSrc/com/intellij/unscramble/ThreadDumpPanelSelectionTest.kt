@@ -120,9 +120,10 @@ class ThreadDumpPanelSelectionTest : BasePlatformTestCase() {
     panel.selectStackFrame(1)
     assertSelectedThread("worker-thread-2")
 
-    setFilterText("worker")
+    filterItemsBy("worker")
 
     assertSelectedThread("worker-thread-2")
+    assertVisibleItems("worker-thread-1", "worker-thread-2", "worker-thread-3")
   }
 
   fun testSelectionFallsBackToFirstWhenFilterDoesNotMatchPreviousSelection() {
@@ -134,23 +135,89 @@ class ThreadDumpPanelSelectionTest : BasePlatformTestCase() {
     panel.selectStackFrame(0)
     assertSelectedThread("worker-thread-1")
 
-    setFilterText("main")
+    filterItemsBy("main")
 
     assertSelectedThread("main-thread")
+    assertVisibleItems("main-thread")
   }
 
-  private fun thread(name: String, virtual: Boolean, stackTrace: String = "java.lang.Thread.sleep"): ThreadState {
+  fun testFilterAppliesToHierarchyMode() {
+    val containerId = 100L
+    createPanelWithContainers(
+      threads = listOf(
+        thread("worker-thread-1", virtual = true, stackTrace = "at com.example.Worker.run", containerId = containerId),
+        thread("main-thread", virtual = true, stackTrace = "at com.example.Main.run", containerId = containerId),
+      ),
+      containers = listOf(container("Container", containerId)),
+    )
+
+    UISettings.getInstance().state.showDumpItemsHierarchy = true
+    invokeUpdateThreadsTree()
+
+    filterItemsBy("Worker")
+
+    assertVisibleItems("worker-thread-1")
+  }
+
+  fun testFilterInHierarchyPreservesSelection() {
+    val containerId = 100L
+    createPanelWithContainers(
+      threads = listOf(
+        thread("worker-thread-1", virtual = true, stackTrace = "at com.example.Worker.run", containerId = containerId),
+        thread("worker-thread-2", virtual = true, stackTrace = "at com.example.Worker.run", containerId = containerId),
+        thread("main-thread", virtual = true, stackTrace = "at com.example.Main.run", containerId = containerId),
+      ),
+      containers = listOf(container("Container", containerId)),
+    )
+
+    UISettings.getInstance().state.showDumpItemsHierarchy = true
+    invokeUpdateThreadsTree()
+
+    selectThreadByName("worker-thread-2")
+    assertSelectedThread("worker-thread-2")
+
+    filterItemsBy("Worker")
+
+    assertSelectedThread("worker-thread-2")
+    assertVisibleItems("worker-thread-1", "worker-thread-2")
+  }
+
+  fun testFilterInHierarchyRemovesEmptyContainers() {
+    val containerId = 100L
+    val container1Id = 101L
+    createPanelWithContainers(
+      threads = listOf(
+        thread("platform-thread-1", virtual = false, stackTrace = "at com.example.Main.run"),
+        thread("virtual-thread-1", virtual = true, stackTrace = "at com.example.Worker.run", containerId = containerId),
+        thread("virtual-thread-2", virtual = true, stackTrace = "at com.example.Worker.run", containerId = container1Id),
+        thread("virtual-thread-3", virtual = true, stackTrace = "at com.example.Worker.run", containerId = container1Id),
+        thread("virtual-thread-4", virtual = true, stackTrace = "at com.example.Worker.run", containerId = container1Id),
+      ),
+      containers = listOf(container("GroupA", containerId), container("GroupB", container1Id)),
+    )
+
+    UISettings.getInstance().state.showDumpItemsHierarchy = true
+
+    filterItemsBy("Main")
+
+    assertVisibleItems("platform-thread-1")
+
+    filterItemsBy("Group")
+
+    assertVisibleItems("GroupA", "GroupB")
+  }
+
+  private fun thread(name: String, virtual: Boolean, stackTrace: String = "java.lang.Thread.sleep", containerId: Long? = null): ThreadState {
     val state = ThreadState(name, "waiting")
     state.setStackTrace("\"$name\"\n  $stackTrace", false)
     state.isVirtual = virtual
     state.uniqueId = name.hashCode().toLong()
+    state.threadContainerUniqueId = containerId
     return state
   }
 
   private fun threadWithContainer(name: String, virtual: Boolean, containerId: Long): ThreadState {
-    val state = thread(name, virtual)
-    state.threadContainerUniqueId = containerId
-    return state
+    return thread(name, virtual, containerId = containerId)
   }
 
   private fun container(name: String, id: Long): JavaThreadContainerDesc {
@@ -158,7 +225,7 @@ class ThreadDumpPanelSelectionTest : BasePlatformTestCase() {
     val ref = object : MockObjectReference(vm, Any()) {
       override fun uniqueID(): Long = id
     }
-    return JavaThreadContainerDesc(name, ref, null)
+    return JavaThreadContainerDesc(name, ref.uniqueID(), null)
   }
 
   private fun createPanel(vararg threads: ThreadState) {
@@ -170,6 +237,11 @@ class ThreadDumpPanelSelectionTest : BasePlatformTestCase() {
     val toolbarActions = DefaultActionGroup()
     val dumpItems = toDumpItems(threads, containers)
     panel = ThreadDumpPanel.createFromDumpItems(project, consoleView, toolbarActions, dumpItems)
+  }
+
+  private fun filterItemsBy(text: String) {
+    setFilterText(text)
+    invokeUpdateThreadsTree()
   }
 
   private fun invokeUpdateThreadsTree() {
@@ -194,6 +266,33 @@ class ThreadDumpPanelSelectionTest : BasePlatformTestCase() {
     val method = ThreadDumpPanel::class.java.getDeclaredMethod("getTree")
     method.isAccessible = true
     return method.invoke(panel) as javax.swing.JTree
+  }
+
+  private fun assertVisibleItems(vararg expectedNames: String) {
+    val tree = getTree()
+    val root = tree.model.root as DefaultMutableTreeNode
+    val visibleNames = mutableListOf<String>()
+    collectItemNames(root, visibleNames)
+    assertEquals(expectedNames.toList(), visibleNames)
+  }
+
+  private fun collectItemNames(node: DefaultMutableTreeNode, result: MutableList<String>) {
+    val item = node.userObject
+    if (item is DumpItem) {
+      result.add(item.name)
+    }
+    for (i in 0 until node.childCount) {
+      collectItemNames(node.getChildAt(i) as DefaultMutableTreeNode, result)
+    }
+  }
+
+  private fun assertNodeExpanded(name: String, expectedExpanded: Boolean) {
+    val tree = getTree()
+    val root = tree.model.root as DefaultMutableTreeNode
+    val node = findNode(root, name)
+    assertNotNull("Could not find node with name '$name'", node)
+    val path = TreePath(node!!.path)
+    assertEquals("Expected node '$name' to be ${if (expectedExpanded) "expanded" else "collapsed"}", expectedExpanded, tree.isExpanded(path))
   }
 
   private fun assertSelectedThread(expectedName: String) {

@@ -47,6 +47,7 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -71,6 +72,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.BooleanSupplier;
+import java.util.stream.Collectors;
 
 /**
  * @author Jeka
@@ -229,9 +231,6 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
   }
 
   private void updateThreadsTree() {
-    String text = myFilterPanel.isVisible() ? myFilterField.getText() : "";
-    var path = myThreadTree.getSelectionPath();
-    var selection = path != null ? (DumpItem)((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject() : null;
     var uiSettings = UISettings.getInstance().getState();
     boolean useMerged = uiSettings.getMergeEqualStackTraces();
     boolean showDumpItemsHierarchy = uiSettings.getShowDumpItemsHierarchy();
@@ -241,18 +240,25 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
     // Add all of them in a single call, otherwise it works too slow recalculating UI layout.
     var model = (DefaultTreeModel)myThreadTree.getModel();
     var treeRoot = ((DefaultMutableTreeNode)model.getRoot());
+
+    var path = myThreadTree.getSelectionPath();
+    var selection = path != null ? (DumpItem)((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject() : null;
     DefaultMutableTreeNode selectedNode = null;
 
     if (treeRoot != null) {
       treeRoot.removeAllChildren();
 
+      String text = myFilterPanel.isVisible() ? myFilterField.getText() : "";
+      var filteredThreadStates = threadStates.stream().filter(item -> matchesFilter(item, text)).toList();
+      var filteredTreeIds = filteredThreadStates.stream().map(DumpItem::getTreeId).collect(Collectors.toSet());
+
       if (showDumpItemsHierarchy && !showOnlyPlatformThreads) {
         // Build map from parent item name to the list of it's child items
         var rootItems = new ArrayList<DumpItem>();
         var parentIdToChildren = new HashMap<Long, List<DumpItem>>();
-        for (var item : threadStates) {
+        for (var item : filteredThreadStates) {
           var parentId = item.getParentTreeId();
-          if (parentId != null) {
+          if (parentId != null && filteredTreeIds.contains(parentId)) {
             parentIdToChildren.computeIfAbsent(parentId, k -> new ArrayList<>()).add(item);
           } else {
             rootItems.add(item);
@@ -280,14 +286,13 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
         }
       } else {
         // Show flat dump
-        for (DumpItem state : threadStates) {
+        for (DumpItem state : filteredThreadStates) {
           if (state.isContainer()) continue;
           if (showOnlyPlatformThreads && state.getCanBeHidden()) continue;
-          if (StringUtil.containsIgnoreCase(state.getStackTrace(), text) || StringUtil.containsIgnoreCase(state.getName(), text)) {
-            var node = new DefaultMutableTreeNode(state);
-            treeRoot.add(node);
-            if (selection == state) selectedNode = node;
-          }
+
+          var node = new DefaultMutableTreeNode(state);
+          treeRoot.add(node);
+          if (selection == state) selectedNode = node;
         }
       }
     }
@@ -304,7 +309,7 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
     if (treeRoot != null && treeRoot.getChildCount() > 0) {
       if (selectedNode != null) {
         var selectionPath = new TreePath(selectedNode.getPath());
-        myThreadTree.expandPath(selectionPath.getParentPath());
+        myThreadTree.expandPath(selectionPath);
         myThreadTree.setSelectionPath(selectionPath);
         myThreadTree.scrollPathToVisible(selectionPath);
       }
@@ -328,6 +333,12 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
       currentNode.add(childNode);
       buildDumpItemsTree(childNode, parentIdToChildren);
     }
+  }
+
+  private static boolean matchesFilter(DumpItem item, String text) {
+    return text.isEmpty() ||
+           StringUtil.containsIgnoreCase(item.getStackTrace(), text) ||
+           StringUtil.containsIgnoreCase(item.getName(), text);
   }
 
   private static void highlightOccurrences(String filter, Project project, Editor editor) {
