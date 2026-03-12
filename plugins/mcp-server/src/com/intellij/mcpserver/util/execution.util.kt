@@ -7,6 +7,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.execution.lineMarker.RunLineMarkerContributor.Info
@@ -259,8 +260,14 @@ internal suspend fun executeResolvedRunConfiguration(
   timeout: Int,
   maxLinesCount: Int,
   truncateMode: TruncateMode,
+  isDebug: Boolean,
 ): RunConfigurationExecutionOutput {
-  val executor = DefaultRunExecutor.getRunExecutorInstance() ?: mcpFail("Execution is not supported in this environment or IDE")
+  val executor = if (isDebug) {
+    DefaultDebugExecutor.getDebugExecutorInstance() ?: mcpFail("Debugging is not available in this environment or IDE.")
+  }
+  else {
+    DefaultRunExecutor.getRunExecutorInstance() ?: mcpFail("Execution is not supported in this environment or IDE")
+  }
   val exitCodeDeferred = CompletableDeferred<Int>()
   val outputBuilder = StringBuilder()
 
