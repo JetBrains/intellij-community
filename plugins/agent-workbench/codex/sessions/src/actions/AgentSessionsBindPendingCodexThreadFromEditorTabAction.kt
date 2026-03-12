@@ -2,14 +2,13 @@
 package com.intellij.agent.workbench.codex.sessions.actions
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
-import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindReport
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindRequest
 import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
-import com.intellij.agent.workbench.chat.rebindOpenPendingAgentChatTabs
 import com.intellij.agent.workbench.chat.resolveAgentChatEditorTabActionContext
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabActionBase
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
+import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
 import com.intellij.agent.workbench.sessions.service.isPendingEditorContext
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
@@ -18,8 +17,10 @@ class AgentSessionsBindPendingCodexThreadFromEditorTabAction @JvmOverloads const
   private val resolveTarget: (AgentChatEditorTabActionContext) -> AgentChatTabRebindTarget? = { context ->
     service<AgentSessionReadService>().resolvePendingThreadRebindTarget(context, AgentSessionProvider.CODEX)
   },
-  private val rebindPendingTab: (Map<String, List<AgentChatPendingCodexTabRebindRequest>>) -> AgentChatPendingCodexTabRebindReport =
-    { requestsByPath -> rebindOpenPendingAgentChatTabs(AgentSessionProvider.CODEX, requestsByPath) },
+  private val rebindPendingTab: (Map<String, List<AgentChatPendingCodexTabRebindRequest>>) -> Unit =
+    { requestsByPath ->
+      service<AgentSessionRefreshService>().rebindPendingTabsInBackground(AgentSessionProvider.CODEX, requestsByPath)
+    },
   resolveContext: (AnActionEvent) -> AgentChatEditorTabActionContext? = ::resolveAgentChatEditorTabActionContext,
 ) : AgentSessionsEditorTabActionBase(resolveContext) {
 

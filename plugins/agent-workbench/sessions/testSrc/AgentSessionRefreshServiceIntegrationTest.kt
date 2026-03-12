@@ -677,10 +677,10 @@ class AgentSessionRefreshServiceIntegrationTest {
       assertThat(invocation.pendingTabKey).isEqualTo("pending-codex:new-1")
       assertThat(invocation.pendingThreadIdentity).isEqualTo("codex:new-1")
       val target = invocation.target
+      assertThat(target.projectPath).isEqualTo(PROJECT_PATH)
+      assertThat(target.provider).isEqualTo(AgentSessionProvider.CODEX)
       assertThat(target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-2"))
       assertThat(target.threadId).isEqualTo("codex-2")
-      assertThat(target.shellCommand)
-        .containsExactly("codex", "-c", "check_for_update_on_startup=false", "resume", "codex-2")
       assertThat(target.threadTitle).isEqualTo("New Codex thread")
       assertThat(target.threadActivity).isEqualTo(AgentThreadActivity.READY)
 

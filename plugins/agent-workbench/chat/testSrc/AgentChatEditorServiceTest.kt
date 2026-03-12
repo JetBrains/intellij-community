@@ -1,6 +1,7 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.application.UiWithModelAccess
@@ -335,10 +336,9 @@ class AgentChatEditorServiceTest {
           AgentChatPendingCodexTabRebindRequest(
             pendingTabKey = file.tabKey,
             pendingThreadIdentity = file.threadIdentity,
-            target = AgentChatTabRebindTarget(
+            target = rebindTarget(
               threadIdentity = "CODEX:thread-3",
               threadId = "thread-3",
-              shellCommand = listOf("codex", "resume", "thread-3"),
               threadTitle = "Recovered thread",
               threadActivity = AgentThreadActivity.UNREAD,
             ),
@@ -353,7 +353,7 @@ class AgentChatEditorServiceTest {
 
     assertThat(file.threadIdentity).isEqualTo("CODEX:thread-3")
     assertThat(file.threadId).isEqualTo("thread-3")
-    assertThat(file.shellCommand).containsExactly("codex", "resume", "thread-3")
+    assertThat(file.shellCommand).containsExactlyElementsOf(resolvedCodexResumeCommand("thread-3"))
     assertThat(file.threadTitle).isEqualTo("Recovered thread")
     assertThat(file.threadActivity).isEqualTo(AgentThreadActivity.UNREAD)
 
@@ -455,10 +455,9 @@ class AgentChatEditorServiceTest {
             tabKey = file.tabKey,
             currentThreadIdentity = file.threadIdentity,
             newThreadRebindRequestedAtMs = 1_000L,
-            target = AgentChatTabRebindTarget(
+            target = rebindTarget(
               threadIdentity = "CODEX:thread-2",
               threadId = "thread-2",
-              shellCommand = listOf("codex", "resume", "thread-2"),
               threadTitle = "New thread",
               threadActivity = AgentThreadActivity.UNREAD,
             ),
@@ -473,7 +472,7 @@ class AgentChatEditorServiceTest {
       .isEqualTo(AgentChatConcreteCodexTabRebindStatus.REBOUND)
     assertThat(file.threadIdentity).isEqualTo("CODEX:thread-2")
     assertThat(file.threadId).isEqualTo("thread-2")
-    assertThat(file.shellCommand).containsExactly("codex", "resume", "thread-2")
+    assertThat(file.shellCommand).containsExactlyElementsOf(resolvedCodexResumeCommand("thread-2"))
     assertThat(file.threadTitle).isEqualTo("New thread")
     assertThat(file.threadActivity).isEqualTo(AgentThreadActivity.UNREAD)
     assertThat(file.newThreadRebindRequestedAtMs).isNull()
@@ -507,10 +506,9 @@ class AgentChatEditorServiceTest {
             tabKey = concreteTab.tabKey,
             currentThreadIdentity = "CODEX:thread-1",
             newThreadRebindRequestedAtMs = 1_000L,
-            target = AgentChatTabRebindTarget(
+            target = rebindTarget(
               threadIdentity = "CODEX:thread-2",
               threadId = "thread-2",
-              shellCommand = listOf("codex", "resume", "thread-2"),
               threadTitle = "Should not replace",
               threadActivity = AgentThreadActivity.READY,
             ),
@@ -551,10 +549,9 @@ class AgentChatEditorServiceTest {
             tabKey = staleSnapshot.tabKey,
             currentThreadIdentity = staleSnapshot.currentThreadIdentity,
             newThreadRebindRequestedAtMs = staleSnapshot.newThreadRebindRequestedAtMs,
-            target = AgentChatTabRebindTarget(
+            target = rebindTarget(
               threadIdentity = "CODEX:thread-2",
               threadId = "thread-2",
-              shellCommand = listOf("codex", "resume", "thread-2"),
               threadTitle = "Should not rebind",
               threadActivity = AgentThreadActivity.READY,
             ),
@@ -594,10 +591,9 @@ class AgentChatEditorServiceTest {
           AgentChatPendingCodexTabRebindRequest(
             pendingTabKey = pendingTab.tabKey,
             pendingThreadIdentity = "CODEX:new-2",
-            target = AgentChatTabRebindTarget(
+            target = rebindTarget(
               threadIdentity = "CODEX:thread-2",
               threadId = "thread-2",
-              shellCommand = listOf("codex", "resume", "thread-2"),
               threadTitle = "Recovered two",
               threadActivity = AgentThreadActivity.UNREAD,
             ),
@@ -639,10 +635,9 @@ class AgentChatEditorServiceTest {
           AgentChatPendingCodexTabRebindRequest(
             pendingTabKey = pendingTab.tabKey,
             pendingThreadIdentity = "CODEX:new-1",
-            target = AgentChatTabRebindTarget(
+            target = rebindTarget(
               threadIdentity = "CODEX:thread-2",
               threadId = "thread-2",
-              shellCommand = listOf("codex", "resume", "thread-2"),
               threadTitle = "Should not replace",
               threadActivity = AgentThreadActivity.READY,
             ),
@@ -672,10 +667,9 @@ class AgentChatEditorServiceTest {
           AgentChatPendingCodexTabRebindRequest(
             pendingTabKey = "missing-tab-key",
             pendingThreadIdentity = "CODEX:new-1",
-            target = AgentChatTabRebindTarget(
+            target = rebindTarget(
               threadIdentity = "CODEX:thread-2",
               threadId = "thread-2",
-              shellCommand = listOf("codex", "resume", "thread-2"),
               threadTitle = "Recovered",
               threadActivity = AgentThreadActivity.READY,
             ),
@@ -1023,6 +1017,24 @@ class AgentChatEditorServiceTest {
     }
   }
 
+  private fun rebindTarget(
+    threadIdentity: String,
+    threadId: String,
+    threadTitle: String,
+    threadActivity: AgentThreadActivity,
+    provider: AgentSessionProvider = AgentSessionProvider.CODEX,
+    projectPath: String = this.projectPath,
+  ): AgentChatTabRebindTarget {
+    return AgentChatTabRebindTarget(
+      projectPath = projectPath,
+      provider = provider,
+      threadIdentity = threadIdentity,
+      threadId = threadId,
+      threadTitle = threadTitle,
+      threadActivity = threadActivity,
+    )
+  }
+
   private class TestChatFileEditorProvider : FileEditorProvider, DumbAware {
     override fun accept(project: Project, file: VirtualFile): Boolean {
       return file is AgentChatVirtualFile
@@ -1038,6 +1050,10 @@ class AgentChatEditorServiceTest {
 
     override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_OTHER_EDITORS
   }
+}
+
+private fun resolvedCodexResumeCommand(threadId: String): List<String> {
+  return listOf("codex", "-c", "check_for_update_on_startup=false", "resume", threadId)
 }
 
 private suspend fun <T> runInUi(action: suspend () -> T): T {

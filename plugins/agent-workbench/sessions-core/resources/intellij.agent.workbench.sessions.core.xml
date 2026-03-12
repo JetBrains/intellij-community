@@ -34,6 +34,10 @@
       qualifiedName="com.intellij.agent.workbench.promptManualContextSource"
       interface="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptManualContextSourceBridge"
       dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.sessionLaunchSpecAugmenter"
+      interface="com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchSpecAugmenter"
+      dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

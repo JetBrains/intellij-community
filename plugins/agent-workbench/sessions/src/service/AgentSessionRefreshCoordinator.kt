@@ -78,11 +78,11 @@ internal class AgentSessionRefreshCoordinator(
     Map<Pair<String, String>, String>,
     Map<Pair<String, String>, AgentThreadActivity>,
   ) -> Int = ::updateOpenAgentChatTabPresentation,
-  private val openAgentChatPendingTabsBinder: (
+  private val openAgentChatPendingTabsBinder: suspend (
     AgentSessionProvider,
     Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
   ) -> AgentChatPendingCodexTabRebindReport = ::rebindOpenPendingAgentChatTabs,
-  private val openAgentChatConcreteTabsBinder: (
+  private val openAgentChatConcreteTabsBinder: suspend (
     AgentSessionProvider,
     Map<String, List<AgentChatConcreteCodexTabRebindRequest>>,
   ) -> AgentChatConcreteCodexTabRebindReport = ::rebindOpenConcreteAgentChatTabs,

@@ -14,5 +14,6 @@ import org.junit.platform.suite.api.Suite
   "com.intellij.agent.workbench.prompt.vcs",
   "com.intellij.agent.workbench.prompt.testrunner",
   "com.intellij.agent.workbench.sessions",
+  "com.intellij.agent.workbench.sessions.launch.config.backend",
 )
 class AgentWorkbenchAllTestsSuite
