@@ -59,10 +59,9 @@ import kotlin.coroutines.coroutineContext
  *
  * **Only keep using [MergingUpdateQueue] if you have a rare, specific need for:**
  * - Manual activation/suspension control via [activate]/[suspend]/[resume] (think twice: can you use coroutine scope cancellation/restart instead?)
- * - Waiting for all queued updates to complete with [waitForAllExecuted] (think twice: typically only needed in tests; can you restructure your code?)
- * - Flushing updates immediately with [sendFlush] (think twice: can you use a shorter delay or trigger the update directly?)
+ * - Flushing updates immediately with [sendFlush] (think twice: can you use a shorter delay or trigger the update directly? For tests, use [UpdateQueue.waitForAllExecuted] instead)
  *
- * If you are still using [MergingUpdateQueue], you can consider queuing via [MergingQueueUtil.queueTracked]
+ * If you are still using [MergingUpdateQueue], you can consider queuing via [queueTracked]
  * in order to notify the platform about scheduled updates.
  *
  * **Note:** consider to use [setRestartTimerOnAdd] to avoid updates stuck in the queue.
