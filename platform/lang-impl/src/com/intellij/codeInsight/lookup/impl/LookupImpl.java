@@ -107,6 +107,7 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.ui.Advertiser;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.JBUI;
@@ -757,7 +758,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     if (command == null) {
       command = ProgressManager.getInstance().runProcessWithProgressSynchronously(
         () -> ReadAction.nonBlocking(
-          () -> wrapper.computeCommand(finalActionContext, insertionContext)).executeSynchronously(),
+          () -> DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(
+            () -> wrapper.computeCommand(finalActionContext, insertionContext))).executeSynchronously(),
         AnalysisBundle.message("complete"), true, project);
     }
     ModCompletionInserter.executeModCommand(editor, psiFile, start, actionContext.offset(), command);
