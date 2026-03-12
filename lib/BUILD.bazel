@@ -18665,17 +18665,17 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.intellij.deps/intellij-coverage-agent-1.0.771.jar_copy",
-  src = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_771_http//file",
-  out = "org.jetbrains.intellij.deps/intellij-coverage-agent-1.0.771.jar",
+  name = "org.jetbrains.intellij.deps/intellij-coverage-agent-1.0.773.jar_copy",
+  src = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_773_http//file",
+  out = "org.jetbrains.intellij.deps/intellij-coverage-agent-1.0.773.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "platform-coverage-agent-intellij-coverage",
-  jar = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_771_http//file",
-  source_jar = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_771-sources_http//file",
+  jar = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_773_http//file",
+  source_jar = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_773-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
