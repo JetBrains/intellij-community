@@ -54,7 +54,9 @@ internal class AmendCommitModeDropDownLink(val amendHandler: AmendCommitHandler)
           val fullText = itemToString(value)
           val popupText = itemToPopupText(value)
           icon(if (value == link.selectedItem) AllIcons.Actions.Checked else AllIcons.Empty)
-          text(popupText)
+          text(popupText) {
+            speedSearch {}
+          }
           toolTipText = if (popupText == fullText) null else fullText
         })
         .setSelectedValue(link.selectedItem, true)
