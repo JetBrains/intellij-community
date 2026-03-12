@@ -195,7 +195,7 @@ internal class TerminalCommandCompletionProcess(
     val model = context.outputModel
     val startOffset = model.cursorOffset - lookup.itemPattern(element).length.toLong()
     return startOffset >= model.startOffset
-           && model.getText(startOffset, model.endOffset).startsWith(element.lookupString)
+           && model.getText(startOffset, model.cursorOffset).toString() == element.lookupString
   }
 
   override fun itemSelected(item: LookupElement?, completionChar: Char) {
