@@ -144,7 +144,7 @@ internal class RunBlockingInSuspendFunctionInspection : KotlinApplicableInspecti
 
                 FixType.RUN -> RUN_FUNCTION_NAME
                 FixType.INLINE -> {
-                    val lambdaArgument = element.lambdaArguments.single() ?: return
+                    val lambdaArgument = element.lambdaArguments.singleOrNull() ?: return
                     val functionLiteral = lambdaArgument.getLambdaExpression()?.functionLiteral ?: return
                     val bodyExpression = functionLiteral.bodyExpression ?: return
 
