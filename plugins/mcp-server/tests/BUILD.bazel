@@ -68,6 +68,10 @@ jvm_library(
     "//RegExpSupport:regexp-tests_test_lib",
     "//platform/xdebugger-impl:debugger-impl-tests",
     "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
+    "//platform/execution",
+    "//platform/execution:execution_test_lib",
+    "//platform/execution-impl",
+    "//platform/execution-impl:execution-impl_test_lib",
   ],
   runtime_deps = [
     ":tests",

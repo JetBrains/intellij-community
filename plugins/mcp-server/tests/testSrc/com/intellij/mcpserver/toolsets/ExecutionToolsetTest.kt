@@ -2,9 +2,25 @@
 
 package com.intellij.mcpserver.toolsets
 
+import com.intellij.execution.CommonProgramRunConfigurationParameters
+import com.intellij.execution.Executor
+import com.intellij.execution.RunManager
+import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.execution.configurations.ConfigurationTypeBase
+import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.execution.configurations.RunConfigurationBase
+import com.intellij.execution.configurations.RunConfigurationOptions
+import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.mcpserver.McpToolsetTestBase
 import com.intellij.mcpserver.toolsets.general.ExecutionToolset
+import com.intellij.mcpserver.util.prepareRunConfigurationForExecution
+import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.options.SettingsEditor
+import com.intellij.openapi.project.Project
+import com.intellij.util.ui.EmptyIcon
 import io.kotest.common.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
@@ -13,24 +29,26 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.jupiter.api.Test
+import java.nio.file.Path
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotSame
+import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
-import java.lang.reflect.InvocationHandler
-import java.lang.reflect.Proxy
+import javax.swing.JPanel
 
 class ExecutionToolsetTest : McpToolsetTestBase() {
   @Test
   fun get_run_configurations() = runBlocking {
-    val runManager = getRunManager()
+    val runManager = RunManager.getInstance(project)
     val editableSettings = createEditableConfiguration(runManager)
-    val editableConfiguration = getConfiguration(editableSettings)
-    setDynamicLaunchOverrides(editableConfiguration)
+    setDynamicLaunchOverrides(editableSettings.configuration)
     val nonEditableSettings = createNonEditableConfiguration(runManager)
 
     runWriteAction {
-      addConfiguration(runManager, editableSettings)
-      addConfiguration(runManager, nonEditableSettings)
+      runManager.addConfiguration(editableSettings)
+      runManager.addConfiguration(nonEditableSettings)
     }
 
     testMcpTool(
@@ -69,12 +87,48 @@ class ExecutionToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
+  fun execute_run_configuration_from_context() = runBlocking {
+    testMcpTool(
+      ExecutionToolset::execute_run_configuration.name,
+      buildJsonObject {
+        put("filePath", JsonPrimitive(Path.of(requireNotNull(project.basePath)).relativizeIfPossible(mainJavaFile)))
+        put("line", JsonPrimitive(1))
+      },
+      "No run configuration could be created from src/Main.java:1. Use get_run_configurations with filePath to find valid run locations."
+    )
+  }
+
+  @Test
+  fun execute_run_configuration_rejects_mixed_targets() = runBlocking {
+    testMcpTool(
+      ExecutionToolset::execute_run_configuration.name,
+      buildJsonObject {
+        put("configurationName", JsonPrimitive("test-config"))
+        put("filePath", JsonPrimitive(Path.of(requireNotNull(project.basePath)).relativizeIfPossible(mainJavaFile)))
+        put("line", JsonPrimitive(1))
+      },
+      "Pass either configurationName or filePath + line, but not both."
+    )
+  }
+
+  @Test
+  fun execute_run_configuration_rejects_incomplete_context_target() = runBlocking {
+    testMcpTool(
+      ExecutionToolset::execute_run_configuration.name,
+      buildJsonObject {
+        put("filePath", JsonPrimitive(Path.of(requireNotNull(project.basePath)).relativizeIfPossible(mainJavaFile)))
+      },
+      "Pass both filePath and line together, or use configurationName."
+    )
+  }
+
+  @Test
   fun execute_run_configuration_with_dynamic_launch_overrides_on_unsupported_configuration() = runBlocking {
-    val runManager = getRunManager()
+    val runManager = RunManager.getInstance(project)
     val nonEditableSettings = createNonEditableConfiguration(runManager)
 
     runWriteAction {
-      addConfiguration(runManager, nonEditableSettings)
+      runManager.addConfiguration(nonEditableSettings)
     }
 
     testMcpTool(
@@ -87,96 +141,173 @@ class ExecutionToolsetTest : McpToolsetTestBase() {
     )
   }
 
-  private fun createEditableConfiguration(runManager: Any): Any {
-    val name = "editable-config"
-    val baseSettings = createNonEditableConfiguration(runManager)
-    val baseConfiguration = getConfiguration(baseSettings)
-    val factory = baseConfiguration.javaClass.getMethod("getFactory").invoke(baseConfiguration)
-    val editableConfiguration = createEditableConfigurationProxy(baseConfiguration, name)
-    return runManager.javaClass.methods
-      .first { it.name == "createConfiguration" && it.parameterCount == 2 && it.parameterTypes[0].name == "com.intellij.execution.configurations.RunConfiguration" }
-      .invoke(runManager, editableConfiguration, factory)
-  }
+  @Test
+  fun prepare_run_configuration_for_execution_ignores_empty_string_overrides() {
+    val editableSettings = createEditableConfiguration(RunManager.getInstance(project))
+    val editableConfiguration = editableSettings.configuration
+    setDynamicLaunchOverrides(editableConfiguration)
 
-  private fun getRunManager(): Any {
-    val projectClass = Class.forName("com.intellij.openapi.project.Project")
-    val runManagerClass = Class.forName("com.intellij.execution.RunManager")
-    return runManagerClass.getMethod("getInstance", projectClass).invoke(null, project)
-  }
-
-  private fun createNonEditableConfiguration(runManager: Any): Any {
-    val name = "compound-config"
-    val configurationTypeClassName = "com.intellij.execution.compound.CompoundRunConfigurationType"
-    val createConfigurationMethod = runManager.javaClass.methods.first {
-      it.name == "createConfiguration" &&
-      it.parameterCount == 2 &&
-      it.parameterTypes[0] == String::class.java &&
-      it.parameterTypes[1] == Class::class.java
-    }
-    return createConfigurationMethod.invoke(runManager, name, Class.forName(configurationTypeClassName))
-  }
-
-  private fun getConfiguration(settings: Any): Any = settings.javaClass.getMethod("getConfiguration").invoke(settings)
-
-  private fun setDynamicLaunchOverrides(configuration: Any) {
-    val parametersClass = Class.forName("com.intellij.execution.CommonProgramRunConfigurationParameters")
-    parametersClass.getMethod("setProgramParameters", String::class.java).invoke(configuration, "--sample")
-    parametersClass.getMethod("setWorkingDirectory", String::class.java).invoke(configuration, project.basePath)
-    parametersClass.getMethod("setEnvs", Map::class.java).invoke(configuration, mapOf("FOO" to "bar"))
-  }
-
-  private fun addConfiguration(runManager: Any, settings: Any) {
-    runManager.javaClass.methods
-      .first { it.name == "addConfiguration" && it.parameterCount == 1 }
-      .invoke(runManager, settings)
-  }
-
-  private fun createEditableConfigurationProxy(baseConfiguration: Any, name: String): Any {
-    val runConfigurationClass = Class.forName("com.intellij.execution.configurations.RunConfiguration")
-    val parametersClass = Class.forName("com.intellij.execution.CommonProgramRunConfigurationParameters")
-    val envMap = linkedMapOf<String, String>()
-    var programParameters: String? = null
-    var workingDirectory: String? = null
-    var passParentEnvs = true
-
-    val invocationHandler = InvocationHandler { _, method, args ->
-      when (method.name) {
-        "setProgramParameters" -> {
-          programParameters = args?.firstOrNull() as String?
-          null
-        }
-        "getProgramParameters" -> programParameters
-        "setWorkingDirectory" -> {
-          workingDirectory = args?.firstOrNull() as String?
-          null
-        }
-        "getWorkingDirectory" -> workingDirectory
-        "setEnvs" -> {
-          envMap.clear()
-          @Suppress("UNCHECKED_CAST")
-          envMap.putAll(args?.firstOrNull() as Map<String, String>)
-          null
-        }
-        "getEnvs" -> LinkedHashMap(envMap)
-        "setPassParentEnvs" -> {
-          passParentEnvs = args?.firstOrNull() as Boolean
-          null
-        }
-        "isPassParentEnvs" -> passParentEnvs
-        "getName" -> name
-        "setName" -> null
-        "clone" -> createEditableConfigurationProxy(baseConfiguration, name)
-        "equals" -> args?.firstOrNull() === baseConfiguration
-        "hashCode" -> System.identityHashCode(baseConfiguration)
-        "toString" -> "EditableTestRunConfigurationProxy($name)"
-        else -> method.invoke(baseConfiguration, *(args ?: emptyArray()))
-      }
-    }
-
-    return Proxy.newProxyInstance(
-      javaClass.classLoader,
-      arrayOf(runConfigurationClass, parametersClass),
-      invocationHandler,
+    val preparedConfiguration = prepareRunConfigurationForExecution(
+      configurationName = "editable-config",
+      configuration = editableConfiguration,
+      programArguments = "",
+      workingDirectory = "",
+      envs = null,
     )
+
+    assertSame(editableConfiguration, preparedConfiguration)
+    assertEquals("--sample", getProgramParameters(preparedConfiguration))
+    assertEquals(project.basePath, getWorkingDirectory(preparedConfiguration))
+  }
+
+  @Test
+  fun prepare_run_configuration_for_execution_clears_values_for_blank_string_overrides() {
+    val editableSettings = createEditableConfiguration(RunManager.getInstance(project))
+    val editableConfiguration = editableSettings.configuration
+    setDynamicLaunchOverrides(editableConfiguration)
+
+    val preparedConfiguration = prepareRunConfigurationForExecution(
+      configurationName = "editable-config",
+      configuration = editableConfiguration,
+      programArguments = " ",
+      workingDirectory = " ",
+      envs = null,
+    )
+
+    assertNotSame(editableConfiguration, preparedConfiguration)
+    assertNull(getProgramParameters(preparedConfiguration))
+    assertNull(getWorkingDirectory(preparedConfiguration))
+    assertEquals("--sample", getProgramParameters(editableConfiguration))
+    assertEquals(project.basePath, getWorkingDirectory(editableConfiguration))
+  }
+
+  private fun createEditableConfiguration(runManager: RunManager): RunnerAndConfigurationSettings {
+    return runManager.createConfiguration("editable-config", EDITABLE_CONFIGURATION_TYPE.factory)
+  }
+
+  private fun createNonEditableConfiguration(runManager: RunManager): RunnerAndConfigurationSettings {
+    return runManager.createConfiguration("compound-config", NON_EDITABLE_CONFIGURATION_TYPE.factory)
+  }
+
+  private fun setDynamicLaunchOverrides(configuration: RunConfiguration) {
+    val configurable = configuration as CommonProgramRunConfigurationParameters
+    configurable.programParameters = "--sample"
+    configurable.workingDirectory = project.basePath
+    configurable.envs = linkedMapOf("FOO" to "bar")
+  }
+
+  private fun getProgramParameters(configuration: RunConfiguration): String? {
+    return (configuration as CommonProgramRunConfigurationParameters).programParameters
+  }
+
+  private fun getWorkingDirectory(configuration: RunConfiguration): String? {
+    return (configuration as CommonProgramRunConfigurationParameters).workingDirectory
+  }
+
+  private open class TestRunConfiguration(
+    project: Project,
+    factory: ConfigurationFactory,
+    name: String,
+  ) : RunConfigurationBase<RunConfigurationOptions>(project, factory, name) {
+    override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> = NoOpSettingsEditor()
+
+    override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? = null
+  }
+
+  private class TestEditableRunConfiguration(
+    project: Project,
+    factory: ConfigurationFactory,
+    name: String,
+  ) : TestRunConfiguration(project, factory, name), CommonProgramRunConfigurationParameters {
+    private var myProgramParameters: String? = null
+    private var myWorkingDirectory: String? = null
+    private val myEnvs = linkedMapOf<String, String>()
+    private var myPassParentEnvs = true
+
+    override fun setProgramParameters(value: String?) {
+      myProgramParameters = value
+    }
+
+    override fun getProgramParameters(): String? = myProgramParameters
+
+    override fun setWorkingDirectory(value: String?) {
+      myWorkingDirectory = value
+    }
+
+    override fun getWorkingDirectory(): String? = myWorkingDirectory
+
+    override fun setEnvs(envs: MutableMap<String, String>) {
+      myEnvs.clear()
+      myEnvs.putAll(envs)
+    }
+
+    override fun getEnvs(): MutableMap<String, String> = LinkedHashMap(myEnvs)
+
+    override fun setPassParentEnvs(passParentEnvs: Boolean) {
+      myPassParentEnvs = passParentEnvs
+    }
+
+    override fun isPassParentEnvs(): Boolean = myPassParentEnvs
+
+    @Suppress("UsePropertyAccessSyntax")
+    override fun clone(): TestEditableRunConfiguration {
+      val cloned = super.clone() as TestEditableRunConfiguration
+      cloned.programParameters = myProgramParameters
+      cloned.workingDirectory = myWorkingDirectory
+      cloned.envs = LinkedHashMap(myEnvs)
+      cloned.setPassParentEnvs(myPassParentEnvs)
+      return cloned
+    }
+  }
+
+  private class TestNonEditableRunConfiguration(
+    project: Project,
+    factory: ConfigurationFactory,
+    name: String,
+  ) : TestRunConfiguration(project, factory, name)
+
+  private class TestConfigurationType(
+    id: String,
+    displayName: String,
+    description: String,
+    private val configurationFactory: (project: Project, factory: ConfigurationFactory, name: String) -> RunConfiguration,
+  ) : ConfigurationTypeBase(id, displayName, description, EmptyIcon.ICON_16) {
+    val factory = object : ConfigurationFactory(this) {
+      override fun createTemplateConfiguration(project: Project): RunConfiguration {
+        return configurationFactory(project, this, "")
+      }
+
+      override fun getId(): String = id
+    }
+
+    init {
+      addFactory(factory)
+    }
+  }
+
+  private class NoOpSettingsEditor : SettingsEditor<RunConfiguration>() {
+    override fun resetEditorFrom(configuration: RunConfiguration) = Unit
+
+    override fun applyEditorTo(configuration: RunConfiguration) = Unit
+
+    override fun createEditor() = JPanel()
+  }
+
+  companion object {
+    private val EDITABLE_CONFIGURATION_TYPE = TestConfigurationType(
+      id = "EditableTestRunConfigurationType",
+      displayName = "Editable",
+      description = "Editable configuration",
+    ) { project, factory, name ->
+      TestEditableRunConfiguration(project, factory, name)
+    }
+
+    private val NON_EDITABLE_CONFIGURATION_TYPE = TestConfigurationType(
+      id = "NonEditableTestRunConfigurationType",
+      displayName = "Compound",
+      description = "Compound configuration",
+    ) { project, factory, name ->
+      TestNonEditableRunConfiguration(project, factory, name)
+    }
   }
 }
