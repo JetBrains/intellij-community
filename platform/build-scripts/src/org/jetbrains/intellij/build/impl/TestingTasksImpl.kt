@@ -617,9 +617,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     @Suppress("SpellCheckingInspection")
     for ((k, v) in sequenceOf(
       "idea.platform.prefix" to options.platformPrefix,
-      "idea.home.path" to context.paths.projectHome.toString(),
-      "idea.config.path" to "$tempDir/config",
-      "idea.system.path" to "$ideaSystemPath",
+      PathManager.PROPERTY_HOME_PATH to context.paths.projectHome.toString(),
+      PathManager.PROPERTY_CONFIG_PATH to "$tempDir/config",
+      PathManager.PROPERTY_SYSTEM_PATH to "$ideaSystemPath",
       BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY to "${context.classesOutputDirectory}",
       "idea.coverage.enabled.build" to System.getProperty("idea.coverage.enabled.build"),
       "teamcity.buildConfName" to System.getProperty("teamcity.buildConfName"),
@@ -947,7 +947,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         var failedClassesJUnit5: List<String>? = null
         var failedClassesJUnit34: List<String>? = null
 
-        Path.of(systemProperties[PathManager.PROPERTY_SYSTEM_PATH]!!).let {
+        PathManager.PROPERTY_SYSTEM_PATH.let { Path.of(systemProperties[it] ?: error("'$it' is not set")) }.let {
           additionalPropertiesJUnit5[PathManager.PROPERTY_LOG_PATH] = it.resolve("log/junit5").absolutePathString()
           additionalPropertiesJUnit34[PathManager.PROPERTY_LOG_PATH] = it.resolve("log/junit34").absolutePathString()
         }
@@ -972,11 +972,11 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           if (attempt > 1) {
             additionalProperties["intellij.build.test.ignoreFirstAndLastTests"] = "true"
             if (runJUnit5) {
-              require(failedClassesJUnit5!!.isNotEmpty())  // already checked in the previous attempt
+              check(!failedClassesJUnit5.isNullOrEmpty())  // already checked in the previous attempt
               additionalPropertiesJUnit5["intellij.build.test.patterns"] = failedClassesJUnit5.joinToString(";")
             }
             if (runJUnit34) {
-              require(failedClassesJUnit34!!.isNotEmpty())  // already checked in the previous attempt
+              check(!failedClassesJUnit34.isNullOrEmpty())  // already checked in the previous attempt
               additionalPropertiesJUnit34["intellij.build.test.patterns"] = failedClassesJUnit34.joinToString(";")
             }
           }
@@ -1289,7 +1289,10 @@ private val ignoredPrefixes = listOf(
   "-ea", "-XX:+HeapDumpOnOutOfMemoryError", "-Xbootclasspath", "-Xmx", "-Xms",
   // ReservedCodeCacheSize is critical - if not configured, maybe error `Out of space in CodeCache for adapters`
   "-XX:ReservedCodeCacheSize",
-  "-Didea.system.path=", "-Didea.config.path=", "-Didea.home.path="
+  "-D${PathManager.PROPERTY_HOME_PATH}=",
+  "-D${PathManager.PROPERTY_CONFIG_PATH}=",
+  "-D${PathManager.PROPERTY_SYSTEM_PATH}=",
+  "-D${PathManager.PROPERTY_LOG_PATH}=",
 )
 
 private fun removeStandardJvmOptions(vmOptions: List<String>): List<String> {

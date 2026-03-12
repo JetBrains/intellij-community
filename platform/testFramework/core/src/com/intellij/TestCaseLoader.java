@@ -30,7 +30,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -106,14 +105,6 @@ public class TestCaseLoader {
     System.out.println("Using tests filter: " + myTestClassesFilter);
   }
 
-  private static TestClassesFilter wrapAsCompositeTestClassesFilter(TestClassesFilter filter) {
-    final TestClassesFilter explicitTestsFilter = explicitTestsFilter();
-    if (explicitTestsFilter != null) {
-      filter = new TestClassesFilter.And(filter, explicitTestsFilter);
-    }
-    return filter;
-  }
-
   private static TestClassesFilter calcTestClassFilter(@Nullable String patterns,
                                                        @Nullable List<@NotNull String> testGroupNames,
                                                        @Nullable String classFilterName) {
@@ -167,31 +158,6 @@ public class TestCaseLoader {
     return System.getProperty("intellij.build.test.patterns", System.getProperty("idea.test.patterns"));
   }
 
-  private static @Nullable TestClassesFilter explicitTestsFilter() {
-    String fileName = System.getProperty("intellij.build.test.list.file");
-    if (fileName != null && !fileName.isBlank()) {
-      Path path = Path.of(fileName);
-      if (Files.isRegularFile(path)) {
-        System.out.println("Loading explicit tests list from " + path);
-        return loadTestsFilterFromFile(path, false);
-      }
-    }
-    return null;
-  }
-
-  private static @Nullable TestClassesFilter loadTestsFilterFromFile(Path path, boolean linesArePatterns) {
-    try {
-      List<String> lines = Files.readAllLines(path);
-      if (lines.isEmpty()) return null;
-      if (ContainerUtil.and(lines, String::isBlank)) return null;
-      return linesArePatterns ? new PatternListTestClassFilter(lines) : new NameListTestClassFilter(lines);
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-      throw new RuntimeException(e);
-    }
-  }
-
   private static @Unmodifiable List<String> getTestGroups() {
     return StringUtil.split(System.getProperty("intellij.build.test.groups", System.getProperty("idea.test.group", "")).trim(), ";");
   }
@@ -233,27 +199,6 @@ public class TestCaseLoader {
   public static boolean matchesCurrentBucket(@NotNull String testIdentifier) {
     if (!shouldBucketTests()) return true;
     return ourBucketingScheme.getValue().matchesCurrentBucket(testIdentifier);
-  }
-
-  @ApiStatus.Internal
-  public static List<Class<?>> loadClassesForWarmup() {
-    var groupsTestCaseLoader = TestCaseLoader.Builder.fromDefaults().forWarmup().build();
-    groupsTestCaseLoader.fillTestCases("", TestAll.getClassRoots(), true);
-    if (!groupsTestCaseLoader.getClassLoadingErrors().isEmpty()) {
-      RuntimeException e = new RuntimeException("Failed to load classes for warmup");
-      groupsTestCaseLoader.getClassLoadingErrors().forEach(e::addSuppressed);
-      throw e;
-    }
-
-    var testCaseClasses = groupsTestCaseLoader.getClasses(false);
-
-    System.out.printf("Finishing warmup initialization. Found %s classes%n", testCaseClasses.size());
-
-    if (testCaseClasses.isEmpty()) {
-      System.err.println("Fair bucketing is enabled, but 0 test classes were found for warmup");
-    }
-
-    return testCaseClasses;
   }
 
   /**
@@ -421,15 +366,6 @@ public class TestCaseLoader {
       return filter;
     });
 
-  // We assume that getPatterns and getTestGroups won't change during execution
-  private static final Lazy<TestClassesFilter> ourCommonCompositeTestClassesFilter =
-    LazyKt.lazy(() -> {
-      TestClassesFilter filter = wrapAsCompositeTestClassesFilter(ourCommonTestClassesFilter.getValue());
-      System.out.println("Initialized composite tests filter: " + filter);
-      return filter;
-    });
-
-
   // called reflectively from `JUnit5TeamCityRunnerForTestsOnClasspath#createClassNameFilter`
   @SuppressWarnings("unused")
   public static boolean isClassNameIncluded(String className) {
@@ -440,7 +376,7 @@ public class TestCaseLoader {
       return false;
     }
 
-    return ourCommonCompositeTestClassesFilter.getValue().matches(className);
+    return ourCommonTestClassesFilter.getValue().matches(className);
   }
 
   // called reflectively from `JUnit5TeamCityRunnerForTestsOnClasspath#createPostDiscoveryFilter`
@@ -517,7 +453,6 @@ public class TestCaseLoader {
     private String myPatterns;
     private List<String> myTestGroups;
     private boolean myForceLoadPerformanceTests = false;
-    private boolean myWarmup = false;
 
     private Builder() {
     }
@@ -557,38 +492,24 @@ public class TestCaseLoader {
       return this;
     }
 
-    Builder forWarmup() {
-      myWarmup = true;
-      return this;
-    }
-
     public TestCaseLoader build() {
       if (myPatterns == null && myTestGroups == null) {
         throw new IllegalStateException("Either withPatterns, withTestGroups, or fromDefault should be called");
       }
-      TestClassesFilter filter = getFilter(myPatterns, myTestGroupsResourcePath, myTestGroups, myWarmup);
+      TestClassesFilter filter = getFilter(myPatterns, myTestGroupsResourcePath, myTestGroups);
       return new TestCaseLoader(filter, myForceLoadPerformanceTests);
     }
   }
 
   private static TestClassesFilter getFilter(@Nullable String patterns,
                                              @Nullable String testGroupsResourcePath,
-                                             @Nullable List<@NotNull String> testGroups,
-                                             boolean warmup) {
+                                             @Nullable List<@NotNull String> testGroups) {
     TestClassesFilter filter;
     if (ourCommonTestClassesFilterArgs.getValue().equals(new TestClassesFilterArgs(patterns, testGroups, testGroupsResourcePath))) {
-      if (warmup) {
-        filter = ourCommonTestClassesFilter.getValue();
-      }
-      else {
-        filter = ourCommonCompositeTestClassesFilter.getValue();
-      }
+      filter = ourCommonTestClassesFilter.getValue();
     }
     else {
       filter = calcTestClassFilter(patterns, testGroups, testGroupsResourcePath);
-      if (!warmup) {
-        filter = wrapAsCompositeTestClassesFilter(filter);
-      }
     }
     return filter;
   }
