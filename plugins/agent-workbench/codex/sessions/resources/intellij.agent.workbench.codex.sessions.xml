@@ -27,6 +27,7 @@
   <actions>
     <action
       id="AgentWorkbenchSessions.BindPendingCodexThreadFromEditorTab"
+      icon="AllIcons.Actions.Attach"
       class="com.intellij.agent.workbench.codex.sessions.actions.AgentSessionsBindPendingCodexThreadFromEditorTabAction">
       <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="AgentWorkbenchSessions.EditorTabPopup.SeparatorBeforeCloseActions"/>
     </action>
