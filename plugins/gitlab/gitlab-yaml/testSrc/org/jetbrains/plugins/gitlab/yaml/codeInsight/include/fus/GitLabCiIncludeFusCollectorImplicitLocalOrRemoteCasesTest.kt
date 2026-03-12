@@ -31,7 +31,7 @@ internal class GitLabCiIncludeFusCollectorImplicitLocalOrRemoteCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
+      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
       stats.assertExplicitLocalNotFound()
       stats.assertExplicitRemoteNotFound()
       stats.assertImplicitLocalOrRemoteFound(hasEnvVar = false, hasSingleAsterisk = false, hasDoubleAsterisk = false)
@@ -55,7 +55,7 @@ internal class GitLabCiIncludeFusCollectorImplicitLocalOrRemoteCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
+      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
       stats.assertExplicitLocalNotFound()
       stats.assertExplicitRemoteNotFound()
       stats.assertImplicitLocalOrRemoteFound(hasEnvVar = true, hasSingleAsterisk = false, hasDoubleAsterisk = true)
@@ -79,7 +79,7 @@ internal class GitLabCiIncludeFusCollectorImplicitLocalOrRemoteCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
+      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
       stats.assertExplicitLocalNotFound()
       stats.assertExplicitRemoteNotFound()
       stats.assertImplicitLocalOrRemoteFound(hasEnvVar = false, hasSingleAsterisk = true, hasDoubleAsterisk = false)
@@ -104,7 +104,7 @@ internal class GitLabCiIncludeFusCollectorImplicitLocalOrRemoteCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
+      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
       stats.assertExplicitLocalNotFound()
       stats.assertExplicitRemoteNotFound()
       stats.assertImplicitLocalOrRemoteFound(hasEnvVar = true, hasSingleAsterisk = true, hasDoubleAsterisk = true)
@@ -130,7 +130,7 @@ internal class GitLabCiIncludeFusCollectorImplicitLocalOrRemoteCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
+      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
       stats.assertExplicitLocalNotFound()
       stats.assertExplicitRemoteNotFound()
       stats.assertImplicitLocalOrRemoteFound(hasEnvVar = false, hasSingleAsterisk = false, hasDoubleAsterisk = false)

@@ -7,12 +7,16 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
+import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.checkCanceled
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.gitlab.ui.isGitlabCiFile
 import org.jetbrains.yaml.psi.YAMLDocument
@@ -24,20 +28,8 @@ import org.jetbrains.yaml.psi.YAMLValue
 import java.net.URI
 import java.net.URISyntaxException
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration.Companion.minutes
 
-
-private object GitLabCiKeys {
-  const val INCLUDE = "include"
-  const val LOCAL = "local"
-  const val REMOTE = "remote"
-  const val RULES = "rules"
-  const val CACHE = "cache"
-  const val REF = "ref"
-  const val FILE = "file"
-  const val TEMPLATE = "template"
-  const val COMPONENT = "component"
-  const val PROJECT = "project"
-}
 
 internal class GitLabCiIncludeApplicationMetricsCollector : ApplicationUsagesCollector() {
 
@@ -88,10 +80,17 @@ internal class GitLabCiIncludeApplicationMetricsCollector : ApplicationUsagesCol
     "unknown"
   )
 
-  override suspend fun getMetricsAsync(): Set<MetricEvent> {
-    val includeStats = performAnalyzing()
+  private val analyzingQualityEvent = group.registerVarargEvent(
+    "analyzing.quality",
+    FILES_ANALYZED,
+    FILES_FAILED,
+    TIMEOUT_HAPPENED
+  )
 
-    return includeStats.toMetricEvents(
+  override suspend fun getMetricsAsync(): Set<MetricEvent> {
+    val result = performAnalyzing()
+
+    val metricEvents = result.includeStats.toMetricEvents(
       explicitLocalTypeEvent,
       explicitRemoteTypeEvent,
       implicitLocalOrRemoteTypeEvent,
@@ -99,13 +98,40 @@ internal class GitLabCiIncludeApplicationMetricsCollector : ApplicationUsagesCol
       componentTypeEvent,
       projectTypeEvent,
       unknownTypeEvent
+    ).toMutableSet()
+
+    metricEvents += analyzingQualityEvent.metric(
+      FILES_ANALYZED.with(StatisticsUtil.roundToPowerOfTwo(result.filesAnalyzed)),
+      FILES_FAILED.with(StatisticsUtil.roundToPowerOfTwo(result.filesFailed)),
+      TIMEOUT_HAPPENED.with(result.timeoutHappened)
     )
+
+    return metricEvents
   }
 
   @VisibleForTesting
-  internal suspend fun performAnalyzing(): IncludeStats {
-    val includeStats = IncludeStats()
+  internal suspend fun performAnalyzing(): AnalyzingResult {
+    val state = AnalyzingState()
 
+    val timedOut = withTimeoutOrNull(AnalyzingLimits.TIMEOUT) {
+      performAnalyzingInternal(state)
+    } == null
+
+    return AnalyzingResult(
+      includeStats = state.includeStats,
+      filesAnalyzed = state.filesAnalyzed,
+      filesFailed = state.filesFailed,
+      timeoutHappened = timedOut
+    )
+  }
+
+  private class AnalyzingState {
+    val includeStats = IncludeStats()
+    var filesAnalyzed = 0
+    var filesFailed = 0
+  }
+
+  private suspend fun performAnalyzingInternal(state: AnalyzingState) {
     val openProjects = readAction {
       ProjectManager.getInstance().openProjects.toList()
     }
@@ -113,37 +139,16 @@ internal class GitLabCiIncludeApplicationMetricsCollector : ApplicationUsagesCol
     for (project in openProjects) {
       if (project.isDisposed) continue
 
-      val gitlabCiFiles = readAction {
-        if (project.isDisposed) return@readAction emptyList()
-
-        val fileIndex = ProjectFileIndex.getInstance(project)
-        val allFiles = mutableListOf<VirtualFile>()
-
-        fileIndex.iterateContent { file ->
-          if (file.isValid && !file.isDirectory && isGitlabCiFile(file)) {
-            allFiles.add(file)
-          }
-          true
-        }
-        allFiles
-      }
+      val gitlabCiFiles = collectGitLabCiFileForAnalyzing(project)
 
       for (file in gitlabCiFiles) {
+        checkCanceled()
         try {
-          val fileStats = readAction {
-            if (!file.isValid || project.isDisposed) return@readAction null
-
-            val psiFile = PsiManager.getInstance(project).findFile(file) ?: return@readAction null
-            val yamlFile = psiFile as? YAMLFile ?: return@readAction null
-
-            // Only process the first YAML document since GitLab CI/CD ignores subsequent documents
-            val firstYamlDoc = yamlFile.documents.firstOrNull() ?: return@readAction null
-
-            analyzeIncludesInDocument(firstYamlDoc)
-          }
+          val fileStats = analyzeFile(file, project)
 
           if (fileStats != null) {
-            includeStats.addLogically(fileStats)
+            state.includeStats.addLogically(fileStats)
+            state.filesAnalyzed++
           }
         }
         catch (ce: CancellationException) {
@@ -151,11 +156,45 @@ internal class GitLabCiIncludeApplicationMetricsCollector : ApplicationUsagesCol
         }
         catch (e: Exception) {
           logger<GitLabCiIncludeApplicationMetricsCollector>().error(e)
+          state.filesFailed++
         }
       }
     }
+  }
 
-    return includeStats
+  private suspend fun collectGitLabCiFileForAnalyzing(
+    project: Project,
+  ): List<VirtualFile> = readAction {
+    if (project.isDisposed) return@readAction emptyList()
+
+    val fileIndex = ProjectFileIndex.getInstance(project)
+    val allFiles = mutableListOf<VirtualFile>()
+
+    fileIndex.iterateContent { file ->
+      if (file.isValid && !file.isDirectory && isGitlabCiFile(file)) {
+        allFiles.add(file)
+        if (allFiles.size >= AnalyzingLimits.MAX_FILES_TO_ANALYZE) {
+          return@iterateContent false
+        }
+      }
+      true
+    }
+    allFiles
+  }
+
+  private suspend fun analyzeFile(
+    file: VirtualFile,
+    project: Project,
+  ): IncludeStats? = readAction {
+    if (!file.isValid || project.isDisposed) return@readAction null
+
+    val psiFile = PsiManager.getInstance(project).findFile(file) ?: return@readAction null
+    val yamlFile = psiFile as? YAMLFile ?: return@readAction null
+
+    // Only process the first YAML document since GitLab CI/CD ignores subsequent documents
+    val firstYamlDoc = yamlFile.documents.firstOrNull() ?: return@readAction IncludeStats()
+
+    analyzeIncludesInDocument(firstYamlDoc)
   }
 
   private fun analyzeIncludesInDocument(yamlDoc: YAMLDocument): IncludeStats {
@@ -411,9 +450,39 @@ internal class IncludeStats(
   }
 }
 
+@VisibleForTesting
+internal data class AnalyzingResult(
+  val includeStats: IncludeStats,
+  val filesAnalyzed: Int,
+  val filesFailed: Int,
+  val timeoutHappened: Boolean,
+)
+
+private object GitLabCiKeys {
+  const val INCLUDE = "include"
+  const val LOCAL = "local"
+  const val REMOTE = "remote"
+  const val RULES = "rules"
+  const val CACHE = "cache"
+  const val REF = "ref"
+  const val FILE = "file"
+  const val TEMPLATE = "template"
+  const val COMPONENT = "component"
+  const val PROJECT = "project"
+}
+
+private object AnalyzingLimits {
+  const val MAX_FILES_TO_ANALYZE = 100
+  val TIMEOUT = 5.minutes
+}
+
 private val WITH_RULES = EventFields.Boolean("with_rules", "is `rules:` section present")
 private val WITH_ENV_VAR = EventFields.Boolean("with_env_var", "are any environment variables used in the main file path / URL")
 private val WITH_SINGLE_ASTERISK = EventFields.Boolean("with_single_asterisk", "are any `*` used in file(-s) path(-s)")
 private val WITH_DOUBLE_ASTERISK = EventFields.Boolean("with_double_asterisk", "are any `**` used in file(-s) path(-s)")
 private val WITH_CACHE = EventFields.Boolean("with_cache", "is `cache:` directive present")
 private val WITH_REF = EventFields.Boolean("with_ref", "is `ref:` key-value present")
+
+private val FILES_ANALYZED = EventFields.Int("files_analyzed", "Number of GitLab CI files successfully analyzed")
+private val FILES_FAILED = EventFields.Int("files_failed", "Number of GitLab CI files that failed to analyze")
+private val TIMEOUT_HAPPENED = EventFields.Boolean("timeout_happened", "Whether the analyzing timed out before completion")

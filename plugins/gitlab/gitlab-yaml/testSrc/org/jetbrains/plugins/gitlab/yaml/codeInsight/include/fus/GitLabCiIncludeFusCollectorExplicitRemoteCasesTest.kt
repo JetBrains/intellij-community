@@ -31,7 +31,7 @@ internal class GitLabCiIncludeFusCollectorExplicitRemoteCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
+      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
       stats.assertExplicitLocalNotFound()
       stats.assertExplicitRemoteFound(hasRules = false, hasEnvVar = false, hasCache = false)
       stats.assertImplicitLocalOrRemoteNotFound()
@@ -60,7 +60,7 @@ internal class GitLabCiIncludeFusCollectorExplicitRemoteCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
+      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
       stats.assertExplicitLocalNotFound()
       stats.assertExplicitRemoteFound(hasRules = true, hasEnvVar = false, hasCache = true)
       stats.assertImplicitLocalOrRemoteNotFound()
@@ -83,7 +83,7 @@ internal class GitLabCiIncludeFusCollectorExplicitRemoteCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
+      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
       stats.assertExplicitLocalNotFound()
       stats.assertExplicitRemoteFound(hasRules = false, hasEnvVar = true, hasCache = false)
       stats.assertImplicitLocalOrRemoteNotFound()
@@ -113,7 +113,7 @@ internal class GitLabCiIncludeFusCollectorExplicitRemoteCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
+      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
       stats.assertExplicitLocalNotFound()
       stats.assertExplicitRemoteFound(hasRules = true, hasEnvVar = true, hasCache = true)
       stats.assertImplicitLocalOrRemoteNotFound()

@@ -1,8 +1,19 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.yaml.codeInsight.include.fus;
 
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+
+internal fun AnalyzingResult.assertQuality(
+  filesAnalyzed: Int,
+  filesFailed: Int,
+  timeoutHappened: Boolean
+) {
+  assertEquals(filesAnalyzed, this.filesAnalyzed, "Files analyzed count mismatch")
+  assertEquals(filesFailed, this.filesFailed, "Files failed count mismatch")
+  assertEquals(timeoutHappened, this.timeoutHappened, "Timeout happened mismatch")
+}
 
 internal fun IncludeStats.assertExplicitLocalFound(
   hasRules: Boolean,

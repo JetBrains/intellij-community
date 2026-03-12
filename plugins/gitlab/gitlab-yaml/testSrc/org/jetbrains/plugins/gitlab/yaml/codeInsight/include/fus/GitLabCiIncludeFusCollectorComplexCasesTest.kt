@@ -46,8 +46,10 @@ internal class GitLabCiIncludeFusCollectorComplexCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
+      val result = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
+      result.assertQuality(filesAnalyzed = 2, filesFailed = 0, timeoutHappened = false)
 
+      val stats = result.includeStats
       stats.assertExplicitLocalFound(hasRules = false, hasEnvVar = true, hasSingleAsterisk = true, hasDoubleAsterisk = true)
       stats.assertExplicitRemoteNotFound()
       stats.assertImplicitLocalOrRemoteNotFound()
@@ -91,8 +93,10 @@ internal class GitLabCiIncludeFusCollectorComplexCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
+      val result = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
+      result.assertQuality(filesAnalyzed = 1, filesFailed = 0, timeoutHappened = false)
 
+      val stats = result.includeStats
       stats.assertExplicitLocalFound(hasRules = false, hasEnvVar = false, hasSingleAsterisk = false, hasDoubleAsterisk = false)
       stats.assertExplicitRemoteNotFound()
       stats.assertImplicitLocalOrRemoteNotFound()
@@ -120,6 +124,7 @@ internal class GitLabCiIncludeFusCollectorComplexCasesTest {
     val module3 = project3.moduleFixture(project3Path, addPathToSourceRoot = true)
     val sourceRoot3 = module3.sourceRootFixture(pathFixture = project3Path)
 
+    @Suppress("unused")
     val project1File = sourceRoot1.virtualFileFixture(".gitlab-ci.yml", $$"""
       include:
         - local: '/templates/**/.gitlab-ci-template.yml'
@@ -133,6 +138,7 @@ internal class GitLabCiIncludeFusCollectorComplexCasesTest {
         script: echo "Building"
     """.trimIndent())
 
+    @Suppress("unused")
     val project2File = sourceRoot2.virtualFileFixture(".gitlab-ci.yml", $$"""
       include:
         - remote: 'https://gitlab.com/templates/security.yml'
@@ -144,6 +150,7 @@ internal class GitLabCiIncludeFusCollectorComplexCasesTest {
         script: echo "Testing"
     """.trimIndent())
 
+    @Suppress("unused")
     val project3File = sourceRoot3.virtualFileFixture(".gitlab-ci.yml", $$"""
       include:
         - template: 'Jobs/Build.gitlab-ci.yml'
@@ -162,8 +169,10 @@ internal class GitLabCiIncludeFusCollectorComplexCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val collector = GitLabCiIncludeApplicationMetricsCollector()
-      val stats = collector.performAnalyzing()
+      val result = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
+      result.assertQuality(filesAnalyzed = 3, filesFailed = 0, timeoutHappened = false)
+
+      val stats = result.includeStats
 
       stats.assertExplicitLocalFound(hasRules = true, hasEnvVar = false, hasSingleAsterisk = false, hasDoubleAsterisk = true)
       stats.assertExplicitRemoteFound(hasRules = false, hasEnvVar = true, hasCache = true)
@@ -236,8 +245,10 @@ internal class GitLabCiIncludeFusCollectorComplexCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
-      
+      val result = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
+      result.assertQuality(filesAnalyzed = 4, filesFailed = 0, timeoutHappened = false)
+
+      val stats = result.includeStats
       stats.assertExplicitLocalFound(hasRules = true, hasEnvVar = false, hasSingleAsterisk = true, hasDoubleAsterisk = false)
       stats.assertExplicitRemoteFound(hasRules = false, hasEnvVar = true, hasCache = true)
       stats.assertImplicitLocalOrRemoteFound(hasEnvVar = false, hasSingleAsterisk = false, hasDoubleAsterisk = true)
@@ -319,8 +330,10 @@ internal class GitLabCiIncludeFusCollectorComplexCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
-      
+      val result = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
+      result.assertQuality(filesAnalyzed = 4, filesFailed = 0, timeoutHappened = false)
+
+      val stats = result.includeStats
       stats.assertExplicitLocalFound(hasRules = true, hasEnvVar = true, hasSingleAsterisk = true, hasDoubleAsterisk = true)
       stats.assertExplicitRemoteFound(hasRules = true, hasEnvVar = true, hasCache = true)
       stats.assertImplicitLocalOrRemoteFound(hasEnvVar = true, hasSingleAsterisk = true, hasDoubleAsterisk = true)
