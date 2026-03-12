@@ -40,15 +40,12 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace", "TestOnlyProblems"})
 public class TestCaseLoader {
   public static final String PERFORMANCE_TESTS_ONLY_FLAG = "idea.performance.tests";
   public static final String INCLUDE_PERFORMANCE_TESTS_FLAG = "idea.include.performance.tests";
   public static final String INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG = "idea.include.unconventionally.named.tests";
-  public static final String RUN_ONLY_AFFECTED_TEST_FLAG = "idea.run.only.affected.tests";
   public static final String TEST_RUNNERS_COUNT_FLAG = "idea.test.runners.count";
   public static final String TEST_RUNNER_INDEX_FLAG = "idea.test.runner.index";
   public static final String VERBOSE_LOG_ENABLED_FLAG = "idea.test.log.verbose";
@@ -57,7 +54,6 @@ public class TestCaseLoader {
   private static final boolean PERFORMANCE_TESTS_ONLY = Boolean.getBoolean(PERFORMANCE_TESTS_ONLY_FLAG);
   private static final boolean INCLUDE_PERFORMANCE_TESTS = Boolean.getBoolean(INCLUDE_PERFORMANCE_TESTS_FLAG);
   private static final boolean INCLUDE_UNCONVENTIONALLY_NAMED_TESTS = Boolean.getBoolean(INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG);
-  private static final boolean RUN_ONLY_AFFECTED_TESTS = Boolean.getBoolean(RUN_ONLY_AFFECTED_TEST_FLAG);
   private static final boolean RUN_WITH_TEST_DISCOVERY = System.getProperty("test.discovery.listener") != null;
   public static final boolean IS_VERBOSE_LOG_ENABLED = Boolean.getBoolean(VERBOSE_LOG_ENABLED_FLAG);
 
@@ -112,10 +108,6 @@ public class TestCaseLoader {
   }
 
   private static TestClassesFilter wrapAsCompositeTestClassesFilter(TestClassesFilter filter) {
-    final TestClassesFilter affectedTestsFilter = affectedTestsFilter();
-    if (affectedTestsFilter != null) {
-      filter = new TestClassesFilter.And(filter, affectedTestsFilter);
-    }
     final TestClassesFilter explicitTestsFilter = explicitTestsFilter();
     if (explicitTestsFilter != null) {
       filter = new TestClassesFilter.And(filter, explicitTestsFilter);
@@ -174,25 +166,6 @@ public class TestCaseLoader {
 
   private static @Nullable String getTestPatterns() {
     return System.getProperty("intellij.build.test.patterns", System.getProperty("idea.test.patterns"));
-  }
-
-  private static @Nullable TestClassesFilter affectedTestsFilter() {
-    if (RUN_ONLY_AFFECTED_TESTS) {
-      return Stream.of(System.getProperty("intellij.build.test.affected.classes.file", ""),
-                       System.getProperty("idea.home.path", "") + "/discoveredTestClasses.txt")
-        .filter(Predicate.not(StringUtil::isEmptyOrSpaces))
-        .map(Path::of)
-        .filter(Files::isRegularFile)
-        .findFirst()
-        .map(path -> {
-          System.out.println("Loading affected tests patterns from " + path);
-          return loadTestsFilterFromFile(path, true);
-        }).orElse(null);
-    }
-    else {
-      System.out.println("Affected tests discovery is disabled. Will run with the standard test filter");
-    }
-    return null;
   }
 
   private static @Nullable TestClassesFilter explicitTestsFilter() {
@@ -519,7 +492,7 @@ public class TestCaseLoader {
     t = (System.nanoTime() - t) / 1_000_000;
     System.out.println("Loaded " + getClassesCount() + " classes in " + t + " ms");
 
-    if (!warmUpPhase && !RUN_ONLY_AFFECTED_TESTS && getClassesCount() == 0 && !Boolean.getBoolean("idea.tests.ignoreJUnit3EmptySuite")) {
+    if (!warmUpPhase && getClassesCount() == 0 && !Boolean.getBoolean("idea.tests.ignoreJUnit3EmptySuite")) {
       // Specially formatted error message will fail the build
       // See https://www.jetbrains.com/help/teamcity/build-script-interaction-with-teamcity.html#BuildScriptInteractionwithTeamCity-ReportingMessagesForBuildLog
       System.out.println(
