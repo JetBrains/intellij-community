@@ -44,6 +44,7 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.toolwindow" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.sessions" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.claude.sessions" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.sessions.launch.config.backend" scope="RUNTIME" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5Suites" level="project" />
   </component>

@@ -25,6 +25,7 @@ jvm_library(
     "//plugins/agent-workbench/sessions-toolwindow:agent-workbench-sessions-toolwindow",
     "//plugins/agent-workbench/codex/sessions",
     "//plugins/agent-workbench/claude/sessions",
+    "//plugins/agent-workbench/sessions-launch-config/backend",
   ]
 )
 
@@ -50,6 +51,7 @@ jvm_library(
     "//plugins/agent-workbench/sessions:sessions_test_lib",
     "//plugins/agent-workbench/codex/sessions:sessions_test_lib",
     "//plugins/agent-workbench/claude/sessions:sessions_test_lib",
+    "//plugins/agent-workbench/sessions-launch-config/backend:backend_test_lib",
   ]
 )
 ### auto-generated section `build intellij.agent.workbench.plugin` end

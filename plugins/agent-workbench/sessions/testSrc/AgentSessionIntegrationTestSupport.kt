@@ -13,6 +13,7 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import com.intellij.agent.workbench.sessions.frame.OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.model.WorktreeEntry
@@ -21,9 +22,13 @@ import com.intellij.agent.workbench.sessions.service.AgentSessionChatOpenExecuto
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
-import com.intellij.agent.workbench.sessions.state.InMemorySessionsTreeUiState
-import com.intellij.agent.workbench.sessions.state.SessionsTreeUiState
+import com.intellij.agent.workbench.sessions.state.InMemorySessionWarmState
+import com.intellij.agent.workbench.sessions.state.SessionWarmState
+import com.intellij.openapi.options.advanced.AdvancedSettingBean
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -39,7 +44,35 @@ import kotlin.time.Duration.Companion.milliseconds
 internal const val PROJECT_PATH = "/work/project-a"
 internal const val WORKTREE_PATH = "/work/project-feature"
 
-internal class AgentSessionStateSyncTestFacade(
+internal fun registerDedicatedFrameSettingForTest(disposable: com.intellij.openapi.Disposable) {
+  if (AdvancedSettingBean.EP_NAME.extensionList.none { it.id == OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID }) {
+    AdvancedSettingBean.EP_NAME.point.registerExtension(
+      AdvancedSettingBean().apply {
+        id = OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID
+        defaultValue = "true"
+        groupKey = "agent.workbench.tests"
+      },
+      disposable,
+    )
+  }
+}
+
+data class TestProjectCatalogEntry(
+  @JvmField val path: String,
+  @JvmField val name: String,
+  @JvmField val worktrees: List<TestWorktreeCatalogEntry> = emptyList(),
+  @JvmField val branch: String? = null,
+  @JvmField val isOpen: Boolean = true,
+)
+
+data class TestWorktreeCatalogEntry(
+  @JvmField val path: String,
+  @JvmField val name: String,
+  @JvmField val branch: String?,
+  @JvmField val isOpen: Boolean = false,
+)
+
+class AgentSessionStateSyncTestFacade(
   private val stateStore: AgentSessionsStateStore,
   private val syncService: AgentSessionRefreshService,
 ) {
@@ -136,7 +169,7 @@ internal suspend fun withService(
     ::collectOpenPendingCodexTabsByPath,
   openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> =
     ::collectOpenConcreteAgentChatThreadIdentitiesByPath,
-  openAgentChatPendingTabsBinder: (
+  openAgentChatPendingTabsBinder: suspend (
     Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
   ) -> AgentChatPendingCodexTabRebindReport = ::rebindOpenPendingCodexTabs,
   action: suspend (AgentSessionStateSyncTestFacade) -> Unit,
@@ -163,7 +196,7 @@ internal suspend fun withServiceAndLaunch(
     ::collectOpenPendingCodexTabsByPath,
   openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> =
     ::collectOpenConcreteAgentChatThreadIdentitiesByPath,
-  openAgentChatPendingTabsBinder: (
+  openAgentChatPendingTabsBinder: suspend (
     Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
   ) -> AgentChatPendingCodexTabRebindReport = ::rebindOpenPendingCodexTabs,
   action: suspend (AgentSessionStateSyncTestFacade, AgentSessionLaunchService) -> Unit,
@@ -192,7 +225,7 @@ internal suspend fun withServiceAndArchive(
     ::collectOpenPendingCodexTabsByPath,
   openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> =
     ::collectOpenConcreteAgentChatThreadIdentitiesByPath,
-  openAgentChatPendingTabsBinder: (
+  openAgentChatPendingTabsBinder: suspend (
     Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
   ) -> AgentChatPendingCodexTabRebindReport = ::rebindOpenPendingCodexTabs,
   action: suspend (AgentSessionStateSyncTestFacade, AgentSessionArchiveService) -> Unit,
@@ -221,14 +254,18 @@ internal suspend fun withServiceAndArchiveAndLaunch(
     ::collectOpenPendingCodexTabsByPath,
   openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> =
     ::collectOpenConcreteAgentChatThreadIdentitiesByPath,
-  openAgentChatPendingTabsBinder: (
+  openAgentChatPendingTabsBinder: suspend (
     Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
   ) -> AgentChatPendingCodexTabRebindReport = ::rebindOpenPendingCodexTabs,
   action: suspend (AgentSessionStateSyncTestFacade, AgentSessionArchiveService, AgentSessionLaunchService) -> Unit,
 ) {
   @Suppress("RAW_SCOPE_CREATION")
-  val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+  val scope = CoroutineScope(job + Dispatchers.Default)
+  val settingDisposable = Disposer.newDisposable()
   try {
+    val advancedSettings = AdvancedSettings.getInstance() as AdvancedSettingsImpl
+    registerDedicatedFrameSettingForTest(settingDisposable)
+    advancedSettings.setSetting(OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID, true, settingDisposable)
     val stateStore = AgentSessionsStateStore()
     val syncService = AgentSessionRefreshService(
       serviceScope = scope,
@@ -271,7 +308,8 @@ internal suspend fun withServiceAndArchiveAndLaunch(
     action(service, archiveService, launchService)
   }
   finally {
-    scope.cancel()
+    Disposer.dispose(settingDisposable)
+    job.cancelAndJoin()
   }
 }
 

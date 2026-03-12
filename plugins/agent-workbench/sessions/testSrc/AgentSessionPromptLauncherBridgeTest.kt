@@ -34,15 +34,18 @@ import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelem
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelemetryProvider
 import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
-import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
+import com.intellij.agent.workbench.sessions.frame.OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID
 import com.intellij.agent.workbench.sessions.service.AgentSessionChatOpenExecutor
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionPromptLauncherBridge
 import com.intellij.agent.workbench.sessions.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.tree.SessionTreeNode
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -201,13 +204,11 @@ class AgentSessionPromptLauncherBridgeTest {
         }
       }
     )
-    AgentSessionProviderBridges.withRegistryForTest(
-      InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
-    ) {
-      runBlocking(Dispatchers.Default) {
-        val previousOpenInDedicatedFrame = AgentChatOpenModeSettings.openInDedicatedFrame()
-        try {
-          AgentChatOpenModeSettings.setOpenInDedicatedFrame(false)
+    withOpenInNonDedicatedFrameSettingForTest {
+      AgentSessionProviderBridges.withRegistryForTest(
+        InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
+      ) {
+        runBlocking(Dispatchers.Default) {
           withServiceAndLaunch(
             sessionSourcesProvider = { listOf(providerBridge.sessionSource) },
             projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
@@ -253,9 +254,6 @@ class AgentSessionPromptLauncherBridgeTest {
               token.finish()
             }
           }
-        }
-        finally {
-          AgentChatOpenModeSettings.setOpenInDedicatedFrame(previousOpenInDedicatedFrame)
         }
       }
     }
@@ -323,6 +321,47 @@ class AgentSessionPromptLauncherBridgeTest {
           val openRequest = checkNotNull(chatOpenExecutor.lastOpenNewChatRequest.get())
           assertThat(openRequest.startupLaunchSpecOverride?.envVariables)
             .containsExactlyEntriesOf(mapOf("DISABLE_AUTOUPDATER" to "1"))
+        }
+      }
+    }
+  }
+
+  @Test
+  fun launchAugmentsNewSessionAndStartupOverrideFromAugmenter() {
+    val providerBridge = RecordingPromptLaunchProviderBridge(
+      provider = AgentSessionProvider.CODEX,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      startupPromptCommandEnvVariables = mapOf("DISABLE_AUTOUPDATER" to "1"),
+    )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
+    AgentSessionProviderBridges.withRegistryForTest(
+      InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
+    ) {
+      runBlocking(Dispatchers.Default) {
+        withTestLaunchSpecAugmenter {
+          withServiceAndLaunch(
+            sessionSourcesProvider = { listOf(providerBridge.sessionSource) },
+            projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
+            chatOpenExecutor = chatOpenExecutor,
+          ) { service, launchService ->
+            val bridge = promptLauncherBridge(service, launchService)
+            val result = bridge.launch(promptLaunchRequest(projectPath = PROJECT_PATH))
+
+            assertThat(result.launched).isTrue()
+            assertThat(result.error).isNull()
+            waitForCondition {
+              chatOpenExecutor.openNewChatCalls.get() == 1
+            }
+
+            val openRequest = checkNotNull(chatOpenExecutor.lastOpenNewChatRequest.get())
+            assertThat(openRequest.launchSpec.envVariables)
+              .containsEntry(AGENT_WORKBENCH_TEST_ENV_NAME, AGENT_WORKBENCH_TEST_ENV_VALUE)
+              .containsEntry("PATH", AGENT_WORKBENCH_TEST_PATH_PREPEND)
+            assertThat(openRequest.startupLaunchSpecOverride?.envVariables)
+              .containsEntry("DISABLE_AUTOUPDATER", "1")
+              .containsEntry(AGENT_WORKBENCH_TEST_ENV_NAME, AGENT_WORKBENCH_TEST_ENV_VALUE)
+              .containsEntry("PATH", AGENT_WORKBENCH_TEST_PATH_PREPEND)
+          }
         }
       }
     }
@@ -462,14 +501,16 @@ class AgentSessionPromptLauncherBridgeTest {
           assertThat(result.launched).isTrue()
           assertThat(result.error).isNull()
           assertThat(providerBridge.createCalls.get()).isZero()
+          waitForCondition {
+            providerBridge.composeCalls.get() == 1 &&
+            providerBridge.startupCommandCalls.get() == 1 &&
+            chatOpenExecutor.openChatCalls.get() == 1
+          }
           assertThat(providerBridge.composeCalls.get()).isEqualTo(1)
           assertThat(providerBridge.lastComposeRequest.get()).isEqualTo(request.initialMessageRequest)
           assertThat(providerBridge.startupCommandCalls.get()).isEqualTo(1)
           assertThat(providerBridge.lastStartupBaseLaunchSpec.get()?.command).containsExactly("test", "resume", "thread-existing")
           assertThat(providerBridge.lastStartupPrompt.get()).isEqualTo("composed:Refactor selected code")
-          waitForCondition {
-            chatOpenExecutor.openChatCalls.get() == 1
-          }
           val openRequest = checkNotNull(chatOpenExecutor.lastOpenChatRequest.get())
           assertThat(openRequest.normalizedPath).isEqualTo(PROJECT_PATH)
           assertThat(openRequest.thread.id).isEqualTo("thread-existing")
@@ -501,23 +542,25 @@ class AgentSessionPromptLauncherBridgeTest {
         }
       }
     )
-    AgentSessionProviderBridges.withRegistryForTest(
-      InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
-    ) {
-      runBlocking(Dispatchers.Default) {
-        withServiceAndLaunch(
-          sessionSourcesProvider = {
-            listOf(
-              ScriptedSessionSource(
-                provider = AgentSessionProvider.CODEX,
-                listFromOpenProject = { path, _ ->
-                  if (path == PROJECT_PATH) {
-                    listOf(thread(id = "thread-existing", updatedAt = 200, provider = AgentSessionProvider.CODEX))
-                  }
-                  else {
-                    emptyList()
-                  }
-                },
+    withOpenInNonDedicatedFrameSettingForTest {
+      AgentSessionProviderBridges.withRegistryForTest(
+        InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
+      ) {
+        runBlocking(Dispatchers.Default) {
+          withServiceAndLaunch(
+            sessionSourcesProvider = {
+              listOf(
+                ScriptedSessionSource(
+                  provider = AgentSessionProvider.CODEX,
+                  listFromOpenProject = { path, _ ->
+                    if (path == PROJECT_PATH) {
+                      listOf(thread(id = "thread-existing", updatedAt = 200, provider = AgentSessionProvider.CODEX))
+                    }
+                    else {
+                      emptyList()
+                    }
+                  },
+                )
               )
             )
           },
@@ -585,16 +628,17 @@ class AgentSessionPromptLauncherBridgeTest {
               assertThat(result.launched).isTrue()
               assertThat(result.error).isNull()
               assertThat(providerBridge.createCalls.get()).isZero()
-              assertThat(providerBridge.composeCalls.get()).isEqualTo(1)
-              assertThat(providerBridge.lastComposeRequest.get()).isEqualTo(request.initialMessageRequest)
-              assertThat(providerBridge.startupCommandCalls.get()).isEqualTo(1)
-              assertThat(providerBridge.lastStartupBaseLaunchSpec.get()?.command).containsExactly("test", "resume", "thread-existing")
-              assertThat(providerBridge.lastStartupPrompt.get()).isEqualTo("composed:Refactor selected code")
 
               releaseFirstOpen.complete(Unit)
               waitForCondition(timeoutMs = 5_000) {
                 chatOpenExecutor.openChatCalls.get() == 2
               }
+
+              assertThat(providerBridge.composeCalls.get()).isEqualTo(1)
+              assertThat(providerBridge.lastComposeRequest.get()).isEqualTo(request.initialMessageRequest)
+              assertThat(providerBridge.startupCommandCalls.get()).isEqualTo(1)
+              assertThat(providerBridge.lastStartupBaseLaunchSpec.get()?.command).containsExactly("test", "resume", "thread-existing")
+              assertThat(providerBridge.lastStartupPrompt.get()).isEqualTo("composed:Refactor selected code")
 
               assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
               assertThat(chatOpenExecutor.openChatRequests).hasSize(2)
@@ -618,9 +662,6 @@ class AgentSessionPromptLauncherBridgeTest {
               releaseFirstOpen.complete(Unit)
             }
           }
-        }
-        finally {
-          AgentChatOpenModeSettings.setOpenInDedicatedFrame(previousOpenInDedicatedFrame)
         }
       }
     }
@@ -671,14 +712,16 @@ class AgentSessionPromptLauncherBridgeTest {
           assertThat(result.launched).isTrue()
           assertThat(result.error).isNull()
           assertThat(providerBridge.createCalls.get()).isZero()
+          waitForCondition {
+            providerBridge.composeCalls.get() == 1 &&
+            providerBridge.startupCommandCalls.get() == 1 &&
+            chatOpenExecutor.openChatCalls.get() == 1
+          }
           assertThat(providerBridge.composeCalls.get()).isEqualTo(1)
           assertThat(providerBridge.lastComposeRequest.get()).isEqualTo(request.initialMessageRequest)
           assertThat(providerBridge.startupCommandCalls.get()).isEqualTo(1)
           assertThat(providerBridge.lastStartupBaseLaunchSpec.get()?.command).containsExactly("test", "resume", "thread-existing")
           assertThat(providerBridge.lastStartupPrompt.get()).isEqualTo("composed:Refactor selected code")
-          waitForCondition {
-            chatOpenExecutor.openChatCalls.get() == 1
-          }
           val openRequest = checkNotNull(chatOpenExecutor.lastOpenChatRequest.get())
           assertThat(openRequest.normalizedPath).isEqualTo(PROJECT_PATH)
           assertThat(openRequest.thread.id).isEqualTo("thread-existing")
@@ -1186,6 +1229,20 @@ class AgentSessionPromptLauncherBridgeTest {
 
     assertThat(stored).isEqualTo(prefs)
     assertThat(bridge.loadProviderPreferences()).isEqualTo(prefs)
+  }
+}
+
+private fun <T> withOpenInNonDedicatedFrameSettingForTest(action: () -> T): T {
+  val advancedSettings = AdvancedSettings.getInstance() as AdvancedSettingsImpl
+  val disposable = Disposer.newDisposable()
+  registerDedicatedFrameSettingForTest(disposable)
+  advancedSettings.setSetting(OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID, false, disposable)
+  try {
+    AgentChatOpenModeSettings.setOpenInDedicatedFrame(false)
+    return action()
+  }
+  finally {
+    Disposer.dispose(disposable)
   }
 }
 

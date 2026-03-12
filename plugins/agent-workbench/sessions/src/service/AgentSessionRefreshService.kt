@@ -34,6 +34,8 @@ import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.wm.ToolWindowManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private val LOG = logger<AgentSessionRefreshService>()
@@ -51,11 +53,11 @@ internal class AgentSessionRefreshService(
     ::collectOpenConcreteAgentChatTabsAwaitingNewThreadRebindByPath,
     private val openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> =
     ::collectOpenConcreteAgentChatThreadIdentitiesByPath,
-    private val openAgentChatPendingTabsBinder: (
+    private val openAgentChatPendingTabsBinder: suspend (
     AgentSessionProvider,
     Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
   ) -> AgentChatPendingCodexTabRebindReport = ::rebindOpenPendingAgentChatTabs,
-    private val openAgentChatConcreteTabsBinder: (
+    private val openAgentChatConcreteTabsBinder: suspend (
     AgentSessionProvider,
     Map<String, List<AgentChatConcreteCodexTabRebindRequest>>,
   ) -> AgentChatConcreteCodexTabRebindReport = ::rebindOpenConcreteAgentChatTabs,
@@ -169,6 +171,28 @@ internal class AgentSessionRefreshService(
   fun refreshProviderForPath(path: String, provider: AgentSessionProvider) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
     loadingCoordinator.refreshProviderScope(provider = provider, scopedPaths = setOf(normalizedPath))
+  }
+
+  fun rebindPendingTabsInBackground(
+    provider: AgentSessionProvider,
+    requestsByProjectPath: Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
+  ): Job {
+    return serviceScope.launch(Dispatchers.IO) {
+      openAgentChatPendingTabsBinder(provider, requestsByProjectPath)
+    }
+  }
+
+  internal fun prepareThreadForOpen(path: String, provider: AgentSessionProvider, threadId: String, updatedAt: Long) {
+    contentRepository.markThreadAsRead(path = path, provider = provider, threadId = threadId, updatedAt = updatedAt)
+    val source = sessionSourcesProvider().firstOrNull { it.provider == provider } ?: return
+    source.setActiveThreadId(threadId)
+    source.markThreadAsRead(threadId, updatedAt)
+  }
+
+  fun markThreadAsRead(path: String, provider: AgentSessionProvider, threadId: String, updatedAt: Long) {
+    contentRepository.markThreadAsRead(path = path, provider = provider, threadId = threadId, updatedAt = updatedAt)
+    val source = sessionSourcesProvider().firstOrNull { it.provider == provider } ?: return
+    source.markThreadAsRead(threadId, updatedAt)
   }
 
   fun appendProviderUnavailableWarning(path: String, provider: AgentSessionProvider) {

@@ -13,9 +13,7 @@ import com.intellij.agent.workbench.sessions.codex.CodexPendingTabMatcher
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
-import com.intellij.agent.workbench.sessions.util.buildAgentSessionResumeLaunchSpec
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.agent.workbench.sessions.util.parseAgentSessionIdentity
 import com.intellij.openapi.application.UI
@@ -42,11 +40,11 @@ internal class AgentSessionCodexRefreshSupport(
   private val openPendingCodexTabsProvider: suspend (AgentSessionProvider) -> Map<String, List<AgentChatPendingCodexTabSnapshot>>,
   private val openConcreteCodexTabsAwaitingNewThreadRebindProvider: suspend (AgentSessionProvider) -> Map<String, List<AgentChatConcreteCodexTabSnapshot>>,
   private val openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>>,
-  private val openAgentChatPendingTabsBinder: (
+  private val openAgentChatPendingTabsBinder: suspend (
     AgentSessionProvider,
     Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
   ) -> AgentChatPendingCodexTabRebindReport,
-  private val openAgentChatConcreteTabsBinder: (
+  private val openAgentChatConcreteTabsBinder: suspend (
     AgentSessionProvider,
     Map<String, List<AgentChatConcreteCodexTabRebindRequest>>,
   ) -> AgentChatConcreteCodexTabRebindReport,
@@ -253,7 +251,8 @@ internal class AgentSessionCodexRefreshSupport(
         if (thread.provider != provider) continue
         if (allowedThreadIds != null && thread.id !in allowedThreadIds) continue
         candidatesByPath.getOrPut(path) { ArrayList() }.add(
-          buildPendingCodexRebindTarget(
+          buildCodexRebindTarget(
+            path = path,
             provider = provider,
             threadId = thread.id,
             title = thread.title,
@@ -276,7 +275,8 @@ internal class AgentSessionCodexRefreshSupport(
       val pathCandidates = candidatesByPath.getOrPut(path) { ArrayList(rebindCandidates.size) }
       for (candidate in rebindCandidates) {
         pathCandidates.add(
-          buildPendingCodexRebindTarget(
+          buildCodexRebindTarget(
+            path = path,
             provider = provider,
             threadId = candidate.threadId,
             title = candidate.title,
@@ -322,9 +322,7 @@ internal class AgentSessionCodexRefreshSupport(
       }
     }
 
-    val rebindReport = withContext(Dispatchers.UI) {
-      openAgentChatPendingTabsBinder(provider, requestsByPath)
-    }
+    val rebindReport = openAgentChatPendingTabsBinder(provider, requestsByPath)
 
     LOG.debug {
       "Provider refresh id=$refreshId provider=${provider.value} rebound pending chat tabs " +
@@ -405,6 +403,7 @@ internal class AgentSessionCodexRefreshSupport(
       val unavailableThreadIdentities = unavailableThreadIdentitiesByPath.getOrPut(path) { LinkedHashSet() }
       val candidates = rebindCandidates.map { candidate ->
         buildCodexRebindTarget(
+          path = path,
           provider = provider,
           threadId = candidate.threadId,
           title = candidate.title,
@@ -439,9 +438,7 @@ internal class AgentSessionCodexRefreshSupport(
       return
     }
 
-    val rebindReport = withContext(Dispatchers.UI) {
-      openAgentChatConcreteTabsBinder(provider, requestsByPath)
-    }
+    val rebindReport = openAgentChatConcreteTabsBinder(provider, requestsByPath)
 
     LOG.debug {
       "Provider refresh id=$refreshId provider=codex rebound concrete /new chat tabs " +
@@ -705,21 +702,19 @@ internal class AgentSessionCodexRefreshSupport(
     }
   }
 
-  private fun buildPendingCodexRebindTarget(
+  private fun buildCodexRebindTarget(
+    path: String,
     provider: AgentSessionProvider,
     threadId: String,
     title: String,
     activity: AgentThreadActivity,
     updatedAt: Long,
-  ): AgentChatPendingTabRebindTarget {
-    val launchSpec = runCatching {
-      buildAgentSessionResumeLaunchSpec(provider, threadId)
-    }.getOrDefault(AgentSessionTerminalLaunchSpec(command = listOf(provider.value, "resume", threadId)))
-    return AgentChatPendingTabRebindTarget(
+  ): AgentChatTabRebindTarget {
+    return AgentChatTabRebindTarget(
+      projectPath = normalizeAgentWorkbenchPath(path),
+      provider = provider,
       threadIdentity = buildAgentSessionIdentity(provider, threadId),
       threadId = threadId,
-      shellCommand = launchSpec.command,
-      shellEnvVariables = launchSpec.envVariables,
       threadTitle = title,
       threadActivity = activity,
       threadUpdatedAt = updatedAt,

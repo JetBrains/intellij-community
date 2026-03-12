@@ -1,12 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.service
 
+import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.AgentSubAgent
+import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchSpecs
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
-import com.intellij.agent.workbench.sessions.util.buildAgentSessionResumeLaunchSpec
 
 internal data class AgentSessionChatOpenPayload(
   @JvmField val threadIdentity: String,
@@ -17,14 +18,30 @@ internal data class AgentSessionChatOpenPayload(
   @JvmField val initialMessageDispatchPlan: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
 )
 
-internal fun resolveAgentSessionChatOpenPayload(
+internal suspend fun resolveAgentSessionChatOpenPayload(
+  projectPath: String,
   thread: AgentSessionThread,
   subAgent: AgentSubAgent?,
   launchSpecOverride: AgentSessionTerminalLaunchSpec?,
+  resumeLaunchSpecProvider: ((AgentSessionProvider, String) -> AgentSessionTerminalLaunchSpec)? = null,
 ): AgentSessionChatOpenPayload {
   val threadIdentity = buildAgentSessionIdentity(provider = thread.provider, sessionId = thread.id)
   val runtimeThreadId = subAgent?.id ?: thread.id
-  val launchSpec = launchSpecOverride ?: buildAgentSessionResumeLaunchSpec(provider = thread.provider, sessionId = runtimeThreadId)
+  val launchSpec = launchSpecOverride
+                   ?: resumeLaunchSpecProvider
+                     ?.let { provider ->
+                       AgentSessionLaunchSpecs.resolveResume(
+                         projectPath = projectPath,
+                         provider = thread.provider,
+                         sessionId = runtimeThreadId,
+                         baseLaunchSpecProvider = provider,
+                       )
+                     }
+                   ?: AgentSessionLaunchSpecs.resolveResume(
+                     projectPath = projectPath,
+                     provider = thread.provider,
+                     sessionId = runtimeThreadId,
+                   )
   val threadTitle = subAgent?.name?.ifBlank { subAgent.id } ?: thread.title
   return AgentSessionChatOpenPayload(
     threadIdentity = threadIdentity,

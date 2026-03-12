@@ -6,12 +6,10 @@ import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindTarget
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
-import com.intellij.agent.workbench.sessions.util.buildAgentSessionResumeLaunchSpec
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -22,7 +20,6 @@ import kotlinx.coroutines.flow.StateFlow
 class AgentSessionReadService private constructor(
   private val requiredStateStoreProvider: () -> AgentSessionsStateStore,
   private val optionalSessionsStateProvider: () -> AgentSessionsState?,
-  private val resumeLaunchSpecProvider: (AgentSessionProvider, String) -> AgentSessionTerminalLaunchSpec,
 ) {
   @Suppress("unused")
   constructor() : this(
@@ -30,18 +27,15 @@ class AgentSessionReadService private constructor(
     optionalSessionsStateProvider = {
       ApplicationManager.getApplication().serviceIfCreated<AgentSessionsStateStore>()?.state?.value
     },
-    resumeLaunchSpecProvider = ::buildAgentSessionResumeLaunchSpec,
   )
 
   internal constructor(
     stateProvider: () -> AgentSessionsState?,
-    resumeLaunchSpecProvider: (AgentSessionProvider, String) -> AgentSessionTerminalLaunchSpec = ::buildAgentSessionResumeLaunchSpec,
   ) : this(
     requiredStateStoreProvider = {
       error("AgentSessionsStateStore is unavailable in this test setup")
     },
     optionalSessionsStateProvider = stateProvider,
-    resumeLaunchSpecProvider = resumeLaunchSpecProvider,
   )
 
   internal fun stateFlow(): StateFlow<AgentSessionsState> = requiredStateStoreProvider().state
@@ -67,15 +61,12 @@ class AgentSessionReadService private constructor(
       .toList()
 
     val thread = candidateThreads.firstOrNull() ?: return null
-    val launchSpec = runCatching {
-      resumeLaunchSpecProvider(thread.provider, thread.id)
-    }.getOrDefault(AgentSessionTerminalLaunchSpec(command = listOf(provider.value, "resume", thread.id)))
 
-    return AgentChatPendingTabRebindTarget(
+    return AgentChatTabRebindTarget(
+      projectPath = normalizedPath,
+      provider = thread.provider,
       threadIdentity = buildAgentSessionIdentity(provider = thread.provider, sessionId = thread.id),
       threadId = thread.id,
-      shellCommand = launchSpec.command,
-      shellEnvVariables = launchSpec.envVariables,
       threadTitle = thread.title,
       threadActivity = thread.activity,
       threadUpdatedAt = thread.updatedAt,

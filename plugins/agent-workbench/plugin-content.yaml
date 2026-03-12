@@ -9,6 +9,7 @@
   - name: intellij.agent.workbench.filewatch
   - name: intellij.agent.workbench.codex.sessions
   - name: intellij.agent.workbench.sessions.core
+  - name: intellij.agent.workbench.sessions.launch.config.backend
   - name: intellij.agent.workbench.prompt
   - name: intellij.agent.workbench.prompt.vcs
   - name: intellij.agent.workbench.sessions
