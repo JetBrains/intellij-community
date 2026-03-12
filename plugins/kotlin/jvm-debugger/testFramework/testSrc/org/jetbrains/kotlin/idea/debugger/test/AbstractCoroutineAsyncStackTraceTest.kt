@@ -6,6 +6,7 @@ import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerTestUtil
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 
@@ -49,4 +50,11 @@ abstract class AbstractK2CoroutineAsyncStackTraceTest : AbstractCoroutineAsyncSt
 
     override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K2
+
+    override val compileWithK2: Boolean
+        get() = true
+
+    override fun lambdasGenerationScheme(): JvmClosureGenerationScheme {
+        return JvmClosureGenerationScheme.INDY
+    }
 }
