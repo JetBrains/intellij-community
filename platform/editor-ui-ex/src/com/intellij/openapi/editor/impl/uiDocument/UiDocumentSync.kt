@@ -35,25 +35,18 @@ internal class UiDocumentSync(
   override fun documentChanged(event: DocumentEvent) {
     ThreadingAssertions.assertEventDispatchThread()
     val document = event.document
-    if (isUiDocument(document)) {
+    val manager = UiDocumentManager.getInstance()
+    if (manager.isUiDocument(document)) {
       if (!realToUiSync.isInProgress(document.modificationStamp)) {
         uiToRealSync.documentChanged(event)
       }
-    } else if (isRealDocument(document)) {
+    } else if (manager.isRealDocument(document)) {
       if (!uiToRealSync.isInProgress(document.modificationStamp)) {
         realToUiSync.documentChanged(event)
       }
     } else {
       error("Unknown document ${document}")
     }
-  }
-
-  private fun isUiDocument(document: Document): Boolean {
-    return getRealDocument(document) != null
-  }
-
-  private fun isRealDocument(document: Document): Boolean {
-    return getUiDocument(document) != null
   }
 
   private fun getUiDocument(document: Document): DocumentImpl? {

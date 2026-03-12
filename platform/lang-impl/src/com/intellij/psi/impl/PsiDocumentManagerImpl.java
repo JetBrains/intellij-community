@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -8,6 +8,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -40,8 +41,11 @@ import java.util.List;
 
 //todo listen & notifyListeners readonly events?
 public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
+  private final @NotNull UiPsiSupport myUiPsiSupport;
+
   public PsiDocumentManagerImpl(@NotNull Project project) {
     super(project);
+    myUiPsiSupport = new UiPsiSupport(project);
 
     EditorFactory editorFactory = EditorFactory.getInstance();
     editorFactory.getEventMulticaster().addDocumentListener(this, this);
@@ -50,7 +54,11 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
 
   @Override
   public @Nullable PsiFile getPsiFile(@NotNull Document document) {
+    if (myUiPsiSupport.isUiDocument(document)) {
+      return myUiPsiSupport.getPsiFile(document);
+    }
     final PsiFile psiFile = super.getPsiFile(document);
+    myUiPsiSupport.recordRealPsiFile(document, psiFile);
     if (myUnitTestMode) {
       VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
       if (virtualFile != null) {
@@ -58,6 +66,43 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
       }
     }
     return psiFile;
+  }
+
+  @Override
+  public @Nullable Document getDocument(@NotNull PsiFile psiFile) {
+    Document uiDocument = myUiPsiSupport.getDocument(psiFile);
+    return uiDocument != null ? uiDocument : super.getDocument(psiFile);
+  }
+
+  @Override
+  public @Nullable Document getCachedDocument(@NotNull PsiFile psiFile) {
+    Document uiDocument = myUiPsiSupport.getDocument(psiFile);
+    return uiDocument != null ? uiDocument : super.getCachedDocument(psiFile);
+  }
+
+  @Override
+  public void commitDocument(@NotNull Document document) {
+    if (myUiPsiSupport.isUiDocument(document)) {
+      myUiPsiSupport.commitDocument(document);
+      return;
+    }
+    super.commitDocument(document);
+  }
+
+  @Override
+  public @NotNull DocumentEx getLastCommittedDocument(@NotNull Document document) {
+    if (myUiPsiSupport.isUiDocument(document)) {
+      return myUiPsiSupport.getLastCommittedDocument(document);
+    }
+    return super.getLastCommittedDocument(document);
+  }
+
+  @Override
+  public boolean isCommitted(@NotNull Document document) {
+    if (myUiPsiSupport.isUiDocument(document)) {
+      return myUiPsiSupport.isCommitted(document);
+    }
+    return super.isCommitted(document);
   }
 
   @Override
@@ -96,6 +141,7 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
                                               boolean synchronously) {
     boolean success = super.finishCommitInWriteAction(document, finishProcessors, reparseInjectedProcessors, synchronously);
     PsiFile file = getCachedPsiFile(document);
+    myUiPsiSupport.recordRealPsiFile(document, file);
     if (file != null) {
       InjectedLanguageManagerImpl.clearInvalidInjections(file);
     }
@@ -122,6 +168,11 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
 
   @Override
   public void doPostponedOperationsAndUnblockDocument(@NotNull Document document) {
+    if (myUiPsiSupport.isUiDocument(document)) {
+      myUiPsiSupport.doPostponedOperationsAndUnblockDocument(document);
+      return;
+    }
+
     PostprocessReformattingAspect component = PostprocessReformattingAspect.getInstance(myProject);
     if (component == null) return;
 

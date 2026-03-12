@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Key
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicBoolean
 
 
@@ -24,17 +25,17 @@ class UiDocumentManager(private val coroutineScope: CoroutineScope) {
 
   fun bindUiDocument(realDocument: Document) {
     if (isLockFreeEnabled() && isLockFreeAllowed(realDocument)) {
-      val existingUiDocument = getUiDocument(realDocument)
-      if (existingUiDocument != null) {
-        error("UI document already bound $existingUiDocument")
-      }
-      val uiDocument = createLockFreeDocument(realDocument as DocumentImpl)
-      val sync = UiDocumentSync(coroutineScope)
-      uiDocument.addDocumentListener(sync)
-      realDocument.addDocumentListener(sync)
-      uiDocument.putUserData(REAL_DOCUMENT_KEY, realDocument)
-      realDocument.putUserData(UI_DOCUMENT_KEY, uiDocument)
+      bindUiDocumentInternal(realDocument)
     }
+  }
+
+  @TestOnly
+  fun bindUiDocumentForTests(realDocument: Document): DocumentImpl {
+    val existingUiDocument = getUiDocument(realDocument)
+    if (existingUiDocument != null) {
+      return existingUiDocument
+    }
+    return bindUiDocumentInternal(realDocument)
   }
 
   fun isUiDocumentChangeInProgress(): Boolean {
@@ -45,7 +46,15 @@ class UiDocumentManager(private val coroutineScope: CoroutineScope) {
     return realDocument.getUserData(UI_DOCUMENT_KEY)
   }
 
-  internal fun getRealDocument(uiDocument: Document): DocumentImpl? {
+  fun isUiDocument(document: Document): Boolean {
+    return getRealDocument(document) != null
+  }
+
+  fun isRealDocument(document: Document): Boolean {
+    return getUiDocument(document) != null
+  }
+
+  fun getRealDocument(uiDocument: Document): DocumentImpl? {
     return uiDocument.getUserData(REAL_DOCUMENT_KEY)
   }
 
@@ -75,6 +84,20 @@ class UiDocumentManager(private val coroutineScope: CoroutineScope) {
     val doc = DocumentImpl(chars, acceptsSlashR, true)
     doc.modificationStamp = document.modificationStamp
     return doc
+  }
+
+  private fun bindUiDocumentInternal(realDocument: Document): DocumentImpl {
+    val existingUiDocument = getUiDocument(realDocument)
+    if (existingUiDocument != null) {
+      error("UI document already bound $existingUiDocument")
+    }
+    val uiDocument = createLockFreeDocument(realDocument as DocumentImpl)
+    val sync = UiDocumentSync(coroutineScope)
+    uiDocument.addDocumentListener(sync)
+    realDocument.addDocumentListener(sync)
+    uiDocument.putUserData(REAL_DOCUMENT_KEY, realDocument)
+    realDocument.putUserData(UI_DOCUMENT_KEY, uiDocument)
+    return uiDocument
   }
 
   private fun isLockFreeAllowed(document: Document): Boolean {
