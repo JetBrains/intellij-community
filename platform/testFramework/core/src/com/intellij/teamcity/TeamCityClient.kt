@@ -2,10 +2,8 @@
 package com.intellij.teamcity
 
 import com.intellij.TestCaseLoader
-import com.intellij.nastradamus.model.ChangeEntity
 import com.intellij.openapi.application.PathManager
 import com.intellij.tool.HttpClient
-import com.intellij.tool.NastradamusCache
 import com.intellij.tool.withErrorThreshold
 import com.intellij.tool.withRetry
 import org.apache.http.HttpRequest
@@ -137,97 +135,6 @@ class TeamCityClient(
 
     return requireNotNull(result) { "Request ${request.uri} failed" }
   }
-
-  fun getChanges(buildId: String): List<JsonNode> {
-    val fullUrl = restUri.resolve("changes?locator=build:(id:$buildId)")
-
-    val rawData = NastradamusCache.get(fullUrl) { get(fullUrl).toString() }
-
-    return jacksonMapper.readTree(rawData).properties().asSequence()
-      .filter { it.key == "change" }
-      .flatMap { it.value }
-      .toList()
-  }
-
-  fun getChanges(): List<JsonNode> = getChanges(buildId)
-
-  fun getChangeDetails(changeId: String): List<ChangeEntity> {
-    val fullUrl = restUri.resolve("changes/id:$changeId")
-
-    fun processData(jsonRoot: JsonNode): List<ChangeEntity> {
-      val comment = jsonRoot.findValue("comment").asString()
-      val userName = jsonRoot.findValue("username").asString()
-      val date = jsonRoot.findValue("date").asString()
-
-      val filesFields = jsonRoot.findValue("files")
-        .findValue("file")
-        .toList()
-
-      return filesFields.map { fileField ->
-        ChangeEntity(
-          filePath = fileField.findValue("file").asString(),
-          relativeFile = fileField.findValue("relative-file").asString(),
-          beforeRevision = fileField.findValue("before-revision")?.asString("") ?: "",
-          afterRevision = fileField.findValue("after-revision")?.asString("") ?: "",
-          changeType = fileField.findValue("changeType").asString(),
-          comment = comment,
-          userName = userName,
-          date = date
-        )
-      }
-    }
-
-    val rawChange = NastradamusCache.get(fullUrl) { get(fullUrl).toString() }
-    return processData(jacksonMapper.readTree(rawChange))
-  }
-
-  private fun getTestRunInfo(buildId: String): List<JsonNode> {
-    val countOfTestsOnPage = 200
-    var startPosition = 0
-    val accumulatedTests: MutableList<JsonNode> = mutableListOf()
-
-    var currentTests: List<JsonNode>
-
-    println("Getting test run info from TC ...")
-
-    do {
-      val fullUrl = restUri
-        .resolve("testOccurrences?locator=build:(id:$buildId),ignored:any,muted:any,count:$countOfTestsOnPage,start:$startPosition," +
-                 "includePersonal:true&fields=nextHref," +
-                 "testOccurrence(id,name,status,duration,currentlyInvestigated,currentlyMuted,muted,test(id,parsedTestName),newFailure,metadata(count),nextFixed(id),runOrder)")
-
-      val rawData = NastradamusCache.get(fullUrl) { get(fullUrl).toString() }
-
-      currentTests = jacksonMapper.readTree(rawData).properties().asSequence()
-        .filter { it.key == "testOccurrence" }
-        .flatMap { it.value }
-        .toList()
-
-      accumulatedTests.addAll(currentTests)
-
-      startPosition += countOfTestsOnPage
-    }
-    while (currentTests.isNotEmpty())
-
-    println("Test run info acquired. Count of tests ${accumulatedTests.size}")
-
-    return accumulatedTests
-  }
-
-  fun getTestRunInfo(): List<JsonNode> = getTestRunInfo(buildId)
-
-  private fun getBuildInfo(buildId: String): JsonNode {
-    val fullUrl = restUri.resolve("builds/$buildId")
-
-    val rawData = NastradamusCache.get(fullUrl) { get(fullUrl).toString() }
-    return jacksonMapper.readTree(rawData)
-  }
-
-  fun getBuildInfo(): JsonNode = getBuildInfo(buildId)
-
-  private fun getTriggeredByInfo(buildId: String): JsonNode = getBuildInfo(buildId).findValue("triggered")
-
-  fun getTriggeredByInfo(): JsonNode = getTriggeredByInfo(buildId)
 
   /**
    * [source] - source path of artifact

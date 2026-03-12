@@ -237,7 +237,6 @@ Then attach debugger to port 5005.
 | `BucketingScheme` | Interface for test distribution |
 | `HashingBucketingScheme` | Default: hash-based distribution |
 | `TestsDurationBucketingScheme` | Duration-aware distribution |
-| `NastradamusBucketingScheme` | AI-powered test distribution |
 
 ## Test Module Hierarchy
 

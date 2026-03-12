@@ -4,7 +4,6 @@ package com.intellij;
 import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.idea.IJIgnore;
 import com.intellij.idea.IgnoreJUnit3;
-import com.intellij.nastradamus.NastradamusClient;
 import com.intellij.openapi.application.ArchivedCompilationContextUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.SelfSeedingTestCase;
@@ -13,8 +12,6 @@ import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.bucketing.BucketingScheme;
 import com.intellij.testFramework.bucketing.CyclicCounterBucketingScheme;
 import com.intellij.testFramework.bucketing.HashingBucketingScheme;
-import com.intellij.testFramework.bucketing.NastradamusBucketingScheme;
-import com.intellij.testFramework.bucketing.NastradamusDataCollectingBucketingScheme;
 import com.intellij.testFramework.bucketing.TestsDurationBucketingScheme;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -58,8 +55,6 @@ public class TestCaseLoader {
   public static final String VERBOSE_LOG_ENABLED_FLAG = "idea.test.log.verbose";
   public static final String FAIR_BUCKETING_FLAG = "idea.fair.bucketing";
   public static final String IS_TESTS_DURATION_BUCKETING_ENABLED_FLAG = "idea.tests.duration.bucketing.enabled";
-  public static final String NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED_FLAG = "idea.enable.nastradamus.test.distributor";
-  public static final String NASTRADAMUS_SHADOW_DATA_COLLECTION_ENABLED_FLAG = "idea.nastradamus.shadow.data.collection.enabled";
 
   private static final boolean PERFORMANCE_TESTS_ONLY = Boolean.getBoolean(PERFORMANCE_TESTS_ONLY_FLAG);
   private static final boolean INCLUDE_PERFORMANCE_TESTS = Boolean.getBoolean(INCLUDE_PERFORMANCE_TESTS_FLAG);
@@ -80,17 +75,6 @@ public class TestCaseLoader {
    * Distribute tests equally among buckets using tests duration data
    */
   public static final boolean IS_TESTS_DURATION_BUCKETING_ENABLED = Boolean.getBoolean(IS_TESTS_DURATION_BUCKETING_ENABLED_FLAG);
-
-  /**
-   * Intelligent test distribution to shorten time of tests run (ultimately - predict what tests to run on a changeset)
-   */
-  public static final boolean IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED = Boolean.getBoolean(NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED_FLAG);
-
-  /**
-   * During the usual runs of the "old" aggregator the data about the run will be sent to Nastradamus service
-   */
-  public static final boolean IS_NASTRADAMUS_SHADOW_DATA_COLLECTION_ENABLED =
-    Boolean.getBoolean(NASTRADAMUS_SHADOW_DATA_COLLECTION_ENABLED_FLAG);
 
   /**
    * An implicit group which includes all tests from all defined groups and tests which don't belong to any group.
@@ -114,19 +98,11 @@ public class TestCaseLoader {
     if (IS_TESTS_DURATION_BUCKETING_ENABLED) {
       scheme = new TestsDurationBucketingScheme();
     }
-    else if (IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED) {
-      scheme = new NastradamusBucketingScheme();
-    }
     else if (IS_FAIR_BUCKETING) {
       scheme = new CyclicCounterBucketingScheme();
     }
     else {
       scheme = new HashingBucketingScheme();
-    }
-
-    // run tests "as usual", but send the data to Nastradamus
-    if (IS_NASTRADAMUS_SHADOW_DATA_COLLECTION_ENABLED && !(scheme instanceof NastradamusBucketingScheme)) {
-      scheme = new NastradamusDataCollectingBucketingScheme(scheme);
     }
 
     if (ourBucketingSchemeInitRecursionLock.get() == Boolean.TRUE) throw new IllegalStateException("recursion detected");
@@ -312,29 +288,10 @@ public class TestCaseLoader {
     System.out.printf("Finishing warmup initialization. Found %s classes%n", testCaseClasses.size());
 
     if (testCaseClasses.isEmpty()) {
-      System.err.println("Fair bucketing or Nastradamus is enabled, but 0 test classes were found for warmup");
+      System.err.println("Fair bucketing is enabled, but 0 test classes were found for warmup");
     }
 
     return testCaseClasses;
-  }
-
-  public static void sendTestRunResultsToNastradamus() {
-    // Don't initialize if it wasn't used
-    if (!ourBucketingScheme.isInitialized()) return;
-
-    BucketingScheme scheme = ourBucketingScheme.getValue();
-    if (!(scheme instanceof NastradamusBucketingScheme)) return;
-    NastradamusClient client = ((NastradamusBucketingScheme)scheme).getNastradamusClient();
-    if (client == null) return;
-
-    try {
-      var testRunRequest = client.collectTestRunResults();
-      client.sendTestRunResults(testRunRequest, IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED);
-    }
-    catch (Exception e) {
-      System.err.println("Unexpected error happened during sending test results to Nastradamus");
-      e.printStackTrace();
-    }
   }
 
   /**

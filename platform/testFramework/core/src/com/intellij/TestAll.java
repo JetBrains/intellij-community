@@ -342,8 +342,6 @@ public class TestAll implements Test {
         e.printStackTrace();
       }
     }
-
-    TestCaseLoader.sendTestRunResultsToNastradamus();
   }
 
   private static void dumpSuite(List<Class<?>> testsToRun) {
