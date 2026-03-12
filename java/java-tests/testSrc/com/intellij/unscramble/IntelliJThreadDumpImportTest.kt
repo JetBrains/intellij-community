@@ -184,7 +184,7 @@ internal class IntelliJThreadDumpImportTest {
   }
 
   @Test
-  fun `parser drops container parent that does not point to another container`() {
+  fun `thread may be a parent to a container`() {
     val dumpText = """
       "main@101" #1 prio=5 tid=0x1 nid=0x1 runnable
          java.lang.Thread.State: RUNNABLE
@@ -210,7 +210,7 @@ internal class IntelliJThreadDumpImportTest {
 
     val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(dumpText))
 
-    assertDumpItem(parsedThreadDump, "Scope A", 300L, null, true)
+    assertDumpItem(parsedThreadDump, "Scope A", 300L, 101L, true)
   }
 
   private fun loadThreadDump(path: String): String {

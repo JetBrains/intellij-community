@@ -107,12 +107,11 @@ private fun createThreadContainerDescriptors(
     return emptyList()
   }
   val parentIds = metadata.threadLinks.associate { it.treeId to it.parentTreeId }
-  val containerIds = containers.mapTo(linkedSetOf()) { it.treeId }
   return containers.map { container ->
     JavaThreadContainerDesc(
       name = container.name,
       containerId = container.treeId,
-      parentContainerId = parentIds[container.treeId]?.takeIf { it in containerIds },
+      parentContainerId = parentIds[container.treeId],
     )
   }
 }
