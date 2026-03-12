@@ -25,7 +25,7 @@ public class ThreadState {
   private String myExtraState;
   private boolean isDaemon;
   private boolean isVirtual;
-  private long uniqueId;
+  private Long uniqueId;
   private Long threadContainerUniqueId;
   private final Set<ThreadState> myThreadsWaitingForMyLock = new HashSet<>();
   private final Set<ThreadState> myDeadlockedThreads = new HashSet<>();
@@ -205,9 +205,9 @@ public class ThreadState {
     isVirtual = virtual;
   }
 
-  public long getUniqueId() { return uniqueId; }
+  public @Nullable Long getUniqueId() { return uniqueId; }
 
-  public void setUniqueId(long id) { uniqueId = id; }
+  public void setUniqueId(@Nullable Long id) { uniqueId = id; }
 
   public Long getThreadContainerUniqueId() { return threadContainerUniqueId; }
 

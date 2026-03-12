@@ -153,7 +153,7 @@ internal class IntelliJThreadDumpImportTest {
   }
 
   @Test
-  fun `parser leaves zero id threads detached from containers`() {
+  fun `parser leaves threads without id detached from containers`() {
     val dumpText = """
       "main" #1 prio=5 tid=0x1 nid=0x1 runnable
          java.lang.Thread.State: RUNNABLE
@@ -179,7 +179,7 @@ internal class IntelliJThreadDumpImportTest {
 
     val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(dumpText))
 
-    assertDumpItem(parsedThreadDump, "main", 0L, null, false)
+    assertDumpItem(parsedThreadDump, "main", null, null, false)
     assertDumpItem(parsedThreadDump, "Scope A", 300L, null, true)
   }
 
