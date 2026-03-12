@@ -217,7 +217,6 @@ Then attach debugger to port 5005.
 
 | Class | Purpose |
 |-------|---------|
-| `JUnit5TeamCityRunnerForTestsOnClasspath` | Runs JUnit 5 tests, uses `Launcher` API |
 | `JUnit5TeamCityRunner` | Runs JUnit 3/4 tests using the JUnit Vintage test engine, or JUnit5 tests using the JUnit Jupiter test engine |
 | `TCExecutionListener` | Reports test results to TeamCity via service messages |
 

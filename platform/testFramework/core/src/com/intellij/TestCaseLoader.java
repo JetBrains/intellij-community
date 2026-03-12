@@ -323,12 +323,12 @@ public class TestCaseLoader {
     myLastTestClass = null;
   }
 
-  // called reflectively from `JUnit5TeamCityRunner#createPerformancePostDiscoveryFilter`
+  // called reflectively from `com.intellij.tests.JUnit5TeamCityRunner.PerformancePostDiscoveryFilter`
   public static boolean isPerformanceTestsRun() {
     return PERFORMANCE_TESTS_ONLY;
   }
 
-  // called reflectively from `JUnit5TeamCityRunner#createPerformancePostDiscoveryFilter`
+  // called reflectively from `com.intellij.tests.JUnit5TeamCityRunner.PerformancePostDiscoveryFilter`
   public static boolean isIncludingPerformanceTestsRun() {
     return INCLUDE_PERFORMANCE_TESTS;
   }
@@ -366,7 +366,7 @@ public class TestCaseLoader {
       return filter;
     });
 
-  // called reflectively from `JUnit5TeamCityRunnerForTestsOnClasspath#createClassNameFilter`
+  // called reflectively from `com.intellij.tests.JUnit5TeamCityRunner.CommonTestClassesFilter`
   @SuppressWarnings("unused")
   public static boolean isClassNameIncluded(String className) {
     if (!ClassFinder.isSuitableTestClassName(className, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS)) {
@@ -379,7 +379,7 @@ public class TestCaseLoader {
     return ourCommonTestClassesFilter.getValue().matches(className);
   }
 
-  // called reflectively from `JUnit5TeamCityRunnerForTestsOnClasspath#createPostDiscoveryFilter`
+  // called reflectively from `com.intellij.tests.JUnit5TeamCityRunner.BucketingPostDiscoveryFilter`
   @SuppressWarnings("unused")
   public static boolean isClassIncluded(Class<?> aClass) {
     // JUnit 5 might rediscover `@Nested` tests if they were previously filtered out by `isClassNameIncluded`,
