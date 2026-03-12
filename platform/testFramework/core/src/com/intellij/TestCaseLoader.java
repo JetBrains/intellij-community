@@ -10,7 +10,6 @@ import com.intellij.testFramework.SelfSeedingTestCase;
 import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.bucketing.BucketingScheme;
-import com.intellij.testFramework.bucketing.CyclicCounterBucketingScheme;
 import com.intellij.testFramework.bucketing.HashingBucketingScheme;
 import com.intellij.testFramework.bucketing.TestsDurationBucketingScheme;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,7 +52,6 @@ public class TestCaseLoader {
   public static final String TEST_RUNNERS_COUNT_FLAG = "idea.test.runners.count";
   public static final String TEST_RUNNER_INDEX_FLAG = "idea.test.runner.index";
   public static final String VERBOSE_LOG_ENABLED_FLAG = "idea.test.log.verbose";
-  public static final String FAIR_BUCKETING_FLAG = "idea.fair.bucketing";
   public static final String IS_TESTS_DURATION_BUCKETING_ENABLED_FLAG = "idea.tests.duration.bucketing.enabled";
 
   private static final boolean PERFORMANCE_TESTS_ONLY = Boolean.getBoolean(PERFORMANCE_TESTS_ONLY_FLAG);
@@ -65,11 +63,6 @@ public class TestCaseLoader {
 
   public static final int TEST_RUNNERS_COUNT = Integer.parseInt(System.getProperty(TEST_RUNNERS_COUNT_FLAG, "1"));
   public static final int TEST_RUNNER_INDEX = Integer.parseInt(System.getProperty(TEST_RUNNER_INDEX_FLAG, "0"));
-
-  /**
-   * Distribute tests equally among the buckets
-   */
-  private static final boolean IS_FAIR_BUCKETING = Boolean.getBoolean(FAIR_BUCKETING_FLAG);
 
   /**
    * Distribute tests equally among buckets using tests duration data
@@ -97,9 +90,6 @@ public class TestCaseLoader {
 
     if (IS_TESTS_DURATION_BUCKETING_ENABLED) {
       scheme = new TestsDurationBucketingScheme();
-    }
-    else if (IS_FAIR_BUCKETING) {
-      scheme = new CyclicCounterBucketingScheme();
     }
     else {
       scheme = new HashingBucketingScheme();
