@@ -32,7 +32,6 @@ import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Path
 import java.util.Base64
-import java.util.concurrent.TimeUnit
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.PathWalkOption
 import kotlin.io.path.deleteIfExists
@@ -46,7 +45,9 @@ import kotlin.io.path.readLines
 import kotlin.io.path.relativeTo
 import kotlin.io.path.walk
 import kotlin.io.path.writeText
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * @param workDir is expected to contain:
@@ -77,6 +78,9 @@ class MavenCentralPublication(
     private const val STATUS_URI_BASE = "$URI_BASE/status"
     private val JSON = Json { ignoreUnknownKeys = true }
     private val SUPPORTED_CHECKSUMS = setOf("md5", "sha1", "sha256", "sha512")
+    private val SONATYPE_TIMEOUT: Duration = 5.minutes
+    private val DEPLOYMENT_TIMEOUT: Duration = 30.minutes
+    private val DEPLOYMENT_STATUS_POLL_DELAY: Duration = 15.seconds
   }
 
   /**
@@ -294,7 +298,11 @@ class MavenCentralPublication(
       .toString(Charsets.UTF_8)
     val span = Span.current()
     span.addEvent("Sending request to $uri...")
-    val client = OkHttpClient()
+    val client = OkHttpClient.Builder()
+      .connectTimeout(SONATYPE_TIMEOUT)
+      .readTimeout(SONATYPE_TIMEOUT)
+      .writeTimeout(SONATYPE_TIMEOUT)
+      .build()
     val request = Request.Builder().url(uri)
       .header("Authorization", "Bearer $base64Auth")
       .let { builder(it) }
@@ -342,7 +350,7 @@ class MavenCentralPublication(
    */
   private suspend fun wait(deploymentId: String) {
     spanBuilder("waiting").setAttribute("deploymentId", deploymentId).use { span ->
-      withTimeout(30.minutes) {
+      withTimeout(DEPLOYMENT_TIMEOUT) {
         while (true) {
           val deploymentState = callSonatype("$STATUS_URI_BASE?id=$deploymentId", builder = {
             it.post("{}".toRequestBody("application/json".toMediaType()))
@@ -361,7 +369,7 @@ class MavenCentralPublication(
               }
               break
             }
-            else -> delay(TimeUnit.SECONDS.toMillis(15))
+            else -> delay(DEPLOYMENT_STATUS_POLL_DELAY)
           }
         }
       }
