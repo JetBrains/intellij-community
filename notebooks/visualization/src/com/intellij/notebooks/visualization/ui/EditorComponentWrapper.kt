@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notebooks.visualization.ui
 
-import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
+import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeNotifier
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import java.awt.AWTEvent
@@ -40,6 +40,7 @@ class EditorComponentWrapper private constructor(private val editor: EditorImpl)
       val viewportWrapper = object : JViewport() {
         override fun getViewRect() = editor.scrollPane.viewport.viewRect
       }
+      viewportWrapper.isOpaque = false
       viewportWrapper.view = editor.contentComponent
       add(viewportWrapper, BorderLayout.CENTER)
     }
@@ -114,9 +115,9 @@ class EditorComponentWrapper private constructor(private val editor: EditorImpl)
 
   override fun validateTree() {
     editor.notebookEditor.editorPositionKeeper.keepScrollingPositionWhile {
-      JupyterBoundsChangeHandler.get(editor).postponeUpdates()
+      JupyterBoundsChangeNotifier.get(editor).postponeUpdates()
       super.validateTree()
-      JupyterBoundsChangeHandler.get(editor).performPostponed()
+      JupyterBoundsChangeNotifier.get(editor).performPostponed()
     }
   }
 

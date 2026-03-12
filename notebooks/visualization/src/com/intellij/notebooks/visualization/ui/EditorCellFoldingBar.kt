@@ -3,7 +3,7 @@ package com.intellij.notebooks.visualization.ui
 import com.intellij.notebooks.ui.visualization.NotebookUtil.isOrdinaryNotebookEditor
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.ui.cellsDnD.EditorCellDragAssistant
-import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
+import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeNotifier
 import com.intellij.notebooks.visualization.useG2D
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
@@ -64,7 +64,7 @@ class EditorCellFoldingBar(
   }
 
   private fun registerListeners() {
-    JupyterBoundsChangeHandler.get(editor).subscribe(this, ::updateBounds)
+    JupyterBoundsChangeNotifier.get(editor).subscribe(this, ::updateBounds)
   }
 
   override fun dispose() {

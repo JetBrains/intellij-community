@@ -6,7 +6,7 @@ import com.intellij.notebooks.ui.afterDistinctChange
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.ui.EditorCell
 import com.intellij.notebooks.visualization.ui.notebookEditor
-import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
+import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeNotifier
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.util.registry.Registry
@@ -43,7 +43,7 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
       updateCellFrameShow()
     }
 
-    JupyterBoundsChangeHandler.get(editor).subscribe(this) {
+    JupyterBoundsChangeNotifier.get(editor).subscribe(this) {
       cachedRightLine = null
     }
 

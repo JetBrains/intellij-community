@@ -13,7 +13,7 @@ import com.intellij.notebooks.visualization.ui.EditorCell
 import com.intellij.notebooks.visualization.ui.NotebookUiUtils.intersectsEvenIfEmpty
 import com.intellij.notebooks.visualization.ui.jupyterToolbars.JupyterCellActionsToolbar
 import com.intellij.notebooks.visualization.ui.notebookEditor
-import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
+import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeNotifier
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
@@ -21,27 +21,22 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.PlatformUtils
-import com.intellij.util.cancelOnDispose
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import java.awt.Point
 import java.awt.Rectangle
-import java.time.Duration
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.toKotlinDuration
 
 /** Position of the floating toolbar in cells top right corner. */
 internal class EditorCellActionsToolbarController(
@@ -60,15 +55,10 @@ internal class EditorCellActionsToolbarController(
     get() = cell.view?.controllers?.filterIsInstance<DataProviderComponent>()?.firstOrNull()?.retrieveDataProvider()
 
   init {
-    coroutineScope.launch {
-      @OptIn(FlowPreview::class) // For debounce.
-      JupyterBoundsChangeHandler.get(editor).eventFlow.debounce(Duration.ofMillis(200).toKotlinDuration()).collect {
-        val targetComponent = toolbar?.targetComponent ?: return@collect
-        withContext(Dispatchers.EDT) {
-          updateToolbarPosition(targetComponent)
-        }
-      }
-    }.cancelOnDispose(this)
+    JupyterBoundsChangeNotifier.get(editor).subscribe(this) {
+      val targetComponent = toolbar?.targetComponent ?: return@subscribe
+      updateToolbarPosition(targetComponent)
+    }
 
     editor.scrollingModel.addVisibleAreaListener {
       if (!NotebookSettings.getInstance().cellToolbarStickyVisible) return@addVisibleAreaListener

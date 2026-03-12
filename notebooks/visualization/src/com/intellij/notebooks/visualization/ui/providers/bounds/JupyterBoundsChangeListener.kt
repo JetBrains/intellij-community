@@ -4,5 +4,5 @@ package com.intellij.notebooks.visualization.ui.providers.bounds
 import java.util.EventListener
 
 fun interface JupyterBoundsChangeListener : EventListener {
-  fun boundsChanged(): Unit?
+  fun boundsChanged()
 }

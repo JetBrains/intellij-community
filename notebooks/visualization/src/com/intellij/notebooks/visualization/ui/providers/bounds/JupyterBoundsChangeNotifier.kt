@@ -10,13 +10,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayModel
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Key
 import com.intellij.util.EventDispatcher
-import kotlinx.coroutines.flow.MutableSharedFlow
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.beans.PropertyChangeListener
@@ -33,17 +33,15 @@ import java.beans.PropertyChangeListener
  * - Inlay model change
  * - Editor size changed
  */
-// Class name does not reflect the functionality of this class.
-class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
+class JupyterBoundsChangeNotifier(val editor: EditorImpl) : Disposable {
   private var isDelayed = false
   private var isShouldBeRecalculated = false
 
   private val dispatcher = EventDispatcher.create(JupyterBoundsChangeListener::class.java)
 
-  val eventFlow: MutableSharedFlow<Unit> = MutableSharedFlow()
-
   init {
-    editor.addPropertyChangeListener(PropertyChangeListener { _ ->
+    editor.addPropertyChangeListener(PropertyChangeListener { evt ->
+      if (evt.propertyName == EditorEx.PROP_HIGHLIGHTER) return@PropertyChangeListener
       boundsChanged()
     }, this)
 
@@ -83,7 +81,7 @@ class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
         if (event.isIntervalsChanged())
           boundsChanged()
       }
-    }, editor.disposable)
+    }, this)
 
     editor.inlayModel.addListener(object : InlayModel.Listener {
       override fun onBatchModeFinish(editor: Editor) = boundsChanged()
@@ -132,10 +130,9 @@ class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
   private fun notifyBoundsChanged() {
     if (editor.isDisposed)
       return
-    dispatcher.multicaster.boundsChanged()
 
-    NotebookVisualizationCoroutine.Utils.launchBackground {
-      eventFlow.emit(Unit)
+    NotebookVisualizationCoroutine.Utils.launchEdt {
+      dispatcher.multicaster.boundsChanged()
     }
   }
 
@@ -145,26 +142,22 @@ class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
   }
 
   fun performPostponed() {
-    finishDelayAndDoIfShouldBeRecalculated { notifyBoundsChanged() }
-  }
-
-  private fun finishDelayAndDoIfShouldBeRecalculated(block: () -> Unit) {
     isDelayed = false
     if (isShouldBeRecalculated) {
       isShouldBeRecalculated = false
-      block()
+      notifyBoundsChanged()
     }
   }
 
   companion object {
-    private val INSTANCE_KEY = Key<JupyterBoundsChangeHandler>("INLAYS_CHANGE_HANDLER")
+    private val INSTANCE_KEY = Key<JupyterBoundsChangeNotifier>("INLAYS_CHANGE_HANDLER")
 
     fun install(editor: EditorImpl) {
-      val updater = JupyterBoundsChangeHandler(editor)
+      val updater = JupyterBoundsChangeNotifier(editor)
       EditorUtil.disposeWithEditor(editor, updater)
       editor.putUserData(INSTANCE_KEY, updater)
     }
 
-    fun get(editor: Editor): JupyterBoundsChangeHandler = INSTANCE_KEY.get(editor)
+    fun get(editor: Editor): JupyterBoundsChangeNotifier = INSTANCE_KEY.get(editor)
   }
 }

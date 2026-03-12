@@ -4,8 +4,7 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.visualization.NotebookCellInlayManager
-import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
-import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeListener
+import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeNotifier
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -24,11 +23,10 @@ class NotebookVisibleCellsBatchUpdater(
   private var prevVisibleCells = listOf<EditorCell>()
 
   init {
-    JupyterBoundsChangeHandler.get(editor).subscribe(this, object : JupyterBoundsChangeListener {
-      override fun boundsChanged() {
-        updateVisibleCells()
-      }
-    })
+    JupyterBoundsChangeNotifier.get(editor).subscribe(this) {
+      updateVisibleCells()
+    }
+
     editor.scrollingModel.addVisibleAreaListener(
       {
         if (it.newRectangle == it.oldRectangle)

@@ -6,7 +6,7 @@ import com.intellij.notebooks.ui.visualization.markerRenderers.NotebookCellHighl
 import com.intellij.notebooks.ui.visualization.markerRenderers.NotebookLineMarkerRenderer
 import com.intellij.notebooks.visualization.controllers.selfUpdate.common.NotebookCellSelfHighlighterController
 import com.intellij.notebooks.visualization.ui.EditorCell
-import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
+import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeNotifier
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.markup.TextAttributes
 import java.awt.Color
@@ -17,8 +17,7 @@ class NotebookCellBackgroundController(editorCell: EditorCell) : NotebookCellSel
   private var textAttributesColor: Color? = null
 
   init {
-    val jupyterBoundsChangeHandler = JupyterBoundsChangeHandler.get(editor)
-    jupyterBoundsChangeHandler.subscribe(this) {
+    JupyterBoundsChangeNotifier.get(editor).subscribe(this) {
       cachedBounds = null
     }
   }

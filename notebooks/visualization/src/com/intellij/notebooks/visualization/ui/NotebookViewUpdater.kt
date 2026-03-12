@@ -3,7 +3,7 @@ package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.visualization.InlaysChangedListener
 import com.intellij.notebooks.visualization.UpdateContext
-import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
+import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeNotifier
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -76,8 +76,7 @@ class NotebookViewUpdater private constructor(val editor: EditorImpl) : Disposab
   }
 
   private fun <T> updateImpl(newCtx: UpdateContext, block: (updateCtx: UpdateContext) -> T): T {
-    val jupyterBoundsChangeHandler = JupyterBoundsChangeHandler.get(editor)
-    jupyterBoundsChangeHandler.postponeUpdates()
+    JupyterBoundsChangeNotifier.get(editor).postponeUpdates()
     val r = block(newCtx)
     updateCtx = null
     if (editorIsProcessingDocument) {
@@ -92,9 +91,10 @@ class NotebookViewUpdater private constructor(val editor: EditorImpl) : Disposab
 
   private fun finalizeChanges() {
     inlaysChanged()
-    val jupyterBoundsChangeHandler = JupyterBoundsChangeHandler.get(editor)
-    jupyterBoundsChangeHandler.boundsChanged()
-    jupyterBoundsChangeHandler.performPostponed()
+    JupyterBoundsChangeNotifier.get(editor).apply {
+      boundsChanged()
+      performPostponed()
+    }
   }
 
   private fun inlaysChanged() {
