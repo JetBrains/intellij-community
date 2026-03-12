@@ -156,15 +156,8 @@ class KotlinAvoidDuplicateDependenciesInspectionVisitor(
                 dependency,
                 GradleInspectionBundle.message("inspection.message.avoid.duplicate.dependencies.descriptor", key),
             ).maybeFix(potentialRemoveFix)
-                .fix(
-                    ShowDuplicateElementsAction(
-                        key,
-                        duplicateDependencies,
-                        GradleInspectionBundle.message("intention.family.name.show.duplicate.dependencies"),
-                        GradleInspectionBundle.message("intention.choose.action.name.select.duplicate.dependency"),
-                        GradleInspectionBundle.message("intention.family.name.navigate.to.duplicate.dependency")
-                    )
-                ).register()
+                .fix(ShowDuplicateElementsAction.forDependencies(key, duplicateDependencies))
+                .register()
         }
     }
 }
