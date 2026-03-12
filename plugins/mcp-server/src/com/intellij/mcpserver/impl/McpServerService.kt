@@ -291,7 +291,7 @@ class McpServerService(val cs: CoroutineScope) {
           useFiltersFromEP = useFiltersFromEP,
         )
 
-        val session = sessionToolsManager.createAndInitializeSession(transport)
+        val session = sessionToolsManager.createAndInitializeSession(transport, this)
         //session.setRequestHandler<LoggingMessageNotification.SetLevelRequest>(Method.Defined.LoggingSetLevel) { request, extra ->
         //  // Workaround inspector failure
         //  return@setRequestHandler EmptyRequestResult()
