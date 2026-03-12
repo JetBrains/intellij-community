@@ -11,6 +11,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <agent.workbench.promptManualContextSource implementation="com.intellij.agent.workbench.prompt.context.AgentPromptProjectPathsManualContextSource"/>
+    <agent.workbench.promptManualContextSource implementation="com.intellij.agent.workbench.prompt.context.uiPicker.AgentPromptUIContextManualContextSource"/>
     <agent.workbench.promptContextContributor implementation="com.intellij.agent.workbench.prompt.context.AgentPromptEditorContextContributor"/>
     <agent.workbench.promptContextContributor implementation="com.intellij.agent.workbench.prompt.context.AgentPromptProjectViewSelectionContextContributor"/>
     <agent.workbench.promptContextContributor implementation="com.intellij.agent.workbench.prompt.context.AgentPromptSelectedEditorFallbackContextContributor"/>
