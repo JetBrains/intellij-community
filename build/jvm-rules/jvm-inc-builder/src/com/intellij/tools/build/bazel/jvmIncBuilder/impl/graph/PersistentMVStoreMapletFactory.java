@@ -3,8 +3,6 @@ package com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.h2.mvstore.FileStore;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
@@ -21,6 +19,7 @@ import org.jetbrains.jps.dependency.impl.CachingMaplet;
 import org.jetbrains.jps.dependency.impl.CachingMultiMaplet;
 import org.jetbrains.jps.dependency.impl.GraphDataInputImpl;
 import org.jetbrains.jps.dependency.impl.GraphDataOutputImpl;
+import org.jetbrains.jps.dependency.impl.StringEnumerator;
 
 import java.io.Closeable;
 import java.io.Flushable;
@@ -28,11 +27,12 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+
+import static org.jetbrains.jps.util.Iterators.map;
 
 // suitable for relatively small amounts of stored data
 public final class PersistentMVStoreMapletFactory implements MapletFactory, Closeable, Flushable {
@@ -60,7 +60,7 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
     // MVStore counter-based enumerator?
     myEnumerator = new MVSEnumerator(myStore);
     final int maxGb = (int) (Runtime.getRuntime().maxMemory() / 1_073_741_824L);
-    myCacheSize = BASE_CACHE_SIZE * Math.min(Math.max(1, maxGb), 5); // increase by BASE_CACHE_SIZE for every additional Gb
+    myCacheSize = BASE_CACHE_SIZE * Math.clamp(maxGb, 1, 5); // increase by BASE_CACHE_SIZE for every additional Gb
 
     myInternerCache = Caffeine.newBuilder().maximumSize(myCacheSize).build(key -> key);
     //myStringsInternerCache = Caffeine.newBuilder().maximumSize(myCacheSize).build(key -> key);
@@ -192,30 +192,22 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
   }
 
   private static final class MVSEnumerator implements Enumerator {
-    private final Object2IntMap<String> myToIntMap = new Object2IntOpenHashMap<>();
-    private final ArrayList<String> myTable = new ArrayList<>();
-    private int myUnsavedIndex; // "everything saved" condition: "myUnsavedIndex == myTable.size()"
-
+    private final StringEnumerator myEnumerator;
     // MVMap is a sorted map implementation using a B+ tree. Keys are sorted in their natural ordering.
     private final MVMap<Integer, String> myStoreMap;
 
     MVSEnumerator(MVStore store) {
       myStoreMap = store.openMap("string-table");
-      for (Map.Entry<Integer, String> entry : myStoreMap.entrySet()) {
-        int num = entry.getKey(); // expect sequential order
-        String str = entry.getValue();
-        myTable.add(str);
-        myToIntMap.put(str, num);
-      }
-      myUnsavedIndex = myTable.size();
+      // expect sequential order in the myStoreMap
+      myEnumerator = new StringEnumerator(map(myStoreMap.entrySet(), Map.Entry::getValue));
     }
 
     @Override
     public synchronized String toString(int num) throws IOException {
-      String str = num < myTable.size()? myTable.get(num) : null;
+      String str = myEnumerator.lookupString(num);
       if (str == null) {
         throw new IOException(
-          "Mapping for number " + num + " does not exist. Current string table size: " + myTable.size() + " entries."
+          "Mapping for number " + num + " does not exist. Current string table size: " + myEnumerator.getTableSize() + " entries."
         );
       }
       return str;
@@ -223,25 +215,16 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
 
     @Override
     public synchronized int toNumber(String str) {
-      int nextAvailable = myTable.size();
-      int num = myToIntMap.getOrDefault(str, nextAvailable);
-      if (num == nextAvailable) { // not in map yet
-        myTable.add(str);
-        myToIntMap.put(str, num);
-      }
-      return num;
+      return myEnumerator.toNumber(str);
     }
 
     public synchronized boolean flush() {
-      int size = myTable.size();
-      if (myUnsavedIndex == size) {
-        return false;
+      try {
+        return myEnumerator.drainUnsaved((key, value) -> myStoreMap.put(key, value));
       }
-      while (myUnsavedIndex < size) {
-        int num = myUnsavedIndex++;
-        myStoreMap.put(num, myTable.get(num));
+      catch (IOException e) {
+        throw new RuntimeException(e);
       }
-      return true;
     }
   }
 }

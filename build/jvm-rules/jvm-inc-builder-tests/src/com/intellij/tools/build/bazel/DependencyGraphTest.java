@@ -2,12 +2,19 @@
 package com.intellij.tools.build.bazel;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.dependency.*;
-import org.jetbrains.jps.dependency.impl.Containers;
+import org.jetbrains.jps.dependency.BackDependencyIndex;
+import org.jetbrains.jps.dependency.Delta;
+import org.jetbrains.jps.dependency.DependencyGraph;
+import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.dependency.impl.DependencyGraphImpl;
 import org.jetbrains.jps.dependency.impl.DifferentiateParametersBuilder;
+import org.jetbrains.jps.dependency.impl.MemoryMapletFactory;
 import org.jetbrains.jps.dependency.impl.PathSource;
-import org.jetbrains.jps.dependency.java.*;
+import org.jetbrains.jps.dependency.java.JVMFlags;
+import org.jetbrains.jps.dependency.java.JvmClass;
+import org.jetbrains.jps.dependency.java.JvmField;
+import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
+import org.jetbrains.jps.dependency.java.SubclassesIndex;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.junit.Test;
 
@@ -16,14 +23,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.jetbrains.jps.util.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.collect;
+import static org.jetbrains.jps.util.Iterators.flat;
+import static org.jetbrains.jps.util.Iterators.map;
 import static org.junit.Assert.assertEquals;
 
 public class DependencyGraphTest {
 
   @Test
   public void testShsdowedNodesIndexConsistency() throws IOException {
-    try (DependencyGraph graph = new DependencyGraphImpl(Containers.MEMORY_CONTAINER_FACTORY)) {
+    try (DependencyGraph graph = new DependencyGraphImpl(new MemoryMapletFactory())) {
       NodeSource srcA1 = createSource("module-a/src-1");
       NodeSource srcA2 = createSource("module-a/src-2");
       NodeSource srcB1 = createSource("module-b/src-1");

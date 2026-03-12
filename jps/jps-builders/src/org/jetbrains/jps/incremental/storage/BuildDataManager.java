@@ -43,6 +43,8 @@ import org.jetbrains.jps.incremental.storage.graph.PersistentMapletFactory;
 import org.jetbrains.jps.util.Iterators;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
@@ -841,6 +843,28 @@ public final class BuildDataManager {
       @Override
       public @NotNull Iterable<ReferenceID> getDependingNodes(@NotNull ReferenceID id) {
         return delegate.getDependingNodes(id);
+      }
+
+      @Override
+      public void importSnapshot(InputStream in) throws IOException {
+        lock.writeLock().lock();
+        try {
+          delegate.importSnapshot(in);
+        }
+        finally {
+          lock.writeLock().unlock();
+        }
+      }
+
+      @Override
+      public void exportSnapshot(OutputStream out) throws IOException {
+        lock.writeLock().lock();
+        try {
+          delegate.exportSnapshot(out);
+        }
+        finally {
+          lock.writeLock().unlock();
+        }
       }
 
       @Override

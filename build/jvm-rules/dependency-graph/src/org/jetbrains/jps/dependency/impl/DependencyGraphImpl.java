@@ -13,6 +13,8 @@ import org.jetbrains.jps.dependency.DifferentiateParameters;
 import org.jetbrains.jps.dependency.DifferentiateResult;
 import org.jetbrains.jps.dependency.DifferentiateStrategy;
 import org.jetbrains.jps.dependency.Graph;
+import org.jetbrains.jps.dependency.GraphDataInput;
+import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.MapletFactory;
 import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.NodeSource;
@@ -23,8 +25,14 @@ import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.java.GeneralJvmDifferentiateStrategy;
 import org.jetbrains.jps.dependency.kotlin.KotlinSourceOnlyDifferentiateStrategy;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -45,7 +54,7 @@ import static org.jetbrains.jps.util.Iterators.isEmpty;
 import static org.jetbrains.jps.util.Iterators.map;
 import static org.jetbrains.jps.util.Iterators.unique;
 
-public final class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
+public class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
 
   private static final List<DifferentiateStrategy> ourDifferentiateStrategies = List.of(new KotlinSourceOnlyDifferentiateStrategy(), new GeneralJvmDifferentiateStrategy());
 
@@ -376,7 +385,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     }
     else {
       shadowedNodesIndices = new HashMap<>();
-      for (BackDependencyIndex index : getIndexFactory().createIndices(Containers.MEMORY_CONTAINER_FACTORY)) {
+      for (BackDependencyIndex index : getIndexFactory().createIndices(new MemoryMapletFactory())) {
         shadowedNodesIndices.put(index.getName(), index);
       }
     }
@@ -406,30 +415,8 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     }
 
     for (NodeSource src : params.isCompiledWithErrors() || delta.isSourceOnly()? delta.getSources() : unique(flat(delta.getSources(), delta.getBaseSources()))) {
-      //noinspection unchecked
-      mySourceToNodesMap.update(src, delta.getNodes(src), (past, now) -> new Difference.Specifier<>() {
-        private final Difference.Specifier<Node, ?> diff = Difference.deepDiff(Graph.getNodesOfType(past, Node.class), Graph.getNodesOfType(now, Node.class));
-
-        @Override
-        public Iterable<Node<?, ?>> added() {
-          return map(diff.added(), n -> (Node<?, ?>)n);
-        }
-
-        @Override
-        public Iterable<Node<?, ?>> removed() {
-          return map(diff.removed(), n -> (Node<?, ?>)n);
-        }
-
-        @Override
-        public Iterable<Difference.Change<Node<?, ?>, Difference>> changed() {
-          return map(diff.changed(), ch -> new DiffChangeAdapter(ch));
-        }
-
-        @Override
-        public boolean unchanged() {
-          return diff.unchanged();
-        }
-      });
+      //noinspection unchecked,rawtypes
+      mySourceToNodesMap.update(src, delta.getNodes(src), (past, now) -> Difference.deepDiff((Iterable)past, (Iterable)now));
     }
     
     try {
@@ -441,27 +428,63 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     }
   }
 
-  private static final class DiffChangeAdapter implements Difference.Change<Node<?, ?>, Difference> {
+  @Override
+  public void importSnapshot(InputStream in) throws IOException {
+    StringEnumerator enumerator = new StringEnumerator();
+    Map<Usage, Usage> usagesInterner = new HashMap<>();
+    DataInputStream dataIn = new DataInputStream(in);
+    GraphDataInput graphIn = GraphDataInputImpl.wrap(
+      dataIn,
+      enumerator::lookupString,
+      o -> o instanceof Usage? usagesInterner.computeIfAbsent((Usage)o,Function.identity()) : o
+    );
 
-    private final Difference.Change<Node, ?> myDelegate;
-
-    DiffChangeAdapter(Difference.Change<Node, ?> delegate) {
-      myDelegate = delegate;
-    }
-
-    @Override
-    public Node<?, ?> getPast() {
-      return myDelegate.getPast();
-    }
-
-    @Override
-    public Node<?, ?> getNow() {
-      return myDelegate.getNow();
-    }
-
-    @Override
-    public Difference getDiff() {
-      return myDelegate.getDiff();
+    int size = dataIn.readInt();
+    while (size-- > 0) {
+      int stringTableSize = dataIn.readInt();
+      while (stringTableSize-- > 0) {
+        enumerator.addString(dataIn.readUTF());
+      }
+      PathSource src = graphIn.readGraphElement();
+      RW.readCollection(graphIn, graphIn::readGraphElement, (Consumer<Node<?, ?>>) node -> {
+        mySourceToNodesMap.appendValue(src, node);
+        myNodeToSourcesMap.appendValue(node.getReferenceID(), src);
+        for (BackDependencyIndex index : getIndices()) {
+          index.indexNode(node);
+        }
+      });
     }
   }
+
+  @Override
+  public void exportSnapshot(OutputStream out) throws IOException {
+    StringEnumerator enumerator = new StringEnumerator();
+    List<Node<?, ?>> nodes = new ArrayList<>();
+    ByteArrayOutputStream buf = new ByteArrayOutputStream();
+    GraphDataOutput nodesOut = GraphDataOutputImpl.wrap(new DataOutputStream(buf), enumerator::toNumber);
+
+    DataOutputStream dataOut = new DataOutputStream(out);
+    try {
+      Collection<NodeSource> allSources = ensureCollection(getSources());
+      dataOut.writeInt(allSources.size());
+      for (NodeSource src : allSources) {
+        buf.reset();
+        nodes.clear();
+        nodesOut.writeGraphElement(src);
+        RW.writeCollection(nodesOut, collect(getNodes(src), nodes), nodesOut::writeGraphElement);
+        dataOut.writeInt(enumerator.getUnsavedCount());
+        enumerator.drainUnsaved((__, str) -> dataOut.writeUTF(str));
+        buf.writeTo(dataOut);
+      }
+    }
+    finally {
+      dataOut.flush();
+    }
+  }
+
+  private static <T> Collection<T> ensureCollection(Iterable<T> iterable) {
+    return iterable instanceof Collection? (Collection<T>) iterable : collect(iterable, new ArrayList<>());
+  }
+
+
 }

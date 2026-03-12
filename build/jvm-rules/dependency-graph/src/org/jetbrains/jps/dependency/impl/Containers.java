@@ -6,31 +6,14 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.dependency.ComparableTypeExternalizer;
-import org.jetbrains.jps.dependency.Maplet;
-import org.jetbrains.jps.dependency.MapletFactory;
-import org.jetbrains.jps.dependency.MultiMaplet;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public final class Containers {
-
-  public static final MapletFactory MEMORY_CONTAINER_FACTORY = new MapletFactory() {
-    @Override
-    public <K, V> MultiMaplet<K, V> createSetMultiMaplet(String storageName, ComparableTypeExternalizer<K> keyExternalizer, ComparableTypeExternalizer<V> valueExternalizer) {
-      return new MemoryMultiMaplet<>(() -> (Set<V>)new HashSet<V>());
-    }
-
-    @Override
-    public <K, V> Maplet<K, V> createMaplet(String storageName, ComparableTypeExternalizer<K> keyExternalizer, ComparableTypeExternalizer<V> valueExternalizer) {
-      return new MemoryMaplet<>();
-    }
-  };
 
   public static <K, V> Map<K, V> createCustomPolicyMap(BiFunction<? super K, ? super K, Boolean> keyEqualsImpl, Function<? super K, Integer> keyHashCodeImpl) {
     return new Object2ObjectOpenCustomHashMap<>(asHashStrategy(keyEqualsImpl, keyHashCodeImpl));

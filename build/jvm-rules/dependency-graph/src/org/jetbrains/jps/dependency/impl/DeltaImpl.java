@@ -29,7 +29,7 @@ public final class DeltaImpl extends GraphImpl implements Delta {
   private final Set<NodeSource> myDeletedSources;
   
   public DeltaImpl(Iterable<NodeSource> baseSources, Iterable<NodeSource> deletedSources, IndexFactory indexFactory) {
-    super(Containers.MEMORY_CONTAINER_FACTORY, indexFactory);
+    super(new MemoryMapletFactory(), indexFactory);
     myBaseSources = Collections.unmodifiableSet(baseSources instanceof Set? (Set<? extends NodeSource>)baseSources : Iterators.collect(baseSources, new HashSet<>()));
     myDeletedSources = Collections.unmodifiableSet(deletedSources instanceof Set? (Set<? extends NodeSource>)deletedSources : Iterators.collect(deletedSources, new HashSet<>()));
   }

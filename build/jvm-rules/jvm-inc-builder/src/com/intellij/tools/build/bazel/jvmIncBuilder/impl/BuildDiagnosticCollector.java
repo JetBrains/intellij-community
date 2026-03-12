@@ -195,7 +195,7 @@ public class BuildDiagnosticCollector {
 
         // keep previous data for some period of time
         if (readPath != null) {
-          try (var zis = new ZipInputStream(Files.newInputStream(readPath))) {
+          try (var zis = new ZipInputStream(new BufferedInputStream(Files.newInputStream(readPath)))) {
 
             var entryCounter = new Object() {
               private final Set<String> processed = new HashSet<>(Set.of(dataDir));

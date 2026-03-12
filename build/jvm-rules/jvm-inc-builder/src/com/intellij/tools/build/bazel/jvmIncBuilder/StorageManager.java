@@ -8,20 +8,16 @@ import com.intellij.tools.build.bazel.jvmIncBuilder.impl.Utils;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ZipElement;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ZipOutputBuilderImpl;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.forms.FormBinding;
-import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.PersistentMVStoreMapletFactory;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.MVStoreGraphConfiguration;
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumentationClassFinder;
 import com.sun.nio.file.ExtendedOpenOption;
 import org.h2.mvstore.MVStore;
 import org.h2.mvstore.OffHeapStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.dependency.CloseableExt;
 import org.jetbrains.jps.dependency.DependencyGraph;
 import org.jetbrains.jps.dependency.GraphConfiguration;
-import org.jetbrains.jps.dependency.NodeSourcePathMapper;
-import org.jetbrains.jps.dependency.impl.DependencyGraphImpl;
-import org.jetbrains.jps.dependency.impl.GraphImpl;
-import org.jetbrains.jps.dependency.kotlin.KotlinSubclassesIndex;
-import org.jetbrains.jps.dependency.kotlin.LookupsIndex;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -135,47 +131,9 @@ public class StorageManager implements CloseableExt {
   public GraphConfiguration getGraphConfiguration() throws IOException {
     GraphConfiguration config = myGraphConfig;
     if (config == null) {
-      myGraphConfig = config = createDependencyGraph();
+      myGraphConfig = config = new MVStoreGraphConfiguration(myContext);
     }
     return config;
-  }
-
-  @NotNull
-  private GraphConfiguration createDependencyGraph() throws IOException {
-    try {
-      int maxBuilderThreads = Math.min(8, Runtime.getRuntime().availableProcessors());
-      String storePath = DataPaths.getDepGraphStoreFile(myContext).toString();
-      boolean kotlinCriEnabled = myContext.getKotlinCriStoragePath() != null;
-
-      return new GraphConfiguration() {
-        private final PersistentMVStoreMapletFactory containerFactory = new PersistentMVStoreMapletFactory(storePath, maxBuilderThreads);
-        private final DependencyGraph graph = kotlinCriEnabled?
-          new DependencyGraphImpl(
-            containerFactory, GraphImpl.IndexFactory.create(LookupsIndex::new, KotlinSubclassesIndex::new)
-          )
-          : new DependencyGraphImpl(containerFactory);
-
-        @Override
-        public @NotNull NodeSourcePathMapper getPathMapper() {
-          return myContext.getPathMapper();
-        }
-
-        @Override
-        public @NotNull DependencyGraph getGraph() {
-          return graph;
-        }
-
-        @Override
-        public boolean isGraphUpdated() {
-          return containerFactory.hasUpdates();
-        }
-      };
-    }
-    catch (Throwable e) {
-      // treat any unexpected exception on graph initialization as graph storage corruption
-      // the calling logic will decide on the way the error is handled
-      throw new IOException(e);
-    }
   }
 
   @NotNull
