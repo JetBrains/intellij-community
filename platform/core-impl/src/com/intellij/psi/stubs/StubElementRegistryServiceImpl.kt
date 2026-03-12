@@ -54,6 +54,7 @@ open class StubElementRegistryServiceImpl(coroutineScope: CoroutineScope) : Core
   }
 
   override fun getStubSerializer(type: IElementType): ObjectStubSerializer<*, Stub>? {
+    @Suppress("UNCHECKED_CAST")
     return (super.getStubSerializer(type) ?: type2serializerMap[type]) as ObjectStubSerializer<*, Stub>?
   }
 
@@ -87,10 +88,10 @@ open class StubElementRegistryServiceImpl(coroutineScope: CoroutineScope) : Core
 }
 
 @JvmField
-internal val STUB_DEFINITION_EP: LanguageExtension<LanguageStubDefinition> = LanguageExtension<LanguageStubDefinition>("com.intellij.languageStubDefinition")
+internal val STUB_DEFINITION_EP: LanguageExtension<LanguageStubDefinition> = LanguageExtension("com.intellij.languageStubDefinition")
 
 @JvmField
-internal val STUB_REGISTRY_EP: ExtensionPointName<StubRegistryExtension> = ExtensionPointName<StubRegistryExtension>("com.intellij.stubElementRegistryExtension")
+internal val STUB_REGISTRY_EP: ExtensionPointName<StubRegistryExtension> = ExtensionPointName("com.intellij.stubElementRegistryExtension")
 
 private class StubRegistryImpl(
   private val factories: MutableMap<IElementType, StubElementFactory<*, *>>,
