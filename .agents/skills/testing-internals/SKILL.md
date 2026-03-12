@@ -354,7 +354,6 @@ java_binary(
 "idea.config.path"   → tempDir/config
 "idea.system.path"   → tempDir/system
 "java.io.tmpdir"     → tempDir
-"classpath.file"     → path to file with test classpath
 
 // JVM options:
 "-XX:+HeapDumpOnOutOfMemoryError"
