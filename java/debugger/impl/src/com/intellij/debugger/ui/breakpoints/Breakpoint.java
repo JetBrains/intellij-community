@@ -77,12 +77,12 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointActionsPanel;
 import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.sun.jdi.Location;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
@@ -438,13 +438,22 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       }
       if (!buf.isEmpty()) {
         var msg = buf.toString();
-        getBreakpointManager().multicastLogMessage(this, msg, debugProcess);
-        debugProcess.printToConsole(msg);
+        printLoggingBreakpointMessage(getBreakpointManager(), this, msg, debugProcess);
       }
     }
     if (isRemoveAfterHit()) {
       handleTemporaryBreakpointHit(debugProcess);
     }
+  }
+
+  protected static void printLoggingBreakpointMessage(@NotNull BreakpointManager manager,
+                                                      @Nullable Breakpoint<?> breakpoint,
+                                                      @NotNull String msg,
+                                                      @NotNull DebugProcessImpl debugProcess) {
+    if (breakpoint != null) {
+      manager.multicastLogMessage(breakpoint, msg, debugProcess);
+    }
+    debugProcess.printToConsole(msg);
   }
 
   /**
