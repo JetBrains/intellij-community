@@ -20,6 +20,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/statistics",
     "//platform/util",
+    "//platform/util:util-ui",
     "//plugins/agent-workbench/common",
   ]
 )
@@ -36,6 +37,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel_test_lib",
     "//platform/statistics:statistics_test_lib",
     "//platform/util:util_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//plugins/agent-workbench/common:common_test_lib",
   ]
 )

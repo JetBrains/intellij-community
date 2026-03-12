@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.toolwindow.ui
 
+import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.withYoloModeBadge
 import com.intellij.agent.workbench.sessions.toolwindow.tree.NewSessionRowActions
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
@@ -63,7 +65,8 @@ internal class AgentSessionsTreeRowActionsOverlay(
   private val tree: Tree,
   private val nodeResolver: (SessionTreeId) -> SessionTreeNode?,
   private val lastUsedProvider: () -> AgentSessionProvider?,
-  private val onQuickCreate: (path: String, provider: AgentSessionProvider) -> Unit,
+  private val lastUsedLaunchMode: () -> AgentSessionLaunchMode?,
+  private val onQuickCreate: (path: String, provider: AgentSessionProvider, mode: AgentSessionLaunchMode) -> Unit,
   private val onShowPopup: (nodeId: SessionTreeId, node: SessionTreeNode, anchorRect: Rectangle, row: Int) -> Unit,
 ) {
   private var hoveredRowAction: RowActionHit? = null
@@ -74,7 +77,7 @@ internal class AgentSessionsTreeRowActionsOverlay(
     treeNode: SessionTreeNode,
     selected: Boolean,
   ): SessionTreeRowActionPresentation? {
-    val rowActions = resolveNewSessionRowActions(treeNode, lastUsedProvider()) ?: return null
+    val rowActions = resolveNewSessionRowActions(treeNode, lastUsedProvider(), lastUsedLaunchMode()) ?: return null
     val isHovered = TreeHoverListener.getHoveredRow(tree) == row
     val isPinned = popupPinnedRow == row
     val showInteractiveActions = selected || isHovered || isPinned
@@ -86,7 +89,10 @@ internal class AgentSessionsTreeRowActionsOverlay(
     if (!showInteractiveActions && !showLoadingAction) return null
 
     val quickIcon = rowActions.quickProvider?.let { provider ->
-      providerIcon(provider) ?: AllIcons.General.Add
+      val baseIcon = providerIcon(provider) ?: AllIcons.General.Add
+      if (rowActions.quickLaunchMode == AgentSessionLaunchMode.YOLO) {
+        withYoloModeBadge(baseIcon)
+      } else baseIcon
     }
     val hoveredKind = hoveredRowAction?.takeIf { it.row == row }?.kind
     return SessionTreeRowActionPresentation(
@@ -107,7 +113,7 @@ internal class AgentSessionsTreeRowActionsOverlay(
     when (hit.kind) {
       RowActionKind.QuickCreate -> {
         val provider = hit.actions.quickProvider ?: return false
-        onQuickCreate(hit.actions.path, provider)
+        onQuickCreate(hit.actions.path, provider, hit.actions.quickLaunchMode)
       }
 
       RowActionKind.ShowPopup -> {
@@ -234,7 +240,7 @@ internal class AgentSessionsTreeRowActionsOverlay(
     val path = tree.getPathForRow(row) ?: return null
     val treeId = path.lastPathComponent?.let(::extractSessionTreeId) ?: return null
     val treeNode = nodeResolver(treeId) ?: return null
-    val rowActions = resolveNewSessionRowActions(treeNode, lastUsedProvider()) ?: return null
+    val rowActions = resolveNewSessionRowActions(treeNode, lastUsedProvider(), lastUsedLaunchMode()) ?: return null
     val presentation = rowActionPresentation(
       row = row,
       treeNode = treeNode,

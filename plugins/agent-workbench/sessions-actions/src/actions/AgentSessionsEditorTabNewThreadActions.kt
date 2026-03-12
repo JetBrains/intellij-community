@@ -22,19 +22,20 @@ internal class AgentSessionsEditorTabNewThreadQuickAction @JvmOverloads construc
   private val allBridges: () -> List<AgentSessionProviderBridge> = AgentSessionProviderBridges::allBridges,
   private val createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit = ::createNewThreadViaService,
   private val lastUsedProvider: () -> AgentSessionProvider? = { service<AgentSessionUiPreferencesStateService>().getLastUsedProvider() },
+  private val lastUsedLaunchMode: () -> AgentSessionLaunchMode? = { service<AgentSessionUiPreferencesStateService>().getLastUsedLaunchMode() },
   resolveContext: (AnActionEvent) -> AgentChatEditorTabActionContext? = ::resolveAgentChatEditorTabActionContext,
 ) : AgentSessionsEditorTabActionBase(resolveContext) {
   override fun update(e: AnActionEvent) {
     val context = resolveEditorTabContext(e)
-    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider())
+    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode())
     val isVisible = context != null && actionModel.quickStartItem != null
     e.presentation.isEnabledAndVisible = isVisible
-    e.presentation.icon = actionModel.quickStartItem?.let { providerIcon(it.bridge.provider) } ?: templatePresentation.icon
+    e.presentation.icon = actionModel.quickStartItem?.let { providerIconWithMode(it.bridge.provider, it.mode) } ?: templatePresentation.icon
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val context = resolveEditorTabContext(e) ?: return
-    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider())
+    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode())
     launchQuickStartThread(
       path = context.path,
       project = context.project,

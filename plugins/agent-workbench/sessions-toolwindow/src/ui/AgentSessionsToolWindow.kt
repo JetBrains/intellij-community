@@ -42,6 +42,7 @@ internal fun dispatchTreeRowOverlayQuickCreate(
   project: Project,
   path: String,
   provider: AgentSessionProvider,
+  mode: AgentSessionLaunchMode,
   createNewSession: (
     path: String,
     provider: AgentSessionProvider,
@@ -53,7 +54,7 @@ internal fun dispatchTreeRowOverlayQuickCreate(
   createNewSession(
     path,
     provider,
-    AgentSessionLaunchMode.STANDARD,
+    mode,
     AgentWorkbenchEntryPoint.TREE_ROW_OVERLAY,
     project,
   )
@@ -196,11 +197,13 @@ internal class AgentSessionsToolWindowPanel(
       tree = tree,
       nodeResolver = ::sessionTreeNode,
       lastUsedProvider = { lastUsedProvider },
-      onQuickCreate = { path, provider ->
+      lastUsedLaunchMode = { uiPreferencesStateService.getLastUsedLaunchMode() },
+      onQuickCreate = { path, provider, mode ->
         dispatchTreeRowOverlayQuickCreate(
           project = project,
           path = path,
           provider = provider,
+          mode = mode,
           createNewSession = { quickPath, quickProvider, mode, entryPoint, currentProject ->
             launchService.createNewSession(
               path = quickPath,

@@ -24,6 +24,7 @@ import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
 import com.intellij.agent.workbench.sessions.toolwindow.tree.pathForMoreThreadsNode
 import com.intellij.agent.workbench.sessions.toolwindow.tree.pathForThreadNode
 import com.intellij.agent.workbench.sessions.toolwindow.ui.providerIcon
+import com.intellij.agent.workbench.sessions.core.providers.withYoloModeBadge
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -34,6 +35,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.Nls
+import javax.swing.Icon
 
 internal object AgentSessionsTreePopupDataKeys {
   @JvmField
@@ -172,12 +174,13 @@ internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
     private val allBridges: () -> List<AgentSessionProviderBridge> = AgentSessionProviderBridges::allBridges,
     private val createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit = ::createNewThreadViaService,
   private val lastUsedProvider: () -> AgentSessionProvider? = { service<AgentSessionUiPreferencesStateService>().getLastUsedProvider() },
+  private val lastUsedLaunchMode: () -> AgentSessionLaunchMode? = { service<AgentSessionUiPreferencesStateService>().getLastUsedLaunchMode() },
 ) : ActionGroup(), DumbAware {
 
   override fun update(e: AnActionEvent) {
     val context = resolveContext(e)
     val path = context?.let(::newThreadPathFromNode)
-    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider())
+    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode())
     if (path == null || !actionModel.menuModel.hasEntries()) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -186,20 +189,20 @@ internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
     e.presentation.isEnabledAndVisible = true
     e.presentation.isPopupGroup = true
     e.presentation.isPerformGroup = actionModel.quickStartItem != null
-    e.presentation.icon = actionModel.quickStartItem?.let { providerIcon(it.bridge.provider) } ?: templatePresentation.icon
+    e.presentation.icon = actionModel.quickStartItem?.let { quickStartProviderIcon(it.bridge.provider, it.mode) } ?: templatePresentation.icon
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val context = resolveContext(e) ?: return
     val path = newThreadPathFromNode(context) ?: return
-    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider())
+    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode())
     launchQuickStartThread(path, context.project, actionModel.quickStartItem, AgentWorkbenchEntryPoint.TREE_POPUP, createNewSession)
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val context = e?.let(resolveContext) ?: return emptyArray()
     val path = newThreadPathFromNode(context) ?: return emptyArray()
-    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider())
+    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode())
     return buildNewThreadMenuActions(
       path = path,
       project = context.project,
@@ -218,6 +221,14 @@ private fun newThreadPathFromNode(context: AgentSessionsTreePopupActionContext):
     is SessionTreeNode.Worktree -> node.worktree.path
     else -> null
   }
+}
+
+private fun quickStartProviderIcon(provider: AgentSessionProvider, mode: AgentSessionLaunchMode): Icon? {
+  val icon = providerIcon(provider) ?: return null
+  if (mode == AgentSessionLaunchMode.YOLO) {
+    return withYoloModeBadge(icon)
+  }
+  return icon
 }
 
 private fun morePopupLabel(node: SessionTreeNode): @Nls String {

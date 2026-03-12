@@ -82,6 +82,7 @@ class AgentSessionsToolWindowFactorySwingTest {
       project = project,
       path = "/work/project",
       provider = AgentSessionProvider.CODEX,
+      mode = AgentSessionLaunchMode.STANDARD,
       createNewSession = { path, provider, mode, entryPoint, currentProject ->
         capturedPath = path
         capturedProvider = provider
