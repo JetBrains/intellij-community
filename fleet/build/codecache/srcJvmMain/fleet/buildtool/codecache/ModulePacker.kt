@@ -213,7 +213,7 @@ private fun repackToImmutableJarExtractingNativeFiles(
   val nativeFiles = extractionSpec.nativeLibrariesSelector(tmp)
     .filter { lib -> lib.extension in extractionSpec.allowedExtensions }
     .mapNotNull { lib ->
-      val libraryPlatform = extractionSpec.platformDetector(lib) ?: extractionSpec.platformDetector(jar)
+      val libraryPlatform = extractionSpec.platformDetector.detect(libraryPath = lib, jarPath = jar)
       if (libraryPlatform != null) {
         val target = nativeLibrariesTargetDirectory.resolve(libraryPlatform.toS3DistributionSlug()).createDirectories()
         val targetFile = lib.moveTo(target.resolve(lib.name), overwrite = true)

@@ -23,10 +23,14 @@ sealed class NativeLibraryExtractor {
   }
 }
 
-data class NativeLibrariesExtractorSpec(
-  val jarNamePattern: Regex,
-  val allowedExtensions: Set<String>,
-  val nativeLibrariesSelector: (Path) -> List<Path>,
-  val platformDetector: (Path) -> Platform?,
-)
+interface NativeLibrariesExtractorSpec {
+  val jarNamePattern: Regex
+  val allowedExtensions: Set<String>
+  val nativeLibrariesSelector: (Path) -> List<Path>
+  val platformDetector: PlatformDetector
+
+  fun interface PlatformDetector {
+    fun detect(libraryPath: Path, jarPath: Path): Platform?
+  }
+}
 
