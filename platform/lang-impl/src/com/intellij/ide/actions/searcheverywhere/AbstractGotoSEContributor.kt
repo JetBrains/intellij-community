@@ -371,13 +371,22 @@ abstract class AbstractGotoSEContributor @ApiStatus.Internal protected construct
       fetchRunnable.run()
     }
     else {
-      // IJPL-176529
-      if (ModalityState.defaultModalityState() == ModalityState.nonModal()) {
+      try {
+        // IJPL-176529
+        if (ModalityState.defaultModalityState() == ModalityState.nonModal()) {
+          @Suppress("UsagesOfObsoleteApi", "DEPRECATION")
+          ProgressIndicatorUtils.yieldToPendingWriteActions()
+        }
         @Suppress("UsagesOfObsoleteApi", "DEPRECATION")
-        ProgressIndicatorUtils.yieldToPendingWriteActions()
+        ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(fetchRunnable, progressIndicator)
       }
-      @Suppress("UsagesOfObsoleteApi", "DEPRECATION")
-      ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(fetchRunnable, progressIndicator)
+      catch (_: IllegalStateException) {
+        // Happens when danced around with coroutineToIndicator calls
+        if (progressIndicator.isCanceled) {
+          LOG.warn("Got cancelled while trying to start a progress; rethrowing a CancelledException")
+          progressIndicator.checkCanceled()
+        }
+      }
     }
   }
 
