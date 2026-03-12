@@ -1708,11 +1708,4 @@ public final class ConfigImportHelper {
   @VisibleForTesting
   @SuppressWarnings("StaticNonFinalField")
   public static @Nullable Function<Set<PluginId>, @Nullable Map<PluginId, PluginNode>> testLastCompatiblePluginUpdatesFetcher = null;
-
-  /// @deprecated use [#importConfigsTo(Path, List)] instead
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("ALL")
-  public static void importConfigsTo(boolean u1, @NotNull Path newConfigDir, @NotNull List<String> args, @NotNull Logger u2) {
-    importConfigsTo(newConfigDir, args);
-  }
 }
