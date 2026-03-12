@@ -1,5 +1,5 @@
 plugins {
-    kotlin("multiplatform") version "1.8.0"
+    kotlin("multiplatform") version "2.2.0"
 }
 
 repositories {
@@ -14,12 +14,8 @@ kotlin {
         withJava()
     }
     sourceSets {
-        val jvmMain by getting {
-        }
-        all {
-            languageSettings {
-                languageVersion = "1.8"
-            }
+        jvmMain.languageSettings {
+            languageVersion = "2.1"
         }
     }
 }

@@ -1,5 +1,5 @@
 plugins {
-    id 'org.jetbrains.kotlin.multiplatform' version '1.8.0'
+    id 'org.jetbrains.kotlin.multiplatform' version '2.2.0'
 }
 
 repositories {
@@ -16,7 +16,7 @@ kotlin {
         }
         all {
             languageSettings {
-                languageVersion = "1.9"
+                languageVersion = "2.2"
             }
         }
     }

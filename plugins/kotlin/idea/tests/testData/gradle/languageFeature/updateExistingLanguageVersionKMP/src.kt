@@ -1,1 +1,3 @@
-data object Test
+fun test() {
+    <caret>$$""
+}

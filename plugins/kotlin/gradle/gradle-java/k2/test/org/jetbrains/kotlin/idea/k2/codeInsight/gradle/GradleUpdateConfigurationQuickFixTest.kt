@@ -69,15 +69,16 @@ class GradleUpdateConfigurationQuickFixTest : GradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("7.0 <=> 9.0")
+    @TargetVersions("7.6.3 <=> 8.14.4")
     fun testUpdateExistingLanguageVersionKMP() {
-        doKMPTest("Set module language version to 1.9")
+        doKMPTest("Increase language version to 2.2")
     }
 
+    // Duplicated setting of languageVersion in the after file is expected and should be fixed in KTIJ-37967
     @Test
-    @TargetVersions("7.0 <=> 9.0")
+    @TargetVersions("7.6.3 <=> 8.14.4")
     fun testUpdateExistingLanguageVersionKMPKts() {
-        doKMPTest("Set module language version to 1.9")
+        doKMPTest("Increase language version to 2.2")
     }
 
     private fun doKMPTest(intentionName: String) = doTest(intentionName, "src/jvmMain/kotlin/src.kt")
