@@ -599,8 +599,8 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
   @Override
   public boolean isModified() {
     return isCheckboxModified(ui.reportWarningsCheckBox, !commonCompilerArguments.getSuppressWarnings()) ||
-           !getSelectedLanguageVersionView().equals(KotlinFacetSettingsKt.getLanguageVersionView(commonCompilerArguments)) ||
-           !getSelectedAPIVersionView().equals(KotlinFacetSettingsKt.getApiVersionView(commonCompilerArguments)) ||
+           !getSelectedLanguageVersionView().equals(getCurrentLanguageVersion()) ||
+           !getSelectedAPIVersionView().equals(getCurrentApiVersion()) ||
            jpsPluginSettings != null &&
            !getSelectedKotlinJpsPluginVersion().equals(KotlinJpsPluginSettingsKt.getVersionWithFallback(jpsPluginSettings)) ||
            !ui.additionalArgsOptionsField.getText().equals(compilerSettings.getAdditionalArguments()) ||
@@ -679,8 +679,8 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
   ) throws ConfigurationException {
     if (isProjectSettings) {
       boolean shouldInvalidateCaches =
-        !getSelectedLanguageVersionView().equals(KotlinFacetSettingsKt.getLanguageVersionView(commonCompilerArguments)) ||
-        !getSelectedAPIVersionView().equals(KotlinFacetSettingsKt.getApiVersionView(commonCompilerArguments)) ||
+        !getSelectedLanguageVersionView().equals(getCurrentLanguageVersion()) ||
+        !getSelectedAPIVersionView().equals(getCurrentApiVersion()) ||
         jpsPluginSettings != null &&
         !getSelectedKotlinJpsPluginVersion().equals(KotlinJpsPluginSettingsKt.getVersionWithFallback(jpsPluginSettings)) ||
         !ui.additionalArgsOptionsField.getText().equals(compilerSettings.getAdditionalArguments());
@@ -764,18 +764,9 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
     // It also selects some values of the dropdown, but we want to choose the values reflecting the current settings afterward.
     onLanguageLevelChanged(getSelectedKotlinJpsPluginVersionView()); // getSelectedLanguageVersionView() replaces null
 
-    if (!commonCompilerArguments.getAutoAdvanceLanguageVersion()) {
-      setSelectedItem(ui.languageVersionComboBox, KotlinFacetSettingsKt.getLanguageVersionView(commonCompilerArguments));
-    }
-    else {
-      setSelectedItem(ui.languageVersionComboBox, getLatestStableVersion());
-    }
-    if (!commonCompilerArguments.getAutoAdvanceApiVersion()) {
-      setSelectedItem(ui.apiVersionComboBox, KotlinFacetSettingsKt.getApiVersionView(commonCompilerArguments));
-    }
-    else {
-      setSelectedItem(ui.apiVersionComboBox, getLatestStableVersion());
-    }
+    setSelectedItem(ui.languageVersionComboBox, getCurrentLanguageVersion());
+    setSelectedItem(ui.apiVersionComboBox, getCurrentApiVersion());
+
     ui.additionalArgsOptionsField.setText(compilerSettings.getAdditionalArguments());
     ui.copyRuntimeFilesCheckBox.setSelected(compilerSettings.getCopyJsLibraryFiles());
     ui.outputDirectory.setText(compilerSettings.getOutputDirectoryForJsLibraryFiles());
@@ -794,6 +785,18 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
     ui.sourceMapEmbedSources.setSelectedItem(getSourceMapSourceEmbeddingOrDefault(k2jsCompilerArguments.getSourceMapEmbedSources()));
 
     ui.jvmVersionComboBox.setSelectedItem(getJvmVersionOrDefault(k2jvmCompilerArguments.getJvmTarget()));
+  }
+
+  private VersionView getCurrentLanguageVersion() {
+      return commonCompilerArguments.getAutoAdvanceLanguageVersion()
+             ? getLatestStableVersion()
+             : KotlinFacetSettingsKt.getLanguageVersionView(commonCompilerArguments);
+  }
+
+  private VersionView getCurrentApiVersion() {
+      return commonCompilerArguments.getAutoAdvanceApiVersion()
+             ? getLatestStableVersion()
+             : KotlinFacetSettingsKt.getApiVersionView(commonCompilerArguments);
   }
 
   private static <T> void setSelectedItem(JComboBox<T> comboBox, T versionView) {
