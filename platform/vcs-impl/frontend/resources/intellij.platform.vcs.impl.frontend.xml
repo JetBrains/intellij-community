@@ -1,14 +1,19 @@
 <idea-plugin visibility="internal">
   <projectListeners>
   </projectListeners>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.frontend"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.recentFiles.frontend"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.vcs.impl.shared"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <ui.content.impl.toolWindowContentPostprocessor implementation="com.intellij.platform.vcs.impl.frontend.toolwindow.VcsToolWindowContentReplacer"/>

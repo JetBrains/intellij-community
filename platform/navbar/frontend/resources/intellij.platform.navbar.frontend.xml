@@ -1,10 +1,18 @@
 <idea-plugin visibility="public" package="com.intellij.platform.navbar.frontend">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.navbar"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.util.coroutines"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <!--suppress PluginXmlDynamicPlugin -->
     <ideRootPaneNorth implementation="com.intellij.platform.navbar.frontend.NavBarRootPaneExtension"/>

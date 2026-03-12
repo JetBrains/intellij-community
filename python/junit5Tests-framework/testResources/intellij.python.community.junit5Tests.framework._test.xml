@@ -10,9 +10,13 @@
     <module name="intellij.libraries.sshd.osgi"/>
     <module name="intellij.libraries.system.stubs.jupiter"/>
     <module name="intellij.libraries.testcontainers"/>
+    <module name="intellij.platform.core"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.testFramework"/>
     <module name="intellij.platform.testFramework.junit5"/>
     <module name="intellij.platform.testFramework.junit5.projectStructure"/>

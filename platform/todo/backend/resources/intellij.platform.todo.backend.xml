@@ -1,12 +1,14 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.todo"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.kernel.backend"/>
-    <!-- endregion -->
+    <module name="intellij.platform.projectModel"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.todo.TodoIndex"/>

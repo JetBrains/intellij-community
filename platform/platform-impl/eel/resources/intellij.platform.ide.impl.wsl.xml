@@ -2,8 +2,12 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.platform.core"/>
     <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ex"/>
   </dependencies>
   <!-- endregion -->
 

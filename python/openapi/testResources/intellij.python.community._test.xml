@@ -1,10 +1,12 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.junit5"/>
     <module name="intellij.libraries.junit5.params"/>
     <module name="intellij.python.community"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.core"/>
     <module name="intellij.platform.execution"/>
-    <!-- endregion -->
+    <module name="intellij.platform.projectModel"/>
   </dependencies>
+  <!-- endregion -->
 </idea-plugin>
