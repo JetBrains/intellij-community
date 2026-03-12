@@ -22,7 +22,6 @@ import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.components.ValidationType
 import com.intellij.ui.dsl.builder.components.validationTooltip
 import com.intellij.util.lateinitVal
-import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
@@ -39,6 +38,7 @@ import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.add.v2.ValidatedPathField
 import com.jetbrains.python.sdk.add.v2.Version
+import com.jetbrains.python.sdk.add.v2.withAdjustedWidth
 import com.jetbrains.python.sdk.add.v2.pythonInterpreterComboBox
 import com.jetbrains.python.sdk.add.v2.validatablePathField
 import kotlinx.coroutines.CoroutineScope
@@ -156,7 +156,7 @@ private fun <P : PathHolder> Panel.addEnvironmentComboBox(
       }
       .align(Align.FILL)
       .applyToComponent {
-        preferredSize = JBUI.size(preferredSize)
+        preferredSize = preferredSize.withAdjustedWidth
       }
   }
 
