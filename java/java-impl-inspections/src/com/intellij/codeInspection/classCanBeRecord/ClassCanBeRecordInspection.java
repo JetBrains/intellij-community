@@ -91,16 +91,8 @@ public final class ClassCanBeRecordInspection extends BaseInspection implements 
           for (PsiAnnotation annotation : annotations) {
             String fqn = annotation.getQualifiedName();
             if (fqn != null) {
-              fixes.add(new AddToInspectionOptionListFix<>(
-                this, JavaBundle.message("class.can.be.record.suppress.conversion.if.annotated.fix.name", fqn),
-                fqn, tool -> tool.myIgnoredAnnotations) {
-                @Override
-                public boolean availableInBatchMode() {
-                  // This is a fix for IDEA-386737.
-                  return false;
-                }
-              }
-              );
+              String suppressMessage = JavaBundle.message("class.can.be.record.suppress.conversion.if.annotated.fix.name", fqn);
+              fixes.add(new AddToInspectionOptionListFix<>(this, suppressMessage, fqn, tool -> tool.myIgnoredAnnotations));
             }
           }
         }

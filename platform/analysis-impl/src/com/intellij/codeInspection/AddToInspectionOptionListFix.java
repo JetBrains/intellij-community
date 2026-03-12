@@ -48,6 +48,11 @@ public class AddToInspectionOptionListFix<T extends InspectionProfileEntry> exte
   }
 
   @Override
+  public boolean availableInBatchMode() {
+    return false;
+  }
+
+  @Override
   public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     return ModCommand.updateInspectionOption(descriptor.getStartElement(), myInspection, inspection -> {
       List<String> list = myExtractor.apply(inspection);

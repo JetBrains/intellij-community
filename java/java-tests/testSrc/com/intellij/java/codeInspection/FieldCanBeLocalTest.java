@@ -2,7 +2,11 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -96,4 +100,31 @@ public class FieldCanBeLocalTest extends LightJavaCodeInsightFixtureTestCase {
   public void testConstructor() { doTest(); }
   public void testReflection() { doTest(); }
   public void testArrayAccessAssignment() { doTest(); }
+
+  /// Regression test for IDEA-386737.
+  public void testSuppressAnnotationFixHasNoFixAll() {
+    FieldCanBeLocalInspection inspection = new FieldCanBeLocalInspection();
+    myFixture.enableInspections(inspection);
+    myFixture.configureByText("Test.java", """
+      package my.annotation1;
+
+      class Test {
+      @MyAnn
+        private int <caret>f;
+
+        void foo() {
+          f = 0;
+          int k = f;
+        }
+      }
+
+      @interface MyAnn {
+      }
+      """);
+
+    IntentionAction suppressFix = myFixture.findSingleIntention(
+      QuickFixBundle.message("fix.add.special.annotation.text", "my.annotation1.MyAnn"));
+    IntentionAction fixAll = IntentionManager.getInstance().createFixAllIntention(new LocalInspectionToolWrapper(inspection), suppressFix);
+    assertNull(fixAll);
+  }
 }
