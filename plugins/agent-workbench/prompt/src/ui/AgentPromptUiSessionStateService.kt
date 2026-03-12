@@ -41,13 +41,6 @@ internal data class AgentPromptUiContextRestoreSnapshot(
 )
 
 @Serializable
-internal data class AgentPromptUiProviderPreferences(
-    @JvmField val providerId: String? = null,
-    @JvmField val launchModeName: String? = null,
-    @JvmField val providerOptionsByProviderId: Map<String, Set<String>> = emptyMap(),
-)
-
-@Serializable
 internal data class AgentPromptUiState(
     @JvmField val draft: AgentPromptUiDraft = AgentPromptUiDraft(),
 )

@@ -133,8 +133,8 @@ Prompt-context collection and rendering contracts are specified separately in `s
   [@test] ../../prompt/testSrc/ui/AgentPromptFooterHintDecisionsTest.kt
 
 - Provider restore order for opening the prompt must be:
-  - prompt draft `providerId`,
-  - shared preferred provider exposed by `AgentPromptLauncherBridge.preferredProvider()`,
+  - shared provider preferences from `AgentPromptLauncherBridge.loadProviderPreferences()` (authoritative, updated by all launch surfaces),
+  - prompt draft `providerId` (fallback for when shared preferences have no provider),
   - provider-list default ordering.
   [@test] ../../prompt/testSrc/ui/AgentPromptProviderSelectionDecisionsTest.kt
 

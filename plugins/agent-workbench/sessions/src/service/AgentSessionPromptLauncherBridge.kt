@@ -33,6 +33,8 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
   private val refreshProviderForPath: (String, AgentSessionProvider) -> Unit
   private val preferredProviderProvider: () -> AgentSessionProvider?
   private val sourceProjectResolver: (String) -> Project?
+  private val providerPreferencesLoader: () -> AgentPromptLauncherBridge.ProviderPreferences
+  private val providerPreferencesSaver: (AgentPromptLauncherBridge.ProviderPreferences) -> Unit
 
   @Suppress("unused")
   constructor() : this(
@@ -42,6 +44,8 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
     refreshCatalogAndLoadNewlyOpened = { service<AgentSessionRefreshService>().refreshCatalogAndLoadNewlyOpened() },
     refreshProviderForPath = { path, provider -> service<AgentSessionRefreshService>().refreshProviderForPath(path = path, provider = provider) },
     preferredProviderProvider = { service<AgentSessionUiPreferencesStateService>().getLastUsedProvider() },
+    providerPreferencesLoader = { service<AgentSessionUiPreferencesStateService>().getProviderPreferences() },
+    providerPreferencesSaver = { prefs -> service<AgentSessionUiPreferencesStateService>().setProviderPreferences(prefs) },
     sourceProjectResolver = ::findOpenSourceProjectByPath,
   )
 
@@ -57,6 +61,8 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
     refreshProviderForPath = { _, _ -> },
     preferredProviderProvider = { null },
     sourceProjectResolver = ::findOpenSourceProjectByPath,
+    providerPreferencesLoader = { AgentPromptLauncherBridge.ProviderPreferences() },
+    providerPreferencesSaver = {},
   )
 
   internal constructor(
@@ -67,6 +73,8 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
     refreshProviderForPath: (String, AgentSessionProvider) -> Unit,
     preferredProviderProvider: () -> AgentSessionProvider?,
     sourceProjectResolver: (String) -> Project? = ::findOpenSourceProjectByPath,
+    providerPreferencesLoader: () -> AgentPromptLauncherBridge.ProviderPreferences = { AgentPromptLauncherBridge.ProviderPreferences() },
+    providerPreferencesSaver: (AgentPromptLauncherBridge.ProviderPreferences) -> Unit = {},
   ) {
     this.launchPromptRequest = launchPromptRequest
     this.stateFlowProvider = stateFlowProvider
@@ -75,10 +83,24 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
     this.refreshProviderForPath = refreshProviderForPath
     this.preferredProviderProvider = preferredProviderProvider
     this.sourceProjectResolver = sourceProjectResolver
+    this.providerPreferencesLoader = providerPreferencesLoader
+    this.providerPreferencesSaver = providerPreferencesSaver
   }
 
   override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
     return launchPromptRequest(request)
+  }
+
+  override fun preferredProvider(): AgentSessionProvider? {
+    return preferredProviderProvider()
+  }
+
+  override fun loadProviderPreferences(): AgentPromptLauncherBridge.ProviderPreferences {
+    return providerPreferencesLoader()
+  }
+
+  override fun saveProviderPreferences(preferences: AgentPromptLauncherBridge.ProviderPreferences) {
+    providerPreferencesSaver(preferences)
   }
 
   override fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String? {

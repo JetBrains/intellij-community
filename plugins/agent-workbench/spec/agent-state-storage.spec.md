@@ -51,10 +51,10 @@ This file is the single inventory for where Agent Workbench state is persisted a
 - `AgentSessionTreeUiState` persistence must remain cache-scoped app state and must store only tree UI preferences (collapsed paths and visible counts).
   [@test] ../sessions/testSrc/AgentSessionTreeUiStateServiceTest.kt
 
-- `AgentSessionUiPreferencesState` persistence must remain non-roamable app state and must store shared UI preferences (`lastUsedProvider`, Claude quota hint eligibility/acknowledgement).
+- `AgentSessionUiPreferencesState` persistence must remain non-roamable app state and must store shared UI preferences (`lastUsedProvider`, `launchMode: AgentSessionLaunchMode`, `providerOptionsByProviderId`, Claude quota hint eligibility/acknowledgement).
   [@test] ../sessions/testSrc/AgentSessionUiPreferencesStateServiceTest.kt
 
-- `AgentPromptUiState` persistence must remain workspace-scoped project state and must store only prompt draft fields.
+- `AgentPromptUiState` persistence must remain workspace-scoped project state and must store only prompt draft fields (no provider preferences).
   [@test] ../prompt/testSrc/ui/AgentPromptUiSessionStateServiceTest.kt
 
 - Prompt context restore snapshot (`contextRestoreSnapshot`) is runtime-only session state and must not be part of persisted `AgentPromptUiState`.

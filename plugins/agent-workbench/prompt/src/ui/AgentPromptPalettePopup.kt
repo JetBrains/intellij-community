@@ -936,19 +936,22 @@ internal class AgentPromptPalettePopup(
 
   private fun restoreDraft(): AgentPromptUiDraft {
     val draft = uiStateService.loadDraft()
-    val providerPrefs = uiStateService.loadProviderPreferences()
+    val providerPrefs = launcherProvider()?.loadProviderPreferences() ?: AgentPromptLauncherBridge.ProviderPreferences()
     val contextRestoreSnapshot = uiStateService.loadContextRestoreSnapshot()
     val launcher = launcherProvider()
 
     promptArea.text = draft.promptText
-    providerSelector.restoreProviderOptionSelections(draft.providerOptionsByProviderId)
+    val effectiveProviderOptions = providerPrefs.providerOptionsByProviderId.ifEmpty { draft.providerOptionsByProviderId }
+    providerSelector.restoreProviderOptionSelections(effectiveProviderOptions)
     val persistedProvider = resolveRestoredPromptProvider(
-      draftProviderId = draft.providerId ?: providerPrefs.providerId,
+      draftProviderId = providerPrefs.providerId ?: draft.providerId,
       preferredProvider = launcher?.preferredProvider(),
       availableProviders = providerSelector.availableProviders,
     )
-    providerSelector.selectProvider(persistedProvider)
-    if (draft.providerOptionsByProviderId.isEmpty()) {
+    val restoredLaunchMode = providerPrefs.launchMode
+    providerSelector.selectProvider(persistedProvider, restoredLaunchMode)
+    selectedLaunchMode = providerSelector.selectedLaunchMode
+    if (effectiveProviderOptions.isEmpty()) {
       providerSelector.applyLegacyPlanModeSelection(providerSelector.selectedProvider?.bridge?.provider, draft.planModeEnabled)
     }
     updateProviderOptionsVisibility()
@@ -983,10 +986,10 @@ internal class AgentPromptPalettePopup(
   }
 
   private fun saveProviderPreferences() {
-    uiStateService.saveProviderPreferences(
-      AgentPromptUiProviderPreferences(
+    launcherProvider()?.saveProviderPreferences(
+      AgentPromptLauncherBridge.ProviderPreferences(
         providerId = providerSelector.selectedProvider?.bridge?.provider?.value,
-        launchModeName = providerSelector.selectedLaunchMode.name,
+        launchMode = providerSelector.selectedLaunchMode,
         providerOptionsByProviderId = providerSelector.providerOptionSelections(),
       )
     )

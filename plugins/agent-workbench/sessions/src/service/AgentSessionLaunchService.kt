@@ -264,6 +264,7 @@ internal class AgentSessionLaunchService(
   ) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
     AgentSessionProviderBehaviors.find(provider)?.onConversationOpened()
+    uiPreferencesState.updateProviderPreferencesOnLaunch(provider, mode, initialMessageRequest)
     launchDropAction(
       key = buildCreateSessionActionKey(normalizedPath, provider, mode),
       droppedActionMessage = "Dropped duplicate create session action for $normalizedPath:$provider:mode=$mode",
@@ -272,13 +273,47 @@ internal class AgentSessionLaunchService(
         { handler(AgentPromptLaunchResult.failure(AgentPromptLaunchError.DROPPED_DUPLICATE)) }
       },
     ) {
-      treeUiState.setLastUsedProvider(provider)
+      try {
+        val bridge = AgentSessionProviderBridges.find(provider)
+        if (bridge == null) {
+          logMissingProviderBridge(provider)
+          syncService.appendProviderUnavailableWarning(normalizedPath, provider)
+          promptLaunchResolved?.invoke(AgentPromptLaunchResult.failure(AgentPromptLaunchError.PROVIDER_UNAVAILABLE))
+          return@launchDropAction
+        }
+        if (mode !in bridge.supportedLaunchModes) {
+          LOG.warn("Session provider bridge ${provider.value} does not support launch mode $mode")
+          syncService.appendProviderUnavailableWarning(normalizedPath, provider)
+          promptLaunchResolved?.invoke(AgentPromptLaunchResult.failure(AgentPromptLaunchError.UNSUPPORTED_LAUNCH_MODE))
+          return@launchDropAction
+        }
 
-      val bridge = AgentSessionProviderBridges.find(provider)
-      if (bridge == null) {
-        logMissingProviderBridge(provider)
-        syncService.appendProviderUnavailableWarning(normalizedPath, provider)
-        return@launchDropAction
+        val createSpec = bridge.createNewSession(path = normalizedPath, mode = mode)
+        val identity = createSpec.sessionId?.let { sessionId ->
+          buildAgentSessionIdentity(provider, sessionId)
+        } ?: buildAgentSessionNewIdentity(provider)
+        val initialMessagePlan = initialMessageRequest
+          ?.let(bridge::buildInitialMessagePlan)
+          ?: AgentInitialMessagePlan.EMPTY
+        val initialMessageDispatchPlan = buildInitialMessageDispatchPlan(
+          bridge = bridge,
+          baseLaunchSpec = createSpec.launchSpec,
+          identity = identity,
+          initialMessagePlan = initialMessagePlan,
+        )
+
+        AgentWorkbenchTelemetry.logThreadCreateRequested(entryPoint, provider, mode)
+        chatOpenExecutor.openNewChat(
+          normalizedPath = normalizedPath,
+          identity = identity,
+          launchSpec = createSpec.launchSpec,
+          initialMessageDispatchPlan = initialMessageDispatchPlan,
+          preferredDedicatedFrame = preferredDedicatedFrame,
+        )
+        if (AgentSessionProviderBehaviors.find(provider)?.refreshPathAfterCreateNewSession == true) {
+          syncService.refreshProviderForPath(path = normalizedPath, provider = provider)
+        }
+        promptLaunchResolved?.invoke(AgentPromptLaunchResult.SUCCESS)
       }
       if (mode !in bridge.supportedLaunchModes) {
         LOG.warn("Session provider bridge ${provider.value} does not support launch mode $mode")
@@ -350,7 +385,7 @@ internal class AgentSessionLaunchService(
             provider = request.provider,
             threadId = targetThreadId,
           ) ?: return@run reportPromptLaunchResolved(AgentPromptLaunchResult.failure(AgentPromptLaunchError.TARGET_THREAD_NOT_FOUND))
-          uiPreferencesState.setLastUsedProvider(request.provider)
+          uiPreferencesState.updateProviderPreferencesOnLaunch(request.provider, request.launchMode, request.initialMessageRequest)
 
           val initialMessagePlan = bridge.buildInitialMessagePlan(request.initialMessageRequest)
           val targetIdentity = buildAgentSessionIdentity(provider = request.provider, sessionId = targetThread.id)
