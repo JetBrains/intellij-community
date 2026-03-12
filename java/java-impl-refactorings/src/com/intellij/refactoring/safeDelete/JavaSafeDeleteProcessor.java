@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -1135,9 +1135,11 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
                                             PsiParameter parameter) {
     PsiClass containingClass = method.getContainingClass();
     if (containingClass != null) {
-      int parameterIndex = method.getParameterList().getParameterIndex(parameter);
       PsiMethod methodCopy = (PsiMethod)method.copy();
-      methodCopy.getParameterList().getParameters()[parameterIndex].delete();
+      if (!containingClass.isRecord() || !JavaPsiRecordUtil.isCompactConstructor(method)) {
+        int parameterIndex = method.getParameterList().getParameterIndex(parameter);
+        methodCopy.getParameterList().getParameters()[parameterIndex].delete();
+      }
       ConflictsUtil.checkMethodConflicts(containingClass, method, methodCopy, conflicts);
     }
   }

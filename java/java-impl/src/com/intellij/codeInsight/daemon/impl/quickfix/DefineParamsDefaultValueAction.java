@@ -48,6 +48,7 @@ import com.intellij.psi.PsiTypeCastExpression;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -238,9 +239,9 @@ public final class DefineParamsDefaultValueAction extends PsiBasedModCommandActi
   }
 
   private static PsiMethod generateMethodPrototype(PsiMethod method, PsiParameter... params) {
-    final PsiMethod prototype = JavaPsiRecordUtil.isCompactConstructor(method) ?
-                                new RecordConstructorMember(method.getContainingClass(), false).generateRecordConstructor() :                            
-                                (PsiMethod)method.copy();
+    final PsiMethod prototype = JavaPsiRecordUtil.isCompactConstructor(method) || method instanceof LightRecordCanonicalConstructor
+                                ? new RecordConstructorMember(method.getContainingClass(), false).generateRecordConstructor()
+                                : (PsiMethod)method.copy();
     final PsiCodeBlock body = prototype.getBody();
     final PsiCodeBlock emptyBody = JavaPsiFacade.getElementFactory(method.getProject()).createCodeBlock();
     final PsiModifierList modifierList = prototype.getModifierList();
