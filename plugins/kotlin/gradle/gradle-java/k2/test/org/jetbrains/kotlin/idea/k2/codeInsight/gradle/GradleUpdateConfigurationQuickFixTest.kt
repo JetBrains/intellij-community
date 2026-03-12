@@ -105,13 +105,6 @@ class GradleUpdateConfigurationQuickFixTest : GradleImportingTestCase() {
         doTest("Set module language version to 1.1")
     }
 
-    @Test
-    @Ignore // Import failed: Could not initialize class org.jetbrains.kotlin.gradle.internal.KotlinSourceSetProviderImplKt
-    @TargetVersions("4.7 <=> 6.0")
-    fun testAddKotlinReflect() {
-        doTest("Add 'kotlin-reflect.jar' to the classpath")
-    }
-
     private fun doKMPTest(intentionName: String) = doTest(intentionName, "src/jvmMain/kotlin/src.kt")
 
     private fun doTest(intentionName: String, srcFilePath: String = "src/main/kotlin/src.kt") {
