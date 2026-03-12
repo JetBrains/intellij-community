@@ -25,8 +25,11 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.Icon;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
+import java.awt.Graphics;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -232,18 +235,30 @@ public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
 
     TextAttributesKey firstKey = TextAttributesKey.createTextAttributesKey("DUPLICATE_DYNAMIC_FIRST");
     TextAttributesKey secondKey = TextAttributesKey.createTextAttributesKey("DUPLICATE_DYNAMIC_SECOND");
-    Disposable firstProvider = registerProvider(new TestSeveritiesProvider(infoType("DUPLICATE_DYNAMIC", 310, firstKey)));
+    Disposable firstProvider = registerProvider(new TestSeveritiesProvider(duplicateDynamicInfoType(
+      310,
+      firstKey,
+      new AtomicInteger(),
+      new TestIcon(12, 12)
+    )));
     HighlightDisplayLevel initialLevel = Objects.requireNonNull(HighlightDisplayLevel.find("DUPLICATE_DYNAMIC"));
     assertEquals(310, initialLevel.getSeverity().myVal);
     assertEquals(firstKey, registrar.getHighlightInfoTypeBySeverity(Objects.requireNonNull(registrar.getSeverity("DUPLICATE_DYNAMIC")))
       .getAttributesKey());
+    assertTrue(findDuplicateDynamicStandardSeverityType() instanceof HighlightInfoType.Iconable);
 
-    Disposable secondProvider = registerProvider(new TestSeveritiesProvider(infoType("DUPLICATE_DYNAMIC", 320, secondKey)));
+    Disposable secondProvider = registerProvider(new TestSeveritiesProvider(duplicateDynamicInfoType(
+      320,
+      secondKey,
+      new AtomicInteger(),
+      new TestIcon(14, 14)
+    )));
     assertSame(initialLevel, HighlightDisplayLevel.find("DUPLICATE_DYNAMIC"));
     assertEquals(320, initialLevel.getSeverity().myVal);
     assertEquals(320, Objects.requireNonNull(registrar.getSeverity("DUPLICATE_DYNAMIC")).myVal);
     assertEquals(secondKey, registrar.getHighlightInfoTypeBySeverity(Objects.requireNonNull(registrar.getSeverity("DUPLICATE_DYNAMIC")))
       .getAttributesKey());
+    assertTrue(findDuplicateDynamicStandardSeverityType() instanceof HighlightInfoType.Iconable);
 
     Disposer.dispose(secondProvider);
 
@@ -252,6 +267,7 @@ public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
     assertEquals(310, Objects.requireNonNull(registrar.getSeverity("DUPLICATE_DYNAMIC")).myVal);
     assertEquals(firstKey, registrar.getHighlightInfoTypeBySeverity(Objects.requireNonNull(registrar.getSeverity("DUPLICATE_DYNAMIC")))
       .getAttributesKey());
+    assertTrue(findDuplicateDynamicStandardSeverityType() instanceof HighlightInfoType.Iconable);
     Disposer.dispose(firstProvider);
   }
 
@@ -277,6 +293,20 @@ public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
 
   private static HighlightInfoType.HighlightInfoTypeImpl infoType(@NotNull String name, int value, @NotNull TextAttributesKey key) {
     return new HighlightInfoType.HighlightInfoTypeImpl(new HighlightSeverity(name, value), key);
+  }
+
+  private static CountingIconableInfoType duplicateDynamicInfoType(int value,
+                                                                   @NotNull TextAttributesKey key,
+                                                                   @NotNull AtomicInteger iconRequests,
+                                                                   @NotNull Icon icon) {
+    return new CountingIconableInfoType(new HighlightSeverity("DUPLICATE_DYNAMIC", value), key, iconRequests, icon);
+  }
+
+  private static @NotNull HighlightInfoType findDuplicateDynamicStandardSeverityType() {
+    return SeverityRegistrar.standardSeverities().stream()
+      .filter(type -> "DUPLICATE_DYNAMIC".equals(type.getSeverity(null).getName()))
+      .findFirst()
+      .orElseThrow();
   }
 
   private static void registerProvider(@NotNull SeveritiesProvider provider, @NotNull Disposable disposable) {
@@ -310,6 +340,50 @@ public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
     @Override
     public @NotNull List<@NotNull HighlightInfoType> getSeveritiesHighlightInfoTypes() {
       return myHighlightInfoTypes;
+    }
+  }
+
+  private static final class CountingIconableInfoType extends HighlightInfoType.HighlightInfoTypeImpl implements HighlightInfoType.Iconable {
+    private final @NotNull AtomicInteger myIconRequests;
+    private final @NotNull Icon myIcon;
+
+    private CountingIconableInfoType(@NotNull HighlightSeverity severity,
+                                     @NotNull TextAttributesKey attributesKey,
+                                     @NotNull AtomicInteger iconRequests,
+                                     @NotNull Icon icon) {
+      super(severity, attributesKey);
+      myIconRequests = iconRequests;
+      myIcon = icon;
+    }
+
+    @Override
+    public @NotNull Icon getIcon() {
+      myIconRequests.incrementAndGet();
+      return myIcon;
+    }
+  }
+
+  private static final class TestIcon implements Icon {
+    private final int myWidth;
+    private final int myHeight;
+
+    private TestIcon(int width, int height) {
+      myWidth = width;
+      myHeight = height;
+    }
+
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+    }
+
+    @Override
+    public int getIconWidth() {
+      return myWidth;
+    }
+
+    @Override
+    public int getIconHeight() {
+      return myHeight;
     }
   }
 }

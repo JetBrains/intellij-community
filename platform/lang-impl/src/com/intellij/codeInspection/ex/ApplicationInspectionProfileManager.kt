@@ -24,6 +24,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IconLoader
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
@@ -124,25 +125,30 @@ class ApplicationInspectionProfileManager @TestOnly @NonInjectable @Internal con
 
   private fun syncProvidedSeverities(notifyListeners: Boolean) {
     val providedSeverities = LinkedHashMap<String, HighlightDisplayLevel.SeverityDescriptor>()
+    val providedTypes = LinkedHashMap<String, HighlightInfoType>()
     SeveritiesProvider.EP_NAME.forEachExtensionSafe { provider ->
       for (highlightInfoType in provider.severitiesHighlightInfoTypes) {
         val severity = highlightInfoType.getSeverity(null)
         val severityName = severity.name
-        val icon = if (highlightInfoType is HighlightInfoType.Iconable) highlightInfoType.icon else null
+        val iconable = highlightInfoType as? HighlightInfoType.Iconable
+        // Keep provider icons lazy when the dynamic EP refresh rebuilds HighlightDisplayLevel state.
+        // IconLoader.createLazy preserves icon-patcher/path-transform behavior, and reusing the same
+        // lazy icon instance lets HighlightDisplayLevel expose identical icon/outlineIcon objects.
+        val lazyIcon = iconable?.let { IconLoader.createLazy { it.icon } }
         providedSeverities.remove(severityName)
+        providedTypes.remove(severityName)
         providedSeverities[severityName] = HighlightDisplayLevel.SeverityDescriptor(
           severity = severity,
           attributesKey = highlightInfoType.attributesKey,
-          icon = icon,
+          icon = lazyIcon,
         )
+        // Preserve the original provider type instead of flattening it to HighlightInfoTypeImpl so
+        // provider-specific contracts such as Iconable survive add/remove syncs.
+        providedTypes[severityName] = highlightInfoType
       }
     }
 
     HighlightDisplayLevel.syncProvidedSeverities(providedSeverities)
-    val providedTypes = LinkedHashMap<String, HighlightInfoType>()
-    for ((severityName, descriptor) in providedSeverities) {
-      providedTypes[severityName] = HighlightInfoType.HighlightInfoTypeImpl(descriptor.severity, descriptor.attributesKey)
-    }
     val removedSeverities = if (notifyListeners) SeverityRegistrar.syncProvidedSeverities(providedTypes)
     else SeverityRegistrar.syncProvidedSeveritiesSilently(providedTypes)
     if (notifyListeners && removedSeverities.isNotEmpty()) {

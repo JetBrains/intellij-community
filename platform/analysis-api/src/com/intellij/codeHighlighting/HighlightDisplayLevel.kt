@@ -8,7 +8,6 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.IconManager
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
@@ -27,6 +26,8 @@ open class HighlightDisplayLevel(severity: HighlightSeverity) {
   data class SeverityDescriptor(
     @JvmField val severity: HighlightSeverity,
     @JvmField val attributesKey: TextAttributesKey,
+    // Provider-backed severities pass the shared lazy icon instance here so both icon variants
+    // resolve on demand and continue to participate in IconLoader's patcher/transform lifecycle.
     @JvmField val icon: Icon?,
   )
 
@@ -101,6 +102,8 @@ open class HighlightDisplayLevel(severity: HighlightSeverity) {
 
     private fun createIcons(presentation: LevelPresentation): Pair<Icon, Icon> {
       presentation.icon?.let { icon ->
+        // Custom severities historically reuse the same icon object for both regular and outline
+        // presentations unless the caller explicitly supplies a different outline icon.
         return icon to (presentation.outlineIcon ?: icon)
       }
 
@@ -298,7 +301,7 @@ private class HighlightDisplayLevelColorizedIcon(private val key: TextAttributes
 
   private fun getColorFromAttributes(key: TextAttributesKey): Color? {
     val editorColorManager = EditorColorsManager.getInstance()
-                             ?: return (key.getDefaultAttributes() ?: TextAttributes.ERASE_MARKER).errorStripeColor
+                             ?: return key.getDefaultAttributes().errorStripeColor
     lastColor?.takeIf { editorColorManager.schemeModificationCounter == lastEditorColorManagerModCounter}?.let {
       return it
     }

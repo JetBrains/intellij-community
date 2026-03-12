@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider
@@ -22,9 +23,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import java.awt.Component
+import java.awt.Graphics
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.util.concurrent.atomic.AtomicInteger
+import javax.swing.Icon
 import kotlin.io.path.readText
 
 @TestApplication
@@ -96,7 +100,41 @@ class InspectionSchemeTest {
 
       assertThat(profileManager.severityRegistrar.getSeverity("PRELOADED_DYNAMIC")).isNotNull()
       assertThat(notifications.get()).isZero()
-  }
+    }
+
+  @Test
+  fun iconableSeverityProviderIsLazyAndPreservedInStandardTypes(@TestDisposable disposable: Disposable): Unit =
+    runBlocking(Dispatchers.Default) {
+      val iconRequests = AtomicInteger()
+      val infoType = CountingIconableInfoType(
+        HighlightSeverity("ICONABLE_DYNAMIC", 352),
+        TextAttributesKey.createTextAttributesKey("ICONABLE_DYNAMIC_KEY"),
+        iconRequests,
+        TestIcon(width = 11, height = 13),
+      )
+      val profileManager = ApplicationInspectionProfileManager(
+        this@runBlocking,
+        SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath("")),
+      )
+
+      SeveritiesProvider.EP_NAME.point.registerExtension(object : SeveritiesProvider() {
+        override fun getSeveritiesHighlightInfoTypes(): List<HighlightInfoType> = listOf(infoType)
+      }, disposable)
+
+      assertThat(iconRequests.get()).isZero()
+
+      val severity = profileManager.severityRegistrar.getSeverity("ICONABLE_DYNAMIC")
+      assertThat(severity).isNotNull()
+      val level = HighlightDisplayLevel.find(checkNotNull(severity))
+      assertThat(level).isNotNull()
+      assertThat(findIconableDynamicStandardSeverityType()).isInstanceOf(HighlightInfoType.Iconable::class.java)
+      assertThat(HighlightDisplayLevel.find("ICONABLE_DYNAMIC")).isSameAs(level)
+      assertThat(level!!.icon).isSameAs(level.outlineIcon)
+
+      level.icon.iconWidth
+      level.outlineIcon.iconWidth
+      assertThat(iconRequests.get()).isEqualTo(1)
+    }
 
   @Test
   fun bundledProfileUsesSelfAsBaseAndResetsToBundled() {
@@ -145,5 +183,30 @@ class InspectionSchemeTest {
 
     bundledProfile?.resetToBase(project)
     assertThat(bundledProfile?.isToolEnabled(key, null)).isFalse()
+  }
+
+  private fun findIconableDynamicStandardSeverityType(): HighlightInfoType {
+    return SeverityRegistrar.standardSeverities().first { "ICONABLE_DYNAMIC" == it.getSeverity(null).name }
+  }
+
+  private class CountingIconableInfoType(
+    severity: HighlightSeverity,
+    attributesKey: TextAttributesKey,
+    private val iconRequests: AtomicInteger,
+    private val icon: Icon,
+  ) : HighlightInfoType.HighlightInfoTypeImpl(severity, attributesKey), HighlightInfoType.Iconable {
+    override fun getIcon(): Icon {
+      iconRequests.incrementAndGet()
+      return icon
+    }
+  }
+
+  private class TestIcon(private val width: Int, private val height: Int) : Icon {
+    override fun paintIcon(c: Component?, g: Graphics?, x: Int, y: Int) {
+    }
+
+    override fun getIconWidth(): Int = width
+
+    override fun getIconHeight(): Int = height
   }
 }
