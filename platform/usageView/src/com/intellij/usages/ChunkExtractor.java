@@ -16,6 +16,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Segment;
@@ -193,7 +194,10 @@ public final class ChunkExtractor {
 
     boolean isBeginning = true;
 
-    for (; lexer.getTokenType() != null; lexer.advance()) {
+    for (int j = 0; lexer.getTokenType() != null; lexer.advance(), j++) {
+      if (j % 1000 == 0) {
+        ProgressManager.checkCanceled();
+      }
       int hiStart = lexer.getTokenStart();
       int hiEnd = lexer.getTokenEnd();
       if (hiStart >= end) {
