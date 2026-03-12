@@ -473,13 +473,20 @@ Most likely there was an uncaught exception in asynchronous execution that resul
 
   protected final void invokeSetUp() throws Exception {
     long setupStart = System.nanoTime();
-    setUp();
+    TestLoggerFactory.onFixturesInitializationStarted(false);
+    try {
+      setUp();
+    }
+    finally {
+      TestLoggerFactory.onFixturesInitializationFinished(false);
+    }
     long setupCost = (System.nanoTime() - setupStart) / 1000000;
     logPerClassCost((int)setupCost, TOTAL_SETUP_COST_MILLIS, TOTAL_SETUP_COUNT);
   }
 
   protected void invokeTearDown() throws Exception {
     long teardownStart = System.nanoTime();
+    TestLoggerFactory.onFixturesDisposeStart(false);
     tearDown();
     long teardownCost = (System.nanoTime() - teardownStart) / 1000000;
     logPerClassCost((int)teardownCost, TOTAL_TEARDOWN_COST_MILLIS, TOTAL_TEARDOWN_COUNT);
