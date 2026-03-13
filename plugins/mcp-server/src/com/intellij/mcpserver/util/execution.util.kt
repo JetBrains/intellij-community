@@ -1,6 +1,7 @@
 package com.intellij.mcpserver.util
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters
+import com.intellij.execution.ExecutionManager
 import com.intellij.execution.Executor
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
@@ -24,10 +25,11 @@ import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.mcpCallInfo
 import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.settings.McpServerSettings
+import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Document
@@ -37,6 +39,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
@@ -51,24 +54,30 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.rows
 import com.intellij.ui.dsl.builder.text
 import com.intellij.usageView.UsageViewUtil
+import com.intellij.util.AwaitCancellationAndInvoke
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.containers.TreeTraversal
+import com.intellij.util.io.createDirectories
+import com.intellij.util.io.sanitizeFileName
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import java.nio.file.Files
+import java.nio.file.Path
 import javax.swing.Action
 import javax.swing.JComponent
+import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
 import kotlin.time.Duration.Companion.milliseconds
 
-private object RunConfigurationExecutionLogMarker
-private val executionLogger = logger<RunConfigurationExecutionLogMarker>()
+private val logger = fileLogger()
 
 suspend fun checkUserConfirmationIfNeeded(@NlsContexts.Label notificationText: String, command: String?, project: Project) {
 
@@ -197,9 +206,17 @@ internal data class ResolvedRunConfiguration(
 )
 
 internal data class RunConfigurationExecutionOutput(
+  val sessionId: String,
   val exitCode: Int?,
   val output: String,
-  val fullOutputPath: String?,
+  val outputPath: Path?,
+)
+
+private data class StartedRunConfigurationExecution(
+  val descriptor: RunContentDescriptor,
+  val sessionId: String,
+  val exitCodeDeferred: CompletableDeferred<Int>,
+  val outputCollector: OutputCollector,
 )
 
 internal fun resolveRunConfigurationExecutionTarget(
@@ -258,8 +275,7 @@ internal suspend fun executeResolvedRunConfiguration(
   project: Project,
   resolvedConfiguration: ResolvedRunConfiguration,
   timeout: Int,
-  maxLinesCount: Int,
-  truncateMode: TruncateMode,
+  waitForExit: Boolean,
   isDebug: Boolean,
 ): RunConfigurationExecutionOutput {
   val executor = if (isDebug) {
@@ -268,14 +284,52 @@ internal suspend fun executeResolvedRunConfiguration(
   else {
     DefaultRunExecutor.getRunExecutorInstance() ?: mcpFail("Execution is not supported in this environment or IDE")
   }
-  val exitCodeDeferred = CompletableDeferred<Int>()
-  val outputBuilder = StringBuilder()
+  val startedExecution = startResolvedRunConfiguration(
+    project = project,
+    resolvedConfiguration = resolvedConfiguration,
+    executor = executor,
+  )
+  val exitCode = if (waitForExit) awaitExitCode(startedExecution.exitCodeDeferred, timeout) else null
+  if (exitCode != null) {
+    logger.trace { "Execution finished with exit code $exitCode. Closing collector..." }
+    startedExecution.outputCollector.close()
+    // wait for all output is written
+    logger.trace { "Waiting for output drain..." }
+    startedExecution.outputCollector.waitForDrain()
+    // if process exited and output is not big/truncated, delete output file, because the whole output will be returned in the result
+    if (!startedExecution.outputCollector.isOutputPreviewTruncated) {
+      logger.trace { "Output is truncated. Scheduling temp file deletion: ${startedExecution.outputCollector.outputPath}..." }
+      McpServerService.getInstance().cs.launch(Dispatchers.IO) {
+        try {
+          logger.trace { "Deleting temp file: ${startedExecution.outputCollector.outputPath}..." }
+          startedExecution.outputCollector.outputPath.deleteIfExists()
+        }
+        catch (_: Exception) {
+          logger.trace { "Failed to delete temp file: ${startedExecution.outputCollector.outputPath}." }
+        }
+      }
+    }
+  }
+
+  return RunConfigurationExecutionOutput(
+    sessionId = startedExecution.sessionId,
+    exitCode = exitCode,
+    output = startedExecution.outputCollector.getOutputPreview(),
+    // add output file only if process is running or output is truncated, otherwise file
+    outputPath = if (exitCode == null || startedExecution.outputCollector.isOutputPreviewTruncated) startedExecution.outputCollector.outputPath else null
+  )
+}
+
+private suspend fun startResolvedRunConfiguration(
+  project: Project,
+  resolvedConfiguration: ResolvedRunConfiguration,
+  executor: Executor,
+): StartedRunConfigurationExecution {
+  val startedDeferred = CompletableDeferred<StartedRunConfigurationExecution>()
 
   withContext(Dispatchers.EDT) {
     val runner: ProgramRunner<*>? = ProgramRunner.getRunner(executor.id, resolvedConfiguration.runConfiguration)
     if (runner == null) mcpFail("No suitable runner found for configuration '${resolvedConfiguration.settings.name}'")
-
-    val callback = createProcessCallback(exitCodeDeferred, outputBuilder)
 
     val environment = createExecutionEnvironment(
       project = project,
@@ -284,67 +338,98 @@ internal suspend fun executeResolvedRunConfiguration(
       useOriginalSettings = resolvedConfiguration.useOriginalSettings,
       runnerAndConfigurationSettings = resolvedConfiguration.settings,
     )
-    environment.callback = callback
+    environment.callback = createProcessCallback(
+      project = project,
+      executorId = executor.id,
+      sessionName = resolvedConfiguration.settings.name,
+      startedDeferred = startedDeferred,
+    )
     runner.execute(environment)
   }
 
-  val exitCode = awaitExitCode(exitCodeDeferred, timeout)
-  val fullOutput = outputBuilder.toString()
-  val output = truncateText(fullOutput, maxLinesCount = maxLinesCount, truncateMode = truncateMode)
-  val fullOutputPath = if (output.length != fullOutput.length) createTmpFile(fullOutput) else null
-
-  return RunConfigurationExecutionOutput(
-    exitCode = exitCode,
-    output = output,
-    fullOutputPath = fullOutputPath,
-  )
-}
-
-private fun createTmpFile(fullOutput: String): String? {
   return try {
-    val tmpFile = Files.createTempFile(PathManager.getTempDir(), "run-config-output", ".log")
-    Files.writeString(tmpFile, fullOutput)
-    tmpFile.toAbsolutePath().toString()
+    logger.trace { "Waiting for process start..." }
+    startedDeferred.await()
   }
   catch (e: Exception) {
     rethrowControlFlowException(e)
-    executionLogger.trace { "Failed to write full output to temp file: ${e.message}" }
-    null
+    logger.trace { "Execution failed: ${e.message}" }
+    mcpFail("Execution failed: ${e.message}")
   }
 }
 
 private fun createProcessCallback(
-  exitCodeDeferred: CompletableDeferred<Int>,
-  outputBuilder: StringBuilder,
+  project: Project,
+  executorId: String,
+  sessionName: String,
+  startedDeferred: CompletableDeferred<StartedRunConfigurationExecution>,
 ): ProgramRunner.Callback = object : ProgramRunner.Callback {
   override fun processNotStarted(error: Throwable?) {
-    exitCodeDeferred.completeExceptionally(
+    startedDeferred.completeExceptionally(
       error ?: IllegalStateException("Process not started by some reasons. Probably build process failed."))
   }
 
   override fun processStarted(descriptor: RunContentDescriptor) {
     val processHandler = descriptor.processHandler
     if (processHandler == null) {
-      exitCodeDeferred.completeExceptionally(
+      startedDeferred.completeExceptionally(
         IllegalStateException("Process handler is null even though RunContentDescriptor exists."))
       return
     }
 
+    val outputCollector = try {
+      val outputPath = createRunConfigurationOutputFile(sessionName)
+      // remove on IDE close
+      @OptIn(AwaitCancellationAndInvoke::class)
+      McpServerService.getInstance().cs.awaitCancellationAndInvoke(Dispatchers.IO) {
+        try {
+          outputPath.deleteIfExists()
+        }
+        catch (_: Exception) {
+          // ignore
+        }
+      }
+      OutputCollector(McpServerService.getInstance().cs, outputPath)
+    }
+    catch (e: Exception) {
+      rethrowControlFlowException(e)
+      processHandler.destroyProcess()
+      startedDeferred.completeExceptionally(IllegalStateException("Failed to create temp output file: ${e.message}", e))
+      return
+    }
+
+    val exitCodeDeferred = CompletableDeferred<Int>()
     processHandler.addProcessListener(object : ProcessListener {
       override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
         if (outputType == ProcessOutputTypes.SYSTEM) return
-        outputBuilder.append(event.text)
+        outputCollector.append(event.text)
       }
 
       override fun processTerminated(event: ProcessEvent) {
+        outputCollector.close()
         exitCodeDeferred.complete(event.exitCode)
       }
 
       override fun processNotStarted() {
+        outputCollector.close()
         exitCodeDeferred.completeExceptionally(
           IllegalStateException("Process explicitly reported as not started."))
       }
     })
+    val sessionId = buildExecutionSessionId(
+      project = project,
+      executorId = executorId,
+      sessionName = sessionName,
+      descriptor = descriptor,
+    )
+    startedDeferred.complete(
+      StartedRunConfigurationExecution(
+        descriptor = descriptor,
+        sessionId = sessionId,
+        exitCodeDeferred = exitCodeDeferred,
+        outputCollector = outputCollector,
+      )
+    )
     processHandler.startNotify()
   }
 }
@@ -356,10 +441,66 @@ private suspend fun awaitExitCode(exitCodeDeferred: CompletableDeferred<Int>, ti
     }
     catch (e: Exception) {
       rethrowControlFlowException(e)
-      executionLogger.trace { "Execution failed: ${e.message}" }
+      logger.trace { "Execution failed: ${e.message}" }
       mcpFail("Execution failed: ${e.message}")
     }
   }
+}
+
+private fun createRunConfigurationOutputFile(runConfigName: String): Path {
+  logger
+  return try {
+    Files.createTempFile(PathManager.getTempDir().createDirectories(), "ij_run_" + sanitizeFileName(runConfigName), ".log")
+  }
+  catch (e: Exception) {
+    rethrowControlFlowException(e)
+    throw e
+  }
+}
+
+internal fun buildExecutionSessionId(
+  sessionName: String,
+  executionId: Long?,
+  activeSessionNames: List<String>,
+): String {
+  val hasDuplicateName = activeSessionNames.count { it == sessionName } > 1
+  if (!hasDuplicateName) {
+    return sessionName
+  }
+  return if (executionId != null && executionId > 0) "$sessionName#$executionId" else sessionName
+}
+
+private fun buildExecutionSessionId(
+  project: Project,
+  executorId: String,
+  sessionName: String,
+  descriptor: RunContentDescriptor,
+): String {
+  val executionManager = ExecutionManager.getInstance(project)
+  val activeSessionNames = executionManager.getRunningDescriptors(Conditions.alwaysTrue())
+    .asSequence()
+    .filter { runningDescriptor -> executionManager.getExecutors(runningDescriptor).any { it.id == executorId } }
+    .mapNotNull(::extractExecutionSessionName)
+    .toMutableList()
+  if (!activeSessionNames.contains(sessionName)) {
+    activeSessionNames.add(sessionName)
+  }
+  return buildExecutionSessionId(sessionName, descriptor.executionId, activeSessionNames)
+}
+
+private fun extractExecutionSessionName(descriptor: RunContentDescriptor): String? {
+  return descriptor.runConfigurationName?.takeIf { it.isNotBlank() }
+         ?: descriptor.displayName?.takeIf { it.isNotBlank() }
+}
+
+internal fun truncateRunConfigurationPreviewLine(line: String): String {
+  return truncateText(
+    text = line,
+    maxLinesCount = 3,
+    maxTextLength = Constants.RUN_CONFIGURATION_PREVIEW_MAX_LINE_LENGTH - Constants.RUN_CONFIGURATION_PREVIEW_TRUNCATED_MARKER.length,
+    truncateMode = TruncateMode.NONE,
+    truncatedMarker = Constants.RUN_CONFIGURATION_PREVIEW_TRUNCATED_MARKER,
+  )
 }
 
 private fun createExecutionEnvironment(

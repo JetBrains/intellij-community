@@ -14,7 +14,6 @@ import com.intellij.mcpserver.project
 import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.util.RunPoint
-import com.intellij.mcpserver.util.TruncateMode
 import com.intellij.mcpserver.util.checkUserConfirmationIfNeeded
 import com.intellij.mcpserver.util.collectRunPoints
 import com.intellij.mcpserver.util.executeResolvedRunConfiguration
@@ -31,6 +30,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
+import kotlin.io.path.pathString
 
 class ExecutionToolset : McpToolset {
 
@@ -113,7 +113,13 @@ class ExecutionToolset : McpToolset {
     |
     |Pass either `configurationName`, or `filePath` together with `line`. These modes are mutually exclusive.
     |
-    |Returns the execution result including exit code, output, and success status.
+    |Behavior:
+    |- When `waitForExit=true`, waits up to `timeout` milliseconds for process termination. If the timeout expires,
+    |  the process keeps running in the background and `exitCode` is omitted from the result.
+    |- When `waitForExit=false`, waits only for the process to start, then returns immediately without applying `timeout`.
+    |- `fullOutputPath` points to a temp file with the full raw output and may continue growing while the process is alive.
+    |
+    |Returns the execution result including current output snapshot, optional exit code, and optional `fullOutputPath`.
   """)
   suspend fun execute_run_configuration(
     @McpDescription("Name of the existing run configuration to execute")
@@ -123,11 +129,9 @@ class ExecutionToolset : McpToolset {
     @McpDescription("1-based line number for `filePath`. Provide together with `filePath` and do not combine with `configurationName`.")
     line: Int? = null,
     @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION)
-    timeout: Int = Constants.LONG_TIMEOUT_MILLISECONDS_VALUE,
-    @McpDescription(Constants.MAX_LINES_COUNT_DESCRIPTION)
-    maxLinesCount: Int = Constants.MAX_LINES_COUNT_VALUE,
-    @McpDescription(Constants.TRUNCATE_MODE_DESCRIPTION)
-    truncateMode: TruncateMode = Constants.TRUCATE_MODE_VALUE,
+    timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE,
+    @McpDescription("Whether to wait for process termination. If false, the tool returns immediately after the process starts and ignores `timeout`.")
+    waitForExit: Boolean = true,
     @McpDescription("Optional program arguments override for this launch only. Missing/null or empty string keeps the existing value; whitespace-only string clears it.")
     programArguments: String? = null,
     @McpDescription("Optional working directory override for this launch only. Missing/null or empty string keeps the existing value; whitespace-only string clears it.")
@@ -140,13 +144,12 @@ class ExecutionToolset : McpToolset {
       filePath = filePath,
       line = line,
       timeout = timeout,
-      maxLinesCount = maxLinesCount,
-      truncateMode = truncateMode,
+      waitForExit = waitForExit,
       programArguments = programArguments,
       workingDirectory = workingDirectory,
       envs = envs,
       isDebug = false,
-    )
+    ).copy(sessionId = null) // reset sessionId because at the moment it's unnecessary for execution (not tools can use it)
   }
 
   // for start_debug_session
@@ -155,8 +158,7 @@ class ExecutionToolset : McpToolset {
     filePath: String? = null,
     line: Int? = null,
     timeout: Int,
-    maxLinesCount: Int,
-    truncateMode: TruncateMode,
+    waitForExit: Boolean,
     programArguments: String?,
     workingDirectory: String?,
     envs: Map<String, String>?,
@@ -192,15 +194,14 @@ class ExecutionToolset : McpToolset {
       project = project,
       resolvedConfiguration = resolvedConfiguration,
       timeout = timeout,
-      maxLinesCount = maxLinesCount,
-      truncateMode = truncateMode,
+      waitForExit = waitForExit,
       isDebug = isDebug,
     )
     return RunConfigurationResult(
+      sessionId = executionOutput.sessionId,
       exitCode = executionOutput.exitCode,
-      timedOut = executionOutput.exitCode == null,
       output = executionOutput.output,
-      fullOutputPath = executionOutput.fullOutputPath,
+      fullOutputPath = executionOutput.outputPath?.pathString,
     )
   }
 
@@ -239,16 +240,24 @@ class ExecutionToolset : McpToolset {
 
   @Serializable
   data class RunConfigurationResult @JvmOverloads constructor(
-    @property:McpDescription("Process exit code. Null when execution timed out before termination.")
+    @property:McpDescription("Process exit code. Absent when the tool returns before observing process termination, for example when `waitForExit=false` or when `timeout` expires.")
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
     val exitCode: Int? = null,
-    @property:McpDescription(Constants.TIMED_OUT_DESCRIPTION)
+
+    @Deprecated("To be removed")
+    @property:McpDescription("Deprecated")
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
     val timedOut: Boolean? = false,
-    @property:McpDescription("Captured process output. May be truncated according to `maxLinesCount` and `truncateMode`.")
+
+    @property:McpDescription("Captured process output snapshot. The snapshot includes up to the first ${Constants.RUN_CONFIGURATION_PREVIEW_MAX_LENGTH} characters of process output; when additional output exists, `<truncated>` is appended to the preview.")
     val output: String,
-    @property:McpDescription("Path to a temp file containing the full untruncated output. Present only when output was truncated. Use read_file to access the complete log.")
+
+    @property:McpDescription("Path to a temp file containing the full raw output. The file may continue growing while the process is still running.")
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
     val fullOutputPath: String? = null,
+
+    @property:McpDescription("Session identifier for this run. Uses the session name by default; if duplicate live run sessions exist, format is `<sessionName>#<executionId>`.")
+    @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
+    val sessionId: String? = null,
   )
 }
