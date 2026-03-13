@@ -196,9 +196,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
   ), productLayout = productLayout, layout = layout)
   addModule("stats.jar", sequenceOf(
     "intellij.platform.experiment",
-    "intellij.platform.statistics",
     "intellij.platform.statistics.uploader",
-    "intellij.platform.statistics.config",
   ), productLayout = productLayout, layout = layout)
   if (!productLayout.excludedModuleNames.contains("intellij.java.guiForms.rt")) {
     layout.withModule("intellij.java.guiForms.rt", "forms_rt.jar")

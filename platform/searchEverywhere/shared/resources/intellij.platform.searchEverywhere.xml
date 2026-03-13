@@ -10,6 +10,7 @@
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.scopes"/>
+    <module name="intellij.platform.statistics"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
