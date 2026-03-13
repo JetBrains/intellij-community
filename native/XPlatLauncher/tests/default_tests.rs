@@ -151,7 +151,7 @@ mod tests {
     }
 
     #[test]
-    fn missing_standard_vm_options_failure_test() {
+    fn missing_standard_vm_options_tolerance_test() {
         let test = prepare_test_env(LauncherLocation::Standard);
 
         let bin_dir = test.dist_root.join("bin");
@@ -162,8 +162,7 @@ mod tests {
             }
         }
 
-        let result = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump());
-        assert!(!result.exit_status.success(), "Expected to fail: {result:?}");
+        run_launcher_ext(&test, LauncherRunSpec::standard().assert_status());
     }
 
     #[test]

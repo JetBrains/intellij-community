@@ -321,7 +321,14 @@ impl DefaultLaunchConfiguration {
 }
 
 fn read_vm_options(path: &Path) -> Result<(Vec<String>, bool)> {
-    let file = File::open(path)?;
+    let result = File::open(path);
+    if let Err(e) = &result {
+        if e.kind() == std::io::ErrorKind::NotFound {
+            debug!("Not found: {path:?}");
+            return Ok((vec![], false));
+        }
+    }
+    let file = result?;
 
     let mut vm_options = Vec::with_capacity(50);
     for line in BufReader::new(file).lines() {
