@@ -287,6 +287,47 @@ class AgentChatEditorServiceTest {
   }
 
   @Test
+  fun testUpdateOpenChatTabPresentationNormalizesIncomingProjectPaths(): Unit = timeoutRunBlocking {
+    openChatInModal(
+      threadIdentity = "CODEX:thread-1",
+      shellCommand = codexCommand,
+      threadId = "thread-1",
+      threadTitle = "Initial title",
+      subAgentId = null,
+    )
+
+    val file = openedChatFiles().single()
+    val nonCanonicalThreadKey = "${file.projectPath}/" to file.threadIdentity
+    val updatedTabs = runInUi {
+      updateOpenAgentChatTabPresentation(
+        titleByPathAndThreadIdentity = mapOf(
+          nonCanonicalThreadKey to "Renamed by normalized source update",
+        ),
+        activityByPathAndThreadIdentity = mapOf(
+          nonCanonicalThreadKey to AgentThreadActivity.UNREAD,
+        ),
+      )
+    }
+    assertThat(updatedTabs).isEqualTo(1)
+
+    assertThat(file.threadTitle).isEqualTo("Renamed by normalized source update")
+    assertThat(file.threadActivity).isEqualTo(AgentThreadActivity.UNREAD)
+    assertThat(editorTabTitle(file)).isEqualTo("Renamed by normalized source update")
+
+    val unchangedTabs = runInUi {
+      updateOpenAgentChatTabPresentation(
+        titleByPathAndThreadIdentity = mapOf(
+          nonCanonicalThreadKey to "Renamed by normalized source update",
+        ),
+        activityByPathAndThreadIdentity = mapOf(
+          nonCanonicalThreadKey to AgentThreadActivity.UNREAD,
+        ),
+      )
+    }
+    assertThat(unchangedTabs).isEqualTo(0)
+  }
+
+  @Test
   fun testUpdateOpenChatTabPresentationDoesNotOverrideSubAgentTitle(): Unit = timeoutRunBlocking {
     openChatInModal(
       threadIdentity = "CODEX:thread-1",
