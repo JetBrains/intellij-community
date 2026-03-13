@@ -12,7 +12,7 @@
   </dependencies>
   <!-- endregion -->
   <actions>
-    <group id="BuildTree.Main" class="com.intellij.platform.buildView.BuildTreeMainContextMenuActionGroup"/>
+    <group id="BuildTree" class="com.intellij.platform.buildView.BuildTreeMainContextMenuActionGroup"/>
     <group id="BuildTree.FilteringAndNavigation" class="com.intellij.platform.buildView.BuildTreeFilteringAndNavigationContextMenuActionGroup"/>
     <group id="BuildView" class="com.intellij.platform.buildView.BuildViewToolbarActionGroup"/>
   </actions>

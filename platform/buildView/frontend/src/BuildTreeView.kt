@@ -196,7 +196,7 @@ internal class BuildTreeView(
   }
 
   private fun getContextMenuGroup() = DefaultActionGroup().apply {
-    addIfFound("BuildTree.Main")
+    addIfFound("BuildTree")
     addSeparator()
     if (backendNavigationAndFiltering) {
       addIfFound("BuildTree.FilteringAndNavigation")
