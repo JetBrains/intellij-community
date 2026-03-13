@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.imports;
 
@@ -515,9 +515,59 @@ public abstract class K2JvmOptimizeImportsTestGenerated extends AbstractK2JvmOpt
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("CompanionField.kt")
+            public void testCompanionField() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/kDoc/CompanionField.kt");
+            }
+
             @TestMetadata("extensionForBaseClassViaChildClass.kt")
             public void testExtensionForBaseClassViaChildClass() throws Exception {
                 runTest("../../idea/tests/testData/editor/optimizeImports/common/kDoc/extensionForBaseClassViaChildClass.kt");
+            }
+
+            @TestMetadata("KDocReferenceMemberFromBaseCompanion.kt")
+            public void testKDocReferenceMemberFromBaseCompanion() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/kDoc/KDocReferenceMemberFromBaseCompanion.kt");
+            }
+
+            @TestMetadata("KDocReferenceMemberFromBaseCompanionUnrelated.kt")
+            public void testKDocReferenceMemberFromBaseCompanionUnrelated() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/kDoc/KDocReferenceMemberFromBaseCompanionUnrelated.kt");
+            }
+
+            @TestMetadata("KDocReferenceMemberFromCompanion.kt")
+            public void testKDocReferenceMemberFromCompanion() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/kDoc/KDocReferenceMemberFromCompanion.kt");
+            }
+
+            @TestMetadata("KDocReferenceObjectMemberOnFunction.kt")
+            public void testKDocReferenceObjectMemberOnFunction() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/kDoc/KDocReferenceObjectMemberOnFunction.kt");
+            }
+
+            @TestMetadata("KDocReferenceObjectMemberOnObject.kt")
+            public void testKDocReferenceObjectMemberOnObject() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/kDoc/KDocReferenceObjectMemberOnObject.kt");
+            }
+
+            @TestMetadata("KDocReferenceObjectMemberOnObjectFromBase.kt")
+            public void testKDocReferenceObjectMemberOnObjectFromBase() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/kDoc/KDocReferenceObjectMemberOnObjectFromBase.kt");
+            }
+
+            @TestMetadata("KDocReferenceObjectMemberOnUnrelatedFunction.kt")
+            public void testKDocReferenceObjectMemberOnUnrelatedFunction() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/kDoc/KDocReferenceObjectMemberOnUnrelatedFunction.kt");
+            }
+
+            @TestMetadata("KDocReferenceObjectMemberOnUnrelatedFunction2.kt")
+            public void testKDocReferenceObjectMemberOnUnrelatedFunction2() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/kDoc/KDocReferenceObjectMemberOnUnrelatedFunction2.kt");
+            }
+
+            @TestMetadata("KDocReferenceObjectMemberOnUnrelatedFunctionSameObject.kt")
+            public void testKDocReferenceObjectMemberOnUnrelatedFunctionSameObject() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/kDoc/KDocReferenceObjectMemberOnUnrelatedFunctionSameObject.kt");
             }
 
             @TestMetadata("unresolvedNameInKDocDoesHoldImports.kt")
