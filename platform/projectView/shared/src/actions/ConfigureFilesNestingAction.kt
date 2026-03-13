@@ -6,12 +6,12 @@ import com.intellij.ide.projectView.impl.FileNestingInProjectViewDialog
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingModel
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService
 import com.intellij.ide.projectView.impl.ProjectViewState
+import com.intellij.ide.projectView.impl.isProjectViewSplit
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.platform.projectView.window.isProjectViewSplit
 import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 
 internal class ConfigureFilesNestingAction : DumbAwareAction(), ActionRemoteBehaviorSpecification {
