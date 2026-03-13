@@ -9,6 +9,7 @@ import com.intellij.ide.impl.ProjectViewSelectInGroupTarget
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.ide.projectView.impl.SelectInProjectViewImpl
+import com.intellij.ide.projectView.impl.isProjectViewSplit
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -115,14 +116,55 @@ internal class SelectFileAction : DumbAwareAction(), ActionRemoteBehaviorSpecifi
     return Selector(target, context)
   }
 
-  private fun getView(event: AnActionEvent) =
-    event.project?.let { ProjectView.getInstance(it) as? ProjectViewImpl }
+  private fun getView(event: AnActionEvent): View? =
+    if (isProjectViewSplit()) {
+      event.project
+        ?.let { project -> SelectInSplitProjectViewImpl.getInstance(project) }
+        ?.let { impl -> SplitView(impl) }
+    }
+    else {
+      event.project
+        ?.let { project -> ProjectView.getInstance(project) as? ProjectViewImpl }
+        ?.let { impl -> LegacyView(impl) }
+    }
 
   private fun getActionId(event: AnActionEvent) =
     when (event.getData(TOOL_WINDOW)?.id) {
       PROJECT_VIEW -> SELECT_OPENED_FILE
       else -> SELECT_CONTEXT_FILE
     }
+}
+
+private sealed interface View {
+  val isSelectOpenedFileEnabled: Boolean
+  fun selectOpenedFileUsingLastFocusedEditor()
+  fun selectOpenedFile()
+}
+
+private class LegacyView(private val impl: ProjectViewImpl) : View {
+  override val isSelectOpenedFileEnabled: Boolean
+    get() = impl.isSelectOpenedFileEnabled
+
+  override fun selectOpenedFileUsingLastFocusedEditor() {
+    impl.selectOpenedFileUsingLastFocusedEditor()
+  }
+
+  override fun selectOpenedFile() {
+    impl.selectOpenedFile()
+  }
+}
+
+private class SplitView(private val impl: SelectInSplitProjectViewImpl): View {
+  override val isSelectOpenedFileEnabled: Boolean
+    get() = impl.isSelectOpenedFileEnabled()
+
+  override fun selectOpenedFileUsingLastFocusedEditor() {
+    impl.selectOpenedFile(EditorChoice.LAST_FOCUSED_ONLY)
+  }
+
+  override fun selectOpenedFile() {
+    impl.selectOpenedFile(EditorChoice.ALL_SELECTED)
+  }
 }
 
 private val SELECT_IN_LOG = logger<SelectInProjectViewImpl>()

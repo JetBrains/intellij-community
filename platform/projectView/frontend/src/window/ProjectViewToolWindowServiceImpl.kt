@@ -22,8 +22,10 @@ import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.platform.project.projectId
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.frontend.actions.ProjectViewActionSupportImpl
+import com.intellij.platform.projectView.frontend.impl.pane.TreeBasedFrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneProviderEP
+import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.projectViewPaneId
 import com.intellij.platform.projectView.rpc.ProjectViewRpc
@@ -74,6 +76,9 @@ internal class ProjectViewToolWindowServiceImpl(
     }
   }
   private val optionService = ProjectViewActionSupportImpl(currentPaneFlow)
+
+  override val currentPaneId: ProjectViewPaneId?
+    get() = currentPaneFlow.value?.id
 
   override fun getActionSupport(): ProjectViewActionSupport = optionService
 
@@ -255,6 +260,12 @@ internal class ProjectViewToolWindowServiceImpl(
   @RequiresEdt
   private fun removeContent(toolWindow: ToolWindow, content: Content) {
     toolWindow.contentManager.removeContent(content, true)
+  }
+
+  override suspend fun selectNode(nodePath: ProjectViewNodePath) {
+    val currentPane = currentPaneFlow.value ?: return
+    if (currentPane.id != nodePath.paneId) return // TODO make it possible to change the pane if needed
+    (currentPane as? TreeBasedFrontendProjectViewPane)?.selectNode(nodePath)
   }
 
   override fun getState(): Element = Element("projectView").also { element ->

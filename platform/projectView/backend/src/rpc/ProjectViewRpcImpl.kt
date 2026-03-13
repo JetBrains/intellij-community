@@ -3,7 +3,9 @@ package com.intellij.platform.projectView.backend.rpc
 
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
+import com.intellij.platform.projectView.actions.EditorChoice
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneService
+import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
@@ -44,5 +46,9 @@ internal class ProjectViewRpcImpl : ProjectViewRpc {
     return BackendProjectViewPaneService.getInstanceSuspend(projectId.findProject()).getPaneStateFlow(paneId).map {
       it.toDTO()
     }
+  }
+
+  override suspend fun findNodeForOpenedFile(projectId: ProjectId, paneId: ProjectViewPaneId, editorChoice: EditorChoice): ProjectViewNodePath? {
+    return BackendProjectViewPaneService.getInstanceSuspend(projectId.findProject()).findNodeForOpenedFile(paneId, editorChoice)
   }
 }

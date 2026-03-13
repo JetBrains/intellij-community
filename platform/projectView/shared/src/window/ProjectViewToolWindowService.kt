@@ -5,6 +5,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
+import com.intellij.platform.projectView.pane.ProjectViewNodePath
+import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
@@ -13,9 +15,15 @@ interface ProjectViewToolWindowService {
   companion object {
     @JvmStatic fun getInstance(project: Project): ProjectViewToolWindowService = project.service()
   }
+
+  val currentPaneId: ProjectViewPaneId?
+
   @RequiresEdt
   fun setupToolWindow(toolWindow: ToolWindow)
-  suspend fun manageToolWindow(toolWindow: ToolWindow)
-  fun getActionSupport(): ProjectViewActionSupport
-}
 
+  suspend fun manageToolWindow(toolWindow: ToolWindow)
+
+  fun getActionSupport(): ProjectViewActionSupport
+
+  suspend fun selectNode(nodePath: ProjectViewNodePath)
+}

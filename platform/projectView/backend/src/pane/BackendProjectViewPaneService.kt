@@ -5,6 +5,8 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
+import com.intellij.platform.projectView.actions.EditorChoice
+import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
@@ -72,5 +74,11 @@ internal class BackendProjectViewPaneService(
   
   fun getPane(paneId: ProjectViewPaneId): BackendProjectViewPane? {
     return panes.load()?.get(paneId)
+  }
+
+  suspend fun findNodeForOpenedFile(paneId: ProjectViewPaneId, editorChoice: EditorChoice): ProjectViewNodePath? {
+    val panes = panes.load() ?: return null
+    val pane = panes[paneId] ?: return null
+    return pane.findNodeForEditor(editorChoice)
   }
 }

@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -33,6 +34,7 @@ import com.intellij.platform.projectView.pane.ProjectViewChildrenLoaded
 import com.intellij.platform.projectView.pane.ProjectViewChildrenRemoved
 import com.intellij.platform.projectView.pane.ProjectViewNodeAdded
 import com.intellij.platform.projectView.pane.ProjectViewNodeModel
+import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewNodeUpdated
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeFileNestingRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeOptionValueRequest
@@ -47,21 +49,29 @@ import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.SuperRootModel
 import com.intellij.pom.Navigatable
 import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.ui.treeStructure.TreeNodePresentation
 import com.intellij.ui.treeStructure.TreeNodePresentationImpl
 import com.intellij.ui.treeStructure.TreeNodeWithPresentation
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EditSourceOnEnterKeyHandler
+import com.intellij.util.ui.tree.TreeUtil
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.withContext
 import org.jdom.Element
 import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
 import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.TreePath
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
@@ -93,6 +103,8 @@ internal abstract class TreeBasedFrontendProjectViewPane(
   private val nodeById = hashMapOf<Long, Node>().also { 
     it[SUPER_ROOT_ID] = Node(SuperRootModel)
   }
+
+  private val updateEpoch = MutableStateFlow(0L)
   
   override val component: JComponent
     get() = contentPanel
@@ -190,6 +202,7 @@ internal abstract class TreeBasedFrontendProjectViewPane(
         optionSupport.updateActionState(event.actionState)
       }
     }
+    updateEpoch.update { it + 1 }
   }
 
   private fun getNodeById(id: Long): Node? {
@@ -210,6 +223,26 @@ internal abstract class TreeBasedFrontendProjectViewPane(
     nodeById.remove(node.projectViewNode.id)
     for (node in node.children()) {
       removeNode(node as Node)
+    }
+  }
+
+  suspend fun selectNode(nodePath: ProjectViewNodePath) {
+    withContext(Dispatchers.UI) {
+      val treePath = awaitNodePath(nodePath.nodeIds.last())
+      TreeUtil.selectPath(tree, treePath)
+    }
+  }
+
+  private suspend fun awaitNodePath(nodeId: Long): TreePath {
+    var epoch = 0L
+    while (true) {
+      val node = nodeById[nodeId]
+      if (node == null) {
+        epoch = updateEpoch.first { it > epoch }
+      }
+      else {
+        return CachingTreePath(node.path)
+      }
     }
   }
 

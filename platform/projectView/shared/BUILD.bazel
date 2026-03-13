@@ -36,6 +36,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/util/jdom",
     "//platform/lang-api:lang",
+    "//platform/analysis-api:analysis",
   ]
 )
 
@@ -63,6 +64,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel_test_lib",
     "//platform/util/jdom:jdom_test_lib",
     "//platform/lang-api:lang_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.projectView` end

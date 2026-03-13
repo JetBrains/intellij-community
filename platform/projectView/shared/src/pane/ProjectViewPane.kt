@@ -36,6 +36,16 @@ val PROJECT_VIEW_SELECTED_NODE_IDS_KEY: DataKey<List<Long>> = DataKey.create("Pr
 @ApiStatus.Internal
 fun projectViewPaneId(idString: @NonNls String): ProjectViewPaneId = ProjectViewPaneIdImpl(idString)
 
+@ApiStatus.Internal
+@Serializable
+sealed interface ProjectViewNodePath {
+  val paneId: ProjectViewPaneId
+  val nodeIds: List<Long>
+}
+
+@ApiStatus.Internal
+fun projectViewNodePath(paneId: ProjectViewPaneId, nodeIds: List<Long>): ProjectViewNodePath = ProjectViewNodePathImpl(paneId, nodeIds)
+
 internal class ProjectViewPaneIdDataContextSerializer : CustomDataContextSerializer<ProjectViewPaneId> {
   override val key: DataKey<ProjectViewPaneId>
     get() = ProjectViewPaneId.DATA_KEY
@@ -54,3 +64,9 @@ internal class ProjectViewSelectedNodeIdsDataContextSerializer : CustomDataConte
 private data class ProjectViewPaneIdImpl(
   override val idString: @NonNls String
 ) : ProjectViewPaneId
+
+@Serializable
+private data class ProjectViewNodePathImpl(
+  override val paneId: ProjectViewPaneId,
+  override val nodeIds: List<Long>,
+) : ProjectViewNodePath

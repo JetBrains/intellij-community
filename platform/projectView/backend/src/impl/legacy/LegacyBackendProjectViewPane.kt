@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(ExperimentalAtomicApi::class)
+
 package com.intellij.platform.projectView.backend.impl.legacy
 
 import com.intellij.ide.projectView.NodeSortKey
@@ -8,6 +10,7 @@ import com.intellij.ide.projectView.impl.ProjectViewFileNestingService
 import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.ide.projectView.impl.ProjectViewState
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
+import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
 import com.intellij.openapi.actionSystem.LangDataKeys
@@ -21,6 +24,7 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.navigation.NavigationService
+import com.intellij.platform.projectView.actions.EditorChoice
 import com.intellij.platform.projectView.actions.FileNestingState
 import com.intellij.platform.projectView.actions.NestingRuleState
 import com.intellij.platform.projectView.actions.ProjectViewActionState
@@ -31,6 +35,7 @@ import com.intellij.platform.projectView.actions.legacyProjectViewOption
 import com.intellij.platform.projectView.actions.toNestingRuleState
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPane
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneProvider
+import com.intellij.platform.projectView.backend.pane.id
 import com.intellij.platform.projectView.backend.pane.projectViewPaneStateBuilder
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
 import com.intellij.platform.projectView.pane.ProjectViewActionStateEvent
@@ -39,6 +44,7 @@ import com.intellij.platform.projectView.pane.ProjectViewChildrenLoaded
 import com.intellij.platform.projectView.pane.ProjectViewChildrenRemoved
 import com.intellij.platform.projectView.pane.ProjectViewNodeAdded
 import com.intellij.platform.projectView.pane.ProjectViewNodeModel
+import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewNodeUpdated
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeFileNestingRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeOptionValueRequest
@@ -52,6 +58,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneSelectionChanged
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.SuperRoot
+import com.intellij.platform.projectView.pane.projectViewNodePath
 import com.intellij.platform.projectView.pane.projectViewPaneId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
@@ -77,13 +84,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.event.TreeModelEvent
 import javax.swing.event.TreeModelListener
+import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
+import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.coroutines.resume
 
 internal class LegacyBackendProjectViewPaneProvider : BackendProjectViewPaneProvider {
   override fun createPanes(project: Project): List<BackendProjectViewPane> {
@@ -115,10 +127,12 @@ private class LegacyBackendProjectViewPaneService(
 }
 
 private class LegacyBackendProjectViewPane(
-  project: Project,
+  private val project: Project,
   private val legacyPaneManager: AbstractProjectViewPaneStateManager,
   private val subId: String?,
 ) : BackendProjectViewPane {
+  private val managerRequestChannel = legacyPaneManager.getRequestChannel()
+
   override val descriptor: ProjectViewPaneDescriptor = ProjectViewPaneDescriptor(
     id = projectViewPaneId(if (subId == null) legacyPaneManager.id else "${legacyPaneManager.id}:$subId"),
     presentableName = if (subId == null) legacyPaneManager.legacyPane.title else legacyPaneManager.legacyPane.getPresentableSubIdName(subId),
@@ -134,9 +148,8 @@ private class LegacyBackendProjectViewPane(
         legacyPaneManager.managePane(descriptor.id)
       }
       launch(CoroutineName("Manage request channel ${descriptor.id}")) {
-        val targetChannel = legacyPaneManager.getRequestChannel()
         for (request in requestChannel) {
-          targetChannel.send(request)
+          managerRequestChannel.send(request)
         }
       }
     }
@@ -154,6 +167,55 @@ private class LegacyBackendProjectViewPane(
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
     val selectedIds = snapshot[PROJECT_VIEW_SELECTED_NODE_IDS_KEY] ?: return
     legacyPaneManager.uiDataSnapshot(sink, selectedIds)
+  }
+
+  override suspend fun findNodeForEditor(editorChoice: EditorChoice): ProjectViewNodePath? {
+    return withContext(Dispatchers.UI) {
+      val impl = ProjectViewImpl.getInstance(project) as ProjectViewImpl
+      val tree = legacyPaneManager.legacyPane.tree
+      tree.selectionPath = null
+      // suspendCancellableCoroutine makes listener deregistration incredibly tricky, so let's put it outside it
+      val captureSelection = AtomicReference<((TreePath?) -> Unit)?>(null)
+      val selectionListener = TreeSelectionListener { event ->
+        captureSelection.load()?.invoke(event.newLeadSelectionPath)
+      }
+      val selectedPath = try {
+        tree.addTreeSelectionListener(selectionListener)
+        suspendCancellableCoroutine { continuation ->
+          captureSelection.store { selectionPath ->
+            continuation.resume(selectionPath)
+          }
+          if (editorChoice == EditorChoice.LAST_FOCUSED_ONLY && AppMode.isMonolith()) { // in remdev, "last focused" isn't very meaningful
+            impl.selectOpenedFileUsingLastFocusedEditor()
+          }
+          else {
+            impl.selectOpenedFile()
+          }
+          continuation.invokeOnCancellation { captureSelection.store(null) }
+        }
+      }
+      finally {
+        tree.removeTreeSelectionListener(selectionListener)
+      }
+      selectedPath?.load()
+    }
+  }
+
+  private suspend fun TreePath.load(): ProjectViewNodePath? {
+    val ids = loadIds(this) ?: return null
+    return projectViewNodePath(id, ids)
+  }
+
+  private suspend fun loadIds(path: TreePath): List<Long>? {
+    if (path.parentPath == null) {
+      val id = legacyPaneManager.loadNode(SUPER_ROOT_ID, path.lastPathComponent)?.id ?: return null
+      return listOf(id)
+    }
+    else {
+      val parentIds = loadIds(path.parentPath) ?: return null
+      val id = legacyPaneManager.loadNode(parentIds.last(), path.lastPathComponent)?.id ?: return null
+      return parentIds + id
+    }
   }
 }
 
@@ -186,6 +248,8 @@ private class AbstractProjectViewPaneStateManager(
   private val nodeById = hashMapOf<Long, LegacyProjectViewNode>()
 
   private val nodeByModelNode = hashMapOf<Any, LegacyProjectViewNode>()
+
+  private val updateEpochFlow = MutableStateFlow(0L)
   
   private lateinit var treeModel: AsyncTreeModel
   
@@ -203,6 +267,29 @@ private class AbstractProjectViewPaneStateManager(
   fun getRequestChannel(): SendChannel<ProjectViewPaneRequest> = requestChannel
   
   fun getStateFlow(): Flow<ProjectViewPaneStateEvent> = stateBuilder.getStateFlow()
+
+  suspend fun loadNode(parentId: Long, modelChild: Any): LegacyProjectViewNode? {
+    return withContext(Dispatchers.UI) { // our data structures are EDT-only and updates happen there too
+      var updateEpoch = updateEpochFlow.value
+      var result: LegacyProjectViewNode? = null
+      while (true) {
+        val child = nodeByModelNode[modelChild]
+        // Already loaded? Just return it.
+        if (child != null) {
+          result = child
+          break
+        }
+        // The parent doesn't exist? Can't do anything then.
+        val parent = nodeById[parentId] ?: break
+        // The children are already loaded and the child isn't there? Can't do anything. Likely it was just removed.
+        if (parent.childrenState == ChildrenState.LOADED) break
+        // The children not loaded? Request and wait.
+        requestChannel.send(ProjectViewPaneLoadChildrenRequest(parentId))
+        updateEpoch = updateEpochFlow.first { it > updateEpoch }
+      }
+      result
+    }
+  }
 
   suspend fun managePane(paneId: ProjectViewPaneId) {
     activePanes.update { it + paneId }
@@ -235,6 +322,7 @@ private class AbstractProjectViewPaneStateManager(
               val event = buildStateUpdateEvent(request)
               LOG.trace { "Applying state update for pane $id: $event" }
               stateBuilder.updateState(event)
+              updateEpochFlow.update { it + 1 }
             }
           }
           launch(CoroutineName("requests from the frontend")) {
