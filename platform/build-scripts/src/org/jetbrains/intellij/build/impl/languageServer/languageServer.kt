@@ -4,10 +4,9 @@ package org.jetbrains.intellij.build.impl.languageServer
 import com.intellij.platform.buildData.productInfo.CustomCommandLaunchData
 import org.jetbrains.intellij.build.BuildContext
 
-internal fun generateLspServerLaunchData(ideContext: BuildContext): CustomCommandLaunchData {
-  return CustomCommandLaunchData(
-    commands = listOf("run"),
-    bootClassPathJarNames = ideContext.bootClassPathJarNames,
-    mainClass = "com.jetbrains.ls.kotlinLsp.KotlinLspServerKt",
-  )
-}
+internal fun generateLspServerLaunchData(ideContext: BuildContext): CustomCommandLaunchData = CustomCommandLaunchData(
+  commands = listOf("run"),
+  vmOptionsFilePath = "bin/lsp-server.vmoptions",
+  bootClassPathJarNames = ideContext.bootClassPathJarNames,
+  mainClass = "com.jetbrains.ls.kotlinLsp.KotlinLspServerKt",
+)

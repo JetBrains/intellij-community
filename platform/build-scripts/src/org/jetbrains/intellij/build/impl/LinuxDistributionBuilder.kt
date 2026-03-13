@@ -397,7 +397,7 @@ class LinuxDistributionBuilder(
                 "bin/${it.productProperties.baseFileName}64.vmoptions"
               },
               generateQodanaLaunchData(context, arch, OsFamily.LINUX),
-              generateStdioMcpRunnerLaunchData(context)
+              generateStdioMcpRunnerLaunchData(context, OsFamily.LINUX)
             )
           }
         )
