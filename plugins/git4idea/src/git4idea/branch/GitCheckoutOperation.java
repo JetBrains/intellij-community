@@ -24,6 +24,7 @@ import git4idea.GitActivity;
 import git4idea.GitProtectedBranchesKt;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
+import git4idea.commands.GitBranchAlreadyCheckedOutInWorktreeDetector;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
 import git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector;

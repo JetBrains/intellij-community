@@ -23,6 +23,7 @@ import git4idea.GitLocalBranch;
 import git4idea.GitNotificationIdsHolder;
 import git4idea.GitRemoteBranch;
 import git4idea.commands.Git;
+import git4idea.commands.GitBranchCheckedOutInWorktreeDeleteDetector;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
 import git4idea.commands.GitLineHandlerListener;
