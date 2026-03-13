@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.inspections
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
@@ -9,8 +9,8 @@ import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import org.jetbrains.idea.maven.buildtool.quickfix.AddModelVersionQuickFix
 import org.jetbrains.idea.maven.buildtool.quickfix.UpdateXmlsTo410
 import org.jetbrains.idea.maven.dom.MavenDomBundle
+import org.jetbrains.idea.maven.dom.MavenDomUtil.isAtLeastMaven4
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
-import org.jetbrains.idea.maven.utils.MavenUtil
 
 class MavenModelVersionMissedInspection : BasicDomElementsInspection<MavenDomProjectModel?>(MavenDomProjectModel::class.java) {
   override fun getGroupDisplayName(): String {
@@ -27,10 +27,7 @@ class MavenModelVersionMissedInspection : BasicDomElementsInspection<MavenDomPro
   ) {
     val projectModel = domFileElement.getRootElement()
     if (projectModel.modelVersion.exists()) return
-    val rootTag = domFileElement.rootTag
-    if (MavenUtil.isMaven410(
-        rootTag?.getAttribute("xmlns")?.value,
-        rootTag?.getAttribute("xsi:schemaLocation")?.value)) return
+    if (isAtLeastMaven4(domFileElement.file.virtualFile, domFileElement.file.project)) return
     holder.createProblem(projectModel,
                          HighlightSeverity.ERROR,
                          MavenDomBundle.message("inspection.missed.model.version"),
