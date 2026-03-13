@@ -1,18 +1,29 @@
 ---
 name: Agent Sessions New-Session Actions
-description: Requirements for Swing tree new-thread affordances, provider selection popup, and service-level creation flow.
+description: Requirements for tree and editor-tab new-thread affordances, dedicated-frame multi-project source selection, provider selection popup parity, and service-level creation flow.
 targets:
-  - ../../sessions/src/AgentSessionsToolWindow.kt
-  - ../../sessions/src/SessionTree.kt
-  - ../../sessions/src/AgentSessionsTreePopupActions.kt
+  - ../../sessions-toolwindow/src/ui/AgentSessionsToolWindow.kt
+  - ../../sessions-toolwindow/src/tree/SessionTree.kt
+  - ../../sessions-toolwindow/src/actions/AgentSessionsTreePopupActions.kt
+  - ../../sessions-actions/src/actions/AgentSessionsEditorTabNewThreadActions.kt
   - ../../sessions/src/service/AgentSessionLaunchService.kt
-  - ../../sessions/src/AgentSessionCli.kt
+  - ../../sessions/src/service/AgentSessionProjectCatalog.kt
+  - ../../sessions/src/service/AgentSessionProjectPresentation.kt
+  - ../../sessions/src/util/AgentSessionCli.kt
+  - ../../chat/src/AgentChatFileEditor.kt
+  - ../../sessions/resources/intellij.agent.workbench.sessions.xml
+  - ../../sessions-actions/resources/intellij.agent.workbench.sessions.actions.xml
   - ../../codex/sessions/src/CodexAgentSessionProviderBridge.kt
   - ../../codex/sessions/src/backend/CodexSessionBackendSelector.kt
   - ../../sessions/resources/messages/AgentSessionsBundle.properties
   - ../../chat/testSrc/AgentChatEditorServiceTest.kt
-  - ../../sessions/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
+  - ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+  - ../../sessions-toolwindow/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
+  - ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
+  - ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  - ../../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
   - ../../sessions/testSrc/AgentSessionCliTest.kt
+  - ../../sessions/testSrc/AgentSessionProjectCatalogTest.kt
   - ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
   - ../../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
 ---
@@ -20,12 +31,13 @@ targets:
 # Agent Sessions New-Session Actions
 
 Status: Draft
-Date: 2026-02-24
+Date: 2026-03-13
 
 ## Summary
 Define project/worktree `New Thread` behavior in the Swing tree implementation:
 - hover/selection row affordances,
 - quick-create with last used provider,
+- explicit source-project selection in dedicated-frame multi-project editor tabs,
 - provider popup with Standard and YOLO entries,
 - creation-flow deduplication and Codex pending-to-concrete identity rebinding.
 
@@ -34,6 +46,8 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 ## Goals
 - Keep new-thread behavior identical for project and worktree rows.
 - Keep provider and YOLO mode choices explicit and testable.
+- Keep tree and editor-tab new-thread controls consistent in labels, provider order, and mode sections.
+- Keep source-project selection explicit and predictable in dedicated-frame multi-project mode.
 - Prevent duplicate creation from repeated clicks.
 - Keep Codex pending-thread creation flow compatible with rollout-default discovery.
 
@@ -44,27 +58,53 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 
 ## Requirements
 - Project/worktree rows must expose new-session affordances only when rows are hovered or selected.
-  [@test] ../../sessions/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
 
 - Loading project/worktree rows must suppress new-session affordances.
-  [@test] ../../sessions/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
 
-- Quick-provider action (when eligible) must launch standard mode with `lastUsedProvider`.
-  [@test] ../../sessions/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
+- Quick-provider action (when eligible) must use `lastUsedProvider` and `lastUsedLaunchMode`; defaults to `STANDARD` when no launch mode preference is stored.
+- Quick-provider action launches directly when the source project is unambiguous.
+- In dedicated-frame editor tabs with multiple distinct source-project candidates, quick-provider action must show an anchored IntelliJ action-system popup of source projects under the quick-provider control when a UI anchor component is available; selecting a project launches with the resolved quick provider and launch mode.
+- When no UI anchor component is available for the quick-provider invocation, the source-project popup may fall back to IntelliJ best-position placement.
+- Quick-provider action and provider-popup entries must follow the global dedicated-frame routing policy; they do not force the clicked source frame.
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
+  [@test] ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
 
 - Quick-provider eligibility must require:
   - a non-null `lastUsedProvider`,
-  - bridge support for `STANDARD`.
-  [@test] ../../sessions/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
+  - bridge support for the resolved launch mode (`STANDARD` or `YOLO`); falls back to `STANDARD` when the last-used provider does not support the stored launch mode.
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
 
 - Provider popup must include Standard entries and YOLO entries (`toolwindow.action.new.session.section.auto`) when launch mode support is available.
-  [@test] ../../sessions/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
+  [@test] ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
+
+- Tree popup new-thread action must resolve launch context from tree rows only; editor-tab context must use dedicated editor-tab actions.
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
+
+- Editor-tab new-thread controls must expose two separate actions:
+  - quick-provider action that launches with `lastUsedProvider` and `lastUsedLaunchMode` when the source project is unambiguous, and switches to an anchored source-project popup in dedicated-frame multi-project mode,
+  - popup-only Add action with provider entries and optional YOLO section, and in dedicated-frame multi-project mode it must first group entries by source project.
+  [@test] ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  [@test] ../../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
+
+- Dedicated-frame multi-project source-project labels in editor-tab new-thread popups must reuse the sessions tree naming policy:
+  - prefer `RecentProjectsManager.getDisplayName(path)`,
+  - then `RecentProjectsManager.getProjectName(path)`,
+  - then open `project.name`,
+  - then path fallback,
+  - and when multiple candidates still resolve to the same label, fall back to the full normalized path for those conflicting entries.
+  [@test] ../../sessions/testSrc/AgentSessionProjectCatalogTest.kt
+  [@test] ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
 
 - Swing row popup implementation must use IntelliJ action-system popup infrastructure; no Compose popup code is allowed.
-  [@test] ../../sessions/testSrc/AgentSessionsToolWindowFactorySwingTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsToolWindowFactorySwingTest.kt
 
 - Service entry point must be `AgentSessionLaunchService.createNewSession(path, provider, mode, currentProject)`.
-  [@test] ../../sessions/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
 
 - `createNewSession` must deduplicate in-flight actions by normalized `path + provider + mode` using single-flight `DROP` semantics.
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
@@ -93,7 +133,7 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 
 - When automatic pending-Codex matching is ambiguous or unmatched, users must be able to manually rebind from editor tab actions via `Bind Pending Codex Thread`.
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
-  [@test] ../../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  [@test] ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
 - `Codex (Full Auto)` semantics are defined by command mapping and require no additional warning text in this flow.
@@ -101,8 +141,12 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 
 ## User Experience
 - Hovering a project/worktree row reveals new-thread controls without opening the project.
-- Quick-provider icon enables one-click repeat creation.
+- Quick-provider icon enables one-click repeat creation when the source project is unambiguous.
 - Provider popup keeps normal and YOLO options explicit.
+- Editor tabs expose the same quick-provider + Add-popup language as tree new-thread actions.
+- In dedicated-frame multi-project mode, the editor-tab quick-provider source-project popup opens under the clicked quick-provider control when possible, with best-position fallback only for non-anchored invocations.
+- In dedicated-frame multi-project mode, the editor-tab Add action remains an anchored popup affordance for explicit source-project selection.
+- Source-project labels in dedicated-frame editor-tab new-thread popups match the sessions tree, and collisions fall back to full path labels.
 
 ## Data & Backend
 - Codex creation flow starts with pending identity and is resolved asynchronously on provider refresh.
@@ -114,6 +158,10 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 
 ## Testing / Local Run
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsSwingNewSessionActionsTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsTreePopupActionsTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsEditorTabActionsTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsGearActionsTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionProjectCatalogTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionCliTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionRefreshCoordinatorTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexAgentSessionProviderBridgeTest'`

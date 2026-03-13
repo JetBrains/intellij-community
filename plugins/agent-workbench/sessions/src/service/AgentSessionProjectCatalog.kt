@@ -8,6 +8,7 @@ import com.intellij.agent.workbench.sessions.git.GitWorktreeDiscovery
 import com.intellij.agent.workbench.sessions.git.GitWorktreeInfo
 import com.intellij.agent.workbench.sessions.git.shortBranchName
 import com.intellij.agent.workbench.sessions.git.worktreeDisplayName
+import com.intellij.agent.workbench.sessions.model.ProjectBuildSystemBadge
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.model.WorktreeEntry
 import com.intellij.ide.RecentProjectsManager
@@ -16,7 +17,6 @@ import com.intellij.ide.impl.ProjectUtil.isSameProject
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectOpenProcessor
@@ -25,13 +25,14 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import java.nio.file.InvalidPathException
-import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.invariantSeparatorsPathString
-import kotlin.io.path.name
+
+private val LOG = logger<AgentSessionProjectCatalog>()
 
 internal class AgentSessionProjectCatalog {
+  private val projectBuildSystemBadgeCache = ProjectBuildSystemBadgeCatalogCache()
+
   suspend fun collectProjects(): List<ProjectEntry> {
     val rawEntries = collectRawProjectEntries()
     if (rawEntries.isEmpty()) return emptyList()
@@ -377,21 +378,10 @@ private fun resolveProjectName(
   path: String,
   project: Project?,
 ): String {
-  val displayName = manager.getDisplayName(path).takeIf { !it.isNullOrBlank() }
-  if (displayName != null) return displayName
-  val projectName = manager.getProjectName(path)
-  if (projectName.isNotBlank()) return projectName
-  if (project != null) return project.name
-  return resolveProjectNameWithoutManager(path, project)
-}
-
-private fun resolveProjectNameWithoutManager(path: String, project: Project?): String {
-  if (project != null) return project.name
-  val fileName = try {
-    Path.of(path).name
-  }
-  catch (_: InvalidPathException) {
-    null
-  }
-  return fileName ?: FileUtilRt.toSystemDependentName(path)
+  return resolveAgentSessionProjectDisplayName(
+    path = path,
+    project = project,
+    recentProjectDisplayName = manager::getDisplayName,
+    recentProjectName = manager::getProjectName,
+  )
 }
