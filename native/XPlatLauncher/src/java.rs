@@ -36,7 +36,7 @@ static DEBUG_MODE: AtomicBool = AtomicBool::new(true);
 static HOOK_MESSAGES: Mutex<Option<Vec<String>>> = Mutex::new(None);
 
 extern "C" fn vfprintf_hook(fp: *const c_void, format: *const c_char, args: va_list::VaList<'_>) -> jint {
-    extern "C" {
+    unsafe extern "C" {
         fn vfprintf(fp: *const c_void, format: *const c_char, args: va_list::VaList<'_>) -> c_int;
         fn vsnprintf(s: *mut c_char, n: usize, format: *const c_char, args: va_list::VaList<'_>) -> c_int;
     }
@@ -325,10 +325,8 @@ fn call_main_method(mut jni_env: EnvUnowned<'_>, main_class_name: &str, args: Ve
         debug!("[JVM] Calling '{main_class_name}#main'");
         let main_class = env.find_class(JNIString::new(main_class_name.replace('.', "/")))?;
         let result = env.call_static_method(main_class, MAIN_METHOD_NAME, MAIN_METHOD_SIGNATURE, &main_args).map(|_| ());
-        if let Err(e) = &result {
-            if let jni::errors::Error::JavaException = e {
-                env.exception_describe();
-            }
+        if let Err(e) = &result && let jni::errors::Error::JavaException = e {
+            env.exception_describe();
         }
         result
     }).into_outcome()

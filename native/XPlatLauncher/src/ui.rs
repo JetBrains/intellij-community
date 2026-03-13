@@ -43,7 +43,7 @@ fn show_alert_impl(title: &str, text: &str) {
         core_foundation::url::CFURLRef
     };
 
-    extern "C" {
+    unsafe extern "C" {
         fn CFUserNotificationDisplayAlert(
             timeout: CFTimeInterval,
             flags: CFOptionFlags,

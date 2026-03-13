@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 use std::{env, fs, thread, time};
 use std::collections::HashMap;
@@ -7,7 +7,7 @@ use std::fs::{File, OpenOptions};
 use std::io::{Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Stdio};
-use std::sync::Once;
+use std::sync::LazyLock;
 
 use anyhow::{bail, Context, Result};
 use log::debug;
@@ -16,8 +16,9 @@ use tempfile::{Builder, TempDir};
 
 use xplat_launcher::{DEBUG_MODE_ENV_VAR, PathExt, get_caches_home, get_config_home};
 
-static INIT: Once = Once::new();
-static mut SHARED: Option<TestEnvironmentShared> = None;
+static SHARED_ENV: LazyLock<TestEnvironmentShared> = LazyLock::new(|| {
+    init_test_environment_once().context("Failed to init shared test environment").unwrap()
+});
 
 #[derive(Clone)]
 pub enum LauncherLocation { Standard, RemoteDev }
@@ -162,14 +163,7 @@ fn prepare_test_env_impl<'a>(
     dir_suffix: Option<&str>,
     with_jbr: bool
 ) -> Result<TestEnvironment<'a>> {
-    INIT.call_once(|| {
-        let shared = init_test_environment_once().context("Failed to init shared test environment").unwrap();
-        unsafe {
-            SHARED = Some(shared)
-        }
-    });
-
-    let shared_env = unsafe { SHARED.as_ref() }.expect("Shared test environment should have already been initialized");
+    let shared_env = &SHARED_ENV;
 
     let prefix = if let Some(s) = dir_suffix { format!("launcher_test_{s}_") } else { "launcher_test_".to_string() };
     let temp_dir = Builder::new().prefix(&prefix).tempdir().context("Failed to create temp directory")?;
@@ -187,8 +181,10 @@ fn init_test_environment_once() -> Result<TestEnvironmentShared> {
     //xplat_launcher::mini_logger::init(log::LevelFilter::Debug)?;
 
     // clean environment variables
-    env::remove_var("JDK_HOME");
-    env::remove_var("JAVA_HOME");
+    unsafe {
+        env::remove_var("JDK_HOME");
+        env::remove_var("JAVA_HOME");
+    }
 
     let project_root = env::current_dir().expect("Failed to get project root");
 
@@ -530,19 +526,15 @@ fn run_launcher_with_retries(test_env: &TestEnvironment, run_spec: &LauncherRunS
     let mut retries = 3;
     let mut run_result = run_launcher_impl(test_env, run_spec);
     loop {
-        if let Ok(result) = &run_result {
-            if let Some(signal) = result.exit_status.signal() {
-                if signal == libc::SIGKILL {
-                    debug!("test process killed; retrying...");
-                    retries -= 1;
-                    if retries == 0 {
-                        panic!("The test process was killed 3 times in a row; giving up. Last result: {:?}", run_result);
-                    }
-                    thread::sleep(time::Duration::from_secs(1));
-                    run_result = run_launcher_impl(test_env, run_spec);
-                    continue;
-                }
+        if let Ok(result) = &run_result && let Some(signal) = result.exit_status.signal() && signal == libc::SIGKILL {
+            debug!("test process killed; retrying...");
+            retries -= 1;
+            if retries == 0 {
+                panic!("The test process was killed 3 times in a row; giving up. Last result: {:?}", run_result);
             }
+            thread::sleep(time::Duration::from_secs(1));
+            run_result = run_launcher_impl(test_env, run_spec);
+            continue;
         }
         break;
     }

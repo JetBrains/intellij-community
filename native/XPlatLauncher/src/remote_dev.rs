@@ -431,14 +431,14 @@ fn init_env_vars(default: &DefaultLaunchConfiguration) -> Result<()> {
         if let Ok(old_value) = env::var(key) {
             debug!("'{key}' has already been assigned the value {old_value}, overriding to {value}. \
                         Old value will be preserved for child processes.");
-            env::set_var(backup_key, old_value)
+            unsafe { env::set_var(backup_key, old_value) }
         }
         else {
             debug!("'{key}' was set to {value}. It will be unset for child processes.");
-            env::set_var(backup_key, "")
+            unsafe { env::set_var(backup_key, "") }
         }
 
-        env::set_var(key, value)
+        unsafe { env::set_var(key, value) }
     }
 
     Ok(())

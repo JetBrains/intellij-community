@@ -199,10 +199,12 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool, sandbox_subp
 #[cfg(target_os = "windows")]
 fn ensure_env_vars_set() -> Result<()> {
     let app_data = get_known_folder_path(&Shell::FOLDERID_RoamingAppData, "FOLDERID_RoamingAppData")?;
-    env::set_var("APPDATA", app_data.strip_ns_prefix()?.to_string_checked()?);
-
     let local_app_data = get_known_folder_path(&Shell::FOLDERID_LocalAppData, "FOLDERID_LocalAppData")?;
-    env::set_var("LOCALAPPDATA", local_app_data.strip_ns_prefix()?.to_string_checked()?);
+
+    unsafe {
+        env::set_var("APPDATA", app_data.strip_ns_prefix()?.to_string_checked()?);
+        env::set_var("LOCALAPPDATA", local_app_data.strip_ns_prefix()?.to_string_checked()?);
+    }
 
     Ok(())
 }
@@ -249,13 +251,9 @@ fn restore_working_directory() -> Result<()> {
     let (cwd_res, pwd_var) = (env::current_dir(), env::var("PWD"));
     debug!("Adjusting current directory (current={:?} $PWD={:?})", cwd_res, pwd_var);
 
-    if let Ok(cwd) = cwd_res {
-        if cwd == PathBuf::from("/") {
-            if let Ok(pwd) = pwd_var {
-                env::set_current_dir(&pwd)
-                    .with_context(|| format!("Cannot set current directory to '{pwd}'"))?;
-            }
-        }
+    #[allow(clippy::cmp_owned)]
+    if let Ok(cwd) = cwd_res && cwd == PathBuf::from("/") && let Ok(pwd) = pwd_var {
+        env::set_current_dir(&pwd).with_context(|| format!("Cannot set current directory to '{pwd}'"))?;
     }
 
     Ok(())

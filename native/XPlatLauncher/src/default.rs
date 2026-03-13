@@ -328,11 +328,9 @@ impl DefaultLaunchConfiguration {
 
 fn read_vm_options(path: &Path) -> Result<(Vec<String>, bool)> {
     let result = File::open(path);
-    if let Err(e) = &result {
-        if e.kind() == std::io::ErrorKind::NotFound {
-            debug!("Not found: {path:?}");
-            return Ok((vec![], false));
-        }
+    if let Err(e) = &result && e.kind() == std::io::ErrorKind::NotFound {
+        debug!("Not found: {path:?}");
+        return Ok((vec![], false));
     }
     let file = result?;
 
@@ -422,10 +420,8 @@ fn find_ide_home(current_exe: &Path) -> Result<(PathBuf, PathBuf)> {
     let dereferenced = current_exe
         .canonicalize().with_context(|| format!("Resolving symlinks in '{}'", current_exe.display()))?
         .strip_ns_prefix().with_context(|| format!("Resolving symlinks in '{}'", current_exe.display()))?;
-    if dereferenced != current_exe {
-        if let Some(paths) = traverse_parents(dereferenced)? {
-            return Ok(paths);
-        }
+    if dereferenced != current_exe && let Some(paths) = traverse_parents(dereferenced)? {
+        return Ok(paths);
     }
 
     bail!("Max lookup depth ({IDE_HOME_LOOKUP_DEPTH}) reached")

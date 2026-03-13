@@ -42,8 +42,10 @@ public class TestMain {
             "  print-cwd\n" +
             "  async-profiler\n" +
             "  exit-code <number>\n" +
+            "  exception\n" +
             "  sigsegv\n" +
-            "  main-class");
+            "  main-class\n" +
+            "  remoteDevStatus");
           System.exit(1);
         }
       }
