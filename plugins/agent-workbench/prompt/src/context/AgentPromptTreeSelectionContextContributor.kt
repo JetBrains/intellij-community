@@ -18,7 +18,6 @@ import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.JTree
 
 private const val MAX_INCLUDED_NODES = 10
-private const val MAX_NODE_TEXT_LENGTH = 500
 
 internal class AgentPromptTreeSelectionContextContributor : AgentPromptContextContributorBridge {
   override val phase: AgentPromptContextContributorPhase
@@ -44,8 +43,7 @@ internal class AgentPromptTreeSelectionContextContributor : AgentPromptContextCo
       val userObject = TreeUtil.getLastUserObject(path) ?: continue
       val text = userObject.toString().trim()
       if (text.isBlank()) continue
-      val cappedText = if (text.length > MAX_NODE_TEXT_LENGTH) text.substring(0, MAX_NODE_TEXT_LENGTH) + "…" else text
-      texts.add(cappedText)
+      texts.add(text)
     }
     if (texts.isEmpty()) {
       return emptyList()
