@@ -357,6 +357,9 @@ public interface Git {
   GitCommandResult deleteWorkingTree(@NotNull Project project, @NotNull GitWorkingTree tree);
 
   @NotNull
+  GitCommandResult removeWorktree(@NotNull GitRepository repository, @NotNull String worktreePath);
+
+  @NotNull
   GitCommandResult listWorktrees(@NotNull GitRepository repository, GitLineHandlerListener @NotNull ... listeners);
 
   @NotNull

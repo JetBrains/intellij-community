@@ -119,9 +119,16 @@ public interface GitBranchUiHandler {
    *
    * @param branchName    the name of the branch that is checked out in a worktree
    * @param worktreePath  the path to the worktree where the branch is checked out
-   * @return true if user confirmed to proceed with force deletion, false otherwise
+   * @return the user's decision: delete worktree and branch, delete worktree only, or cancel
    */
-  boolean showBranchCheckedOutInWorktreeDeleteDialog(@NotNull String branchName, @NotNull String worktreePath);
+  @NotNull
+  DeleteWorktreeBranchDecision showBranchCheckedOutInWorktreeDeleteDialog(@NotNull String branchName, @NotNull String worktreePath);
+
+  enum DeleteWorktreeBranchDecision {
+    CANCEL,
+    DELETE_WORKTREE_ONLY,
+    DELETE_WORKTREE_AND_BRANCH
+  }
 
   enum DeleteRemoteBranchDecision {
     CANCEL,

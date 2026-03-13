@@ -894,6 +894,16 @@ public class GitImpl extends GitImplBase {
   }
 
   @Override
+  public @NotNull GitCommandResult removeWorktree(@NotNull GitRepository repository, @NotNull String worktreePath) {
+    GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.WORKTREE);
+    handler.setSilent(false);
+    handler.setStdoutSuppressed(false);
+    handler.setStderrSuppressed(false);
+    handler.addParameters(asList("remove", worktreePath, "--force"));
+    return runCommand(handler);
+  }
+
+  @Override
   public @NotNull GitCommandResult listWorktrees(@NotNull GitRepository repository, GitLineHandlerListener @NotNull ... listeners) {
     GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.WORKTREE);
     handler.addParameters("list");

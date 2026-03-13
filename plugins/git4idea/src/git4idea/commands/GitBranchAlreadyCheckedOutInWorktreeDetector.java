@@ -9,13 +9,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Detects the error "fatal: '<branch>' is already checked out at '<path>'" which occurs when
- * trying to checkout a branch that is already checked out in another worktree.
+ * Detects the error "fatal: '<branch>' is already checked out at '<path>'" (or the newer
+ * "fatal: '<branch>' is already used by worktree at '<path>'") which occurs when trying to
+ * checkout a branch that is already checked out in another worktree.
  */
 public class GitBranchAlreadyCheckedOutInWorktreeDetector implements GitLineEventDetector {
-  // Git error message format: fatal: '<branch>' is already checked out at '<path>'
+  // Git error message format:
+  // Older git: fatal: '<branch>' is already checked out at '<path>'
+  // Newer git: fatal: '<branch>' is already used by worktree at '<path>'
   private static final Pattern ALREADY_CHECKED_OUT_PATTERN =
-    Pattern.compile("fatal:\\s*'(.+)'\\s+is already checked out at\\s+'(.+)'");
+    Pattern.compile("fatal:\\s*'(.+)'\\s+is already (?:checked out|used by worktree) at\\s+'(.+)'");
 
   private boolean myDetected;
   private @Nullable String myBranchName;

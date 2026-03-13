@@ -9,13 +9,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Detects the error "error: Cannot delete branch '<branch>' checked out at '<path>'" which occurs when
- * trying to delete a branch that is checked out in another worktree.
+ * Detects the error "error: Cannot delete branch '<branch>' checked out at '<path>'" (or the newer
+ * "error: cannot delete branch '<branch>' used by worktree at '<path>'") which occurs when trying
+ * to delete a branch that is checked out in another worktree.
  */
 public class GitBranchCheckedOutInWorktreeDeleteDetector implements GitLineEventDetector {
-  // Git error message format: error: Cannot delete branch 'branch-name' checked out at '/path/to/worktree'
+  // Git error message format:
+  // Older git: error: Cannot delete branch 'branch-name' checked out at '/path/to/worktree'
+  // Newer git: error: cannot delete branch 'branch-name' used by worktree at '/path/to/worktree'
   private static final Pattern CANNOT_DELETE_CHECKED_OUT_PATTERN =
-    Pattern.compile("error:\\s*Cannot delete branch\\s*'(.+)'\\s*checked out at\\s*'(.+)'");
+    Pattern.compile("error:\\s*[Cc]annot delete branch\\s*'(.+)'\\s*(?:checked out|used by worktree) at\\s*'(.+)'");
 
   private boolean myDetected;
   private @Nullable String myBranchName;

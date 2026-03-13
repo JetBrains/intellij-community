@@ -225,22 +225,28 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   }
 
   @Override
-  public boolean showBranchCheckedOutInWorktreeDeleteDialog(@NotNull String branchName, @NotNull String worktreePath) {
-    AtomicBoolean confirmed = new AtomicBoolean();
+  public @NotNull DeleteWorktreeBranchDecision showBranchCheckedOutInWorktreeDeleteDialog(@NotNull String branchName, @NotNull String worktreePath) {
+    Ref<DeleteWorktreeBranchDecision> decision = Ref.create(DeleteWorktreeBranchDecision.CANCEL);
     ApplicationManager.getApplication().invokeAndWait(() -> {
       String title = GitBundle.message("delete.branch.operation.worktree.delete.title");
       String message = GitBundle.message("delete.branch.operation.worktree.delete.message", branchName, worktreePath);
-      String proceedButton = GitBundle.message("delete.branch.operation.worktree.delete.proceed");
-      confirmed.set(YES == DialogManager.showOkCancelDialog(
+      int result = DialogManager.showYesNoCancelDialog(
         myProject,
         message,
         title,
-        proceedButton,
+        GitBundle.message("delete.branch.operation.worktree.delete.worktree.and.branch"),
+        GitBundle.message("delete.branch.operation.worktree.delete.worktree.only"),
         getCancelButtonText(),
         Messages.getWarningIcon()
-      ));
+      );
+      if (result == Messages.YES) {
+        decision.set(DeleteWorktreeBranchDecision.DELETE_WORKTREE_AND_BRANCH);
+      }
+      else if (result == Messages.NO) {
+        decision.set(DeleteWorktreeBranchDecision.DELETE_WORKTREE_ONLY);
+      }
     });
-    return confirmed.get();
+    return decision.get();
   }
 
   private static @NotNull @NlsContexts.DialogTitle String unmergedFilesErrorTitle(@NotNull String operationName) {

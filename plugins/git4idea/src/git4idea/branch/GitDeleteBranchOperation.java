@@ -148,7 +148,7 @@ public class GitDeleteBranchOperation extends GitBranchOperation {
 
   /**
    * Handles the case when the branch is checked out in another worktree.
-   * Shows a confirmation dialog and retries deletion with force flag if the user confirms.
+   * Shows a dialog offering to remove the worktree (and optionally delete the branch).
    */
   private boolean handleWorktreeBranchDelete(@NotNull GitRepository repository,
                                               @NotNull GitBranchCheckedOutInWorktreeDeleteDetector worktreeDetector) {
@@ -156,25 +156,38 @@ public class GitDeleteBranchOperation extends GitBranchOperation {
     String worktreePath = worktreeDetector.getWorktreePath();
 
     if (branchName == null || worktreePath == null) {
-      // Should not happen, but handle gracefully
       fatalError(getErrorTitle(), GitBundle.message("delete.branch.operation.branch.was.not.deleted.error", myBranchName));
       return false;
     }
 
-    boolean userConfirmed = myUiHandler.showBranchCheckedOutInWorktreeDeleteDialog(branchName, worktreePath);
-    if (!userConfirmed) {
+    GitBranchUiHandler.DeleteWorktreeBranchDecision decision =
+      myUiHandler.showBranchCheckedOutInWorktreeDeleteDialog(branchName, worktreePath);
+    if (decision == GitBranchUiHandler.DeleteWorktreeBranchDecision.CANCEL) {
       return false;
     }
 
-    // Retry deletion with force flag
-    GitCommandResult forceDeleteResult = myGit.branchDelete(repository, myBranchName, true);
-    if (forceDeleteResult.success()) {
-      refresh(repository);
-      markSuccessful(repository);
-      return true;
+    // First, remove the worktree
+    GitCommandResult removeWorktreeResult = myGit.removeWorktree(repository, worktreePath);
+    if (!removeWorktreeResult.success()) {
+      fatalError(getErrorTitle(), removeWorktreeResult);
+      return false;
+    }
+
+    if (decision == GitBranchUiHandler.DeleteWorktreeBranchDecision.DELETE_WORKTREE_AND_BRANCH) {
+      // Delete the branch after removing the worktree
+      GitCommandResult deleteResult = myGit.branchDelete(repository, myBranchName, true);
+      if (deleteResult.success()) {
+        refresh(repository);
+        markSuccessful(repository);
+        return true;
+      }
+      else {
+        fatalError(getErrorTitle(), deleteResult);
+        return false;
+      }
     }
     else {
-      fatalError(getErrorTitle(), forceDeleteResult);
+      // DELETE_WORKTREE_ONLY: worktree removed, branch deletion is no longer needed
       return false;
     }
   }
