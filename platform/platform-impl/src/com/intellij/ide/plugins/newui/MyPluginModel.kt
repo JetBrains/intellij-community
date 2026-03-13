@@ -157,7 +157,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     UiPluginManager.getInstance().resetSession(mySessionId.toString(), false,
                                                parentComponent) {
       applyChangedStates(it)
-      updateAfterEnableDisable()
+      updateEnabledStateInUi()
       null
     }
   }
