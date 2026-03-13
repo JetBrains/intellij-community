@@ -973,8 +973,13 @@ private fun loadContentModuleDescriptors(
         !isRunningFromSourcesWithoutDevBuild &&
         // module-based loader is not supported, descriptorContent maybe null
         (!isDeprecatedLoader || module.descriptorContent != null) &&
-        (moduleId.name.startsWith("intellij.") || moduleId.name.startsWith("fleet.")) &&
-        loadProductModule(
+        moduleId.name.run {
+          startsWith("intellij.") ||
+          startsWith("fleet.") ||
+          startsWith("language-server.")
+        }
+    ) {
+      if (loadProductModule(
           jarFile = jarFileForModule,
           module = module,
           subDescriptorFile = subDescriptorFile,
@@ -982,7 +987,8 @@ private fun loadContentModuleDescriptors(
           xIncludeLoader = xIncludeLoader,
           containerDescriptor = descriptor,
         )) {
-      continue
+        continue
+      }
     }
 
     if (isDeprecatedLoader && jarFileForModule != null && Files.exists(jarFileForModule)) {
