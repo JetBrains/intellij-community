@@ -70,7 +70,7 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
     if (idValue == null) {
       String name = serializer.getExternalId();
       idValue = myNameToId.get(name);
-      assert idValue > 0 : "No ID found for serializer " + objectInfo(serializer) + ", external id:" + name +
+      assert idValue != null && idValue.intValue() > 0 : "No ID found for serializer " + objectInfo(serializer) + ", external id:" + name +
                            (serializer instanceof IElementType ? ", language:" + ((IElementType)serializer).getLanguage() : "");
       mySerializerToId.put(serializer, idValue);
     }
