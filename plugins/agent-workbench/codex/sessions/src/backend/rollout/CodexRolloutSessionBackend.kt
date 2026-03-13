@@ -10,13 +10,12 @@ import com.intellij.agent.workbench.codex.common.normalizeRootPath
 import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
 import com.intellij.agent.workbench.codex.sessions.resolveProjectDirectoryFromPath
-import com.intellij.openapi.diagnostic.debug
+import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
+import com.intellij.agent.workbench.json.filebacked.createFileBackedSessionChangeFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -27,7 +26,7 @@ private val LOG = logger<CodexRolloutSessionBackend>()
 
 internal class CodexRolloutSessionBackend(
   private val codexHomeProvider: () -> Path = { Path.of(System.getProperty("user.home"), ".codex") },
-  rolloutChangeSource: (() -> Flow<CodexRolloutChangeSet>)? = null,
+  rolloutChangeSource: (() -> Flow<FileBackedSessionChangeSet>)? = null,
 ) : CodexSessionBackend {
   private val parser = CodexRolloutParser()
   private val threadIndex = CodexRolloutThreadIndex(codexHomeProvider = codexHomeProvider, parser = parser)
@@ -38,36 +37,18 @@ internal class CodexRolloutSessionBackend(
     }
     .conflate()
 
-  private fun createWatcherUpdates(): Flow<CodexRolloutChangeSet> = callbackFlow {
-    LOG.debug { "Initializing Codex rollout updates watcher (codexHome=${codexHomeProvider()})" }
-    val watcher = runCatching {
+  private fun createWatcherUpdates(): Flow<FileBackedSessionChangeSet> {
+    return createFileBackedSessionChangeFlow(
+      logger = LOG,
+      watcherName = "Codex rollout",
+      initContext = { "codexHome=${codexHomeProvider()}" },
+      emitInitialRefreshPing = true,
+    ) { scope, onChange ->
       CodexRolloutSessionsWatcher(
         codexHomeProvider = codexHomeProvider,
-        scope = this,
-      ) { changeSet ->
-        LOG.debug {
-          "Rollout watcher signaled change; emitting update (fullRescan=${changeSet.requiresFullRescan}, changedPaths=${changeSet.changedRolloutPaths.size})"
-        }
-        trySend(changeSet)
-      }
-    }.onFailure { t ->
-      LOG.warn("Failed to initialize Codex rollout watcher", t)
-    }.getOrNull()
-
-    if (watcher == null) {
-      LOG.debug { "Codex rollout updates watcher was not initialized; updates flow will stay idle" }
-      awaitClose { }
-      return@callbackFlow
-    }
-
-    val initialRefreshEmitted = trySend(CodexRolloutChangeSet()).isSuccess
-    LOG.debug {
-      "Codex rollout watcher initialized; initial refresh ping emitted=$initialRefreshEmitted"
-    }
-
-    awaitClose {
-      LOG.debug { "Closing Codex rollout updates watcher" }
-      watcher.close()
+        scope = scope,
+        onRolloutChange = onChange,
+      )
     }
   }
 

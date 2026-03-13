@@ -2,8 +2,8 @@
 package com.intellij.agent.workbench.codex.sessions
 
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity
-import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutChangeSet
 import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutSessionBackend
+import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
@@ -537,7 +537,7 @@ class CodexRolloutSessionBackendTest {
         ),
       )
 
-      val sourceUpdates = MutableSharedFlow<CodexRolloutChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
       val backend = CodexRolloutSessionBackend(
         codexHomeProvider = { tempDir },
         rolloutChangeSource = { sourceUpdates },
@@ -562,7 +562,7 @@ class CodexRolloutSessionBackendTest {
             """{"timestamp":"2026-02-16T10:05:00.000Z","type":"event_msg","payload":{"type":"user_message","message":"Updated title"}}""",
           ),
         )
-        sourceUpdates.emit(CodexRolloutChangeSet(changedRolloutPaths = setOf(rollout)))
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(rollout)))
 
         val updated = awaitWatcherUpdate(updates)
         assertThat(updated).isTrue()
@@ -592,7 +592,7 @@ class CodexRolloutSessionBackendTest {
         ),
       )
 
-      val sourceUpdates = MutableSharedFlow<CodexRolloutChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
       val backend = CodexRolloutSessionBackend(
         codexHomeProvider = { tempDir },
         rolloutChangeSource = { sourceUpdates },
@@ -619,7 +619,7 @@ class CodexRolloutSessionBackendTest {
         )
 
         // Represents non-rollout file events (temp/rename artifacts) where path-level invalidation is unavailable.
-        sourceUpdates.emit(CodexRolloutChangeSet())
+        sourceUpdates.emit(FileBackedSessionChangeSet())
 
         val updated = awaitWatcherUpdate(updates)
         assertThat(updated).isTrue()
@@ -639,7 +639,7 @@ class CodexRolloutSessionBackendTest {
       val projectDir = tempDir.resolve("project-updates-create")
       Files.createDirectories(projectDir)
 
-      val sourceUpdates = MutableSharedFlow<CodexRolloutChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
       val backend = CodexRolloutSessionBackend(
         codexHomeProvider = { tempDir },
         rolloutChangeSource = { sourceUpdates },
@@ -665,7 +665,7 @@ class CodexRolloutSessionBackendTest {
             """{"timestamp":"2026-03-01T09:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Created title"}}""",
           ),
         )
-        sourceUpdates.emit(CodexRolloutChangeSet(changedRolloutPaths = setOf(rollout)))
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(rollout)))
 
         val updated = awaitWatcherUpdate(updates)
         assertThat(updated).isTrue()
@@ -695,7 +695,7 @@ class CodexRolloutSessionBackendTest {
       )
       val originalLastModifiedTime = Files.getLastModifiedTime(rollout)
 
-      val sourceUpdates = MutableSharedFlow<CodexRolloutChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
       val backend = CodexRolloutSessionBackend(
         codexHomeProvider = { tempDir },
         rolloutChangeSource = { sourceUpdates },
@@ -721,7 +721,7 @@ class CodexRolloutSessionBackendTest {
           ),
         )
         Files.setLastModifiedTime(rollout, originalLastModifiedTime)
-        sourceUpdates.emit(CodexRolloutChangeSet(changedRolloutPaths = setOf(rollout)))
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(rollout)))
 
         val updated = awaitWatcherUpdate(updates)
         assertThat(updated).isTrue()
