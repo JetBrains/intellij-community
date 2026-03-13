@@ -171,7 +171,11 @@ public final class PyDebuggerOptionsProvider implements PersistentStateComponent
    */
   @ApiStatus.Internal
   public static void switchBackendWithRestart(@NotNull Project project, @NotNull PyDebuggerBackend newBackend) {
+    PyDebuggerBackend oldBackend = getInstance(project).getSelectedBackend();
     getInstance(project).setSelectedBackend(newBackend);
+    if (oldBackend != newBackend) {
+      project.getMessageBus().syncPublisher(PyDebuggerBackendSwitchedListener.TOPIC).backendSwitched(project, oldBackend, newBackend);
+    }
     restartAllPythonSessions(project);
   }
 
