@@ -12,9 +12,9 @@ import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.components.usesContextSensitiveResolution
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitInvokeCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -246,10 +246,8 @@ private fun resolveExtensionReceiverForFunctionalTypeVariable(
         return null
     }
 
-    val parentCallInfo = parentCall.resolveToCall()?.singleCallOrNull<KaSimpleFunctionCall>() ?: return null
-    if (!parentCallInfo.isImplicitInvoke) return null
-
-    return parentCallInfo.partiallyAppliedSymbol.extensionReceiver as? KaExplicitReceiverValue
+    val parentCallInfo = parentCall.resolveToCall()?.singleCallOrNull<KaImplicitInvokeCall>() ?: return null
+    return parentCallInfo.extensionReceiver as? KaExplicitReceiverValue
 }
 
 context(_: KaSession)
