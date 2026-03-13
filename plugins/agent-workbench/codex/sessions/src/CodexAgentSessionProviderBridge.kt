@@ -4,20 +4,19 @@ package com.intellij.agent.workbench.codex.sessions
 import com.intellij.agent.workbench.codex.common.CodexCliNotFoundException
 import com.intellij.agent.workbench.codex.common.CodexCliUtils
 import com.intellij.agent.workbench.codex.sessions.backend.appserver.SharedCodexAppServerService
-import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
-import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderOption
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.agent.workbench.sessions.core.providers.buildPlanModeInitialMessagePlan
 import com.intellij.openapi.components.serviceAsync
 import javax.swing.Icon
 
@@ -52,7 +51,7 @@ internal class CodexAgentSessionProviderBridge(
         get() = true
 
     override val promptOptions: List<AgentPromptProviderOption>
-        get() = listOf(CODEX_PLAN_MODE_OPTION)
+        get() = listOf(AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION)
 
     override val cliMissingMessageKey: String
         get() = "toolwindow.error.cli"
@@ -97,26 +96,9 @@ internal class CodexAgentSessionProviderBridge(
     }
 
     override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
-        val basePlan = AgentInitialMessagePlan.composeDefault(request)
-        val normalizedMessage = basePlan.message ?: return basePlan
-        val planModeEnabled = request.planModeEnabled || AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE in request.providerOptionIds
-        val message = if (planModeEnabled) {
-            ensurePlanModePrefix(normalizedMessage)
-        } else {
-            normalizedMessage
-        }
-        return AgentInitialMessagePlan(
-            message = message,
-            startupPolicy = if (planModeEnabled) {
-                AgentInitialMessageStartupPolicy.POST_START_ONLY
-            } else {
-                AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND
-            },
-            timeoutPolicy = if (isPlanModeCommand(message)) {
-                AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS
-            } else {
-                AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK
-            },
+        return buildPlanModeInitialMessagePlan(
+            request = request,
+            startupPolicyWhenPlanModeEnabled = AgentInitialMessageStartupPolicy.POST_START_ONLY,
         )
     }
 
@@ -141,34 +123,6 @@ internal class CodexAgentSessionProviderBridge(
     override fun isCliMissingError(throwable: Throwable): Boolean {
         return throwable is CodexCliNotFoundException
     }
-
-    private fun ensurePlanModePrefix(message: String): String {
-        val normalized = message.trim()
-        if (normalized.isEmpty()) {
-            return PLAN_MODE_COMMAND
-        }
-        if (isPlanModeCommand(normalized)) {
-            return normalized
-        }
-        return "$PLAN_MODE_COMMAND $normalized"
-    }
-
-    private fun isPlanModeCommand(message: String): Boolean {
-        if (!message.startsWith(PLAN_MODE_COMMAND)) {
-            return false
-        }
-        val suffix = message.removePrefix(PLAN_MODE_COMMAND)
-        return suffix.isEmpty() || suffix.first().isWhitespace()
-    }
 }
 
 private const val CODEX_AUTO_UPDATE_CONFIG: String = "check_for_update_on_startup=false"
-private const val PLAN_MODE_COMMAND: String = "/plan"
-
-private val CODEX_PLAN_MODE_OPTION = AgentPromptProviderOption(
-    id = AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE,
-    labelKey = "toolwindow.prompt.option.plan.mode",
-    labelFallback = "Plan mode",
-    defaultSelected = true,
-    disabledExistingTaskActivities = setOf(AgentThreadActivity.PROCESSING, AgentThreadActivity.REVIEWING),
-)
