@@ -85,8 +85,7 @@ internal class PyAddKeywordArgumentNamesIntention : PsiUpdateModCommandAction<Py
     if (arguments.any { it is PyStarArgument && !it.isKeyword }) return null
 
     val result = mutableListOf<Pair<PyExpression, String>>()
-    for (i in caretArgIndex until arguments.size) {
-      val arg = arguments[i]
+    for (arg in arguments.drop(caretArgIndex)) {
       if (arg is PyKeywordArgument) continue
       if (arg is PyStarArgument) return null
 

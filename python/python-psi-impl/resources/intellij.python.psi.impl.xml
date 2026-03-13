@@ -564,6 +564,13 @@
       <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
+    <intentionAction>
+      <language>Python</language>
+      <className>com.jetbrains.python.codeInsight.intentions.PyRemoveKeywordArgumentNamesIntention</className>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
+    </intentionAction>
+
     <registryKey defaultValue="true"
                  description="Enable experimental better handling of recursive cases in type inference"
                  key="python.use.better.control.flow.type.inference"/>
