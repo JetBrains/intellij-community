@@ -1151,44 +1151,44 @@
 
     "TrialWidget": {
       "Default": {
-        "foreground": "#EBECF0",
-        "background": "#27282E",
-        "borderColor": "#DFE1E5",
-        "hoverForeground": "#EBECF0",
-        "hoverBackground": "#383A42",
-        "hoverBorderColor": "#D3D5DB"
+        "foreground": "gray-70",
+        "background": "gray-160",
+        "borderColor": "gray-80",
+        "hoverForeground": "gray-70",
+        "hoverBackground": "gray-150",
+        "hoverBorderColor": "gray-80"
       },
       "Active": {
-        "foreground": "#55A76A",
-        "background": "#1E6B3320",
-        "borderColor": "#89C398",
-        "hoverForeground": "#55A76A",
-        "hoverBackground": "#1E6B3340",
-        "hoverBorderColor": "#89C398"
+        "foreground": "green-80",
+        "background": "gray-160",
+        "borderColor": "green-80",
+        "hoverForeground": "green-80",
+        "hoverBackground": "green-150",
+        "hoverBorderColor": "green-80"
       },
       "Alert": {
-        "foreground": "#FFAF0F",
-        "background": "#A4670420",
-        "borderColor": "#DF9303",
-        "hoverForeground": "#FED277",
-        "hoverBackground": "#A4670440",
-        "hoverBorderColor": "#DF9303"
+        "foreground": "orange-90",
+        "background": "gray-160",
+        "borderColor": "orange-90",
+        "hoverForeground": "orange-90",
+        "hoverBackground": "orange-160",
+        "hoverBorderColor": "orange-90"
       },
       "Expiring": {
-        "foreground": "#E55765",
-        "background": "#DB3B4B10",
-        "borderColor": "#DB3B4B",
-        "hoverForeground": "#E55765",
-        "hoverBackground": "#DB3B4B20",
-        "hoverBorderColor": "#DB3B4B"
+        "foreground": "red-160",
+        "background": "red-80",
+        "borderColor": "red-80",
+        "hoverForeground": "red-160",
+        "hoverBackground": "red-90",
+        "hoverBorderColor": "red-90"
       },
       "Progress" : {
-        "foreground": "#6C707E",
-        "background": "#27282E",
-        "borderColor": "#6C707E",
-        "hoverForeground": "#6C707E",
-        "hoverBackground": "#27282E",
-        "hoverBorderColor": "#6C707E"
+        "foreground": "#818594",
+        "background": "#F7F8FA",
+        "borderColor": "#A8ADBD",
+        "hoverForeground": "#818594",
+        "hoverBackground": "#F7F8FA",
+        "hoverBorderColor": "#A8ADBD"
       }
     },
 
