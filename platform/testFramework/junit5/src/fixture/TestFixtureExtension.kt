@@ -94,35 +94,36 @@ internal class TestFixtureExtension : BeforeAllCallback,
       return
     }
 
-    TestLoggerFactory.fixtureInitialization(static) {
-      val exceptionHandler = CoroutineExceptionHandler { _, exception ->
-        context[exceptionsKey] = exception
-        throw exception
-      }
+    TestLoggerFactory.onFixturesInitializationStarted(static)
 
-      @OptIn(DelicateCoroutinesApi::class)
-      val testScope = GlobalScope.childScope(context.displayName, exceptionHandler)
-      val pendingFixtures = ArrayList<Deferred<*>>()
-
-      val classToTestInstance = collectTestInstances(context)
-      // start with the outermost one, in case the inner ones depend on them
-      val classes = context.enclosingTestClasses + listOf(testClass)
-      for (clazz in classes) {
-        val testInstance = classToTestInstance[clazz] ?: instance
-        val fieldsForDeclaringClass = ReflectionSupport.findFields(clazz, Predicate { field ->
-          TestFixture::class.java.isAssignableFrom(field.type) && Modifier.isStatic(field.modifiers) == static
-        }, HierarchyTraversalMode.TOP_DOWN)
-
-        for (field in fieldsForDeclaringClass) {
-          field.isAccessible = true
-          val fixture = field.get(testInstance) as TestFixtureImpl<*>
-          pendingFixtures.add(fixture.init(testScope, TestContextImpl(context, eelApi)))
-        }
-      }
-
-      awaitFixtureInitialization(testScope, pendingFixtures)
-      context.getStore(ExtensionContext.Namespace.GLOBAL).put("TestFixtureExtension_$static", testScope)
+    val exceptionHandler = CoroutineExceptionHandler { _, exception ->
+      context[exceptionsKey] = exception
+      throw exception
     }
+
+    @OptIn(DelicateCoroutinesApi::class)
+    val testScope = GlobalScope.childScope(context.displayName, exceptionHandler)
+    val pendingFixtures = ArrayList<Deferred<*>>()
+
+    val classToTestInstance = collectTestInstances(context)
+    // start with the outermost one, in case the inner ones depend on them
+    val classes = context.enclosingTestClasses + listOf(testClass)
+    for (clazz in classes) {
+      val testInstance = classToTestInstance[clazz] ?: instance
+      val fieldsForDeclaringClass = ReflectionSupport.findFields(clazz, Predicate { field ->
+        TestFixture::class.java.isAssignableFrom(field.type) && Modifier.isStatic(field.modifiers) == static
+      }, HierarchyTraversalMode.TOP_DOWN)
+
+      for (field in fieldsForDeclaringClass) {
+        field.isAccessible = true
+        val fixture = field.get(testInstance) as TestFixtureImpl<*>
+        pendingFixtures.add(fixture.init(testScope, TestContextImpl(context, eelApi)))
+      }
+    }
+
+    awaitFixtureInitialization(testScope, pendingFixtures)
+    context.getStore(ExtensionContext.Namespace.GLOBAL).put("TestFixtureExtension_$static", testScope)
+    TestLoggerFactory.onFixturesInitializationFinished(static)
   }
 
   override fun afterEach(context: ExtensionContext) {
