@@ -13,7 +13,7 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
-import git4idea.commit.GitMyRecentCommitsProvider
+import git4idea.commit.GitRecentCommitsProvider
 import git4idea.config.GitVersionSpecialty
 import git4idea.repo.GitRepositoryManager
 import kotlinx.coroutines.Dispatchers
@@ -37,7 +37,7 @@ internal class GitAmendCommitService(project: Project) : AmendCommitService(proj
   override suspend fun getAmendSpecificCommitTargets(root: VirtualFile, limit: Int): List<CommitToAmend.Specific> =
     withContext(Dispatchers.Default) {
       val repo = GitRepositoryManager.getInstance(project).repositories.singleOrNull() ?: return@withContext emptyList()
-      val commits: List<VcsCommitMetadata> = GitMyRecentCommitsProvider.getInstance(project).getRecentCommits(repo.root, limit)
+      val commits: List<VcsCommitMetadata> = GitRecentCommitsProvider.getInstance(project).getRecentCommits(repo.root, limit)
 
       commits.map { metadata ->
         CommitToAmend.Specific(metadata.id, metadata.subject)

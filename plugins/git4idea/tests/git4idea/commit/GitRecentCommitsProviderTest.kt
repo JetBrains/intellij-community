@@ -5,9 +5,9 @@ import git4idea.test.GitSingleRepoTest
 import git4idea.test.makeCommit
 import kotlinx.coroutines.runBlocking
 
-class GitMyRecentCommitsProviderTest : GitSingleRepoTest() {
+class GitRecentCommitsProviderTest : GitSingleRepoTest() {
   fun `test recent commits are returned`() {
-    val provider = GitMyRecentCommitsProvider.getInstance(project)
+    val provider = GitRecentCommitsProvider.getInstance(project)
     var loadedCommits = runBlocking { provider.getRecentCommits(repo.root, 1) }
     assertSize(1, loadedCommits)
 
