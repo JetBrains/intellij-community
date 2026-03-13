@@ -1,14 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.sessions.git.GitWorktreeInfo
 import com.intellij.agent.workbench.sessions.model.ProjectBuildSystemBadge
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.model.WorktreeEntry
 import com.intellij.agent.workbench.sessions.service.ProjectBuildSystemBadgeCatalogCache
 import com.intellij.agent.workbench.sessions.service.ProjectOpenProcessorSnapshot
+import com.intellij.agent.workbench.sessions.service.buildAgentSessionProjectPathCandidates
 import com.intellij.agent.workbench.sessions.service.buildRepoProjectEntry
 import com.intellij.agent.workbench.sessions.service.detectProjectBuildSystemBadge
+import com.intellij.agent.workbench.sessions.service.resolveAgentSessionProjectDisplayName
 import com.intellij.agent.workbench.sessions.service.resolveOpenProjectPath
 import com.intellij.agent.workbench.sessions.service.resolveRecentPathCandidate
 import com.intellij.openapi.project.Project
@@ -21,6 +24,55 @@ import org.junit.jupiter.api.Test
 import javax.swing.Icon
 
 class AgentSessionProjectCatalogTest {
+  @Test
+  fun resolveAgentSessionProjectDisplayNamePrefersRecentDisplayName() {
+    assertThat(
+      resolveAgentSessionProjectDisplayName(
+        path = "/work/project-a",
+        project = null,
+        recentProjectDisplayName = { "Workspace Project A" },
+        recentProjectName = { "Project A" },
+      )
+    ).isEqualTo("Workspace Project A")
+  }
+
+  @Test
+  fun resolveAgentSessionProjectDisplayNameFallsBackToRecentProjectName() {
+    assertThat(
+      resolveAgentSessionProjectDisplayName(
+        path = "/work/project-a",
+        project = null,
+        recentProjectDisplayName = { null },
+        recentProjectName = { "Project A" },
+      )
+    ).isEqualTo("Project A")
+  }
+
+  @Test
+  fun resolveAgentSessionProjectDisplayNameFallsBackToPathName() {
+    assertThat(
+      resolveAgentSessionProjectDisplayName(
+        path = "/work/project-a",
+        project = null,
+        recentProjectDisplayName = { null },
+        recentProjectName = { "" },
+      )
+    ).isEqualTo("project-a")
+  }
+
+  @Test
+  fun buildAgentSessionProjectPathCandidatesFallsBackToPathsForDuplicateLabels() {
+    assertThat(
+      buildAgentSessionProjectPathCandidates(
+        paths = listOf("/work/repo-a", "/tmp/repo-a"),
+        resolveDisplayName = { "Repo A" },
+      )
+    ).containsExactly(
+      AgentPromptProjectPathCandidate(path = "/work/repo-a", displayName = "/work/repo-a"),
+      AgentPromptProjectPathCandidate(path = "/tmp/repo-a", displayName = "/tmp/repo-a"),
+    )
+  }
+
   @Test
   fun resolveOpenProjectPathNormalizesManagerPath() {
     assertThat(resolveOpenProjectPath(managerProjectPath = "/work/project-a/", projectBasePath = null))

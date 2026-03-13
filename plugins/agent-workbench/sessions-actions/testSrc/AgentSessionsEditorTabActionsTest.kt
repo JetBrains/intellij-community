@@ -11,17 +11,26 @@ import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewTh
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProjectFromEditorTabAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsSelectThreadInToolWindowAction
 import com.intellij.agent.workbench.sessions.actions.providerIcon
-import com.intellij.ui.BadgeIcon
+import com.intellij.agent.workbench.sessions.actions.resolveQuickStartProjectPopupAnchor
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.SessionActionTarget
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.ui.BadgeIcon
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.awt.event.MouseEvent
+import javax.swing.JPanel
 
 @TestApplication
 class AgentSessionsEditorTabActionsTest {
@@ -163,6 +172,100 @@ class AgentSessionsEditorTabActionsTest {
   }
 
   @Test
+  fun editorTabQuickNewThreadShowsProjectPopupWhenMultipleSourceProjectsExist() {
+    val context = editorContext(path = "/tmp/editor-project")
+    var launchedPath: String? = null
+    var launchedProvider: AgentSessionProvider? = null
+    var launchedMode: AgentSessionLaunchMode? = null
+    var entryPoint: AgentWorkbenchEntryPoint? = null
+    var shownCandidates: List<AgentPromptProjectPathCandidate>? = null
+    var popupSelection: ((AgentPromptProjectPathCandidate) -> Unit)? = null
+    val claudeBridge = TestAgentSessionProviderBridge(
+      provider = AgentSessionProvider.CLAUDE,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+    )
+    val action = AgentSessionsEditorTabNewThreadQuickAction(
+      resolveContext = { context },
+      allBridges = { listOf(claudeBridge) },
+      lastUsedProvider = { AgentSessionProvider.CLAUDE },
+      createNewSession = { path, provider, mode, _, capturedEntryPoint ->
+        launchedPath = path
+        launchedProvider = provider
+        launchedMode = mode
+        entryPoint = capturedEntryPoint
+      },
+      projectPathCandidates = { _, _ ->
+        listOf(
+          projectCandidate(path = "/work/repo-a", displayName = "Project A"),
+          projectCandidate(path = "/tmp/repo-a", displayName = "/tmp/repo-a"),
+        )
+      },
+      showProjectPopup = { candidates, _, onResolved ->
+        shownCandidates = candidates
+        popupSelection = onResolved
+      },
+    )
+
+    action.actionPerformed(TestActionEvent.createTestEvent(action))
+
+    assertThat(launchedPath).isNull()
+    assertThat(shownCandidates).isNotNull()
+    val resolvedCandidates = shownCandidates.orEmpty()
+    assertThat(resolvedCandidates.map(AgentPromptProjectPathCandidate::displayName))
+      .containsExactly("Project A", "/tmp/repo-a")
+    checkNotNull(popupSelection).invoke(resolvedCandidates.last())
+
+    assertThat(launchedPath).isEqualTo("/tmp/repo-a")
+    assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CLAUDE)
+    assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
+    assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.EDITOR_TAB_QUICK)
+  }
+
+  @Test
+  fun quickNewThreadPopupAnchorPrefersInputEventComponent() {
+    val action = AgentSessionsEditorTabNewThreadQuickAction(resolveContext = { null }, allBridges = { emptyList() })
+    val inputComponent = JPanel()
+    val contextComponent = JPanel()
+    val event = AnActionEvent(
+      { dataId -> if (dataId == PlatformCoreDataKeys.CONTEXT_COMPONENT.name) contextComponent else null },
+      action.templatePresentation.clone(),
+      "",
+      ActionUiKind.NONE,
+      MouseEvent(inputComponent, MouseEvent.MOUSE_CLICKED, 0, 0, 0, 0, 1, false),
+      0,
+      ActionManager.getInstance(),
+    )
+
+    assertThat(resolveQuickStartProjectPopupAnchor(event)).isSameAs(inputComponent)
+  }
+
+  @Test
+  fun quickNewThreadPopupAnchorFallsBackToContextComponent() {
+    val action = AgentSessionsEditorTabNewThreadQuickAction(resolveContext = { null }, allBridges = { emptyList() })
+    val contextComponent = JPanel()
+    val event = AnActionEvent(
+      { dataId -> if (dataId == PlatformCoreDataKeys.CONTEXT_COMPONENT.name) contextComponent else null },
+      action.templatePresentation.clone(),
+      "",
+      ActionUiKind.NONE,
+      null,
+      0,
+      ActionManager.getInstance(),
+    )
+
+    assertThat(resolveQuickStartProjectPopupAnchor(event)).isSameAs(contextComponent)
+  }
+
+  @Test
+  fun quickNewThreadPopupAnchorReturnsNullWithoutUiComponent() {
+    val action = AgentSessionsEditorTabNewThreadQuickAction(resolveContext = { null }, allBridges = { emptyList() })
+    val event = TestActionEvent.createTestEvent(action)
+
+    assertThat(resolveQuickStartProjectPopupAnchor(event)).isNull()
+  }
+
+  @Test
   fun editorTabPopupNewThreadBuildsMenuAndLaunchesSelectedMode() {
     val context = editorContext(path = "/tmp/editor-project")
     var launchedPath: String? = null
@@ -212,6 +315,59 @@ class AgentSessionsEditorTabActionsTest {
     assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CODEX)
     assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.YOLO)
     assertThat(launchedProjectName).isEqualTo(context.project.name)
+    assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.EDITOR_TAB_POPUP)
+  }
+
+  @Test
+  fun editorTabPopupNewThreadUsesProjectCandidateLabelsForDedicatedFrameProjects() {
+    val context = editorContext(path = "/tmp/editor-project")
+    var launchedPath: String? = null
+    var launchedProvider: AgentSessionProvider? = null
+    var launchedMode: AgentSessionLaunchMode? = null
+    var entryPoint: AgentWorkbenchEntryPoint? = null
+    val codexBridge = TestAgentSessionProviderBridge(
+      provider = AgentSessionProvider.CODEX,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
+      cliAvailable = true,
+      yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
+    )
+    val claudeBridge = TestAgentSessionProviderBridge(
+      provider = AgentSessionProvider.CLAUDE,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+    )
+    val group = AgentSessionsEditorTabNewThreadPopupGroup(
+      resolveContext = { context },
+      allBridges = { listOf(codexBridge, claudeBridge) },
+      createNewSession = { path, provider, mode, _, capturedEntryPoint ->
+        launchedPath = path
+        launchedProvider = provider
+        launchedMode = mode
+        entryPoint = capturedEntryPoint
+      },
+      projectPathCandidates = { _, _ ->
+        listOf(
+          projectCandidate(path = "/work/repo-a", displayName = "Project A"),
+          projectCandidate(path = "/tmp/repo-a", displayName = "/tmp/repo-a"),
+        )
+      },
+    )
+    val event = TestActionEvent.createTestEvent(group)
+
+    val children = group.getChildren(event)
+
+    assertThat(children.map { it.templatePresentation.text }).containsExactly("Project A", "/tmp/repo-a")
+
+    val secondProjectGroup = children.last() as ActionGroup
+    val secondProjectChildren = secondProjectGroup.getChildren(event)
+    val yoloAction = secondProjectChildren.first { action ->
+      action.templatePresentation.text == AgentSessionsBundle.message("toolwindow.action.new.session.codex.yolo")
+    }
+    yoloAction.actionPerformed(TestActionEvent.createTestEvent(yoloAction))
+
+    assertThat(launchedPath).isEqualTo("/tmp/repo-a")
+    assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CODEX)
+    assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.YOLO)
     assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.EDITOR_TAB_POPUP)
   }
 
@@ -530,4 +686,8 @@ private fun editorContext(
     threadCoordinates = threadCoordinates,
     sessionActionTarget = sessionActionTarget,
   )
+}
+
+private fun projectCandidate(path: String, displayName: String): AgentPromptProjectPathCandidate {
+  return AgentPromptProjectPathCandidate(path = normalizeAgentWorkbenchPath(path), displayName = displayName)
 }

@@ -6,6 +6,7 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.SessionActionTarget
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 
 data class AgentChatEditorTabActionContext(
@@ -41,6 +42,16 @@ internal fun resolveAgentChatThreadCoordinates(threadIdentity: String): AgentCha
     sessionId = sessionId,
     isPending = sessionId.startsWith("new-"),
   )
+}
+
+fun collectDistinctChatProjectPaths(project: Project): List<String> {
+  return FileEditorManager.getInstance(project).openFiles
+    .asSequence()
+    .filterIsInstance<AgentChatVirtualFile>()
+    .map { normalizeAgentWorkbenchPath(it.projectPath) }
+    .filter { it.isNotBlank() }
+    .distinct()
+    .toList()
 }
 
 fun resolveAgentChatEditorTabActionContext(event: AnActionEvent): AgentChatEditorTabActionContext? {
