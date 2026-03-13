@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 
 import static com.intellij.java.codeInspection.DataFlowInspectionTest.addJavaxNullabilityAnnotations;
+import static com.intellij.java.codeInspection.DataFlowInspectionTestCase.addJSpecifyNonNull;
 import static com.intellij.java.codeInspection.DataFlowInspectionTestCase.addJSpecifyNullMarked;
 import static com.intellij.java.codeInspection.DataFlowInspectionTestCase.setupTypeUseAnnotations;
 
@@ -520,6 +521,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
 
   public void testIncompatibleContainer() {
     addJSpecifyNullMarked(myFixture);
+    addJSpecifyNonNull(myFixture);
     doTest();
   }
 

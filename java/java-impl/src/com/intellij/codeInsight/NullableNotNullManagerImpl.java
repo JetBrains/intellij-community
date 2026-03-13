@@ -61,6 +61,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -388,8 +389,8 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
       @NotNull ContextNullabilityInfo info = ContextNullabilityInfo.EMPTY;
 
       @Override
-      public void process(@NotNull PsiAnnotation annotation, boolean superPackage) {
-        info = info.orElse(checkNullityDefault(annotation, placeTargetTypes, superPackage));
+      public void processAll(@NotNull List<@NotNull PsiAnnotation> annotations, boolean superPackage) {
+        info = info.orElse(checkNullityDefault(annotations, placeTargetTypes, superPackage));
       }
     };
     JavaPsiAnnotationUtil.processPackageAnnotations(file, processor, true);
@@ -400,23 +401,17 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   protected @NotNull ContextNullabilityInfo getNullityDefault(@NotNull PsiModifierListOwner container,
                                                               PsiAnnotation.TargetType @NotNull [] placeTargetTypes) {
     LOG.assertTrue(!(container instanceof PsiPackage)); // Packages are handled separately in findNullityDefaultOnPackage
-    ContextNullabilityInfo res = ContextNullabilityInfo.EMPTY;
     PsiModifierList modifierList = container.getModifierList();
-    if (modifierList != null) {
-      for (PsiAnnotation annotation : modifierList.getAnnotations()) {
-        ContextNullabilityInfo info = checkNullityDefault(annotation, placeTargetTypes, false);
-        res = res.orElse(info);
-      }
-    }
-    return res;
+    if (modifierList == null) return ContextNullabilityInfo.EMPTY;
+    return checkNullityDefault(Arrays.asList(modifierList.getAnnotations()), placeTargetTypes, false);
   }
 
-  private @NotNull ContextNullabilityInfo checkNullityDefault(@NotNull PsiAnnotation annotation,
+  private @NotNull ContextNullabilityInfo checkNullityDefault(@NotNull List<@NotNull PsiAnnotation> annotations,
                                                               PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
                                                               boolean superPackage) {
     ContextNullabilityInfo info = ContextNullabilityInfo.EMPTY;
     for (AnnotationPackageSupport support : myAnnotationSupports) {
-      info = info.orElse(support.getNullabilityByContainerAnnotation(annotation, placeTargetTypes, superPackage));
+      info = info.orElse(support.getNullabilityByContainerAnnotations(annotations, placeTargetTypes, superPackage));
     }
     return info;
   }
