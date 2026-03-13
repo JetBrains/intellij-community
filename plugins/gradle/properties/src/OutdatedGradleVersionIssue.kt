@@ -28,7 +28,7 @@ class OutdatedGradleVersionIssue(
 ) : ConfigurableGradleBuildIssue() {
 
   init {
-    val latestVersion = GradleJvmSupportMatrix.getLatestMinorGradleVersion(currentVersion.majorVersion)
+    val latestVersion = GradleJvmSupportMatrix.suggestLatestMinorGradleVersion(currentVersion.majorVersion)
     setTitle(GradleBundle.message("gradle.build.issue.gradle.outdated.minor.version.title"))
     addDescription(
         GradleBundle.message(

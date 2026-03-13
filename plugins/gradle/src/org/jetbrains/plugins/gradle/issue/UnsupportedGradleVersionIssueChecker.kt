@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.issue
 
 import com.intellij.build.issue.BuildIssue
@@ -78,8 +78,8 @@ class UnsupportedGradleVersionIssueChecker : GradleIssueChecker {
 
 private class UnsupportedGradleVersionIssue(gradleVersion: GradleVersion?, projectPath: String) : ConfigurableGradleBuildIssue() {
   init {
-    val oldestSupportedGradleVersion = GradleJvmSupportMatrix.getOldestSupportedGradleVersionByIdea()
-    val recommendedGradleVersion = GradleJvmSupportMatrix.getRecommendedGradleVersionByIdea()
+    val oldestSupportedGradleVersion = GradleJvmSupportMatrix.suggestOldestSupportedGradleVersionByIdea()
+    val recommendedGradleVersion = GradleJvmSupportMatrix.suggestRecommendedGradleVersionByIdea()
     setTitle(GradleBundle.message("gradle.build.issue.gradle.unsupported.title"))
     if (gradleVersion == null) {
       addDescription(GradleBundle.message("gradle.build.issue.gradle.unsupported.unknown.description"))
@@ -102,7 +102,7 @@ private class UnsupportedGradleVersionIssue(gradleVersion: GradleVersion?, proje
 @ApiStatus.Internal
 class DeprecatedGradleVersionIssue(gradleVersion: GradleVersion, projectPath: String) : ConfigurableGradleBuildIssue() {
   init {
-    val oldestNonDeprecatedGradleVersion = GradleJvmSupportMatrix.getOldestNonDeprecatedGradleVersionByIdea()
+    val oldestNonDeprecatedGradleVersion = GradleJvmSupportMatrix.suggestOldestNonDeprecatedGradleVersionByIdea()
     setTitle(GradleBundle.message("gradle.build.issue.gradle.deprecated.title"))
     addDescription(GradleBundle.message("gradle.build.issue.gradle.deprecated.description", gradleVersion.version))
     addDescription(GradleBundle.message(

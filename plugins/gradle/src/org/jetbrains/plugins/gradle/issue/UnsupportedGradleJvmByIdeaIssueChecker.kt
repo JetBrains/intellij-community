@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.issue
 
 import com.intellij.build.issue.BuildIssue
@@ -24,7 +24,7 @@ private class UnsupportedGradleJvmBuildIssue(
   projectPath: String
 ) : ConfigurableGradleBuildIssue() {
   init {
-    val oldestSupportedJavaVersionByIdea = GradleJvmSupportMatrix.getOldestSupportedJavaVersionByIdea()
+    val oldestSupportedJavaVersionByIdea = GradleJvmSupportMatrix.suggestOldestSupportedJavaVersionByIdea()
     val oldestSupportedJavaVersionByGradle = GradleJvmSupportMatrix.suggestOldestSupportedJavaVersion(gradleVersion)
     val oldestSupportedJavaVersion = oldestSupportedJavaVersionByGradle ?: oldestSupportedJavaVersionByIdea
     setTitle(GradleBundle.message("gradle.build.issue.gradle.jvm.unsupported.title"))

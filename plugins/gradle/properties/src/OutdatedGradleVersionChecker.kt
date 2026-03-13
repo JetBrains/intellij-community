@@ -8,8 +8,8 @@ import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildE
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix.Companion.getLatestMinorGradleVersion
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix.Companion.isGradleDeprecatedByIdea
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix.Companion.suggestLatestMinorGradleVersion
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionChecker
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionContext
 
@@ -44,7 +44,7 @@ internal class OutdatedGradleVersionChecker: GradleExecutionChecker {
   }
 
   private fun isMinorGradleVersionOutdated(currentVersion: GradleVersion): Boolean {
-    val latestVersion = getLatestMinorGradleVersion(currentVersion.majorVersion)
+    val latestVersion = suggestLatestMinorGradleVersion(currentVersion.majorVersion)
     return currentVersion >= latestVersion
   }
 }
