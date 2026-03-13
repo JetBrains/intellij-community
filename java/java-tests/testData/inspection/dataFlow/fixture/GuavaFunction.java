@@ -23,7 +23,7 @@ class Test {
     pred.apply(null);
   }
   void testNotNull(Predicate<@NotNull String> pred) {
-    pred.apply(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    pred.apply(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
   }
   void apply(Function<String, String> fn) {
     fn.apply(<warning descr="Passing 'null' argument to non-annotated parameter">null</warning>).hashCode();
@@ -32,7 +32,7 @@ class Test {
     fn.apply(null).<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>();
   }
   void applyNotNull(Function<@NotNull String, @NotNull String> fn) {
-    fn.apply(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>).hashCode();
+    fn.apply(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>).hashCode();
   }
   
   void call() {

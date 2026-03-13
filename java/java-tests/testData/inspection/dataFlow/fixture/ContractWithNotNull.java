@@ -9,7 +9,7 @@ class Foo {
   }
 
   static Object g(Object o1) {
-    return f(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>, o1);
+    return f(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>, o1);
   }
 
 }

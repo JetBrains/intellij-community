@@ -495,7 +495,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
-    IntentionAction action = myFixture.findSingleIntention("Fix all '@NotNull/@Nullable problems' problems in file");
+    IntentionAction action = myFixture.findSingleIntention("Fix all 'Nullability problems' problems in file");
     myFixture.launchAction(action);
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }

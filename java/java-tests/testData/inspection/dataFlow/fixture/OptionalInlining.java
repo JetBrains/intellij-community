@@ -61,7 +61,7 @@ public class OptionalInlining {
   }
 
   void testOrElseGet(Optional<String> opt) {
-    opt.orElseGet(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    opt.orElseGet(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
     String s = opt.orElseGet(() -> {
       if (Math.random() > 0.5) {
         return "foo";
@@ -74,7 +74,7 @@ public class OptionalInlining {
   }
 
   void testFilter(Optional<String> opt, Optional<Integer> intOpt) {
-    opt.filter(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    opt.filter(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
     Integer integer = <warning descr="Result of 'intOpt.filter(x -> x > 5).filter(x -> x == 5).orElse(0)' is always '0'">intOpt.filter(x -> x > 5).filter(x -> <warning descr="Condition 'x == 5' is always 'false'">x == 5</warning>).orElse(0)</warning>;
     String s1 = opt.filter(s -> false).filter(s -> s.equals("barr")).orElse("baz");
     if (<warning descr="Condition 's1.equals(\"xz\")' is always 'false'">s1.equals("xz")</warning>) {
@@ -109,7 +109,7 @@ public class OptionalInlining {
   }
 
   void testMap(Optional<String> opt) {
-    opt.map(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    opt.map(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
     String res = opt.<String>map(s -> null).orElse("abc");
     if (<warning descr="Condition '!res.equals(\"abc\")' is always 'false'">!res.equals("abc")</warning>) {
       System.out.println("Never");
@@ -154,7 +154,7 @@ public class OptionalInlining {
   }
 
   void testFlatMap(Optional<String> opt) {
-    opt.flatMap(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    opt.flatMap(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
     opt.flatMap(x -> <warning descr="Function may return null, but it's not allowed here">null</warning>);
     opt.flatMap(<warning descr="Function may return null, but it's not allowed here">this::nullableOptionalMethod</warning>);
     opt.flatMap(x -> x.isEmpty() ? <warning descr="Function may return null, but it's not allowed here">null</warning> : Optional.of(x));
@@ -175,7 +175,7 @@ public class OptionalInlining {
   }
 
   void testIfPresent(Optional<String> opt) {
-    opt.ifPresent(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    opt.ifPresent(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
     opt.map(s -> s.isEmpty() ? 5 : 6).ifPresent(val -> {
       if (<warning descr="Condition 'val == 7' is always 'false'">val == 7</warning>) {
         System.out.println("oops");

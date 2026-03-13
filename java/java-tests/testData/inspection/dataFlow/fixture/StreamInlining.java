@@ -7,14 +7,14 @@ import java.util.stream.*;
 
 public class StreamInlining {
   void testNulls(List<String> list) {
-    list.stream().filter(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>).forEach(System.out::println);
-    list.stream().map(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>).forEach(System.out::println);
-    list.stream().flatMap(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>).forEach(System.out::println);
-    list.stream().filter(x -> x != null).forEach(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    list.stream().filter(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>).forEach(System.out::println);
+    list.stream().map(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>).forEach(System.out::println);
+    list.stream().flatMap(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>).forEach(System.out::println);
+    list.stream().filter(x -> x != null).forEach(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
     List<String> l = null;
     l.<warning descr="Method invocation 'stream' will produce 'NullPointerException'">stream</warning>().count();
     int[] arr = null;
-    Arrays.stream(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">arr</warning>).count();
+    Arrays.stream(<warning descr="Passing 'null' argument to parameter annotated as non-null">arr</warning>).count();
     Stream<String> stream = null;
     stream.<warning descr="Method invocation 'filter' will produce 'NullPointerException'">filter</warning>(x -> x != null).forEach(System.out::println);
   }

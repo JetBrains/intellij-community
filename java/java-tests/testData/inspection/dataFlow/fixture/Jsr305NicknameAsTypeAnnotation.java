@@ -35,7 +35,7 @@ import java.lang.annotation.Target;
 class Test {
   void test(String s) {
     if (<warning descr="Condition 's == null' is always 'false'">s == null</warning>) {}
-    @Nullable String @Nullable [] arr = new String[] {"a", "b", "c", <warning descr="'null' is stored to an array of @NotNull elements">null</warning>};
+    @Nullable String @Nullable [] arr = new String[] {"a", "b", "c", <warning descr="'null' is stored to an array of non-null elements">null</warning>};
     @Nullable String @Nullable [] arr2 = {"a", "b", "c", null};
     @Nullable String @Nullable [] arr3 = new @Nullable String [] {"a", "b", "c", null};
   }

@@ -1,4 +1,4 @@
-// "Fix all '@NotNull/@Nullable problems' problems in file" "true"
+// "Fix all 'Nullability problems' problems in file" "true"
 package typeUse;
 
 import java.lang.annotation.*;

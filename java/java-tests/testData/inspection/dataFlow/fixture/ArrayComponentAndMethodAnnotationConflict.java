@@ -19,19 +19,19 @@ class FooImpl implements Foo {
       return null;
     }
     else if (Math.random() > 0.5) {
-      @NotNull Object @Nullable [] arr1 = new Object[]{<warning descr="'null' is stored to an array of @NotNull elements">null</warning>, new Object(), Math.random() > 0.5 ? new Object() : <warning descr="'null' is stored to an array of @NotNull elements">null</warning>, <warning descr="Expression 'foo()' might evaluate to null but is stored to an array of @NotNull elements">foo()</warning>};
-      @NotNull Object @Nullable [] arr2 = {<warning descr="'null' is stored to an array of @NotNull elements">null</warning>, new Object(), Math.random() > 0.5 ? new Object() : <warning descr="'null' is stored to an array of @NotNull elements">null</warning>, <warning descr="Expression 'foo()' might evaluate to null but is stored to an array of @NotNull elements">foo()</warning>};
-      return new Object[]{<warning descr="'null' is stored to an array of @NotNull elements">null</warning>, new Object(), Math.random() > 0.5 ? new Object() : <warning descr="'null' is stored to an array of @NotNull elements">null</warning>, <warning descr="Expression 'foo()' might evaluate to null but is stored to an array of @NotNull elements">foo()</warning>};
+      @NotNull Object @Nullable [] arr1 = new Object[]{<warning descr="'null' is stored to an array of non-null elements">null</warning>, new Object(), Math.random() > 0.5 ? new Object() : <warning descr="'null' is stored to an array of non-null elements">null</warning>, <warning descr="Expression 'foo()' might evaluate to null but is stored to an array of non-null elements">foo()</warning>};
+      @NotNull Object @Nullable [] arr2 = {<warning descr="'null' is stored to an array of non-null elements">null</warning>, new Object(), Math.random() > 0.5 ? new Object() : <warning descr="'null' is stored to an array of non-null elements">null</warning>, <warning descr="Expression 'foo()' might evaluate to null but is stored to an array of non-null elements">foo()</warning>};
+      return new Object[]{<warning descr="'null' is stored to an array of non-null elements">null</warning>, new Object(), Math.random() > 0.5 ? new Object() : <warning descr="'null' is stored to an array of non-null elements">null</warning>, <warning descr="Expression 'foo()' might evaluate to null but is stored to an array of non-null elements">foo()</warning>};
     }
-    return new @NotNull Object @Nullable []{<warning descr="'null' is stored to an array of @NotNull elements">null</warning>, new Object(), Math.random() > 0.5 ? new Object() : <warning descr="'null' is stored to an array of @NotNull elements">null</warning>, <warning descr="Expression 'foo()' might evaluate to null but is stored to an array of @NotNull elements">foo()</warning>};
+    return new @NotNull Object @Nullable []{<warning descr="'null' is stored to an array of non-null elements">null</warning>, new Object(), Math.random() > 0.5 ? new Object() : <warning descr="'null' is stored to an array of non-null elements">null</warning>, <warning descr="Expression 'foo()' might evaluate to null but is stored to an array of non-null elements">foo()</warning>};
   }
 
   void test() {
     @NotNull Object @Nullable [] array = getNullableArrayOfNotNullObjects();
     assert array != null;
-    array[0] = <warning descr="'null' is stored to an array of @NotNull elements">null</warning>;
-    array[1] = Math.random() > 0.5 ? <warning descr="'null' is stored to an array of @NotNull elements">null</warning> : "foo";
-    array[3] = <warning descr="Expression 'foo()' might evaluate to null but is stored to an array of @NotNull elements">foo()</warning>;
+    array[0] = <warning descr="'null' is stored to an array of non-null elements">null</warning>;
+    array[1] = Math.random() > 0.5 ? <warning descr="'null' is stored to an array of non-null elements">null</warning> : "foo";
+    array[3] = <warning descr="Expression 'foo()' might evaluate to null but is stored to an array of non-null elements">foo()</warning>;
   }
   
   native @Nullable Object foo();
