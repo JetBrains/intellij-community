@@ -323,14 +323,13 @@ class DirtyFilesQueueTest {
 
   private suspend fun configureModule(project: Project): ModuleEntity {
     val workspaceModel = project.workspaceModel
-    val moduleEntity = ModuleEntity(
-      name = TEST_MODULE_NAME,
-      dependencies = emptyList(),
-      entitySource = TestModuleEntitySource
-    )
 
     workspaceModel.update("creating test module") { storage ->
-      storage.addEntity(moduleEntity)
+      storage addEntity ModuleEntity(
+        name = TEST_MODULE_NAME,
+        dependencies = emptyList(),
+        entitySource = TestModuleEntitySource
+      )
     }
     return workspaceModel.currentSnapshot.resolve(ModuleId(TEST_MODULE_NAME))!!
   }
