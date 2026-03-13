@@ -74,7 +74,7 @@ interface DumpItem {
 
     @JvmField
     val BY_INTEREST: Comparator<DumpItem> = Comparator<DumpItem> { o1, o2 ->
-      o2.interestLevel - o1.interestLevel
+      o2.interestLevel compareTo o1.interestLevel
     }
   }
 }
