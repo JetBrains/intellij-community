@@ -5,31 +5,31 @@ import com.intellij.agent.workbench.common.buildAgentThreadIdentity
 import com.intellij.agent.workbench.common.parseAgentThreadIdentity
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import java.util.UUID
 
 internal class AgentSessionProviderUnavailableException(provider: AgentSessionProvider) :
-  IllegalStateException("No session provider bridge registered for ${provider.value}")
+  IllegalStateException("No session provider registered for ${provider.value}")
 
-private fun requireAgentSessionProviderBridge(provider: AgentSessionProvider) =
-  AgentSessionProviderBridges.find(provider)
+private fun requireAgentSessionProviderDescriptor(provider: AgentSessionProvider) =
+  AgentSessionProviders.find(provider)
   ?: throw AgentSessionProviderUnavailableException(provider)
 
 internal fun buildAgentSessionResumeLaunchSpec(
   provider: AgentSessionProvider,
   sessionId: String,
 ): AgentSessionTerminalLaunchSpec =
-  requireAgentSessionProviderBridge(provider).buildResumeLaunchSpec(sessionId)
+  requireAgentSessionProviderDescriptor(provider).buildResumeLaunchSpec(sessionId)
 
 internal fun buildAgentSessionNewLaunchSpec(
   provider: AgentSessionProvider,
   mode: AgentSessionLaunchMode,
 ): AgentSessionTerminalLaunchSpec =
-  requireAgentSessionProviderBridge(provider).buildNewSessionLaunchSpec(mode)
+  requireAgentSessionProviderDescriptor(provider).buildNewSessionLaunchSpec(mode)
 
 internal fun buildAgentSessionEntryLaunchSpec(provider: AgentSessionProvider): AgentSessionTerminalLaunchSpec {
-  return requireAgentSessionProviderBridge(provider).buildNewEntryLaunchSpec()
+  return requireAgentSessionProviderDescriptor(provider).buildNewEntryLaunchSpec()
 }
 
 internal fun buildAgentSessionIdentity(provider: AgentSessionProvider, sessionId: String): String {
@@ -66,5 +66,5 @@ internal fun buildAgentSessionNewIdentity(provider: AgentSessionProvider): Strin
 }
 
 internal fun agentSessionCliMissingMessageKey(provider: AgentSessionProvider): String {
-  return requireAgentSessionProviderBridge(provider).cliMissingMessageKey
+  return requireAgentSessionProviderDescriptor(provider).cliMissingMessageKey
 }

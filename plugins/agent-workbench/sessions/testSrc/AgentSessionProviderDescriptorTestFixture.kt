@@ -8,20 +8,22 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.project.Project
 import javax.swing.Icon
 
-class TestAgentSessionProviderBridge(
+class TestAgentSessionProviderDescriptor(
   override val provider: AgentSessionProvider,
   private val supportedModes: Set<AgentSessionLaunchMode>,
   private val cliAvailable: Boolean,
   private val resumeEnvVariables: Map<String, String> = emptyMap(),
   private val iconOverride: Icon? = null,
+  private val sourceId: String = provider.value,
+  override val displayPriority: Int = Int.MAX_VALUE,
   override val yoloSessionLabelKey: String? = null,
-) : AgentSessionProviderBridge {
+) : AgentSessionProviderDescriptor {
   override val displayNameKey: String
     get() = if (provider == AgentSessionProvider.CLAUDE) "toolwindow.provider.claude" else "toolwindow.provider.codex"
 
@@ -36,11 +38,13 @@ class TestAgentSessionProviderBridge(
 
   override val sessionSource: AgentSessionSource = object : AgentSessionSource {
     override val provider: AgentSessionProvider
-      get() = this@TestAgentSessionProviderBridge.provider
+      get() = this@TestAgentSessionProviderDescriptor.provider
 
     override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = emptyList()
 
     override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> = emptyList()
+
+    override fun toString(): String = "TestAgentSessionSource($sourceId)"
   }
 
   override val cliMissingMessageKey: String

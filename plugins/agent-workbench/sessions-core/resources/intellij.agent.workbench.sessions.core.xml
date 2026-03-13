@@ -7,12 +7,8 @@
 
   <extensionPoints>
     <extensionPoint
-      qualifiedName="com.intellij.agent.workbench.sessionProviderBridge"
-      interface="com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge"
-      dynamic="true"/>
-    <extensionPoint
-      qualifiedName="com.intellij.agent.workbench.sessionProviderBehavior"
-      interface="com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBehavior"
+      qualifiedName="com.intellij.agent.workbench.sessionProvider"
+      interface="com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor"
       dynamic="true"/>
     <extensionPoint
       qualifiedName="com.intellij.agent.workbench.promptLauncher"

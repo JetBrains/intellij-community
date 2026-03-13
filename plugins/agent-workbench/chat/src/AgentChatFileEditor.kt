@@ -5,7 +5,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBehaviors
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -63,7 +63,7 @@ internal class AgentChatFileEditor(
   private val editorTabActions: ActionGroup? by lazy {
     val actionManager = ActionManager.getInstance()
     val providerActionIds = file.provider
-      ?.let { provider -> AgentSessionProviderBehaviors.find(provider)?.editorTabActionIds }
+      ?.let { provider -> AgentSessionProviders.find(provider)?.editorTabActionIds }
       .orEmpty()
     val actions = buildList {
       listOf(
@@ -92,7 +92,7 @@ internal class AgentChatFileEditor(
   private var codexTuiPatchFoldController: CodexTuiPatchFoldController? = null
 
   private val providerBehavior
-    get() = file.provider?.let(AgentSessionProviderBehaviors::find)
+    get() = file.provider?.let(AgentSessionProviders::find)
 
   override fun getComponent(): JComponent = component
 
@@ -385,7 +385,7 @@ private class ToolWindowAgentChatTerminalTab(
       timeoutMs = timeoutMs,
       idleMs = idleMs,
       onMeaningfulOutput = {
-        if (provider != null && AgentSessionProviderBehaviors.find(provider)?.emitsScopedRefreshSignals == true) {
+        if (provider != null && AgentSessionProviders.find(provider)?.emitsScopedRefreshSignals == true) {
           notifyAgentChatTerminalOutputForRefresh(provider = provider, projectPath = projectPath)
         }
       },

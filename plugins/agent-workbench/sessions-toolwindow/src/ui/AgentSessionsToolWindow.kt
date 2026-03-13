@@ -9,7 +9,7 @@ import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBehaviors
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
@@ -216,8 +216,8 @@ internal class AgentSessionsToolWindowPanel(
   }
 
   private fun buildNorthPanel(): JPanel? {
-    val contributions = AgentSessionProviderBehaviors.allBehaviors()
-      .mapNotNull { behavior -> behavior.createToolWindowNorthComponent(project) }
+    val contributions = AgentSessionProviders.allProvidersById()
+      .mapNotNull { provider -> provider.createToolWindowNorthComponent(project) }
     if (contributions.isEmpty()) {
       return null
     }

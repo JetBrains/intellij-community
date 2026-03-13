@@ -21,8 +21,8 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageP
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
@@ -69,7 +69,7 @@ class AgentSessionPromptLauncherBridgeTest {
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
     )
     val chatOpenExecutor = RecordingChatOpenExecutor()
-    AgentSessionProviderBridges.withRegistryForTest(
+    AgentSessionProviders.withRegistryForTest(
       InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
     ) {
       runBlocking(Dispatchers.Default) {
@@ -155,7 +155,7 @@ class AgentSessionPromptLauncherBridgeTest {
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
     )
-    AgentSessionProviderBridges.withRegistryForTest(
+    AgentSessionProviders.withRegistryForTest(
       InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
     ) {
       runBlocking(Dispatchers.Default) {
@@ -205,7 +205,7 @@ class AgentSessionPromptLauncherBridgeTest {
       }
     )
     withOpenInNonDedicatedFrameSettingForTest {
-      AgentSessionProviderBridges.withRegistryForTest(
+      AgentSessionProviders.withRegistryForTest(
         InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
       ) {
         runBlocking(Dispatchers.Default) {
@@ -267,7 +267,7 @@ class AgentSessionPromptLauncherBridgeTest {
     )
     val chatOpenExecutor = RecordingChatOpenExecutor()
     val uiPreferencesState = AgentSessionUiPreferencesStateService()
-    AgentSessionProviderBridges.withRegistryForTest(
+    AgentSessionProviders.withRegistryForTest(
       InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
     ) {
       runBlocking(Dispatchers.Default) {
@@ -301,7 +301,7 @@ class AgentSessionPromptLauncherBridgeTest {
       startupPromptCommandEnvVariables = mapOf("DISABLE_AUTOUPDATER" to "1"),
     )
     val chatOpenExecutor = RecordingChatOpenExecutor()
-    AgentSessionProviderBridges.withRegistryForTest(
+    AgentSessionProviders.withRegistryForTest(
       InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
     ) {
       runBlocking(Dispatchers.Default) {
@@ -334,7 +334,7 @@ class AgentSessionPromptLauncherBridgeTest {
       startupPromptCommandEnvVariables = mapOf("DISABLE_AUTOUPDATER" to "1"),
     )
     val chatOpenExecutor = RecordingChatOpenExecutor()
-    AgentSessionProviderBridges.withRegistryForTest(
+    AgentSessionProviders.withRegistryForTest(
       InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
     ) {
       runBlocking(Dispatchers.Default) {
@@ -375,7 +375,7 @@ class AgentSessionPromptLauncherBridgeTest {
       startupPromptCommandSupported = false,
     )
     val chatOpenExecutor = RecordingChatOpenExecutor()
-    AgentSessionProviderBridges.withRegistryForTest(
+    AgentSessionProviders.withRegistryForTest(
       InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
     ) {
       runBlocking(Dispatchers.Default) {
@@ -417,7 +417,7 @@ class AgentSessionPromptLauncherBridgeTest {
       startupPromptCommandPolicyEnabled = false,
     )
     val chatOpenExecutor = RecordingChatOpenExecutor()
-    AgentSessionProviderBridges.withRegistryForTest(
+    AgentSessionProviders.withRegistryForTest(
       InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
     ) {
       runBlocking(Dispatchers.Default) {
@@ -464,7 +464,7 @@ class AgentSessionPromptLauncherBridgeTest {
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
     )
     val chatOpenExecutor = RecordingChatOpenExecutor()
-    AgentSessionProviderBridges.withRegistryForTest(
+    AgentSessionProviders.withRegistryForTest(
       InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
     ) {
       runBlocking(Dispatchers.Default) {
@@ -543,7 +543,7 @@ class AgentSessionPromptLauncherBridgeTest {
       }
     )
     withOpenInNonDedicatedFrameSettingForTest {
-      AgentSessionProviderBridges.withRegistryForTest(
+      AgentSessionProviders.withRegistryForTest(
         InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
       ) {
         runBlocking(Dispatchers.Default) {
@@ -641,7 +641,7 @@ class AgentSessionPromptLauncherBridgeTest {
       startupPromptCommandSupported = false,
     )
     val chatOpenExecutor = RecordingChatOpenExecutor()
-    AgentSessionProviderBridges.withRegistryForTest(
+    AgentSessionProviders.withRegistryForTest(
       InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
     ) {
       runBlocking(Dispatchers.Default) {
@@ -708,7 +708,7 @@ class AgentSessionPromptLauncherBridgeTest {
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
     )
     val chatOpenExecutor = RecordingChatOpenExecutor()
-    AgentSessionProviderBridges.withRegistryForTest(
+    AgentSessionProviders.withRegistryForTest(
       InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
     ) {
       runBlocking(Dispatchers.Default) {
@@ -753,7 +753,7 @@ class AgentSessionPromptLauncherBridgeTest {
   @Test
   fun launchReturnsProviderUnavailableWhenBridgeIsMissing() {
     val chatOpenExecutor = RecordingChatOpenExecutor()
-    AgentSessionProviderBridges.withRegistryForTest(
+    AgentSessionProviders.withRegistryForTest(
       InMemoryAgentSessionProviderRegistry(emptyList())
     ) {
       runBlocking(Dispatchers.Default) {
@@ -798,7 +798,7 @@ class AgentSessionPromptLauncherBridgeTest {
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
     )
     val chatOpenExecutor = RecordingChatOpenExecutor()
-    AgentSessionProviderBridges.withRegistryForTest(
+    AgentSessionProviders.withRegistryForTest(
       InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
     ) {
       runBlocking(Dispatchers.Default) {
@@ -1383,7 +1383,7 @@ private class RecordingPromptLaunchProviderBridge(
   private val startupPromptCommandPolicyEnabled: Boolean = true,
   private val timeoutPolicy: AgentInitialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK,
   private val startupPromptCommandEnvVariables: Map<String, String> = emptyMap(),
-) : AgentSessionProviderBridge {
+) : AgentSessionProviderDescriptor {
   val createCalls: AtomicInteger = AtomicInteger(0)
   val composeCalls: AtomicInteger = AtomicInteger(0)
   val startupCommandCalls: AtomicInteger = AtomicInteger(0)

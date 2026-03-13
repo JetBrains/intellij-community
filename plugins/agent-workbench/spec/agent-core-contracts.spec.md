@@ -60,15 +60,15 @@ Define the single source of truth for cross-feature behavior that must stay cons
   - Claude default: `claude`
   - Claude YOLO: `claude --dangerously-skip-permissions`
   [@test] ../sessions/testSrc/AgentSessionCliTest.kt
-  [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
+  [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
 
 - Canonical provider command mapping must keep bare executable names; executable lookup is resolved by terminal startup environment and provider mapping must not pre-resolve absolute executable paths.
   [@test] ../sessions/testSrc/AgentSessionCliTest.kt
-  [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
+  [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
 
 - New-thread prompt bootstrap — startup command format: provider bridges may build one-shot startup commands by appending `-- <prompt>` to canonical command.
-  [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
-  [@test] ../claude/sessions/testSrc/ClaudeAgentSessionProviderBridgeTest.kt
+  [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
+  [@test] ../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
 
 - Provider bridge policy may explicitly disable startup prompt command usage for a launch request (for example Codex Plan mode), forcing post-start message send path.
   [@test] ../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
@@ -84,7 +84,7 @@ Define the single source of truth for cross-feature behavior that must stay cons
   [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
 - If startup command support is unavailable, inapplicable for the open target (for example existing-tab reuse), or exceeds command-size guard, post-start send-once initial message metadata must be used.
-  [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
+  [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
   [@test] ../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
 - Post-start initial message fallback must be terminal-readiness-gated for all providers: dispatch only after terminal session reaches `Running` and startup output readiness heuristic, never before process readiness.
@@ -110,7 +110,7 @@ Define the single source of truth for cross-feature behavior that must stay cons
 
 - Provider bridge unarchive capability is optional; unsupported providers must keep archive flow functional and must not block supported-provider unarchive restores.
   [@test] ../sessions/testSrc/AgentSessionArchiveServiceIntegrationTest.kt
-  [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
+  [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
 
 - `Select in Agent Threads` must call `ensureThreadVisible(path, provider, threadId)` before activating the Agent Threads tool window.
   [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt

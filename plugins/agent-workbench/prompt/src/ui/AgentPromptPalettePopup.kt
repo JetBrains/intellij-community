@@ -30,8 +30,8 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPaletteExten
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPaletteExtensions
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUiKind
@@ -126,7 +126,7 @@ private class AgentPromptTextField(project: Project) : LanguageTextField(
 
 internal class AgentPromptPalettePopup(
   private val invocationData: AgentPromptInvocationData,
-  private val providersProvider: () -> List<AgentSessionProviderBridge> = AgentSessionProviderBridges::allBridges,
+  private val providersProvider: () -> List<AgentSessionProviderDescriptor> = AgentSessionProviders::allProviders,
   private val launcherProvider: () -> AgentPromptLauncherBridge? = AgentPromptLaunchers::find,
   private val onClosed: (() -> Unit)? = null,
 ) : AgentPromptPalettePopupSession {

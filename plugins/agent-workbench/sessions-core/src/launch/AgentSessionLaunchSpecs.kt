@@ -2,7 +2,7 @@
 package com.intellij.agent.workbench.sessions.core.launch
 
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.diagnostic.logger
 
@@ -55,7 +55,7 @@ private fun buildDefaultResumeLaunchSpec(
   provider: AgentSessionProvider,
   sessionId: String,
 ): AgentSessionTerminalLaunchSpec {
-  return AgentSessionProviderBridges.find(provider)?.buildResumeLaunchSpec(sessionId)
+  return AgentSessionProviders.find(provider)?.buildResumeLaunchSpec(sessionId)
          ?: fallbackResumeLaunchSpec(provider, sessionId)
 }
 

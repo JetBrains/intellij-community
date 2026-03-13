@@ -2,7 +2,7 @@
 package com.intellij.agent.workbench.sessions.toolwindow
 
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
-import com.intellij.agent.workbench.sessions.TestAgentSessionProviderBridge
+import com.intellij.agent.workbench.sessions.TestAgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
@@ -242,13 +242,13 @@ class AgentSessionsTreePopupActionsTest {
     var launchedMode: AgentSessionLaunchMode? = null
     var launchedProject: Project? = null
     var entryPoint: AgentWorkbenchEntryPoint? = null
-    val codexBridge = TestAgentSessionProviderBridge(
+    val codexBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
       cliAvailable = true,
       yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
     )
-    val claudeBridge = TestAgentSessionProviderBridge(
+    val claudeBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CLAUDE,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
@@ -330,13 +330,13 @@ class AgentSessionsTreePopupActionsTest {
     var launchedMode: AgentSessionLaunchMode? = null
     var launchedProject: Project? = null
     var entryPoint: AgentWorkbenchEntryPoint? = null
-    val codexBridge = TestAgentSessionProviderBridge(
+    val codexBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
       cliAvailable = true,
       yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
     )
-    val claudeBridge = TestAgentSessionProviderBridge(
+    val claudeBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CLAUDE,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = false,
@@ -399,13 +399,13 @@ class AgentSessionsTreePopupActionsTest {
     var launchedMode: AgentSessionLaunchMode? = null
     var entryPoint: AgentWorkbenchEntryPoint? = null
     val fallbackProvider = AgentSessionProvider.from("fallback")
-    val codexYoloOnlyBridge = TestAgentSessionProviderBridge(
+    val codexYoloOnlyBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.YOLO),
       cliAvailable = true,
       yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
     )
-    val fallbackBridge = TestAgentSessionProviderBridge(
+    val fallbackBridge = TestAgentSessionProviderDescriptor(
       provider = fallbackProvider,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,

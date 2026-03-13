@@ -5,7 +5,9 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextEnvelopeFormatter
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
+import com.intellij.openapi.project.Project
 import javax.swing.Icon
+import javax.swing.JComponent
 
 enum class AgentInitialMessageStartupPolicy {
   TRY_STARTUP_COMMAND,
@@ -47,7 +49,12 @@ data class AgentInitialMessageDispatchPlan(
   }
 }
 
-interface AgentSessionProviderBridge {
+data class AgentPendingSessionMetadata(
+  @JvmField val createdAtMs: Long,
+  @JvmField val launchMode: String?,
+)
+
+interface AgentSessionProviderDescriptor {
   val provider: AgentSessionProvider
   val displayNameKey: String
   val displayNameFallback: String
@@ -70,6 +77,27 @@ interface AgentSessionProviderBridge {
     get() = false
 
   val suppressPromptExistingTaskSelectionHint: Boolean
+    get() = false
+
+  val editorTabActionIds: List<String>
+    get() = emptyList()
+
+  val supportsPendingEditorTabRebind: Boolean
+    get() = false
+
+  val supportsNewThreadRebind: Boolean
+    get() = false
+
+  val emitsScopedRefreshSignals: Boolean
+    get() = false
+
+  val refreshPathAfterCreateNewSession: Boolean
+    get() = false
+
+  val archiveRefreshDelayMs: Long
+    get() = 0L
+
+  val suppressArchivedThreadsDuringRefresh: Boolean
     get() = false
 
   val sessionSource: AgentSessionSource
@@ -104,6 +132,16 @@ interface AgentSessionProviderBridge {
   suspend fun unarchiveThread(path: String, threadId: String): Boolean = false
 
   fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan
+
+  fun onConversationOpened() {
+  }
+
+  fun resolvePendingSessionMetadata(
+    identity: String,
+    launchSpec: AgentSessionTerminalLaunchSpec,
+  ): AgentPendingSessionMetadata? = null
+
+  fun createToolWindowNorthComponent(project: Project): JComponent? = null
 
   fun isCliMissingError(throwable: Throwable): Boolean = false
 }

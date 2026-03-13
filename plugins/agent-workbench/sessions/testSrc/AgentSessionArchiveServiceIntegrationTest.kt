@@ -8,8 +8,8 @@ import com.intellij.agent.workbench.sessions.core.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
@@ -60,7 +60,7 @@ class AgentSessionArchiveServiceIntegrationTest {
         true
       },
     )
-    val claudeBridge = object : AgentSessionProviderBridge {
+    val claudeBridge = object : AgentSessionProviderDescriptor {
       override val provider: AgentSessionProvider
         get() = AgentSessionProvider.CLAUDE
       override val displayNameKey: String
@@ -93,7 +93,7 @@ class AgentSessionArchiveServiceIntegrationTest {
       }
     }
 
-    AgentSessionProviderBridges.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(codexBridge, claudeBridge))) {
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(codexBridge, claudeBridge))) {
       runBlocking(Dispatchers.Default) {
         withServiceAndArchive(
           sessionSourcesProvider = { listOf(codexSource, claudeSource) },
@@ -145,7 +145,7 @@ class AgentSessionArchiveServiceIntegrationTest {
       },
     )
 
-    AgentSessionProviderBridges.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
       runBlocking(Dispatchers.Default) {
         withServiceAndArchive(
           sessionSourcesProvider = { listOf(sessionSource) },
@@ -216,7 +216,7 @@ class AgentSessionArchiveServiceIntegrationTest {
       onArchive = { _, _ -> true },
     )
 
-    AgentSessionProviderBridges.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
       runBlocking(Dispatchers.Default) {
         withServiceAndArchive(
           sessionSourcesProvider = { listOf(sessionSource) },
@@ -287,7 +287,7 @@ class AgentSessionArchiveServiceIntegrationTest {
       onArchive = { _, _ -> true },
     )
 
-    AgentSessionProviderBridges.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
       runBlocking(Dispatchers.Default) {
         withServiceAndArchive(
           sessionSourcesProvider = { listOf(sessionSource) },
@@ -329,7 +329,7 @@ class AgentSessionArchiveServiceIntegrationTest {
       onArchive = { _, _ -> false },
     )
 
-    AgentSessionProviderBridges.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
       runBlocking(Dispatchers.Default) {
         withServiceAndArchive(
           sessionSourcesProvider = { listOf(sessionSource) },
@@ -380,7 +380,7 @@ class AgentSessionArchiveServiceIntegrationTest {
       },
     )
 
-    AgentSessionProviderBridges.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
       runBlocking(Dispatchers.Default) {
         withServiceAndArchive(
           sessionSourcesProvider = { listOf(sessionSource) },
@@ -444,7 +444,7 @@ class AgentSessionArchiveServiceIntegrationTest {
       },
     )
 
-    AgentSessionProviderBridges.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
       runBlocking(Dispatchers.Default) {
         withServiceAndArchive(
           sessionSourcesProvider = { listOf(sessionSource) },
@@ -532,7 +532,7 @@ class AgentSessionArchiveServiceIntegrationTest {
       },
     )
 
-    AgentSessionProviderBridges.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
       runBlocking(Dispatchers.Default) {
         withServiceAndArchive(
           sessionSourcesProvider = { listOf(sessionSource) },
@@ -590,7 +590,7 @@ class AgentSessionArchiveServiceIntegrationTest {
       },
     )
 
-    AgentSessionProviderBridges.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
       runBlocking(Dispatchers.Default) {
         withServiceAndArchive(
           sessionSourcesProvider = { listOf(sessionSource) },
@@ -630,8 +630,8 @@ private fun testCodexBridge(
   sessionSource: AgentSessionSource,
   onArchive: suspend (path: String, threadId: String) -> Boolean,
   onUnarchive: (suspend (path: String, threadId: String) -> Boolean)? = null,
-): AgentSessionProviderBridge {
-  return object : AgentSessionProviderBridge {
+): AgentSessionProviderDescriptor {
+  return object : AgentSessionProviderDescriptor {
     override val provider: AgentSessionProvider
       get() = AgentSessionProvider.CODEX
 
@@ -654,6 +654,12 @@ private fun testCodexBridge(
 
     override val supportsUnarchiveThread: Boolean
       get() = onUnarchive != null
+
+    override val archiveRefreshDelayMs: Long
+      get() = 1_000L
+
+    override val suppressArchivedThreadsDuringRefresh: Boolean
+      get() = true
 
     override fun isCliAvailable(): Boolean = true
 

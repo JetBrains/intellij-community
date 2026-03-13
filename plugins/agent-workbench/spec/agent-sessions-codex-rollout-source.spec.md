@@ -176,7 +176,7 @@ Define Codex thread-list behavior where discovery and primary status projection 
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
 - Codex provider bridge must advertise archive capability and route archive/unarchive calls through shared app-server service when unarchive is supported.
-  [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
+  [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
   [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
 
 - Shared app-server process must start lazily on first request.

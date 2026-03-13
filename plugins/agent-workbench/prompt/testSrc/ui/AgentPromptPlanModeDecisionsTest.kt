@@ -9,7 +9,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDE
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderOption
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import org.assertj.core.api.Assertions.assertThat
@@ -104,8 +104,8 @@ private fun testPlanModeProviderBridge(
     provider: AgentSessionProvider = AgentSessionProvider.CODEX,
     supportsPlanMode: Boolean = true,
     promptOptions: List<AgentPromptProviderOption> = listOf(PLAN_MODE_OPTION),
-): AgentSessionProviderBridge {
-    return object : AgentSessionProviderBridge {
+): AgentSessionProviderDescriptor {
+    return object : AgentSessionProviderDescriptor {
         override val provider: AgentSessionProvider = provider
         override val displayNameKey: String = provider.value
         override val newSessionLabelKey: String = provider.value

@@ -11,7 +11,7 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchSpecs
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBehaviors
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -280,7 +280,7 @@ suspend fun openChat(
   }
 
   val pendingProvider = pendingProviderForThreadIdentity(threadIdentity)
-  if (pendingProvider != null && AgentSessionProviderBehaviors.find(pendingProvider)?.emitsScopedRefreshSignals == true) {
+  if (pendingProvider != null && AgentSessionProviders.find(pendingProvider)?.emitsScopedRefreshSignals == true) {
     notifyAgentChatTerminalOutputForRefresh(provider = pendingProvider, projectPath = projectPath)
   }
 }

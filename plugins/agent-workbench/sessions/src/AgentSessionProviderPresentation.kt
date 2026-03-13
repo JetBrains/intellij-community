@@ -2,12 +2,12 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.openapi.util.NlsSafe
 import javax.swing.Icon
 
 internal fun providerDisplayName(provider: AgentSessionProvider): @NlsSafe String {
-  val bridge = AgentSessionProviderBridges.find(provider)
+  val bridge = AgentSessionProviders.find(provider)
   if (bridge == null) {
     return provider.value
   }
@@ -16,5 +16,5 @@ internal fun providerDisplayName(provider: AgentSessionProvider): @NlsSafe Strin
 }
 
 internal fun providerIcon(provider: AgentSessionProvider): Icon? {
-  return AgentSessionProviderBridges.find(provider)?.icon
+  return AgentSessionProviders.find(provider)?.icon
 }

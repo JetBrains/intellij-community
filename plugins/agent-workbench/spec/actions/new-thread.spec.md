@@ -13,7 +13,7 @@ targets:
   - ../../chat/src/AgentChatFileEditor.kt
   - ../../sessions/resources/intellij.agent.workbench.sessions.xml
   - ../../sessions-actions/resources/intellij.agent.workbench.sessions.actions.xml
-  - ../../codex/sessions/src/CodexAgentSessionProviderBridge.kt
+  - ../../codex/sessions/src/CodexAgentSessionProviderDescriptor.kt
   - ../../codex/sessions/src/backend/CodexSessionBackendSelector.kt
   - ../../codex/sessions/src/backend/rollout/CodexRolloutRefreshHintsProvider.kt
   - ../../sessions/resources/messages/AgentSessionsBundle.properties
@@ -26,7 +26,7 @@ targets:
   - ../../sessions/testSrc/AgentSessionCliTest.kt
   - ../../sessions/testSrc/AgentSessionProjectCatalogTest.kt
   - ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
-  - ../../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
+  - ../../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
   - ../../codex/sessions/testSrc/backend/rollout/CodexRolloutRefreshHintsProviderTest.kt
 ---
 
@@ -116,7 +116,7 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 
 - Command selection for new-thread launches must follow canonical mapping in `spec/agent-core-contracts.spec.md`.
   [@test] ../../sessions/testSrc/AgentSessionCliTest.kt
-  [@test] ../../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
+  [@test] ../../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
 
 - Codex new-thread opens must start in pending identity state (`codex:new-*`) with `sessionId = null`.
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
@@ -185,7 +185,7 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionProjectCatalogTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionCliTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionRefreshCoordinatorTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexAgentSessionProviderBridgeTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexAgentSessionProviderDescriptorTest'`
 
 ## Open Questions / Risks
 - Pending-to-concrete binding timing can vary by backend update latency; user feedback for long delay may need dedicated UX later.

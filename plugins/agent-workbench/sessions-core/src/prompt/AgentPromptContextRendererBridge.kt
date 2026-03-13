@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.core.prompt
 
+import com.intellij.agent.workbench.sessions.core.OverridableValue
+import com.intellij.agent.workbench.sessions.core.SnapshotExtensionPointCache
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 
@@ -36,8 +38,6 @@ private val LOG = logger<AgentPromptContextRendererRegistryLog>()
 private val AGENT_PROMPT_CONTEXT_RENDERER_BRIDGE_EP: ExtensionPointName<AgentPromptContextRendererBridge> =
   ExtensionPointName("com.intellij.agent.workbench.promptContextRenderer")
 
-private class AgentPromptContextRendererBridgeSnapshotCacheId
-
 private data class AgentPromptContextRendererBridgeSnapshot(
   @JvmField val orderedBridges: List<AgentPromptContextRendererBridge>,
   @JvmField val bridgesById: Map<String, AgentPromptContextRendererBridge>,
@@ -49,6 +49,15 @@ private data class AgentPromptContextRendererBridgeSnapshot(
     )
   }
 }
+
+private val RENDERER_SNAPSHOT_CACHE = SnapshotExtensionPointCache(
+  log = LOG,
+  extensionPoint = AGENT_PROMPT_CONTEXT_RENDERER_BRIDGE_EP,
+  cacheId = AgentPromptContextRendererBridgeSnapshot::class.java,
+  emptySnapshot = AgentPromptContextRendererBridgeSnapshot.EMPTY,
+  unavailableMessage = "Prompt context renderer EP is unavailable in this context",
+  buildSnapshot = ::buildAgentPromptContextRendererBridgeSnapshot,
+)
 
 interface AgentPromptContextRendererRegistry {
   fun allBridges(): List<AgentPromptContextRendererBridge>
@@ -89,19 +98,7 @@ private class EpBackedAgentPromptContextRendererRegistry : AgentPromptContextRen
 }
 
 private fun snapshotOrEmpty(): AgentPromptContextRendererBridgeSnapshot {
-  return try {
-    AGENT_PROMPT_CONTEXT_RENDERER_BRIDGE_EP.computeIfAbsent(AgentPromptContextRendererBridgeSnapshotCacheId::class.java) {
-      buildAgentPromptContextRendererBridgeSnapshot(AGENT_PROMPT_CONTEXT_RENDERER_BRIDGE_EP.extensionList)
-    }
-  }
-  catch (t: IllegalStateException) {
-    LOG.debug("Prompt context renderer EP is unavailable in this context", t)
-    AgentPromptContextRendererBridgeSnapshot.EMPTY
-  }
-  catch (t: IllegalArgumentException) {
-    LOG.debug("Prompt context renderer EP is unavailable in this context", t)
-    AgentPromptContextRendererBridgeSnapshot.EMPTY
-  }
+  return RENDERER_SNAPSHOT_CACHE.getSnapshotOrEmpty()
 }
 
 @Suppress("unused")
@@ -121,34 +118,19 @@ class InMemoryAgentPromptContextRendererRegistry(
 
 object AgentPromptContextRenderers {
   private val epRegistry: AgentPromptContextRendererRegistry = EpBackedAgentPromptContextRendererRegistry()
-  private val testOverrideLock = Any()
+  private val registryOverride = OverridableValue { epRegistry }
 
-  @Volatile
-  private var testRegistryOverride: AgentPromptContextRendererRegistry? = null
-
-  private fun activeRegistry(): AgentPromptContextRendererRegistry {
-    return testRegistryOverride ?: epRegistry
-  }
-
+  @Suppress("unused")
   fun allBridges(): List<AgentPromptContextRendererBridge> {
-    return activeRegistry().allBridges()
+    return registryOverride.value().allBridges()
   }
 
   fun find(rendererId: String): AgentPromptContextRendererBridge? {
-    return activeRegistry().find(rendererId)
+    return registryOverride.value().find(rendererId)
   }
 
   @Suppress("unused")
   fun <T> withRegistryForTest(registry: AgentPromptContextRendererRegistry, action: () -> T): T {
-    return synchronized(testOverrideLock) {
-      val previous = testRegistryOverride
-      testRegistryOverride = registry
-      try {
-        action()
-      }
-      finally {
-        testRegistryOverride = previous
-      }
-    }
+    return registryOverride.withOverride(registry, action)
   }
 }

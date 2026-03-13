@@ -3,17 +3,17 @@ package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.agent.workbench.prompt.AgentPromptBundle
 import com.intellij.agent.workbench.prompt.context.dataContextOrNull
-import com.intellij.agent.workbench.sessions.core.providers.withYoloModeBadge
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationData
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderOption
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuItem
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuModel
 import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderMenuModel
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries
+import com.intellij.agent.workbench.sessions.core.providers.withYoloModeBadge
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.setToolTipText
@@ -32,11 +32,11 @@ import javax.swing.Icon
 import javax.swing.JPanel
 
 internal class AgentPromptProviderSelector(
-  private val invocationData: AgentPromptInvocationData,
-  private val providerIconLabel: JBLabel,
-  private val providerOptionsPanel: JPanel,
-  private val providersProvider: () -> List<AgentSessionProviderBridge>,
-  private val sessionsMessageResolver: AgentPromptSessionsMessageResolver,
+    private val invocationData: AgentPromptInvocationData,
+    private val providerIconLabel: JBLabel,
+    private val providerOptionsPanel: JPanel,
+    private val providersProvider: () -> List<AgentSessionProviderDescriptor>,
+    private val sessionsMessageResolver: AgentPromptSessionsMessageResolver,
 ) {
   private var providerEntries: List<ProviderEntry> = emptyList()
   private var providerMenuModel: AgentSessionProviderMenuModel = AgentSessionProviderMenuModel(emptyList(), emptyList())
@@ -254,9 +254,9 @@ internal class AgentPromptProviderSelector(
   }
 
   private fun createProviderOptionCheckBox(
-    bridge: AgentSessionProviderBridge,
-    option: AgentPromptProviderOption,
-    selectedOptionIds: LinkedHashSet<String>,
+      bridge: AgentSessionProviderDescriptor,
+      option: AgentPromptProviderOption,
+      selectedOptionIds: LinkedHashSet<String>,
   ): JBCheckBox {
     val label = sessionsMessageResolver.resolve(option.labelKey, bridge) ?: option.labelFallback
     return JBCheckBox(label, option.id in selectedOptionIds).apply {
@@ -274,7 +274,7 @@ internal class AgentPromptProviderSelector(
     }
   }
 
-  private fun optionSelectionState(bridge: AgentSessionProviderBridge): LinkedHashSet<String> {
+  private fun optionSelectionState(bridge: AgentSessionProviderDescriptor): LinkedHashSet<String> {
     return selectedOptionIdsByProvider.getOrPut(bridge.provider) {
       bridge.promptOptions
         .asSequence()
@@ -283,7 +283,7 @@ internal class AgentPromptProviderSelector(
     }
   }
 
-  private fun sanitizeSelectedOptionIds(bridge: AgentSessionProviderBridge, optionIds: Set<String>): LinkedHashSet<String> {
+  private fun sanitizeSelectedOptionIds(bridge: AgentSessionProviderDescriptor, optionIds: Set<String>): LinkedHashSet<String> {
     val validIds = bridge.promptOptions.mapTo(HashSet()) { option -> option.id }
     return optionIds
       .asSequence()
@@ -291,7 +291,7 @@ internal class AgentPromptProviderSelector(
       .toCollection(LinkedHashSet())
   }
 
-  private fun AgentSessionProviderBridge.hasPromptOption(optionId: String): Boolean {
+  private fun AgentSessionProviderDescriptor.hasPromptOption(optionId: String): Boolean {
     return promptOptions.any { option -> option.id == optionId }
   }
 }

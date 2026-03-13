@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.core.prompt
 
+import com.intellij.agent.workbench.sessions.core.OverridableValue
+import com.intellij.agent.workbench.sessions.core.SnapshotExtensionPointCache
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -36,8 +38,6 @@ private val LOG = logger<AgentPromptContextContributorBridgeRegistryLog>()
 private val AGENT_PROMPT_CONTEXT_CONTRIBUTOR_BRIDGE_EP: ExtensionPointName<AgentPromptContextContributorBridge> =
   ExtensionPointName("com.intellij.agent.workbench.promptContextContributor")
 
-private class AgentPromptContextContributorBridgeSnapshotCacheId
-
 private val CONTRIBUTOR_ORDERING: Comparator<AgentPromptContextContributorBridge> =
   compareBy(
     { it.phase.ordinal },
@@ -52,6 +52,15 @@ private data class AgentPromptContextContributorBridgeSnapshot(
     val EMPTY = AgentPromptContextContributorBridgeSnapshot(orderedContributors = emptyList())
   }
 }
+
+private val CONTRIBUTOR_SNAPSHOT_CACHE = SnapshotExtensionPointCache(
+  log = LOG,
+  extensionPoint = AGENT_PROMPT_CONTEXT_CONTRIBUTOR_BRIDGE_EP,
+  cacheId = AgentPromptContextContributorBridgeSnapshot::class.java,
+  emptySnapshot = AgentPromptContextContributorBridgeSnapshot.EMPTY,
+  unavailableMessage = "Prompt context contributor EP is unavailable in this context",
+  buildSnapshot = ::buildAgentPromptContextContributorBridgeSnapshot,
+)
 
 interface AgentPromptContextContributorRegistry {
   fun allBridges(): List<AgentPromptContextContributorBridge>
@@ -74,19 +83,7 @@ private class EpBackedAgentPromptContextContributorRegistry : AgentPromptContext
 }
 
 private fun snapshotOrEmpty(): AgentPromptContextContributorBridgeSnapshot {
-  return try {
-    AGENT_PROMPT_CONTEXT_CONTRIBUTOR_BRIDGE_EP.computeIfAbsent(AgentPromptContextContributorBridgeSnapshotCacheId::class.java) {
-      buildAgentPromptContextContributorBridgeSnapshot(AGENT_PROMPT_CONTEXT_CONTRIBUTOR_BRIDGE_EP.extensionList)
-    }
-  }
-  catch (t: IllegalStateException) {
-    LOG.debug("Prompt context contributor EP is unavailable in this context", t)
-    AgentPromptContextContributorBridgeSnapshot.EMPTY
-  }
-  catch (t: IllegalArgumentException) {
-    LOG.debug("Prompt context contributor EP is unavailable in this context", t)
-    AgentPromptContextContributorBridgeSnapshot.EMPTY
-  }
+  return CONTRIBUTOR_SNAPSHOT_CACHE.getSnapshotOrEmpty()
 }
 
 @Suppress("unused")
@@ -102,30 +99,14 @@ class InMemoryAgentPromptContextContributorRegistry(
 
 object AgentPromptContextContributors {
   private val epRegistry: AgentPromptContextContributorRegistry = EpBackedAgentPromptContextContributorRegistry()
-  private val testOverrideLock = Any()
-
-  @Volatile
-  private var testRegistryOverride: AgentPromptContextContributorRegistry? = null
-
-  private fun activeRegistry(): AgentPromptContextContributorRegistry {
-    return testRegistryOverride ?: epRegistry
-  }
+  private val registryOverride = OverridableValue { epRegistry }
 
   fun allBridges(): List<AgentPromptContextContributorBridge> {
-    return activeRegistry().allBridges()
+    return registryOverride.value().allBridges()
   }
 
   @Suppress("unused")
   fun <T> withRegistryForTest(registry: AgentPromptContextContributorRegistry, action: () -> T): T {
-    return synchronized(testOverrideLock) {
-      val previous = testRegistryOverride
-      testRegistryOverride = registry
-      try {
-        action()
-      }
-      finally {
-        testRegistryOverride = previous
-      }
-    }
+    return registryOverride.withOverride(registry, action)
   }
 }

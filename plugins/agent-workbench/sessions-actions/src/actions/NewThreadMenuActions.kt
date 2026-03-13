@@ -5,16 +5,16 @@ import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderActionModel
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuItem
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuModel
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderActionModel
 import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderMenuModel
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries
+import com.intellij.agent.workbench.sessions.core.providers.withYoloModeBadge
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
-import com.intellij.agent.workbench.sessions.core.providers.withYoloModeBadge
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -35,14 +35,14 @@ fun createNewThreadViaService(
   service<AgentSessionLaunchService>().createNewSession(path, provider, mode, entryPoint, currentProject)
 }
 
-fun buildNewThreadMenuModel(bridges: List<AgentSessionProviderBridge>): AgentSessionProviderMenuModel {
+fun buildNewThreadMenuModel(bridges: List<AgentSessionProviderDescriptor>): AgentSessionProviderMenuModel {
   return buildAgentSessionProviderMenuModel(bridges)
 }
 
 fun buildNewThreadActionModel(
-  bridges: List<AgentSessionProviderBridge>,
-  lastUsedProvider: AgentSessionProvider?,
-  lastUsedLaunchMode: AgentSessionLaunchMode? = null,
+    bridges: List<AgentSessionProviderDescriptor>,
+    lastUsedProvider: AgentSessionProvider?,
+    lastUsedLaunchMode: AgentSessionLaunchMode? = null,
 ): AgentSessionProviderActionModel {
   return buildAgentSessionProviderActionModel(bridges, lastUsedProvider, lastUsedLaunchMode)
 }
@@ -132,13 +132,13 @@ private class AgentSessionsCreateThreadAction(
 }
 
 internal fun providerDisplayName(provider: AgentSessionProvider): @NlsSafe String {
-  val bridge = AgentSessionProviderBridges.find(provider) ?: return provider.value
+  val bridge = AgentSessionProviders.find(provider) ?: return provider.value
   return runCatching { AgentSessionsBundle.message(bridge.displayNameKey) }
     .getOrDefault(bridge.displayNameFallback)
 }
 
 internal fun providerIcon(provider: AgentSessionProvider): Icon? {
-  return AgentSessionProviderBridges.find(provider)?.icon
+  return AgentSessionProviders.find(provider)?.icon
 }
 
 internal fun providerIconWithMode(provider: AgentSessionProvider, mode: AgentSessionLaunchMode): Icon? {
