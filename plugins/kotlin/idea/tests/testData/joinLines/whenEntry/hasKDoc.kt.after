@@ -1,0 +1,4 @@
+fun check(): Int = when {
+    /** Hello, World! */
+    else -> 0
+ }

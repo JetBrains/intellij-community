@@ -12,6 +12,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
+import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
@@ -185,7 +186,18 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
 
         element.accept(object : PsiRecursiveElementVisitor() {
             override fun visitComment(comment: PsiComment) {
-                val treeElement = comment.savedTreeElement
+                removeIfSaved(comment)
+            }
+
+            override fun visitElement(element: PsiElement) {
+                if (element is KDoc) {
+                    removeIfSaved(element)
+                }
+                super.visitElement(element)
+            }
+
+            private fun removeIfSaved(element: PsiElement) {
+                val treeElement = element.savedTreeElement
                 if (treeElement != null) {
                     commentsToRestore.remove(treeElement)
                 }

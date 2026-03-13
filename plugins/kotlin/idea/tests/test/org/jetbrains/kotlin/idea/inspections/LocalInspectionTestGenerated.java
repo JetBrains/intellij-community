@@ -19012,6 +19012,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
                 runTest("testData/inspectionsLocal/useExpressionBody/if.kt");
             }
 
+            @TestMetadata("KDoc.kt")
+            public void testKDoc() throws Exception {
+                runTest("testData/inspectionsLocal/useExpressionBody/KDoc.kt");
+            }
+
             @TestMetadata("leftBrace.kt")
             public void testLeftBrace() throws Exception {
                 runTest("testData/inspectionsLocal/useExpressionBody/leftBrace.kt");

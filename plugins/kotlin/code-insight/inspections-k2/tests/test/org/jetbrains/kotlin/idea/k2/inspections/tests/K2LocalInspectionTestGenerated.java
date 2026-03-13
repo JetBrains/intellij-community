@@ -5991,6 +5991,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("../../../idea/tests/testData/inspectionsLocal/useExpressionBody/if.kt");
             }
 
+            @TestMetadata("KDoc.kt")
+            public void testKDoc() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/useExpressionBody/KDoc.kt");
+            }
+
             @TestMetadata("leftBrace.kt")
             public void testLeftBrace() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/useExpressionBody/leftBrace.kt");
