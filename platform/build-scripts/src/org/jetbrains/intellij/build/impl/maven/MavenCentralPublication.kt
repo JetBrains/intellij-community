@@ -79,7 +79,7 @@ class MavenCentralPublication(
     private val JSON = Json { ignoreUnknownKeys = true }
     private val SUPPORTED_CHECKSUMS = setOf("md5", "sha1", "sha256", "sha512")
     private val SONATYPE_TIMEOUT: Duration = 5.minutes
-    private val DEPLOYMENT_TIMEOUT: Duration = 30.minutes
+    private val DEPLOYMENT_TIMEOUT: Duration = 45.minutes
     private val DEPLOYMENT_STATUS_POLL_DELAY: Duration = 15.seconds
   }
 
