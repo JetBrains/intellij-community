@@ -569,13 +569,15 @@ public final class CompileDriver {
 
             if (canCleanBuildSystemData) {
               cancelPreload.waitFor();
-              buildSystemDataCleanupTask.set(new TaskFutureAdapter<>(ProcessIOExecutorService.INSTANCE.submit(() -> {
+              TaskFutureAdapter<Void> cleanupTask = new TaskFutureAdapter<>(ProcessIOExecutorService.INSTANCE.submit(() -> {
                 for (Path path : NioFiles.list(buildManager.getProjectSystemDir(myProject))) {
                   //noinspection UseOptimizedEelFunctions
                   NioFiles.deleteRecursively(path);
                 }
                 return null;
-              })));
+              }));
+              buildSystemDataCleanupTask.set(cleanupTask);
+              cleanupTask.waitFor();
             }
             else {
               if (cleanBuildRequested) {
@@ -642,7 +644,6 @@ public final class CompileDriver {
         if (status == ExitStatus.SUCCESS) {
           BuildUsageCollector.logBuildCompleted(duration, isRebuild, false);
         }
-
         TaskFutureAdapter<Void> cleanupTask = buildSystemDataCleanupTask.get();
         if (cleanupTask != null) {
           cleanupTask.waitFor();
