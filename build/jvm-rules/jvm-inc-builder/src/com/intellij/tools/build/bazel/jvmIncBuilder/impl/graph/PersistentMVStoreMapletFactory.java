@@ -14,6 +14,7 @@ import org.jetbrains.jps.dependency.Enumerator;
 import org.jetbrains.jps.dependency.Maplet;
 import org.jetbrains.jps.dependency.MapletFactory;
 import org.jetbrains.jps.dependency.MultiMaplet;
+import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.impl.CachingMaplet;
 import org.jetbrains.jps.dependency.impl.CachingMultiMaplet;
@@ -39,8 +40,8 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
   private static final int BASE_CACHE_SIZE = 512;
   private final MVSEnumerator myEnumerator;
   private final Function<Object, Object> myDataInterner;
-  private final LoadingCache<Object, Object> myInternerCache;
-  //private final LoadingCache<String, String> myStringsInternerCache;
+  private final LoadingCache<Usage, Usage> myUsageInternerCache;
+  private final LoadingCache<ReferenceID, ReferenceID> myRefIdInternerCache;
   private final int myCacheSize;
   private final MVStore myStore;
 
@@ -62,9 +63,17 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
     final int maxGb = (int) (Runtime.getRuntime().maxMemory() / 1_073_741_824L);
     myCacheSize = BASE_CACHE_SIZE * Math.clamp(maxGb, 1, 5); // increase by BASE_CACHE_SIZE for every additional Gb
 
-    myInternerCache = Caffeine.newBuilder().maximumSize(myCacheSize).build(key -> key);
-    //myStringsInternerCache = Caffeine.newBuilder().maximumSize(myCacheSize).build(key -> key);
-    myDataInterner = elem -> elem instanceof Usage? myInternerCache.get(elem) : /*elem instanceof String? myStringsInternerCache.get((String) elem) :*/ elem;
+    myUsageInternerCache = Caffeine.newBuilder().maximumSize(myCacheSize).build(key -> key);
+    myRefIdInternerCache = Caffeine.newBuilder().maximumSize(myCacheSize).build(key -> key);
+    myDataInterner = elem -> {
+      if (elem instanceof Usage) {
+        return myUsageInternerCache.get((Usage)elem);
+      }
+      if (elem instanceof ReferenceID) {
+        return myRefIdInternerCache.get((ReferenceID)elem);
+      }
+      return elem;
+    };
   }
 
   private static int getConcurrencyLevel(int builderThreads) {
@@ -104,7 +113,8 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
       myStore.close(getCompactionTimeMs()); // completely close the store commiting the rest of unsaved data
     }
     finally {
-      myInternerCache.invalidateAll();
+      myUsageInternerCache.invalidateAll();
+      myRefIdInternerCache.invalidateAll();
     }
   }
 
