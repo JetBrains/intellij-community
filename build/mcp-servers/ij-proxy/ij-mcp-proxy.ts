@@ -2,7 +2,6 @@
 import path from 'node:path'
 import {cwd, env} from 'node:process'
 import {fileURLToPath} from 'node:url'
-import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {Server} from '@modelcontextprotocol/sdk/server/index.js'
 import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js'
 import {
@@ -12,13 +11,11 @@ import {
   ToolListChangedNotificationSchema
 } from '@modelcontextprotocol/sdk/types.js'
 import {clearLogFile, logProgress, logToFile} from '../shared/mcp-rpc.mjs'
-import {createProjectPathManager} from './project-path'
 import {createStreamTransport} from './stream-transport'
-import {setIdeVersion} from './workarounds'
+import {UpstreamConnection} from './upstream'
 import {BLOCKED_TOOL_NAMES, getReplacedToolNames} from './proxy-tools/registry'
-import {createProxyTooling, resolveReadCapabilities, resolveSearchCapabilities} from './proxy-tools/tooling'
-import {extractTextFromResult} from './proxy-tools/shared'
-import type {ToolArgs, ToolResultLike, ToolSpecLike} from './proxy-tools/types'
+import {createProxyTooling} from './proxy-tools/tooling'
+import type {ToolArgs, ToolSpecLike} from './proxy-tools/types'
 
 // Proxy JetBrains MCP Streamable HTTP to stdio and inject the cwd as project_path.
 const explicitMcpUrl = env.JETBRAINS_MCP_STREAM_URL
@@ -99,12 +96,9 @@ const explicitProjectPath = env.JETBRAINS_MCP_PROJECT_PATH
 const projectPathResolution = resolveProjectPath(explicitProjectPath)
 const projectPath = projectPathResolution.projectPath
 const defaultProjectPathKey = 'project_path'
-const projectPathManager = createProjectPathManager({projectPath, defaultProjectPathKey})
 
 const REPLACED_TOOL_NAMES = getReplacedToolNames()
 const BASE_BLOCKED_TOOL_NAMES = new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES])
-let searchCapabilities = resolveSearchCapabilities([]).capabilities
-let readCapabilities = resolveReadCapabilities([]).capabilities
 
 function blockedToolMessage(toolName: string): string {
   if (toolName === 'create_new_file') {
@@ -122,16 +116,14 @@ let runProxyToolCall: (toolName: string, args: ToolArgs) => Promise<unknown> = a
 function updateProxyTooling(): void {
   const tooling = createProxyTooling({
     projectPath,
-    callUpstreamTool,
-    searchCapabilities,
-    readCapabilities
+    callUpstreamTool: (name, args) => upstream.callTool(name, args),
+    searchCapabilities: upstream.searchCapabilities,
+    readCapabilities: upstream.readCapabilities
   })
   proxyToolSpecs = tooling.proxyToolSpecs
   proxyToolNames = tooling.proxyToolNames
   runProxyToolCall = tooling.runProxyToolCall
 }
-
-updateProxyTooling()
 
 function note(message: string): void {
   logToFile(message)
@@ -166,14 +158,16 @@ const streamTransport = createStreamTransport({
   warn
 })
 
-const upstreamClient = new Client({name: 'ij-mcp-proxy', version: '1.0.0'})
-upstreamClient.onerror = (error) => {
-  warn(`Upstream client error: ${error.message}`)
-}
-upstreamClient.onclose = () => {
-  resetUpstreamState()
-  warn('Upstream client connection closed; will reconnect on next request')
-}
+const upstream = new UpstreamConnection({
+  transport: streamTransport,
+  projectPath,
+  defaultProjectPathKey,
+  toolCallTimeoutMs,
+  warn
+})
+
+upstream.onStateChange = () => updateProxyTooling()
+updateProxyTooling()
 
 const proxyServer = new Server(
   {name: 'ij-mcp-proxy', version: '1.0.0'},
@@ -188,7 +182,7 @@ const proxyServer = new Server(
 )
 
 proxyServer.setRequestHandler(ListToolsRequestSchema, async () => {
-  const upstreamTools = await getUpstreamTools()
+  const upstreamTools = await upstream.getTools()
   return {
     tools: mergeToolLists(proxyToolSpecs, upstreamTools, BASE_BLOCKED_TOOL_NAMES)
   }
@@ -220,7 +214,7 @@ proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 
   try {
-    return await callUpstreamToolForClient(toolName, args)
+    return await upstream.callToolForClient(toolName, args)
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     return makeToolError(message)
@@ -228,22 +222,16 @@ proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
 })
 
 proxyServer.fallbackRequestHandler = async (request) => {
-  return await withUpstreamReconnect(request.method, async () => {
-    await ensureUpstreamConnected()
-    return await upstreamClient.request({method: request.method, params: request.params}, ResultSchema)
-  })
+  return await upstream.forwardRequest(request.method, request.params)
 }
 
 proxyServer.fallbackNotificationHandler = async (notification) => {
-  await withUpstreamReconnect(notification.method, async () => {
-    await ensureUpstreamConnected()
-    await upstreamClient.notification(notification)
-  })
+  await upstream.forwardNotification(notification)
 }
 
-upstreamClient.setNotificationHandler(ToolListChangedNotificationSchema, async () => {
+upstream.client.setNotificationHandler(ToolListChangedNotificationSchema, async () => {
   try {
-    await refreshUpstreamTools()
+    await upstream.refreshTools()
     await proxyServer.sendToolListChanged()
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
@@ -251,11 +239,11 @@ upstreamClient.setNotificationHandler(ToolListChangedNotificationSchema, async (
   }
 })
 
-upstreamClient.fallbackRequestHandler = async (request) => {
+upstream.client.fallbackRequestHandler = async (request) => {
   return await proxyServer.request({method: request.method, params: request.params}, ResultSchema)
 }
 
-upstreamClient.fallbackNotificationHandler = async (notification) => {
+upstream.client.fallbackNotificationHandler = async (notification) => {
   try {
     await proxyServer.notification(notification)
   } catch (error) {
@@ -272,97 +260,6 @@ void proxyServer.connect(stdioTransport).catch((error) => {
   const message = error instanceof Error ? error.message : String(error)
   warn(`Failed to start stdio transport: ${message}`)
 })
-
-let upstreamConnectedPromise: Promise<void> | null = null
-let upstreamTools: ToolSpecLike[] | null = null
-
-const RECOVERABLE_UPSTREAM_ERROR_RE = /\b(not connected|connection closed|session not found|server not initialized|mcp-session-id header is required)\b/i
-
-function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error)
-}
-
-function isRecoverableUpstreamError(error: unknown): boolean {
-  const message = getErrorMessage(error)
-  return RECOVERABLE_UPSTREAM_ERROR_RE.test(message)
-}
-
-function resetUpstreamState(): void {
-  upstreamConnectedPromise = null
-  upstreamTools = null
-  searchCapabilities = resolveSearchCapabilities([]).capabilities
-  readCapabilities = resolveReadCapabilities([]).capabilities
-  updateProxyTooling()
-  setIdeVersion(null)
-}
-
-async function withUpstreamReconnect<T>(label: string, fn: () => Promise<T>): Promise<T> {
-  try {
-    return await fn()
-  } catch (error) {
-    if (!isRecoverableUpstreamError(error)) throw error
-    warn(`Upstream ${label} failed (${getErrorMessage(error)}); reconnecting and retrying once`)
-    resetUpstreamState()
-    try {
-      await streamTransport.resetTransport(error)
-    } catch (resetError) {
-      warn(`Failed to reset MCP stream transport: ${getErrorMessage(resetError)}`)
-    }
-    await ensureUpstreamConnected()
-    return fn()
-  }
-}
-
-async function ensureUpstreamConnected(): Promise<void> {
-  if (!upstreamClient.transport) {
-    upstreamConnectedPromise = null
-    upstreamTools = null
-  }
-  if (upstreamConnectedPromise) return upstreamConnectedPromise
-  upstreamConnectedPromise = upstreamClient.connect(streamTransport).catch((error) => {
-    upstreamConnectedPromise = null
-    throw error
-  })
-  upstreamConnectedPromise = upstreamConnectedPromise.then(() => {
-    updateIdeVersionFromUpstream()
-  })
-  return upstreamConnectedPromise
-}
-
-function updateIdeVersionFromUpstream(): void {
-  const serverInfo = upstreamClient.getServerVersion()
-  const version = serverInfo?.version
-  setIdeVersion(typeof version === 'string' ? version : null)
-}
-
-async function refreshUpstreamTools(): Promise<ToolSpecLike[]> {
-  return await withUpstreamReconnect('tools/list', async () => {
-    await ensureUpstreamConnected()
-    const response = await upstreamClient.listTools()
-    const tools = Array.isArray(response?.tools) ? response.tools : []
-    projectPathManager.updateProjectPathKeys(tools)
-    projectPathManager.stripProjectPathFromTools(tools)
-    upstreamTools = tools
-    searchCapabilities = resolveSearchCapabilities(tools).capabilities
-    readCapabilities = resolveReadCapabilities(tools).capabilities
-    updateProxyTooling()
-    return tools
-  })
-}
-
-async function getUpstreamTools(): Promise<ToolSpecLike[]> {
-  if (!upstreamTools) {
-    await refreshUpstreamTools()
-  }
-  return upstreamTools ?? []
-}
-
-function normalizeToolResult(result: unknown): unknown {
-  if (result && typeof result === 'object' && 'toolResult' in result) {
-    return (result as ToolResultLike).toolResult
-  }
-  return result
-}
 
 function makeToolOutput(text: unknown): ToolOutput {
   return {
@@ -385,35 +282,6 @@ function makeToolError(text: unknown): ToolOutput {
     ],
     isError: true
   }
-}
-
-async function callUpstreamToolForClient(toolName: string, args: ToolArgs): Promise<unknown> {
-  return await withUpstreamReconnect(`tools/call ${toolName}`, async () => {
-    await ensureUpstreamConnected()
-    await getUpstreamTools()
-    projectPathManager.injectProjectPathArgs(toolName, args)
-    const options = toolCallTimeoutMs > 0 ? {timeout: toolCallTimeoutMs} : undefined
-    const result = await upstreamClient.callTool({name: toolName, arguments: args}, undefined, options)
-    return normalizeToolResult(result)
-  })
-}
-
-async function callUpstreamTool(toolName: string, args: ToolArgs): Promise<unknown> {
-  return await withUpstreamReconnect(`tools/call ${toolName}`, async () => {
-    await ensureUpstreamConnected()
-    await getUpstreamTools()
-    const callArgs = {...args}
-    projectPathManager.injectProjectPathArgs(toolName, callArgs)
-    const options = toolCallTimeoutMs > 0 ? {timeout: toolCallTimeoutMs} : undefined
-    const result = normalizeToolResult(
-      await upstreamClient.callTool({name: toolName, arguments: callArgs}, undefined, options)
-    )
-
-    if (result?.isError) {
-      throw new Error(extractTextFromResult(result) || 'Upstream tool error')
-    }
-    return result
-  })
 }
 
 function mergeToolLists(
