@@ -18,6 +18,8 @@ import com.intellij.agent.workbench.sessions.toolwindow.tree.diffSessionTreeMode
 import com.intellij.agent.workbench.sessions.toolwindow.tree.parentNodesForSelection
 import com.intellij.agent.workbench.sessions.toolwindow.tree.resolveSelectedSessionTreeId
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.CoroutineScope
@@ -35,8 +37,6 @@ import javax.swing.SwingUtilities
 internal class AgentSessionsTreeStateController(
   private val sessionsStateFlow: StateFlow<AgentSessionsState>,
   private val chatSelectionService: AgentChatTabSelectionService,
-  private val treeUiStateService: AgentSessionTreeUiStateService,
-  private val uiPreferencesStateService: AgentSessionUiPreferencesStateService,
   private val markThreadAsRead: (String, AgentSessionProvider, String, Long) -> Unit,
   private val tree: Tree,
   private val getSessionTreeModel: () -> SessionTreeModel,
@@ -72,7 +72,7 @@ internal class AgentSessionsTreeStateController(
     }
 
     scope.launch {
-      uiPreferencesStateService.lastUsedProviderFlow.collect { provider ->
+      serviceAsync<AgentSessionUiPreferencesStateService>().lastUsedProviderFlow.collect { provider ->
         onLastUsedProviderChanged(provider)
       }
     }
@@ -113,7 +113,7 @@ internal class AgentSessionsTreeStateController(
           projects = snapshotState.projects,
           visibleClosedProjectCount = snapshotState.visibleClosedProjectCount,
           visibleThreadCounts = snapshotState.visibleThreadCounts,
-          treeUiState = treeUiStateService,
+          treeUiState = service<AgentSessionTreeUiStateService>(),
         )
         val diff = diffSessionTreeModels(oldModel, model)
         val selection = resolveSelectedSessionTreeId(snapshotState.projects, snapshotSelectedChatTab)

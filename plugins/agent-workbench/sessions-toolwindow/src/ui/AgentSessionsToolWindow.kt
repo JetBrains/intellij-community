@@ -14,9 +14,7 @@ import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntry
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
-import com.intellij.agent.workbench.sessions.state.AgentSessionTreeUiStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
-import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModel
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModelDiff
@@ -63,14 +61,6 @@ internal fun dispatchTreeRowOverlayQuickCreate(
 internal class AgentSessionsToolWindowPanel(
   private val project: Project,
 ) : JPanel(BorderLayout()), Disposable, UiDataProvider {
-  private val launchService = service<AgentSessionLaunchService>()
-  private val readService = service<AgentSessionReadService>()
-  private val stateStore = service<AgentSessionsStateStore>()
-  private val syncService = service<AgentSessionRefreshService>()
-  private val chatSelectionService = project.service<AgentChatTabSelectionService>()
-  private val treeUiStateService = service<AgentSessionTreeUiStateService>()
-  private val uiPreferencesStateService = service<AgentSessionUiPreferencesStateService>()
-
   private var sessionTreeModel: SessionTreeModel = SessionTreeModel.EMPTY
   private var lastUsedProvider: AgentSessionProvider? = null
 
@@ -151,11 +141,11 @@ internal class AgentSessionsToolWindowPanel(
   }
 
   private val stateController = AgentSessionsTreeStateController(
-    sessionsStateFlow = readService.stateFlow(),
-    chatSelectionService = chatSelectionService,
-    treeUiStateService = treeUiStateService,
-    uiPreferencesStateService = uiPreferencesStateService,
-    markThreadAsRead = syncService::markThreadAsRead,
+    sessionsStateFlow = service<AgentSessionReadService>().stateFlow(),
+    chatSelectionService = project.service<AgentChatTabSelectionService>(),
+    markThreadAsRead = { path, provider, threadId, updatedAt ->
+      service<AgentSessionRefreshService>().markThreadAsRead(path, provider, threadId, updatedAt)
+    },
     tree = tree,
     getSessionTreeModel = { sessionTreeModel },
     setSessionTreeModel = { sessionTreeModel = it },
@@ -184,10 +174,6 @@ internal class AgentSessionsToolWindowPanel(
     interactionController = AgentSessionsTreeInteractionController(
       project = project,
       tree = tree,
-      launchService = launchService,
-      syncService = syncService,
-      stateStore = stateStore,
-      treeUiStateService = treeUiStateService,
       rowActionsOverlayProvider = { rowActionsOverlay },
       nodeResolver = ::sessionTreeNode,
       selectedArchiveTargets = { dataContextProvider.selectedArchiveTargets() },
@@ -197,7 +183,7 @@ internal class AgentSessionsToolWindowPanel(
       tree = tree,
       nodeResolver = ::sessionTreeNode,
       lastUsedProvider = { lastUsedProvider },
-      lastUsedLaunchMode = { uiPreferencesStateService.getLastUsedLaunchMode() },
+      lastUsedLaunchMode = { service<AgentSessionUiPreferencesStateService>().getLastUsedLaunchMode() },
       onQuickCreate = { path, provider, mode ->
         dispatchTreeRowOverlayQuickCreate(
           project = project,
@@ -205,7 +191,7 @@ internal class AgentSessionsToolWindowPanel(
           provider = provider,
           mode = mode,
           createNewSession = { quickPath, quickProvider, mode, entryPoint, currentProject ->
-            launchService.createNewSession(
+            service<AgentSessionLaunchService>().createNewSession(
               path = quickPath,
               provider = quickProvider,
               mode = mode,
@@ -226,7 +212,7 @@ internal class AgentSessionsToolWindowPanel(
 
     interactionController.install()
     stateController.start()
-    syncService.refresh()
+    service<AgentSessionRefreshService>().refresh()
   }
 
   private fun buildNorthPanel(): JPanel? {

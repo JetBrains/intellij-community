@@ -17,6 +17,7 @@
     <agent.workbench.promptContextContributor implementation="com.intellij.agent.workbench.prompt.context.AgentPromptProjectViewSelectionContextContributor"/>
     <agent.workbench.promptContextContributor implementation="com.intellij.agent.workbench.prompt.context.AgentPromptSelectedEditorFallbackContextContributor"/>
     <agent.workbench.promptContextContributor implementation="com.intellij.agent.workbench.prompt.context.AgentPromptTreeSelectionContextContributor"/>
+    <actionPromoter implementation="com.intellij.agent.workbench.prompt.actions.AgentWorkbenchPromptShortcutActionPromoter" order="last"/>
   </extensions>
 
   <actions resource-bundle="messages.AgentPromptBundle">
