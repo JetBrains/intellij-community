@@ -4,7 +4,6 @@ package com.intellij.util.indexing.roots
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ContentIteratorEx
 import com.intellij.openapi.vfs.VirtualFile
@@ -94,5 +93,5 @@ internal class ModuleFilesIteratorImpl(
     return data is ModuleRelatedRootData && data.module == module
   }
 
-  override fun getRootUrls(project: Project): Set<String> = module.rootManager.contentRootUrls.toSet()
+  override fun getRootUrls(project: Project): Set<String> = setOf(root.url)
 }
