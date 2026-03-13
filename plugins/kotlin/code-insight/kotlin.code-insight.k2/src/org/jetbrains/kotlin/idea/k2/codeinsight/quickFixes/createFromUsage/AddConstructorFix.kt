@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.psi.createPrimaryConstructorIfAbsent
 import org.jetbrains.kotlin.utils.addIfNotNull
 
@@ -47,7 +48,8 @@ internal class AddConstructorFix(
         val targetClass = pointer.element ?: return
         val psiFactory = KtPsiFactory(project)
 
-        val needPrimary = !targetClass.hasExplicitPrimaryConstructor()
+        // create primary only when there are no secondary constructors
+        val needPrimary = !targetClass.hasExplicitPrimaryConstructor() && !targetClass.hasSecondaryConstructors()
         val constructorText = buildConstructorAsString(targetClass, request, psiFactory)
 
         if (needPrimary) {
@@ -100,7 +102,15 @@ private fun buildConstructorAsString(
         append(" : ")
         append(renderDelegationCall(element, request))
     }
-    append(" {\n\n}")
+    else {
+        val hasSuperCallInSecondaryConstructors = element.secondaryConstructors.any { ctr ->
+            val delegationCall = ctr.getDelegationCallOrNull()
+            delegationCall != null && !delegationCall.isCallToThis && !delegationCall.isImplicit
+        }
+        if (hasSuperCallInSecondaryConstructors || element.superTypeListEntries.any { it is KtSuperTypeCallEntry }) {
+            append(" : super()")
+        }
+    }
 }
 
 private fun renderModifier(modifier: JvmModifier): String? =

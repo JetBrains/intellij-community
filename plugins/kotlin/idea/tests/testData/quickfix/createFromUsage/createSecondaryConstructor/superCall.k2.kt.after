@@ -2,12 +2,12 @@
 // K2_ACTION: "Add primary constructor to 'A'" "true"
 // K2_ERROR: Too many arguments for 'constructor(): A'.
 
-open class A {
+open class A(i: Int) {
 
 }
 
 class B: A {
-    constructor(): super(<caret>1) {
+    constructor(): super(1) {
 
     }
 }

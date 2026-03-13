@@ -81,6 +81,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/convertToBlockBody", pattern = pattern)
             model("$idea/quickfix/convertToIsArrayOfCall", pattern = pattern)
             model("$idea/quickfix/createFromUsage/createClass", pattern = pattern, excludedDirectories = listOf("importDirective/kt21515", "callExpression/typeArguments"))
+            model("$idea/quickfix/createFromUsage/createSecondaryConstructor", pattern = pattern)
             model("$idea/quickfix/createFromUsage/createFunction/call", pattern = pattern,
                   excludedDirectories = listOf("extensionByExtensionReceiver", "typeArguments"))
             model("$idea/quickfix/createFromUsage/createVariable", pattern = pattern)
@@ -266,6 +267,11 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             )
             model(
                 "$idea/quickfix/createFromUsage/createClass",
+                pattern = pattern,
+                testMethodName = testMethodName,
+            )
+            model(
+                "$idea/quickfix/createFromUsage/createSecondaryConstructor",
                 pattern = pattern,
                 testMethodName = testMethodName,
             )

@@ -23,5 +23,6 @@
     <orderEntry type="module" module-name="intellij.platform.uast" />
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" />
     <orderEntry type="module" module-name="intellij.platform.uast.ide" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.psi" />
   </component>
 </module>

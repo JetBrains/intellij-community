@@ -4494,6 +4494,110 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor")
+    public static class CreateSecondaryConstructor extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("argumentTypeMismatch.kt")
+        public void testArgumentTypeMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/argumentTypeMismatch.kt");
+        }
+
+        @TestMetadata("callWithExpectedType.kt")
+        public void testCallWithExpectedType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/callWithExpectedType.kt");
+        }
+
+        @TestMetadata("callWithTypeArguments.kt")
+        public void testCallWithTypeArguments() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/callWithTypeArguments.kt");
+        }
+
+        @TestMetadata("classWithBody.kt")
+        public void testClassWithBody() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/classWithBody.kt");
+        }
+
+        @TestMetadata("classWithoutBody.kt")
+        public void testClassWithoutBody() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/classWithoutBody.kt");
+        }
+
+        @TestMetadata("delegatorToSuperCall.kt")
+        public void testDelegatorToSuperCall() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/delegatorToSuperCall.kt");
+        }
+
+        @TestMetadata("delegatorToSuperCallNoClass.kt")
+        public void testDelegatorToSuperCallNoClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/delegatorToSuperCallNoClass.kt");
+        }
+
+        @TestMetadata("noParametersImplicitSuperCall.kt")
+        public void testNoParametersImplicitSuperCall() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/noParametersImplicitSuperCall.kt");
+        }
+
+        @TestMetadata("noParametersSuperCall.kt")
+        public void testNoParametersSuperCall() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/noParametersSuperCall.kt");
+        }
+
+        @TestMetadata("noParametersThisCall.kt")
+        public void testNoParametersThisCall() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/noParametersThisCall.kt");
+        }
+
+        @TestMetadata("noneApplicable.kt")
+        public void testNoneApplicable() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/noneApplicable.kt");
+        }
+
+        @TestMetadata("superCall.kt")
+        public void testSuperCall() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/superCall.kt");
+        }
+
+        @TestMetadata("superCallNoClass.kt")
+        public void testSuperCallNoClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/superCallNoClass.kt");
+        }
+
+        @TestMetadata("superCallNoneApplicable.kt")
+        public void testSuperCallNoneApplicable() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/superCallNoneApplicable.kt");
+        }
+
+        @TestMetadata("thisCall.kt")
+        public void testThisCall() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/thisCall.kt");
+        }
+
+        @TestMetadata("tooManyArguments.kt")
+        public void testTooManyArguments() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/tooManyArguments.kt");
+        }
+
+        @TestMetadata("tooManyArgumentsWithImcompatibleType.kt")
+        public void testTooManyArgumentsWithImcompatibleType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/tooManyArgumentsWithImcompatibleType.kt");
+        }
+
+        @TestMetadata("wrongExpectedType.kt")
+        public void testWrongExpectedType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/wrongExpectedType.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call")
     public abstract static class Call extends AbstractHighLevelQuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)

@@ -22,6 +22,7 @@ jvm_library(
     "//uast/uast-common:uast",
     "//plugins/kotlin/base/code-insight",
     "//uast/uast-common-ide:ide",
+    "//plugins/kotlin/base/psi",
   ]
 )
 
@@ -45,6 +46,7 @@ jvm_library(
     "//uast/uast-common:uast_test_lib",
     "//plugins/kotlin/base/code-insight:code-insight_test_lib",
     "//uast/uast-common-ide:ide_test_lib",
+    "//plugins/kotlin/base/psi:psi_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.uast.idea.base` end

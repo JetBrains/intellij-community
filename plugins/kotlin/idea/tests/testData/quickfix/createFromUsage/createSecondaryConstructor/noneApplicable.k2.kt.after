@@ -5,11 +5,12 @@
 
 class CtorSecondary() {
     constructor(p: Int) : this()
+    constructor(i: Int, i2: Int) : this()
 }
 
 fun construct() {
     // todo: add this()
-    val vA = <caret>CtorSecondary(2, 3)
+    val vA = CtorSecondary(2, 3)
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.AddConstructorFix

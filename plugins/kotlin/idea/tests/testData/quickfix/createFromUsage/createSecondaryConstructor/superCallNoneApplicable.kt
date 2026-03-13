@@ -1,4 +1,7 @@
 // "Create secondary constructor" "true"
+// K2_ACTION: "Add primary constructor to 'A'" "true"
+// K2_ERROR: No value passed for parameter 'y'.
+// K2_ERROR: None of the following candidates is applicable:<br><br>constructor(x: Int, y: Int): A<br>constructor(x: Int, y: String): A
 
 open class A {
     constructor(x: Int, y: Int)
@@ -7,3 +10,4 @@ open class A {
 
 class B : <caret>A(1)
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.AddConstructorFix

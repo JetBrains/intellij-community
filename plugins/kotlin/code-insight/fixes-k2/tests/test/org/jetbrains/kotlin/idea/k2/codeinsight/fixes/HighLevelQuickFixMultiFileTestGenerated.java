@@ -2203,6 +2203,40 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor")
+    public static class CreateSecondaryConstructor extends AbstractHighLevelQuickFixMultiFileTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("delegatorToSuperCallJavaClass.before.Main.kt")
+        public void testDelegatorToSuperCallJavaClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/delegatorToSuperCallJavaClass.before.Main.kt");
+        }
+
+        @TestMetadata("groovyConstructor.before.Main.kt")
+        public void testGroovyConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/groovyConstructor.before.Main.kt");
+        }
+
+        @TestMetadata("javaConstructor.before.Main.kt")
+        public void testJavaConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/javaConstructor.before.Main.kt");
+        }
+
+        @TestMetadata("superCallJavaClass.before.Main.kt")
+        public void testSuperCallJavaClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/superCallJavaClass.before.Main.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/override/overriddenJavaAccessor")
     public static class OverriddenJavaAccessor extends AbstractHighLevelQuickFixMultiFileTest {
         @java.lang.Override
