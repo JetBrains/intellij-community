@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.async.flatMapLatestEach
 import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.async.mapStateInNow
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.async.transformConsecutiveSuccesses
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
@@ -124,15 +125,11 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
       .transformConsecutiveSuccesses { filterInFile(change) }
       .stateInNow(cs, ComputedResult.loading())
   override val newDiscussions: StateFlow<Collection<GitLabMergeRequestEditorNewDiscussionViewModel>> =
-    discussionsContainer.newDiscussions.flatMapLatestEach { vm ->
-      vm.position.map { pos -> vm to pos }
-    }.map {
-      it.mapNotNull { (vm, position) ->
-        val mappedLocation = position.mapToLocation(diffData) ?: return@mapNotNull null
-        if (mappedLocation.startSide != Side.RIGHT || mappedLocation.side != Side.RIGHT) return@mapNotNull null
-        GitLabMergeRequestEditorNewDiscussionViewModel(vm, diffData, discussionsViewOption)
+    discussionsContainer.newDiscussions.mapStateInNow(cs) { vms ->
+      vms.map { baseVm ->
+        GitLabMergeRequestEditorNewDiscussionViewModel(baseVm, diffData, discussionsViewOption)
       }
-    }.stateInNow(cs, emptyList())
+    }
 
   override val linesWithDiscussions: StateFlow<Set<Int>> =
     GitLabMergeRequestDiscussionUtil
