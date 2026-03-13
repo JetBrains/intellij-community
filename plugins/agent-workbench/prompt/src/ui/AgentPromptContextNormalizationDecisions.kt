@@ -31,7 +31,7 @@ internal fun normalizeContextItemsForProject(
 
 internal fun materializeVisibleContextEntries(
   autoEntries: List<ContextEntry>,
-  manualItemsBySourceId: Map<String, AgentPromptContextItem>,
+  manualItemsBySourceId: Map<String, List<AgentPromptContextItem>>,
   projectPath: String?,
 ): List<ContextEntry> {
   if (autoEntries.isEmpty() && manualItemsBySourceId.isEmpty()) {
@@ -45,13 +45,16 @@ internal fun materializeVisibleContextEntries(
       projectBasePath = projectPath,
     )
   }
-  val visibleManualEntries = manualItemsBySourceId.entries.flatMap { (sourceId, item) ->
-    val normalizedItem = normalizeContextItemForProject(item, projectPath) ?: return@flatMap emptyList()
-    materializeVisibleManualEntries(
-      sourceId = sourceId,
-      item = normalizedItem,
-      projectPath = projectPath,
-    )
+  val visibleManualEntries = manualItemsBySourceId.entries.flatMap { (sourceId, items) ->
+    items.flatMap { item ->
+      val normalizedItem = normalizeContextItemForProject(item, projectPath) ?: return@flatMap emptyList()
+      materializeVisibleManualEntries(
+        sourceId = sourceId,
+        item = normalizedItem,
+        backingItem = item,
+        projectPath = projectPath,
+      )
+    }
   }
   return visibleAutoEntries + visibleManualEntries
 }
@@ -59,6 +62,7 @@ internal fun materializeVisibleContextEntries(
 private fun materializeVisibleManualEntries(
   sourceId: String,
   item: AgentPromptContextItem,
+  backingItem: AgentPromptContextItem,
   projectPath: String?,
 ): List<ContextEntry> {
   if (sourceId != MANUAL_PROJECT_PATHS_SOURCE_ID) {
@@ -66,9 +70,10 @@ private fun materializeVisibleManualEntries(
       ContextEntry(
         item = item,
         projectBasePath = projectPath,
-        id = "manual:$sourceId",
+        id = manualContextEntryId(sourceId, item),
         origin = ContextEntryOrigin.MANUAL,
         manualSourceId = sourceId,
+        backingItem = backingItem,
       )
     )
   }
@@ -81,9 +86,12 @@ private fun materializeVisibleManualEntries(
       id = manualPathContextEntryId(sourceId, entry.path),
       origin = ContextEntryOrigin.MANUAL,
       manualSourceId = sourceId,
+      backingItem = backingItem,
     )
   }
 }
+
+internal fun manualContextEntryId(sourceId: String, item: AgentPromptContextItem): String = "manual:$sourceId:${item.hashCode()}"
 
 internal fun manualPathContextEntryId(sourceId: String, path: String): String = "manual:$sourceId:$path"
 

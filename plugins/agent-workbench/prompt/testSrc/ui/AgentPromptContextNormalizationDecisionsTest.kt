@@ -191,12 +191,12 @@ class AgentPromptContextNormalizationDecisionsTest {
     val visibleEntries = materializeVisibleContextEntries(
       autoEntries = emptyList(),
       manualItemsBySourceId = linkedMapOf(
-        MANUAL_PROJECT_PATHS_SOURCE_ID to buildManualPathsContextItem(
+        MANUAL_PROJECT_PATHS_SOURCE_ID to listOf(buildManualPathsContextItem(
           listOf(
             ManualPathSelectionEntry(path = dirPath, isDirectory = true),
             ManualPathSelectionEntry(path = filePath, isDirectory = false),
           )
-        )
+        ))
       ),
       projectPath = projectPath,
     )
@@ -221,12 +221,12 @@ class AgentPromptContextNormalizationDecisionsTest {
     val visibleEntries = materializeVisibleContextEntries(
       autoEntries = emptyList(),
       manualItemsBySourceId = linkedMapOf(
-        MANUAL_PROJECT_PATHS_SOURCE_ID to buildManualPathsContextItem(
+        MANUAL_PROJECT_PATHS_SOURCE_ID to listOf(buildManualPathsContextItem(
           listOf(
             ManualPathSelectionEntry(path = projectPath, isDirectory = true),
             ManualPathSelectionEntry(path = filePath, isDirectory = false),
           )
-        )
+        ))
       ),
       projectPath = projectPath,
     )
@@ -234,6 +234,31 @@ class AgentPromptContextNormalizationDecisionsTest {
     assertThat(visibleEntries).hasSize(1)
     assertThat(visibleEntries.single().id).isEqualTo(manualPathContextEntryId(MANUAL_PROJECT_PATHS_SOURCE_ID, filePath))
     assertThat(visibleEntries.single().item.body).isEqualTo("file: $filePath")
+  }
+
+  @Test
+  fun manualScreenshotItemsMaterializeIntoSeparateVisibleEntries() {
+    val sourceId = "manual.ui.context"
+    val firstItem = AgentPromptContextItem(
+      rendererId = AgentPromptContextRendererIds.SNIPPET,
+      title = "Editor",
+      body = "/tmp/ui-1.png",
+      source = "manualScreenshot",
+    )
+    val secondItem = firstItem.copy(title = "Project View", body = "/tmp/ui-2.png")
+
+    val visibleEntries = materializeVisibleContextEntries(
+      autoEntries = emptyList(),
+      manualItemsBySourceId = linkedMapOf(sourceId to listOf(firstItem, secondItem)),
+      projectPath = null,
+    )
+
+    assertThat(visibleEntries).hasSize(2)
+    assertThat(visibleEntries.map(ContextEntry::id)).containsExactly(
+      manualContextEntryId(sourceId, firstItem),
+      manualContextEntryId(sourceId, secondItem),
+    )
+    assertThat(visibleEntries.map(ContextEntry::backingItem)).containsExactly(firstItem, secondItem)
   }
 
   private fun systemPath(projectName: String): String {

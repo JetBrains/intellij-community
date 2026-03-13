@@ -23,6 +23,7 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchReques
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchers
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptManualContextPickerRequest
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptManualContextSelectionMode
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptManualContextSourceBridge
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptManualContextSources
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPaletteExtension
@@ -157,7 +158,7 @@ internal class AgentPromptPalettePopup(
   private var contextEntries: List<ContextEntry> = emptyList()
   private var initialAutoContextFingerprint: HashValue128? = null
   private val removedAutoLogicalItemIds = LinkedHashSet<String>()
-  private val manualContextItemsBySourceId: MutableMap<String, AgentPromptContextItem> = LinkedHashMap()
+  private val manualContextItemsBySourceId: MutableMap<String, List<AgentPromptContextItem>> = LinkedHashMap()
   private var selectedLaunchMode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD
   private var selectedWorkingProjectPath: String? = null
   private var existingTaskSearchQuery: String = ""
@@ -366,7 +367,7 @@ internal class AgentPromptPalettePopup(
             sourceProject = sourceProject,
             invocationData = invocationData,
             workingProjectPath = resolveWorkingProjectPath(launcher),
-            currentItem = manualContextItemsBySourceId[source.sourceId],
+            currentItems = manualContextItemsBySourceId[source.sourceId].orEmpty(),
             anchorComponent = anchorComponent,
             onSelected = { item -> applyManualContextSelection(source = source, item = item) },
             onError = ::showError,
@@ -381,7 +382,11 @@ internal class AgentPromptPalettePopup(
     source: AgentPromptManualContextSourceBridge,
     item: AgentPromptContextItem,
   ) {
-    manualContextItemsBySourceId[source.sourceId] = item
+    val updatedItems = when (source.selectionMode) {
+      AgentPromptManualContextSelectionMode.REPLACE -> listOf(item)
+      AgentPromptManualContextSelectionMode.APPEND -> manualContextItemsBySourceId[source.sourceId].orEmpty() + item
+    }
+    manualContextItemsBySourceId[source.sourceId] = updatedItems
     refreshContextEntries()
     resolveExtensionTabs()
     updateTargetModeUi()
@@ -1058,9 +1063,17 @@ internal class AgentPromptPalettePopup(
       AgentPromptUiContextRestoreSnapshot(
         contextFingerprint = initialAutoContextFingerprint,
         removedContextItemIds = normalizeRemovedContextItemIds(removedAutoLogicalItemIds),
-        manualContextItemsBySourceId = LinkedHashMap(manualContextItemsBySourceId),
+        manualContextItemsBySourceId = copyManualContextItemsBySourceId(),
       )
     )
+  }
+
+  private fun copyManualContextItemsBySourceId(): LinkedHashMap<String, List<AgentPromptContextItem>> {
+    val copy = LinkedHashMap<String, List<AgentPromptContextItem>>(manualContextItemsBySourceId.size)
+    manualContextItemsBySourceId.forEach { (sourceId, items) ->
+      copy[sourceId] = ArrayList(items)
+    }
+    return copy
   }
 
   private fun clearStatus() {

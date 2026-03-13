@@ -103,7 +103,7 @@ class AgentPromptVcsCommitManualContextSourceTest {
         sourceProject = sourceProject,
         invocationData = invocationData(hostProject),
         workingProjectPath = "/repo",
-        currentItem = null,
+        currentItems = emptyList(),
         anchorComponent = JPanel(),
         onSelected = { error("Selection callback is not expected") },
         onError = { message -> errorMessage = message },
