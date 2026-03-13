@@ -61,7 +61,6 @@ import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer.Ligh
 import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.EditorLockFreeTyping
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
@@ -1155,20 +1154,14 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
   override fun fireBeforeEditorTyping(c: Char, dataContext: DataContext) {
     lastTimeEditorWasTypedIn = System.currentTimeMillis()
-    //maybe readaction
     EditorThreading.runWritable {
-      if (!EditorLockFreeTyping.isEnabled()) {
-        publisher().beforeEditorTyping(c, dataContext)
-      }
+      publisher().beforeEditorTyping(c, dataContext)
     }
   }
 
   override fun fireAfterEditorTyping(c: Char, dataContext: DataContext) {
-    //maybe readaction
     EditorThreading.runWritable {
-      if (!EditorLockFreeTyping.isEnabled()) {
-        publisher().afterEditorTyping(c, dataContext)
-      }
+      publisher().afterEditorTyping(c, dataContext)
     }
   }
 
