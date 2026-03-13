@@ -5,6 +5,8 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
+import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.testFramework.junit5.TestApplication
@@ -64,6 +66,16 @@ class ClaudeAgentSessionProviderBridgeTest {
   }
 
   @Test
+  fun buildLaunchSpecWithInitialPromptDoesNotTreatPlannerAsPlanMode() {
+    val baseLaunchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+
+    val launchSpec = bridge.buildLaunchSpecWithInitialPrompt(baseLaunchSpec, "/planner Refactor this")
+
+    assertThat(launchSpec.command)
+      .containsExactly("claude", "--permission-mode", "default", "--", "/planner Refactor this")
+  }
+
+  @Test
   fun buildLaunchSpecWithInitialPromptForResumeCommand() {
     val resumeLaunchSpec = bridge.buildResumeLaunchSpec("session-1")
 
@@ -103,7 +115,22 @@ class ClaudeAgentSessionProviderBridgeTest {
   }
 
   @Test
-  fun composeInitialMessagePrefixesPlanCommandWhenEnabled() {
+  fun composeInitialMessagePrefixesPlanCommandWhenProviderOptionIsEnabled() {
+    val plan = bridge.buildInitialMessagePlan(
+      AgentPromptInitialMessageRequest(
+        prompt = "Refactor this",
+        providerOptionIds = setOf(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE),
+      )
+    )
+    val message = checkNotNull(plan.message)
+
+    assertThat(message).isEqualTo("/plan Refactor this")
+    assertThat(plan.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND)
+    assertThat(plan.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS)
+  }
+
+  @Test
+  fun composeInitialMessagePrefixesPlanCommandWhenLegacyFlagIsEnabled() {
     val plan = bridge.buildInitialMessagePlan(
       AgentPromptInitialMessageRequest(
         prompt = "Refactor this",
@@ -132,11 +159,27 @@ class ClaudeAgentSessionProviderBridgeTest {
 
   @Test
   fun initialMessagePlanPoliciesDefaultWithoutPlanMode() {
-    val plan = bridge.buildInitialMessagePlan(
+    val defaultPlan = bridge.buildInitialMessagePlan(
       AgentPromptInitialMessageRequest(prompt = "Refactor this")
     )
 
-    assertThat(plan.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND)
-    assertThat(plan.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK)
+    assertThat(defaultPlan.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND)
+    assertThat(defaultPlan.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK)
+
+    val plannerPlan = bridge.buildInitialMessagePlan(
+      AgentPromptInitialMessageRequest(prompt = "/planner follow-up")
+    )
+    assertThat(plannerPlan.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK)
+
+    val manualPlanCommand = bridge.buildInitialMessagePlan(
+      AgentPromptInitialMessageRequest(prompt = "/plan follow-up")
+    )
+    assertThat(manualPlanCommand.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND)
+    assertThat(manualPlanCommand.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS)
+  }
+
+  @Test
+  fun promptOptionsUseSharedPlanModeOption() {
+    assertThat(bridge.promptOptions).containsExactly(AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION)
   }
 }
