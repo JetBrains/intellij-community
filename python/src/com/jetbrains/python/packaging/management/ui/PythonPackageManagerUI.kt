@@ -41,25 +41,34 @@ import org.jetbrains.annotations.Nls
  * @param sdk The Python SDK associated with the operations.
  * @param sink The error sink used for reporting errors during operations.
  */
-@ApiStatus.Internal
-class PythonPackageManagerUI(val manager: PythonPackageManager, val sink: ErrorSink = ShowingMessageErrorSync) {
+@ApiStatus.Experimental
+class PythonPackageManagerUI private constructor(
+  @get:ApiStatus.Internal val manager: PythonPackageManager,
+  @get:ApiStatus.Internal val sink: ErrorSink = ShowingMessageErrorSync,
+) {
+  @ApiStatus.Internal
   val project: Project = manager.project
+
+  @ApiStatus.Internal
   val sdk: Sdk = manager.sdk
 
   /**
    * @return List of installed packages or null if the operation was failed.
    */
+  @ApiStatus.Internal
   suspend fun reloadPackagesBackground(): List<PythonPackage>? {
     return executeCommand(PyBundle.message("python.packaging.list.packages")) {
       manager.reloadPackages()
     }
   }
 
+  @ApiStatus.Internal
   suspend fun installWithConfirmation(packages: List<String>, module: Module? = null): List<PythonPackage>? {
     val requirements = packages.map { pyRequirement(it) }
     return installPyRequirementsWithConfirmation(requirements, module)
   }
 
+  @ApiStatus.Internal
   suspend fun installPyRequirementsWithConfirmation(
     packages: List<PyRequirement>,
     module: Module? = null,
@@ -72,6 +81,7 @@ class PythonPackageManagerUI(val manager: PythonPackageManager, val sink: ErrorS
     return installPyRequirementsBackground(confirmed, module = module)
   }
 
+  @ApiStatus.Internal
   suspend fun installPyRequirementsDetachedWithConfirmation(packages: List<PyRequirement>): List<PythonPackage>? {
     val confirmed = PyPackageManagerUiConfirmationHelpers.getConfirmedPackages(packages, project)
     if (confirmed.isEmpty())
@@ -84,6 +94,7 @@ class PythonPackageManagerUI(val manager: PythonPackageManager, val sink: ErrorS
   /**
    * @return List of all installed packages or null if the operation was failed.
    */
+  @ApiStatus.Internal
   suspend fun installPackagesRequestBackground(
     installRequest: PythonPackageInstallRequest,
     options: List<String> = emptyList(),
@@ -94,6 +105,7 @@ class PythonPackageManagerUI(val manager: PythonPackageManager, val sink: ErrorS
     }
   }
 
+  @ApiStatus.Internal
   suspend fun installPackagesRequestDetachedBackground(
     installRequest: PythonPackageInstallRequest,
     options: List<String> = emptyList(),
@@ -118,6 +130,7 @@ class PythonPackageManagerUI(val manager: PythonPackageManager, val sink: ErrorS
   /**
    * @return List of all installed packages or null if the operation was failed.
    */
+  @ApiStatus.Internal
   suspend fun updatePackagesBackground(
     packages: List<PythonRepositoryPackageSpecification>,
   ): List<PythonPackage>? {
@@ -136,6 +149,7 @@ class PythonPackageManagerUI(val manager: PythonPackageManager, val sink: ErrorS
   /**
    * @return List of all installed packages or null if the operation was failed.
    */
+  @ApiStatus.Internal
   suspend fun uninstallPackagesBackground(
     packages: List<String>,
     workspaceMember: PyWorkspaceMember? = null,
@@ -174,6 +188,7 @@ class PythonPackageManagerUI(val manager: PythonPackageManager, val sink: ErrorS
    */
   @RequiresEdt
   @RequiresBlockingContext
+  @ApiStatus.Experimental
   fun installPackagesWithModalProgressBlocking(vararg packages: String): List<PythonPackage>? {
     val specifications = runWithModalProgressBlocking(project, PyBundle.message("python.packaging.installing.packages")) {
       packages.mapNotNull {
@@ -196,13 +211,12 @@ class PythonPackageManagerUI(val manager: PythonPackageManager, val sink: ErrorS
     @ApiStatus.Internal
     fun forSdk(project: Project, sdk: Sdk, sink: ErrorSink = ShowingMessageErrorSync): PythonPackageManagerUI {
       val packageManager = PythonPackageManager.forSdk(project, sdk)
-      return forPackageManager(packageManager, sink)
+      return PythonPackageManagerUI(packageManager, sink)
     }
 
-    @ApiStatus.Internal
+    @ApiStatus.Experimental
     fun forPackageManager(
       packageManager: PythonPackageManager,
-      sink: ErrorSink = ShowingMessageErrorSync,
-    ): PythonPackageManagerUI = PythonPackageManagerUI(packageManager, sink)
+    ): PythonPackageManagerUI = PythonPackageManagerUI(packageManager, ShowingMessageErrorSync)
   }
 }

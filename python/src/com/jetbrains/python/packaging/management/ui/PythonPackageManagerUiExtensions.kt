@@ -101,7 +101,16 @@ suspend fun PythonPackageManagerUI.installPyRequirementsDetachedBackground(
 }
 
 
-@ApiStatus.Internal
+/**
+ * Installs packages by name, resolving specifications from the repository first.
+ *
+ * Must not be called from modal dialogs (e.g., Settings) because this method uses
+ * a background write action internally. Use [PythonPackageManagerUI.installPackagesWithModalProgressBlocking]
+ * for modal contexts instead.
+ *
+ * @return list of all installed packages after installation, or null if the operation failed
+ */
+@ApiStatus.Experimental
 suspend fun PythonPackageManagerUI.installPackagesBackground(
   packages: List<String>,
   options: List<String> = emptyList(),
@@ -125,4 +134,3 @@ suspend fun PythonPackageManagerUI.installPackageBackground(
   options: List<String> = emptyList(),
 ): List<PythonPackage>? = installPyRequirementsBackground(listOf(pyRequirement(pyPackage, versionSpec)),
                                                           options = options)
-
