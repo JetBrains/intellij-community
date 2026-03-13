@@ -279,6 +279,12 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     ) { }
 
     StubElementRegistryService stubElementRegistryService = StubElementRegistryService.getInstance();
+
+    // preload state before accessing registered element types
+    // if we don't call it, some stub element types can be still not loaded and be missing in IElementType registry.
+    if (stubElementRegistryService instanceof StubElementRegistryServiceImpl) {
+      ((StubElementRegistryServiceImpl)stubElementRegistryService).ensureStateLoaded();
+    }
     List<TypeAndSerializer> stubElementTypes = new ArrayList<>(IElementType.mapNotNull(type -> {
       ObjectStubSerializer<?, @NotNull Stub> serializer = stubElementRegistryService.getStubSerializer(type);
       if (serializer == null) {

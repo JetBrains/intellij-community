@@ -283,6 +283,10 @@ com.intellij.util.SequentialTask
 - iteration(com.intellij.openapi.progress.ProgressIndicator):Z
 - prepare():V
 - stop():V
+f:com.intellij.util.concurrency.CancellableClearableLazy
+- <init>(kotlin.jvm.functions.Function0):V
+- f:clear():V
+- f:getValue():java.lang.Object
 org.picocontainer.MutablePicoContainer
 - a:getComponentAdapter(java.lang.Object):org.picocontainer.ComponentAdapter
 - registerComponentImplementation(java.lang.Class):org.picocontainer.ComponentAdapter
