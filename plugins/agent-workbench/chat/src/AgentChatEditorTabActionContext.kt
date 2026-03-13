@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.SessionActionTarget
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
@@ -12,15 +13,11 @@ data class AgentChatEditorTabActionContext(
   @JvmField val path: String,
   @JvmField val tabKey: String,
   @JvmField val threadIdentity: String = "",
-  @JvmField val threadId: String = "",
-  @JvmField val threadTitle: String = "",
-  val provider: AgentSessionProvider? = null,
-  @JvmField val sessionId: String = "",
-  @JvmField val isPendingThread: Boolean = false,
-  @JvmField val subAgentId: String? = null,
+  val threadCoordinates: AgentChatThreadCoordinates? = null,
+  val sessionActionTarget: SessionActionTarget? = null,
 )
 
-internal data class AgentChatThreadCoordinates(
+data class AgentChatThreadCoordinates(
   val provider: AgentSessionProvider,
   @JvmField val sessionId: String,
   @JvmField val isPending: Boolean,
@@ -49,16 +46,66 @@ internal fun resolveAgentChatThreadCoordinates(threadIdentity: String): AgentCha
 fun resolveAgentChatEditorTabActionContext(event: AnActionEvent): AgentChatEditorTabActionContext? {
   val project = event.project ?: return null
   val selectedChatFile = event.getData(CommonDataKeys.VIRTUAL_FILE) as? AgentChatVirtualFile ?: return null
+  val threadCoordinates = selectedChatFile.provider
+    ?.let { provider ->
+      AgentChatThreadCoordinates(
+        provider = provider,
+        sessionId = selectedChatFile.sessionId,
+        isPending = selectedChatFile.isPendingThread,
+      )
+    }
   return AgentChatEditorTabActionContext(
     project = project,
     path = normalizeAgentWorkbenchPath(selectedChatFile.projectPath),
     tabKey = selectedChatFile.tabKey,
     threadIdentity = selectedChatFile.threadIdentity,
-    threadId = selectedChatFile.threadId,
-    threadTitle = selectedChatFile.threadTitle,
-    provider = selectedChatFile.provider,
-    sessionId = selectedChatFile.sessionId,
-    isPendingThread = selectedChatFile.isPendingThread,
-    subAgentId = selectedChatFile.subAgentId,
+    threadCoordinates = threadCoordinates,
+    sessionActionTarget = resolveAgentChatSessionActionTarget(
+      path = normalizeAgentWorkbenchPath(selectedChatFile.projectPath),
+      threadCoordinates = threadCoordinates,
+      threadId = selectedChatFile.threadId,
+      threadTitle = selectedChatFile.threadTitle,
+      subAgentId = selectedChatFile.subAgentId,
+    ),
   )
+}
+
+private fun resolveAgentChatSessionActionTarget(
+  path: String,
+  threadCoordinates: AgentChatThreadCoordinates?,
+  threadId: String,
+  threadTitle: String,
+  subAgentId: String?,
+): SessionActionTarget? {
+  val coordinates = threadCoordinates ?: return null
+  if (coordinates.isPending) {
+    return null
+  }
+
+  val normalizedSubAgentId = subAgentId?.takeIf { it.isNotBlank() }
+  val resolvedThreadId = threadId.takeIf { it.isNotBlank() } ?: normalizedSubAgentId ?: coordinates.sessionId
+  if (resolvedThreadId.isBlank()) {
+    return null
+  }
+
+  return if (normalizedSubAgentId == null) {
+    SessionActionTarget.Thread(
+      path = path,
+      provider = coordinates.provider,
+      threadId = resolvedThreadId,
+      title = threadTitle,
+    )
+  }
+  else {
+    if (resolvedThreadId != normalizedSubAgentId) {
+      return null
+    }
+    SessionActionTarget.SubAgent(
+      path = path,
+      provider = coordinates.provider,
+      parentThreadId = coordinates.sessionId,
+      subAgentId = normalizedSubAgentId,
+      title = threadTitle,
+    )
+  }
 }

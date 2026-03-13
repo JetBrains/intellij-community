@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupActionContext
+import com.intellij.agent.workbench.sessions.toolwindow.actions.createAgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
 import com.intellij.openapi.project.Project
@@ -22,7 +23,7 @@ internal fun resolveArchiveActionContext(
     return null
   }
 
-  return AgentSessionsTreePopupActionContext(
+  return createAgentSessionsTreePopupActionContext(
     project = project,
     nodeId = selectedTreeId,
     node = selectedTreeNode,

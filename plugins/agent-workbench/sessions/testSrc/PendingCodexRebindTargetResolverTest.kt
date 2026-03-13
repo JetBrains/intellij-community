@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
+import com.intellij.agent.workbench.chat.AgentChatThreadCoordinates
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
@@ -39,10 +40,11 @@ class PendingCodexRebindTargetResolverTest {
       path = PROJECT_PATH,
       tabKey = "pending-codex:new-1",
       threadIdentity = "codex:new-1",
-      threadId = "",
-      provider = AgentSessionProvider.CODEX,
-      sessionId = "new-1",
-      isPendingThread = true,
+      threadCoordinates = AgentChatThreadCoordinates(
+        provider = AgentSessionProvider.CODEX,
+        sessionId = "new-1",
+        isPending = true,
+      ),
     )
 
     val target = readService.resolvePendingCodexRebindTarget(context)
@@ -79,10 +81,11 @@ class PendingCodexRebindTargetResolverTest {
         path = PROJECT_PATH,
         tabKey = "pending-codex:new-1",
         threadIdentity = "codex:new-1",
-        threadId = "",
-        provider = AgentSessionProvider.CODEX,
-        sessionId = "new-1",
-        isPendingThread = true,
+        threadCoordinates = AgentChatThreadCoordinates(
+          provider = AgentSessionProvider.CODEX,
+          sessionId = "new-1",
+          isPending = true,
+        ),
       )
 
       val target = withTestLaunchSpecAugmenter {

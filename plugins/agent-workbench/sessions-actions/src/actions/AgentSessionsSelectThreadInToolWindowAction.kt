@@ -22,14 +22,14 @@ internal class AgentSessionsSelectThreadInToolWindowAction @JvmOverloads constru
 
   override fun actionPerformed(e: AnActionEvent) {
     val context = resolveEditorTabContext(e) ?: return
-    val threadCoordinates = resolveAgentSessionsEditorTabThreadCoordinates(context) ?: return
-    ensureThreadVisible(context.path, threadCoordinates.provider, threadCoordinates.threadId)
+    val conversationTarget = resolveEditorTabConversationTarget(context) ?: return
+    ensureThreadVisible(context.path, conversationTarget.provider, conversationTarget.threadId)
     activateSessionsToolWindow(context.project)
   }
 
   override fun update(e: AnActionEvent) {
     val context = resolveEditorTabContext(e)
-    e.presentation.isEnabledAndVisible = context != null && resolveAgentSessionsEditorTabThreadCoordinates(context) != null
+    e.presentation.isEnabledAndVisible = context != null && resolveEditorTabConversationTarget(context) != null
   }
 }
 

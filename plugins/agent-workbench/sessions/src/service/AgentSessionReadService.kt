@@ -112,7 +112,8 @@ internal fun resolveAgentSessionPathState(state: AgentSessionsState, normalizedP
 }
 
 fun isPendingEditorContext(context: AgentChatEditorTabActionContext, provider: AgentSessionProvider): Boolean {
-  return context.isPendingThread && context.provider == provider
+  val threadCoordinates = context.threadCoordinates ?: return false
+  return threadCoordinates.isPending && threadCoordinates.provider == provider
 }
 
 private fun resolveThreadsForPath(state: AgentSessionsState, normalizedPath: String): List<AgentSessionThread> {

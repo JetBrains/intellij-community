@@ -7,7 +7,7 @@ import com.intellij.agent.workbench.sessions.core.AgentSubAgent
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
-import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupActionContext
+import com.intellij.agent.workbench.sessions.toolwindow.actions.createAgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
 import com.intellij.agent.workbench.sessions.toolwindow.tree.pathForMoreThreadsNode
@@ -108,12 +108,12 @@ class AgentSessionsSwingTreeInteractionTest {
     val selectedThread = AgentSessionThread(id = "selected-1", title = "Selected", updatedAt = 100, archived = false, provider = AgentSessionProvider.CLAUDE)
     val popupTarget = ArchiveThreadTarget.Thread(path = "/work/project-a", provider = popupThread.provider, threadId = popupThread.id)
     val selectedTarget = ArchiveThreadTarget.Thread(path = "/work/project-b", provider = selectedThread.provider, threadId = selectedThread.id)
-    val popupContext = AgentSessionsTreePopupActionContext(
+    val popupContext = checkNotNull(createAgentSessionsTreePopupActionContext(
       project = project,
       nodeId = SessionTreeId.Thread("/work/project-a", AgentSessionProvider.CODEX, "popup-1"),
       node = SessionTreeNode.Thread(projectSessions, popupThread),
       archiveTargets = listOf(popupTarget),
-    )
+    ))
 
     val contextFromPopup = resolveArchiveActionContext(
       popupActionContext = popupContext,
@@ -132,7 +132,7 @@ class AgentSessionsSwingTreeInteractionTest {
       selectedArchiveTargets = listOf(selectedTarget),
     )
     assertThat(contextFromSelection).isEqualTo(
-      AgentSessionsTreePopupActionContext(
+      createAgentSessionsTreePopupActionContext(
         project = project,
         nodeId = SessionTreeId.Thread("/work/project-b", AgentSessionProvider.CLAUDE, "selected-1"),
         node = SessionTreeNode.Thread(projectSessions, selectedThread),

@@ -16,6 +16,7 @@ import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTre
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupMoreAction
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupNewThreadGroup
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupOpenAction
+import com.intellij.agent.workbench.sessions.toolwindow.actions.createAgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.actions.resolveAgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
@@ -455,12 +456,12 @@ private fun popupContext(
   node: SessionTreeNode,
   archiveTargets: List<ArchiveThreadTarget> = emptyList(),
 ): AgentSessionsTreePopupActionContext {
-  return AgentSessionsTreePopupActionContext(
+  return checkNotNull(createAgentSessionsTreePopupActionContext(
     project = ProjectManager.getInstance().defaultProject,
     nodeId = nodeId,
     node = node,
     archiveTargets = archiveTargets,
-  )
+  ))
 }
 
 private fun popupEvent(action: AnAction, context: AgentSessionsTreePopupActionContext): AnActionEvent {

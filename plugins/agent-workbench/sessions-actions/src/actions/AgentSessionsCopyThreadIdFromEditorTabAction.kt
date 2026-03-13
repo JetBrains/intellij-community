@@ -16,14 +16,14 @@ internal class AgentSessionsCopyThreadIdFromEditorTabAction @JvmOverloads constr
 
   override fun actionPerformed(e: AnActionEvent) {
     val context = resolveEditorTabContext(e) ?: return
-    val threadCoordinates = resolveAgentSessionsEditorTabThreadCoordinates(context) ?: return
-    copyToClipboard(threadCoordinates.threadId)
+    val conversationTarget = resolveEditorTabConversationTarget(context) ?: return
+    copyToClipboard(conversationTarget.threadId)
   }
 
   override fun update(e: AnActionEvent) {
     val context = resolveEditorTabContextOrHide(e) ?: return
 
     e.presentation.isVisible = true
-    e.presentation.isEnabled = resolveAgentSessionsEditorTabThreadCoordinates(context) != null
+    e.presentation.isEnabled = resolveEditorTabConversationTarget(context) != null
   }
 }
