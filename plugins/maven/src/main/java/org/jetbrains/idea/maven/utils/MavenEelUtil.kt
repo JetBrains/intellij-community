@@ -35,6 +35,7 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.EelExecApi.EnvironmentVariablesException
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.fs.EelFileSystemApi
@@ -43,6 +44,7 @@ import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.EelPathUtils.getActualPath
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
@@ -225,22 +227,46 @@ object MavenEelUtil {
     if (mavenSettingsFile.isNullOrBlank()) {
       settingPath = mavenConfig?.getFilePath(MavenConfigSettings.ALTERNATE_USER_SETTINGS) ?: ""
     }
+    val properties = mavenConfig?.toProperties() ?: Properties()
+    enrichProperties(properties, project?.getEelDescriptor()?.toEelApi() ?: localEel)
     val path = resolveUsingEel(project,
                                {
                                  resolveLocalRepositoryAsync(project,
                                                              overriddenLocalRepository,
                                                              mavenHome,
                                                              settingPath,
-                                                             mavenConfig?.toProperties())
+                                                             properties)
                                },
                                {
                                  if (it is LocalEelApi) null
                                  else it.resolveRepository(overriddenLocalRepository,
                                                            mavenHome,
                                                            settingPath,
-                                                           mavenConfig?.toProperties())
+                                                           properties)
                                })
     return mavenConfig?.getAbsolutePath(path) ?: path
+  }
+
+
+  private suspend fun enrichProperties(properties: Properties, eelApi: EelApi) {
+    try {
+      val envMap = if (eelApi is LocalEelApi) {
+        System.getenv()
+      }
+      else {
+        eelApi.exec.environmentVariables().eelIt().await()
+      }
+      val envProperties = MavenServerUtil.mavenPropsFromEnvironment(envMap, eelApi.platform.isWindows)
+      envProperties.forEach { (k, v) ->
+        if (k is String) {
+          properties.setProperty(k, envProperties.getProperty(k))
+        }
+      }
+    }
+    catch (e: EnvironmentVariablesException) {
+      MavenLog.LOG.warn(e)
+      throw RuntimeException(e)
+    }
   }
 
   suspend fun getToolchainsFile(
