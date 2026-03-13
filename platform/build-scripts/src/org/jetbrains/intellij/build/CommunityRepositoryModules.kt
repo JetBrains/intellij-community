@@ -156,7 +156,6 @@ object CommunityRepositoryModules {
       }
 
       spec.withModule("intellij.idea.community.build.dependencies")
-      spec.withModule("intellij.maven.jps")
       spec.withModule("intellij.maven.artifactResolver.m31", "artifact-resolver-m31.jar")
       spec.withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m31.jar")
       spec.withModule("intellij.maven.server", relativeJarPath = "maven-server.jar")
