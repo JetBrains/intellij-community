@@ -2,6 +2,19 @@ load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "kt_javac_options")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
+exports_files(
+  glob(["**/*.iml"]),
+  visibility = ["//visibility:public"],
+)
+
+filegroup(
+  name = "jps_to_bazel_community_model_root_files",
+  srcs = [
+    ".idea/modules.xml",
+  ] + glob([".idea/libraries/*.xml"]),
+  visibility = ["//visibility:public"],
+)
+
 kt_javac_options(
   name = "default-javac-opts",
   no_proc = True,

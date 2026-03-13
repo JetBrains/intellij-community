@@ -111,6 +111,10 @@ internal fun generateDeps(
 
       val jpsLibrary = element.library ?: error("library dependency '$element' from module ${module.module.name} is not resolved")
       val files: List<Path> = jpsLibrary.getPaths(JpsOrderRootType.COMPILED)
+      if (files.isEmpty()) {
+        error("library '${jpsLibrary.name}' in module ${module.module.name} has no compiled roots")
+      }
+
       val repositoryJpsLibrary = jpsLibrary.asTyped(JpsRepositoryLibraryType.INSTANCE)
       val isSnapshotOutsideOfTree = files.any { it.name.endsWith("-SNAPSHOT.jar") } &&
                                     files.all { !it.startsWith(context.communityRoot) &&
@@ -129,12 +133,18 @@ internal fun generateDeps(
         isSnapshotVersion || isKotlinDevVersionAsSnapshotOutsideOfTree -> {
           val firstFile = files.first()
           val libraryContainer = context.getLibraryContainer(module.isCommunity)
-          val libSnapshotsDir = libraryContainer.buildFile.parent.resolve("snapshots").createDirectories()
+          val libSnapshotsDir = when (context.snapshotLibraryMode) {
+            SnapshotLibraryMode.WRITE_TO_REPO -> libraryContainer.buildFile.parent.resolve("snapshots").createDirectories()
+            SnapshotLibraryMode.REUSE_GENERATED -> libraryContainer.buildFile.parent.resolve("snapshots")
+          }
           val targetName = camelToSnakeCase(escapeBazelLabel(firstFile.nameWithoutExtension))
 
           val localFiles = files.map { file ->
             val localFile = libSnapshotsDir.resolve(file.name)
-            file.copyTo(localFile, overwrite = true)
+            when (context.snapshotLibraryMode) {
+              SnapshotLibraryMode.WRITE_TO_REPO -> file.copyTo(localFile, overwrite = true)
+              SnapshotLibraryMode.REUSE_GENERATED -> Unit
+            }
             localFile
           }
 
@@ -372,7 +382,7 @@ internal fun generateDeps(
 private fun getLocalLibBazelFileDir(files: List<Path>, communityRoot: Path): Path {
   val dir = files.first().parent
 
-  // Special case, kt-master development places all snapshot kotlin libraries
+  // Special case, kt-master development places all snapshot Kotlin libraries
   // as a maven repo under community/lib/kotlin
   if (underKotlinSnapshotLibRoot(dir, communityRoot)) {
     return communityRoot.resolve("lib")
@@ -509,6 +519,7 @@ private fun addDep(
         }
       }
       JpsJavaDependencyScope.RUNTIME -> {
+        @Suppress("KotlinConstantConditions")
         if (!isIncludedInProductionRuntime) {  // always false, kept for consistency
           runtimeDeps.add(dependencyLabel)
         }
@@ -576,13 +587,6 @@ private fun needsBackwardCompatibleTestDependency(
     // See: https://youtrack.jetbrains.com/issue/IJI-2851/ (auto-add dependency on test target only for existing bad modules and forbid it for everything else).
     return true
   }
-}
-
-internal fun hasOnlyTestResources(moduleDescriptor: ModuleDescriptor): Boolean {
-  return !moduleDescriptor.testResources.isEmpty() &&
-         moduleDescriptor.sources.isEmpty() &&
-         moduleDescriptor.resources.isEmpty() &&
-         moduleDescriptor.testSources.isEmpty()
 }
 
 internal const val TEST_LIB_NAME_SUFFIX = "_test_lib"

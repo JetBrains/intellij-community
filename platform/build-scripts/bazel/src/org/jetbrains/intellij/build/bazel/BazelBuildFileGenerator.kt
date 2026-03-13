@@ -92,6 +92,11 @@ internal val DEFAULT_CUSTOM_MODULES: Map<String, CustomModuleDescription> = list
                           sources = listOf("@rules_jvm//jps-builders-6:build-javac-rt_sources")),
 ).associateBy { it.moduleName }
 
+internal enum class SnapshotLibraryMode {
+  WRITE_TO_REPO,
+  REUSE_GENERATED,
+}
+
 @Suppress("ReplaceGetOrSet")
 internal class BazelBuildFileGenerator(
   val ultimateRoot: Path?,
@@ -100,6 +105,7 @@ internal class BazelBuildFileGenerator(
   private val projectDir: Path,
   val urlCache: UrlCache,
   val customModules: Map<String, CustomModuleDescription>,
+  val snapshotLibraryMode: SnapshotLibraryMode = SnapshotLibraryMode.WRITE_TO_REPO,
 ) {
   @JvmField
   val javaExtensionService: JpsJavaExtensionService = JpsJavaExtensionService.getInstance()
@@ -404,14 +410,30 @@ internal class BazelBuildFileGenerator(
     val moduleTargets: List<ModuleTargets>,
   )
 
-  fun generateModuleBuildFiles(list: ModuleList, isCommunity: Boolean): ModuleGenerationResult {
-    // assert that customModules are still actual
+  private fun validateCustomModules(list: ModuleList) {
     for (customModule in customModules.values) {
       check(list.ultimate.any { it.module.name == customModule.moduleName } ||
             list.community.any { it.module.name == customModule.moduleName }) {
         "Unknown module name: ${customModule.moduleName} in `customModules`"
       }
     }
+  }
+
+  fun generateModuleTargets(list: ModuleList, isCommunity: Boolean): List<ModuleTargets> {
+    validateCustomModules(list)
+
+    val targetsPerModule = mutableListOf<ModuleTargets>()
+    for (module in (if (isCommunity) list.community else list.ultimate)) {
+      if (generated.putIfAbsent(module, true) == null) {
+        val buildTargetsBazel = BuildFile()
+        targetsPerModule.add(buildTargetsBazel.generateBuildTargets(module, list))
+      }
+    }
+    return targetsPerModule
+  }
+
+  fun generateModuleBuildFiles(list: ModuleList, isCommunity: Boolean): ModuleGenerationResult {
+    validateCustomModules(list)
     val targetsPerModule = mutableListOf<ModuleTargets>()
     val fileToUpdater = LinkedHashMap<Path, BazelFileUpdater>()
     // bazel build file -> (bzlFile (for import) -> already imported symbols)

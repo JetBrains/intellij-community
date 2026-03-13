@@ -68,6 +68,27 @@ class BazelGeneratorIntegrationTests {
     val tempDir = Files.createTempDirectory("test-$testName")
     projectDataPath.copyToRecursively(tempDir, followLinks = true, overwrite = false)
 
+    val bazelTargetsBeforeRunningGenerator = Files.createTempFile("bazel-targets-before-running-generator", ".json")
+    JpsModuleToBazelTargetsOnly.main(
+      if (runWithoutUltimateRoot) {
+        arrayOf(
+          "--community_root=$tempDir",
+          "--default-custom-modules=$defaultCustomModules",
+          "--output=$bazelTargetsBeforeRunningGenerator",
+        )
+      }
+      else {
+        arrayOf(
+          "--community_root=${tempDir.resolve("community")}",
+          "--ultimate_root=$tempDir",
+          "--default-custom-modules=$defaultCustomModules",
+          "--output=$bazelTargetsBeforeRunningGenerator",
+        )
+      }
+    )
+
+    compareDirectoriesWithoutMutation(projectDataPath, tempDir, "targets-only must not modify the project tree")
+  
     JpsModuleToBazel.main(
       arrayOf(
         "--workspace_directory=$tempDir",
@@ -84,8 +105,39 @@ class BazelGeneratorIntegrationTests {
       }
     }
 
+    val bazelTargetsAfterRunningGenerator = Files.createTempFile("bazel-targets-after-running-generator", ".json")
+    JpsModuleToBazelTargetsOnly.main(
+      if (runWithoutUltimateRoot) {
+        arrayOf(
+          "--community_root=$tempDir",
+          "--default-custom-modules=$defaultCustomModules",
+          "--output=$bazelTargetsAfterRunningGenerator",
+        )
+      }
+      else {
+        arrayOf(
+          "--community_root=${tempDir.resolve("community")}",
+          "--ultimate_root=$tempDir",
+          "--default-custom-modules=$defaultCustomModules",
+          "--output=$bazelTargetsAfterRunningGenerator",
+        )
+      }
+    )
+
     assertAndRemoveSameFiles(projectDataPath, tempDir)
     compareDirectories(expectedDataPath, tempDir)
+
+    val bazelTargetsFromGenerator = tempDir.resolve("build").resolve("bazel-targets.json")
+    softly.assertThat(bazelTargetsAfterRunningGenerator.readText())
+      .withFailMessage {
+        "Actual $bazelTargetsAfterRunningGenerator targets file is different from generated file at $bazelTargetsFromGenerator"
+      }
+      .isEqualTo(bazelTargetsFromGenerator.readText())
+    softly.assertThat(bazelTargetsBeforeRunningGenerator.readText())
+      .withFailMessage {
+        "Actual $bazelTargetsBeforeRunningGenerator targets file is different from generated file at $bazelTargetsFromGenerator"
+      }
+      .isEqualTo(bazelTargetsFromGenerator.readText())
 
     // do not delete tempDir on tests failure, it is used in IDE to update expected file
     if (softly.wasSuccess()) {
@@ -274,6 +326,29 @@ class BazelGeneratorIntegrationTests {
       else {
         assertFilesEqual(actualChildPath, expectedChildPath,
                          "Generated output differs from expected snapshot")
+      }
+    }
+  }
+
+  private fun compareDirectoriesWithoutMutation(expected: Path, actual: Path, messagePrefix: String) {
+    val expectedChildren = if (expected.isDirectory()) expected.listDirectoryEntries().map { it.name }.toSet() else emptySet()
+    val actualChildren = if (actual.isDirectory()) actual.listDirectoryEntries().map { it.name }.toSet() else emptySet()
+
+    softly.assertThat(expectedChildren - actualChildren)
+      .describedAs("$messagePrefix: missing entries in $actual compared with $expected")
+      .isEmpty()
+    softly.assertThat(actualChildren - expectedChildren)
+      .describedAs("$messagePrefix: unexpected entries in $actual compared with $expected")
+      .isEmpty()
+
+    for (child in actualChildren.intersect(expectedChildren)) {
+      val actualChildPath = actual.resolve(child)
+      val expectedChildPath = expected.resolve(child)
+      if (actualChildPath.isDirectory()) {
+        compareDirectoriesWithoutMutation(expectedChildPath, actualChildPath, messagePrefix)
+      }
+      else {
+        assertFilesEqual(actualChildPath, expectedChildPath, messagePrefix)
       }
     }
   }

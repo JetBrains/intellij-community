@@ -271,7 +271,7 @@ internal class JpsModuleToBazel {
       }
 
       fun computeImlPackage(module: ModuleDescriptor): ImlPackageDescription {
-        if (ultimateRoot != null && module.isCommunity) {
+        if (module.isCommunity) {
           val standaloneRepoRoot = when {
             module.bazelBuildFileDir.startsWith(communityRoot.resolve("platform/build-scripts/bazel")) -> communityRoot.resolve("platform/build-scripts/bazel") to "@jps_to_bazel"
             module.bazelBuildFileDir.startsWith(communityRoot.resolve("build/jvm-rules")) -> communityRoot.resolve("build/jvm-rules") to "@rules_jvm"
@@ -445,6 +445,7 @@ internal class JpsModuleToBazel {
               }
             }
           } + skippedModules.associateWith { emptyModule },
+
           imlTargets = moduleList.allModules.asSequence()
             .map { makeImlTarget(it) }
             .distinct()
@@ -463,6 +464,7 @@ internal class JpsModuleToBazel {
       }
 
       println("Writing targets info to $file")
+      file.parent.createDirectories()
       val tempFile = Files.createTempFile(file.parent, file.fileName.toString(), ".tmp")
       try {
         tempFile.writeText(fileContent)
@@ -512,7 +514,7 @@ private fun deleteOldFiles(projectDir: Path, generatedFiles: Set<Path>) {
   Files.writeString(fileListFile, generatedFiles.joinToString("\n") { projectDir.relativize(it).invariantSeparatorsPathString })
 }
 
-private fun loadJarRepositories(projectDir: Path): List<JarRepository> {
+internal fun loadJarRepositories(projectDir: Path): List<JarRepository> {
   val jarRepositoriesXml = JDOMUtil.load(projectDir.resolve(".idea/jarRepositories.xml"))
   val component = jarRepositoriesXml.getChildren("component").single()
   return component.getChildren("remote-repository").map { element ->
@@ -520,6 +522,6 @@ private fun loadJarRepositories(projectDir: Path): List<JarRepository> {
   }
 }
 
-private fun getOptionValue(element: Element, key: String): String {
+internal fun getOptionValue(element: Element, key: String): String {
   return element.getChildren("option").single { it.getAttributeValue("name") == key }.getAttributeValue("value")
 }

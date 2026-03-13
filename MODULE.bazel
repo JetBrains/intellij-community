@@ -56,6 +56,12 @@ local_path_override(
     path = "lib",
 )
 
+bazel_dep(name = "jps_to_bazel")
+local_path_override(
+    module_name = "jps_to_bazel",
+    path = "platform/build-scripts/bazel",
+)
+
 local_path_override(
     module_name = "rules_jvm",
     path = "build/jvm-rules",

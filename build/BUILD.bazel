@@ -1,9 +1,19 @@
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:jps_to_bazel_targets_json.bzl", "jps_to_bazel_targets_json")
 
 load("//build:intellij_dev_community.bzl", "intellij_dev_binary_community")
 load("//build:intellij_dev.bzl", "INTELLIJ_ADD_OPENS")
-load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS", "ALL_PRODUCTION_COMMUNITY_TARGETS", "ALL_LIBRARY_COMMUNITY_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_IML_TARGETS", "ALL_COMMUNITY_TARGETS", "ALL_PRODUCTION_COMMUNITY_TARGETS", "ALL_LIBRARY_COMMUNITY_TARGETS")
+
+jps_to_bazel_targets_json(
+  name = "bazel_targets_json",
+  mode = "community",
+  srcs = [
+    "//:jps_to_bazel_community_model_root_files",
+  ] + ALL_COMMUNITY_IML_TARGETS,
+  tool = "@jps_to_bazel//:jps-to-bazel-targets-only",
+)
 
 # Can't name the target 'installers' since it triggers elevation in Windows
 java_binary(

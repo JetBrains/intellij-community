@@ -35,11 +35,11 @@ CUSTOM_MODULES = {
 STANDALONE_BAZEL_REPOS = [
     struct(
         repo_name = "@jps_to_bazel",
-        repo_root_parts = ["community", "platform", "build-scripts", "bazel"],
+        repo_root_parts = ["platform", "build-scripts", "bazel"],
     ),
     struct(
         repo_name = "@rules_jvm",
-        repo_root_parts = ["community", "build", "jvm-rules"],
+        repo_root_parts = ["build", "jvm-rules"],
     ),
 ]
 
@@ -337,10 +337,11 @@ def _compute_package_info(module_name, build_dir_parts, is_community, community_
             effective_build_dir_parts = _package_label_to_build_dir_parts(custom.bazel_package, community_root_parts),
         )
 
-    if community_root_parts and is_community:
+    if is_community:
+        community_relative = build_dir_parts[len(community_root_parts):]
         for repo in STANDALONE_BAZEL_REPOS:
-            if _all_start_with([build_dir_parts], repo.repo_root_parts):
-                rel_parts = build_dir_parts[len(repo.repo_root_parts):]
+            if _all_start_with([community_relative], repo.repo_root_parts):
+                rel_parts = community_relative[len(repo.repo_root_parts):]
                 rel_path = "/".join(rel_parts)
                 return struct(
                     package_prefix = repo.repo_name + "//" + rel_path,
