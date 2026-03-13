@@ -101,6 +101,11 @@ class InstalledPluginsTab extends PluginsTab {
     for (InstalledSearchOption option : InstalledSearchOption.values()) {
       myInstalledSearchGroup.add(new InstalledSearchOptionAction(option));
     }
+
+    myUpdateAll.setVisible(false);
+    myUpdateAllBundled.setVisible(false);
+    myUpdateCounter.setVisible(false);
+    myUpdateCounterBundled.setVisible(false);
   }
 
   public @Nullable PluginsGroupComponentWithProgress getInstalledPanel() {
@@ -144,11 +149,6 @@ class InstalledPluginsTab extends PluginsTab {
 
     PluginsGroup userInstalled = new PluginsGroup(IdeBundle.message("plugins.configurable.userInstalled"), PluginsGroupType.INSTALLED);
     PluginsGroup installing = new PluginsGroup(IdeBundle.message("plugins.configurable.installing"), PluginsGroupType.INSTALLING);
-
-    myUpdateAll.setVisible(false);
-    myUpdateAllBundled.setVisible(false);
-    myUpdateCounter.setVisible(false);
-    myUpdateCounterBundled.setVisible(false);
 
     LinkListener<Object> updateAllListener = new LinkListener<>() {
       @Override
