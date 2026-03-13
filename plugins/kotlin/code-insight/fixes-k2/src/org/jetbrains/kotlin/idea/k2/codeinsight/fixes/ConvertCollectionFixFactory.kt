@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -19,8 +20,9 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 
 internal object ConvertCollectionFixFactory {
+    context(_: KaSession)
     internal fun getCollectionType(type: KaType, acceptNullableTypes: Boolean = false): CollectionType? {
-        if (type.nullability.isNullable && !acceptNullableTypes) return null
+        if (type.isMarkedNullable && !acceptNullableTypes) return null
         return CollectionType.entries.firstOrNull {
             type.symbol?.classId?.asSingleFqName() == it.fqName
         }
