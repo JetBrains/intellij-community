@@ -472,13 +472,7 @@ suspend fun rebindOpenPendingAgentChatTabs(
     return emptyPendingCodexTabRebindReport()
   }
 
-  val normalizedRequestsByPath = LinkedHashMap<String, List<AgentChatPendingCodexTabRebindRequest>>()
-  for ((projectPath, requests) in requestsByProjectPath) {
-    if (requests.isEmpty()) {
-      continue
-    }
-    normalizedRequestsByPath[normalizeAgentWorkbenchPath(projectPath)] = requests
-  }
+  val normalizedRequestsByPath = normalizePathToListMap(requestsByProjectPath)
   if (normalizedRequestsByPath.isEmpty()) {
     return emptyPendingCodexTabRebindReport()
   }
@@ -665,13 +659,7 @@ suspend fun rebindOpenConcreteAgentChatTabs(
     return emptyConcreteCodexTabRebindReport()
   }
 
-  val normalizedRequestsByPath = LinkedHashMap<String, List<AgentChatConcreteCodexTabRebindRequest>>()
-  for ((projectPath, requests) in requestsByProjectPath) {
-    if (requests.isEmpty()) {
-      continue
-    }
-    normalizedRequestsByPath[normalizeAgentWorkbenchPath(projectPath)] = requests
-  }
+  val normalizedRequestsByPath = normalizePathToListMap(requestsByProjectPath)
   if (normalizedRequestsByPath.isEmpty()) {
     return emptyConcreteCodexTabRebindReport()
   }
@@ -867,13 +855,7 @@ fun clearOpenConcreteAgentChatNewThreadRebindAnchors(
     return 0
   }
 
-  val normalizedTabsByPath = LinkedHashMap<String, List<AgentChatConcreteCodexTabSnapshot>>()
-  for ((projectPath, tabs) in tabsByProjectPath) {
-    if (tabs.isEmpty()) {
-      continue
-    }
-    normalizedTabsByPath[normalizeAgentWorkbenchPath(projectPath)] = tabs
-  }
+  val normalizedTabsByPath = normalizePathToListMap(tabsByProjectPath)
   if (normalizedTabsByPath.isEmpty()) {
     return 0
   }
@@ -931,6 +913,8 @@ suspend fun updateOpenAgentChatTabPresentation(
     return 0
   }
 
+  val normalizedTitlesByPathAndThreadIdentity = normalizePathAndThreadIdentityMap(titleByPathAndThreadIdentity)
+  val normalizedActivitiesByPathAndThreadIdentity = normalizePathAndThreadIdentityMap(activityByPathAndThreadIdentity)
   val updatedSnapshots = ArrayList<AgentChatTabSnapshot>()
   var updatedTabs: Int
   var updatedPresentations: Int
@@ -945,8 +929,8 @@ suspend fun updateOpenAgentChatTabPresentation(
         val chatFile = openFile as? AgentChatVirtualFile ?: continue
         managerByFile.computeIfAbsent(chatFile) { LinkedHashSet() }.add(manager)
         val key = normalizeAgentWorkbenchPath(chatFile.projectPath) to chatFile.threadIdentity
-        val targetTitle = titleByPathAndThreadIdentity[key]
-        val targetActivity = activityByPathAndThreadIdentity[key]
+        val targetTitle = normalizedTitlesByPathAndThreadIdentity[key]
+        val targetActivity = normalizedActivitiesByPathAndThreadIdentity[key]
         if (targetTitle == null && targetActivity == null) {
           continue
         }
@@ -987,7 +971,7 @@ suspend fun updateOpenAgentChatTabPresentation(
 
   LOG.debug {
     "updateOpenAgentChatTabPresentation updatedTabs=$updatedTabs, updatedPresentations=$updatedPresentations," +
-    " requestedTitles=${titleByPathAndThreadIdentity.size}, requestedActivities=${activityByPathAndThreadIdentity.size}"
+    " requestedTitles=${normalizedTitlesByPathAndThreadIdentity.size}, requestedActivities=${normalizedActivitiesByPathAndThreadIdentity.size}"
   }
   return updatedTabs
 }
@@ -1011,6 +995,27 @@ suspend fun collectSelectedChatThreadIdentity(): Pair<AgentSessionProvider, Stri
     return@withContext provider to identity.threadId
   }
   null
+}
+
+private fun <T> normalizePathToListMap(pathToValues: Map<String, List<T>>): LinkedHashMap<String, List<T>> {
+  val normalizedPathToValues = LinkedHashMap<String, List<T>>()
+  for ((projectPath, values) in pathToValues) {
+    if (values.isEmpty()) {
+      continue
+    }
+    normalizedPathToValues[normalizeAgentWorkbenchPath(projectPath)] = values
+  }
+  return normalizedPathToValues
+}
+
+private fun <T> normalizePathAndThreadIdentityMap(
+  valuesByPathAndThreadIdentity: Map<Pair<String, String>, T>,
+): LinkedHashMap<Pair<String, String>, T> {
+  val normalizedValuesByPathAndThreadIdentity = LinkedHashMap<Pair<String, String>, T>()
+  for ((key, value) in valuesByPathAndThreadIdentity) {
+    normalizedValuesByPathAndThreadIdentity[normalizeAgentWorkbenchPath(key.first) to key.second] = value
+  }
+  return normalizedValuesByPathAndThreadIdentity
 }
 
 private fun emptyPendingCodexTabRebindReport(): AgentChatPendingCodexTabRebindReport {
