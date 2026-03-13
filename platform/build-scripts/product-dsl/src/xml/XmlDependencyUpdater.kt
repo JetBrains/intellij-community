@@ -33,6 +33,12 @@ private sealed class DepEntry {
   data class Module(val name: String) : DepEntry()
 }
 
+private data class DepOccurrence(
+  @JvmField val entry: DepEntry,
+  @JvmField val startOffset: Int,
+  @JvmField val inRegion: Boolean,
+)
+
 internal data class ParsedDependenciesEntries(
   @JvmField val moduleNames: List<String>,
   @JvmField val pluginIds: List<String>,
@@ -41,8 +47,7 @@ internal data class ParsedDependenciesEntries(
 private class DependenciesInfo(
   @JvmField val startOffset: Int,
   @JvmField val endOffset: Int,
-  @JvmField val entries: List<DepEntry>,  // All entries in original order
-  @JvmField val entriesInRegion: Set<DepEntry>,  // Entries inside generated region only
+  @JvmField val entries: List<DepOccurrence>,  // All entries in original order with region membership
   @JvmField val indent: String,
   @JvmField val regionType: RegionType,
 )
@@ -162,19 +167,19 @@ internal fun buildUpdatedXmlDependenciesContent(
     return insertDependenciesSection(content, uncoveredModules.sorted(), uncoveredPlugins.sorted())
   }
 
-  // Extract current entries for comparison
-  val moduleNames = info.entries.filterIsInstance<DepEntry.Module>().map { it.name }
-  val pluginIds = info.entries.filterIsInstance<DepEntry.Plugin>().map { it.id }
+  val entries = info.entries
 
-  // Manual entries = manual plugins + manual modules (in original order)
-  val manualEntries = info.entries.filter { entry ->
-    when (entry) {
+  // Extract current entries for comparison
+  val moduleNames = entries.mapNotNull { (it.entry as? DepEntry.Module)?.name }
+  val pluginIds = entries.mapNotNull { (it.entry as? DepEntry.Plugin)?.id }
+
+  // Manual entries = preserved plugins/modules (in original order)
+  val manualEntries = entries.filter { occurrence ->
+    when (val entry = occurrence.entry) {
       is DepEntry.Plugin -> preserveExistingPlugin?.invoke(entry.id) == true
       is DepEntry.Module -> preserveExistingModule?.invoke(entry.name) == true
     }
   }
-  val manualModuleNames = manualEntries.filterIsInstance<DepEntry.Module>().map { it.name }
-  val manualPluginIds = manualEntries.filterIsInstance<DepEntry.Plugin>().map { it.id }
 
   // Filter out xi:include deps - they're already present in xi:included files, don't duplicate in main file
   val xiModuleValues = xiIncludeModuleDeps.mapTo(HashSet()) { it.value }
@@ -182,54 +187,91 @@ internal fun buildUpdatedXmlDependenciesContent(
   val autoModules = (moduleDependencies.toSet() - xiModuleValues).sorted()
   val autoPlugins = (pluginDependencies.toSet() - xiPluginValues).sorted()
 
-  // For INSIDE_SECTION: filter out deps that are manually declared outside the region
-  // to avoid duplicating them in the generated region
-  val (effectiveAutoModules, effectiveAutoPlugins) = if (info.regionType == RegionType.INSIDE_SECTION) {
-    val modulesInRegion = info.entriesInRegion.filterIsInstance<DepEntry.Module>().map { it.name }.toSet()
-    val pluginsInRegion = info.entriesInRegion.filterIsInstance<DepEntry.Plugin>().map { it.id }.toSet()
-    val manualModulesOutsideRegion = moduleNames.toSet() - modulesInRegion
-    val manualPluginsOutsideRegion = pluginIds.toSet() - pluginsInRegion
-    Pair(
-      autoModules.filter { it !in manualModulesOutsideRegion },
-      autoPlugins.filter { it !in manualPluginsOutsideRegion }
+  val manualEntriesInRegion = manualEntries.filter { it.inRegion }
+  val generatedRegionModules = dedupeValuesKeepingFirst(
+    autoModules + manualEntriesInRegion.mapNotNull { (it.entry as? DepEntry.Module)?.name }
+  )
+  val generatedRegionPlugins = dedupeValuesKeepingFirst(
+    autoPlugins + manualEntriesInRegion.mapNotNull { (it.entry as? DepEntry.Plugin)?.id }
+  )
+
+  if (info.regionType == RegionType.INSIDE_SECTION) {
+    val outsideRegionEntries = entries.filterNot { it.inRegion }
+    val duplicateRanges = collectDuplicateRemovalRanges(
+      content = content,
+      entries = outsideRegionEntries,
+      generatedModuleNames = generatedRegionModules.toSet(),
+      generatedPluginIds = generatedRegionPlugins.toSet(),
+    )
+    if (duplicateRanges.isNotEmpty()) {
+      val cleanedContent = removeRanges(content, duplicateRanges)
+      return buildUpdatedXmlDependenciesContent(
+        content = cleanedContent,
+        moduleDependencies = moduleDependencies,
+        pluginDependencies = pluginDependencies,
+        preserveExistingModule = preserveExistingModule,
+        preserveExistingPlugin = preserveExistingPlugin,
+        legacyPluginDependencies = legacyPluginDependencies,
+        xiIncludeModuleDeps = xiIncludeModuleDeps,
+        xiIncludePluginDeps = xiIncludePluginDeps,
+        allowInsideSectionRegion = allowInsideSectionRegion,
+      ) ?: cleanedContent
+    }
+  }
+
+  val retainedOutsideEntries = if (info.regionType == RegionType.INSIDE_SECTION) {
+    dedupeOccurrencesKeepingFirst(
+      entries = entries.filterNot { it.inRegion },
+      generatedModuleNames = generatedRegionModules.toSet(),
+      generatedPluginIds = generatedRegionPlugins.toSet(),
     )
   }
   else {
-    Pair(autoModules, autoPlugins)
+    emptyList()
+  }
+
+  val normalizedManualEntries = if (info.regionType == RegionType.INSIDE_SECTION) {
+    emptyList()
+  }
+  else {
+    dedupeOccurrencesKeepingFirst(
+      entries = manualEntries,
+      generatedModuleNames = autoModules.toSet(),
+      generatedPluginIds = autoPlugins.toSet(),
+    )
+  }
+
+  val expectedModuleNames = when (info.regionType) {
+    RegionType.INSIDE_SECTION -> retainedOutsideEntries.filterIsInstance<DepEntry.Module>().map { it.name } + generatedRegionModules
+    else -> normalizedManualEntries.filterIsInstance<DepEntry.Module>().map { it.name } + autoModules
+  }
+  val expectedPluginIds = when (info.regionType) {
+    RegionType.INSIDE_SECTION -> retainedOutsideEntries.filterIsInstance<DepEntry.Plugin>().map { it.id } + generatedRegionPlugins
+    else -> normalizedManualEntries.filterIsInstance<DepEntry.Plugin>().map { it.id } + autoPlugins
   }
 
   // Skip writing if both module set and plugin set are unchanged AND file already uses current region format
   // Force rewrite if file uses legacy editor-fold markers or old region text without re-gen instructions
   val usesLegacyMarkers = content.contains(LEGACY_MARKER) && !content.contains(REGION_MARKER)
   val usesOldRegionText = content.contains(REGION_MARKER) && !content.contains(REGION_START)
-  val modulesUnchanged = moduleNames.sorted() == (effectiveAutoModules + manualModuleNames).distinct().sorted()
-  val pluginsUnchanged = pluginIds.sorted() == (effectiveAutoPlugins + manualPluginIds).distinct().sorted()
+  val modulesUnchanged = moduleNames.sorted() == expectedModuleNames.distinct().sorted()
+  val pluginsUnchanged = pluginIds.sorted() == expectedPluginIds.distinct().sorted()
+  val hasDuplicateModules = moduleNames.size != moduleNames.distinct().size
+  val hasDuplicatePlugins = pluginIds.size != pluginIds.distinct().size
 
-  if (modulesUnchanged && pluginsUnchanged && !usesLegacyMarkers && !usesOldRegionText) {
+  if (modulesUnchanged && pluginsUnchanged && !usesLegacyMarkers && !usesOldRegionText && !hasDuplicateModules && !hasDuplicatePlugins) {
     return null
   }
 
   val replacement = when {
-    effectiveAutoModules.isEmpty() && effectiveAutoPlugins.isEmpty() && manualEntries.isEmpty() -> ""
+    when (info.regionType) {
+      RegionType.INSIDE_SECTION -> generatedRegionModules.isEmpty() && generatedRegionPlugins.isEmpty()
+      else -> autoModules.isEmpty() && autoPlugins.isEmpty() && normalizedManualEntries.isEmpty()
+    } -> ""
     else -> when (info.regionType) {
-      RegionType.WRAPS_ENTIRE_SECTION -> buildFullBlock(info.indent, manualEntries, autoModules, autoPlugins)
-      RegionType.INSIDE_SECTION -> {
-        // Include manual entries that were inside the region (suppressed deps)
-        val manualModulesInRegion = manualEntries
-          .filterIsInstance<DepEntry.Module>()
-          .filter { it in info.entriesInRegion }
-          .map { it.name }
-        val manualPluginsInRegion = manualEntries
-          .filterIsInstance<DepEntry.Plugin>()
-          .filter { it in info.entriesInRegion }
-          .map { it.id }
-        buildFoldOnly(
-          info.indent,
-          effectiveAutoModules + manualModulesInRegion,
-          effectiveAutoPlugins + manualPluginsInRegion
-        )
-      }
-      RegionType.NONE -> buildWithEntries(info.indent, manualEntries, autoModules, autoPlugins)
+      RegionType.WRAPS_ENTIRE_SECTION -> buildFullBlock(info.indent, normalizedManualEntries, autoModules, autoPlugins)
+      RegionType.INSIDE_SECTION -> buildFoldOnly(info.indent, generatedRegionModules, generatedRegionPlugins)
+      RegionType.NONE -> buildWithEntries(info.indent, normalizedManualEntries, autoModules, autoPlugins)
     }
   }
 
@@ -242,8 +284,8 @@ internal fun buildUpdatedXmlDependenciesContent(
  */
 internal fun extractDependenciesEntries(content: String): ParsedDependenciesEntries? {
   val info = parseDependenciesInfo(content = content, allowInsideSectionRegion = true) ?: return null
-  val moduleNames = info.entries.filterIsInstance<DepEntry.Module>().map { it.name }
-  val pluginIds = info.entries.filterIsInstance<DepEntry.Plugin>().map { it.id }
+  val moduleNames = info.entries.mapNotNull { (it.entry as? DepEntry.Module)?.name }
+  val pluginIds = info.entries.mapNotNull { (it.entry as? DepEntry.Plugin)?.id }
   return ParsedDependenciesEntries(moduleNames = moduleNames, pluginIds = pluginIds)
 }
 
@@ -254,7 +296,6 @@ private fun parseDependenciesInfo(content: String, allowInsideSectionRegion: Boo
   var depsEnd = -1
   var depsIndent = ""
   val entries = mutableListOf<DepEntry>()
-  // Track character offset for each entry to determine if it's inside the region
   val entryOffsets = mutableListOf<Int>()
 
   val reader = createXmlStreamReaderWithLocation(StringReader(content))
@@ -271,15 +312,16 @@ private fun parseDependenciesInfo(content: String, allowInsideSectionRegion: Boo
           }
           else if (depth > 0) {
             depth++
-            val offset = reader.location.characterOffset
             when (reader.localName) {
               "plugin" -> reader.getAttributeValue(null, "id")?.let {
+                val startOffset = content.lastIndexOf("<plugin", reader.location.characterOffset)
                 entries.add(DepEntry.Plugin(it))
-                entryOffsets.add(offset)
+                entryOffsets.add(startOffset)
               }
               "module" -> reader.getAttributeValue(null, "name")?.let {
+                val startOffset = content.lastIndexOf("<module", reader.location.characterOffset)
                 entries.add(DepEntry.Module(it))
-                entryOffsets.add(offset)
+                entryOffsets.add(startOffset)
               }
             }
           }
@@ -307,32 +349,139 @@ private fun parseDependenciesInfo(content: String, allowInsideSectionRegion: Boo
     foldStart = content.indexOf(LEGACY_MARKER)
   }
   if (foldStart == -1) {
-    return DependenciesInfo(depsLineStart, depsEnd, entries, emptySet(), depsIndent, RegionType.NONE)
+    return DependenciesInfo(
+      startOffset = depsLineStart,
+      endOffset = depsEnd,
+      entries = entries.mapIndexed { index, entry ->
+        DepOccurrence(entry = entry, startOffset = entryOffsets[index], inRegion = false)
+      },
+      indent = depsIndent,
+      regionType = RegionType.NONE,
+    )
   }
 
   val fold = findFoldRegion(content, foldStart)
-             ?: return DependenciesInfo(depsLineStart, depsEnd, entries, emptySet(), depsIndent, RegionType.NONE)
+             ?: return DependenciesInfo(
+               startOffset = depsLineStart,
+               endOffset = depsEnd,
+               entries = entries.mapIndexed { index, entry ->
+                 DepOccurrence(entry = entry, startOffset = entryOffsets[index], inRegion = false)
+               },
+               indent = depsIndent,
+               regionType = RegionType.NONE,
+             )
 
   // Determine which entries are inside the generated region
-  val entriesInRegion = entries.filterIndexedTo(HashSet()) { index, _ ->
+  val occurrences = entries.mapIndexed { index, entry ->
     val offset = entryOffsets[index]
-    offset >= fold.startOffset && offset < fold.endOffset
+    DepOccurrence(
+      entry = entry,
+      startOffset = offset,
+      inRegion = offset >= fold.startOffset && offset < fold.endOffset,
+    )
   }
 
   return if (foldStart < depsStart) {
     // Editor-fold wraps entire section (module descriptors)
-    DependenciesInfo(fold.startOffset, fold.endOffset, entries, entriesInRegion, fold.indent, RegionType.WRAPS_ENTIRE_SECTION)
+    DependenciesInfo(fold.startOffset, fold.endOffset, occurrences, fold.indent, RegionType.WRAPS_ENTIRE_SECTION)
   }
   else {
     if (allowInsideSectionRegion) {
       // Editor-fold inside section (plugin.xml)
-      DependenciesInfo(fold.startOffset, fold.endOffset, entries, entriesInRegion, fold.indent, RegionType.INSIDE_SECTION)
+      DependenciesInfo(fold.startOffset, fold.endOffset, occurrences, fold.indent, RegionType.INSIDE_SECTION)
     }
     else {
       // Normalize non-plugin descriptors to whole-section replacement.
-      DependenciesInfo(depsLineStart, depsEnd, entries, entriesInRegion, depsIndent, RegionType.WRAPS_ENTIRE_SECTION)
+      DependenciesInfo(depsLineStart, depsEnd, occurrences, depsIndent, RegionType.WRAPS_ENTIRE_SECTION)
     }
   }
+}
+
+private fun dedupeValuesKeepingFirst(values: List<String>): List<String> {
+  val seen = HashSet<String>()
+  return values.filterTo(ArrayList(values.size)) { seen.add(it) }
+}
+
+private fun dedupeOccurrencesKeepingFirst(
+  entries: List<DepOccurrence>,
+  generatedModuleNames: Set<String>,
+  generatedPluginIds: Set<String>,
+): List<DepEntry> {
+  val seenModules = HashSet<String>()
+  val seenPlugins = HashSet<String>()
+  val result = ArrayList<DepEntry>(entries.size)
+  for (occurrence in entries) {
+    val entry = occurrence.entry
+    when (entry) {
+      is DepEntry.Module -> {
+        if (entry.name in generatedModuleNames || !seenModules.add(entry.name)) continue
+      }
+      is DepEntry.Plugin -> {
+        if (entry.id in generatedPluginIds || !seenPlugins.add(entry.id)) continue
+      }
+    }
+    result.add(entry)
+  }
+  return result
+}
+
+private fun collectDuplicateRemovalRanges(
+  content: String,
+  entries: List<DepOccurrence>,
+  generatedModuleNames: Set<String>,
+  generatedPluginIds: Set<String>,
+): List<RemovalRange> {
+  val seenModules = HashSet<String>()
+  val seenPlugins = HashSet<String>()
+  val ranges = ArrayList<RemovalRange>()
+  for (occurrence in entries) {
+    val shouldRemove = when (val entry = occurrence.entry) {
+      is DepEntry.Module -> entry.name in generatedModuleNames || !seenModules.add(entry.name)
+      is DepEntry.Plugin -> entry.id in generatedPluginIds || !seenPlugins.add(entry.id)
+    }
+    if (shouldRemove) {
+      createEntryRemovalRange(content, occurrence)?.let(ranges::add)
+    }
+  }
+  return ranges
+}
+
+private fun createEntryRemovalRange(content: String, occurrence: DepOccurrence): RemovalRange? {
+  val tagName = when (occurrence.entry) {
+    is DepEntry.Module -> "module"
+    is DepEntry.Plugin -> "plugin"
+  }
+  val startOffset = occurrence.startOffset
+  if (startOffset < 0) return null
+
+  var start = startOffset
+  val lineStart = content.lastIndexOf('\n', startOffset - 1).let { if (it == -1) 0 else it + 1 }
+  if (content.substring(lineStart, startOffset).all { it == ' ' || it == '\t' }) {
+    start = lineStart
+  }
+
+  val elementEnd = findElementEndOffset(content, tagName, startOffset) ?: return null
+  var end = elementEnd
+  if (end < content.length && content[end] == '\r') end++
+  if (end < content.length && content[end] == '\n') end++
+  return RemovalRange(start = start, end = end)
+}
+
+private fun removeRanges(content: String, ranges: List<RemovalRange>): String {
+  if (ranges.isEmpty()) {
+    return content
+  }
+
+  val sortedRanges = ranges.sortedBy { it.start }
+  val result = StringBuilder(content.length)
+  var cursor = 0
+  for (range in sortedRanges) {
+    if (range.start < cursor) continue
+    result.append(content, cursor, range.start)
+    cursor = range.end
+  }
+  result.append(content, cursor, content.length)
+  return result.toString()
 }
 
 private fun insertDependenciesSection(content: String, modules: List<String>, plugins: List<String>): String {

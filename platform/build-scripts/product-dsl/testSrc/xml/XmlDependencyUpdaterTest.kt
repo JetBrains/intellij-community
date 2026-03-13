@@ -126,6 +126,118 @@ class XmlDependencyUpdaterTest {
   }
 
   @Test
+  fun `inside section generated dependency wins over duplicate outside region`(@TempDir tempDir: Path) {
+    val content = """
+      <idea-plugin>
+        <dependencies>
+          <plugin id="dup.plugin"/>
+          <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+          <plugin id="dup.plugin"/>
+          <!-- endregion -->
+        </dependencies>
+      </idea-plugin>
+    """.trimIndent()
+
+    val updater = DeferredFileUpdater(tempDir)
+    val path = tempDir.resolve("META-INF/plugin.xml")
+    updateXmlDependencies(
+      path = path,
+      content = content,
+      moduleDependencies = emptyList(),
+      pluginDependencies = listOf("dup.plugin"),
+      strategy = updater,
+    )
+
+    val xml = updater.getDiffs().single().expectedContent
+    assertThat(xml).containsOnlyOnce("<plugin id=\"dup.plugin\"/>")
+    assertThat(xml.indexOf("<plugin id=\"dup.plugin\"/>")).isGreaterThan(xml.indexOf("<!-- region Generated dependencies"))
+  }
+
+  @Test
+  fun `inside section keeps first duplicate outside region`(@TempDir tempDir: Path) {
+    val content = """
+      <idea-plugin>
+        <dependencies>
+          <module name="manual.dep"/>
+          <module name="manual.dep"/>
+          <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+          <module name="generated.dep"/>
+          <!-- endregion -->
+        </dependencies>
+      </idea-plugin>
+    """.trimIndent()
+
+    val updater = DeferredFileUpdater(tempDir)
+    val path = tempDir.resolve("META-INF/plugin.xml")
+    updateXmlDependencies(
+      path = path,
+      content = content,
+      moduleDependencies = listOf("generated.dep"),
+      strategy = updater,
+    )
+
+    val xml = updater.getDiffs().single().expectedContent
+    assertThat(xml).containsOnlyOnce("<module name=\"manual.dep\"/>")
+    assertThat(xml).containsOnlyOnce("<module name=\"generated.dep\"/>")
+    assertThat(xml.indexOf("<module name=\"manual.dep\"/>")).isLessThan(xml.indexOf("<!-- region Generated dependencies"))
+  }
+
+  @Test
+  fun `wrapped section keeps single preserved module dependency when also generated`(@TempDir tempDir: Path) {
+    val content = """
+      <idea-plugin>
+        <dependencies>
+          <module name="manual.dep"/>
+          <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+          <module name="manual.dep"/>
+          <!-- endregion -->
+        </dependencies>
+      </idea-plugin>
+    """.trimIndent()
+
+    val updater = DeferredFileUpdater(tempDir)
+    val path = tempDir.resolve("resources/intellij.sample.xml")
+    updateXmlDependencies(
+      path = path,
+      content = content,
+      moduleDependencies = listOf("manual.dep", "intellij.new.auto"),
+      preserveExistingModule = { it == "manual.dep" },
+      allowInsideSectionRegion = false,
+      strategy = updater,
+    )
+
+    val xml = updater.getDiffs().single().expectedContent
+    assertThat(xml).containsOnlyOnce("<module name=\"manual.dep\"/>")
+    assertThat(xml).contains("<module name=\"intellij.new.auto\"/>")
+  }
+
+  @Test
+  fun `legacy section keeps single preserved plugin dependency when also generated`(@TempDir tempDir: Path) {
+    val content = """
+      <idea-plugin>
+        <dependencies>
+          <plugin id="dup.plugin"/>
+        </dependencies>
+      </idea-plugin>
+    """.trimIndent()
+
+    val updater = DeferredFileUpdater(tempDir)
+    val path = tempDir.resolve("META-INF/plugin.xml")
+    updateXmlDependencies(
+      path = path,
+      content = content,
+      moduleDependencies = emptyList(),
+      pluginDependencies = listOf("dup.plugin", "new.plugin"),
+      preserveExistingPlugin = { it == "dup.plugin" },
+      strategy = updater,
+    )
+
+    val xml = updater.getDiffs().single().expectedContent
+    assertThat(xml).containsOnlyOnce("<plugin id=\"dup.plugin\"/>")
+    assertThat(xml).contains("<plugin id=\"new.plugin\"/>")
+  }
+
+  @Test
   fun `removes duplicate legacy depends for modern plugin deps`() {
     val content = """
       <idea-plugin>

@@ -234,6 +234,38 @@ class PluginXmlGenerationTest {
   }
 
   @Test
+  fun `generated plugin dependency wins over duplicate outside generated region in plugin xml`(@TempDir tempDir: Path) {
+    runBlocking(Dispatchers.Default) {
+      val setup = pluginTestSetup(tempDir) {
+        plugin("intellij.consumer.plugin") {
+          pluginId = "com.consumer"
+          content("intellij.consumer.module")
+        }
+        contentModule("intellij.consumer.module") {
+          descriptor = """<idea-plugin package="com.intellij.consumer"/>"""
+        }
+      }
+
+      val aliasId = PluginId("com.intellij.modules.java")
+      val consumerInfo = setup.pluginContentInfos
+        .getValue("intellij.consumer.plugin")
+        .withManualAndGeneratedPluginDependency(aliasId)
+      val context = setup.withPluginInfoAndGraph(
+        pluginInfo = consumerInfo,
+        graph = buildPluginGraph(consumerInfo, aliasId),
+      )
+
+      val result = context.generateDependencies(listOf("intellij.consumer.plugin"))
+
+      assertThat(result.errors).isEmpty()
+      assertThat(result.files.single().status).isEqualTo(FileChangeStatus.MODIFIED)
+      val xml = context.strategy.getDiffs().single().expectedContent
+      assertThat(xml).containsOnlyOnce("<plugin id=\"${aliasId.value}\"/>")
+      assertThat(xml.indexOf("<plugin id=\"${aliasId.value}\"/>")).isGreaterThan(xml.indexOf("<!-- region Generated dependencies"))
+    }
+  }
+
+  @Test
   fun `manual non alias plugin dependency is removed from plugin xml`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
       val setup = pluginTestSetup(tempDir) {
@@ -271,6 +303,33 @@ private fun PluginContentInfo.withManualPluginDependency(pluginId: PluginId): Pl
     """
     |  <dependencies>
     |    $dependencyTag
+    |  </dependencies>
+    |</idea-plugin>
+    """.trimMargin()
+  )
+  return copy(
+    pluginXmlContent = updatedPluginXmlContent,
+    pluginDependencies = setOf(pluginId),
+    depsByFile = listOf(
+      FileDepInfo(
+        relativePath = "META-INF/plugin.xml",
+        moduleDependencies = emptySet(),
+        pluginDependencies = setOf(pluginId),
+      )
+    ),
+  )
+}
+
+private fun PluginContentInfo.withManualAndGeneratedPluginDependency(pluginId: PluginId): PluginContentInfo {
+  val dependencyTag = "<plugin id=\"${pluginId.value}\"/>"
+  val updatedPluginXmlContent = pluginXmlContent.replace(
+    "</idea-plugin>",
+    """
+    |  <dependencies>
+    |    $dependencyTag
+    |    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    |    $dependencyTag
+    |    <!-- endregion -->
     |  </dependencies>
     |</idea-plugin>
     """.trimMargin()
