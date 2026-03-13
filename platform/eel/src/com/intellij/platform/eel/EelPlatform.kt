@@ -109,27 +109,51 @@ sealed interface EelPlatform {
 
   companion object {
     @ApiStatus.Internal
-    fun getFor(os: String, arch: String): EelPlatform? =
-      when (os.lowercase()) {
-        "darwin" -> when (arch.lowercase()) {
-          "arm64", "aarch64" -> Darwin(Arch.ARM_64)
-          "amd64", "x86_64", "x86-64" -> Darwin(Arch.X86_64)
-          else -> null
-        }
-        "linux" -> when (arch.lowercase()) {
-          "arm64", "aarch64" -> Linux(Arch.ARM_64)
-          "amd64", "x86_64", "x86-64" -> Linux(Arch.X86_64)
-          else -> null
-        }
-        "windows" -> when (arch.lowercase()) {
-          "amd64", "x86_64", "x86-64" -> Windows(Arch.X86_64)
-          "arm64", "aarch64" -> Windows(Arch.ARM_64)
-          else -> null
-        }
+    fun getFor(os: String, arch: String): EelPlatform? {
+      val resolvedArch = resolveArch(arch) ?: return null
+      return when (os.lowercase()) {
+        "darwin" -> Darwin(resolvedArch)
+        "linux" -> Linux(resolvedArch)
+        "windows" -> Windows(resolvedArch)
+        "freebsd" -> FreeBSD(resolvedArch)
         else -> null
       }
+    }
+
+    private fun resolveArch(arch: String): Arch? = when (arch.lowercase()) {
+      "amd64", "x86_64", "x86-64" -> Arch.X86_64
+      "arm64", "aarch64" -> Arch.ARM_64
+      "arm32", "arm" -> Arch.ARM_32
+      "x86", "i386", "i686" -> Arch.X86
+      else -> null
+    }
   }
 }
+
+/** Canonical OS name compatible with [EelPlatform.getFor], e.g. `"linux"`, `"darwin"`, `"windows"`, `"freebsd"`. */
+@get:ApiStatus.Experimental
+val EelPlatform.osName: String
+  get() = when (this) {
+    is Linux -> "linux"
+    is Darwin -> "darwin"
+    is EelPlatform.Windows -> "windows"
+    is FreeBSD -> "freebsd"
+  }
+
+/** Canonical arch name compatible with [EelPlatform.getFor], e.g. `"x86_64"`, `"arm64"`. */
+@get:ApiStatus.Experimental
+val EelPlatform.archName: String get() = arch.canonicalName
+
+/** Canonical name compatible with [EelPlatform.getFor]. */
+@get:ApiStatus.Experimental
+val Arch.canonicalName: String
+  get() = when (this) {
+    Arch.X86_64 -> "x86_64"
+    Arch.ARM_64 -> "arm64"
+    Arch.ARM_32 -> "arm32"
+    Arch.X86 -> "x86"
+    Arch.Unknown -> "unknown"
+  }
 
 @get:ApiStatus.Experimental
 val EelOsFamily.pathSeparator: String

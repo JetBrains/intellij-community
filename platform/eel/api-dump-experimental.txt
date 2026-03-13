@@ -236,7 +236,10 @@ f:com.intellij.platform.eel.EelExecWindowsApiHelpersKt
 - getArch():com.intellij.platform.eel.EelPlatform$Arch
 - getOsFamily():com.intellij.platform.eel.EelOsFamily
 f:com.intellij.platform.eel.EelPlatformKt
+- *sf:getArchName(com.intellij.platform.eel.EelPlatform):java.lang.String
+- *sf:getCanonicalName(com.intellij.platform.eel.EelPlatform$Arch):java.lang.String
 - *sf:getDirectorySeparators(com.intellij.platform.eel.EelOsFamily):C[]
+- *sf:getOsName(com.intellij.platform.eel.EelPlatform):java.lang.String
 - *sf:getPathSeparator(com.intellij.platform.eel.EelOsFamily):java.lang.String
 - *sf:isArm32(com.intellij.platform.eel.EelPlatform):Z
 - *sf:isArm64(com.intellij.platform.eel.EelPlatform):Z

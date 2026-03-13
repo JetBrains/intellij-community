@@ -34,6 +34,7 @@ interface LocalWindowsEelApi : LocalEelApi, EelWindowsApi
 interface LocalPosixEelApi : LocalEelApi, EelPosixApi
 
 private val EEL_MACHINE_KEY: Key<EelMachine> = Key.create("com.intellij.platform.eel.machine")
+private val EEL_DESCRIPTOR_KEY: Key<EelDescriptor> = Key.create("com.intellij.platform.eel.descriptor")
 
 fun Project.getEelMachine(): EelMachine {
   val descriptor = getEelDescriptor()
@@ -59,7 +60,8 @@ fun Project.getEelMachine(): EelMachine {
   }
 }
 
-private fun Project.setEelMachine(machine: EelMachine) {
+@ApiStatus.Internal
+fun Project.setEelMachine(machine: EelMachine) {
   putUserData(EEL_MACHINE_KEY, machine)
 }
 
@@ -130,10 +132,13 @@ val Path.osFamily: EelOsFamily get() = getEelDescriptor().osFamily
 
 /**
  * Retrieves [EelDescriptor] for the environment where [this] is located.
- * If the project is not the real one (i.e., it is default or not backed by a real file), then [LocalEelDescriptor] will be returned.
+ * If the project is not the real one (i.e., it is default or not backed by a real file), then [LocalEelDescriptor] will be returned,
+ * unless an explicit descriptor has been set via [setEelDescriptor] (e.g., for RD thin client with a fake project).
  */
 @ApiStatus.Experimental
 fun Project.getEelDescriptor(): EelDescriptor {
+  getUserData(EEL_DESCRIPTOR_KEY)?.let { return it }
+
   @MultiRoutingFileSystemPath
   val filePath = projectFilePath
   if (filePath == null) {
@@ -146,6 +151,16 @@ fun Project.getEelDescriptor(): EelDescriptor {
     return LocalEelDescriptor
   }
   return Path.of(filePath).getEelDescriptor()
+}
+
+/**
+ * Explicitly associates an [EelDescriptor] with this project.
+ * This is useful for projects that are not backed by a real file path (e.g., the default project in RD thin client),
+ * where the descriptor cannot be inferred from the project file path.
+ */
+@ApiStatus.Internal
+fun Project.setEelDescriptor(descriptor: EelDescriptor) {
+  putUserData(EEL_DESCRIPTOR_KEY, descriptor)
 }
 
 @get:ApiStatus.Experimental
