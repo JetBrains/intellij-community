@@ -15,7 +15,7 @@ import com.intellij.agent.workbench.chat.rebindOpenConcreteAgentChatTabs
 import com.intellij.agent.workbench.chat.rebindOpenPendingAgentChatTabs
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.frame.AGENT_SESSIONS_TOOL_WINDOW_ID
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
@@ -70,7 +70,7 @@ internal class AgentSessionRefreshService(
   @Suppress("unused")
   constructor(serviceScope: CoroutineScope) : this(
     serviceScope = serviceScope,
-    sessionSourcesProvider = AgentSessionProviderBridges::sessionSources,
+    sessionSourcesProvider = AgentSessionProviders::sessionSources,
     projectEntriesProvider = AgentSessionProjectCatalog()::collectProjects,
     stateStore = service<AgentSessionsStateStore>(),
     treeUiState = service<AgentSessionsTreeUiStateService>(),

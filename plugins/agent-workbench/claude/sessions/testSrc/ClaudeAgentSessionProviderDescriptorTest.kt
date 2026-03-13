@@ -14,8 +14,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 @TestApplication
-class ClaudeAgentSessionProviderBridgeTest {
-  private val bridge = ClaudeAgentSessionProviderBridge()
+class ClaudeAgentSessionProviderDescriptorTest {
+  private val bridge = ClaudeAgentSessionProviderDescriptor()
 
   @Test
   fun buildNewEntryLaunchSpec() {

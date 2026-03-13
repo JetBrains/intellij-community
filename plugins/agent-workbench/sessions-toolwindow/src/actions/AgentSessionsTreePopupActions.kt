@@ -9,11 +9,12 @@ import com.intellij.agent.workbench.sessions.actions.launchQuickStartThread
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
-import com.intellij.agent.workbench.sessions.core.SessionActionTarget
 import com.intellij.agent.workbench.sessions.core.AgentSubAgent
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
+import com.intellij.agent.workbench.sessions.core.SessionActionTarget
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries
+import com.intellij.agent.workbench.sessions.core.providers.withYoloModeBadge
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
@@ -21,7 +22,6 @@ import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.toolwindow.ui.providerIcon
-import com.intellij.agent.workbench.sessions.core.providers.withYoloModeBadge
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -165,10 +165,10 @@ internal class AgentSessionsTreePopupMoreAction : DumbAwareAction {
 }
 
 internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
-    private val resolveContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext? =
+  private val resolveContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext? =
     ::resolveAgentSessionsTreePopupActionContext,
-    private val allBridges: () -> List<AgentSessionProviderBridge> = AgentSessionProviderBridges::allBridges,
-    private val createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit = ::createNewThreadViaService,
+  private val allBridges: () -> List<AgentSessionProviderDescriptor> = AgentSessionProviders::allProviders,
+  private val createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit = ::createNewThreadViaService,
   private val lastUsedProvider: () -> AgentSessionProvider? = { service<AgentSessionUiPreferencesStateService>().getLastUsedProvider() },
   private val lastUsedLaunchMode: () -> AgentSessionLaunchMode? = { service<AgentSessionUiPreferencesStateService>().getLastUsedLaunchMode() },
 ) : ActionGroup(), DumbAware {

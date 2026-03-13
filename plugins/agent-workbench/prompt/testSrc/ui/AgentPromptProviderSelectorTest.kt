@@ -9,7 +9,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDE
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderOption
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.project.ProjectManager
@@ -71,7 +71,7 @@ class AgentPromptProviderSelectorTest {
     }
   }
 
-  private fun createSelectorFixture(providers: List<AgentSessionProviderBridge>): ProviderSelectorFixture {
+  private fun createSelectorFixture(providers: List<AgentSessionProviderDescriptor>): ProviderSelectorFixture {
     val project = ProjectManager.getInstance().defaultProject
     val providerOptionsPanel = JPanel()
     return ProviderSelectorFixture(
@@ -96,8 +96,8 @@ class AgentPromptProviderSelectorTest {
     provider: AgentSessionProvider,
     supportsPlanMode: Boolean,
     promptOptions: List<AgentPromptProviderOption>,
-  ): AgentSessionProviderBridge {
-    return object : AgentSessionProviderBridge {
+  ): AgentSessionProviderDescriptor {
+    return object : AgentSessionProviderDescriptor {
       override val provider: AgentSessionProvider = provider
       override val displayNameKey: String = "provider.${provider.value}"
       override val newSessionLabelKey: String = displayNameKey

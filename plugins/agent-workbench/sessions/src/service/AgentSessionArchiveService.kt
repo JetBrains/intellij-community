@@ -5,8 +5,9 @@ import com.intellij.agent.workbench.chat.closeAndForgetAgentChatsForThread
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBehaviors
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelemetry
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.util.SingleFlightActionGate
@@ -51,8 +52,8 @@ internal class AgentSessionArchiveService(
   private val actionGate = SingleFlightActionGate()
 
   fun canArchiveProvider(provider: AgentSessionProvider): Boolean {
-    val bridge = AgentSessionProviderBridges.find(provider) ?: return false
-    return bridge.supportsArchiveThread
+    val descriptor = AgentSessionProviders.find(provider) ?: return false
+    return descriptor.supportsArchiveThread
   }
 
   fun archiveThreads(targets: List<ArchiveThreadTarget>) {
@@ -89,18 +90,17 @@ internal class AgentSessionArchiveService(
       var refreshDelayMs = 0L
       normalizedTargets.forEach { target ->
         val provider = target.provider
-        val bridge = AgentSessionProviderBridges.find(provider)
-        val behavior = AgentSessionProviderBehaviors.find(provider)
-        if (bridge == null) {
-          logMissingProviderBridge(provider)
+        val descriptor = AgentSessionProviders.find(provider)
+        if (descriptor == null) {
+          logMissingProviderDescriptor(provider)
           return@forEach
         }
-        if (!bridge.supportsUnarchiveThread) {
+        if (!descriptor.supportsUnarchiveThread) {
           return@forEach
         }
 
         val unarchived = try {
-          bridge.unarchiveThread(path = target.path, threadId = target.threadId)
+          descriptor.unarchiveThread(path = target.path, threadId = target.threadId)
         }
         catch (t: Throwable) {
           if (t is CancellationException) {
@@ -114,10 +114,10 @@ internal class AgentSessionArchiveService(
         }
 
         anyUnarchived = true
-        if (behavior?.suppressArchivedThreadsDuringRefresh == true) {
+        if (descriptor.suppressArchivedThreadsDuringRefresh) {
           syncService.unsuppressArchivedTarget(target)
         }
-        refreshDelayMs = maxOf(refreshDelayMs, behavior?.archiveRefreshDelayMs ?: 0L)
+        refreshDelayMs = maxOf(refreshDelayMs, descriptor.archiveRefreshDelayMs)
       }
       if (!anyUnarchived) {
         return@launchDropAction
@@ -157,19 +157,18 @@ internal class AgentSessionArchiveService(
         return@forEach
       }
 
-      val bridge = AgentSessionProviderBridges.find(provider)
-      if (bridge == null) {
-        logMissingProviderBridge(provider)
+      val descriptor = AgentSessionProviders.find(provider)
+      if (descriptor == null) {
+        logMissingProviderDescriptor(provider)
         syncService.appendProviderUnavailableWarning(target.path, provider)
         return@forEach
       }
-      if (!bridge.supportsArchiveThread) {
+      if (!descriptor.supportsArchiveThread) {
         return@forEach
       }
-      val behavior = AgentSessionProviderBehaviors.find(provider)
 
       val archived = try {
-        bridge.archiveThread(path = target.path, threadId = target.threadId)
+        descriptor.archiveThread(path = target.path, threadId = target.threadId)
       }
       catch (t: Throwable) {
         if (t is CancellationException) {
@@ -185,10 +184,10 @@ internal class AgentSessionArchiveService(
         return@forEach
       }
 
-      if (behavior?.suppressArchivedThreadsDuringRefresh == true) {
+      if (descriptor.suppressArchivedThreadsDuringRefresh) {
         syncService.suppressArchivedTarget(target)
       }
-      refreshDelayMs = maxOf(refreshDelayMs, behavior?.archiveRefreshDelayMs ?: 0L)
+      refreshDelayMs = maxOf(refreshDelayMs, descriptor.archiveRefreshDelayMs)
       contentRepository.removeArchivedTarget(target)
 
       try {
@@ -204,7 +203,7 @@ internal class AgentSessionArchiveService(
       }
 
       archivedTargets.add(target)
-      if (bridge.supportsUnarchiveThread) {
+      if (descriptor.supportsUnarchiveThread) {
         undoTargets.add(target)
       }
     }
@@ -314,12 +313,8 @@ private fun buildUnarchiveThreadsActionKey(targets: List<ArchiveThreadTarget>): 
   return "$UNARCHIVE_THREADS_ACTION_KEY_PREFIX:$targetsKey"
 }
 
-private fun archiveTargetKey(target: ArchiveThreadTarget): String {
-  return "${target.path}:${target.provider}:${target.threadId}"
-}
-
-private fun logMissingProviderBridge(provider: AgentSessionProvider) {
-  LOG.warn("No session provider bridge registered for ${provider.value}")
+private fun logMissingProviderDescriptor(provider: AgentSessionProvider) {
+  LOG.warn("No session provider registered for ${provider.value}")
 }
 
 private fun ArchiveThreadTarget.toArchivedChatCleanupTarget(): ArchivedChatCleanupTarget {

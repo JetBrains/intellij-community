@@ -5,7 +5,7 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.agent.workbench.sessions.core.providers.agentSessionThreadStatusIcon
 import com.intellij.agent.workbench.sessions.core.providers.clearAgentSessionThreadStatusIconCacheForTests
@@ -668,7 +668,7 @@ class AgentSessionsSwingTreeCellRendererTest {
       },
     )
 
-    AgentSessionProviderBridges.withRegistryForTest(InMemoryAgentSessionProviderRegistry(emptyList())) {
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(emptyList())) {
       clearAgentSessionThreadStatusIconCacheForTests()
 
       renderer.getTreeCellRendererComponent(tree, descriptorValue(threadId), false, false, true, 0, false)

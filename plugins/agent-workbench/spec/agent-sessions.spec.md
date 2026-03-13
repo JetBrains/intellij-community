@@ -55,7 +55,7 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
   [@test] ../sessions/testSrc/GitWorktreeDiscoveryTest.kt
 
 - Default session-source registration must include Codex and Claude provider bridges.
-  [@test] ../sessions/testSrc/AgentSessionProviderBridgesTest.kt
+  [@test] ../sessions/testSrc/AgentSessionProvidersTest.kt
 
 - Provider results for a path load must be merged and sorted by `updatedAt` descending.
   [@test] ../sessions/testSrc/AgentSessionLoadAggregationTest.kt

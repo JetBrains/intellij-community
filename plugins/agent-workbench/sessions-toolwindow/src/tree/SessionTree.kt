@@ -11,7 +11,7 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.formatAgentSessionRelativeTimeShort
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
@@ -485,7 +485,7 @@ private fun resolveQuickCreateProviderAndMode(
   lastUsedProvider: AgentSessionProvider?,
   lastUsedLaunchMode: AgentSessionLaunchMode?,
 ): Pair<AgentSessionProvider?, AgentSessionLaunchMode> {
-  val bridges = AgentSessionProviderBridges.allBridges()
+  val bridges = AgentSessionProviders.allProviders()
 
   if (lastUsedLaunchMode == AgentSessionLaunchMode.YOLO) {
     val yoloProviders = bridges

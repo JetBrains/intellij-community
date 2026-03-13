@@ -7,8 +7,8 @@ import com.intellij.agent.workbench.chat.resolveAgentChatEditorTabActionContext
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptProjectPathCandidate
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
@@ -28,9 +28,10 @@ import javax.swing.JComponent
 
 internal class AgentSessionsEditorTabNewThreadQuickAction @JvmOverloads constructor(
   private val isDedicatedProject: (Project) -> Boolean = AgentWorkbenchDedicatedFrameProjectManager::isDedicatedProject,
-  private val allBridges: () -> List<AgentSessionProviderBridge> = AgentSessionProviderBridges::allBridges,
-  private val createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project) -> Unit = ::createNewThreadViaService,
-  private val lastUsedProvider: () -> AgentSessionProvider? = { service<AgentSessionsTreeUiStateService>().getLastUsedProvider() },
+  private val allBridges: () -> List<AgentSessionProviderDescriptor> = AgentSessionProviders::allProviders,
+  private val createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit = ::createNewThreadViaService,
+  private val lastUsedProvider: () -> AgentSessionProvider? = { service<AgentSessionUiPreferencesStateService>().getLastUsedProvider() },
+  private val lastUsedLaunchMode: () -> AgentSessionLaunchMode? = { service<AgentSessionUiPreferencesStateService>().getLastUsedLaunchMode() },
   resolveContext: (AnActionEvent) -> AgentChatEditorTabActionContext? = ::resolveAgentChatEditorTabActionContext,
   private val projectPathCandidates: (Project, (Project) -> Boolean) -> List<AgentPromptProjectPathCandidate>? = ::collectProjectPathCandidates,
   private val showProjectPopup: (List<AgentPromptProjectPathCandidate>, AnActionEvent, (AgentPromptProjectPathCandidate) -> Unit) -> Unit =
@@ -68,7 +69,7 @@ internal class AgentSessionsEditorTabNewThreadPopupGroup @JvmOverloads construct
   private val isDedicatedProject: (Project) -> Boolean = AgentWorkbenchDedicatedFrameProjectManager::isDedicatedProject,
   private val resolveContext: (AnActionEvent) -> AgentChatEditorTabActionContext? =
     ::resolveAgentChatEditorTabActionContext,
-  private val allBridges: () -> List<AgentSessionProviderBridge> = AgentSessionProviderBridges::allBridges,
+  private val allBridges: () -> List<AgentSessionProviderDescriptor> = AgentSessionProviders::allProviders,
   private val createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit = ::createNewThreadViaService,
   private val projectPathCandidates: (Project, (Project) -> Boolean) -> List<AgentPromptProjectPathCandidate>? = ::collectProjectPathCandidates,
 ) : ActionGroup(), DumbAware {

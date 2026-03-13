@@ -3,7 +3,23 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
-import com.intellij.icons.AllIcons
+import com.intellij.agent.workbench.common.withAgentThreadActivityBadge
+import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
+import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.AgentSessionThread
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
+import com.intellij.agent.workbench.sessions.core.providers.agentSessionThreadStatusIcon
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IconLoader
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.IconManager
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -300,7 +316,85 @@ class AgentChatFileEditorProviderTest {
     val readyIcon = providerIcon(threadIdentity = "codex:thread-1", threadActivity = AgentThreadActivity.READY)
     val unreadIcon = providerIcon(threadIdentity = "codex:thread-1", threadActivity = AgentThreadActivity.UNREAD)
 
-    assertThat(readyIcon).isEqualTo(AgentWorkbenchCommonIcons.Codex_14x14)
-    assertThat(unreadIcon).isNotEqualTo(readyIcon)
+    assertThat(readyIcon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.CODEX, AgentThreadActivity.READY))
+    assertThat(processingIcon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.CODEX, AgentThreadActivity.PROCESSING))
+    assertThat(reviewingIcon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.CODEX, AgentThreadActivity.REVIEWING))
+    assertThat(unreadIcon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.CODEX, AgentThreadActivity.UNREAD))
+    assertThat(readyIcon).isNotEqualTo(AgentWorkbenchCommonIcons.Codex_14x14)
+    assertThat(processingIcon).isNotSameAs(readyIcon)
+    assertThat(reviewingIcon).isNotSameAs(readyIcon)
+    assertThat(unreadIcon).isNotSameAs(readyIcon)
+    assertThat(unreadIcon).isNotSameAs(processingIcon)
+    assertThat(unreadIcon).isNotSameAs(reviewingIcon)
+  }
+
+  @Test
+  fun resolvesProviderIconsThroughBridgeRegistry() {
+    val customIcon = EmptyIcon.create(18, 18)
+    val bridge = ChatTestProviderBridge(
+      provider = AgentSessionProvider.CODEX,
+      icon = customIcon,
+    )
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
+      clearAgentChatIconCacheForTests()
+
+      val icon = providerIcon(threadIdentity = "codex:thread-1", threadActivity = AgentThreadActivity.PROCESSING)
+      val sharedHelperIcon = agentSessionThreadStatusIcon(AgentSessionProvider.CODEX, AgentThreadActivity.PROCESSING)
+      val expected = withAgentThreadActivityBadge(customIcon, AgentThreadActivity.PROCESSING)
+
+      assertThat(icon).isSameAs(sharedHelperIcon)
+      assertThat(icon.iconWidth).isEqualTo(expected.iconWidth)
+      assertThat(icon.iconHeight).isEqualTo(expected.iconHeight)
+      assertThat(icon.iconWidth).isNotEqualTo(AgentWorkbenchCommonIcons.Codex_14x14.iconWidth)
+    }
+  }
+}
+
+private class ChatTestProviderBridge(
+  override val provider: AgentSessionProvider,
+  override val icon: Icon,
+) : AgentSessionProviderDescriptor {
+  override val displayNameKey: String
+    get() = provider.value
+
+  override val newSessionLabelKey: String
+    get() = provider.value
+
+  override val sessionSource: AgentSessionSource = object : AgentSessionSource {
+    override val provider: AgentSessionProvider
+      get() = this@ChatTestProviderBridge.provider
+
+    override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = emptyList()
+
+    override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> = emptyList()
+  }
+
+  override val cliMissingMessageKey: String
+    get() = provider.value
+
+  override fun isCliAvailable(): Boolean = true
+
+  override fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
+    return AgentSessionTerminalLaunchSpec(command = listOf("test", "resume", sessionId))
+  }
+
+  override fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
+    return AgentSessionTerminalLaunchSpec(command = listOf("test", "new", mode.name))
+  }
+
+  override fun buildNewEntryLaunchSpec(): AgentSessionTerminalLaunchSpec {
+    return AgentSessionTerminalLaunchSpec(command = listOf("test"))
+  }
+
+  override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
+    return AgentSessionLaunchSpec(
+      sessionId = null,
+      launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("test", "create", path, mode.name)),
+    )
+  }
+
+  override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
+    return AgentInitialMessagePlan.composeDefault(request)
   }
 }

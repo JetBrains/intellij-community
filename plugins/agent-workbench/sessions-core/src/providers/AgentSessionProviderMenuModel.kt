@@ -15,18 +15,18 @@ data class AgentSessionProviderActionModel(
 )
 
 data class AgentSessionProviderMenuItem(
-  @JvmField val bridge: AgentSessionProviderBridge,
-  @JvmField val mode: AgentSessionLaunchMode,
-  @JvmField val labelKey: String,
-  @JvmField val isEnabled: Boolean,
-  @JvmField val disabledReasonKey: String? = null,
+    @JvmField val bridge: AgentSessionProviderDescriptor,
+    @JvmField val mode: AgentSessionLaunchMode,
+    @JvmField val labelKey: String,
+    @JvmField val isEnabled: Boolean,
+    @JvmField val disabledReasonKey: String? = null,
 )
 
 fun AgentSessionProviderMenuModel.hasEntries(): Boolean {
   return standardItems.isNotEmpty() || yoloItems.isNotEmpty()
 }
 
-fun buildAgentSessionProviderMenuModel(bridges: List<AgentSessionProviderBridge>): AgentSessionProviderMenuModel {
+fun buildAgentSessionProviderMenuModel(bridges: List<AgentSessionProviderDescriptor>): AgentSessionProviderMenuModel {
   val standardItems = ArrayList<AgentSessionProviderMenuItem>(bridges.size)
   val yoloItems = ArrayList<AgentSessionProviderMenuItem>()
 
@@ -63,9 +63,9 @@ fun buildAgentSessionProviderMenuModel(bridges: List<AgentSessionProviderBridge>
 }
 
 fun buildAgentSessionProviderActionModel(
-  bridges: List<AgentSessionProviderBridge>,
-  lastUsedProvider: AgentSessionProvider?,
-  lastUsedLaunchMode: AgentSessionLaunchMode? = null,
+    bridges: List<AgentSessionProviderDescriptor>,
+    lastUsedProvider: AgentSessionProvider?,
+    lastUsedLaunchMode: AgentSessionLaunchMode? = null,
 ): AgentSessionProviderActionModel {
   val menuModel = buildAgentSessionProviderMenuModel(bridges)
   return AgentSessionProviderActionModel(

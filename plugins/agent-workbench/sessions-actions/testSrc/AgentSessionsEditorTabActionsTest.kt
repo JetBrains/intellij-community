@@ -42,13 +42,13 @@ class AgentSessionsEditorTabActionsTest {
     var launchedMode: AgentSessionLaunchMode? = null
     var launchedProjectName: String? = null
     var entryPoint: AgentWorkbenchEntryPoint? = null
-    val codexBridge = TestAgentSessionProviderBridge(
+    val codexBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
       cliAvailable = true,
       yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
     )
-    val claudeBridge = TestAgentSessionProviderBridge(
+    val claudeBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CLAUDE,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
@@ -89,13 +89,13 @@ class AgentSessionsEditorTabActionsTest {
     var launchedMode: AgentSessionLaunchMode? = null
     var launchedProjectName: String? = null
     var entryPoint: AgentWorkbenchEntryPoint? = null
-    val codexBridge = TestAgentSessionProviderBridge(
+    val codexBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
       cliAvailable = true,
       yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
     )
-    val claudeBridge = TestAgentSessionProviderBridge(
+    val claudeBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CLAUDE,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
@@ -136,13 +136,13 @@ class AgentSessionsEditorTabActionsTest {
     var launchedMode: AgentSessionLaunchMode? = null
     var entryPoint: AgentWorkbenchEntryPoint? = null
     val fallbackProvider = AgentSessionProvider.from("fallback")
-    val codexYoloOnlyBridge = TestAgentSessionProviderBridge(
+    val codexYoloOnlyBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.YOLO),
       cliAvailable = true,
       yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
     )
-    val fallbackBridge = TestAgentSessionProviderBridge(
+    val fallbackBridge = TestAgentSessionProviderDescriptor(
       provider = fallbackProvider,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
@@ -180,7 +180,7 @@ class AgentSessionsEditorTabActionsTest {
     var entryPoint: AgentWorkbenchEntryPoint? = null
     var shownCandidates: List<AgentPromptProjectPathCandidate>? = null
     var popupSelection: ((AgentPromptProjectPathCandidate) -> Unit)? = null
-    val claudeBridge = TestAgentSessionProviderBridge(
+    val claudeBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CLAUDE,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
@@ -273,13 +273,13 @@ class AgentSessionsEditorTabActionsTest {
     var launchedMode: AgentSessionLaunchMode? = null
     var launchedProjectName: String? = null
     var entryPoint: AgentWorkbenchEntryPoint? = null
-    val codexBridge = TestAgentSessionProviderBridge(
+    val codexBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
       cliAvailable = true,
       yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
     )
-    val claudeBridge = TestAgentSessionProviderBridge(
+    val claudeBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CLAUDE,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
@@ -325,13 +325,13 @@ class AgentSessionsEditorTabActionsTest {
     var launchedProvider: AgentSessionProvider? = null
     var launchedMode: AgentSessionLaunchMode? = null
     var entryPoint: AgentWorkbenchEntryPoint? = null
-    val codexBridge = TestAgentSessionProviderBridge(
+    val codexBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
       cliAvailable = true,
       yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
     )
-    val claudeBridge = TestAgentSessionProviderBridge(
+    val claudeBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CLAUDE,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
@@ -373,7 +373,7 @@ class AgentSessionsEditorTabActionsTest {
 
   @Test
   fun editorTabPopupNewThreadHiddenWithoutEditorContext() {
-    val codexBridge = TestAgentSessionProviderBridge(
+    val codexBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,

@@ -18,8 +18,8 @@ import org.junit.jupiter.api.Test
 import java.nio.file.Path
 
 @TestApplication
-class CodexAgentSessionProviderBridgeTest {
-    private val bridge = CodexAgentSessionProviderBridge()
+class CodexAgentSessionProviderDescriptorTest {
+    private val bridge = CodexAgentSessionProviderDescriptor()
 
     @Test
     fun buildResumeLaunchSpec() {
@@ -317,6 +317,6 @@ class CodexAgentSessionProviderBridgeTest {
     }
 }
 
-private fun messageFor(bridge: CodexAgentSessionProviderBridge, request: AgentPromptInitialMessageRequest): String {
+private fun messageFor(bridge: CodexAgentSessionProviderDescriptor, request: AgentPromptInitialMessageRequest): String {
     return checkNotNull(bridge.buildInitialMessagePlan(request).message)
 }

@@ -29,7 +29,7 @@ private val TOOL_WINDOW_MESSAGES_FALLBACK_ICON: Icon by lazy {
 }
 
 private fun resolveAgentSessionProviderIcon(provider: AgentSessionProvider?): Icon? {
-  return provider?.let { AgentSessionProviderBridges.find(it)?.icon }
+  return provider?.let { AgentSessionProviders.find(it)?.icon }
 }
 
 @ApiStatus.Internal

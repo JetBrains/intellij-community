@@ -1,8 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.core.prompt
 
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
+import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.OverridableValue
+import com.intellij.agent.workbench.sessions.core.SingleExtensionPointResolver
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -66,23 +68,24 @@ private val LOG = logger<AgentPromptLauncherBridgeLog>()
 private val AGENT_PROMPT_LAUNCHER_BRIDGE_EP: ExtensionPointName<AgentPromptLauncherBridge> =
   ExtensionPointName("com.intellij.agent.workbench.promptLauncher")
 
-object AgentPromptLaunchers {
-  fun find(): AgentPromptLauncherBridge? {
-    val launchers = try {
-      AGENT_PROMPT_LAUNCHER_BRIDGE_EP.extensionList
-    }
-    catch (t: IllegalStateException) {
-      LOG.debug("Prompt launcher bridge EP is unavailable in this context", t)
-      return null
-    }
-    catch (t: IllegalArgumentException) {
-      LOG.debug("Prompt launcher bridge EP is unavailable in this context", t)
-      return null
-    }
+private val REGISTERED_PROMPT_LAUNCHER = SingleExtensionPointResolver(
+  log = LOG,
+  extensionPoint = AGENT_PROMPT_LAUNCHER_BRIDGE_EP,
+  unavailableMessage = "Prompt launcher bridge EP is unavailable in this context",
+  multipleExtensionsMessage = { launchers ->
+    "Multiple prompt launchers registered; using first: ${launchers.map { it::class.java.name }}"
+  },
+)
 
-    if (launchers.size > 1) {
-      LOG.warn("Multiple prompt launchers registered; using first: ${launchers.map { it::class.java.name }}")
-    }
-    return launchers.firstOrNull()
+object AgentPromptLaunchers {
+  private val launcherOverride = OverridableValue<AgentPromptLauncherBridge?> { REGISTERED_PROMPT_LAUNCHER.findFirstOrNull() }
+
+  fun find(): AgentPromptLauncherBridge? {
+    return launcherOverride.value()
+  }
+
+  @Suppress("unused")
+  fun <T> withLauncherForTest(launcher: AgentPromptLauncherBridge?, action: () -> T): T {
+    return launcherOverride.withOverride(launcher, action)
   }
 }
