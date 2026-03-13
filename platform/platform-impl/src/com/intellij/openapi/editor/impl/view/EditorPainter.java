@@ -499,6 +499,8 @@ public final class EditorPainter implements TextDrawingCallback {
         int visualLine = visLinesIterator.getVisualLine();
         if (visualLine > myEndVisualLine + 1) break;
         int y = visLinesIterator.getY() + myYShift;
+        mySelectionLinePainter.associateWithVisualLine(y, visualLine);
+
         if (calculateMarginWidths) myMarginPositions.y()[visualLine - myStartVisualLine] = y;
         if (y > prevY) {
           boolean selection = mySelectionLinePainter.isAllBlockInlaysAboveSelected(visualLine);

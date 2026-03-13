@@ -66,7 +66,8 @@ private data class CaretLineSelections(
   private val editor: EditorImpl,
   private val line: Int,
   private val selections: List<CaretSelection>,
-  private val lineExtensionWidth: Double
+  private val lineExtensionWidth: Double,
+  private val selectionBoundaryCache: MutableMap<Pair<Int, Int>, Pair<Double, Double>>
 ) {
   private fun trimToLine(selection: CaretSelection): CaretSelection {
     val columnEnd = EditorUtil.getLastVisualLineColumnNumber(editor, line)
@@ -86,16 +87,18 @@ private data class CaretLineSelections(
     editor.isRightAligned && selections.firstOrNull()?.let { it.start.line < line } ?: false
 
   private fun selectionBoundaries(index: Int): Pair<Double, Double> {
-    val selection = this[index]
-    val (rawStart, rawEnd) = Pair(
-      editor.visualPositionToPoint2D(selection.start).x,
-      editor.visualPositionToPoint2D(selection.end).x
-    )
+    return selectionBoundaryCache.getOrPut(line to index) {
+      val selection = this[index]
+      val (rawStart, rawEnd) = Pair(
+        editor.visualPositionToPoint2D(selection.start).x,
+        editor.visualPositionToPoint2D(selection.end).x
+      )
 
-    return Pair(
-      if (index == 0 && isLeftExtended()) rawStart - lineExtensionWidth else rawStart,
-      if (index == selections.lastIndex && isRightExtended()) rawEnd + lineExtensionWidth else rawEnd
-    )
+      Pair(
+        if (index == 0 && isLeftExtended()) rawStart - lineExtensionWidth else rawStart,
+        if (index == selections.lastIndex && isRightExtended()) rawEnd + lineExtensionWidth else rawEnd
+      )
+    }
   }
 
   fun hasSelectionEnd(left: Boolean, pos: Double): Boolean =
@@ -160,6 +163,8 @@ internal class SelectionLinePainter(
 
     startOffset to endOffset
   }
+  private val visualLineCache = mutableMapOf<Int, Int>()
+  private val selectionBoundaryCache = mutableMapOf<Pair<Int, Int>, Pair<Double, Double>>()
 
   private val caretSelections by lazy {
     editor.caretModel.allCarets.map { caret ->
@@ -183,6 +188,10 @@ internal class SelectionLinePainter(
 
   private val allCarets by lazy { editor.caretModel.allCarets }
 
+  fun associateWithVisualLine(y: Int, visualLine: Int) {
+    visualLineCache[y] = visualLine
+  }
+
   fun isCFRInSelection(cfr: CustomFoldRegion): Boolean = allCarets.any {
     it.selectionStart <= cfr.startOffset && cfr.endOffset <= it.selectionEnd
   }
@@ -195,37 +204,41 @@ internal class SelectionLinePainter(
     bounds.y in selectedRange && (bounds.y + bounds.height) in selectedRange
   }
 
+  private data class CFRData(val region: CustomFoldRegion, val startLine: Int, val endLine: Int)
   private val customFoldRegions by lazy {
     val foldingModel = editor.foldingModel
     val regions = foldingModel.fetchTopLevel() ?: emptyArray()
 
     regions.filterIsInstance<CustomFoldRegion>()
-      .filter { isCFRInSelection(it) }
       .filter {
         val (visibleStart, visibleEnd) = visibleScrollArea
         visibleStart <= it.startOffset && it.endOffset <= visibleEnd
       }
+      .filter { isCFRInSelection(it) }
+      .map {
+        val startLine = editor.offsetToVisualLine(it.startOffset)
+        val endLine = editor.offsetToVisualLine(it.endOffset)
+        CFRData(it, startLine, endLine)
+      }
   }
 
   private fun caretSelectionsForLine(line: Int): CaretLineSelections {
-    if (caretSelections.isEmpty()) return CaretLineSelections(editor, line, emptyList(), lineExtensionWidth)
+    if (caretSelections.isEmpty()) return CaretLineSelections(editor, line, emptyList(), lineExtensionWidth, selectionBoundaryCache)
 
     val lower = caretSelections.binarySearch { if (it.end.line < line) -1 else 1 }.let { -it - 1 }
     val upper = caretSelections.binarySearch { if (it.start.line <= line) -1 else 1 }.let { -it - 1 }
 
-    return CaretLineSelections(editor, line, caretSelections.subList(lower, upper), lineExtensionWidth)
+    return CaretLineSelections(editor, line, caretSelections.subList(lower, upper), lineExtensionWidth, selectionBoundaryCache)
   }
 
   private fun yToVisualLine(y: Int): Int {
-    return editor.yToVisualLine(y - yShift)
+    return visualLineCache.getOrPut(y) { editor.yToVisualLine(y - yShift) }
   }
 
   private fun customFoldRegionsFor(visualLine: Int): List<CustomFoldRegion> {
-    return customFoldRegions.filter { cfr ->
-      val startLine = editor.offsetToVisualLine(cfr.startOffset)
-      val endLine = editor.offsetToVisualLine(cfr.endOffset)
+    return customFoldRegions.filter { (_, startLine, endLine) ->
       visualLine in startLine..endLine
-    }
+    }.map { it.region }
   }
 
   private fun blockInlayAbove(visualLine: Int): Inlay<*>? =
