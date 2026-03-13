@@ -34,6 +34,10 @@
     />
 
     <registryKey
+      key="decompiler.assert.thread"
+      defaultValue="true"
+      description="Assert that the decompiler is not called on EDT or under write lock"/>
+    <registryKey
       key="decompiler.use.line.mapping"
       defaultValue="true"
       description="Maps original and decompiled line numbers when stepping in the debugger."/>

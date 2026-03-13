@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -45,6 +46,9 @@ private const val POSTPONE_EXIT_CODE = DialogWrapper.CANCEL_EXIT_CODE
 private const val DECLINE_EXIT_CODE = DialogWrapper.NEXT_USER_EXIT_CODE
 
 private val TASK_KEY: Key<Future<CharSequence>> = Key.create("java.decompiler.optimistic.task")
+
+private val logger = Logger.getInstance(IdeaDecompiler::class.java)
+private const val DECOMPILER_MUST_NOT_BE_CALLED_WITH_WRITE_ACCESS = "Decompiler must not be called with write access"
 
 class IdeaDecompiler : ClassFileDecompilers.Light() {
   internal class LegalBurden : FileEditorManagerListener.Before {
@@ -115,6 +119,15 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
     }
 
   private fun decompile(file: VirtualFile): CharSequence {
+
+    val application = ApplicationManager.getApplication()
+
+    if (application.isEAP && application.isInternal && Registry.`is`("decompiler.assert.thread")) {
+      if ((application.isDispatchThread || application.isWriteAccessAllowed) && !BinaryFileTypeDecompilers.getInstance().isAllowDecompileOnEDT) {
+        logger.error(DECOMPILER_MUST_NOT_BE_CALLED_WITH_WRITE_ACCESS)
+      }
+    }
+
     val indicator = ProgressManager.getInstance().progressIndicator
     if (indicator != null) {
       indicator.text = IdeaDecompilerBundle.message("decompiling.progress", file.name)
@@ -164,7 +177,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
     catch (e: Exception) {
       when {
         e is IdeaLogger.InternalException && e.cause is IOException -> {
-          Logger.getInstance(IdeaDecompiler::class.java).warn(file.url, e)
+          logger.warn(file.url, e)
           return Strings.EMPTY_CHAR_SEQUENCE
         }
         ApplicationManager.getApplication().isUnitTestMode && e !is ClassFormatException -> throw AssertionError(file.url, e)
