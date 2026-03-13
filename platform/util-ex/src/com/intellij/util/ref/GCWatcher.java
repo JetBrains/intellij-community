@@ -154,7 +154,7 @@ public final class GCWatcher {
     LowMemoryWatcher.runWithNotificationsSuppressed(() -> {
       try {
         GCUtil.allocateTonsOfMemory(log, runWhileWaiting,
-                                    () -> isEverythingCollected() || System.currentTimeMillis() < timeoutDeadline);
+                                    () -> isEverythingCollected() || System.currentTimeMillis() > timeoutDeadline);
       }
       catch (OutOfMemoryError e) {
         // IDEA-310426
