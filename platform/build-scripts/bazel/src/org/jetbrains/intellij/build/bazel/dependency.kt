@@ -22,13 +22,9 @@ import java.util.logging.Logger
 import kotlin.io.path.Path
 import kotlin.io.path.copyTo
 import kotlin.io.path.createDirectories
-import kotlin.io.path.exists
-import kotlin.io.path.extension
-import kotlin.io.path.inputStream
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
-import kotlin.io.path.readBytes
 import kotlin.io.path.relativeTo
 
 internal data class BazelLabel(
@@ -136,12 +132,9 @@ internal fun generateDeps(
           val libSnapshotsDir = libraryContainer.buildFile.parent.resolve("snapshots").createDirectories()
           val targetName = camelToSnakeCase(escapeBazelLabel(firstFile.nameWithoutExtension))
 
-          val localFilesWithChecksum = files.map { file ->
-            val checksum = file.inputStream().sha256().take(20)
-            val localFile = libSnapshotsDir.resolve("${file.nameWithoutExtension}-${checksum}.${file.extension}")
-            if (!localFile.exists() || !localFile.readBytes().contentEquals(file.readBytes())) {
-              file.copyTo(localFile, overwrite = true)
-            }
+          val localFiles = files.map { file ->
+            val localFile = libSnapshotsDir.resolve(file.name)
+            file.copyTo(localFile, overwrite = true)
             localFile
           }
 
@@ -153,7 +146,7 @@ internal fun generateDeps(
           )
           context.addLocalLibrary(
             lib = LocalLibrary(
-              files = localFilesWithChecksum,
+              files = localFiles,
               target = libraryTarget,
               bazelBuildFileDir = libSnapshotsDir,
             ),
