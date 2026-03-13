@@ -295,7 +295,7 @@ class BuildContextImpl internal constructor(
   private val bundledPluginModulesForModularLoader by lazy {
     productProperties.rootModuleForModularLoader?.let { rootModule ->
       loadRawProductModules(rootModule, productProperties.productMode).bundledPluginMainModules.map {
-        it.stringId
+        it.name
       }
     }
   }
@@ -500,7 +500,7 @@ class BuildContextImpl internal constructor(
                              ?: error("Cannot find product-modules.xml file in $rootModuleName")
     val resolver = object : ResourceFileResolver {
       override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? {
-        return findFileInModuleSources(findRequiredModule(moduleId.stringId), relativePath)?.inputStream()
+        return findFileInModuleSources(findRequiredModule(moduleId.name), relativePath)?.inputStream()
       }
 
       override fun toString(): String {

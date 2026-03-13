@@ -37,7 +37,7 @@ class ModuleBasedPluginLayoutProvider(
     }
     val resourceFileResolver = object : ResourceFileResolver {
       override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? {
-        val module = project.findModuleByName(moduleId.stringId) ?: return null
+        val module = project.findModuleByName(moduleId.name) ?: return null
         return module.findProductionFile(relativePath)?.inputStream()
       }
     }
@@ -48,7 +48,7 @@ class ModuleBasedPluginLayoutProvider(
       runtimeModuleRepository,
       resourceFileResolver,
     )
-    mainModulesOfBundledPlugins = productModules.bundledPluginModuleGroups.mapTo(HashSet()) { it.mainModule.moduleId.stringId }
+    mainModulesOfBundledPlugins = productModules.bundledPluginModuleGroups.mapTo(HashSet()) { it.mainModule.moduleId.name }
   }
 
   private fun JpsModule.findProductionFile(relativePath: String): Path? = JpsJavaExtensionService.getInstance().findSourceFileInProductionRoots(this, relativePath)
@@ -70,7 +70,7 @@ class ModuleBasedPluginLayoutProvider(
     
     val mainGroupModules = embeddedModulesWithDependencies
       .asSequence()
-      .map { it.moduleId.stringId }
+      .map { it.moduleId.name }
       .filterNot { it.startsWith(RuntimeModuleId.LIB_NAME_PREFIX) }
       .mapNotNull { 
         project.findModuleByName(it)

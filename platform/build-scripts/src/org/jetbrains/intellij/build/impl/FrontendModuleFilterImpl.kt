@@ -35,7 +35,7 @@ internal class FrontendModuleFilterImpl private constructor(
       val includedProjectLibraryNames = LinkedHashSet<String>()
 
       for (rootModuleName in productModules.mainGroupModules) {
-        val rootModule = project.findModuleByName(rootModuleName.moduleId.stringId) ?: continue
+        val rootModule = project.findModuleByName(rootModuleName.moduleId.name) ?: continue
         collectTransitiveDependenciesCompatibleWithFrontend(
           module = rootModule,
           frontendModeMatcher = frontendModeMatcher,
@@ -45,7 +45,7 @@ internal class FrontendModuleFilterImpl private constructor(
       }
 
       for (mainModuleId in productModules.bundledPluginMainModules) {
-        val module = project.findModuleByName(mainModuleId.stringId) ?: continue
+        val module = project.findModuleByName(mainModuleId.name) ?: continue
         if (frontendModeMatcher.matches(module)) {
           includedModuleNames.add(module.name)
           @Suppress("RAW_RUN_BLOCKING")

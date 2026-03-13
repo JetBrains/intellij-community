@@ -195,11 +195,11 @@ internal class RuntimeModuleRepositoryChecker private constructor(
     }.groupBy({ it.first }, { it.second })
     
     for (moduleId in moduleRepositoryData.allModuleIds) {
-      if (moduleId.stringId.startsWith(RuntimeModuleId.LIB_NAME_PREFIX)) {
+      if (moduleId.name.startsWith(RuntimeModuleId.LIB_NAME_PREFIX)) {
         //additional libraries shouldn't cause problems because their resources should not be loaded unless they are requested from modules
         continue
       }
-      val module = context.outputProvider.findModule(moduleId.stringId)
+      val module = context.outputProvider.findModule(moduleId.name)
       if (module != null && hasModuleOutputPath(module = module, relativePath = "${module.name}.xml", outputProvider = context.outputProvider)) {
         // such a descriptor indicates that it's a module in plugin model V2, and its ClassLoader ignores classes from irrelevant packages,
         // so including its JAR to classpath should not cause problems
