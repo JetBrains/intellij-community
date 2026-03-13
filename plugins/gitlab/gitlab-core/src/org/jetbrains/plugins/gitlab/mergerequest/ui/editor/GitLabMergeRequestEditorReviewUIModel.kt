@@ -122,6 +122,7 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   }
 
   override fun canCreateComment(lineRange: LineRange): Boolean {
+    if (!fileVm.canAddMultilinePositionalNotes) return false
     val gutterControls = gutterControlsState.value ?: return false
     return gutterControls.isLineCommentable(lineRange.start) &&
            gutterControls.isLineCommentable(lineRange.end)

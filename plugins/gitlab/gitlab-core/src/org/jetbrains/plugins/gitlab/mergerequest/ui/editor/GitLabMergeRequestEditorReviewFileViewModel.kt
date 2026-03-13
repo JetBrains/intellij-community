@@ -63,6 +63,7 @@ interface GitLabMergeRequestEditorReviewFileViewModel {
   val canNavigate: Boolean
 
   val canComment: StateFlow<Boolean>
+  val canAddMultilinePositionalNotes: Boolean
   val newDiscussions: StateFlow<Collection<GitLabMergeRequestEditorNewDiscussionViewModel>>
 
   val avatarIconsProvider: IconsProvider<GitLabUserDTO>
@@ -142,6 +143,7 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
   override val canNavigate: Boolean = diffData.isCumulative
 
   override val canComment: StateFlow<Boolean> = discussionsViewOption.mapState { it != DiscussionsViewOption.DONT_SHOW }
+  override val canAddMultilinePositionalNotes: Boolean = mergeRequest.canAddMultilinePositionalNotes
 
   override val linesWithNewDiscussions: StateFlow<Set<Int>> =
     discussionsContainer.newDiscussions.flatMapLatestEach {

@@ -57,7 +57,7 @@ internal class CodeReviewEditorNewCommentAction
 
     if (model is CodeReviewCommentableEditorModel.WithMultilineComments) {
       val selectedRange = caret.getSelectedLinesRange().takeIf { it?.isEmpty == false }
-      if (selectedRange != null) {
+      if (selectedRange != null && model.canCreateComment(selectedRange)) {
         scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
         scrollingModel.runActionOnScrollingFinished {
           model.requestNewComment(selectedRange)
