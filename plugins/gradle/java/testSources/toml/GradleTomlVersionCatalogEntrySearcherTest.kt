@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.toml
 
-import com.intellij.gradle.java.toml.findTomlCatalogKey
+import com.intellij.gradle.java.toml.service.GradleTomlVersionCatalogEntrySearcher
 import com.intellij.openapi.externalSystem.util.runReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
@@ -29,8 +29,8 @@ import org.toml.lang.TomlLanguage
 import org.toml.lang.psi.TomlFile
 
 @TestApplication
-class GradleFindTomlCatalogKeyTest {
-
+class GradleTomlVersionCatalogEntrySearcherTest {
+  private val entrySearcher = GradleTomlVersionCatalogEntrySearcher()
   private val project by projectFixture()
 
   private fun testFindTomlCatalogKey(
@@ -40,7 +40,7 @@ class GradleFindTomlCatalogKeyTest {
   ) = runReadAction {
     val tomPsiFile = PsiFileFactory.getInstance(project)
       .createFileFromText(TomlLanguage, versionCatalogText) as TomlFile
-    val element = findTomlCatalogKey(tomPsiFile, tomlKeyPath)
+    val element = entrySearcher.findEntryElement(tomPsiFile, tomlKeyPath)
     checker(element)
   }
 

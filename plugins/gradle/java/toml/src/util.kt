@@ -19,10 +19,10 @@ import com.intellij.util.asSafely
 import com.intellij.util.containers.tail
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.resolve.DependencyCoordinates
-import org.jetbrains.plugins.gradle.service.resolve.PluginCoordinates
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROVIDER_PROVIDER
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROVIDER_PROVIDER_CONVERTIBLE
 import org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogPsiResolver
+import org.jetbrains.plugins.gradle.service.resolve.PluginCoordinates
 import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogsLocator
 import org.jetbrains.plugins.gradle.service.resolve.getVersionCatalogFiles
 import org.jetbrains.plugins.gradle.util.BUNDLE_ACCESSORS_SUFFIX
@@ -33,11 +33,9 @@ import org.jetbrains.plugins.gradle.util.VERSION_ACCESSORS_SUFFIX
 import org.jetbrains.plugins.gradle.util.getCapitalizedAccessorName
 import org.jetbrains.plugins.gradle.util.isInVersionCatalogAccessor
 import org.toml.lang.psi.TomlFile
-import org.toml.lang.psi.TomlHeaderOwner
 import org.toml.lang.psi.TomlInlineTable
 import org.toml.lang.psi.TomlKeySegment
 import org.toml.lang.psi.TomlKeyValue
-import org.toml.lang.psi.TomlKeyValueOwner
 import org.toml.lang.psi.TomlLiteral
 import org.toml.lang.psi.TomlRecursiveVisitor
 import org.toml.lang.psi.TomlTable
@@ -68,100 +66,6 @@ private fun findTomlFileDynamically(context: PsiElement, name: String): VirtualF
   val tomlPath = context.project.service<VersionCatalogsLocator>().getVersionCatalogsForModule(module)[name] ?: return null
   return VfsUtil.findFile(tomlPath, false)
 }
-
-/**
- * Given a [org.toml.lang.psi.TomlFile] and a path, returns the corresponding key element.
- * For example, given "versions.foo", it will locate the `foo =` key/value
- * pair under the `\[versions]` table and return it. As a special case,
- * `libraries` don't have to be explicitly named in the path.
- */
-fun findTomlCatalogKey(tomlFile: TomlFile, declarationPath: String): PsiElement? {
-  val prefix = listOf("versions.", "bundles.", "plugins.")
-  val section: String
-  val target: String
-  if (prefix.none { declarationPath.startsWith(it) }) {
-    section = "libraries"
-    target = declarationPath
-  }
-  else {
-    section = declarationPath.substringBefore('.')
-    target = declarationPath.substringAfter('.')
-  }
-
-  // At the root level, look for the right section (versions, libraries, etc)
-  tomlFile.children.forEach { element ->
-    // [table]
-    // alias =
-    if (element is TomlHeaderOwner) {
-      val keyText = element.header.key?.text
-      if (keysMatch(keyText, section)) {
-        if (element is TomlKeyValueOwner) {
-          return findAlias(element, target)
-        }
-      }
-    }
-    // for corner cases
-    if (element is TomlKeyValue) {
-      val keyText = element.key.text
-      // libraries.alias = ""
-      if (keysMatch(keyText, "$section.$target")) {
-        return element
-      } else
-      // libraries = { alias = ""
-        if(element.value is TomlInlineTable && keysMatch(keyText, section)) {
-          return findAlias(element.value as TomlInlineTable,target)
-        }
-    }
-  }
-  return null
-}
-
-private fun findAlias(valueOwner: TomlKeyValueOwner, target:String): PsiElement?{
-  for (entry in valueOwner.entries) {
-    val entryKeyText = entry.key.text
-    if (keysMatch(entryKeyText, target)) {
-      return entry
-    }
-  }
-  return null
-}
-
-fun keysMatch(keyText: String?, reference: String): Boolean {
-  keyText ?: return false
-  if (keyText.length != reference.length) {
-    return false
-  }
-  for (i in keyText.indices) {
-    if(isAfterDelimiter(i, keyText)){
-      // first character may be capital after `-_.` symbols in TOML
-      // it still makes it equal to low case reference - Gradle implementation detail
-      if(keyText[i].normalizeIgnoreCase() != reference[i].normalize())
-        return false
-    } else if (keyText[i].normalize() != reference[i].normalize()) {
-      return false
-    }
-  }
-  return true
-}
-
-private fun isAfterDelimiter(index: Int, s:String):Boolean =
-  index > 0 && s[index-1].normalize() == '.'
-
-private fun Char.normalizeIgnoreCase(): Char {
-  if (this == '-' || this == '_') {
-    return '.'
-  }
-  return this.lowercaseChar()
-}
-
-// Gradle converts dashed-keys or dashed_keys into dashed.keys
-private fun Char.normalize(): Char {
-  if (this == '-' || this == '_') {
-    return '.'
-  }
-  return this
-}
-
 
 /**
  * @param method a method within a synthetic version catalog accessor class. The method must not return an accessor (i.e. it should be a leaf method).

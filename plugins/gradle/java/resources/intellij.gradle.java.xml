@@ -35,6 +35,9 @@
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.externallyHandledExtensions"
                     interface="org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogHandler"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.versionCatalogEntrySearcher"
+                    interface="org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogEntrySearcher"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.dslInspectionProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
