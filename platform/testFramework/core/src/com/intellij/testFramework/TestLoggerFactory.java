@@ -32,9 +32,6 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.io.StringWriter;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -566,34 +563,7 @@ public final class TestLoggerFactory implements Logger.Factory {
 
     @Override
     public boolean isDebugEnabled() {
-      return !Accessor.isInStressTest() || super.isDebugEnabled();
-    }
-
-    /// Calling [com.intellij.openapi.application.ex.ApplicationManagerEx#isInStressTest] reflectively to avoid dependency on a platform module
-    private static class Accessor {
-      private static final @NotNull MethodHandle isInStressTest = getMethodHandle();
-
-      private static @NotNull MethodHandle getMethodHandle() {
-        try {
-          var clazz = Class.forName("com.intellij.openapi.application.ex.ApplicationManagerEx");
-          var handle = MethodHandles.privateLookupIn(clazz, MethodHandles.lookup()).findStatic(clazz, "isInStressTest", MethodType.methodType(boolean.class));
-          var result = handle.invokeWithArguments();
-          assert result instanceof Boolean;
-          return handle;
-        }
-        catch (Throwable e) {
-          throw new RuntimeException(e);
-        }
-      }
-
-      private static boolean isInStressTest() {
-        try {
-          return (boolean)isInStressTest.invokeWithArguments();
-        }
-        catch (Throwable ignored) {
-          return false;
-        }
-      }
+      return !isInStressTest() || super.isDebugEnabled();
     }
   }
 

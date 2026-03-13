@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import org.jetbrains.annotations.TestOnly;
 
@@ -26,5 +27,6 @@ public final class ApplicationManagerEx extends ApplicationManager {
   public static void setInStressTest(boolean value) {
     inStressTest = value;
     IndexDebugProperties.IS_IN_STRESS_TESTS = value;
+    Logger.setInStressTest(value);
   }
 }
