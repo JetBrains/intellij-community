@@ -4,11 +4,15 @@ package org.jetbrains.yaml;
 import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 
-public final class YAMLLanguage extends Language {
+public class YAMLLanguage extends Language {
   public static final YAMLLanguage INSTANCE = new YAMLLanguage();
 
-  private YAMLLanguage() {
+  protected YAMLLanguage() {
     super("yaml", "application/x-yaml", "application/yaml", "text/yaml", "text/x-yaml");
+  }
+
+  protected YAMLLanguage(@NotNull String id, @NotNull String... mimeTypes) {
+    super(id, mimeTypes);
   }
 
   @Override

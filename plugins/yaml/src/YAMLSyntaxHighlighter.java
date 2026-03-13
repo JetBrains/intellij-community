@@ -11,7 +11,7 @@ import org.jetbrains.yaml.lexer.YAMLFlexLexer;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class YAMLSyntaxHighlighter extends SyntaxHighlighterBase implements YAMLTokenTypes {
+public class YAMLSyntaxHighlighter extends SyntaxHighlighterBase implements YAMLTokenTypes {
   private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<>();
 
   static {

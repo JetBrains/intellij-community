@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 @InternalIgnoreDependencyViolation
-public final class YAMLSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
+public class YAMLSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
   @Override
   public @NotNull SyntaxHighlighter getSyntaxHighlighter(Project project, VirtualFile virtualFile) {
     return new YAMLSyntaxHighlighter();
