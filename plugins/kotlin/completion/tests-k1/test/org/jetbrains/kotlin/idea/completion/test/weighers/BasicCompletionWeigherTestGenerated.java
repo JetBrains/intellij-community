@@ -569,6 +569,16 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../testData/weighers/basic/DoNotLiftShorter.kt");
         }
 
+        @TestMetadata("DoNotLiftShorterMatchingParameterName.kt")
+        public void testDoNotLiftShorterMatchingParameterName() throws Exception {
+            runTest("../testData/weighers/basic/DoNotLiftShorterMatchingParameterName.kt");
+        }
+
+        @TestMetadata("DoNotLiftShorterMatchingTypeName.kt")
+        public void testDoNotLiftShorterMatchingTypeName() throws Exception {
+            runTest("../testData/weighers/basic/DoNotLiftShorterMatchingTypeName.kt");
+        }
+
         @TestMetadata("DoNotPreferNullForNonNullable.kt")
         public void testDoNotPreferNullForNonNullable() throws Exception {
             runTest("../testData/weighers/basic/DoNotPreferNullForNonNullable.kt");
