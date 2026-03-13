@@ -72,7 +72,7 @@ internal object ConvertCollectionFixFactory {
         }
 
         val literalFunctionName = expectedCollectionType.literalFunctionName ?: return null
-        if (getCollectionType(expectedType) != expectedCollectionType) return null
+        if (getCollectionType(expectedType, acceptNullableTypes = true) != expectedCollectionType) return null
         if (!areTypeArgumentsCompatible(expectedType, actualType)) return null
 
         return ReplaceWithMutableCollectionFactoryFix(expression, literalFunctionName)

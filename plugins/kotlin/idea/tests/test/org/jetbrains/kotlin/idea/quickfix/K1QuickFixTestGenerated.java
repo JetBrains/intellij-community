@@ -19234,6 +19234,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/convertCollection/emptyListToMutableList.kt");
             }
 
+            @TestMetadata("emptyListToMutableListNullable.kt")
+            public void testEmptyListToMutableListNullable() throws Exception {
+                runTest("testData/quickfix/typeMismatch/convertCollection/emptyListToMutableListNullable.kt");
+            }
+
             @TestMetadata("emptyListToMutableListWithTypeArg.kt")
             public void testEmptyListToMutableListWithTypeArg() throws Exception {
                 runTest("testData/quickfix/typeMismatch/convertCollection/emptyListToMutableListWithTypeArg.kt");
@@ -19244,6 +19249,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/convertCollection/emptyMapToMutableMap.kt");
             }
 
+            @TestMetadata("emptyMapToMutableMapNullableReturn.kt")
+            public void testEmptyMapToMutableMapNullableReturn() throws Exception {
+                runTest("testData/quickfix/typeMismatch/convertCollection/emptyMapToMutableMapNullableReturn.kt");
+            }
+
             @TestMetadata("emptySetAssignmentToMutableSet.kt")
             public void testEmptySetAssignmentToMutableSet() throws Exception {
                 runTest("testData/quickfix/typeMismatch/convertCollection/emptySetAssignmentToMutableSet.kt");
@@ -19252,6 +19262,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             @TestMetadata("emptySetToMutableSet.kt")
             public void testEmptySetToMutableSet() throws Exception {
                 runTest("testData/quickfix/typeMismatch/convertCollection/emptySetToMutableSet.kt");
+            }
+
+            @TestMetadata("emptySetToMutableSetNullableInitializer.kt")
+            public void testEmptySetToMutableSetNullableInitializer() throws Exception {
+                runTest("testData/quickfix/typeMismatch/convertCollection/emptySetToMutableSetNullableInitializer.kt");
             }
 
             @TestMetadata("initializer.kt")
