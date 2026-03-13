@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.claude.common
+package com.intellij.agent.workbench.json
 
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
 
-internal inline fun forEachJsonObjectField(parser: JsonParser, onField: (String) -> Boolean) {
+inline fun forEachJsonObjectField(parser: JsonParser, onField: (String) -> Boolean) {
   while (true) {
     val token = parser.nextToken() ?: return
     if (token == JsonToken.END_OBJECT) return
@@ -18,7 +18,7 @@ internal inline fun forEachJsonObjectField(parser: JsonParser, onField: (String)
   }
 }
 
-internal fun readJsonStringOrNull(parser: JsonParser): String? {
+fun readJsonStringOrNull(parser: JsonParser): String? {
   return when (parser.currentToken) {
     JsonToken.VALUE_STRING -> parser.text
     JsonToken.VALUE_NUMBER_INT, JsonToken.VALUE_NUMBER_FLOAT -> parser.numberValue.toString()
@@ -31,7 +31,7 @@ internal fun readJsonStringOrNull(parser: JsonParser): String? {
   }
 }
 
-internal fun readJsonLongOrNull(parser: JsonParser): Long? {
+fun readJsonLongOrNull(parser: JsonParser): Long? {
   return when (parser.currentToken) {
     JsonToken.VALUE_NUMBER_INT -> parser.longValue
     JsonToken.VALUE_NUMBER_FLOAT -> parser.doubleValue.toLong()
