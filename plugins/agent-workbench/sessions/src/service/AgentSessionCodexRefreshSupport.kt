@@ -1,6 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.service
 
+import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabRebindReport
+import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabRebindRequest
+import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabRebindStatus
+import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindReport
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindRequest
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindStatus
@@ -19,7 +23,6 @@ import com.intellij.agent.workbench.sessions.util.parseAgentSessionIdentity
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -37,9 +40,6 @@ internal data class PendingCodexBindOutcome(
 
 internal class AgentSessionCodexRefreshSupport(
   private val provider: AgentSessionProvider,
-  private val openPendingCodexTabsProvider: suspend (AgentSessionProvider) -> Map<String, List<AgentChatPendingCodexTabSnapshot>>,
-  private val openConcreteCodexTabsAwaitingNewThreadRebindProvider: suspend (AgentSessionProvider) -> Map<String, List<AgentChatConcreteCodexTabSnapshot>>,
-  private val openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>>,
   private val openAgentChatPendingTabsBinder: suspend (
     AgentSessionProvider,
     Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
@@ -56,59 +56,13 @@ internal class AgentSessionCodexRefreshSupport(
   private val pendingCodexAmbiguityLock = Any()
   private val pendingCodexAmbiguityStateByKey = LinkedHashMap<String, PendingCodexAmbiguityState>()
 
-  suspend fun collectNormalizedPendingTabsByPath(): Map<String, List<AgentChatPendingCodexTabSnapshot>> {
-    val pendingTabsByPath = try {
-      openPendingCodexTabsProvider(provider)
-    }
-    catch (e: Throwable) {
-      if (e is CancellationException) throw e
-      LOG.warn("Failed to collect pending Codex tabs for provider refresh", e)
-      return emptyMap()
-    }
-    if (pendingTabsByPath.isEmpty()) {
-      return emptyMap()
-    }
-
-    val normalized = LinkedHashMap<String, MutableList<AgentChatPendingCodexTabSnapshot>>(pendingTabsByPath.size)
-    for ((path, pendingTabs) in pendingTabsByPath) {
-      if (pendingTabs.isEmpty()) {
-        continue
-      }
-      val normalizedPath = normalizeAgentWorkbenchPath(path)
-      normalized.getOrPut(normalizedPath) { ArrayList(pendingTabs.size) }.addAll(pendingTabs)
-    }
-    return normalized
-  }
-
-  suspend fun collectNormalizedConcreteTabsAwaitingNewThreadRebindByPath(): Map<String, List<AgentChatConcreteCodexTabSnapshot>> {
-    val concreteTabsByPath = try {
-      openConcreteCodexTabsAwaitingNewThreadRebindProvider(provider)
-    }
-    catch (e: Throwable) {
-      if (e is CancellationException) throw e
-      LOG.warn("Failed to collect concrete Codex tabs awaiting /new rebind", e)
-      return emptyMap()
-    }
-    if (concreteTabsByPath.isEmpty()) {
-      return emptyMap()
-    }
-
-    val normalized = LinkedHashMap<String, MutableList<AgentChatConcreteCodexTabSnapshot>>(concreteTabsByPath.size)
-    for ((path, concreteTabs) in concreteTabsByPath) {
-      if (concreteTabs.isEmpty()) {
-        continue
-      }
-      val normalizedPath = normalizeAgentWorkbenchPath(path)
-      normalized.getOrPut(normalizedPath) { ArrayList(concreteTabs.size) }.addAll(concreteTabs)
-    }
-    return normalized
-  }
-
-  suspend fun collectRefreshHintThreadIdsByPath(
+  fun collectRefreshHintThreadIdsByPath(
     targetPaths: Set<String>,
     outcomes: Map<String, ProviderRefreshOutcome>,
     knownThreadIdsByPath: Map<String, Set<String>>,
     pendingTabsByPath: Map<String, List<AgentChatPendingCodexTabSnapshot>>,
+    concreteTabsByPath: Map<String, List<AgentChatConcreteCodexTabSnapshot>> = emptyMap(),
+    openConcreteThreadIdentitiesByPath: Map<String, Set<String>> = emptyMap(),
   ): Map<String, Set<String>> {
     if (targetPaths.isEmpty()) {
       return emptyMap()
@@ -145,15 +99,6 @@ internal class AgentSessionCodexRefreshSupport(
       if (ids.isNotEmpty() || pendingTabsByPath[path]?.isNotEmpty() == true) {
         hintThreadIdsByPath[path] = ids
       }
-    }
-
-    val openConcreteThreadIdentitiesByPath = try {
-      openConcreteChatThreadIdentitiesByPathProvider()
-    }
-    catch (e: Throwable) {
-      if (e is CancellationException) throw e
-      LOG.warn("Failed to collect open concrete chat thread identities for Codex refresh hints", e)
-      emptyMap()
     }
 
     for ((path, threadIdentities) in openConcreteThreadIdentitiesByPath) {
@@ -224,6 +169,7 @@ internal class AgentSessionCodexRefreshSupport(
     allowedThreadIdsByPath: Map<String, Set<String>>? = null,
     refreshHintsByPath: Map<String, AgentSessionRefreshHints> = emptyMap(),
     pendingTabsByPath: Map<String, List<AgentChatPendingCodexTabSnapshot>> = emptyMap(),
+    openConcreteThreadIdentitiesByPath: Map<String, Set<String>> = emptyMap(),
   ): PendingCodexBindOutcome {
     if (pendingTabsByPath.isEmpty()) {
       clearPendingCodexAmbiguityState()
@@ -291,7 +237,6 @@ internal class AgentSessionCodexRefreshSupport(
       return PendingCodexBindOutcome(pendingTabsForProjectionByPath = pendingTabsByPath)
     }
 
-    val openConcreteThreadIdentitiesByPath = openConcreteChatThreadIdentitiesByPathProvider()
     val matchResult = CodexPendingTabMatcher.match(
       pendingTabsByPath = eligiblePendingTabsByPath,
       candidatesByPath = candidatesByPath,
@@ -342,6 +287,7 @@ internal class AgentSessionCodexRefreshSupport(
     refreshId: Long,
     refreshHintsByPath: Map<String, AgentSessionRefreshHints>,
     concreteTabsByPath: Map<String, List<AgentChatConcreteCodexTabSnapshot>> = emptyMap(),
+    openConcreteThreadIdentitiesByPath: MutableMap<String, MutableSet<String>> = linkedMapOf(),
   ) {
     if (concreteTabsByPath.isEmpty()) {
       return
@@ -381,14 +327,6 @@ internal class AgentSessionCodexRefreshSupport(
       return
     }
 
-    val openConcreteThreadIdentitiesByPath = try {
-      openConcreteChatThreadIdentitiesByPathProvider()
-    }
-    catch (e: Throwable) {
-      if (e is CancellationException) throw e
-      LOG.warn("Failed to collect open concrete chat thread identities for /new rebind", e)
-      emptyMap()
-    }
     val unavailableThreadIdentitiesByPath = LinkedHashMap<String, LinkedHashSet<String>>(openConcreteThreadIdentitiesByPath.size)
     for ((path, threadIdentities) in openConcreteThreadIdentitiesByPath) {
       unavailableThreadIdentitiesByPath[normalizeAgentWorkbenchPath(path)] = LinkedHashSet(threadIdentities)
@@ -439,11 +377,36 @@ internal class AgentSessionCodexRefreshSupport(
     }
 
     val rebindReport = openAgentChatConcreteTabsBinder(provider, requestsByPath)
+    applyConcreteRebindsToOpenIdentities(
+      openConcreteThreadIdentitiesByPath = openConcreteThreadIdentitiesByPath,
+      rebindReport = rebindReport,
+    )
 
     LOG.debug {
       "Provider refresh id=$refreshId provider=codex rebound concrete /new chat tabs " +
       "(reboundBindings=${rebindReport.reboundBindings}, reboundFiles=${rebindReport.reboundFiles}, " +
       "requestedBindings=${rebindReport.requestedBindings}, candidatePaths=${refreshHintsByPath.size}, matchedPaths=${requestsByPath.size})"
+    }
+  }
+
+  private fun applyConcreteRebindsToOpenIdentities(
+    openConcreteThreadIdentitiesByPath: MutableMap<String, MutableSet<String>>,
+    rebindReport: AgentChatConcreteCodexTabRebindReport,
+  ) {
+    if (rebindReport.outcomesByPath.isEmpty()) {
+      return
+    }
+
+    for ((path, outcomes) in rebindReport.outcomesByPath) {
+      val normalizedPath = normalizeAgentWorkbenchPath(path)
+      val openThreadIdentities = openConcreteThreadIdentitiesByPath.getOrPut(normalizedPath) { LinkedHashSet() }
+      for (outcome in outcomes) {
+        if (outcome.status != AgentChatConcreteCodexTabRebindStatus.REBOUND) {
+          continue
+        }
+        openThreadIdentities.remove(outcome.request.currentThreadIdentity)
+        openThreadIdentities.add(outcome.request.target.threadIdentity)
+      }
     }
   }
 

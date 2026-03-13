@@ -6,16 +6,12 @@ package com.intellij.agent.workbench.sessions.service
 import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabRebindReport
 import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabRebindRequest
 import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabSnapshot
+import com.intellij.agent.workbench.chat.AgentChatOpenTabsRefreshSnapshot
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindReport
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindRequest
-import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabSnapshot
 import com.intellij.agent.workbench.chat.agentChatScopedRefreshSignals
 import com.intellij.agent.workbench.chat.clearOpenConcreteAgentChatNewThreadRebindAnchors
-import com.intellij.agent.workbench.chat.collectOpenAgentChatProjectPaths
-import com.intellij.agent.workbench.chat.collectOpenConcreteAgentChatTabsAwaitingNewThreadRebindByPath
-import com.intellij.agent.workbench.chat.collectOpenConcreteAgentChatThreadIdentitiesByPath
-import com.intellij.agent.workbench.chat.collectOpenPendingAgentChatTabsByPath
-import com.intellij.agent.workbench.chat.collectSelectedChatThreadIdentity
+import com.intellij.agent.workbench.chat.collectOpenAgentChatRefreshSnapshot
 import com.intellij.agent.workbench.chat.rebindOpenConcreteAgentChatTabs
 import com.intellij.agent.workbench.chat.rebindOpenPendingAgentChatTabs
 import com.intellij.agent.workbench.chat.updateOpenAgentChatTabPresentation
@@ -66,15 +62,10 @@ internal class AgentSessionRefreshCoordinator(
     private val stateStore: AgentSessionsStateStore,
     private val contentRepository: AgentSessionContentRepository,
     private val isRefreshGateActive: suspend () -> Boolean,
-    private val openAgentChatProjectPathsProvider: suspend () -> Set<String> = ::collectOpenAgentChatProjectPaths,
+    private val openAgentChatSnapshotProvider: suspend () -> AgentChatOpenTabsRefreshSnapshot = ::collectOpenAgentChatRefreshSnapshot,
     private val codexScopedRefreshSignalsProvider: (AgentSessionProvider) -> Flow<Set<String>> = { provider ->
       agentChatScopedRefreshSignals(provider)
     },
-    private val openPendingCodexTabsProvider: suspend (AgentSessionProvider) -> Map<String, List<AgentChatPendingCodexTabSnapshot>> =
-    ::collectOpenPendingAgentChatTabsByPath,
-    private val openConcreteCodexTabsAwaitingNewThreadRebindProvider: suspend (AgentSessionProvider) -> Map<String, List<AgentChatConcreteCodexTabSnapshot>> =
-    ::collectOpenConcreteAgentChatTabsAwaitingNewThreadRebindByPath,
-    private val openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> = ::collectOpenConcreteAgentChatThreadIdentitiesByPath,
     private val openAgentChatTabPresentationUpdater: suspend (
     Map<Pair<String, String>, String>,
     Map<Pair<String, String>, AgentThreadActivity>,
@@ -91,7 +82,6 @@ internal class AgentSessionRefreshCoordinator(
     AgentSessionProvider,
     Map<String, List<AgentChatConcreteCodexTabSnapshot>>,
   ) -> Int = ::clearOpenConcreteAgentChatNewThreadRebindAnchors,
-  private val selectedChatThreadIdentityProvider: suspend () -> Pair<AgentSessionProvider, String>? = ::collectSelectedChatThreadIdentity,
 ) {
   private val refreshMutex = Mutex()
   private val refreshQueueLock = Any()
@@ -172,9 +162,6 @@ internal class AgentSessionRefreshCoordinator(
       providerRefreshSupportByProvider.getOrPut(provider) {
         AgentSessionCodexRefreshSupport(
           provider = provider,
-          openPendingCodexTabsProvider = openPendingCodexTabsProvider,
-          openConcreteCodexTabsAwaitingNewThreadRebindProvider = openConcreteCodexTabsAwaitingNewThreadRebindProvider,
-          openConcreteChatThreadIdentitiesByPathProvider = openConcreteChatThreadIdentitiesByPathProvider,
           openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinder,
           openAgentChatConcreteTabsBinder = openAgentChatConcreteTabsBinder,
           clearOpenConcreteCodexTabAnchors = clearOpenConcreteCodexTabAnchors,
@@ -786,7 +773,8 @@ internal class AgentSessionRefreshCoordinator(
         "Starting provider refresh id=$refreshId provider=${provider.value} (sourceUpdate=${sourceUpdate.name.lowercase()})"
       }
       val source = sessionSourcesProvider().firstOrNull { it.provider == provider } ?: return
-      val selectedIdentity = selectedChatThreadIdentityProvider()
+      val openChatSnapshot = openAgentChatSnapshotProvider()
+      val selectedIdentity = openChatSnapshot.selectedChatThreadIdentity
       source.setActiveThreadId(
         if (selectedIdentity != null && selectedIdentity.first == provider) selectedIdentity.second else null
       )
@@ -795,7 +783,7 @@ internal class AgentSessionRefreshCoordinator(
       val targetPaths = LinkedHashSet<String>()
       if (scopedPaths == null) {
         targetPaths.addAll(collectLoadedPaths(stateSnapshot))
-        targetPaths.addAll(openAgentChatProjectPathsProvider())
+        targetPaths.addAll(openChatSnapshot.openProjectPaths)
       }
       else {
         targetPaths.addAll(scopedPaths)
@@ -850,9 +838,12 @@ internal class AgentSessionRefreshCoordinator(
       }
 
       val refreshSupport = refreshSupportFor(provider)
-      val pendingCodexTabsSnapshotByPath = refreshSupport?.collectNormalizedPendingTabsByPath() ?: emptyMap()
-
-      val concreteCodexTabsSnapshotByPath = refreshSupport?.collectNormalizedConcreteTabsAwaitingNewThreadRebindByPath() ?: emptyMap()
+      val pendingCodexTabsSnapshotByPath = openChatSnapshot.pendingTabsByPath(provider)
+      val concreteCodexTabsSnapshotByPath = openChatSnapshot.concreteTabsAwaitingNewThreadRebindByPath(provider)
+      val openConcreteChatThreadIdentitiesByPath = LinkedHashMap<String, MutableSet<String>>()
+      for ((path, identities) in openChatSnapshot.concreteThreadIdentitiesByPath) {
+        openConcreteChatThreadIdentitiesByPath[path] = LinkedHashSet(identities)
+      }
 
       val codexHintThreadIdsByPath = refreshSupport?.collectRefreshHintThreadIdsByPath(
           targetPaths = targetPaths,
@@ -860,6 +851,7 @@ internal class AgentSessionRefreshCoordinator(
           knownThreadIdsByPath = knownThreadIdsByPath,
           pendingTabsByPath = pendingCodexTabsSnapshotByPath,
           concreteTabsByPath = concreteCodexTabsSnapshotByPath,
+          openConcreteThreadIdentitiesByPath = openConcreteChatThreadIdentitiesByPath,
         ) ?: emptyMap()
 
       val refreshHintPaths = if (refreshSupport != null) {
@@ -913,6 +905,7 @@ internal class AgentSessionRefreshCoordinator(
           refreshId = refreshId,
           refreshHintsByPath = refreshHintsByPath,
           concreteTabsByPath = concreteCodexTabsSnapshotByPath,
+          openConcreteThreadIdentitiesByPath = openConcreteChatThreadIdentitiesByPath,
         )
 
       val pendingCodexBindOutcome = refreshSupport?.bindPendingOpenChatTabs(
@@ -921,6 +914,7 @@ internal class AgentSessionRefreshCoordinator(
           allowedThreadIdsByPath = allowedNewThreadIdsByPath,
           refreshHintsByPath = refreshHintsByPath,
           pendingTabsByPath = pendingCodexTabsSnapshotByPath,
+          openConcreteThreadIdentitiesByPath = openConcreteChatThreadIdentitiesByPath,
         )
 
       val pendingCodexTabsForProjectionByPath =
