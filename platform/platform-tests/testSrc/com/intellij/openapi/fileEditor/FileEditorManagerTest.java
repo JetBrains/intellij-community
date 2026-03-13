@@ -49,11 +49,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class FileEditorManagerTest extends FileEditorManagerTestCase {
   public void testTabOrder() {
-    openFiles(STRING.replace("pinned=\"true\"", "pinned=\"false\""));
+    openFiles(getXMLText().replace("pinned=\"true\"", "pinned=\"false\""));
     assertOpenFiles("1.txt", "foo.xml", "2.txt", "3.txt");
 
     manager.closeAllFiles();
-    openFiles(STRING);
+    openFiles(getXMLText());
     // regardless of pin, we open files in the same order as it was closed
     assertOpenFiles("1.txt", "foo.xml", "2.txt", "3.txt");
   }
@@ -77,7 +77,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
 
   public void testTabLimit() {
     UISettings.getInstance().getState().setEditorTabLimit(2);
-    openFiles(STRING);
+    openFiles(getXMLText());
     // note that foo.xml is pinned
     assertOpenFiles("foo.xml", "3.txt");
   }
@@ -106,12 +106,12 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
 
   public void testSingleTabLimit() {
     UISettings.getInstance().getState().setEditorTabLimit(1);
-    openFiles(STRING.replace("pinned=\"true\"", "pinned=\"false\""));
+    openFiles(getXMLText().replace("pinned=\"true\"", "pinned=\"false\""));
     assertOpenFiles("3.txt");
 
     manager.closeAllFiles();
 
-    openFiles(STRING);
+    openFiles(getXMLText());
     // note that foo.xml is pinned
     assertOpenFiles("foo.xml");
     manager.openFile(getFile("/src/3.txt"), null, new FileEditorOpenOptions().withRequestFocus());
@@ -436,45 +436,48 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     exManager.closeFile(file, secondaryWindow);
   }
 
-  @Language("XML")
-  private static final String STRING = """
-    <component name="FileEditorManager">
-        <leaf>
-          <file pinned="false" current="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/src/1.txt">
-              <provider selected="true" editor-type-id="text-editor">
-                <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file pinned="true" current="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/src/foo.xml">
-              <provider selected="true" editor-type-id="text-editor">
-                <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file pinned="false" current="true" current-in-tab="true">
-            <entry file="file://$PROJECT_DIR$/src/2.txt">
-              <provider selected="true" editor-type-id="text-editor">
-                <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file pinned="false" current="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/src/3.txt">
-              <provider selected="true" editor-type-id="text-editor">
-                <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
-                </state>
-              </provider>
-            </entry>
-          </file>
-        </leaf>
-      </component>
-    """;
+  private static String getXMLText() {
+    @Language("XML")
+    String STRING = """
+      <component name="FileEditorManager">
+          <leaf>
+            <file pinned="false" current="false" current-in-tab="false">
+              <entry file="file://$PROJECT_DIR$/src/1.txt">
+                <provider selected="true" editor-type-id="text-editor">
+                  <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+                  </state>
+                </provider>
+              </entry>
+            </file>
+            <file pinned="true" current="false" current-in-tab="false">
+              <entry file="file://$PROJECT_DIR$/src/foo.xml">
+                <provider selected="true" editor-type-id="text-editor">
+                  <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+                  </state>
+                </provider>
+              </entry>
+            </file>
+            <file pinned="false" current="true" current-in-tab="true">
+              <entry file="file://$PROJECT_DIR$/src/2.txt">
+                <provider selected="true" editor-type-id="text-editor">
+                  <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+                  </state>
+                </provider>
+              </entry>
+            </file>
+            <file pinned="false" current="false" current-in-tab="false">
+              <entry file="file://$PROJECT_DIR$/src/3.txt">
+                <provider selected="true" editor-type-id="text-editor">
+                  <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+                  </state>
+                </provider>
+              </entry>
+            </file>
+          </leaf>
+        </component>
+      """;
+    return STRING;
+  }
 
   private void assertOpenFiles(String... fileNames) {
     List<String> names = ContainerUtil.map(manager.getSplitters().getAllComposites(), composite -> composite.getFile().getName());
