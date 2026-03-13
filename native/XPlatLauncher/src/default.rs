@@ -299,11 +299,17 @@ impl DefaultLaunchConfiguration {
             Err(e) => { debug!("Failed: {e}"); }
         }
 
-        let real_ide_home = if cfg!(target_os = "macos") { self.ide_home.parent().context("Failed to get ide_home parent")? } else { &self.ide_home };
-        let tb_file_base = real_ide_home.file_name()
-            .context("Failed to get real_ide_home file_name()")?.to_str()
-            .context("Failed to get to_str() from real_ide_home file_name()")?;
-        let tb_file_path = real_ide_home.parent().context("Failed to get real_ide_home parent()")?.join(tb_file_base.to_string() + ".vmoptions");
+        let real_ide_home = if cfg!(target_os = "macos") {
+            self.ide_home.parent().context("Failed to get ide_home parent")?
+        } else {
+            &self.ide_home
+        };
+        let tb_file_base = real_ide_home
+            .file_name().context("Failed to get real_ide_home file_name()")?
+            .to_str().context("Failed to get to_str() from real_ide_home file_name()")?;
+        let tb_file_path = real_ide_home
+            .parent().context("Failed to get real_ide_home parent()")?
+            .join(tb_file_base.to_string() + ".vmoptions");
         debug!("Checking {tb_file_path:?}");
         if tb_file_path.is_file() {
             return Ok(tb_file_path);
@@ -368,9 +374,7 @@ pub fn compute_launch_info(product_info: &ProductInfo, command_name: Option<&Str
     let custom_command_data = match command_name {
         Some(command_name) => {
             match &launch_data.customCommands {
-                Some(commands) => commands.iter().find(
-                    |custom| custom.commands.contains(command_name)
-                ),
+                Some(commands) => commands.iter().find(|custom| custom.commands.contains(command_name)),
                 None => None
             }
         },
