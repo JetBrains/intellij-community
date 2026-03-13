@@ -39,9 +39,7 @@ class WebpMetadata : IIOMetadata() {
     const val DEFAULT_ENCODING_QUALITY: Float = 0.75f
     const val DEFAULT_LOSSLESS: Boolean = true
 
-    /**
-     * Ensures that service providers are registered.
-     */
+    @Deprecated("Please do not use it. SPI-s loaded via EP")
     @JvmStatic
     fun ensureWebpRegistered() {
       val defaultInstance = IIORegistry.getDefaultInstance()

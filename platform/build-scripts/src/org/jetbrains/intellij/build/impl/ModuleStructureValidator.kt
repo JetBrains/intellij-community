@@ -39,7 +39,7 @@ private val nonPathAttributes = hashSetOf(
 )
 
 private val pathElements = hashSetOf("interface-class", "implementation-class")
-private val predefinedTypes = hashSetOf("java.lang.Object")
+private val predefinedTypes = hashSetOf("java.lang.Object", "javax.imageio.spi.IIOServiceProvider") // jdk classes are not resolved in runtime
 private val ignoreModules = hashSetOf("intellij.java.testFramework", "intellij.platform.uast.testFramework")
 
 class ModuleStructureValidator(
