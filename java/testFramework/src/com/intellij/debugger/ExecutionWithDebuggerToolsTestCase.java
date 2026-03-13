@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -466,7 +467,8 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   public void createBreakpoints(PsiFile file) {
     Runnable runnable = () -> {
       BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
-      Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
+      Document document =
+        BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() -> PsiDocumentManager.getInstance(myProject).getDocument(file));
       assert document != null;
       String text = document.getText();
 

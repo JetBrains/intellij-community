@@ -6,6 +6,7 @@ import com.intellij.codeInsight.TypeNullability;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -341,13 +342,15 @@ public class ClsPsiTest extends LightIdeaTestCase {
 
       // We are actually most interested in the side effect of calls to getText() (we want to ensure no warnings are being logged)
 
-      assertNotNull(modifierList.getMirror());
-      assertEquals("public", modifierList.getText());
-      assertNotNull(modifierList.getMirror()); // assert that calling getText() does not set a mirror
+      assertNotNull(BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() -> modifierList.getMirror()));
+      assertEquals("public", BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() -> modifierList.getText()));
+      assertNotNull(BinaryFileTypeDecompilers.getInstance()
+                      .allowDecompileOnEDT(() -> modifierList.getMirror())); // assert that calling getText() does not set a mirror
 
-      assertNotNull(throwsList.getMirror());
+      assertNotNull(BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() -> throwsList.getMirror()));
       assertEquals("", throwsList.getText());
-      assertNotNull(throwsList.getMirror()); // assert that calling getText() does not set a mirror
+      assertNotNull(BinaryFileTypeDecompilers.getInstance()
+                      .allowDecompileOnEDT(() -> throwsList.getMirror())); // assert that calling getText() does not set a mirror
     });
 
     assertEmpty(warnings);
@@ -572,9 +575,10 @@ public class ClsPsiTest extends LightIdeaTestCase {
   public void testClsPsiDoesNotHoldStrongReferencesToMirrorAST() {
     PsiClass dbl = getJavaFacade().findClass(Double.class.getName(), myScope);
     assertNotNull(dbl);
-    assertEquals(dbl, ((ClsClassImpl)dbl).getMirror().getUserData(ClsElementImpl.COMPILED_ELEMENT));
+    assertEquals(dbl, BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() -> ((ClsClassImpl)dbl).getMirror())
+      .getUserData(ClsElementImpl.COMPILED_ELEMENT));
 
-    GCWatcher.tracking(((ClsClassImpl)dbl).getMirror()).ensureCollected();
+    GCWatcher.tracking(BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() -> ((ClsClassImpl)dbl).getMirror())).ensureCollected();
     LeakHunter.checkLeak(dbl, ClassElement.class, element -> element.getPsi().getUserData(ClsElementImpl.COMPILED_ELEMENT) == dbl);
   }
 
@@ -584,7 +588,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
     FileUtil.copy(file1, testFile);
     VirtualFile copyVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(testFile);
     ClsFileImpl clsFile = (ClsFileImpl)PsiManager.getInstance(getProject()).findFile(copyVFile);
-    PsiElement mirror = clsFile.getMirror();
+    PsiElement mirror = BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() -> clsFile.getMirror());
     assertTrue(clsFile.isValid());
     assertTrue(mirror.isValid());
 

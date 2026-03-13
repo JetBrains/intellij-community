@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.ElementManipulators
+import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiType
@@ -119,6 +120,7 @@ class JvmTestDiffProvider : TestDiffProvider {
   }
 
   private fun findFailedCall(file: PsiFile, lineNumber: Int, resolvedMethod: UMethod?): UCallExpression? {
+    if (file is PsiCompiledElement) return null
     val virtualFile = file.virtualFile ?: return null
     val document = FileDocumentManager.getInstance().getDocument(virtualFile) ?: return null
     if (lineNumber < 1 || lineNumber > document.lineCount) return null

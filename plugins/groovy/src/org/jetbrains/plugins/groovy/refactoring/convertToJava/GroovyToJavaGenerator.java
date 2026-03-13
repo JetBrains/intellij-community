@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -53,7 +54,8 @@ public final class GroovyToJavaGenerator {
 
   public static String generateMethodStub(@NotNull PsiMethod method) {
     if (!(method instanceof GroovyPsiElement)) {
-      return method.getText();
+      //todo fix IDEA-387059
+      return BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() -> method.getText());
     }
 
     final ClassItemGenerator generator = new StubGenerator(new StubClassNameProvider(Collections.emptySet()));

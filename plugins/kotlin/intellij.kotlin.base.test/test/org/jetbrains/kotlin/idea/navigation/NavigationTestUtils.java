@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -98,7 +99,8 @@ public final class NavigationTestUtils {
         MultiMap<VirtualFile, Pair<Integer, Integer>> filesToNumbersAndOffsets = new MultiMap<>();
         int refNumber = 1;
         for (PsiElement navigationElement : navigableElements) {
-            Pair<Integer, Integer> numberAndOffset = new Pair<>(refNumber++, navigationElement.getTextOffset());
+            Pair<Integer, Integer> numberAndOffset = new Pair<>(refNumber++, BinaryFileTypeDecompilers.getInstance()
+                    .allowDecompileOnEDT(() -> navigationElement.getTextOffset()));
             filesToNumbersAndOffsets.putValue(navigationElement.getContainingFile().getVirtualFile(), numberAndOffset);
         }
 

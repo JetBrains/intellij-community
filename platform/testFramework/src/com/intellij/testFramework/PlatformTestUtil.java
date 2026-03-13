@@ -53,6 +53,7 @@ import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -934,8 +935,22 @@ public final class PlatformTestUtil {
   }
 
   public static void assertFilesEqual(@NotNull VirtualFile fileExpected, @NotNull VirtualFile fileActual) throws IOException {
-    var actual = fileText(fileActual);
-    var expected = fileText(fileExpected);
+    var actual = BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() -> {
+      try {
+        return fileText(fileActual);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    });
+    var expected = BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() -> {
+      try {
+        return fileText(fileExpected);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    });
     if (expected == null || actual == null) {
       assertArrayEquals(fileExpected.getPath(), fileExpected.contentsToByteArray(), fileActual.contentsToByteArray());
     }

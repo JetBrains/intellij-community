@@ -6,6 +6,7 @@ import com.intellij.ide.util.gotoByName.LanguageRef
 import com.intellij.navigation.NavigationItem
 import com.intellij.navigation.PsiElementNavigationItem
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.UsefulTestCase
@@ -126,7 +127,7 @@ object GotoCheck {
                 |    presentableText: ${presentation?.presentableText}
                 |    locationString: ${presentation?.locationString}
                 |    icon: ${presentation?.getIcon(false)}
-                |TargetElement: ${psiTarget?.text?.lines()?.first()?.trim()}
+                |TargetElement: ${BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT{ psiTarget?.text?.lines()?.first()?.trim()}}
                 |QualifiedName: ${model.getFullName(element)}
             """.trimMargin()
         }

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ExternalAnnotationLineMarkerProvider;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.javadoc.AnnotationDocGenerator;
 import com.intellij.codeInsight.javadoc.NonCodeAnnotationGenerator;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
@@ -79,7 +80,7 @@ public class JavaDocInfoGeneratorTypeTest extends LightJavaCodeInsightFixtureTes
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     ClsClassImpl comparatorClass =
       (ClsClassImpl)facade.findClass(CommonClassNames.JAVA_UTIL_COMPARATOR, GlobalSearchScope.allScope(project));
-    PsiClass mirrorClass = ((PsiClass)comparatorClass.getMirror());
+    PsiClass mirrorClass = BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() -> ((PsiClass)comparatorClass.getMirror()));
 
     PsiFile containingFile = comparatorClass.getContainingFile();
     myFixture.configureFromExistingVirtualFile(containingFile.getVirtualFile());
@@ -100,7 +101,7 @@ public class JavaDocInfoGeneratorTypeTest extends LightJavaCodeInsightFixtureTes
     Project project = getProject();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     ClsClassImpl optionalClass = (ClsClassImpl)facade.findClass(CommonClassNames.JAVA_UTIL_OPTIONAL, GlobalSearchScope.allScope(project));
-    PsiClass mirrorClass = ((PsiClass)optionalClass.getMirror());
+    PsiClass mirrorClass = BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() -> ((PsiClass)optionalClass.getMirror()));
 
     List<LineMarkerInfo> infos = new ArrayList<>();
     new ExternalAnnotationLineMarkerProvider().collectSlowLineMarkers(List.of(mirrorClass.getNameIdentifier()), infos);
@@ -115,7 +116,7 @@ public class JavaDocInfoGeneratorTypeTest extends LightJavaCodeInsightFixtureTes
     Project project = getProject();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     ClsClassImpl optionalClass = (ClsClassImpl)facade.findClass(CommonClassNames.JAVA_UTIL_OPTIONAL, GlobalSearchScope.allScope(project));
-    PsiClass mirrorClass = ((PsiClass)optionalClass.getMirror());
+    PsiClass mirrorClass = BinaryFileTypeDecompilers.getInstance().allowDecompileOnEDT(() -> ((PsiClass)optionalClass.getMirror()));
 
     PsiMethod[] mirrorMethods = mirrorClass.findMethodsByName("or", false);
     assertEquals(1, mirrorMethods.length);

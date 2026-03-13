@@ -4,6 +4,7 @@ package com.intellij.refactoring.extractSuperclass;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -163,7 +164,9 @@ public final class ExtractSuperClassUtil {
       final PsiCodeBlock body = constructor.getBody();
       assert body != null;
       body.add(statement);
-      constructor.getThrowsList().replace(baseConstructor.getThrowsList());
+      //todo fix IDEA-387050
+      BinaryFileTypeDecompilers.getInstance()
+        .allowDecompileOnEDT(() -> constructor.getThrowsList().replace(baseConstructor.getThrowsList()));
     }
   }
 
