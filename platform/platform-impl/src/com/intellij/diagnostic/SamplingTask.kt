@@ -58,9 +58,12 @@ internal open class SamplingTask(@JvmField internal val dumpInterval: Int, priva
     val infos = ThreadDumper.getThreadInfos(THREAD_MX_BEAN, false)
     coroutineContext.ensureActive()
 
-    threadInfos = threadInfos.add(infos)
-
+    storeThreadInfos(infos)
     processDumpedThreads(infos)
+  }
+
+  protected open fun storeThreadInfos(infos: Array<ThreadInfo>) {
+    threadInfos = threadInfos.add(infos)
   }
 
   protected open suspend fun processDumpedThreads(infos: Array<ThreadInfo>) {}
