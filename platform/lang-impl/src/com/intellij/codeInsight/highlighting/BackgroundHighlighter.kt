@@ -236,18 +236,69 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
     }
   }
 
-  @RequiresEdt
-  private fun updateHighlighted(project: Project, hostEditor: Editor, coroutineScope: CoroutineScope) {
-    ThreadingAssertions.assertEventDispatchThread()
-    val hostDocument = hostEditor.document
-    if (hostDocument.isInBulkUpdate || !BackgroundHighlightingUtil.isValidEditor(hostEditor)) {
-      return
-    }
-    val offsetBefore = hostEditor.caretModel.offset
-    val visibleRange = hostEditor.calculateVisibleRange()
-    val needMatching = BackgroundHighlightingUtil.needMatching(hostEditor, CodeInsightSettings.getInstance())
-    coroutineScope.launch(context = CoroutineName("BackgroundHighlighter.updateHighlighted(${hostEditor.document})")) {
-      val job:Job = coroutineContext.job
+    @RequiresEdt
+    private fun updateHighlighted(project: Project, hostEditor: Editor, coroutineScope: CoroutineScope) {
+      ThreadingAssertions.assertEventDispatchThread()
+      val hostDocument = hostEditor.document
+      if (hostDocument.isInBulkUpdate || !BackgroundHighlightingUtil.isValidEditor(hostEditor)) {
+        return
+      }
+      val offsetBefore = hostEditor.caretModel.offset
+      val visibleRange = hostEditor.calculateVisibleRange()
+      val needMatching = BackgroundHighlightingUtil.needMatching(hostEditor, CodeInsightSettings.getInstance())
+      val coroutineName = "BackgroundHighlighter.updateHighlighted(${hostEditor.document})"
+      val job = coroutineScope.launch(context = CoroutineName(coroutineName)) {
+        val job: Job = coroutineContext.job
+        val documentModStampBefore = hostDocument.modificationStamp
+        val injected = readAction { BackgroundHighlightingUtil.findInjected(hostEditor, project, offsetBefore) } ?: return@launch
+        val newPsiFile = injected.first
+        val newEditor = injected.second
+        val modalityState: CoroutineContext = ModalityState.stateForComponent(hostEditor.component).asContextElement()
+        val maybeMatch = if (needMatching) {
+          readAction {
+            HeavyBraceHighlighter.match(newPsiFile, offsetBefore)
+          }
+        }
+        else {
+          null
+        }
+        // launch nested coroutines that finish only after the main job is finished, to be able to wait for identifier highlighting to apply, see waitForIdentifierHighlighting
+        launch(Dispatchers.EDT + modalityState) {
+          if (isEditorUpToDate(hostEditor, offsetBefore, newEditor, newPsiFile, documentModStampBefore, job)) {
+            applyBraceMatching(project, newEditor, newPsiFile, maybeMatch, needMatching)
+          }
+        }
+
+        val identPass = readAction {
+          createPass(newPsiFile, hostEditor, newEditor)
+        }
+        if (identPass != null) {
+          var infos = listOf<HighlightInfo>()
+          var result = EMPTY_RESULT
+          try {
+            result = identPass.doCollectInformation(project, visibleRange)
+            if (result == WRONG_DOCUMENT_VERSION) {
+              launch(Dispatchers.EDT + modalityState) {
+                updateHighlighted(project, hostEditor, coroutineScope)
+              }
+              return@launch
+            }
+            infos = readAction {
+              identPass.createHighlightInfos(result)
+            }
+          }
+          catch (_: IndexNotReadyException) {
+          }
+          launch(Dispatchers.EDT + modalityState) {
+            if (isEditorUpToDate(hostEditor, offsetBefore, newEditor, newPsiFile, documentModStampBefore, job)) {
+              val group = (IdentifierHighlightingManager.getInstance(project) as IdentifierHighlightingManagerImpl).getPassId()
+              UpdateHighlightersUtil.setHighlightersToSingleEditor(project, hostEditor, 0, hostDocument.textLength, infos, hostEditor.colorsScheme, group)
+              identPass.doAdditionalCodeBlockHighlighting(result)
+            }
+          }
+        }
+      }
+
       val oldJob = (hostEditor as UserDataHolderEx).getAndUpdateUserData(BACKGROUND_TASK_KEY) {
         job
       }
@@ -255,60 +306,10 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
       // clear user data only after the nested launches completed, since they assume the job is still in the editor user data, see isEditorUpToDate
       job.invokeOnCompletion {
         (hostEditor as UserDataHolderEx).getAndUpdateUserData(BACKGROUND_TASK_KEY) {
-          oldJob -> if (oldJob == job) null else oldJob // remove my job, but don't touch the job if not mine because it might be the newest job
-        }
-      }
-
-      val documentModStampBefore = hostDocument.modificationStamp
-      val injected = readAction { BackgroundHighlightingUtil.findInjected(hostEditor, project, offsetBefore) } ?: return@launch
-      val newPsiFile = injected.first
-      val newEditor = injected.second
-      val modalityState: CoroutineContext = ModalityState.stateForComponent(hostEditor.component).asContextElement()
-      val maybeMatch = if (needMatching) {
-        readAction {
-          HeavyBraceHighlighter.match(newPsiFile, offsetBefore)
-        }
-      }
-      else {
-        null
-      }
-      // launch nested coroutines that finish only after the main job is finished, to be able to wait for identifier highlighting to apply, see waitForIdentifierHighlighting
-      launch(Dispatchers.EDT + modalityState) {
-        if (isEditorUpToDate(hostEditor, offsetBefore, newEditor, newPsiFile, documentModStampBefore, job)) {
-          applyBraceMatching(project, newEditor, newPsiFile, maybeMatch, needMatching)
-        }
-      }
-
-      val identPass = readAction {
-        createPass(newPsiFile, hostEditor, newEditor)
-      }
-      if (identPass != null) {
-        var infos = listOf<HighlightInfo>()
-        var result = EMPTY_RESULT
-        try {
-          result = identPass.doCollectInformation(project, visibleRange)
-          if (result == WRONG_DOCUMENT_VERSION) {
-            launch(Dispatchers.EDT + modalityState) {
-              updateHighlighted(project, hostEditor, coroutineScope)
-            }
-            return@launch
-          }
-          infos = readAction {
-            identPass.createHighlightInfos(result)
-          }
-        }
-        catch (_: IndexNotReadyException) {
-        }
-        launch(Dispatchers.EDT + modalityState) {
-          if (isEditorUpToDate(hostEditor, offsetBefore, newEditor, newPsiFile, documentModStampBefore, job)) {
-            val group = (IdentifierHighlightingManager.getInstance(project) as IdentifierHighlightingManagerImpl).getPassId()
-            UpdateHighlightersUtil.setHighlightersToSingleEditor(project, hostEditor, 0, hostDocument.textLength, infos, hostEditor.colorsScheme, group)
-            identPass.doAdditionalCodeBlockHighlighting(result)
-          }
+          newJob -> if (newJob == job) null else newJob // remove my job, but don't touch the job if not mine because it might be the newest job
         }
       }
     }
-  }
 
   @RequiresEdt
   private suspend fun isEditorUpToDate(
