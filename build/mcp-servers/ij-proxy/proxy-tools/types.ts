@@ -4,6 +4,8 @@ export type ToolArgs = Record<string, unknown>
 
 export type UpstreamToolCaller = (toolName: string, args: ToolArgs) => Promise<unknown>
 
+export type WorkaroundChecker = (key: import('../workarounds').WorkaroundKey) => boolean
+
 export interface ToolContentItem {
   text?: string
   [key: string]: unknown

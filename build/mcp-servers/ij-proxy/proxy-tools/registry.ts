@@ -15,13 +15,14 @@ import {
   createSearchSymbolSchema,
   createSearchTextSchema
 } from './schemas'
-import type {ReadCapabilities, SearchCapabilities, ToolArgs, ToolInputSchema, ToolSpecLike, UpstreamToolCaller} from './types'
+import type {ReadCapabilities, SearchCapabilities, ToolArgs, ToolInputSchema, ToolSpecLike, UpstreamToolCaller, WorkaroundChecker} from './types'
 
 interface ToolContext {
   projectPath: string
   callUpstreamTool: UpstreamToolCaller
   searchCapabilities: SearchCapabilities
   readCapabilities: ReadCapabilities
+  shouldApplyWorkaround: WorkaroundChecker
 }
 
 type ToolHandler = (args: ToolArgs) => Promise<unknown>
@@ -97,8 +98,8 @@ const TOOL_VARIANTS: ToolVariant[] = [
     name: 'search_regex',
     description: 'Search for a regular expression in project files.',
     schemaFactory: () => createSearchRegexSchema(),
-    handlerFactory: ({projectPath, callUpstreamTool, searchCapabilities}) => (args) =>
-      handleSearchRegexTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    handlerFactory: ({projectPath, callUpstreamTool, searchCapabilities, shouldApplyWorkaround}) => (args) =>
+      handleSearchRegexTool(args, projectPath, callUpstreamTool, searchCapabilities, shouldApplyWorkaround),
     upstreamNames: ['search_regex'],
     expose: ({searchCapabilities}) => !searchCapabilities.hasSearchRegex && searchCapabilities.supportsRegex
   },

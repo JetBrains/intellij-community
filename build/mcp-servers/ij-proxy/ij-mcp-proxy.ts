@@ -118,7 +118,8 @@ function updateProxyTooling(): void {
     projectPath,
     callUpstreamTool: (name, args) => upstream.callTool(name, args),
     searchCapabilities: upstream.searchCapabilities,
-    readCapabilities: upstream.readCapabilities
+    readCapabilities: upstream.readCapabilities,
+    ideVersion: upstream.ideVersion
   })
   proxyToolSpecs = tooling.proxyToolSpecs
   proxyToolNames = tooling.proxyToolNames
