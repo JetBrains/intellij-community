@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl
 import org.jetbrains.jps.builders.storage.BuildDataPaths
 import org.jetbrains.kotlin.config.SettingConstants
+import org.jetbrains.kotlin.config.SettingConstants.KOTLIN_COMPILER_REFERENCE_INDEX_BUILDER_ID
 import org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexStorage
 import org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexStorageProvider
 import java.nio.file.Path
@@ -48,6 +49,9 @@ internal class JpsKotlinCompilerReferenceIndexStorageProvider : KotlinCompilerRe
         if (!storage.initialize(buildDataPaths)) return null
         return storage
     }
+
+    override val builderId: String
+        get() = KOTLIN_COMPILER_REFERENCE_INDEX_BUILDER_ID
 }
 
 internal val Project.buildDataPaths: BuildDataPaths

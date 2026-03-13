@@ -51,7 +51,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.syntheticAccessors
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.util.not
@@ -93,6 +92,7 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
     private val compilationCounter = LongAdder()
     private val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
     private val supportedFileTypes: Set<FileType> = setOf(KotlinFileType.INSTANCE, JavaFileType.INSTANCE)
+    private val currentBuilderId by lazy { KotlinCompilerReferenceIndexStorage.getBuilderId(project) }
     private val dirtyScopeHolder = DirtyScopeHolder(
         project,
         supportedFileTypes,
@@ -103,7 +103,7 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
         connect.subscribe(
             CustomBuilderMessageHandler.TOPIC,
             CustomBuilderMessageHandler { builderId, _, messageText ->
-                if (builderId == SettingConstants.KOTLIN_COMPILER_REFERENCE_INDEX_BUILDER_ID) {
+                if (builderId == currentBuilderId) {
                     mutableSet += messageText
                 }
             },
