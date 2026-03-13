@@ -18,12 +18,10 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiManager
 import com.intellij.psi.SingleRootFileViewProvider
 import com.intellij.testFramework.ReadOnlyLightVirtualFile
-import com.intellij.util.ui.EDT
 
 
-class UiPsiSupport(
-  private val project: Project,
-) {
+internal class UiPsiSupport(private val project: Project) {
+
   fun isUiDocument(uiOrRealDocument: Document): Boolean {
     return getTopLevelUiDocument(uiOrRealDocument) != null
   }
@@ -126,10 +124,8 @@ class UiPsiSupport(
     if (uiDocumentManager.isUiDocument(topLevelDocument)) {
       return topLevelDocument
     }
-    if (EDT.isCurrentThreadEdt()) {
-      if (topLevelDocument.getUserData(EditorLockFreeTyping.USE_UI_PSI_FOR_DOCUMENT_KEY) == true) {
-        return uiDocumentManager.getUiDocument(topLevelDocument)
-      }
+    if (EditorLockFreeTyping.isInUiPsiScope(topLevelDocument)) {
+      return uiDocumentManager.getUiDocument(topLevelDocument)
     }
     return null
   }
@@ -190,18 +186,15 @@ class UiPsiSupport(
     template: UiPsiTemplate,
   ): FileViewProvider {
     val providerFactory = LanguageFileViewProviders.INSTANCE.forLanguage(template.language)
-    val uiViewProvider: FileViewProvider
     if (providerFactory != null) {
-      uiViewProvider = providerFactory.createFileViewProvider(
+      return providerFactory.createFileViewProvider(
         uiVirtualFile,
         template.language,
         psiManager,
         /* eventSystemEnabled = */ false,
       )
-    } else {
-      uiViewProvider = SingleRootFileViewProvider(psiManager, uiVirtualFile, false)
     }
-    return uiViewProvider
+    return SingleRootFileViewProvider(psiManager, uiVirtualFile, false)
   }
 
   private fun createUiPsiVirtualFile(

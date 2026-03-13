@@ -48,7 +48,6 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
   public PsiDocumentManagerImpl(@NotNull Project project) {
     super(project);
     myUiPsiSupport = new UiPsiSupport(project);
-
     EditorFactory editorFactory = EditorFactory.getInstance();
     editorFactory.getEventMulticaster().addDocumentListener(this, this);
     ((EditorEventMulticasterImpl)editorFactory.getEventMulticaster()).addPrioritizedDocumentListener(new PriorityEventCollector(), this);

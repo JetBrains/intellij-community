@@ -46,24 +46,20 @@ public abstract class TypedAction {
   public void beforeActionPerformed(@NotNull Editor editor, char c, @NotNull DataContext context, @NotNull ActionPlan plan) {
     assertLocalEditorSupport(editor);
     if (rawHandler instanceof TypedActionHandlerEx rawHandlerEx) {
-      useUiPsiForDocument(editor, true);
-      try {
-        rawHandlerEx.beforeExecute(editor, c, context, plan);
-      } finally {
-        useUiPsiForDocument(editor, false);
-      }
+      EditorLockFreeTyping.withUiPsiScope(
+        editor.getDocument(),
+        () -> rawHandlerEx.beforeExecute(editor, c, context, plan)
+      );
     }
   }
 
   public final void actionPerformed(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
     assertLocalEditorSupport(editor);
     try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
-      useUiPsiForDocument(editor, true);
-      try {
-        rawHandler.execute(editor, charTyped, dataContext);
-      } finally {
-        useUiPsiForDocument(editor, false);
-      }
+      EditorLockFreeTyping.withUiPsiScope(
+        editor.getDocument(),
+        () -> rawHandler.execute(editor, charTyped, dataContext)
+      );
     }
   }
 
@@ -186,12 +182,6 @@ public abstract class TypedAction {
     catch (Exception e) {
       LOG.error(new PluginException(e, pluginDescriptor.getPluginId()));
       return null;
-    }
-  }
-
-  private static void useUiPsiForDocument(@NotNull Editor editor, boolean value) {
-    if (EditorLockFreeTyping.isEnabled()) {
-      editor.getDocument().putUserData(EditorLockFreeTyping.USE_UI_PSI_FOR_DOCUMENT_KEY, value);
     }
   }
 }
