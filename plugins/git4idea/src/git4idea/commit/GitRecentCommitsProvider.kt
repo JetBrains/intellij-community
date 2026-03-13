@@ -30,7 +30,7 @@ import kotlin.time.measureTimedValue
 
 @ApiStatus.Experimental
 @Service(Service.Level.PROJECT)
-class GitMyRecentCommitsProvider(private val project: Project, private val scope: CoroutineScope) {
+class GitRecentCommitsProvider(private val project: Project, private val scope: CoroutineScope) {
   private val requestedDepth = ConcurrentHashMap<VirtualFile, Int>()
 
   private val cache: AsyncLoadingCache<VirtualFile, List<VcsCommitMetadata>> = CaffeineUtil.withIoExecutor()
@@ -89,6 +89,6 @@ class GitMyRecentCommitsProvider(private val project: Project, private val scope
   companion object {
     private val LOG = thisLogger()
 
-    fun getInstance(project: Project): GitMyRecentCommitsProvider = project.service()
+    fun getInstance(project: Project): GitRecentCommitsProvider = project.service()
   }
 }

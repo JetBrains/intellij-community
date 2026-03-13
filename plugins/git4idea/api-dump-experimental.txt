@@ -55,12 +55,12 @@ f:git4idea.changes.GitBranchComparisonResultKt
 - s:wrap(com.intellij.openapi.vcs.CheckoutProvider$Listener):git4idea.checkout.GitCheckoutListener
 *f:git4idea.checkout.GitCheckoutListener$Companion
 - f:wrap(com.intellij.openapi.vcs.CheckoutProvider$Listener):git4idea.checkout.GitCheckoutListener
-*f:git4idea.commit.GitMyRecentCommitsProvider
-- *sf:Companion:git4idea.commit.GitMyRecentCommitsProvider$Companion
+*f:git4idea.commit.GitRecentCommitsProvider
+- *sf:Companion:git4idea.commit.GitRecentCommitsProvider$Companion
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - f:getRecentCommits(com.intellij.openapi.vfs.VirtualFile,I,kotlin.coroutines.Continuation):java.lang.Object
-*f:git4idea.commit.GitMyRecentCommitsProvider$Companion
-- f:getInstance(com.intellij.openapi.project.Project):git4idea.commit.GitMyRecentCommitsProvider
+*f:git4idea.commit.GitRecentCommitsProvider$Companion
+- f:getInstance(com.intellij.openapi.project.Project):git4idea.commit.GitRecentCommitsProvider
 git4idea.push.GitPushListener
 - *:onCompleted(git4idea.repo.GitRepository,git4idea.push.GitPushRepoResult,java.util.Map):V
 f:git4idea.push.GitPushNotificationCustomizerKt
