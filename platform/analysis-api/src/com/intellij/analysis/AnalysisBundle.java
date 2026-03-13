@@ -2,6 +2,7 @@
 package com.intellij.analysis;
 
 import com.intellij.DynamicBundle;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -9,6 +10,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
+@Internal
 public final class AnalysisBundle {
   public static final @NonNls String BUNDLE = "messages.AnalysisBundle";
   private static final DynamicBundle INSTANCE = new DynamicBundle(AnalysisBundle.class, BUNDLE);

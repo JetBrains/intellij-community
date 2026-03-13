@@ -98,9 +98,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.ProperTextRange
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.registry.Registry.Companion.`is`
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
@@ -141,7 +140,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.awt.AWTEvent
 import java.awt.Adjustable
 import java.awt.AlphaComposite
 import java.awt.Color
@@ -972,7 +970,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     override fun isThumbTranslucent(): Boolean = true
 
     override fun getThumbOffset(value: Int): Int {
-      if (SystemInfoRt.isMac || `is`("editor.full.width.scrollbar")) {
+      if (SystemInfoRt.isMac || Registry.`is`("editor.full.width.scrollbar")) {
         return getMinMarkHeight() + scale(2)
       }
       @Suppress("DEPRECATION")
@@ -1079,7 +1077,8 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
 
       MarkupIterator.mergeIterators(
         (getEditor().getMarkupModel() as MarkupModelEx).overlappingErrorStripeIterator(startOffset, endOffset),
-        ((getEditor() as EditorEx).getFilteredDocumentMarkupModel() as EditorFilteringMarkupModelEx).getDelegate().overlappingErrorStripeIterator(startOffset, endOffset), RangeHighlighterEx.BY_AFFECTED_START_OFFSET)
+        ((getEditor() as EditorEx).getFilteredDocumentMarkupModel() as EditorFilteringMarkupModelEx).getDelegate()
+          .overlappingErrorStripeIterator(startOffset, endOffset), RangeHighlighterEx.BY_AFFECTED_START_OFFSET)
         .use { iterator ->
           for (highlighter in iterator) {
             if (!ErrorStripeMarkersModel.isErrorStripeHighlighter(highlighter, editor)) {
@@ -1290,17 +1289,17 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
 
     fun closeHintOnMovingMouseAway(hint: LightweightHint) {
       val disposable = Disposer.newDisposable()
-      IdeEventQueue.getInstance().addDispatcher({ e: AWTEvent? ->
-        if (e!!.getID() == MouseEvent.MOUSE_PRESSED) {
-          myKeepHint = true
-          Disposer.dispose(disposable)
-        }
-        else if (e.getID() == MouseEvent.MOUSE_MOVED && !hint.isInsideHint(RelativePoint(e as MouseEvent))) {
-          hint.hide()
-          Disposer.dispose(disposable)
-        }
-        false
-      }, disposable)
+      IdeEventQueue.getInstance().addDispatcher({ e ->
+                                                  if (e.getID() == MouseEvent.MOUSE_PRESSED) {
+                                                    myKeepHint = true
+                                                    Disposer.dispose(disposable)
+                                                  }
+                                                  else if (e.getID() == MouseEvent.MOUSE_MOVED && !hint.isInsideHint(RelativePoint(e as MouseEvent))) {
+                                                    hint.hide()
+                                                    Disposer.dispose(disposable)
+                                                  }
+                                                  false
+                                                }, disposable)
     }
 
     override fun mouseDragged(e: MouseEvent) {
@@ -1337,7 +1336,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
   }
 
   override fun addErrorMarkerListener(listener: ErrorStripeListener, parent: Disposable) {
-    val markupListener: MarkupModelListener = object: MarkupModelListener {
+    val markupListener: MarkupModelListener = object : MarkupModelListener {
       override fun afterAdded(highlighter: RangeHighlighterEx) {
         if (ErrorStripeMarkersModel.isErrorStripeHighlighter(highlighter, editor)) {
           listener.errorMarkerChanged(ErrorStripeEvent(editor, null, highlighter))
@@ -1350,7 +1349,12 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
         }
       }
 
-      override fun attributesChanged(highlighter: RangeHighlighterEx, renderersChanged: Boolean, fontStyleChanged: Boolean, foregroundColorChanged: Boolean) {
+      override fun attributesChanged(
+        highlighter: RangeHighlighterEx,
+        renderersChanged: Boolean,
+        fontStyleChanged: Boolean,
+        foregroundColorChanged: Boolean,
+      ) {
         if (ErrorStripeMarkersModel.isErrorStripeHighlighter(highlighter, editor)) {
           listener.errorMarkerChanged(ErrorStripeEvent(editor, null, highlighter))
         }
@@ -1689,7 +1693,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
         override fun setUI(ui: LabelUI?) {
           super.setUI(ui)
 
-          if (!SystemInfo.isWindows) {
+          if (!SystemInfoRt.isWindows) {
             var font = getFont()
             // allow resetting the font by UI
             font = FontUIResource(font.deriveFont(font.getStyle(), (font.getSize() - scale(2)).toFloat()))
@@ -1705,7 +1709,8 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     }
 
     override fun paintComponent(graphics: Graphics?) {
-      val state = if (mousePressed) ActionButtonComponent.PUSHED else if (mouseHover) ActionButtonComponent.POPPED else ActionButtonComponent.NORMAL
+      val state =
+        if (mousePressed) ActionButtonComponent.PUSHED else if (mouseHover) ActionButtonComponent.POPPED else ActionButtonComponent.NORMAL
       buttonLook.paintBackground(graphics, this, state)
     }
 
@@ -1887,5 +1892,3 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
   )
 
 }
-
-
