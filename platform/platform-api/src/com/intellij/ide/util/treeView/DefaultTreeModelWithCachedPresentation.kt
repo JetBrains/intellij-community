@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView
 
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.util.containers.nullize
 import org.jetbrains.annotations.ApiStatus
@@ -24,11 +26,15 @@ class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentation
   @set:ApiStatus.Internal
   override var cachedPresentation: CachedTreePresentation? = null
     set(value) {
+      LOG.debug("Applying the cached presentation")
       field = value
       if (value != null) {
         cachedPresentationApplier = CachedPresentationApplier(value)
       }
       cachedPresentationApplier?.checkDone() // the "nothing to apply" case
+      if (LOG.isTraceEnabled) {
+        dumpTree()
+      }
     }
 
   fun promiseRealNodes(): Promise<List<TreePath>> {
@@ -68,26 +74,43 @@ class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentation
   }
 
   fun setRoot(newRoot: DefaultMutableTreeNode?) {
+    LOG.debug { "Set root: $newRoot" }
     cachedPresentationApplier?.rootLoaded(newRoot)
     delegate.setRoot(newRoot)
     cachedPresentationApplier?.checkDone()
+    if (LOG.isTraceEnabled && newRoot != null) {
+      dumpTree()
+    }
   }
 
   fun setChildren(parent: DefaultMutableTreeNode, children: List<DefaultMutableTreeNode>) {
+    LOG.debug { "Set children of $parent: $children" }
     removeChildrenFromDelegate(parent)
     insertChildrenIntoDelegate(parent, children)
     cachedPresentationApplier?.checkDone()
+    if (LOG.isTraceEnabled) {
+      dumpTree()
+    }
   }
 
   fun insertChild(parent: DefaultMutableTreeNode, index: Int, newChild: DefaultMutableTreeNode) {
+    LOG.debug { "Insert at $index into $parent: $newChild" }
     delegate.insertNodeInto(newChild, parent, index)
+    if (LOG.isTraceEnabled) {
+      dumpTree()
+    }
   }
 
   fun removeChild(parent: DefaultMutableTreeNode, index: Int) {
-    delegate.removeNodeFromParent(getChild(parent, index) as DefaultMutableTreeNode)
+    LOG.debug { "Remove at $index from $parent" }
+    delegate.removeNodeFromParent(getChild(parent, index))
+    if (LOG.isTraceEnabled) {
+      dumpTree()
+    }
   }
-  
+
   fun updateNode(node: DefaultMutableTreeNode, newValue: Any) {
+    LOG.debug { "Update $node, new value: $newValue" }
     node.userObject = newValue
     delegate.nodeChanged(node)
   }
@@ -114,6 +137,23 @@ class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentation
     delegate.nodesWereInserted(parent, IntArray(children.size) { it })
   }
 
+  private fun dumpTree() {
+    val structure = buildString {
+      dumpTree(root, level = 0)
+    }
+    LOG.trace { "The tree structure at the moment:\n$structure" }
+  }
+
+  private fun StringBuilder.dumpTree(node: DefaultMutableTreeNode?, level: Int) {
+    if (node == null) return
+    append(" ".repeat(level))
+    append(node)
+    append("\n")
+    for (child in node.children()) {
+      dumpTree(child as DefaultMutableTreeNode, level + 1)
+    }
+  }
+
   private inner class CachedPresentationApplier(
     val cachedPresentation: CachedTreePresentation
   ) {
@@ -132,7 +172,7 @@ class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentation
       else {
         cachedPresentation.rootLoaded(realRoot)
         // Notify that the tree has changed only if it in fact DID change (any cached presentations were applied).
-        if (applyCachedChildPresentations(realRoot as DefaultMutableTreeNode)) {
+        if (applyCachedChildPresentations(realRoot)) {
           delegate.reload(realRoot)
         }
       }
@@ -183,6 +223,7 @@ class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentation
     }
 
     private fun done() {
+      LOG.debug { "Done with the cached presentation, loadedRealNodes.size=${loadedRealNodes.size}" }
       promise.setResult(loadedRealNodes)
       this@DefaultTreeModelWithCachedPresentation.cachedPresentationApplier = null
     }
