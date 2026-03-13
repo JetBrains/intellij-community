@@ -2008,6 +2008,7 @@ object MavenUtil {
    * MNG-7805: Since Maven 4.0.0-alpha-7, modelVersion is optional and inferred from namespace.
    * @return inferred modelVersion from xmlns, or null if not inferrable
    */
+  @JvmStatic
   fun inferModelVersionFromNamespace(xmlns: String?): String? {
     if (xmlns == null) return null
     val prefix = "http://maven.apache.org/POM/"
