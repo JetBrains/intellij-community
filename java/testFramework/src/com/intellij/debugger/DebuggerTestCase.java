@@ -165,6 +165,10 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     super.runTestRunnable(testRunnable);
+    runProcessAndAwaitCompleted();
+  }
+
+  public void runProcessAndAwaitCompleted() throws Exception {
     if (getDebugProcess() != null) {
       runProcess();
       waitProcess(getDebugProcess().getProcessHandler());
