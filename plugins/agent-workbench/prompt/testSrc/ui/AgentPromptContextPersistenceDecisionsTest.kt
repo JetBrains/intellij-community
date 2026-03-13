@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.prompt.ui
 
 import com.dynatrace.hash4j.hashing.Hashing
+import com.intellij.agent.workbench.prompt.ui.AgentPromptContextRemovalDecisions.resolveContextEntriesAfterRemoval
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayload

@@ -2,7 +2,7 @@
 package com.intellij.agent.workbench.prompt.context.uiPicker
 
 import com.intellij.agent.workbench.prompt.AgentPromptBundle
-import com.intellij.agent.workbench.prompt.context.buildScreenshotContextItem
+import com.intellij.agent.workbench.prompt.context.AgentPromptScreenshotContextItem.buildScreenshotContextItem
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptManualContextPickerRequest
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptManualContextSourceBridge

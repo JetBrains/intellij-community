@@ -5,10 +5,15 @@ import com.intellij.agent.workbench.prompt.context.MANUAL_PROJECT_PATHS_SOURCE_I
 import com.intellij.agent.workbench.prompt.context.ManualPathSelectionEntry
 import com.intellij.agent.workbench.prompt.context.buildManualPathsContextItem
 import com.intellij.agent.workbench.prompt.context.extractCurrentPaths
+import com.intellij.agent.workbench.prompt.ui.AgentPromptContextRemovalDecisions.removeManualContextItemsAfterExplicitRemoval
+import com.intellij.agent.workbench.prompt.ui.AgentPromptContextRemovalDecisions.resolveContextEntriesAfterRemoval
+import com.intellij.agent.workbench.prompt.ui.AgentPromptContextRemovalDecisions.resolveManualContextItemsAfterRemoval
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererIds
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayload
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.nio.file.Files
 
 class AgentPromptContextRemovalDecisionsTest {
   @Test
@@ -153,6 +158,34 @@ class AgentPromptContextRemovalDecisionsTest {
     assertThat(updatedItems).isEmpty()
   }
 
+  @Test
+  fun explicitlyRemovingManualScreenshotSourcesDeletesBackingImageFile() {
+    listOf("manual.ui.context", "manual.screen.capture").forEach { sourceId ->
+      val screenshotFile = Files.createTempFile("agent-workbench-context-", ".png")
+      try {
+        val manualItem = screenshotContextItem(sourceId, screenshotFile.toString())
+        val removedEntry = ContextEntry(
+          item = manualItem,
+          id = "manual:$sourceId",
+          origin = ContextEntryOrigin.MANUAL,
+          manualSourceId = sourceId,
+        )
+
+        val updatedItems = removeManualContextItemsAfterExplicitRemoval(
+          manualItemsBySourceId = mapOf(sourceId to manualItem),
+          removedEntry = removedEntry,
+          projectPath = null,
+        )
+
+        assertThat(updatedItems).isEmpty()
+        assertThat(Files.exists(screenshotFile)).isFalse()
+      }
+      finally {
+        Files.deleteIfExists(screenshotFile)
+      }
+    }
+  }
+
   private fun contextEntry(
     entryId: String,
     logicalItemId: String?,
@@ -169,6 +202,20 @@ class AgentPromptContextRemovalDecisionsTest {
         source = "test",
       ),
       id = entryId,
+    )
+  }
+
+  private fun screenshotContextItem(sourceId: String, filePath: String): AgentPromptContextItem {
+    return AgentPromptContextItem(
+      rendererId = AgentPromptContextRendererIds.SNIPPET,
+      title = "Screenshot",
+      body = filePath,
+      payload = AgentPromptPayload.obj(
+        "type" to AgentPromptPayload.str("screenshot"),
+        "filePath" to AgentPromptPayload.str(filePath),
+      ),
+      itemId = sourceId,
+      source = "manualScreenshot",
     )
   }
 }
