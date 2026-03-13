@@ -1,5 +1,6 @@
 package com.intellij.python.pyproject.model.internal.workspaceBridge
 
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.NlsSafe
@@ -47,6 +48,7 @@ import com.intellij.python.pyproject.model.spi.Tool
 import com.intellij.python.pyproject.model.spi.WorkspaceName
 import com.intellij.python.pyproject.model.spi.plus
 import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
+import com.intellij.workspaceModel.ide.toPath
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.Dispatchers
@@ -57,6 +59,7 @@ import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.name
 
+private val logger = fileLogger()
 
 // Workspace adapter functions
 
@@ -74,8 +77,60 @@ internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfoWith
       renameSameModuleAndMoveSources(syncStorage, projectStorage)
       relocateFacetAndSdk(syncStorage, projectStorage)
       projectStorage.replaceBySource({ it.isPythonEntity }, syncStorage)
+      ensureNoSrcIntersectsWithOtherRoots(projectStorage)
     }
   }
+}
+
+/**
+ * No module should have source root that clashes with a content root of another module.
+ * Starting from a module source and going up to its content root, we shouldn't meet any content root of another module.
+ */
+private fun ensureNoSrcIntersectsWithOtherRoots(projectStorage: MutableEntityStorage) {
+  val moduleEntities = projectStorage.entities<ModuleEntity>().toList()
+  val rootToModules = HashMap<Path, MutableSet<ModuleEntity>>()
+  for (moduleEntity in moduleEntities) {
+    for (contentRoot in moduleEntity.contentRoots) {
+      rootToModules.getOrPut(contentRoot.url.toPath()) { mutableSetOf() }.add(moduleEntity)
+    }
+  }
+
+  for (moduleEntity in moduleEntities) {
+    for (contentRootEntity in moduleEntity.contentRoots.toList()) {
+      if (contentRootEntity.sourceRoots.isEmpty()) continue
+
+      val contentRoot = contentRootEntity.url.toPath()
+      val clashingPaths = contentRootEntity.sourceRoots
+        .mapNotNull { sr -> sr.url.toPath().takeIf { clashesWithOtherRoot(it, contentRoot, moduleEntity, rootToModules) } }
+        .toSet()
+      if (clashingPaths.isEmpty()) continue
+
+      logger.info("Removing source roots clashing with other modules from '${moduleEntity.name}': $clashingPaths")
+      projectStorage.modifyContentRootEntity(contentRootEntity) {
+        sourceRoots = sourceRoots.filterNot { it.url.toPath() in clashingPaths }
+      }
+    }
+  }
+}
+
+/**
+ * Walk from [moduleSrc] up to [moduleContentRoot] (inclusive).
+ * Return `true` if any intermediate path is a content root owned by a module other than [currentModule].
+ */
+private fun clashesWithOtherRoot(
+  moduleSrc: Path,
+  moduleContentRoot: Path,
+  currentModule: ModuleEntity,
+  rootToModules: Map<Path, Set<ModuleEntity>>,
+): Boolean {
+  var current = moduleSrc
+  do {
+    val owners = rootToModules[current]
+    if (owners != null && owners.any { it != currentModule }) return true
+    current = current.parent ?: break
+  }
+  while (current.startsWith(moduleContentRoot))
+  return false
 }
 
 private fun renameSameModuleAndMoveSources(syncStorage: EntityStorage, projectStorage: MutableEntityStorage) {
