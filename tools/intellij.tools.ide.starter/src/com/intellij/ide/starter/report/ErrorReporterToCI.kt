@@ -126,16 +126,17 @@ object ErrorReporterToCI: ErrorReporter {
       val failureDetailsProvider = FailureDetailsOnCI.instance
       val failureDetailsMessage = failureDetailsProvider.getFailureDetails(runContext)
       val urlToLogs = failureDetailsProvider.getLinkToCIArtifacts(runContext).toString()
+      val linkToMuteArticle = "\nThis test fail is an exception! \nYou can find instructions about muting this error in this link https://youtrack.jetbrains.com/articles/IJPL-A-1185/How-to-create-a-new-mapping"
       if (CIServer.instance.isTestFailureShouldBeIgnored(messageText) || CIServer.instance.isTestFailureShouldBeIgnored(stackTraceContent)) {
         CIServer.instance.ignoreTestFailure(testName = "(${generifyErrorMessage(testName)})",
                                             message = failureDetailsMessage)
       }
       else {
         CIServer.instance.reportTestFailure(testName = "(${generifyErrorMessage(testName)})",
-                                            message = failureDetailsMessage,
+                                            message = failureDetailsMessage + linkToMuteArticle,
                                             details = stackTraceContent,
                                             linkToLogs = urlToLogs)
-        AllureReport.reportFailure(runContext.contextName, messageText,
+        AllureReport.reportFailure(runContext.contextName, messageText + linkToMuteArticle,
                                    stackTraceContent,
                                    links = AllureLink.single("Link to Logs and artifacts", failureDetailsProvider.getLinkToCIArtifacts(runContext) ?: "fail to get link"))
       }
