@@ -57,7 +57,10 @@ private val POETRY_TOOL: ToolCommandExecutor = ToolCommandExecutor(
 private val POETRY_EXCLUDE_NON_DIGITS_REGEX = Regex("""\D+$""")
 
 @Internal
-suspend fun runPoetry(projectPath: Path?, vararg args: String): PyResult<String> = POETRY_TOOL.runTool(projectPath, *args)
+suspend fun runPoetry(projectPath: Path?, vararg args: String, inProjectEnv: Boolean = false): PyResult<String> {
+  val env = if (inProjectEnv) mapOf("POETRY_VIRTUALENVS_IN_PROJECT" to "true") else emptyMap()
+  return POETRY_TOOL.runTool(projectPath, *args, env = env)
+}
 
 
 /**
@@ -93,6 +96,7 @@ suspend fun setupPoetry(
   installPackages: Boolean,
   init: Boolean,
   errorSink: ErrorSink,
+  inProjectEnv: Boolean = false,
 ): PyResult<PythonHomePath> {
   if (init) {
     // Build poetry init command with Python version constraint if available
@@ -112,16 +116,16 @@ suspend fun setupPoetry(
     initArgs.add("--python")
     initArgs.add("^$major.$minor")
 
-    runPoetry(projectPath, *initArgs.toTypedArray()).getOr { return it }
+    runPoetry(projectPath, *initArgs.toTypedArray(), inProjectEnv = inProjectEnv).getOr { return it }
   }
 
-  runPoetry(projectPath, "env", "use", basePythonBinaryPath.pathString).getOr { return it }
+  runPoetry(projectPath, "env", "use", basePythonBinaryPath.pathString, inProjectEnv = inProjectEnv).getOr { return it }
 
   if (installPackages) {
-    runPoetry(projectPath, "install", "--no-root").onFailure { errorSink.emit(it) }
+    runPoetry(projectPath, "install", "--no-root", inProjectEnv = inProjectEnv).onFailure { errorSink.emit(it) }
   }
 
-  return runPoetry(projectPath, "env", "info", "-p").mapSuccess { Path.of(it) }
+  return runPoetry(projectPath, "env", "info", "-p", inProjectEnv = inProjectEnv).mapSuccess { Path.of(it) }
 }
 
 internal suspend fun detectPoetryEnvs(searchPath: Path): List<PythonBinary> = getPoetryEnvs(searchPath).mapNotNull { getPythonExecutable(it) }
