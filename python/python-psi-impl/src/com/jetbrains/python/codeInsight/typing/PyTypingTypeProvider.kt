@@ -2296,36 +2296,20 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     ): PyQualifiedNameOwner? {
       if (!context.isComputeTypeParameterScopeEnabled) return null
 
-      val typeHintContext: PsiElement = getStubRetainedTypeHintContext(typeHint)
+      val typeHintContext = getStubRetainedTypeHintContext(typeHint)
       val typeParamOwnerCandidates =
-        StreamEx.iterate<PsiElement?>(
-          typeHintContext,
-          { Objects.nonNull(it) },
-          UnaryOperator { owner: PsiElement? ->
-            PsiTreeUtil.getStubOrPsiParentOfType(
-              owner,
-              ScopeOwner::class.java
-            )
-          })
-          .filter { owner: PsiElement? -> owner is PyFunction || owner is PyClass }
-          .select(PyQualifiedNameOwner::class.java)
+        generateSequence(typeHintContext) { PsiTreeUtil.getStubOrPsiParentOfType(it, ScopeOwner::class.java) }
+          .filter { it is PyFunction || it is PyClass }
+          .map { it as PyQualifiedNameOwner }
           .toList()
 
       val closestOwner = typeParamOwnerCandidates.firstOrNull()
       if (closestOwner is PyFunction) {
-        val typeParameterType = StreamEx.of(typeParamOwnerCandidates)
-          .skip(1)
-          .map {
-            findSameTypeParameterInDefinition(
-              it,
-              name,
-              context
-            )
-          }
-          .nonNull()
-          .findFirst()
-        if (typeParameterType.isPresent) {
-          return typeParameterType.get().scopeOwner
+        val typeParameterType = typeParamOwnerCandidates.asSequence()
+          .drop(1)
+          .firstNotNullOfOrNull { findSameTypeParameterInDefinition(it, name, context) }
+        if (typeParameterType != null) {
+          return typeParameterType.scopeOwner
         }
       }
       if (closestOwner != null) {
