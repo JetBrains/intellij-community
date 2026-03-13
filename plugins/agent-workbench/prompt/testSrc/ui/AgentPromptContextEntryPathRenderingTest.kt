@@ -1,10 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.ui
 
+import com.intellij.agent.workbench.prompt.vcs.render.AgentPromptVcsRevisionsContextRendererBridge
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererIds
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRenderers
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptFileContextRendererBridge
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPathsContextRendererBridge
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayload
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayloadValue
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptSnippetContextRendererBridge
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptSymbolContextRendererBridge
+import com.intellij.agent.workbench.sessions.core.prompt.InMemoryAgentPromptContextRendererRegistry
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.junit5.TestApplication
@@ -16,7 +23,7 @@ import java.io.File
 @TestApplication
 class AgentPromptContextEntryPathRenderingTest {
   @Test
-  fun fileChipUsesProjectRelativePath() {
+  fun fileChipUsesProjectRelativePath() = withBuiltinRenderers {
     val home = systemPath(SystemProperties.getUserHome())
     val projectBasePath = systemPath("$home/agent-workbench-project")
     val filePath = systemPath("$projectBasePath/src/Main.kt")
@@ -34,7 +41,7 @@ class AgentPromptContextEntryPathRenderingTest {
   }
 
   @Test
-  fun fileChipUsesDotForProjectRoot() {
+  fun fileChipUsesDotForProjectRoot() = withBuiltinRenderers {
     val home = systemPath(SystemProperties.getUserHome())
     val projectBasePath = systemPath("$home/agent-workbench-project-root")
 
@@ -49,7 +56,7 @@ class AgentPromptContextEntryPathRenderingTest {
   }
 
   @Test
-  fun fileChipUsesHomeRelativePathOutsideProject() {
+  fun fileChipUsesHomeRelativePathOutsideProject() = withBuiltinRenderers {
     val home = systemPath(SystemProperties.getUserHome())
     val filePath = systemPath("$home/awb-chips/notes.md")
     val expected = FileUtil.getLocationRelativeToUserHome(filePath, false)
@@ -65,7 +72,7 @@ class AgentPromptContextEntryPathRenderingTest {
   }
 
   @Test
-  fun fileChipMiddleTruncatesLongProjectRelativePath() {
+  fun fileChipMiddleTruncatesLongProjectRelativePath() = withBuiltinRenderers {
     val home = systemPath(SystemProperties.getUserHome())
     val projectBasePath = systemPath("$home/agent-workbench-project-long")
     val relativePath = listOf(
@@ -91,7 +98,7 @@ class AgentPromptContextEntryPathRenderingTest {
   }
 
   @Test
-  fun pathsChipKeepsPrefixAndShortensPath() {
+  fun pathsChipKeepsPrefixAndShortensPath() = withBuiltinRenderers {
     val home = systemPath(SystemProperties.getUserHome())
     val projectBasePath = systemPath("$home/agent-workbench-project-paths")
     val selectedDirectory = systemPath("$projectBasePath/subdir")
@@ -108,7 +115,7 @@ class AgentPromptContextEntryPathRenderingTest {
   }
 
   @Test
-  fun pathsChipMiddleTruncatesLongHomeRelativePath() {
+  fun pathsChipMiddleTruncatesLongHomeRelativePath() = withBuiltinRenderers {
     val home = systemPath(SystemProperties.getUserHome())
     val selectedPath = systemPath(
       "$home/awb-long-selection/deeply-nested-selection/with-extra-context/for-preview/VeryLongSelectedPathName.txt"
@@ -128,7 +135,7 @@ class AgentPromptContextEntryPathRenderingTest {
   }
 
   @Test
-  fun nonPathKindsDoNotShortenAbsoluteContent() {
+  fun nonPathKindsDoNotShortenAbsoluteContent() = withBuiltinRenderers {
     val home = systemPath(SystemProperties.getUserHome())
     val projectBasePath = systemPath("$home/agent-workbench-project-symbol")
     val absoluteContent = systemPath("$home/agent-workbench-project-symbol/src/SomeSymbol")
@@ -144,7 +151,7 @@ class AgentPromptContextEntryPathRenderingTest {
   }
 
   @Test
-  fun snippetChipShowsTitleOnly() {
+  fun snippetChipShowsTitleOnly() = withBuiltinRenderers {
     val entry = contextEntry(
       rendererId = AgentPromptContextRendererIds.SNIPPET,
       title = "Selection (1-5)",
@@ -156,7 +163,7 @@ class AgentPromptContextEntryPathRenderingTest {
   }
 
   @Test
-  fun vcsRevisionsChipUsesFirstRevisionFromPayload() {
+  fun vcsRevisionsChipUsesFirstRevisionFromPayload() = withBuiltinRenderers {
     val entry = contextEntry(
       rendererId = AgentPromptContextRendererIds.VCS_REVISIONS,
       title = "VCS Revisions",
@@ -178,7 +185,7 @@ class AgentPromptContextEntryPathRenderingTest {
   }
 
   @Test
-  fun unknownRendererTooltipFallsBackToGenericEnvelopeRender() {
+  fun unknownRendererTooltipFallsBackToGenericEnvelopeRender() = withBuiltinRenderers {
     val entry = contextEntry(
       rendererId = "customRenderer",
       title = "Custom",
@@ -215,5 +222,18 @@ class AgentPromptContextEntryPathRenderingTest {
 
   private fun systemPath(path: String): String {
     return FileUtil.toSystemDependentName(path)
+  }
+
+  private fun withBuiltinRenderers(action: () -> Unit) {
+    val registry = InMemoryAgentPromptContextRendererRegistry(
+      listOf(
+        AgentPromptSnippetContextRendererBridge(),
+        AgentPromptFileContextRendererBridge(),
+        AgentPromptSymbolContextRendererBridge(),
+        AgentPromptPathsContextRendererBridge(),
+        AgentPromptVcsRevisionsContextRendererBridge(),
+      )
+    )
+    AgentPromptContextRenderers.withRegistryForTest(registry, action)
   }
 }

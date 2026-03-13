@@ -13,7 +13,7 @@ import kotlin.math.max
 
 private const val CHIP_PREVIEW_MAX_LENGTH = 60
 
-internal class AgentPromptSnippetContextRendererBridge : AgentPromptContextRendererBridge {
+class AgentPromptSnippetContextRendererBridge : AgentPromptContextRendererBridge {
   override val rendererId: String
     get() = AgentPromptContextRendererIds.SNIPPET
 
@@ -77,7 +77,10 @@ class AgentPromptSymbolContextRendererBridge : AgentPromptContextRendererBridge 
   }
 
   override fun renderChip(input: AgentPromptChipRenderInput): AgentPromptChipRender {
-    return AgentPromptChipRender(text = composeChipText(input.item.title, input.item.body))
+    val title = input.item.title?.takeIf { it.isNotBlank() } ?: "Context"
+    val body = input.item.body.trim()
+    val text = if (body.isEmpty()) title else "$title: $body"
+    return AgentPromptChipRender(text = text)
   }
 }
 
@@ -221,16 +224,6 @@ private fun resolveAbsolutePath(pathText: String, projectPath: String?): String?
   catch (_: InvalidPathException) {
     null
   }
-}
-
-internal fun composeChipText(title: String?, preview: String): String {
-  val resolvedTitle = title?.takeIf { it.isNotBlank() } ?: "Context"
-  val trimmedPreview = preview.trim()
-  if (trimmedPreview.isEmpty()) {
-    return resolvedTitle
-  }
-  val shortPreview = if (trimmedPreview.length <= CHIP_PREVIEW_MAX_LENGTH) trimmedPreview else trimmedPreview.take(CHIP_PREVIEW_MAX_LENGTH) + "\u2026"
-  return "$resolvedTitle: $shortPreview"
 }
 
 internal fun composePathChipText(title: String?, preview: String): String {
