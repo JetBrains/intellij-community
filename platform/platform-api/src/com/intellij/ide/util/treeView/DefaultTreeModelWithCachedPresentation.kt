@@ -171,22 +171,33 @@ class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentation
       }
       else {
         cachedPresentation.rootLoaded(realRoot)
+        applyCachedChildPresentations(realRoot)
         // Notify that the tree has changed only if it in fact DID change (any cached presentations were applied).
-        if (applyCachedChildPresentations(realRoot)) {
+        if (cachedNodeCount > 0) {
           delegate.reload(realRoot)
         }
       }
     }
 
-    private fun applyCachedChildPresentations(parent: DefaultMutableTreeNode): Boolean {
-      val children = cachedPresentation.getChildren(parent)?.nullize() ?: return false
-      for ((index, child) in children.withIndex()) {
-        val childNode = DefaultMutableTreeNode(child)
-        applyCachedChildPresentations(childNode)
-        parent.insert(childNode, index)
-        ++cachedNodeCount
+    private fun applyCachedChildPresentations(parent: DefaultMutableTreeNode) {
+      val cachedChildren = cachedPresentation.getChildren(parent)?.nullize() ?: return
+      val realChildCount = delegate.getChildCount(parent)
+      if (realChildCount == 0) {
+        for ((index, cachedChild) in cachedChildren.withIndex()) {
+          val cachedChildNode = DefaultMutableTreeNode(cachedChild)
+          applyCachedChildPresentations(cachedChildNode)
+          parent.insert(cachedChildNode, index)
+          ++cachedNodeCount
+        }
       }
-      return true
+      else if (realChildCount == cachedChildren.size) {
+        val realChildren = (0 until realChildCount).map { delegate.getChild(parent, it) as DefaultMutableTreeNode }
+        cachedPresentation.childrenLoaded(parent, realChildren)
+        for (realChild in realChildren) {
+          applyCachedChildPresentations(realChild)
+        }
+      }
+      // else mismatch, the cached info is outdated
     }
 
     fun rootLoaded(newRoot: DefaultMutableTreeNode?) {

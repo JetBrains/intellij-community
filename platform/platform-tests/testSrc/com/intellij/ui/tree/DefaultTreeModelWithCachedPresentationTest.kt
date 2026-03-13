@@ -100,6 +100,30 @@ internal class DefaultTreeModelWithCachedPresentationTest {
   )
 
   @Test
+  fun `restore cached presentation with already existing root and some children`() = restorePresentationTest(
+    initialState = """
+      |root
+      | child1
+      | child2
+      """.trimMargin(),
+    cachedPresentation = """
+      |root
+      | child1
+      |  child11
+      |  child12
+      | child2
+      """.trimMargin(),
+    expectedResult = """
+      |root
+      | child1
+      |  *child11
+      |  *child12
+      | child2
+      """.trimMargin(),
+    expectedEventCount = 2, // root set, presentation set
+  )
+
+  @Test
   fun `restore cached root presentation with cached children`() = restorePresentationTest(
     initialState = "",
     cachedPresentation = """
