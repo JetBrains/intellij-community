@@ -5,12 +5,16 @@ package com.intellij.agent.workbench.claude.sessions.backend.store
 
 import com.intellij.agent.workbench.claude.common.ClaudeSessionsStore
 import com.intellij.agent.workbench.claude.sessions.ClaudeBackendThread
+import com.intellij.agent.workbench.json.filebacked.FileBackedSessionCachedFile
+import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
+import com.intellij.agent.workbench.json.filebacked.FileBackedSessionFileStat
+import com.intellij.agent.workbench.json.filebacked.FileBackedSessionInvalidationState
+import com.intellij.agent.workbench.json.filebacked.toFileBackedSessionPathKey
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
-import kotlin.io.path.invariantSeparatorsPathString
 
 private val LOG = logger<ClaudeThreadIndex>()
 
@@ -19,30 +23,14 @@ private val MAX_AGE_NS = TimeUnit.DAYS.toNanos(30)
 internal class ClaudeThreadIndex(
   private val store: ClaudeSessionsStore,
 ) {
-  private val cacheLock = Any()
-  private var state = State()
+  private val invalidationState = FileBackedSessionInvalidationState<com.intellij.agent.workbench.claude.common.ClaudeSessionThread?>(::isClaudeSessionFile)
 
-  fun markDirty(changeSet: ClaudeChangeSet) {
-    if (!changeSet.requiresFullRescan && changeSet.changedJsonlPaths.isEmpty()) {
+  fun markDirty(changeSet: FileBackedSessionChangeSet) {
+    if (!changeSet.requiresFullRescan && changeSet.changedPaths.isEmpty()) {
       return
     }
 
-    var markedPaths = 0
-    synchronized(cacheLock) {
-      val newDirtyKeys = LinkedHashSet(state.dirtyPathKeys)
-      for (path in changeSet.changedJsonlPaths) {
-        val fileName = path.fileName?.toString() ?: continue
-        if (!fileName.endsWith(".jsonl")) continue
-        if (newDirtyKeys.add(toPathKey(path))) {
-          markedPaths++
-        }
-      }
-
-      state = state.copy(
-        forceFullRescan = state.forceFullRescan || changeSet.requiresFullRescan,
-        dirtyPathKeys = newDirtyKeys,
-      )
-    }
+    val markedPaths = invalidationState.markDirty(changeSet)
     LOG.debug {
       "Marked Claude thread cache dirty (fullRescan=${changeSet.requiresFullRescan}, paths=$markedPaths)"
     }
@@ -61,7 +49,7 @@ internal class ClaudeThreadIndex(
       return emptyList()
     }
 
-    val allJsonlFiles = LinkedHashMap<String, JsonlFileStat>()
+    val allJsonlFiles = LinkedHashMap<String, FileBackedSessionFileStat>()
     for (directory in directories) {
       try {
         scanJsonlFiles(directory, allJsonlFiles)
@@ -71,81 +59,47 @@ internal class ClaudeThreadIndex(
       }
     }
 
-    val filesToParse = ArrayList<JsonlFileStat>()
-    collectChangedFiles(allJsonlFiles, filesToParse)
+    val rescanPlan = invalidationState.planRescan(allJsonlFiles)
 
-    if (filesToParse.isNotEmpty()) {
-      val parsedUpdates = HashMap<String, CachedClaudeFile>(filesToParse.size)
-      for (stat in filesToParse) {
-        parsedUpdates[stat.pathKey] = CachedClaudeFile(
+    if (rescanPlan.filesToParse.isNotEmpty()) {
+      val parsedUpdates = HashMap<String, FileBackedSessionCachedFile<com.intellij.agent.workbench.claude.common.ClaudeSessionThread?>>(rescanPlan.filesToParse.size)
+      for (stat in rescanPlan.filesToParse) {
+        parsedUpdates[stat.pathKey] = FileBackedSessionCachedFile(
           lastModifiedNs = stat.lastModifiedNs,
           sizeBytes = stat.sizeBytes,
-          parsedThread = store.parseJsonlFile(stat.path),
+          parsedValue = store.parseJsonlFile(stat.path),
         )
       }
-      synchronized(cacheLock) {
-        state = state.copy(cachedFilesByPath = state.cachedFilesByPath + parsedUpdates)
-      }
+      invalidationState.applyParsedUpdates(parsedUpdates)
     }
 
     val threads = ArrayList<ClaudeBackendThread>()
 
-    synchronized(cacheLock) {
-      val cachedFilesByPath = state.cachedFilesByPath
-      for (pathKey in allJsonlFiles.keys) {
-        val parsed = cachedFilesByPath[pathKey]?.parsedThread ?: continue
-        threads.add(
-          ClaudeBackendThread(
-            id = parsed.id,
-            title = parsed.title,
-            updatedAt = parsed.updatedAt,
-            gitBranch = parsed.gitBranch,
-            activity = parsed.activity,
-          )
+    val cachedFilesByPath = invalidationState.snapshotCachedFiles()
+    for (pathKey in allJsonlFiles.keys) {
+      val parsed = cachedFilesByPath[pathKey]?.parsedValue ?: continue
+      threads.add(
+        ClaudeBackendThread(
+          id = parsed.id,
+          title = parsed.title,
+          updatedAt = parsed.updatedAt,
+          gitBranch = parsed.gitBranch,
+          activity = parsed.activity,
         )
-      }
+      )
     }
 
     threads.sortByDescending { it.updatedAt }
 
     LOG.debug {
-      "Resolved Claude threads for project (directories=${directories.size}, jsonlFiles=${allJsonlFiles.size}, parsed=${filesToParse.size}, total=${threads.size})"
+      "Resolved Claude threads for project (directories=${directories.size}, jsonlFiles=${allJsonlFiles.size}, parsed=${rescanPlan.filesToParse.size}, total=${threads.size})"
     }
 
     return threads
   }
-
-  private fun collectChangedFiles(
-    scannedFiles: Map<String, JsonlFileStat>,
-    filesToParse: MutableList<JsonlFileStat>,
-  ) {
-    synchronized(cacheLock) {
-      val currentCache = state.cachedFilesByPath
-      val needsPruning = currentCache.keys.any { !scannedFiles.containsKey(it) }
-      val prunedCache = if (needsPruning) currentCache.filterKeys { scannedFiles.containsKey(it) } else currentCache
-
-      val dirtyPathsSnapshot = state.dirtyPathKeys.takeIf { it.isNotEmpty() }
-      val fullRescan = state.forceFullRescan
-
-      state = state.copy(
-        cachedFilesByPath = prunedCache,
-        forceFullRescan = false,
-        dirtyPathKeys = emptySet(),
-      )
-
-      for ((pathKey, stat) in scannedFiles) {
-        val cached = prunedCache[pathKey]
-        val parseBecauseDirty = dirtyPathsSnapshot?.contains(pathKey) == true
-        val parseBecauseStatsChanged = cached == null || cached.lastModifiedNs != stat.lastModifiedNs || cached.sizeBytes != stat.sizeBytes
-        if (fullRescan || parseBecauseDirty || parseBecauseStatsChanged) {
-          filesToParse.add(stat)
-        }
-      }
-    }
-  }
 }
 
-private fun scanJsonlFiles(directory: Path, result: MutableMap<String, JsonlFileStat>) {
+private fun scanJsonlFiles(directory: Path, result: MutableMap<String, FileBackedSessionFileStat>) {
   val cutoffNs = TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis()) - MAX_AGE_NS
   Files.newDirectoryStream(directory, "*.jsonl").use { files ->
     for (candidate in files) {
@@ -164,8 +118,8 @@ private fun scanJsonlFiles(directory: Path, result: MutableMap<String, JsonlFile
         continue
       }
 
-      val pathKey = toPathKey(candidate)
-      result[pathKey] = JsonlFileStat(
+      val pathKey = toFileBackedSessionPathKey(candidate)
+      result[pathKey] = FileBackedSessionFileStat(
         pathKey = pathKey,
         path = candidate,
         lastModifiedNs = lastModifiedNs,
@@ -175,33 +129,7 @@ private fun scanJsonlFiles(directory: Path, result: MutableMap<String, JsonlFile
   }
 }
 
-private fun toPathKey(path: Path): String {
-  return normalizeFilePath(path).invariantSeparatorsPathString
+private fun isClaudeSessionFile(path: Path): Boolean {
+  val fileName = path.fileName?.toString() ?: return false
+  return fileName.endsWith(".jsonl")
 }
-
-internal fun normalizeFilePath(path: Path): Path {
-  return runCatching {
-    path.toAbsolutePath().normalize()
-  }.getOrElse {
-    path.normalize()
-  }
-}
-
-private data class State(
-  @JvmField val cachedFilesByPath: Map<String, CachedClaudeFile> = emptyMap(),
-  @JvmField val dirtyPathKeys: Set<String> = emptySet(),
-  @JvmField val forceFullRescan: Boolean = false,
-)
-
-private data class JsonlFileStat(
-  @JvmField val pathKey: String,
-  @JvmField val path: Path,
-  @JvmField val lastModifiedNs: Long,
-  @JvmField val sizeBytes: Long,
-)
-
-private data class CachedClaudeFile(
-  @JvmField val lastModifiedNs: Long,
-  @JvmField val sizeBytes: Long,
-  @JvmField val parsedThread: com.intellij.agent.workbench.claude.common.ClaudeSessionThread?,
-)

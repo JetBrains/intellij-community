@@ -2,8 +2,8 @@
 package com.intellij.agent.workbench.claude.sessions
 
 import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
-import com.intellij.agent.workbench.claude.sessions.backend.store.ClaudeChangeSet
 import com.intellij.agent.workbench.claude.sessions.backend.store.ClaudeStoreSessionBackend
+import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
@@ -312,7 +312,7 @@ class ClaudeStoreSessionBackendTest {
         listOf(claudeUserLine("2026-02-10T10:00:00.000Z", "session-updates", projectPath, "Initial title")),
       )
 
-      val sourceUpdates = MutableSharedFlow<ClaudeChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
       val backend = ClaudeStoreSessionBackend(
         claudeHomeProvider = { tempDir.resolve(".claude") },
         changeSource = { sourceUpdates },
@@ -334,7 +334,7 @@ class ClaudeStoreSessionBackendTest {
           jsonl,
           listOf(claudeUserLine("2026-02-10T10:05:00.000Z", "session-updates", projectPath, "Updated title")),
         )
-        sourceUpdates.emit(ClaudeChangeSet(changedJsonlPaths = setOf(jsonl)))
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(jsonl)))
 
         val updated = awaitWatcherUpdate(updates)
         assertThat(updated).isTrue()
@@ -362,7 +362,7 @@ class ClaudeStoreSessionBackendTest {
         listOf(claudeUserLine("2026-02-10T10:00:00.000Z", "session-refresh", projectPath, "Initial title")),
       )
 
-      val sourceUpdates = MutableSharedFlow<ClaudeChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
       val backend = ClaudeStoreSessionBackend(
         claudeHomeProvider = { tempDir.resolve(".claude") },
         changeSource = { sourceUpdates },
@@ -386,7 +386,7 @@ class ClaudeStoreSessionBackendTest {
         )
 
         // Refresh ping: no specific paths, just a stat-based rescan trigger.
-        sourceUpdates.emit(ClaudeChangeSet())
+        sourceUpdates.emit(FileBackedSessionChangeSet())
 
         val updated = awaitWatcherUpdate(updates)
         assertThat(updated).isTrue()

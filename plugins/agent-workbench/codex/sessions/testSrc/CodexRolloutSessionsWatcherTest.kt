@@ -33,7 +33,7 @@ class CodexRolloutSessionsWatcherTest {
 
       assertThat(changeSet).isNotNull
       assertThat(changeSet!!.requiresFullRescan).isFalse()
-      assertThat(changeSet.changedRolloutPaths).containsExactly(rolloutPath.toAbsolutePath().normalize())
+      assertThat(changeSet.changedPaths).containsExactly(rolloutPath.toAbsolutePath().normalize())
     }
   }
 
@@ -54,7 +54,7 @@ class CodexRolloutSessionsWatcherTest {
 
       assertThat(changeSet).isNotNull
       assertThat(changeSet!!.requiresFullRescan).isFalse()
-      assertThat(changeSet.changedRolloutPaths).isEmpty()
+      assertThat(changeSet.changedPaths).isEmpty()
     }
   }
 
@@ -94,7 +94,7 @@ class CodexRolloutSessionsWatcherTest {
 
       assertThat(changeSet).isNotNull
       assertThat(changeSet!!.requiresFullRescan).isTrue()
-      assertThat(changeSet.changedRolloutPaths).isEmpty()
+      assertThat(changeSet.changedPaths).isEmpty()
     }
   }
 
@@ -113,7 +113,7 @@ class CodexRolloutSessionsWatcherTest {
 
       assertThat(changeSet).isNotNull
       assertThat(changeSet!!.requiresFullRescan).isTrue()
-      assertThat(changeSet.changedRolloutPaths).isEmpty()
+      assertThat(changeSet.changedPaths).isEmpty()
     }
   }
 

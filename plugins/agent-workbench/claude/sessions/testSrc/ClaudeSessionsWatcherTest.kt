@@ -21,16 +21,12 @@ class ClaudeSessionsWatcherTest {
     val projectsDir = claudeHome.resolve("projects")
     Files.createDirectories(projectsDir)
     runBlocking(Dispatchers.Default) {
-      val watcher = ClaudeSessionsWatcher(
+      ClaudeSessionsWatcher(
         claudeHomeProvider = { claudeHome },
         scope = this,
         onChange = {},
-      )
-      try {
+      ).use { watcher ->
         block(watcher)
-      }
-      finally {
-        watcher.close()
       }
     }
   }
@@ -51,7 +47,7 @@ class ClaudeSessionsWatcherTest {
       val changeSet = watcher.eventToChangeSet(event)
 
       assertThat(changeSet).isNotNull
-      assertThat(changeSet!!.changedJsonlPaths).containsExactly(jsonlPath.toAbsolutePath().normalize())
+      assertThat(changeSet!!.changedPaths).containsExactly(jsonlPath.toAbsolutePath().normalize())
       assertThat(changeSet.requiresFullRescan).isFalse()
     }
   }
@@ -72,7 +68,7 @@ class ClaudeSessionsWatcherTest {
       val changeSet = watcher.eventToChangeSet(event)
 
       assertThat(changeSet).isNotNull
-      assertThat(changeSet!!.changedJsonlPaths).isEmpty()
+      assertThat(changeSet!!.changedPaths).isEmpty()
       assertThat(changeSet.requiresFullRescan).isFalse()
     }
   }
@@ -133,7 +129,7 @@ class ClaudeSessionsWatcherTest {
       val changeSet = watcher.eventToChangeSet(event)
 
       assertThat(changeSet).isNotNull
-      assertThat(changeSet!!.changedJsonlPaths).isEmpty()
+      assertThat(changeSet!!.changedPaths).isEmpty()
       assertThat(changeSet.requiresFullRescan).isFalse()
     }
   }

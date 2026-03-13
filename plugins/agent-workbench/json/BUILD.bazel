@@ -15,18 +15,44 @@ jvm_library(
   resources = [":json_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//plugins/agent-workbench/filewatch",
     "//libraries/jackson/jackson",
   ]
 )
 
 jvm_library(
   name = "json_test_lib",
-  module_name = "intellij.agent.workbench.json",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":json",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [":json"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//platform/util",
+    "//platform/util:util_test_lib",
+    "//plugins/agent-workbench/filewatch",
+    "//plugins/agent-workbench/filewatch:filewatch_test_lib",
+    "//libraries/jackson/jackson",
     "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/junit5",
+    "//libraries/junit5:junit5_test_lib",
+    "//libraries/assertj-core",
+    "//libraries/assertj-core:assertj-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.agent.workbench.json` end
+
+### auto-generated section `test intellij.agent.workbench.json` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "json_test",
+  runtime_deps = [":json_test_lib"]
+)
+### auto-generated section `test intellij.agent.workbench.json` end
