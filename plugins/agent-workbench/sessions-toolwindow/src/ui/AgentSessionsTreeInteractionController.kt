@@ -18,6 +18,7 @@ import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.TreeUIHelper
 import com.intellij.ui.hover.TreeHoverListener
@@ -37,10 +38,6 @@ import javax.swing.tree.TreePath
 internal class AgentSessionsTreeInteractionController(
   private val project: Project,
   private val tree: Tree,
-  private val launchService: AgentSessionLaunchService,
-  private val syncService: AgentSessionRefreshService,
-  private val stateStore: AgentSessionsStateStore,
-  private val treeUiStateService: AgentSessionsTreeUiStateService,
   private val rowActionsOverlayProvider: () -> AgentSessionsTreeRowActionsOverlay,
   private val nodeResolver: (SessionTreeId) -> SessionTreeNode?,
   private val selectedArchiveTargets: () -> List<ArchiveThreadTarget>,
@@ -95,11 +92,11 @@ internal class AgentSessionsTreeInteractionController(
     val enter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)
     val fallbackListener = tree.getActionForKeyStroke(enter)
     tree.registerKeyboardAction({ event ->
-      val handled = activateSelectedNode()
-      if (!handled) {
-        fallbackListener?.actionPerformed(event)
-      }
-    }, enter, 0)
+                                  val handled = activateSelectedNode()
+                                  if (!handled) {
+                                    fallbackListener?.actionPerformed(event)
+                                  }
+                                }, enter, 0)
   }
 
   private fun installMouseListeners() {
@@ -144,17 +141,17 @@ internal class AgentSessionsTreeInteractionController(
       override fun treeExpanded(event: TreeExpansionEvent) {
         when (val id = idFromPath(event.path) ?: return) {
           is SessionTreeId.Project -> {
-            treeUiStateService.setProjectCollapsed(id.path, collapsed = false)
+            service<AgentSessionTreeUiStateService>().setProjectCollapsed(id.path, collapsed = false)
             val projectNode = nodeResolver(id) as? SessionTreeNode.Project ?: return
             if (!projectNode.project.hasLoaded && !projectNode.project.isLoading) {
-              syncService.loadProjectThreadsOnDemand(id.path)
+              service<AgentSessionRefreshService>().loadProjectThreadsOnDemand(id.path)
             }
           }
 
           is SessionTreeId.Worktree -> {
             val worktreeNode = nodeResolver(id) as? SessionTreeNode.Worktree ?: return
             if (!worktreeNode.worktree.hasLoaded && !worktreeNode.worktree.isLoading) {
-              syncService.loadWorktreeThreadsOnDemand(id.projectPath, id.worktreePath)
+              service<AgentSessionRefreshService>().loadWorktreeThreadsOnDemand(id.projectPath, id.worktreePath)
             }
           }
 
@@ -164,7 +161,7 @@ internal class AgentSessionsTreeInteractionController(
 
       override fun treeCollapsed(event: TreeExpansionEvent) {
         val id = idFromPath(event.path) as? SessionTreeId.Project ?: return
-        treeUiStateService.setProjectCollapsed(id.path, collapsed = true)
+        service<AgentSessionTreeUiStateService>().setProjectCollapsed(id.path, collapsed = true)
       }
     })
   }
@@ -214,13 +211,13 @@ internal class AgentSessionsTreeInteractionController(
   private fun runNodeAction(id: SessionTreeId, treeNode: SessionTreeNode, includeOpenActions: Boolean): Boolean {
     return when (treeNode) {
       is SessionTreeNode.MoreProjects -> {
-        stateStore.showMoreProjects()
+        service<AgentSessionsStateStore>().showMoreProjects()
         true
       }
 
       is SessionTreeNode.MoreThreads -> {
         val path = pathForMoreThreadsNode(id) ?: return false
-        stateStore.showMoreThreads(path)
+        service<AgentSessionsStateStore>().showMoreThreads(path)
         true
       }
 
@@ -228,32 +225,46 @@ internal class AgentSessionsTreeInteractionController(
         if (!includeOpenActions) return false
         if (isAgentSessionNewSessionId(treeNode.thread.id)) return false
         val path = pathForThreadNode(id, treeNode.project.path)
-        launchService.openChatThread(path, treeNode.thread, project)
+        service<AgentSessionLaunchService>().openChatThread(
+          path = path,
+          thread = treeNode.thread,
+          entryPoint = AgentWorkbenchEntryPoint.TREE_ROW,
+          currentProject = project,
+        )
         true
       }
 
       is SessionTreeNode.SubAgent -> {
         if (!includeOpenActions) return false
         val path = pathForThreadNode(id, treeNode.project.path)
-        launchService.openChatSubAgent(path, treeNode.thread, treeNode.subAgent, project)
+        service<AgentSessionLaunchService>().openChatSubAgent(
+          path = path,
+          thread = treeNode.thread,
+          subAgent = treeNode.subAgent,
+          entryPoint = AgentWorkbenchEntryPoint.TREE_ROW,
+          currentProject = project,
+        )
         true
       }
 
       is SessionTreeNode.Project -> {
         if (!includeOpenActions) return false
-        launchService.openOrFocusProject(treeNode.project.path)
+        service<AgentSessionLaunchService>().openOrFocusProject(treeNode.project.path, AgentWorkbenchEntryPoint.TREE_ROW)
         true
       }
 
       is SessionTreeNode.Worktree -> {
         if (!includeOpenActions) return false
-        launchService.openOrFocusProject(treeNode.worktree.path)
+        service<AgentSessionLaunchService>().openOrFocusProject(treeNode.worktree.path, AgentWorkbenchEntryPoint.TREE_ROW)
         true
       }
 
       is SessionTreeNode.Warning,
       is SessionTreeNode.Error,
-      is SessionTreeNode.Empty -> false
+      is SessionTreeNode.Empty,
+        -> {
+        false
+        }
     }
   }
 
