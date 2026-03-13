@@ -7,13 +7,14 @@ import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
-import com.intellij.agent.workbench.sessions.state.AgentSessionsTreeUiStateService
-import com.intellij.agent.workbench.sessions.tree.SessionTreeId
-import com.intellij.agent.workbench.sessions.tree.SessionTreeNode
-import com.intellij.agent.workbench.sessions.tree.pathForMoreThreadsNode
-import com.intellij.agent.workbench.sessions.tree.pathForThreadNode
-import com.intellij.agent.workbench.sessions.tree.shouldHandleSingleClick
-import com.intellij.agent.workbench.sessions.tree.shouldRetargetSelectionForContextMenu
+import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupActionContext
+import com.intellij.agent.workbench.sessions.toolwindow.actions.createAgentSessionsTreePopupActionContext
+import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
+import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
+import com.intellij.agent.workbench.sessions.toolwindow.tree.pathForMoreThreadsNode
+import com.intellij.agent.workbench.sessions.toolwindow.tree.pathForThreadNode
+import com.intellij.agent.workbench.sessions.toolwindow.tree.shouldHandleSingleClick
+import com.intellij.agent.workbench.sessions.toolwindow.tree.shouldRetargetSelectionForContextMenu
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -63,12 +64,12 @@ internal class AgentSessionsTreeInteractionController(
   ) {
     val actionGroup = ActionManager.getInstance().getAction(AgentWorkbenchActionIds.Sessions.TreePopup.NEW_THREAD) as? ActionGroup
                       ?: return
-    popupActionContext = AgentSessionsTreePopupActionContext(
+    popupActionContext = createAgentSessionsTreePopupActionContext(
       project = project,
       nodeId = nodeId,
       node = node,
       archiveTargets = selectedArchiveTargets(),
-    )
+    ) ?: return
     val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, actionGroup)
     popupMenu.setTargetComponent(tree)
     rowActionsOverlayProvider().pinPopupRow(row)
@@ -176,12 +177,12 @@ internal class AgentSessionsTreeInteractionController(
     val treeNode = nodeResolver(id) ?: return
     val actionGroup = ActionManager.getInstance().getAction(AgentWorkbenchActionIds.Sessions.TreePopup.GROUP) as? ActionGroup
                       ?: return
-    popupActionContext = AgentSessionsTreePopupActionContext(
+    popupActionContext = createAgentSessionsTreePopupActionContext(
       project = project,
       nodeId = id,
       node = treeNode,
       archiveTargets = selectedArchiveTargets(),
-    )
+    ) ?: return
     val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, actionGroup)
     popupMenu.setTargetComponent(tree)
     popupMenu.component.addPopupMenuListener(object : javax.swing.event.PopupMenuListener {

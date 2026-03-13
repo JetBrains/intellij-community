@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.codex.sessions
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
+import com.intellij.agent.workbench.chat.AgentChatThreadCoordinates
 import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 import com.intellij.agent.workbench.codex.sessions.actions.AgentSessionsBindPendingCodexThreadFromEditorTabAction
 import com.intellij.agent.workbench.common.AgentThreadActivity
@@ -22,7 +23,6 @@ class AgentSessionsBindPendingCodexThreadFromEditorTabActionTest {
     val context = editorContext(
       path = normalizedPath,
       threadIdentity = "codex:new-1",
-      threadId = "",
       provider = AgentSessionProvider.CODEX,
       sessionId = "new-1",
       isPendingThread = true,
@@ -82,7 +82,6 @@ class AgentSessionsBindPendingCodexThreadFromEditorTabActionTest {
     val context = editorContext(
       path = normalizedPath,
       threadIdentity = "codex:new-1",
-      threadId = "",
       provider = AgentSessionProvider.CODEX,
       sessionId = "new-1",
       isPendingThread = true,
@@ -143,21 +142,26 @@ private fun editorContext(
   path: String = "/tmp/project",
   tabKey: String = "tab-pending-1",
   threadIdentity: String = "codex:thread-1",
-  threadId: String = "thread-1",
   provider: AgentSessionProvider? = AgentSessionProvider.CODEX,
   sessionId: String = "thread-1",
   isPendingThread: Boolean = false,
 ): AgentChatEditorTabActionContext {
+  val threadCoordinates = provider
+    ?.takeIf { sessionId.isNotBlank() }
+    ?.let { resolvedProvider ->
+      AgentChatThreadCoordinates(
+        provider = resolvedProvider,
+        sessionId = sessionId,
+        isPending = isPendingThread,
+      )
+    }
   return AgentChatEditorTabActionContext(
     project = ProjectManager.getInstance().defaultProject,
     path = normalizeAgentWorkbenchPath(path),
     tabKey = tabKey,
     threadIdentity = threadIdentity,
-    threadId = threadId,
-    provider = provider,
-    sessionId = sessionId,
-    isPendingThread = isPendingThread,
-    subAgentId = null,
+    threadCoordinates = threadCoordinates,
+    sessionActionTarget = null,
   )
 }
 

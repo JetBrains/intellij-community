@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
+import com.intellij.agent.workbench.chat.AgentChatThreadCoordinates
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsCopyThreadIdFromEditorTabAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabArchiveThreadAction
@@ -11,6 +12,8 @@ import com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProj
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsSelectThreadInToolWindowAction
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.SessionActionTarget
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.ui.providerIcon
 import com.intellij.openapi.project.ProjectManager
@@ -258,6 +261,7 @@ class AgentSessionsEditorTabActionsTest {
   @Test
   fun archiveThreadActionUsesThreadTargetAndPreferredLabelFromEditorTabContext() {
     val context = editorContext(threadTitle = "Refactor session setup")
+    val contextTarget = context.sessionActionTarget as SessionActionTarget.Thread
     var archivedTargets: List<ArchiveThreadTarget>? = null
     var preferredSingleArchivedLabel: String? = null
     var entryPoint: AgentWorkbenchEntryPoint? = null
@@ -277,8 +281,8 @@ class AgentSessionsEditorTabActionsTest {
     assertThat(checkNotNull(archivedTargets)).containsExactly(
       ArchiveThreadTarget.Thread(
         path = context.path,
-        provider = checkNotNull(context.provider),
-        threadId = context.threadId,
+        provider = contextTarget.provider,
+        threadId = contextTarget.threadId,
       )
     )
     assertThat(preferredSingleArchivedLabel).isEqualTo("Refactor session setup")
@@ -294,6 +298,7 @@ class AgentSessionsEditorTabActionsTest {
       subAgentId = "sub-agent-1",
       threadTitle = "Sub-agent label",
     )
+    val contextTarget = context.sessionActionTarget as SessionActionTarget.SubAgent
     var archivedTargets: List<ArchiveThreadTarget>? = null
     var preferredSingleArchivedLabel: String? = null
     var entryPoint: AgentWorkbenchEntryPoint? = null
@@ -314,9 +319,9 @@ class AgentSessionsEditorTabActionsTest {
     assertThat(archivedTarget).isEqualTo(
       ArchiveThreadTarget.SubAgent(
         path = context.path,
-        provider = checkNotNull(context.provider),
-        parentThreadId = context.sessionId,
-        subAgentId = checkNotNull(context.subAgentId),
+        provider = contextTarget.provider,
+        parentThreadId = contextTarget.parentThreadId,
+        subAgentId = contextTarget.subAgentId,
       )
     )
     assertThat(preferredSingleArchivedLabel).isEqualTo("Sub-agent label")
@@ -331,6 +336,7 @@ class AgentSessionsEditorTabActionsTest {
       threadId = "sub-agent-1",
       subAgentId = "sub-agent-1",
     )
+    val contextTarget = context.sessionActionTarget as SessionActionTarget.Conversation
     var ensuredPath: String? = null
     var ensuredProvider: AgentSessionProvider? = null
     var ensuredThreadId: String? = null
@@ -354,8 +360,8 @@ class AgentSessionsEditorTabActionsTest {
 
     action.actionPerformed(event)
     assertThat(ensuredPath).isEqualTo(context.path)
-    assertThat(ensuredProvider).isEqualTo(context.provider)
-    assertThat(ensuredThreadId).isEqualTo(context.threadId)
+    assertThat(ensuredProvider).isEqualTo(contextTarget.provider)
+    assertThat(ensuredThreadId).isEqualTo(contextTarget.threadId)
     assertThat(activatedProjectName).isEqualTo(context.project.name)
   }
 
@@ -481,16 +487,46 @@ private fun editorContext(
   isPendingThread: Boolean = false,
   subAgentId: String? = null,
 ): AgentChatEditorTabActionContext {
+  val normalizedPath = normalizeAgentWorkbenchPath(path)
+  val threadCoordinates = provider
+    ?.takeIf { sessionId.isNotBlank() }
+    ?.let { resolvedProvider ->
+      AgentChatThreadCoordinates(
+        provider = resolvedProvider,
+        sessionId = sessionId,
+        isPending = isPendingThread,
+      )
+    }
+  val normalizedSubAgentId = subAgentId?.takeIf { it.isNotBlank() }
+  val effectiveThreadId = threadId.takeIf { it.isNotBlank() } ?: normalizedSubAgentId ?: sessionId
+  val sessionActionTarget = when {
+    threadCoordinates == null || threadCoordinates.isPending || effectiveThreadId.isBlank() -> null
+    normalizedSubAgentId != null && effectiveThreadId != normalizedSubAgentId -> null
+    normalizedSubAgentId != null -> {
+      SessionActionTarget.SubAgent(
+        path = normalizedPath,
+        provider = threadCoordinates.provider,
+        parentThreadId = threadCoordinates.sessionId,
+        subAgentId = normalizedSubAgentId,
+        title = threadTitle,
+      )
+    }
+
+    else -> {
+      SessionActionTarget.Thread(
+        path = normalizedPath,
+        provider = threadCoordinates.provider,
+        threadId = effectiveThreadId,
+        title = threadTitle,
+      )
+    }
+  }
   return AgentChatEditorTabActionContext(
     project = ProjectManager.getInstance().defaultProject,
-    path = normalizeAgentWorkbenchPath(path),
+    path = normalizedPath,
     tabKey = tabKey,
     threadIdentity = threadIdentity,
-    threadId = threadId,
-    threadTitle = threadTitle,
-    provider = provider,
-    sessionId = sessionId,
-    isPendingThread = isPendingThread,
-    subAgentId = subAgentId,
+    threadCoordinates = threadCoordinates,
+    sessionActionTarget = sessionActionTarget,
   )
 }

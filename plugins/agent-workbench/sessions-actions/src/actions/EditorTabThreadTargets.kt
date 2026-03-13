@@ -3,92 +3,58 @@ package com.intellij.agent.workbench.sessions.actions
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.SessionActionTarget
 import com.intellij.agent.workbench.sessions.core.formatCompactAgentSessionThreadTitle
 import com.intellij.agent.workbench.sessions.core.formatCompactAgentSessionTitle
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 
-internal data class AgentSessionsEditorTabThreadCoordinates(
-  @JvmField val path: String,
-  val provider: AgentSessionProvider,
-  @JvmField val parentThreadId: String,
-  @JvmField val threadId: String,
-  @JvmField val subAgentId: String?,
-)
-
-internal fun resolveAgentSessionsEditorTabThreadCoordinates(
-  context: AgentChatEditorTabActionContext,
-): AgentSessionsEditorTabThreadCoordinates? {
-  if (context.isPendingThread) {
-    return null
-  }
-
-  val provider = context.provider ?: return null
-  val sessionId = context.sessionId.takeIf { it.isNotBlank() } ?: return null
-  val subAgentId = context.subAgentId?.takeIf { it.isNotBlank() }
-  if (context.threadIdentity.isNotBlank()) {
-    val separator = context.threadIdentity.indexOf(':')
-    if (separator <= 0 || separator == context.threadIdentity.lastIndex) {
-      return null
-    }
-    val identityProviderId = context.threadIdentity.substring(0, separator).lowercase()
-    if (identityProviderId != provider.value) {
-      return null
-    }
-    val identitySessionId = context.threadIdentity.substring(separator + 1)
-    if (identitySessionId.isBlank() || identitySessionId != sessionId || identitySessionId.startsWith("new-")) {
-      return null
-    }
-  }
-  val threadId = context.threadId.takeIf { it.isNotBlank() } ?: subAgentId ?: sessionId
-  if (subAgentId != null && threadId != subAgentId) {
-    return null
-  }
-  return AgentSessionsEditorTabThreadCoordinates(
-    path = context.path,
-    provider = provider,
-    parentThreadId = sessionId,
-    threadId = threadId,
-    subAgentId = subAgentId,
-  )
+internal fun resolveEditorTabConversationTarget(context: AgentChatEditorTabActionContext): SessionActionTarget.Conversation? {
+  return context.sessionActionTarget as? SessionActionTarget.Conversation
 }
 
 internal fun resolveArchiveThreadTargetFromEditorTabContext(context: AgentChatEditorTabActionContext): ArchiveThreadTarget? {
-  val threadCoordinates = resolveAgentSessionsEditorTabThreadCoordinates(context) ?: return null
-  return if (threadCoordinates.subAgentId == null) {
-    ArchiveThreadTarget.Thread(
-      path = threadCoordinates.path,
-      provider = threadCoordinates.provider,
-      threadId = threadCoordinates.threadId,
-    )
-  }
-  else {
-    ArchiveThreadTarget.SubAgent(
-      path = threadCoordinates.path,
-      provider = threadCoordinates.provider,
-      parentThreadId = threadCoordinates.parentThreadId,
-      subAgentId = threadCoordinates.subAgentId,
-    )
-  }
+  return resolveEditorTabConversationTarget(context)?.toArchiveThreadTarget()
 }
 
 internal fun resolvePreferredArchiveNotificationLabelFromEditorTabContext(context: AgentChatEditorTabActionContext): String? {
-  val threadCoordinates = resolveAgentSessionsEditorTabThreadCoordinates(context) ?: return null
-  val title = context.threadTitle.trim()
+  val target = resolveEditorTabConversationTarget(context) ?: return null
+  val title = target.title.trim()
   if (title.isEmpty()) {
     return null
   }
 
-  return if (threadCoordinates.subAgentId == null) {
-    formatCompactAgentSessionThreadTitle(
-      threadId = threadCoordinates.threadId,
-      title = title,
-      fallbackTitle = { idPrefix ->
-        AgentSessionsBundle.message("toolwindow.thread.fallback.title", idPrefix)
-      },
-    )
+  return when (target) {
+    is SessionActionTarget.Thread -> {
+      formatCompactAgentSessionThreadTitle(
+        threadId = target.threadId,
+        title = title,
+        fallbackTitle = { idPrefix ->
+          AgentSessionsBundle.message("toolwindow.thread.fallback.title", idPrefix)
+        },
+      )
+    }
+
+    is SessionActionTarget.SubAgent -> formatCompactAgentSessionTitle(title)
   }
-  else {
-    formatCompactAgentSessionTitle(title)
+}
+
+private fun SessionActionTarget.Conversation.toArchiveThreadTarget(): ArchiveThreadTarget {
+  return when (this) {
+    is SessionActionTarget.Thread -> {
+      ArchiveThreadTarget.Thread(
+        path = path,
+        provider = provider,
+        threadId = threadId,
+      )
+    }
+
+    is SessionActionTarget.SubAgent -> {
+      ArchiveThreadTarget.SubAgent(
+        path = path,
+        provider = provider,
+        parentThreadId = parentThreadId,
+        subAgentId = subAgentId,
+      )
+    }
   }
 }
