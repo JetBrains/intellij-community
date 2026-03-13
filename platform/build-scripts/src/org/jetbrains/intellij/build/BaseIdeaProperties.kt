@@ -117,6 +117,7 @@ fun configurePropertiesForAllEditionsOfIntelliJIdea(properties: JetBrainsProduct
 
   properties.productLayout.compatiblePluginsToIgnore = persistentListOf(
     JavaPluginLayout.MAIN_MODULE_NAME,
+    "intellij.searchEverywhereLucene.plugin",
   )
   properties.modulesToCompileTests += persistentListOf("intellij.platform.jps.build.tests")
 }
