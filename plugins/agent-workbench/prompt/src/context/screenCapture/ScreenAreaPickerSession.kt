@@ -2,11 +2,14 @@
 package com.intellij.agent.workbench.prompt.context.screenCapture
 
 import com.intellij.agent.workbench.prompt.AgentPromptBundle
+import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.ui.popup.StackingPopupDispatcher
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.JBColor
+import java.awt.AWTEvent
 import java.awt.BasicStroke
 import java.awt.Color
 import java.awt.Component
@@ -20,10 +23,9 @@ import java.awt.Point
 import java.awt.Rectangle
 import java.awt.RenderingHints
 import java.awt.Robot
+import java.awt.Toolkit
 import java.awt.Window
-import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
-import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.image.BufferedImage
 import java.util.concurrent.atomic.AtomicBoolean
@@ -100,6 +102,21 @@ private fun isMeaningfulSelection(selection: Rectangle): Boolean {
   return selection.width >= MIN_SELECTION_SIDE && selection.height >= MIN_SELECTION_SIDE
 }
 
+/**
+ * Manages an interactive screen area pick session: shows full-screen overlays
+ * with a dimmed screenshot and lets the user drag-select an area to capture.
+ *
+ * Uses [IdeEventQueue.addPostEventListener] to intercept events at **posting** time,
+ * before they enter the event queue. This is the earliest interception point and prevents
+ * events from ever reaching popup cancel handlers (which run during dispatch).
+ * Without this, the [com.intellij.ui.popup.StackingPopupDispatcherImpl] would see
+ * mouse/key events from the overlay and cancel the prompt's [com.intellij.openapi.ui.popup.JBPopup].
+ *
+ * The hook must not call `kotlinx.coroutines.launch` or `LaterInvocator.invokeLater`
+ * because it runs inside [sun.awt.PostEventQueue.flush] which holds an AWT-internal lock.
+ * All deferred work is scheduled via [SwingUtilities.invokeLater] which posts directly
+ * to the AWT [java.awt.EventQueue] and bypasses IntelliJ's `NonBlockingFlushQueue`.
+ */
 internal class ScreenAreaPickerSession(
   anchorComponent: Component,
   private val onPicked: (BufferedImage) -> Unit,
@@ -118,9 +135,55 @@ internal class ScreenAreaPickerSession(
   fun start() {
     SwingUtilities.invokeLater {
       if (!active.get()) return@invokeLater
+      IdeEventQueue.getInstance().addPostEventListener(postEventHook, this)
       hidePromptWindow()
+      // Wait for the native compositor to finish hiding the window before capturing
+      // the screen. Without this, the prompt popup may still appear in the screenshot.
+      Toolkit.getDefaultToolkit().sync()
+      Robot().delay(150)
       showOverlays()
     }
+  }
+
+  private val postEventHook: (AWTEvent) -> Boolean = { event ->
+    if (!active.get()) {
+      false
+    }
+    else if (event is KeyEvent && event.id == KeyEvent.KEY_PRESSED && event.keyCode == KeyEvent.VK_ESCAPE) {
+      SwingUtilities.invokeLater { cancel() }
+      true
+    }
+    else if (event is MouseEvent) {
+      handleMouseEvent(event)
+    }
+    else {
+      false
+    }
+  }
+
+  private fun handleMouseEvent(event: MouseEvent): Boolean {
+    when (event.id) {
+      MouseEvent.MOUSE_PRESSED -> {
+        if (SwingUtilities.isLeftMouseButton(event)) {
+          val screenPoint = Point(event.xOnScreen, event.yOnScreen)
+          SwingUtilities.invokeLater { beginSelection(screenPoint) }
+        }
+      }
+      MouseEvent.MOUSE_DRAGGED -> {
+        if (SwingUtilities.isLeftMouseButton(event)) {
+          val screenPoint = Point(event.xOnScreen, event.yOnScreen)
+          SwingUtilities.invokeLater { updateSelection(screenPoint) }
+        }
+      }
+      MouseEvent.MOUSE_RELEASED -> {
+        if (SwingUtilities.isLeftMouseButton(event)) {
+          val screenPoint = Point(event.xOnScreen, event.yOnScreen)
+          SwingUtilities.invokeLater { finishSelection(screenPoint) }
+        }
+      }
+    }
+    // Consume all mouse events so they never reach the popup stacking dispatcher
+    return true
   }
 
   private fun showOverlays() {
@@ -207,6 +270,10 @@ internal class ScreenAreaPickerSession(
     overlayWindows.forEach(ScreenCaptureOverlayWindow::disposeWindow)
     overlayWindows.clear()
     restorePromptWindow()
+    // While the prompt window was hidden, IdePopupManager.isPopupActive() removed the
+    // StackingPopupDispatcherImpl from its dispatch stack (content was not showing).
+    // Re-push it so that Esc handling works again for the prompt's JBPopup.
+    IdeEventQueue.getInstance().popupManager.push(StackingPopupDispatcher.getInstance())
     Disposer.dispose(this)
   }
 
@@ -326,35 +393,9 @@ private class ScreenCaptureOverlayWindow(
     bounds = snapshot.bounds
     minimumSize = Dimension(snapshot.bounds.width, snapshot.bounds.height)
     contentPane = overlayComponent
-
-    val mouseHandler = object : MouseAdapter() {
-      override fun mousePressed(event: MouseEvent) {
-        if (SwingUtilities.isLeftMouseButton(event)) {
-          session.beginSelection(Point(event.xOnScreen, event.yOnScreen))
-        }
-      }
-
-      override fun mouseDragged(event: MouseEvent) {
-        if (SwingUtilities.isLeftMouseButton(event)) {
-          session.updateSelection(Point(event.xOnScreen, event.yOnScreen))
-        }
-      }
-
-      override fun mouseReleased(event: MouseEvent) {
-        if (SwingUtilities.isLeftMouseButton(event)) {
-          session.finishSelection(Point(event.xOnScreen, event.yOnScreen))
-        }
-      }
-    }
-    addMouseListener(mouseHandler)
-    addMouseMotionListener(mouseHandler)
-    addKeyListener(object : KeyAdapter() {
-      override fun keyPressed(event: KeyEvent) {
-        if (event.keyCode == KeyEvent.VK_ESCAPE) {
-          session.cancel()
-        }
-      }
-    })
+    // Mouse and key events are intercepted by the session's post-event hook
+    // (registered via IdeEventQueue.addPostEventListener) to prevent the
+    // StackingPopupDispatcherImpl from cancelling the prompt popup.
   }
 
   fun showWindow(requestFocus: Boolean) {
