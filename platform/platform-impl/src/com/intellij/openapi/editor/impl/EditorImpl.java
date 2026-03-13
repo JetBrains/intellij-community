@@ -4765,8 +4765,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           getFoldingModel().runBatchFoldingOperation(() -> {
             range.setExpanded(expansion);
             if (e.isAltDown()) {
-              for (FoldRegion region : myFoldingModel.getAllFoldRegions()) {
-                if (region.getStartOffset() >= range.getStartOffset() && region.getEndOffset() <= range.getEndOffset()) {
+              for (FoldRegion region : myFoldingModel.getRegionsOverlappingWith(range.getStartOffset(), range.getStartOffset())) {
+                if (range.getTextRange().contains(region)) {
                   region.setExpanded(expansion);
                 }
               }

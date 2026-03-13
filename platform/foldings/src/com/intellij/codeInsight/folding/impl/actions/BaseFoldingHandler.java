@@ -21,8 +21,12 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,23 +41,18 @@ public abstract class BaseFoldingHandler extends EditorActionHandler {
   /**
    * Returns fold regions inside selection, or all regions in editor, if selection doesn't exist or doesn't contain fold regions.
    */
-  protected @NotNull List<FoldRegion> getFoldRegionsForSelection(@NotNull Editor editor, @Nullable Caret caret) {
-    FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
+  protected @NotNull @Unmodifiable List<FoldRegion> getFoldRegionsForSelection(@NotNull Editor editor, @Nullable Caret caret) {
     if (caret == null) {
       caret = editor.getCaretModel().getPrimaryCaret();
     }
     if (caret.hasSelection()) {
-      List<FoldRegion> result = new ArrayList<>();
-      for (FoldRegion region : allRegions) {
-        if (region.getStartOffset() >= caret.getSelectionStart() && region.getEndOffset() <= caret.getSelectionEnd()) {
-          result.add(region);
-        }
-      }
+      TextRange selectionRange = caret.getSelectionRange();
+      List<FoldRegion> result = ContainerUtil.filter(((FoldingModelEx)editor.getFoldingModel()).getRegionsOverlappingWith(caret.getSelectionStart(), caret.getSelectionEnd()), region -> selectionRange.contains(region));
       if (!result.isEmpty()) {
         return result;
       }
     }
-    return Arrays.asList(allRegions);
+    return Arrays.asList(editor.getFoldingModel().getAllFoldRegions());
   }
 
   /**
@@ -77,9 +76,8 @@ public abstract class BaseFoldingHandler extends EditorActionHandler {
     }
     List<FoldRegion> result = new ArrayList<>();
     if (rootRegion != null) {
-      FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
-      for (FoldRegion region : allRegions) {
-        if (region.getStartOffset() >= rootRegion.getStartOffset() && region.getEndOffset() <= rootRegion.getEndOffset()) {
+      for (FoldRegion region : ((FoldingModelEx)editor.getFoldingModel()).getRegionsOverlappingWith(rootRegion.getStartOffset(), rootRegion.getEndOffset())) {
+        if (rootRegion.getTextRange().contains(region)) {
           result.add(region);
         }
       }
