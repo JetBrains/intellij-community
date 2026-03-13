@@ -19,6 +19,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/util",
     "//platform/execution-impl",
+    "//plugins/agent-workbench/json",
     "//libraries/jackson/jackson",
     "//platform/platform-util-io:ide-util-io",
   ]
@@ -35,6 +36,7 @@ jvm_library(
     "//platform/core-api:core_test_lib",
     "//platform/util:util_test_lib",
     "//platform/execution-impl:execution-impl_test_lib",
+    "//plugins/agent-workbench/json:json_test_lib",
     "//libraries/jackson/jackson:jackson_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
   ]

@@ -5,6 +5,8 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
 import com.intellij.agent.workbench.json.WorkbenchJsonlScanner
+import com.intellij.agent.workbench.json.forEachJsonObjectField
+import com.intellij.agent.workbench.json.readJsonStringOrNull
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
