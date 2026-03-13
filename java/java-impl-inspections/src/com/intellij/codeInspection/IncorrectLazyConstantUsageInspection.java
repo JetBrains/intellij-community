@@ -6,9 +6,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
@@ -56,7 +54,6 @@ public final class IncorrectLazyConstantUsageInspection extends AbstractBaseJava
   }
 
   public static boolean isLazyCollectionInitializer(@NotNull PsiField field) {
-    PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(field.getInitializer());
-    return initializer instanceof PsiMethodCallExpression call && LAZY_COLLECTION_FACTORIES.test(call);
+    return LAZY_COLLECTION_FACTORIES.matches(field.getInitializer());
   }
 }
