@@ -18007,6 +18007,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("ambiguousContextArgument.kt")
+        public void testAmbiguousContextArgument() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeExplicitTypeArguments/ambiguousContextArgument.kt");
+        }
+
         @TestMetadata("arrayOf.kt")
         public void testArrayOf() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/removeExplicitTypeArguments/arrayOf.kt");

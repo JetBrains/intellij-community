@@ -12057,6 +12057,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("ambiguousContextArgument.kt")
+        public void testAmbiguousContextArgument() throws Exception {
+            runTest("testData/inspectionsLocal/removeExplicitTypeArguments/ambiguousContextArgument.kt");
+        }
+
         @TestMetadata("arrayOf.kt")
         public void testArrayOf() throws Exception {
             runTest("testData/inspectionsLocal/removeExplicitTypeArguments/arrayOf.kt");
