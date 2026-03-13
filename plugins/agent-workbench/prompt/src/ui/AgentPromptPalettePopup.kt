@@ -9,6 +9,8 @@ import com.intellij.CommonBundle
 import com.intellij.agent.workbench.prompt.AgentPromptBundle
 import com.intellij.agent.workbench.prompt.context.AgentPromptContextResolverService
 import com.intellij.agent.workbench.prompt.context.dataContextOrNull
+import com.intellij.agent.workbench.prompt.ui.AgentPromptContextRemovalDecisions.removeManualContextItemsAfterExplicitRemoval
+import com.intellij.agent.workbench.prompt.ui.AgentPromptContextRemovalDecisions.resolveContextEntriesAfterRemoval
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.prompt.AGENT_PROMPT_INVOCATION_PREFER_EXTENSIONS_KEY
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextEnvelopeFormatter
@@ -631,7 +633,7 @@ internal class AgentPromptPalettePopup(
 
   private fun removeContextEntry(entry: ContextEntry) {
     if (entry.origin == ContextEntryOrigin.MANUAL) {
-      val updatedManualItems = resolveManualContextItemsAfterRemoval(
+      val updatedManualItems = removeManualContextItemsAfterExplicitRemoval(
         manualItemsBySourceId = manualContextItemsBySourceId,
         removedEntry = entry,
         projectPath = resolveContextProjectBasePath(launcherProvider()),

@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.prompt.ui
 import com.dynatrace.hash4j.hashing.HashSink
 import com.dynatrace.hash4j.hashing.HashValue128
 import com.dynatrace.hash4j.hashing.Hashing
+import com.intellij.agent.workbench.prompt.ui.AgentPromptContextRemovalDecisions.resolveContextEntriesAfterRemoval
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayloadValue
 
