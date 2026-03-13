@@ -57,8 +57,8 @@ private val POETRY_TOOL: ToolCommandExecutor = ToolCommandExecutor(
 private val POETRY_EXCLUDE_NON_DIGITS_REGEX = Regex("""\D+$""")
 
 @Internal
-suspend fun runPoetry(projectPath: Path?, vararg args: String, inProjectEnv: Boolean = false): PyResult<String> {
-  val env = if (inProjectEnv) mapOf("POETRY_VIRTUALENVS_IN_PROJECT" to "true") else emptyMap()
+suspend fun runPoetry(projectPath: Path?, vararg args: String, inProjectEnv: Boolean? = null): PyResult<String> {
+  val env = if (inProjectEnv != null) mapOf("POETRY_VIRTUALENVS_IN_PROJECT" to inProjectEnv.toString()) else emptyMap()
   return POETRY_TOOL.runTool(projectPath, *args, env = env)
 }
 
