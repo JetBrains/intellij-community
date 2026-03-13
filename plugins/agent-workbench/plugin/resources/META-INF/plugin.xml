@@ -10,6 +10,8 @@
       <li><b>Persistent Chat Tabs</b> — each session opens in its own editor tab and survives IDE restarts.</li>
       <li><b>Separate Window Mode</b> — run AI chat in a dedicated frame so you can work on code and manage tasks side by side.</li>
       <li><b>Automatic Context</b> — editor selections, VCS changes, project-view selections, and test results are collected and sent with your prompt so the agent has the context it needs.</li>
+      <li><b>Context from UI</b> — click any IDE component (tool window, editor, panel) to screenshot it and attach the image as visual context for the agent.</li>
+      <li><b>Context from Screen</b> — drag to select any screen area and capture it as a screenshot to share with the agent, even outside the IDE.</li>
     </ul>
     <em>Experimental — features are under active development and may change without notice.</em>
   ]]></description>
