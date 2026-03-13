@@ -19,7 +19,7 @@ import org.jetbrains.jps.dependency.impl.CachingMaplet;
 import org.jetbrains.jps.dependency.impl.CachingMultiMaplet;
 import org.jetbrains.jps.dependency.impl.GraphDataInputImpl;
 import org.jetbrains.jps.dependency.impl.GraphDataOutputImpl;
-import org.jetbrains.jps.dependency.impl.StringEnumerator;
+import org.jetbrains.jps.dependency.impl.ObjectEnumerator;
 
 import java.io.Closeable;
 import java.io.Flushable;
@@ -192,19 +192,19 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
   }
 
   private static final class MVSEnumerator implements Enumerator {
-    private final StringEnumerator myEnumerator;
+    private final ObjectEnumerator<String> myEnumerator;
     // MVMap is a sorted map implementation using a B+ tree. Keys are sorted in their natural ordering.
     private final MVMap<Integer, String> myStoreMap;
 
     MVSEnumerator(MVStore store) {
       myStoreMap = store.openMap("string-table");
       // expect sequential order in the myStoreMap
-      myEnumerator = new StringEnumerator(map(myStoreMap.entrySet(), Map.Entry::getValue));
+      myEnumerator = new ObjectEnumerator<>(map(myStoreMap.entrySet(), Map.Entry::getValue));
     }
 
     @Override
     public synchronized String toString(int num) throws IOException {
-      String str = myEnumerator.lookupString(num);
+      String str = myEnumerator.lookup(num);
       if (str == null) {
         throw new IOException(
           "Mapping for number " + num + " does not exist. Current string table size: " + myEnumerator.getTableSize() + " entries."

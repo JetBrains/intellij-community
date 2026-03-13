@@ -9,39 +9,39 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class StringEnumerator {
-  private final Object2IntMap<String> myToIntMap = new Object2IntOpenHashMap<>();
-  private final ArrayList<String> myTable = new ArrayList<>();
+public final class ObjectEnumerator<T> {
+  private final Object2IntMap<T> myToIntMap = new Object2IntOpenHashMap<>();
+  private final ArrayList<T> myTable = new ArrayList<>();
   private int myUnsavedIndex; // "everything saved" condition: "myUnsavedIndex == myTable.size()"
 
-  public StringEnumerator() {
+  public ObjectEnumerator() {
     this(List.of());
   }
   
-  public StringEnumerator(Iterable<String> initial) {
-    for (String str : initial) {
-      addString(str);
+  public ObjectEnumerator(Iterable<? extends T> initial) {
+    for (T str : initial) {
+      append(str);
     }
     myUnsavedIndex = myTable.size();
   }
 
-  public void addString(String str) {
+  public void append(T obj) {
     int num = myTable.size();
-    myTable.add(str);
-    myToIntMap.put(str, num);
+    myTable.add(obj);
+    myToIntMap.put(obj, num);
   }
 
   @Nullable
-  public String lookupString(int num) {
+  public T lookup(int num) {
     return num < myTable.size()? myTable.get(num) : null;
   }
 
-  public int toNumber(String str) {
+  public int toNumber(T obj) {
     int nextAvailable = myTable.size();
-    int num = myToIntMap.getOrDefault(str, nextAvailable);
+    int num = myToIntMap.getOrDefault(obj, nextAvailable);
     if (num == nextAvailable) { // not in map yet
-      myTable.add(str);
-      myToIntMap.put(str, num);
+      myTable.add(obj);
+      myToIntMap.put(obj, num);
     }
     return num;
   }
@@ -54,11 +54,11 @@ public final class StringEnumerator {
     return myTable.size() - myUnsavedIndex;
   }
 
-  public interface EntryConsumer {
-    void accept(int num, String str) throws IOException;
+  public interface TableEntryConsumer<T> {
+    void accept(int num, T obj) throws IOException;
   }
 
-  public boolean drainUnsaved(EntryConsumer consumer) throws IOException {
+  public boolean drainUnsaved(TableEntryConsumer<? super T> consumer) throws IOException {
     int size = myTable.size();
     if (myUnsavedIndex == size) {
       return false;

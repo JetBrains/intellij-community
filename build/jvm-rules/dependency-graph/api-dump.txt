@@ -20,6 +20,9 @@ org.jetbrains.jps.dependency.BaseMaplet
 - a:flush():V
 - a:getKeys():java.lang.Iterable
 - a:remove(java.lang.Object):V
+org.jetbrains.jps.dependency.CloseableExt
+- java.io.Closeable
+- close(Z):V
 org.jetbrains.jps.dependency.ComparableTypeExternalizer
 - java.util.Comparator
 - org.jetbrains.jps.dependency.Externalizer
@@ -49,6 +52,8 @@ org.jetbrains.jps.dependency.DependencyGraph
 - a:createDelta(java.lang.Iterable,java.lang.Iterable,Z):org.jetbrains.jps.dependency.Delta
 - differentiate(org.jetbrains.jps.dependency.Delta,org.jetbrains.jps.dependency.DifferentiateParameters):org.jetbrains.jps.dependency.DifferentiateResult
 - a:differentiate(org.jetbrains.jps.dependency.Delta,org.jetbrains.jps.dependency.DifferentiateParameters,java.lang.Iterable):org.jetbrains.jps.dependency.DifferentiateResult
+- a:exportSnapshot(java.io.OutputStream):V
+- a:importSnapshot(java.io.InputStream):V
 - a:integrate(org.jetbrains.jps.dependency.DifferentiateResult):V
 org.jetbrains.jps.dependency.DifferentiateContext
 - a:affectNodeSource(org.jetbrains.jps.dependency.NodeSource):V

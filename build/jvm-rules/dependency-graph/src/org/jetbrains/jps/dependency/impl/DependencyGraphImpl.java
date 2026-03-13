@@ -430,12 +430,12 @@ public class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
 
   @Override
   public void importSnapshot(InputStream in) throws IOException {
-    StringEnumerator enumerator = new StringEnumerator();
+    ObjectEnumerator<String> enumerator = new ObjectEnumerator<>();
     Map<Usage, Usage> usagesInterner = new HashMap<>();
     DataInputStream dataIn = new DataInputStream(in);
     GraphDataInput graphIn = GraphDataInputImpl.wrap(
       dataIn,
-      enumerator::lookupString,
+      enumerator::lookup,
       o -> o instanceof Usage? usagesInterner.computeIfAbsent((Usage)o,Function.identity()) : o
     );
 
@@ -443,7 +443,7 @@ public class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
     while (size-- > 0) {
       int stringTableSize = dataIn.readInt();
       while (stringTableSize-- > 0) {
-        enumerator.addString(dataIn.readUTF());
+        enumerator.append(dataIn.readUTF());
       }
       PathSource src = graphIn.readGraphElement();
       RW.readCollection(graphIn, graphIn::readGraphElement, (Consumer<Node<?, ?>>) node -> {
@@ -458,7 +458,7 @@ public class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
 
   @Override
   public void exportSnapshot(OutputStream out) throws IOException {
-    StringEnumerator enumerator = new StringEnumerator();
+    ObjectEnumerator<String> enumerator = new ObjectEnumerator<>();
     List<Node<?, ?>> nodes = new ArrayList<>();
     ByteArrayOutputStream buf = new ByteArrayOutputStream();
     GraphDataOutput nodesOut = GraphDataOutputImpl.wrap(new DataOutputStream(buf), enumerator::toNumber);
