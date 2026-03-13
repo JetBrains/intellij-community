@@ -60,6 +60,12 @@ public class HeadlessDataManager extends DataManagerImpl {
     manager.myUseProductionDataManager = true;
   }
 
+  @TestOnly
+  @ApiStatus.Internal
+  public static boolean isFallbackProductionDataManagerEnabled() {
+    return ((HeadlessDataManager)getInstance()).myUseProductionDataManager;
+  }
+
   @Override
   public @NotNull DataContext getDataContext() {
     return new HeadlessContext(productionDataContext(super::getDataContext), myTestDataProvider);
