@@ -6,6 +6,7 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.JBColor
@@ -23,7 +24,9 @@ import java.awt.Dimension
 import java.awt.EventQueue
 import java.awt.Graphics
 import java.awt.Graphics2D
+import java.awt.IllegalComponentStateException
 import java.awt.MouseInfo
+import java.awt.Point
 import java.awt.Rectangle
 import java.awt.RenderingHints
 import java.awt.event.KeyEvent
@@ -195,11 +198,14 @@ internal class UIContextPickerSession(
   }
 
   private fun findComponentUnderCursor(): Component? {
-    val ideFrame = WindowManager.getInstance().getIdeFrame(project) ?: return null
     val mousePos = MouseInfo.getPointerInfo()?.location ?: return null
-    SwingUtilities.convertPointFromScreen(mousePos, ideFrame.component)
+    val ideFrame = findFrameUnderScreenLocation(WindowManager.getInstance().allProjectFrames.asIterable(), mousePos)
+                   ?: WindowManager.getInstance().getIdeFrame(project)
+                   ?: return null
+    val pointInFrame = Point(mousePos)
+    SwingUtilities.convertPointFromScreen(pointInFrame, ideFrame.component)
 
-    return UIUtil.getDeepestComponentAt(ideFrame.component, mousePos.x, mousePos.y)
+    return UIUtil.getDeepestComponentAt(ideFrame.component, pointInFrame.x, pointInFrame.y)
       ?.let { findParentScrollPane(it) }
   }
 
@@ -252,6 +258,41 @@ internal class UIContextPickerSession(
   }
 
   override fun dispose() {}
+}
+
+internal fun findFrameUnderScreenLocation(
+  frames: Iterable<IdeFrame>,
+  screenLocation: Point,
+  boundsOnScreen: (Component) -> Rectangle? = ::componentBoundsOnScreen,
+  isPreferred: (IdeFrame) -> Boolean = ::isFrameFocused,
+): IdeFrame? {
+  var lastMatch: IdeFrame? = null
+  for (frame in frames) {
+    if (boundsOnScreen(frame.component)?.contains(screenLocation) == true) {
+      lastMatch = frame
+      if (isPreferred(frame)) {
+        return frame
+      }
+    }
+  }
+
+  return lastMatch
+}
+
+private fun isFrameFocused(frame: IdeFrame): Boolean {
+  val window = SwingUtilities.getWindowAncestor(frame.component) ?: (frame as? java.awt.Window)
+  return window?.isFocused == true
+}
+
+private fun componentBoundsOnScreen(component: Component): Rectangle? {
+  if (!component.isShowing) return null
+  return try {
+    val location = component.locationOnScreen
+    Rectangle(location.x, location.y, component.width, component.height)
+  }
+  catch (_: IllegalComponentStateException) {
+    null
+  }
 }
 
 private fun findParentScrollPane(component: Component): Component {
