@@ -147,12 +147,11 @@ public class TestReporter extends AbstractTestReporter {
         }
       }
 
-      boolean hasComparisonData = failureData != null || ex instanceof MultipleFailuresError;
-      String trace = includeThrowable ? getTrace(ex) : "";
-      ComparisonFailureData.registerSMAttributes(failureData, hasComparisonData ? "" : trace, ex.getMessage(), attributes, ex,
-                                                 "Comparison Failure: ", "expected: <");
-      if (hasComparisonData && !trace.isEmpty()) {
-        attributes.put("details", trace);
+      ComparisonFailureData.registerSMAttributes(failureData, includeThrowable || failureData == null ? getTrace(ex) : "",
+                                                 ex.getMessage(), attributes, ex, "Comparison Failure: ", "expected: <");
+
+      if (ex instanceof MultipleFailuresError) {
+        attributes.computeIfPresent("message", (k, msq) -> (msq.contains("\n")) ? msq.substring(0, msq.indexOf('\n')) + "..." : msq);
       }
     }
 
