@@ -32,6 +32,7 @@ import com.intellij.task.ModuleBuildTask
 import com.intellij.task.ProjectTask
 import com.intellij.task.ProjectTaskContext
 import com.intellij.task.ProjectTaskRunner
+import com.intellij.task.TaskRunnerResults.FAILURE
 import com.intellij.task.TaskRunnerResults.SUCCESS
 import com.intellij.util.text.nullize
 import kotlinx.coroutines.async
@@ -52,6 +53,8 @@ import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import java.io.IOException
 import java.nio.file.Path
+import java.util.concurrent.CancellationException
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.Path
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.readLines
@@ -70,15 +73,14 @@ class GradleProjectTaskRunner : ProjectTaskRunner() {
   private val mutex = Mutex()
 
   override fun run(project: Project, context: ProjectTaskContext, vararg tasks: ProjectTask): Promise<Result> {
-    return project.gradleCoroutineScope.async<Result> {
+    return project.gradleCoroutineScope.async {
       mutex.withLock {
         run(project, context, tasks.asList())
       }
-      SUCCESS
     }.asCompletableFuture().asPromise()
   }
 
-  private suspend fun run(project: Project, context: ProjectTaskContext, tasks: List<ProjectTask>) {
+  private suspend fun run(project: Project, context: ProjectTaskContext, tasks: List<ProjectTask>): Result {
     val taskOutputEelPath = if (context.isCollectionOfGeneratedFilesEnabled) createTaskOutputFile(project) else null
     val taskOutputPath = taskOutputEelPath?.asNioPath()
     try {
@@ -90,8 +92,10 @@ class GradleProjectTaskRunner : ProjectTaskRunner() {
 
       if (settings.rootPaths.isEmpty()) {
         LOG.warn("Nothing will be run for $tasks")
-        return
+        return SUCCESS
       }
+
+      val errors = AtomicInteger()
 
       coroutineScope {
         for (rootProjectPath in settings.rootPaths) {
@@ -107,24 +111,30 @@ class GradleProjectTaskRunner : ProjectTaskRunner() {
           }
 
           launch {
-            TaskExecutionUtil.runTask(
-              TaskExecutionSpec.create()
-                .withProject(project)
-                .withSystemId(SYSTEM_ID)
-                .withSettings(ExternalSystemTaskExecutionSettings().also {
-                  it.executionName = GradleBundle.message("gradle.execution.name.build.project.", Path(rootProjectPath).fileName)
-                  it.externalSystemIdString = SYSTEM_ID.id
-                  it.externalProjectPath = rootProjectPath
-                  it.taskNames = tasksToExecute
-                })
-                .withUserData(UserDataHolderBase().also {
-                  it.putUserData(PROGRESS_LISTENER_KEY, BuildViewManager::class.java)
-                  it.putUserData(VERSION_SPECIFIC_SCRIPTS_KEY, settings.getVersionedInitScripts(rootProjectPath))
-                  it.putUserData(INIT_SCRIPT_KEY, settings.getInitScript(rootProjectPath))
-                  it.putUserData(INIT_SCRIPT_PREFIX_KEY, BUILD_INIT_SCRIPT_NAME)
-                })
-                .withActivateToolWindowOnFailure(!context.isAutoRun)
-            )
+            try {
+              TaskExecutionUtil.runTask(
+                TaskExecutionSpec.create()
+                  .withProject(project)
+                  .withSystemId(SYSTEM_ID)
+                  .withSettings(ExternalSystemTaskExecutionSettings().also {
+                    it.executionName = GradleBundle.message("gradle.execution.name.build.project.", Path(rootProjectPath).fileName)
+                    it.externalSystemIdString = SYSTEM_ID.id
+                    it.externalProjectPath = rootProjectPath
+                    it.taskNames = tasksToExecute
+                  })
+                  .withUserData(UserDataHolderBase().also {
+                    it.putUserData(PROGRESS_LISTENER_KEY, BuildViewManager::class.java)
+                    it.putUserData(VERSION_SPECIFIC_SCRIPTS_KEY, settings.getVersionedInitScripts(rootProjectPath))
+                    it.putUserData(INIT_SCRIPT_KEY, settings.getInitScript(rootProjectPath))
+                    it.putUserData(INIT_SCRIPT_PREFIX_KEY, BUILD_INIT_SCRIPT_NAME)
+                  })
+                  .withActivateToolWindowOnFailure(!context.isAutoRun)
+              )
+            } catch (cancellationException: CancellationException) {
+              throw cancellationException
+            } catch (e: Exception) {
+              errors.incrementAndGet();
+            }
           }
         }
       }
@@ -141,6 +151,7 @@ class GradleProjectTaskRunner : ProjectTaskRunner() {
         // have to refresh in case of errors too, because run configuration may be set to ignore errors
         CompilerUtil.refreshOutputRoots(affectedRoots)
       }
+      return if (errors.get() == 0) SUCCESS else FAILURE
     }
     finally {
       taskOutputPath?.deleteIfExists()
