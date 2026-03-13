@@ -60,12 +60,13 @@ public final class TestLoggerFactory implements Logger.Factory {
   private static final long LOG_SIZE_LIMIT = 100 * 1024 * 1024;
   private static final long LOG_SEEK_WINDOW = 100 * 1024;
 
-  private static final char FAILED_TEST_DEBUG_OUTPUT_MARKER = '\u2003';  // used in `FailedTestDebugLogConsoleFolding#shouldFoldLine`
-  private static final int MAX_BUFFER_LENGTH = Integer.getInteger("idea.single.test.log.max.length", 10_000_000);
+  /**
+   * used in {@link org.jetbrains.idea.devkit.run.FailedTestDebugLogConsoleFolding#shouldFoldLine}
+   */
+  private static final char FAILED_TEST_DEBUG_OUTPUT_MARKER = '\u2003';
+  private static final int MAX_BUFFER_LENGTH = Math.max(1024, Integer.getInteger("idea.single.test.log.max.length", 10_000_000));
 
-  private final StringBuilder myBuffer = new StringBuilder();
-  private int myBufferStaticFixturesEndOffset;
-  private int myBufferFixturesEndOffset;
+  private final StringBuilder myBuffer = new StringBuilder(); // guarded by myBuffer
   private long myTestStartedMillis;
   private boolean myInitialized;
 
@@ -152,7 +153,7 @@ public final class TestLoggerFactory implements Logger.Factory {
     dumpLogTo(testStartMarker, System.out);
   }
 
-  public static void dumpLogTo(@NotNull String testStartMarker, PrintStream out) {
+  public static void dumpLogTo(@NotNull String testStartMarker, @NotNull PrintStream out) {
     var logFile = getTestLogDir().resolve(LOG_FILE_NAME);
     if (Files.exists(logFile)) {
       try {
@@ -281,7 +282,7 @@ public final class TestLoggerFactory implements Logger.Factory {
     if (factory != null) {
       // clear buffer from tests which failed to report their termination properly
       synchronized (factory.myBuffer) {
-        factory.myBuffer.setLength(factory.myBufferFixturesEndOffset);
+        factory.myBuffer.setLength(0);
       }
       var publisher = factory.myDebugArtifactPublisher.getAndSet(null);
       if (publisher != null) {
@@ -319,33 +320,27 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
   }
 
-  public static void onFixturesInitializationStarted(boolean isStatic) {
-    var factory = getTestLoggerFactory();
-    if (factory != null) {
-      if (isStatic) {
-        factory.myBufferStaticFixturesEndOffset = 0;
-      }
-      else {
-        factory.myBufferFixturesEndOffset = factory.myBufferStaticFixturesEndOffset;
-      }
+  private @NotNull CharSequence myBufferStaticFixtureInit = "";
+  private @NotNull CharSequence myBufferFixtureInit = "";
+  public static void fixtureInitialization(boolean isStatic, @NotNull Runnable runnable) {
+    try {
+      runnable.run();
     }
-  }
-
-  public static void onFixturesInitializationFinished(boolean isStatic) {
-    var factory = getTestLoggerFactory();
-    if (factory != null) {
-      if (isStatic) {
+    finally {
+      var factory = getTestLoggerFactory();
+      if (factory != null) {
         synchronized (factory.myBuffer) {
-          factory.myBuffer.append("---Static Fixtures Initialization End---");
-          factory.myBuffer.append(System.lineSeparator());
-          factory.myBufferStaticFixturesEndOffset = factory.myBuffer.length();
-        }
-      }
-      else {
-        synchronized (factory.myBuffer) {
-          factory.myBuffer.append("---Instance Fixtures Initialization End---");
-          factory.myBuffer.append(System.lineSeparator());
-          factory.myBufferFixturesEndOffset = factory.myBuffer.length();
+          if (isStatic) {
+            factory.myBuffer.append("---Static Fixtures Initialization End---");
+            factory.myBuffer.append(System.lineSeparator());
+            factory.myBufferStaticFixtureInit = factory.myBuffer.toString();
+          }
+          else {
+            factory.myBuffer.append("---Instance Fixtures Initialization End---");
+            factory.myBuffer.append(System.lineSeparator());
+            factory.myBufferFixtureInit = factory.myBuffer.toString();
+          }
+          factory.myBuffer.setLength(0);
         }
       }
     }
@@ -355,12 +350,9 @@ public final class TestLoggerFactory implements Logger.Factory {
     var factory = getTestLoggerFactory();
     if (factory != null) {
       if (isStatic) {
-        factory.myBufferStaticFixturesEndOffset = 0;
-        factory.myBufferFixturesEndOffset = 0;
+        factory.myBufferStaticFixtureInit = "";
       }
-      else {
-        factory.myBufferFixturesEndOffset = factory.myBufferStaticFixturesEndOffset;
-      }
+      factory.myBufferFixtureInit = "";
     }
   }
 
@@ -396,8 +388,9 @@ public final class TestLoggerFactory implements Logger.Factory {
   private void dumpLogBuffer(boolean success, @NotNull String testName) {
     String buffer;
     synchronized (myBuffer) {
-      buffer = success || myBuffer.isEmpty() ? null : myBuffer.toString();
-      myBuffer.setLength(myBufferStaticFixturesEndOffset);
+      buffer = success || myBuffer.isEmpty() && myBufferStaticFixtureInit.isEmpty() && myBufferFixtureInit.isEmpty() ? null :
+               myBufferStaticFixtureInit + "\n" + myBufferFixtureInit + "\n" + myBuffer;
+      myBuffer.setLength(0);
     }
 
     if (buffer != null) {
@@ -421,7 +414,7 @@ public final class TestLoggerFactory implements Logger.Factory {
       }
 
       if (System.getenv("TEAMCITY_VERSION") != null) {
-        var finalBuffer = buffer;
+        CharSequence finalBuffer = buffer;
         TeamCityLogger.block("DEBUG log", () ->
           System.out.println(finalBuffer)
         );
