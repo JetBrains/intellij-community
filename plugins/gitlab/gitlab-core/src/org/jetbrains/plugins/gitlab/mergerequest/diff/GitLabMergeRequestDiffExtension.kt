@@ -196,7 +196,11 @@ private class DiffEditorModel(
     diffReviewVm.requestNewDiscussion(loc, true)
   }
 
-  override fun canCreateComment(lineRange: LineRange) = true
+  override fun canCreateComment(lineRange: LineRange): Boolean {
+    if (!diffReviewVm.canAddMultilinePositionalNotes) return false
+    if (!diffReviewVm.isCumulativeChange) return false
+    return true
+  }
 
   override fun toggleComments(lineIdx: Int) {
     inlays.value.asSequence().filter { it.line.value == lineIdx }.filterIsInstance<Hideable>().syncOrToggleAll()
