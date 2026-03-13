@@ -52,6 +52,13 @@ open class TestingOptions {
   var testTags: String? = System.getProperty("intellij.build.test.tags").nullize(nullizeSpaces = true)
 
   /**
+   * Semicolon-separated exact test simple patterns, wildcards are not allowed.
+   * Each entry is `FullyQualifiedClassName` or `FullyQualifiedClassName#methodName`.
+   * If specified, [testGroups] and [testPatterns] will be ignored.
+   */
+  var testSimplePatterns: String? = System.getProperty("intellij.build.test.simple.patterns").nullize(nullizeSpaces = true)
+
+  /**
    * Semicolon-separated names of JUnit run configurations in the project which need to be executed. If this option is specified,
    * [testGroups], [testPatterns] and [mainModule] will be ignored.
    */

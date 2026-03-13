@@ -142,6 +142,13 @@ If tests.cmd reports "No tests found":
 
 ### Test Selection (Choose ONE)
 
+**`-Dintellij.build.test.simple.patterns=<selectors>`**
+- Semicolon-separated **exact** test patterns (no wildcards)
+- Each entry is `FullyQualifiedClassName` or `FullyQualifiedClassName#methodName`
+- When specified, test patterns and test groups are ignored
+- Example: `-Dintellij.build.test.simple.patterns=org.jetbrains.intellij.build.TestSelectorsTest#class selector`
+- Example with multiple: `-Dintellij.build.test.simple.patterns=org.jetbrains.intellij.build.TestSelectorsTest#class selector;org.jetbrains.intellij.build.FileSetTest`
+
 **`-Dintellij.build.test.patterns=<pattern>`**
 - Semicolon-separated patterns for test class names
 - Wildcard '*' is supported
@@ -170,6 +177,22 @@ Fast execution for a single test class:
 ```bash
 ./tests.cmd \
   -Dintellij.build.test.patterns=com.goide.comments.GoCommentReferencesTest
+```
+
+### Run a Specific Test Method
+
+Use simple patterns to run a single test method without wildcards:
+
+```bash
+./tests.cmd \
+  -Dintellij.build.test.simple.patterns=org.jetbrains.intellij.build.TestSelectorsTest#class selector
+```
+
+Multiple methods or a mix of classes and methods:
+
+```bash
+./tests.cmd \
+  '-Dintellij.build.test.simple.patterns=org.jetbrains.intellij.build.TestSelectorsTest#class selector;org.jetbrains.intellij.build.FileSetTest'
 ```
 
 ### Run Tests with Retries (for flaky tests)

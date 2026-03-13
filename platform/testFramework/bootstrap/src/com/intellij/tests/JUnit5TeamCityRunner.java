@@ -111,7 +111,10 @@ public final class JUnit5TeamCityRunner {
 
       if (args[0].equals("__class__")) {
         String[] classNames = args[1].split(";");
-        selectors = Arrays.stream(classNames).map(DiscoverySelectors::selectClass).toList();
+        selectors = Arrays.stream(classNames).map(className -> {
+          String[] parts = className.split("#", 2);
+          return parts.length == 1 ? DiscoverySelectors.selectClass(className) : DiscoverySelectors.selectMethod(parts[0], parts[1]);
+        }).toList();
         // no filters
       }
       else if (args[0].equals("__package__")) {
@@ -996,4 +999,5 @@ public final class JUnit5TeamCityRunner {
       delegate.execute(request);
     }
   }
+
 }

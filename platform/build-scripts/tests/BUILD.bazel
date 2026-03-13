@@ -77,6 +77,9 @@ jvm_library(
     "//RegExpSupport:regexp-tests_test_lib",
     "//platform/xdebugger-impl:debugger-impl-tests",
     "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
+    "//platform/testFramework/bootstrap:tools-testsBootstrap",
+    "//platform/testFramework/bootstrap:tools-testsBootstrap_test_lib",
+    "@lib//:junit5Launcher",
   ],
   runtime_deps = [":tests"]
 )
