@@ -212,18 +212,14 @@ public final class TypedHandler extends TypedActionHandlerBase {
 
   static @NotNull Editor injectedEditorIfCharTypedIsSignificant(int charTyped, @NotNull Editor editor, @NotNull PsiFile oldFile) {
     int offset = editor.getCaretModel().getOffset();
-    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(oldFile.getProject());
-    PsiFile topLevelFile = injectedLanguageManager.getTopLevelFile(oldFile);
     // even for uncommitted document try to retrieve injected fragment that has been there recently
     // we are assuming here that when user is (even furiously) typing, injected language would not change
     // and thus we can use its lexer to insert closing braces etc
-    List<DocumentWindow> injected = injectedLanguageManager.getCachedInjectedDocumentsInRange(
-      topLevelFile,
-      ProperTextRange.create(offset, offset)
-    );
+    List<DocumentWindow> injected = InjectedLanguageManager.getInstance(oldFile.getProject())
+      .getCachedInjectedDocumentsInRange(oldFile, ProperTextRange.create(offset, offset));
     for (DocumentWindow documentWindow : injected) {
       if (documentWindow.isValid() && documentWindow.containsRange(offset, offset)) {
-        PsiFile injectedFile = PsiDocumentManager.getInstance(oldFile.getProject()).getCachedPsiFile(documentWindow);
+        PsiFile injectedFile = PsiDocumentManager.getInstance(oldFile.getProject()).getPsiFile(documentWindow);
         if (injectedFile != null) {
           Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
           // IDEA-52375/WEB-9105/KTNB-470 fix: last quote in editable fragment should be handled by outer language quote handler,
