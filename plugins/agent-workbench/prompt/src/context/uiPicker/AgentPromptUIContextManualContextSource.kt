@@ -2,19 +2,14 @@
 package com.intellij.agent.workbench.prompt.context.uiPicker
 
 import com.intellij.agent.workbench.prompt.AgentPromptBundle
+import com.intellij.agent.workbench.prompt.context.buildScreenshotContextItem
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererIds
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextTruncation
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptManualContextPickerRequest
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptManualContextSourceBridge
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayload
 import com.intellij.idea.AppMode
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import java.awt.Component
 import java.awt.image.BufferedImage
-import java.nio.file.Files
-import javax.imageio.ImageIO
 
 private const val UI_CONTEXT_SOURCE_ID = "manual.ui.context"
 private const val UI_CONTEXT_SOURCE = "manualUiPicker"
@@ -47,25 +42,12 @@ internal class AgentPromptUIContextManualContextSource : AgentPromptManualContex
 }
 
 private fun buildUIContextItem(component: Component, screenshot: BufferedImage): AgentPromptContextItem {
-  val name = resolveComponentDisplayName(component)
-  val screenshotFile = Files.createTempFile(PathManager.getTempDir(), "ui-screenshot-", ".png")
-  @Suppress("SSBasedInspection") screenshotFile.toFile().deleteOnExit()
-  Files.newOutputStream(screenshotFile).use { ImageIO.write(screenshot, "png", it) }
-  val filePath = screenshotFile.toAbsolutePath().toString()
-
-  return AgentPromptContextItem(
-    rendererId = AgentPromptContextRendererIds.SNIPPET,
-    title = name,
-    body = filePath,
-    payload = AgentPromptPayload.obj(
-      "type" to AgentPromptPayload.str("screenshot"),
-      "filePath" to AgentPromptPayload.str(filePath),
-      "width" to AgentPromptPayload.num(screenshot.width),
-      "height" to AgentPromptPayload.num(screenshot.height),
-    ),
-    itemId = UI_CONTEXT_SOURCE_ID,
+  return buildScreenshotContextItem(
+    title = resolveComponentDisplayName(component),
+    screenshot = screenshot,
+    sourceId = UI_CONTEXT_SOURCE_ID,
     source = UI_CONTEXT_SOURCE,
-    truncation = AgentPromptContextTruncation.none(filePath.length),
+    tempFilePrefix = "ui-screenshot-",
   )
 }
 
