@@ -1,17 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("DEPRECATION")
-
 package org.jetbrains.intellij.build.bazel
 
-import com.intellij.openapi.application.PathManager
-import com.intellij.platform.testFramework.core.FileComparisonFailedError
-import com.intellij.rt.execution.junit.FileComparisonFailure
-import org.assertj.core.api.SoftAssertions
-import org.assertj.core.api.junit.jupiter.InjectSoftAssertions
-import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
-import org.opentest4j.AssertionFailedError
+import org.assertj.core.api.JUnitSoftAssertions
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
@@ -21,16 +14,29 @@ import kotlin.io.path.deleteExisting
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.moveTo
 import kotlin.io.path.name
 import kotlin.io.path.readText
+import kotlin.io.path.walk
 import kotlin.io.path.writeText
 
-
+/**
+ * run tests via `bazel test //:bazel-generator-integration-tests --test_output=all`
+ * from `community/platform/build-scripts/bazel`
+ */
 @OptIn(ExperimentalPathApi::class)
-@ExtendWith(SoftAssertionsExtension::class)
 class BazelGeneratorIntegrationTests {
-  @InjectSoftAssertions
-  lateinit var softly: SoftAssertions
+  companion object {
+    private const val TEST_DATA_MARKER_ENV = "BAZEL_GENERATOR_INTEGRATION_TEST_DATA_MARKER"
+
+    // Expected BUILD.bazel files are stored as ~BUILD.bazel in test data
+    // to prevent Bazel from treating those directories as packages (same convention as plugins/bazel)
+    private const val TILDE_BUILD_PREFIX = "~"
+  }
+
+  @JvmField
+  @Rule
+  val softly = JUnitSoftAssertions()
 
   @Test fun kotlinSnapshotLibrary() = doTest("kotlin-snapshot-library")
   @Test fun snapshotRepositoryLibrary() = doTest("snapshot-repository-library")
@@ -43,20 +49,18 @@ class BazelGeneratorIntegrationTests {
     runWithoutUltimateRoot: Boolean = true,
     defaultCustomModules: Boolean = false,
   ) {
-    val testDataPath = Path.of(
-      PathManager.getCommunityHomePath(),
-      "platform/build-scripts/bazel/testData/integration/$testName"
-    )
+    val testDataPath = getTestDataPath(testName)
 
     val projectDataPath = testDataPath.resolve("project")
-    check(projectDataPath.isDirectory()) {
-      "$projectDataPath is not a directory"
+    assertTrue("$projectDataPath is not a directory", projectDataPath.isDirectory())
+    for (path in projectDataPath.walk()) {
+      check(!path.name.startsWith(TILDE_BUILD_PREFIX)) {
+        "Initial project dir is not expected to contain $TILDE_BUILD_PREFIX files, but $path is"
+      }
     }
 
     val expectedDataPath = testDataPath.resolve("expected")
-    check(expectedDataPath.isDirectory()) {
-      "$expectedDataPath is not a directory"
-    }
+    assertTrue("$expectedDataPath is not a directory", expectedDataPath.isDirectory())
 
     // can be missing
     val m2RepoPath = testDataPath.resolve("m2-repo")
@@ -73,6 +77,13 @@ class BazelGeneratorIntegrationTests {
       )
     )
 
+    for (path in tempDir.walk()) {
+      // mangle names in output dir so file names will be the same as in expectedDataPath (with ~)
+      if (path.name == "BUILD.bazel") {
+        path.moveTo(path.resolveSibling(TILDE_BUILD_PREFIX + path.name))
+      }
+    }
+
     assertAndRemoveSameFiles(projectDataPath, tempDir)
     compareDirectories(expectedDataPath, tempDir)
 
@@ -82,10 +93,18 @@ class BazelGeneratorIntegrationTests {
     }
   }
 
-  private fun assertAndRemoveSameFiles(initialProjectDir: Path, testOutputDir: Path) {
-    val initialProjectFiles = initialProjectDir.listDirectoryEntries()
+  private fun getTestDataPath(testName: String): Path {
+    return Path.of(requireEnv("TEST_SRCDIR"), requireEnv(TEST_DATA_MARKER_ENV)).parent.resolve(testName).normalize()
+  }
 
-    for (initialProjectChildPath in initialProjectFiles) {
+  private fun requireEnv(name: String): String {
+    val value = System.getenv(name)
+    assertTrue("Missing $name env variable in bazel test environment", !value.isNullOrBlank())
+    return value.orEmpty()
+  }
+
+  private fun assertAndRemoveSameFiles(initialProjectDir: Path, testOutputDir: Path) {
+    for (initialProjectChildPath in initialProjectDir.listDirectoryEntries()) {
       val outputChildPath = testOutputDir.resolve(initialProjectChildPath.name)
       if (initialProjectChildPath.isDirectory()) {
         check(outputChildPath.isDirectory()) {
@@ -98,15 +117,12 @@ class BazelGeneratorIntegrationTests {
         outputChildPath.deleteExisting()
       }
       else {
-        softly.collectAssertionError(
-          FileComparisonFailedError(
-            message = "Actual file $outputChildPath is different from initial project file at $initialProjectChildPath. Generator should not modify existing project model files",
-            expected = initialProjectChildPath.readText(),
-            expectedFilePath = initialProjectChildPath.toString(),
-            actual = outputChildPath.readText(),
-            actualFilePath = outputChildPath.toString(),
-          )
-        )
+        softly.assertThatCharSequence(outputChildPath.readText())
+          .withFailMessage {
+            "Actual file $outputChildPath is different from initial project file at $initialProjectChildPath. " +
+            "Generator should not modify existing project model files"
+          }
+          .isEqualTo(initialProjectChildPath.readText())
       }
     }
   }
@@ -125,15 +141,7 @@ class BazelGeneratorIntegrationTests {
       }
       else {
         actualChildPath.createParentDirectories().writeText("")
-        softly.collectAssertionError(
-          FileComparisonFailedError(
-            message = "Expected file $expectedChildPath is missing at $actualChildPath",
-            expected = expectedChildPath.readText(),
-            expectedFilePath = expectedChildPath.toString(),
-            actual = "",
-            actualFilePath = actualChildPath.toString(),
-          )
-        )
+        softly.fail("Expected file $expectedChildPath is missing at $actualChildPath")
       }
     }
 
@@ -146,8 +154,7 @@ class BazelGeneratorIntegrationTests {
         compareDirectories(expectedChildPath, actualChildPath)
       }
       else {
-        softly.collectAssertionError(
-          AssertionFailedError("Actual file $actualChildPath is unexpected at $expectedChildPath"))
+        softly.fail("Actual file $actualChildPath is unexpected at $expectedChildPath")
       }
     }
 
@@ -159,17 +166,11 @@ class BazelGeneratorIntegrationTests {
         compareDirectories(expectedChildPath, actualChildPath)
       }
       else {
-        if (actualChildPath.readText() != expectedChildPath.readText()) {
-          // for some reason, adding it to softly or using non-deprecated FileComparisonFailedError
-          // does not show a diff in IDEA
-          throw FileComparisonFailure(
-            "Actual file $actualChildPath is different from $expectedChildPath",
-            expectedChildPath.readText(),
-            actualChildPath.readText(),
-            expectedChildPath.toString(),
-            actualChildPath.toString(),
-          )
-        }
+        softly.assertThatCharSequence(actualChildPath.readText())
+          .withFailMessage {
+            "Actual file $actualChildPath is different from expected file at $expectedChildPath"
+          }
+          .isEqualTo(expectedChildPath.readText())
       }
     }
   }

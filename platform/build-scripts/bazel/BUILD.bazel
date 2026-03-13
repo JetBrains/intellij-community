@@ -1,4 +1,4 @@
-load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_java//java:defs.bzl", "java_binary", "java_test", "java_import")
 load("@rules_java//toolchains:default_java_toolchain.bzl", "default_java_toolchain")
 load("@rules_kotlin//kotlin:core.bzl", "kt_compiler_plugin")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
@@ -12,6 +12,24 @@ default_java_toolchain(
     java_runtime = "@rules_java//toolchains:remotejdk_25",
     proguard_allowlister = ":noop_proguard_allowlister",
     visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "junit",
+  jars = ["@junit_http//file:junit.jar"],
+  visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "assertj-core",
+  jars = ["@assertj-core_http//file:assertj-core.jar"],
+  visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "byte-buddy",
+  jars = ["@byte-buddy_http//file:byte-buddy.jar"],
+  visibility = ["//visibility:public"],
 )
 
 sh_binary(
@@ -58,6 +76,35 @@ kt_jvm_library(
         ":kotlin_serialization",
     ],
     runtime_deps = [],
+)
+
+kt_jvm_library(
+    name = "bazel-generator-integration-tests-lib",
+    srcs = ["test/org/jetbrains/intellij/build/bazel/BazelGeneratorIntegrationTests.kt"],
+    associates = [":jps_to_bazel-lib"],
+    deps = [
+        ":junit",
+        ":assertj-core",
+        ":byte-buddy",
+    ],
+)
+
+filegroup(
+    name = "bazel-generator-integration-test-data",
+    srcs = glob(["testData/integration/**"]),
+)
+
+java_test(
+    name = "bazel-generator-integration-tests",
+    test_class = "org.jetbrains.intellij.build.bazel.BazelGeneratorIntegrationTests",
+    data = [
+        ":bazel-generator-integration-test-data",
+        "testData/integration/marker.txt",
+    ],
+    env = {
+        "BAZEL_GENERATOR_INTEGRATION_TEST_DATA_MARKER": "$(rlocationpath testData/integration/marker.txt)",
+    },
+    runtime_deps = [":bazel-generator-integration-tests-lib"],
 )
 
 java_binary(

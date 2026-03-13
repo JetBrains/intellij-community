@@ -7,8 +7,12 @@
       "productionJars": [
         "out/bazel-out/jvm-fastbuild/bin/module/module.jar"
       ],
-      "testTargets": [],
-      "testJars": [],
+      "testTargets": [
+        "@community//module:module_test_lib.jar"
+      ],
+      "testJars": [
+        "out/bazel-out/jvm-fastbuild/bin/module/module_test_lib.jar"
+      ],
       "exports": [],
       "moduleLibraries": {
         "#": {

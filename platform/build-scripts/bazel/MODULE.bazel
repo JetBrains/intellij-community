@@ -72,6 +72,29 @@ maven.install(
 )
 use_repo(maven, "j2b_maven")
 
+http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+
+http_file(
+    name = "assertj-core_http",
+    downloaded_file_path = "assertj-core.jar",
+    sha256 = "03852ab5b4419c1b0b3689930cdc1ac4f0c437a0c8094a900370dcb170cfbb46",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/assertj/assertj-core/4.0.0-M1/assertj-core-4.0.0-M1.jar",
+)
+
+http_file(
+    name = "junit_http",
+    downloaded_file_path = "junit.jar",
+    sha256 = "8e495b634469d64fb8acfa3495a065cbacc8a0fff55ce1e31007be4c16dc57d3",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/junit/junit/4.13.2/junit-4.13.2.jar",
+)
+
+http_file(
+    name = "byte-buddy_http",
+    downloaded_file_path = "byte-buddy.jar",
+    sha256 = "07273f05f91b4d20eb5547075627ae7f40b13447c20e7beda8aaac55d4aaa768",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.17.1/byte-buddy-1.17.1.jar",
+)
+
 bazel_dep(name = "rules_python", version = "1.7.0")
 
 # Use custom remote_java_tools_windows with vc_redist .dll files due to https://github.com/bazelbuild/rules_java/issues/316

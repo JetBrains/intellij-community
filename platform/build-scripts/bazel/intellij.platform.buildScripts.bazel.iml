@@ -64,12 +64,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework.core" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
-    <orderEntry type="library" scope="TEST" name="byte-buddy" level="project" />
-    <orderEntry type="library" scope="TEST" name="opentest4j" level="project" />
-    <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
   </component>
 </module>
