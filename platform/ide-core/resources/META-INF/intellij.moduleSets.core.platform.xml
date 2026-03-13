@@ -131,6 +131,7 @@
     <module name="intellij.platform.analysis" loading="embedded"/>
     <module name="intellij.platform.analysis.impl" loading="embedded"/>
     <module name="intellij.platform.ide.core" loading="embedded"/>
+    <module name="intellij.platform.ide.core.plugins" loading="embedded"/>
     <!-- endregion -->
   </content>
 </idea-plugin>

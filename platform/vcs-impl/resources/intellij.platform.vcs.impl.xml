@@ -13,6 +13,7 @@
     <module name="intellij.platform.diagnostic.telemetry"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core.plugins"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.kernel.backend"/>

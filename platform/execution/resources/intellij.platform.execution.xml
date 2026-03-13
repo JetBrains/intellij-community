@@ -6,6 +6,7 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.plugins"/>
     <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.util.coroutines"/>

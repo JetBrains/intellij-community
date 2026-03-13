@@ -275,6 +275,7 @@ object CoreModuleSets {
     moduleSet(rpcMinimal())
 
     embeddedModule("intellij.platform.ide.core")
+    embeddedModule("intellij.platform.ide.core.plugins")
   }
 
   /**
