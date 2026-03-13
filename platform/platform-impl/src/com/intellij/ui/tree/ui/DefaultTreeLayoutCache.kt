@@ -4,6 +4,8 @@ package com.intellij.ui.tree.ui
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.treeStructure.CachingTreePath
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -722,14 +724,29 @@ class DefaultTreeLayoutCache(
 
     private val nodes = mutableListOf<Node>()
     private var minimumAffectedRow: Int = -1
+    
+    @Volatile private var isEdtAssertionEnabled = false
 
     override fun iterator(): Iterator<Node> = nodes.iterator()
 
     fun clear() {
+      assertCorrectThread()
       for (node in nodes) {
         node.row = -1
       }
       nodes.clear()
+    }
+    
+    private fun assertCorrectThread() {
+      // There are too many places where UI is created on a BGT by accident.
+      // Those are bad enough by themselves, but out of scope for this check.
+      // So we start asserting only after it's accessed for the first time from the EDT.
+      if (EDT.isCurrentThreadEdt()) {
+        isEdtAssertionEnabled = true
+      }
+      if (isEdtAssertionEnabled) {
+        ThreadingAssertions.softAssertEventDispatchThread()
+      }
     }
 
     inline fun update(update: () -> Unit) {
@@ -741,6 +758,7 @@ class DefaultTreeLayoutCache(
     }
 
     inline fun updateImpl(location: Location?, update: () -> Unit) {
+      assertCorrectThread()
       val reentry = minimumAffectedRow != -1
       if (reentry) { // Indirect recursion will update later up the stack.
         update()
