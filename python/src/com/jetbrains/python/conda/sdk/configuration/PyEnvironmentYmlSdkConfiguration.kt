@@ -32,7 +32,7 @@ import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
-import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
+import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnvironment
 import com.jetbrains.python.sdk.conda.execution.CondaExecutor
 import com.jetbrains.python.sdk.conda.suggestCondaPath
 import com.jetbrains.python.sdk.configuration.CONDA_TOOL_ID
@@ -149,12 +149,12 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
 
   private suspend fun useExistingCondaEnv(module: Module, condaExecutable: String): PyResult<Sdk> {
     val project = module.project
-    return PyResult.success(PyCondaCommand(condaExecutable, null).createCondaSdkFromExistingEnv(
+    return PyCondaCommand(condaExecutable, null).createCondaSdkFromExistingEnvironment(
       getCondaEnvIdentity(module, condaExecutable)
       ?: return PyResult.localizedError(PyBundle.message("sdk.cannot.use.existing.conda.environment")),
       PyConfigurableInterpreterList.getInstance(project).model.sdks.toList(),
       project
-    ))
+    )
   }
 
   private suspend fun getCondaEnvIdentity(module: Module, condaExecutable: String): PyCondaEnvIdentity? {
@@ -184,7 +184,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
     val existingSdks = PyConfigurableInterpreterList.getInstance(project).model.sdks
     val newCondaEnvInfo = NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(environmentYml.toNioPath(), existingEnvs)
     val sdk = PyCondaCommand(condaExecutable, null)
-      .createCondaSdkAlongWithNewEnv(newCondaEnvInfo, Dispatchers.EDT, existingSdks.toList(), project).getOr {
+      .createCondaSdkAlongWithNewEnv(newCondaEnvInfo, existingSdks.toList(), project).getOr {
         PySdkConfigurationCollector.logCondaEnv(project, CondaEnvResult.CREATION_FAILURE)
         thisLogger().warn("Exception during creating conda environment $it")
         return it

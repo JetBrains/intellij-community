@@ -1,18 +1,30 @@
-// Copyright 2000-2025 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.SoftWrapModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.DocumentUtil;
@@ -20,13 +32,14 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
-import org.intellij.lang.annotations.JdkConstants;
+import com.intellij.util.ui.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -111,7 +124,7 @@ public final class IterationState {
   private Color myLastBackgroundColor;
   private FoldRegion myCurrentFold;
   private boolean myNextIsFoldRegion;
-  private boolean myIsInSelection = false;
+  private final boolean myShouldUseNewSelection;
 
   @ApiStatus.Internal
   public IterationState(
@@ -159,6 +172,11 @@ public final class IterationState {
     myDocumentHighlighters = createSweep(getDocumentMarkupModel(editor));
     myGuardedBlocks =  buildGuardedBlocks(start, end);
     myEndOffset = myStartOffset;
+    if (editor instanceof EditorImpl impl) {
+      myShouldUseNewSelection = impl.shouldUseNewSelection();
+    } else {
+      myShouldUseNewSelection = !Registry.is("editor.old.full.horizontal.selection.enabled") && !myColumnMode;
+    }
 
     advance();
   }
@@ -283,8 +301,8 @@ public final class IterationState {
   }
 
   @ApiStatus.Internal
-  public boolean isInSelection() {
-    return myIsInSelection;
+  public boolean hasPastLineEndExtension() {
+    return isInSelection(hasSoftWrap());
   }
 
   @ApiStatus.Internal
@@ -392,7 +410,7 @@ public final class IterationState {
     );
   }
 
-  private boolean isInSelection(boolean atBreak) {
+  boolean isInSelection(boolean atBreak) {
     return myCurrentSelectionIndex < myCaretData.selectionsSize() &&
            (myReverseIteration ? lessThan(myStartOffset, myCaretData.selectionEnd(myCurrentSelectionIndex, true), !atBreak)
                                : lessThan(myCaretData.selectionStart(myCurrentSelectionIndex, false), myStartOffset, !atBreak));
@@ -514,7 +532,6 @@ public final class IterationState {
 
   private void setAttributes(TextAttributes attributes, boolean atBreak, boolean beforeBreak) {
     boolean isInSelection = isInSelection(atBreak);
-    myIsInSelection = isInSelection;
     boolean isInCaretRow = isInCaretRow(
       !myReverseIteration && (!atBreak || !beforeBreak),
       myReverseIteration || (atBreak && beforeBreak)
@@ -527,7 +544,8 @@ public final class IterationState {
                               ? null
                               : myHighlighterIterator.getTextAttributes();
     TextAttributes selection = getSelectionAttributes(isInSelection);
-    if (!Registry.is("editor.old.full.horizontal.selection.enabled") && !myColumnMode && selection != null) {
+    if (myShouldUseNewSelection && selection != null) {
+      selection = selection.clone();
       selection.setBackgroundColor(null);
     }
     TextAttributes caret = getCaretRowAttributes(isInCaretRow);

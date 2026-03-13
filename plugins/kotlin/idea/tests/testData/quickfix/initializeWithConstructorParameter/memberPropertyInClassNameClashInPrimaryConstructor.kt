@@ -1,4 +1,5 @@
 // "Initialize with constructor parameter" "true"
+// K2_ERROR: Property must be initialized.
 open class A(n: Int) {
     <caret>var n: Int
         get() = 1

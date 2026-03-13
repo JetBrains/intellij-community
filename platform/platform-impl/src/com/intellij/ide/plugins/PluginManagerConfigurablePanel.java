@@ -6,11 +6,33 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.certificates.PluginCertificateManager;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
-import com.intellij.ide.plugins.newui.*;
+import com.intellij.ide.plugins.newui.ListPluginComponent;
+import com.intellij.ide.plugins.newui.MyPluginModel;
+import com.intellij.ide.plugins.newui.PluginManagerCustomizer;
+import com.intellij.ide.plugins.newui.PluginModelAsyncOperationsExecutor;
+import com.intellij.ide.plugins.newui.PluginModelFacade;
+import com.intellij.ide.plugins.newui.PluginPriceService;
+import com.intellij.ide.plugins.newui.PluginUiModel;
+import com.intellij.ide.plugins.newui.PluginUpdatesService;
+import com.intellij.ide.plugins.newui.PluginsGroup;
+import com.intellij.ide.plugins.newui.PluginsGroupComponent;
+import com.intellij.ide.plugins.newui.PluginsTab;
+import com.intellij.ide.plugins.newui.SearchWords;
+import com.intellij.ide.plugins.newui.TabbedPaneHeaderComponent;
+import com.intellij.ide.plugins.newui.UIPluginGroup;
+import com.intellij.ide.plugins.newui.UiPluginManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CheckedActionGroup;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -61,14 +83,21 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.ScrollPaneConstants;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.ide.plugins.PluginManagerConfigurable.*;
+import static com.intellij.ide.plugins.PluginManagerConfigurable.PLUGIN_INSTALL_CALLBACK_DATA_KEY;
+import static com.intellij.ide.plugins.PluginManagerConfigurable.SELECTION_TAB_KEY;
+import static com.intellij.ide.plugins.PluginManagerConfigurable.TopComponentController;
+import static com.intellij.ide.plugins.PluginManagerConfigurable.shutdownOrRestartApp;
 
 @ApiStatus.Internal
 public final class PluginManagerConfigurablePanel implements Disposable {
@@ -94,6 +123,8 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
   private Boolean myPluginsAutoUpdateEnabled;
   private volatile Boolean myDisposeStarted = false;
+  private final Object myCallbackLock = new Object();
+  private boolean myShutdownCallbackExecuted = false;
 
   public PluginManagerConfigurablePanel() {
     myPluginModelFacade = new PluginModelFacade(new MyPluginModel(null));
@@ -437,7 +468,10 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
   @Override
   public void dispose() {
-    myDisposeStarted = true;
+    synchronized (myCallbackLock) {
+      myDisposeStarted = true;
+    }
+
     if (ComponentUtil.getParentOfType(WelcomeScreen.class, myCardPanel) != null && isModified()) {
       scheduleApply();
     }
@@ -489,8 +523,10 @@ public final class PluginManagerConfigurablePanel implements Disposable {
       try {
         apply();
         WelcomeScreenEventCollector.logPluginsModified();
-        if (myDisposeStarted) { //To avoid race condition when dispose is called before apply callback gets called
-          InstalledPluginsState.getInstance().runShutdownCallback();
+        synchronized (myCallbackLock) {
+          if (myDisposeStarted && !myShutdownCallbackExecuted) {
+            InstalledPluginsState.getInstance().runShutdownCallback();
+          }
         }
       }
       catch (ConfigurationException exception) {
@@ -510,22 +546,38 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     myPluginModelFacade.getModel().applyWithCallback(myCardPanel, (installedWithoutRestart) -> {
       if (installedWithoutRestart) return;
       InstalledPluginsState installedPluginsState = InstalledPluginsState.getInstance();
-      if (myPluginModelFacade.getModel().createShutdownCallback) {
-        installedPluginsState.setShutdownCallback(() -> {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            if (ApplicationManager.getApplication().isExitInProgress()) return; // already shutting down
-            if (myPluginManagerCustomizer != null) {
-              myPluginManagerCustomizer.requestRestart(myPluginModelFacade, myTabHeaderComponent);
-              return;
+
+      synchronized (myCallbackLock) {
+        if (myShutdownCallbackExecuted) {
+          return;
+        }
+
+        if (myPluginModelFacade.getModel().createShutdownCallback) {
+          installedPluginsState.setShutdownCallback(() -> {
+            synchronized (myCallbackLock) {
+              if (myShutdownCallbackExecuted) {
+                return;
+              }
+              myShutdownCallbackExecuted = true;
             }
-            myPluginModelFacade.closeSession();
-            shutdownOrRestartApp();
+
+            ApplicationManager.getApplication().invokeLater(() -> {
+              if (ApplicationManager.getApplication().isExitInProgress()) return; // already shutting down
+              if (myPluginManagerCustomizer != null) {
+                myPluginManagerCustomizer.requestRestart(myPluginModelFacade, myTabHeaderComponent);
+                return;
+              }
+              myPluginModelFacade.closeSession();
+              shutdownOrRestartApp();
+            });
           });
-        });
+        }
       }
 
-      if (myDisposeStarted) {
-        installedPluginsState.runShutdownCallback();
+      synchronized (myCallbackLock) {
+        if (myDisposeStarted && !myShutdownCallbackExecuted) {
+          installedPluginsState.runShutdownCallback();
+        }
       }
     });
   }
@@ -565,7 +617,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
   public @Nullable Runnable enableSearch(String option, boolean ignoreTagMarketplaceTab) {
     if (StringUtil.isEmpty(option) &&
-        (myTabHeaderComponent.getSelectionTab() == MARKETPLACE_TAB || myInstalledTab.getInstalledSearchPanel().isEmpty())) {
+        (myTabHeaderComponent.getSelectionTab() == MARKETPLACE_TAB || myInstalledTab.getInstalledSearchPanel().isQueryEmpty())) {
       return null;
     }
 
@@ -687,6 +739,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
+      List<String> oldRepoUrls = new ArrayList<>(UpdateSettings.getInstance().getStoredPluginHosts());
       if (ShowSettingsUtil.getInstance().editConfigurable(myCardPanel, new PluginHostsConfigurable())) {
         if (myPluginManagerCustomizer == null) {
           resetPanels();
@@ -694,7 +747,12 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
         PluginManagerCustomizer customizer = PluginManagerCustomizer.getInstance();
         if (customizer != null) {
-          customizer.updateCustomRepositories(UpdateSettings.getInstance().getStoredPluginHosts(), () -> {
+          List<String> newRepoUrls = UpdateSettings.getInstance().getStoredPluginHosts();
+          List<String> addedRepoUrls = new ArrayList<>(newRepoUrls);
+          addedRepoUrls.removeAll(oldRepoUrls);
+          List<String> removedRepoUrls = new ArrayList<>(oldRepoUrls);
+          removedRepoUrls.removeAll(newRepoUrls);
+          customizer.updateCustomRepositories(addedRepoUrls, removedRepoUrls, () -> {
             resetPanels();
             return null;
           });

@@ -6,4 +6,3 @@ var r : Runnable = object : Runnable {
 
 //ELEMENT: object
 //TAIL_TEXT: " (java.lang)"
-// IGNORE_K2

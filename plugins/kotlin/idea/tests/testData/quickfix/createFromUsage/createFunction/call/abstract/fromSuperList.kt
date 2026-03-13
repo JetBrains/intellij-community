@@ -1,4 +1,5 @@
 // "Create abstract function 'foo'" "false"
+// K2_ERROR: Unresolved reference 'foo'.
 // K2_AFTER_ERROR: Unresolved reference 'foo'.
 
 open class ParentCtor(p: Int)

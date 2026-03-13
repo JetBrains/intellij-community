@@ -1,59 +1,42 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionSuppressor;
 import com.intellij.codeInspection.LanguageInspectionSuppressors;
-import com.intellij.codeInspection.PossibleHeapPollutionVarargsInspection;
 import com.intellij.codeInspection.RedundantSuppressInspection;
 import com.intellij.codeInspection.SuppressQuickFix;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.codeInspection.emptyMethod.EmptyMethodInspection;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.i18n.I18nInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
-import com.intellij.codeInspection.miscGenerics.RawUseOfParameterizedTypeInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 import com.intellij.testFramework.JavaInspectionTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.dataflow.UnnecessaryLocalVariableInspection;
-import com.siyeh.ig.inheritance.RefusedBequestInspection;
-import com.siyeh.ig.internationalization.UnnecessaryUnicodeEscapeInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 public class RedundantSuppressTest extends JavaInspectionTestCase {
   private GlobalInspectionToolWrapper myWrapper;
+  private final List<InspectionToolWrapper<?, ?>> myWrappers = new ArrayList<>();
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    List<InspectionToolWrapper<?, ?>> myInspectionToolWrappers = Arrays.asList(new LocalInspectionToolWrapper(new JavaDocReferenceInspection()),
-                                             new LocalInspectionToolWrapper(new PossibleHeapPollutionVarargsInspection()),
-                                             new LocalInspectionToolWrapper(new UncheckedWarningLocalInspection()),
-                                             new LocalInspectionToolWrapper(new I18nInspection()),
-                                             new LocalInspectionToolWrapper(new RawUseOfParameterizedTypeInspection()),
-                                             new LocalInspectionToolWrapper(new UnnecessaryLocalVariableInspection()),
-                                             new LocalInspectionToolWrapper(new UnnecessaryUnicodeEscapeInspection()),
-                                             new LocalInspectionToolWrapper(new RefusedBequestInspection()),
-                                             new GlobalInspectionToolWrapper(new EmptyMethodInspection()),
-                                             new GlobalInspectionToolWrapper(new HighlightVisitorBasedInspection().setRunAnnotators(true)),
-                                             new GlobalInspectionToolWrapper(new UnusedDeclarationInspection()));
 
     myWrapper = new GlobalInspectionToolWrapper(new RedundantSuppressInspection() {
       @Override
       protected @NotNull @Unmodifiable List<InspectionToolWrapper<?, ?>> getInspectionTools(@NotNull PsiElement psiElement, @NotNull InspectionProfile profile) {
-        return myInspectionToolWrappers;
+        return myWrappers;
       }
     });
   }
@@ -71,37 +54,33 @@ public class RedundantSuppressTest extends JavaInspectionTestCase {
   }
 
   public void testModuleInfo() {
+    myWrappers.add(new LocalInspectionToolWrapper(new JavaDocReferenceInspection()));
     doTest("redundantSuppress/" + getTestName(true), myWrapper, false);
   }
 
   public void testDefaultFile() {
+    myWrappers.add(new LocalInspectionToolWrapper(new I18nInspection()));
     doTest();
   }
 
-  public void testAlternativeIds() {
-    doTest();
-  }
+  public void testAlternativeIds() { doTest(); }
 
   public void testAnnotator() {
+    myWrappers.add(new GlobalInspectionToolWrapper(new HighlightVisitorBasedInspection().setRunAnnotators(true)));
     doTest("redundantSuppress/" + getTestName(true), myWrapper, false);
   }
 
-  public void testIgnoreUnused() {
-    doTest();
-  }
-
+  public void testIgnoreUnused() { doTest(); }
   public void testIgnoreWithAnnotation() { doTest(); }
 
-  public void testSameSuppressIds() { doTest(); }
+  public void testSameSuppressIds() {
+    myWrappers.add(new LocalInspectionToolWrapper(new UncheckedWarningLocalInspection()));
+    doTest(); 
+  }
 
   public void testSuppressAll() {
-    try {
-      ((RedundantSuppressInspection)myWrapper.getTool()).IGNORE_ALL = true;
-      doTest();
-    }
-    finally {
-      ((RedundantSuppressInspection)myWrapper.getTool()).IGNORE_ALL = false;
-    }
+    ((RedundantSuppressInspection)myWrapper.getTool()).IGNORE_ALL = true;
+    doTest();
   }
 
   public void testInjections() {
@@ -123,7 +102,8 @@ public class RedundantSuppressTest extends JavaInspectionTestCase {
         return SuppressQuickFix.EMPTY_ARRAY;
       }
     }, getTestRootDisposable());
-    doTest("redundantSuppress/defaultFile", myWrapper, true);
+    myWrappers.add(new LocalInspectionToolWrapper(new I18nInspection()));
+    doTest();
   }
 
   private void doTest() {

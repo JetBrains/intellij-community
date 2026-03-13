@@ -119,7 +119,7 @@ private class GradleSyncActionRunner {
     context: ProjectResolverContext,
     phase: GradleSyncPhase,
   ) {
-    TELEMETRY.spanBuilder(phase.name).use {
+    TELEMETRY.spanBuilder(phase.name + "-idea").use {
       GradleSyncContributor.EP_NAME.forEachExtensionSafeAsync { contributor ->
         if (contributor.phase == phase) {
           TELEMETRY.spanBuilder(contributor.name).use {

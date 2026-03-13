@@ -4,6 +4,7 @@ package com.intellij.completion.ml.sorting
 
 import com.intellij.codeInsight.completion.CompletionFinalSorter
 import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.NewRdCompletionSupport
 import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
@@ -75,6 +76,7 @@ class MLSorter : CompletionFinalSorter() {
   }
 
   override fun sort(items: Iterable<LookupElement>, parameters: CompletionParameters): Iterable<LookupElement> {
+    if (NewRdCompletionSupport.isFrontendRdCompletionOn()) return items // todo support it on frontend
     val lookup = LookupManager.getActiveLookup(parameters.editor) as? LookupImpl ?: return items
     val lookupStorage = MutableLookupStorage.get(lookup) ?: return items
     // Do nothing if unable to reorder items or to log the weights

@@ -106,7 +106,7 @@ internal class GitLogExperimentalProvider(private val project: Project) {
 
   companion object {
     val isEnabled: Boolean
-      get() = Registry.`is`("git.log.provider.experimental.refs.collection", false)
+      get() = Registry.`is`("git.log.provider.experimental.refs.collection", true)
   }
 }
 

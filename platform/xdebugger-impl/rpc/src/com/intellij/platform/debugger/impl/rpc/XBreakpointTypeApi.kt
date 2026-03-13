@@ -37,6 +37,7 @@ interface XBreakpointTypeApi : RemoteApi<Unit> {
   suspend fun restoreRemovedBreakpoint(projectId: ProjectId)
 
   suspend fun copyLineBreakpoint(breakpointId: XBreakpointId, fileId: VirtualFileId, line: Int)
+  suspend fun onBreakpointRemoval(breakpointId: XBreakpointId, sessionId: XDebugSessionId)
 
   /**
    * Computes inline breakpoint variants.

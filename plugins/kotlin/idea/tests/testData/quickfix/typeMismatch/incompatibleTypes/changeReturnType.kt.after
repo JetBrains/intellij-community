@@ -1,5 +1,6 @@
 // "Change return type of called function 'foo' to 'Int'" "true"
 // WITH_STDLIB
+// K2_ERROR: Incompatible types 'Int' and 'String'.
 fun test(i: Int) {
     when (i) {
         <caret>foo() -> {}

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.codeinsight.utils.hasExplicitBackingField
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -61,6 +62,7 @@ object MovePropertyToConstructorUtils {
                 && setter == null
                 && !hasModifier(KtTokens.LATEINIT_KEYWORD)
                 && isDeclaredInSupportedClass()
+                && !this.hasExplicitBackingField()
     }
 
     fun KtProperty.buildReplacementConstructorParameterText(constructorParameter: KtParameter, propertyAnnotationsText: String?): String =

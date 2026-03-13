@@ -29,7 +29,15 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -120,23 +128,21 @@ final class UndoClientState implements Disposable {
     undoRedoInProgress = undo ? UndoRedoInProgress.UNDO : UndoRedoInProgress.REDO;
     try {
       var exception = new AtomicReference<RuntimeException>();
-      UndoSpy.withBlindSpot(
-        () -> CommandProcessor.getInstance().executeCommand(
-          project,
-          () -> {
-            try {
-              beforeUndoRedoStarted.run();
-              CopyPasteManager.getInstance().stopKillRings();
-              undoOrRedo(editor, undo);
-            }
-            catch (RuntimeException ex) {
-              exception.set(ex);
-            }
-          },
-          commandName,
-          null,
-          commandMerger.getUndoConfirmationPolicy()
-        )
+      CommandProcessor.getInstance().executeCommand(
+        project,
+        () -> {
+          try {
+            beforeUndoRedoStarted.run();
+            CopyPasteManager.getInstance().stopKillRings();
+            undoOrRedo(editor, undo);
+          }
+          catch (RuntimeException ex) {
+            exception.set(ex);
+          }
+        },
+        commandName,
+        null,
+        commandMerger.getUndoConfirmationPolicy()
       );
       if (exception.get() != null) {
         throw exception.get();

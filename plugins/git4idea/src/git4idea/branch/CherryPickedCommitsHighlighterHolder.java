@@ -8,11 +8,13 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogData;
 import git4idea.repo.GitRepositoryManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 public final class CherryPickedCommitsHighlighterHolder implements Disposable {
   private final @NotNull Project myProject;

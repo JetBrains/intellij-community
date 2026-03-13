@@ -174,8 +174,8 @@ public enum PythonHelper implements HelperPackage {
       return cmd;
     }
 
-    @Override
-    public @NotNull GeneralCommandLine newCommandLine(@NotNull Sdk pythonSdk, @NotNull List<String> parameters) {
+    @NotNull
+    private GeneralCommandLine newCommandLine(@NotNull Sdk pythonSdk, @NotNull List<String> parameters) {
       final String sdkHomePath = pythonSdk.getHomePath();
       assert sdkHomePath != null;
       final GeneralCommandLine cmd = newCommandLine(sdkHomePath, parameters);
@@ -295,7 +295,6 @@ public enum PythonHelper implements HelperPackage {
     return myModule.newCommandLine(sdkPath, parameters);
   }
 
-  @Override
   public @NotNull GeneralCommandLine newCommandLine(@NotNull Sdk pythonSdk, @NotNull List<String> parameters) {
     return myModule.newCommandLine(pythonSdk, parameters);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.JavaTailTypes;
@@ -7,8 +7,8 @@ import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.completion.JavaKeywordCompletion;
 import com.intellij.codeInsight.completion.ModifierChooser;
+import com.intellij.codeInsight.completion.OverridableSpace;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
@@ -363,7 +363,7 @@ public final class GroovyCompletionData {
 
   private static LookupElement keyword(final String keyword, @NotNull TailType tail) {
     LookupElementBuilder element = LookupElementBuilder.create(keyword).bold();
-    return tail != TailTypes.noneType() ? new JavaKeywordCompletion.OverridableSpace(element, tail) : element;
+    return tail != TailTypes.noneType() ? OverridableSpace.create(element, tail) : element;
   }
 
   private static void registerControlCompletion(PsiElement context, GroovyCompletionConsumer result) {

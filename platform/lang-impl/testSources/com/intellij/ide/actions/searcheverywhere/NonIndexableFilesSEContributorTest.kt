@@ -1,23 +1,34 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere
 
+import com.intellij.ide.util.gotoByName.FileTypeRef
+import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.mock.MockProgressIndicator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.SearchScope
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.testFramework.utils.vfs.getPsiFile
 import com.intellij.testFramework.workspaceModel.update
-import com.intellij.util.indexing.testEntities.*
+import com.intellij.util.indexing.testEntities.IndexableKindFileSetTestContributor
+import com.intellij.util.indexing.testEntities.IndexingTestEntity
+import com.intellij.util.indexing.testEntities.NonIndexableKindFileSetTestContributor
+import com.intellij.util.indexing.testEntities.NonIndexableTestEntity
+import com.intellij.util.indexing.testEntities.NonRecursiveFileSetContributor
+import com.intellij.util.indexing.testEntities.NonRecursiveTestEntity
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.toPath
@@ -55,8 +66,9 @@ open class NonIndexableFilesSEContributorTest {
   }
 
 
-  private fun searchNonIndexableFiles(pattern: String): Set<PsiFileSystemItem> {
+  private fun searchNonIndexableFiles(pattern: String, scope: SearchScope? = null): Set<PsiFileSystemItem> {
     val contributor = NonIndexableFilesSEContributor(createEvent(project))
+    contributor.setScope(ScopeDescriptor(scope))
     Disposer.register(disposable, contributor)
 
     val items = contributor.search(pattern, MockProgressIndicator()).toSet()
@@ -99,6 +111,28 @@ open class NonIndexableFilesSEContributorTest {
     val items = searchNonIndexableFiles("f")
     val names = items.map { it.name }
     assertThat(names).containsExactlyInAnyOrder("f1", "f2")
+  }
+
+  @Test
+  fun `search scope includes only one file of two`(): Unit = runBlocking {
+    val unindexed1 = baseDir.newVirtualDirectory("u1").toVirtualFileUrl(urlManager)
+    val unindexed2 = baseDir.newVirtualDirectory("u2").toVirtualFileUrl(urlManager)
+    baseDir.newVirtualFile("u1/d1/f1")
+    val f2 = baseDir.newVirtualFile("u2/d2/f2")
+
+    workspaceModel.update { storage ->
+      storage.addEntity(NonIndexableTestEntity(unindexed1, NonPersistentEntitySource))
+      storage.addEntity(NonIndexableTestEntity(unindexed2, NonPersistentEntitySource))
+    }
+    VfsTestUtil.syncRefresh()
+
+    val scope = readAction {
+      val f2PsiFile = f2.getPsiFile(project)
+      GlobalSearchScope.projectScope(project).intersectWith(GlobalSearchScope.fileScope(f2PsiFile))
+    }
+    val items = searchNonIndexableFiles("f", scope)
+    val names = items.map { it.name }
+    assertThat(names).containsExactlyInAnyOrder("f2")
   }
 
   @Test
@@ -239,6 +273,25 @@ open class NonIndexableFilesSEContributorTest {
     assertThat(items).allSatisfy { it is PsiFileSystemItem }
     val names = items.map { (it as PsiFileSystemItem).name }
     assertThat(names).containsExactlyInAnyOrder("file1")
+  }
+
+
+  @Test
+  fun `file is not found because it has hidden type`(): Unit = runBlocking {
+    val unindexed1 = baseDir.newVirtualDirectory("dir1").toVirtualFileUrl(urlManager)
+    val file1 = baseDir.newVirtualFile("dir1/file1")
+    workspaceModel.update { storage ->
+      storage.addEntity(NonIndexableTestEntity(unindexed1, NonPersistentEntitySource))
+    }
+    VfsTestUtil.syncRefresh()
+
+    val contributor = NonIndexableFilesSEContributor(createEvent(project))
+    contributor.setHiddenTypes(listOf(FileTypeRef.forFileType(file1.fileType)))
+    Disposer.register(disposable, contributor)
+
+    val items = contributor.search("file1", MockProgressIndicator()).toSet()
+
+    assertThat(items).isEmpty()
   }
 
   @Test

@@ -1,4 +1,6 @@
 // "Add 1st parameter to constructor 'Foo'" "true"
+// K2_ERROR: Argument type mismatch: actual type is 'Int', but 'String' was expected.
+// K2_ERROR: Too many arguments for 'constructor(name: String): Foo'.
 
 class Foo(val name: String)
 

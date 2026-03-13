@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.CommonBundle;
@@ -44,6 +44,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -73,6 +74,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -382,7 +384,18 @@ public final class PreviewFormAction extends AnAction {
             executionResult.getProcessHandler().addProcessListener(new ProcessListener() {
               @Override
               public void processTerminated(@NotNull ProcessEvent event) {
-                FileUtil.asyncDelete(new File(myTempPath));
+                try {
+                  //noinspection UseOptimizedEelFunctions
+                  NioFiles.deleteRecursively(Path.of(myTempPath));
+                }
+                catch (IOException e) {
+                  LOG.warn(e);
+                  Messages.showErrorDialog(
+                    myModule.getProject(),
+                    UIDesignerBundle.message("error.cannot.delete.temp.dir", myTempPath, e.getMessage()),
+                    CommonBundle.getErrorTitle()
+                  );
+                }
               }
             });
             return executionResult;

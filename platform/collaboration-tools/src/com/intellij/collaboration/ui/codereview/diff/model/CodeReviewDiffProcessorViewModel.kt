@@ -12,7 +12,13 @@ import com.intellij.openapi.ListSelection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.transformLatest
 
 /**
  * A viewmodel for a diff processor which can show multiple diffs and switch between them
@@ -77,19 +83,20 @@ private class PreLoadingCodeReviewAsyncDiffViewModelDelegateImpl<D : Any, C : An
       val vmsContainer = MappingScopedItemsContainer.byEquality<C, CVM>(this) {
         createViewModel(preloadedData, it)
       }
-      var lastList: List<C> = emptyList()
-      changesPreProcessor.collectLatest { preProcessor ->
+      var lastProcessedList: List<C> = emptyList()
+      changesPreProcessor.distinctUntilChanged().collectLatest { preProcessor ->
+        var lastList: List<C>? = null
         delegate.changesToShow.collectScoped { changesState ->
           try {
-            if (changesState.selectedChanges.list != lastList) {
+            val inputList = changesState.selectedChanges.list
+            if (inputList != lastList) {
+              lastList = inputList
+              lastProcessedList = preProcessor(inputList)
               emit(ComputedResult.loading())
-              val processedList = preProcessor(changesState.selectedChanges.list)
-              vmsContainer.update(processedList)
-              lastList = changesState.selectedChanges.list
+              vmsContainer.update(lastProcessedList)
             }
-            val mappingState = vmsContainer.mappingState.value
-            val vms = mappingState.values.toList()
-            val selectedVmIdx = mappingState.keys.indexOf(changesState.selectedChanges.selectedItem)
+            val vms = vmsContainer.mappedState.value
+            val selectedVmIdx = lastProcessedList.indexOf(changesState.selectedChanges.selectedItem)
             val newState = ViewModelsState(ListSelection.createAt(vms, selectedVmIdx), changesState.scrollRequests)
             emit(ComputedResult.success(newState))
           }

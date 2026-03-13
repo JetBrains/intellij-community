@@ -8,7 +8,11 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.ui.ComponentWithActions
 import com.intellij.openapi.ui.getPreferredFocusedComponent
-import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionAdditionalTabComponentManagerId
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionTabApi
+import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionAdditionalTabDto
+import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionAdditionalTabEvent
+import com.intellij.platform.debugger.impl.rpc.XDebuggerTabId
 import com.intellij.ui.content.Content
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import kotlinx.coroutines.CoroutineScope

@@ -23,6 +23,23 @@ jvm_library(
     "//platform/util/jdom",
   ]
 )
+
+jvm_library(
+  name = "jps_test_lib",
+  module_name = "intellij.ant.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  runtime_deps = [
+    ":jps",
+    "//jps/model-api:model_test_lib",
+    "//jps/model-serialization:model-serialization_test_lib",
+    "//platform/util:util_test_lib",
+    "//jps/jps-builders:build_test_lib",
+    "//java/java-runtime:rt_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.ant.jps` end
 
 ### auto-generated section `build intellij.ant.jps.tests` start
@@ -43,9 +60,14 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//plugins/ant/jps-plugin:jps",
+    "//plugins/ant/jps-plugin:jps_test_lib",
     "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
+    "//jps/model-serialization:model-serialization-tests",
     "//jps/model-serialization:model-serialization-tests_test_lib",
     "//jps/model-serialization",
+    "//jps/model-serialization:model-serialization_test_lib",
+    "//jps/jps-builders:build-tests",
     "//jps/jps-builders:build-tests_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

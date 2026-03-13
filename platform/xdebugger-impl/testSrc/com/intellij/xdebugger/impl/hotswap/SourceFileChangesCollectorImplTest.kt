@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.hotswap
 
-import com.intellij.history.*
+import com.intellij.history.ActivityId
+import com.intellij.history.FileRevisionTimestampComparator
+import com.intellij.history.Label
+import com.intellij.history.LocalHistory
+import com.intellij.history.LocalHistoryAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project

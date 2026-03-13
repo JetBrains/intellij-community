@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-rd-core-rd-core"],
   runtime_deps = ["@lib//:libraries-rd-core-rd-core"]
 )
+
+jvm_library(
+  name = "core_test_lib",
+  module_name = "intellij.libraries.rd.core",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-rd-core-rd-core"],
+  runtime_deps = [":core"]
+)
 ### auto-generated section `build intellij.libraries.rd.core` end

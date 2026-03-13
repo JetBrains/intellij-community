@@ -140,7 +140,6 @@ internal fun KotlinLibrary.createKlibPackageFragmentProvider(
 
     return metadataModuleDescriptorFactory.createPackageFragmentProvider(
         library = this,
-        packageAccessHandler = null,
         customMetadataProtoLoader = CachingIdeKlibMetadataLoader,
         storageManager = storageManager,
         moduleDescriptor = moduleDescriptor,

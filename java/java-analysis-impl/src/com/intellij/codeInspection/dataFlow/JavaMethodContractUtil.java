@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -182,8 +183,14 @@ public final class JavaMethodContractUtil {
     }
   }
 
+  /**
+   * TODO: replace with external annotations when annotations for Java 26+ will be supported
+   */
+  private static final CallMatcher ADDITIONAL_PURE_METHODS =
+      CallMatcher.instanceCall("java.lang.LazyConstant", "get", "isInitialized");
+
   static @NotNull ContractInfo getContractInfo(@NotNull PsiMethod method) {
-    if (PsiUtil.isAnnotationMethod(method) || method instanceof LightRecordMethod) {
+    if (PsiUtil.isAnnotationMethod(method) || method instanceof LightRecordMethod || ADDITIONAL_PURE_METHODS.methodMatches(method)) {
       return ContractInfo.PURE;
     }
     return CachedValuesManager.getCachedValue(method, () -> {

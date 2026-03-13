@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.jetbrains.python.PyNamesKt.isPrivate;
+import static com.jetbrains.python.PyNames.isPrivate;
 
 /**
  * Checks for anomalies in parameter lists of function declarations.

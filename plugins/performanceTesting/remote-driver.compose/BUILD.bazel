@@ -23,4 +23,20 @@ jvm_library(
     "//plugins/performanceTesting/remote-driver",
   ]
 )
+
+jvm_library(
+  name = "remote-driver.compose_test_lib",
+  module_name = "intellij.performanceTesting.remoteDriver.compose",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":remote-driver.compose",
+    "//plugins/performanceTesting/core:performanceTesting_test_lib",
+    "//platform/remote-driver/model:model_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/compose:compose_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//plugins/performanceTesting/remote-driver:remote-driver_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.performanceTesting.remoteDriver.compose` end

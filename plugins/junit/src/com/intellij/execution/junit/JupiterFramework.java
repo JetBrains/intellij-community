@@ -57,6 +57,11 @@ public abstract class JupiterFramework extends JUnitTestFramework {
   }
 
   @Override
+  protected @Nullable PsiMethod findAfterClassMethod(@NotNull PsiClass clazz) {
+    return findMethod(clazz, PsiModifier.STATIC, JUnitUtil.AFTER_ALL_ANNOTATION_NAME);
+  }
+
+  @Override
   protected @Nullable PsiElement findBeforeSuiteMethod(@NotNull PsiClass clazz) {
     return findMethod(clazz, PsiModifier.STATIC, ORG_JUNIT_PLATFORM_SUITE_API_BEFORESUITE);
   }

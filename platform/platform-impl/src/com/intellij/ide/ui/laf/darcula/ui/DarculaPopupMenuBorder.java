@@ -12,7 +12,12 @@ import com.intellij.util.ui.JBUI;
 import javax.swing.border.AbstractBorder;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicComboPopup;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.Shape;
 import java.awt.geom.Path2D;
 
 /**

@@ -1,5 +1,8 @@
 // "Import extension function 'C.extension'" "true"
 // WITH_STDLIB
+// K2_ERROR: Cannot infer type for type parameter 'R'. Specify it explicitly.
+// K2_ERROR: Cannot infer type for type parameter 'R'. Specify it explicitly.
+// K2_ERROR: Unresolved reference 'extension'.
 package p
 
 class A

@@ -73,7 +73,7 @@ public class TextRange implements Segment, Serializable {
    * Checks if the specified text range is fully contained within this TextRange.
    *
    * @param range the text range to check for containment
-   * @return {@code true} if the specified text range is contained within this object, 
+   * @return {@code true} if the specified text range is contained within this object,
    *         {@code false} otherwise
    */
   @Contract(pure = true)
@@ -110,12 +110,12 @@ public class TextRange implements Segment, Serializable {
   }
 
   /**
-   * Checks if the given offset is contained within the range 
+   * Checks if the given offset is contained within the range
    * (unlike {@link #contains(int)}, offset at the end of the range is considered to be inside).
    *
    * @param offset the offset to check
    * @return true if the given offset is within the range, false otherwise
-   * @see #contains(int) 
+   * @see #contains(int)
    */
   @Contract(pure = true)
   public boolean containsOffset(int offset) {
@@ -128,12 +128,12 @@ public class TextRange implements Segment, Serializable {
   }
 
   /**
-   * Checks if the given offset is contained within the range 
+   * Checks if the given offset is contained within the range
    * (unlike {@link #containsOffset(int)}, offset at the end of the range is considered to be outside).
    *
    * @param offset the offset to check
    * @return true if the given offset is within the range, false otherwise
-   * @see #containsOffset(int) 
+   * @see #containsOffset(int)
    */
   @Override
   @Contract(pure = true)
@@ -208,6 +208,14 @@ public class TextRange implements Segment, Serializable {
            && segment1.getEndOffset() == segment2.getEndOffset();
   }
 
+  /// Replaces the substring in `original` covered by this range with `replacement`.
+  ///
+  /// Equivalent to `original.substring(0, getStartOffset()) + replacement + original.substring(getEndOffset())`.
+  ///
+  /// The length of `replacement` is unrestricted.
+  ///
+  /// @throws StringIndexOutOfBoundsException if this range does not fit `original`, i.e.
+  /// `0 <= getStartOffset() <= getEndOffset() <= original.length()` is not satisfied
   @Contract(pure = true)
   public @NotNull String replace(@NotNull String original, @NotNull String replacement) {
     String beginning = original.substring(0, getStartOffset());

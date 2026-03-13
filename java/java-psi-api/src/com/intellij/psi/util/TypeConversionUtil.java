@@ -1430,10 +1430,11 @@ public final class TypeConversionUtil {
   public static boolean isPrimitiveWrapper(@NotNull String fullyQualifiedName) {
     return PRIMITIVE_WRAPPER_FQNS.contains(fullyQualifiedName);
   }
+
   @Contract("null -> false")
   public static boolean isAssignableFromPrimitiveWrapper(@Nullable PsiType type) {
     if (type == null) return false;
-    if (isPrimitiveWrapper(type)) return true;
+    if (isPrimitiveWrapper(type)) return true; //leave it as short path; for intersection, there is a double check
     for (PsiType component : type instanceof PsiIntersectionType ? ((PsiIntersectionType)type).getConjuncts() : new PsiType[]{type}) {
       if (!(component instanceof PsiClassType)) return false;
       if (component.equalsToText(JAVA_LANG_OBJECT)) continue;
@@ -1442,6 +1443,7 @@ public final class TypeConversionUtil {
       if (component.equalsToText("java.lang.constant.Constable")) continue;
       if (component.equalsToText("java.lang.constant.ConstantDesc")) continue;
       if (PsiTypesUtil.classNameEquals(component, JAVA_LANG_COMPARABLE)) continue;
+      if (isPrimitiveWrapper(component)) continue;
       return false;
     }
     return true;

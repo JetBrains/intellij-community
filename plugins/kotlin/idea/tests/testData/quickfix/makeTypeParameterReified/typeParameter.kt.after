@@ -1,4 +1,5 @@
 // "Make type parameter reified and function inline" "true"
+// K2_ERROR: Cannot check for instance of erased type 'T (of fun <T> test)'.
 inline fun <reified T> test(a: String) = a is T
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MakeTypeParameterReifiedAndFunctionInlineFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MakeTypeParameterReifiedAndFunctionInlineFix

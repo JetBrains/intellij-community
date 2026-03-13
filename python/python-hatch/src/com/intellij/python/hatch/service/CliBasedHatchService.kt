@@ -1,10 +1,9 @@
 package com.intellij.python.hatch.service
 
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.eel.fs.EelFileSystemApi
-import com.intellij.platform.eel.fs.EelFileSystemApi.ReplaceExistingDuringMove.DO_NOT_REPLACE_DIRECTORIES
-import com.intellij.platform.eel.fs.move
+import com.intellij.platform.eel.fs.EelFileUtils
 import com.intellij.platform.eel.getOr
-import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
@@ -31,6 +30,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
+import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
@@ -114,14 +114,20 @@ internal class CliBasedHatchService private constructor(
     }
 
     hatchRuntime.hatchCli().new(projectName, tempDir.asNioPath()).getOr { return it }
-    val target = workingDirectoryPath.asEelPath()
-    eelApi.fs.move(tempDir, target).replaceExisting(DO_NOT_REPLACE_DIRECTORIES).eelIt().getOr { failure ->
-      return Result.failure(FileSystemOperationHatchError(failure.error))
+    try {
+      withContext(Dispatchers.IO) {
+        val source = tempDir.asNioPath()
+        NioFiles.copyRecursively(source, workingDirectoryPath)
+        EelFileUtils.deleteRecursively(source)
+      }
+    }
+    catch (e: IOException) {
+      return Result.failure(FileSystemOperationHatchError(e.localizedMessage ?: e.toString()))
     }
 
     return Result.success(ProjectStructure(
-      sourceRoot = target.asNioPath().resolve("src").takeIf { it.isDirectory() },
-      testRoot = target.asNioPath().resolve("tests").takeIf { it.isDirectory() },
+      sourceRoot = workingDirectoryPath.resolve("src").takeIf { it.isDirectory() },
+      testRoot = workingDirectoryPath.resolve("tests").takeIf { it.isDirectory() },
     ))
   }
 

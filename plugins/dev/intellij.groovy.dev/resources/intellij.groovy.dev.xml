@@ -1,9 +1,10 @@
-<idea-plugin package="org.jetbrains.idea.dev.groovy">
-
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.dev.codeInsight"/>
     <plugin id="org.intellij.groovy"/>
+    <module name="intellij.dev.codeInsight"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij.dev">
     <lang.goodCodeRedVisitor language="Groovy"

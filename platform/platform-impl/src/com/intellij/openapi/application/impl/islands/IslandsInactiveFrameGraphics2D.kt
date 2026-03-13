@@ -1,8 +1,19 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl.islands
 
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.Graphics2DDelegate
-import java.awt.*
+import com.intellij.ui.IslandsState
+import com.intellij.ui.JBColor
+import com.intellij.util.system.OS
+import java.awt.AlphaComposite
+import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Image
+import java.awt.Polygon
+import java.awt.Shape
 import java.awt.image.BufferedImage
 import java.awt.image.BufferedImageOp
 import java.awt.image.ImageObserver
@@ -20,10 +31,14 @@ internal class IslandsInactiveFrameGraphics2D(g: Graphics2D, private val compone
     return if (SwingUtilities.getWindowAncestor(component)?.isActive == false) islandsInactiveAlpha else 1f
   }
 
+  private fun shouldSkipAlphaBlending(alpha: Float): Boolean {
+    return alpha == 1f || preserveComposite || isIslandsGradientColor(paint)
+  }
+
   private fun <R> wrapPaint(runnable: () -> R): R {
     val alpha = getAlpha()
 
-    if (alpha == 1f || preserveComposite || isIslandsGradientColor(paint)) {
+    if (shouldSkipAlphaBlending(alpha)) {
       return runnable.invoke()
     }
 
@@ -42,6 +57,34 @@ internal class IslandsInactiveFrameGraphics2D(g: Graphics2D, private val compone
     }
     finally {
       setComposite(composite)
+    }
+  }
+
+  private fun <R> wrapPaintText(runnable: () -> R): R {
+    val alpha = getAlpha()
+
+    if (shouldSkipAlphaBlending(alpha)) {
+      return runnable.invoke()
+    }
+
+    // todo Workaround of JBR-9949, should be removed when the bug is fixed
+    // IJPL-230775: Use alpha blending for text on macOS Islands Light at high zoom
+    // to avoid inconsistent dimming in inactive state
+    val useAlphaBlending = OS.CURRENT == OS.macOS && IslandsState.isEnabled() && JBColor.isBright()
+    if (!useAlphaBlending) {
+      return wrapPaint(runnable)
+    }
+
+    val originalColor = color
+    try {
+      val foreground = ColorUtil.withAlpha(originalColor, alpha.toDouble())
+      val background = JBColor.namedColor("MainWindow.background", JBColor.PanelBackground)
+      color = ColorUtil.alphaBlending(foreground, background)
+
+      return runnable.invoke()
+    }
+    finally {
+      color = originalColor
     }
   }
 
@@ -159,25 +202,25 @@ internal class IslandsInactiveFrameGraphics2D(g: Graphics2D, private val compone
   }
 
   override fun drawString(iterator: AttributedCharacterIterator?, x: Float, y: Float) {
-    wrapPaint {
+    wrapPaintText {
       super.drawString(iterator, x, y)
     }
   }
 
   override fun drawString(iterator: AttributedCharacterIterator?, x: Int, y: Int) {
-    wrapPaint {
+    wrapPaintText {
       super.drawString(iterator, x, y)
     }
   }
 
   override fun drawString(s: String?, x: Float, y: Float) {
-    wrapPaint {
+    wrapPaintText {
       super.drawString(s, x, y)
     }
   }
 
   override fun drawString(str: String, x: Int, y: Int) {
-    wrapPaint {
+    wrapPaintText {
       super.drawString(str, x, y)
     }
   }

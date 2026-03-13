@@ -13,25 +13,13 @@ import it.unimi.dsi.fastutil.ints.Int2IntMap
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 
 internal class CodeInsightContextFusCollector : ProjectUsagesCollector() {
-  private val GROUP: EventLogGroup = EventLogGroup(
-    id = "code.insight.context",
-    version = 1,
-    recorder = "FUS",
-    description = "Statistics for code insight contexts registered on users projects"
-  )
+  private val GROUP: EventLogGroup = EventLogGroup("code.insight.context", 1)
 
-  private val ENABLED = GROUP.registerEvent(
-    eventId = "shared_source_support_enabled",
-    eventField1 = EventFields.Boolean("enabled"),
-    description = "is shared source support enabled for this project"
-  )
+  private val ENABLED = GROUP.registerEvent("shared_source_support_enabled", EventFields.Boolean("enabled"))
 
   private val CONTEXT_REPORT = GROUP.registerEvent(
-    eventId = "context_report",
-    eventField1 = EventFields.FileType,
-    eventField2 = EventFields.Int("context_number"),
-    eventField3 = EventFields.RoundedInt("file_number"),
-    description = "Project's context report"
+    "context_report",
+    EventFields.FileType, EventFields.Int("context_number"), EventFields.RoundedInt("file_number")
   )
 
   override fun getGroup(): EventLogGroup = GROUP

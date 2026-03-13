@@ -14,4 +14,18 @@ jvm_library(
   ],
   exports = ["@lib//:tasks-compatibility-http-client-3-1"]
 )
+
+jvm_library(
+  name = "compatibility_test_lib",
+  module_name = "intellij.tasks.compatibility",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:tasks-compatibility-http-client-3-1"],
+  runtime_deps = [
+    ":compatibility",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/tasks/tasks-api:tasks_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.tasks.compatibility` end

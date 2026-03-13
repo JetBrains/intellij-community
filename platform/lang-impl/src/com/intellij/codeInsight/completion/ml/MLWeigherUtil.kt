@@ -6,7 +6,11 @@ import com.intellij.codeInsight.completion.CompletionService
 import com.intellij.codeInsight.completion.CompletionSorter
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
-import com.intellij.psi.*
+import com.intellij.psi.ForceableComparable
+import com.intellij.psi.Weigher
+import com.intellij.psi.WeigherExtensionPoint
+import com.intellij.psi.WeighingComparable
+import com.intellij.psi.WeighingService
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

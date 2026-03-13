@@ -107,7 +107,7 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
     custom = PythonAddCustomInterpreter(
       model = model,
       module = module,
-      errorSink = ShowingMessageErrorSync,
+      errorSink = module?.project?.let { ShowingMessageErrorSync.withProject(it) } ?: ShowingMessageErrorSync,
       limitExistingEnvironments = limitExistingEnvironments,
       bestGuessCreateSdkInfo = CompletableDeferred(value = null)
     )
@@ -158,7 +158,7 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
   }
 
   override fun onShownInitialization(scopingComponent: Component) {
-    scopingComponent.launchOnShow("${this::class.java} onShown initialization", TraceContext(message("tracecontext.new.project.wizard"), null)) {
+    scopingComponent.launchOnShow("${this::class.java} onShown initialization", TraceContext(message("trace.context.new.project.wizard"), null)) {
       initMutex.withLock {
         supervisorScope {
           initialize(this@supervisorScope)

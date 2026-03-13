@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<idea-plugin>
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.java.impl"/>
-    <module name="intellij.java.psi"/>
-    <module name="intellij.platform.analysis"/>
-    <module name="intellij.platform.core"/>
-    <module name="intellij.java.uast"/>
-
-    <module name="intellij.platform.backend"/>
     <plugin id="com.intellij.modules.java-capable"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.uast"/>
   </dependencies>
+  <!-- endregion -->
 
   <!--from intellij.java.psi.impl.xml-->
   <extensions defaultExtensionNs="org.jetbrains.uast">

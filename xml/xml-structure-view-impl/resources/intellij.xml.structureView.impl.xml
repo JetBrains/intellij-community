@@ -1,9 +1,15 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.xml.structureView"/>
-    <module name="intellij.xml.psi.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.structureView.impl"/>
     <module name="intellij.xml.parser"/>
+    <module name="intellij.xml.psi.impl"/>
+    <module name="intellij.xml.structureView"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <lang.psiStructureViewFactory language="DTD" implementationClass="com.intellij.lang.dtd.DtdStructureViewBuilderFactory"/>

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions;
 
+import com.intellij.diff.impl.AssignmentTracker;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -78,5 +79,24 @@ public abstract class DocumentsSynchronizer {
     Document document = EditorFactory.getInstance().createDocument("", acceptsSlashR, !writeThreadOnly);
     document.putUserData(UndoManager.ORIGINAL_DOCUMENT, original);
     return document;
+  }
+
+  @ApiStatus.Internal
+  public static class DocumentSynchronizerAssignmentTracker extends AssignmentTracker {
+    @NotNull private final DocumentsSynchronizer mySynchronizer;
+
+    public DocumentSynchronizerAssignmentTracker(@NotNull DocumentsSynchronizer synchronizer) {
+      mySynchronizer = synchronizer;
+    }
+
+    @Override
+    public void onFirstAssignment() {
+      mySynchronizer.startListen();
+    }
+
+    @Override
+    public void onLastUnassignment() {
+      mySynchronizer.stopListen();
+    }
   }
 }

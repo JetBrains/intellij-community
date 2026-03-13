@@ -18,6 +18,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/pty4j",
     "//platform/core-api:core",
+    "//libraries/caffeine",
     "//platform/core-nio-fs",
     "//platform/eel-provider",
     "//platform/diagnostic/telemetry-impl",
@@ -30,6 +31,31 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/eel-impl",
     "//platform/projectModel-api:projectModel",
+  ]
+)
+
+jvm_library(
+  name = "ide-impl-wsl_test_lib",
+  module_name = "intellij.platform.ide.impl.wsl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":ide-impl-wsl",
+    "//libraries/pty4j:pty4j_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//libraries/caffeine:caffeine_test_lib",
+    "//platform/core-nio-fs:core-nio-fs_test_lib",
+    "//platform/eel-provider:eel-provider_test_lib",
+    "//platform/diagnostic/telemetry-impl:telemetry-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/ijent:ijent_test_lib",
+    "//platform/ijent/impl:impl_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/eel-impl:eel-impl_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.impl.wsl` end

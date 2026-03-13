@@ -1,4 +1,5 @@
 // "Make 'bar' internal" "true"
+// K2_ERROR: Public-API inline function cannot access non-public-API function.
 class C {
     internal fun foo() = true
 

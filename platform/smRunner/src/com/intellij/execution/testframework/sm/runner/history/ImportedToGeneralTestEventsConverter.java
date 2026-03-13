@@ -70,7 +70,16 @@ public class ImportedToGeneralTestEventsConverter extends OutputToGeneralTestEve
 
   public static void parseTestResults(Supplier<? extends Reader> readerSupplier, GeneralTestEventsProcessor processor) throws IOException {
     try (Reader reader = readerSupplier.get()) {
-      SAXParser parser = SAXParserFactory.newDefaultInstance().newSAXParser();
+      SAXParserFactory factory = SAXParserFactory.newDefaultInstance();
+      try {
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+      }
+      catch (Exception ignored) {
+      }
+
+      SAXParser parser = factory.newSAXParser();
       parser.parse(new InputSource(reader), ImportTestOutputExtension.findHandler(readerSupplier, processor));
     }
     catch (ParserConfigurationException | SAXException e) {

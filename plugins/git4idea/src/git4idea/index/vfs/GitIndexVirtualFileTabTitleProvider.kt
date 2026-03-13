@@ -2,21 +2,23 @@
 package git4idea.index.vfs
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.vfs.CustomisableUniqueNameEditorTabTitleProvider
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.i18n.GitBundle
 
-class GitIndexVirtualFileTabTitleProvider : CustomisableUniqueNameEditorTabTitleProvider() {
+internal class GitIndexVirtualFileTabTitleProvider : CustomisableUniqueNameEditorTabTitleProvider() {
   override fun isApplicable(file: VirtualFile): Boolean = file is GitIndexVirtualFile
 
   override fun getEditorTabTitle(file: VirtualFile, baseUniqueName: String): String {
     return GitBundle.message("stage.vfs.presentable.file.name", baseUniqueName)
   }
 
-  override fun getEditorTabTooltipText(project: Project, file: VirtualFile): String? {
-    if (!isApplicable(file)) return null
-    return GitBundle.message("stage.vfs.editor.tab.tooltip",
-                             VcsUtil.getPresentablePath(project, file.filePath(), true, false))
+  override fun getEditorTabTooltipHtml(project: Project, virtualFile: VirtualFile): HtmlChunk? {
+    if (!isApplicable(virtualFile)) return null
+    val text = GitBundle.message("stage.vfs.editor.tab.tooltip",
+                                 VcsUtil.getPresentablePath(project, virtualFile.filePath(), true, false))
+    return HtmlChunk.text(text)
   }
 }

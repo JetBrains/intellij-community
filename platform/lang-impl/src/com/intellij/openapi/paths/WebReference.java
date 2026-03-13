@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.paths;
 
 import com.intellij.ide.BrowserUtil;
@@ -8,7 +8,6 @@ import com.intellij.psi.ContributedReferenceHost;
 import com.intellij.psi.HintedReferenceHost;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
-import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.impl.FakePsiElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +20,7 @@ public class WebReference extends PsiReferenceBase<PsiElement> {
   public WebReference(@NotNull PsiElement element) {
     this(element, (String)null);
   }
-  
+
   public WebReference(@NotNull PsiElement element, @Nullable String url) {
     super(element, true);
     myUrl = url;
@@ -59,7 +58,7 @@ public class WebReference extends PsiReferenceBase<PsiElement> {
     return myUrl != null ? myUrl : getValue();
   }
 
-  final class MyFakePsiElement extends FakePsiElement implements SyntheticElement {
+  final class MyFakePsiElement extends FakePsiElement {
     @Override
     public PsiElement getParent() {
       return myElement;

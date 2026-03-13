@@ -14,7 +14,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.kotlin.idea.actions.JavaToKotlinAction
+import org.jetbrains.kotlin.idea.actions.JavaToKotlinActionHandler
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.testIntegration.AbstractKotlinCreateTestIntention
@@ -73,7 +73,7 @@ class KotlinCreateTestIntention: AbstractKotlinCreateTestIntention() {
                 }
 
                 project.service<ScopeHolder>().scope.launch {
-                    JavaToKotlinAction.Handler.convertFiles(
+                    JavaToKotlinActionHandler.convertFiles(
                         listOf(element = generatedFile),
                         project = project,
                         module = srcModule,

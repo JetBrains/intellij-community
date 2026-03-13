@@ -10,7 +10,8 @@ PsiJavaFile:CodeTagWithBraces.java
       PsiInlineDocTag:@code
         PsiDocToken:DOC_INLINE_TAG_START('{')
         PsiDocToken:DOC_TAG_NAME('@code')
-        PsiDocToken:DOC_COMMENT_DATA(' opening curly brace ')
+        PsiWhiteSpace(' ')
+        PsiDocToken:DOC_COMMENT_DATA('opening curly brace ')
         PsiDocToken:DOC_COMMENT_DATA('{')
         PsiDocToken:DOC_COMMENT_DATA(' closing curly brace ')
         PsiDocToken:DOC_COMMENT_DATA('}')

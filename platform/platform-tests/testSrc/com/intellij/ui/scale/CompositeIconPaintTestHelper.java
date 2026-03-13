@@ -7,14 +7,20 @@ import com.intellij.ui.icons.CachedImageIcon;
 import com.intellij.ui.icons.CachedImageIconKt;
 import com.intellij.ui.scale.paint.ImageComparator;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.nio.file.Path;
 import java.util.function.BiFunction;
 
-import static com.intellij.ui.scale.ScaleType.*;
-import static com.intellij.ui.scale.TestScaleHelper.*;
+import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
+import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
+import static com.intellij.ui.scale.ScaleType.USR_SCALE;
+import static com.intellij.ui.scale.TestScaleHelper.createImageAndGraphics;
+import static com.intellij.ui.scale.TestScaleHelper.loadImage;
+import static com.intellij.ui.scale.TestScaleHelper.overrideJreHiDPIEnabled;
+import static com.intellij.ui.scale.TestScaleHelper.saveImage;
 
 /**
  * @author tav

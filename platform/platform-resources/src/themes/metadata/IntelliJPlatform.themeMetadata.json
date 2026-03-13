@@ -3,6 +3,14 @@
   "fixed": false,
   "ui": [
     {
+      "key": "ActionButton.focusedBorderColor",
+      "description": "ActionButton border color when focused"
+    },
+    {
+      "key": "ActionButton.hoverSeparatorColor",
+      "description": "ActionButton separator line color on hover"
+    },
+    {
       "key": "ActionButton.separatorColor",
       "description": "ActionButton separator line color",
       "since": "2023.1"
@@ -25,6 +33,18 @@
     },
     {
       "key": "Banner.warningBorderColor"
+    },
+    {
+      "key": "AlertDialog.background",
+      "description": "Background of alert dialogs"
+    },
+    {
+      "key": "Badge.greenOutlineBorderColor",
+      "description": "Border color for green outline badge"
+    },
+    {
+      "key": "Badge.greenOutlineForeground",
+      "description": "Foreground color for green outline badge"
     },
     {
       "key": "Banner.errorBackground"
@@ -105,6 +125,10 @@
       "description": "Used in tool buttons bars and the navigation bar"
     },
     {
+      "key": "Button.border",
+      "description": "Border color for buttons"
+    },
+    {
       "key": "Button.minimumSize",
       "description": "Minimum size of buttons"
     },
@@ -127,8 +151,20 @@
       "description": "Chevron arrow color for default split button"
     },
     {
+      "key": "CheckBox.borderInsets",
+      "description": "Insets for CheckBox border"
+    },
+    {
       "key": "CheckBox.iconSize",
       "description": "Size of CheckBox icon"
+    },
+    {
+      "key": "ComboBox.border",
+      "description": "Border color for ComboBox"
+    },
+    {
+      "key": "ComboBox.padding",
+      "description": "Padding for ComboBox"
     },
     {
       "key": "ComboBox.minimumSize",
@@ -422,6 +458,10 @@
       "key": "Counter.foreground"
     },
     {
+      "key": "DataSummary.Chart.barColor",
+      "description": "Color for bars in DataSummary charts"
+    },
+    {
       "key": "DebuggerPopup.borderColor",
       "description": "A breakpoint popup that opens on right-click"
     },
@@ -566,6 +606,11 @@
       "description": "Editor inplace search/replace fields background color"
     },
     {
+      "key": "Editor.SearchField.borderColor",
+      "description": "Editor inplace search/replace fields border color",
+      "since": "2024.1"
+    },
+    {
       "key": "Editor.ReplaceToolbar.borderInsets",
       "description": "Insets around editor replace panel",
       "since": "2023.3.1"
@@ -583,6 +628,56 @@
     {
       "key": "Editor.Toolbar.borderColor",
       "description": "Editor header component border"
+    },
+    {
+      "key": "Editor.ToolTip.background",
+      "description": "Editor tooltip background color",
+      "since": "2024.1"
+    },
+    {
+      "key": "Editor.ToolTip.border",
+      "description": "Editor tooltip border color",
+      "since": "2024.1"
+    },
+    {
+      "key": "Editor.ToolTip.errorBackground",
+      "description": "Editor error tooltip background color",
+      "since": "2024.1"
+    },
+    {
+      "key": "Editor.ToolTip.errorBorder",
+      "description": "Editor error tooltip border color",
+      "since": "2024.1"
+    },
+    {
+      "key": "Editor.ToolTip.iconHoverBackground",
+      "description": "Editor tooltip icon hover background color",
+      "since": "2024.1"
+    },
+    {
+      "key": "Editor.ToolTip.selectionBackground",
+      "description": "Editor tooltip selection background color",
+      "since": "2024.1"
+    },
+    {
+      "key": "Editor.ToolTip.successBackground",
+      "description": "Editor success tooltip background color",
+      "since": "2024.1"
+    },
+    {
+      "key": "Editor.ToolTip.successBorder",
+      "description": "Editor success tooltip border color",
+      "since": "2024.1"
+    },
+    {
+      "key": "Editor.ToolTip.warningBackground",
+      "description": "Editor warning tooltip background color",
+      "since": "2024.1"
+    },
+    {
+      "key": "Editor.ToolTip.warningBorder",
+      "description": "Editor warning tooltip border color",
+      "since": "2024.1"
     },
     {
       "key": "Editor.Gutter.emptyAnnotationAreaWidth",
@@ -613,6 +708,31 @@
       "key": "EditorTabs.borderColor",
       "description": "The editor tabs border color. If value isn't specified the value of DefaultTabs.borderColor will be used",
       "since": "2019.2"
+    },
+    {
+      "key": "EditorTabs.underTabsBorderColor",
+      "description": "Border color under the editor tabs",
+      "since": "2024.1"
+    },
+    {
+      "key": "EditorTabs.underlinedBorderColor",
+      "description": "Border color for the selected editor tab",
+      "since": "2024.1"
+    },
+    {
+      "key": "EditorTabs.inactiveUnderlinedTabBorderColor",
+      "description": "Border color for the selected editor tab when the editor is not focused",
+      "since": "2024.1"
+    },
+    {
+      "key": "EditorTabs.inactiveUnderlinedTabBackground",
+      "description": "Background for the selected editor tab when the editor is not focused",
+      "since": "2024.1"
+    },
+    {
+      "key": "EditorTabs.underlineArc",
+      "description": "Arc radius for the editor tab underline",
+      "since": "2024.1"
     },
     {
       "key": "EditorTabs.fontSizeOffset",
@@ -845,6 +965,16 @@
       "description": "GotIt tooltip link foreground color if different from Link.activeForeground"
     },
     {
+      "key": "GotItTooltip.linkUnderlineDefaultColor",
+      "description": "GotIt tooltip link underline color",
+      "since": "2023.3"
+    },
+    {
+      "key": "GotItTooltip.linkUnderlineHoveredColor",
+      "description": "GotIt tooltip link underline color on hover",
+      "since": "2023.3"
+    },
+    {
       "key": "GotItTooltip.codeForeground",
       "description": "GotIt tooltip inline code element foreground color if different from GotItTooltip.foreground",
       "since": "2023.1.1"
@@ -865,6 +995,11 @@
       "since": "2023.1"
     },
     {
+      "key": "GotItTooltip.secondaryActionForeground",
+      "description": "GotIt tooltip secondary action foreground color",
+      "since": "2023.3"
+    },
+    {
       "key": "GotItTooltip.imageBorderColor",
       "description": "GotIt tooltip image rounded border color if different from GotItTooltip.background",
       "since": "2023.2.1"
@@ -873,6 +1008,16 @@
       "key": "GotItTooltip.animationBackground",
       "description": "GotIt tooltip animation background color if different from GotItTooltip.background",
       "since": "2023.2.1"
+    },
+    {
+      "key": "GotItTooltip.iconFillColor",
+      "description": "GotIt tooltip icon fill color",
+      "since": "2023.3"
+    },
+    {
+      "key": "GotItTooltip.iconBorderColor",
+      "description": "GotIt tooltip icon border color",
+      "since": "2023.3"
     },
     {
       "key": "GotItTooltip.Header.foreground",
@@ -903,6 +1048,11 @@
       "key": "GotItTooltip.Button.endBorderColor",
       "description": "GotIt tooltip button outline gradient end color if different from Button.endBorderColor",
       "since": "2022.3.1"
+    },
+    {
+      "key": "GotItTooltip.Button.contrastBackground",
+      "description": "GotIt tooltip button contrast background color",
+      "since": "2023.3"
     },
     {
       "key": "GotItTooltip.startBackground",
@@ -988,6 +1138,54 @@
       "deprecated": true
     },
     {
+      "key": "HelpBrowser.HelpBrowserMessage.Snippet.MoreLines.background",
+      "description": "Background color of the 'more lines' indicator in help browser messages"
+    },
+    {
+      "key": "HelpBrowser.HelpBrowserMessage.Snippet.MoreLines.foreground",
+      "description": "Text color of the 'more lines' indicator in help browser messages"
+    },
+    {
+      "key": "HelpBrowser.HelpBrowserMessage.Snippet.MoreLines.hoverBackground",
+      "description": "Background color of the 'more lines' indicator in help browser messages on hover"
+    },
+    {
+      "key": "HelpBrowser.HelpBrowserMessage.Snippet.MoreLines.hoverForeground",
+      "description": "Text color of the 'more lines' indicator in help browser messages on hover"
+    },
+    {
+      "key": "HelpBrowser.HelpBrowserMessage.Snippet.border",
+      "description": "Border color of code snippets in help browser messages"
+    },
+    {
+      "key": "HelpBrowser.UserMessage.Snippet.MoreLines.background",
+      "description": "Background color of the 'more lines' indicator in user messages"
+    },
+    {
+      "key": "HelpBrowser.UserMessage.Snippet.MoreLines.foreground",
+      "description": "Text color of the 'more lines' indicator in user messages"
+    },
+    {
+      "key": "HelpBrowser.UserMessage.Snippet.MoreLines.hoverBackground",
+      "description": "Background color of the 'more lines' indicator in user messages on hover"
+    },
+    {
+      "key": "HelpBrowser.UserMessage.Snippet.MoreLines.hoverForeground",
+      "description": "Text color of the 'more lines' indicator in user messages on hover"
+    },
+    {
+      "key": "HelpBrowser.UserMessage.Snippet.border",
+      "description": "Border color of code snippets in user messages"
+    },
+    {
+      "key": "HelpBrowser.UserMessage.background",
+      "description": "Background color of user messages in the help browser"
+    },
+    {
+      "key": "HelpBrowser.titleHighlightForeground",
+      "description": "Foreground color of highlighted titles in the help browser"
+    },
+    {
       "key": "HelpTooltip.background",
       "description": "Use ToolTip.background instead",
       "deprecated": true
@@ -1011,6 +1209,11 @@
       "key": "HelpTooltip.infoForeground",
       "description": "Use ToolTip.infoForeground instead",
       "deprecated": true
+    },
+    {
+      "key": "HelpTooltip.verticalGap",
+      "description": "Vertical gap between HelpTooltip elements",
+      "since": "2024.1"
     },
     {
       "key": "IconBadge.borderWidth",
@@ -1053,11 +1256,123 @@
       "description": "Badge color indicating the success status"
     },
     {
+      "key": "Ide.Shadow.borderInsets",
+      "description": "Insets for the IDE shadow border"
+    },
+    {
+      "key": "Ide.Shadow.bottom0Color"
+    },
+    {
+      "key": "Ide.Shadow.bottom1Color"
+    },
+    {
+      "key": "Ide.Shadow.bottomLeft0Color"
+    },
+    {
+      "key": "Ide.Shadow.bottomLeft1Color"
+    },
+    {
+      "key": "Ide.Shadow.bottomRight0Color"
+    },
+    {
+      "key": "Ide.Shadow.bottomRight1Color"
+    },
+    {
+      "key": "Ide.Shadow.left0Color"
+    },
+    {
+      "key": "Ide.Shadow.left1Color"
+    },
+    {
+      "key": "Ide.Shadow.right0Color"
+    },
+    {
+      "key": "Ide.Shadow.right1Color"
+    },
+    {
+      "key": "Ide.Shadow.top0Color"
+    },
+    {
+      "key": "Ide.Shadow.top1Color"
+    },
+    {
+      "key": "Ide.Shadow.topLeft0Color"
+    },
+    {
+      "key": "Ide.Shadow.topLeft1Color"
+    },
+    {
+      "key": "Ide.Shadow.topRight0Color"
+    },
+    {
+      "key": "Ide.Shadow.topRight1Color"
+    },
+    {
       "key": "InformationHint.borderColor"
     },
     {
       "key": "InplaceRefactoringPopup.borderColor",
       "description": "A popup in the editor with refactoring options"
+    },
+    {
+      "key": "Island.arc",
+      "description": "The corner radius of islands",
+      "since": "2026.1"
+    },
+    {
+      "key": "Island.arc.compact",
+      "description": "The corner radius of islands in compact mode",
+      "since": "2026.1"
+    },
+    {
+      "key": "Island.borderArcLength",
+      "description": "The length of islands border corner arc",
+      "since": "2026.1"
+    },
+    {
+      "key": "Island.borderArcLength.compact",
+      "description": "The length of islands border corner arc in compact mode",
+      "since": "2026.1"
+    },
+    {
+      "key": "Island.borderColor",
+      "description": "The color of islands border",
+      "since": "2026.1"
+    },
+    {
+      "key": "Island.borderWidth",
+      "description": "The width of islands border",
+      "since": "2026.1"
+    },
+    {
+      "key": "Island.borderWidth.compact",
+      "description": "The width of islands border in compact mode",
+      "since": "2026.1"
+    },
+    {
+      "key": "Island.inactiveAlpha",
+      "description": "The transparency of islands when it is inactive",
+      "since": "2026.1"
+    },
+    {
+      "key": "Island.inactiveAlphaInStatusBar.os.linux",
+      "description": "The transparency of islands in the status bar when it is inactive on Linux",
+      "since": "2026.1"
+    },
+    {
+      "key": "Island.inactiveAlphaInStatusBar.os.mac",
+      "description": "The transparency of islands in the status bar when it is inactive on macOS",
+      "since": "2026.1"
+    },
+    {
+      "key": "Island.inactiveAlphaInStatusBar.os.windows",
+      "description": "The transparency of islands in the status bar when it is inactive on Windows",
+      "since": "2026.1"
+    },
+    {
+      "key": "Islands",
+      "description": "Enables or disables islands UI mode",
+      "since": "2026.1"
     },
     {
       "key": "Label.disabledText"
@@ -1079,9 +1394,36 @@
       "description": "Light-colored links. Used in the Variables tab of the Debugger tool window. Can be seen when a tree line is long, does not fit into the tab's width, and its popup on hover goes beyond the right monitor side."
     },
     {
+      "key": "Link.focusedBorderColor",
+      "description": "Border color for focused link"
+    },
+    {
       "key": "MainMenu.transparentSelectionBackground",
       "description": "Selection background in colorful header mode",
       "since": "2023.2"
+    },
+    {
+      "key": "MainMenu.selectionBackground",
+      "description": "Selection background color for main menu items"
+    },
+    {
+      "key": "MainMenu.selectionForeground",
+      "description": "Selection foreground color for main menu items"
+    },
+    {
+      "key": "MainMenu.Selection.fullScreenArc",
+      "description": "Selection arc diameter for the main menu in full screen (in the normal mode MainToolbar.Dropdown.arc is used)",
+      "since": "2026.1"
+    },
+    {
+      "key": "MainMenu.Selection.outerInsets",
+      "description": "Insets around main menu selection",
+      "since": "2026.1"
+    },
+    {
+      "key": "MainMenu.Selection.fullScreenOuterInsets",
+      "description": "Insets around main menu selection in full screen",
+      "since": "2026.1"
     },
     {
       "key": "MemoryIndicator.usedBackground",
@@ -1133,6 +1475,10 @@
       "since": "2023.2.1"
     },
     {
+      "key": "NewClass.SearchField.background",
+      "description": "Background color for the search field in the New Class dialog"
+    },
+    {
       "key": "Notification.background",
       "description": "Notification that appears in in bottom-right corner. Use the \"Add Test Notification\" action in internal mode to show notifications on demand."
     },
@@ -1167,6 +1513,62 @@
     {
       "key": "Notification.borderInsets",
       "description": "Top/Left/Bottom/Right insets of the notification"
+    },
+    {
+      "key": "Notification.iconHoverBackground",
+      "description": "Background color for the notification icon on hover"
+    },
+    {
+      "key": "Notification.Shadow.borderInsets",
+      "description": "Top/Left/Bottom/Right insets of the notification balloon shadow"
+    },
+    {
+      "key": "Notification.Shadow.bottom0Color"
+    },
+    {
+      "key": "Notification.Shadow.bottom1Color"
+    },
+    {
+      "key": "Notification.Shadow.bottomLeft0Color"
+    },
+    {
+      "key": "Notification.Shadow.bottomLeft1Color"
+    },
+    {
+      "key": "Notification.Shadow.bottomRight0Color"
+    },
+    {
+      "key": "Notification.Shadow.bottomRight1Color"
+    },
+    {
+      "key": "Notification.Shadow.left0Color"
+    },
+    {
+      "key": "Notification.Shadow.left1Color"
+    },
+    {
+      "key": "Notification.Shadow.right0Color"
+    },
+    {
+      "key": "Notification.Shadow.right1Color"
+    },
+    {
+      "key": "Notification.Shadow.top0Color"
+    },
+    {
+      "key": "Notification.Shadow.top1Color"
+    },
+    {
+      "key": "Notification.Shadow.topLeft0Color"
+    },
+    {
+      "key": "Notification.Shadow.topLeft1Color"
+    },
+    {
+      "key": "Notification.Shadow.topRight0Color"
+    },
+    {
+      "key": "Notification.Shadow.topRight1Color"
     },
     {
       "key": "Notification.iconOffsetSize",
@@ -1343,6 +1745,14 @@
       "key": "Plugins.eapTagBackground"
     },
     {
+      "key": "Plugins.paidTagBackground",
+      "description": "Background color for paid tag in Plugins list"
+    },
+    {
+      "key": "Plugins.trialTagBackground",
+      "description": "Background color for trial tag in Plugins list"
+    },
+    {
       "key": "Plugins.lightSelectionBackground",
       "description": "Selection background"
     },
@@ -1431,6 +1841,10 @@
     },
     {
       "key": "Popup.Advertiser.foreground"
+    },
+    {
+      "key": "Popup.Advertiser.fontSizeOffset",
+      "description": "Font size offset for the advertiser text in popups"
     },
     {
       "key": "Popup.Body.bottomInsetNoAd",
@@ -1555,8 +1969,34 @@
       "key": "ProgressBar.warningEndColor"
     },
     {
+      "key": "ProgressBar.indeterminateendcolor",
+      "description": "The lighter part in an indeterminate progress bar"
+    },
+    {
+      "key": "ProgressBar.failedcolor",
+      "description": "Use the \"Test Progress Indicators\" action in internal mode to preview progress bars"
+    },
+    {
+      "key": "ProgressBar.failedendcolor",
+      "description": "The lighter part in a failed indeterminate progress bar"
+    },
+    {
+      "key": "ProgressBar.passedcolor"
+    },
+    {
+      "key": "ProgressBar.passedendcolor"
+    },
+    {
       "key": "RadioButton.iconSize",
       "description": "Size of RadioButton icon"
+    },
+    {
+      "key": "RadioButton.borderInsets",
+      "description": "Insets around the radio button border"
+    },
+    {
+      "key": "RadioButton.iconTextGap",
+      "description": "Gap between the radio button icon and text"
     },
     {
       "key": "SearchEverywhere.Advertiser.background",
@@ -1571,6 +2011,10 @@
     {
       "key": "SearchEverywhere.Header.background",
       "description": "Tabs area background"
+    },
+    {
+      "key": "SearchEverywhere.Header.insets",
+      "description": "Insets for the Search Everywhere header"
     },
     {
       "key": "SearchEverywhere.List.separatorColor",
@@ -1725,9 +2169,33 @@
       "description": "Minimum size of spinners"
     },
     {
+      "key": "Spinner.border",
+      "description": "Border for spinner components"
+    },
+    {
+      "key": "StatusBar.background",
+      "description": "Background of the status bar"
+    },
+    {
       "key": "StatusBar.fontSizeOffset",
       "description": "Status bar font size offset",
       "since": "2024.1"
+    },
+    {
+      "key": "StatusBar.Breadcrumbs.chevronInset",
+      "description": "Horizontal inset of breadcrumb chevrons"
+    },
+    {
+      "key": "StatusBar.Breadcrumbs.foreground",
+      "description": "Text color of breadcrumbs in the status bar"
+    },
+    {
+      "key": "StatusBar.Breadcrumbs.hoverBackground",
+      "description": "Background color of a hovered breadcrumb item"
+    },
+    {
+      "key": "StatusBar.Breadcrumbs.hoverForeground",
+      "description": "Text color of a hovered breadcrumb item"
     },
     {
       "key": "StatusBar.Breadcrumbs.navBarInsets",
@@ -1735,14 +2203,41 @@
       "since": "2023.1"
     },
     {
-      "key": "StatusBar.Widget.widgetInsets",
-      "description": "Insets around status bar widgets",
-      "since": "2023.1"
+      "key": "StatusBar.Breadcrumbs.pressedBackground",
+      "description": "Background color of a pressed breadcrumb item"
+    },
+    {
+      "key": "StatusBar.Breadcrumbs.selectionBackground",
+      "description": "Background color of a selected breadcrumb item"
+    },
+    {
+      "key": "StatusBar.Breadcrumbs.selectionInactiveBackground",
+      "description": "Background color of a selected breadcrumb item when the status bar is inactive"
+    },
+    {
+      "key": "StatusBar.Widget.foreground",
+      "description": "Text color of status bar widgets"
+    },
+    {
+      "key": "StatusBar.Widget.hoverBackground",
+      "description": "Background color of a hovered status bar widget"
+    },
+    {
+      "key": "StatusBar.Widget.hoverForeground",
+      "description": "Text color of a hovered status bar widget"
     },
     {
       "key": "StatusBar.Widget.hoverInsets",
-      "description": "Insets of the hover area around status bar widgets",
-      "since": "2025.3"
+      "description": "Insets of the hover area around status bar widgets"
+    },
+    {
+      "key": "StatusBar.Widget.pressedBackground",
+      "description": "Background color of a pressed status bar widget"
+    },
+    {
+      "key": "StatusBar.Widget.widgetInsets",
+      "description": "Insets around status bar widgets",
+      "since": "2023.1"
     },
     {
       "key": "StripeToolbar.Button.size",
@@ -1788,6 +2283,10 @@
       "key": "List.hoverBackground",
       "since": "2020.3",
       "description": "A background of a hovered row in a focused list if hover is allowed."
+    },
+    {
+      "key": "List.border",
+      "description": "Border insets for list items"
     },
     {
       "key": "List.hoverInactiveBackground",
@@ -1842,6 +2341,44 @@
     {
       "key": "TextField.minimumSize",
       "description": "Minimum size of text fields"
+    },
+    {
+      "key": "PasswordField.border",
+      "description": "Border for password fields"
+    },
+    {
+      "key": "SearchFieldWithExtension.border",
+      "description": "Border for search fields with extensions"
+    },
+    {
+      "key": "Tree.border",
+      "description": "Inner tree border. Format: \"top, left, bottom, right\" in pixels, e.g. \"4,12,4,12\"",
+      "since": "2025.1"
+    },
+    {
+      "key": "Tree.border.compact",
+      "description": "Inner tree border used in compact mode. Format: \"top, left, bottom, right\" in pixels, e.g. \"2,8,2,8\"",
+      "since": "2025.1"
+    },
+    {
+      "key": "Tree.collapsedIcon",
+      "description": "An icon used for collapsed tree nodes",
+      "since": "2025.1"
+    },
+    {
+      "key": "Tree.collapsedSelectedIcon",
+      "description": "An icon used for collapsed tree nodes when selected",
+      "since": "2025.1"
+    },
+    {
+      "key": "Tree.expandedIcon",
+      "description": "An icon used for expanded tree nodes",
+      "since": "2025.1"
+    },
+    {
+      "key": "Tree.expandedSelectedIcon",
+      "description": "An icon used for expanded tree nodes when selected",
+      "since": "2025.1"
     },
     {
       "key": "Tree.hoverBackground",
@@ -2024,6 +2561,22 @@
       "description": "Action shortcuts"
     },
     {
+      "key": "ToolWindow.Button.DragAndDrop.buttonDropBackground",
+      "description": "Background of the drop target area for a tool window stripe button"
+    },
+    {
+      "key": "ToolWindow.Button.DragAndDrop.buttonDropBorderColor",
+      "description": "Border color of the drop target area for a tool window stripe button"
+    },
+    {
+      "key": "ToolWindow.Button.DragAndDrop.buttonFloatingBackground",
+      "description": "Background of a tool window stripe button while it's being dragged"
+    },
+    {
+      "key": "ToolWindow.Button.foreground",
+      "description": "Foreground color of a tool window stripe button"
+    },
+    {
       "key": "ToolWindow.Button.hoverBackground",
       "description": "Buttons in a tool window stripe"
     },
@@ -2034,11 +2587,19 @@
       "key": "ToolWindow.Button.selectedForeground"
     },
     {
+      "key": "ToolWindow.DragAndDrop.areaBackground",
+      "description": "Background of the drop target area in a tool window"
+    },
+    {
       "key": "ToolWindow.Header.background",
       "description": "Active tool window header"
     },
     {
       "key": "ToolWindow.Header.borderColor"
+    },
+    {
+      "key": "ToolWindow.Header.font.size.offset",
+      "description": "Tool window header font size offset"
     },
     {
       "key": "ToolWindow.Header.fontSizeOffset",
@@ -2104,8 +2665,28 @@
       "since": "2021.3"
     },
     {
+      "key": "ToolWindow.Stripe.DragAndDrop.separatorColor",
+      "description": "Color of the separator that appears between buttons on a tool window stripe during drag-and-drop"
+    },
+    {
+      "key": "ToolWindow.Stripe.background",
+      "description": "Background color of the tool window stripe"
+    },
+    {
+      "key": "ToolWindow.Stripe.borderColor",
+      "description": "Border color of the tool window stripe"
+    },
+    {
+      "key": "ToolWindow.Stripe.separatorColor",
+      "description": "Color of separators on the tool window stripe"
+    },
+    {
       "key": "ToolWindow.background",
       "since": "2021.3"
+    },
+    {
+      "key": "ToolWindow.borderColor",
+      "description": "General border color of tool windows"
     },
     {
       "key": "Tooltip.separatorColor",
@@ -2233,6 +2814,36 @@
       "since": "2025.1"
     },
     {
+      "key": "TrialWidget.Progress.background",
+      "description": "Background of trial widget in progress state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Progress.borderColor",
+      "description": "Border color of trial widget in progress state. Use transparent color if no border needed",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Progress.foreground",
+      "description": "Foreground of trial widget in progress state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Progress.hoverBackground",
+      "description": "Hover background of trial widget in progress state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Progress.hoverBorderColor",
+      "description": "Hover border color of trial widget in progress state. Use transparent color if no border needed",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Progress.hoverForeground",
+      "description": "Hover foreground of trial widget in progress state",
+      "since": "2025.1"
+    },
+    {
       "key": "UiDesigner.Panel.background",
       "description": "Android plugin: panels around the preview area"
     },
@@ -2241,8 +2852,24 @@
       "description": "Android plugin: the app preview area"
     },
     {
+      "key": "UnattendedHostStatus.dangerBackground",
+      "description": "Background for danger status of unattended host in Gateway"
+    },
+    {
+      "key": "UnattendedHostStatus.warningBackground",
+      "description": "Background for warning status of unattended host in Gateway"
+    },
+    {
+      "key": "UnattendedHostStatus.warningForeground",
+      "description": "Foreground for warning status of unattended host in Gateway"
+    },
+    {
       "key": "ValidationTooltip.errorBackground",
       "description": "Error description tooltip above a control. See the \"Validation Dialog Test\" action in internal mode (press Enter for validation in the dialog)."
+    },
+    {
+      "key": "ValidationTooltip.errorForeground",
+      "description": "Foreground color for error validation tooltip"
     },
     {
       "key": "ValidationTooltip.errorBorderColor"
@@ -2250,6 +2877,10 @@
     {
       "key": "ValidationTooltip.warningBackground",
       "description": "Warning description tooltip above a control. See the \"Show Standard Panels\" action in internal mode (press Enter for validation in the dialog)."
+    },
+    {
+      "key": "ValidationTooltip.warningForeground",
+      "description": "Foreground color for warning validation tooltip"
     },
     {
       "key": "ValidationTooltip.warningBorderColor"
@@ -2586,6 +3217,34 @@
       "since": "2021.2"
     },
     {
+      "key": "Tooltip.Learning.Header.foreground",
+      "description": "Foreground for the header in lesson tooltips"
+    },
+    {
+      "key": "Tooltip.Learning.iconBorderColor",
+      "description": "Border color for icons used in lesson tooltips"
+    },
+    {
+      "key": "Tooltip.Learning.iconFillColor",
+      "description": "Fill color for icons used in lesson tooltips"
+    },
+    {
+      "key": "Tooltip.Learning.linkForeground",
+      "description": "Foreground for links in lesson tooltips"
+    },
+    {
+      "key": "Tooltip.Learning.linkUnderlineDefaultColor",
+      "description": "Default underline color for links in lesson tooltips"
+    },
+    {
+      "key": "Tooltip.Learning.linkUnderlineHoveredColor",
+      "description": "Hovered underline color for links in lesson tooltips"
+    },
+    {
+      "key": "Tooltip.Learning.secondaryActionForeground",
+      "description": "Foreground for secondary actions in lesson tooltips"
+    },
+    {
       "key": "Tooltip.Learning.stepNumberForeground",
       "description": "Foreground for task numbers in lesson tooltips",
       "since": "2021.2"
@@ -2624,6 +3283,14 @@
       "since": "2022.3"
     },
     {
+      "key": "MainToolbar.borderColor",
+      "description": "Border color for the Main Toolbar"
+    },
+    {
+      "key": "MainWindow.background",
+      "description": "Background color of the IDE main window"
+    },
+    {
       "key": "MainToolbar.fontSizeOffset",
       "description": "Main toolbar widgets font size offset",
       "since": "2024.1"
@@ -2644,9 +3311,41 @@
       "since": "2023.1"
     },
     {
+      "key": "MainToolbar.Dropdown.pressedBackground",
+      "description": "Background color for pressed state of combo widgets in the main toolbar"
+    },
+    {
+      "key": "MainToolbar.Dropdown.transparentHoverBackground",
+      "description": "Transparent hover background color for combo widgets in the main toolbar"
+    },
+    {
       "key": "MainToolbar.Icon.insets",
       "description": "Insets around buttons on the Main Toolbar",
       "since": "2023.2"
+    },
+    {
+      "key": "MainToolbar.Icon.background",
+      "description": "Background color for main toolbar icons"
+    },
+    {
+      "key": "MainToolbar.Icon.pressedBackground",
+      "description": "Background color for pressed state of icons in the main toolbar"
+    },
+    {
+      "key": "ManagedIdeBadgeBackground",
+      "description": "Background color for Managed IDE badge"
+    },
+    {
+      "key": "ManagedIdeBadgeBackgroundHover",
+      "description": "Hover background color for Managed IDE badge"
+    },
+    {
+      "key": "ManagedIdeBadgeBorder",
+      "description": "Border color for Managed IDE badge"
+    },
+    {
+      "key": "ManagedIdeMenuItemHover",
+      "description": "Hover background color for Managed IDE menu items"
     },
     {
       "key": "RunWidget.configurationSelectorFontSizeOffset",
@@ -2863,6 +3562,62 @@
       "key": "Recap.chroniclesForegroundGreyed",
       "description": "Recap card's history element's muted text color.",
       "since": "2025.3"
+    },
+    {
+      "key": "ProjectGradients.GroupN.DiagonalGradient.ColorN",
+      "description": "Diagonal gradient color of project gradient in group",
+      "since": "2025.3"
+    },
+    {
+      "key": "ProjectGradients.GroupN.DiagonalGradient.FractionN",
+      "description": "Diagonal gradient fraction of project gradient in group",
+      "since": "2025.3"
+    },
+    {
+      "key": "ProjectGradients.GroupN.RadialGradient.ColorN",
+      "description": "Radial gradient color of project gradient in group",
+      "since": "2025.3"
+    },
+    {
+      "key": "ProjectGradients.GroupN.HorizontalGradient.ColorN",
+      "description": "Horizonal gradient color of project gradient in group",
+      "since": "2025.3"
+    },
+    {
+      "key": "ProjectGradients.GroupN.VerticalGradient.ColorN",
+      "description": "Vertical gradient color of project gradient in group",
+      "since": "2025.3"
+    },
+    {
+      "key": "RecentProject.ColorN.MainToolbarGradientStart",
+      "description": "Main toolbar gradient start color of recent project",
+      "since": "2025.3"
+    },
+    {
+      "key": "RecentProject.ColorN.Avatar.Start",
+      "description": "Avatar gradient start color of recent project",
+      "since": "2025.3"
+    },
+    {
+      "key": "RecentProject.ColorN.Avatar.End",
+      "description": "Avatar gradient end color of recent project",
+      "since": "2025.3"
+    },
+    {
+      "key": "VersionControl.Merge.Badge.infoForeground",
+      "description": "Foreground color for the conflicts badge when there are no conflicts resolved"
+    },
+    {
+      "key": "VersionControl.Merge.Badge.infoBackground",
+      "description": "Background color for the conflicts badge when there are no conflicts resolved"
+    },
+    {
+      "key": "VersionControl.Merge.Badge.modifiedItemForeground",
+      "description": "Foreground color for the conflicts badge when there are some conflicts resolved"
+    },
+    {
+      "key": "VersionControl.Merge.Badge.modifiedItemBackground",
+      "description": "Background color for the conflicts badge when there are some conflicts resolved"
     }
   ]
 }

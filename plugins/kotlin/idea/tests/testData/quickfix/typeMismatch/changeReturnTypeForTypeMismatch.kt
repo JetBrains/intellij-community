@@ -1,5 +1,6 @@
 // "Specify 'Int' return type for enclosing function 'test1'" "true"
 // WITH_STDLIB
+// K2_ERROR: Return type mismatch: expected 'Unit', actual 'Int'.
 
 fun test1(ss: List<Any>) {
     return ss.map { it }.size<caret>

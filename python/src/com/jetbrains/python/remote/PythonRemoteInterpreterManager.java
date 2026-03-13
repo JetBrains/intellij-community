@@ -12,7 +12,6 @@ import com.intellij.remote.RemoteMappingsManager;
 import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.util.PathMappingSettings;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.extensions.ProgressManagerExtKt;
 import com.jetbrains.python.remote.PyRemotePathMapper.PyPathMappingType;
@@ -28,10 +27,6 @@ public abstract class PythonRemoteInterpreterManager {
   public static final Key<PathMappingSettings> ADDITIONAL_MAPPINGS = Key.create("ADDITIONAL_MAPPINGS");
 
   public static final String PYTHON_PREFIX = "python";
-
-  public static @Nullable PythonRemoteInterpreterManager getInstance() {
-    return ContainerUtil.getFirstItem(EP_NAME.getExtensionList());
-  }
 
   /**
    * @deprecated  use {@link java.nio.file.Path}

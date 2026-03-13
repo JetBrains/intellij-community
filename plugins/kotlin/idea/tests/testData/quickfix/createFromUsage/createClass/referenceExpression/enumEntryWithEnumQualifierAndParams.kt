@@ -1,5 +1,6 @@
 // "Create enum constant 'A'" "true"
 // ERROR: No value passed for parameter 'n'
+// K2_ERROR: Unresolved reference 'A'.
 // K2_AFTER_ERROR: No value passed for parameter 'n'.
 package p
 

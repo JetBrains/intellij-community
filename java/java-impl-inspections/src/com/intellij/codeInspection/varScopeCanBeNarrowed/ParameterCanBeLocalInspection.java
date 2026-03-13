@@ -173,8 +173,13 @@ public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalIn
     }
 
     @Override
+    public @NotNull String getName() {
+      return JavaBundle.message("inspection.parameter.can.be.local.quickfix");
+    }
+
+    @Override
     public @NotNull String getFamilyName() {
-      return JavaBundle.message("inspection.convert.to.local.quickfix");
+      return JavaBundle.message("inspection.convert.to.local.family.name");
     }
 
     @Override

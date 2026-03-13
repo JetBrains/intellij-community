@@ -3,16 +3,23 @@ package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.util.text.buildHtmlChunk
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.util.Processor
 import com.intellij.util.containers.SortedList
 import com.intellij.util.containers.sequenceOfNotNull
 import com.intellij.util.containers.tail
+import com.intellij.xml.util.XmlStringUtil
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.isProtocol
+import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
@@ -20,9 +27,13 @@ import com.jetbrains.python.psi.PyKnownDecorator
 import com.jetbrains.python.psi.PyKnownDecoratorUtil
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyClassImpl
+import com.jetbrains.python.psi.types.PyCallableParameterListTypeImpl
+import com.jetbrains.python.psi.types.PyCallableType
+import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
+import org.jetbrains.annotations.Nls
 import java.util.EnumSet
 
 class PyOverloadsInspection : PyInspection() {
@@ -34,6 +45,7 @@ class PyOverloadsInspection : PyInspection() {
   ): PsiElementVisitor = Visitor(holder, PyInspectionVisitor.getContext(session))
 
   private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
+    private val OVERLOADS_ANALYSIS_LIMIT = 30
 
     override fun visitPyClass(node: PyClass) {
       processScope(node) { node.visitMethods(it, false, myTypeEvalContext) }
@@ -66,6 +78,8 @@ class PyOverloadsInspection : PyInspection() {
 
       checkOverrideAndFinal(overloads, implementation)
 
+      checkOverloadsOverlapping(overloads)
+
       var requiresImplementation = true
       if (owner.containingFile is PyiFile) {
         requiresImplementation = false
@@ -93,7 +107,12 @@ class PyOverloadsInspection : PyInspection() {
       if (implementation != null) {
         overloads
           .asSequence()
-          .filter { !PyUtil.isSignatureCompatibleTo(implementation, it, myTypeEvalContext) }
+          .filter {
+            val overloadInputSignature = PyCallableParameterListTypeImpl(it.getParameters(myTypeEvalContext))
+            val implementationInputSignature = PyCallableParameterListTypeImpl(implementation.getParameters(myTypeEvalContext))
+
+            !PyTypeChecker.match(overloadInputSignature, implementationInputSignature, myTypeEvalContext)
+          }
           .forEach {
             registerProblem(it.nameIdentifier,
                             PyPsiBundle.message("INSP.overloads.this.overload.signature.not.compatible.with.implementation",
@@ -150,6 +169,59 @@ class PyOverloadsInspection : PyInspection() {
         }
       }
     }
+
+    private fun checkOverloadsOverlapping(overloads: List<PyFunction>) {
+      // This analysis is N^2 so limited to a reasonable number of overloads to prevent performance issues
+      if (overloads.size !in 2..OVERLOADS_ANALYSIS_LIMIT) return
+
+      // __get__ method should be special-cased
+      if (overloads.firstOrNull()?.name == PyNames.DUNDER_GET) return
+
+      for (i in overloads.indices) {
+        val current = overloads[i]
+        val currCallableType = myTypeEvalContext.getType(current) as? PyCallableType ?: continue
+        val currParams = currCallableType.getParameters(myTypeEvalContext) ?: continue
+        val currReturnType = currCallableType.getReturnType(myTypeEvalContext)
+        val currInputSignature = PyCallableParameterListTypeImpl(currParams)
+
+        for (j in (i + 1) until overloads.size) {
+          val next = overloads[j]
+          val nextCallableType = myTypeEvalContext.getType(next) as? PyCallableType ?: continue
+          val nextParams = nextCallableType.getParameters(myTypeEvalContext) ?: continue
+          val nextReturnType = nextCallableType.getReturnType(myTypeEvalContext)
+
+          val nextOverloadInputSignature = PyCallableParameterListTypeImpl(nextParams)
+
+          if (PyTypeChecker.match(nextOverloadInputSignature, currInputSignature, myTypeEvalContext)) {
+            val signatureRepresentation = PythonDocumentationProvider.getTypeName(nextCallableType, myTypeEvalContext)
+            val message =
+              buildMessage(PyPsiBundle.message("INSP.overloads.overload.overlapped.by.a.broader.type", i + 1),
+                           signatureRepresentation)
+            registerProblem(next.nameIdentifier, message)
+          }
+          else if (PyTypeChecker.match(currInputSignature, nextOverloadInputSignature, myTypeEvalContext)) {
+            if (!PyTypeChecker.match(nextReturnType, currReturnType, myTypeEvalContext)) {
+              val signatureRepresentation = PythonDocumentationProvider.getTypeName(currCallableType, myTypeEvalContext)
+              val message =
+                buildMessage(PyPsiBundle.message("INSP.overloads.overload.overlaps.with.incompatible.return.type", j + 1),
+                             signatureRepresentation)
+              registerProblem(current.nameIdentifier, message)
+            }
+          }
+        }
+      }
+    }
+
+    @InspectionMessage
+    private fun buildMessage(
+      @Nls msg: String,
+      @NlsSafe signature: String,
+    ): String = XmlStringUtil
+      .wrapInHtml(buildHtmlChunk {
+        append(msg)
+        append(HtmlChunk.br())
+        append(PyPsiBundle.message("INSP.overloads.overload.conflicting.signature", signature))
+      }.toString())
   }
 
   private class GroupingFunctionsByNameProcessor : Processor<PyFunction> {

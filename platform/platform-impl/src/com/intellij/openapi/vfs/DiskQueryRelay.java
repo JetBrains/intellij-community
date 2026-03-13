@@ -8,11 +8,14 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.ExceptionUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
@@ -23,7 +26,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * A utility to run a potentially long function on a pooled thread, wait for it in an interruptible way,
- * and reuse that computation if it's needed again if it's still running.
+ * and reuse that computation if it's necessary again if it's still running.
  * Function results should be ready for concurrent access, preferably thread-safe.
  * <p>
  * To avoid deadlocks, please pay attention to locks held at the call time and try to abstain from taking locks
@@ -32,7 +35,6 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * An instance of the class should be used for performing multiple similar operations;
  * for one-shot tasks, {@link #compute(ThrowableComputable)} is simpler to use.
  */
-@ApiStatus.Internal
 public final class DiskQueryRelay<Param, Result> {
   private final Function<? super Param, ? extends Result> myFunction;
 
@@ -148,22 +150,22 @@ public final class DiskQueryRelay<Param, Result> {
   private static final AtomicLong taskWaitingTotalTimeNs = new AtomicLong();
   /** total (since app start) number of tasks actually executed */
   private static final AtomicInteger tasksExecutedCount = new AtomicInteger();
-  /** total (since app start) number of tasks requested. Could be <= tasksExecuted because of task coalescing */
+  /** Total (since app start) number of tasks requested. Could be <= tasksExecuted because of task coalescing */
   private static final AtomicInteger tasksRequestedCount = new AtomicInteger();
 
-  public static long taskExecutionTotalTime(@NotNull TimeUnit unit) {
+  static long taskExecutionTotalTime(@NotNull TimeUnit unit) {
     return unit.convert(taskExecutionTotalTimeNs.get(), NANOSECONDS);
   }
 
-  public static long taskWaitingTotalTime(@NotNull TimeUnit unit) {
+  static long taskWaitingTotalTime(@NotNull TimeUnit unit) {
     return unit.convert(taskWaitingTotalTimeNs.get(), NANOSECONDS);
   }
 
-  public static int tasksExecuted() {
+  static int tasksExecuted() {
     return tasksExecutedCount.get();
   }
 
-  public static int tasksRequested() {
+  static int tasksRequested() {
     return tasksRequestedCount.get();
   }
 

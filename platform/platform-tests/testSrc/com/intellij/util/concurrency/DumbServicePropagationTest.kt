@@ -7,8 +7,12 @@ import com.intellij.concurrency.currentThreadContext
 import com.intellij.idea.IgnoreJUnit3
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.impl.ProgressRunner
+import com.intellij.openapi.progress.timeoutJoinBlocking
+import com.intellij.openapi.progress.timeoutWaitUp
+import com.intellij.openapi.progress.withRootJob
 import com.intellij.openapi.project.DumbModeTask
 import com.intellij.openapi.project.DumbService
 import com.intellij.testFramework.fixtures.BasePlatformTestCase

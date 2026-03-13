@@ -35,7 +35,13 @@ public class CompositeDescriptor extends RngElementDescriptor {
 
   CompositeDescriptor(RngNsDescriptor nsDescriptor, DElementPattern pattern, List<DElementPattern> patterns) {
     super(nsDescriptor, pattern);
-    myPatterns = ContainerUtil.reverse(patterns).toArray(new DElementPattern[patterns.size()]);
+    if (patterns.size() > 1) {
+      myPatterns = new LinkedHashSet<>(ContainerUtil.reverse(patterns)).toArray(DElementPattern[]::new);
+    } else if (patterns.size() == 1) {
+      myPatterns = new DElementPattern[] {pattern};
+    } else {
+      myPatterns = new DElementPattern[0];
+    }
   }
 
   @Override

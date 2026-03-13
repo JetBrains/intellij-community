@@ -16,6 +16,7 @@ jvm_library(
   deps = [
     "@lib//:jetbrains-annotations",
     "//platform/core-api:core",
+    "//platform/core-ui",
     "//platform/util:util-ui",
     "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core",
@@ -24,5 +25,24 @@ jvm_library(
     "//platform/remote-servers/impl",
   ],
   runtime_deps = ["//platform/execution.dashboard"]
+)
+
+jvm_library(
+  name = "clouds_test_lib",
+  module_name = "intellij.platform.clouds",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":clouds",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/remote-servers/api:remoteServers_test_lib",
+    "//platform/remote-servers/impl:impl_test_lib",
+    "//platform/execution.dashboard:execution.dashboard_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.platform.clouds` end

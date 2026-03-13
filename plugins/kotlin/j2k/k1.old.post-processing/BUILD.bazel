@@ -56,4 +56,36 @@ jvm_library(
     "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
   ]
 )
+
+jvm_library(
+  name = "k1.old.post-processing_test_lib",
+  module_name = "kotlin.j2k.k1.old.post-processing",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_k1.old.post-processing",
+  runtime_deps = [
+    ":k1.old.post-processing",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/core:core_test_lib",
+    "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//java/java-psi-impl:psi-impl_test_lib",
+    "//plugins/kotlin/idea:idea_test_lib",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
+    "//plugins/kotlin/code-insight/intentions-shared:kotlin-code-insight-intentions-shared_test_lib",
+    "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
+    "//plugins/kotlin/code-insight/api:api_test_lib",
+    "//plugins/kotlin/base/psi:psi_test_lib",
+    "//plugins/kotlin/base/fe10/code-insight:code-insight_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//plugins/kotlin/j2k/shared:shared_test_lib",
+    "//plugins/kotlin/j2k/k1.old:k1.old_test_lib",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
+    "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared_test_lib",
+  ]
+)
 ### auto-generated section `build kotlin.j2k.k1.old.post-processing` end

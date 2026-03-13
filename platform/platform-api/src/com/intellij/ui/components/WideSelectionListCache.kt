@@ -6,7 +6,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Dimension
 import java.beans.PropertyChangeListener
-import java.util.*
+import java.util.Collections
+import java.util.IdentityHashMap
 import javax.swing.JList
 import javax.swing.ListModel
 import javax.swing.event.ListDataEvent

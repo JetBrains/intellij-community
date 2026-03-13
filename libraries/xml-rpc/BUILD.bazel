@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-xml-rpc-xml-rpc"],
   runtime_deps = ["@lib//:libraries-xml-rpc-xml-rpc"]
 )
+
+jvm_library(
+  name = "xml-rpc_test_lib",
+  module_name = "intellij.libraries.xml.rpc",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-xml-rpc-xml-rpc"],
+  runtime_deps = [":xml-rpc"]
+)
 ### auto-generated section `build intellij.libraries.xml.rpc` end

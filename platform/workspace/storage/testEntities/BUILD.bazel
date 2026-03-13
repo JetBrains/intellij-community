@@ -5,7 +5,10 @@ jvm_library(
   name = "testEntities",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  runtime_deps = ["//libraries/kotlin/reflect"]
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlin/reflect",
+  ]
 )
 
 jvm_library(
@@ -14,10 +17,13 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form", "testGen/**/*.kt", "testGen/**/*.java"], allow_empty = True),
   deps = [
+    "@lib//:kotlin-stdlib",
     "//platform/workspace/storage",
+    "//platform/workspace/storage:storage_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//libraries/kotlin/reflect",
+    "//libraries/kotlin/reflect:reflect_test_lib",
   ],
   runtime_deps = [":testEntities"]
 )

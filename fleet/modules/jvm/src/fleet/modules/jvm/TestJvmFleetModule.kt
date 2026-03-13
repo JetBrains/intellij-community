@@ -37,12 +37,6 @@ data class TestJvmFleetModule(
   override val layer: FleetModuleLayer
     get() = moduleLayer
 
-  @Deprecated("Get rid of it as soon as we drop entities auto-registration")
-  override fun getEntityTypeProvider(providerName: String): Any? {
-    val providerClass = classpathUniqueModule.classLoader.loadClass(providerName)
-    return providerClass.getField("INSTANCE").get(null)
-  }
-
   override fun getResource(path: String): ByteArray? =
     when (val codeLocation = moduleInfo?.codeLocation()) {
       null -> null

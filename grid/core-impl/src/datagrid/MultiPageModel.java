@@ -15,6 +15,10 @@ public interface MultiPageModel<Row, Column> extends GridPagingModel<Row, Column
 
   void addPageModelListener(@NotNull PageModelListener listener);
 
+  default int getFirstRowIndex() {
+    return 1;
+  }
+
   interface PageModelListener extends EventListener {
     void pageSizeChanged();
     void pageStartChanged();

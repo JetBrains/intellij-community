@@ -153,8 +153,7 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
     // Temporary hack allowing to reuse new test runner in selected smoke tests for runs on linux-hosts
     open val allowOnNonMac: Boolean = false
 
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     open fun TestConfigurationDslScope.defaultTestConfiguration() {}
 

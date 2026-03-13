@@ -12,7 +12,12 @@ import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.impl.zombie.*
+import com.intellij.openapi.editor.impl.zombie.CleaverNecromancer
+import com.intellij.openapi.editor.impl.zombie.Necromancer
+import com.intellij.openapi.editor.impl.zombie.NecromancerAwaker
+import com.intellij.openapi.editor.impl.zombie.Recipe
+import com.intellij.openapi.editor.impl.zombie.SpawnRecipe
+import com.intellij.openapi.editor.impl.zombie.TurningRecipe
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
@@ -22,7 +27,6 @@ import com.intellij.psi.PsiManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlin.collections.map
 
 
 internal class CodeVisionNecromancerAwaker : NecromancerAwaker<CodeVisionZombie> {

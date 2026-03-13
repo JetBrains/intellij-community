@@ -19,7 +19,15 @@ import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.FileResolveScopeProvider;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.ResolveScopeEnlarger;
+import com.intellij.psi.ResolveScopeProvider;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -53,7 +61,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     myManager = PsiManager.getInstance(project);
     myAdditionalIndexableFileSet = new AdditionalIndexableFileSet(project);
 
-    myDefaultResolveScopesCache = ConcurrentFactoryMap.create(key -> ReadAction.compute(() -> createScopeByFile(key)),
+    myDefaultResolveScopesCache = ConcurrentFactoryMap.create(key -> ReadAction.computeBlocking(() -> createScopeByFile(key)),
                                                               () -> CollectionFactory.createConcurrentWeakKeySoftValueMap());
 
     myProject.getMessageBus().connect(this).subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {

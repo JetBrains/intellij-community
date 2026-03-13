@@ -1,9 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.parameters
 
-import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.ExcludeListDialog
+import com.intellij.codeInsight.hints.InlayParameterHintsExtension
+import com.intellij.codeInsight.hints.InlayParameterHintsProvider
+import com.intellij.codeInsight.hints.PARAMETER_NAME_HINTS_EP
 import com.intellij.codeInsight.hints.filtering.Matcher
 import com.intellij.codeInsight.hints.filtering.MatcherConstructor
+import com.intellij.codeInsight.hints.getExcludeList
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.diagnostic.PluginException
 import com.intellij.lang.Language

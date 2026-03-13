@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.util.ExceptionUtil
 import org.jetbrains.annotations.ApiStatus
+import tools.jackson.databind.ObjectMapper
 import java.util.logging.Formatter
 import java.util.logging.LogRecord
 import java.util.logging.StreamHandler

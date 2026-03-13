@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.tabs.JBTabsEx
 import com.intellij.util.ui.JBUI
@@ -35,16 +36,6 @@ fun getValidBoundsForPopup(popup: Component): Rectangle? {
   }
   val validBounds = getNearestTopLevelParentBounds(popup) ?: return null
   LOG.debug { "The allowed bounds in screen coordinates are $validBounds" }
-  val directParent = popup.parent
-  if (directParent == null) {
-    LOG.warn("Impossible to determine the valid bounds because the popup has no direct parent: $popup")
-    return null
-  }
-  // Now convert the allowed bounds to the direct parent's coordinate system.
-  val directParentLocation = directParent.locationOnScreen
-  validBounds.x -= directParentLocation.x
-  validBounds.y -= directParentLocation.y
-  LOG.debug { "The allowed bounds in parent coordinates are $validBounds" }
   return validBounds
 }
 
@@ -199,5 +190,15 @@ private fun fitValue(location: Int, width: Int, start1: Int, end1: Int, start2: 
     return location
   }
 }
+
+private const val POPUP_POSITION_UNCONSTRAINED = "wlawt.popup_position_unconstrained"
+
+var Window.isUnconstrainedPopupPositioning: Boolean
+  @ApiStatus.Internal
+  get() = ClientProperty.isTrue(this, POPUP_POSITION_UNCONSTRAINED)
+  @ApiStatus.Internal
+  set(value) {
+    ClientProperty.put(this, POPUP_POSITION_UNCONSTRAINED, true.takeIf { value })
+  }
 
 private val LOG = fileLogger()

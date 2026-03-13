@@ -6,12 +6,22 @@ import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteIntentReadAction;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretAction;
+import com.intellij.openapi.editor.CaretActionListener;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.CaretState;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.InlayModel;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.SelectionEvent;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -29,16 +39,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.awt.*;
+import java.awt.GraphicsEnvironment;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 
 public final class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, Disposable, Dumpable, InlayModel.Listener {
   private static final RegistryValue MAX_CARET_COUNT = Registry.get("editor.max.caret.count");
 
   private final EditorImpl myEditor;
+  private final DocumentEx myDocument;
 
   private final EventDispatcher<CaretListener> myCaretListeners = EventDispatcher.create(CaretListener.class);
   private final EventDispatcher<CaretActionListener> myCaretActionListeners = EventDispatcher.create(CaretActionListener.class);
@@ -61,6 +76,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
 
   public CaretModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
+    myDocument = editor.getUiDocument();
     myEditor.addPropertyChangeListener(evt -> {
       if (EditorEx.PROP_COLUMN_MODE.equals(evt.getPropertyName()) && !myEditor.isColumnMode()) {
         for (CaretImpl caret : myCarets) {
@@ -69,8 +85,8 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
       }
     }, this);
 
-    myPositionMarkerTree = new RangeMarkerTree<>(myEditor.getDocument());
-    mySelectionMarkerTree = new RangeMarkerTree<>(myEditor.getDocument());
+    myPositionMarkerTree = new RangeMarkerTree<>(myDocument);
+    mySelectionMarkerTree = new RangeMarkerTree<>(myDocument);
     myPrimaryCaret = new CaretImpl(myEditor, this);
     myCarets.add(myPrimaryCaret);
   }
@@ -86,7 +102,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   public void documentChanged(final @NotNull DocumentEvent e) {
     myIsInUpdate = false;
     myDocumentUpdateCounter++;
-    if (!myEditor.getDocument().isInBulkUpdate()) {
+    if (!isInBulkUpdate()) {
       doWithCaretMerging(() -> {}); // do caret merging if it's not scheduled for later
       if (myVisualPositionUpdateScheduled) updateVisualPosition();
     }
@@ -94,7 +110,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
 
   @Override
   public void beforeDocumentChange(@NotNull DocumentEvent e) {
-    if (!myEditor.getDocument().isInBulkUpdate() && e.isWholeTextReplaced()) {
+    if (!isInBulkUpdate() && e.isWholeTextReplaced()) {
       for (CaretImpl caret : myCarets) {
         caret.updateCachedStateIfNeeded(); // logical position will be needed to restore caret position via diff
       }
@@ -113,8 +129,8 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
     for (CaretImpl caret : myCarets) {
       Disposer.dispose(caret);
     }
-    mySelectionMarkerTree.dispose(myEditor.getDocument());
-    myPositionMarkerTree.dispose(myEditor.getDocument());
+    mySelectionMarkerTree.dispose(myDocument);
+    myPositionMarkerTree.dispose(myDocument);
   }
 
   public void updateVisualPosition() {
@@ -576,7 +592,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
 
   @Override
   public void onAdded(@NotNull Inlay<?> inlay) {
-    if (myEditor.getDocument().isInBulkUpdate() || myEditor.getInlayModel().isInBatchMode()) return;
+    if (isInBulkUpdate() || myEditor.getInlayModel().isInBatchMode()) return;
     Inlay.Placement placement = inlay.getPlacement();
     if (placement == Inlay.Placement.INLINE) {
       int offset = inlay.getOffset();
@@ -591,9 +607,9 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
 
   @Override
   public void onRemoved(@NotNull Inlay<?> inlay) {
-    if (myEditor.getDocument().isInBulkUpdate() || myEditor.getInlayModel().isInBatchMode()) return;
+    if (isInBulkUpdate() || myEditor.getInlayModel().isInBatchMode()) return;
     Inlay.Placement placement = inlay.getPlacement();
-    if (myEditor.getDocument().isInEventsHandling()) {
+    if (myDocument.isInEventsHandling()) {
       if (placement == Inlay.Placement.AFTER_LINE_END) myVisualPositionUpdateScheduled = true;
       return;
     }
@@ -611,7 +627,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
 
   @Override
   public void onUpdated(@NotNull Inlay<?> inlay, int changeFlags) {
-    if (myEditor.getDocument().isInBulkUpdate() ||
+    if (isInBulkUpdate() ||
         myEditor.getInlayModel().isInBatchMode() ||
         (changeFlags & (InlayModel.ChangeFlags.WIDTH_CHANGED | InlayModel.ChangeFlags.HEIGHT_CHANGED)) == 0) {
       return;
@@ -624,7 +640,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   @Override
   public void onBatchModeFinish(@NotNull Editor editor) {
     WriteIntentReadAction.run(() -> {
-      if (myEditor.getDocument().isInBulkUpdate()) return;
+      if (isInBulkUpdate()) return;
       doWithCaretMerging(() -> {
         for (CaretImpl caret : myCarets) {
           caret.resetCachedState();
@@ -637,6 +653,10 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
 
   private boolean hasCaretInVirtualSpace() {
     return myEditor.getSettings().isVirtualSpace() && ContainerUtil.exists(myCarets, CaretImpl::isInVirtualSpace);
+  }
+
+  private boolean isInBulkUpdate() {
+    return myDocument.isInBulkUpdate();
   }
 
   @TestOnly

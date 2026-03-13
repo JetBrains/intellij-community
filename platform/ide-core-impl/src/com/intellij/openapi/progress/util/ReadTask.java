@@ -53,7 +53,7 @@ public abstract class ReadTask {
    * @param indicator the progress indicator of the background thread
    */
   public Continuation runBackgroundProcess(final @NotNull ProgressIndicator indicator) throws ProcessCanceledException {
-    return ReadAction.compute(() -> performInReadAction(indicator));
+    return ReadAction.computeBlocking(() -> performInReadAction(indicator));
   }
 
   /**

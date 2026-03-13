@@ -3,18 +3,18 @@ package org.jetbrains.idea.maven.indices;
 
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
+import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo;
 
 
 public class MavenArtifactSearchResult {
-  private MavenRepositoryArtifactInfo myInfo;
+  private MavenRepoArtifactInfo myInfo;
 
 
-  public MavenArtifactSearchResult(@NotNull MavenRepositoryArtifactInfo info) {
+  public MavenArtifactSearchResult(@NotNull MavenRepoArtifactInfo info) {
     this.myInfo = info;
   }
 
-  public MavenRepositoryArtifactInfo getSearchResults(){
+  public MavenRepoArtifactInfo getSearchResults(){
     return myInfo;
   }
 }

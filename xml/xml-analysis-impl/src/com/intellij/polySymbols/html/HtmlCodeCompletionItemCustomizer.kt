@@ -19,16 +19,18 @@ class HtmlCodeCompletionItemCustomizer : PolySymbolCodeCompletionItemCustomizer 
     location: PsiElement,
   ): PolySymbolCodeCompletionItem =
     when (kind) {
-      HTML_ELEMENTS -> item.withTypeText {
-        item.symbol
-          ?.getDocumentationTarget(null)
-          ?.asSafely<PolySymbolDocumentationTarget>()
-          ?.documentation
-          ?.library
-          ?.let {
-            val atIndex = it.lastIndexOf('@')
-            if (atIndex > 0) it.substring(0, atIndex) else it
-          }
+      HTML_ELEMENTS -> item.withAsyncCustomizer {
+        withTypeText(
+          item.symbol
+            ?.getDocumentationTarget(null)
+            ?.asSafely<PolySymbolDocumentationTarget>()
+            ?.documentation
+            ?.library
+            ?.let {
+              val atIndex = it.lastIndexOf('@')
+              if (atIndex > 0) it.substring(0, atIndex) else it
+            }
+        )
       }
       HTML_ATTRIBUTES -> item // TODO - we can figure out the actual type with full match provided
       else -> item

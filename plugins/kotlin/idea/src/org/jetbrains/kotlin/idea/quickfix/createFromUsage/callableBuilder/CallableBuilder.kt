@@ -614,7 +614,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                     val classWithPrimaryConstructorInfo = callableInfo as ClassWithPrimaryConstructorInfo
                     val classInfo = classWithPrimaryConstructorInfo.classInfo
 
-                    CreateClassUtil.createClassDeclaration(config.currentFile.project,
+                    CreateClassUtil.createClassDeclaration(config.currentFile,
                                                            paramList,
                                                            returnTypeString,
                                                            classInfo.kind,

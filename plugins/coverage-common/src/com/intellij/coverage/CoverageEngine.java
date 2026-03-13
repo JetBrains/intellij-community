@@ -349,14 +349,14 @@ public abstract class CoverageEngine {
   public boolean isInLibraryClasses(final Project project, final VirtualFile file) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
-    return ReadAction.compute(() -> projectFileIndex.isInLibraryClasses(file) && !projectFileIndex.isInSource(file));
+    return ReadAction.computeBlocking(() -> projectFileIndex.isInLibraryClasses(file) && !projectFileIndex.isInSource(file));
   }
 
   @ApiStatus.Internal
   protected boolean isInLibrarySource(Project project, VirtualFile file) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
-    return ReadAction.compute(() -> projectFileIndex.isInLibrarySource(file));
+    return ReadAction.computeBlocking(() -> projectFileIndex.isInLibrarySource(file));
   }
 
   @ApiStatus.Internal

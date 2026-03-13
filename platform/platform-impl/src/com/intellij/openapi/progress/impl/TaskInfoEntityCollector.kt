@@ -11,8 +11,14 @@ import com.intellij.openapi.progress.ProgressModel
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.platform.ide.progress.*
+import com.intellij.platform.ide.progress.TaskInfoEntity
+import com.intellij.platform.ide.progress.TaskManager
+import com.intellij.platform.ide.progress.TaskStatus
+import com.intellij.platform.ide.progress.activeTasks
+import com.intellij.platform.ide.progress.statuses
 import com.intellij.platform.ide.progress.suspender.TaskSuspension
+import com.intellij.platform.ide.progress.suspensionState
+import com.intellij.platform.ide.progress.updates
 import com.intellij.platform.project.projectId
 import fleet.kernel.rete.asValuesFlow
 import fleet.kernel.rete.collect

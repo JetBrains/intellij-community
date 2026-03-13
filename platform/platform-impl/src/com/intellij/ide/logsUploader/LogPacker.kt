@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.logsUploader
 
 import com.intellij.diagnostic.MacOSDiagnosticReportDirectories
@@ -47,7 +47,7 @@ object LogPacker {
     (Logger.getFactory() as? LoggerFactory)?.flushHandlers()
 
     val productName = ApplicationNamesInfo.getInstance().productName.lowercase()
-    val date = DateTimeFormatter.ofPattern(@Suppress("SpellCheckingInspection") "yyyyMMdd-HHmmss").format(LocalDateTime.now())
+    val date = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").format(LocalDateTime.now())
     val archive = Files.createTempFile("${productName}-logs-${date}", ".zip")
     try {
       Compressor.Zip(archive).use { zip ->
@@ -64,11 +64,22 @@ object LogPacker {
 
         coroutineContext.ensureActive()
 
-        LogProvider.EP.extensionList.firstOrNull()?.let { logProvider ->
+        zip.addDirectory("", logs)
+
+        coroutineContext.ensureActive()
+
+        val filter = mutableSetOf<String>()  // temporary guard for recursive TBE provider
+        LogProvider.EP.extensionList.forEach { logProvider ->
           logProvider.getAdditionalLogFiles(project).forEach { entry ->
-            for (dir in entry.files) {
+            if (!filter.add(entry.entryName)) return@forEach
+            entry.files.forEach { dir ->
+              coroutineContext.ensureActive()
               if (dir.exists()) {
-                val dirPrefix = if (entry.entryName.isNotEmpty()) "${entry.entryName}/${dir.name}" else ""
+                val dirPrefix = when {
+                  entry.entryName.isEmpty() -> ""
+                  entry.createSubdirectories -> "${entry.entryName}/${dir.name}"
+                  else -> entry.entryName
+                }
                 zip.addDirectory(dirPrefix, dir)
               }
             }

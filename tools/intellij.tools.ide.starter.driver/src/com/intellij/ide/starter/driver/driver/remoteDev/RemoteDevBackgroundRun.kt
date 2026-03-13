@@ -82,4 +82,9 @@ class RemoteDevBackgroundRun(
       backendRun.closeIdeAndWait(closeIdeTimeout + 30.seconds, false)
     }
   }
+
+  override fun forceKill() {
+    backendRun.forceKill()
+    super.forceKill()
+  }
 }

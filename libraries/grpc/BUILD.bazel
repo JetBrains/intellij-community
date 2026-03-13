@@ -25,4 +25,18 @@ jvm_library(
     "@lib//:grpc-protobuf",
   ]
 )
+
+jvm_library(
+  name = "grpc_test_lib",
+  module_name = "intellij.libraries.grpc",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "@lib//:grpc-core",
+    "@lib//:grpc-stub",
+    "@lib//:grpc-kotlin-stub",
+    "@lib//:grpc-protobuf",
+  ],
+  runtime_deps = [":grpc"]
+)
 ### auto-generated section `build intellij.libraries.grpc` end

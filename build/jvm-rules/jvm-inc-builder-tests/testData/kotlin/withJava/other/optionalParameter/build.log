@@ -1,0 +1,10 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_withJava_other_optionalParameter-a.kotlin_module
+  test/OtherKt.class
+End of files
+Compiling files:
+  kotlin/withJava/other/optionalParameter/a/other.kt
+End of files
+------------------------------------------
+Exit code: OK

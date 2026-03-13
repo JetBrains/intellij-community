@@ -5,26 +5,26 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.ParamHelper;
+import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyCallableParameterListTypeImpl;
+import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
  * Detect and report incompatibilities between __new__ and __init__ signatures.
  */
 public final class PyInitNewSignatureInspection extends PyInspection {
-
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                                  boolean isOnTheFly,
@@ -42,41 +42,33 @@ public final class PyInitNewSignatureInspection extends PyInspection {
       final PyClass cls = PyUtil.turnConstructorIntoClass(node);
       if (cls == null || !cls.isNewStyleClass(myTypeEvalContext)) return;
 
-      final List<PyFunction> complementaryMethods = findComplementaryMethods(cls, node);
+      final List<PyFunction> complementaryMethods = PyConstructorSignatureUtil.findComplementaryConstructors(node, myTypeEvalContext);
 
       for (PyFunction complementaryMethod : complementaryMethods) {
-        if (PyUtil.isSignatureCompatibleTo(complementaryMethod, node, myTypeEvalContext) ||
-            PyUtil.isSignatureCompatibleTo(node, complementaryMethod, myTypeEvalContext)) {
+        if (matchSignatures(node, complementaryMethod) || matchSignatures(complementaryMethod, node)) {
           return;
         }
       }
 
       if (complementaryMethods.size() == 1) {
         registerIncompatibilityProblem(node, PythonUiService.getInstance().createPyChangeSignatureQuickFixForMismatchingMethods(
-          node, complementaryMethods.get(0)));
+          node, complementaryMethods.getFirst()));
       }
       else if (!complementaryMethods.isEmpty()) {
         registerIncompatibilityProblem(node, null);
       }
     }
 
-    private @NotNull List<PyFunction> findComplementaryMethods(@NotNull PyClass cls, @NotNull PyFunction original) {
-      final String complementaryName = PyUtil.isNewMethod(original) ? PyNames.INIT : PyNames.NEW;
-      final List<PyFunction> complementaryMethods = cls.multiFindMethodByName(complementaryName, true, myTypeEvalContext);
+    private boolean matchSignatures(@NotNull PyFunction current, @NotNull PyFunction other) {
+      List<PyCallableParameter> currentParameters = current.getParameters(myTypeEvalContext);
+      List<PyCallableParameter> otherParameters = other.getParameters(myTypeEvalContext);
 
-      for (PyFunction complementaryMethod : complementaryMethods) {
-        final PyClass complementaryMethodClass = complementaryMethod.getContainingClass();
+      var currentInputSignature = new PyCallableParameterListTypeImpl(ParamHelper.dropSelf(currentParameters));
+      var otherInputSignature = new PyCallableParameterListTypeImpl(ParamHelper.dropSelf(otherParameters));
 
-        if (complementaryMethodClass == null ||
-            PyUtil.isObjectClass(complementaryMethodClass) ||
-            ContainerUtil.exists(PyInspectionExtension.EP_NAME.getExtensionList(),
-                                 extension -> extension.ignoreInitNewSignatures(original, complementaryMethod))) {
-          return Collections.emptyList();
-        }
-      }
-
-      return complementaryMethods;
+      return PyTypeChecker.match(currentInputSignature, otherInputSignature, myTypeEvalContext);
     }
+
 
     private void registerIncompatibilityProblem(@NotNull PyFunction function, @Nullable LocalQuickFix quickFix) {
       final PyParameterList parameterList = function.getParameterList();

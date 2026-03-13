@@ -101,26 +101,46 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     Path(myConfiguration.runnerParameters.workingDirPath).asEelPath()
   }
 
+
+  private suspend fun collectParameters(eelApi: EelApi, debug: Boolean): MavenProcessExecutionData {
+    val exe = if (isWindows()) "cmd.exe" else "/bin/sh"
+    val env = getEnv(eelApi.exec.fetchLoginShellEnvVariables(), debug)
+
+    val charset = tryToGetCharset(env, eelApi) ?: Charsets.UTF_8
+    val envWithCharsets = applyCharset(env, charset)
+
+    val params = collectArguments(eelApi)
+    MAVEN_EXECUTION_CONFIGURATOR.forEachExtensionSafe {
+      it.createConfigurator(environment, myConfiguration)?.configureParameters(envWithCharsets, params)
+    }
+
+    return MavenProcessExecutionData(
+      isWindows(),
+      exe,
+      envWithCharsets,
+      charset,
+      params,
+      debug
+    )
+
+  }
+
   @Throws(ExecutionException::class)
 
   private fun startProcess(debug: Boolean): ProcessHandler {
     return runWithModalProgressBlocking(myConfiguration.project, RunnerBundle.message("maven.target.run.label")) {
       val eelApi = myConfiguration.project.getEelDescriptor().toEelApi()
 
-      val exe = if (isWindows()) "cmd.exe" else "/bin/sh"
-      val env = getEnv(eelApi.exec.fetchLoginShellEnvVariables(), debug)
+      val executionParameters = collectParameters(eelApi, debug)
 
-      val charset = tryToGetCharset(env, eelApi) ?: Charsets.UTF_8
-      val envWithCharsets = applyCharset(env, charset)
-
-      val processHandler = runProcessInEel(eelApi, exe, envWithCharsets, charset)
+      val processHandler = runProcessInEel(eelApi, executionParameters)
       JavaRunConfigurationExtensionManager.instance
         .attachExtensionsToProcess(myConfiguration, processHandler, environment.runnerSettings)
       return@runWithModalProgressBlocking processHandler
     }
   }
 
-  private fun applyCharset(env: MutableMap<String, String>, charset: Charset): Map<String, String> {
+  private fun applyCharset(env: MutableMap<String, String>, charset: Charset): MutableMap<String, String> {
     val mavenOpts = env["MAVEN_OPTS"]
     if (mavenOpts != null && mavenOpts.contains("-Dfile.encoding")) return env
     val newOpts = listOf(mavenOpts, "-Dfile.encoding=${charset.name()}").joinToString(" ").trim()
@@ -130,41 +150,32 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
 
   private suspend fun runProcessInEel(
     eelApi: EelApi,
-    exe: String,
-    env: Map<String, String>,
-    charset: Charset,
+    parameters: MavenProcessExecutionData,
   ): KillableColoredProcessHandler.Silent {
 
-
-    val params = collectArguments(eelApi)
-
     return if (isWindows()) {
-      executeBatScriptForWindows(exe, eelApi, env, params, charset)
+      executeBatScriptForWindows(eelApi, parameters)
     }
     else {
-      doRunProcessInEel(eelApi, exe, env, params.list, "$exe ${params.list.joinToString(" ")}", charset, null)
+      doRunProcessInEel(eelApi, parameters, "${parameters.exeName} ${parameters.parametersList.list.joinToString(" ")}", null)
     }
   }
 
   private suspend fun executeBatScriptForWindows(
-    exe: String,
     eelApi: EelApi,
-    env: Map<String, String>,
-    params: ParametersList,
-    charset: Charset,
+    parameters: MavenProcessExecutionData,
   ): KillableColoredProcessHandler.Silent {
 
     val isSpyDebug = Registry.`is`("maven.spy.events.debug")
-    val tmpFile = writeParamsToBatBecauseCmdIsReallyReallyBad(params, isSpyDebug)
+    val tmpFile = writeParamsToBatBecauseCmdIsReallyReallyBad(parameters.parametersList, isSpyDebug)
 
 
-    MavenLog.LOG.debug("Running $tmpFile: ${params.list.joinToString(" ")}")
-    return doRunProcessInEel(eelApi,
-                             exe,
-                             env,
-                             listOf("/c", tmpFile.absolutePath),
-                             if (isSpyDebug) tmpFile.absolutePath else params.list.joinToString(" "),
-                             charset) {
+    MavenLog.LOG.debug("Running $tmpFile: ${parameters.parametersList.list.joinToString(" ")}")
+    return doRunProcessInEel(eelApi, parameters.copy(
+      parametersList = ParametersList().also {
+        it.add("/c")
+        it.add(tmpFile.absolutePath)
+      }), if (isSpyDebug) tmpFile.absolutePath else parameters.parametersList.list.joinToString(" ")) {
       try {
         tmpFile.delete()
       }
@@ -225,21 +236,18 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
 
   private suspend fun doRunProcessInEel(
     eelApi: EelApi,
-    exe: String,
-    env: Map<String, String>,
-    args: List<String>,
+    parameters: MavenProcessExecutionData,
     commandLineToShowUser: String,
-    charset: Charset,
     onTerminate: (() -> Unit)?,
   ): KillableColoredProcessHandler.Silent {
-    val processOptions = eelApi.exec.spawnProcess(exe)
-      .env(env)
+    val processOptions = eelApi.exec.spawnProcess(parameters.exeName)
+      .env(parameters.env)
       .workingDirectory(workingDir)
-      .args(args)
+      .args(parameters.parametersList.list)
 
     try {
       val result = processOptions.eelIt()
-      return KillableColoredProcessHandler.Silent(result.convertToJavaProcess(), commandLineToShowUser, charset, emptySet())
+      return KillableColoredProcessHandler.Silent(result.convertToJavaProcess(), commandLineToShowUser, parameters.charset, emptySet())
         .also {
           it.addProcessListener(object : ProcessListener {
             override fun processTerminated(event: ProcessEvent) {
@@ -652,3 +660,12 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
   override fun isPollConnection(): Boolean = true
 
 }
+
+private data class MavenProcessExecutionData(
+  val isWindows: Boolean,
+  val exeName: String,
+  val env: Map<String, String>,
+  val charset: Charset,
+  val parametersList: ParametersList,
+  val debug: Boolean,
+)

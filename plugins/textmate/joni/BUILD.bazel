@@ -29,8 +29,10 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/textmate/core",
+    "//plugins/textmate/core:core_test_lib",
     "@lib//:joni",
     "@lib//:slf4j-api",
+    "//plugins/textmate/core/tests",
     "//plugins/textmate/core/tests:tests_test_lib",
     "@lib//:junit5",
   ]

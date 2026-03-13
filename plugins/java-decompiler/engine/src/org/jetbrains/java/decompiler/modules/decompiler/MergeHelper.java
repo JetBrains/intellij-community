@@ -312,7 +312,7 @@ public final class MergeHelper {
               if (stt == stat) {
                 Statement stnext = swst.getCaseStatements().get(i + 1);
 
-                if (stnext.getExprents() != null && stnext.getExprents().isEmpty()) {
+                if (stnext.getExprents() != null && stnext.getExprents().isEmpty() && !stnext.getAllSuccessorEdges().isEmpty()) {
                   stnext = stnext.getAllSuccessorEdges().get(0).getDestination();
                 }
                 return (endstat == stnext);

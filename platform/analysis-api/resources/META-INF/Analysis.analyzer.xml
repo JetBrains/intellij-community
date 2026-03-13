@@ -31,4 +31,11 @@
       <with attribute="implementationClass" implements="com.intellij.psi.Weigher"/>
     </extensionPoint>
   </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.codeInsight.completion.NewRdCompletionSupport"
+                        serviceImplementation="com.intellij.codeInsight.completion.NoOpNewCompletionSupport"
+                        open="true"
+    />
+  </extensions>
 </idea-plugin>

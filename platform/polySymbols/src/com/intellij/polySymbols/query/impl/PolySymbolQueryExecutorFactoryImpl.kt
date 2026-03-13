@@ -16,7 +16,14 @@ import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.context.PolyContextKindRules
 import com.intellij.polySymbols.context.PolyContextRulesProvider
 import com.intellij.polySymbols.context.impl.buildPolyContext
-import com.intellij.polySymbols.query.*
+import com.intellij.polySymbols.query.PolySymbolNameConversionRules
+import com.intellij.polySymbols.query.PolySymbolNameConversionRulesProvider
+import com.intellij.polySymbols.query.PolySymbolNamesProvider
+import com.intellij.polySymbols.query.PolySymbolQueryConfigurator
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
+import com.intellij.polySymbols.query.PolySymbolQueryResultsCustomizerFactory
+import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.utils.PolySymbolPrioritizedScope
 import com.intellij.polySymbols.utils.createModificationTracker
 import com.intellij.polySymbols.utils.findOriginalFile
@@ -85,13 +92,14 @@ class PolySymbolQueryExecutorFactoryImpl(private val project: Project) : PolySym
         result.putAllValues(it)
       }
 
-    val providers = mutableListOf<Pointer<out PolyContextRulesProvider>>()
+    val providers = mutableListOf<Pointer<out ModificationTracker>>()
     for (provider in PolySymbolQueryConfigurator.EP_NAME.extensionList.flatMap {
       it.beforeQueryExecutorCreation(project)
       it.getContextRulesProviders(project, dir)
     }) {
       result.putAllValues(provider.getContextRules())
-      providers.add(provider.createPointer())
+      val providerPtr = provider.createPointer()
+      providers.add(Pointer { providerPtr.dereference()?.modificationTracker })
     }
     return Pair(result, createModificationTracker(providers))
   }
@@ -105,7 +113,10 @@ class PolySymbolQueryExecutorFactoryImpl(private val project: Project) : PolySym
       nameConversionRules.add(provider.getNameConversionRules())
       providers.add(provider.createPointer())
     }
-    return PolySymbolNamesProviderImpl(context, nameConversionRules, createModificationTracker(providers))
+    val trackers = providers.map { providerPointer ->
+      Pointer { providerPointer.dereference()?.modificationTracker }
+    }
+    return PolySymbolNamesProviderImpl(context, nameConversionRules, createModificationTracker(trackers))
   }
 
   private fun getCustomScope(context: PsiElement?): List<PolySymbolScope> =

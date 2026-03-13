@@ -27,8 +27,10 @@ import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import java.awt.Graphics;
+import java.awt.Shape;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

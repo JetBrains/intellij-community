@@ -18,7 +18,6 @@
   - name: intellij.java.psi
   - name: intellij.java.psi.impl
   - name: intellij.java.frontback.impl
-  - name: intellij.platform.jps.build.dependencyGraph
   - name: intellij.platform.jps.build.javac.rt
   - name: intellij.java.guiForms.compiler
   - name: intellij.java.compiler.antTasks
@@ -47,6 +46,9 @@
 - name: lib/modules/intellij.debugger.jvm.advanced.java.jar
   contentModules:
   - name: intellij.debugger.jvm.advanced.java
+- name: lib/modules/intellij.debugger.logpoints.jar
+  contentModules:
+  - name: intellij.debugger.logpoints
 - name: lib/modules/intellij.java.analysis.impl.jar
   contentModules:
   - name: intellij.java.analysis.impl
@@ -68,10 +70,6 @@
 - name: lib/modules/intellij.java.compiler.impl.jar
   contentModules:
   - name: intellij.java.compiler.impl
-  library: netty-codec-protobuf
-  files:
-  - name: $MAVEN_REPOSITORY$/io/netty/netty-codec-protobuf/4/netty-codec-protobuf-4.jar
-  reason: <- intellij.java.compiler.impl
 - name: lib/modules/intellij.java.compiler.jar
   contentModules:
   - name: intellij.java.compiler
@@ -168,12 +166,6 @@
 - name: lib/modules/intellij.java.remoteServers.jar
   contentModules:
   - name: intellij.java.remoteServers
-- name: lib/modules/intellij.java.resources.en.jar
-  contentModules:
-  - name: intellij.java.resources.en
-- name: lib/modules/intellij.java.resources.jar
-  contentModules:
-  - name: intellij.java.resources
 - name: lib/modules/intellij.java.structuralSearch.jar
   contentModules:
   - name: intellij.java.structuralSearch
@@ -225,6 +217,9 @@
 - name: lib/modules/intellij.jvm.dfa.analysis.ui.jar
   contentModules:
   - name: intellij.jvm.dfa.analysis.ui
+- name: lib/modules/intellij.platform.jps.build.dependencyGraph.jar
+  contentModules:
+  - name: intellij.platform.jps.build.dependencyGraph
 - name: lib/modules/intellij.platform.jps.build.jar
   contentModules:
   - name: intellij.platform.jps.build
@@ -247,23 +242,16 @@
 - name: lib/modules/intellij.uiDesigner.jar
   contentModules:
   - name: intellij.uiDesigner
+- name: lib/netty-codec-protobuf.jar
+  library: netty-codec-protobuf
+  files:
+  - name: $MAVEN_REPOSITORY$/io/netty/netty-codec-protobuf/4/netty-codec-protobuf-4.jar
+  reason: withProjectLibrary
 - name: lib/rt/debugger-agent.jar
   library: debugger-agent
   module: intellij.java.debugger.agent.holder
   files:
   - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/debugger-agent/1/debugger-agent-1.jar
-- name: lib/rt/netty-jps.jar
-  library: netty-jps
-  files:
-  - name: $MAVEN_REPOSITORY$/io/netty/netty-all/4/netty-all-4.jar
-  - name: $MAVEN_REPOSITORY$/io/netty/netty-buffer/4/netty-buffer-4.jar
-  - name: $MAVEN_REPOSITORY$/io/netty/netty-codec/4/netty-codec-4.jar
-  - name: $MAVEN_REPOSITORY$/io/netty/netty-codec-http/4/netty-codec-http-4.jar
-  - name: $MAVEN_REPOSITORY$/io/netty/netty-common/4/netty-common-4.jar
-  - name: $MAVEN_REPOSITORY$/io/netty/netty-handler/4/netty-handler-4.jar
-  - name: $MAVEN_REPOSITORY$/io/netty/netty-resolver/4/netty-resolver-4.jar
-  - name: $MAVEN_REPOSITORY$/io/netty/netty-transport/4/netty-transport-4.jar
-  reason: withProjectLibrary
 - name: lib/sa-jdwp.jar
   library: sa-jdwp
   module: intellij.java.debugger.impl

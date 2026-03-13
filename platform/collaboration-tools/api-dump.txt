@@ -471,6 +471,31 @@ f:com.intellij.collaboration.util.HashingUtil
 - bs:mappingStrategy$default(com.intellij.collaboration.util.HashingUtil,kotlin.jvm.functions.Function1,com.intellij.util.containers.HashingStrategy,I,java.lang.Object):com.intellij.util.containers.HashingStrategy
 f:com.intellij.collaboration.util.HideableKt
 - sf:syncOrToggleAll(kotlin.sequences.Sequence):V
+f:com.intellij.collaboration.util.IncrementallyComputedValue
+- sf:Companion:com.intellij.collaboration.util.IncrementallyComputedValue$Companion
+- f:getExceptionOrNull():java.lang.Exception
+- f:getValue-fHzv8Uk():com.intellij.collaboration.util.IncrementallyComputedValue$Value
+- f:getValueOrNull():java.lang.Object
+- f:isComplete():Z
+- f:isLoading():Z
+- f:isValueAvailable():Z
+f:com.intellij.collaboration.util.IncrementallyComputedValue$Companion
+- f:failure(java.lang.Exception):com.intellij.collaboration.util.IncrementallyComputedValue
+- f:loading():com.intellij.collaboration.util.IncrementallyComputedValue
+- f:partialFailure(java.lang.Object,java.lang.Exception):com.intellij.collaboration.util.IncrementallyComputedValue
+- f:partialSuccess(java.lang.Object):com.intellij.collaboration.util.IncrementallyComputedValue
+- f:success(java.lang.Object):com.intellij.collaboration.util.IncrementallyComputedValue
+f:com.intellij.collaboration.util.IncrementallyComputedValue$Value
+- bsf:box-impl(java.lang.Object):com.intellij.collaboration.util.IncrementallyComputedValue$Value
+- s:constructor-impl(java.lang.Object):java.lang.Object
+- equals(java.lang.Object):Z
+- s:equals-impl(java.lang.Object,java.lang.Object):Z
+- sf:equals-impl0(java.lang.Object,java.lang.Object):Z
+- f:getValue():java.lang.Object
+- hashCode():I
+- s:hashCode-impl(java.lang.Object):I
+- s:toString-impl(java.lang.Object):java.lang.String
+- bf:unbox-impl():java.lang.Object
 f:com.intellij.collaboration.util.KeyValuePairKt
 f:com.intellij.collaboration.util.ProgressIndicatorsProvider
 - com.intellij.openapi.Disposable

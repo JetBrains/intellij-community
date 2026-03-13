@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.GutterIntentionAction;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.IntentionActionFilter;
+import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.intention.AdvertisementAction;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -12,7 +16,12 @@ import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.icons.AllIcons;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUiKind;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.SeparatorAction;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ReadAction;
@@ -21,9 +30,17 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
@@ -33,8 +50,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Predicate;
 
@@ -194,7 +215,7 @@ public final class CachedIntentions implements IntentionContainer {
     wrapActionsTo(descriptors, myGutters, false);
   }
 
-  private boolean addActionsTo(@NotNull List<HighlightInfo.IntentionActionDescriptor> newDescriptors,
+  private boolean addActionsTo(@NotNull List<? extends HighlightInfo.IntentionActionDescriptor> newDescriptors,
                                @NotNull Set<? super IntentionActionWithTextCaching> cachedActions) {
     boolean changed = false;
     for (HighlightInfo.IntentionActionDescriptor descriptor : newDescriptors) {
@@ -203,7 +224,7 @@ public final class CachedIntentions implements IntentionContainer {
     return changed;
   }
 
-  private boolean wrapActionsTo(@NotNull List<HighlightInfo.IntentionActionDescriptor> newDescriptors,
+  private boolean wrapActionsTo(@NotNull List<? extends HighlightInfo.IntentionActionDescriptor> newDescriptors,
                                 @NotNull Set<? super IntentionActionWithTextCaching> cachedActions,
                                 boolean shouldCallIsAvailable) {
     if (cachedActions.isEmpty() && newDescriptors.isEmpty()) return false;
@@ -293,9 +314,8 @@ public final class CachedIntentions implements IntentionContainer {
       if (editor == null) continue;
       var problemOffset = myOffset >= 0 ? myOffset : editor.getCaretModel().getOffset();
       Pair<PsiFile, Editor> availableIn = ShowIntentionActionsHandler
-        .chooseBetweenHostAndInjected(myPsiFile, editor, problemOffset, containingFile, (f, e, o) -> {
-          return ShowIntentionActionsHandler.availableFor(f, e, o, option);
-        });
+        .chooseBetweenHostAndInjected(myPsiFile, editor, problemOffset, containingFile,
+                                      (f, e, o) -> ShowIntentionActionsHandler.availableFor(f, e, o, option));
       if (availableIn == null) continue;
       IntentionActionWithTextCaching textCaching = new IntentionActionWithTextCaching(option);
       boolean isErrorFix = myErrorFixes.contains(textCaching);
@@ -394,7 +414,7 @@ public final class CachedIntentions implements IntentionContainer {
       }
     }
 
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       if (IntentionManagerSettings.getInstance().isShowLightBulb(action)) {
         return myErrorFixes.contains(value) ? AllIcons.Actions.QuickfixBulb :
                myInspectionFixes.contains(value) ? AllIcons.Actions.IntentionBulb :

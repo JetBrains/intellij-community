@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.CaretVisualAttributes;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.ApiStatus;
@@ -11,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Internal
 public class ImaginaryCaret extends UserDataHolderBase implements Caret {
   private final ImaginaryCaretModel myCaretModel;
-  private int myStart, myPos, myEnd;
+  private int myStart = 0, myPos = 0, myEnd = 0;
 
   public ImaginaryCaret(ImaginaryCaretModel caretModel) {
     myCaretModel = caretModel;
@@ -54,9 +58,10 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public void moveToOffset(int offset, boolean locateBeforeSoftWrap) {
-    if (offset < 0)
-      offset = 0;
-    myStart = myPos = myEnd = offset;
+    offset = clampWithinDocumentBounds(offset);
+    myStart = offset;
+    myPos = offset;
+    myEnd = offset;
   }
 
   private RuntimeException notImplemented() {
@@ -71,9 +76,10 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
   @Override
   public void moveCaretRelatively(int columnShift, int lineShift, boolean withSelection, boolean scrollToCaret) {
     if (lineShift == 0) {
-      myEnd += columnShift;
+      myEnd = clampWithinDocumentBounds(myEnd + columnShift);
       if (!withSelection) {
-        myStart = myPos = myEnd;
+        myStart = myEnd;
+        myPos = myEnd;
       }
     }
     else {
@@ -86,6 +92,10 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
         myEnd = Math.max(oldPos, newPos);
       }
     }
+  }
+
+  private int clampWithinDocumentBounds(int value) {
+    return Math.clamp(value, 0, getEditor().getDocument().getTextLength());
   }
 
   @Override
@@ -149,8 +159,9 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public void setSelection(int startOffset, int endOffset) {
-    if (startOffset < 0) startOffset = 0;
-    if (endOffset < 0) endOffset = 0;
+    startOffset = clampWithinDocumentBounds(startOffset);
+    endOffset = clampWithinDocumentBounds(endOffset);
+
     // mimicking CaretImpl's doSetSelection: removing selection if startOffset == endOffset
     if (startOffset == endOffset) {
       myStart = myPos;
@@ -199,7 +210,8 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public void removeSelection() {
-    myStart = myPos = myEnd;
+    myStart = myEnd;
+    myPos = myEnd;
   }
 
   @Override

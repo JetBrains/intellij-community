@@ -1,9 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.codeVision
 
-import com.intellij.codeInsight.codeVision.*
+import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
+import com.intellij.codeInsight.codeVision.CodeVisionEntry
+import com.intellij.codeInsight.codeVision.CodeVisionPlaceholderCollector
+import com.intellij.codeInsight.codeVision.CodeVisionProvider
+import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
+import com.intellij.codeInsight.codeVision.CodeVisionState
 import com.intellij.codeInsight.hints.settings.language.isInlaySettingsEditor
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
@@ -34,10 +39,10 @@ class CodeVisionProviderAdapter(internal val delegate: DaemonBoundCodeVisionProv
     if (isInlaySettingsEditor(editor)) return true
     val project = editor.project ?: return super.shouldRecomputeForEditor(editor, uiData)
     val cacheService = DaemonBoundCodeVisionCacheService.getInstance(project)
-    return runReadAction {
+    return runReadActionBlocking {
       val modificationTracker = PsiModificationTracker.getInstance(editor.project)
       val cached = cacheService.getVisionDataForEditor(editor, id)
-                   ?: return@runReadAction super.shouldRecomputeForEditor(editor, uiData)
+                   ?: return@runReadActionBlocking super.shouldRecomputeForEditor(editor, uiData)
       modificationTracker.modificationCount == cached.modificationStamp
     }
   }
@@ -45,9 +50,10 @@ class CodeVisionProviderAdapter(internal val delegate: DaemonBoundCodeVisionProv
   override fun computeCodeVision(editor: Editor, uiData: Unit): CodeVisionState {
     val project = editor.project ?: return CodeVisionState.NotReady
     val cacheService = DaemonBoundCodeVisionCacheService.getInstance(project)
-    return runReadAction {
+    return runReadActionBlocking {
       val cached = cacheService.getVisionDataForEditor(editor, id)
-                   ?: return@runReadAction CodeVisionState.NotReady
+                   ?: return@runReadActionBlocking CodeVisionState.NotReady
+
       val document = editor.document
       // ranges may be slightly outdated, so we have to unsure that they fit the document
       val lenses = cached.codeVisionEntries.map {

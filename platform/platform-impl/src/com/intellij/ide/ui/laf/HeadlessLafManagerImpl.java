@@ -15,7 +15,10 @@ import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.ListCellRenderer;
+import javax.swing.UIDefaults;
+import javax.swing.UIManager;
 
 final class HeadlessLafManagerImpl extends LafManager {
   HeadlessLafManagerImpl() {

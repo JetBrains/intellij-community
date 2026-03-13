@@ -2,6 +2,7 @@
 package com.intellij.collaboration.ui.codereview
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle.message
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.content.AlertIcon
@@ -54,5 +55,6 @@ private fun TabInfo.appendUnreadIcon(tabLabel: TabLabel, unread: Int?) {
 }
 
 private fun TabInfo.setUnreadTooltip(unread: Int?) {
-  setTooltipText(if (unread != null && unread > 0) message("tooltip.code.review.files.not.viewed", unread) else null)
+  val text = if (unread != null && unread > 0) message("tooltip.code.review.files.not.viewed", unread) else null
+  setTooltipText(text?.let { HtmlChunk.text(it) })
 }

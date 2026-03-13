@@ -26,4 +26,23 @@ jvm_library(
     "//platform/progress/shared:ide-progress",
   ]
 )
+
+jvm_library(
+  name = "mcp_test_lib",
+  module_name = "intellij.devkit.mcp",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":mcp",
+    "//plugins/devkit/devkit-core:core_test_lib",
+    "//plugins/mcp-server:mcpserver_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/util:util_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.devkit.mcp` end

@@ -86,6 +86,13 @@ public final class SoftWrapsStorage implements Dumpable {
     }
     return result;
   }
+
+  /**
+   * Same as {@code getNumberOfSoftWrapsInRange(startOffset, endOffset) > 0}.
+   */
+  public boolean hasSoftWrapsInRange(int startOffset, int endOffset) {
+    return getNumberOfSoftWrapsInRange(startOffset, endOffset) > 0;
+  }
   
   /**
    * Inserts given soft wrap to {@link #myWraps} collection at the given index.

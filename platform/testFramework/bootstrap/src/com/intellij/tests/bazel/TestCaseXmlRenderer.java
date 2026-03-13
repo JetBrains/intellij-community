@@ -6,6 +6,13 @@
  */
 package com.intellij.tests.bazel;
 
+import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.launcher.TestIdentifier;
+import org.junit.platform.launcher.TestPlan;
+import org.junit.platform.launcher.listeners.LegacyReportingUtils;
+
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.math.RoundingMode;
@@ -14,14 +21,10 @@ import java.text.DecimalFormatSymbols;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Locale;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamWriter;
-import org.junit.platform.engine.TestExecutionResult;
-import org.junit.platform.launcher.TestIdentifier;
-import org.junit.platform.launcher.TestPlan;
-import org.junit.platform.launcher.listeners.LegacyReportingUtils;
 
-import static com.intellij.tests.bazel.SafeXml.*;
+import static com.intellij.tests.bazel.SafeXml.escapeIllegalCharacters;
+import static com.intellij.tests.bazel.SafeXml.writeCData;
+import static com.intellij.tests.bazel.SafeXml.writeTextElement;
 
 class TestCaseXmlRenderer {
 

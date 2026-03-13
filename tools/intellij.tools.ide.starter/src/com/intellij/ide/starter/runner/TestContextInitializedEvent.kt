@@ -22,11 +22,13 @@ fun EventsBus.subscribeForTestContextInitializedEvent(
   container: TestContainer,
   timeout: Duration = 2.minutes,
   ignoreExceptions: Boolean = true,
+  sequential: Boolean = false,
   callback: suspend (event: TestContextInitializedEvent) -> Unit,
 ): EventsBus = subscribe<TestContextInitializedEvent>(
   subscriber = Pair(subscriber, container),
   timeout = timeout,
   ignoreExceptions = ignoreExceptions,
+  sequential = sequential,
   callback = { event ->
     if (event.container === container
         // not rem dev or rem dev backend

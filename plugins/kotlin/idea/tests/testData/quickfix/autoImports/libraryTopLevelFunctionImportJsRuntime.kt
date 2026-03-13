@@ -1,5 +1,6 @@
 // "Import function 'cos'" "true"
 // JS
+// K2_ERROR: Unresolved reference 'cos'.
 package some
 
 fun testFun() {

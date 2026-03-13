@@ -23,4 +23,21 @@ jvm_library(
     "//java/compiler/openapi:java-compiler",
   ]
 )
+
+jvm_library(
+  name = "java-remoteServers_test_lib",
+  module_name = "intellij.java.remoteServers",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":java-remoteServers",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/remote-servers/api:remoteServers_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/xdebugger-api:debugger_test_lib",
+    "//java/execution/openapi:java-execution_test_lib",
+    "//java/compiler/openapi:java-compiler_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.java.remoteServers` end

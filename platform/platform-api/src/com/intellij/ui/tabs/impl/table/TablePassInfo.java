@@ -7,9 +7,13 @@ import com.intellij.ui.tabs.impl.LayoutPassInfo;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 /**
  * @deprecated use {@link com.intellij.ui.tabs.impl.multiRow.MultiRowLayout}

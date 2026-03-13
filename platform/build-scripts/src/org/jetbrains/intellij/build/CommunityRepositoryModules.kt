@@ -77,16 +77,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.tasks.compatibility")
       spec.withModule("intellij.tasks.java")
     },
-    pluginAuto(listOf("intellij.xslt.debugger")) { spec ->
-      spec.withModule("intellij.xslt.debugger.rt", "xslt-debugger-rt.jar")
-      spec.withModule("intellij.xslt.debugger.impl.rt", "rt/xslt-debugger-impl-rt.jar")
-      spec.withModuleLibrary("Saxon-6.5.5", "intellij.xslt.debugger.impl.rt", "rt/saxon.jar")
-      spec.withModuleLibrary("Saxon-9HE", "intellij.xslt.debugger.impl.rt", "rt/saxon9he.jar")
-      spec.withModuleLibrary("Xalan-2.7.3", "intellij.xslt.debugger.impl.rt", "rt/xalan-2.7.3.jar")
-      spec.withModuleLibrary("Serializer-2.7.3", "intellij.xslt.debugger.impl.rt", "rt/serializer-2.7.3.jar")
-      spec.withModuleLibrary("RMI Stubs", "intellij.xslt.debugger.rt", "rmi-stubs.jar")
-    },
-    plugin("intellij.maven") { spec ->
+    plugin("intellij.maven.plugin") { spec ->
 
       spec.doNotCopyModuleLibrariesAutomatically(
         listOf(
@@ -166,13 +157,13 @@ object CommunityRepositoryModules {
 
       spec.withModule("intellij.idea.community.build.dependencies")
       spec.withModule("intellij.maven.jps")
-      spec.withModule("intellij.maven.errorProne.compiler")
       spec.withModule("intellij.maven.artifactResolver.m31", "artifact-resolver-m31.jar")
       spec.withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m31.jar")
       spec.withModule("intellij.maven.server", relativeJarPath = "maven-server.jar")
     },
     pluginAuto(
       listOf(
+        "intellij.gradle.plugin",
         "intellij.gradle",
         "intellij.gradle.common",
         "intellij.gradle.toolingProxy",
@@ -183,7 +174,7 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("Gradle", LibraryPackMode.STANDALONE_SEPARATE)
       spec.withProjectLibrary("Ant", "ant", LibraryPackMode.STANDALONE_SEPARATE)
     },
-    pluginAuto(listOf("intellij.gradle.java", "intellij.gradle.jps")) {
+    pluginAuto(listOf("intellij.gradle.java.plugin", "intellij.gradle.java", "intellij.gradle.jps")) {
       it.excludeProjectLibrary("Ant")
       it.excludeProjectLibrary("Gradle")
     },
@@ -234,11 +225,6 @@ object CommunityRepositoryModules {
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
     },
     pluginAuto(listOf("intellij.lombok", "intellij.lombok.generated")),
-    plugin("intellij.platform.testFramework.ui") { spec ->
-      spec.withModuleLibrary("intellij.remoterobot.remote.fixtures", spec.mainModule, "")
-      spec.withModuleLibrary("intellij.remoterobot.robot.server.core", spec.mainModule, "")
-      spec.withProjectLibrary("okhttp")
-    },
     pluginAuto(listOf("intellij.performanceTesting")),
     pluginAuto(listOf("intellij.performanceTesting.ui")),
     pluginAuto(listOf("intellij.vcs.github")),

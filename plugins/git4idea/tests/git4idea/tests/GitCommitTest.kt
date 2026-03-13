@@ -1,18 +1,24 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.tests
 
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.IssueNavigationConfiguration
 import com.intellij.openapi.vcs.IssueNavigationLink
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.testFramework.junit5.eel.params.api.DockerTest
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
 import com.intellij.testFramework.junit5.RegistryKey
-import com.intellij.testFramework.junit5.fixture.*
+import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.extensionPointFixture
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.registryKeyFixture
+import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.vcs.commit.CommitExceptionWithActions
 import com.intellij.vcs.test.updateChangeListManager
 import com.intellij.vcs.test.vcsPlatformFixture
@@ -22,7 +28,23 @@ import git4idea.config.GitConfigUtil
 import git4idea.config.GitSaveChangesPolicy
 import git4idea.config.GitVersion
 import git4idea.i18n.GitBundle
-import git4idea.test.*
+import git4idea.test.GitSingleRepoContext
+import git4idea.test.addCommit
+import git4idea.test.assertChangesWithRefresh
+import git4idea.test.assertCommitted
+import git4idea.test.assertMessage
+import git4idea.test.assertNoChanges
+import git4idea.test.assertStagedChanges
+import git4idea.test.checkout
+import git4idea.test.commit
+import git4idea.test.createFileStructure
+import git4idea.test.createSubRepository
+import git4idea.test.git
+import git4idea.test.gitPlatformFixture
+import git4idea.test.gitSingleRepoFixture
+import git4idea.test.message
+import git4idea.test.tac
+import git4idea.test.tryCommit
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -991,7 +1013,8 @@ internal abstract class GitCommitTestBase(@Suppress("unused") val eelHolder: Eel
     val exceptions = tryCommit(changes).orEmpty()
     assertEquals(exceptions.toString(), 1, exceptions.size)
 
-    val actions = (exceptions.single() as? CommitExceptionWithActions)?.actions ?: emptyList()
+    val notification = VcsNotifier.standardNotification().createNotification("notification content", NotificationType.ERROR)
+    val actions = (exceptions.single() as? CommitExceptionWithActions)?.getActions(notification) ?: emptyList()
     assertEquals(actions.toString(), 1, actions.size)
 
     val action = actions.single()

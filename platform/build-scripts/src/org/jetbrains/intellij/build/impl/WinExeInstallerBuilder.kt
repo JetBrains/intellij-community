@@ -100,7 +100,8 @@ internal suspend fun buildNsisInstaller(
             "${nsiConfDir}/idea.nsi",
           ),
           workingDir = box,
-          timeout
+          timeout = timeout,
+          attachStdOutToException = true,
         )
       }
       else {
@@ -116,8 +117,9 @@ internal suspend fun buildNsisInstaller(
             "${nsiConfDir}/idea.nsi",
           ),
           workingDir = box,
-          timeout,
+          timeout = timeout,
           additionalEnvVariables = mapOf("NSISDIR" to nsisDir.toString(), "LC_CTYPE" to "C.UTF-8"),
+          attachStdOutToException = true,
         )
       }
     }
@@ -196,7 +198,7 @@ private suspend fun prepareConfigurationFiles(nsiConfDir: Path, uninstallerFileN
 
   Files.writeString(nsiConfDir.resolve("config.nsi"), $$"""
     !define INSTALLER_ARCH $${expectedArch}
-    !define IMAGES_LOCATION "$${customizer.installerImagesPath!!}"
+    !define IMAGES_LOCATION "$${customizer.installerImagesPath ?: context.productProperties.imagesDirectoryPath!!.resolve("win")}"
 
     !define MANUFACTURER "$${appInfo.shortCompanyName}"
     !define MUI_PRODUCT "$${customizer.getFullNameIncludingEdition(appInfo)}"

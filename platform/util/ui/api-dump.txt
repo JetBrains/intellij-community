@@ -46,7 +46,6 @@ f:com.intellij.icons.AllIcons$Actions
 - sf:EditScheme:javax.swing.Icon
 - sf:EditSource:javax.swing.Icon
 - sf:EnableNewUi:javax.swing.Icon
-- sf:EnableNewUiSelected:javax.swing.Icon
 - sf:Execute:javax.swing.Icon
 - sf:Exit:javax.swing.Icon
 - sf:Expandall:javax.swing.Icon
@@ -225,6 +224,8 @@ f:com.intellij.icons.AllIcons$Breakpoints
 - sf:BreakpointFieldUnsuspendentDisabled:javax.swing.Icon
 - sf:BreakpointMethodUnsuspendentDisabled:javax.swing.Icon
 - sf:BreakpointUnsuspendentDisabled:javax.swing.Icon
+- sf:ConditionalInstrumentation:javax.swing.Icon
+- sf:LoggingInstrumentation:javax.swing.Icon
 - sf:MultipleBreakpointsDisabled:javax.swing.Icon
 - sf:MultipleBreakpointsMuted:javax.swing.Icon
 - <init>():V
@@ -367,6 +368,10 @@ f:com.intellij.icons.AllIcons$Debugger
 - sf:ViewBreakpoints:javax.swing.Icon
 - sf:Watch:javax.swing.Icon
 - sf:WatchLastReturnValue:javax.swing.Icon
+- <init>():V
+f:com.intellij.icons.AllIcons$Debugger$PinToTop
+- sf:PinnedItem:javax.swing.Icon
+- sf:UnpinnedItem:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$Debugger$ThreadStates
 - sf:Idle:javax.swing.Icon
@@ -556,6 +561,7 @@ f:com.intellij.icons.AllIcons$General
 - sf:LinkDropTriangle:javax.swing.Icon
 - sf:LocalizationSettings:javax.swing.Icon
 - sf:Locate:javax.swing.Icon
+- sf:LockedUltimate:javax.swing.Icon
 - sf:Menu:javax.swing.Icon
 - sf:Modified:javax.swing.Icon
 - sf:ModifiedSelected:javax.swing.Icon
@@ -828,13 +834,7 @@ f:com.intellij.icons.AllIcons$Mac$Touchbar
 - <init>():V
 f:com.intellij.icons.AllIcons$MeetNewUi
 - sf:DarkTheme:javax.swing.Icon
-- sf:DarkThemeSelected:javax.swing.Icon
-- sf:DensityCompact:javax.swing.Icon
-- sf:DensityDefault:javax.swing.Icon
 - sf:LightTheme:javax.swing.Icon
-- sf:LightThemeSelected:javax.swing.Icon
-- sf:SystemTheme:javax.swing.Icon
-- sf:SystemThemeSelected:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$Modules
 - sf:AddExcludedRoot:javax.swing.Icon
@@ -1855,6 +1855,8 @@ com.intellij.ui.Colors
 - sf:DARK_RED:java.awt.Color
 - sf:DISABLED_COLOR:java.awt.Color
 f:com.intellij.ui.ComponentUtil
+- s:convertPoint(java.awt.Component,java.awt.Point,java.awt.Component):java.awt.Point
+- s:convertRectangle(java.awt.Component,java.awt.Rectangle,java.awt.Component):java.awt.Rectangle
 - s:decorateWindowHeader(javax.swing.JRootPane):V
 - s:findComponentsOfType(javax.swing.JComponent,java.lang.Class):java.util.List
 - s:findParentByCondition(java.awt.Component,java.util.function.Predicate):java.awt.Component
@@ -2721,6 +2723,8 @@ f:com.intellij.ui.SizedIcon
 - getIconHeight():I
 - getIconWidth():I
 - getMenuBarIcon(Z):javax.swing.Icon
+- getSizedHeight():I
+- getSizedWidth():I
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
 - replaceBy(com.intellij.ui.icons.IconReplacer):com.intellij.ui.SizedIcon
 - retrieveIcon():javax.swing.Icon
@@ -3547,6 +3551,7 @@ f:com.intellij.util.ui.AvatarUtils
 com.intellij.util.ui.CSSFontResolver
 - a:getFont(java.awt.Font,javax.swing.text.AttributeSet):java.awt.Font
 f:com.intellij.util.ui.CenteredIcon
+- com.intellij.ui.RetrievableIcon
 - javax.swing.Icon
 - <init>(javax.swing.Icon):V
 - <init>(javax.swing.Icon,I,I):V
@@ -3554,6 +3559,8 @@ f:com.intellij.util.ui.CenteredIcon
 - getIconHeight():I
 - getIconWidth():I
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+- replaceBy(com.intellij.ui.icons.IconReplacer):javax.swing.Icon
+- retrieveIcon():javax.swing.Icon
 f:com.intellij.util.ui.Centerizer
 - javax.swing.JPanel
 - <init>(javax.swing.JComponent):V
@@ -3594,6 +3601,7 @@ f:com.intellij.util.ui.ColorPalette$Companion
 - f:select(java.lang.Object[],java.lang.String):java.lang.Object
 - bs:select$default(com.intellij.util.ui.ColorPalette$Companion,java.lang.Object[],java.lang.String,I,java.lang.Object):java.lang.Object
 a:com.intellij.util.ui.ColorizeProxyIcon
+- com.intellij.ui.RetrievableIcon
 - javax.swing.Icon
 - p:<init>(javax.swing.Icon):V
 - getBaseIcon():javax.swing.Icon
@@ -3605,6 +3613,8 @@ f:com.intellij.util.ui.ColorizeProxyIcon$Simple
 - com.intellij.util.ui.ColorizeProxyIcon
 - <init>(javax.swing.Icon,java.awt.Color):V
 - getColor():java.awt.Color
+- replaceBy(com.intellij.ui.icons.IconReplacer):javax.swing.Icon
+- retrieveIcon():javax.swing.Icon
 c:com.intellij.util.ui.ColorsIcon
 - com.intellij.util.ui.ColorIcon
 - <init>(I,java.awt.Color[]):V
@@ -3879,12 +3889,15 @@ f:com.intellij.util.ui.ImageUtil
 - s:toBufferedImage(java.awt.Image,Z):java.awt.image.BufferedImage
 - s:toBufferedImage(java.awt.Image,Z,Z):java.awt.image.BufferedImage
 f:com.intellij.util.ui.IndentedIcon
+- com.intellij.ui.RetrievableIcon
 - javax.swing.Icon
 - <init>(javax.swing.Icon,I):V
 - <init>(javax.swing.Icon,java.awt.Insets):V
 - getIconHeight():I
 - getIconWidth():I
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+- replaceBy(com.intellij.ui.icons.IconReplacer):javax.swing.Icon
+- retrieveIcon():javax.swing.Icon
 com.intellij.util.ui.ItemRemovable
 - a:removeRow(I):V
 a:com.intellij.util.ui.JBCachingScalableIcon
@@ -4156,6 +4169,7 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$Banner
 - sf:WARNING_BACKGROUND:java.awt.Color
 - sf:WARNING_BORDER_COLOR:java.awt.Color
 - <init>():V
+- s:arc():com.intellij.util.ui.JBValue
 f:com.intellij.util.ui.JBUI$CurrentTheme$BigPopup
 - sf:LIST_SETTINGS_BACKGROUND:java.awt.Color
 - <init>():V
@@ -4437,6 +4451,11 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$List$Selection
 com.intellij.util.ui.JBUI$CurrentTheme$List$Tag
 - sf:BACKGROUND:java.awt.Color
 - sf:FOREGROUND:java.awt.Color
+f:com.intellij.util.ui.JBUI$CurrentTheme$MainMenu
+f:com.intellij.util.ui.JBUI$CurrentTheme$MainMenu$Selection
+- s:fullScreenArc():com.intellij.util.ui.JBValue
+- s:fullScreenOuterInsets():com.intellij.util.ui.JBInsets
+- s:outerInsets():com.intellij.util.ui.JBInsets
 f:com.intellij.util.ui.JBUI$CurrentTheme$MainToolbar
 - <init>():V
 - s:borderColor():java.awt.Color
@@ -5557,11 +5576,14 @@ e:com.intellij.util.ui.UnixDesktopEnv
 - s:valueOf(java.lang.String):com.intellij.util.ui.UnixDesktopEnv
 - s:values():com.intellij.util.ui.UnixDesktopEnv[]
 f:com.intellij.util.ui.WatermarkIcon
+- com.intellij.ui.RetrievableIcon
 - javax.swing.Icon
 - <init>(javax.swing.Icon,F):V
 - getIconHeight():I
 - getIconWidth():I
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+- replaceBy(com.intellij.ui.icons.IconReplacer):javax.swing.Icon
+- retrieveIcon():javax.swing.Icon
 a:com.intellij.util.ui.WavePainter
 - p:<init>():V
 - s:forColor(java.awt.Color):com.intellij.util.ui.WavePainter
@@ -5709,6 +5731,8 @@ f:com.intellij.util.ui.html.HRViewEx
 - getBreakWeight(I,F,F):I
 - getPreferredSpan(I):F
 - getResizeWeight(I):I
+- modelToView(I,java.awt.Shape,javax.swing.text.Position$Bias):java.awt.Shape
+- viewToModel(F,F,java.awt.Shape,javax.swing.text.Position$Bias[]):I
 c:com.intellij.util.ui.html.ParagraphViewEx
 - javax.swing.text.html.ParagraphView
 - p:fixedLineHeight:java.lang.Float

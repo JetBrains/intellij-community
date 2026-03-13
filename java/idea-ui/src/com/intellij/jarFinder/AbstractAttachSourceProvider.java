@@ -18,6 +18,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.io.HttpRequests;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public abstract class AbstractAttachSourceProvider implements AttachSourcesProvider {
@@ -48,7 +50,7 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
   protected static @Nullable Library getLibraryFromOrderEntriesList(@NotNull List<? extends LibraryOrderEntry> orderEntries) {
     if (orderEntries.isEmpty()) return null;
 
-    Library library = orderEntries.get(0).getLibrary();
+    Library library = orderEntries.getFirst().getLibrary();
     if (library == null) return null;
 
     for (int i = 1; i < orderEntries.size(); i++) {
@@ -93,14 +95,21 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
 
     @Override
     public @NotNull ActionCallback perform(@NotNull List<? extends LibraryOrderEntry> orderEntriesContainingFile) {
+      return performInternal();
+    }
+
+    @Override
+    public @NotNull ActionCallback perform(@NotNull Collection<LibraryEntity> libraryEntities, @NotNull Project project) {
+      return performInternal();
+    }
+
+    private @NotNull ActionCallback performInternal() {
       ThreadingAssertions.assertEventDispatchThread();
 
       ActionCallback callback = new ActionCallback();
       callback.setDone();
 
       if (!mySrcFile.isValid()) return callback;
-
-      if (myLibrary != getLibraryFromOrderEntriesList(orderEntriesContainingFile)) return callback;
 
       WriteAction.run(() -> addSourceFile(mySrcFile, myLibrary));
 
@@ -133,6 +142,15 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
 
     @Override
     public @NotNull ActionCallback perform(@NotNull List<? extends LibraryOrderEntry> orderEntriesContainingFile) {
+      return performInternal();
+    }
+
+    @Override
+    public @NotNull ActionCallback perform(@NotNull Collection<LibraryEntity> libraryEntities, @NotNull Project project) {
+      return performInternal();
+    }
+
+    private @NotNull ActionCallback performInternal() {
       final ActionCallback callback = new ActionCallback();
       Task task = new Task.Backgroundable(myProject, JavaUiBundle.message("progress.title.downloading.sources"), true) {
         @Override

@@ -1,4 +1,5 @@
 // "Move to constructor parameters" "true"
+// K2_ERROR: Property must be initialized or be abstract.
 open class A {
     <caret>val n: Int
 }

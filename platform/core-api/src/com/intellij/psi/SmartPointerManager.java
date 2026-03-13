@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.project.Project;
@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * Allows creating references to PSI elements that can survive a reparse and return the corresponding
  * element in the PSI tree after the reparse.
  */
+@ApiStatus.NonExtendable
 public abstract class SmartPointerManager {
   public abstract @NotNull SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile psiFile, @NotNull TextRange range);
 

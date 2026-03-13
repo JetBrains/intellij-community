@@ -13,16 +13,19 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.GroupHeaderSeparator
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.intellij.images.scientific.utils.ScientificImageViewerCoroutine
 import com.intellij.util.ui.JBUI
 import org.intellij.images.ImagesBundle
 import org.intellij.images.scientific.utils.ScientificUtils
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
-import java.awt.FlowLayout
 import javax.swing.DefaultComboBoxModel
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -32,9 +35,6 @@ import javax.swing.JPanel
 import javax.swing.ListCellRenderer
 
 class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, DumbAware {
-  private var selectedMode: ImageOperationMode = ImageOperationMode.ORIGINAL_IMAGE
-  private var imageOptions: ComboBox<ImageOperationMode>? = null
-
   private val customRenderer = object : ListCellRenderer<Any?> {
     private val separator = GroupHeaderSeparator(JBUI.CurrentTheme.Popup.separatorLabelInsets())
     private val itemComponent = JLabel()
@@ -42,7 +42,7 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
 
     init {
       panel.isOpaque = false
-      panel.border = null
+      panel.border = JBUI.Borders.empty()
       itemComponent.isOpaque = false
       panel.add(separator, BorderLayout.NORTH)
       panel.add(itemComponent, BorderLayout.CENTER)
@@ -58,7 +58,7 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
       val mode = value as? ImageOperationMode
       itemComponent.text = mode?.displayName
       itemComponent.icon = mode?.icon
-      itemComponent.border = null
+      itemComponent.border = JBUI.Borders.empty()
 
       if (isSelected) {
         itemComponent.foreground = list?.selectionForeground
@@ -92,40 +92,40 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
     }
     val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
     e.presentation.isEnabledAndVisible = imageFile?.getUserData(ScientificUtils.SCIENTIFIC_MODE_KEY) != null
+    val fileMode = imageFile?.getUserData(CURRENT_OPERATION_MODE_KEY) ?: ImageOperationMode.ORIGINAL_IMAGE
+    val modeSelector = e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY) as? ComboBox<*>
+    if (modeSelector != null && modeSelector.selectedItem != fileMode) {
+      ScientificImageViewerCoroutine.Utils.scope.launch(Dispatchers.EDT) {
+        modeSelector.selectedItem = fileMode
+      }
+    }
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    selectedMode = ImageOperationMode.ORIGINAL_IMAGE
     val comboBoxModel = DefaultComboBoxModel(enumValues<ImageOperationMode>())
-    val comboBox = ComboBox(comboBoxModel).apply {
-      selectedItem = selectedMode
+    return ComboBox(comboBoxModel).apply {
+      selectedItem = ImageOperationMode.ORIGINAL_IMAGE
       isOpaque = false
       maximumRowCount = comboBoxModel.size
       renderer = customRenderer
       addActionListener { handleComboBoxSelection(this) }
     }
-    imageOptions = comboBox
-    return JPanel(FlowLayout(FlowLayout.CENTER, 0, 0)).apply {
-      isOpaque = false
-      border = null
-      add(comboBox)
-    }
-  }
-
-  fun updateSelectedMode(mode: ImageOperationMode) {
-    selectedMode = mode
-    imageOptions?.selectedItem = mode
   }
 
   private fun handleComboBoxSelection(comboBox: ComboBox<ImageOperationMode>) {
     val selectedItem = comboBox.selectedItem as? ImageOperationMode ?: return
     if (selectedItem == ImageOperationMode.CONFIGURE_BINARIZATION) {
-      comboBox.selectedItem = selectedMode
+      val previousMode = comboBox.getClientProperty(PREVIOUS_MODE_KEY) as? ImageOperationMode ?: ImageOperationMode.ORIGINAL_IMAGE
+      comboBox.selectedItem = previousMode
       selectedItem.executeAction()
     } else {
-      selectedMode = selectedItem
-      selectedMode.executeAction()
+      comboBox.putClientProperty(PREVIOUS_MODE_KEY, selectedItem)
+      selectedItem.executeAction()
     }
+  }
+
+  companion object {
+    private const val PREVIOUS_MODE_KEY = "ImageOperationsActionGroup.previousMode"
   }
 }
 

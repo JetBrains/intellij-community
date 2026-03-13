@@ -17,7 +17,12 @@ import com.intellij.polySymbols.customElements.json.toApiStatus
 import com.intellij.polySymbols.framework.FrameworkId
 import com.intellij.polySymbols.impl.StaticPolySymbolScopeBase
 import com.intellij.polySymbols.patterns.PolySymbolPattern
-import com.intellij.polySymbols.query.*
+import com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
+import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
+import com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolQueryStack
+import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.psi.PsiElement
 
@@ -66,10 +71,8 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
               ?: (base.declaration.mixins + listOfNotNull(base.declaration.superclass))
                 .also { _superContributions = emptyList() }
                 .flatMap { it.resolve(origin, queryExecutor) }
-                .toList()
+                .filterIsInstance<CustomElementsSymbol>()
                 .also { contributions -> _superContributions = contributions }
-
-    override fun getModificationCount(): Long = 0
 
     override val origin: CustomElementsJsonOrigin
       get() = base.origin
@@ -83,9 +86,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
     override val description: String?
       get() = (base.declaration.description?.takeIf { it.isNotBlank() } ?: base.declaration.summary)
                 ?.let { origin.renderDescription(it) }
-              ?: superContributions.asSequence()
-                .mapNotNull { (it as? CustomElementsSymbol)?.description }
-                .firstOrNull()
+              ?: superContributions.firstNotNullOfOrNull { (it as? CustomElementsSymbol)?.description }
 
     override val apiStatus: PolySymbolApiStatus
       get() = base.declaration.deprecated.toApiStatus(origin) ?: PolySymbolApiStatus.Stable

@@ -37,7 +37,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
 
   void nodeAdded() {
     super.dropProblemCountCaches();
-    ReadAction.run(() -> myValid = calculateIsValid());
+    ReadAction.runBlocking(() -> myValid = calculateIsValid());
     //force calculation
     getProblemLevels();
   }
@@ -89,7 +89,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   public final synchronized boolean isValid() {
     Boolean valid = myValid;
     if (valid == null) {
-      valid = ReadAction.compute(() -> calculateIsValid());
+      valid = ReadAction.computeBlocking(() -> calculateIsValid());
       myValid = valid;
     }
     return valid;
@@ -99,7 +99,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   public final synchronized String getPresentableText() {
     String name = myPresentableName;
     if (name == null) {
-      name = ReadAction.compute(() -> calculatePresentableName());
+      name = ReadAction.computeBlocking(() -> calculatePresentableName());
       myPresentableName = name;
     }
     return name;
@@ -152,7 +152,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     myProblemLevels.drop();
     if (isQuickFixAppliedFromView() || isAlreadySuppressedFromView()) return;
     // calculate all data on background thread
-    ReadAction.run(() -> {
+    ReadAction.runBlocking(() -> {
       myValid = calculateIsValid();
       myPresentableName = calculatePresentableName();
     });

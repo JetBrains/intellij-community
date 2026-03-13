@@ -64,4 +64,46 @@ jvm_library(
     "//platform/lang-api:lang",
   ]
 )
+
+jvm_library(
+  name = "k1_test_lib",
+  module_name = "kotlin.jvm.k1",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_k1",
+  runtime_deps = [
+    ":k1",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/execution-impl:execution-impl_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
+    "//plugins/kotlin/base/fe10/code-insight:code-insight_test_lib",
+    "//plugins/kotlin/project-configuration:project-configuration_test_lib",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/kotlin/jvm/shared:shared_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//plugins/kotlin/code-insight/api:api_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//java/java-impl:impl_test_lib",
+    "//plugins/kotlin/idea:idea_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//plugins/kotlin/base/psi:psi_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//plugins/kotlin/repl:repl_test_lib",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//java/execution/impl:impl_test_lib",
+    "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//plugins/kotlin/base/scripting/scripting.k1:scripting.k1_test_lib",
+    "//plugins/kotlin/base/scripting/scripting.shared:scripting.shared_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//platform/lang-api:lang_test_lib",
+  ]
+)
 ### auto-generated section `build kotlin.jvm.k1` end

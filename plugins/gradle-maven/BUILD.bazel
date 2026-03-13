@@ -26,6 +26,8 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/projectModel-api:projectModel",
     "//plugins/repository-search/common",
+    "//plugins/gradle/java/groovy",
+    "//platform/util/concurrency",
   ]
 )
 
@@ -36,22 +38,36 @@ jvm_library(
   associates = [":gradle-java-maven"],
   deps = [
     "//plugins/gradle/java",
+    "//plugins/gradle/java:java_test_lib",
     "//plugins/maven",
+    "//plugins/maven:maven_test_lib",
     "//plugins/groovy",
     "//plugins/groovy:groovy_test_lib",
     "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
     "//platform/code-style-api:codeStyle",
+    "//platform/code-style-api:codeStyle_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
+    "//platform/lang-impl:lang-impl_test_lib",
     "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
     "//plugins/repository-search/common",
     "//plugins/repository-search/common:common_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-  ]
+    "//plugins/gradle/java/groovy",
+    "//plugins/gradle/java/groovy:groovy_test_lib",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+  ],
+  runtime_deps = ["//platform/platform-impl:ide-impl_test_lib"]
 )
 ### auto-generated section `build intellij.gradle.java.maven` end
 

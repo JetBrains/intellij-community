@@ -3,8 +3,8 @@ package com.intellij.codeInsight.completion.addingPolicy
 
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.PolicyObeyingResultSet
-import org.jetbrains.annotations.ApiStatus
 import com.intellij.util.containers.Stack
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * An intermediary instance, that controls the policy of in which manner

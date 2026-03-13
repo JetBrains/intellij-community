@@ -16,8 +16,9 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
 
 /**
- * Suspends until it's possible to obtain the read lock and then
- * runs the [action] holding the lock **without** preventing write actions.
+ * Suspends until it's possible to get the read lock and then runs the [action] holding the lock **without** preventing write actions.
+ *
+ * **[action] can be restarted several times if it gets canceled by write actions! Hence, [action] must be idempotent**
  *
  * The [action] is dispatched to [Dispatchers.Default], because a read action is expected to be a CPU-bound task.
  *
@@ -31,9 +32,11 @@ suspend fun <T> readAction(action: () -> T): T {
 }
 
 /**
- * Suspends until it's possible to obtain the read lock in smart mode and then
+ * Suspends until it's possible to get the read lock in smart mode and then
  * runs the [action] holding the lock **without** preventing write actions.
  * See [constrainedReadAction] for semantic details.
+ *
+ * **[action] can be restarted several times if it gets canceled by write actions! Hence, [action] must be idempotent**
  *
  * @see smartReadActionBlocking
  */
@@ -90,8 +93,7 @@ suspend fun <T> constrainedReadActionUndispatched(vararg constraints: ReadConstr
 }
 
 /**
- * Suspends until it's possible to obtain the read lock and then
- * runs the [action] holding the lock and **preventing** write actions.
+ * Suspends until it's possible to get the read lock and then runs the [action] holding the lock and **preventing** write actions.
  * See [constrainedReadActionBlocking] for semantic details.
  *
  * @see readAction
@@ -101,7 +103,7 @@ suspend fun <T> readActionBlocking(action: () -> T): T {
 }
 
 /**
- * Suspends until it's possible to obtain the read lock in smart mode and then
+ * Suspends until it's possible to get the read lock in smart mode and then
  * runs the [action] holding the lock and **preventing** write actions.
  * See [constrainedReadActionBlocking] for semantic details.
  *
@@ -196,7 +198,7 @@ suspend fun <T> readAndEdtWriteActionUndispatched(action: ReadAndWriteScope.() -
 /**
  * Runs given [action] under [read lock][com.intellij.openapi.application.Application.runReadAction]
  * **without** preventing write actions. If given [action] returns [write action][ReadAndWriteScope.writeAction]
- * as result, this write action will be run under [write lock][com.intellij.openapi.application.Application.runWriteAction]
+ * as a result, this write action will be run under [write lock][com.intellij.openapi.application.Application.runWriteAction]
  * if no other write actions intertwines between read action and returned write action. Read action will be re-run if a concurrent
  * write action happens after the read completion but before the returned write action was able to run.
  * In other words, it's guaranteed that no other write occurs between the read action and returned write action.
@@ -214,7 +216,7 @@ suspend fun <T> readAndEdtWriteAction(action: ReadAndWriteScope.() -> ReadResult
 /**
  * Runs given [action] under [read lock][com.intellij.openapi.application.Application.runReadAction]
  * **without** preventing write actions. If given [action] returns [write action][ReadAndWriteScope#writeAction]
- * as result, this write action will be run under [write lock][com.intellij.openapi.application.Application.runWriteAction]
+ * as a result, this write action will be run under [write lock][com.intellij.openapi.application.Application.runWriteAction]
  * if no other write actions intertwines between read action and returned write action. Read action will be re-run if a concurrent
  * write action happens after the read completion but before the returned write action was able to run.
  * In other words, it's guaranteed that no other write occurs between the read action and returned write action.
@@ -267,9 +269,8 @@ suspend fun <T> constrainedReadAndWriteAction(vararg constraints: ReadConstraint
  *
  * The [action] is dispatched by [Dispatchers.EDT] within the [context modality state][asContextElement].
  * If the calling coroutine is already executed by [Dispatchers.EDT], then no re-dispatch happens.
- * Acquiring the write-lock happens in blocking manner,
- * i.e. [runWriteAction][com.intellij.openapi.application.Application.runWriteAction] call will block
- * until all currently running read actions are finished.
+ * Acquiring the write-lock happens in a blocking manner, i.e. [runWriteAction][com.intellij.openapi.application.Application.runWriteAction]
+ * call will block until all currently running read actions are finished.
  *
  * @see readAndEdtWriteAction
  * @see com.intellij.openapi.command.writeCommandAction
@@ -300,7 +301,7 @@ suspend fun <T> writeAction(action: () -> T): T {
  * Runs given [action] under [write lock][com.intellij.openapi.application.Application.runWriteAction].
  *
  * This function dispatches the [action] by [Dispatchers.Default] within the [context modality state][asContextElement].
- * The lock is acquired in suspending manner, so the calling coroutine will be suspended during the acquisition.
+ * The lock is acquired in a suspending manner, so the calling coroutine will be suspended during the acquisition.
  *
  * A pending background write action can be diagnosed by an inspection of _coroutine dumps_.
  *
@@ -314,9 +315,8 @@ suspend fun <T> backgroundWriteAction(action: () -> T): T {
 /**
  * Runs given [action] under [write intent read lock][com.intellij.openapi.application.Application.runWriteIntentReadAction].
  *
- * Acquiring the write intent lock happens in blocking manner,
- * i.e. [runWriteIntentReadAction][com.intellij.openapi.application.Application.runWriteIntentReadAction] call will block
- * until all currently running write actions are finished.
+ * Acquiring the Write intent lock happens in a blocking manner, i.e. [runWriteIntentReadAction][com.intellij.openapi.application.Application.runWriteIntentReadAction]
+ * call will block until all currently running write actions are finished.
  *
  * NB This function is an API stub.
  * The implementation will change once running write actions would be allowed on other threads.
@@ -359,7 +359,7 @@ fun ModalityState.asContextElement(): CoroutineContext = asContextElement()
  * ### Ordering Guarantees
  * This dispatcher is fair: two `launch(Dispatchers.EDT)` are executed in the order of their scheduling.
  *
- * _NB:_ There are no ordering guarantees between `launch(Dispatchers.EDT)` and `launch(Dispatchers.UI)` coroutines:
+ * NB: There are no ordering guarantees between `launch(Dispatchers.EDT)` and `launch(Dispatchers.UI)` coroutines:
  * when scheduled sequentially, either one can execute first.
  *
  * ### Modality Behavior
@@ -370,7 +370,7 @@ fun ModalityState.asContextElement(): CoroutineContext = asContextElement()
 val Dispatchers.EDT: CoroutineContext get() = coroutineSupport().uiDispatcher(UiDispatcherKind.LEGACY, false)
 
 /**
- * UI dispatcher which dispatches onto Swing event dispatching thread within the [context modality state][asContextElement].
+ * UI dispatcher that dispatches onto Swing event dispatching thread within the [context modality state][asContextElement].
  * If no context modality state is specified, then the coroutine is dispatched within [ModalityState.nonModal] modality state.
  *
  * The behavior of the Write-Intent lock can be configured by the use of [kind].
@@ -398,7 +398,7 @@ fun Dispatchers.ui(kind: UiDispatcherKind = UiDispatcherKind.STRICT, immediate: 
  * ### Ordering Guarantees
  * This dispatcher is fair: two `launch(Dispatchers.UI)` are executed in the order of their scheduling.
  *
- * _NB:_ There are no ordering guarantees between `launch(Dispatchers.EDT)` and `launch(Dispatchers.UI)` coroutines:
+ * NB: There are no ordering guarantees between `launch(Dispatchers.EDT)` and `launch(Dispatchers.UI)` coroutines:
  * when scheduled sequentially, either one can execute first.
  *
  * ### Modality Behavior
@@ -409,7 +409,7 @@ fun Dispatchers.ui(kind: UiDispatcherKind = UiDispatcherKind.STRICT, immediate: 
 val Dispatchers.UI: CoroutineContext get() = coroutineSupport().uiDispatcher(kind = UiDispatcherKind.STRICT, immediate = false)
 
 /**
- * UI dispatcher which dispatches onto Swing event dispatching thread within the [context modality state][asContextElement].
+ * UI dispatcher that dispatches onto Swing event dispatching thread within the [context modality state][asContextElement].
  * The computations scheduled by this dispatcher are **not** protected by any lock, but it is **allowed** to initiate Read or Write actions inside.
  *
  * If no context modality state is specified, then the coroutine is dispatched within [ModalityState.nonModal] modality state.

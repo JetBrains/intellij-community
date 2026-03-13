@@ -3,10 +3,20 @@ package com.intellij.internal.ui.sandbox
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.ui.SearchTextField
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.rows
 import com.intellij.util.ui.ThreeStateCheckBox
 import org.jetbrains.annotations.Nls
-import javax.swing.*
+import javax.swing.AbstractButton
+import javax.swing.JButton
+import javax.swing.JComboBox
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JTextArea
+import javax.swing.JToggleButton
 import javax.swing.text.JTextComponent
 
 internal fun getStateText(vararg states: @Nls String?): @Nls String {

@@ -5,6 +5,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegro
 create_kotlinc_options(
   name = "custom_multiplatform.shims",
   x_consistent_data_class_copy_visibility = True,
+  x_context_parameters = True,
   x_jvm_default = "all-compatibility",
   x_lambdas = "class"
 )
@@ -24,13 +25,26 @@ jvm_library(
   name = "multiplatform.shims",
   module_name = "fleet.multiplatform.shims",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True),
   resources = [":multiplatform.shims_resources"],
   kotlinc_opts = ":custom_multiplatform.shims",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     ":fleet_util_multiplatform_provided",
+  ]
+)
+
+jvm_library(
+  name = "multiplatform.shims_test_lib",
+  module_name = "fleet.multiplatform.shims",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_multiplatform.shims",
+  runtime_deps = [
+    ":multiplatform.shims",
+    "//fleet/util/multiplatform",
+    "//fleet/util/multiplatform:multiplatform_test_lib",
   ]
 )
 ### auto-generated section `build fleet.multiplatform.shims` end

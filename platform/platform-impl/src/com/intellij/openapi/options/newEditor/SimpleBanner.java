@@ -7,8 +7,13 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 
 /**
  * @author Alexander Lobas
@@ -49,6 +54,10 @@ class SimpleBanner extends JPanel {
     if (template == null) {
       return;
     }
+
+    // Ensure template's internal layout is up-to-date after FlowLayout resizing,
+    // so that getBaseline() returns a value consistent with the current size.
+    template.doLayout();
 
     int baseline = template.getBaseline(template.getWidth(), template.getHeight());
     if (baseline == -1) {

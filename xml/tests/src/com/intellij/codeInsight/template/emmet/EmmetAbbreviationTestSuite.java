@@ -85,7 +85,7 @@ public abstract class EmmetAbbreviationTestSuite extends TestSuite {
 
   protected void addTest(String source, String expected, @Nullable TestInitializer setUp, String... extensions) {
     for (String extension : extensions) {
-      super.addTest(new EmmetAbbreviation(source, expected, extension, false, setUp) {});
+      super.addTest(new EmmetAbbreviation(source, expected, /* name */ source, extension, false, setUp) {});
     }
   }
 
@@ -95,8 +95,16 @@ public abstract class EmmetAbbreviationTestSuite extends TestSuite {
 
   protected void addTestWithPositionCheck(String source, String expected, @Nullable TestInitializer setUp, String... extensions) {
     for (String extension : extensions) {
-      super.addTest(new EmmetAbbreviation(source, expected, extension, true, setUp) {});
+      super.addTest(new EmmetAbbreviation(source, expected, /* name */ source, extension, true, setUp) {});
     }
+  }
+
+  protected void addTestWithName(String source, String name, String expected, @Nullable TestInitializer setUp, String extension) {
+    super.addTest(new EmmetAbbreviation(source, expected, name, extension, false, setUp) {});
+  }
+
+  protected void addTestWithNameWithPositionCheck(String source, String name, String expected, @Nullable TestInitializer setUp, String extension) {
+    super.addTest(new EmmetAbbreviation(source, expected, name, extension, true, setUp) {});
   }
 
   @Override
@@ -114,6 +122,7 @@ public abstract class EmmetAbbreviationTestSuite extends TestSuite {
   }
 
   private abstract class EmmetAbbreviation extends BasePlatformTestCase {
+    private final String name;
     private final String extension;
     private final String sourceData;
     private final String expectedData;
@@ -124,9 +133,11 @@ public abstract class EmmetAbbreviationTestSuite extends TestSuite {
 
     EmmetAbbreviation(@NotNull String sourceData,
                       @NotNull String expectedData,
+                      @NotNull String name,
                       @NotNull String extension,
                       boolean checkPosition,
                       @Nullable TestInitializer initializer) {
+      this.name = name;
       this.extension = extension;
       this.sourceData = sourceData;
       this.expectedData = expectedData;
@@ -219,7 +230,7 @@ public abstract class EmmetAbbreviationTestSuite extends TestSuite {
 
     @Override
     public String toString() {
-      return (sourceData + " in " + extension).replace('\n', ' ').replaceAll("  ", "");
+      return (name + " in " + extension).replace('\n', ' ').replaceAll("  ", "");
     }
 
     @Override

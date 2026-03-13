@@ -25,4 +25,26 @@ jvm_library(
     "//java/compiler/impl",
   ]
 )
+
+jvm_library(
+  name = "jps_test_lib",
+  module_name = "intellij.kotlin.base.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":jps",
+    "//platform/core-api:core_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//java/compiler/impl:impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.kotlin.base.jps` end

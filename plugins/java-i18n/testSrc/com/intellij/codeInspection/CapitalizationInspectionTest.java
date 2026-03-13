@@ -21,12 +21,20 @@ public class CapitalizationInspectionTest extends LightJavaCodeInsightFixtureTes
   public void testTitleCapitalization() {
     doTest(true);
   }
+  
+  public void testTitleCapitalizationHtml() {
+    doTest(true);
+  }
 
   public void testTitleCapitalizationExtension() {
     doTest(true);
   }
 
   public void testSentenceCapitalization() {
+    doTest(true);
+  }
+  
+  public void testSentenceCapitalizationHtml() {
     doTest(true);
   }
 

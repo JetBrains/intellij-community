@@ -46,6 +46,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import one.util.streamex.StreamEx;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -758,8 +759,12 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       }
 
       var projectPath = Path.of(gradleProjectSettings.getExternalProjectPath());
-      var gradleVersion = gradleProjectSettings.resolveGradleVersion();
-      myGradleDaemonJvmCriteriaView = GradleDaemonJvmCriteriaViewFactory.createView(projectPath, gradleVersion, myDisposable);
+      var gradleVersion = GradleInstallationManager.guessGradleVersion(gradleProjectSettings);
+      myGradleDaemonJvmCriteriaView = GradleDaemonJvmCriteriaViewFactory.createView(
+        projectPath,
+        gradleVersion == null ? GradleVersion.current() : gradleVersion,
+        myDisposable
+      );
       myGradleJvmWrapper.add(myGradleDaemonJvmCriteriaView, BorderLayout.CENTER);
     }
   }

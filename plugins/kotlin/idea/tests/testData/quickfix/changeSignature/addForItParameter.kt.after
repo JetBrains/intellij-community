@@ -1,5 +1,6 @@
 // "Add parameter to constructor 'Foo'" "true"
 // WITH_STDLIB
+// K2_ERROR: Too many arguments for 'constructor(): Foo'.
 
 class Foo(s: String)
 

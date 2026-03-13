@@ -1,4 +1,5 @@
 // "Convert string to character literal" "true"
+// K2_ERROR: Argument type mismatch: actual type is 'String', but 'Char' was expected.
 fun foo(x: Char) {}
 
 fun bar() {

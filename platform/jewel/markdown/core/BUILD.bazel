@@ -58,6 +58,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "@lib//:jetbrains-annotations",
     "//platform/jewel/ui",
     "//platform/jewel/ui:ui_test_lib",
@@ -65,10 +66,15 @@ jvm_library(
     "//platform/jewel/foundation",
     "//platform/jewel/foundation:foundation_test_lib",
     "//libraries/compose-foundation-desktop",
+    "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
     "//libraries/junit4",
+    "//libraries/junit4:junit4_test_lib",
     "//libraries/compose-runtime-desktop",
+    "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
     "//libraries/compose-foundation-desktop-junit",
+    "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
     "//libraries/jsoup",
+    "//libraries/jsoup:jsoup_test_lib",
   ],
   exports = ["@lib//:platform-jewel-markdown-core-org-commonmark-commonmark"],
   plugins = ["@lib//:compose-plugin"]

@@ -1,4 +1,5 @@
 // "Import" "false"
+// K2_ERROR: Unresolved reference 'foo'.
 
 // ACTION: Create extension property 'A.Companion.foo'
 // ACTION: Create member property 'A.Companion.foo'

@@ -1,5 +1,6 @@
 // "Remove @JvmField annotation" "true"
 // WITH_STDLIB
+// K2_ERROR: JvmField has no effect on a private property.
 class Foo {
     <caret>@JvmField private val bar = 0
 }

@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
 import com.intellij.xdebugger.frame.XValue
@@ -15,6 +16,11 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object JvmDebuggerUtils {
+  @JvmStatic
+  fun isBreakpointInstrumentationSwitchedOn(): Boolean {
+    return Registry.`is`("debugger.breakpoint.instrumentation")
+  }
+
   @JvmStatic
   fun findProxyFromContext(debuggerContext: DebuggerContextImpl): XDebugSessionProxy? {
     val session = debuggerContext.debuggerSession?.xDebugSession ?: return null

@@ -14,7 +14,6 @@ import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
@@ -63,7 +62,7 @@ public final class ExpectedTypeMacro extends Macro {
     final Project project = context.getProject();
     PsiType[] types = null;
 
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
+    PsiFile file = context.getPsiFile();
     assert file != null;
     final PsiFile fileCopy = (PsiFile)file.copy();
     BlockSupport.getInstance(project).reparseRange(fileCopy, context.getTemplateStartOffset(), context.getTemplateEndOffset(),

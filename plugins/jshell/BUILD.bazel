@@ -13,4 +13,12 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":jshell_resources"]
 )
+
+jvm_library(
+  name = "jshell_test_lib",
+  module_name = "intellij.java.jshell",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":jshell"]
+)
 ### auto-generated section `build intellij.java.jshell` end

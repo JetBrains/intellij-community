@@ -20,4 +20,16 @@ jvm_library(
     "@lib//:kotlin-stdlib",
   ]
 )
+
+jvm_library(
+  name = "java-debugger-memory-agent_test_lib",
+  module_name = "intellij.java.debugger.memory.agent",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":java-debugger-memory-agent",
+    "//platform/util:util_test_lib",
+    "//platform/backend:backend_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.java.debugger.memory.agent` end

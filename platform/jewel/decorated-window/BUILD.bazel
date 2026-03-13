@@ -41,4 +41,23 @@ jvm_library(
   ],
   plugins = ["@lib//:compose-plugin"]
 )
+
+jvm_library(
+  name = "decorated-window_test_lib",
+  module_name = "intellij.platform.jewel.decoratedWindow",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_decorated-window",
+  runtime_deps = [
+    ":decorated-window",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/jewel/ui:ui_test_lib",
+    "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
+    "//platform/jewel/foundation:foundation_test_lib",
+    "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
+    "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
+    "//libraries/jbr:jbr_test_lib",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
 ### auto-generated section `build intellij.platform.jewel.decoratedWindow` end

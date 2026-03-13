@@ -2,7 +2,13 @@
 package com.intellij.execution.wsl.target
 
 import com.intellij.execution.ExecutionException
-import com.intellij.execution.target.*
+import com.intellij.execution.target.EelTargetEnvironment
+import com.intellij.execution.target.EelTargetEnvironmentRequest
+import com.intellij.execution.target.ExternallySynchronized
+import com.intellij.execution.target.ResolvedPortBinding
+import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.TargetPlatform
+import com.intellij.execution.target.TargetedCommandLine
 import com.intellij.execution.target.value.TargetValue
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.applyWslOptions
@@ -76,8 +82,6 @@ class WslTargetEnvironment(
     request.localPortBindings.forEach { portBinding ->
       this.localPortBindings.add(portBinding)
     }
-
-    this.shouldCopyVolumes = (request as? VolumeCopyingRequest)?.shouldCopyVolumes ?: false
   }
 
   private val delegate = EelTargetEnvironment(eelRequest)

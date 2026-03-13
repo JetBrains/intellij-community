@@ -16,4 +16,19 @@ jvm_library(
     "//platform/kernel/pasta",
   ]
 )
+
+jvm_library(
+  name = "kernel_test_lib",
+  module_name = "intellij.platform.ide.bootstrap.kernel",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":kernel",
+    "//fleet/kernel:kernel_test_lib",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/kernel/pasta:pasta_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.ide.bootstrap.kernel` end

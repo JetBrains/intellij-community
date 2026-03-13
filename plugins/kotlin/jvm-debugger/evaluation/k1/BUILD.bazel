@@ -53,4 +53,42 @@ jvm_library(
     "//platform/lang-api:lang",
   ]
 )
+
+jvm_library(
+  name = "k1_test_lib",
+  module_name = "kotlin.jvm-debugger.evaluation.k1",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_k1",
+  runtime_deps = [
+    ":k1",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
+    "//java/debugger/openapi:java-debugger_test_lib",
+    "//plugins/kotlin/jvm-debugger/evaluation:evaluation_test_lib",
+    "//plugins/kotlin/jvm-debugger/base/util:util_test_lib",
+    "//plugins/kotlin/jvm-debugger/core:core_test_lib",
+    "//plugins/kotlin/base/fe10/code-insight:code-insight_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//platform/xdebugger-impl:debugger-impl_test_lib",
+    "//java/debugger/impl:impl_test_lib",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/j2k/k1.old:k1.old_test_lib",
+    "//plugins/kotlin/idea:idea_test_lib",
+    "//java/java-analysis-impl:analysis-impl_test_lib",
+    "//plugins/kotlin/base/psi:psi_test_lib",
+    "//plugins/kotlin/j2k/shared:shared_test_lib",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//libraries/asm:asm_test_lib",
+    "//libraries/guava:guava_test_lib",
+    "//plugins/kotlin/jvm-debugger/eval4j:eval4j_test_lib",
+    "//platform/xdebugger-impl/rpc:rpc_test_lib",
+    "//platform/lang-api:lang_test_lib",
+  ]
+)
 ### auto-generated section `build kotlin.jvm-debugger.evaluation.k1` end

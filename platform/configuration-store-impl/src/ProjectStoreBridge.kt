@@ -8,11 +8,16 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.PathMacros
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.ExpandMacroToPathMap
+import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.components.PathMacroMap
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -52,7 +57,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.io.Closeable
 import java.io.IOException
 import java.nio.file.Path
-import java.util.*
+import java.util.TreeMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.CopyOnWriteArrayList

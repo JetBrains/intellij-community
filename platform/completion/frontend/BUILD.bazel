@@ -21,4 +21,17 @@ jvm_library(
   ],
   runtime_deps = ["//platform/platform-frontend:frontend"]
 )
+
+jvm_library(
+  name = "frontend_test_lib",
+  module_name = "intellij.platform.completion.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":frontend",
+    "//platform/completion/common:common_test_lib",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/platform-frontend:frontend_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.completion.frontend` end

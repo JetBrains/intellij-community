@@ -21,7 +21,6 @@ maybeTest('ij proxy fallback search tools honor path scopes', async () => {
     proxyEnv: {
       JETBRAINS_MCP_STREAM_URL: streamUrl,
       JETBRAINS_MCP_PROJECT_PATH: projectRoot,
-      JETBRAINS_MCP_TOOL_MODE: 'cc',
       JETBRAINS_MCP_PROXY_DISABLE_NEW_SEARCH: 'true'
     }
   }, async ({proxyClient}) => {

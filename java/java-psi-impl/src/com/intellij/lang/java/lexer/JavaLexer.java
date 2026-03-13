@@ -4,6 +4,7 @@ package com.intellij.lang.java.lexer;
 import com.intellij.platform.syntax.psi.lexer.LexerAdapter;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.lang.java.syntax.JavaElementTypeConverterKt.getJavaElementTypeConverter;
@@ -32,6 +33,7 @@ public final class JavaLexer extends LexerAdapter {
    * @return true if a given id is a keyword at a given language level
    * @deprecated use {@link PsiUtil#isSoftKeyword(CharSequence, LanguageLevel)}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean isSoftKeyword(@NotNull CharSequence id, @NotNull LanguageLevel level) {
     return PsiUtil.isSoftKeyword(id, level);

@@ -47,6 +47,7 @@ fun printGenerationSummary(
       }
       stats.hasChanges -> appendDetailedSummary(
         moduleSetResults = stats.moduleSetResults,
+        moduleSetPluginResult = stats.moduleSetPluginResult,
         dependencyResult = stats.dependencyResult,
         contentModuleResult = stats.contentModuleResult,
         pluginDependencyResult = stats.pluginDependencyResult,
@@ -55,6 +56,7 @@ fun printGenerationSummary(
       )
       else -> appendCompactSummary(
         moduleSetResults = stats.moduleSetResults,
+        moduleSetPluginResult = stats.moduleSetPluginResult,
         dependencyResult = stats.dependencyResult,
         contentModuleResult = stats.contentModuleResult,
         pluginDependencyResult = stats.pluginDependencyResult,
@@ -70,6 +72,7 @@ fun printGenerationSummary(
 
 private fun StringBuilder.appendCompactSummary(
   moduleSetResults: List<ModuleSetGenerationResult>,
+  moduleSetPluginResult: ModuleSetPluginGenerationResult?,
   dependencyResult: DependencyGenerationResult?,
   contentModuleResult: DependencyGenerationResult?,
   pluginDependencyResult: PluginDependencyGenerationResult?,
@@ -81,6 +84,10 @@ private fun StringBuilder.appendCompactSummary(
   val totalModuleSetFiles = moduleSetResults.sumOf { it.files.size }
   val totalModules = moduleSetResults.sumOf { it.totalModules }
   appendLine("  Module sets: ${AnsiColors.BOLD}$totalModuleSetFiles${AnsiColors.RESET} files ($totalModules modules)")
+
+  if (moduleSetPluginResult != null && moduleSetPluginResult.files.isNotEmpty()) {
+    appendLine("  Module-set plugins: ${AnsiColors.BOLD}${moduleSetPluginResult.files.size}${AnsiColors.RESET} files")
+  }
 
   if (dependencyResult != null && dependencyResult.files.isNotEmpty()) {
     appendLine("  Module dependencies: ${AnsiColors.BOLD}${dependencyResult.files.size}${AnsiColors.RESET} files (${dependencyResult.totalDependencies} deps)")
@@ -107,6 +114,7 @@ private fun StringBuilder.appendCompactSummary(
 
 private fun StringBuilder.appendDetailedSummary(
   moduleSetResults: List<ModuleSetGenerationResult>,
+  moduleSetPluginResult: ModuleSetPluginGenerationResult?,
   dependencyResult: DependencyGenerationResult?,
   contentModuleResult: DependencyGenerationResult?,
   pluginDependencyResult: PluginDependencyGenerationResult?,
@@ -114,11 +122,30 @@ private fun StringBuilder.appendDetailedSummary(
   suppressionConfigStats: SuppressionConfigStats?,
 ) {
   appendModuleSetsSection(moduleSetResults)
+  appendModuleSetPluginsSection(moduleSetPluginResult)
   appendDependenciesSection(dependencyResult, "Module Dependencies")
   appendDependenciesSection(contentModuleResult, "Content Module Dependencies")
   appendPluginDependenciesSection(pluginDependencyResult)
   appendProductsSection(productResult)
   appendSuppressionConfigSection(suppressionConfigStats)
+}
+
+private fun StringBuilder.appendModuleSetPluginsSection(result: ModuleSetPluginGenerationResult?) {
+  if (result == null || result.files.isEmpty()) return
+
+  if (!result.files.hasChanges()) {
+    appendLine("Module-Set Plugins (${AnsiColors.GRAY}${result.files.size} unchanged${AnsiColors.RESET})")
+    appendLine()
+    return
+  }
+
+  val counts = changeCounts(result.files.createdCount, result.files.modifiedCount, result.files.unchangedCount, result.files.deletedCount)
+  appendLine("${AnsiColors.BOLD}Module-Set Plugins${AnsiColors.RESET} ($counts)")
+
+  for (file in result.files.filter { it.status != FileChangeStatus.UNCHANGED }) {
+    appendLine("  ${statusIcon(file.status)} ${file.relativePath}")
+  }
+  appendLine()
 }
 
 private fun StringBuilder.appendModuleSetsSection(results: List<ModuleSetGenerationResult>) {

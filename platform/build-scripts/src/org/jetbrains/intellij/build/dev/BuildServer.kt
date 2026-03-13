@@ -3,8 +3,6 @@
 
 package org.jetbrains.intellij.build.dev
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonToken
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -18,6 +16,9 @@ import org.jetbrains.intellij.build.productLayout.discovery.ProductConfiguration
 import org.jetbrains.intellij.build.productLayout.discovery.ProductConfigurationRegistry
 import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.telemetry.use
+import tools.jackson.core.JsonToken
+import tools.jackson.core.ObjectReadContext
+import tools.jackson.core.json.JsonFactory
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Properties
@@ -62,10 +63,10 @@ private fun extractAdditionalJvmArguments(productInfoFile: Path): List<String> {
   val jsonFactory = JsonFactory()
 
   productInfoFile.inputStream().use { input ->
-    jsonFactory.createParser(input).use { parser ->
+    jsonFactory.createParser(ObjectReadContext.empty(), input).use { parser ->
       // Find the "launch" array
       while (parser.nextToken() != null) {
-        if (parser.currentToken == JsonToken.FIELD_NAME && parser.currentName() == "launch") {
+        if (parser.currentToken() == JsonToken.PROPERTY_NAME && parser.currentName() == "launch") {
           // Move to START_ARRAY
           parser.nextToken()
           // Move to first object in array (START_OBJECT)
@@ -73,14 +74,14 @@ private fun extractAdditionalJvmArguments(productInfoFile: Path): List<String> {
 
           // Find "additionalJvmArguments" in the first launch config
           while (parser.nextToken() != JsonToken.END_OBJECT) {
-            if (parser.currentToken == JsonToken.FIELD_NAME && parser.currentName() == "additionalJvmArguments") {
+            if (parser.currentToken() == JsonToken.PROPERTY_NAME && parser.currentName() == "additionalJvmArguments") {
               // Move to START_ARRAY
               parser.nextToken()
 
               // Read all string values from the array
               while (parser.nextToken() != JsonToken.END_ARRAY) {
-                if (parser.currentToken == JsonToken.VALUE_STRING) {
-                  result.add(parser.text)
+                if (parser.currentToken() == JsonToken.VALUE_STRING) {
+                  result.add(parser.string)
                 }
               }
 

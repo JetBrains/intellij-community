@@ -38,4 +38,25 @@ jvm_library(
   ],
   plugins = ["@lib//:compose-plugin"]
 )
+
+jvm_library(
+  name = "threading_test_lib",
+  module_name = "intellij.devkit.threading",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_threading",
+  runtime_deps = [
+    ":threading",
+    "//platform/util:util-ui_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/compose:compose_test_lib",
+    "//plugins/devkit/devkit-core:core_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
 ### auto-generated section `build intellij.devkit.threading` end

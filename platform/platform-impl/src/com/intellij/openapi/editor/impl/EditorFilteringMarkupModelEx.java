@@ -27,7 +27,7 @@ public final class EditorFilteringMarkupModelEx implements MarkupModelEx {
   private final @NotNull EditorImpl myEditor;
   private final @NotNull MarkupModelEx myDelegate;
 
-  private final Condition<RangeHighlighter> IS_AVAILABLE = this::isAvailable;
+  private final Condition<RangeHighlighter> IS_AVAILABLE = highlighter -> isAvailable(highlighter);
 
   @ApiStatus.Internal
   public EditorFilteringMarkupModelEx(@NotNull EditorImpl editor, @NotNull MarkupModelEx delegate) {
@@ -40,7 +40,7 @@ public final class EditorFilteringMarkupModelEx implements MarkupModelEx {
   }
 
   private boolean isAvailable(@NotNull RangeHighlighter highlighter) {
-    return highlighter.getEditorFilter().avaliableIn(myEditor) && myEditor.isHighlighterAvailable(highlighter);
+    return highlighter.isValid() && highlighter.getEditorFilter().avaliableIn(myEditor) && myEditor.isHighlighterAvailable(highlighter);
   }
 
   @Override

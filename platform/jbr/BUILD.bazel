@@ -12,4 +12,16 @@ jvm_library(
     "//platform/core-ui",
   ]
 )
+
+jvm_library(
+  name = "jbr_test_lib",
+  module_name = "intellij.platform.jbr",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":jbr",
+    "//platform/util:util_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.jbr` end

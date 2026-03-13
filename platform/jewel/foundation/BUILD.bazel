@@ -50,14 +50,20 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "@lib//:jetbrains-annotations",
     "//libraries/compose-foundation-desktop",
+    "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
     "//libraries/skiko",
+    "//libraries/skiko:skiko_test_lib",
     "//libraries/compose-foundation-desktop-junit",
+    "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
   ],
   exports = [
     "//libraries/compose-foundation-desktop",
+    "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
     "//libraries/skiko",
+    "//libraries/skiko:skiko_test_lib",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

@@ -97,7 +97,7 @@ public class CopyPasteDelegator implements CopyPasteSupport {
 
     @Override
     public void performCopy(@NotNull DataContext dataContext) {
-      ReadAction.run(() -> {
+      ReadAction.runBlocking(() -> {
         PsiElement[] elements = validate(getSelectedElements(dataContext));
         PsiCopyPasteManager.getInstance().setElements(elements, true);
       });
@@ -118,7 +118,7 @@ public class CopyPasteDelegator implements CopyPasteSupport {
 
     @Override
     public void performCut(@NotNull DataContext dataContext) {
-      ReadAction.run(() -> {
+      ReadAction.runBlocking(() -> {
         PsiElement[] elements = validate(getSelectedElements(dataContext));
         if (MoveHandler.adjustForMove(myProject, elements, null) == null) {
           return;

@@ -546,7 +546,7 @@ public final class PyTypeParser {
       final String name = token.getText().toString();
       final TextRange range = token.getRange();
 
-      if (PyNames.UNKNOWN_TYPE.equals(name)) {
+      if (PyNames.ANY_TYPE.equals(name)) {
         return EMPTY_RESULT;
       }
       else if (PyNames.NONE.equals(name)) {
@@ -576,6 +576,16 @@ public final class PyTypeParser {
       else if ("boolean".equals(name)) {
         final PyClassType type = builtinCache.getBoolType();
         return type != null ? new ParseResult(type, range) : EMPTY_RESULT;
+      }
+      else if (PyNames.TYPE_FLOAT.equals(name)) {
+        final PyClassType type = builtinCache.getFloatType();
+        PyType enriched = PyNumericTowerUtil.enrich(type);
+        return enriched != null ? new ParseResult(enriched, range) : EMPTY_RESULT;
+      }
+      else if (PyNames.TYPE_COMPLEX.equals(name)) {
+        final PyClassType type = builtinCache.getComplexType();
+        PyType enriched = PyNumericTowerUtil.enrich(type);
+        return enriched != null ? new ParseResult(enriched, range) : EMPTY_RESULT;
       }
       else if ("dictionary".equals(name)) {
         final PyClassType type = builtinCache.getDictType();

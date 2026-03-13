@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class StubFileElementType<T extends PsiFileStub> extends IFileElementType implements StubSerializer<T> {
 
   /** @deprecated this constant is unused */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static final String DEFAULT_EXTERNAL_ID = "psi.file";
 

@@ -19,7 +19,10 @@ import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.jps.serialization.impl.ErrorReporter
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntitiesLoader
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectSerializers
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.ExternalMappingKey
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.cache.CacheResetTracker
 import com.intellij.platform.workspace.storage.impl.cache.ChangeOnVersionedChange
 import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCache
@@ -33,7 +36,24 @@ import com.intellij.platform.workspace.storage.query.entities
 import com.intellij.platform.workspace.storage.query.flatMap
 import com.intellij.platform.workspace.storage.query.groupBy
 import com.intellij.platform.workspace.storage.query.map
-import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildMultipleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ComposedIdSoftRefEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.LeftEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.MySource
+import com.intellij.platform.workspace.storage.testEntities.entities.NameId
+import com.intellij.platform.workspace.storage.testEntities.entities.NamedChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.NamedEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.OoChildWithNullableParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.OoParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentMultipleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.WithSoftLinkEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyNamedChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyNamedEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyOoChildWithNullableParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyParentMultipleEntity
+import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.PerformanceUnitTest
@@ -53,7 +73,12 @@ import kotlinx.collections.immutable.mutate
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.jps.model.serialization.PathMacroUtil
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
@@ -200,6 +225,24 @@ class WorkspaceModelBenchmarksPerformanceTest {
       repeat(size) {
         list.addAll(storage.referrers(NameId("$it"), ComposedIdSoftRefEntity::class.java).toList())
       }
+    }
+      .warmupIterations(0)
+      .attempts(1).start()
+  }
+
+  @Test
+  fun replaceBySourceALotOfRootEntitiesWithoutSymbolicId(testInfo: TestInfo) {
+    val source: MutableEntityStorage = MutableEntityStorage.create()
+    val target: MutableEntityStorage = MutableEntityStorage.create()
+    val size = 30_000
+
+    repeat(size) {
+      source addEntity WithSoftLinkEntity(NameId("$it"), MySource) // could be any entity without symbolic id
+      target addEntity WithSoftLinkEntity(NameId("$it"), MySource)
+    }
+
+    Benchmark.newBenchmark(testInfo.displayName) {
+      target.replaceBySource({ true }, source.toSnapshot())
     }
       .warmupIterations(0)
       .attempts(1).start()

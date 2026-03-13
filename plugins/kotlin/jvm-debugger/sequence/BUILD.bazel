@@ -37,4 +37,23 @@ jvm_library(
     "//plugins/stream-debugger-core:debugger-streams-core",
   ]
 )
+
+jvm_library(
+  name = "kotlin-jvm-debugger-sequence-k1_test_lib",
+  module_name = "kotlin.jvm-debugger.sequence.k1",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-jvm-debugger-sequence-k1",
+  runtime_deps = [
+    ":kotlin-jvm-debugger-sequence-k1",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
+    "//plugins/kotlin/core:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//plugins/stream-debugger:java-debugger-streams_test_lib",
+    "//plugins/stream-debugger-core:debugger-streams-core_test_lib",
+  ]
+)
 ### auto-generated section `build kotlin.jvm-debugger.sequence.k1` end

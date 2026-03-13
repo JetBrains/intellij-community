@@ -2,10 +2,10 @@
 package com.intellij.internal.statistic.eventLog.validator.storage
 
 import com.intellij.internal.statistic.eventLog.EventLogBuild
-import com.intellij.internal.statistic.eventLog.validator.IEventGroupRules
-import com.intellij.internal.statistic.eventLog.validator.IEventGroupsFilterRules
-import com.intellij.internal.statistic.eventLog.validator.IGroupValidators
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.RecorderDataValidationRule
+import com.jetbrains.fus.reporting.api.IEventGroupRules
+import com.jetbrains.fus.reporting.api.IEventGroupsFilterRules
+import com.jetbrains.fus.reporting.api.IGroupValidators
+import com.jetbrains.fus.reporting.api.RecorderDataValidationRule
 import com.jetbrains.fus.reporting.MetadataStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job

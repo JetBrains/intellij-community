@@ -7,7 +7,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.MacGestureSupportForMouseShortcutPanel;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;

@@ -24,7 +24,9 @@ import com.intellij.platform.pluginGraph.LOADING_REQUIRED
 import com.intellij.platform.pluginGraph.MutablePluginGraphStore
 import com.intellij.platform.pluginGraph.NODE_CONTENT_MODULE
 import com.intellij.platform.pluginGraph.NODE_FLAG_HAS_DESCRIPTOR
+import com.intellij.platform.pluginGraph.NODE_FLAG_IS_ALIAS
 import com.intellij.platform.pluginGraph.NODE_FLAG_IS_DSL_DEFINED
+import com.intellij.platform.pluginGraph.NODE_FLAG_IS_MODULE_SET_WRAPPER
 import com.intellij.platform.pluginGraph.NODE_FLAG_IS_TEST
 import com.intellij.platform.pluginGraph.NODE_FLAG_IS_TEST_DESCRIPTOR
 import com.intellij.platform.pluginGraph.NODE_FLAG_SELF_CONTAINED
@@ -39,6 +41,7 @@ import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.TEST_DESCRIPTOR_SUFFIX
 import com.intellij.platform.pluginGraph.TargetDependencyScope
 import com.intellij.platform.pluginGraph.TargetName
+import com.intellij.platform.pluginGraph.aliasNodeName
 import com.intellij.platform.pluginGraph.baseModuleName
 import com.intellij.platform.pluginGraph.packEdgeEntry
 import com.intellij.platform.pluginGraph.packPluginDepEntry
@@ -46,8 +49,9 @@ import com.intellij.platform.pluginGraph.packTargetDependencyEntry
 import com.intellij.platform.pluginGraph.storesReverseEdges
 import com.intellij.platform.pluginGraph.unpackNodeId
 import com.intellij.platform.pluginGraph.unpackPluginDepFormats
+import com.intellij.platform.pluginGraph.unpackPluginDepHasConfigFile
 import com.intellij.platform.pluginGraph.unpackPluginDepOptional
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -129,10 +133,15 @@ internal class PluginGraphBuilder(
     isDslDefined: Boolean = false,
     pluginId: PluginId? = null,
     pluginAliases: List<PluginId> = emptyList(),
+    isModuleSetWrapper: Boolean = false,
+    isAlias: Boolean = false,
   ): Int {
     val existing = store.nameIndex[NODE_PLUGIN].getOrDefault(name.value, -1)
     if (existing >= 0) {
-      val flags = (if (isTest) NODE_FLAG_IS_TEST else 0) or (if (isDslDefined) NODE_FLAG_IS_DSL_DEFINED else 0)
+      val flags = (if (isTest) NODE_FLAG_IS_TEST else 0) or
+                  (if (isDslDefined) NODE_FLAG_IS_DSL_DEFINED else 0) or
+                  (if (isModuleSetWrapper) NODE_FLAG_IS_MODULE_SET_WRAPPER else 0) or
+                  (if (isAlias) NODE_FLAG_IS_ALIAS else 0)
       if (flags != 0) {
         store.kinds[existing] = store.kinds[existing] or flags
       }
@@ -164,7 +173,9 @@ internal class PluginGraphBuilder(
     store.names.add(name.value)
     store.kinds.add(NODE_PLUGIN
               or (if (isTest) NODE_FLAG_IS_TEST else 0)
-              or (if (isDslDefined) NODE_FLAG_IS_DSL_DEFINED else 0))
+              or (if (isDslDefined) NODE_FLAG_IS_DSL_DEFINED else 0)
+              or (if (isModuleSetWrapper) NODE_FLAG_IS_MODULE_SET_WRAPPER else 0)
+              or (if (isAlias) NODE_FLAG_IS_ALIAS else 0))
     store.mutableNameIndex(NODE_PLUGIN).set(name.value, id)
 
     if (pluginId != null) {
@@ -174,6 +185,16 @@ internal class PluginGraphBuilder(
       store.aliases.put(id, pluginAliases.map { it.value }.toTypedArray())
     }
     return id
+  }
+
+  /** Add or get a synthetic plugin node representing a bundled alias target. */
+  fun addAliasPlugin(alias: PluginId, isTest: Boolean = false): Int {
+    return addPlugin(
+      name = aliasNodeName(alias),
+      isTest = isTest,
+      pluginId = alias,
+      isAlias = true,
+    )
   }
 
   /**
@@ -398,11 +419,25 @@ internal class PluginGraphBuilder(
       }
 
       for (depId in content.pluginDependencies) {
-        addPluginDependencyEdge(sourceId = sourceId, depId = depId, isOptional = false, formatMask = PLUGIN_DEP_MODERN_MASK, index = idIndex)
+        addPluginDependencyEdge(
+          sourceId = sourceId,
+          depId = depId,
+          isOptional = false,
+          formatMask = PLUGIN_DEP_MODERN_MASK,
+          hasConfigFile = false,
+          index = idIndex,
+        )
       }
       for (legacy in content.legacyDepends) {
         val isOptional = legacy.optional || legacy.configFile != null
-        addPluginDependencyEdge(sourceId = sourceId, depId = legacy.pluginId, isOptional = isOptional, formatMask = PLUGIN_DEP_LEGACY_MASK, index = idIndex)
+        addPluginDependencyEdge(
+          sourceId = sourceId,
+          depId = legacy.pluginId,
+          isOptional = isOptional,
+          formatMask = PLUGIN_DEP_LEGACY_MASK,
+          hasConfigFile = legacy.configFile != null,
+          index = idIndex,
+        )
       }
       for (moduleDep in content.moduleDependencies) {
         addPluginModuleDependencyEdge(sourceId, moduleDep)
@@ -415,8 +450,16 @@ internal class PluginGraphBuilder(
     depId: PluginId,
     isOptional: Boolean,
     formatMask: Int,
+    hasConfigFile: Boolean = false,
   ) {
-    addPluginDependencyEdge(sourceId = sourcePluginId, depId = depId, isOptional = isOptional, formatMask = formatMask, index = buildPluginIdIndex())
+    addPluginDependencyEdge(
+      sourceId = sourcePluginId,
+      depId = depId,
+      isOptional = isOptional,
+      formatMask = formatMask,
+      hasConfigFile = hasConfigFile,
+      index = buildPluginIdIndex(),
+    )
   }
 
   private fun buildPluginIdIndex(): MutableMap<String, MutableList<Int>> {
@@ -442,13 +485,14 @@ internal class PluginGraphBuilder(
     depId: PluginId,
     isOptional: Boolean,
     formatMask: Int,
+    hasConfigFile: Boolean,
     index: MutableMap<String, MutableList<Int>>,
   ) {
     val targets = index[depId.value]
     if (!targets.isNullOrEmpty()) {
       for (targetId in targets) {
         if (targetId != sourceId) {
-          addPluginDependencyEdge(sourceId, targetId, isOptional, formatMask)
+          addPluginDependencyEdge(sourceId, targetId, isOptional, formatMask, hasConfigFile)
         }
       }
       return
@@ -461,17 +505,17 @@ internal class PluginGraphBuilder(
     )
     recordPluginId(index, depId.value, placeholderId)
     if (placeholderId != sourceId) {
-      addPluginDependencyEdge(sourceId, placeholderId, isOptional, formatMask)
+      addPluginDependencyEdge(sourceId, placeholderId, isOptional, formatMask, hasConfigFile)
     }
   }
 
-  private fun addPluginDependencyEdge(sourceId: Int, targetId: Int, isOptional: Boolean, formatMask: Int) {
+  private fun addPluginDependencyEdge(sourceId: Int, targetId: Int, isOptional: Boolean, formatMask: Int, hasConfigFile: Boolean) {
     val targets = store.getOrCreateSuccessors(EDGE_PLUGIN_XML_DEPENDS_ON_PLUGIN, sourceId)
-    upsertPluginDepEntry(targets, targetId, isOptional, formatMask)
+    upsertPluginDepEntry(targets, targetId, isOptional, formatMask, hasConfigFile)
 
     if (storesReverseEdges(EDGE_PLUGIN_XML_DEPENDS_ON_PLUGIN)) {
       val sources = store.getOrCreatePredecessors(EDGE_PLUGIN_XML_DEPENDS_ON_PLUGIN, targetId)
-      upsertPluginDepEntry(sources, sourceId, isOptional, formatMask)
+      upsertPluginDepEntry(sources, sourceId, isOptional, formatMask, hasConfigFile)
     }
   }
 
@@ -480,21 +524,23 @@ internal class PluginGraphBuilder(
     addEdge(sourceId, targetId, EDGE_PLUGIN_XML_DEPENDS_ON_CONTENT_MODULE)
   }
 
-  private fun upsertPluginDepEntry(entries: MutableIntList, nodeId: Int, isOptional: Boolean, formatMask: Int) {
+  private fun upsertPluginDepEntry(entries: MutableIntList, nodeId: Int, isOptional: Boolean, formatMask: Int, hasConfigFile: Boolean) {
     for (i in 0 until entries.size) {
       val entry = entries[i]
       if (unpackNodeId(entry) == nodeId) {
         val existingOptional = unpackPluginDepOptional(entry)
         val existingFormats = unpackPluginDepFormats(entry)
+        val existingConfigFile = unpackPluginDepHasConfigFile(entry)
         val mergedOptional = existingOptional && isOptional
         val mergedFormats = existingFormats or formatMask
-        if (mergedOptional != existingOptional || mergedFormats != existingFormats) {
-          entries[i] = packPluginDepEntry(nodeId, mergedOptional, mergedFormats)
+        val mergedConfigFile = existingConfigFile || hasConfigFile
+        if (mergedOptional != existingOptional || mergedFormats != existingFormats || mergedConfigFile != existingConfigFile) {
+          entries[i] = packPluginDepEntry(nodeId, mergedOptional, mergedFormats, mergedConfigFile)
         }
         return
       }
     }
-    entries.add(packPluginDepEntry(nodeId, isOptional, formatMask))
+    entries.add(packPluginDepEntry(nodeId, isOptional, formatMask, hasConfigFile))
   }
 
   internal fun addEdge(source: Int, target: Int, edgeType: Int) {

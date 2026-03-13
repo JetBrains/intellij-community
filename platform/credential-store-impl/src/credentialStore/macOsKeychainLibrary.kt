@@ -4,7 +4,11 @@ package com.intellij.credentialStore
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.text.nullize
-import com.sun.jna.*
+import com.sun.jna.Library
+import com.sun.jna.Memory
+import com.sun.jna.Native
+import com.sun.jna.Pointer
+import com.sun.jna.Structure
 import com.sun.jna.ptr.IntByReference
 import com.sun.jna.ptr.PointerByReference
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap

@@ -71,6 +71,9 @@ def _targets_repo_impl(ctx):
             .get_child("jpsModelToBazelCommunityOnly.cmd")
     )
 
+    # Invalidate results when generator or its settings change
+    ctx.watch_tree(root.get_child("platform").get_child("build-scripts").get_child("bazel"))
+
     # jps-to-bazel.cmd internally runs `bazel run` to execute the converter.
     # This "bazel inside bazel" works because repository rules execute during the loading phase,
     # before the current build's analysis phase starts. The inner bazel invocation is a completely

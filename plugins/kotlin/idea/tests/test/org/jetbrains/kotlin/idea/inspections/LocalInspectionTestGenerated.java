@@ -4717,6 +4717,50 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
                 runTest("testData/inspectionsLocal/coroutines/unusedFlow/whenUsed.kt");
             }
         }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/coroutines/uselessCallOnFlow")
+        public static class UselessCallOnFlow extends AbstractK1LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("FilterIsExactInstance.kt")
+            public void testFilterIsExactInstance() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/uselessCallOnFlow/FilterIsExactInstance.kt");
+            }
+
+            @TestMetadata("FilterIsExactInstanceFake.kt")
+            public void testFilterIsExactInstanceFake() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/uselessCallOnFlow/FilterIsExactInstanceFake.kt");
+            }
+
+            @TestMetadata("FilterNotNull.kt")
+            public void testFilterNotNull() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/uselessCallOnFlow/FilterNotNull.kt");
+            }
+
+            @TestMetadata("FilterNotNullFake.kt")
+            public void testFilterNotNullFake() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/uselessCallOnFlow/FilterNotNullFake.kt");
+            }
+
+            @TestMetadata("MapNotNullWithLambda.kt")
+            public void testMapNotNullWithLambda() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/uselessCallOnFlow/MapNotNullWithLambda.kt");
+            }
+
+            @TestMetadata("MapNotNullWithLambdaFake.kt")
+            public void testMapNotNullWithLambdaFake() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/uselessCallOnFlow/MapNotNullWithLambdaFake.kt");
+            }
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -6539,6 +6583,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
             @TestMetadata("annotation.kt")
             public void testAnnotation() throws Exception {
                 runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/annotation.kt");
+            }
+
+            @TestMetadata("clsParameter.kt")
+            public void testClsParameter() throws Exception {
+                runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/clsParameter.kt");
             }
 
             @TestMetadata("comment.kt")
@@ -14364,170 +14413,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls")
-    public static class ReplaceManualRangeWithIndicesCalls extends AbstractK1LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K1;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("asReceiver.kt")
-        public void testAsReceiver() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/asReceiver.kt");
-        }
-
-        @TestMetadata("complexReceiver.kt")
-        public void testComplexReceiver() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/complexReceiver.kt");
-        }
-
-        @TestMetadata("forNotTarget.kt")
-        public void testForNotTarget() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/forNotTarget.kt");
-        }
-
-        @TestMetadata("implicitReceiver.kt")
-        public void testImplicitReceiver() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/implicitReceiver.kt");
-        }
-
-        @TestMetadata("implicitReceiverFor.kt")
-        public void testImplicitReceiverFor() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/implicitReceiverFor.kt");
-        }
-
-        @TestMetadata("implicitReceiverRangeUntil.kt")
-        public void testImplicitReceiverRangeUntil() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/implicitReceiverRangeUntil.kt");
-        }
-
-        @TestMetadata("implicitReceiverUntil.kt")
-        public void testImplicitReceiverUntil() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/implicitReceiverUntil.kt");
-        }
-
-        @TestMetadata("indexInLvalue.kt")
-        public void testIndexInLvalue() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/indexInLvalue.kt");
-        }
-
-        @TestMetadata("lastIndex.kt")
-        public void testLastIndex() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/lastIndex.kt");
-        }
-
-        @TestMetadata("lengthLiteralConstant.kt")
-        public void testLengthLiteralConstant() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/lengthLiteralConstant.kt");
-        }
-
-        @TestMetadata("lengthVariable.kt")
-        public void testLengthVariable() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/lengthVariable.kt");
-        }
-
-        @TestMetadata("map.kt")
-        public void testMap() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/map.kt");
-        }
-
-        @TestMetadata("multidimensionalArray2.kt")
-        public void testMultidimensionalArray2() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/multidimensionalArray2.kt");
-        }
-
-        @TestMetadata("multipleImplicitReceivers.kt")
-        public void testMultipleImplicitReceivers() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/multipleImplicitReceivers.kt");
-        }
-
-        @TestMetadata("multipleImplicitReceivers2.kt")
-        public void testMultipleImplicitReceivers2() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/multipleImplicitReceivers2.kt");
-        }
-
-        @TestMetadata("notUsedAsIndex.kt")
-        public void testNotUsedAsIndex() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/notUsedAsIndex.kt");
-        }
-
-        @TestMetadata("rangeTo.kt")
-        public void testRangeTo() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/rangeTo.kt");
-        }
-
-        @TestMetadata("simpleExpression.kt")
-        public void testSimpleExpression() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/simpleExpression.kt");
-        }
-
-        @TestMetadata("simpleExpressionRangeUntil.kt")
-        public void testSimpleExpressionRangeUntil() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/simpleExpressionRangeUntil.kt");
-        }
-
-        @TestMetadata("simpleExpressionUntil.kt")
-        public void testSimpleExpressionUntil() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/simpleExpressionUntil.kt");
-        }
-
-        @TestMetadata("simpleFor.kt")
-        public void testSimpleFor() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/simpleFor.kt");
-        }
-
-        @TestMetadata("sizeLabeled.kt")
-        public void testSizeLabeled() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/sizeLabeled.kt");
-        }
-
-        @TestMetadata("sizeLiteralConstant.kt")
-        public void testSizeLiteralConstant() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/sizeLiteralConstant.kt");
-        }
-
-        @TestMetadata("sizeVariable.kt")
-        public void testSizeVariable() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/sizeVariable.kt");
-        }
-
-        @TestMetadata("thisReceiver.kt")
-        public void testThisReceiver() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/thisReceiver.kt");
-        }
-
-        @TestMetadata("thisReceiverFor.kt")
-        public void testThisReceiverFor() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/thisReceiverFor.kt");
-        }
-
-        @TestMetadata("thisReceiverRangeUntil.kt")
-        public void testThisReceiverRangeUntil() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/thisReceiverRangeUntil.kt");
-        }
-
-        @TestMetadata("thisReceiverUntil.kt")
-        public void testThisReceiverUntil() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/thisReceiverUntil.kt");
-        }
-
-        @TestMetadata("typeMismatch.kt")
-        public void testTypeMismatch() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/typeMismatch.kt");
-        }
-
-        @TestMetadata("usedForOtherArray.kt")
-        public void testUsedForOtherArray() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/usedForOtherArray.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceNegatedIsEmptyWithIsNotEmpty")
     public static class ReplaceNegatedIsEmptyWithIsNotEmpty extends AbstractK1LocalInspectionTest {
         @java.lang.Override
@@ -16297,6 +16182,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("listOfPathOfPlusPathOf.kt")
+        public void testListOfPathOfPlusPathOf() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/listOfPathOfPlusPathOf.kt");
+        }
+
         @TestMetadata("minusListOfPath.kt")
         public void testMinusListOfPath() throws Exception {
             runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusListOfPath.kt");
@@ -16312,9 +16202,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
             runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusListOfPathNonOperator.kt");
         }
 
+        @TestMetadata("minusListOfPathWrapper.kt")
+        public void testMinusListOfPathWrapper() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusListOfPathWrapper.kt");
+        }
+
         @TestMetadata("minusMutableCollectionOfPath.kt")
         public void testMinusMutableCollectionOfPath() throws Exception {
             runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusMutableCollectionOfPath.kt");
+        }
+
+        @TestMetadata("minusSequenceAndPathWrapper.kt")
+        public void testMinusSequenceAndPathWrapper() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusSequenceAndPathWrapper.kt");
         }
 
         @TestMetadata("minusSequenceOfPath.kt")
@@ -16322,9 +16222,34 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
             runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusSequenceOfPath.kt");
         }
 
+        @TestMetadata("minusSequenceandSequence.kt")
+        public void testMinusSequenceandSequence() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusSequenceandSequence.kt");
+        }
+
         @TestMetadata("minusSetOfAny.kt")
         public void testMinusSetOfAny() throws Exception {
             runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusSetOfAny.kt");
+        }
+
+        @TestMetadata("plusListAndSequence.kt")
+        public void testPlusListAndSequence() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListAndSequence.kt");
+        }
+
+        @TestMetadata("plusListOfCustomIterableSelfWithPath.kt")
+        public void testPlusListOfCustomIterableSelfWithPath() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfCustomIterableSelfWithPath.kt");
+        }
+
+        @TestMetadata("plusListOfIntWithList.kt")
+        public void testPlusListOfIntWithList() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfIntWithList.kt");
+        }
+
+        @TestMetadata("plusListOfIterableOfString.kt")
+        public void testPlusListOfIterableOfString() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfIterableOfString.kt");
         }
 
         @TestMetadata("plusListOfPath.kt")
@@ -16342,14 +16267,54 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
             runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfPathNonOperator.kt");
         }
 
+        @TestMetadata("plusListOfPathWrapper.kt")
+        public void testPlusListOfPathWrapper() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfPathWrapper.kt");
+        }
+
+        @TestMetadata("plusListOfStringWithString.kt")
+        public void testPlusListOfStringWithString() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfStringWithString.kt");
+        }
+
         @TestMetadata("plusMutableCollectionOfPath.kt")
         public void testPlusMutableCollectionOfPath() throws Exception {
             runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusMutableCollectionOfPath.kt");
         }
 
+        @TestMetadata("plusPathAndPath.kt")
+        public void testPlusPathAndPath() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusPathAndPath.kt");
+        }
+
+        @TestMetadata("plusSequenceAndList.kt")
+        public void testPlusSequenceAndList() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusSequenceAndList.kt");
+        }
+
+        @TestMetadata("plusSequenceAndPathWrapper.kt")
+        public void testPlusSequenceAndPathWrapper() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusSequenceAndPathWrapper.kt");
+        }
+
+        @TestMetadata("plusSequenceAndSequence.kt")
+        public void testPlusSequenceAndSequence() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusSequenceAndSequence.kt");
+        }
+
+        @TestMetadata("plusSequenceAndSequenceNonOperator.kt")
+        public void testPlusSequenceAndSequenceNonOperator() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusSequenceAndSequenceNonOperator.kt");
+        }
+
         @TestMetadata("plusSequenceOfPath.kt")
         public void testPlusSequenceOfPath() throws Exception {
             runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusSequenceOfPath.kt");
+        }
+
+        @TestMetadata("plusSequenceOfPathNonOperator.kt")
+        public void testPlusSequenceOfPathNonOperator() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusSequenceOfPathNonOperator.kt");
         }
 
         @TestMetadata("plusSetOfAny.kt")
@@ -19822,6 +19787,40 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
             @TestMetadata("nullOrIsEmpty5.kt")
             public void testNullOrIsEmpty5() throws Exception {
                 runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/complex/nullOrIsEmpty5.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness/custom")
+        public static class Custom extends AbstractK1LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("customIsBlank.kt")
+            public void testCustomIsBlank() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/custom/customIsBlank.kt");
+            }
+
+            @TestMetadata("customIsEmpty.kt")
+            public void testCustomIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/custom/customIsEmpty.kt");
+            }
+
+            @TestMetadata("customIsNotBlank.kt")
+            public void testCustomIsNotBlank() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/custom/customIsNotBlank.kt");
+            }
+
+            @TestMetadata("customIsNotEmpty.kt")
+            public void testCustomIsNotEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/custom/customIsNotEmpty.kt");
             }
         }
 

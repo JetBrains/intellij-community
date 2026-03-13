@@ -8,6 +8,7 @@ from psycopg2._psycopg import _type, connection, cursor
 _T_co = TypeVar("_T_co", covariant=True)
 
 class Range(Generic[_T_co]):
+    __slots__ = ("_lower", "_upper", "_bounds")
     def __init__(
         self, lower: _T_co | None = None, upper: _T_co | None = None, bounds: str = "[)", empty: bool = False
     ) -> None: ...

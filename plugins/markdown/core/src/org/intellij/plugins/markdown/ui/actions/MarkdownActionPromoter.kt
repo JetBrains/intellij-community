@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionPromoter
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.extensions.ExtensionPointName
 import org.intellij.plugins.markdown.lang.hasMarkdownType
 
 internal class MarkdownActionPromoter: ActionPromoter {
@@ -20,10 +21,17 @@ internal class MarkdownActionPromoter: ActionPromoter {
     )
   }
 
+private val EP = ExtensionPointName.create<MarkdownActionPromoterExtension>(
+  "org.intellij.markdown.actionPromoterExtension"
+)
+
   override fun promote(actions: List<AnAction>, context: DataContext): List<AnAction> {
     val file = context.getData(PlatformCoreDataKeys.FILE_EDITOR)?.file
     if (file?.hasMarkdownType() == true) {
       return actions.filter { ActionManager.getInstance().getId(it) in promotedActions }
+    }
+    if (EP.extensionList.any { it.shouldPromoteMarkdownActions(context) }) {
+      return actions.filter { ActionManager.getInstance().getId(it) in promotedActions}
     }
     return emptyList()
   }

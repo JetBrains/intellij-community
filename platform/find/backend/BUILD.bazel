@@ -28,4 +28,25 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
   ]
 )
+
+jvm_library(
+  name = "backend_test_lib",
+  module_name = "intellij.platform.find.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":backend",
+    "//platform/core-api:core_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/usageView:usageView_test_lib",
+    "//platform/kernel/backend:backend_test_lib",
+    "//platform/find:find_test_lib",
+    "//platform/project/shared:project_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.find.backend` end

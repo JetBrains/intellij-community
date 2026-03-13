@@ -27,4 +27,29 @@ jvm_library(
     "//python/python-sdk:sdk",
   ]
 )
+
+jvm_library(
+  name = "execService.python_test_lib",
+  module_name = "intellij.python.community.execService.python",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":execService.python",
+    "//python/python-exec-service:community-execService_test_lib",
+    "//python/openapi:community_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/eel:eel_test_lib",
+    "//platform/eel-provider:eel-provider_test_lib",
+    "//python/impl.helperLocator:community-helpersLocator_test_lib",
+    "@lib//:junit5",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/testFramework/junit5/eel",
+    "//platform/testFramework/junit5/eel:eel_test_lib",
+    "@lib//:junit5Params",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//python/python-sdk:sdk_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.python.community.execService.python` end

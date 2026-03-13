@@ -3,7 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.platform.plugins.parser.impl.isKotlinPlugin
+import com.intellij.platform.pluginSystem.parser.impl.isKotlinPlugin
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
@@ -34,8 +34,8 @@ internal fun pluginCanWorkInK2Mode(plugin: IdeaPluginDescriptorImpl): Boolean {
     // explicitly disabled
     supportKotlinPluginModeEPs.any { it.element?.attributes.orEmpty()[SUPPORTS_K2_ATTRIBUTE_NAME] == "false" } -> false
     plugin.pluginId.idString in pluginIdsToIgnoreK2KotlinCompatibility -> true
-    // by default, the K2 mode is not supported
-    else -> supportKotlinPluginModeEPs.any { it.element?.attributes.orEmpty()[SUPPORTS_K2_ATTRIBUTE_NAME] == "true" }
+    // by default, the K2 mode is supported
+    else -> true
   }
 }
 
@@ -49,8 +49,8 @@ internal fun pluginCanWorkInK1Mode(plugin: IdeaPluginDescriptorImpl): Boolean {
   return when {
     // explicitly disabled
     supportKotlinPluginModeEPs.any { it.element?.attributes.orEmpty()[SUPPORTS_K1_ATTRIBUTE_NAME] == "false" } -> false
-    // by default, the K1 mode is supported
-    else -> true
+    // by default, the K1 mode is not supported
+    else -> supportKotlinPluginModeEPs.any { it.element?.attributes.orEmpty()[SUPPORTS_K1_ATTRIBUTE_NAME] == "true" }
   }
 }
 

@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.productLayout.validator
 
 import com.intellij.platform.pluginGraph.ContentModuleName
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.productLayout.TestFailureLogger
@@ -19,7 +20,7 @@ import java.nio.file.Path
 @ExtendWith(TestFailureLogger::class)
 class ContentModuleBackingValidatorTest {
   @Test
-  fun `reports missing JPS module for declared content module`(@TempDir tempDir: Path) {
+  fun `reports missing JPS module for declared content module`(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
     val jps = jpsProject(tempDir) {
       module("module.exists") {
         resourceRoot("resources")
@@ -37,7 +38,7 @@ class ContentModuleBackingValidatorTest {
     }
 
     val model = testGenerationModel(graph, outputProvider = jps.outputProvider)
-    val errors = runBlocking { runValidationRule(ContentModuleBackingValidator, model) }
+    val errors = runValidationRule(ContentModuleBackingValidator, model)
 
     assertThat(errors).hasSize(1)
     val error = errors[0] as MissingContentModuleBackingError
@@ -45,26 +46,27 @@ class ContentModuleBackingValidatorTest {
   }
 
   @Test
-  fun `passes when declared content module resolves to JPS module`(@TempDir tempDir: Path) {
-    val jps = jpsProject(tempDir) {
-      module("module.exists") {
-        resourceRoot("resources")
+  fun `passes when declared content module resolves to JPS module`(@TempDir tempDir: Path): Unit =
+    runBlocking(Dispatchers.Default) {
+      val jps = jpsProject(tempDir) {
+        module("module.exists") {
+          resourceRoot("resources")
+        }
       }
-    }
-    writeDescriptor(tempDir, "module.exists")
+      writeDescriptor(tempDir, "module.exists")
 
-    val graph = pluginGraph {
-      plugin("my.plugin") {
-        content("module.exists")
+      val graph = pluginGraph {
+        plugin("my.plugin") {
+          content("module.exists")
+        }
+        moduleWithDeps("module.exists")
       }
-      moduleWithDeps("module.exists")
+
+      val model = testGenerationModel(graph, outputProvider = jps.outputProvider)
+      val errors = runValidationRule(ContentModuleBackingValidator, model)
+
+      assertThat(errors).isEmpty()
     }
-
-    val model = testGenerationModel(graph, outputProvider = jps.outputProvider)
-    val errors = runBlocking { runValidationRule(ContentModuleBackingValidator, model) }
-
-    assertThat(errors).isEmpty()
-  }
 }
 
 @Suppress("SameParameterValue")

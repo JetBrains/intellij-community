@@ -106,7 +106,7 @@ public class VcsLogUiImpl extends CommonVcsLogUiImpl implements MainVcsLogUi {
     List<NotificationAction> actions = new ArrayList<>();
     actions.add(NotificationAction.createSimple(VcsLogBundle.message("vcs.log.commit.does.not.match.view.and.reset.link"), () -> {
       getFilterUi().clearFilters();
-      VcsLogUtil.invokeOnChange(this, () -> jumpTo(commitId, rowGetter, SettableFuture.create(), false, true),
+      VcsLogUtil.invokeOnceOnDataChange(this, () -> jumpTo(commitId, rowGetter, SettableFuture.create(), false, true),
                                 pack -> pack.getFilters().isEmpty());
     }));
     VcsProjectLog projectLog = VcsProjectLog.getInstance(myProject);
@@ -114,7 +114,7 @@ public class VcsLogUiImpl extends CommonVcsLogUiImpl implements MainVcsLogUi {
       actions.add(NotificationAction.createSimple(VcsLogBundle.message("vcs.log.commit.does.not.match.view.in.tab.link"), () -> {
         MainVcsLogUi ui = projectLog.openLogTab(VcsLogFilterObject.collection());
         if (ui != null) {
-          VcsLogUtil.invokeOnChange(ui, () -> ui.jumpTo(commitId, rowGetter, SettableFuture.create(), false, true),
+          VcsLogUtil.invokeOnceOnDataChange(ui, () -> ui.jumpTo(commitId, rowGetter, SettableFuture.create(), false, true),
                                     pack -> pack.getFilters().isEmpty());
         }
       }));

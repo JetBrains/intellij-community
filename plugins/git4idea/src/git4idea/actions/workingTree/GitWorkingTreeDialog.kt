@@ -24,6 +24,7 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.RowLayout
@@ -137,7 +138,7 @@ internal class GitWorkingTreeDialog(
           .withTitle(GitBundle.message("working.tree.dialog.label.location.file.chooser.title"))
         parentPathCell = textFieldWithBrowseButton(descriptor, data.project)
           .bindText(parentPath).align(Align.FILL).validationOnApply { validateLocationOnApply() }
-          .comment("")
+          .comment("", maxLineLength = MAX_LINE_LENGTH_WORD_WRAP)
 
         supportFieldCommentsAndPathValidation()
       }
@@ -157,6 +158,12 @@ internal class GitWorkingTreeDialog(
     component.isSwingPopup = false
     component.isUsePreferredSizeAsMinimum = false
     component.renderer = BranchWithTreeCellRenderer(data.project, data.repository)
+
+    // Set prototype to calculate proper size upfront and prevent resizing on first selection
+    val longestBranch = localBranchesWithTrees.maxByOrNull { it?.branch?.name?.length ?: 0 }
+    if (longestBranch != null) {
+      component.prototypeDisplayValue = longestBranch
+    }
 
     return cell(component)
       .validationRequestor(WHEN_PROPERTY_CHANGED(createNewBranch))

@@ -14,7 +14,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -87,7 +86,7 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
       String notificationText =
         IdeBundle.message(ScreenReader.isActive() ? "whats.new.notification.text.regular.language" : "whats.new.notification.text", name,
                           version);
-      ApplicationManager.getApplication().getService(UpdateCheckerFacade.class).getNotificationGroupForIdeUpdateResults()
+      UpdateCheckerFacade.getInstance().getNotificationGroupForIdeUpdateResults()
         .createNotification(notificationText, NotificationType.INFORMATION)
         .setIcon(AllIcons.Nodes.PpWeb)
         .setDisplayId("ide.whats.new")
@@ -100,8 +99,7 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
   }
 
   @ApiStatus.Internal
-  @SuppressWarnings("UnusedReturnValue")
-  public static @Nullable FileEditor openWhatsNewPage(@NotNull Project project,
+  public static void openWhatsNewPage(@NotNull Project project,
                                                       @NotNull String url,
                                                       boolean includePlatformData,
                                                       @Nullable HTMLEditorProvider.JsQueryHandler queryHandler) {
@@ -129,7 +127,7 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
     request.withQueryHandler(queryHandler);
 
     var title = IdeBundle.message("update.whats.new", ApplicationNamesInfo.getInstance().getFullProductName());
-    return HTMLEditorProvider.openEditor(project, title, request);
+    HTMLEditorProvider.openEditorWithoutBlocking(project, title, request);
   }
 
   private static Map<String, String> getRequestParameters(boolean includePlatformData) {
@@ -144,6 +142,7 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
     parameters.put("lang", Locale.getDefault().toLanguageTag().toLowerCase(Locale.ENGLISH));
 
     if (includePlatformData) {
+      @SuppressWarnings("SpellCheckingInspection")
       var os = OS.CURRENT == OS.Windows ? "windows" : OS.CURRENT == OS.macOS ? "mac" : OS.CURRENT == OS.Linux ? "linux" : null;
       var arch = CpuArch.CURRENT == CpuArch.X86_64 ? "" : CpuArch.CURRENT == CpuArch.ARM64 ? "ARM64" : null;
       if (os != null && arch != null) {

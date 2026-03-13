@@ -22,4 +22,21 @@ jvm_library(
     "@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop",
   ]
 )
+
+jvm_library(
+  name = "compose-foundation-desktop_test_lib",
+  module_name = "intellij.libraries.compose.foundation.desktop",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//libraries/compose-runtime-desktop",
+    "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
+    "@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop",
+  ],
+  runtime_deps = [
+    ":compose-foundation-desktop",
+    "//libraries/skiko:skiko_test_lib",
+    "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.libraries.compose.foundation.desktop` end

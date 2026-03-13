@@ -29,6 +29,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration.StandardConfirmation
 import com.intellij.openapi.vcs.VcsConfiguration.StandardOption
@@ -57,7 +58,8 @@ import com.intellij.openapi.vcs.update.UpdatedFiles
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
+import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
 import com.intellij.ui.content.ContentManager
@@ -641,12 +643,12 @@ class ProjectLevelVcsManagerImpl(
   }
 
   internal class ActivateVcsesStartupActivity : VcsStartupActivity {
-    override fun runActivity(project: Project) {
-      if (WelcomeScreenProjectProvider.isWelcomeScreenProject(project)) {
+    override suspend fun execute(project: Project) {
+      if (ProjectFrameCapabilitiesService.getInstance().has(project, ProjectFrameCapability.SUPPRESS_VCS_UI)) {
         return
       }
 
-      getInstanceImpl(project).mappingsHolder.activateActiveVcses()
+      (project.serviceAsync<ProjectLevelVcsManager>() as ProjectLevelVcsManagerImpl).mappingsHolder.activateActiveVcses()
     }
 
     override val order: Int

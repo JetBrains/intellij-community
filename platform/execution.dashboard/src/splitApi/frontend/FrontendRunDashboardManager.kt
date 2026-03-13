@@ -18,9 +18,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.execution.dashboard.RunDashboardCoroutineScopeProvider
 import com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributor
 import com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributorHelper
-import com.intellij.platform.execution.dashboard.splitApi.*
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardAdditionalServiceDto
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardConfigurationDto
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardMainServiceDto
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceDto
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceRpc
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardSettingsDto
+import com.intellij.platform.execution.dashboard.splitApi.ServiceCustomizationDto
+import com.intellij.platform.execution.dashboard.splitApi.ServiceStatusDto
 import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.FrontendRunConfigurationNode
 import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.RunDashboardStatusFilter
+import com.intellij.platform.execution.dashboard.splitApi.toAdditionalServiceDto
 import com.intellij.platform.execution.serviceView.ServiceViewManagerImpl
 import com.intellij.platform.execution.serviceView.shouldEnableServicesViewInCurrentEnvironment
 import com.intellij.platform.project.projectId
@@ -40,7 +48,7 @@ internal class FrontendRunDashboardManager(private val project: Project) : RunDa
   private val frontendDtos = MutableStateFlow<List<RunDashboardServiceDto>>(emptyList())
   private val frontendStatuses = MutableStateFlow(emptyMap<RunDashboardServiceId, ServiceStatusDto>())
   private val frontendCustomizations = MutableStateFlow(emptyMap<RunDashboardServiceId, ServiceCustomizationDto>())
-  private val frontendAvailableConfigurations = MutableStateFlow(emptySet<RunDashboardConfigurationDto>())
+  private val frontendAvailableConfigurations = MutableStateFlow(emptyList<RunDashboardConfigurationDto>())
   private val frontendExcludedConfigurationTypeIds = MutableStateFlow(emptySet<String>())
   private val statusFilter = RunDashboardStatusFilter()
   private val configurationTypes = MutableStateFlow(emptySet<String>())
@@ -110,7 +118,7 @@ internal class FrontendRunDashboardManager(private val project: Project) : RunDa
     }
   }
 
-  fun getAvailableConfigurations(): Set<RunDashboardConfigurationDto> {
+  fun getAvailableConfigurations(): List<RunDashboardConfigurationDto> {
     return frontendAvailableConfigurations.value
   }
 

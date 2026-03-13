@@ -6,7 +6,10 @@ import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
-import com.intellij.xdebugger.*
+import com.intellij.xdebugger.XAlternativeSourceHandler
+import com.intellij.xdebugger.XDebugProcess
+import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.XDropFrameHandler
@@ -19,6 +22,7 @@ import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.Exited
 import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighLevelDebuggerStepRequested
 import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighLevelPositionReached
 import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighLevelRunToAddress
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighLevelSetNextStatementRequested
 import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighRun
 import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighStarted
 import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.LowLevelPositionReached
@@ -31,7 +35,6 @@ import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.PauseRequ
 import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.ResumeRequested
 import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.StepType
 import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.Stop
-import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighLevelSetNextStatementRequested
 import com.intellij.xdebugger.impl.ui.SessionTabComponentProvider
 import com.intellij.xdebugger.impl.ui.XDebugSessionTabCustomizer
 import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcessExtension

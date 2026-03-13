@@ -28,7 +28,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
-public class PyUnionType implements PyType {
+public class PyUnionType implements PyCompositeType {
 
   @ApiStatus.Internal
   public static boolean isStrictSemanticsEnabled() {
@@ -203,6 +203,7 @@ public class PyUnionType implements PyType {
    * @see PyTypeUtil#toStream(PyType)
    * @see PyUnionType#map(Function)
    */
+  @Override
   public @NotNull Collection<@Nullable PyType> getMembers() {
     return Collections.unmodifiableCollection(myMembers);
   }

@@ -1,3 +1,4 @@
+fleet/util/UID
 java/awt/*
 java/awt/color/ColorSpace
 java/awt/datatransfer/*

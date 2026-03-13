@@ -29,9 +29,9 @@
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="library" name="opentelemetry-exporter-otlp-common" level="project" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" />
     <orderEntry type="library" scope="PROVIDED" name="io.opentelemetry.sdk.extension.autoconfigure.spi" level="project" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
   </component>
 </module>

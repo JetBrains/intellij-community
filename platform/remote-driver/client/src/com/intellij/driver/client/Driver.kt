@@ -77,6 +77,10 @@ interface Driver : AutoCloseable {
    * @return information about the product under test
    */
   fun getProductVersion(): ProductVersion
+  /**
+   * Hook that is called before each remote call.
+   */
+  val beforeCall: (Driver.() -> Unit)?
 
   /**
    * Forcefully exits the application.
@@ -142,17 +146,6 @@ interface Driver : AutoCloseable {
    * Runs the block that requires a write action.
    */
   fun <T> withWriteAction(code: Driver.() -> T): T
-
-  companion object {
-    /**
-     * Creates a driver with the specified remote endpoint. Actual JMX connection performed lazily on the first call to the remote side.
-     * You must call [Driver.close] to explicitly close the connection and dispose its resources.
-     */
-    @JvmStatic
-    @Contract(pure = true)
-    fun create(host: JmxHost, isRemDevMode: Boolean = false): Driver =
-      DriverImpl(host, isRemDevMode)
-  }
 }
 
 /**

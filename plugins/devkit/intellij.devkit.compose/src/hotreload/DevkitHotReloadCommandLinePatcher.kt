@@ -19,6 +19,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState
@@ -187,7 +188,7 @@ internal class DevkitGradleHotReloadRunner : ExternalSystemTaskDebugRunner() {
   override fun canRun(executorId: String, profile: RunProfile): Boolean {
     return executorId == DEVKIT_HOT_RELOAD_EXECUTOR_ID
            && profile is ExternalSystemRunConfiguration
-           && isRelevantContext(profile.project)
+           && runReadActionBlocking { isRelevantContext(profile.project) }
   }
 
   override fun doExecute(state: RunProfileState, env: ExecutionEnvironment): RunContentDescriptor? {
@@ -230,7 +231,8 @@ internal class DevkitHotReloadCommandLinePatcher : RunConfigurationExtension() {
     if (configuration !is JavaRunConfigurationBase) return
 
     if (params.mainClass != "org.jetbrains.intellij.build.devServer.DevMainKt"
-        && params.mainClass != "com.intellij.idea.Main") {
+        && params.mainClass != "com.intellij.idea.Main"
+        && params.mainClass != "com.android.tools.idea.Main") {
       // only IDE build configurations supported here so far
       return
     }

@@ -101,7 +101,7 @@ public final class MacUtil {
         Object peer = getPeer.invoke(componentAccessor, w);
         if (peer != null) {
           Class<?> cWindowPeerClass = peer.getClass();
-          Method getPlatformWindowMethod = cWindowPeerClass.getDeclaredMethod("getPlatformWindow");
+          Method getPlatformWindowMethod = cWindowPeerClass.getMethod("getPlatformWindow");
           Object cPlatformWindow = getPlatformWindowMethod.invoke(peer);
           if (cPlatformWindow != null) {
             return cPlatformWindow;

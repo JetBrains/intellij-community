@@ -4,7 +4,7 @@ package com.intellij.tasks.config;
 import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * @author Dmitry Avdeev

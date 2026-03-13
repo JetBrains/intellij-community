@@ -3,6 +3,7 @@ package com.intellij.facet.impl
 
 import com.intellij.facet.FacetManager
 import com.intellij.facet.FacetManagerFactory
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
@@ -32,7 +33,9 @@ class FacetManagerFactoryImpl(
 
   override fun getFacetManager(module: Module): FacetManager {
     if (module.isDisposed) {
-      throw AlreadyDisposedException("Module is disposed: ${module.name}")
+      val exception = AlreadyDisposedException("Module is disposed: ${module.name}")
+      thisLogger().error(exception)
+      throw exception
     }
     return facetManagerInstances.computeIfAbsent(module) { FacetManagerBridge(module) }
   }

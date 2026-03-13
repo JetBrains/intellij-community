@@ -191,13 +191,6 @@ class ShellCommandSpecsManagerImpl(coroutineScope: CoroutineScope) : ShellComman
 
   private fun resolveSpecsConflict(specs: Collection<ShellCommandSpecData>): ShellCommandSpecData {
     assert(specs.size > 1)
-    val replaceSpecs = specs.filter { it.conflictStrategy == ShellCommandSpecConflictStrategy.REPLACE }
-    if (replaceSpecs.isNotEmpty()) {
-      if (replaceSpecs.size > 1) {
-        LOG.warn(conflictMessage(ShellCommandSpecConflictStrategy.REPLACE, specs))
-      }
-      return replaceSpecs.first()
-    }
 
     val baseSpecs = specs.filter { it.conflictStrategy == ShellCommandSpecConflictStrategy.DEFAULT }
     if (baseSpecs.size > 1) {
@@ -205,16 +198,24 @@ class ShellCommandSpecsManagerImpl(coroutineScope: CoroutineScope) : ShellComman
     }
     val baseSpecData = baseSpecs.firstOrNull()
 
+    val replaceSpecs = specs.filter { it.conflictStrategy == ShellCommandSpecConflictStrategy.REPLACE }
+    if (replaceSpecs.size > 1) {
+      LOG.warn(conflictMessage(ShellCommandSpecConflictStrategy.REPLACE, specs))
+    }
+    val replacingSpecData = replaceSpecs.firstOrNull()
+
+    val effectiveBaseSpecData = replacingSpecData ?: baseSpecData
+
     val overrideSpecs = specs.filter { it.conflictStrategy == ShellCommandSpecConflictStrategy.OVERRIDE }
-    return if (overrideSpecs.size == 1 && baseSpecData == null) {
-      overrideSpecs.single()  // Single overriding spec overrides nothing, so return it.
+    return if (overrideSpecs.size == 1 && effectiveBaseSpecData == null) {
+      overrideSpecs.single()  // A single overriding spec overrides nothing, so return it.
     }
     else if (overrideSpecs.isNotEmpty()) {
-      val mergedSpec = ShellMergedCommandSpec(baseSpecData?.spec, overrideSpecs.map { it.spec })
-      val provider = baseSpecData?.provider ?: overrideSpecs.first().provider
+      val mergedSpec = ShellMergedCommandSpec(effectiveBaseSpecData?.spec, overrideSpecs.map { it.spec })
+      val provider = effectiveBaseSpecData?.provider ?: overrideSpecs.first().provider
       ShellCommandSpecData(mergedSpec, ShellCommandSpecConflictStrategy.OVERRIDE, provider)
     }
-    else baseSpecData!!  // If there are no overriding specs, then base spec should be present.
+    else effectiveBaseSpecData!!  // If there are no overriding specs, then base spec should be present.
   }
 
   private fun conflictMessage(strategy: ShellCommandSpecConflictStrategy, specs: Collection<ShellCommandSpecData>): String {

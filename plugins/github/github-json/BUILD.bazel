@@ -22,4 +22,19 @@ jvm_library(
     "//platform/analysis-api:analysis",
   ]
 )
+
+jvm_library(
+  name = "vcs-github-json_test_lib",
+  module_name = "intellij.vcs.github.json",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":vcs-github-json",
+    "//plugins/github/github-core:vcs-github_test_lib",
+    "//json/backend:backend_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.vcs.github.json` end

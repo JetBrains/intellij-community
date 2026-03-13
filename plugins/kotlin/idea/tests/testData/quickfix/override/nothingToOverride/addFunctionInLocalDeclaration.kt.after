@@ -1,4 +1,5 @@
 // "Add 'open fun f()' to 'A'" "true"
+// K2_ERROR: 'f' overrides nothing.
 open class A {
     open fun f() {}
 }

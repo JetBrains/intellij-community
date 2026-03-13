@@ -28,7 +28,7 @@ public final class OutOfProcessRetries {
 
   /**
    * Stores list of classes with failed tests to a file.
-   * Later that file could be passed to a `intellij.build.test.list.file` system property to run only those test classes.
+   * Later that file could be passed to a `intellij.build.test.patterns` system property to run only those test classes.
    */
   public static class OutOfProcessRetryListener implements TestListener {
     private final String myFileWithFailedClassesPath;

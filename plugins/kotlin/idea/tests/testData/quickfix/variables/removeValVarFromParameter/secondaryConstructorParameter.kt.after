@@ -1,4 +1,5 @@
 // "Remove 'val' from parameter" "true"
+// K2_ERROR: 'val' on secondary constructor parameter is prohibited.
 class A {
     constructor(<caret>x: Int)
 }

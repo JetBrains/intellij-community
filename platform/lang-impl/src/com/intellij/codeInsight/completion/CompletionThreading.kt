@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion
 
+import com.intellij.codeInsight.completion.CompletionThreadingBase.Companion.isInBatchUpdate
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.ComponentManagerEx
@@ -10,9 +11,16 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.Semaphore
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
@@ -28,11 +36,17 @@ internal sealed interface CompletionThreading {
   // Deferred and not Job - client should get error
   fun startThread(progressIndicator: ProgressIndicator?, runnable: Runnable): Deferred<*>
 
-  fun delegateWeighing(indicator: CompletionProgressIndicator): WeighingDelegate
+  fun createConsumer(indicator: CompletionProgressIndicator): CompletionConsumer
 }
 
+/**
+ * Completion result consumer that weighs items according to specified weights
+ */
 @Suppress("UsagesOfObsoleteApi")
-internal interface WeighingDelegate : Consumer<CompletionResult> {
+internal interface CompletionConsumer : Consumer<CompletionResult> {
+  /**
+   * await for weighing thread to finish
+   */
   fun waitFor()
 }
 
@@ -45,22 +59,8 @@ internal class SyncCompletion : CompletionThreadingBase() {
     return CompletableDeferred(Unit)
   }
 
-  override fun delegateWeighing(indicator: CompletionProgressIndicator): WeighingDelegate {
-    return object : WeighingDelegate {
-      override fun waitFor() {
-        indicator.addDelayedMiddleMatches()
-      }
-
-      override fun consume(result: CompletionResult) {
-        if (isInBatchUpdate.get()) {
-          batchList.add(result)
-        }
-        else {
-          indicator.addItem(result)
-        }
-      }
-    }
-  }
+  override fun createConsumer(indicator: CompletionProgressIndicator): CompletionConsumer =
+    SyncConsumer(indicator, batchList)
 
   override fun flushBatchResult(indicator: CompletionProgressIndicator) {
     try {
@@ -72,6 +72,24 @@ internal class SyncCompletion : CompletionThreadingBase() {
     }
     finally {
       batchList.clear()
+    }
+  }
+}
+
+private class SyncConsumer(
+  val indicator: CompletionProgressIndicator,
+  val batchList: ArrayList<CompletionResult>,
+) : CompletionConsumer {
+  override fun waitFor() {
+    indicator.addDelayedMiddleMatches()
+  }
+
+  override fun consume(result: CompletionResult) {
+    if (isInBatchUpdate.get()) {
+      batchList.add(result)
+    }
+    else {
+      indicator.addItem(result)
     }
   }
 }
@@ -90,8 +108,7 @@ internal fun tryReadOrCancel(indicator: ProgressIndicator, runnable: Runnable) {
 
 internal class AsyncCompletion(project: Project?) : CompletionThreadingBase() {
   private val batchList = ArrayList<CompletionResult>()
-  private val queue = LinkedBlockingQueue<() -> Boolean>()
-
+  private val workingQueue = LinkedBlockingQueue<AddingEvent>()
   private val coroutineScope = ((project ?: ApplicationManagerEx.getApplicationEx()) as ComponentManagerEx).getCoroutineScope()
 
   override fun startThread(progressIndicator: ProgressIndicator?, runnable: Runnable): Deferred<*> {
@@ -105,7 +122,7 @@ internal class AsyncCompletion(project: Project?) : CompletionThreadingBase() {
             ProgressManager.checkCanceled()
             runnable.run()
           }
-          catch (_: ProcessCanceledException) {
+          catch (@Suppress("IncorrectCancellationExceptionHandling") _: ProcessCanceledException) {
           }
         }, progressIndicator)
     }
@@ -124,55 +141,15 @@ internal class AsyncCompletion(project: Project?) : CompletionThreadingBase() {
     return future
   }
 
-  override fun delegateWeighing(indicator: CompletionProgressIndicator): WeighingDelegate {
-    class WeighItems : Runnable {
-      override fun run() {
-        try {
-          while (true) {
-            val next = queue.poll(30, TimeUnit.MILLISECONDS)
-            if (next != null && !next()) {
-              tryReadOrCancel(indicator) { indicator.addDelayedMiddleMatches() }
-              return
-            }
-            indicator.checkCanceled()
-          }
-        }
-        catch (e: InterruptedException) {
-          logger<AsyncCompletion>().error(e)
-        }
-      }
-    }
+  override fun createConsumer(indicator: CompletionProgressIndicator): CompletionConsumer {
+    @Suppress("DEPRECATION")
+    val addItemJob = if (Registry.`is`("ide.completion.batch.add.items"))
+      AddItemJob(workingQueue, indicator)
+    else
+      AddItemJobNoBatching(workingQueue, indicator)
 
-    val future = startThread(ProgressWrapper.wrap(indicator), WeighItems())
-    return object : WeighingDelegate {
-      override fun waitFor() {
-        queue.offer { false }
-        try {
-          @Suppress("SSBasedInspection")
-          runBlocking {
-            future.await()
-          }
-        }
-        catch (e: CancellationException) {
-          throw e
-        }
-        catch (e: Exception) {
-          logger<AsyncCompletion>().error(e)
-        }
-      }
-
-      override fun consume(result: CompletionResult) {
-        if (isInBatchUpdate.get()) {
-          batchList.add(result)
-        }
-        else {
-          queue.offer {
-            tryReadOrCancel(indicator) { indicator.addItem(result) }
-            true
-          }
-        }
-      }
-    }
+    val addItemJobHook = startThread(ProgressWrapper.wrap(indicator), addItemJob)
+    return CompletionConsumerImpl(workingQueue, addItemJobHook, batchList)
   }
 
   override fun flushBatchResult(indicator: CompletionProgressIndicator) {
@@ -183,16 +160,7 @@ internal class AsyncCompletion(project: Project?) : CompletionThreadingBase() {
     val batchListCopy = ArrayList(batchList)
     batchList.clear()
 
-    queue.offer {
-      tryReadOrCancel(indicator) {
-        indicator.withSingleUpdate {
-          for (result in batchListCopy) {
-            indicator.addItem(result)
-          }
-        }
-      }
-      true
-    }
+    workingQueue.offer(AddBatch(batchListCopy))
   }
 }
 
@@ -203,3 +171,149 @@ internal fun checkForExceptions(future: Deferred<*>) {
     future.await()
   }
 }
+
+/**
+ * The job that processes [AddingEvent]s in a separate thread from [CompletionContributor]s.
+ */
+private class AddItemJob(
+  val workingQueue: LinkedBlockingQueue<AddingEvent>,
+  val indicator: CompletionProgressIndicator,
+) : Runnable {
+  override fun run() {
+    try {
+      val batch = mutableListOf<AddingEvent>()
+      while (true) {
+        indicator.checkCanceled()
+
+        workingQueue.drainTo(batch)
+        if (batch.isEmpty()) {
+          // try awaiting the next event
+          val next = workingQueue.poll(30, TimeUnit.MILLISECONDS) ?: continue
+          batch.add(next)
+        }
+
+        var stop = false
+        tryReadOrCancel(indicator) {
+          indicator.withSingleUpdate {
+            for (event in batch) {
+              indicator.checkCanceled()
+              when (event) {
+                is AddItem -> {
+                  indicator.addItem(event.result)
+                }
+                is AddBatch -> {
+                  for (result in event.results) {
+                    indicator.addItem(result)
+                  }
+                }
+                Stop -> {
+                  indicator.addDelayedMiddleMatches()
+                  stop = true
+                  break
+                }
+              }
+            }
+          }
+        }
+
+        if (stop) {
+          return
+        }
+
+        batch.clear()
+      }
+    }
+    catch (e: InterruptedException) {
+      logger<AsyncCompletion>().error(e)
+    }
+  }
+}
+
+/**
+ * The outdated version of [AddItemJob]
+ */
+@Deprecated("Use AddItemJob instead")
+private class AddItemJobNoBatching(
+  val workingQueue: LinkedBlockingQueue<AddingEvent>,
+  val indicator: CompletionProgressIndicator,
+) : Runnable {
+  override fun run() {
+    try {
+      while (true) {
+        indicator.checkCanceled()
+
+        when (val event = workingQueue.poll(30, TimeUnit.MILLISECONDS)) {
+          Stop -> {
+            tryReadOrCancel(indicator) {
+              indicator.addDelayedMiddleMatches()
+            }
+            return
+          }
+          is AddItem -> {
+            tryReadOrCancel(indicator) {
+              indicator.addItem(event.result)
+            }
+          }
+          is AddBatch -> {
+            tryReadOrCancel(indicator) {
+              indicator.withSingleUpdate {
+                for (result in event.results) {
+                  indicator.addItem(result)
+                }
+              }
+            }
+          }
+          null -> { /* keep waiting for the value */ }
+        }
+      }
+    }
+    catch (e: InterruptedException) {
+      logger<AsyncCompletion>().error(e)
+    }
+  }
+}
+
+
+/**
+ * Delegates all the work to [AddItemJob] working on another thread by passing events to [workingQueue].
+ */
+private class CompletionConsumerImpl(
+  val workingQueue: LinkedBlockingQueue<AddingEvent>,
+  val addItemJob: Deferred<*>,
+  val batchList: ArrayList<CompletionResult>,
+) : CompletionConsumer {
+
+  override fun consume(result: CompletionResult) {
+    if (isInBatchUpdate.get()) {
+      batchList.add(result)
+    }
+    else {
+      workingQueue.offer(AddItem(result))
+    }
+  }
+
+  override fun waitFor() {
+    workingQueue.offer(Stop)
+    awaitAddItemJobToStop()
+  }
+
+  fun awaitAddItemJobToStop() {
+    try {
+      @Suppress("SSBasedInspection")
+      runBlocking {
+        addItemJob.await()
+      }
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Exception) {
+      logger<AsyncCompletion>().error(e)
+    }
+  }
+}
+
+private sealed interface AddingEvent
+private class AddItem(val result: CompletionResult) : AddingEvent
+private class AddBatch(val results: List<CompletionResult>) : AddingEvent
+private object Stop : AddingEvent

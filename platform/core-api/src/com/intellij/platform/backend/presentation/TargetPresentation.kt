@@ -15,7 +15,6 @@ import javax.swing.Icon
  * ```
  * Elements before spacer are aligned to the left, right text and right icon are aligned to the right.
  */
-@ApiStatus.Experimental
 @ApiStatus.NonExtendable
 interface TargetPresentation {
 

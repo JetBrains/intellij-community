@@ -9,7 +9,6 @@ import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider.Companion.isWelcomeScreenProject
 import com.intellij.openapi.wm.impl.CloseProjectWindowHelper
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabVirtualFile
 import com.intellij.util.application
@@ -25,7 +24,7 @@ internal class WelcomeScreenProjectActivity : ProjectActivity {
   }
 
   override suspend fun execute(project: Project) {
-    if (isWelcomeScreenProject(project)) {
+    if (project.isWelcomeExperienceProject()) {
       dropModalWelcomeScreenOnClose(project)
       subscribeToWelcomeScreenTabClose(project)
     }

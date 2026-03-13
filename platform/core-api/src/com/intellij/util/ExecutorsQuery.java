@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.CeProcessCanceledException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 
 public final class ExecutorsQuery<Result, Parameter> extends AbstractQuery<Result> {
   private static final Logger LOG = Logger.getInstance(ExecutorsQuery.class);
@@ -36,6 +38,9 @@ public final class ExecutorsQuery<Result, Parameter> extends AbstractQuery<Resul
       }
       catch (ProcessCanceledException e) {
         throw e;
+      }
+      catch (CancellationException e) {
+        throw new CeProcessCanceledException(e);
       }
       catch (Exception e) {
         LOG.error(e);

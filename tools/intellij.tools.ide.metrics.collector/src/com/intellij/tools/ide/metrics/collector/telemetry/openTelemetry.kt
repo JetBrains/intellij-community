@@ -3,6 +3,7 @@
 package com.intellij.tools.ide.metrics.collector.telemetry
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.Metric
 import java.nio.file.Path
 import kotlin.math.min
@@ -103,7 +104,11 @@ fun getMetricsForStartup(file: Path): List<Metric> {
 
 internal fun getAttributes(spanName: String, metric: MetricWithAttributes): Collection<Metric> {
   return metric.attributes.map { attributeMetric ->
-    Metric.newCounter("$spanName#" + attributeMetric.id.name, attributeMetric.value)
+    val attributeMetricName = "$spanName#" + attributeMetric.id.name
+    when (attributeMetric.id) {
+      is PerformanceMetrics.MetricId.Duration -> Metric.newDuration(attributeMetricName, attributeMetric.value)
+      is PerformanceMetrics.MetricId.Counter -> Metric.newCounter(attributeMetricName, attributeMetric.value)
+    }
   }
 }
 

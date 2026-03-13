@@ -38,6 +38,8 @@ abstract class AbstractPythonConfigurationFragmentedEditor<T : AbstractPythonRun
     addInterpreterOptions(fragments)
     addContentSourceRoots(fragments)
 
+    addDebuggerOptions(fragments)
+
     runConfiguration.sdk?.takeIf { enableRunTool }
       ?.let { createRunToolTag(it) }
       ?.let { fragments.add(it) }
@@ -83,6 +85,18 @@ abstract class AbstractPythonConfigurationFragmentedEditor<T : AbstractPythonRun
     interpreterOptionsFragment.setHint(PyBundle.message("python.run.configuration.fragments.interpreter.options.hint"))
     interpreterOptionsFragment.actionHint = PyBundle.message("python.run.configuration.fragments.interpreter.options.hint")
     fragments.add(interpreterOptionsFragment)
+  }
+
+  private fun <T : AbstractPythonRunConfiguration<*>> addDebuggerOptions(fragments: MutableList<SettingsEditorFragment<T, *>>) {
+    val justMyCodeElement = SettingsEditorFragment.createTag<T>(
+      "justMyCode",
+      PyBundle.message("python.debugger.configuration.justMyCode.label"),
+      PyBundle.message("python.debugger.configuration.group"),
+      { runConfiguration.shouldDebugJustMyCode() },
+      { config, value -> config.setDebugJustMyCode(value) }
+    )
+    justMyCodeElement.isSelected = runConfiguration.shouldDebugJustMyCode()
+    fragments.add(justMyCodeElement)
   }
 
   private fun <T : AbstractPythonRunConfiguration<*>> addContentSourceRoots(fragments: MutableList<SettingsEditorFragment<T, *>>) {

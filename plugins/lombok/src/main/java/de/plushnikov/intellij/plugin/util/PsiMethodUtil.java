@@ -1,6 +1,10 @@
 package de.plushnikov.intellij.plugin.util;
 
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -30,5 +34,24 @@ public final class PsiMethodUtil {
       maxArgs = Integer.MAX_VALUE;
     }
     return !(methodArgCount < minArgs || methodArgCount > maxArgs);
+  }
+
+  public static boolean noConstructorWithParamsOfTypesDefined(Collection<PsiMethod> existedConstructors, PsiClassType... classTypes) {
+    return !ContainerUtil.exists(existedConstructors, method -> {
+      final PsiParameterList parameterList = method.getParameterList();
+      if (parameterList.getParametersCount() != classTypes.length) {
+        return false;
+      }
+
+      int paramIndex = 0;
+      for (PsiClassType classType : classTypes) {
+        if (!PsiTypesUtil.compareTypes(parameterList.getParameter(paramIndex).getType(), classType, true)) {
+          return false;
+        }
+        paramIndex++;
+      }
+
+      return true;
+    });
   }
 }

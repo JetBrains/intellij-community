@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations
 
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
@@ -12,9 +13,13 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.utils.convertDestructuringToPositionalForm
 import org.jetbrains.kotlin.idea.codeinsight.utils.extractPrimaryParameters
+import org.jetbrains.kotlin.idea.codeinsight.utils.isPositionalDestructuringType
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
@@ -22,10 +27,14 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
-
-private data class DestructuringEntryInfo(
-    val originalPropertyName: Name,
-    val needsRename: Boolean
+private data class DestructuringAnalysisResult(
+    /**
+     * If this flag is `true`, the positional destructuring form is preferred over the name-based one for the analyzed destructuring declaration.
+     *
+     * Otherwise, the name-based form should be preferred.
+     */
+    val preferPositionalDestructuring: Boolean,
+    val entriesWithNameMismatch: List<Pair<KtDestructuringDeclarationEntry, Name>>  // entry to expected name
 )
 
 internal class DestructingShortFormNameMismatchInspection : AbstractKotlinInspection() {
@@ -41,47 +50,56 @@ internal class DestructingShortFormNameMismatchInspection : AbstractKotlinInspec
         holder: ProblemsHolder,
         isOnTheFly: Boolean
     ): KtVisitor<*, *> = object : KtVisitorVoid() {
-        override fun visitDestructuringDeclarationEntry(entry: KtDestructuringDeclarationEntry) {
-            if (!isApplicableByPsi(entry)) return
+        override fun visitDestructuringDeclaration(declaration: KtDestructuringDeclaration) {
+            if (declaration.isFullForm || declaration.hasSquareBrackets()) return
+            if (declaration.entries.isEmpty()) return
 
-            val entryInfo = analyze(entry) {
-                prepareDestructuringEntryInfo(entry) ?: return
+            val analysisResult = analyze(declaration) {
+                analyzeDestructuringDeclaration(declaration)
+            } ?: return
+
+            if (analysisResult.entriesWithNameMismatch.isEmpty()) return
+
+            if (analysisResult.preferPositionalDestructuring) {
+                val highlightRange = ApplicabilityRanges.destructuringDeclarationParens(declaration).singleOrNull() ?: return
+                holder.registerProblem(
+                    declaration,
+                    highlightRange,
+                    KotlinBundle.message("inspection.positional.destructuring.migration"),
+                    ConvertNameBasedDestructuringShortFormToPositionalFix()
+                )
+            } else {
+                // For regular data classes: offer rename fix on each mismatched entry
+                // (full form conversion is available as a separate intention)
+                for ((entry, expectedName) in analysisResult.entriesWithNameMismatch) {
+                    holder.registerProblem(
+                        entry,
+                        KotlinBundle.message("inspection.destruction.declaration.mismatch"),
+                        IntentionWrapper(RenameVariableToMatchPropertiesQuickFix(entry, expectedName))
+                    )
+                }
             }
-
-            if (!entryInfo.needsRename) return
-            holder.registerProblem(
-                entry,
-                KotlinBundle.message("inspection.destruction.declaration.mismatch"),
-                IntentionWrapper(RenameVariableToMatchPropertiesQuickFix(entry, entryInfo.originalPropertyName))
-            )
         }
-    }
-
-    private fun isApplicableByPsi(element: KtDestructuringDeclarationEntry): Boolean {
-        val destructuringDeclaration = element.parent as? KtDestructuringDeclaration ?: return false
-        if (destructuringDeclaration.isFullForm) return false
-        return element.nameAsName != null
     }
 }
 
+private fun KaSession.analyzeDestructuringDeclaration(declaration: KtDestructuringDeclaration): DestructuringAnalysisResult? {
+    val constructorParameters = extractPrimaryParameters(declaration) ?: return null
 
-private fun KaSession.prepareDestructuringEntryInfo(element: KtDestructuringDeclarationEntry): DestructuringEntryInfo? {
-    // Get the parent destructuring declaration
-    val destructuringDeclaration = element.parent as? KtDestructuringDeclaration ?: return null
-    val constructorParameters = extractPrimaryParameters(destructuringDeclaration) ?: return null
-    
-    // Find the parameter that corresponds to this entry
-    val entryIndex = destructuringDeclaration.entries.indexOf(element)
-    if (entryIndex < 0 || entryIndex >= constructorParameters.size) return null
+    // Check if the destructured type is intended for positional destructuring (Pair, Triple, IndexedValue)
+    val isPositionalDestructuring = declaration.isPositionalDestructuringType()
 
-    val param = constructorParameters[entryIndex]
-    val entryName = element.nameAsName ?: return null
-    val originalPropertyName = param.name
-    val needsRename = entryName != originalPropertyName
+    // Find all entries with name mismatch
+    val entriesWithNameMismatch = declaration.entries.zip(constructorParameters)
+        .filter { (entry, param) ->
+            val entryName = entry.nameAsName
+            entryName != null && entryName != param.name
+        }
+        .map { (entry, param) -> entry to param.name }
 
-    return DestructuringEntryInfo(
-        originalPropertyName = originalPropertyName,
-        needsRename = needsRename
+    return DestructuringAnalysisResult(
+        preferPositionalDestructuring = isPositionalDestructuring,
+        entriesWithNameMismatch = entriesWithNameMismatch
     )
 }
 
@@ -99,6 +117,18 @@ private class RenameVariableToMatchPropertiesQuickFix(
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
         RenameProcessor(project, element, targetName.toString(), false, false).run()
+    }
+}
+
+private class ConvertNameBasedDestructuringShortFormToPositionalFix : KotlinModCommandQuickFix<KtDestructuringDeclaration>() {
+    override fun getFamilyName(): String = KotlinBundle.message("inspection.positional.destructuring.migration.fix")
+
+    override fun applyFix(
+        project: Project,
+        element: KtDestructuringDeclaration,
+        updater: ModPsiUpdater
+    ) {
+        convertDestructuringToPositionalForm(element)
     }
 }
 

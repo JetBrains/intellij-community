@@ -1,4 +1,5 @@
 // "Change to 'return@foo'" "true"
+// K2_ERROR: Return type mismatch: expected 'Unit', actual 'Int'.
 inline fun foo(f: (Int) -> Int) {}
 
 fun test() {

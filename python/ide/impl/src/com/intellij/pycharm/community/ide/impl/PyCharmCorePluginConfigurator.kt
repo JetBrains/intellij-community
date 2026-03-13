@@ -118,11 +118,6 @@ internal class PyCharmCorePluginConfigurator : ApplicationInitializedListener {
       }
     }
 
-    ConfigurableGroupEP.find("Jupyter Settings")?.apply {
-      parentId = "root"
-      weight = 900
-    }
-
     ConfigurableGroupEP.find("project")?.apply {
       weight = 800
     }

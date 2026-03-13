@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.json
 
-import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.platform.pluginGraph.PluginGraph
 import kotlinx.serialization.Serializable
 import org.jetbrains.intellij.build.productLayout.ContentModule
 import org.jetbrains.intellij.build.productLayout.ModuleSet
 import org.jetbrains.intellij.build.productLayout.tooling.ModuleSetMetadata
 import org.jetbrains.intellij.build.productLayout.traversal.collectModuleSetModuleNames
+import tools.jackson.core.JsonGenerator
 
 @Serializable
 internal data class ModuleSetEntry(
@@ -108,7 +108,7 @@ internal fun writeDuplicateAnalysis(
     .sortedBy { it.key }
     .map { (moduleName, setNames) -> ModuleDuplicate(moduleName, setNames.sorted()) }
 
-  gen.writeFieldName("modulesInMultipleSets")
+  gen.writeName("modulesInMultipleSets")
   gen.writeRawValue(kotlinxJson.encodeToString(modulesInMultipleSets))
 
   // Set overlap analysis (using cache for O(1) lookups)
@@ -141,6 +141,6 @@ internal fun writeDuplicateAnalysis(
     }
   }
 
-  gen.writeFieldName("setOverlapAnalysis")
+  gen.writeName("setOverlapAnalysis")
   gen.writeRawValue(kotlinxJson.encodeToString(setOverlapAnalysis))
 }

@@ -6,6 +6,7 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.polySymbols.PolyContextKind
@@ -24,7 +25,18 @@ import com.intellij.polySymbols.query.PolySymbolNameConversionRulesProvider
 import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import com.intellij.polySymbols.webTypes.impl.WebTypesJsonContributionAdapter
 import com.intellij.polySymbols.webTypes.impl.WebTypesJsonContributionAdapter.Companion.wrap
-import com.intellij.polySymbols.webTypes.json.*
+import com.intellij.polySymbols.webTypes.json.ContextsConfig
+import com.intellij.polySymbols.webTypes.json.Contributions
+import com.intellij.polySymbols.webTypes.json.FrameworkConfig
+import com.intellij.polySymbols.webTypes.json.GenericContributionsHost
+import com.intellij.polySymbols.webTypes.json.SourceBase
+import com.intellij.polySymbols.webTypes.json.WebTypes
+import com.intellij.polySymbols.webTypes.json.buildNameConverters
+import com.intellij.polySymbols.webTypes.json.descriptionMarkupWithLegacy
+import com.intellij.polySymbols.webTypes.json.evaluate
+import com.intellij.polySymbols.webTypes.json.getAllContributions
+import com.intellij.polySymbols.webTypes.json.mergeConverters
+import com.intellij.polySymbols.webTypes.json.wrap
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.ui.EmptyIcon
@@ -221,6 +233,9 @@ private class WebTypesSymbolNameConversionRulesProvider(
     return nameConversionRulesCache.value[framework] ?: PolySymbolNameConversionRules.empty()
   }
 
+  override val modificationTracker: ModificationTracker
+    get() = scope.modificationTracker
+
   override fun createPointer(): Pointer<out PolySymbolNameConversionRulesProvider> {
     val framework = framework
     val scopePtr = scope.createPointer()
@@ -234,8 +249,6 @@ private class WebTypesSymbolNameConversionRulesProvider(
       }
     }
   }
-
-  override fun getModificationCount(): Long = scope.modificationCount
 }
 
 private val EOL_PATTERN: Regex = Regex("\n|\r\n")

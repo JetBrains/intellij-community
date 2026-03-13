@@ -84,9 +84,6 @@
   </extensions>
 
   <extensionPoints>
-    <extensionPoint
-      interface="com.intellij.searchEverywhereMl.features.SearchEverywhereStateFeaturesProvider"
-      dynamic="true" name="searchEverywhereStateFeaturesProvider"/>
     <extensionPoint qualifiedName="com.intellij.searchEverywhereMl.textEmbeddingProvider"
                     interface="com.intellij.searchEverywhereMl.TextEmbeddingProvider"
                     dynamic="true"/>

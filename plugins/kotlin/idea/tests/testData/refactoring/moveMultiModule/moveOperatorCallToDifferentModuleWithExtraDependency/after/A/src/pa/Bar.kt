@@ -1,0 +1,3 @@
+package pa
+
+class Bar

@@ -1,0 +1,8 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.jackson.annotations"/>
+    <module name="intellij.libraries.jackson3"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

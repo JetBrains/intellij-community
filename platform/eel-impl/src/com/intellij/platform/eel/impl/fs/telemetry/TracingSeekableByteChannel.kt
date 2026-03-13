@@ -4,7 +4,11 @@ package com.intellij.platform.eel.impl.fs.telemetry
 import java.lang.reflect.Method
 import java.nio.ByteBuffer
 import java.nio.MappedByteBuffer
-import java.nio.channels.*
+import java.nio.channels.FileChannel
+import java.nio.channels.FileLock
+import java.nio.channels.ReadableByteChannel
+import java.nio.channels.SeekableByteChannel
+import java.nio.channels.WritableByteChannel
 import java.util.concurrent.ConcurrentHashMap
 
 internal fun SeekableByteChannel.traced(spanNamePrefix: String): SeekableByteChannel =

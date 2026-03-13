@@ -31,24 +31,38 @@ jvm_library(
   resources = [":tests_test_resources"],
   deps = [
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/diff-api:diff",
+    "//platform/diff-api:diff_test_lib",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/platform-api:ide",
+    "//platform/platform-api:ide_test_lib",
     "//platform/platform-impl:ide-impl",
     "//platform/util/diff",
+    "//platform/util/diff:diff_test_lib",
     "//platform/diff-impl",
+    "//platform/diff-impl:diff-impl_test_lib",
     "//libraries/mockito",
+    "//libraries/mockito:mockito_test_lib",
     "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
     "//platform/editor-ui-ex:editor-ex",
+    "//platform/editor-ui-ex:editor-ex_test_lib",
     "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "@lib//:kotlin-test",
     "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
   ],
-  runtime_deps = [":tests"]
+  runtime_deps = [
+    ":tests",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.platform.diff.tests` end
 

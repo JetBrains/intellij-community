@@ -1,4 +1,5 @@
 // "Add type 'Int' to parameter 'bar'" "true"
+// K2_ERROR: An explicit type is required on a value parameter.
 
 class Foo(val bar = 10<caret>)
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddTypeAnnotationToValueParameterFix

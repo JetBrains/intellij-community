@@ -11,6 +11,8 @@
 // K2_ACTIONS_LIST: Create function 'Foo'
 // K2_ACTIONS_LIST: Enable a trailing comma by default in the formatter
 // K2_ACTIONS_LIST: Move lambda argument into parentheses
+// K2_ERROR: Cannot infer type for type parameter 'T'. Specify it explicitly.
+// K2_ERROR: Unresolved reference 'Foo'.
 fun <T> run(f: () -> T) = f()
 
 fun test() {

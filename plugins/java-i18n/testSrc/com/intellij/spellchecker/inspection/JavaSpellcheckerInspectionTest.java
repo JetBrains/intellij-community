@@ -1,14 +1,13 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.inspection;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.grazie.spellchecker.inspection.SpellcheckerInspectionTestCase;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaSpellcheckerInspectionTest extends LightJavaCodeInsightFixtureTestCase {
@@ -63,7 +62,7 @@ public class JavaSpellcheckerInspectionTest extends LightJavaCodeInsightFixtureT
   private void doTest(boolean inDumbMode) {
     myFixture.enableInspections(SpellcheckerInspectionTestCase.getInspectionTools());
     if (inDumbMode) {
-      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).mustWaitForSmartMode(false, getTestRootDisposable());
+      CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, getTestRootDisposable());
       DumbModeTestUtils.runInDumbModeSynchronously(getProject(),
                                                    () -> myFixture.testHighlighting(false, false, true, getTestName(false) + ".java"));
     } else {

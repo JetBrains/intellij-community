@@ -6,7 +6,12 @@ import com.intellij.ide.RecentProjectsManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
-import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.*
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.CloneableProjectItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectsGroupItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProviderRecentProjectItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectTreeItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RootItem
 
 /**
  * @author Konstantin Bulenkov

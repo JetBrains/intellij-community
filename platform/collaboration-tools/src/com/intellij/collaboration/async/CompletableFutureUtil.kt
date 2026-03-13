@@ -14,7 +14,11 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.*
+import java.util.concurrent.CancellationException
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionException
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BiFunction
 import java.util.function.Supplier

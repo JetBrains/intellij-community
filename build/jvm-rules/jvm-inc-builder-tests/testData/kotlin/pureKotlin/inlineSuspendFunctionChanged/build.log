@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_inlineSuspendFunctionChanged-a.kotlin_module
+  inline/InlineKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/inlineSuspendFunctionChanged/a/inline.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_inlineSuspendFunctionChanged-a.kotlin_module
+  inline/UseInlineKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/inlineSuspendFunctionChanged/a/useInline.kt
+End of files
+------------------------------------------
+Exit code: OK

@@ -4,7 +4,7 @@ package com.intellij.execution.impl.statistics;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector.RunConfigurationUtilValidator;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
+import com.jetbrains.fus.reporting.api.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.openapi.Disposable;

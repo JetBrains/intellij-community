@@ -19,8 +19,6 @@ object KotlinGradleFUSCollector : CounterUsagesCollector() {
     private val GROUP = EventLogGroup(
         "kotlin.gradle.performance",
         BASE_FUS_VERSION + StringMetrics.VERSION + BooleanMetrics.VERSION + NumericalMetrics.VERSION,
-        recorder = "FUS",
-        description = "Kotlin build performance statistics collected from Kotlin Gradle plugin"
     )
 
     private fun listOfAllMetrics(): Array<Any> {
@@ -183,4 +181,3 @@ enum class GradleStatisticsEventGroups {
     UseScenarios,
     BuildReports
 }
-

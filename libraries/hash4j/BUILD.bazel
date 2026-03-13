@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-hash4j-hash4j"],
   runtime_deps = ["@lib//:libraries-hash4j-hash4j"]
 )
+
+jvm_library(
+  name = "hash4j_test_lib",
+  module_name = "intellij.libraries.hash4j",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-hash4j-hash4j"],
+  runtime_deps = [":hash4j"]
+)
 ### auto-generated section `build intellij.libraries.hash4j` end

@@ -21,6 +21,7 @@ fun reportMissingLicenses(collector: SoftAssertions, project: JpsProject, licens
       && it.name != "intellij.platform.util.immutableKeyValueStore.benchmark"
       && it.name != "intellij.libraries.mockito"
       && !it.name.contains("integrationTests", ignoreCase = true)
+      && !it.name.startsWith("intellij.codeowners")
     }
     .forEach { module ->
       val enumerator = JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)

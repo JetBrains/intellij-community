@@ -1,4 +1,5 @@
 // "Add parameter to function 'baz'" "true"
+// K2_ERROR: Too many arguments for 'suspend fun baz(): Unit'.
 suspend fun bar(): Int = 42
 
 suspend fun baz(function: suspend () -> Int) {}

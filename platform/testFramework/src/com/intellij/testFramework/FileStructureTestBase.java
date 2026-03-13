@@ -59,7 +59,7 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
   
   protected void checkTree(@Nullable String filter, boolean expandAll) {
     configureDefault();
-    myPopupFixture.update();
+    myPopupFixture.updateAndSelectCurrent();
     if (filter != null) {
       setSearchFilter(filter);
     }
@@ -71,7 +71,7 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
 
   protected void setSearchFilter(@NotNull String filter) {
     myPopupFixture.getPopup().setSearchFilterForTests(filter);
-    PlatformTestUtil.waitForPromise(myPopupFixture.getPopup().rebuildAndUpdate());
+    myPopupFixture.update();
     myPopupFixture.getSpeedSearch().findAndSelectElement(filter);
   }
 

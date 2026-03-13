@@ -7,4 +7,18 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   exports = ["@lib//:libraries-dokka-jetbrains-dokka-analysis-kotlin-descriptors-provided"]
 )
+
+jvm_library(
+  name = "dokka_test_lib",
+  module_name = "intellij.libraries.dokka",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:libraries-dokka-jetbrains-dokka-analysis-kotlin-descriptors-provided"],
+  runtime_deps = [
+    ":dokka",
+    "@lib//:libraries-dokka-jetbrains-dokka-cli-provided",
+    "@lib//:libraries-dokka-jetbrains-dokka-javadoc-plugin-provided",
+    "@lib//:libraries-dokka-jetbrains-dokka-analysis-kotlin-descriptors-provided",
+  ]
+)
 ### auto-generated section `build intellij.libraries.dokka` end

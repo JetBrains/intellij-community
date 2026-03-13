@@ -177,6 +177,12 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
            : null;
   }
 
+  @Override
+  public @Nullable PyCallableParameterVariadicType getParametersType(@NotNull TypeEvalContext context) {
+    List<PyCallableParameter> parameters = getParameters(context);
+    return parameters != null ? new PyCallableParameterListTypeImpl(parameters) : null;
+  }
+
   public boolean isTyped() {
     return myTyped;
   }

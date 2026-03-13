@@ -32,12 +32,12 @@ data class ScriptEvaluationConfigurationEntity(val data: ByteArray) {
     override fun hashCode(): Int = data.contentHashCode()
 }
 
-data class ScriptCompilationConfigurationEntity(val data: ByteArray) {
+data class ScriptCompilationConfigurationData(val data: ByteArray) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as ScriptCompilationConfigurationEntity
+        other as ScriptCompilationConfigurationData
 
         return data.contentEquals(other.data)
     }

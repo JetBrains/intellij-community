@@ -91,7 +91,7 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
     myModule.setText(ExecutionBundle.message("use.classpath.of.module"));
     myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent());
 
-    myCommonProgramParameters = new CommonJavaParametersPanel();
+    myCommonProgramParameters = new CommonJavaParametersPanel(project);
     myCommonProgramParameters.setModuleContext(myModuleSelector.getModule());
     myModule.getComponent().addActionListener(new ActionListener() {
       @Override
@@ -99,7 +99,7 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
         myCommonProgramParameters.setModuleContext(myModuleSelector.getModule());
       }
     });
-    myJrePathEditor = new JrePathEditor(DefaultJreSelector.projectSdk(project));
+    myJrePathEditor = new JrePathEditor(DefaultJreSelector.projectSdk(project), project);
 
     myIncludeProvidedDeps = new LabeledComponent<>();
     myIncludeProvidedDeps.setLabelLocation(BorderLayout.WEST);

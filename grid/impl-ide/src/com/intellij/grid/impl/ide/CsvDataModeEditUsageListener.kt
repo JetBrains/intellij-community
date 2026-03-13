@@ -11,7 +11,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 
-class CsvDataModeEditUsageListener : AnActionListener {
+internal class CsvDataModeEditUsageListener : AnActionListener {
   override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
     if (isActionInCsvFileTableMode(event) && (action is GridEditAction || action is EditorAction)) {
       val project = event.project ?: return

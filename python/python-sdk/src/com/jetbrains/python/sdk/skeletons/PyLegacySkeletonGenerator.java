@@ -47,19 +47,6 @@ public class PyLegacySkeletonGenerator extends PySkeletonGenerator {
     return builder;
   }
 
-  /**
-   * @param ensureSuccess throw {@link InvalidSdkException} containing additional diagnostic on process non-zero exit code.
-   *                      You might want to disable it for commands where non-zero exit code is possible for situations other
-   *                      than misconfigured interpreter or execution error in order to inspect the output manually.
-   */
-  protected @NotNull ProcessOutput runProcess(@NotNull Builder builder, boolean ensureSuccess) throws InvalidSdkException {
-    ProcessOutput output = builder.runProcess();
-    if (ensureSuccess && output.getExitCode() != 0) {
-      throw new InvalidSdkException(formatGeneratorFailureMessage(output));
-    }
-    return output;
-  }
-
   // [targets-api] this should be left as-is because it deals with non-structured `commandLine`
   protected @NotNull ProcessOutput getProcessOutput(@Nullable String homePath,
                                                     String @NotNull [] commandLine,

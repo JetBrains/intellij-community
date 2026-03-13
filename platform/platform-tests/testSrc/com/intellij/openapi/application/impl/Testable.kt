@@ -16,7 +16,7 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.impl.LaterInvocatorTest.flushSwingQueue
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.Condition

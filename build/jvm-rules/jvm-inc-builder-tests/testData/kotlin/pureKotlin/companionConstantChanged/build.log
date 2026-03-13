@@ -1,0 +1,26 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_companionConstantChanged-a.kotlin_module
+  test/A$CompanionObject.class
+  test/A.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/companionConstantChanged/a/A.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_companionConstantChanged-a.kotlin_module
+  foo/B$Companion.class
+  foo/B.class
+  foo/C$Companion.class
+  foo/C.class
+  foo/CompanionUsageKt.class
+  foo/ConstantUsageKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/companionConstantChanged/a/B.kt
+  kotlin/pureKotlin/companionConstantChanged/a/C.kt
+  kotlin/pureKotlin/companionConstantChanged/a/companionUsage.kt
+  kotlin/pureKotlin/companionConstantChanged/a/constantUsage.kt
+End of files
+------------------------------------------
+Exit code: OK

@@ -33,15 +33,24 @@ jvm_library(
   associates = [":java-guiForms-compiler"],
   deps = [
     "//platform/util/jdom",
+    "//platform/util/jdom:jdom_test_lib",
     "//platform/forms_rt:java-guiForms-rt",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
     "//libraries/asm",
+    "//libraries/asm:asm_test_lib",
     "//libraries/jgoodies/forms",
+    "//libraries/jgoodies/forms:forms_test_lib",
     "//java/compiler/instrumentation-util",
+    "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "@lib//:jetbrains-annotations",
     "@lib//:junit4",
   ],
-  exports = ["//java/compiler/instrumentation-util"]
+  exports = [
+    "//java/compiler/instrumentation-util",
+    "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.java.guiForms.compiler` end
 

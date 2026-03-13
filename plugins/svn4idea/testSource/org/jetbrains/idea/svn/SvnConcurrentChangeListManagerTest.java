@@ -7,15 +7,18 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.vcs.DuringChangeListManagerUpdateTestScheme;
+import com.intellij.util.containers.ContainerUtil;
 import org.junit.Test;
 
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
-import static org.hamcrest.Matchers.isIn;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
   private DuringChangeListManagerUpdateTestScheme myScheme;
@@ -324,8 +327,12 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     final Collection<Change> changes = changeListManager.findChangeList(listName).getChanges();
     assertEquals(changeListManager.getChangeLists().toString(), changes.size(), files.length);
 
+    List<Path> expectedPaths = Arrays.stream(files).map(VirtualFile::toNioPath).toList();
     for (Change change : changes) {
-      assertThat(change.getAfterRevision().getFile().getVirtualFile(), isIn(files));
+      assertNotNull("afterRevision is null for " + change, change.getAfterRevision());
+      Path changePath = Path.of(change.getAfterRevision().getFile().getPath());
+      assertTrue("Change path " + changePath + " not found in " + expectedPaths,
+                 ContainerUtil.exists(expectedPaths, p -> p.equals(changePath)));
     }
   }
 

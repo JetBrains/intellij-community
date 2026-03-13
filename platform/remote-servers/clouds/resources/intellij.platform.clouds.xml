@@ -1,8 +1,15 @@
 <idea-plugin visibility="internal" package="com.intellij.platform.clouds">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.remoteServers"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.execution.dashboard"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <serviceViewContributor implementation="com.intellij.platform.clouds.impl.runtime.ui.DefaultRemoteServersServiceViewContributor"/>
   </extensions>

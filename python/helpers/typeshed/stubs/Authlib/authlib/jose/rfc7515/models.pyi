@@ -4,6 +4,7 @@ from typing_extensions import Self
 class JWSAlgorithm:
     name: str | None
     description: str | None
+    deprecated: bool
     algorithm_type: str
     algorithm_location: str
     def prepare_key(self, raw_data): ...

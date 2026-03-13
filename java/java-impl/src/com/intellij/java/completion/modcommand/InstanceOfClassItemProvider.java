@@ -4,6 +4,7 @@ package com.intellij.java.completion.modcommand;
 import com.intellij.codeInsight.completion.JavaInheritorsGetter;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcompletion.ModCompletionItem;
+import com.intellij.modcompletion.ModCompletionResult;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -22,7 +23,6 @@ import org.jetbrains.annotations.NotNullByDefault;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -31,7 +31,7 @@ final class InstanceOfClassItemProvider extends JavaModCompletionItemProvider {
   static final ElementPattern<PsiElement> AFTER_INSTANCEOF = psiElement().afterLeaf(JavaKeywords.INSTANCEOF);
 
   @Override
-  public void provideItems(CompletionContext context, Consumer<ModCompletionItem> sink) {
+  public void provideItems(CompletionContext context, ModCompletionResult sink) {
     if (!context.isSmart()) return;
     final PsiElement position = context.element();
     if (!AFTER_INSTANCEOF.accepts(position)) return;

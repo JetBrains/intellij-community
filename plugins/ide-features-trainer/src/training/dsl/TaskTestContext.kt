@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.dsl
 
 import com.intellij.ide.util.treeView.NodeRenderer
@@ -51,7 +51,7 @@ import javax.swing.tree.TreePath
 
 @LearningDsl
 class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
-  val defaultTimeout = Timeout.timeout(3, TimeUnit.SECONDS)
+  val defaultTimeout: Timeout = Timeout.timeout(3, TimeUnit.SECONDS)
 
   val robot: Robot get() = LearningUiUtil.robot
 
@@ -211,7 +211,7 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
         }
         JDialogFixture(robot, dialog)
       }
-      catch (timeoutError: WaitTimedOutError) {
+      catch (_: WaitTimedOutError) {
         throw ComponentLookupException("Timeout error for finding JDialog by title \"$title\" for ${timeout.duration()}")
       }
     }
@@ -350,7 +350,7 @@ private fun Component.findText(): String? {
     )
     return resultList.firstOrNull { it.isNotEmpty() }
   }
-  catch (ignored: ComponentLookupException) {
+  catch (_: ComponentLookupException) {
     return null
   }
 }
@@ -409,7 +409,7 @@ private fun findIdeFrame(project: Project, robot: Robot, timeout: Timeout): IdeF
     val ideFrame = robot.finder().find(matcher)
     IdeFrameFixture(robot, ideFrame)
   }
-  catch (timedOutError: WaitTimedOutError) {
+  catch (_: WaitTimedOutError) {
     throw ComponentLookupException("Unable to find IdeFrame in " + timeout.duration())
   }
 }

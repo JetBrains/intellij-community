@@ -4,7 +4,12 @@ package com.intellij.collaboration.ui.util
 import com.intellij.ui.ExpandedItemListCellRendererWrapper
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
-import java.awt.event.*
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.FocusEvent
+import java.awt.event.FocusListener
+import java.awt.event.MouseEvent
+import java.awt.event.MouseMotionAdapter
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 import javax.swing.event.ListDataEvent

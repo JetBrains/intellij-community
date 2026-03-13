@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.unwrap;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +70,7 @@ public class KotlinUnwrappers {
         @Override
         protected void doUnwrap(PsiElement element, Context context) throws IncorrectOperationException {
             KtIfExpression ifExpr = (KtIfExpression) element;
-            context.replace(ifExpr, new KtPsiFactory(ifExpr.getProject()).createIf(ifExpr.getCondition(), ifExpr.getThen(), null));
+            context.replace(ifExpr, ReadAction.computeBlocking(() -> new KtPsiFactory(ifExpr.getProject()).createIf(ifExpr.getCondition(), ifExpr.getThen(), null)));
         }
     }
 

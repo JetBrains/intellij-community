@@ -17,7 +17,7 @@ public final class PsiTreeAnchorizer extends TreeAnchorizer {
   @Override
   public @NotNull Object createAnchor(@NotNull Object element) {
     if (element instanceof PsiElement psi) {
-      return ReadAction.compute(() -> {
+      return ReadAction.computeBlocking(() -> {
         if (!psi.isValid()) return psi;
         return SmartPointerManager.getInstance(psi.getProject()).createSmartPsiElementPointer(psi);
       });
@@ -27,7 +27,7 @@ public final class PsiTreeAnchorizer extends TreeAnchorizer {
   @Override
   public @Nullable Object retrieveElement(final @NotNull Object pointer) {
     if (pointer instanceof SmartPsiElementPointer) {
-      return ReadAction.compute(() -> ((SmartPsiElementPointer<?>)pointer).getElement());
+      return ReadAction.computeBlocking(() -> ((SmartPsiElementPointer<?>)pointer).getElement());
     }
 
     return super.retrieveElement(pointer);

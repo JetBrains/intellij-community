@@ -18,7 +18,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import kotlin.time.Duration.Companion.minutes
 
-class GitShowVcsWidgetCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
+internal class GitShowVcsWidgetCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
     const val NAME = "gitShowBranchWidget"
     const val PREFIX = CMD_PREFIX + NAME

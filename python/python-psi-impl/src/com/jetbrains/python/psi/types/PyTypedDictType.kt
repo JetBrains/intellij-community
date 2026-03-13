@@ -15,62 +15,42 @@ import com.jetbrains.python.psi.PyKeyValueExpression
 import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.impl.PyBuiltinCache
+import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import org.jetbrains.annotations.ApiStatus
 import java.util.Objects
 
-class PyTypedDictType @JvmOverloads constructor(
-  private val name: String,
+class PyTypedDictType(
+  override val name: String,
   val fields: Map<String, FieldTypeAndTotality>,
-
   private val dictClass: PyClass,
-  private val definitionLevel: DefinitionLevel,
-  private val ancestors: List<PyTypedDictType>,
-  private val declaration: PyQualifiedNameOwner? = null,
-) :
-  PyClassTypeImpl(dictClass, definitionLevel != DefinitionLevel.INSTANCE) {
+  isDefinition: Boolean,
+  private val declaration: PyQualifiedNameOwner,
+) : PyClassTypeImpl(dictClass, isDefinition) {
   fun getElementType(key: String): PyType? {
     return fields[key]?.type
   }
 
   override fun getCallType(context: TypeEvalContext, callSite: PyCallSiteExpression): PyType? {
-    if (definitionLevel == DefinitionLevel.NEW_TYPE) {
-      return toInstance()
-    }
-
-    return null
+    return if (isDefinition) toInstance() else null
   }
 
-  override fun isDefinition(): Boolean {
-    return definitionLevel == DefinitionLevel.NEW_TYPE
-  }
-
-  override fun toInstance(): PyClassType {
-    return if (definitionLevel == DefinitionLevel.NEW_TYPE)
-      PyTypedDictType(name, fields, dictClass,
-                      DefinitionLevel.INSTANCE, ancestors,
-                      declaration)
+  override fun toInstance(): PyTypedDictType {
+    return if (isDefinition)
+      PyTypedDictType(name, fields, dictClass, false, declaration)
     else
       this
   }
 
-  override fun toClass(): PyClassType {
-    return if (definitionLevel == DefinitionLevel.INSTANCE)
-      PyTypedDictType(name, fields, dictClass,
-                      DefinitionLevel.NEW_TYPE, ancestors,
-                      declaration)
-    else
+  override fun toClass(): PyTypedDictType {
+    return if (isDefinition)
       this
+    else
+      PyTypedDictType(name, fields, dictClass, true, declaration)
   }
 
-  override fun getName(): String {
-    return name
-  }
+  override val isBuiltin: Boolean = false
 
-  override fun isBuiltin(): Boolean = false
-
-  override fun isCallable(): Boolean {
-    return definitionLevel != DefinitionLevel.INSTANCE
-  }
+  override fun isCallable(): Boolean = isDefinition
 
   override fun getParameters(context: TypeEvalContext): List<PyCallableParameter>? {
     return if (isCallable)
@@ -87,32 +67,26 @@ class PyTypedDictType @JvmOverloads constructor(
     else null
   }
 
-  override fun toString(): String {
-    return "PyTypedDictType: $name"
+  override fun getParametersType(context: TypeEvalContext): PyCallableParameterVariadicType? {
+    return getParameters(context)?.let { PyCallableParameterListTypeImpl(it) }
   }
+
+  override fun toString(): String = "PyTypedDictType: $name"
 
   override fun equals(other: Any?): Boolean {
     if (other === this) return true
     if (other == null || javaClass != other.javaClass) return false
+    if (!super.equals(other)) return false
 
-    val otherTypedDict = other as? PyTypedDictType ?: return false
-    return name == otherTypedDict.name
-           && fields == otherTypedDict.fields
-           && definitionLevel == otherTypedDict.definitionLevel
-           && ancestors == otherTypedDict.ancestors
-           && declaration == otherTypedDict.declaration
+    other as PyTypedDictType
+    return declaration == other.declaration
   }
 
   override fun hashCode(): Int {
-    return Objects.hash(super.hashCode(), name, fields, definitionLevel, ancestors, declaration)
+    return Objects.hash(super.hashCode(), declaration)
   }
 
-  enum class DefinitionLevel {
-    NEW_TYPE,
-    INSTANCE
-  }
-
-  override fun getDeclarationElement(): PyQualifiedNameOwner = declaration ?: super<PyClassTypeImpl>.getDeclarationElement()
+  override val declarationElement: PyQualifiedNameOwner = declaration
 
   /**
    * @isRequired is true - if value type is Required, false - if it is NotRequired, and null if it does not have any type specification
@@ -197,7 +171,7 @@ class PyTypedDictType @JvmOverloads constructor(
       result: TypeCheckingResult,
     ): Boolean {
       if (actualExpression != null && isDictExpression(actualExpression, context)) {
-        val types = PyTypeUtil.toStream(expectedType).toList()
+        val types = expectedType.toStream().toList()
         for (subType in types) {
           if (subType is PyTypedDictType) {
             val res = if (types.size <= 1) result else TypeCheckingResult()
@@ -219,7 +193,7 @@ class PyTypedDictType @JvmOverloads constructor(
 
     private fun strictUnionMatch(expected: PyType?, actual: PyType?, context: TypeEvalContext): Boolean {
       if (!PyUnionType.isStrictSemanticsEnabled()) {
-        return PyTypeUtil.toStream(actual).allMatch { type -> PyTypeChecker.match(expected, type, context) }
+        return actual.toStream().allMatch { type -> PyTypeChecker.match(expected, type, context) }
       }
       return PyTypeChecker.match(expected, actual, context)
     }
@@ -345,7 +319,7 @@ class PyTypedDictType @JvmOverloads constructor(
     val hasErrors: Boolean get() = valueTypeErrors.isNotEmpty() || missingKeys.isNotEmpty() || extraKeys.isNotEmpty()
   }
 
-  override fun <T : Any?> acceptTypeVisitor(visitor: PyTypeVisitor<T?>): T? {
+  override fun <T> acceptTypeVisitor(visitor: PyTypeVisitor<T>): T? {
     if (visitor is PyTypeVisitorExt) {
       return visitor.visitPyTypedDictType(this)
     }

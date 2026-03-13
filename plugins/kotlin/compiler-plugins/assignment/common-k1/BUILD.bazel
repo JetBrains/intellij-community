@@ -44,6 +44,33 @@ jvm_library(
     "//plugins/kotlin/base/fe10/analysis",
     "//platform/lang-impl",
     "//plugins/kotlin/base/scripting/scripting.k1",
+    "//plugins/kotlin/base/fe10/project-structure",
+  ]
+)
+
+jvm_library(
+  name = "kotlin-compiler-plugins-assignment-common-k1_test_lib",
+  module_name = "kotlin.compiler-plugins.assignment.common.k1",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-compiler-plugins-assignment-common-k1",
+  runtime_deps = [
+    ":kotlin-compiler-plugins-assignment-common-k1",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/analysis:analysis_test_lib",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//plugins/kotlin/base/fe10/code-insight:code-insight_test_lib",
+    "//plugins/kotlin/idea:idea_test_lib",
+    "//plugins/kotlin/code-insight/api:api_test_lib",
+    "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//plugins/kotlin/base/scripting/scripting.k1:scripting.k1_test_lib",
+    "//plugins/kotlin/base/fe10/project-structure:project-structure_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.compiler-plugins.assignment.common.k1` end

@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:jbr-api"],
   runtime_deps = ["@lib//:jbr-api"]
 )
+
+jvm_library(
+  name = "jbr_test_lib",
+  module_name = "intellij.libraries.jbr",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:jbr-api"],
+  runtime_deps = [":jbr"]
+)
 ### auto-generated section `build intellij.libraries.jbr` end

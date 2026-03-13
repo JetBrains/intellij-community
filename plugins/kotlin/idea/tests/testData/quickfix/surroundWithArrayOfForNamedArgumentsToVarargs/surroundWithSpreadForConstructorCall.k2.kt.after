@@ -1,4 +1,7 @@
 // "Surround with arrayOf(...)" "true"
+// K2_ERROR: Argument type mismatch: actual type is 'Int', but 'Array<out uninferred T (of class Foo<T>)>' was expected.
+// K2_ERROR: Assigning single elements to varargs in named form is prohibited.
+// K2_ERROR: Cannot infer type for type parameter 'T'. Specify it explicitly.
 
 class Foo<T>(vararg val p: T)
 

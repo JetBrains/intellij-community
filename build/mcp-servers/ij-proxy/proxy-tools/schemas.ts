@@ -183,7 +183,7 @@ export function createApplyPatchSchema(): ToolInputSchema {
     {
       input: {
         type: 'string',
-        description: 'Patch text in the apply_patch format, including Begin/End markers.'
+        description: 'Patch text in the apply_patch format or unified git diff format.'
       }
     },
     ['input']

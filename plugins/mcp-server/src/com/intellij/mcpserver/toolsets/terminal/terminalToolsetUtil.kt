@@ -29,10 +29,10 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration
 
-class CommandSession(val sessionId: String, val console: TerminalExecutionConsole)
-val MCP_TERMINAL_KEY: Key<CommandSession> = Key.create("MCP_TERMINAL_KEY")
+internal class CommandSession(val sessionId: String, val console: TerminalExecutionConsole)
+internal val MCP_TERMINAL_KEY: Key<CommandSession> = Key.create("MCP_TERMINAL_KEY")
 
-suspend fun executeShellCommand(
+internal suspend fun executeShellCommand(
   window: ToolWindow?,
   project: Project,
   command: String,

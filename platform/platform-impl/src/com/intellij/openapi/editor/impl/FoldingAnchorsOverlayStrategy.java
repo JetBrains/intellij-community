@@ -1,6 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -14,10 +15,12 @@ import java.util.List;
 @ApiStatus.Internal
 public final class FoldingAnchorsOverlayStrategy {
   private final EditorImpl myEditor;
+  private final Document myDocument;
 
   @VisibleForTesting
   public FoldingAnchorsOverlayStrategy(EditorImpl editor) {
     myEditor = editor;
+    myDocument = editor.getUiDocument();
   }
 
   @NotNull
@@ -36,8 +39,8 @@ public final class FoldingAnchorsOverlayStrategy {
         if (endOffset < firstVisibleOffset) continue;
 
         boolean singleLine = false;
-        int startLogicalLine = myEditor.getDocument().getLineNumber(startOffset);
-        int endLogicalLine = myEditor.getDocument().getLineNumber(endOffset);
+        int startLogicalLine = myDocument.getLineNumber(startOffset);
+        int endLogicalLine = myDocument.getLineNumber(endOffset);
         if (startLogicalLine == endLogicalLine) {
           singleLine = true;
           if (!region.isGutterMarkEnabledForSingleLine() &&

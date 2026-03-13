@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.core.script.k2.asEntity
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.sdkId
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.toVirtualFileUrl
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionsModificationTracker
+import org.jetbrains.kotlin.idea.core.script.k2.getOrCreateScriptConfigurationId
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
@@ -162,12 +163,14 @@ class GradleKotlinScriptEntityProvider(override val project: Project) : KotlinSc
                 })
 
             if (indexSourceRootsEagerly() || AdvancedSettings.getBoolean("gradle.attach.scripts.dependencies.sources")) {
-                addAll(extractDependenciesWithSources(
-                    storage = storage,
-                    scriptUrl = scriptUrl,
-                    classes = classes,
-                    sources = sources
-                ))
+                addAll(
+                    extractDependenciesWithSources(
+                        storage = storage,
+                        scriptUrl = scriptUrl,
+                        classes = classes,
+                        sources = sources
+                    )
+                )
 
                 groupSourcesByParent(sources)
 
@@ -195,7 +198,10 @@ class GradleKotlinScriptEntityProvider(override val project: Project) : KotlinSc
         storage addEntity KotlinScriptEntity(
             scriptUrl, dependencies, KotlinGradleScriptEntitySource
         ) {
-            this.configuration = configurationWrapper.configuration?.asEntity()
+            this.configurationId = configurationWrapper.configuration?.getOrCreateScriptConfigurationId(
+                storage,
+                KotlinGradleScriptEntitySource
+            )
             this.reports = configurationResult.reports.map(ScriptDiagnostic::map).toMutableList()
             this.sdkId = configurationWrapper.configuration?.sdkId
             this.relatedModuleIds = classpathModel?.let { getRelatedModules(storage, it) }.orEmpty().toMutableList()

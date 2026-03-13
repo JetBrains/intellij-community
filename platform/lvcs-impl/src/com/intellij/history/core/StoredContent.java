@@ -17,6 +17,8 @@ import java.io.IOException;
 public class StoredContent extends Content {
   private static final int UNAVAILABLE = 0;
 
+  public static final StoredContent UNAVAILABLE_CONTENT = new StoredContent(UNAVAILABLE);
+
   private int myContentId;
 
   public static StoredContent acquireContent(byte[] bytes) {

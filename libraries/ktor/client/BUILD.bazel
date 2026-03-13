@@ -38,4 +38,32 @@ jvm_library(
     "//libraries/kotlinx/coroutines/slf4j",
   ]
 )
+
+jvm_library(
+  name = "client_test_lib",
+  module_name = "intellij.libraries.ktor.client",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = [
+    "@lib//:ktor-client-core",
+    "@lib//:ktor-client-java",
+    "@lib//:libraries-ktor-client-ktor-client-encoding",
+    "@lib//:libraries-ktor-client-ktor-client-content-negotiation",
+    "@lib//:ktor-serialization-kotlinx-json",
+    "@lib//:kotlinx-serialization-json-io",
+    "@lib//:libraries-ktor-client-ktor-client-auth",
+    "@lib//:libraries-ktor-client-ktor-client-logging",
+    "//libraries/ktor/utils",
+    "//libraries/ktor/utils:utils_test_lib",
+    "//libraries/ktor/io",
+    "//libraries/ktor/io:io_test_lib",
+  ],
+  runtime_deps = [
+    ":client",
+    "//libraries/ktor/utils:utils_test_lib",
+    "//libraries/ktor/io:io_test_lib",
+    "//libraries/kotlinx/coroutines/slf4j:slf4j_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.libraries.ktor.client` end

@@ -1,11 +1,19 @@
-<idea-plugin package="com.intellij.platform.vcs.impl.frontend">
+<idea-plugin visibility="internal">
   <projectListeners>
   </projectListeners>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.vcs.impl.shared"/>
     <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.recentFiles.frontend"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <ui.content.impl.toolWindowContentPostprocessor implementation="com.intellij.platform.vcs.impl.frontend.toolwindow.VcsToolWindowContentReplacer"/>
@@ -18,7 +26,7 @@
     <recentFiles.excluder implementation="com.intellij.platform.vcs.impl.frontend.diff.DiffRecentFilesExcluder"/>
   </extensions>
 
-  <actions>
+  <actions resource-bundle="messages.ActionsBundle">
     <group id="Frontend.Shelve.KeymapGroup" searchable="false">
       <add-to-group group-id="Vcs.KeymapGroup" anchor="first"/>
     </group>
@@ -70,7 +78,7 @@
   </actions>
 
   <extensionPoints>
-    <extensionPoint name="frontendChangesViewContentProvider"
+    <extensionPoint qualifiedName="com.intellij.frontendChangesViewContentProvider"
                     interface="com.intellij.platform.vcs.impl.frontend.changes.FrontendChangesViewContentProvider"
                     dynamic="true">
     </extensionPoint>

@@ -11,20 +11,31 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
-import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeUtil.*;
+import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeUtil.BitString;
+import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeUtil.clearBit;
+import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeUtil.extractBits;
+import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeUtil.gcd;
+import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeUtil.isSet;
+import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeUtil.remainder;
+import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeUtil.rotateRemainders;
+import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeUtil.setBit;
 
 /**
  * An immutable set of long values optimized for small number of ranges.
  * Currently, all math are performed according to JVM operations on int or long numbers.
  * In particular, overflows are processed in JVM-specific way,
  * so it might be not well-suitable for non-JVM languages.
- *
- * @author Tagir Valeev
  */
 public abstract sealed class LongRangeSet {
 

@@ -9,7 +9,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
@@ -30,24 +30,23 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 
-public final class ShortenToStaticImportProcessor implements TemplateOptionalProcessor, DumbAware {
+public final class ShortenToStaticImportProcessor implements ModCommandAwareTemplateOptionalProcessor, DumbAware {
 
   private static final List<StaticImporter> IMPORTERS = asList(new SingleMemberStaticImporter(), new OnDemandStaticImporter());
-  
+
   @Override
-  public void processText(Project project, Template template, Document document, RangeMarker templateRange, Editor editor) {
+  public void processText(@NotNull Template template, @NotNull ModNavigator navigator, @NotNull RangeMarker templateRange) {
     if (!template.getValue(Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE)) {
       return;
     }
+    Document document = navigator.getDocument();
+    Project project = navigator.getProject();
 
     PsiDocumentManager.getInstance(project).commitDocument(document);
-    final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
-    if (file == null) {
-       return;
-    }
+    final PsiFile file = PsiUtilBase.getPsiFileInModNavigator(navigator);
 
     DumbService.getInstance(project).withAlternativeResolveEnabled(
-      () -> doStaticImport(project, editor, file, getStaticImportTargets(templateRange, file)));
+      () -> doStaticImport(project, file, getStaticImportTargets(templateRange, file)));
   }
 
   private static @NotNull List<Pair<PsiElement, StaticImporter>> getStaticImportTargets(RangeMarker templateRange,
@@ -69,13 +68,12 @@ public final class ShortenToStaticImportProcessor implements TemplateOptionalPro
   }
 
   private static void doStaticImport(Project project,
-                                     Editor editor,
                                      PsiFile file,
                                      List<? extends Pair<PsiElement, StaticImporter>> staticImportTargets) {
     Collections.reverse(staticImportTargets);
     for (Pair<PsiElement, StaticImporter> pair : staticImportTargets) {
       if (pair.first.isValid()) {
-        pair.second.perform(project, file, editor, pair.first);
+        pair.second.perform(project, file, pair.first);
       }
     }
   }
@@ -108,7 +106,7 @@ public final class ShortenToStaticImportProcessor implements TemplateOptionalPro
   
   private interface StaticImporter {
     boolean canPerform(@NotNull PsiElement element);
-    void perform(Project project, PsiFile file, Editor editor, PsiElement element);
+    void perform(Project project, PsiFile file, PsiElement element);
   }
   
   private static class SingleMemberStaticImporter implements StaticImporter {
@@ -118,7 +116,7 @@ public final class ShortenToStaticImportProcessor implements TemplateOptionalPro
     }
 
     @Override
-    public void perform(Project project, PsiFile file, Editor editor, PsiElement element) {
+    public void perform(Project project, PsiFile file, PsiElement element) {
       AddSingleMemberStaticImportAction.invoke(file, element);
     }
   }
@@ -130,8 +128,8 @@ public final class ShortenToStaticImportProcessor implements TemplateOptionalPro
     }
 
     @Override
-    public void perform(Project project, PsiFile file, Editor editor, PsiElement element) {
-      AddOnDemandStaticImportAction.invoke(project, file, editor, element);
+    public void perform(Project project, PsiFile file, PsiElement element) {
+      AddOnDemandStaticImportAction.invoke(project, file, null, element);
     }
   }
 }

@@ -215,14 +215,16 @@ class MavenProjectReader(
       val lang = findChildValueByPath(each, "lang") ?: MavenSource.JAVA_LANG
       val includes = findChildrenValuesByPath(each, "includes", "include")
       val excludes = findChildrenValuesByPath(each, "excludes", "exclude")
+      val module = findChildValueByPath(each, "module")
       val filtered = "true" == findChildValueByPath(each, "filtering")
       val enabled = "true" == findChildValueByPath(each, "enabled")
-      val directory = findChildValueByPath(each, "directory") ?: "src/${scope}/${lang}"
+      val directory = findChildValueByPath(each, "directory")
       result.add(MavenSource.fromSourceTag(
         projectFile.toNioPath(),
         directory,
         includes,
         excludes,
+        module,
         scope,
         lang,
         targetPath,

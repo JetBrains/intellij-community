@@ -211,16 +211,15 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
     // Find all directories and files names similar to the last component in patternComponents
     List<MatchResult> matchingNames = new ArrayList<>();
-    final String fullPattern = String.join("", patternComponents);
-    final MinusculeMatcher fullMatcher = buildPatternMatcher(fullPattern, true);
-    String lastPatternComponent = patternComponents.get(patternComponents.size() - 1);
-    MinusculeMatcher matcher = buildPatternMatcher(lastPatternComponent, true);
+    final var fullPattern = String.join("", patternComponents);
+    final var fullMatcher = buildPatternMatcher(fullPattern, true);
+    final var lastPatternComponent = patternComponents.get(patternComponents.size() - 1);
     var nameMatchingCheck = new ProcessorWithThrottledCancellationCheck<>(
       (CharSequence fileNameCharSeq) -> {
         indicator.checkCanceled();
         if (fileNameCharSeq != null) {
           String fileName = fileNameCharSeq.toString();
-          MatchResult result = matchesWithFullMatcherCheck(base, fullMatcher, parameters.getCompletePattern(), matcher, fileName);
+          MatchResult result = matches(base, parameters.getCompletePattern(), fullMatcher, fileName);
           if (result != null) {
             matchingNames.add(result);
           }
@@ -599,27 +598,20 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   private final class SuffixMatches {
     final String patternSuffix;
     final MinusculeMatcher fullMatcher;
-    final MinusculeMatcher matcher;
     final List<MatchResult> matchingNames = new ArrayList<>();
     final ProgressIndicator indicator;
 
     SuffixMatches(@NotNull String pattern, int from, @NotNull ProgressIndicator indicator) {
       patternSuffix = pattern.substring(from);
-      boolean preferStartMatches = from == 0 && !patternSuffix.startsWith("*");
-      String matchPattern = (from > 0 ? " " : "*") + patternSuffix;
+      final boolean preferStartMatches = from == 0 && !patternSuffix.startsWith("*");
+      final var matchPattern = (from > 0 ? " " : "*") + patternSuffix;
 
-      NameUtil.MatcherBuilder builder = NameUtil.buildMatcher(matchPattern).withMatchingMode(MatchingMode.IGNORE_CASE);
+      final var fullBuilder = NameUtil.buildMatcher(matchPattern).withMatchingMode(MatchingMode.IGNORE_CASE);
       if (preferStartMatches) {
-        builder.preferringStartMatches();
-      }
-
-      final var fullBuilder = NameUtil.buildMatcher(patternSuffix).withMatchingMode(MatchingMode.IGNORE_CASE);
-      if (preferStartMatches) {
-        builder.preferringStartMatches();
+        fullBuilder.preferringStartMatches();
       }
 
       this.fullMatcher = fullBuilder.build();
-      this.matcher = builder.build();
       this.indicator = indicator;
     }
 
@@ -632,7 +624,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
 
     boolean matchName(@NotNull ChooseByNameViewModel base, String name) {
-      MatchResult result = matchesWithFullMatcherCheck(base, fullMatcher, patternSuffix, matcher, name);
+      MatchResult result = matches(base, patternSuffix, fullMatcher, name);
       if (result != null) {
         matchingNames.add(result);
         return true;
@@ -649,7 +641,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       if (patternSuffix.length() <= 3 && !dirMatcher.dirPattern.isEmpty()) {
         // just enumerate over files
         // otherwise there are too many names matching the remaining few letters, and querying index for all of them with a very constrained scope is expensive
-        Set<String> existingNames = dirMatcher.findFileNamesMatchingIfCheap(patternSuffix.charAt(0), matcher);
+        Set<String> existingNames = dirMatcher.findFileNamesMatchingIfCheap(patternSuffix.charAt(0), fullMatcher);
         if (existingNames != null) {
           matchingNames = ContainerUtil.filter(matchingNames, mr -> existingNames.contains(mr.elementName));
         }

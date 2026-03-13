@@ -9,10 +9,9 @@ import com.intellij.util.system.OS
 import java.awt.Toolkit
 
 internal class ToolkitInfoCollector : ApplicationUsagesCollector() {
-
-  private val GROUP = EventLogGroup("toolkit.info", 2, "FUS", "Toolkit information")
-  private val selectedToolkit = GROUP.registerEvent("awt.toolkit.name", EventFields.String("value", listOf("WLToolkit", "XToolkit", "auto", "other", "not_set")), "The value of the awt.toolkit.name VM option")
-  private val effectiveToolkit = GROUP.registerEvent("awt.toolkit.effective", EventFields.String("value", listOf("WLToolkit", "XToolkit", "other")), "The effective toolkit used by the IDE")
+  private val GROUP = EventLogGroup("toolkit.info", 2)
+  private val selectedToolkit = GROUP.registerEvent("awt.toolkit.name", EventFields.String("value", listOf("WLToolkit", "XToolkit", "auto", "other", "not_set")))
+  private val effectiveToolkit = GROUP.registerEvent("awt.toolkit.effective", EventFields.String("value", listOf("WLToolkit", "XToolkit", "other")))
 
   override fun getMetrics(): Set<MetricEvent> {
     if (OS.CURRENT != OS.Linux) {

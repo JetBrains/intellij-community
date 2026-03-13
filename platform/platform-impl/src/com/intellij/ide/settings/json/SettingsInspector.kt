@@ -5,7 +5,13 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.client.ClientSessionsManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.ComponentCategorizer
+import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.serialization.MutableAccessor
 import com.intellij.util.xmlb.annotations.OptionTag

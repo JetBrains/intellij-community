@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  MyBean.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/changeGetterType/a/MyBean.java
+End of files
+Cleaning output files:
+  AppKt.class
+  META-INF/kotlin_withJava_javaUsedInKotlin_changeGetterType-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/changeGetterType/a/app.kt
+End of files
+------------------------------------------
+Exit code: ERROR

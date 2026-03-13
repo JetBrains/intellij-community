@@ -1,12 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing
 
+import com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction
+import com.intellij.idea.TestFor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPolyVariantReference
 import com.intellij.psi.PsiReference
 import com.intellij.psi.ResolveResult
 import com.jetbrains.python.fixture.PythonCommonTestCase
 import com.jetbrains.python.fixtures.PyTestCase
+import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.resolve.ImportedResolveResult
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -359,5 +362,28 @@ class PyTestFixtureResolvingTest : PyTestCase() {
 
   fun testNamedParameterTypes() {
     assertCorrectType(PARAMETRIZED_DIR, TEST_PARAMETER_TYPES, INT_STR_UNION)
+  }
+
+  @TestFor(issues = ["PY-56268"])
+  fun `test goto type declaration for fixture parameter`() {
+    myFixture.configureByText("test.py", """
+      import pytest
+
+
+      class A: pass
+      
+      
+      @pytest.fixture
+      def instance():
+          return A()
+      
+      
+      def test(inst<caret>ance):
+          assert instance
+      """)
+    val types = GotoTypeDeclarationAction.findSymbolTypes(myFixture.editor, myFixture.caretOffset)
+    assertNotNull("Go to Type Declaration should resolve the fixture parameter type", types)
+    assertEquals(1, types!!.size)
+    assertEquals((myFixture.file as PyFile).findTopLevelClass("A"), types.single())
   }
 }

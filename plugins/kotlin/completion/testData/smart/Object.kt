@@ -8,5 +8,3 @@ fun foo(): I = <caret>
 // EXIST: foo
 // EXIST: object
 // NOTHING_ELSE
-
-// IGNORE_K2

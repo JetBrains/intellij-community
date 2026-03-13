@@ -39,4 +39,23 @@ jvm_library(
     "//plugins/kotlin/base/project-structure",
   ]
 )
+
+jvm_library(
+  name = "navigation_test_lib",
+  module_name = "intellij.kotlin.navigation",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_navigation",
+  runtime_deps = [
+    ":navigation",
+    "//platform/core-api:core_test_lib",
+    "//plugins/kotlin/base/indices:indices_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.kotlin.navigation` end

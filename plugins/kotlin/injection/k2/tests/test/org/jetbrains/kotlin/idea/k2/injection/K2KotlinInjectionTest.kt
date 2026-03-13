@@ -68,4 +68,24 @@ class K2KotlinInjectionTest: KotlinInjectionTestBase() {
             myFixture.checkHighlighting()
         }
     }
+
+    fun testInjectKotlinInJava() {
+        myFixture.configureByText(
+            "a.java",
+            """
+                
+                import org.intellij.lang.annotations.Language;
+                
+                class Main {
+                  {
+                     @Language("kotlin")
+                     var kotlinCode = "package foo; class A"; 
+                  }
+                }
+            """.trimIndent()
+        )
+
+        myFixture.checkHighlighting()
+
+    }
 }

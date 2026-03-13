@@ -1,0 +1,18 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_functionBecameInline-a.kotlin_module
+  Y.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/functionBecameInline/a/fun.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_functionBecameInline-a.kotlin_module
+  X$main$1.class
+  X.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/functionBecameInline/a/usage.kt
+End of files
+------------------------------------------
+Exit code: OK

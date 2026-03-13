@@ -12,5 +12,8 @@
     <orderEntry type="module" module-name="intellij.editorconfig.backend" />
     <orderEntry type="module" module-name="intellij.jsonpath" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log.impl" />
+    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.util.base" />
   </component>
 </module>

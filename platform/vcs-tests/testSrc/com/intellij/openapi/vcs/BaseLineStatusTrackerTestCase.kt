@@ -6,10 +6,14 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.parseInput
-import com.intellij.openapi.vcs.ex.*
+import com.intellij.openapi.vcs.ex.ChangelistsLocalLineStatusTracker
+import com.intellij.openapi.vcs.ex.LineStatusTracker
 import com.intellij.openapi.vcs.ex.LocalLineStatusTracker.Mode
+import com.intellij.openapi.vcs.ex.PartialCommitHelper
+import com.intellij.openapi.vcs.ex.Range
+import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
 import com.intellij.testFramework.LightVirtualFile
-import java.util.*
+import java.util.BitSet
 
 abstract class BaseLineStatusTrackerTestCase : BaseLineStatusTrackerManagerTest() {
   protected fun test(text: String, task: SimpleTest.() -> Unit) {

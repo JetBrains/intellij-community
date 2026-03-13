@@ -13,4 +13,12 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":color-scheme-warmNeon_resources"]
 )
+
+jvm_library(
+  name = "color-scheme-warmNeon_test_lib",
+  module_name = "intellij.color.scheme.warmNeon",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":color-scheme-warmNeon"]
+)
 ### auto-generated section `build intellij.color.scheme.warmNeon` end

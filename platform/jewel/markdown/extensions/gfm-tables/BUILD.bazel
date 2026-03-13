@@ -40,4 +40,24 @@ jvm_library(
   ],
   plugins = ["@lib//:compose-plugin"]
 )
+
+jvm_library(
+  name = "gfm-tables_test_lib",
+  module_name = "intellij.platform.jewel.markdown.extensions.gfmTables",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_gfm-tables",
+  runtime_deps = [
+    ":gfm-tables",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/jewel/markdown/core:core_test_lib",
+    "//platform/jewel/ui:ui_test_lib",
+    "//platform/jewel/foundation:foundation_test_lib",
+    "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
+    "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
+    "//libraries/compose-foundation-desktop-junit",
+    "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.gfmTables` end

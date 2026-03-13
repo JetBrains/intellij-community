@@ -1,15 +1,33 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.readAndBackgroundWriteAction
+import com.intellij.openapi.application.readAndBackgroundWriteActionUndispatched
+import com.intellij.openapi.application.readAndEdtWriteAction
+import com.intellij.openapi.application.readAndEdtWriteActionUndispatched
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.progress.testExceptions
+import com.intellij.openapi.progress.testNoExceptions
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.application
 import com.intellij.util.concurrency.SequentialTaskExecutor
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test

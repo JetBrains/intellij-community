@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.model
 import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isBuildSrcAddedInEditableBuilds
 import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isBuildSrcSyncedSeparately
 import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isBuildTreePathAvailable
+import com.intellij.openapi.util.io.systemIndependentPath
 import org.gradle.tooling.internal.gradle.DefaultBuildIdentifier
 import org.gradle.tooling.model.gradle.BasicGradleProject
 import org.gradle.tooling.model.gradle.GradleBuild
@@ -473,10 +474,11 @@ class DefaultGradleLightBuildTest {
     projectNames: List<String>,
     parent: DefaultGradleLightBuild? = null,
   ) {
-    assertEquals(File(buildPath).name, build.name) {
+    val expectedBuildFile = File(buildPath).absoluteFile
+    assertEquals(expectedBuildFile.name, build.name) {
       "Build name should be equal to its root project name: by default, it's the name of directory where settings.gradle(.kts) is located."
     }
-    assertEquals(buildPath, build.buildIdentifier.rootDir.path) {
+    assertEquals(expectedBuildFile.path, build.buildIdentifier.rootDir.path) {
       "The build directory specified in the build identifier should match the given path."
     }
     assertEquals(parent, build.parentBuild) {
@@ -508,7 +510,7 @@ class DefaultGradleLightBuildTest {
       "The project should have expected `identityPath`. It identifies the project, relatively to the settings file of the root build. " +
       "Before 8.2 it is calculated relying on the known hierarchy of builds and projects. After 8.2, it is taken from `buildTreePath`."
     }
-    assertEquals(projectPath, project.projectDirectory.path) {
+    assertEquals(projectPath, project.projectDirectory.systemIndependentPath) {
       "The project should be located in expected `projectDirectory`"
     }
     assertEquals(build.buildIdentifier.rootDir, project.projectIdentifier.buildIdentifier.rootDir) {

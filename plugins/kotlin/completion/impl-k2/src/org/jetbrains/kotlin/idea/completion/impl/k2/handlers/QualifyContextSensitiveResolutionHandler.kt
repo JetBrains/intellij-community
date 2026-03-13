@@ -22,9 +22,9 @@ import org.jetbrains.kotlin.idea.base.psi.prependDotQualifiedReceiver
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.serialization.names.KotlinFqNameSerializer
 import org.jetbrains.kotlin.idea.codeinsight.utils.getLeftMostReceiverExpression
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Corrected
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.CorrectionType
+import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters
+import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters.Corrected
+import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters.CorrectionType
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.withChainedInsertHandler
 import org.jetbrains.kotlin.idea.references.mainReference

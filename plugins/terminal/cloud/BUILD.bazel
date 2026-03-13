@@ -24,4 +24,22 @@ jvm_library(
     "//platform/remote-servers/api:remoteServers",
   ]
 )
+
+jvm_library(
+  name = "cloud_test_lib",
+  module_name = "intellij.terminal.cloud",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":cloud",
+    "//platform/remote-servers/agent-rt:remoteServers-agent-rt_test_lib",
+    "//platform/execution-impl:execution-impl_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//plugins/terminal:terminal_test_lib",
+    "//platform/remote-servers/impl:impl_test_lib",
+    "//libraries/jediterm-core:jediterm-core_test_lib",
+    "//platform/remote-servers/api:remoteServers_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.terminal.cloud` end

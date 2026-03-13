@@ -145,7 +145,7 @@ class GitLabMergeRequestStandaloneDraftNoteViewModelBase internal constructor(
   override val author: GitLabUserDTO = note.author
   override val createdAt: Date? = note.createdAt
   override val isDraft: Boolean = true
-  override val serverUrl: URL = mr.glProject.serverPath.toURL()
+  override val serverUrl: URL = mr.serverPath.toURL()
 
   override val actionsVm: GitLabNoteAdminActionsViewModel? =
     if (note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, projectData, note) else null

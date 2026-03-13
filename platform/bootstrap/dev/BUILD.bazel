@@ -13,4 +13,17 @@ jvm_library(
     "//platform/util-class-loader:util-classLoader",
   ]
 )
+
+jvm_library(
+  name = "dev_test_lib",
+  module_name = "intellij.platform.bootstrap.dev",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":dev",
+    "//platform/boot:boot_test_lib",
+    "//platform/build-scripts/dev-server:buildScripts-devBuildServer_test_lib",
+    "//platform/util-class-loader:util-classLoader_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.bootstrap.dev` end

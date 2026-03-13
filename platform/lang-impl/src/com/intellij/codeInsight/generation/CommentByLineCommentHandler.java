@@ -11,7 +11,12 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
@@ -20,7 +25,6 @@ import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -37,10 +41,16 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHandler {
   private static final Key<Boolean> INJECTION_FORBIDS_LINE_COMMENTS = Key.create("INJECTION_FORBIDS_LINE_COMMENTS");
+  private static final int COMMENT_BY_LINE_BULK_LINES_TRIGGER = 100;
 
   /**
    * Disable line commenting in an injected file making this action operate on its host file instead.
@@ -293,7 +303,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
 
   private static void doUncommenting(Block block) {
     DocumentUtil.executeInBulk(block.editor.getDocument(),
-                               block.endLine - block.startLine >= Registry.intValue("comment.by.line.bulk.lines.trigger"),
+                               block.endLine - block.startLine >= COMMENT_BY_LINE_BULK_LINES_TRIGGER,
                                () -> {
                                  for (int line = block.endLine; line >= block.startLine; line--) {
                                    uncommentLine(block, line, block.addLineSpace, block.addBlockSpace);
@@ -450,7 +460,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
   private static void doDefaultCommenting(final Block block) {
     final Document document = block.editor.getDocument();
     DocumentUtil.executeInBulk(
-      document, block.endLine - block.startLine >= Registry.intValue("comment.by.line.bulk.lines.trigger"), () -> {
+      document, block.endLine - block.startLine >= COMMENT_BY_LINE_BULK_LINES_TRIGGER, () -> {
         for (int line = block.endLine; line >= block.startLine; line--) {
           int offset = document.getLineStartOffset(line);
           commentLine(block, line, offset);
@@ -465,7 +475,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
     final CommonCodeStyleSettings.IndentOptions indentOptions = CodeStyle.getIndentOptions(block.psiFile);
 
     DocumentUtil.executeInBulk(
-      document, block.endLine - block.startLine > Registry.intValue("comment.by.line.bulk.lines.trigger"), () -> {
+      document, block.endLine - block.startLine > COMMENT_BY_LINE_BULK_LINES_TRIGGER, () -> {
         for (int line = block.endLine; line >= block.startLine; line--) {
           int lineStart = document.getLineStartOffset(line);
           int offset = lineStart;

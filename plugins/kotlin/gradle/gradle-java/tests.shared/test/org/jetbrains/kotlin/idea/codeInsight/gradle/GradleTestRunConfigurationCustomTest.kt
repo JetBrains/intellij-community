@@ -80,7 +80,25 @@ class GradleTestRunConfigurationCustomTest16 : KotlinGradleImportingTestCase() {
                     "pkg in project.test" to AllInPackageConfigurationProducer::class.java,
                     "Tests in 'pkg'" to KotlinAllInPackageGradleConfigurationProducer::class.java
                 )
-                assertEquals(expectedConfigurations.size, kotlinPackageConfigurations.size)
+                val diff = buildString {
+                    appendLine("EXPECTED (${expectedConfigurations.size})")
+                    expectedConfigurations.forEachIndexed { index, (name, klass) ->
+                        appendLine("[$index] name='$name', producerClass='${klass.name}'")
+                    }
+                    appendLine("ACTUAL (${kotlinPackageConfigurations.size})")
+                    kotlinPackageConfigurations.forEachIndexed { index, configFromContext ->
+                        val producerClassName =
+                            ((configFromContext as? ConfigurationFromContextImpl)?.configurationProducer
+                                ?: configFromContext).javaClass.name
+
+                        appendLine(
+                            "[$index] name='${configFromContext.configuration.name}', " +
+                                    "configurationClass='${configFromContext.javaClass.name}', " +
+                                    "producerClass='$producerClassName'"
+                        )
+                    }
+                }
+                assertEquals(diff, expectedConfigurations.size, kotlinPackageConfigurations.size)
                 assertEquals("pkg in project.test", kotlinPackageConfigurations[0].configuration.name)
                 assertEquals("Tests in 'pkg'", kotlinPackageConfigurations[1].configuration.name)
 

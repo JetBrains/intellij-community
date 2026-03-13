@@ -36,11 +36,11 @@ internal class AddComposeToIJModuleAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    val project = e.project
     val modules = e.getData(LangDataKeys.MODULE_CONTEXT_ARRAY)
-    e.presentation.isEnabledAndVisible = project != null &&
-                                         isIntelliJPlatformProject(project) &&
-                                         !modules.isNullOrEmpty()
+    val isRelevantProject = e.project?.let { isIntelliJPlatformProject(it) } ?: false
+
+    e.presentation.isVisible = isRelevantProject
+    e.presentation.isEnabled = isRelevantProject && !modules.isNullOrEmpty()
   }
 
   override fun actionPerformed(e: AnActionEvent) {

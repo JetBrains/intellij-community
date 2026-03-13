@@ -1,4 +1,5 @@
 // "Remove explicitly specified return type of enclosing function 'foo'" "true"
+// K2_ERROR: Return type mismatch: expected 'Int', actual 'Unit'.
 fun foo(): Int {
     return<caret>
 }

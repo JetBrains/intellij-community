@@ -17,7 +17,8 @@ package com.intellij.openapi.editor.impl;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
 
 /**
  * IDEA editors use highly-optimized drawing algorithm that is tuned for painting large amounts of text data.

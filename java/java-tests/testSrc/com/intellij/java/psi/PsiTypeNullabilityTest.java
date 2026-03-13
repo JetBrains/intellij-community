@@ -388,6 +388,20 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
     assertEquals("NOT_NULL (@NotNullByDefault on package foo)", typeNullability.toString());
   }
   
+  public void testMalformedPackageInfo() {
+    myFixture.addFileToProject("org/example/package-info.java", """
+      @NotNullByDefault
+      package org.example2;
+      
+      import org.jetbrains.annotations.NotNullByDefault;""");
+    PsiFile clsFile = myFixture.addFileToProject("org/example/A.java", "package org.example; class A {}");
+    PsiElement context = ((PsiJavaFile)clsFile).getClasses()[0];
+    NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(getProject()).findDefaultTypeUseNullability(context);
+    assertNotNull(info);
+    TypeNullability typeNullability = info.toTypeNullability();
+    assertEquals("NOT_NULL (@NotNullByDefault on package org.example2)", typeNullability.toString());
+  }
+  
   public void testFBoundResolveUnderNotNull() {
     myFixture.addClass("""
       package org.jetbrains.annotations;

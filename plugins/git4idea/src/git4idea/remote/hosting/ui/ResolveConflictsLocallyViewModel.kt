@@ -79,7 +79,7 @@ private class ResolveConflictsLocallyViewModelImpl<Error : Any>(
   override val isBusy: StateFlow<Boolean> = taskLauncher.busy
 
   override val hasConflicts: StateFlow<Boolean?> =
-    hasConflicts.stateIn(cs, SharingStarted.Lazily, false)
+    hasConflicts.stateIn(cs, SharingStarted.Lazily, null)
   override val requestOrError: StateFlow<Either<Error, ResolveConflictsLocallyCoordinates>> =
     requestOrError.stateIn(cs, SharingStarted.Lazily, initialRequestOrErrorState)
 

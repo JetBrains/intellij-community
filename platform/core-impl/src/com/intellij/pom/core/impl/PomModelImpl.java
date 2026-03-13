@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pom.core.impl;
 
 import com.intellij.lang.ASTNode;
@@ -30,7 +30,6 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.ChangedPsiRangeUtil;
 import com.intellij.psi.impl.DebugUtil;
@@ -299,7 +298,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
     VirtualFile vFile = psiFile == null ? null : psiFile.getViewProvider().getVirtualFile();
     if (psiFile != null) {
-      ((SmartPointerManagerEx) SmartPointerManager.getInstance(myProject)).fastenBelts(vFile);
+      SmartPointerManagerEx.getInstanceEx(myProject).fastenBelts(vFile);
       if (psiFile instanceof PsiFileImpl) {
         ((PsiFileImpl)psiFile).beforeAstChange();
       }

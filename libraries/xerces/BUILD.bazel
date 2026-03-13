@@ -15,4 +15,13 @@ jvm_library(
   exports = ["@lib//:libraries-xerces-_xerces"],
   runtime_deps = ["@lib//:libraries-xerces-_xerces"]
 )
+
+jvm_library(
+  name = "xerces_test_lib",
+  module_name = "intellij.libraries.xerces",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:libraries-xerces-_xerces"],
+  runtime_deps = [":xerces"]
+)
 ### auto-generated section `build intellij.libraries.xerces` end

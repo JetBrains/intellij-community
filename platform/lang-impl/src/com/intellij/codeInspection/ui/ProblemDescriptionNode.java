@@ -169,7 +169,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   protected @NotNull String calculatePresentableName() {
     CommonProblemDescriptor descriptor = getDescriptor();
     if (descriptor == null) return "";
-    String name = ReadAction.compute(() -> {
+    String name = ReadAction.computeBlocking(() -> {
       PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
       return ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, ProblemDescriptorUtil.TRIM_AT_TREE_END);
     });

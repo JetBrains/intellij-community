@@ -1,5 +1,6 @@
 // "Specify 'Unit' return type for called function 'A.component2'" "true"
 // ERROR: The integer literal does not conform to the expected type Unit
+// K2_ERROR: Operator call 'component2()' returns 'Int', but 'Unit' is expected.
 // K2_AFTER_ERROR: Return type mismatch: expected 'Unit', actual 'Int'.
 abstract class A {
     abstract operator fun component1(): Int

@@ -8,7 +8,12 @@ import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.dashboard.RunDashboardUiManager
 import com.intellij.icons.AllIcons
 import com.intellij.lang.LangBundle
-import com.intellij.notification.*
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationDisplayType
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
+import com.intellij.notification.NotificationsConfiguration
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project

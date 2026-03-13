@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.hasKotlinJvmRuntime
+import org.jetbrains.kotlin.idea.configuration.ConfigurationResultBuilder
 import org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProjectConfigurator
 import org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProjectConfigurator.Companion.compilerPluginProjectConfigurators
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurationService
@@ -34,27 +35,11 @@ import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 abstract class AbstractKotlinCompilerPluginInspection(protected val kotlinCompilerPluginId: String): LocalInspectionTool() {
-    protected fun compilerPluginProjectConfigurators(): List<KotlinCompilerPluginProjectConfigurator> =
-        compilerPluginProjectConfigurators(kotlinCompilerPluginId)
+    protected fun compilerPluginProjectConfigurators(module: Module): List<KotlinCompilerPluginProjectConfigurator> =
+        compilerPluginProjectConfigurators(kotlinCompilerPluginId,module)
 
-    protected fun KtFile.hasCompilerPluginExtension(filter: (FirExtensionRegistrarAdapter) -> Boolean): Boolean {
-        val module = getKaModule(project, useSiteModule = null).takeIf { it is KaSourceModule } ?: return false
-        return module.hasCompilerPluginExtension(filter)
-    }
-
-    final override fun isAvailableForFile(file: PsiFile): Boolean {
-        val ktFile = (file as? KtFile)?.takeUnless { it.isCompiled } ?: return false
-        val module = ModuleUtilCore.findModuleForFile(ktFile) ?: return false
-
-        if (!super.isAvailableForFile(file) || isIncompleteModel(file)) return false
-
-        val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
-        val hasKotlinJvmRuntime = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
-            scope.hasKotlinJvmRuntime(module.project)
-        })
-
-        return hasKotlinJvmRuntime && isAvailableForFileInModule(ktFile, module)
-    }
+    final override fun isAvailableForFile(file: PsiFile): Boolean =
+        isAvailableForFile(file) { file, module -> isAvailableForFileInModule(file, module) }
 
     protected abstract fun isAvailableForFileInModule(ktFile: KtFile, module: Module): Boolean
 
@@ -92,23 +77,7 @@ abstract class AbstractKotlinCompilerPluginInspection(protected val kotlinCompil
             val element = descriptor.psiElement
             val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return
 
-            val configurators =
-                compilerPluginProjectConfigurators().ifEmpty { return }
-
-            val configurationService = KotlinProjectConfigurationService.getInstance(project)
-            configurationService.coroutineScope.launchTracked {
-                edtWriteAction {
-                    executeCommand(
-                        project,
-                        KotlinProjectConfigurationBundle.message("command.name.configure.kotlin.compiler.plugin.0", kotlinCompilerPluginId)
-                    ) {
-                        for (configurator in configurators) {
-                            configurator.configureModule(module)
-                        }
-                    }
-                }
-                configurationService.queueSyncIfPossible()
-            }
+            configureCompilerPlugin(project, module, kotlinCompilerPluginId)
         }
     }
 
@@ -121,6 +90,54 @@ abstract class AbstractKotlinCompilerPluginInspection(protected val kotlinCompil
             val registeredExtensions =
                 pluginsProvider.getRegisteredExtensions(this, FirExtensionRegistrarAdapter)
             return registeredExtensions.any(filter)
+        }
+
+        @ApiStatus.Internal
+        fun KtFile.hasCompilerPluginExtension(filter: (FirExtensionRegistrarAdapter) -> Boolean): Boolean {
+            val module = getKaModule(project, useSiteModule = null).takeIf { it is KaSourceModule } ?: return false
+            return module.hasCompilerPluginExtension(filter)
+        }
+
+        @ApiStatus.Internal
+        fun isAvailableForFile(file: PsiFile, isAvailableForFileInModule: (KtFile, Module) -> Boolean): Boolean {
+            val ktFile = (file as? KtFile)?.takeUnless { it.isCompiled } ?: return false
+
+            if (isIncompleteModel(file)) return false
+
+            val module = ModuleUtilCore.findModuleForFile(ktFile) ?: return false
+
+            val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
+            val hasKotlinJvmRuntime = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
+                scope.hasKotlinJvmRuntime(module.project)
+            })
+
+            if (!hasKotlinJvmRuntime) return false
+
+            return isAvailableForFileInModule(ktFile, module)
+        }
+
+        fun configureCompilerPlugin(project: Project, module: Module, kotlinCompilerPluginId: String) {
+            val configurators =
+                compilerPluginProjectConfigurators(kotlinCompilerPluginId, module).ifEmpty { return }
+
+            val configurationResultBuilder = ConfigurationResultBuilder()
+            val configurationService = KotlinProjectConfigurationService.getInstance(project)
+            configurationService.coroutineScope.launchTracked {
+                edtWriteAction {
+                    executeCommand(
+                        project,
+                        KotlinProjectConfigurationBundle.message("command.name.configure.kotlin.compiler.plugin.0", kotlinCompilerPluginId)
+                    ) {
+                        for (configurator in configurators) {
+                            configurator.configureModule(module, configurationResultBuilder)
+                        }
+                    }
+                    val result = configurationResultBuilder.build()
+                    if (result.configuredModules.isNotEmpty()) {
+                        configurationService.queueSyncIfPossible()
+                    }
+                }
+            }
         }
     }
 

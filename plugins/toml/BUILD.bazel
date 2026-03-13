@@ -13,4 +13,12 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":toml_resources"]
 )
+
+jvm_library(
+  name = "toml_test_lib",
+  module_name = "intellij.toml",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":toml"]
+)
 ### auto-generated section `build intellij.toml` end

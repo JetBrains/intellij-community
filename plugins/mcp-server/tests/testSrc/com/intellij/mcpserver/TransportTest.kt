@@ -37,55 +37,51 @@ import org.junit.jupiter.params.provider.MethodSource
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
 import kotlin.test.fail
+import kotlin.time.Duration.Companion.milliseconds
 
 @TestApplication
 class TransportTest {
-
   companion object {
     val projectFixture = projectFixture(openAfterCreation = true)
     val project by projectFixture
 
     @JvmStatic
-    fun getTransports(): Array<TransportHolder> {
-      return arrayOf(
-        StdioTransportHolder(project),
-        SseTransportHolder(project),
-        HttpTransportHolder(project),
-      )
-    }
+    fun getTransports(): Array<TransportHolder> = arrayOf(
+      StdioTransportHolder(project),
+      SseTransportHolder(project),
+      HttpTransportHolder(project),
+    )
   }
 
   @ParameterizedTest
   @MethodSource("getTransports")
   fun list_tools(transport: TransportHolder) = transportTest(transport) { client ->
-    val listTools = client.listTools() ?: fail("No tools returned")
+    val listTools = client.listTools()
     assert(listTools.tools.isNotEmpty()) { "No tools returned" }
   }
 
   @ParameterizedTest
   @MethodSource("getTransports")
   fun tool_call_has_project(transport: TransportHolder) = transportTest(transport) { client ->
-    delay(500)
+    delay(500.milliseconds)
     Disposer.newDisposable().use { disposable ->
       application.extensionArea.getExtensionPoint(McpToolsProvider.EP).registerExtension(object : McpToolsProvider {
-        override fun getTools(): List<McpTool> {
-          return listOf(this@TransportTest::test_tool.asTool())
-        }
+        override fun getTools(): List<McpTool> = listOf(this@TransportTest::test_tool.asTool())
       }, disposable)
-      // tools change is being listened in a backgound coroutine, so we have to wait a bit
-      delay(500)
+      // tools change is being listened in a background coroutine, so we have to wait a bit
+      delay(500.milliseconds)
       client.callTool("test_tool", emptyMap())
 
-      val actual = withTimeout(2000) { projectFromTool.await() }
+      val actual = withTimeout(2000.milliseconds) { projectFromTool.await() }
       assertEquals(project, actual)
     }
     // the same to unregistration. Otherwise, tools change notification is being sent into a closed transport
-    delay(500) // delay for exit from use {}
+    delay(500.milliseconds) // delay for exit from use {}
   }
 
   val projectFromTool = CompletableDeferred<Project?>()
 
-  @com.intellij.mcpserver.annotations.McpTool()
+  @com.intellij.mcpserver.annotations.McpTool
   @McpDescription("Test description")
   suspend fun test_tool() {
     projectFromTool.complete(currentCoroutineContext().projectOrNull)
@@ -124,9 +120,8 @@ abstract class TransportHolder {
 
 @Suppress("RAW_SCOPE_CREATION")
 class StdioTransportHolder(project: Project) : TransportHolder() {
-
   private val scope = CoroutineScope(Job())
-  private val diag = StringBuilder()
+  private val diagnosticsCollector = StringBuilder()
 
   val process: Process by lazy {
     val mcpServerCommandLine = createStdioMcpServerCommandLine(McpServerService.getInstance().port, project.basePath)
@@ -134,7 +129,7 @@ class StdioTransportHolder(project: Project) : TransportHolder() {
     scope.launch {
       proc.errorStream.bufferedReader().use { reader ->
         reader.forEachLine {
-          diag.appendLine(it)
+          diagnosticsCollector.appendLine(it)
         }
       }
     }
@@ -146,7 +141,7 @@ class StdioTransportHolder(project: Project) : TransportHolder() {
   }
 
   override val diagnostics: String
-    get() = diag.toString()
+    get() = diagnosticsCollector.toString()
 
   override fun close() {
     super.close() //sseClientTransport.close()
@@ -155,9 +150,7 @@ class StdioTransportHolder(project: Project) : TransportHolder() {
     if (!process.waitFor(10, TimeUnit.SECONDS)) fail("Process is still alive")
   }
 
-  override fun toString(): String {
-    return "Stdio"
-  }
+  override fun toString(): String = "Stdio"
 }
 
 class SseTransportHolder(project: Project) : TransportHolder() {
@@ -171,9 +164,7 @@ class SseTransportHolder(project: Project) : TransportHolder() {
     }
   }
 
-  override fun toString(): String {
-    return "SSE"
-  }
+  override fun toString(): String = "SSE"
 }
 
 class HttpTransportHolder(project: Project) : TransportHolder() {
@@ -187,7 +178,5 @@ class HttpTransportHolder(project: Project) : TransportHolder() {
     }
   }
 
-  override fun toString(): String {
-    return "Http Stream"
-  }
+  override fun toString(): String = "Http Stream"
 }

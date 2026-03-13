@@ -28,6 +28,8 @@ class InlayTextMetricsStorage(val editor: Editor) {
 
   private var lastStamp : InlayTextMetricsStamp? = null
 
+  private var isInsideCheckpoint = false
+
   private val smallTextSize: Float
     @RequiresEdt
     get() = max(1f, normalTextSize - 1f)
@@ -36,15 +38,45 @@ class InlayTextMetricsStorage(val editor: Editor) {
     @RequiresEdt
     get() = editor.colorsScheme.editorFontSize2D
 
+  /** Indicates that checking whether cached metrics are actual can be safely skipped inside [block].
+   *
+   *  Rationale: The values of [InlayTextMetrics] object retrieved via [getFontMetrics]
+   *  are not to be considered actual across multiple EDT events.
+   *  Hence, as we have no reliable way to listen to changes of these values,
+   *  to properly react to changes,
+   *  some inlay hints may request the metrics many times during e.g., a single [com.intellij.openapi.editor.Inlay.update].
+   *  This leads to excessive checks whether they are actual ([getCurrentStamp])
+   *  and performance problems.
+   *  */
+  @RequiresEdt
+  fun <T> checkpoint(block: () -> T): T {
+    if (isInsideCheckpoint) {
+      return block()
+    }
+    getCurrentStamp()
+    isInsideCheckpoint = true
+    try {
+      return block()
+    }
+    finally {
+      isInsideCheckpoint = false
+    }
+  }
+
   @RequiresEdt
   fun getCurrentStamp(): InlayTextMetricsStamp {
     val lastStamp = lastStamp
+    if (isInsideCheckpoint) return checkNotNull(lastStamp)
     if (lastStamp == null
         || normalTextSize != lastStamp.editorFontSize2D
         || UISettings.getInstance().ideScale != lastStamp.ideScale
         || getFontFamilyName() != lastStamp.familyName
         || getFontRenderContext(editor.component) != lastStamp.fontRenderContext) {
-      return doGetCurrentStamp()
+      val actualStamp = doGetCurrentStamp()
+      this.lastStamp = actualStamp
+      smallTextMetrics = null
+      normalTextMetrics = null
+      return actualStamp
     }
     return lastStamp
   }
@@ -63,12 +95,6 @@ class InlayTextMetricsStorage(val editor: Editor) {
   @RequiresEdt
   fun getFontMetrics(small: Boolean): InlayTextMetrics {
     val currentStamp = getCurrentStamp()
-    // a new stamp is only ever constructed if a change is detected
-    if (lastStamp !== currentStamp) {
-      lastStamp = currentStamp
-      smallTextMetrics = null
-      normalTextMetrics = null
-    }
 
     var metrics: InlayTextMetrics?
     if (small) {

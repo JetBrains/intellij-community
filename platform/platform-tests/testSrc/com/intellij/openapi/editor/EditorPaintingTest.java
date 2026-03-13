@@ -10,15 +10,24 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.SeparatorPlacement;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.ui.ColorIcon;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
 import java.util.Collections;
 
@@ -152,11 +161,12 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   }
 
   private void runTestBlockInlaysWithSelection() throws Exception {
-    initText("line 1\nline 2\n");
+    initText("line 1\nline 2\na");
     addBlockInlay(getEditor().getDocument().getLineStartOffset(0));
     addBlockInlay(getEditor().getDocument().getLineStartOffset(1));
     executeAction(IdeActions.ACTION_EDITOR_TEXT_END);
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION);
     checkResult();
   }
 
@@ -168,6 +178,17 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   public void testBlockInlaysWithNewSelection() throws Exception {
     setNewSelectionEnabled(true);
     runTestBlockInlaysWithSelection();
+  }
+
+  public void testBlockInlaysWithNewSelection2() throws Exception {
+    setNewSelectionEnabled(true);
+
+    initText("line 1\nline 2\n");
+    addBlockInlay(getEditor().getDocument().getLineStartOffset(0));
+    addBlockInlay(getEditor().getDocument().getLineStartOffset(1));
+    executeAction(IdeActions.ACTION_EDITOR_TEXT_END);
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
+    checkResult();
   }
 
   public void testBlockInlaysAboveWithNewSelection() throws Exception {
@@ -183,7 +204,7 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   }
 
   private void runTestMarginIsShownOverSelectionInBlockInlayRange() throws Exception {
-    initText("  \n");
+    initText("  \n ");
     addBlockInlay(0);
     executeAction(IdeActions.ACTION_SELECT_ALL);
     getEditor().getSettings().setRightMargin(1);

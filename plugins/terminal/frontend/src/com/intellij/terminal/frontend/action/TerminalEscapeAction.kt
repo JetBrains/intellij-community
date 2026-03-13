@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.wm.ToolWindowManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.action.TerminalMoveFocusToEditorAction

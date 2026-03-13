@@ -205,6 +205,9 @@ class PyCallableParameterMappingTest : PyTestCase() {
     checkMatch("(**kwargs)", "(a = 1, **kwargs)") // OK
     checkNotMatch("(**kwargs)", "(a, **kwargs)") // Missing default
     checkMatch("(**kwargs: int)", "(a: int = 1, **kwargs: int)") // OK
+    checkNotMatch("(**kwargs: int)", "(a: str = 'str', **kwargs: int)") // a has wrong type
+    checkNotMatch("(**kwargs: int)", "(a: int = 1, *, b: str = 'str', **kwargs: int)") // b has wrong type
+    checkMatch("(**kwargs: int)", "(a: int = 1, *, b: int = 1, **kwargs: int)") // OK
     checkNotMatch("(**kwargs: int)", "(a: int, **kwargs: int)") // Missing default
     checkNotMatch("(**kwargs: int)", "(a: int, b: int = 1, **kwargs: int)") // Missing default
     checkMatch("(**kwargs: int)", "(a: int = 1, b: int = 1, **kwargs: int)") // OK
@@ -272,6 +275,12 @@ class PyCallableParameterMappingTest : PyTestCase() {
     checkNotMatch("(a: int, b: str, /, c: float, *, d: bool)", "(a: int, b: str, c: float, *, d: str)")
     // OK
     checkMatch("(a: int, /)", "(a: int, b: str = 'default', /, c: float = 1.0, *, d: bool = True)")
+    // OK. Type of a is omitted, types of pos-or-kw b and kw-only c match with type of **kwargs
+    checkMatch("(**kwargs: int)", "(a: str = '', /, b: int = 1, *, c: int = 1, **kwargs: int)")
+    // b has wrong type
+    checkNotMatch("(**kwargs: int)", "(a: str = '', /, b: str = '', *, c: int = 1, **kwargs: int)")
+    // c has wrong type
+    checkNotMatch("(**kwargs: int)", "(a: str = '', /, b: int = 1, *, c: str = '', **kwargs: int)")
   }
 
   fun testKwargsTypeCompatibility() {
@@ -547,6 +556,49 @@ class PyCallableParameterMappingTest : PyTestCase() {
 
   fun testKeywordOnlyVsAnotherOptionalKeywordOnlyAndKwargs() {
     checkMatch("(*, a)", "(*, b=None, **kwargs)")
+  }
+
+  fun testWildcardSignatures() {
+    checkMatch("(*args, **kwargs)", "()")
+    checkMatch("()", "(*args, **kwargs)")
+    checkMatch("(*args, **kwargs)", "(a: int)")
+    checkMatch("(a: int)", "(*args, **kwargs)")
+    checkMatch("(*args, **kwargs)", "(a: int, b: str)")
+    checkMatch("(a: int, b: str)", "(*args, **kwargs)")
+    checkMatch("(*args, **kwargs)", "(a: int, /, b: str)")
+    checkMatch("(a: int, /, b: str)", "(*args, **kwargs)")
+    checkMatch("(*args, **kwargs)", "(*, a: int, b: str)")
+    checkMatch("(*, a: int, b: str)", "(*args, **kwargs)")
+    checkMatch("(*args, **kwargs)", "(a: int, *args2)")
+    checkMatch("(a: int, *args2)", "(*args, **kwargs)")
+    checkMatch("(*args, **kwargs)", "(a: int, **kwargs2)")
+    checkMatch("(a: int, **kwargs2)", "(*args, **kwargs)")
+    checkMatch("(a: int, /, **kwargs2)", "(*args, **kwargs)")
+
+    checkMatch("(*args: Any, **kwargs: Any)", "()")
+    checkMatch("()", "(*args: Any, **kwargs: Any)")
+    checkMatch("(*args: Any, **kwargs: Any)", "(a: int, b: str)")
+    checkMatch("(a: int, b: str)", "(*args: Any, **kwargs: Any)")
+    checkMatch("(*args: Any, **kwargs: Any)", "(*, a: int)")
+    checkMatch("(*, a: int)", "(*args: Any, **kwargs: Any)")
+
+    // Typed wildcard should NOT be wildcard (only untyped or Any are wildcards)
+    checkNotMatch("(*args: int, **kwargs: str)", "(a: float)")
+    checkNotMatch("(a: float)", "(*args: int, **kwargs: str)")
+  }
+
+  // PY-87556
+  fun testKwargsVsPrecedingOptionalPositionalOnlyParameter() {
+    checkMatch("(**kwargs)", "(a=1, /, **kwargs)")
+    checkNotMatch("(**kwargs)", "(a, /, **kwargs)")
+    checkMatch("(**kwargs: str)", "(a: int = 1, /, **kwargs: str)") // type of a should be omitted
+    checkMatch("(**kwargs: str)", "(a: int = 1, b: bool = False, /, **kwargs: str)") // types of a and b should be omitted
+  }
+
+  // PY-87771
+  fun testKwargsVsPrecedingPositionalContainer() {
+    checkMatch("(**kwargs: str)", "(*args: int, **kwargs: str)") // type of *args should be omitted
+    checkMatch("(**kwargs: str)", "(a: bool = True, /, *args: int, **kwargs: str)") // type of *args and a should be omitted
   }
 
   fun checkNotMatch(expectedSignature: String, actualSignature: String) {

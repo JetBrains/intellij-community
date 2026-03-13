@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.refactoring.move;
 
@@ -28,6 +28,11 @@ public class K2MultiModuleMoveTestGenerated extends AbstractK2MultiModuleMoveTes
 
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    }
+
+    @TestMetadata("moveAllOperatorsToDifferentModuleWithExtraDependency/moveAllOperatorsToDifferentModuleWithExtraDependency.test")
+    public void testMoveAllOperatorsToDifferentModuleWithExtraDependency_MoveAllOperatorsToDifferentModuleWithExtraDependency() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveAllOperatorsToDifferentModuleWithExtraDependency/moveAllOperatorsToDifferentModuleWithExtraDependency.test");
     }
 
     @TestMetadata("moveClassWithInternalMemberFromJvmToCommon/moveClassWithInternalMemberFromJvmToCommon.test")
@@ -130,9 +135,24 @@ public class K2MultiModuleMoveTestGenerated extends AbstractK2MultiModuleMoveTes
         runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveMultipleFilesToUnrelatedModuleConflict/moveMultipleFilesToUnrelatedModuleConflict.test");
     }
 
+    @TestMetadata("moveOperatorCallToDifferentModuleWithExtraDependency/moveOperatorCallToDifferentModuleWithExtraDependency.test")
+    public void testMoveOperatorCallToDifferentModuleWithExtraDependency_MoveOperatorCallToDifferentModuleWithExtraDependency() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveOperatorCallToDifferentModuleWithExtraDependency/moveOperatorCallToDifferentModuleWithExtraDependency.test");
+    }
+
+    @TestMetadata("moveOperatorsCallsInTextFormToDifferentModuleWithExtraDependency/moveOperatorsCallsInTextFormToDifferentModuleWithExtraDependency.test")
+    public void testMoveOperatorsCallsInTextFormToDifferentModuleWithExtraDependency_MoveOperatorsCallsInTextFormToDifferentModuleWithExtraDependency() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveOperatorsCallsInTextFormToDifferentModuleWithExtraDependency/moveOperatorsCallsInTextFormToDifferentModuleWithExtraDependency.test");
+    }
+
     @TestMetadata("movePackageToUnrelatedModuleConflict/movePackageToUnrelatedModuleConflict.test")
     public void testMovePackageToUnrelatedModuleConflict_MovePackageToUnrelatedModuleConflict() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveMultiModule/movePackageToUnrelatedModuleConflict/movePackageToUnrelatedModuleConflict.test");
+    }
+
+    @TestMetadata("movePlusAssignToDifferentModule/movePlusAssignToDifferentModule.test")
+    public void testMovePlusAssignToDifferentModule_MovePlusAssignToDifferentModule() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveMultiModule/movePlusAssignToDifferentModule/movePlusAssignToDifferentModule.test");
     }
 
     @TestMetadata("moveProtectedToDifferentModule/moveProtectedToDifferentModule.test")

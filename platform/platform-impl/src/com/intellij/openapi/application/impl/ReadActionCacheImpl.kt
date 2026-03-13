@@ -4,23 +4,34 @@ package com.intellij.openapi.application.impl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.util.ReadActionCache
 import com.intellij.util.ProcessingContext
+import com.intellij.util.concurrency.ThreadingAssertions
+import java.util.Optional
 
 internal class ReadActionCacheImpl : ReadActionCache {
-  private val threadProcessingContext: ThreadLocal<ProcessingContext> = ThreadLocal()
+  private val threadProcessingContext: ThreadLocal<Optional<ProcessingContext>> = ThreadLocal()
 
   override val processingContext: ProcessingContext?
     get() {
-      threadProcessingContext.get()?.let { return it }
-      if (ApplicationManager.getApplication().isWriteIntentLockAcquired) return writeActionProcessingContext
-      if (!ApplicationManager.getApplication().isReadAccessAllowed) return null
-      threadProcessingContext.set(ProcessingContext())
-      return threadProcessingContext.get()
+      threadProcessingContext.get()?.let { return it.orElse(null) }
+
+      val application = ApplicationManager.getApplication()
+      if (application.isWriteIntentLockAcquired) return writeActionProcessingContext
+      if (!application.isReadAccessAllowed) return null
+
+      val value = ProcessingContext()
+      threadProcessingContext.set(Optional.of<ProcessingContext>(value))
+      return value
     }
 
   fun clear() {
     threadProcessingContext.remove()
   }
 
+  override fun disable() {
+    ThreadingAssertions.assertReadAccess()
+
+    threadProcessingContext.set(Optional.empty())
+  }
 
   private var writeActionProcessingContext: ProcessingContext? = null
 

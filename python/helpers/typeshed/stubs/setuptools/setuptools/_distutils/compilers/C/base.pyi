@@ -2,7 +2,7 @@ from _typeshed import BytesPath, Incomplete, StrOrBytesPath, StrPath, Unused
 from collections.abc import Callable, Iterable, MutableSequence, Sequence
 from subprocess import _ENV
 from typing import ClassVar, Final, Literal, TypeVar, overload
-from typing_extensions import TypeAlias, TypeVarTuple, Unpack
+from typing_extensions import TypeAlias, TypeVarTuple, Unpack, deprecated
 
 _Macro: TypeAlias = tuple[str] | tuple[str, str | None]
 _StrPathT = TypeVar("_StrPathT", bound=StrPath)
@@ -25,7 +25,6 @@ class Compiler:
 
     language_map: ClassVar[dict[str, str]]
     language_order: ClassVar[list[str]]
-    dry_run: bool
     force: bool
     verbose: bool
     output_dir: str | None
@@ -39,7 +38,7 @@ class Compiler:
     SHARED_OBJECT: Final = "shared_object"
     SHARED_LIBRARY: Final = "shared_library"
     EXECUTABLE: Final = "executable"
-    def __init__(self, verbose: bool = False, dry_run: bool = False, force: bool = False) -> None: ...
+    def __init__(self, verbose: bool = False, force: bool = False) -> None: ...
     def add_include_dir(self, dir: str) -> None: ...
     def set_include_dirs(self, dirs: list[str]) -> None: ...
     def add_library(self, libname: str) -> None: ...
@@ -54,6 +53,12 @@ class Compiler:
     def set_link_objects(self, objects: list[str]) -> None: ...
     def detect_language(self, sources: str | list[str]) -> str | None: ...
     def find_library_file(self, dirs: Iterable[str], lib: str, debug: bool = False) -> str | None: ...
+    @overload
+    def has_function(
+        self, funcname: str, libraries: list[str] | None = None, library_dirs: list[str] | tuple[str, ...] | None = None
+    ) -> bool: ...
+    @overload
+    @deprecated("The `includes`, `include_dirs` parameters are deprecated.")
     def has_function(
         self,
         funcname: str,
@@ -194,7 +199,7 @@ compiler_class: dict[str, tuple[str, str, str]]
 
 def show_compilers() -> None: ...
 def new_compiler(
-    plat: str | None = None, compiler: str | None = None, verbose: bool = False, dry_run: bool = False, force: bool = False
+    plat: str | None = None, compiler: str | None = None, verbose: bool = False, force: bool = False
 ) -> Compiler: ...
 def gen_preprocess_options(macros: Iterable[_Macro], include_dirs: Iterable[str]) -> list[str]: ...
 def gen_lib_options(

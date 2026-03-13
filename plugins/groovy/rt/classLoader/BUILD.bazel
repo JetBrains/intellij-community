@@ -19,4 +19,16 @@ jvm_library(
     "//platform/util-rt",
   ]
 )
+
+jvm_library(
+  name = "classLoader_test_lib",
+  module_name = "intellij.groovy.rt.classLoader",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  runtime_deps = [
+    ":classLoader",
+    "//platform/util-rt:util-rt_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.groovy.rt.classLoader` end

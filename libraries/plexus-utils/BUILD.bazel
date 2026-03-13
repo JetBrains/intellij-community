@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-plexus-utils-plexus-utils"],
   runtime_deps = ["@lib//:libraries-plexus-utils-plexus-utils"]
 )
+
+jvm_library(
+  name = "plexus-utils_test_lib",
+  module_name = "intellij.libraries.plexus.utils",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-plexus-utils-plexus-utils"],
+  runtime_deps = [":plexus-utils"]
+)
 ### auto-generated section `build intellij.libraries.plexus.utils` end

@@ -26,6 +26,29 @@ jvm_library(
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/xdebugger-impl/rpc",
     "//platform/xdebugger-impl/shared",
+    "//platform/xdebugger-impl/ui",
+  ]
+)
+
+jvm_library(
+  name = "debugger-streams-shared_test_lib",
+  module_name = "intellij.debugger.streams.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":debugger-streams-shared",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//platform/xdebugger-impl:debugger-impl_test_lib",
+    "//platform/xdebugger-impl/rpc:rpc_test_lib",
+    "//platform/xdebugger-impl/shared:shared_test_lib",
+    "//platform/xdebugger-impl/ui:ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.debugger.streams.shared` end

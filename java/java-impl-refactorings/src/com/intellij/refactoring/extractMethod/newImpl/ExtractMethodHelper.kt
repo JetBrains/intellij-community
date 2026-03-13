@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.newImpl
 
+import com.intellij.codeInsight.AnnotationTargetUtil
 import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInsight.PsiEquivalenceUtil
@@ -37,7 +38,6 @@ import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.PsiReturnStatement
 import com.intellij.psi.PsiStatement
 import com.intellij.psi.PsiType
-import com.intellij.psi.PsiTypeElement
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.PsiTypeParameterListOwner
 import com.intellij.psi.PsiTypes
@@ -146,16 +146,22 @@ object ExtractMethodHelper {
     return physicalParent ?: throw IllegalArgumentException()
   }
 
-  fun addNullabilityAnnotation(typeElement: PsiTypeElement?, nullability: Nullability) {
-    if (typeElement == null) return
-    if (nullability == Nullability.UNKNOWN) return
-    val nullabilityManager = NullableNotNullManager.getInstance(typeElement.project)
-    val annotation = nullabilityManager.getDefaultAnnotation(nullability, typeElement)
-    val annotationElement = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(annotation, PsiNameValuePair.EMPTY_ARRAY, typeElement)
+  internal fun addNullabilityAnnotation(psiModifierListOwner: PsiModifierListOwner?, nullability: Nullability, targetClass: PsiClass) {
+    if (psiModifierListOwner == null) return
+    val project = psiModifierListOwner.project
+    val nullabilityManager = NullableNotNullManager.getInstance(project)
+    if (nullability == Nullability.UNKNOWN && containerNullability(targetClass) != Nullability.NOT_NULL) return
+    if (nullability == Nullability.NOT_NULL && containerNullability(targetClass) == Nullability.NOT_NULL) return
+    val annotation = nullabilityManager.getDefaultAnnotation(nullability, psiModifierListOwner)
+    val annotationOwner = AnnotationTargetUtil.getTarget(psiModifierListOwner, annotation) ?: return
+    val annotationElement = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(annotation, PsiNameValuePair.EMPTY_ARRAY, annotationOwner)
     if (annotationElement != null) {
-      JavaCodeStyleManager.getInstance(typeElement.project).shortenClassReferences(annotationElement)
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(annotationElement)
     }
   }
+
+  internal fun containerNullability(targetClass: PsiModifierListOwner): Nullability? =
+    NullableNotNullManager.getInstance(targetClass.project).findContainerAnnotation(targetClass)?.nullability
 
   private fun findVariableReferences(element: PsiElement): Sequence<PsiVariable> {
     val references = PsiTreeUtil.findChildrenOfAnyType(element, PsiReferenceExpression::class.java)

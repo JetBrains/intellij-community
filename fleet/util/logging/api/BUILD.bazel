@@ -25,7 +25,7 @@ jvm_library(
   name = "api",
   module_name = "fleet.util.logging.api",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True),
   resources = [":api_resources"],
   kotlinc_opts = ":custom_api",
   deps = [
@@ -36,6 +36,23 @@ jvm_library(
   exports = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
+  ]
+)
+
+jvm_library(
+  name = "api_test_lib",
+  module_name = "fleet.util.logging.api",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_api",
+  exports = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+  ],
+  runtime_deps = [
+    ":api",
+    "//fleet/util/multiplatform",
+    "//fleet/util/multiplatform:multiplatform_test_lib",
   ]
 )
 ### auto-generated section `build fleet.util.logging.api` end

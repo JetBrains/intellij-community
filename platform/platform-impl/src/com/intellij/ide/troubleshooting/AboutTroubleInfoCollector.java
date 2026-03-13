@@ -11,7 +11,7 @@ import com.intellij.util.system.CpuArch;
 import com.jetbrains.JBR;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Toolkit;
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;

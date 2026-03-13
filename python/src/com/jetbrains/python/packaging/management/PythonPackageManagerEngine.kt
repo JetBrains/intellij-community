@@ -13,7 +13,7 @@ internal interface PythonPackageManagerEngine {
 
   suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit>
 
-  suspend fun uninstallPackageCommand(vararg pythonPackages: String): PyResult<Unit>
+  suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember? = null): PyResult<Unit>
 
   suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>>
 

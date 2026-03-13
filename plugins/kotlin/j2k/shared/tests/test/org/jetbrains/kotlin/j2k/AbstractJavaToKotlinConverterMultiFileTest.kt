@@ -6,7 +6,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.idea.actions.JavaToKotlinAction
+import org.jetbrains.kotlin.idea.actions.JavaToKotlinActionHandler
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -53,7 +53,7 @@ abstract class AbstractJavaToKotlinConverterMultiFileTest : AbstractJavaToKotlin
         }
 
         runWithModalProgressBlocking(project, "") {
-            JavaToKotlinAction.Handler.convertFiles(psiFilesToConvert, project, module, askExternalCodeProcessing = false)
+            JavaToKotlinActionHandler.convertFiles(psiFilesToConvert, project, module, askExternalCodeProcessing = false)
         }
 
         val resultFiles = psiFilesToConvert.map {

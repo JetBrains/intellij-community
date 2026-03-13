@@ -6,11 +6,22 @@ package com.intellij.platform.eel.provider.utils
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelConnectionError
+import com.intellij.platform.eel.EelTunnelsApi
+import com.intellij.platform.eel.ThrowsChecked
 import com.intellij.platform.eel.channels.EelDelicateApi
+import com.intellij.platform.eel.eelProxy
+import com.intellij.platform.eel.getAcceptorForRemotePort
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.util.io.toByteArray
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import java.net.InetAddress
 import java.net.InetSocketAddress

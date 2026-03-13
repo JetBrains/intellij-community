@@ -44,5 +44,7 @@
     <orderEntry type="module" module-name="intellij.libraries.commons.io" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.platform.util.trove" />
+    <orderEntry type="library" scope="PROVIDED" name="org.codehaus.groovy:groovy" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="org.codehaus.groovy:groovy-ant" level="project" />
   </component>
 </module>

@@ -24,4 +24,21 @@ jvm_library(
     "//plugins/gradle:gradle-common",
   ]
 )
+
+jvm_library(
+  name = "gradle_test_lib",
+  module_name = "kotlin.compiler-plugins.parcelize.gradle",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":gradle",
+    "//platform/core-api:core_test_lib",
+    "//platform/external-system-impl:externalSystem-impl_test_lib",
+    "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
+    "//platform/util:util_test_lib",
+    "//plugins/kotlin/compiler-plugins/parcelize/common:common_test_lib",
+    "//platform/object-serializer:objectSerializer-annotations_test_lib",
+    "//plugins/gradle:gradle-common_test_lib",
+  ]
+)
 ### auto-generated section `build kotlin.compiler-plugins.parcelize.gradle` end

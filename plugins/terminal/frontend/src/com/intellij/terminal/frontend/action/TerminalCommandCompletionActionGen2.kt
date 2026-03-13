@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionPromoter
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalView
 import com.intellij.terminal.frontend.view.activeOutputModel
 import com.intellij.terminal.frontend.view.completion.TerminalCommandCompletionService
@@ -58,4 +59,9 @@ internal class TerminalCommandCompletionActionGen2 : BaseCodeCompletionAction(),
   override fun promote(actions: @Unmodifiable List<AnAction?>, context: DataContext): @Unmodifiable List<AnAction?>? {
     return listOf(this)
   }
+
+  override fun getBehavior(): ActionRemoteBehavior? {
+    return null
+  }
+
 }

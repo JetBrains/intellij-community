@@ -188,7 +188,7 @@ BACK_REFERENCES_GROUP = [1-9][0-9]{0,2}
 {ESCAPE} "u" ({HEX_CHAR}{4})  { return RegExpTT.UNICODE_CHAR; }
 {ESCAPE} "u" / {LBRACE}       {  if (allowExtendedUnicodeCharacter) yypushstate(EMBRACED_HEX); else return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;  }
 {ESCAPE} "u"                  { return allowTransformationEscapes ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
-{ESCAPE} "u" {HEX_CHAR}{1,3}  { yypushback(yylength() - 2); return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+{ESCAPE} "u" {HEX_CHAR}{1,3}  { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
 
 <EMBRACED_HEX> {
   {LBRACE}{HEX_CHAR}+{RBRACE}  {  yypopstate(); return (yycharat(-1) == 'u') ? RegExpTT.UNICODE_CHAR : RegExpTT.HEX_CHAR;  }

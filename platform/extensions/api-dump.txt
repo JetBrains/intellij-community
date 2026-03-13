@@ -50,7 +50,6 @@ f:com.intellij.openapi.extensions.DefaultPluginDescriptor
 - getVersion():java.lang.String
 - isEnabled():Z
 - isLicenseOptional():Z
-- setEnabled(Z):V
 f:com.intellij.openapi.extensions.ExtensionNotApplicableException
 - java.lang.RuntimeException
 - com.intellij.openapi.diagnostic.ControlFlowException
@@ -180,7 +179,6 @@ com.intellij.openapi.extensions.PluginDescriptor
 - a:isEnabled():Z
 - a:isLicenseOptional():Z
 - isRequireRestart():Z
-- a:setEnabled(Z):V
 f:com.intellij.openapi.extensions.PluginId
 - java.lang.Comparable
 - sf:Companion:com.intellij.openapi.extensions.PluginId$Companion

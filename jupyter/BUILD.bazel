@@ -27,4 +27,24 @@ jvm_library(
     "//platform/analysis-api:analysis",
   ]
 )
+
+jvm_library(
+  name = "notebooks-jupyter-core_test_lib",
+  module_name = "intellij.notebooks.jupyter.core",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":notebooks-jupyter-core",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/built-in-server-api:builtInServer_test_lib",
+    "//platform/platform-util-netty:ide-util-netty_test_lib",
+    "//libraries/http-client:http-client_test_lib",
+    "//platform/util:util_test_lib",
+    "//libraries/netty/buffer:buffer_test_lib",
+    "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.notebooks.jupyter.core` end

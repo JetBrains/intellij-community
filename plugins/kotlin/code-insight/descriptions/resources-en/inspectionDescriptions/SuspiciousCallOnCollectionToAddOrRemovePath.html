@@ -1,12 +1,13 @@
 <html>
 <body>
-<p>Reports calls that add or remove a <code>java.nio.file.Path</code> to/from a Kotlin collection or sequence using
-    <code>plus</code>/<code>minus</code>, either in operator form (<code>a + b</code>, <code>a - b</code>) or regular call form
-    (<code>a.plus(b)</code>, <code>a.minus(b)</code>).</p>
-<p>Since <code>java.nio.file.Path</code> implements <code>Iterable&lt;Path&gt;</code>, such calls resolve to the unexpected overload of
-    the <code>plus</code> or <code>minus</code> function that takes a collection of elements (in this case, the individual elements
-    of the <code>Path</code>). But the intent of the code is probably to add or remove the <code>Path</code> itself, not the
-    individual elements.</p>
+<p>Reports usages of `plus`/`minus` where the argument type implements `Iterable`,
+    and the receiver is a Kotlin `Collection` or `Sequence` of the same element type.
+</p>
+<p>If the argument type implements `Iterable`, it is treated as a collection of elements rather than as a single element.
+    This may unintentionally add or remove multiple elements instead of the object itself.</p>
+<p>A common example is `java.nio.file.Path`, which implements `Iterable&lt;Path&gt;` (iterating over its name elements).
+    Adding a `Path` to a `Collection&lt;Path&gt;` using `+` or `-` may therefore operate on its components rather than on the `Path` instance as a whole.</p>
+<p>The inspection covers both operator syntax (`a + b`, `a - b`) and explicit calls (`a.plus(b)`, `a.minus(b)`).</p>
 <p><b>Examples:</b></p>
 <pre><code>
 // Operator form
@@ -16,6 +17,12 @@ val paths2 = setOf(path) - somePath
 // Regular call form
 val paths = listOf(path).plus(somePath)
 val paths2 = setOf(path).minus(somePath)
+
+// Sequences
+val seq = sequenceOf(path) + somePath
+
+// Path + Path (both sides are iterable)
+val combined = path1 + path2  // Returns List of segments, not a combined path
 </code></pre>
 
 <p><b>Quick-fixes:</b></p>
@@ -24,6 +31,7 @@ val paths2 = setOf(path).minus(somePath)
         <pre><code>
 val paths = listOf(path).plusElement(somePath)
 val paths2 = setOf(path).minusElement(somePath)
+val paths3 = sequenceOf(path).plusElement(somePath)
     </code></pre>
     </li>
     <li>Convert the <code>Path</code> argument to a collection to clarify intent without changing semantics:

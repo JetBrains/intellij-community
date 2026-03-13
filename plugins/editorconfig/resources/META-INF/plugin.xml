@@ -27,5 +27,6 @@
     <module name="intellij.editorconfig.frontend"/>
     <module name="intellij.editorconfig.frontend.split"/>
     <module name="intellij.editorconfig.backend"/>
+    <module name="intellij.editorconfig.backend.spellchecking"/>
   </content>
 </idea-plugin>

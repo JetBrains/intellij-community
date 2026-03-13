@@ -2,6 +2,8 @@
 
 package com.intellij.settingsSync.core
 
+import com.intellij.ide.plugins.DisabledPluginsState
+import com.intellij.ide.plugins.PluginEnabler
 import com.intellij.ide.plugins.PluginManagerCore.VENDOR_JETBRAINS
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -12,18 +14,26 @@ import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.settingsSync.core.communicator.*
+import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
+import com.intellij.settingsSync.core.communicator.SettingsSyncCommunicatorBean
+import com.intellij.settingsSync.core.communicator.SettingsSyncCommunicatorProvider
+import com.intellij.settingsSync.core.communicator.SettingsSyncUserData
+import com.intellij.settingsSync.core.communicator.getSyncProviderPoint
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
+import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.write
+import com.intellij.util.xmlb.SettingsInternalApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
@@ -51,12 +61,17 @@ internal abstract class SettingsSyncTestBase {
   protected lateinit var disposable: Disposable
   protected val settingsSyncStorage: Path get() = configDir.resolve("settingsSync")
 
+  private var ignoredDisabledPluginsBeforeTest: Boolean? = null
+
   @BeforeEach
   fun setup(@TempDir mainDir: Path) {
     application = ApplicationManager.getApplication() as ApplicationImpl
     configDir = mainDir.resolve("rootconfig").createDirectories()
 
+    ignoreDisabledPluginsStateForTest()
+
     SettingsSyncLocalSettings.getInstance().state.reset()
+    @OptIn(SettingsInternalApi::class)
     SettingsSyncSettings.getInstance().state = SettingsSyncSettings.State()
 
     remoteCommunicator = if (isTestingAgainstRealCloudServer()) {
@@ -67,8 +82,8 @@ internal abstract class SettingsSyncTestBase {
     }
     val providerEP = getSyncProviderPoint()
     if (providerEP.extensions.size > 0) {
-      LOG.warn("SettingsSyncCommunicatorProvider.PROVIDER_EP is not empty: ${providerEP.extensions.toList()}")
-      for (it in providerEP.extensions) {
+      LOG.warn("SettingsSyncCommunicatorProvider.PROVIDER_EP is not empty: ${providerEP.extensionList.toList()}")
+      for (it in providerEP.extensionList) {
         LOG.warn("Unregistering extension: ${it.instance.javaClass.name}")
         providerEP.unregisterExtension(it)
       }
@@ -107,14 +122,23 @@ internal abstract class SettingsSyncTestBase {
 
   @AfterEach
   fun cleanup() {
-    remoteCommunicator.deleteAllFiles()
-    if (::bridge.isInitialized) {
-      runBlocking {
-        bridge.waitForAllExecuted()
-      }
-      bridge.stop()
-    }
-    RemoteCommunicatorHolder.invalidateCommunicator()
+    runAll(
+      { remoteCommunicator.deleteAllFiles() },
+      {
+        if (::bridge.isInitialized) {
+          runBlocking {
+            bridge.waitForAllExecuted()
+          }
+        }
+      },
+      {
+        if (::bridge.isInitialized) {
+          bridge.stop()
+        }
+      },
+      { RemoteCommunicatorHolder.invalidateCommunicator() },
+      { restoreDisabledPluginsState() },
+    )
   }
 
   protected fun <T> timeoutRunBlockingAndStopBridge(
@@ -164,6 +188,20 @@ internal abstract class SettingsSyncTestBase {
       bridge.waitForAllExecuted()
     }
     return snapshot
+  }
+
+  private fun ignoreDisabledPluginsStateForTest() {
+    val pluginEnabler = PluginEnabler.HEADLESS
+    ignoredDisabledPluginsBeforeTest = pluginEnabler.isIgnoredDisabledPlugins()
+    DisabledPluginsState.invalidate()
+    pluginEnabler.setIgnoredDisabledPlugins(true)
+  }
+
+  private fun restoreDisabledPluginsState() {
+    val previousValue = ignoredDisabledPluginsBeforeTest ?: return
+    PluginEnabler.HEADLESS.setIgnoredDisabledPlugins(previousValue)
+    DisabledPluginsState.invalidate()
+    ignoredDisabledPluginsBeforeTest = null
   }
 }
 

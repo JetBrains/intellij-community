@@ -3,7 +3,11 @@ package com.intellij.platform.testFramework.monorepo.api
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
-import com.intellij.tools.apiDump.*
+import com.intellij.tools.apiDump.API
+import com.intellij.tools.apiDump.ApiClass
+import com.intellij.tools.apiDump.ClassMembers
+import com.intellij.tools.apiDump.ClassName
+import com.intellij.tools.apiDump.dumpApiAndGroupByClasses
 import com.intellij.util.diff.Diff
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking

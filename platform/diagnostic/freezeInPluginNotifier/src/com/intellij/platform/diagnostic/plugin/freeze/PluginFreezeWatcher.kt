@@ -10,6 +10,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.diagnostic.freezeAnalyzer.FreezeAnalyzer
 import com.intellij.threadDumpParser.ThreadState
 import com.intellij.util.application
@@ -57,6 +58,7 @@ internal class PluginFreezeWatcher {
 
   private fun isWorthReportingToUser(plugin: IdeaPluginDescriptor, frozenPlugin: PluginId): Boolean {
     if (application.isInternal || application.isEAP) return true
+    if (Registry.`is`("ide.diagnostics.notification.freezes.in.bundled.plugins")) return true
 
     return !plugin.isBundled
            && !plugin.isImplementationDetail

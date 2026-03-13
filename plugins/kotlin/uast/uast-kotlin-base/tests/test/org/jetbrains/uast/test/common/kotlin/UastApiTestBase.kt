@@ -303,10 +303,7 @@ interface UastApiTestBase : ExpectedPluginModeProvider {
                     .toUElementOfType<UAnnotation>()
                     ?: throw AssertionError("haven't got annotation from $referenceExpression(${referenceExpression?.javaClass})")
 
-                // NB: descriptor is FE 1.0 thing, not FIR.
-                if (pluginMode == KotlinPluginMode.K1) {
-                    checkDescriptorsLeak(convertedUAnnotation)
-                }
+                checkLeak(convertedUAnnotation)
                 TestCase.assertEquals("Annotation", convertedUAnnotation.qualifiedName)
                 val lightAnnotation = convertedUAnnotation.getAsJavaPsiElement(PsiAnnotation::class.java)
                     ?: throw AssertionError("can't get lightAnnotation from $convertedUAnnotation")
@@ -314,6 +311,8 @@ interface UastApiTestBase : ExpectedPluginModeProvider {
                 TestCase.assertEquals("Annotation", (convertedUAnnotation as UAnchorOwner).uastAnchor?.sourcePsi?.text)
             }
     }
+
+    fun checkLeak(convertedUAnnotation: UAnnotation) {}
 
     private fun checkNestedAnnotationParameters(uFile: UFile) {
         fun UFile.annotationAndParam(refText: String, check: (PsiAnnotation, String?) -> Unit) {

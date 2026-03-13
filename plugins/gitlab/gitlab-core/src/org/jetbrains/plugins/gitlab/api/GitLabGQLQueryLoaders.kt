@@ -17,7 +17,8 @@ internal object GitLabGQLQueryLoaders {
     GitLabVersion(14, 7),
     GitLabVersion(15, 9),
     GitLabVersion(16, 1),
-    GitLabVersion(16, 8)
+    GitLabVersion(16, 8),
+    GitLabVersion(17, 10)
   )
 
   val default: GraphQLQueryLoader by lazy {

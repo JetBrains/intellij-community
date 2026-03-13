@@ -1,9 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.json
 
-import com.fasterxml.jackson.core.JsonEncoding
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginGraph
 import com.intellij.platform.pluginGraph.TargetName
@@ -23,6 +20,13 @@ import org.jetbrains.intellij.build.productLayout.traversal.findModulePaths
 import org.jetbrains.intellij.build.productLayout.traversal.getModuleDependencies
 import org.jetbrains.intellij.build.productLayout.traversal.getModuleOwners
 import org.jetbrains.intellij.build.productLayout.validator.rule.validateNoRedundantModuleSets
+import tools.jackson.core.JsonEncoding
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.ObjectWriteContext
+import tools.jackson.core.PrettyPrinter
+import tools.jackson.core.StreamWriteFeature
+import tools.jackson.core.json.JsonFactory
+import tools.jackson.core.util.DefaultPrettyPrinter
 import java.nio.file.Path
 import java.time.Instant
 
@@ -70,15 +74,19 @@ suspend fun streamModuleAnalysisJson(
   // Enrich products with calculated metrics (parallelized)
   val enrichedProducts = enrichProductsWithMetrics(products, pluginGraph)
 
-  val generator = JsonFactory()
-    .createGenerator(System.out, JsonEncoding.UTF8)
-    .configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false)
-    .configure(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM, false)
-    .useDefaultPrettyPrinter()
+  val jsonFactory = JsonFactory()
+  val writeContext = object : ObjectWriteContext.Base() {
+    override fun tokenStreamFactory() = jsonFactory
+    override fun getPrettyPrinter(): PrettyPrinter = DefaultPrettyPrinter()
+  }
+  val generator = jsonFactory
+    .createGenerator(writeContext, System.out, JsonEncoding.UTF8)
+    .configure(StreamWriteFeature.AUTO_CLOSE_TARGET, false)
+    .configure(StreamWriteFeature.FLUSH_PASSED_TO_STREAM, false)
 
   generator.use { gen ->
     gen.writeStartObject()
-    gen.writeStringField("timestamp", Instant.now().toString())
+    gen.writeStringProperty("timestamp", Instant.now().toString())
 
     // Apply filter (dispatches to handler functions)
     applyFilter(gen, filter, allModuleSets, enrichedProducts, projectRoot, pluginGraph)
@@ -116,12 +124,12 @@ private suspend fun applyFilter(
     "moduleReachability" -> handleModuleReachabilityFilter(gen, filter, pluginGraph)
     "dependencyPath" -> handleDependencyPathFilter(gen, filter, pluginGraph)
     "productUsage" -> handleProductUsageFilter(gen, filter.moduleSet, products, pluginGraph)
-    else -> gen.writeStringField("error", "Unknown filter: ${filter.filter}")
+    else -> gen.writeStringProperty("error", "Unknown filter: ${filter.filter}")
   }
 }
 
 private fun handleProductsFilter(gen: JsonGenerator, products: List<ProductSpec>) {
-  gen.writeArrayFieldStart("products")
+  gen.writeArrayPropertyStart("products")
   for (product in products) {
     writeProduct(gen, product)
   }
@@ -133,7 +141,7 @@ private fun handleModuleSetsFilter(
   allModuleSets: List<ModuleSetMetadata>,
   pluginGraph: PluginGraph,
 ) {
-  gen.writeArrayFieldStart("moduleSets")
+  gen.writeArrayPropertyStart("moduleSets")
   for ((moduleSet, location, sourceFilePath) in allModuleSets) {
     writeModuleSet(gen, moduleSet, location.name, sourceFilePath, pluginGraph)
   }
@@ -141,7 +149,7 @@ private fun handleModuleSetsFilter(
 }
 
 private fun handleCompositionFilter(gen: JsonGenerator, products: List<ProductSpec>) {
-  gen.writeObjectFieldStart("productCompositionAnalysis")
+  gen.writeObjectPropertyStart("productCompositionAnalysis")
   writeProductCompositionAnalysis(gen, products)
   gen.writeEndObject()
 }
@@ -151,23 +159,23 @@ private fun handleDuplicatesFilter(
   allModuleSets: List<ModuleSetMetadata>,
   pluginGraph: PluginGraph,
 ) {
-  gen.writeObjectFieldStart("duplicateAnalysis")
+  gen.writeObjectPropertyStart("duplicateAnalysis")
   writeDuplicateAnalysis(gen, allModuleSets, pluginGraph)
   gen.writeEndObject()
 }
 
 private fun handleSingleProductFilter(gen: JsonGenerator, productName: String?, products: List<ProductSpec>) {
   if (productName == null) {
-    gen.writeStringField("error", "Product name required for 'product' filter")
+    gen.writeStringProperty("error", "Product name required for 'product' filter")
     return
   }
   val product = products.firstOrNull { it.name == productName }
   if (product != null) {
-    gen.writeFieldName("product")
+    gen.writeName("product")
     writeProduct(gen, product)
   }
   else {
-    gen.writeStringField("error", "Product '$productName' not found")
+    gen.writeStringProperty("error", "Product '$productName' not found")
   }
 }
 
@@ -178,12 +186,12 @@ private fun handleSingleModuleSetFilter(
   pluginGraph: PluginGraph,
 ) {
   if (moduleSetName == null) {
-    gen.writeStringField("error", "Module set name required for 'moduleSet' filter")
+    gen.writeStringProperty("error", "Module set name required for 'moduleSet' filter")
     return
   }
   val moduleSetEntry = allModuleSets.firstOrNull { it.moduleSet.name == moduleSetName }
   if (moduleSetEntry != null) {
-    gen.writeFieldName("moduleSet")
+    gen.writeName("moduleSet")
     writeModuleSet(
       gen = gen,
       moduleSet = moduleSetEntry.moduleSet,
@@ -193,7 +201,7 @@ private fun handleSingleModuleSetFilter(
     )
   }
   else {
-    gen.writeStringField("error", "Module set '$moduleSetName' not found")
+    gen.writeStringProperty("error", "Module set '$moduleSetName' not found")
   }
 }
 
@@ -206,22 +214,22 @@ private fun handleMergeImpactFilter(
 ) {
   val sourceSet = filter.source
   if (sourceSet == null) {
-    gen.writeStringField("error", "Source module set required for 'mergeImpact' filter")
+    gen.writeStringProperty("error", "Source module set required for 'mergeImpact' filter")
     return
   }
   val operation = MergeOperation.fromString(filter.operation ?: "merge")
   val impact = analyzeMergeImpact(sourceSet, filter.target, operation, allModuleSets, products, pluginGraph)
-  gen.writeFieldName("mergeImpact")
+  gen.writeName("mergeImpact")
   writeMergeImpactAnalysis(gen, impact)
 }
 
 private fun handleModulePathsFilter(gen: JsonGenerator, moduleName: String?, allModuleSets: List<ModuleSetMetadata>, products: List<ProductSpec>, projectRoot: Path) {
   if (moduleName == null) {
-    gen.writeStringField("error", "Module name required for 'modulePaths' filter")
+    gen.writeStringProperty("error", "Module name required for 'modulePaths' filter")
     return
   }
   val pathsResult = findModulePaths(ContentModuleName(moduleName), allModuleSets, products, projectRoot)
-  gen.writeFieldName("modulePaths")
+  gen.writeName("modulePaths")
   writeModulePathsResult(gen, pathsResult)
 }
 
@@ -232,7 +240,7 @@ private fun handleModuleDependenciesFilter(
 ) {
   val moduleName = filter.module
   if (moduleName == null) {
-    gen.writeStringField("error", "Module name required for 'moduleDependencies' filter")
+    gen.writeStringProperty("error", "Module name required for 'moduleDependencies' filter")
     return
   }
   val result = getModuleDependencies(
@@ -241,7 +249,7 @@ private fun handleModuleDependenciesFilter(
     includeTransitive = filter.includeTransitive,
     includeTestDependencies = filter.includeTestDependencies,
   )
-  gen.writeFieldName("moduleDependencies")
+  gen.writeName("moduleDependencies")
   writeModuleDependenciesResult(gen, result)
 }
 
@@ -252,11 +260,11 @@ private fun handleModuleOwnersFilter(
 ) {
   val moduleName = filter.module
   if (moduleName == null) {
-    gen.writeStringField("error", "Module name required for 'moduleOwners' filter")
+    gen.writeStringProperty("error", "Module name required for 'moduleOwners' filter")
     return
   }
   val result = getModuleOwners(ContentModuleName(moduleName), pluginGraph, filter.includeTestSources)
-  gen.writeFieldName("moduleOwners")
+  gen.writeName("moduleOwners")
   writeModuleOwnersResult(gen, result)
 }
 
@@ -268,11 +276,11 @@ private fun handleModuleReachabilityFilter(
   val moduleName = filter.module
   val moduleSetName = filter.moduleSet
   if (moduleName == null || moduleSetName == null) {
-    gen.writeStringField("error", "Module name and module set name required for 'moduleReachability' filter")
+    gen.writeStringProperty("error", "Module name and module set name required for 'moduleReachability' filter")
     return
   }
   val result = checkModuleReachability(ContentModuleName(moduleName), moduleSetName, pluginGraph)
-  gen.writeFieldName("moduleReachability")
+  gen.writeName("moduleReachability")
   writeModuleReachabilityResult(gen, result)
 }
 
@@ -284,12 +292,12 @@ private fun handleDependencyPathFilter(
   val fromModule = filter.fromModule
   val toModule = filter.toModule
   if (fromModule == null || toModule == null) {
-    gen.writeStringField("error", "Both fromModule and toModule required for 'dependencyPath' filter")
+    gen.writeStringProperty("error", "Both fromModule and toModule required for 'dependencyPath' filter")
     return
   }
   val graphType = filter.graph?.lowercase()
   if (graphType != null && graphType != "jps") {
-    gen.writeStringField("error", "Unsupported dependencyPath graph '$graphType'. Supported: jps")
+    gen.writeStringProperty("error", "Unsupported dependencyPath graph '$graphType'. Supported: jps")
     return
   }
   val result = findDependencyPath(
@@ -299,7 +307,7 @@ private fun handleDependencyPathFilter(
     includeTestDependencies = filter.includeTestDependencies,
     includeScopes = filter.includeScopes,
   )
-  gen.writeFieldName("dependencyPath")
+  gen.writeName("dependencyPath")
   writeDependencyPathResult(gen, result)
 }
 
@@ -310,11 +318,11 @@ private fun handleProductUsageFilter(
   pluginGraph: PluginGraph,
 ) {
   if (moduleSetName == null) {
-    gen.writeStringField("error", "Module set name required for 'productUsage' filter")
+    gen.writeStringProperty("error", "Module set name required for 'productUsage' filter")
     return
   }
   val usage = analyzeProductUsage(moduleSetName, products, pluginGraph)
-  gen.writeFieldName("productUsage")
+  gen.writeName("productUsage")
   writeProductUsageAnalysis(gen, usage)
 }
 
@@ -329,34 +337,34 @@ private suspend fun writeAllSections(
   pluginGraph: PluginGraph,
 ) {
   // Write module sets
-  gen.writeArrayFieldStart("moduleSets")
+  gen.writeArrayPropertyStart("moduleSets")
   for ((moduleSet, location, sourceFilePath) in allModuleSets) {
     writeModuleSet(gen = gen, moduleSet = moduleSet, location = location.name, sourceFilePath = sourceFilePath, pluginGraph = pluginGraph)
   }
   gen.writeEndArray()
 
   // Write module sets index for direct lookup
-  gen.writeFieldName("moduleSetsByName")
+  gen.writeName("moduleSetsByName")
   writeModuleSetIndex(gen, allModuleSets, pluginGraph)
 
   // Write products
-  gen.writeArrayFieldStart("products")
+  gen.writeArrayPropertyStart("products")
   for (product in products) {
     writeProduct(gen, product)
   }
   gen.writeEndArray()
 
   // Write products index for direct lookup
-  gen.writeFieldName("productsByName")
+  gen.writeName("productsByName")
   writeProductIndex(gen, products)
 
   // Write duplicate analysis
-  gen.writeObjectFieldStart("duplicateAnalysis")
+  gen.writeObjectPropertyStart("duplicateAnalysis")
   writeDuplicateAnalysis(gen = gen, allModuleSets = allModuleSets, pluginGraph = pluginGraph)
   gen.writeEndObject()
 
   // Write product composition analysis
-  gen.writeObjectFieldStart("productCompositionAnalysis")
+  gen.writeObjectPropertyStart("productCompositionAnalysis")
   writeProductCompositionAnalysis(gen, products)
   gen.writeEndObject()
 
@@ -365,19 +373,19 @@ private suspend fun writeAllSections(
   val moduleLocations = when (moduleLocationsResult) {
     is ParseResult.Success -> moduleLocationsResult.value
     is ParseResult.Failure -> {
-      gen.writeStringField("moduleLocationsWarning", moduleLocationsResult.error)
+      gen.writeStringProperty("moduleLocationsWarning", moduleLocationsResult.error)
       moduleLocationsResult.partial ?: emptyMap()
     }
   }
-  gen.writeFieldName("moduleDistribution")
+  gen.writeName("moduleDistribution")
   writeModuleDistribution(gen = gen, allModuleSets = allModuleSets, products = products, moduleLocations = moduleLocations, pluginGraph = pluginGraph)
 
   // Write module set hierarchy
-  gen.writeFieldName("moduleSetHierarchy")
+  gen.writeName("moduleSetHierarchy")
   writeModuleSetHierarchy(gen, allModuleSets, pluginGraph)
 
   // Write module usage index
-  gen.writeFieldName("moduleUsageIndex")
+  gen.writeName("moduleUsageIndex")
   writeModuleUsageIndex(gen, allModuleSets, products, pluginGraph)
 
   // Validate community products don't use ultimate modules
@@ -388,24 +396,24 @@ private suspend fun writeAllSections(
     projectRoot = projectRoot,
     pluginGraph = pluginGraph,
   )
-  gen.writeObjectFieldStart("communityProductViolations")
+  gen.writeObjectPropertyStart("communityProductViolations")
   writeCommunityProductViolations(gen, communityViolations)
   gen.writeEndObject()
 
   // Validate module sets are in correct locations
   val locationViolations = validateModuleSetLocations(allModuleSets, moduleLocations, projectRoot, pluginGraph)
-  gen.writeObjectFieldStart("moduleSetLocationViolations")
+  gen.writeObjectPropertyStart("moduleSetLocationViolations")
   writeModuleSetLocationViolations(gen, locationViolations)
   gen.writeEndObject()
 
   // Analyze product similarity for refactoring recommendations (parallelized)
   val similarityPairs = analyzeProductSimilarity(products, pluginGraph, similarityThreshold = 0.7)
-  gen.writeFieldName("productSimilarity")
+  gen.writeName("productSimilarity")
   writeProductSimilarityAnalysis(gen, similarityPairs, 0.7)
 
   // Detect module set overlaps with cache (parallelized)
   val moduleSetOverlaps = detectModuleSetOverlap(allModuleSets, pluginGraph, minOverlapPercent = 50)
-  gen.writeFieldName("moduleSetOverlap")
+  gen.writeName("moduleSetOverlap")
   writeModuleSetOverlapAnalysis(gen, moduleSetOverlaps, 50)
 
   // Generate unification suggestions based on overlaps and similarity (parallelized)
@@ -418,6 +426,6 @@ private suspend fun writeAllSections(
     maxSuggestions = 10,
     strategy = "all"
   )
-  gen.writeFieldName("unificationSuggestions")
+  gen.writeName("unificationSuggestions")
   writeUnificationSuggestions(gen, unificationSuggestions)
 }

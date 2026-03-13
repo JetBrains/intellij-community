@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:bouncy-castle-pgp"],
   runtime_deps = ["@lib//:bouncy-castle-pgp"]
 )
+
+jvm_library(
+  name = "bouncy-castle-pgp_test_lib",
+  module_name = "intellij.libraries.bouncy.castle.pgp",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:bouncy-castle-pgp"],
+  runtime_deps = [":bouncy-castle-pgp"]
+)
 ### auto-generated section `build intellij.libraries.bouncy.castle.pgp` end

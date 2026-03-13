@@ -7,6 +7,7 @@ import com.intellij.grazie.text.TextContent.Exclusion
 import com.intellij.grazie.text.TextContent.ExclusionKind
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.annotations.ApiStatus
 import java.util.regex.Pattern
 
 private val anyTag = Pattern.compile("</?(\\w+)[^>]*>")
@@ -47,6 +48,7 @@ fun excludeHtml(content: TextContent?): List<TextContent> {
 }
 
 /** Remove HTML markup from a text, replacing it with unknown or markup (for some common HTML tags) offsets. */
+@ApiStatus.ScheduledForRemoval
 @Deprecated("use excludeHtml", ReplaceWith("excludeHtml"))
 fun removeHtml(_content: TextContent?): TextContent? {
   var content: TextContent = _content ?: return null

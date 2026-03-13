@@ -25,6 +25,9 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine;
 
 import static org.jetbrains.plugins.gradle.service.execution.GradleCommandLineUtil.getTestPatterns;
+import static org.jetbrains.plugins.gradle.settings.GradleExecutionSettings.DEBUG_ALL_KEY;
+import static org.jetbrains.plugins.gradle.settings.GradleExecutionSettings.IS_TEST_TASK_RERUN_KEY;
+import static org.jetbrains.plugins.gradle.settings.GradleExecutionSettings.RUN_AS_TEST_KEY;
 
 public class GradleRunConfiguration
   extends ExternalSystemRunConfiguration
@@ -39,10 +42,6 @@ public class GradleRunConfiguration
 
   private static final String PROFILING_DISABLED_NAME = "GradleProfilingDisabled";
   private static final String COVERAGE_DISABLED_NAME = "GradleCoverageDisabled";
-
-  public static final Key<Boolean> DEBUG_ALL_KEY = Key.create("DEBUG_ALL_TASKS");
-  public static final Key<Boolean> RUN_AS_TEST_KEY = Key.create("RUN_AS_TEST");
-  public static final Key<Boolean> IS_TEST_TASK_RERUN_KEY = Key.create("IS_TEST_TASK_RERUN");
 
   private boolean isDebugAllEnabled = false;
   private boolean isRunAsTest = false;

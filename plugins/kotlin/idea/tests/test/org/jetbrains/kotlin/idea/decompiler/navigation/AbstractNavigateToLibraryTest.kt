@@ -79,7 +79,7 @@ abstract class AbstractNavigateJavaToLibraryTest(testDataPath: String, attachSou
     protected val mockLibraryFacility = MockLibraryFacility(
         source = IDEA_TEST_DATA_DIR.resolve(testDataPath),
         attachSources = attachSources,
-        options = listOf("-Xcontext-receivers")
+        options = listOf("-Xcontext-parameters")
     )
 
     override val expectedFileExt: String = ".source.expected"
@@ -101,7 +101,7 @@ abstract class AbstractNavigateJavaSourceToLibrarySourceTest : AbstractNavigateJ
 
 abstract class AbstractNavigateToLibrarySourceTestWithJS : AbstractNavigateToLibrarySourceTest() {
     private val mockLibraryFacility = MockLibraryFacility(IDEA_TEST_DATA_DIR.resolve("decompiler/navigation/fromJavaSource"),
-                                                          options = listOf("-Xcontext-receivers"))
+                                                          options = listOf("-Xcontext-parameters"))
 
     override fun tearDown() = runAll(
         ThrowableRunnable { mockLibraryFacility.tearDown(module) },

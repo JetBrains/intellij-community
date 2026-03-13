@@ -6,7 +6,13 @@ import com.intellij.collaboration.async.PaginatedPotentiallyInfiniteListLoader.P
 import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
@@ -158,6 +164,18 @@ interface PotentiallyInfiniteListLoader {
 interface ReloadablePotentiallyInfiniteListLoader<V>
   : ListLoader<V>, ReloadableListLoader, PotentiallyInfiniteListLoader
 
+/**
+ * An abstract class that provides functionality for managing and loading a paginated
+ * potentially infinite list of data items. This loader supports reloading, refreshing,
+ * and incrementally loading more data pages, with support for handling failures and tracking busy states.
+ *
+ * @param PI The type representing page information, which tracks the pagination state.
+ * @param K The type representing keys extracted from data items.
+ * @param V The type of data items being loaded and managed by the loader.
+ * @param initialPageInfo The initial page information used to begin the pagination process.
+ * @param extractKey A lambda to extract a key of type [K] from a data item of type [V].
+ * @param shouldTryToLoadAll Indicates whether the loader should attempt to load all pages upfront.
+ */
 @ApiStatus.Internal
 abstract class PaginatedPotentiallyInfiniteListLoader<PI : PageInfo<PI>, K, V>(
   private val initialPageInfo: PI,
@@ -206,23 +224,29 @@ abstract class PaginatedPotentiallyInfiniteListLoader<PI : PageInfo<PI>, K, V>(
     }
   }
 
+  /**
+   * Refreshes the current state of the paginated list by reloading data for each page
+   * and loading the new pages if [shouldTryToLoadAll] is set
+   */
   private suspend fun doRefresh() {
     coroutineScope {
       val currentPages = pages.list ?: listOf()
-      doEmitPages(
-        runCatchingUser {
-          State(currentPages.mapNotNull { page ->
-            if (page.info == null) return@mapNotNull null
+      val newState = runCatchingUser {
+        val newPages = currentPages.mapNotNull { page ->
+          if (page.info == null) return@mapNotNull null
 
-            performRequestAndProcess(page.info) { pageInfo, results ->
-              page.copy(info = pageInfo, list = results ?: page.list)
-            }
-          }.toList(), null)
-        }.getOrElse {
-          State(currentPages, it)
-        })
+          performRequestAndProcess(page.info) { pageInfo, results ->
+            page.copy(info = pageInfo, list = results ?: page.list)
+          }
+        }
+        State(newPages, null)
+      }.getOrElse {
+        State(currentPages, it)
+      }
+      doEmitPages(newState)
     }
 
+    // load the new pages we learned about during the refresh
     if (shouldTryToLoadAll) {
       loadAllImpl()
     }
@@ -294,7 +318,7 @@ abstract class PaginatedPotentiallyInfiniteListLoader<PI : PageInfo<PI>, K, V>(
    */
   protected abstract suspend fun performRequestAndProcess(
     pageInfo: PI,
-    f: (pageInfo: PI?, results: List<V>?) -> Page<PI, V>?
+    createPage: (pageInfo: PI?, results: List<V>?) -> Page<PI, V>?
   ): Page<PI, V>?
 
   /**

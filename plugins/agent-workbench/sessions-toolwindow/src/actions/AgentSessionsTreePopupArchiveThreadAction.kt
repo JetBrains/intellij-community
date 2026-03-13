@@ -1,0 +1,65 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.agent.workbench.sessions.toolwindow.actions
+
+import com.intellij.agent.workbench.sessions.AgentSessionsBundle
+import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
+import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
+import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveService
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.DumbAwareAction
+
+internal class AgentSessionsTreePopupArchiveThreadAction : DumbAwareAction {
+  private val resolveContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext?
+  private val canArchiveProvider: (AgentSessionProvider) -> Boolean
+  private val archiveThreads: (List<ArchiveThreadTarget>, AgentWorkbenchEntryPoint) -> Unit
+
+  @Suppress("unused")
+  constructor() {
+    resolveContext = ::resolveAgentSessionsTreePopupActionContext
+    canArchiveProvider = { provider -> service<AgentSessionArchiveService>().canArchiveProvider(provider) }
+    archiveThreads = { targets, entryPoint -> service<AgentSessionArchiveService>().archiveThreads(targets, entryPoint) }
+  }
+
+  internal constructor(
+    resolveContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext?,
+    canArchiveProvider: (AgentSessionProvider) -> Boolean,
+    archiveThreads: (List<ArchiveThreadTarget>, AgentWorkbenchEntryPoint) -> Unit,
+  ) {
+    this.resolveContext = resolveContext
+    this.canArchiveProvider = canArchiveProvider
+    this.archiveThreads = archiveThreads
+  }
+
+  override fun update(e: AnActionEvent) {
+    val context = resolveContext(e)
+    if (context == null) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
+    val archiveTargets = context.archiveTargets
+    val canArchive = archiveTargets.any { target -> canArchiveProvider(target.provider) }
+    e.presentation.isEnabledAndVisible = canArchive
+    if (canArchive) {
+      e.presentation.text = if (archiveTargets.size > 1) {
+        AgentSessionsBundle.message("toolwindow.action.archive.selected.count", archiveTargets.size)
+      }
+      else {
+        AgentSessionsBundle.message("toolwindow.action.archive")
+      }
+    }
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val context = resolveContext(e) ?: return
+    if (context.archiveTargets.none { target -> canArchiveProvider(target.provider) }) {
+      return
+    }
+    archiveThreads(context.archiveTargets, AgentWorkbenchEntryPoint.TREE_POPUP)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+}

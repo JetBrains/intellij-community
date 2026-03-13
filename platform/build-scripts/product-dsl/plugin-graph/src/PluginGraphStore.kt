@@ -113,6 +113,36 @@ class PluginGraphStore internal constructor(
     nameIndex[kind].forEachValue(action)
   }
 
+  /** Iterate plugin node IDs registered under the specified plugin ID. */
+  fun forEachPluginNodeByPluginId(pluginId: PluginId, action: (Int) -> Unit) {
+    pluginIds.forEach { nodeId, value ->
+      if (value != pluginId.value) {
+        return@forEach
+      }
+      if ((kinds[nodeId] and NODE_KIND_MASK) != NODE_PLUGIN) {
+        return@forEach
+      }
+      action(nodeId)
+    }
+  }
+
+  /** Returns true if the specified plugin ID has a synthetic alias plugin node. */
+  fun hasAliasPlugin(pluginId: PluginId): Boolean {
+    var found = false
+    pluginIds.forEach { nodeId, value ->
+      if (found || value != pluginId.value) {
+        return@forEach
+      }
+      if ((kinds[nodeId] and NODE_KIND_MASK) != NODE_PLUGIN) {
+        return@forEach
+      }
+      if ((kinds[nodeId] and NODE_FLAG_IS_ALIAS) != 0) {
+        found = true
+      }
+    }
+    return found
+  }
+
   // endregion
 
   // region Property Accessors
@@ -128,6 +158,12 @@ class PluginGraphStore internal constructor(
 
   /** Check if plugin is DSL-defined (auto-computed dependencies) */
   fun isDslDefined(nodeId: Int): Boolean = (kinds[nodeId] and NODE_FLAG_IS_DSL_DEFINED) != 0
+
+  /** Check if plugin is a generated wrapper for a pluginized module set */
+  fun isModuleSetWrapper(nodeId: Int): Boolean = (kinds[nodeId] and NODE_FLAG_IS_MODULE_SET_WRAPPER) != 0
+
+  /** Check if plugin node is a synthetic alias target. */
+  fun isAliasPlugin(nodeId: Int): Boolean = (kinds[nodeId] and NODE_FLAG_IS_ALIAS) != 0
 
   /** Get plugin ID (from <id> element) */
   fun pluginId(nodeId: Int): PluginId {
@@ -281,12 +317,52 @@ class PluginGraphStore internal constructor(
   }
 
   /**
+   * Create a mutable copy of this store for incremental updates.
+   *
+   * @param lazyNameIndex If true, reuse nameIndex maps and copy on first mutation.
+   * @param descriptorFlagsComplete Whether to set descriptor flag completeness on the new store.
+   */
+  fun toMutableStore(
+    lazyNameIndex: Boolean = true,
+    descriptorFlagsComplete: Boolean = this.descriptorFlagsComplete,
+  ): MutablePluginGraphStore {
+    val namesCopy = copyNames(names)
+    val kindsCopy = copyKinds(kinds)
+    val pluginIdsCopy = copyPluginIds(pluginIds)
+    val aliasesCopy = copyAliases(aliases)
+
+    val nameIndexCopy: Array<ObjectIntMap<String>>
+    val nameIndexOwned: BooleanArray
+    if (lazyNameIndex) {
+      nameIndexCopy = nameIndex.copyOf()
+      nameIndexOwned = BooleanArray(nameIndexCopy.size)
+    }
+    else {
+      nameIndexCopy = copyNameIndexDeep(nameIndex)
+      nameIndexOwned = BooleanArray(nameIndexCopy.size) { true }
+    }
+
+    val (outCopy, inCopy) = copyEdgeMaps()
+    return MutablePluginGraphStore(
+      names = namesCopy,
+      kinds = kindsCopy,
+      pluginIds = pluginIdsCopy,
+      aliases = aliasesCopy,
+      outEdges = outCopy,
+      inEdges = inCopy,
+      nameIndex = nameIndexCopy,
+      descriptorFlagsComplete = descriptorFlagsComplete,
+      nameIndexOwned = nameIndexOwned,
+    )
+  }
+
+  /**
    * Create deep copies of the edge maps for building a new store.
-   * Used by ContentModuleDependencyGenerator when extending the store with new nodes.
+   * Used by [toMutableStore] when extending the store with new nodes.
    *
    * @return Pair of (outEdges copy, inEdges copy)
    */
-  fun copyEdgeMaps(): Pair<MutableIntObjectMap<MutableIntList>, MutableIntObjectMap<MutableIntList>> {
+  internal fun copyEdgeMaps(): Pair<MutableIntObjectMap<MutableIntList>, MutableIntObjectMap<MutableIntList>> {
     val outCopy = MutableIntObjectMap<MutableIntList>()
     val inCopy = MutableIntObjectMap<MutableIntList>()
     for (edgeType in 0 until EDGE_TYPE_COUNT) {
@@ -374,7 +450,12 @@ private fun buildReverseCsrFromOut(
       val targetId = unpackNodeId(entry)
       val reverseEntry = when (edgeType) {
         EDGE_TARGET_DEPENDS_ON -> packTargetDependencyEntry(sourceId, unpackTargetDependencyScope(entry))
-        EDGE_PLUGIN_XML_DEPENDS_ON_PLUGIN -> packPluginDepEntry(sourceId, unpackPluginDepOptional(entry), unpackPluginDepFormats(entry))
+        EDGE_PLUGIN_XML_DEPENDS_ON_PLUGIN -> packPluginDepEntry(
+          sourceId,
+          unpackPluginDepOptional(entry),
+          unpackPluginDepFormats(entry),
+          unpackPluginDepHasConfigFile(entry),
+        )
         EDGE_CONTAINS_CONTENT, EDGE_CONTAINS_CONTENT_TEST, EDGE_CONTAINS_MODULE -> packEdgeEntry(sourceId, unpackLoadingMode(entry))
         else -> sourceId
       }

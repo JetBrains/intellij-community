@@ -61,7 +61,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	body.attrs.onoffline?
 		&	body.attrs.ononline?
 		&	body.attrs.onpagehide?
+		&	body.attrs.onpagereveal?
 		&	body.attrs.onpageshow?
+		&	body.attrs.onpageswap?
 		&	body.attrs.onpopstate?
 		&	body.attrs.onrejectionhandled?
 		&	body.attrs.onstorage?
@@ -91,6 +93,10 @@ datatypes w = "http://whattf.org/datatype-draft"
 		attribute ononline { common.data.functionbody }
 	body.attrs.onpagehide =
 		attribute onpagehide { common.data.functionbody }
+	body.attrs.onpagereveal =
+		attribute onpagereveal { common.data.functionbody }
+	body.attrs.onpageswap =
+		attribute onpageswap { common.data.functionbody }
 	body.attrs.onpageshow =
 		attribute onpageshow { common.data.functionbody }
 	body.attrs.onpopstate =
@@ -176,30 +182,22 @@ datatypes w = "http://whattf.org/datatype-draft"
 			}
 		link.attrs.rel =
 			attribute rel {
-				string
+				w:rel-value
 			}
 		link.attrs.as =
 			attribute as {
-				string ""
-			|	string "audio"
-			|	string "audioworklet"
-			|	string "document"
-			|	string "embed"
+				string "audioworklet"
 			|	string "fetch"
 			|	string "font"
 			|	string "image"
-			|	string "manifest"
-			|	string "object"
+			|	string "json"
 			|	string "paintworklet"
-			|	string "report"
 			|	string "script"
 			|	string "serviceworker"
 			|	string "sharedworker"
 			|	string "style"
 			|	string "track"
-			|	string "video"
 			|	string "worker"
-			|	string "xslt"
 			}
 		link.attrs.integrity =
 			attribute integrity {
@@ -253,15 +251,10 @@ datatypes w = "http://whattf.org/datatype-draft"
 		element style { style.inner & style.attrs }
 	style.attrs =
 		(	common.attrs
-		&	style.attrs.type?
 		&	style.attrs.media?
 		&	common.attrs.blocking?
 		#	style.attrs.title included in common.attrs
 		)
-		style.attrs.type =
-			attribute type {
-				text
-			}
 		style.attrs.media =
 			attribute media {
 				common.data.mediaquery

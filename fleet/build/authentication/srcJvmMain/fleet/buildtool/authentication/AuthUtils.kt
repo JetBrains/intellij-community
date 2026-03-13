@@ -1,7 +1,6 @@
 package fleet.buildtool.authentication
 
 import kotlinx.serialization.Serializable
-import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
 import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.serialization.XmlConfig
 import nl.adaptivity.xmlutil.serialization.XmlElement
@@ -17,7 +16,6 @@ val defaultSettingsPath by lazy {
   Path.of(System.getProperty("user.home")).resolve(".m2/settings.xml")
 }
 
-@OptIn(ExperimentalXmlUtilApi::class)
 fun readMavenSettingsServerCredentials(
   logger: Logger,
   mavenSettingsPath: Path = defaultSettingsPath,

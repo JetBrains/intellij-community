@@ -1,7 +1,13 @@
 <idea-plugin>
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.grid.core.impl"/>
     <module name="intellij.grid.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <!-- endregion -->
   </dependencies>
   <applicationListeners>
     <listener class="com.intellij.grid.impl.ide.CsvDataModeEditUsageListener"

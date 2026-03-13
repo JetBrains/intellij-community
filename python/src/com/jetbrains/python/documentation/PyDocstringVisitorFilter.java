@@ -17,7 +17,6 @@ import com.jetbrains.python.inspections.PySingleQuotedDocstringInspection;
 import com.jetbrains.python.inspections.PyStatementEffectInspection;
 import com.jetbrains.python.inspections.PyUnboundLocalVariableInspection;
 import com.jetbrains.python.inspections.PyUnnecessaryBackslashInspection;
-import com.jetbrains.python.inspections.interpreter.PyInterpreterInspection;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PythonVisitorFilter;
@@ -43,7 +42,7 @@ public final class PyDocstringVisitorFilter implements PythonVisitorFilter {
         visitorClass == PyUnboundLocalVariableInspection.class || visitorClass == PyUnnecessaryBackslashInspection.class ||
         visitorClass == PyByteLiteralInspection.class || visitorClass == PyNonAsciiCharInspection.class ||
         visitorClass == PyPackageRequirementsInspection.class || visitorClass == PyMandatoryEncodingInspection.class ||
-        visitorClass == PyInterpreterInspection.class || visitorClass == PyDocstringTypesInspection.class ||
+        visitorClass == PyDocstringTypesInspection.class ||
         visitorClass == PySingleQuotedDocstringInspection.class || visitorClass == PyClassHasNoInitInspection.class ||
         visitorClass == PyStatementEffectInspection.class || visitorClass == PyPep8Inspection.class) {
       return false;

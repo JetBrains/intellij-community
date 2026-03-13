@@ -1,7 +1,6 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
-import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +22,17 @@ import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexEx;
+import com.intellij.util.indexing.FileBasedIndexExtension;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.IdFilter;
+import com.intellij.util.indexing.StorageException;
+import com.intellij.util.indexing.UpdatableIndex;
+import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.impl.UpdateData;
 import com.intellij.util.indexing.impl.UpdateData.ForwardIndexUpdate;
 import com.intellij.util.io.DataExternalizer;
@@ -40,11 +49,19 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 
+import static com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesKt.isIndexingActivitiesSuppressedSync;
 import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.TRACE_OF_STUB_ENTRIES_LOOKUP;
 import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.lookupStubEntriesStarted;
 
@@ -152,7 +169,7 @@ public abstract class StubIndexEx extends StubIndex {
     try {
       boolean dumb = DumbService.isDumb(project);
       if (dumb) {
-        if (project instanceof LightEditCompatible) return false;
+        if (isIndexingActivitiesSuppressedSync(project)) return false;
         DumbModeAccessType accessType = FileBasedIndex.getInstance().getCurrentDumbModeAccessType(project);
         if (accessType == DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE) {
           // Do not disable this assertion.

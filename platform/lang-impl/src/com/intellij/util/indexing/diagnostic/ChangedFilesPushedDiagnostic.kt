@@ -3,14 +3,13 @@ package com.intellij.util.indexing.diagnostic
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonTypeName
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.diagnostic.dto.JsonDateTime
 import com.intellij.util.indexing.diagnostic.dto.JsonDuration
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.module.kotlin.jacksonObjectMapper
+import tools.jackson.module.kotlin.readValue
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import kotlin.io.path.exists
@@ -53,11 +52,10 @@ object ChangedFilesPushedDiagnostic {
     IndexDiagnosticDumper.getProjectDiagnosticDirectory(project).resolve("changed-files-pushing-events.json")
 
   private val jacksonMapper: ObjectMapper by lazy {
-    jacksonObjectMapper().registerKotlinModule()
+    jacksonObjectMapper()
   }
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeName("event")
 data class ChangedFilesPushedEvent(val reason: String, val startTime: JsonDateTime, val duration: JsonDuration, val isCancelled: Boolean)
-

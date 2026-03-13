@@ -32,4 +32,29 @@ jvm_library(
     "//platform/xdebugger-impl/rpc",
   ]
 )
+
+jvm_library(
+  name = "frontend_test_lib",
+  module_name = "intellij.java.debugger.impl.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":frontend",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/xdebugger-api:debugger_test_lib",
+    "//platform/xdebugger-impl:debugger-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//java/debugger/shared:shared_test_lib",
+    "//platform/xdebugger-impl/frontend:frontend_test_lib",
+    "//platform/xdebugger-impl/shared:shared_test_lib",
+    "//platform/xdebugger-impl/rpc:rpc_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.java.debugger.impl.frontend` end

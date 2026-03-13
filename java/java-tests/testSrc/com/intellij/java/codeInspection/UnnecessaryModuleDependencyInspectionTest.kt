@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection
 
 import com.intellij.analysis.AnalysisScope
@@ -72,6 +70,18 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
     myFixture.addFileToProject("mod2/Usage.java", "public class Usage {{Factory.create();}}")
 
     assertInspectionProducesZeroResults()
+  }
+  
+  fun testUnnecessaryDependencyWhenTwoModulesUseTheSameLibrary() {
+    val mod1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
+    val mod2 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
+    ModuleRootModificationUtil.addDependency(mod1, mod2, DependencyScope.COMPILE, false)
+    val lib = IntelliJProjectConfiguration.getProjectLibrary("JUnit4")
+    ModuleRootModificationUtil.addModuleLibrary(mod1, "JUnit4", lib.classesUrls, lib.sourcesUrls, emptyList(), DependencyScope.COMPILE, false)
+    ModuleRootModificationUtil.addModuleLibrary(mod2, "JUnit4", lib.classesUrls, lib.sourcesUrls, emptyList(), DependencyScope.COMPILE, true)
+    myFixture.addFileToProject("mod1/MyTest1.java", "public class MyTest1 {@org.junit.Test public void test() {}}")
+
+    assertReportedProblems("Module 'mod1' sources do not depend on module 'mod2' sources")
   }
 
   fun testExportedLibraryThroughModuleDependency() {
@@ -182,10 +192,8 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
 
   private fun assertReportedProblems(expectedProblems: String) {
     val presentation = getReportedProblems()
-    Assert.assertTrue(presentation.problemDescriptors.joinToString { problem -> problem.descriptionTemplate },
-                      presentation.hasReportedProblems().toBoolean())
-    Assert.assertEquals(expectedProblems,
-                        presentation.problemDescriptors.joinToString { problem -> problem.descriptionTemplate })
+    Assert.assertTrue("No problems were reported. Expected: ${expectedProblems}" , presentation.hasReportedProblems().toBoolean())
+    Assert.assertEquals(expectedProblems, presentation.problemDescriptors.joinToString { problem -> problem.descriptionTemplate })
   }
 
   private fun getReportedProblems(): @NotNull InspectionToolPresentation {

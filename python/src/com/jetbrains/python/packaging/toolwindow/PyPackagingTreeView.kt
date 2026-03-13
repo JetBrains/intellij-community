@@ -9,9 +9,7 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.repository.InstalledPyPackagedRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
-import com.jetbrains.python.packaging.toolwindow.model.ErrorNode
 import com.jetbrains.python.packaging.toolwindow.model.ExpandResultNode
-import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.model.PyInvalidRepositoryViewData
 import com.jetbrains.python.packaging.toolwindow.model.PyPackagesViewData
 import com.jetbrains.python.packaging.toolwindow.packages.PyPackagingTreeGroup
@@ -57,11 +55,6 @@ internal class PyPackagingTreeView(
     }
   }
 
-  fun showErrorResult(errorNode: ErrorNode) {
-    installedPackages.tree.items = listOf(errorNode)
-    synchronizeScrollPaneSize()
-  }
-
   fun showSearchResult(installed: List<DisplayablePackage>, repoData: List<PyPackagesViewData>) {
     updatePackages(installed, repoData)
 
@@ -89,7 +82,7 @@ internal class PyPackagingTreeView(
     }
   }
 
-  fun resetSearch(installed: List<InstalledPackage>, repoData: List<PyPackagesViewData>, currentSdk: Sdk?) {
+  fun resetSearch(installed: List<DisplayablePackage>, repoData: List<PyPackagesViewData>, currentSdk: Sdk?) {
     updatePackages(installed, repoData)
 
     installedPackages.expand()
@@ -104,9 +97,8 @@ internal class PyPackagingTreeView(
   }
 
   private fun updatePackages(installed: List<DisplayablePackage>, repoData: List<PyPackagesViewData>) {
-    val sortedInstalled = installed.sortedBy { it.name }
-    installedPackages.tree.items = sortedInstalled
-    updateExistingRepository(installedPackages, sortedInstalled)
+    installedPackages.tree.items = installed
+    updateExistingRepository(installedPackages, installed)
     val (validRepoData, invalidData) = repoData.partition { it !is PyInvalidRepositoryViewData }
 
     updateValidRepositories(validRepoData)

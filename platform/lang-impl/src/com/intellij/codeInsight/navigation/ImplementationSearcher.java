@@ -34,8 +34,12 @@ import static com.intellij.codeInsight.multiverse.CodeInsightContexts.isShowAllI
 public class ImplementationSearcher {
   public PsiElement @Nullable [] searchImplementations(Editor editor, PsiElement element, int offset) {
     TargetElementUtil targetElementUtil = TargetElementUtil.getInstance();
-    boolean onRef = ReadAction.compute(() -> targetElementUtil.findTargetElement(editor, getFlags() & ~(TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtil.LOOKUP_ITEM_ACCEPTED), offset) == null);
-    return searchImplementations(element, editor, onRef && ReadAction.compute(() -> element == null || targetElementUtil.includeSelfInGotoImplementation(element)), onRef);
+    boolean onRef = ReadAction.computeBlocking(() -> {
+      int flags = getFlags() & ~(TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtil.LOOKUP_ITEM_ACCEPTED);
+      return targetElementUtil.findTargetElement(editor, flags, offset) == null;
+    });
+    return searchImplementations(
+      element, editor, onRef && ReadAction.computeBlocking(() -> element == null || targetElementUtil.includeSelfInGotoImplementation(element)), onRef);
   }
 
   public PsiElement @Nullable [] searchImplementations(PsiElement element,
@@ -44,7 +48,7 @@ public class ImplementationSearcher {
                                                        boolean includeSelfIfNoOthers) {
     if (element == null) return PsiElement.EMPTY_ARRAY;
     PsiElement[] elements = searchDefinitions(element, editor);
-    if (elements == null) return null; //the search has been cancelled
+    if (elements == null) return null; //the search has been canceled
     if (elements.length > 0) return filterElements(element, includeSelfAlways ? ArrayUtil.prepend(element, elements) : elements);
     if (includeSelfAlways || includeSelfIfNoOthers) return new PsiElement[]{element};
     return PsiElement.EMPTY_ARRAY;
@@ -52,7 +56,7 @@ public class ImplementationSearcher {
 
   protected static SearchScope getSearchScope(PsiElement element, Editor editor) {
     try {
-      return ReadAction.compute(() -> TargetElementUtil.getInstance().getSearchScope(editor, element));
+      return ReadAction.computeBlocking(() -> TargetElementUtil.getInstance().getSearchScope(editor, element));
     }
     catch (PsiInvalidElementAccessException e) {
       throw new ProcessCanceledException(e);
@@ -78,7 +82,7 @@ public class ImplementationSearcher {
     if (elementAtOffset == null) {
       return null;
     }
-    String targetName = ReadAction.compute(() -> {
+    String targetName = ReadAction.computeBlocking(() -> {
       return targetElement.getText();
     });
     PsiElement candidate = elementAtOffset;
@@ -116,11 +120,11 @@ public class ImplementationSearcher {
     var contextList = contextManager.getCodeInsightContexts(curretVirtualFile);
 
     for (var context : contextList) {
-      PsiFile psiFileInModule = ReadAction.compute(() -> psiManager.findFile(curretVirtualFile, context)
+      PsiFile psiFileInModule = ReadAction.computeBlocking(() -> psiManager.findFile(curretVirtualFile, context)
       );
       if (psiFileInModule == null) continue;
       if (psiFileInModule.equals(currentPsiFile)) continue;
-      var similarElement = ReadAction.compute(() -> {
+      var similarElement = ReadAction.computeBlocking(() -> {
         return psiFileInModule.isValid() ? findSimilarElement(psiFileInModule, element) : null;
       });
       if (similarElement != null) {

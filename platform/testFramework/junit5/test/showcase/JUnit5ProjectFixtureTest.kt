@@ -4,11 +4,23 @@ package com.intellij.testFramework.junit5.showcase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import org.junit.jupiter.api.Assertions.*
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import com.intellij.testFramework.junit5.fixture.testFixture
+import com.intellij.util.io.createDirectories
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotSame
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
+import java.nio.file.Path
+import kotlin.io.path.writeText
 
 @TestApplication
 class JUnit5ProjectFixtureTest {
@@ -17,6 +29,10 @@ class JUnit5ProjectFixtureTest {
     val sharedProject0 = projectFixture()
     val sharedProject1 = projectFixture()
     val openedProject = projectFixture(openAfterCreation = true)
+
+    val tempPath = tempPathFixture()
+    val preconfiguredProject = preconfigureExistingProjectFixture(tempPath, "existingProject")
+    val existingProject = projectFixture(preconfiguredProject)
 
     var seenProject: Project? = null
   }
@@ -75,4 +91,51 @@ class JUnit5ProjectFixtureTest {
       seenProject = null
     }
   }
+
+  @Test
+  fun `open existing project`() {
+    val project = existingProject.get()
+    assertEquals("existingProject", project.name)
+    assertTrue(project.isOpen)
+  }
+}
+
+/**
+ * Sometimes you need to open an existing project in a test.
+ * This fixture simulates copying the project to a temporary directory.
+ */
+private fun preconfigureExistingProjectFixture(pathFixture: TestFixture<Path>, @Suppress("SameParameterValue") projectName: String): TestFixture<Path> = testFixture {
+  val projectRoot = pathFixture.init()
+  withContext(Dispatchers.IO) {
+    val dotIdea = projectRoot.resolve(Project.DIRECTORY_STORE_FOLDER).createDirectories()
+    dotIdea.resolve("$projectName.iml").writeText(
+      //language=XML
+      """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <module type="EMPTY_MODULE" version="4">
+        <component name="NewModuleRootManager">
+          <orderEntry type="sourceFolder" forTests="false" />
+        </component>
+      </module>
+      """.trimIndent()
+    )
+
+    dotIdea.resolve("modules.xml").writeText(
+      //language=XML
+      $$"""
+      <?xml version="1.0" encoding="UTF-8"?>
+      <project version="4">
+        <component name="ProjectModuleManager">
+          <modules>
+            <module fileurl="file://$PROJECT_DIR$/.idea/$$projectName.iml" filepath="$PROJECT_DIR$/.idea/$$projectName.iml" />
+          </modules>
+        </component>
+      </project>
+      """.trimIndent()
+    )
+
+    dotIdea.resolve(".name").writeText("existingProject")
+  }
+
+  initialized(projectRoot) { }
 }

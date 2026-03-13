@@ -13,4 +13,12 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":keymap-netbeans_resources"]
 )
+
+jvm_library(
+  name = "keymap-netbeans_test_lib",
+  module_name = "intellij.keymap.netbeans",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":keymap-netbeans"]
+)
 ### auto-generated section `build intellij.keymap.netbeans` end

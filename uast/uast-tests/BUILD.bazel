@@ -32,19 +32,29 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
     "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
     "//uast/uast-common:uast",
+    "//uast/uast-common:uast_test_lib",
     "@lib//:kotlin-stdlib",
     "@lib//:junit4",
     "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "//uast/uast-java-ide:java-uast-ide",
+    "//uast/uast-java-ide:java-uast-ide_test_lib",
     "//java/java-runtime:rt",
+    "//java/java-runtime:rt_test_lib",
     "//java/java-psi-impl:psi-impl",
+    "//java/java-psi-impl:psi-impl_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//uast/testFramework",
+    "//uast/testFramework:testFramework_test_lib",
     "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
     "//platform/vcs-impl",
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
@@ -52,10 +62,16 @@ jvm_library(
   ],
   exports = [
     "//uast/uast-common:uast",
+    "//uast/uast-common:uast_test_lib",
     "//uast/uast-java-ide:java-uast-ide",
+    "//uast/uast-java-ide:java-uast-ide_test_lib",
     "//uast/testFramework",
+    "//uast/testFramework:testFramework_test_lib",
   ],
-  runtime_deps = [":tests"]
+  runtime_deps = [
+    ":tests",
+    "//java/java-tests:tests_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.platform.uast.tests` end
 

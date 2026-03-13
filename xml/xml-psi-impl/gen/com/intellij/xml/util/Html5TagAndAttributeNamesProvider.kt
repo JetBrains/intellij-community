@@ -18,7 +18,7 @@ object Html5TagAndAttributeNamesProvider {
    * Version of the information, should be used to calculate stub version,
    * if parser or lexer depends on the information from this object.
    */
-  const val VERSION = 4
+  const val VERSION = 5
 
   /**
    * Retrieves the set of all known HTML, SVG or MathML attributes of tags with a particular name.
@@ -79,7 +79,7 @@ object Html5TagAndAttributeNamesProvider {
     if (caseSensitive) tagToAttributeMapCaseSensitive else tagToAttributeMapCaseInsensitive
 
   private val baseHtmlAttrs = listOf(
-    "accesskey", "autocapitalize", "autofocus", "base", "class", "contenteditable", "dir", "draggable", "enterkeyhint", "hidden", "id", "inert", "inputmode", "is", "lang", "nonce", "onabort", "onauxclick", "onbeforeinput", "onbeforematch", "onblur", "oncancel", "oncanplay", "oncanplaythrough", "onchange", "onclick", "onclose", "oncontextlost", "oncontextmenu", "oncontextrestored", "oncopy", "oncuechange", "oncut", "ondblclick", "ondrag", "ondragend", "ondragenter", "ondragleave", "ondragover", "ondragstart", "ondrop", "ondurationchange", "onemptied", "onended", "onerror", "onfocus", "onfocusin", "onfocusout", "onformdata", "ongotpointercapture", "oninput", "oninvalid", "onkeydown", "onkeypress", "onkeyup", "onload", "onloadeddata", "onloadedmetadata", "onloadstart", "onlostpointercapture", "onmousedown", "onmouseenter", "onmouseleave", "onmousemove", "onmouseout", "onmouseover", "onmouseup", "onpaste", "onpause", "onplay", "onplaying", "onpointercancel", "onpointerdown", "onpointerenter", "onpointerleave", "onpointermove", "onpointerout", "onpointerover", "onpointerrawupdate", "onpointerup", "onprogress", "onratechange", "onreset", "onresize", "onscroll", "onscrollend", "onsecuritypolicyviolation", "onseeked", "onseeking", "onselect", "onslotchange", "onstalled", "onsubmit", "onsuspend", "ontimeupdate", "ontoggle", "ontransitioncancel", "ontransitionend", "ontransitionrun", "ontransitionstart", "onvolumechange", "onwaiting", "onwheel", "popover", "slot", "space", "spellcheck", "style", "tabindex", "title", "translate"
+    "accesskey", "autocapitalize", "autocorrect", "autofocus", "base", "class", "contenteditable", "dir", "draggable", "enterkeyhint", "headingoffset", "headingreset", "hidden", "id", "inert", "inputmode", "is", "lang", "nonce", "onabort", "onauxclick", "onbeforeinput", "onbeforematch", "onbeforetoggle", "onblur", "oncancel", "oncanplay", "oncanplaythrough", "onchange", "onclick", "onclose", "oncommand", "oncontextlost", "oncontextmenu", "oncontextrestored", "oncopy", "oncuechange", "oncut", "ondblclick", "ondrag", "ondragend", "ondragenter", "ondragleave", "ondragover", "ondragstart", "ondrop", "ondurationchange", "onemptied", "onended", "onerror", "onfocus", "onfocusin", "onfocusout", "onformdata", "ongotpointercapture", "oninput", "oninvalid", "onkeydown", "onkeypress", "onkeyup", "onload", "onloadeddata", "onloadedmetadata", "onloadstart", "onlostpointercapture", "onmousedown", "onmouseenter", "onmouseleave", "onmousemove", "onmouseout", "onmouseover", "onmouseup", "onpaste", "onpause", "onplay", "onplaying", "onpointercancel", "onpointerdown", "onpointerenter", "onpointerleave", "onpointermove", "onpointerout", "onpointerover", "onpointerrawupdate", "onpointerup", "onprogress", "onratechange", "onreset", "onresize", "onscroll", "onscrollend", "onsecuritypolicyviolation", "onseeked", "onseeking", "onselect", "onslotchange", "onstalled", "onsubmit", "onsuspend", "ontimeupdate", "ontoggle", "ontouchcancel", "ontouchend", "ontouchmove", "ontouchstart", "ontransitioncancel", "ontransitionend", "ontransitionrun", "ontransitionstart", "onvolumechange", "onwaiting", "onwheel", "popover", "slot", "space", "spellcheck", "style", "tabindex", "title", "translate", "writingsuggestions"
   )
 
   private val htmlAttrs = baseHtmlAttrs + listOf(
@@ -95,7 +95,7 @@ object Html5TagAndAttributeNamesProvider {
   )
 
   private val svgGraphicAttrs = svgAttrs + listOf(
-    "class", "clip-path", "clip-rule", "color", "color-interpolation", "color-rendering", "cursor", "display", "fill-opacity", "fill-rule", "filter", "image-rendering", "mask", "opacity", "pointer-events", "shape-rendering", "stroke", "stroke-dasharray", "stroke-dashoffset", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "stroke-opacity", "stroke-width", "style", "text-rendering", "visibility"
+    "class", "clip-path", "clip-rule", "color", "color-interpolation", "color-rendering", "cursor", "display", "fill-opacity", "fill-rule", "filter", "image-rendering", "mask", "opacity", "paint-order", "pointer-events", "shape-rendering", "stroke", "stroke-dasharray", "stroke-dashoffset", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "stroke-opacity", "stroke-width", "style", "text-rendering", "transform-box", "transform-origin", "visibility"
   )
 
   private val svgTextAttrs = svgGraphicAttrs + listOf(
@@ -164,9 +164,9 @@ object Html5TagAndAttributeNamesProvider {
         "bdo" to attrs(htmlAttrs, "role"),
         "big" to attrs(htmlAttrs, ),
         "blockquote" to attrs(htmlAttrs, "cite", "role"),
-        "body" to attrs(htmlAttrs, "alink", "background", "bgcolor", "bottommargin", "leftmargin", "link", "marginheight", "marginwidth", "onafterprint", "onbeforeprint", "onbeforeunload", "onhashchange", "onlanguagechange", "onmessage", "onmessageerror", "onoffline", "ononline", "onpagehide", "onpageshow", "onpopstate", "onrejectionhandled", "onstorage", "onunhandledrejection", "onunload", "rightmargin", "role", "text", "topmargin", "vlink"),
-        "br" to attrs(htmlAttrs, "clear", "role"),
-        "button" to attrs(htmlAttrs, "datafld", "dataformatas", "datasrc", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "name", "popovertarget", "popovertargetaction", "role", "type", "value"),
+        "body" to attrs(htmlAttrs, "alink", "background", "bgcolor", "bottommargin", "leftmargin", "link", "marginheight", "marginwidth", "onafterprint", "onbeforeprint", "onbeforeunload", "onhashchange", "onlanguagechange", "onmessage", "onmessageerror", "onoffline", "ononline", "onpagehide", "onpagereveal", "onpageshow", "onpageswap", "onpopstate", "onrejectionhandled", "onstorage", "onunhandledrejection", "onunload", "rightmargin", "role", "text", "topmargin", "vlink"),
+        "br" to attrs(baseHtmlAttrs, "clear", "role"),
+        "button" to attrs(htmlAttrs, "command", "commandfor", "datafld", "dataformatas", "datasrc", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "name", "popovertarget", "popovertargetaction", "role", "type", "value"),
         "canvas" to attrs(htmlAttrs, "height", "role", "width"),
         "caption" to attrs(htmlAttrs, "align"),
         "center" to attrs(htmlAttrs, ),
@@ -178,9 +178,9 @@ object Html5TagAndAttributeNamesProvider {
         "datalist" to attrs(htmlAttrs, ),
         "dd" to attrs(htmlAttrs, "role"),
         "del" to attrs(htmlAttrs, "cite", "datetime", "role"),
-        "details" to attrs(htmlAttrs, "open", "role"),
+        "details" to attrs(htmlAttrs, "name", "open", "role"),
         "dfn" to attrs(htmlAttrs, "role"),
-        "dialog" to attrs(htmlAttrs, "open", "role"),
+        "dialog" to attrs(htmlAttrs, "closedby", "open", "role"),
         "dir" to attrs(htmlAttrs, "compact"),
         "div" to attrs(htmlAttrs, "align", "datafld", "dataformatas", "datasrc", "role"),
         "dl" to attrs(htmlAttrs, "compact", "role"),
@@ -209,10 +209,10 @@ object Html5TagAndAttributeNamesProvider {
         "i" to attrs(htmlAttrs, "role"),
         "iframe" to attrs(htmlAttrs, "align", "allow", "allowfullscreen", "allowtransparency", "frameborder", "height", "hspace", "loading", "longdesc", "marginheight", "marginwidth", "name", "referrerpolicy", "role", "sandbox", "scrolling", "src", "srcdoc", "vspace", "width"),
         "img" to attrs(htmlAttrs, "align", "alt", "border", "crossorigin", "decoding", "fetchpriority", "generator-unable-to-provide-required-alt", "height", "hspace", "ismap", "loading", "longdesc", "name", "referrerpolicy", "role", "sizes", "src", "srcset", "usemap", "vspace", "width"),
-        "input" to attrs(htmlAttrs, "accept", "align", "alt", "autocomplete", "capture", "checked", "datafld", "dataformatas", "datasrc", "dirname", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "height", "hspace", "list", "max", "maxlength", "min", "minlength", "multiple", "name", "pattern", "placeholder", "popovertarget", "popovertargetaction", "readonly", "required", "role", "size", "src", "step", "type", "usemap", "value", "vspace", "width"),
+        "input" to attrs(htmlAttrs, "accept", "align", "alpha", "alt", "autocomplete", "capture", "checked", "colorspace", "datafld", "dataformatas", "datasrc", "dirname", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "height", "hspace", "list", "max", "maxlength", "min", "minlength", "multiple", "name", "pattern", "placeholder", "popovertarget", "popovertargetaction", "readonly", "required", "role", "size", "src", "step", "type", "usemap", "value", "vspace", "width"),
         "ins" to attrs(htmlAttrs, "cite", "datetime", "role"),
         "kbd" to attrs(htmlAttrs, "role"),
-        "label" to attrs(htmlAttrs, "for"),
+        "label" to attrs(htmlAttrs, "for", "role"),
         "legend" to attrs(htmlAttrs, "align"),
         "li" to attrs(htmlAttrs, "role", "type", "value"),
         "link" to attrs(htmlAttrs, "as", "blocking", "charset", "color", "crossorigin", "disabled", "fetchpriority", "href", "hreflang", "imagesizes", "imagesrcset", "integrity", "media", "methods", "referrerpolicy", "role", "scope", "sizes", "target", "type", "updateviacache", "urn", "workertype"),
@@ -240,11 +240,10 @@ object Html5TagAndAttributeNamesProvider {
         "rb" to attrs(htmlAttrs, "role"),
         "rp" to attrs(htmlAttrs, "role"),
         "rt" to attrs(htmlAttrs, "role"),
-        "rtc" to attrs(htmlAttrs, "role"),
         "ruby" to attrs(htmlAttrs, "role"),
         "s" to attrs(htmlAttrs, "role"),
         "samp" to attrs(htmlAttrs, "role"),
-        "script" to attrs(htmlAttrs, "async", "blocking", "charset", "crossorigin", "defer", "event", "fetchpriority", "for", "integrity", "language", "nomodule", "referrerpolicy", "src", "type"),
+        "script" to attrs(htmlAttrs, "async", "blocking", "crossorigin", "defer", "event", "fetchpriority", "for", "integrity", "language", "nomodule", "referrerpolicy", "src", "type"),
         "search" to attrs(htmlAttrs, "role"),
         "section" to attrs(htmlAttrs, "role"),
         "select" to attrs(htmlAttrs, "autocomplete", "datafld", "dataformatas", "datasrc", "disabled", "form", "multiple", "name", "required", "role", "size"),
@@ -262,7 +261,7 @@ object Html5TagAndAttributeNamesProvider {
         "table" to attrs(htmlAttrs, "align", "bgcolor", "border", "cellpadding", "cellspacing", "datafld", "dataformatas", "datapagesize", "datasrc", "frame", "role", "rules", "summary", "valign", "width"),
         "tbody" to attrs(htmlAttrs, "align", "char", "charoff", "role", "valign"),
         "td" to attrs(htmlAttrs, "abbr", "align", "axis", "bgcolor", "char", "charoff", "colspan", "headers", "height", "nowrap", "role", "rowspan", "scope", "valign", "width"),
-        "template" to attrs(htmlAttrs, "span", "src"),
+        "template" to attrs(htmlAttrs, "shadowrootclonable", "shadowrootcustomelementregistry", "shadowrootdelegatesfocus", "shadowrootmode", "shadowrootserializable", "span", "src"),
         "textarea" to attrs(htmlAttrs, "autocomplete", "cols", "datafld", "dataformatas", "datasrc", "dirname", "disabled", "form", "maxlength", "minlength", "name", "placeholder", "readonly", "required", "role", "rows", "wrap"),
         "tfoot" to attrs(htmlAttrs, "align", "char", "charoff", "role", "valign"),
         "th" to attrs(htmlAttrs, "abbr", "align", "axis", "bgcolor", "char", "charoff", "colspan", "headers", "height", "nowrap", "role", "rowspan", "scope", "valign", "width"),
@@ -276,7 +275,7 @@ object Html5TagAndAttributeNamesProvider {
         "ul" to attrs(htmlAttrs, "compact", "role", "type"),
         "var" to attrs(htmlAttrs, "role"),
         "video" to attrs(htmlAttrs, "autoplay", "controls", "crossorigin", "height", "loop", "muted", "playsinline", "poster", "preload", "role", "src", "width"),
-        "wbr" to attrs(htmlAttrs, "role")
+        "wbr" to attrs(baseHtmlAttrs, "role")
       ),
       Namespace.SVG to tags(
         "a" to attrs(svgTextAttrs, "actuate", "arcrole", "clip", "color-interpolation-filters", "color-profile", "enable-background", "flood-color", "flood-opacity", "href", "lighting-color", "marker-end", "marker-mid", "marker-start", "onactivate", "onclick", "onfocusin", "onfocusout", "onload", "onmousedown", "onmousemove", "onmouseout", "onmouseover", "onmouseup", "overflow", "rel", "requiredExtensions", "requiredFeatures", "role", "show", "stop-color", "stop-opacity", "systemLanguage", "target", "title", "transform", "type"),
@@ -297,7 +296,7 @@ object Html5TagAndAttributeNamesProvider {
         "font-face" to attrs(svgBasicAttrs, "accent-height", "alphabetic", "ascent", "bbox", "cap-height", "descent", "focusable", "font-family", "font-size", "font-stretch", "font-style", "font-variant", "font-weight", "hanging", "ideographic", "lang", "mathematical", "overline-position", "overline-thickness", "panose-1", "slope", "stemh", "stemv", "strikethrough-position", "strikethrough-thickness", "tabindex", "underline-position", "underline-thickness", "unicode-range", "units-per-em", "v-alphabetic", "v-hanging", "v-ideographic", "v-mathematical", "widths", "x-height"),
         "foreignObject" to attrs(svgTextAttrs, "clip", "color-interpolation-filters", "color-profile", "enable-background", "flood-color", "flood-opacity", "height", "lighting-color", "marker-end", "marker-mid", "marker-start", "onactivate", "onclick", "onfocusin", "onfocusout", "onload", "onmousedown", "onmousemove", "onmouseout", "onmouseover", "onmouseup", "overflow", "requiredExtensions", "requiredFeatures", "role", "stop-color", "stop-opacity", "systemLanguage", "transform", "vector-effect", "width", "x", "y"),
         "g" to attrs(svgTextAttrs, "clip", "color-interpolation-filters", "color-profile", "enable-background", "flood-color", "flood-opacity", "lighting-color", "marker-end", "marker-mid", "marker-start", "onactivate", "onclick", "onfocusin", "onfocusout", "onload", "onmousedown", "onmousemove", "onmouseout", "onmouseover", "onmouseup", "overflow", "requiredExtensions", "requiredFeatures", "role", "stop-color", "stop-opacity", "systemLanguage", "transform"),
-        "image" to attrs(svgBasicAttrs, "actuate", "arcrole", "class", "clip", "clip-path", "clip-rule", "color", "color-interpolation", "color-profile", "color-rendering", "cursor", "display", "externalResourcesRequired", "fill-opacity", "filter", "focusable", "height", "href", "image-rendering", "lang", "mask", "onactivate", "onclick", "onfocusin", "onfocusout", "onload", "onmousedown", "onmousemove", "onmouseout", "onmouseover", "onmouseup", "opacity", "overflow", "pointer-events", "preserveAspectRatio", "requiredExtensions", "requiredFeatures", "role", "shape-rendering", "show", "stroke-opacity", "style", "systemLanguage", "tabindex", "text-rendering", "title", "transform", "type", "vector-effect", "visibility", "width", "x", "y"),
+        "image" to attrs(svgBasicAttrs, "actuate", "arcrole", "class", "clip", "clip-path", "clip-rule", "color", "color-interpolation", "color-profile", "color-rendering", "cursor", "display", "externalResourcesRequired", "fill-opacity", "filter", "focusable", "height", "href", "image-rendering", "lang", "mask", "onactivate", "onclick", "onfocusin", "onfocusout", "onload", "onmousedown", "onmousemove", "onmouseout", "onmouseover", "onmouseup", "opacity", "overflow", "pointer-events", "preserveAspectRatio", "requiredExtensions", "requiredFeatures", "role", "shape-rendering", "show", "stroke-opacity", "style", "systemLanguage", "tabindex", "text-rendering", "title", "transform", "transform-box", "transform-origin", "type", "vector-effect", "visibility", "width", "x", "y"),
         "line" to attrs(svgGraphicAttrs, "marker-end", "marker-mid", "marker-start", "onactivate", "onclick", "onfocusin", "onfocusout", "onload", "onmousedown", "onmousemove", "onmouseout", "onmouseover", "onmouseup", "requiredExtensions", "requiredFeatures", "role", "systemLanguage", "transform", "vector-effect", "x1", "x2", "y1", "y2"),
         "linearGradient" to attrs(svgBasicAttrs, "actuate", "arcrole", "class", "color", "color-interpolation", "color-rendering", "externalResourcesRequired", "focusable", "gradientTransform", "gradientUnits", "href", "lang", "role", "show", "spreadMethod", "stop-color", "stop-opacity", "style", "tabindex", "title", "type", "x1", "x2", "y1", "y2"),
         "marker" to attrs(svgTextAttrs, "clip", "color-interpolation-filters", "color-profile", "enable-background", "flood-color", "flood-opacity", "lighting-color", "marker-end", "marker-mid", "marker-start", "markerHeight", "markerUnits", "markerWidth", "orient", "overflow", "preserveAspectRatio", "refX", "refY", "stop-color", "stop-opacity", "viewBox"),

@@ -29,6 +29,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import static com.intellij.grazie.utils.HighlightingUtil.isSpace;
+
 @ApiStatus.Internal
 public final class TextContentImpl extends UserDataHolderBase implements TextContent {
   private final TextDomain domain;
@@ -57,6 +59,11 @@ public final class TextContentImpl extends UserDataHolderBase implements TextCon
     if (tokens.getLast() instanceof WSTokenInfo) tokens.removeLast();
     if (tokens.isEmpty()) {
       throw new IllegalArgumentException("There should be at least one non-whitespace token");
+    }
+
+    PsiFile file = ((PsiToken)tokens.getFirst()).psi.getContainingFile();
+    if (ContainerUtil.exists(tokens, t -> t instanceof PsiToken pt && pt.psi.getContainingFile() != file)) {
+      throw new IllegalArgumentException("TextContent fragments should be from the same file");
     }
 
     List<TextRange> ranges = getRangesInFile();
@@ -323,8 +330,8 @@ public final class TextContentImpl extends UserDataHolderBase implements TextCon
     String text = toString();
     int start = 0;
     int end = text.length();
-    while (start < end && isSpace(text, start)) start++;
-    while (start < end && isSpace(text, end - 1)) end--;
+    while (start < end && isSpace(text.charAt(start))) start++;
+    while (start < end && isSpace(text.charAt(end - 1))) end--;
     if (start >= end) {
       return null;
     }
@@ -415,10 +422,6 @@ public final class TextContentImpl extends UserDataHolderBase implements TextCon
         return sb.toString();
       }
     };
-  }
-
-  private static boolean isSpace(String text, int start) {
-    return Character.isWhitespace(text.charAt(start)) || Character.isSpaceChar(text.charAt(start));
   }
 
   private static @Nullable TokenInfo merge(TokenInfo t1, TokenInfo t2) {

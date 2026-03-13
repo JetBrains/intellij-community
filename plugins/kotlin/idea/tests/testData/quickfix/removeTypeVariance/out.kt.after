@@ -1,5 +1,6 @@
 // "Remove 'out' variance from 'T'" "true"
 // WITH_STDLIB
+// K2_ERROR: Type parameter 'T' is declared as 'out' but occurs in 'in' position in type 'T (of class Test<out T>)'.
 
 class Test<T> {
     fun foo(t: <caret>T) {}

@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection
 
-import com.intellij.junit.testFramework.JUnitLibrary
+import com.intellij.junit.testFramework.MavenTestLib
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
-abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalformedDeclarationInspectionTestBase(JUnitLibrary.JUNIT3, JUnitLibrary.JUNIT4, JUnitLibrary.JUNIT5) {
+abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalformedDeclarationInspectionTestBase(MavenTestLib.JUNIT3, MavenTestLib.JUNIT4, MavenTestLib.JUNIT5) {
   abstract val pluginVersion: String
 
   /* Malformed extensions */
@@ -2471,6 +2471,6 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
 
       @Suite(failIfNoTests = false)
       class MySuite
-    """.trimIndent(), "Set failIfNoTests = false", testPreview = true)
+    """.trimIndent(), "Set 'failIfNoTests' to 'false'", testPreview = true)
   }
 }

@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
@@ -13,8 +14,8 @@ import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl
 import com.intellij.openapi.startup.StartupActivity.RequiredForSmartMode
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.newvfs.ManagingFS
+import com.intellij.openapi.wm.ex.isIndexingActivitiesSuppressedSync
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -42,6 +43,10 @@ internal class ProjectFileBasedIndexStartupActivity : RequiredForSmartMode {
   }
 
   override fun runActivity(project: Project) {
+    if (isIndexingActivitiesSuppressedSync(project)) {
+      return
+    }
+
     ProgressManager.progress(IndexingBundle.message("progress.text.loading.indexes"))
     val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
     val propertiesUpdater = PushedFilePropertiesUpdater.getInstance(project)
@@ -61,9 +66,9 @@ internal class ProjectFileBasedIndexStartupActivity : RequiredForSmartMode {
 
     // Add a project to various lists in read action to make sure that
     // they are not added to lists during disposing of a project (in this case project may be stuck forever in those lists)
-    val registered = ApplicationManager.getApplication().runReadAction(ThrowableComputable {
+    val registered = runReadActionBlocking {
       if (project.isDisposed()) {
-        return@ThrowableComputable false
+        return@runReadActionBlocking false
       }
 
       // Done mostly for tests.
@@ -82,7 +87,7 @@ internal class ProjectFileBasedIndexStartupActivity : RequiredForSmartMode {
 
       openProjects.add(project)
       true
-    })
+    }
 
     if (!registered) {
       return
@@ -105,7 +110,7 @@ internal class ProjectFileBasedIndexStartupActivity : RequiredForSmartMode {
       registeredIndexesWereCorrupted = wasCorrupted,
       sourceOfScanning = InitialScanningSkipReporter.SourceOfScanning.OnProjectOpen,
     )
-    indexCleanupJob.forgetProjectDirtyFilesOnCompletion(
+    indexCleanupJob?.forgetProjectDirtyFilesOnCompletion(
       fileBasedIndex = fileBasedIndex,
       project = project,
       projectDirtyFilesQueue = projectDirtyFilesQueue,

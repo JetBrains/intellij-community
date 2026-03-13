@@ -1,4 +1,5 @@
 // "Import function 'RegObject.regularFun'" "true"
+// K2_ERROR: Unresolved reference 'regularFun'.
 package p
 
 open class Reg {

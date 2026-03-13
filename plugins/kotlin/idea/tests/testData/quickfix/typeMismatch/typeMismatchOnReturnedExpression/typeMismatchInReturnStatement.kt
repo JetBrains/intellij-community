@@ -1,4 +1,5 @@
 // "Specify 'String' return type for enclosing function 'foo'" "true"
+// K2_ERROR: Return type mismatch: expected 'Unit', actual 'String'.
 fun foo() {
     return ""<caret>
 }

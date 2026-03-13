@@ -3,6 +3,7 @@ package com.jetbrains.python.debugger.attach;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -42,7 +43,7 @@ public class PyAttachToProcessDebugRunner extends PyDebugRunner {
   }
 
   public XDebugSession launch() throws ExecutionException {
-    FileDocumentManager.getInstance().saveAllDocuments();
+    WriteAction.run(() -> FileDocumentManager.getInstance().saveAllDocuments());
 
     return launchRemoteDebugServer();
   }

@@ -14,6 +14,9 @@ def _jvm_import(ctx):
         _KtJvmInfo(
             exported_compiler_plugins = depset(ctx.attr.exported_compiler_plugins),
         ),
+        DefaultInfo(
+          files = depset(direct = [ctx.file.jar])
+        )
     ]
 
 jvm_import = rule(
@@ -37,6 +40,9 @@ jvm_import = rule(
             doc = """Exported compiler plugins.""",
             default = [],
             providers = [[_KtCompilerPluginInfo]],
+        ),
+        "_use_rules_kotlin": attr.label(
+            default = Label("//:use_rules_kotlin"),
         ),
     },
     provides = [JavaInfo, _KtJvmInfo],

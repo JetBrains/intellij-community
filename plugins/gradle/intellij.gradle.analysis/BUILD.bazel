@@ -23,4 +23,21 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
   ]
 )
+
+jvm_library(
+  name = "analysis_test_lib",
+  module_name = "intellij.gradle.analysis",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":analysis",
+    "//android/gradle-dsl:gradle-dsl_test_lib",
+    "//plugins/gradle/java:java_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//java/java-psi-impl:psi-impl_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.gradle.analysis` end

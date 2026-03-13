@@ -1,18 +1,30 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
+import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.NotNull;
+import org.junit.runner.RunWith;
 
-import javax.swing.*;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.junit.Assume.assumeTrue;
+
+@RunWith(JUnit38AssumeSupportRunner.class)
 public class IdeKeyEventDispatcherTest extends LightPlatformTestCase {
   private static final String ACTION_EMPTY = "!!!EmptyAction";
   private static final String ACTION_DISABLED_EMPTY = "!!!DisabledEmptyAction";
@@ -106,10 +118,12 @@ public class IdeKeyEventDispatcherTest extends LightPlatformTestCase {
   }
 
   /**
-   * Checks that when pressing SHIFT+MINUS once, we only get one single event instead of three events:
-   * (1) SHIFT+MINUS, then (2) UNDERSCORE, then (3) SHIFT+MINUS again.
+   * Checks that when pressing META+SHIFT+MINUS once, we only get one single action invocation
+   * instead of redundant events for the same physical key (reported with keyChar '_' / '-' / '_'
+   * while the keyCode stays VK_MINUS).
    */
   public void testTripleCallRedundancyUnderscoreAndMinusKeys() {
+    assumeTrue("Only on macOS three events are generated instead of one", OS.CURRENT == OS.macOS);
     IdeKeyEventDispatcher dispatcher = new IdeKeyEventDispatcher(null);
     AtomicInteger counter = new AtomicInteger();
     AnAction action = new AnAction() {
@@ -121,28 +135,27 @@ public class IdeKeyEventDispatcherTest extends LightPlatformTestCase {
     String actionId = "TripleCallAction";
     ActionManager.getInstance().registerAction(actionId, action);
     try {
-      myKeymap.addShortcut(actionId, new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_UNDERSCORE, InputEvent.SHIFT_DOWN_MASK), null));
+      int metaShift = InputEvent.META_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK;
+      myKeymap.addShortcut(actionId, new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, metaShift), null));
 
       assertEquals("Wrong init value", 0, counter.get());
 
-      // 1. SHIFT+UNDERSCORE
-      KeyEvent event1 = new KeyEvent(myTextField, KeyEvent.KEY_PRESSED, System.currentTimeMillis(),
-                                     InputEvent.SHIFT_DOWN_MASK, KeyEvent.VK_UNDERSCORE, '_');
+      // 1. META+SHIFT+MINUS (reports '_' for a German layout)
+      KeyEvent event1 = new KeyEvent(myTextField, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), metaShift, KeyEvent.VK_MINUS, '_');
       assertTrue(dispatcher.dispatchKeyEvent(event1));
 
       assertEquals("Action have been performed", 1, counter.get());
 
       // Should be consumed as a redundant event if in STATE_PROCESSED
 
-      // 2. MINUS
-      KeyEvent event2 = new KeyEvent(myTextField, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_MINUS, '-');
+      // 2. META+MINUS (no shift, reports '-')
+      KeyEvent event2 = new KeyEvent(myTextField, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), InputEvent.META_DOWN_MASK, KeyEvent.VK_MINUS, '-');
       assertTrue(dispatcher.dispatchKeyEvent(event2));
 
       assertEquals("Action should be performed only once", 1, counter.get());
 
-      // 3. SHIFT+UNDERSCORE
-      KeyEvent event3 = new KeyEvent(myTextField, KeyEvent.KEY_PRESSED, System.currentTimeMillis(),
-                                     InputEvent.SHIFT_DOWN_MASK, KeyEvent.VK_UNDERSCORE, '_');
+      // 3. META+SHIFT+MINUS again
+      KeyEvent event3 = new KeyEvent(myTextField, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), metaShift, KeyEvent.VK_MINUS, '_');
       assertTrue(dispatcher.dispatchKeyEvent(event3));
 
       assertEquals("Action should be performed only once", 1, counter.get());

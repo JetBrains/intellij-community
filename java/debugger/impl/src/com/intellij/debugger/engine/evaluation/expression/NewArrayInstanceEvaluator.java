@@ -41,7 +41,6 @@ class NewArrayInstanceEvaluator implements Evaluator {
   @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
 //    throw new EvaluateException("Creating new array instances is not supported yet", true);
-    DebugProcessImpl debugProcess = context.getDebugProcess();
     Object obj = myArrayTypeEvaluator.evaluate(context);
     if (!(obj instanceof ArrayType arrayType)) {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.array.type.expected"));

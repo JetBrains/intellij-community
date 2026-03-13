@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -20,6 +19,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -75,8 +75,13 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     myCodeInsightContext = codeInsightContext;
     myProgressIndicator = progressIndicator;
     myEditorColorsScheme = editorColorsScheme;
-    myProject = ReadAction.compute(() -> psiFile.getProject());
-    myDocument = ReadAction.compute(() -> psiFile.getOriginalFile().getViewProvider().getDocument());
+
+    var docAndProject = ReadAction.computeBlocking(
+      () -> new Pair<>(psiFile.getOriginalFile().getViewProvider().getDocument(), psiFile.getProject())
+    );
+    myDocument = docAndProject.first;
+    myProject = docAndProject.second;
+
     myVisibleRange = visibleRange;
     myCanChangeFileSilently = canChangeFileSilently;
     myDaemonCancelEventCount = daemonCancelEventCount;
@@ -315,8 +320,9 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   @ApiStatus.Internal
   @RequiresBackgroundThread
   public void additionalSetupFromBackground(@NotNull PsiFile psiFile) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
-    ReadAction.run(() -> {
+    ThreadingAssertions.assertBackgroundThread();
+
+    ReadAction.runBlocking(() -> {
       VirtualFile virtualFile = psiFile.getVirtualFile();
       if (!psiFile.isValid() || virtualFile != null && !virtualFile.isValid()) {
         throw new ProcessCanceledException(new RuntimeException(psiFile.getName() + " is invalid"));

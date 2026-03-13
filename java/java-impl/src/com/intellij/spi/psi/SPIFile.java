@@ -2,6 +2,7 @@
 package com.intellij.spi.psi;
 
 import com.intellij.extapi.psi.PsiFileBase;
+import com.intellij.lang.Language;
 import com.intellij.lang.spi.SPILanguage;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileType;
@@ -26,8 +27,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SPIFile extends PsiFileBase {
+
+  protected SPIFile(@NotNull FileViewProvider viewProvider, Language language) {
+    super(viewProvider, language);
+  }
+
   public SPIFile(@NotNull FileViewProvider viewProvider) {
-    super(viewProvider, SPILanguage.INSTANCE);
+    this(viewProvider, SPILanguage.INSTANCE);
   }
 
   @Override

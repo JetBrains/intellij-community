@@ -290,6 +290,26 @@ public abstract class FindUsagesTestGenerated extends AbstractK1FindUsagesTest {
                     runTest("testData/findUsages/kotlin/conventions/getInObject.0.kt");
                 }
 
+                @TestMetadata("getOperatorNonNullableImplicitType.0.kt")
+                public void testGetOperatorNonNullableImplicitType() throws Exception {
+                    runTest("testData/findUsages/kotlin/conventions/getOperatorNonNullableImplicitType.0.kt");
+                }
+
+                @TestMetadata("getOperatorNullableExplicitType.0.kt")
+                public void testGetOperatorNullableExplicitType() throws Exception {
+                    runTest("testData/findUsages/kotlin/conventions/getOperatorNullableExplicitType.0.kt");
+                }
+
+                @TestMetadata("getOperatorNullableFunctionCall.0.kt")
+                public void testGetOperatorNullableFunctionCall() throws Exception {
+                    runTest("testData/findUsages/kotlin/conventions/getOperatorNullableFunctionCall.0.kt");
+                }
+
+                @TestMetadata("getOperatorNullableImplicitType.0.kt")
+                public void testGetOperatorNullableImplicitType() throws Exception {
+                    runTest("testData/findUsages/kotlin/conventions/getOperatorNullableImplicitType.0.kt");
+                }
+
                 @TestMetadata("inc.0.kt")
                 public void testInc() throws Exception {
                     runTest("testData/findUsages/kotlin/conventions/inc.0.kt");

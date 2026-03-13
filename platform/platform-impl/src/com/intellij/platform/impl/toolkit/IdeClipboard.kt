@@ -6,7 +6,13 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.util.Disposer
-import java.awt.datatransfer.*
+import java.awt.datatransfer.Clipboard
+import java.awt.datatransfer.ClipboardOwner
+import java.awt.datatransfer.DataFlavor
+import java.awt.datatransfer.FlavorEvent
+import java.awt.datatransfer.FlavorListener
+import java.awt.datatransfer.Transferable
+import java.awt.datatransfer.UnsupportedFlavorException
 
 // redirection from AWT API to CopyPasteManager (OS-level clipboard isn't used in a remote development host process)
 internal class IdeClipboard : Clipboard("System") {

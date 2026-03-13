@@ -9,7 +9,7 @@ import com.intellij.codeInspection.ui.InspectionTree
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -26,7 +26,11 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.UserDataHolderEx
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.COLUMNS_LARGE
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.toMutableProperty
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
@@ -67,7 +71,7 @@ abstract class InspectionResultsExportActionProvider(
     ProgressManager.getInstance().run(object: Backgroundable(view.project, progressTitle) {
       override fun run(indicator: ProgressIndicator) {
         try {
-          runReadAction {
+          runReadActionBlocking {
             if (view.currentProfile == null) throw NullPointerException("Failed to export inspection results.")
             writeResults(view.tree,
                          view.currentProfile!!,

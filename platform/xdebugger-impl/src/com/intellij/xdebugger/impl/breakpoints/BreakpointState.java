@@ -7,7 +7,7 @@ import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
@@ -184,7 +184,7 @@ public class BreakpointState {
     }
 
     public static @Nullable Condition create(boolean disabled, XExpression expression) {
-      if (XDebuggerUtilImpl.isEmptyExpression(expression)) {
+      if (DebuggerUIUtil.isEmptyExpression(expression)) {
         return null;
       }
       return new Condition(disabled, expression);
@@ -201,7 +201,7 @@ public class BreakpointState {
     }
 
     public static @Nullable LogExpression create(boolean disabled, XExpression expression) {
-      if (XDebuggerUtilImpl.isEmptyExpression(expression)) {
+      if (DebuggerUIUtil.isEmptyExpression(expression)) {
         return null;
       }
       return new LogExpression(disabled, expression);

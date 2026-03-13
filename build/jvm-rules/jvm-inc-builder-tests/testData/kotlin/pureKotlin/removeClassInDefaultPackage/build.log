@@ -1,0 +1,13 @@
+================ Step #1 =================
+Cleaning output files:
+  A.class
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_removeClassInDefaultPackage-a.kotlin_module
+  UseAKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/removeClassInDefaultPackage/a/useA.kt
+End of files
+------------------------------------------
+Exit code: OK

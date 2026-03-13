@@ -72,6 +72,26 @@ public interface CompileContext extends UserDataHolder {
                   @Nullable String url, int lineNum, int columnNum, @Nullable Navigatable navigatable, Collection<String> moduleNames);
 
   /**
+   * Allows adding a compiler message object directly to the context.
+   * This is a convenience method that extracts the necessary information from the message object.
+   * Line and column information is preserved through the navigatable.
+   *
+   * @param message the compiler message to add.
+   */
+  default void addMessage(@NotNull CompilerMessage message) {
+    VirtualFile file = message.getVirtualFile();
+    addMessage(
+      message.getCategory(),
+      message.getMessage(),
+      file != null ? file.getUrl() : null,
+      -1,
+      -1,
+      message.getNavigatable(),
+      message.getModuleNames()
+    );
+  }
+
+  /**
    * Returns all messages of the specified category added during the current compile session.
    *
    * @param category the category for which messages are requested.

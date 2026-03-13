@@ -3,7 +3,14 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.options.*;
+import com.intellij.codeInspection.options.CustomComponentExtension;
+import com.intellij.codeInspection.options.LocMessage;
+import com.intellij.codeInspection.options.OptCustom;
+import com.intellij.codeInspection.options.OptDropdown;
+import com.intellij.codeInspection.options.OptMultiSelector;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
+import com.intellij.codeInspection.options.PlainMessage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -21,11 +28,28 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 import java.util.List;
 
-import static com.intellij.codeInspection.options.OptPane.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.dropdown;
+import static com.intellij.codeInspection.options.OptPane.expandableString;
+import static com.intellij.codeInspection.options.OptPane.group;
+import static com.intellij.codeInspection.options.OptPane.horizontalStack;
+import static com.intellij.codeInspection.options.OptPane.multiSelector;
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.separator;
+import static com.intellij.codeInspection.options.OptPane.string;
+import static com.intellij.codeInspection.options.OptPane.tab;
+import static com.intellij.codeInspection.options.OptPane.tabs;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestApplication
 public class UiDslOptPaneRendererTest {

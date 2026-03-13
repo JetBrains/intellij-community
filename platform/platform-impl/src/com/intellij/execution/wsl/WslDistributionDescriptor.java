@@ -236,7 +236,8 @@ final class WslDistributionDescriptor {
 
   public static @NotNull <T> ClearableLazyValue<T> createAtomicClearableLazyValue(@NotNull Supplier<? extends T> computable) {
     return new ClearableLazyValue<>() {
-      private long myExternalChangesCount = getCurrentExternalChangesCount();
+      // Initialized on first access to avoid service lookup during class initialization.
+      private long myExternalChangesCount = Long.MIN_VALUE;
 
       @Override
       protected @NotNull T compute() {
@@ -246,7 +247,10 @@ final class WslDistributionDescriptor {
       @Override
       public synchronized @NotNull T getValue() {
         final long curExternalChangesCount = getCurrentExternalChangesCount();
-        if (curExternalChangesCount != myExternalChangesCount) {
+        if (myExternalChangesCount == Long.MIN_VALUE) {
+          myExternalChangesCount = curExternalChangesCount;
+        }
+        else if (curExternalChangesCount != myExternalChangesCount) {
           myExternalChangesCount = curExternalChangesCount;
           drop(); // drop cache
         }

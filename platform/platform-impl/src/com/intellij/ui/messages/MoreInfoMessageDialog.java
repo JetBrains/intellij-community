@@ -9,8 +9,13 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.awt.Dimension;
 
 final class MoreInfoMessageDialog extends MessageDialog {
   private final @Nullable @Nls String myInfoText;

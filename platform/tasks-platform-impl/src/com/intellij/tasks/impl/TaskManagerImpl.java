@@ -5,7 +5,11 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ReportValue;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -19,13 +23,26 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.openapi.vcs.VcsType;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListAdapter;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.serialization.SerializationException;
-import com.intellij.tasks.*;
+import com.intellij.tasks.BranchInfo;
+import com.intellij.tasks.ChangeListInfo;
+import com.intellij.tasks.LocalTask;
+import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskBundle;
+import com.intellij.tasks.TaskListener;
+import com.intellij.tasks.TaskManager;
+import com.intellij.tasks.TaskRepository;
+import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.context.WorkingContextManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EventDispatcher;
@@ -40,7 +57,12 @@ import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.Timer;
 import java.awt.event.ActionEvent;
@@ -48,7 +70,19 @@ import java.awt.event.ActionListener;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -402,15 +436,21 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   }
 
   public void shelveChanges(LocalTask task, @NotNull String shelfName) {
-    Collection<Change> changes = ChangeListManager.getInstance(myProject).getDefaultChangeList().getChanges();
+    Project project = myProject;
+    Collection<Change> changes = ChangeListManager.getInstance(project).getDefaultChangeList().getChanges();
     if (changes.isEmpty()) return;
-    try {
-      ShelveChangesManager.getInstance(myProject).shelveChanges(changes, shelfName, true);
-      task.setShelfName(shelfName);
-    }
-    catch (Exception e) {
-      LOG.warn("Can't shelve changes", e);
-    }
+    new com.intellij.openapi.progress.Task.Modal(project, VcsBundle.message("shelve.changes.progress.title"), true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          ShelveChangesManager.getInstance(project).shelveChanges(changes, shelfName, true);
+          task.setShelfName(shelfName);
+        }
+        catch (Exception e) {
+          LOG.warn("Can't shelve changes", e);
+        }
+      }
+    }.queue();
   }
 
   private void unshelveChanges(LocalTask task) {

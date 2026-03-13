@@ -4,11 +4,21 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.accessibility.AccessibilityUtils;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.ListPluginModel;
+import com.intellij.ide.plugins.PluginEnableDisableAction;
+import com.intellij.ide.plugins.PluginEnabledState;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.ide.plugins.PluginUtilsKt;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorContextProvider;
 import com.intellij.internal.inspector.UiInspectorUtil;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,7 +31,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.ui.*;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.LicensingFacade;
+import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -29,7 +43,12 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.system.OS;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.AbstractLayoutManager;
+import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBValue;
+import com.intellij.util.ui.UIUtil;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -38,14 +57,32 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.text.BadLocationException;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
+import java.awt.Rectangle;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -417,13 +454,13 @@ public final class ListPluginComponent extends JPanel {
         myRating = createRatingLabel(myMetricsPanel, rating, AllIcons.Plugins.Rating);
       }
       String version = myInstalledDescriptorForMarketplace == null ? "" : myInstalledDescriptorForMarketplace.getVersion();
-      myVersion = createRatingLabel(myMetricsPanel, version, null);
+      myVersion = createVersionLabel(myMetricsPanel, version, false);
       myVersion.setVisible(!StringUtil.isEmptyOrSpaces(version));
     }
     else {
       String version = myPlugin.getVersion();
       if (!StringUtil.isEmptyOrSpaces(version)) {
-        myVersion = createRatingLabel(myMetricsPanel, version, myPlugin.isBundledUpdate() ? AllIcons.Plugins.Updated : null);
+        myVersion = createVersionLabel(myMetricsPanel, version, myPlugin.isBundledUpdate());
       }
     }
 
@@ -570,7 +607,7 @@ public final class ListPluginComponent extends JPanel {
 
     if (myUpdateDescriptor == null) {
       if (myVersion != null) {
-        myVersion.setText(plugin.getVersion());
+        setVersionLabelState(myVersion, plugin.getVersion(), plugin.isBundledUpdate());
       }
       if (myUpdateLicensePanel != null) {
         myLayout.removeLineComponent(myUpdateLicensePanel);
@@ -585,7 +622,7 @@ public final class ListPluginComponent extends JPanel {
     }
     else {
       if (myVersion != null) {
-        myVersion.setText(plugin.getVersion());
+        setVersionLabelState(myVersion, plugin.getVersion(), plugin.isBundledUpdate());
       }
       if (plugin.getProductCode() == null && myUpdateDescriptor.getProductCode() != null &&
           !plugin.isBundled() && !LicensePanel.isEA2Product(myUpdateDescriptor.getProductCode()) &&
@@ -608,7 +645,7 @@ public final class ListPluginComponent extends JPanel {
         myUpdateButton.addActionListener(
           e -> updatePlugin(plugin));
       }
-      else {
+      else if (!succesefullyFinishedOnce) {
         myUpdateButton.setEnabled(true);
         myUpdateButton.setVisible(true);
       }
@@ -805,7 +842,7 @@ public final class ListPluginComponent extends JPanel {
               if (myMarketplace) {
                 myInstallButton.setVisible(false);
                 myEnableDisableButton.setVisible(true);
-                myVersion.setText(myInstalledDescriptorForMarketplace.getVersion());
+                setVersionLabelState(myVersion, myInstalledDescriptorForMarketplace.getVersion(), myInstalledDescriptorForMarketplace.isBundledUpdate());
                 myVersion.setVisible(true);
                 updateEnabledStateUI();
                 fullRepaint();
@@ -928,10 +965,11 @@ public final class ListPluginComponent extends JPanel {
     updateColors(mySelection);
     removeButtons(needRestartForUninstall);
 
-    if (!needRestartForUninstall && pluginInstallationState.getStatus() == PluginStatus.UNINSTALLED_WITHOUT_RESTART) {
+    if (!needRestartForUninstall && pluginInstallationState.getStatus() == PluginStatus.UNINSTALLED_WITHOUT_RESTART && !myRestartButton.isVisible()) {
       myLayout.addButtonComponent(myInstallButton = createInstallButton());
       myInstallButton.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"));
     }
+    fullRepaint();
   }
 
   public void updatePlugin() {
@@ -1279,13 +1317,48 @@ public final class ListPluginComponent extends JPanel {
     });
   }
 
+  @NotNull CoroutineScope getCoroutineScope() {
+    return myCoroutineScope;
+  }
+
+  @NotNull PluginModelFacade getModelFacade() {
+    return myModelFacade;
+  }
+
+  @Nullable PluginManagerCustomizer getCustomizer() {
+    return myCustomizer;
+  }
+
   static @NotNull JLabel createRatingLabel(@NotNull JPanel panel, @NotNull @Nls String text, @Nullable Icon icon) {
     return createRatingLabel(panel, null, text, icon, null, true);
   }
 
+  static @NotNull JLabel createVersionLabel(@NotNull JPanel panel,
+                                            @Nullable @Nls String text,
+                                            boolean isBundledUpdate) {
+    var label = createRatingLabel(panel, null, null, null, null, true);
+    setVersionLabelState(label, text, isBundledUpdate);
+    return label;
+  }
+
+  static void setVersionLabelState(@NotNull JLabel versionLabel, @Nullable @Nls String text, boolean isBundledUpdate) {
+    if (isBundledUpdate) {
+      if (versionLabel.getToolTipText() == null) {
+        versionLabel.setToolTipText(IdeBundle.message("plugin.status.is.updated.bundled.plugin.tooltip"));
+      }
+      if (versionLabel.getIcon() != AllIcons.Plugins.Updated) {
+        versionLabel.setIcon(AllIcons.Plugins.Updated);
+      }
+    } else {
+      versionLabel.setToolTipText(null);
+      versionLabel.setIcon(null);
+    }
+    versionLabel.setText(text);
+  }
+
   static @NotNull JLabel createRatingLabel(@NotNull JPanel panel,
                                            @Nullable Object constraints,
-                                           @NotNull @Nls String text,
+                                           @Nullable @Nls String text,
                                            @Nullable Icon icon,
                                            @Nullable Color color,
                                            boolean tiny) {

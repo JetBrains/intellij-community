@@ -52,7 +52,7 @@ public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
   protected boolean isInFileOnly() {
     if (super.isInFileOnly()) return true;
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-347939, EA-976313")) {
-      return ReadAction.compute(() -> {
+      return ReadAction.computeBlocking(() -> {
         Project project = myPsiElement.getProject();
         SearchScope useScope = PsiSearchHelper.getInstance(project).getUseScope(myPsiElement);
         return useScope instanceof LocalSearchScope;

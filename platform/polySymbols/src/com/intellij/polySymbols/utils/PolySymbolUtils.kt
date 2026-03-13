@@ -13,7 +13,15 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.platform.backend.navigation.NavigationTarget
-import com.intellij.polySymbols.*
+import com.intellij.polySymbols.CompositePolySymbol
+import com.intellij.polySymbols.PolySymbol.HideFromCompletionProperty
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolApiStatus
+import com.intellij.polySymbols.PolySymbolKind
+import com.intellij.polySymbols.PolySymbolKindName
+import com.intellij.polySymbols.PolySymbolNameSegment
+import com.intellij.polySymbols.PolySymbolNamespace
+import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.impl.PolySymbolNameSegmentImpl
@@ -21,7 +29,15 @@ import com.intellij.polySymbols.impl.sortSymbolsByPriority
 import com.intellij.polySymbols.impl.withOffset
 import com.intellij.polySymbols.impl.withRange
 import com.intellij.polySymbols.patterns.impl.applyIcons
-import com.intellij.polySymbols.query.*
+import com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
+import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
+import com.intellij.polySymbols.query.PolySymbolMatch
+import com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams
+import com.intellij.polySymbols.query.PolySymbolNamesProvider
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolQueryStack
+import com.intellij.polySymbols.query.PolySymbolScope
+import com.intellij.polySymbols.query.PolySymbolWithPattern
 import com.intellij.polySymbols.query.impl.PolySymbolMatchBase
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.pom.Navigatable
@@ -31,7 +47,7 @@ import com.intellij.psi.SyntheticElement
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.asSafely
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.LinkedList
 import javax.swing.Icon
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
@@ -267,7 +283,7 @@ internal val PolySymbol.matchedNameOrName: String
   get() = (this as? PolySymbolMatch)?.matchedName ?: name
 
 val PolySymbol.hideFromCompletion: Boolean
-  get() = this[PolySymbol.PROP_HIDE_FROM_COMPLETION] == true
+  get() = this[HideFromCompletionProperty] == true
 
 val (PolySymbolNameSegment.MatchProblem?).isCritical: Boolean
   get() = this == PolySymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART || this == PolySymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL

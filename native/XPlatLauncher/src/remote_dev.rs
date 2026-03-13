@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::{BufRead, BufReader, BufWriter, IsTerminal, Write};
+use std::io::IsTerminal;
 use std::path::{Path, PathBuf};
-use std::{env, fs};
+use std::env;
 
 use anyhow::{bail, Context, Result};
 #[allow(unused_imports)]
@@ -45,12 +44,12 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
             vm_options.push(format!("-D{key}={value}"));
         }
 
-        if let Some(command) = self.get_args().get(0) {
+        if let Some(command) = self.get_args().first() {
             match command.as_str() {
                 "remoteDevStatus" | "cwmHostStatus" => {
                     vm_options.retain(|opt| {
                         if opt.starts_with("-agentlib:jdwp=") {
-                            info!("Dropping debug option to prevent startup failure due to port conflict: {}", opt);
+                            info!("Dropping debug option to prevent startup failure due to port conflict: {opt}");
                             false
                         } else {
                             true
@@ -253,19 +252,22 @@ impl RemoteDevLaunchConfiguration {
     }
 }
 
+#[cfg(target_os = "linux")]
 fn get_ide_temp_directory(default: &DefaultLaunchConfiguration) -> Result<PathBuf> {
     Ok(default.user_caches_dir.join("tmp"))
 }
 
 #[cfg(not(target_os = "linux"))]
-fn setup_font_config(default: &DefaultLaunchConfiguration) -> Result<Option<(String, String)>> {
+fn setup_font_config(_default: &DefaultLaunchConfiguration) -> Result<Option<(String, String)>> {
     // fontconfig is Linux-specific
     Ok(None)
 }
 
 #[cfg(target_os = "linux")]
 fn setup_font_config(default: &DefaultLaunchConfiguration) -> Result<Option<(String, String)>> {
+    use std::fs::File;
     use std::hash::{Hash, Hasher};
+    use std::io::{BufRead, BufReader, BufWriter, Write};
 
     let ide_home_path = &default.ide_home;
     let source_font_config_file = ide_home_path.join("plugins/remote-dev-server/selfcontained/fontconfig/fonts.conf");
@@ -291,7 +293,7 @@ fn setup_font_config(default: &DefaultLaunchConfiguration) -> Result<Option<(Str
     let mut hasher = std::collections::hash_map::DefaultHasher::new();
     source_font_config_file.hash(&mut hasher);
     let patched_dir = get_ide_temp_directory(default)?.join(format!("jbrd-fontconfig-{}", hasher.finish()));
-    fs::create_dir_all(&patched_dir).context("Creating directory for temporary fontconfig")?;
+    std::fs::create_dir_all(&patched_dir).context("Creating directory for temporary fontconfig")?;
 
     let patched_file_path = patched_dir.join("fonts.conf");
 
@@ -304,7 +306,7 @@ fn setup_font_config(default: &DefaultLaunchConfiguration) -> Result<Option<(Str
         let mut l = l.context("Failed to read fonts.conf file")?;
         l = l.replace("PATH_FONTS", &extra_fonts_path_config);
         l = l.replace("PATH_JBR", &extra_fonts_path_jbr);
-        writeln!(&mut writer, "{}", l).context("Failed to write patched fonts.conf file")?;
+        writeln!(&mut writer, "{l}").context("Failed to write patched fonts.conf file")?;
     }
 
     writer.flush().context("Failed to flush patched fonts.conf file")?;
@@ -329,7 +331,7 @@ impl std::fmt::Display for IjStarterCommand {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let path = if self.is_project_path_required {"/path/to/project"} else { "" };
         let args = if self.is_arguments_required {"[arguments...]"} else { "" };
-        write!(f, "{} {}", path, args)
+        write!(f, "{path} {args}")
     }
 }
 
@@ -451,7 +453,7 @@ fn parse_bool_env_var_optional(var_name: &str) -> Result<Option<bool>> {
     Ok(match env::var(var_name) {
         Ok(s) if s == "0" || s.eq_ignore_ascii_case("false") => Some(false),
         Ok(s) if s == "1" || s.eq_ignore_ascii_case("true") => Some(true),
-        Ok(s) if !s.is_empty() => bail!("Unsupported value '{}' for '{}' environment variable", s, var_name),
+        Ok(s) if !s.is_empty() => bail!("Unsupported value '{s}' for '{var_name}' environment variable"),
         _ => None,
     })
 }
@@ -463,10 +465,12 @@ fn preload_native_libs(_ide_home_dir: &Path) -> Result<()> {
 }
 
 #[cfg(target_os = "linux")]
-fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
+fn preload_native_libs(ide_home_dir: &Path) -> Result<()> {
     use libloading::os::unix::Library;
     use std::collections::BTreeSet;
+    use std::fs::File;
     use std::mem;
+    use std::io::{BufRead, BufReader};
 
     let use_libs = parse_bool_env_var("REMOTE_DEV_SERVER_USE_SELF_CONTAINED_LIBS", true)?;
     if !use_libs {
@@ -495,11 +499,9 @@ fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
     }
 
     let mut provided_libs = BTreeSet::new();
-    let filter_extensions = vec![
-        "hmac".to_string()
-    ];
+    let filter_extensions = ["hmac".to_string()];
 
-    for f in fs::read_dir(libs_dir)? {
+    for f in std::fs::read_dir(libs_dir)? {
         let entry = f?;
         let file_name = entry.file_name();
         let file_extension = entry.path().extension().map(|ext| ext.to_string_lossy().to_string());
@@ -532,7 +534,7 @@ fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
     for soname in &ordered_libs_to_load {
         debug!("{soname}: trying to load");
 
-        let lib_file = &libs_dir.join(&soname);
+        let lib_file = &libs_dir.join(soname);
         if !lib_file.is_file() {
             bail!("{soname} needs to be loaded as self-contained, but is missing at {lib_file:?}");
         };
@@ -578,7 +580,7 @@ fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
 
 #[cfg(target_os = "linux")]
 fn is_wsl2() -> bool {
-    fs::read_to_string("/proc/sys/kernel/osrelease")
+    std::fs::read_to_string("/proc/sys/kernel/osrelease")
         .map(|x| x.contains("WSL2"))
         .unwrap_or(false)
 }

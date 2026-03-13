@@ -19,10 +19,8 @@ import org.jetbrains.intellij.build.productLayout.pipeline.PipelineNode
 import org.jetbrains.intellij.build.productLayout.pipeline.ProductModuleDepsOutput
 import org.jetbrains.intellij.build.productLayout.pipeline.Slots
 import org.jetbrains.intellij.build.productLayout.stats.DependencyFileResult
-import org.jetbrains.intellij.build.productLayout.stats.FileChangeStatus
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionType
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionUsage
-import org.jetbrains.intellij.build.productLayout.xml.extractDependenciesEntries
 import org.jetbrains.intellij.build.productLayout.xml.updateXmlDependencies
 import org.jetbrains.intellij.build.productLayout.xml.visitAllModules
 
@@ -40,8 +38,8 @@ import org.jetbrains.intellij.build.productLayout.xml.visitAllModules
  * **No dependencies** - can run immediately (level 0).
  *
  * @see org.jetbrains.intellij.build.productLayout.validator.SelfContainedModuleSetValidator for self-contained module set validation
- * @see ProductModuleSetValidationRule for product module set validation
- * @see LibraryModuleValidationRule for library module dependency validation
+ * @see org.jetbrains.intellij.build.productLayout.validator.ProductModuleSetValidator for product module set validation
+ * @see org.jetbrains.intellij.build.productLayout.validator.LibraryModuleValidator for library module dependency validation
  */
 internal object ProductModuleDependencyGenerator : PipelineNode {
   override val id get() = NodeIds.PRODUCT_MODULE_DEPS
@@ -59,7 +57,7 @@ internal object ProductModuleDependencyGenerator : PipelineNode {
 
       val cache = model.descriptorCache
       val graph = model.pluginGraph
-      val strategy = model.fileUpdater
+      val strategy = model.generatedArtifactWritePolicy
       val suppressionConfig = model.suppressionConfig
       val updateSuppressions = model.updateSuppressions
 
@@ -77,50 +75,41 @@ internal object ProductModuleDependencyGenerator : PipelineNode {
           // Compute dependencies from graph (only content modules - those with descriptors)
           val dependencies = computeProductModuleDeps(graph, moduleName, model.config.libraryModuleFilter).map(::ContentModuleName)
           val dependencyNames = dependencies.mapTo(HashSet()) { it.value }
-          val existingXmlModules = if (updateSuppressions) {
-            extractDependenciesEntries(info.content)?.moduleNames?.toSet() ?: info.existingModuleDependencies.toSet()
-          }
-          else {
-            info.existingModuleDependencies.toSet()
-          }
+          val existingXmlModules = info.existingModuleDependencies.toSet()
           val existingXmlModulesAsContentModuleName = existingXmlModules.mapTo(HashSet(), ::ContentModuleName)
+          val moduleHandling = computeExistingDependencyHandling(
+            updateSuppressions = updateSuppressions,
+            existingXmlDeps = existingXmlModulesAsContentModuleName,
+            jpsDeps = dependencies.toSet(),
+            suppressedDeps = suppressedModules,
+          )
+          val effectiveSuppressedModules = moduleHandling.effectiveSuppressedDeps
           val suppressionUsages = ArrayList<SuppressionUsage>()
           val moduleDeps = collectModuleDepsWithSuppressions(
             contentModuleName = contentModuleName,
             dependencies = dependencies,
-            existingXmlModules = existingXmlModulesAsContentModuleName,
-            suppressedModules = suppressedModules,
-            updateSuppressions = updateSuppressions,
+            suppressedModules = effectiveSuppressedModules,
             suppressionUsages = suppressionUsages,
           )
 
           for (existingDep in existingXmlModules) {
             val notInGraph = existingDep !in dependencyNames
-            if (notInGraph) {
-              if (updateSuppressions) {
-                suppressionUsages.add(SuppressionUsage(contentModuleName, existingDep, SuppressionType.MODULE_DEP))
-              }
-              else if (suppressedModules.contains(ContentModuleName(existingDep))) {
-                suppressionUsages.add(SuppressionUsage(contentModuleName, existingDep, SuppressionType.MODULE_DEP))
-              }
+            if (notInGraph && effectiveSuppressedModules.contains(ContentModuleName(existingDep))) {
+              suppressionUsages.add(SuppressionUsage(contentModuleName, existingDep, SuppressionType.MODULE_DEP))
             }
           }
 
-          val status = if (updateSuppressions) {
-            FileChangeStatus.UNCHANGED
-          }
-          else {
-            updateXmlDependencies(
-              path = info.descriptorPath,
-              content = info.content,
-              moduleDependencies = moduleDeps.distinct().sorted(),
-              preserveExistingModule = { moduleNameToPreserve ->
-                suppressedModules.contains(ContentModuleName(moduleNameToPreserve))
-              },
-              preserveExistingPlugin = { true },
-              strategy = strategy,
-            )
-          }
+          val status = updateXmlDependencies(
+            path = info.descriptorPath,
+            content = info.content,
+            moduleDependencies = moduleDeps.distinct().sorted(),
+            preserveExistingModule = { moduleNameToPreserve ->
+              effectiveSuppressedModules.contains(ContentModuleName(moduleNameToPreserve))
+            },
+            preserveExistingPlugin = { true },
+            allowInsideSectionRegion = false,
+            strategy = strategy,
+          )
           DependencyFileResult(
             contentModuleName = contentModuleName,
             descriptorPath = info.descriptorPath,
@@ -160,6 +149,9 @@ private fun computeProductModuleDeps(
       when (val c = classifyTarget(dep.targetId)) {
         is DependencyClassification.ModuleDep -> {
           val depName = c.moduleName.value
+          if (depName == moduleName) {
+            return@dependsOn
+          }
           if (depName.startsWith(LIB_MODULE_PREFIX) && !libraryModuleFilter(depName)) {
             return@dependsOn
           }

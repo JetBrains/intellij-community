@@ -1,9 +1,12 @@
 package com.intellij.mcpserver.util
 
+import com.intellij.execution.CommonProgramRunConfigurationParameters
+import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.mcpserver.McpExpectedError
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.mcpCallInfo
+import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.colors.EditorFontType
@@ -81,4 +84,37 @@ suspend fun askConfirmation(project: Project, @NlsContexts.Label notificationTex
     confirmationDialog.show()
     return@withContext confirmationDialog.isOK
   }
+}
+
+fun prepareRunConfigurationForExecution(
+  configurationName: String,
+  configuration: RunConfiguration,
+  programArguments: String?,
+  workingDirectory: String?,
+  envs: Map<String, String>?,
+): RunConfiguration {
+  if (programArguments == null && workingDirectory == null && envs == null) {
+    return configuration
+  }
+
+  val copiedConfiguration = configuration.clone()
+  val configurable = copiedConfiguration as? CommonProgramRunConfigurationParameters
+                   ?: mcpFail(
+    "Run configuration '$configurationName' of type '${configuration.type.displayName}' doesn't support dynamic launch overrides " +
+    "(programArguments, workingDirectory, envs)."
+  )
+
+  if (programArguments != null) {
+    configurable.programParameters = programArguments.ifEmpty { null }
+  }
+  if (workingDirectory != null) {
+    configurable.workingDirectory = workingDirectory.ifEmpty { null }
+  }
+  if (envs != null) {
+    val mergedEnvs = LinkedHashMap(configurable.envs)
+    mergedEnvs.putAll(envs)
+    configurable.envs = mergedEnvs
+  }
+
+  return copiedConfiguration
 }

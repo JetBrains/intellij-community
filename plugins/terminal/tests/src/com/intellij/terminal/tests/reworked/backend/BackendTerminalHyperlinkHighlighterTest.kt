@@ -8,6 +8,7 @@ import com.intellij.execution.impl.InlayProvider
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
@@ -18,13 +19,14 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineStart.UNDISPATCHED
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -32,6 +34,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkNavigationInterceptor
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalFilterResultInfo
 import org.jetbrains.plugins.terminal.session.impl.TerminalHighlightingInfo
@@ -107,6 +110,43 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       inlay(at(1, "link_inlay12")),
     )
     assertHighlightings()
+  }
+
+  @Test
+  fun `handled hyperlink interceptor skips default navigation`() = withFixture {
+    ExtensionTestUtil.maskExtensions(
+      TerminalHyperlinkNavigationInterceptor.EP_NAME,
+      listOf(object : TerminalHyperlinkNavigationInterceptor {
+        override suspend fun intercept(project: Project, hyperlinkInfo: HyperlinkInfo, mouseEvent: EditorMouseEvent?): Boolean = true
+      }),
+      testRootDisposable,
+    )
+    updateModel(0L, "0: line0 link0")
+
+    click(at(0, "link0"))
+
+    assertClickedLinks()
+  }
+
+  @Test
+  fun `fallthrough hyperlink interceptor keeps default navigation`() = withFixture {
+    var interceptorCalls = 0
+    ExtensionTestUtil.maskExtensions(
+      TerminalHyperlinkNavigationInterceptor.EP_NAME,
+      listOf(object : TerminalHyperlinkNavigationInterceptor {
+        override suspend fun intercept(project: Project, hyperlinkInfo: HyperlinkInfo, mouseEvent: EditorMouseEvent?): Boolean {
+          interceptorCalls++
+          return false
+        }
+      }),
+      testRootDisposable,
+    )
+    updateModel(0L, "0: line0 link0")
+
+    click(at(0, "link0"))
+
+    assertThat(interceptorCalls).isEqualTo(1)
+    assertClickedLinks("link0")
   }
 
   @Test
@@ -470,7 +510,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     private val outputModel = TerminalTestUtil.createOutputModel(MAX_LENGTH)
     private val document: Document get() = outputModel.document
     private lateinit var backendFacade: BackendTerminalHyperlinkFacade
-    private val updateEvents = MutableSharedFlow<List<TerminalOutputEvent>>(replay = 100)
+    private val updateEvents = Channel<List<TerminalOutputEvent>>(capacity = UNLIMITED)
     private val pendingUpdateEventCount = MutableStateFlow(0)
 
     val filter = MyFilter()
@@ -480,11 +520,15 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     suspend fun run(test: suspend Fixture.() -> Unit) {
       coroutineScope {
         val hyperlinkScope = childScope("BackendTerminalHyperlinkHighlighterTest hyperlink scope")
-        backendFacade = BackendTerminalHyperlinkFacade(project, hyperlinkScope, outputModel, false)
+        backendFacade = BackendTerminalHyperlinkFacade(project, hyperlinkScope, outputModel, false, null)
 
-        // do what StateAwareTerminalSession does, but with less infrastructure around
-        val eventJob = launch(CoroutineName("BackendTerminalHyperlinkHighlighterTest event processing"), start = UNDISPATCHED) {
-          merge(updateEvents, backendFacade.heartbeatFlow.map { listOf(it) }).collect { events ->
+        // Do what StateAwareTerminalSession does, but with less infrastructure around.
+        // Note: do NOT use MutableSharedFlow with UNDISPATCHED,
+        // it's useless when combined with merge(), as it does its own launches (without UNDISPATCHED) inside.
+        // Instead, we use channel with an unlimited buffer to avoid losing some of the first events.
+        // Then the channel is consumed once as a flow, thus allowing to merge it with the heartbeat flow.
+        val eventJob = launch(CoroutineName("BackendTerminalHyperlinkHighlighterTest event processing")) {
+          merge(updateEvents.consumeAsFlow(), backendFacade.heartbeatFlow.map { listOf(it) }).collect { events ->
             events.forEach { event ->
               when (event) {
                 is TerminalContentUpdatedEvent -> {
@@ -512,7 +556,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     }
 
     suspend fun updateModel(fromLine: Long, newText: String) {
-      updateEvents.emit(listOf(TerminalContentUpdatedEvent(newText.ensureEOL(), emptyList(), fromLine)))
+      updateEvents.send(listOf(TerminalContentUpdatedEvent(newText.ensureEOL(), emptyList(), fromLine)))
       pendingUpdateEventCount.update { it + 1 }
     }
 
@@ -605,12 +649,20 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     }
 
     suspend fun assertClicks(vararg clicks: LinkLocator) {
+      click(*clicks)
+      assertClickedLinks(*clicks.map { it.substring }.toTypedArray())
+    }
+
+    suspend fun click(vararg clicks: LinkLocator) {
       awaitEventProcessing()
       for (click in clicks) {
         backendFacade.hyperlinkClicked(click.locateLink(outputModel, backendFacade).id, null)
       }
       awaitEventProcessing()
-      assertThat(clickedLinks).containsExactlyElementsOf(clicks.map { it.substring })
+    }
+
+    fun assertClickedLinks(vararg expectedLinks: String) {
+      assertThat(clickedLinks).containsExactly(*expectedLinks)
     }
 
     fun link(

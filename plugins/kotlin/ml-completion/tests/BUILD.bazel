@@ -22,9 +22,14 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:junit4",
     "//plugins/kotlin/ml-completion:completion-ml",
+    "//plugins/kotlin/ml-completion:completion-ml_test_lib",
     "//platform/platform-impl/internal",
   ],
-  runtime_deps = [":tests"]
+  runtime_deps = [
+    ":tests",
+    "//plugins/kotlin/plugin/k1:k1_test_lib",
+    "//platform/platform-impl/internal:internal_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.kotlin.completion.ml.tests` end
 

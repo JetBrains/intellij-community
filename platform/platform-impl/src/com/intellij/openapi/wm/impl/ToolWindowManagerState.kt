@@ -15,7 +15,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.LinkedList
 import javax.swing.JFrame
 
 @ApiStatus.Internal

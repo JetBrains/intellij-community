@@ -6,6 +6,6 @@ package testData.libraries
 
 public fun <T> T.<3>filter(predicate: (T) -> kotlin.Boolean): T? { /* compiled code */ }
 
-context(kotlin.String) public fun kotlin.Int.<5>foo(): kotlin.Unit { /* compiled code */ }
+context(_: kotlin.String) public fun kotlin.Int.<5>foo(): kotlin.Unit { /* compiled code */ }
  Integer.class
 public final class <1>Integer extends Number implements Comparable<Integer> {

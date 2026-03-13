@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.idea.devkit.inspections
 
@@ -42,7 +42,7 @@ private val PLUGIN_GROUP_NAMES = setOf(
   "java", "javac", "uast", "junit4", "dsm",
   "js", "javascript", "typescript", "nodejs", "eslint", "jest",
   "ruby", "rubymine",
-  "groovy", "grails", "python", "php",
+  "groovy", "python", "php",
   "kotlin", "spring", "jupyter", "dataspell", "javafx",
   "maven", "gradle", "android", "eclipse",
   "rider", "compiler"

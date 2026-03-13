@@ -27,4 +27,27 @@ jvm_library(
     "//plugins/gradle/native/tooling",
   ]
 )
+
+jvm_library(
+  name = "native_test_lib",
+  module_name = "intellij.gradle.native",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//plugins/gradle:gradle-common",
+    "//plugins/gradle:gradle-common_test_lib",
+    "//plugins/gradle/native/tooling",
+    "//plugins/gradle/native/tooling:tooling_test_lib",
+  ],
+  runtime_deps = [
+    ":native",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//plugins/gradle:gradle_test_lib",
+    "//plugins/gradle:gradle-common_test_lib",
+    "//plugins/gradle/native/tooling:tooling_test_lib",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-impl_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.gradle.native` end

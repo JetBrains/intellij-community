@@ -222,15 +222,15 @@ class Proto11(Protocol):
 
 
 def cb11_good1(x: int, /, y: str, z: None = None) -> Any:
-    pass
+    raise NotImplementedError
 
 
 def cb11_good2(x: int, y: str, z: None = None) -> Any:
-    pass
+    raise NotImplementedError
 
 
 def cb11_bad1(x: int, y: str, /) -> Any:
-    pass
+    raise NotImplementedError
 
 
 cb11: Proto11 = cb11_good1  # OK

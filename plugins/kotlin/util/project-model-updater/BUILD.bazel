@@ -19,4 +19,16 @@ jvm_library(
     "//platform/util/jdom",
   ]
 )
+
+jvm_library(
+  name = "project-model-updater_test_lib",
+  module_name = "kotlin.util.project-model-updater",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":project-model-updater",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+  ]
+)
 ### auto-generated section `build kotlin.util.project-model-updater` end

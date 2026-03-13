@@ -12,6 +12,8 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
@@ -130,6 +132,13 @@ sealed class ChangeVisibilityModifierIntention(
 
     @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtDeclaration): Unit? {
+        // Skip the visibility-change intention when there is an [EXPLICIT_FIELD_VISIBILITY_MUST_BE_LESS_PERMISSIVE],
+        // as there are already dedicated quick fixes for that compiler error.
+        if (element.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                .any { it is KaFirDiagnostic.ExplicitFieldVisibilityMustBeLessPermissive }
+        ) {
+            return null
+        }
         val symbol = element.symbol
 
         @OptIn(KaExperimentalApi::class)

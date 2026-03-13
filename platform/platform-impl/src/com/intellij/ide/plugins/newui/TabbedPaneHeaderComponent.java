@@ -4,7 +4,13 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -24,9 +30,18 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 import javax.swing.plaf.TabbedPaneUI;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 
@@ -36,7 +51,9 @@ import java.awt.event.ComponentEvent;
 @ApiStatus.Internal
 public class TabbedPaneHeaderComponent extends JPanel implements UiDataProvider {
   private final JBValue myHeight = new JBValue.Float(30);
+  private final JBValue myWeclomeScreenHeight = new JBValue.Float(40);
   private final JBValue myGap = new JBValue.Float(10);
+  private boolean myIsWeclomeScreen = false;
 
   private final JBTabbedPane myTabbedPane = new JBTabbedPane() {
     @Override
@@ -63,7 +80,7 @@ public class TabbedPaneHeaderComponent extends JPanel implements UiDataProvider 
         assert parent.getComponentCount() == 2;
 
         int width = parent.getComponent(0).getPreferredSize().width * 2 + myGap.get() + parent.getComponent(1).getPreferredSize().width;
-        return new Dimension(width, myHeight.get());
+        return new Dimension(width, myIsWeclomeScreen ? myWeclomeScreenHeight.get() : myHeight.get());
       }
 
       @Override
@@ -97,6 +114,10 @@ public class TabbedPaneHeaderComponent extends JPanel implements UiDataProvider 
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
 
+  }
+
+  public void setWeclomeScreen(boolean weclomeScreen) {
+    myIsWeclomeScreen = weclomeScreen;
   }
 
   static @NotNull JComponent createToolbar(@NotNull DefaultActionGroup actions,

@@ -83,9 +83,6 @@ a:com.intellij.remote.RemoteSdkFactoryImpl
 - <init>():V
 - canSaveUnfinished():Z
 - createRemoteSdk(com.intellij.openapi.project.Project,com.intellij.remote.RemoteSdkAdditionalData,java.lang.String,java.util.Collection):com.intellij.openapi.projectRoots.Sdk
-- pa:createSdk(java.util.Collection,com.intellij.openapi.projectRoots.SdkType,com.intellij.remote.RemoteSdkAdditionalData,java.lang.String):com.intellij.openapi.projectRoots.Sdk
-- createUnfinished(com.intellij.remote.RemoteSdkAdditionalData,java.util.Collection):com.intellij.openapi.projectRoots.Sdk
-- generateSdkHomePath(com.intellij.remote.RemoteSdkAdditionalData):java.lang.String
 - s:getDefaultUnfinishedInterpreterName(java.lang.String):java.lang.String
 - a:getDefaultUnfinishedName():java.lang.String
 - pa:getSdkName(com.intellij.remote.RemoteSdkAdditionalData,java.lang.String):java.lang.String
@@ -261,9 +258,9 @@ a:com.intellij.remote.ui.CreateRemoteSdkForm
 - javax.swing.JPanel
 - com.intellij.openapi.Disposable
 - com.intellij.remote.ui.RemoteSdkEditorForm
-- p:myHelpersPathField:com.intellij.openapi.ui.TextFieldWithBrowseButton
-- p:myInterpreterPathField:com.intellij.openapi.ui.TextFieldWithBrowseButton
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- pf:myHelpersPathField:com.intellij.openapi.ui.TextFieldWithBrowseButton
+- pf:myInterpreterPathField:com.intellij.openapi.ui.TextFieldWithBrowseButton
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.openapi.project.Project,com.intellij.remote.ui.RemoteSdkEditorContainer,com.intellij.remote.ui.SdkScopeController,java.lang.Runnable,com.intellij.remote.ui.BundleAccessor):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.remote.ui.RemoteSdkEditorContainer,java.lang.Runnable,com.intellij.remote.ui.BundleAccessor):V
 - createSdkData():com.intellij.remote.RemoteSdkAdditionalData

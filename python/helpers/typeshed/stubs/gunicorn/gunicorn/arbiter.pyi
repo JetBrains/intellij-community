@@ -4,6 +4,7 @@ from typing import ClassVar
 
 from gunicorn.app.base import BaseApplication
 from gunicorn.config import Config
+from gunicorn.dirty import DirtyArbiter
 from gunicorn.glogging import Logger as GLogger
 from gunicorn.sock import BaseSocket
 from gunicorn.workers.base import Worker
@@ -28,6 +29,9 @@ class Arbiter:
     reexec_pid: int
     master_pid: int
     master_name: str
+    dirty_arbiter_pid: int
+    dirty_arbiter: DirtyArbiter | None
+    dirty_pidfile: str | None
     pid: int
     app: BaseApplication
     cfg: Config
@@ -69,3 +73,7 @@ class Arbiter:
     def spawn_workers(self) -> None: ...
     def kill_workers(self, sig: int) -> None: ...
     def kill_worker(self, pid: int, sig: int) -> None: ...
+    def spawn_dirty_arbiter(self) -> int | None: ...
+    def kill_dirty_arbiter(self, sig: int) -> None: ...
+    def reap_dirty_arbiter(self) -> None: ...
+    def manage_dirty_arbiter(self) -> None: ...

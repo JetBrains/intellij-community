@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.otherIde
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.collectors.fus.otherIde.LaunchJsonUsagesCollector.Companion.jsConfigurationEvent
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.util.io.isLocalHost
+import tools.jackson.databind.JsonNode
 import java.net.URL
 
 internal fun reportJSConfigurations(rootNode: JsonNode): List<MetricEvent> {
@@ -23,7 +23,7 @@ private fun parseAndReportJSConfiguration(node: JsonNode): MetricEvent? {
     return null
   }
 
-  val configurationType = node.get("type")?.asText().let {
+  val configurationType = node.get("type")?.asString().let {
     if (it == null || it !in JavaScriptConfigurationFields.jsConfigurationTypes) {
       JavaScriptConfigurationFields.UNKNOWN_VALUE
     }
@@ -32,7 +32,7 @@ private fun parseAndReportJSConfiguration(node: JsonNode): MetricEvent? {
     }
   }
 
-  val request = node.get("request")?.asText().let {
+  val request = node.get("request")?.asString().let {
     if (it == null || it !in JavaScriptConfigurationFields.requestTypes) {
       JavaScriptConfigurationFields.UNKNOWN_VALUE
     }
@@ -45,17 +45,17 @@ private fun parseAndReportJSConfiguration(node: JsonNode): MetricEvent? {
     node.get("env")?.any() == true
   }
   else if (node.has("envFile")) {
-    node.get("envFile")?.asText() != "\${workspaceFolder}/.env"
+    node.get("envFile")?.asString() != "\${workspaceFolder}/.env"
   }
   else false
 
   val skipFilesNode = node.get("skipFiles")
   val hasCustomSkipFiles = if (skipFilesNode != null && skipFilesNode.isArray) {
-    skipFilesNode.any { it.asText() != "<node_internals>/**" }
+    skipFilesNode.any { it.asString() != "<node_internals>/**" }
   }
   else false
 
-  val url = node.get("url")?.asText()
+  val url = node.get("url")?.asString()
 
   return jsConfigurationEvent.metric(
     JavaScriptConfigurationFields.configurationType with configurationType,
@@ -68,7 +68,7 @@ private fun parseAndReportJSConfiguration(node: JsonNode): MetricEvent? {
     JavaScriptConfigurationFields.hasCustomPort with (node.get("port")?.asInt().let { it != null && it != 9229 && it != 0 }),
     JavaScriptConfigurationFields.hasCustomSkipFiles with hasCustomSkipFiles,
     JavaScriptConfigurationFields.hasPathMapping with (node.has("pathMapping") && node.get("pathMapping")?.isEmpty == false),
-    JavaScriptConfigurationFields.hasCustomWebRoot with (node.has("webRoot") && node.get("webRoot")?.asText().let { it != null && it != "\${workspaceFolder}" && it != "\${workspaceFolder}/src" }),
+    JavaScriptConfigurationFields.hasCustomWebRoot with (node.has("webRoot") && node.get("webRoot")?.asString().let { it != null && it != "\${workspaceFolder}" && it != "\${workspaceFolder}/src" }),
     JavaScriptConfigurationFields.pauseForSourceMapEnabled with (node.get("pauseForSourceMap")?.booleanValue() == true),
   )
 }

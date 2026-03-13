@@ -90,7 +90,24 @@ class RuntimeModuleRepositoryBuilderTest : RuntimeModuleRepositoryTestCase() {
       testDescriptor("c.tests", "c", "a.tests")
     }
   }
-  
+
+  fun `test transitive dependency via module without tests but with test module-level library`() {
+    val a = addModule("a", withTests = true)
+    val b = addModule("b", a, withTests = false)
+    val lib = b.libraryCollection.addLibrary("lib", JpsJavaLibraryType.INSTANCE)
+    val dependency = b.dependenciesList.addLibraryDependency(lib)
+    JpsJavaExtensionService.getInstance().getOrCreateDependencyExtension(dependency).scope = JpsJavaDependencyScope.TEST
+    lib.addRoot(getUrl("project/lib"), JpsOrderRootType.COMPILED)
+    addModule("c", b, withTests = true)
+    buildAndCheck {
+      descriptor("a")
+      descriptor("b", "a")
+      descriptor("c", "b")
+      testDescriptor("a.tests", "a")
+      descriptor("c.tests", listOf("test/c", $$"$PROJECT_DIR$/lib"),  listOf("c", "a.tests"))
+    }
+  }
+
   fun `test do not add unnecessary transitive dependencies via module without tests`() {
     val a = addModule("a", withTests = true)
     val b = addModule("b", withTests = false)
@@ -157,8 +174,7 @@ class RuntimeModuleRepositoryBuilderTest : RuntimeModuleRepositoryTestCase() {
     a.dependenciesList.addLibraryDependency(lib)
     lib.addRoot(getUrl("project/lib"), JpsOrderRootType.COMPILED)
     buildAndCheck { 
-      descriptor("a", "lib.a.lib")
-      descriptor("lib.a.lib", listOf($$"$PROJECT_DIR$/lib"), emptyList())
+      descriptor("a",listOf("production/a", $$"$PROJECT_DIR$/lib"), emptyList())
     }
   }
   

@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.utils;
 
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.openapi.components.impl.ProjectWidePathMacroContributor;
+import com.intellij.platform.eel.provider.EelProviderUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.SystemIndependent;
 
@@ -24,7 +25,7 @@ final class MavenProjectPathMacroContributor implements ProjectWidePathMacroCont
 
   static @NotNull String getPathToDefaultMavenLocalRepositoryOnSpecificEnv(@NotNull @SystemIndependent String projectFilePath) {
     Path projectFile = Path.of(projectFilePath);
-    return MavenUtil.resolveDefaultLocalRepository(projectFile).toAbsolutePath().toString();
+    return MavenUtil.resolveDefaultLocalRepositoryForJpsMacros(EelProviderUtil.getEelDescriptor(projectFile)).toAbsolutePath().toString();
   }
 
 }

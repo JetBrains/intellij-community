@@ -1105,12 +1105,10 @@ public final class CreateFromUsageUtils {
     public LookupElement @NotNull [] calculateLookupItems(ExpressionContext context) {
       Project project = context.getProject();
       int offset = context.getStartOffset();
-      Editor editor = context.getEditor();
-      assert editor != null;
-      Document document = editor.getDocument();
-      PsiDocumentManager.getInstance(project).commitDocument(document);
-      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      PsiFile psiFile = context.getPsiFile();
       assert psiFile != null;
+      Document document = psiFile.getFileDocument();
+      PsiDocumentManager.getInstance(project).commitDocument(document);
       PsiElement elementAt = psiFile.findElementAt(offset);
       Set<String> parameterNames = getPeerNames(elementAt);
       if (parameterNames == null) return LookupElement.EMPTY_ARRAY;

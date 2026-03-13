@@ -15,6 +15,7 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//tools/devLauncher",
+    "//tools/devLauncher:devLauncher_test_lib",
     "@lib//:kotlin-stdlib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",

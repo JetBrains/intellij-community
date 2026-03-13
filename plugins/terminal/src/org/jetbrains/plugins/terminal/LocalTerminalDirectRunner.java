@@ -24,8 +24,12 @@ import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 import org.jetbrains.plugins.terminal.runner.LocalOptionsConfigurer;
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector;
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder;
-import org.jetbrains.plugins.terminal.starter.*;
 import org.jetbrains.plugins.terminal.shell_integration.TerminalPSReadLineUpdateUtil;
+import org.jetbrains.plugins.terminal.startup.MutableShellExecOptions;
+import org.jetbrains.plugins.terminal.startup.MutableShellExecOptionsImpl;
+import org.jetbrains.plugins.terminal.startup.ShellExecCommand;
+import org.jetbrains.plugins.terminal.startup.ShellExecCommandImpl;
+import org.jetbrains.plugins.terminal.startup.ShellExecOptionsCustomizer;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -96,13 +100,13 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     EelPath workingDirectoryEelPath = findWorkingDirectoryEelPath(workingDirectory, eelDescriptor);
 
     if (workingDirectoryEelPath != null) {
-      AtomicReference<ShellExecCommand> shellExecCommandRef = new AtomicReference<>(new ShellExecCommand(shellCommand));
-      ShellCustomizer.Companion.getEP_NAME().processWithPluginDescriptor((customizer, __) -> {
-        ShellExecOptions execOptions = new ShellExecOptionsImpl(
-          eelDescriptor,
-          workingDirectoryEelPath,
+      AtomicReference<ShellExecCommand> shellExecCommandRef = new AtomicReference<>(new ShellExecCommandImpl(shellCommand));
+      ShellExecOptionsCustomizer.Companion.getEP_NAME().processWithPluginDescriptor((customizer, __) -> {
+        MutableShellExecOptions execOptions = new MutableShellExecOptionsImpl(
           shellExecCommandRef.get(),
+          workingDirectoryEelPath,
           envs,
+          options.getShellIntegration(),
           customizer.getClass()
         );
         customizer.customizeExecOptions(myProject, execOptions);
@@ -125,7 +129,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       workingDirectoryEelPath = EelNioBridgeServiceKt.asEelPath(nioPath, eelDescriptor);
     }
     catch (InvalidPathException | EelPathException e) {
-      LOG.warn("Cannot find working directory (" + workingDirectory + "), skipping " + ShellCustomizer.class.getSimpleName(), e);
+      LOG.warn("Cannot find working directory (" + workingDirectory + "), skipping " + ShellExecOptionsCustomizer.class.getSimpleName(), e);
     }
     return workingDirectoryEelPath;
   }

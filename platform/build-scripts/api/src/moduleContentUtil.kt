@@ -21,13 +21,13 @@ import java.nio.file.attribute.BasicFileAttributes
 
 const val PLUGIN_XML_RELATIVE_PATH: String = "META-INF/plugin.xml"
 
-fun getUnprocessedPluginXmlContent(module: JpsModule, outputProvider: ModuleOutputProvider): ByteArray {
+suspend fun getUnprocessedPluginXmlContent(module: JpsModule, outputProvider: ModuleOutputProvider): ByteArray {
   return requireNotNull(findUnprocessedDescriptorContent(module = module, path = PLUGIN_XML_RELATIVE_PATH, outputProvider = outputProvider)) {
     "META-INF/plugin.xml not found in ${module.name} module output"
   }
 }
 
-fun findUnprocessedDescriptorContent(module: JpsModule, path: String, outputProvider: ModuleOutputProvider): ByteArray? {
+suspend fun findUnprocessedDescriptorContent(module: JpsModule, path: String, outputProvider: ModuleOutputProvider): ByteArray? {
   try {
     val result = outputProvider.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = false)
     if (result == null && outputProvider.useTestCompilationOutput) {
@@ -86,32 +86,12 @@ fun findProductModulesFile(clientMainModuleName: String, provider: ModuleOutputP
   return findFileInModuleSources(provider.findRequiredModule(clientMainModuleName), "META-INF/$clientMainModuleName/product-modules.xml")
 }
 
-fun findFileInModuleDependencies(
-  module: JpsModule,
-  relativePath: String,
-  outputProvider: ModuleOutputProvider,
-  processedModules: MutableSet<String>,
-  recursiveModuleExclude: String? = null,
-): ByteArray? {
-  findFileInModuleLibraryDependencies(module, relativePath, outputProvider)?.let {
-    return it
-  }
-
-  return findFileInModuleDependenciesRecursive(
-    module = module,
-    relativePath = relativePath,
-    provider = outputProvider,
-    processedModules = processedModules,
-    recursiveModuleExclude = recursiveModuleExclude,
-  )
-}
-
-private fun findFileInModuleDependenciesRecursive(
+suspend fun findFileInModuleDependenciesRecursive(
   module: JpsModule,
   relativePath: String,
   provider: ModuleOutputProvider,
   processedModules: MutableSet<String>,
-  recursiveModuleExclude: String? = null,
+  moduleNamePrefix: String? = null,
 ): ByteArray? {
   for (dependency in module.dependenciesList.dependencies) {
     if (dependency !is JpsModuleDependency) {
@@ -119,6 +99,9 @@ private fun findFileInModuleDependenciesRecursive(
     }
 
     val moduleName = dependency.moduleReference.moduleName
+    if (moduleNamePrefix != null && !moduleName.startsWith(moduleNamePrefix)) {
+      continue
+    }
     if (!processedModules.add(moduleName)) {
       continue
     }
@@ -128,44 +111,13 @@ private fun findFileInModuleDependenciesRecursive(
       return it
     }
 
-    // if recursiveModuleFilter is null, it means that non-direct search not needed
-    if (recursiveModuleExclude != null && !moduleName.startsWith(recursiveModuleExclude)) {
-      findFileInModuleDependenciesRecursive(
-        module = dependentModule,
-        relativePath = relativePath,
-        provider = provider,
-        recursiveModuleExclude = recursiveModuleExclude,
-        processedModules = processedModules,
-      )?.let {
-        return it
-      }
-    }
-  }
-  return null
-}
-
-suspend fun findFileInModuleDependenciesRecursiveAsync(
-  module: JpsModule,
-  relativePath: String,
-  provider: ModuleOutputProvider,
-  processedModules: MutableSet<String>,
-  prefix: String? = null,
-): ByteArray? {
-  for (dependency in module.dependenciesList.dependencies) {
-    if (dependency !is JpsModuleDependency) {
-      continue
-    }
-
-    val moduleName = dependency.moduleReference.moduleName
-    if (prefix != null && !moduleName.startsWith(prefix)) {
-      continue
-    }
-    if (!processedModules.add(moduleName)) {
-      continue
-    }
-
-    val dependentModule = provider.findRequiredModule(moduleName)
-    provider.readFileContentFromModuleOutputAsync(dependentModule, relativePath)?.let {
+    findFileInModuleDependenciesRecursive(
+      module = dependentModule,
+      relativePath = relativePath,
+      provider = provider,
+      processedModules = processedModules,
+      moduleNamePrefix = moduleNamePrefix,
+    )?.let {
       return it
     }
   }

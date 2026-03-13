@@ -39,7 +39,7 @@ internal class MacSystemPythonProvider : SystemPythonProvider {
 
     val pythons = withContext(Dispatchers.IO) {
       try {
-        return@withContext collectPythonsInPaths(eelApi, directories, names)
+        return@withContext collectPythonsInPaths( directories, names)
       }
       catch (e: RuntimeException) {
         LOGGER.error("Failed to discover mac system pythons", e)

@@ -11,15 +11,15 @@ import org.jetbrains.plugins.gradle.jvmcompat.GradleCompatibilityState
  */
 internal val DEFAULT_DATA = GradleCompatibilityState(
   supportedJavaVersions = listOf(
-    "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25"
+    "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26"
   ),
   supportedGradleVersions = listOf(
     "4.6", "4.7", "4.8.1", "4.9", "4.10.3",
     "5.0", "5.1.1", "5.2.1", "5.3.1", "5.4.1", "5.5.1", "5.6.4",
     "6.0.1", "6.1.1", "6.2.2", "6.3", "6.4.1", "6.5.1", "6.6.1", "6.7.1", "6.8.3", "6.9.4",
     "7.0.2", "7.1.1", "7.2", "7.3.3", "7.4.2", "7.5.1", "7.6.6",
-    "8.0.2", "8.1.1", "8.2.1", "8.3", "8.4", "8.5", "8.6", "8.7", "8.8", "8.9", "8.10.2", "8.11.1", "8.12.1", "8.13", "8.14.3",
-    "9.0.0", "9.1.0", "9.2.1", "9.3.0"
+    "8.0.2", "8.1.1", "8.2.1", "8.3", "8.4", "8.5", "8.6", "8.7", "8.8", "8.9", "8.10.2", "8.11.1", "8.12.1", "8.13", "8.14.4",
+    "9.0.0", "9.1.0", "9.2.1", "9.3.0", "9.3.1", "9.4.0"
   ),
   compatibility = listOf(
     VersionMapping(java = "6-8", gradle = "INF-5.0"),
@@ -40,6 +40,7 @@ internal val DEFAULT_DATA = GradleCompatibilityState(
     VersionMapping(java = "22-23", gradle = "8.8-INF"),
     VersionMapping(java = "23-24", gradle = "8.10-INF"),
     VersionMapping(java = "24-25", gradle = "8.14-INF"),
-    VersionMapping(java = "25-26", gradle = "9.1.0-INF")
+    VersionMapping(java = "25-26", gradle = "9.1.0-INF"),
+    VersionMapping(java = "26-27", gradle = "9.4.0-INF")
   )
 );

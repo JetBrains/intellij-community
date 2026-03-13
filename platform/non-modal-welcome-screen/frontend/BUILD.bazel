@@ -28,4 +28,25 @@ jvm_library(
   ],
   plugins = ["@lib//:compose-plugin"]
 )
+
+jvm_library(
+  name = "frontend_test_lib",
+  module_name = "intellij.platform.ide.nonModalWelcomeScreen.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":frontend",
+    "//platform/core-api:core_test_lib",
+    "//platform/compose:compose_test_lib",
+    "//platform/non-modal-welcome-screen:non-modal-welcome-screen_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/project/shared:project_test_lib",
+    "//fleet/rpc:rpc_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
 ### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen.frontend` end

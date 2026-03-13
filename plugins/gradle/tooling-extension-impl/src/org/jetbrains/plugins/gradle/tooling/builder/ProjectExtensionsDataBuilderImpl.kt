@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.gradle.tooling.builder
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
-import com.intellij.gradle.toolingExtension.impl.util.GradleConventionUtil
-import com.intellij.gradle.toolingExtension.impl.util.GradleConventionUtil.getConventionPlugins
+import com.intellij.gradle.toolingExtension.util.GradleConventionUtil
+import com.intellij.gradle.toolingExtension.util.GradleConventionUtil.getConventionPlugins
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import groovy.lang.Closure
 import org.gradle.api.Project
@@ -115,7 +115,7 @@ class ProjectExtensionsDataBuilderImpl : ModelBuilderService {
         return emptyList()
       }
       val result = mutableListOf<DefaultGradleConvention>()
-      if (GradleConventionUtil.isGradleConventionsSupported()) {
+      if (  GradleConventionUtil.isGradleConventionsSupported()) {
         getConventionPlugins(project).forEach { (key, value) ->
           result.add(DefaultGradleConvention(key, getType(value)))
         }

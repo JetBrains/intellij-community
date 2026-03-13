@@ -11,5 +11,3 @@ fun foo(){
 
 // EXIST: { lookupString:"X", itemText:"X", tailText:" (sample.Foo)" }
 // EXIST: { lookupString:"Y", itemText:"Y", tailText:"() (sample.Foo)" }
-
-// IGNORE_K2

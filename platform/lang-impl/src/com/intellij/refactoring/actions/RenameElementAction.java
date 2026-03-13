@@ -2,7 +2,11 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteIntentReadAction;
@@ -21,7 +25,6 @@ import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.Renamer;
 import com.intellij.refactoring.rename.RenamerFactory;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -76,11 +79,10 @@ public class RenameElementAction extends DumbAwareAction {
         return;
       }
 
-      List<Renamer> allRenamers = Utils.computeWithProgressIcon(e.getDataContext(), e.getPlace(), __ -> ReadAction.compute(
+      List<Renamer> allRenamers = Utils.computeWithProgressIcon(e.getDataContext(), e.getPlace(), __ -> ReadAction.computeBlocking(
         () -> getAvailableRenamers(dataContext).toList()));
 
       List<Renamer> availableRenamers = ContainerUtil.filter(allRenamers, DumbService.getInstance(project)::isUsableInCurrentContext);
-
 
       if (availableRenamers.isEmpty()) {
         // check if rename is not performed due to dumb mode

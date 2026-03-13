@@ -7,6 +7,7 @@ import com.intellij.debugger.impl.ClassLoadingUtils
 import com.intellij.debugger.impl.DexDebugFacility
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.sun.jdi.ClassLoaderReference
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluationBundle
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.ReflectionCallClassPatcher
@@ -109,7 +110,8 @@ class OrdinaryClassLoadingAdapter : ClassLoadingAdapter {
         return classLoader
     }
 
-    private fun defineClasses(
+    @ApiStatus.Internal
+    fun defineClasses(
         classes: Collection<ClassToLoad>,
         context: ExecutionContext,
         classLoader: ClassLoaderReference

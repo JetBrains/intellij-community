@@ -1,4 +1,5 @@
 // "Change existing retention to SOURCE" "true"
+// K2_ERROR: Expression annotations with retention other than SOURCE are prohibited.
 class AnnotationRetention
 
 <caret>@Retention()

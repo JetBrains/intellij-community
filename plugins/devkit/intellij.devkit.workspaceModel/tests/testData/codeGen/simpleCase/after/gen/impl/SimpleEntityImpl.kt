@@ -43,6 +43,36 @@ get() {
 readField("isSimple")
 return dataSource.isSimple
 }
+override val char: Char
+get() {
+readField("char")
+return dataSource.char
+}
+override val long: Long
+get() {
+readField("long")
+return dataSource.long
+}
+override val float: Float
+get() {
+readField("float")
+return dataSource.float
+}
+override val double: Double
+get() {
+readField("double")
+return dataSource.double
+}
+override val short: Short
+get() {
+readField("short")
+return dataSource.short
+}
+override val byte: Byte
+get() {
+readField("byte")
+return dataSource.byte
+}
 
 override val entitySource: EntitySource
 get() {
@@ -98,6 +128,12 @@ if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource
 if (this.version != dataSource.version) this.version = dataSource.version
 if (this.name != dataSource.name) this.name = dataSource.name
 if (this.isSimple != dataSource.isSimple) this.isSimple = dataSource.isSimple
+if (this.char != dataSource.char) this.char = dataSource.char
+if (this.long != dataSource.long) this.long = dataSource.long
+if (this.float != dataSource.float) this.float = dataSource.float
+if (this.double != dataSource.double) this.double = dataSource.double
+if (this.short != dataSource.short) this.short = dataSource.short
+if (this.byte != dataSource.byte) this.byte = dataSource.byte
 updateChildToParentReferences(parents)
 }
 
@@ -131,6 +167,48 @@ checkModificationAllowed()
 getEntityData(true).isSimple = value
 changedProperty.add("isSimple")
 }
+override var char: Char
+get() = getEntityData().char
+set(value) {
+checkModificationAllowed()
+getEntityData(true).char = value
+changedProperty.add("char")
+}
+override var long: Long
+get() = getEntityData().long
+set(value) {
+checkModificationAllowed()
+getEntityData(true).long = value
+changedProperty.add("long")
+}
+override var float: Float
+get() = getEntityData().float
+set(value) {
+checkModificationAllowed()
+getEntityData(true).float = value
+changedProperty.add("float")
+}
+override var double: Double
+get() = getEntityData().double
+set(value) {
+checkModificationAllowed()
+getEntityData(true).double = value
+changedProperty.add("double")
+}
+override var short: Short
+get() = getEntityData().short
+set(value) {
+checkModificationAllowed()
+getEntityData(true).short = value
+changedProperty.add("short")
+}
+override var byte: Byte
+get() = getEntityData().byte
+set(value) {
+checkModificationAllowed()
+getEntityData(true).byte = value
+changedProperty.add("byte")
+}
 
 override fun getEntityClass(): Class<SimpleEntity> = SimpleEntity::class.java
 }
@@ -142,9 +220,21 @@ internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>(){
 var version: Int = 0
 lateinit var name: String
 var isSimple: Boolean = false
+var char: Char = 0.toChar()
+var long: Long = 0
+var float: Float = 0f
+var double: Double = 0.0
+var short: Short = 0
+var byte: Byte = 0
 
 
 internal fun isNameInitialized(): Boolean = ::name.isInitialized
+
+
+
+
+
+
 
 
 override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SimpleEntity>{
@@ -174,7 +264,7 @@ return SimpleEntity::class.java
 }
 
 override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*>{
-return SimpleEntity(version, name, isSimple, entitySource)
+return SimpleEntity(version, name, isSimple, char, long, float, double, short, byte, entitySource)
 }
 
 override fun getRequiredParents(): List<Class<out WorkspaceEntity>>{
@@ -190,6 +280,12 @@ if (this.entitySource != other.entitySource) return false
 if (this.version != other.version) return false
 if (this.name != other.name) return false
 if (this.isSimple != other.isSimple) return false
+if (this.char != other.char) return false
+if (this.long != other.long) return false
+if (this.float != other.float) return false
+if (this.double != other.double) return false
+if (this.short != other.short) return false
+if (this.byte != other.byte) return false
 return true
 }
 
@@ -200,6 +296,12 @@ other as SimpleEntityData
 if (this.version != other.version) return false
 if (this.name != other.name) return false
 if (this.isSimple != other.isSimple) return false
+if (this.char != other.char) return false
+if (this.long != other.long) return false
+if (this.float != other.float) return false
+if (this.double != other.double) return false
+if (this.short != other.short) return false
+if (this.byte != other.byte) return false
 return true
 }
 
@@ -208,6 +310,12 @@ var result = entitySource.hashCode()
 result = 31 * result + version.hashCode()
 result = 31 * result + name.hashCode()
 result = 31 * result + isSimple.hashCode()
+result = 31 * result + char.hashCode()
+result = 31 * result + long.hashCode()
+result = 31 * result + float.hashCode()
+result = 31 * result + double.hashCode()
+result = 31 * result + short.hashCode()
+result = 31 * result + byte.hashCode()
 return result
 }
 override fun hashCodeIgnoringEntitySource(): Int{
@@ -215,6 +323,12 @@ var result = javaClass.hashCode()
 result = 31 * result + version.hashCode()
 result = 31 * result + name.hashCode()
 result = 31 * result + isSimple.hashCode()
+result = 31 * result + char.hashCode()
+result = 31 * result + long.hashCode()
+result = 31 * result + float.hashCode()
+result = 31 * result + double.hashCode()
+result = 31 * result + short.hashCode()
+result = 31 * result + byte.hashCode()
 return result
 }
 }

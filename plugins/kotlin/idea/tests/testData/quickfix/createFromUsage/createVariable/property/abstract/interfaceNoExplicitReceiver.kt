@@ -1,4 +1,5 @@
 // "Create abstract property 'foo'" "true"
+// K2_ERROR: Unresolved reference 'foo'.
 interface A {
     fun bar(b: Boolean) {}
 

@@ -47,6 +47,44 @@ jvm_library(
     "//platform/backend/observation",
   ]
 )
+
+jvm_library(
+  name = "evaluation-plugin_test_lib",
+  module_name = "intellij.evaluationPlugin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":evaluation-plugin",
+    "//plugins/evaluation-plugin/languages:languages_test_lib",
+    "//plugins/evaluation-plugin/core:core_test_lib",
+    "//plugins/completion-ml-ranking:completion-ml-ranking_test_lib",
+    "//libraries/io:io_test_lib",
+    "//libraries/ktor/client:client_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/stats-collector:stats-collector_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/vcs-api:vcs_test_lib",
+    "//platform/service-container:service-container_test_lib",
+    "//platform/ml-api:ml_test_lib",
+    "//libraries/gson:gson_test_lib",
+    "//libraries/commons/text:text_test_lib",
+    "//platform/warmup:warmup_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/backend/observation:observation_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.evaluationPlugin` end
 
 ### auto-generated section `build intellij.evaluationPlugin.tests` start
@@ -64,20 +102,29 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/evaluation-plugin/core",
+    "//plugins/evaluation-plugin/core:core_test_lib",
     "//plugins/evaluation-plugin",
+    "//plugins/evaluation-plugin:evaluation-plugin_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//libraries/mockito",
+    "//libraries/mockito:mockito_test_lib",
     "@lib//:junit5",
     "//libraries/gson",
+    "//libraries/gson:gson_test_lib",
     "//plugins/evaluation-plugin/languages",
+    "//plugins/evaluation-plugin/languages:languages_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/evaluation-plugin/languages/python",
+    "//plugins/evaluation-plugin/languages/python:python_test_lib",
     "@lib//:mockito-kotlin",
   ],
-  runtime_deps = [":evaluationPlugin-tests"]
+  runtime_deps = [
+    ":evaluationPlugin-tests",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.evaluationPlugin.tests` end
 

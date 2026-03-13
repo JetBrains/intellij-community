@@ -6,6 +6,7 @@ package com.intellij.openapi.wm.impl.status.widget
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -19,15 +20,30 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
-import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.CustomStatusBarWidget
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.StatusBarWidget
+import com.intellij.openapi.wm.StatusBarWidgetFactory
+import com.intellij.openapi.wm.StatusBarWidgetProvider
+import com.intellij.openapi.wm.WidgetPresentationDataContext
+import com.intellij.openapi.wm.WidgetPresentationFactory
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.status.ChildStatusBarWidget
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.status.createComponentByWidgetPresentation
+import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.application
+import com.intellij.util.asSafely
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.swing.JComponent
 import kotlin.coroutines.CoroutineContext
@@ -254,7 +270,16 @@ private fun createWidget(
   }
 
   val widgetScope = parentScope.childScope("${factory.id}-widget")
+  tryAttachWidgetScopeToPlugin(factory, widgetScope)
+
   return WidgetPresentationWrapper(id = factory.id, factory = factory, dataContext = dataContext, scope = widgetScope)
+}
+
+private fun tryAttachWidgetScopeToPlugin(factory: StatusBarWidgetFactory, widgetScope: CoroutineScope) {
+  val pluginScope = factory.javaClass.classLoader.asSafely<PluginAwareClassLoader>()?.pluginCoroutineScope
+  if (pluginScope != null) {
+    widgetScope.attachAsChildTo(pluginScope)
+  }
 }
 
 /**

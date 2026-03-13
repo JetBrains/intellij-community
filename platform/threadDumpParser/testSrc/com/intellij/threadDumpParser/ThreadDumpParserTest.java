@@ -10,7 +10,10 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class ThreadDumpParserTest {
   @Test
@@ -796,8 +799,47 @@ public class ThreadDumpParserTest {
     List<ThreadState> threads = ThreadDumpParser.parse(text);
     assertEquals(4, threads.size());
 
-    assertTrue(threads.get(3).getName().endsWith("@957"));
+    assertEquals("main@1", threads.get(0).getName());
+    assertNull(threads.get(0).getUniqueId());
+    assertEquals("ForkJoinPool-1-worker-1@934", threads.get(1).getName());
+    assertNull(threads.get(1).getUniqueId());
+    assertEquals("{unnamed}@960", threads.get(2).getName());
+    assertNull(threads.get(2).getUniqueId());
+    assertEquals("{unnamed}@957", threads.get(3).getName());
+    assertNull(threads.get(3).getUniqueId());
     assertTrue(threads.get(3).isVirtual());
+  }
+
+  @Test
+  public void testOurDebuggerExportFormatKeepsSerializedUniqueIdInThreadName() {
+    String text = """
+      "scope@worker@957" tid=0x1c nid=NA virtual runnable
+        java.lang.Thread.State: RUNNABLE
+      	at java.base/java.lang.VirtualThread.run(VirtualThread.java:309)
+      """;
+    List<ThreadState> threads = ThreadDumpParser.parse(text);
+    assertEquals(1, threads.size());
+
+    ThreadState thread = threads.getFirst();
+    assertEquals("scope@worker@957", thread.getName());
+    assertNull(thread.getUniqueId());
+    assertTrue(thread.isVirtual());
+  }
+
+  @Test
+  public void testThreadNameStartingWithAtIsNotInterpretedAsSerializedUniqueId() {
+    String text = """
+      "@4343" tid=0x1c nid=NA virtual runnable
+        java.lang.Thread.State: RUNNABLE
+      	at java.base/java.lang.VirtualThread.run(VirtualThread.java:309)
+      """;
+    List<ThreadState> threads = ThreadDumpParser.parse(text);
+    assertEquals(1, threads.size());
+
+    ThreadState thread = threads.getFirst();
+    assertEquals("{unnamed}@4343", thread.getName());
+    assertNull(thread.getUniqueId());
+    assertTrue(thread.isVirtual());
   }
 
   @PerformanceUnitTest

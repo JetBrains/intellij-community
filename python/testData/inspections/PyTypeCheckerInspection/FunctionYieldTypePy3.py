@@ -46,7 +46,7 @@ def l() -> Generator[None, int, None]:
     x: float = yield
 
 def m() -> Generator[None, float, None]:
-    yield from <warning descr="Expected send type 'float', got 'int' instead">l()</warning>
+    yield from <warning descr="Expected send type 'float | int', got 'int' instead">l()</warning>
     
 def n() -> Generator[None, float, None]:
   x: float = yield

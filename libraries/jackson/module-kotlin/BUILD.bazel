@@ -18,4 +18,17 @@ jvm_library(
     "//libraries/jackson/jackson",
   ]
 )
+
+jvm_library(
+  name = "libraries-jackson-module-kotlin_test_lib",
+  module_name = "intellij.libraries.jackson.module.kotlin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:jackson-module-kotlin"],
+  runtime_deps = [
+    ":libraries-jackson-module-kotlin",
+    "//libraries/jackson/jackson:jackson_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.libraries.jackson.module.kotlin` end

@@ -38,6 +38,9 @@
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
+    <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.kotlin.base.util" />
@@ -59,5 +62,7 @@
     <orderEntry type="library" name="kotlinc.analysis-api-platform-interface" level="project" />
     <orderEntry type="module" module-name="kotlin.base.scripting.k1" />
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting.shared" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.project-structure" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.platforms" />
   </component>
 </module>

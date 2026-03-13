@@ -763,7 +763,6 @@ public final class JavaErrorKinds {
       .withNavigationShift(1)
       .withDescription((list, owner) -> message("type.parameter.count.mismatch", list.getTypeArgumentCount(),
                                                 owner.getTypeParameters().length));
-  public static final Simple<PsiTypeElement> TYPE_PARAMETER_ACTUAL_INFERRED_MISMATCH = error("type.parameter.actual.inferred.mismatch");
 
   public static final Parameterized<PsiMethod, DuplicateMethodsContext> METHOD_DUPLICATE =
     parameterized(PsiMethod.class, DuplicateMethodsContext.class, "method.duplicate")

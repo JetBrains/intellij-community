@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import git4idea.actions.workingTree.GitWorkingTreeDialogData
 import git4idea.branch.GitRebaseParams
 import git4idea.commands.GitCommandResult
+import git4idea.config.GitIncomingRemoteCheckStrategy
 import git4idea.inMemory.rebase.InMemoryRebaseResult
 import git4idea.merge.GitMergeOption
 import git4idea.pull.GitPullOption
@@ -17,13 +18,13 @@ import git4idea.push.GitPushRepoResult
 import git4idea.push.GitPushTargetType
 import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.GitRebaseOption
-import git4idea.rebase.interactive.CantRebaseUsingLogException
+import git4idea.rebase.log.GetEntriesUsingLogResult
 import git4idea.repo.GitRepository
 
 internal object GitOperationsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP: EventLogGroup = EventLogGroup(id = "git.operations", version = 9, description = "Git operations")
+  private val GROUP: EventLogGroup = EventLogGroup(id = "git.operations", version = 11)
 
   internal val UPDATE_FORCE_PUSHED_BRANCH_ACTIVITY = GROUP.registerIdeActivity("update.force.pushed")
 
@@ -48,7 +49,6 @@ internal object GitOperationsCollector : CounterUsagesCollector() {
     "rebase.interactive.log.validation_error",
     EXPECTED_COMMITS_NUMBER,
     ACTUAL_COMMITS_NUMBER,
-    description = "Validation error during interactive rebase via log",
   )
   private val INTERACTIVE_REBASE_WAS_SUCCESSFUL = EventFields.Boolean("was_successful")
   private val INTERACTIVE_REBASE_ACTIVITY = GROUP.registerIdeActivity("interactive.rebase",
@@ -59,16 +59,14 @@ internal object GitOperationsCollector : CounterUsagesCollector() {
                                                                                 finishEventAdditionalFields = arrayOf(
                                                                                   IN_MEMORY_REBASE_RESULT))
 
-  private val CANT_REBASE_USING_LOG_REASON = EventFields.Enum<CantRebaseUsingLogException.Reason>("cant_rebase_using_log_reason")
+  private val CANT_REBASE_USING_LOG_REASON = EventFields.Enum<GetEntriesUsingLogResult.FailureReason>("cant_rebase_using_log_reason")
   private val CANT_REBASE_USING_LOG_EVENT = GROUP.registerEvent("cant.rebase.using.log",
-                                                                CANT_REBASE_USING_LOG_REASON,
-                                                                description = "Rebase using log is not possible")
+                                                                CANT_REBASE_USING_LOG_REASON)
 
   val REBASE_ENTRY_TYPE_FIELDS: Map<String, RoundedIntEventField> = GitRebaseEntry.knownActions.associate {
     it.command to EventFields.RoundedInt("${it.command}_entries_count")
   }
   private val REBASE_START_USING_LOG_EVENT = GROUP.registerVarargEvent("rebase.start.using.log",
-                                                                       description = "Rebase started using log",
                                                                        *REBASE_ENTRY_TYPE_FIELDS.values.toTypedArray())
 
   private val WITH_PROVIDED_BRANCH = EventFields.Boolean("with_provided_branch")
@@ -134,7 +132,7 @@ internal object GitOperationsCollector : CounterUsagesCollector() {
     }
   }
 
-  fun logCantRebaseUsingLog(project: Project, reason: CantRebaseUsingLogException.Reason) {
+  fun logCantRebaseUsingLog(project: Project, reason: GetEntriesUsingLogResult.FailureReason) {
     CANT_REBASE_USING_LOG_EVENT.log(project, reason)
   }
 
@@ -179,7 +177,6 @@ internal object GitOperationsCollector : CounterUsagesCollector() {
   private val OPTION_AUTOSQUASH = EventFields.Boolean("option_autosquash", "--autosquash")
 
   private val REBASE_FROM_DIALOG_EVENT = GROUP.registerVarargEvent("rebase.from.dialog",
-                                                                   "Rebase from dialog was started",
                                                                    CURRENT_BRANCH,
                                                                    REBASE_ON_TRACKED_BRANCH,
                                                                    UPSTREAM_TYPE,
@@ -246,7 +243,6 @@ internal object GitOperationsCollector : CounterUsagesCollector() {
   private val MERGE_OPTION_ALLOW_UNRELATED_HISTORIES = EventFields.Boolean("option_allow_unrelated_histories", "--allow-unrelated-histories")
 
   private val MERGE_FROM_DIALOG_EVENT = GROUP.registerVarargEvent("merge.from.dialog",
-                                                                   "Merge from dialog was started",
                                                                    MERGE_PULL_TRACKED_BRANCH,
                                                                    MERGE_PULL_OPTION_NO_FF,
                                                                    MERGE_PULL_OPTION_FF_ONLY,
@@ -260,7 +256,6 @@ internal object GitOperationsCollector : CounterUsagesCollector() {
   private val PULL_OPTION_REBASE = EventFields.Boolean("option_rebase", "--rebase")
 
   private val PULL_FROM_DIALOG_EVENT = GROUP.registerVarargEvent("pull.from.dialog",
-                                                                  "Pull from dialog was started",
                                                                   MERGE_PULL_TRACKED_BRANCH,
                                                                   PULL_OPTION_REBASE,
                                                                   MERGE_PULL_OPTION_FF_ONLY,
@@ -318,5 +313,13 @@ internal object GitOperationsCollector : CounterUsagesCollector() {
     val trackedBranch = repository.getBranchTrackInfo(currentBranch.name)?.remoteBranch ?: return false
     return trackedBranch == selectedBranch
   }
-  //endregion
+
+  internal val REMOTE_CHECK_STRATEGY = EventFields.Enum<GitIncomingRemoteCheckStrategy>("remoteCheckStrategy")
+  private val REMOTE_INFO_SUCCESS = EventFields.Boolean("success")
+  private val REMOTE_INFO_REQUEST_EVENT = GROUP.registerVarargEvent("remote.info.request", REMOTE_CHECK_STRATEGY, REMOTE_INFO_SUCCESS)
+
+  @JvmStatic
+  fun logRemoteInfoRequest(project: Project, strategy: GitIncomingRemoteCheckStrategy, success: Boolean) {
+    REMOTE_INFO_REQUEST_EVENT.log(project, REMOTE_CHECK_STRATEGY.with(strategy), REMOTE_INFO_SUCCESS.with(success))
+  }
 }

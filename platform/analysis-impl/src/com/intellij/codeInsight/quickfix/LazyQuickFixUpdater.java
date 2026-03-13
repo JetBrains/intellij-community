@@ -3,6 +3,7 @@ package com.intellij.codeInsight.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
@@ -34,12 +35,12 @@ public interface LazyQuickFixUpdater {
    * This method might be needed when that information is required synchronously, e.g., when user pressed Alt-Enter.
    */
   @RequiresBackgroundThread
-  void waitQuickFixesSynchronously(@NotNull PsiFile file, @NotNull Editor editor, @NotNull HighlightInfo info);
+  void waitQuickFixesSynchronously(@NotNull HighlightInfo info, @NotNull Project project, @NotNull Document document);
 
   /**
-   * Start background computation of quick fixes for unresolved references in the {@code file} at the current caret offset
+   * Start background computation of quick fixes for unresolved references in the {@code psiFile} at the current caret offset
    */
   @RequiresBackgroundThread
   @RequiresReadLock
-  void startComputingNextQuickFixes(@NotNull PsiFile file, @NotNull Editor editor, @NotNull ProperTextRange visibleRange);
+  void startComputingNextQuickFixes(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull ProperTextRange visibleRange);
 }

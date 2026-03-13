@@ -30,6 +30,7 @@ jvm_library(
     "//python/python-test-env/core",
     "//python/python-test-env/core:core_test_lib",
     "@lib//:kotlin-stdlib",
+    "//python/python-test-env/common",
     "//python/python-test-env/common:common_test_lib",
   ],
   runtime_deps = [":junit4"]

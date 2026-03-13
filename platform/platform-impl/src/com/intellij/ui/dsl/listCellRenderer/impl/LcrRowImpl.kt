@@ -17,7 +17,13 @@ import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-import com.intellij.ui.dsl.listCellRenderer.*
+import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRendererComponent
+import com.intellij.ui.dsl.listCellRenderer.LcrIconInitParams
+import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
+import com.intellij.ui.dsl.listCellRenderer.LcrRow
+import com.intellij.ui.dsl.listCellRenderer.LcrSeparator
+import com.intellij.ui.dsl.listCellRenderer.LcrSwitchInitParams
+import com.intellij.ui.dsl.listCellRenderer.LcrTextInitParams
 import com.intellij.ui.popup.list.ComboBoxPopup
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
@@ -36,7 +42,13 @@ import java.awt.Component
 import javax.accessibility.Accessible
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComboBox
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.ListCellRenderer
 import javax.swing.plaf.basic.BasicComboPopup
 import kotlin.math.max
 
@@ -55,6 +67,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
   private var separator: LcrSeparatorImpl? = null
   private var gap = LcrRow.Gap.DEFAULT
 
+  @Deprecated("Will be removed because we want to get rid of swing dependency for RemDev")
   override val list: JList<out T>
     get() = listCellRendererParams!!.list
   override val value: T
@@ -69,7 +82,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
   override var background: Color? = null
   override var selectionColor: Color? = null
   override var toolTipText: @NlsContexts.Tooltip String? = null
-  override var rowHeight: Int? = JBUI.CurrentTheme.List.rowHeight()
+  override var rowHeight: Int? = null
   override var rowWidth: Int? = null
   override var uiInspectorContext: List<PropertyBean>? = null
 
@@ -130,6 +143,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     separator = null
     gap = LcrRow.Gap.DEFAULT
     listCellRendererParams = ListCellRendererParams(list, value, index, isSelected, cellHasFocus)
+    rowHeight = JBUI.CurrentTheme.List.rowHeight()
 
     val renderingType = getRenderingType(list, index)
     // The list is not focused when isSwingPopup = false
@@ -198,6 +212,9 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     }
 
     applyRowStyle(result, renderingType, rowHeight ?: (minHeight + JBUIScale.scale(2)), rowWidth, roundSelectionTop, roundSelectionBottom)
+
+    // Free references
+    listCellRendererParams = null
 
     return result
   }

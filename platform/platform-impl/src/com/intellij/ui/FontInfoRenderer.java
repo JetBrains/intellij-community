@@ -4,15 +4,18 @@ package com.intellij.ui;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.ui.render.RenderersKt;
 import com.intellij.util.ui.FontInfo;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JList;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 
 /**
- * @deprecated This renderer doesn't support rounded selection. Use {@link RenderersKt#fontInfoRenderer(boolean)} instead.
+ * @deprecated This renderer doesn't support rounded selection.
+ * Use {@link FontComboBox#setupDefaultRenderer(boolean, boolean)} or {@link FontInfoRendererBuilder} instead.
  */
 @Deprecated(forRemoval = true)
 public class FontInfoRenderer extends ColoredListCellRenderer<Object> {

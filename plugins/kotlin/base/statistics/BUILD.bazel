@@ -27,4 +27,29 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
   ]
 )
+
+jvm_library(
+  name = "statistics_test_lib",
+  module_name = "intellij.kotlin.base.statistics",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":statistics",
+    "//platform/core-api:core_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/platforms:platforms_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//java/java-impl:impl_test_lib",
+    "//platform/external-system-api:externalSystem_test_lib",
+    "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.kotlin.base.statistics` end

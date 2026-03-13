@@ -1,4 +1,5 @@
 // "Move 'SomeOptInAnnotation' opt-in requirement from getter to property" "true"
+// K2_ERROR: Opt-in requirement marker annotation cannot be used on getter.
 
 @RequiresOptIn
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.PROPERTY_GETTER)

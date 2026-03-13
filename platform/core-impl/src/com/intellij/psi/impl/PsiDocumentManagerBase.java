@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
@@ -63,10 +63,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerEx;
-import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -142,7 +139,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     project.getMessageBus().connect(this).subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
       @Override
       public void fileContentLoaded(final @NotNull VirtualFile virtualFile, @NotNull Document document) {
-        PsiFile psiFile = ReadAction.compute(() -> {
+        PsiFile psiFile = ReadAction.computeBlocking(() -> {
           // todo IJPL-339 figure out which psi file to pass here or get rid of psi file at all
           return myProject.isDisposed() || !virtualFile.isValid() ? null : getCachedPsiFile(virtualFile, CodeInsightContexts.anyContext());
         });
@@ -219,14 +216,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
   }
 
   /**
-   * @return associated psi file, it's it cached in {@link FileManagerImpl}.
+   * @return associated psi file, it's it cached in {@link FileManagerEx}.
    * It's guaranteed to not perform any expensive ops like creating files/reparse/resurrecting PsiFile from temp comatose state.
    */
   @ApiStatus.Internal
   @Override
   public final @Nullable PsiFile getRawCachedFile(@NotNull VirtualFile virtualFile, @NotNull CodeInsightContext context) {
-    FileManagerEx manager = ((FileManagerEx)getFileManager());
-    return manager.getRawCachedFile(virtualFile, context);
+    return getFileManager().getFastCachedPsiFile(virtualFile, context);
   }
 
   @ApiStatus.Internal
@@ -247,8 +243,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     return getFileManager().getCachedPsiFile(virtualFile, context);
   }
 
-  private @NotNull FileManager getFileManager() {
-    return ((PsiManagerEx)myPsiManager).getFileManager();
+  private @NotNull FileManagerEx getFileManager() {
+    return ((PsiManagerEx)myPsiManager).getFileManagerEx();
   }
 
   @Override
@@ -380,7 +376,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
       action.run();
     }
     else {
-      addRunOnCommit(document, __->action.run());
+      addRunOnCommit(document, __ -> action.run());
     }
   }
 
@@ -482,7 +478,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
   @ApiStatus.Internal
   @Override
   public boolean isEventSystemEnabled(@NotNull Document document) {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       List<FileViewProvider> viewProviders = getCachedViewProviders(document);
       return CodeInsightContextUtil.isEventSystemEnabled(viewProviders);
     });
@@ -531,13 +527,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
 
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile != null) {
-      getSmartPointerManager().fastenBelts(virtualFile);
+      SmartPointerManagerEx.getInstanceEx(myProject).fastenBelts(virtualFile);
     }
 
     List<FileViewProvider> viewProviders = getCachedViewProviders(document);
 
     AtomicBoolean success = new AtomicBoolean(true);
-    executeInsideCommit(()-> {
+    executeInsideCommit(() -> {
       try {
         success.set(ProgressManager.getInstance().computeInNonCancelableSection(() -> {
           if (viewProviders.isEmpty()) {
@@ -581,7 +577,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     }
     clearUncommittedInfo(document);
     if (virtualFile != null) {
-      getSmartPointerManager().updatePointerTargetsAfterReparse(virtualFile);
+      SmartPointerManagerEx.getInstanceEx(myProject).updatePointerTargetsAfterReparse(virtualFile);
     }
     List<FileViewProvider> viewProviders = getCachedViewProviders(document);
     for (FileViewProvider viewProvider : viewProviders) {
@@ -604,7 +600,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
       });
     }
     if (virtualFile != null) {
-      ((FileManagerEx)getFileManager()).forceReload(virtualFile);
+      getFileManager().forceReload(virtualFile);
     }
   }
 
@@ -700,11 +696,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     }
 
     if (application.holdsReadLock()) {
-      LOG.error("Don't call commitAndRunReadAction inside ReadAction, it will cause a deadlock. "+Thread.currentThread());
+      LOG.error("Don't call commitAndRunReadAction inside ReadAction, it will cause a deadlock. " + Thread.currentThread());
     }
 
     while (true) {
-      boolean executed = ReadAction.compute(() -> {
+      boolean executed = ReadAction.computeBlocking(() -> {
         if (!hasEventSystemEnabledUncommittedDocuments()) {
           runnable.run();
           return true;
@@ -788,7 +784,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
 
       @Override
       public String toString() {
-        return "performLaterWhenAllCommitted(" + runnable+ ")";
+        return "performLaterWhenAllCommitted(" + runnable + ")";
       }
     };
     if (ApplicationManager.getApplication().isDispatchThread() && isInsideCommitHandler()) {
@@ -807,7 +803,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     Application app = ApplicationManager.getApplication();
     if (!app.isDispatchThread() && isEventSystemEnabled(document)) {
       // have to run in EDT to guarantee data structure safe access and "execute in EDT" callbacks contract
-      app.invokeLater(()-> {
+      app.invokeLater(() -> {
         if (!myProject.isDisposed() && isCommitted(document)) {
           runAfterCommitActions(document);
         }
@@ -865,6 +861,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
       LOG.error("During running " + action, e);
     }
   }
+
   private static void runActions(@NotNull Document document, @NotNull @Unmodifiable List<? extends Consumer<? super Document>> actions) {
     List<Pair<Consumer<? super Document>, Throwable>> exceptions = new ArrayList<>();
     for (Consumer<? super Document> action : actions) {
@@ -1159,7 +1156,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     if (myUnitTestMode && isUncommited(document) && areTooManyDocumentsInTheQueue(myUncommittedDocuments)) {
       try {
         Logger.getInstance(getClass()).error(
-          "Too many uncommitted documents (" +myUncommittedDocuments.size()+"):\n"
+          "Too many uncommitted documents (" + myUncommittedDocuments.size() + "):\n"
           + StringUtil.join(myUncommittedDocuments, "\n") + myProject);
         // must not commit during document save
         if (PomModelImpl.isAllowPsiModification()
@@ -1248,7 +1245,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
 
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile != null) {
-      FileManager fileManager = getFileManager();
+      FileManagerEx fileManager = getFileManager();
       List<FileViewProvider> viewProviders = fileManager.findCachedViewProviders(virtualFile);
       boolean isWriteAccess = ApplicationManager.getApplication().isWriteAccessAllowed();
       if (!viewProviders.isEmpty()) {
@@ -1264,8 +1261,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
         }));
       }
       else if (FileIndexFacade.getInstance(myProject).isInContent(virtualFile)) {
-        ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction(() ->
-                                                                                                           ((FileManagerEx)fileManager).firePropertyChangedForUnloadedPsi()));
+        ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction(() -> {
+          fileManager.firePropertyChangedForUnloadedPsi();
+        }));
       }
     }
 
@@ -1276,13 +1274,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     UncommittedInfo info = getUncommittedInfo(document);
     if (info != null) {
       document.putUserData(UNCOMMITTED_INFO_KEY, null);
-      getSmartPointerManager().updatePointers(document, info.myFrozen, info.myEvents);
+      SmartPointerManagerEx.getInstanceEx(myProject).updatePointers(document, info.myFrozen, info.myEvents);
     }
     return info;
-  }
-
-  private SmartPointerManagerEx getSmartPointerManager() {
-    return (SmartPointerManagerEx)SmartPointerManager.getInstance(myProject);
   }
 
   private boolean isRelevant(@NotNull VirtualFile virtualFile) {
@@ -1372,7 +1366,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
   }
 
   @Override
-  public void dispose() {}
+  public void dispose() { }
 
   @Override
   public @NotNull PsiToDocumentSynchronizer getSynchronizer() {
@@ -1433,9 +1427,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     @NotNull List<FileViewProvider> viewProviders = getCachedViewProviders(document);
     return "cachedProvider: " + viewProviders +
            "; isEventSystemEnabled: " + isEventSystemEnabled(document) +
-           "; isCommitted:"+isCommitted(document)+
-           "; myIsCommitInProgress:"+isCommitInProgress()+
-           "; isInUncommittedSet:"+isInUncommittedSet(document);
+           "; isCommitted:" + isCommitted(document) +
+           "; myIsCommitInProgress:" + isCommitInProgress() +
+           "; isInUncommittedSet:" + isInUncommittedSet(document);
   }
 
   /**
@@ -1443,7 +1437,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
    */
   @ApiStatus.Internal
   @Override
-  public void assertFileIsFromCorrectProject(@NotNull VirtualFile virtualFile) {}
+  public void assertFileIsFromCorrectProject(@NotNull VirtualFile virtualFile) { }
 
   @TestOnly
   @ApiStatus.Internal

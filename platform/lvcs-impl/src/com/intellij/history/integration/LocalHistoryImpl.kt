@@ -1,11 +1,21 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration
 
-import com.intellij.history.*
-import com.intellij.history.core.*
+import com.intellij.history.ActivityId
+import com.intellij.history.ByteContent
+import com.intellij.history.FileRevisionTimestampComparator
+import com.intellij.history.Label
+import com.intellij.history.LocalHistoryAction
+import com.intellij.history.LocalHistoryException
+import com.intellij.history.core.ByteContentRetriever
+import com.intellij.history.core.ChangeAndPathProcessor
+import com.intellij.history.core.ChangeList
+import com.intellij.history.core.LabelImpl
+import com.intellij.history.core.LocalHistoryFacade
 import com.intellij.history.core.changes.Change
 import com.intellij.history.core.changes.ChangeSet
 import com.intellij.history.core.changes.PutLabelChange
+import com.intellij.history.core.collectChanges
 import com.intellij.history.core.tree.Entry
 import com.intellij.history.integration.revertion.DifferenceReverter
 import com.intellij.history.utils.LocalHistoryLog
@@ -16,8 +26,10 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ShutDownTracker
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.platform.lvcs.impl.RevisionId
@@ -25,7 +37,13 @@ import com.intellij.platform.lvcs.impl.diff.findEntry
 import com.intellij.platform.lvcs.impl.operations.getRevertCommandName
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.delete
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicBoolean
@@ -109,7 +127,16 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
         }
       }
     }
+    registerDeletionHandler()
     isInitialized.set(true)
+  }
+
+  private fun registerDeletionHandler() {
+    val deletionHandler = LocalHistoryFilesDeletionHandler(facade!!, gateway)
+    LocalFileSystem.getInstance().registerAuxiliaryFileOperationsHandler(deletionHandler)
+    Disposer.register(this) {
+      LocalFileSystem.getInstance().unregisterAuxiliaryFileOperationsHandler(deletionHandler)
+    }
   }
 
   private fun initHistory() {

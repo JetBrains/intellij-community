@@ -32,4 +32,29 @@ jvm_library(
     "//platform/scopes",
   ]
 )
+
+jvm_library(
+  name = "frontend_test_lib",
+  module_name = "intellij.vcs.git.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":frontend",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//plugins/git4idea/shared:shared_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/project/shared:project_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/dvcs-impl/shared:shared_test_lib",
+    "//platform/vcs-impl/shared:shared_test_lib",
+    "//fleet/kernel:kernel_test_lib",
+    "//platform/searchEverywhere/frontend:frontend_test_lib",
+    "//platform/scopes:scopes_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.vcs.git.frontend` end

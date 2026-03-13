@@ -21,7 +21,11 @@ import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.TableUtil
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.MutableProperty
+import com.intellij.ui.dsl.builder.bind
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.ui.AbstractTableCellEditor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil

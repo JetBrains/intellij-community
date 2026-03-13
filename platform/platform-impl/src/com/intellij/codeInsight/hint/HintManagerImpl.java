@@ -9,7 +9,11 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ClientEditorManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -17,11 +21,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts.HintText;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.*;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.Gray;
+import com.intellij.ui.HintHint;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.LightweightHint;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -31,16 +38,25 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
+import javax.swing.JLayeredPane;
+import javax.swing.JRootPane;
+import javax.swing.SwingUtilities;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class HintManagerImpl extends HintManager {
 
   private static final Logger LOG = Logger.getInstance(HintManager.class);
 
+  private static final boolean EDITOR_BALLOON_HINTS = true;
   private final MyEditorManagerListener myEditorManagerListener;
 
   @ApiStatus.Internal
@@ -406,7 +422,7 @@ public class HintManagerImpl extends HintManager {
                                       @NotNull RelativePoint point,
                                       @PositionFlags short constraint) {
     Point p = point.getPoint(editor.getContentComponent());
-    return getHintPosition(hint, editor, p, p, constraint, Registry.is("editor.balloonHints"));
+    return getHintPosition(hint, editor, p, p, constraint, EDITOR_BALLOON_HINTS);
   }
 
   /**
@@ -435,7 +451,7 @@ public class HintManagerImpl extends HintManager {
                                        @NotNull VisualPosition pos1,
                                        @NotNull VisualPosition pos2,
                                        @PositionFlags short constraint) {
-    return getHintPosition(hint, editor, pos1, pos2, constraint, Registry.is("editor.balloonHints"));
+    return getHintPosition(hint, editor, pos1, pos2, constraint, EDITOR_BALLOON_HINTS);
   }
 
   private static Point getHintPosition(@NotNull LightweightHint hint,
@@ -718,8 +734,7 @@ public class HintManagerImpl extends HintManager {
 
     JLayeredPane lp = rootPane.getLayeredPane();
     HintHint hintInfo = new HintHint(editor, SwingUtilities.convertPoint(lp, p, editor.getContentComponent()));
-    boolean showByBalloon = Registry.is("editor.balloonHints");
-    if (showByBalloon) {
+    if (EDITOR_BALLOON_HINTS) {
       if (!createInEditorComponent) {
         hintInfo = new HintHint(lp, p);
       }
@@ -728,7 +743,7 @@ public class HintManagerImpl extends HintManager {
 
 
     hintInfo.initStyleFrom(hint.getComponent());
-    if (showByBalloon) {
+    if (EDITOR_BALLOON_HINTS) {
       if (!hintInfo.isBorderColorSet()) {
         hintInfo.setBorderColor(new JBColor(Color.gray, Gray._140));
       }

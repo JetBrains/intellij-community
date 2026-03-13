@@ -61,5 +61,3 @@ resourcegroup(
     strip_prefix = "resources",
     visibility = ["//visibility:public"],  # used by @community//build:dependency-graph
 )
-
-### skip generation section `build intellij.platform.jps.build.dependencyGraph`

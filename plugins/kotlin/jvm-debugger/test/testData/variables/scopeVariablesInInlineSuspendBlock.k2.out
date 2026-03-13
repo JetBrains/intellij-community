@@ -9,8 +9,8 @@ CoroutinePreflightFrame invokeSuspend (scopeVariablesInInlineSuspendBlock.kt:13)
     JavaValue[local] b: java.lang.String = b (scopeVariablesInInlineSuspendBlock.kt:11)
 scopeVariablesInInlineSuspendBlock.kt:15
 CoroutinePreflightFrame invokeSuspend (scopeVariablesInInlineSuspendBlock.kt:15)
-    JavaValue[continuation] a = a
-    JavaValue[continuation] b = b
+    JavaValue[local] b: java.lang.String = b (scopeVariablesInInlineSuspendBlock.kt:11)
+    JavaValue[local] a: java.lang.String = a (scopeVariablesInInlineSuspendBlock.kt:9)
 scopeVariablesInInlineSuspendBlock.kt:19
 CoroutinePreflightFrame invokeSuspend (scopeVariablesInInlineSuspendBlock.kt:19)
     JavaValue[local] a: java.lang.String = a (scopeVariablesInInlineSuspendBlock.kt:9)

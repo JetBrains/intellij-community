@@ -2,7 +2,13 @@
 package com.intellij.application.options.codeStyle.cache
 
 import com.intellij.codeWithMe.ClientId
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
@@ -24,7 +30,13 @@ import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.ArrayUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
@@ -70,7 +82,7 @@ internal class CodeStyleCachedValueProvider(val fileSupplier: Supplier<VirtualFi
     try {
       settings = computation.getCurrentResult()
     }
-    catch (ignored: ProcessCanceledException) {
+    catch (_: ProcessCanceledException) {
       computation.reset()
       LOG.debug { "Computation was cancelled for ${file.name}" }
       return CachedValueProvider.Result(null, ModificationTracker.EVER_CHANGED)
@@ -148,7 +160,7 @@ internal class CodeStyleCachedValueProvider(val fileSupplier: Supplier<VirtualFi
       }
       else {
         LOG.debug { "sync for ${file.name}" }
-        val success = app.runReadAction<Boolean>(::computeSettings)
+        val success = runReadActionBlocking(::computeSettings)
         if (app.isDispatchThread) {
           notifyCachedValueComputed(success)
         }

@@ -7,6 +7,7 @@ import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.find.FindSettings;
+import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.LanguageUtil;
@@ -46,6 +47,7 @@ import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntRBTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2IntSortedMap;
 import it.unimi.dsi.fastutil.ints.IntComparators;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,13 +68,14 @@ public abstract class FindManagerBase extends FindManager {
   private static final IntObjectMap<Boolean> ourReportedPatterns = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   private static final FindResultImpl NOT_FOUND_RESULT = new FindResultImpl();
 
+  protected final FindUsagesManager myFindUsagesManager;
   protected final @NotNull FindModel myFindInProjectModel = new FindModel();
   protected final @NotNull FindModel myFindInFileModel = new FindModel();
   @NotNull protected final Project myProject;
 
   public FindManagerBase(@NotNull Project project) {
     myProject = project;
-
+    myFindUsagesManager = new FindUsagesManager(project);
 
     FindSettings findSettings = FindSettings.getInstance();
     findSettings.initModelBySetings(myFindInProjectModel);
@@ -121,7 +124,10 @@ public abstract class FindManagerBase extends FindManager {
     return findStringLoop(text, offset, model, file, getFindContextPredicate(model, file, text));
   }
 
-  private FindResult findStringLoop(CharSequence text, int offset, FindModel model, VirtualFile file,
+  private FindResult findStringLoop(@NotNull CharSequence text,
+                                    int offset,
+                                    @NotNull FindModel model,
+                                    @Nullable VirtualFile file,
                                     @Nullable Predicate<? super FindResult> filter) {
     final char[] textArray = CharArrayUtil.fromSequenceWithoutCopying(text);
     while(true) {
@@ -268,7 +274,7 @@ public abstract class FindManagerBase extends FindManager {
       Set<Language> relevantLanguages;
       if (lang != null) {
         final Language finalLang = lang;
-        relevantLanguages = ReadAction.compute(() -> {
+        relevantLanguages = ReadAction.computeBlocking(() -> {
           Set<Language> result = new HashSet<>();
           FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(file);
           if (viewProvider != null) {
@@ -304,7 +310,7 @@ public abstract class FindManagerBase extends FindManager {
 
       try {
         SyntaxHighlighterOverEditorHighlighter highlighterAdapter =
-          ReadAction.compute(() -> new SyntaxHighlighterOverEditorHighlighter(highlighter, file, myProject));
+          ReadAction.computeBlocking(() -> new SyntaxHighlighterOverEditorHighlighter(highlighter, file, myProject));
         currentThreadData =
           new FindManagerBase.CommentsLiteralsSearchData(file, relevantLanguages, highlighterAdapter, tokensOfInterest, searcher, matcher, model.clone());
         currentThreadData.highlighter.restart(text);
@@ -561,10 +567,11 @@ public abstract class FindManagerBase extends FindManager {
                                                   @NotNull FindModel myFindModel,
                                                   @NotNull CharSequence myText,
                                                   @NotNull Int2IntSortedMap mySkipRangesSet) implements Predicate<FindResult> {
-    static FindExceptCommentsOrLiteralsData create(@NotNull VirtualFile file,
-                                                   @NotNull FindModel model,
-                                                   @NotNull CharSequence text,
-                                                   @NotNull FindManagerBase manager) {
+    @Contract("_, _, _, _ -> new")
+    static @NotNull FindExceptCommentsOrLiteralsData create(@NotNull VirtualFile file,
+                                                            @NotNull FindModel model,
+                                                            @NotNull CharSequence text,
+                                                            @NotNull FindManagerBase manager) {
       Int2IntSortedMap skipRangesSet = new Int2IntRBTreeMap(IntComparators.OPPOSITE_COMPARATOR);
 
       if (model.isExceptComments() || model.isExceptCommentsAndStringLiterals()) {
@@ -578,12 +585,12 @@ public abstract class FindManagerBase extends FindManager {
       return new FindExceptCommentsOrLiteralsData(file, model.clone(), ImmutableCharSequence.asImmutable(text), skipRangesSet);
     }
 
-    private static void addRanges(VirtualFile file,
-                                  FindModel model,
-                                  CharSequence text,
+    private static void addRanges(@NotNull VirtualFile file,
+                                  @NotNull FindModel model,
+                                  @NotNull CharSequence text,
                                   @NotNull Int2IntSortedMap result,
-                                  FindModel.SearchContext searchContext,
-                                  FindManagerBase manager) {
+                                  @NotNull FindModel.SearchContext searchContext,
+                                  @NotNull FindManagerBase manager) {
       FindModel clonedModel = model.clone();
       clonedModel.setSearchContext(searchContext);
       clonedModel.setForward(true);
@@ -598,7 +605,7 @@ public abstract class FindManagerBase extends FindManager {
       }
     }
 
-    boolean isAcceptableFor(FindModel model, VirtualFile file, CharSequence text) {
+    boolean isAcceptableFor(@NotNull FindModel model, @NotNull VirtualFile file, @NotNull CharSequence text) {
       return Comparing.equal(myFile, file) &&
              myFindModel.equals(model) &&
              myText.length() == text.length()
@@ -624,5 +631,9 @@ public abstract class FindManagerBase extends FindManager {
       }
       return true;
     }
+  }
+
+  public @NotNull FindUsagesManager getFindUsagesManager() {
+    return myFindUsagesManager;
   }
 }

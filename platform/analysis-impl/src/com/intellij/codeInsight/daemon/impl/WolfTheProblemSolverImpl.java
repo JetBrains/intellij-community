@@ -39,7 +39,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -245,7 +251,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   }
 
   boolean isToBeHighlighted(@NotNull VirtualFile virtualFile) {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       for (Condition<VirtualFile> filter : FILTER_EP_NAME.getExtensionList(myProject)) {
         ProgressManager.checkCanceled();
         if (filter.value(virtualFile)) {
@@ -308,7 +314,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
                                   int column,
                                   String @NotNull [] message) {
     if (virtualFile.isDirectory() || virtualFile.getFileType().isBinary()) return null;
-    HighlightInfo info = ReadAction.compute(() -> {
+    HighlightInfo info = ReadAction.computeBlocking(() -> {
       TextRange textRange = getTextRange(virtualFile, line, column);
       String description = StringUtil.join(message, "\n");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();

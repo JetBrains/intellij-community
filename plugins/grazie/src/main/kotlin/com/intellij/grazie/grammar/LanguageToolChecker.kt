@@ -281,6 +281,11 @@ private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
     return an_vs_a_exclusions[article.lowercase()]!!.any { regex -> regex.matches(nextWord) }
   }
 
+  // https://github.com/languagetool-org/languagetool/issues/11839
+  if (match.rule.id == "TYPOGRAPHICAL_APOSTROPHE") {
+    return text.substring(match.fromPos, match.toPos).contains('\u2019')
+  }
+
   return false
 }
 

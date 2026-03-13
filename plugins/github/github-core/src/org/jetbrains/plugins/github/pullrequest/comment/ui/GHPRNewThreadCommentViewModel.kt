@@ -3,8 +3,9 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModel
 import org.jetbrains.plugins.github.api.data.GHActor
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHViewModelWithTextCompletion
 
-interface GHPRNewThreadCommentViewModel : CodeReviewSubmittableTextViewModel {
+interface GHPRNewThreadCommentViewModel : CodeReviewSubmittableTextViewModel, GHViewModelWithTextCompletion {
   val currentUser: GHActor
   fun submit()
 }

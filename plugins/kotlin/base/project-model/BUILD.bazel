@@ -15,4 +15,17 @@ jvm_library(
   ],
   exports = ["@lib//:kotlin-tooling-core"]
 )
+
+jvm_library(
+  name = "project-model_test_lib",
+  module_name = "intellij.kotlin.base.projectModel",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:kotlin-tooling-core"],
+  runtime_deps = [
+    ":project-model",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.kotlin.base.projectModel` end

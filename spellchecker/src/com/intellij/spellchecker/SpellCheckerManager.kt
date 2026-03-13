@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.Messages
@@ -27,10 +28,24 @@ import com.intellij.openapi.util.io.FileUtilRt.extensionEquals
 import com.intellij.openapi.util.io.FileUtilRt.getExtension
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileEvent
+import com.intellij.openapi.vfs.VirtualFileListener
+import com.intellij.openapi.vfs.VirtualFileMoveEvent
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent
+import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.project.stateStore
 import com.intellij.spellchecker.SpellCheckerManager.Companion.restartInspections
-import com.intellij.spellchecker.dictionary.*
+import com.intellij.spellchecker.dictionary.CustomDictionaryProvider
+import com.intellij.spellchecker.dictionary.Dictionary
+import com.intellij.spellchecker.dictionary.DictionaryChecker
+import com.intellij.spellchecker.dictionary.EditableDictionary
+import com.intellij.spellchecker.dictionary.Loader
+import com.intellij.spellchecker.dictionary.ProjectDictionary
+import com.intellij.spellchecker.dictionary.RuntimeDictionaryProvider
+import com.intellij.spellchecker.dictionary.UserDictionary
 import com.intellij.spellchecker.engine.DictionaryModificationTracker
 import com.intellij.spellchecker.engine.SpellCheckerEngine
 import com.intellij.spellchecker.engine.SuggestionProvider
@@ -41,8 +56,10 @@ import com.intellij.spellchecker.state.DictionaryStateListener
 import com.intellij.spellchecker.state.ProjectDictionaryState
 import com.intellij.spellchecker.util.SpellCheckerBundle
 import com.intellij.util.EventDispatcher
+import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.File
 import java.util.function.Consumer
@@ -209,6 +226,7 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
     spellChecker.addModifiableDictionary(projectDictionary)
   }
 
+  @OptIn(DelicateCoroutinesApi::class)
   fun loadDictionary(path: String) {
     val spellChecker = spellChecker ?: return
     val dictionaryProvider = findApplicable(path)
@@ -216,7 +234,11 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
       spellChecker.loadDictionary(FileLoader(path))
       return
     }
-    val dictionary = dictionaryProvider.get(path)
+    val dictionary = runBlockingCancellable {
+      computeDetached {
+        dictionaryProvider.get(path)
+      }
+    }
     if (dictionary != null) {
       spellChecker.addDictionary(dictionary)
     }

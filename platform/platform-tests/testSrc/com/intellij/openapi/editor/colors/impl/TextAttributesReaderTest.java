@@ -8,7 +8,8 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 
 import static com.intellij.ui.ColorUtil.toHex;
 

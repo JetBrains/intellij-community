@@ -1,5 +1,6 @@
 // "Add empty primary constructor" "true"
 // WITH_STDLIB
+// K2_ERROR: 'Parcelable' must have a primary constructor.
 
 package com.myapp.activity
 
@@ -10,3 +11,4 @@ import kotlinx.parcelize.Parcelize
 class <caret>Test() : Parcelable {
     constructor(a: Int) : this()
 }
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelizeAddPrimaryConstructorQuickFix

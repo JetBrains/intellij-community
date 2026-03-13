@@ -178,7 +178,9 @@ internal class GitLabMergeRequestDiffProcessorViewModelImpl(
 
     val change = mappedVm.diffData.value?.change ?: return
 
-    delegate.showChange(change, location?.let(DiffViewerScrollRequest::toLine))
+    delegate.showChange(change, location?.let {
+      DiffViewerScrollRequest.toLine(it.side to it.lineIdx)
+    })
     mappedVm.requestFocus()
   }
 

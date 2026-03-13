@@ -3,11 +3,13 @@ package org.jetbrains.plugins.terminal
 
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.TerminalUiSettingsManager.CursorShape
-import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -22,13 +24,15 @@ import java.util.concurrent.CopyOnWriteArrayList
        exportable = true,
        presentableName = TerminalOptionsProvider.PresentableNameGetter::class,
        storages = [Storage(value = "terminal.xml")])
-class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : PersistentStateComponent<TerminalOptionsProvider.State> {
+class TerminalOptionsProvider(internal val coroutineScope: CoroutineScope) : PersistentStateComponent<TerminalOptionsProvider.State> {
   private var state = State()
 
   override fun getState(): State = state
 
   override fun loadState(newState: State) {
     state = newState
+
+    ExperimentalTerminalMigration.migrateTerminalEngineOnce(options = this)
 
     // In the case of RemDev settings are synced from backend to frontend using `loadState` method.
     // So, notify the listeners on every `loadState` to not miss the change.
@@ -42,9 +46,6 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
   class State {
     @ApiStatus.Internal
     var terminalEngine: TerminalEngine = TerminalEngine.REWORKED
-
-    @ApiStatus.Internal
-    var terminalEngineInRemDev: TerminalEngine = TerminalEngine.REWORKED
 
     @ApiStatus.Internal
     var showCompletionPopupAutomatically: Boolean = true
@@ -90,23 +91,11 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
 
   // Nice property delegation (var shellPath: String? by state::myShellPath) cannot be used on `var` properties (KTIJ-19450)
 
-  /**
-   * We use different default values for the terminal engine in monolith and RemDev mode.
-   * So, the getter returns the state depending on that.
-   * But the setter applies the provided value to both monolith and RemDev modes.
-   * So, when a user changes the default in any mode, it will be applied everywhere.
-   */
   var terminalEngine: TerminalEngine
-    get() {
-      return if (AppMode.isRemoteDevHost() || PlatformUtils.isJetBrainsClient()) {
-        state.terminalEngineInRemDev
-      }
-      else state.terminalEngine
-    }
+    get() = state.terminalEngine
     set(value) {
-      if (state.terminalEngine != value || state.terminalEngineInRemDev != value) {
+      if (state.terminalEngine != value) {
         state.terminalEngine = value
-        state.terminalEngineInRemDev = value
         fireSettingsChanged()
       }
     }

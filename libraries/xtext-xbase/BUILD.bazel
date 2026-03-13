@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:xtext-xbase"],
   runtime_deps = ["@lib//:xtext-xbase"]
 )
+
+jvm_library(
+  name = "xtext-xbase_test_lib",
+  module_name = "intellij.libraries.xtext.xbase",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:xtext-xbase"],
+  runtime_deps = [":xtext-xbase"]
+)
 ### auto-generated section `build intellij.libraries.xtext.xbase` end

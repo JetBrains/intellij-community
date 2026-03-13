@@ -1,5 +1,6 @@
 // "Remove 'val' from parameter" "true"
 // WITH_STDLIB
+// K2_ERROR: 'val' on catch parameter is prohibited.
 fun f() {
     try {
 

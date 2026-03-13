@@ -47,7 +47,7 @@ public final class EditorSelectionLocalSearchScope extends RangeBasedLocalSearch
   }
 
   private void init() {
-    ReadAction.run(() -> {
+    ReadAction.runBlocking(() -> {
       PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
       if (psiFile == null) {
         myPsiElements = PsiElement.EMPTY_ARRAY;

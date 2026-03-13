@@ -4,6 +4,7 @@
 package org.jetbrains.kotlin.idea.fir.extensions
 
 import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
@@ -13,8 +14,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.utils.Path
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.orNull
@@ -29,7 +28,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
-import org.jetbrains.kotlin.cli.extensionsStorage
+import org.jetbrains.kotlin.cli.create
 import org.jetbrains.kotlin.cli.plugins.processCompilerPluginsOptions
 import org.jetbrains.kotlin.compiler.plugin.CommandLineProcessor
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
@@ -45,6 +44,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
 import org.jetbrains.kotlin.idea.base.projectStructure.openapiModule
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleKind
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayoutService
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.fir.extensions.KtCompilerPluginsCache.Companion.substitutePluginJar
 import org.jetbrains.kotlin.idea.util.getOriginalOrDelegateFileOrSelf
@@ -166,9 +166,8 @@ class KtCompilerPluginsCache private constructor(
         ProgressManager.checkCanceled()
 
         val compilerConfiguration =
-            CompilerConfiguration().apply {
+            CompilerConfiguration.create().apply {
                 @OptIn(ExperimentalCompilerApi::class)
-                extensionsStorage = CompilerPluginRegistrar.ExtensionStorage()
                 // Temporary work-around for KTIJ-24320. Calls to 'setupCommonArguments()' and 'setupJvmSpecificArguments()'
                 // (or even a platform-agnostic alternative) should be added.
                 if (compilerArguments is K2JVMCompilerArguments && module is KaSourceModule) {
@@ -259,18 +258,15 @@ class KtCompilerPluginsCache private constructor(
 
             if (pluginClassPaths.isNullOrEmpty()) return emptyList()
 
+            val layoutService = KotlinPluginLayoutService.getInstance(project)
+
             val pathMacroManager = PathMacroManager.getInstance(project)
             val expandedPluginClassPaths = pluginClassPaths.map { pathMacroManager.expandPath(it) }
-            val eel = project.getEelDescriptor()
+
             return expandedPluginClassPaths.mapNotNull {
-                try {
-                    Path(it, eel).toAbsolutePath()
-                } catch (e: ProcessCanceledException) {
-                    throw e
-                } catch (e: Throwable) {
-                    LOG.error(e)
-                    null
-                }
+                runCatching {
+                    layoutService.resolveRelativeToRemoteKotlinc(Path.of(it))
+                }.getOrLogException(LOG)
             }
         }
 

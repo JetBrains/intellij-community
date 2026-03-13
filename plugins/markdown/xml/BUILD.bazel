@@ -24,4 +24,22 @@ jvm_library(
   ],
   runtime_deps = ["//platform/backend"]
 )
+
+jvm_library(
+  name = "xml_test_lib",
+  module_name = "intellij.markdown.xml",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":xml",
+    "//plugins/markdown/core:markdown_test_lib",
+    "//xml/xml-psi-impl:psi-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//xml/xml-parser:parser_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/backend:backend_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.markdown.xml` end

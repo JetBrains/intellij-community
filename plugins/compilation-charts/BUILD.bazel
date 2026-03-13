@@ -25,6 +25,7 @@ jvm_library(
     "//jps/model-api:model",
     "//platform/lang-api:lang",
     "//platform/lang-core",
+    "@lib//:kotlin-stdlib",
     "//platform/lang-impl",
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
@@ -41,6 +42,43 @@ jvm_library(
     "//java/idea-ui:ui",
     "//platform/platform-impl:ide-impl",
     "//platform/execution",
+  ]
+)
+
+jvm_library(
+  name = "compilation-charts_test_lib",
+  module_name = "intellij.compilation.charts",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":compilation-charts",
+    "//java/compiler/impl:impl_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//jps/jps-builders:build_test_lib",
+    "//platform/extensions:extensions_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//libraries/rd/framework:framework_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/jackson/databind:databind_test_lib",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
+    "//libraries/rd/core:core_test_lib",
+    "//libraries/rd/swing:swing_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/rd-platform-community:rd-community_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//java/idea-ui:ui_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/execution:execution_test_lib",
   ]
 )
 ### auto-generated section `build intellij.compilation.charts` end

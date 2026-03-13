@@ -1,14 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fir.projectStructure
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.JdkOrderEntry
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.allSdks
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModule
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModules
@@ -24,7 +29,7 @@ internal fun Project.getAllKaModules(): List<KaModule> = buildSet {
             addAll(l.toKaLibraryModules(this@getAllKaModules))
         }
     }
-    addAll(allSdks(modules).map { it.toKaLibraryModule(this@getAllKaModules) })
+    addAll(ProjectJdkTable.getInstance().allJdks.map { it.toKaLibraryModule(this@getAllKaModules) })
 }.sortedWith(kaModulesComparatorForStableRendering)
 
 

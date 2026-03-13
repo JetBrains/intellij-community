@@ -1,0 +1,16 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.repository.search.common"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
+    <provider implementation="com.intellij.maven.completion.provider.MavenCompletionProviderFactory"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.idea.maven">
+    <dependencySearchContributor implementation="com.intellij.maven.completion.MavenLegacyDependencySearchContributor"/>
+  </extensions>
+
+</idea-plugin>

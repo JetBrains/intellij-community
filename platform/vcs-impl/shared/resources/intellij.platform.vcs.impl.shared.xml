@@ -1,9 +1,21 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.diff"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.vcs.core"/>
     <module name="intellij.platform.vcs.shared"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint name="changesGroupingPolicy" beanClass="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactoryEPBean"
@@ -40,6 +52,9 @@
                  restartRequired="true"
                  description="Overrides default value ('true' in RemDev mode, 'false' otherwise) for enabling RemDev-native view for local changes.
                  Note that in RemDev mode this setting should be set for both client and backend."/>
+
+    <registryKey key="vcs.merge.conflict.iterative.resolution" defaultValue="false" restartRequired="false"
+                 description="Enable iterative VCS conflict resolution flow"/>
 
     <projectService serviceInterface="com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings"
                     serviceImplementation="com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettingsImpl"/>

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.documentation;
 
@@ -105,6 +105,11 @@ public abstract class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
         @TestMetadata("ClassPropertyWithInitializer.kt")
         public void testClassPropertyWithInitializer() throws Exception {
             runTest("../../idea/tests/testData/editor/quickDoc/ClassPropertyWithInitializer.kt");
+        }
+
+        @TestMetadata("CodeSpan.kt")
+        public void testCodeSpan() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/CodeSpan.kt");
         }
 
         @TestMetadata("ConstDefaultLongParameterValue.kt")

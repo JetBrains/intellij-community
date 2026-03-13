@@ -1,0 +1,12 @@
+================ Step #1 =================
+Cleaning output files:
+  b/B2Kt.class
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_multiplePackagesModified-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/multiplePackagesModified/a/a2.kt
+End of files
+------------------------------------------
+Exit code: OK

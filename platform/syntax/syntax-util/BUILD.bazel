@@ -32,4 +32,20 @@ jvm_library(
     "//platform/syntax/syntax-extensions:extensions",
   ]
 )
+
+jvm_library(
+  name = "util_test_lib",
+  module_name = "intellij.platform.syntax.util",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_util",
+  runtime_deps = [
+    ":util",
+    "//platform/syntax/syntax-api:syntax_test_lib",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
+    "//platform/util/multiplatform:multiplatform_test_lib",
+    "//platform/syntax/syntax-i18n:i18n_test_lib",
+    "//platform/syntax/syntax-extensions:extensions_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.syntax.util` end

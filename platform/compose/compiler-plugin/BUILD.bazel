@@ -6,4 +6,15 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )
+
+jvm_library(
+  name = "compiler-plugin_test_lib",
+  module_name = "intellij.platform.compose.compilerPlugin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":compiler-plugin",
+    "@lib//:platform-compose-compiler_plugin-jetbrains-compose-compiler-hosted-provided",
+  ]
+)
 ### auto-generated section `build intellij.platform.compose.compilerPlugin` end

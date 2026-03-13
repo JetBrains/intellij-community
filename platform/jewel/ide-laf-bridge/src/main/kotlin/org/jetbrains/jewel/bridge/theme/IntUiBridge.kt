@@ -67,6 +67,8 @@ internal fun createBridgeComponentStyling(theme: ThemeDefinition): ComponentStyl
 
     val textFieldStyle = readTextFieldStyle()
     val menuStyle = readMenuStyle()
+    val defaultButtonStyle = readDefaultButtonStyle()
+    val outlinedButtonStyle = readOutlinedButtonStyle()
 
     return DefaultComponentStyling(
         checkboxStyle = readCheckboxStyle(),
@@ -74,7 +76,7 @@ internal fun createBridgeComponentStyling(theme: ThemeDefinition): ComponentStyl
         circularProgressStyle = readCircularProgressStyle(theme.isDark),
         comboBoxStyle = readDefaultComboBoxStyle(),
         defaultBannerStyle = readDefaultBannerStyle(),
-        defaultButtonStyle = readDefaultButtonStyle(),
+        defaultButtonStyle = defaultButtonStyle,
         defaultDropdownStyle = readDefaultDropdownStyle(menuStyle),
         defaultSplitButtonStyle = readDefaultSplitButtonStyle(),
         defaultTabStyle = readDefaultTabStyle(),
@@ -88,7 +90,7 @@ internal fun createBridgeComponentStyling(theme: ThemeDefinition): ComponentStyl
         lazyTreeStyle = readLazyTreeStyle(),
         linkStyle = readLinkStyle(),
         menuStyle = menuStyle,
-        outlinedButtonStyle = readOutlinedButtonStyle(),
+        outlinedButtonStyle = outlinedButtonStyle,
         outlinedSplitButtonStyle = readOutlinedSplitButtonStyle(),
         popupContainerStyle = readPopupContainerStyle(),
         radioButtonStyle = readRadioButtonStyle(),
@@ -105,6 +107,8 @@ internal fun createBridgeComponentStyling(theme: ThemeDefinition): ComponentStyl
         speedSearchStyle = readSpeedSearchStyle(),
         searchMatchStyle = readSearchMatchStyle(theme.isDark),
         popupAdStyle = readPopupAdStyle(),
+        defaultSlimButtonStyle = readDefaultSlimButtonStyle(defaultButtonStyle.colors),
+        outlinedSlimButtonStyle = readOutlinedSlimButtonStyle(outlinedButtonStyle.colors),
     )
 }
 

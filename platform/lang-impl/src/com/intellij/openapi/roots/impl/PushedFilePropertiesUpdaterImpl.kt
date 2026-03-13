@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
@@ -14,8 +15,14 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.project.*
+import com.intellij.openapi.project.DumbModeTask
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbServiceImpl.Companion.isSynchronousTaskExecution
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCoreUtil
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.RootsChangeRescanningInfo
+import com.intellij.openapi.project.isProjectOrWorkspaceFile
 import com.intellij.openapi.roots.ContentIteratorEx
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
@@ -39,10 +46,16 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.TreeNodeProcessingResult
 import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
-import com.intellij.util.indexing.*
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexImpl
+import com.intellij.util.indexing.FileBasedIndexProjectHandler
+import com.intellij.util.indexing.FilePropertyPusherEx
+import com.intellij.util.indexing.IndexingBundle
+import com.intellij.util.indexing.UnindexedFilesUpdater
 import com.intellij.util.indexing.diagnostic.ChangedFilesPushedDiagnostic.addEvent
 import com.intellij.util.indexing.diagnostic.ChangedFilesPushingStatistics
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper.Companion.shouldDumpInUnitTestMode
+import com.intellij.util.indexing.isFirstProjectScanningRequested
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createIterators
 import com.intellij.util.indexing.roots.IndexableFileScanner
 import com.intellij.util.indexing.roots.IndexableFileScanner.IndexableFileVisitor
@@ -58,7 +71,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
-import java.util.*
+import java.util.Queue
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Function
 import kotlin.coroutines.coroutineContext
@@ -182,8 +195,8 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
     return Runnable {
       // delay calling event.getFile() until background to avoid expensive VFileCreateEvent.getFile() in EDT
       val dir = getFile(event)
-      val fileIndex = ReadAction.compute<ProjectFileIndex, RuntimeException> { ProjectFileIndex.getInstance(myProject) }
-      if (dir != null && ReadAction.compute<Boolean, RuntimeException> { fileIndex.isInContent(dir) } && !isProjectOrWorkspaceFile(dir)) {
+      val fileIndex = ReadAction.computeBlocking<ProjectFileIndex, RuntimeException> { ProjectFileIndex.getInstance(myProject) }
+      if (dir != null && ReadAction.computeBlocking<Boolean, RuntimeException> { fileIndex.isInContent(dir) } && !isProjectOrWorkspaceFile(dir)) {
         doPushRecursively(pushers, scanners, ProjectIndexableFilesIteratorImpl(dir))
       }
     }
@@ -305,8 +318,8 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
       fileOrDir.children // outside read action to avoid freezes
     }
 
-    ReadAction.run<RuntimeException> {
-      if (!fileOrDir.isValid || fileOrDir !is VirtualFileWithId) return@run
+    runReadActionBlocking {
+      if (!fileOrDir.isValid || fileOrDir !is VirtualFileWithId) return@runReadActionBlocking
       doApplyPushersToFile(fileOrDir, pushers, moduleValues)
     }
   }
@@ -456,7 +469,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
 
     private fun generateScanTasks(project: Project,
                                   iteratorProducer: Function<in Module, out ContentIteratorEx>): List<Runnable> {
-      val modulesSequence = ReadAction.compute<Sequence<ModuleEntity>, RuntimeException> {
+      val modulesSequence = runReadActionBlocking {
         WorkspaceModel.getInstance(project).currentSnapshot.entities(
           ModuleEntity::class.java)
       }
@@ -464,11 +477,11 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
       val indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create()
 
       return moduleEntities.flatMap { moduleEntity: ModuleEntity ->
-        ReadAction.compute<List<Runnable>, RuntimeException> {
+        ReadAction.computeBlocking<List<Runnable>, RuntimeException> {
           val storage: EntityStorage = WorkspaceModel.getInstance(project).currentSnapshot
           val module: Module? = moduleEntity.findModule(storage)
           if (module == null) {
-            return@compute emptyList()
+            return@computeBlocking emptyList()
           }
           ProgressManager.checkCanceled()
           createIterators(moduleEntity, storage, project).map { it: IndexableFilesIterator ->

@@ -11,6 +11,22 @@ jvm_library(
     "//platform/platform-api:ide",
     "//xml/xml-psi-api:psi",
     "//platform/lang-api:lang",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+  ]
+)
+
+jvm_library(
+  name = "jsp-base_test_lib",
+  module_name = "intellij.jsp.base",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":jsp-base",
+    "//platform/core-api:core_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//xml/xml-psi-api:psi_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.jsp.base` end

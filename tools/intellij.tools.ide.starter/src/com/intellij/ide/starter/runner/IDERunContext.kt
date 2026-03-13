@@ -13,16 +13,15 @@ import com.intellij.ide.starter.ide.isRemDevContext
 import com.intellij.ide.starter.models.IDEStartResult
 import com.intellij.ide.starter.models.VMOptions
 import com.intellij.ide.starter.path.IDEDataPaths
-import com.intellij.ide.starter.process.ProcessInfo.Companion.toProcessInfo
 import com.intellij.ide.starter.process.collectJavaThreadDumpSuspendable
 import com.intellij.ide.starter.process.collectMemoryDump
 import com.intellij.ide.starter.process.exec.ExecOutputRedirect
-import com.intellij.ide.starter.process.getIdeProcessIdWithRetry
 import com.intellij.ide.starter.profiler.ProfilerInjector
 import com.intellij.ide.starter.profiler.ProfilerType
 import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
 import com.intellij.ide.starter.screenRecorder.IDEScreenRecorder
+import com.intellij.ide.starter.utils.FileSystem.listDirectoryEntriesQuietly
 import com.intellij.ide.starter.utils.JvmUtils
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.ide.starter.utils.formatArtifactName
@@ -47,7 +46,9 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.bufferedReader
+import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
 import kotlin.io.path.name
 import kotlin.io.path.readText
@@ -191,7 +192,8 @@ data class IDERunContext(
       if (!useStartupScript) {
         require(commands.count() > 0) { "script builder is not allowed when useStartupScript is disabled" }
       }
-      else
+      // Allow an overridden script file, required for migration of Rider performance tests
+      else if (commands.count() > 0)
         installTestScript(testName = contextName, paths = testContext.paths, commands = commands)
     }
   }
@@ -248,7 +250,7 @@ data class IDERunContext(
     logsDir: Path,
     jdkHome: Path,
     startConfig: IDEStartConfig,
-    process: Process,
+    ideProcessId: Long,
     snapshotsDir: Path,
     runContext: IDERunContext,
   ) {
@@ -259,31 +261,20 @@ data class IDERunContext(
     }
     if (expectedKill) return
 
-    var ideProcessId: Long? = null
-    suspend fun getOrComputeIdeProcessId(): Long {
-      if (ideProcessId == null) {
-        ideProcessId = getIdeProcessIdWithRetry(
-          parentProcessInfo = process.toProcessInfo(),
-          runContext = runContext,
-        )
-      }
-      return ideProcessId
-    }
-
     if (collectNativeThreads) {
       val fileToStoreNativeThreads = logsDir.resolve("native-thread-dumps.txt")
-      startProfileNativeThreads(getOrComputeIdeProcessId().toString())
+      startProfileNativeThreads(ideProcessId.toString())
       delay(15.seconds)
-      stopProfileNativeThreads(getOrComputeIdeProcessId().toString(), fileToStoreNativeThreads.toAbsolutePath().toString())
+      stopProfileNativeThreads(ideProcessId.toString(), fileToStoreNativeThreads.toAbsolutePath().toString())
     }
     val dumpFile = logsDir.resolve("threadDump-before-kill-${System.currentTimeMillis()}.txt")
     val memoryDumpFile = snapshotsDir.resolve("memoryDump-before-kill-${System.currentTimeMillis()}.hprof.gz")
     catchAll {
-      collectJavaThreadDumpSuspendable(jdkHome, startConfig.workDir, getOrComputeIdeProcessId(), dumpFile)
+      collectJavaThreadDumpSuspendable(jdkHome, startConfig.workDir, ideProcessId, dumpFile)
     }
     catchAll {
       if (isLowMemorySignalPresent(logsDir)) {
-        collectMemoryDump(jdkHome, startConfig.workDir, getOrComputeIdeProcessId(), memoryDumpFile)
+        collectMemoryDump(jdkHome, startConfig.workDir, ideProcessId, memoryDumpFile)
       }
     }
   }
@@ -345,6 +336,7 @@ data class IDERunContext(
     })
   }
 
+  @OptIn(ExperimentalPathApi::class)
   internal fun deleteSavedAppStateOnMac() {
     if (SystemInfoRt.isMac) {
       val filesToBeDeleted = listOf(
@@ -353,10 +345,10 @@ data class IDERunContext(
       )
       val home = System.getProperty("user.home")
       val savedAppStateDir = Path.of(home).resolve("Library/Saved Application State")
-      savedAppStateDir.toFile()
-        .walkTopDown().maxDepth(1)
-        .filter { file -> filesToBeDeleted.any { fileToBeDeleted -> file.name == fileToBeDeleted } }
-        .forEach { it.deleteRecursively() }
+      savedAppStateDir
+        .listDirectoryEntriesQuietly()
+        ?.filter { file -> filesToBeDeleted.any { fileToBeDeleted -> file.name == fileToBeDeleted } }
+        ?.forEach { it.deleteRecursively() }
     }
   }
 
@@ -379,7 +371,7 @@ data class IDERunContext(
       logOutput("Will not record screen for a backend of remote dev")
       return
     }
-    val screenRecorder = IDEScreenRecorder(this)
+    val screenRecorder = IDEScreenRecorder.create(this)
     EventsBus.subscribeOnce(IDEScreenRecorder::class.java) { _: IdeLaunchEvent ->
       screenRecorder.start()
     }

@@ -31,6 +31,7 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.ParameterizedCachedValue
 import com.intellij.python.pyproject.model.api.ModuleCreateInfo
 import com.intellij.python.pyproject.model.api.getModuleInfo
+import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.allowCreationTargetOfThisType
@@ -45,7 +46,10 @@ import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.function.Consumer
@@ -134,7 +138,7 @@ internal class AddInterpreterOnTargetAction(
   }
 
   override fun createDialog(): TargetEnvironmentWizard? {
-    val wizard = TargetEnvironmentWizard.createWizard(project, targetType, PythonLanguageRuntimeType.getInstance())
+    val wizard = TargetEnvironmentWizard.createWizard(project, targetType, PythonLanguageRuntimeType.Helper.getInstance())
 
     wizard?.let {
       Disposer.register(it.disposable, Disposable {
@@ -149,13 +153,14 @@ internal class AddInterpreterOnTargetAction(
     if (dialogWrapper.exitCode != OK_EXIT_CODE) return
     val sdk = (dialogWrapper.currentStepObject as? TargetCustomToolWizardStep)?.customTool as? Sdk ?: return
 
-    PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(sdk, isPreviouslyConfigured = true)
+    service<LogCollectorService>().coroutineScope.launch(Dispatchers.Default) {
+      PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(sdk, isPreviouslyConfigured = true)
+    }
     onSdkCreated(sdk)
   }
 }
 
 @ApiStatus.Internal
-
 fun switchToSdk(module: Module, sdk: Sdk, currentSdk: Sdk?) {
   val project = module.project
   (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
@@ -170,6 +175,9 @@ fun switchToSdk(module: Module, sdk: Sdk, currentSdk: Sdk?) {
 
   module.excludeInnerVirtualEnv(sdk)
 }
+
+@Service
+private class LogCollectorService(val coroutineScope: CoroutineScope)
 
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
@@ -195,7 +203,9 @@ private class ToolDetectionService(project: Project, val coroutineScope: Corouti
 
   private fun detectBestToolAsync(module: Module): CachedValueProvider.Result<Deferred<CreateSdkInfoWithTool?>> {
     val result = coroutineScope.async {
-      detectBestToolForModule(module)
+      withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
+        detectBestToolForModule(module)
+      }
     }
     result.invokeOnCompletion { getOrCreateModificationTracker(module).incModificationCount() }
     return CachedValueProvider.Result.create(result, getOrCreateModificationTracker(module))

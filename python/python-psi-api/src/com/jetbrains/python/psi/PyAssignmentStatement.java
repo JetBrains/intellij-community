@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
 import com.intellij.openapi.util.Pair;
 import com.jetbrains.python.ast.PyAstAssignmentStatement;
-import kotlin.annotations.jvm.ReadOnly;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -69,7 +69,7 @@ public interface PyAssignmentStatement extends PyAstAssignmentStatement, PyState
    * @return a list of [target, value] pairs; either part of a pair may be null, but not both.
    */
   @Override
-  default @NotNull @ReadOnly List<Pair<PyExpression, PyExpression>> getTargetsToValuesMapping() {
+  default @NotNull @Unmodifiable List<Pair<PyExpression, PyExpression>> getTargetsToValuesMapping() {
     //noinspection unchecked
     return (List<Pair<PyExpression, PyExpression>>)PyAstAssignmentStatement.super.getTargetsToValuesMapping();
   }

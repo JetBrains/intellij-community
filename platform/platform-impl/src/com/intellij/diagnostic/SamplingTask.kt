@@ -2,21 +2,28 @@
 package com.intellij.diagnostic
 
 import com.intellij.util.containers.UList
+import com.intellij.util.io.blockingDispatcher
 import com.sun.management.OperatingSystemMXBean
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
 import java.lang.management.ManagementFactory
 import java.lang.management.ThreadInfo
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.milliseconds
 
-internal open class SamplingTask(@JvmField internal val dumpInterval: Int, maxDurationMs: Int, coroutineScope: CoroutineScope) {
-  private val maxDumps: Int = maxDurationMs / dumpInterval
-
+@OptIn(DelicateCoroutinesApi::class)
+internal open class SamplingTask(@JvmField internal val dumpInterval: Int, private val maxDurationMs: Int, coroutineScope: CoroutineScope) {
   var threadInfos: UList<Array<ThreadInfo>> = UList()
     private set
 
-  private val job: Job?
+  protected val job: Job
   private val startTime: Long = System.nanoTime()
   private var currentTime: Long = startTime
   private val gcStartTime: Long = currentGcTime()
@@ -29,44 +36,41 @@ internal open class SamplingTask(@JvmField internal val dumpInterval: Int, maxDu
     get() = gcCurrentTime - gcStartTime
 
   init {
-    job = coroutineScope.launch(CoroutineName("freeze dumper")) {
-      val delayDuration = dumpInterval.milliseconds
-      while (true) {
-        dumpThreads(asyncCoroutineScope = coroutineScope)
-        delay(delayDuration)
-      }
+    job = coroutineScope.launch(CoroutineName("freeze dumper") + blockingDispatcher) {
+      dumpThreadsLoop()
     }
   }
 
-  private suspend fun dumpThreads(asyncCoroutineScope: CoroutineScope) {
+  private suspend fun dumpThreadsLoop() {
+    val delayDuration = dumpInterval.milliseconds
+    while (true) {
+      dumpThreads()
+      if (totalTime + dumpInterval > maxDurationMs) {
+        break
+      }
+      delay(delayDuration)
+    }
+  }
+
+  private suspend fun dumpThreads() {
     currentTime = System.nanoTime()
     gcCurrentTime = currentGcTime()
     val infos = ThreadDumper.getThreadInfos(THREAD_MX_BEAN, false)
     coroutineContext.ensureActive()
 
     threadInfos = threadInfos.add(infos)
-    if (threadInfos.size > maxDumps) {
-      stopDumpingThreads()
-      return
-    }
 
-    asyncCoroutineScope.launch(CoroutineName("async freeze dumper")) {
-      val rawDump = ThreadDumper.getThreadDumpInfo(infos, true)
-      val dump = EventCountDumper.addEventCountersTo(rawDump)
-      dumpedThreads(dump)
-    }
-      // don't schedule yet another dumpedThreads - wait for completion
-      .join()
+    processDumpedThreads(infos)
   }
 
-  protected open suspend fun dumpedThreads(threadDump: ThreadDump) {}
+  protected open suspend fun processDumpedThreads(infos: Array<ThreadInfo>) {}
 
   open fun stop() {
-    job?.cancel()
+    job.cancel()
   }
 
-  open suspend fun stopDumpingThreads() {
-    job?.cancelAndJoin()
+  open suspend fun stopAndWait() {
+    job.cancelAndJoin()
   }
 }
 

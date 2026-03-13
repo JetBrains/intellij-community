@@ -10,7 +10,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.updateAndGet
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -119,9 +124,8 @@ fun <C : Any, CVM : AsyncDiffViewModel> Flow<ChangesState<C>>.mapChangesToVms(
           vmsContainer.update(changesState.selectedChanges.list)
           lastList = changesState.selectedChanges.list
         }
-        val mappingState = vmsContainer.mappingState.value
-        val vms = mappingState.values.toList()
-        val selectedVmIdx = mappingState.keys.indexOf(changesState.selectedChanges.selectedItem)
+        val vms = vmsContainer.mappedState.value
+        val selectedVmIdx = changesState.selectedChanges.list.indexOf(changesState.selectedChanges.selectedItem)
         ViewModelsState(ListSelection.createAt(vms, selectedVmIdx), changesState.scrollRequests)
       }.let {
         send(it)

@@ -3,7 +3,11 @@ package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.java.workspace.entities.ArtifactEntity
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.platform.workspace.jps.*
+import com.intellij.platform.workspace.jps.CustomModuleEntitySource
+import com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
+import com.intellij.platform.workspace.jps.JpsFileEntitySource
+import com.intellij.platform.workspace.jps.JpsImportedEntitySource
+import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity

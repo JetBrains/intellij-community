@@ -24,9 +24,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collection;
@@ -96,7 +101,7 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
   T showAndGet(String id, Keymap keymap, @Nullable T selectedShortcut, QuickList... lists) {
     myActionId = id;
     myKeymap = keymap;
-    myGroup = ActionsTreeUtil.createMainGroup(myProject, keymap, lists, null, false, null);
+    myGroup = ActionTreeGroupUtil.createMainGroup(myProject, keymap, lists, null, false, null);
     addSystemActionsIfPresented(myGroup);
     fill(myAction, id, getActionPath(id));
     if (selectedShortcut == null) {

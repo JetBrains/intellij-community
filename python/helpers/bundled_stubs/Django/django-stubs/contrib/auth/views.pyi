@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, TypeVar
 
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import _User, _UserModel
@@ -8,6 +8,7 @@ from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView
 
 UserModel = _UserModel
+_AuthForm = TypeVar("_AuthForm", bound=AuthenticationForm, default=AuthenticationForm)
 
 class RedirectURLMixin:
     next_page: str | None
@@ -18,7 +19,7 @@ class RedirectURLMixin:
     def get_success_url_allowed_hosts(self) -> set[str]: ...
     def get_default_redirect_url(self) -> str: ...
 
-class LoginView(RedirectURLMixin, FormView[AuthenticationForm]):
+class LoginView(RedirectURLMixin, FormView[_AuthForm]):
     authentication_form: Any
     redirect_field_name: Any
     redirect_authenticated_user: bool

@@ -24,4 +24,21 @@ jvm_library(
     "//java/compiler/impl",
   ]
 )
+
+jvm_library(
+  name = "tracing-ide_test_lib",
+  module_name = "intellij.platform.tracing.ide",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":tracing-ide",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/tracing:tracing-rt_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//java/compiler/impl:impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.tracing.ide` end

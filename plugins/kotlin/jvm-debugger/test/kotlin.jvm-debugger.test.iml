@@ -48,7 +48,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.coroutines" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.eval4j" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
@@ -68,5 +67,7 @@
     <orderEntry type="module" module-name="intellij.debugger.streams.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.debugger.streams.core.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.plugin.k1" scope="RUNTIME" />
   </component>
 </module>

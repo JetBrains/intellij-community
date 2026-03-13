@@ -13,7 +13,7 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling.impl" />
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.common" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize.common" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" />
     <orderEntry type="module" module-name="intellij.gradle.common" />
   </component>

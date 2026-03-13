@@ -1,4 +1,11 @@
 // "Add constructor parameters from Base(Int, Int, Any, String, String,...)" "false"
+// K2_ERROR: No value passed for parameter 'p1'.
+// K2_ERROR: No value passed for parameter 'p2'.
+// K2_ERROR: No value passed for parameter 'p3'.
+// K2_ERROR: No value passed for parameter 'p4'.
+// K2_ERROR: No value passed for parameter 'p5'.
+// K2_ERROR: No value passed for parameter 'p6'.
+// K2_ERROR: This type has a constructor, so it must be initialized here.
 // K2_AFTER_ERROR: No value passed for parameter 'p1'.
 // K2_AFTER_ERROR: No value passed for parameter 'p2'.
 // K2_AFTER_ERROR: No value passed for parameter 'p3'.

@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.completion
+package org.jetbrains.kotlin.idea.completion.impl.k2
 
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
@@ -8,7 +8,7 @@ import com.intellij.psi.PsiDocumentManager
 import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
-import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.KotlinLookupObject
 import org.jetbrains.kotlin.psi.KtFile
 import kotlin.reflect.KClass
 

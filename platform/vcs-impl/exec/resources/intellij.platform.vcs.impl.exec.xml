@@ -1,8 +1,12 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.vcs.impl"/>
     <plugin id="com.intellij.modules.execution"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.vcs.impl"/>
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.execution.configurations.RunConfigurationVcsSupport"
                     serviceImplementation="com.intellij.impl.RunConfigurationVcsSupportImpl"

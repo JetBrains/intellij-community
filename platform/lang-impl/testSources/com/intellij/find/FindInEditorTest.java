@@ -22,7 +22,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.opentest4j.AssertionFailedError;
 
-import java.awt.*;
+import java.awt.Point;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.file.Path;

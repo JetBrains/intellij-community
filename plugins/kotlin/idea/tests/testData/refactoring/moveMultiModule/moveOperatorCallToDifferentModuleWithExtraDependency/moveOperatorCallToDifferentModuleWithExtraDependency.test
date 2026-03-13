@@ -1,0 +1,9 @@
+{
+  "mainFile": "B/src/pb/WithList.kt",
+  "type": "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS",
+  "targetPackage": "pc",
+  "targetSourceRoot": "C/src",
+  "withRuntime": "true",
+  "enabledInK1": "false",
+  "enabledInK2": "true"
+}

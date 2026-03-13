@@ -1,6 +1,23 @@
 load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_java//toolchains:default_java_toolchain.bzl", "default_java_toolchain")
 load("@rules_kotlin//kotlin:core.bzl", "kt_compiler_plugin")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+# see usage in .bazelrc
+# this toolchain prevents dependency on C++ toolchain through proguard_allowlister tool
+default_java_toolchain(
+    name = "jps_to_bazel_toolchain_jdk_21",
+    source_version = "21",
+    target_version = "21",
+    java_runtime = "@rules_java//toolchains:remotejdk_25",
+    proguard_allowlister = ":noop_proguard_allowlister",
+    visibility = ["//visibility:public"],
+)
+
+sh_binary(
+    name = "noop_proguard_allowlister",
+    srcs = ["noop_proguard_allowlister.sh"],
+)
 
 kt_compiler_plugin(
     name = "serialization_plugin",
@@ -25,11 +42,19 @@ kt_jvm_library(
     name = "jps_to_bazel-lib",
     srcs = glob(["src/**/*.kt"]),
     deps = [
+        "@j2b_maven//:com_jetbrains_intellij_platform_jps_model",
         "@j2b_maven//:com_jetbrains_intellij_platform_jps_model_impl",
-        "@j2b_maven//:org_jetbrains_teamcity_serviceMessages",
-        "@j2b_maven//:com_jetbrains_intellij_platform_build_scripts_downloader",
         "@j2b_maven//:com_jetbrains_intellij_platform_jps_model_serialization",
+        "@j2b_maven//:com_jetbrains_intellij_platform_util",
+        "@j2b_maven//:com_jetbrains_intellij_platform_util_base",
+        "@j2b_maven//:com_jetbrains_intellij_platform_util_base_multiplatform",
+        "@j2b_maven//:com_jetbrains_intellij_platform_util_jdom",
+        "@j2b_maven//:com_jetbrains_intellij_platform_build_scripts_downloader",
+        "@j2b_maven//:org_jetbrains_intellij_deps_fastutil_intellij_deps_fastutil",
         "@j2b_maven//:org_jetbrains_kotlin_kotlin_jps_plugin",
+        "@j2b_maven//:org_jetbrains_kotlin_kotlin_reflect",
+        "@j2b_maven//:org_jetbrains_kotlinx_kotlinx_serialization_json_jvm",
+        "@j2b_maven//:org_jetbrains_teamcity_serviceMessages",
         ":kotlin_serialization",
     ],
     runtime_deps = [],

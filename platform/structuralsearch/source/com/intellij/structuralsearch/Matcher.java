@@ -16,11 +16,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.structuralsearch.impl.matcher.*;
+import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
+import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
+import com.intellij.structuralsearch.impl.matcher.MatchContext;
+import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
+import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler;
@@ -223,7 +231,7 @@ public class Matcher {
       };
 
       final ProgressIndicator progress = matchContext.getSink().getProgressIndicator();
-      ReadAction.run(() -> FileBasedIndex.getInstance().iterateIndexableFiles(ci, project, progress));
+      ReadAction.runBlocking(() -> FileBasedIndex.getInstance().iterateIndexableFiles(ci, project, progress));
       if (progress != null) progress.setText2("");
     }
     else {
@@ -493,10 +501,10 @@ public class Matcher {
     @Override
     protected @NotNull List<PsiElement> getPsiElementsToProcess() {
       assert project != null;
-      return ReadAction.compute(
+      return ReadAction.computeBlocking(
         () -> {
           if (!myFile.isValid()) {
-            // file may be been deleted since search started
+            // file may be deleted since search started
             return Collections.emptyList();
           }
           final PsiFile file = PsiManager.getInstance(project).findFile(myFile);

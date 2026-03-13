@@ -32,4 +32,23 @@ jvm_library(
     ":platform_multiplatformSupport_provided",
   ]
 )
+
+jvm_library(
+  name = "tree_test_lib",
+  module_name = "intellij.platform.syntax.tree",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_tree",
+  runtime_deps = [
+    ":tree",
+    "//platform/syntax/syntax-api:syntax_test_lib",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
+    "//platform/util/multiplatform:multiplatform_test_lib",
+    "//platform/syntax/syntax-i18n:i18n_test_lib",
+    "//platform/syntax/syntax-extensions:extensions_test_lib",
+    "//platform/multiplatformSupport",
+    "//platform/multiplatformSupport:multiplatformSupport_test_lib",
+    "//platform/syntax/syntax-util:util_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.syntax.tree` end

@@ -18,9 +18,11 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpect
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectDeclarationIfAny
 import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -39,44 +41,68 @@ class KotlinFirDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScoped
         val scope = queryParameters.scope
 
         return when (element) {
-            is KtClass -> {
-                val isExpectEnum = runReadAction { element.isEnum() && element.isExpectDeclaration() }
+            is KtClassOrObject -> {
+                val isExpectEnum = runReadAction { element is KtClass && element.isEnum() && element.isExpectDeclaration() }
                 if (isExpectEnum) {
                     processActualDeclarations(element, processor)
                 } else {
-                    processClassImplementations(element, processor) && processActualDeclarations(element, object : Processor<PsiElement> {
-                        override fun process(actual: PsiElement?): Boolean {
-                            return actual is KtClass && processClassImplementations(actual, processor)
-                        }
-                    })
+                    val expectedClassOrObject = runReadAction { element.expectDeclarationIfAny() as? KtClassOrObject ?: element }
+                    val searchScope = includeCommonPlatformIfNeeded(scope, element, expectedClassOrObject)
+                    processClassImplementations(expectedClassOrObject, searchScope, processor) &&
+                            processActualDeclarations(expectedClassOrObject) { actual ->
+                                if (element == expectedClassOrObject && !processor.process(actual)) return@processActualDeclarations false
+                                actual !is KtClass || processClassImplementations(actual, searchScope, processor)
+                            }
                 }
             }
 
             is KtNamedFunction, is KtSecondaryConstructor -> {
-                processFunctionImplementations(element as KtFunction, scope, processor) && processActualDeclarations(element, object : Processor<PsiElement> {
-                    override fun process(actual: PsiElement?): Boolean {
-                        return actual is KtFunction && processFunctionImplementations(actual, scope, processor)
+                val expectedFunction = runReadAction { element.expectDeclarationIfAny() as? KtFunction ?: element }
+                val searchScope = includeCommonPlatformIfNeeded(scope, element, expectedFunction)
+                processFunctionImplementations(expectedFunction, searchScope, processor) &&
+                    processActualDeclarations(expectedFunction) { actual ->
+                        if (element == expectedFunction && !processor.process(actual)) return@processActualDeclarations false
+                        actual !is KtFunction || processFunctionImplementations(actual, searchScope, processor)
                     }
-                })
             }
 
             is KtProperty -> {
-                processPropertyImplementations(element, scope, processor) && processActualDeclarations(element, object : Processor<PsiElement> {
-                    override fun process(actual: PsiElement?): Boolean {
-                        return actual is KtProperty && processPropertyImplementations(actual, scope, processor)
-                    }
-                })
+                processProperty(element, scope, processor)
             }
 
             is KtParameter -> {
-                if (runReadAction { element.hasValOrVar() }) {
-                    processPropertyImplementations(element, scope, processor)
-                } else {
-                    true
-                }
+                if (isFieldParameter(element)) processProperty(element, scope, processor) else true
             }
 
             else -> true
+        }
+    }
+
+    private fun processProperty(
+        element: KtCallableDeclaration,
+        scope: SearchScope,
+        processor: Processor<PsiElement>
+    ): Boolean {
+        val expectedCallable = runReadAction { element.expectDeclarationIfAny() as? KtCallableDeclaration ?: element }
+        val searchScope = includeCommonPlatformIfNeeded(scope, element, expectedCallable)
+        return processPropertyImplementations(expectedCallable, searchScope, processor) &&
+                processActualDeclarations(expectedCallable) { actual ->
+                    if (element == expectedCallable && !processor.process(actual)) return@processActualDeclarations false
+                    actual !is KtProperty || processPropertyImplementations(actual, searchScope, processor)
+                }
+    }
+
+    private fun includeCommonPlatformIfNeeded(
+        scope: SearchScope,
+        element: KtDeclaration,
+        expectedDeclaration: KtDeclaration
+    ): SearchScope {
+        return runReadAction {
+            if (element != expectedDeclaration) {
+                scope.union(expectedDeclaration.useScope.intersectWith(element.resolveScope))
+            } else {
+                scope
+            }
         }
     }
 }
@@ -95,9 +121,9 @@ private fun isFieldParameter(parameter: KtParameter): Boolean = runReadAction {
     KtPsiUtil.getClassIfParameterIsProperty(parameter) != null
 }
 
-private fun processClassImplementations(klass: KtClass, consumer: Processor<PsiElement>): Boolean {
+private fun processClassImplementations(klass: KtClassOrObject, searchScope: SearchScope, consumer: Processor<PsiElement>): Boolean {
+    if (klass !is KtClass) return true
 
-    val searchScope = runReadAction { klass.useScope }
     if (searchScope is LocalSearchScope) {
         return processLightClassLocalImplementations(klass, searchScope, consumer)
     }

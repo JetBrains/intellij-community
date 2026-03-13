@@ -15,7 +15,7 @@ interface InlayInteractionHandler {
     clickInfo: CapturedPointInfo,
     e: EditorMouseEvent,
     controlDown: Boolean,
-  )
+  ): Boolean
 
   fun handleHover(
     inlay: Inlay<out DeclarativeInlayRendererBase<*>>,
@@ -27,5 +27,5 @@ interface InlayInteractionHandler {
     inlay: Inlay<out DeclarativeInlayRendererBase<*>>,
     clickInfo: CapturedPointInfo,
     e: EditorMouseEvent,
-  )
+  ): Boolean
 }

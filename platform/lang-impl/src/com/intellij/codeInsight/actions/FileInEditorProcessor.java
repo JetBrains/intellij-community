@@ -42,10 +42,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.Objects;
 
 import static com.intellij.codeInsight.actions.TextRangeType.SELECTED_TEXT;

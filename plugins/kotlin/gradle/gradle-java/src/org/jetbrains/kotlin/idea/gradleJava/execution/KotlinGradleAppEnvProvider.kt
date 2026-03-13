@@ -10,8 +10,10 @@ import com.intellij.task.ExecuteRunConfigurationTask
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
 import org.jetbrains.plugins.gradle.execution.build.GradleBaseApplicationEnvironmentProvider
 import org.jetbrains.plugins.gradle.execution.build.GradleInitScriptParameters
+import org.jetbrains.plugins.gradle.service.execution.toGroovyStringLiteral
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.isIncludedBuild
 
 /**
  * This provider is responsible for building [ExecutionEnvironment] for Kotlin JVM modules to be run using Gradle.
@@ -41,8 +43,18 @@ internal fun generateInitScript(params: GradleInitScriptParameters): String? {
     // So our one is built using the same principle.
     val projectPath = extModuleData.data.id
     val gradleProjectId = if (projectPath.startsWith(':')) { // shortening (is unique project id)
-        val rootProjectName = (extModuleData.parent?.data as? ProjectData)?.externalName ?: ""
-        rootProjectName + projectPath
+        if (extModuleData.data.isIncludedBuild) {
+            // For included builds, the id is the Gradle identity path:
+            //   ":buildName" (root of included build)→ "buildName:"
+            //   ":buildName:local" (subproject in included build) → "buildName:local"
+            // This matches what "project.rootProject.name + project.path" evaluates to in the
+            // included build's context when the init script runs.
+            val withoutLeadingColon = projectPath.drop(1)
+            if (':' in withoutLeadingColon) withoutLeadingColon else "$withoutLeadingColon:"
+        } else {
+            val rootProjectName = (extModuleData.parent?.data as? ProjectData)?.externalName ?: ""
+            rootProjectName + projectPath
+        }
     } else {
         projectPath.takeIf { ':' in it } ?: "$projectPath:" // includes rootProject.name already, for top level projects has no ':'
     }
@@ -53,8 +65,8 @@ internal fun generateInitScript(params: GradleInitScriptParameters): String? {
     def gradleProjectId = '$gradleProjectId'
     def runAppTaskName = '${params.runAppTaskName}'
     def mainClassToRun = '${params.mainClass}'
-    def javaExePath = '${params.javaExePath}'
-    def _workingDir = ${if (params.workingDirectory.isNullOrEmpty()) "null\n" else "'${params.workingDirectory}'\n"}
+    def javaExePath = mapPath(${params.javaExePath.toGroovyStringLiteral()})
+    def _workingDir = ${if (params.workingDirectory.isNullOrEmpty()) "null\n" else "mapPath(${params.workingDirectory!!.toGroovyStringLiteral()})"}
     def sourceSetName = '${params.sourceSetName}'
     
     def isOlderThan64 = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("6.4")) < 0

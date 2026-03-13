@@ -22,6 +22,7 @@ jvm_library(
   deps = [
     "@lib//:jetbrains-annotations",
     "//platform/util/base",
+    "//platform/util/base:base_test_lib",
     "//platform/util-rt",
     "//platform/util-rt:util-rt_test_lib",
     "@lib//:kotlin-stdlib",

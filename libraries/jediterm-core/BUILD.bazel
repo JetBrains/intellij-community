@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:jediterm-core"],
   runtime_deps = ["@lib//:jediterm-core"]
 )
+
+jvm_library(
+  name = "jediterm-core_test_lib",
+  module_name = "intellij.libraries.jediterm.core",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:jediterm-core"],
+  runtime_deps = [":jediterm-core"]
+)
 ### auto-generated section `build intellij.libraries.jediterm.core` end

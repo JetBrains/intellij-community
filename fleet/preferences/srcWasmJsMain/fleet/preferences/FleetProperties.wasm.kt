@@ -2,20 +2,28 @@
 package fleet.preferences
 
 import fleet.util.multiplatform.Actual
+import js.core.JsPrimitives.toKotlinString
 import kotlinx.browser.window
 import org.w3c.dom.Window
+import web.url.URL
 
-@Actual
-fun fleetPropertyWasmJs(name: String, defaultValue: String?): String? {
-  return getJsConfigProperty(window, name.removePrefix("fleet."))?.toString() ?: when (name) {
-    "fleet.ai.service.configuration.url" -> url("aiconfig")
-    "fleet.ai.service.url" -> url("ai")
-    "fleet.jba.url" -> url("jba")
-    else -> defaultValue
+private val urlParameters by lazy {
+  buildMap {
+    URL(window.location.href).searchParams.forEach { value, key ->
+      put(key.toKotlinString(), value.toKotlinString())
+    }
   }
 }
 
-private fun getJsConfigProperty(obj: Window, name: String): JsAny? {
+@Actual
+fun fleetPropertyWasmJs(name: String, defaultValue: String?): String? {
+  val name = name.removePrefix("fleet.")
+  return getJsConfigProperty(window, name)?.toString()
+         ?: urlParameters[name.replace('.', '_')]
+         ?: defaultValue
+}
+
+private fun getJsConfigProperty(obj: Window, name: String): JsString? {
   js("return (obj['__airConfig'] || {})[name];")
 }
 
@@ -33,10 +41,3 @@ internal fun getFleetEnvironmentTypeWasmJs(): FleetEnvironmentType {
  */
 @JsName("ENVIRONMENT")
 external val ENVIRONMENT: String
-
-private fun url(suffix: String): String {
-  return sequenceOf(window.location.origin, window.location.pathname, suffix)
-    .map { it.trim('/') }
-    .filter { it.isNotEmpty() }
-    .joinToString(separator = "/")
-}

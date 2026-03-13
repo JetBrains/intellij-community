@@ -1,4 +1,6 @@
 // "Add 2nd parameter to function 'bar'" "true"
+// K2_ERROR: Argument type mismatch: actual type is 'Boolean', but 'Int' was expected.
+// K2_ERROR: Too many arguments for 'fun Foo.bar(s: String, i: Int): Unit'.
 interface Foo
 
 private fun Foo.bar(s: String, b: Boolean, i: Int) {}

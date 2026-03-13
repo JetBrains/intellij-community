@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.BoundMoveModelSetting
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveModel
 import org.jetbrains.kotlin.idea.refactoring.loadTestConfiguration
 import org.jetbrains.kotlin.idea.refactoring.move.withConfiguredRuntime
@@ -56,7 +57,7 @@ abstract class AbstractK2CheckDescriptorMultiModuleMoveTest : KotlinMultiFileTes
         }
     }
 
-    protected fun setMoveModelSetting(setting: K2MoveModel.Setting, newValue: Boolean) {
+    protected fun setMoveModelSetting(setting: BoundMoveModelSetting, newValue: Boolean) {
         val oldSettingValue = setting.state
         setting.state = newValue
         testRootDisposable.whenDisposed {

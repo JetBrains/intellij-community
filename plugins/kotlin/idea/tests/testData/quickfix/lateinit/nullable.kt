@@ -1,4 +1,5 @@
 // "Make not-nullable" "true"
+// K2_ERROR: 'lateinit' modifier is not allowed on properties of a type with nullable upper bound.
 
 class A() {
     <caret>lateinit var foo: String?

@@ -9,9 +9,7 @@ import com.intellij.codeInsight.template.Macro;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TextResult;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAssignmentExpression;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
@@ -35,8 +33,8 @@ public final class CastToLeftSideTypeMacro extends Macro {
   @Override
   public Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
     int offset = context.getStartOffset();
-    Project project = context.getProject();
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
+    PsiFile file = context.getPsiFile();
+    if (file == null) return new TextResult("");
     PsiElement element = file.findElementAt(offset);
     element = PsiTreeUtil.getParentOfType(element, PsiAssignmentExpression.class, PsiVariable.class);
     PsiType leftType = null;

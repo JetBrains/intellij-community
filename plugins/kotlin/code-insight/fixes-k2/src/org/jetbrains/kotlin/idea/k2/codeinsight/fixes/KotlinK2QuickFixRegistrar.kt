@@ -578,6 +578,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ChangeVisibilityFixFactories.superCallFromPublicInline)
         registerFactory(ChangeVisibilityFixFactories.protectedCallFromPublicInlineError)
         registerFactory(ChangeVisibilityFixFactories.nonPublicCallFromPublicInline)
+        registerFactory(ChangeVisibilityFixFactories.explicitFieldVisibilityMustBeLessPermissive)
     }
 
     private val other = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -624,6 +625,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(RenameUnderscoreFixFactory.renameUnderscore)
         registerFactory(NamedContextParameterInFunctionTypeFixFactory.removeParameterName)
         registerFactory(ReceiverShadowedByContextParameterFactory.addReceiverFactory)
+
+        registerFactory(AddReflectionQuickFixFactory.addReflectionQuickFixFactory)
     }
 
     private val optIn = KtQuickFixesListBuilder.registerPsiQuickFix {

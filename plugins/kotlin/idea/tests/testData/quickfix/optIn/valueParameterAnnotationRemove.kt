@@ -1,5 +1,6 @@
 // "Remove annotation" "true"
 // WITH_STDLIB
+// K2_ERROR: Opt-in requirement marker annotation cannot be used on parameter.
 
 @RequiresOptIn
 @Target(AnnotationTarget.VALUE_PARAMETER)

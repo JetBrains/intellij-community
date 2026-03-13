@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.moduleSet.plugin.grid.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "moduleSet-plugin-grid-core_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "moduleSet-plugin-grid-core",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":moduleSet-plugin-grid-core_resources"]
+)
+
+jvm_library(
+  name = "moduleSet-plugin-grid-core_test_lib",
+  module_name = "intellij.moduleSet.plugin.grid.core",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":moduleSet-plugin-grid-core"]
+)
+### auto-generated section `build intellij.moduleSet.plugin.grid.core` end

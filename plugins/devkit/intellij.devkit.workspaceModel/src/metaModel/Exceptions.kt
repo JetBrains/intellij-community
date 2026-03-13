@@ -5,6 +5,8 @@ import com.intellij.psi.PsiElement
 
 class MetaModelBuilderException(errorMessage: String, val psiToHighlight: PsiElement?) : RuntimeException(errorMessage)
 
+class InternalMetaModelBuilderException(errorMessage: String) : RuntimeException(errorMessage)
+
 class WorkspaceEntityInheritsEntitySourceException(entityFqn: String) :
   IllegalStateException("$entityFqn extends WorkspaceEntity and EntitySource at the same time, which is prohibited.")
 

@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.searchEverywhere.SeItemDataKeys
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListItemRow
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListRow
+import com.intellij.platform.searchEverywhere.frontend.ui.asPropertyBeans
 import com.intellij.platform.searchEverywhere.frontend.ui.weightTextIfEnabled
 import com.intellij.platform.searchEverywhere.presentations.SeActionItemPresentation
 import com.intellij.platform.searchEverywhere.presentations.SeOptionActionItemPresentation
@@ -26,7 +27,11 @@ import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.render.IconCompOptionalCompPanel
 import com.intellij.ui.speedSearch.SpeedSearchUtil
-import com.intellij.util.ui.*
+import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
+import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Color
 import java.awt.Font
@@ -40,6 +45,7 @@ import javax.swing.border.Border
 class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultListRow>) {
   fun get(listFont: Font = StartupUiUtil.labelFont, patternProvider: () -> String): ListCellRenderer<SeResultListRow> = listCellRenderer {
     val presentation = (value as SeResultListItemRow).item.presentation as SeActionItemPresentation
+    uiInspectorContext = presentation.uiInspectorInfo.asPropertyBeans()
 
     val showIcon = UISettings.getInstance().showIconsInMenus
     val commonData = presentation.commonData

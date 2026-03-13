@@ -1,9 +1,13 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.diagnostic.DefaultLogger;
+import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter;
+import com.intellij.openapi.diagnostic.JulLogger;
+import com.intellij.openapi.diagnostic.LogLevel;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -21,15 +25,20 @@ import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.RandomAccessFile;
+import java.io.StringWriter;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -55,26 +64,26 @@ public final class TestLoggerFactory implements Logger.Factory {
   private static final int MAX_BUFFER_LENGTH = Integer.getInteger("idea.single.test.log.max.length", 10_000_000);
 
   private final StringBuilder myBuffer = new StringBuilder();
-  private int myBufferStaticFixturesEndOffset = 0;
-  private int myBufferFixturesEndOffset = 0;
+  private int myBufferStaticFixturesEndOffset;
+  private int myBufferFixturesEndOffset;
   private long myTestStartedMillis;
   private boolean myInitialized;
 
-  /** When enabled, logs produced during a failed test are saved to a separate file instead of being dumped to the stdout. */
+  /// When enabled, logs produced during a failed test are saved to a separate file instead of being dumped to the stdout.
   private boolean mySplitTestLogs = Boolean.getBoolean("idea.split.test.logs");
 
-  /** When enabled, log records with at least "FINE" level are echoed to the stdout with a timestamp relative to the test start time. */
+  /// When enabled, log records with at least "FINE" level are echoed to the stdout with a timestamp relative to the test start time.
   private static final boolean myEchoDebugToStdout = Boolean.getBoolean("idea.test.logs.echo.debug.to.stdout");
 
   private static final AtomicInteger myRethrowErrorsNumber = new AtomicInteger(0);
+  private static final ThreadLocal<Class<?>> ourCurrentTestClass = new ThreadLocal<>();
 
   private final AtomicReference<DebugArtifactPublisher> myDebugArtifactPublisher = new AtomicReference<>();
 
   private TestLoggerFactory() { }
 
   private static @Nullable TestLoggerFactory getTestLoggerFactory() {
-    Logger.Factory factory = Logger.getFactory();
-    return factory instanceof TestLoggerFactory ? (TestLoggerFactory)factory : null;
+    return Logger.getFactory() instanceof TestLoggerFactory test ? test : null;
   }
 
   @Override
@@ -92,12 +101,11 @@ public final class TestLoggerFactory implements Logger.Factory {
 
   public static boolean reconfigure() {
     try {
-      String customConfigPath = System.getProperty(PathManager.PROPERTY_LOG_CONFIG_FILE);
-      Path logProperties = customConfigPath != null ? Path.of(customConfigPath)
-                                                    : Path.of(PathManager.getHomePath(), "test-log.properties");
+      var customConfigPath = System.getProperty(PathManager.PROPERTY_LOG_CONFIG_FILE);
+      var logProperties = customConfigPath != null ? Path.of(customConfigPath) : PathManager.getHomeDir().resolve("test-log.properties");
       if (Files.exists(logProperties)) {
         if (customConfigPath != null) System.out.println("Configuring j.u.l.LogManager from file: " + logProperties);
-        try (BufferedInputStream in = new BufferedInputStream(Files.newInputStream(logProperties))) {
+        try (var in = new BufferedInputStream(Files.newInputStream(logProperties))) {
           LogManager.getLogManager().readConfiguration(in);
         }
       }
@@ -105,10 +113,8 @@ public final class TestLoggerFactory implements Logger.Factory {
         System.err.println("Configuration file for j.u.l.LogManager does not exist: " + logProperties);
       }
 
-      Path logDir = getTestLogDir();
-      Files.createDirectories(logDir);
-
-      Path logFile = logDir.resolve(LOG_FILE_NAME);
+      var logDir = Files.createDirectories(getTestLogDir());
+      var logFile = logDir.resolve(LOG_FILE_NAME);
       JulLogger.clearHandlers();
       JulLogger.configureLogFileAndConsole(logFile, false, true, false, true, null, null, null);
 
@@ -131,15 +137,15 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   private static void addConsoleAppenderForDebugRecords() {
-    java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
+    var rootLogger = java.util.logging.Logger.getLogger("");
 
     // just add a single console appender instead of multiple handlers, but for the root logger
     rootLogger.addHandler(new FilteringLogToStdoutJulHandler(Level.FINE));
   }
 
   public static @NotNull Path getTestLogDir() {
-    String property = System.getProperty(PROPERTY_LOG_PATH);
-    return property == null ? Path.of(PathManager.getSystemPath(), LOG_DIR) : Path.of(property).normalize();
+    var property = System.getProperty(PROPERTY_LOG_PATH);
+    return property != null ? Path.of(property).normalize() : PathManager.getSystemDir().resolve(LOG_DIR);
   }
 
   public static void dumpLogToStdout(@NotNull String testStartMarker) {
@@ -147,17 +153,17 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   public static void dumpLogTo(@NotNull String testStartMarker, PrintStream out) {
-    Path logFile = getTestLogDir().resolve(LOG_FILE_NAME);
+    var logFile = getTestLogDir().resolve(LOG_FILE_NAME);
     if (Files.exists(logFile)) {
       try {
         String logText;
 
-        long length = Files.size(logFile);
+        var length = Files.size(logFile);
         if (length > LOG_SEEK_WINDOW) {
-          try (RandomAccessFile file = new RandomAccessFile(logFile.toFile(), "r")) {
+          try (@SuppressWarnings("IO_FILE_USAGE") var file = new RandomAccessFile(logFile.toFile(), "r")) {
             file.seek(length - LOG_SEEK_WINDOW);
-            byte[] bytes = new byte[(int)LOG_SEEK_WINDOW];
-            int read = file.read(bytes);
+            var bytes = new byte[(int)LOG_SEEK_WINDOW];
+            var read = file.read(bytes);
             logText = new String(bytes, 0, read, StandardCharsets.UTF_8);
           }
         }
@@ -166,7 +172,7 @@ public final class TestLoggerFactory implements Logger.Factory {
         }
 
         out.println("\n\nIdea Log at " + logFile + ":");
-        int startPos = logText.lastIndexOf(testStartMarker);
+        var startPos = logText.lastIndexOf(testStartMarker);
         out.println(startPos > 0 ? logText.substring(startPos) : logText);
       }
       catch (IOException e) {
@@ -191,8 +197,8 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   public static void enableTraceLogging(@NotNull Disposable parentDisposable, Class<?> @NotNull ... classes) {
-    for (Class<?> klass : classes) {
-      Logger logger = Logger.getInstance('#' + klass.getName());
+    for (var klass : classes) {
+      var logger = Logger.getInstance('#' + klass.getName());
       if (!logger.isTraceEnabled()) {
         logger.setLevel(LogLevel.TRACE);
         Disposer.register(parentDisposable, () -> logger.setLevel(LogLevel.INFO));
@@ -201,8 +207,8 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   private void buffer(@NotNull LogLevel level, @NotNull String category, @Nullable String message, @Nullable Throwable t) {
-    String source = category.substring(Math.max(category.length() - 30, 0));
-    String format = String.format("%1$tH:%1$tM:%1$tS,%1$tL %2$-6s %3$30s - ", System.currentTimeMillis(), level.getLevelName(), source);
+    var source = category.substring(Math.max(category.length() - 30, 0));
+    var format = String.format("%1$tH:%1$tM:%1$tS,%1$tL %2$-6s %3$30s - ", System.currentTimeMillis(), level.getLevelName(), source);
     synchronized (myBuffer) {
       myBuffer.append(format);
       if (message != null) {
@@ -210,7 +216,7 @@ public final class TestLoggerFactory implements Logger.Factory {
       }
       myBuffer.append(System.lineSeparator());
       if (t != null) {
-        StringWriter writer = new StringWriter(4096);
+        var writer = new StringWriter(4096);
         t.printStackTrace(new PrintWriter(writer));
         myBuffer.append(writer.getBuffer());
         myBuffer.append(System.lineSeparator());
@@ -221,13 +227,11 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
   }
 
-  /**
-   * Report full contents, not limited to 20 characters of ComparisonFailure#MAX_CONTEXT_LENGTH
-   */
+  /// Report full contents, not limited to 20 characters of ComparisonFailure#MAX\_CONTEXT\_LENGTH
   private static @Nullable String dumpComparisonFailures(@Nullable Throwable t) {
     if (t == null) return null;
 
-    StringBuilder sb = new StringBuilder();
+    var sb = new StringBuilder();
     ExceptionUtil.causeAndSuppressed(t, ComparisonFailure.class).forEach(e ->
       logComparisonFailure(sb, e.getExpected(), e.getActual())
     );
@@ -262,14 +266,24 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   public static void onTestStarted() {
+    onTestStarted(null);
+  }
+
+  public static void onTestStarted(@Nullable Class<?> testClass) {
+    if (testClass == null) {
+      ourCurrentTestClass.remove();
+    }
+    else {
+      ourCurrentTestClass.set(testClass);
+    }
     myRethrowErrorsNumber.set(0);
-    TestLoggerFactory factory = getTestLoggerFactory();
+    var factory = getTestLoggerFactory();
     if (factory != null) {
       // clear buffer from tests which failed to report their termination properly
       synchronized (factory.myBuffer) {
         factory.myBuffer.setLength(factory.myBufferFixturesEndOffset);
       }
-      DebugArtifactPublisher publisher = factory.myDebugArtifactPublisher.getAndSet(null);
+      var publisher = factory.myDebugArtifactPublisher.getAndSet(null);
       if (publisher != null) {
         publisher.cleanup();
       }
@@ -277,19 +291,22 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
   }
 
-  /** @see #onTestFinished(boolean, String) */
+  public static @Nullable Class<?> getCurrentTestClass() {
+    return ourCurrentTestClass.get();
+  }
+
+  /// @see #onTestFinished(boolean, String)
   public static void onTestFinished(boolean success, @NotNull Description description) {
     onTestFinished(success, description.getDisplayName());
   }
 
-  /**
-   * @param testName used for the log file name
-   */
+  /// @param testName used for the log file name
   public static void onTestFinished(boolean success, @NotNull String testName) {
-    TestLoggerFactory factory = getTestLoggerFactory();
+    ourCurrentTestClass.remove();
+    var factory = getTestLoggerFactory();
     if (factory != null) {
       factory.myTestStartedMillis = 0;
-      DebugArtifactPublisher publisher = factory.myDebugArtifactPublisher.getAndSet(null);
+      var publisher = factory.myDebugArtifactPublisher.getAndSet(null);
       if (publisher != null) {
         if (!success) {
           publisher.publishArtifacts(testName);
@@ -303,7 +320,7 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   public static void onFixturesInitializationStarted(boolean isStatic) {
-    TestLoggerFactory factory = getTestLoggerFactory();
+    var factory = getTestLoggerFactory();
     if (factory != null) {
       if (isStatic) {
         factory.myBufferStaticFixturesEndOffset = 0;
@@ -315,7 +332,7 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   public static void onFixturesInitializationFinished(boolean isStatic) {
-    TestLoggerFactory factory = getTestLoggerFactory();
+    var factory = getTestLoggerFactory();
     if (factory != null) {
       if (isStatic) {
         synchronized (factory.myBuffer) {
@@ -335,7 +352,7 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   public static void onFixturesDisposeStart(boolean isStatic) {
-    TestLoggerFactory factory = getTestLoggerFactory();
+    var factory = getTestLoggerFactory();
     if (factory != null) {
       if (isStatic) {
         factory.myBufferStaticFixturesEndOffset = 0;
@@ -348,32 +365,30 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   public static void logTestFailure(@Nullable Throwable t) {
-    TestLoggerFactory factory = getTestLoggerFactory();
+    var factory = getTestLoggerFactory();
     if (factory != null) {
-      String comparisonFailures = dumpComparisonFailures(t);
-      String message = comparisonFailures != null ? "test failed: " + comparisonFailures : "Test failed";
+      var comparisonFailures = dumpComparisonFailures(t);
+      var message = comparisonFailures != null ? "test failed: " + comparisonFailures : "Test failed";
       factory.buffer(LogLevel.ERROR, "#TestFramework", message, t);
     }
   }
 
-  /**
-   * Publishes {@code artifactPath} as a build artifact if the current test fails on TeamCity under 'debug-artifacts' directory.
-   * @param artifactPath path to a file or directory to be published
-   * @param artifactName meaningful name under which the artifact will be published; the name of the current test will be added as a prefix
-   *                     automatically; and if multiple artifacts with the same {@code artifactName} are added during execution of the test,
-   *                     unique suffix will also be added automatically.
-   */
+  /// Publishes `artifactPath` as a build artifact if the current test fails on TeamCity under 'debug-artifacts' directory.
+  /// @param artifactPath path to a file or directory to be published
+  /// @param artifactName meaningful name under which the artifact will be published; the name of the current test will be added as a prefix
+  ///                     automatically; and if multiple artifacts with the same `artifactName` are added during execution of the test,
+  ///                     unique suffix will also be added automatically.
   public static void publishArtifactIfTestFails(@NotNull Path artifactPath, @NotNull String artifactName) {
-    TestLoggerFactory factory = getTestLoggerFactory();
+    var factory = getTestLoggerFactory();
     if (factory != null) {
       factory.getOrCreateDebugArtifactPublisher().storeArtifact(artifactPath, artifactName);
     }
   }
 
   private DebugArtifactPublisher getOrCreateDebugArtifactPublisher() {
-    DebugArtifactPublisher publisher = myDebugArtifactPublisher.get();
+    var publisher = myDebugArtifactPublisher.get();
     if (publisher != null) return publisher;
-    Path storagePath = PathManager.getLogDir().resolve("debug-artifacts");
+    var storagePath = PathManager.getLogDir().resolve("debug-artifacts");
     myDebugArtifactPublisher.compareAndSet(null, new DebugArtifactPublisher(storagePath));
     return myDebugArtifactPublisher.get();
   }
@@ -387,16 +402,17 @@ public final class TestLoggerFactory implements Logger.Factory {
 
     if (buffer != null) {
       if (mySplitTestLogs) {
-        Path logDir = getTestLogDir().resolve(SPLIT_LOGS_SUBDIR);
-        Path logFile = FileUtil.findSequentNonexistentFile(logDir.toFile(), FileUtil.sanitizeFileName(testName), "log").toPath();
+        var logFile = (Path)null;
         try {
-          Files.createDirectories(logDir);
+          logFile = createNextFile(FileUtil.sanitizeFileName(testName));
           Files.writeString(logFile, buffer);
-          String headerFooter = StringUtil.repeat("=", 80);
-          buffer = "\n" + headerFooter +
-                   "\nLog saved to: " + logFile +
-                   "\n" + headerFooter +
-                   "\n";
+          var headerFooter = StringUtil.repeat("=", 80);
+          buffer = """
+            
+            %s
+            Log saved to: %s
+            %s
+            """.formatted(headerFooter, logFile, headerFooter);
         }
         catch (IOException e) {
           buffer += "\nError writing split log, disabling splitting: " + logFile + '\n' + e;
@@ -405,17 +421,27 @@ public final class TestLoggerFactory implements Logger.Factory {
       }
 
       if (System.getenv("TEAMCITY_VERSION") != null) {
-        String finalBuffer = buffer;
+        var finalBuffer = buffer;
         TeamCityLogger.block("DEBUG log", () ->
           System.out.println(finalBuffer)
         );
       }
       else {
         // mark each line in IDEA console with this hidden mark to be able to fold it automatically
-        List<String> lines = LineTokenizer.tokenizeIntoList(buffer, false, false);
+        var lines = LineTokenizer.tokenizeIntoList(buffer, false, false);
         if (!lines.getFirst().startsWith("\n")) lines = ContainerUtil.prepend(lines.subList(1, lines.size()), "\n" + lines.getFirst());
         System.err.println(String.join(FAILED_TEST_DEBUG_OUTPUT_MARKER + "\n", lines));
       }
+    }
+  }
+
+  private static Path createNextFile(String testName) throws IOException {
+    var logDir = Files.createDirectories(getTestLogDir().resolve(SPLIT_LOGS_SUBDIR));
+    for (var i = 0; ; i++) {
+      try {
+        return Files.createFile(logDir.resolve(testName + i + ".log"));
+      }
+      catch (FileAlreadyExistsException ignored) { }
     }
   }
 
@@ -461,17 +487,16 @@ public final class TestLoggerFactory implements Logger.Factory {
   private static final class TestLogger extends JulLogger {
     private final TestLoggerFactory myFactory;
 
-    private TestLogger(java.util.logging.Logger julLogger, TestLoggerFactory factory) {
+    private TestLogger(@NotNull java.util.logging.Logger julLogger, @NotNull TestLoggerFactory factory) {
       super(julLogger);
       myFactory = factory;
     }
 
     @Override
     public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
-      Set<LoggedErrorProcessor.Action>
-        actions = LoggedErrorProcessor.getInstance().processError(getLoggerName(), requireNonNullElse(message, ""), details, t);
+      var actions = LoggedErrorProcessor.getInstance().processError(getLoggerName(), requireNonNullElse(message, ""), details, t);
 
-      ErrorLog errorLog = TestLoggerKt.getErrorLog();
+      var errorLog = TestLoggerKt.getErrorLog();
       if (actions.contains(LoggedErrorProcessor.Action.RETHROW) && errorLog != null) {
         errorLog.recordLoggedError(message, t);
         return;
@@ -551,17 +576,15 @@ public final class TestLoggerFactory implements Logger.Factory {
       return !Accessor.isInStressTest() || super.isDebugEnabled();
     }
 
-    /**
-     * Calling {@link com.intellij.openapi.application.ex.ApplicationManagerEx#isInStressTest} reflectively to avoid dependency on a platform module
-     */
+    /// Calling [com.intellij.openapi.application.ex.ApplicationManagerEx#isInStressTest] reflectively to avoid dependency on a platform module
     private static class Accessor {
       private static final @NotNull MethodHandle isInStressTest = getMethodHandle();
 
       private static @NotNull MethodHandle getMethodHandle() {
         try {
-          Class<?> clazz = Class.forName("com.intellij.openapi.application.ex.ApplicationManagerEx");
-          MethodHandle handle = MethodHandles.privateLookupIn(clazz, MethodHandles.lookup()).findStatic(clazz, "isInStressTest", MethodType.methodType(boolean.class));
-          Object result = handle.invokeWithArguments();
+          var clazz = Class.forName("com.intellij.openapi.application.ex.ApplicationManagerEx");
+          var handle = MethodHandles.privateLookupIn(clazz, MethodHandles.lookup()).findStatic(clazz, "isInStressTest", MethodType.methodType(boolean.class));
+          var result = handle.invokeWithArguments();
           assert result instanceof Boolean;
           return handle;
         }
@@ -634,7 +657,7 @@ public final class TestLoggerFactory implements Logger.Factory {
 
     @Override
     protected long getStartedMillis() {
-      TestLoggerFactory factory = getTestLoggerFactory();
+      var factory = getTestLoggerFactory();
       return factory == null ? 0L : factory.myTestStartedMillis;
     }
   }

@@ -201,7 +201,7 @@ open class KotlinMavenImporter : MavenApplicableConfigurator(KOTLIN_PLUGIN_GROUP
         detectPlatformByExecutions(mavenProject) ?: detectPlatformByLibraries(mavenProject)
 
     private fun detectPlatformByExecutions(mavenProject: MavenProject): IdePlatformKind? {
-        return mavenProject.findPlugin(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_ARTIFACT_ID)?.executions?.flatMap { it.goals }
+        return mavenProject.findKotlinPlugin()?.executions?.flatMap { it.goals }
             ?.mapNotNull { goal ->
                 when (goal) {
                     PomFile.KotlinGoals.Compile, PomFile.KotlinGoals.TestCompile -> JvmIdePlatformKind
@@ -244,6 +244,10 @@ open class KotlinMavenImporter : MavenApplicableConfigurator(KOTLIN_PLUGIN_GROUP
         }
     }
 }
+
+fun MavenProject.findKotlinPlugin() = plugins.firstOrNull { it.isKotlinPlugin() }
+
+fun MavenProject.getKotlinPlugin() = plugins.single { it.isKotlinPlugin() }
 
 fun MavenPlugin.isKotlinPlugin(): Boolean =
     groupId == KotlinMavenImporter.KOTLIN_PLUGIN_GROUP_ID && artifactId == KotlinMavenImporter.KOTLIN_PLUGIN_ARTIFACT_ID

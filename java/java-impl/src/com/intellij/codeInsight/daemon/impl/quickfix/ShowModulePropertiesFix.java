@@ -16,6 +16,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -67,7 +68,7 @@ public class ShowModulePropertiesFix implements QuickFix<CommonProblemDescriptor
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
-    return new IntentionPreviewInfo.Html(JavaBundle.message("open.settings.dialog.for.module.preview.text", myModuleName));
+    return new IntentionPreviewInfo.Html(JavaBundle.message("open.settings.dialog.for.module.preview.text", StringUtil.escapeXmlEntities(myModuleName)));
   }
 
   @Override

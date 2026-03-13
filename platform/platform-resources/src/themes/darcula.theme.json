@@ -371,7 +371,13 @@
 
     "MainMenu": {
       "background": "#3c3f41",
-      "foreground": "#bbbbbb"
+      "foreground": "#bbbbbb",
+      "Selection": {
+        "fullScreenArc": 8,
+        "outerInsets": "5,0,5,0",
+        "outerInsets.compact": "3,0,3,0",
+        "fullScreenOuterInsets": "2,0,2,0"
+      }
     },
 
     "Menu": {

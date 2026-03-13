@@ -30,4 +30,30 @@ jvm_library(
   exports = ["//json/backend"],
   runtime_deps = ["//platform/backend"]
 )
+
+jvm_library(
+  name = "json_test_lib",
+  module_name = "intellij.toml.json",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//json/backend",
+    "//json/backend:backend_test_lib",
+  ],
+  runtime_deps = [
+    ":json",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//plugins/toml/core:core_test_lib",
+    "//json/backend:backend_test_lib",
+    "//platform/backend:backend_test_lib",
+    "//libraries/stream:stream_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.toml.json` end

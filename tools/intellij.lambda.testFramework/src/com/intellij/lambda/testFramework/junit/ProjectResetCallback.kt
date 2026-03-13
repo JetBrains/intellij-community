@@ -7,6 +7,8 @@ import com.intellij.ide.starter.project.ProjectInfoSpec
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.ide.trustedProjects.impl.TrustedProjectStartupDialog
 import com.intellij.lambda.testFramework.starter.IdeInstance
+import com.intellij.lambda.testFramework.testApi.waitForNoProjects
+import com.intellij.lambda.testFramework.testApi.waitForProject
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.thisLogger
@@ -129,6 +131,9 @@ class ProjectResetCallback : BeforeEachCallback, AfterEachCallback {
         }
       }
     }
+    IdeInstance.ide.runInFrontend("Wait for no projects to be opened", globalTestScope = true) {
+      waitForNoProjects(timeout = 10.seconds)
+    }
   }
 
   private suspend fun openPreparedProject(projectPath: Path) {
@@ -154,6 +159,10 @@ class ProjectResetCallback : BeforeEachCallback, AfterEachCallback {
       finally {
         Disposer.dispose(disposable)
       }
+    }
+
+    ide.runInFrontend("Wait for project to be opened", globalTestScope = true) {
+      waitForProject(timeout = 10.seconds)
     }
   }
 }

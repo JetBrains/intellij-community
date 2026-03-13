@@ -51,6 +51,44 @@ jvm_library(
     "@lib//:settings_repository-eclipse-jgit-ssh-apache",
   ]
 )
+
+jvm_library(
+  name = "settings-repository_test_lib",
+  module_name = "intellij.settingsRepository",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "@lib//:jetbrains-intellij-deps-eclipse-jgit",
+    "@lib//:settings_repository-eclipse-jgit-ssh-apache-agent",
+    "@lib//:settings_repository-eclipse-jgit-ssh-apache",
+  ],
+  runtime_deps = [
+    ":settings-repository",
+    "//platform/core-api:core_test_lib",
+    "//platform/credential-store:credential-store_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//libraries/jzlib:jzlib_test_lib",
+    "//platform/configuration-store-impl:configurationStore-impl_test_lib",
+    "//platform/util/progress:progress_test_lib",
+    "//platform/credential-store-ui:credentialStore-ui_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/jackson/databind:databind_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/vcs-api:vcs_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//libraries/caffeine:caffeine_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/credential-store-impl:credentialStore-impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.settingsRepository` end
 
 ### auto-generated section `build intellij.settingsRepository.tests` start
@@ -80,33 +118,53 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/credential-store",
+    "//platform/credential-store:credential-store_test_lib",
     "//platform/platform-api:ide",
+    "//platform/platform-api:ide_test_lib",
     "//platform/platform-impl:ide-impl",
     "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
     "//platform/vcs-impl",
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/projectModel-impl",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:kotlin-stdlib",
     "@lib//:jna",
     "@lib//:junit4",
     "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "//platform/vcs-api:vcs",
+    "//platform/vcs-api:vcs_test_lib",
     "//platform/configuration-store-impl:configurationStore-impl",
+    "//platform/configuration-store-impl:configurationStore-impl_test_lib",
+    "//platform/util:util-tests",
     "//platform/util:util-tests_test_lib",
     "//plugins/settings-repository",
+    "//plugins/settings-repository:settings-repository_test_lib",
     "@lib//:assert_j",
     "//platform/credential-store-ui:credentialStore-ui",
+    "//platform/credential-store-ui:credentialStore-ui_test_lib",
     "//platform/testFramework/extensions:testExtensions",
+    "//platform/testFramework/extensions:testExtensions_test_lib",
+    "//platform/configuration-store-impl:configurationStore-tests",
     "//platform/configuration-store-impl:configurationStore-tests_test_lib",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
     "//platform/util/jdom",
+    "//platform/util/jdom:jdom_test_lib",
     "//platform/workspace/jps",
+    "//platform/workspace/jps:jps_test_lib",
   ],
-  runtime_deps = [":settingsRepository-tests"]
+  runtime_deps = [
+    ":settingsRepository-tests",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.settingsRepository.tests` end
 

@@ -24,7 +24,7 @@ import com.jetbrains.python.pyi.PyiUtil
 
 class PySuggestedRefactoringSupport : SuggestedRefactoringSupport {
 
-  companion object {
+  object Helper {
     internal fun isAvailableForChangeSignature(element: PsiElement): Boolean {
       return element is PyFunction &&
              element.name.let { it != null && PyNames.isIdentifier(it) } &&
@@ -91,7 +91,7 @@ class PySuggestedRefactoringSupport : SuggestedRefactoringSupport {
 
   private object ChangeSignatureSupport : SupportInternal {
 
-    override fun isApplicable(element: PsiElement): Boolean = isAvailableForChangeSignature(element)
+    override fun isApplicable(element: PsiElement): Boolean = Helper.isAvailableForChangeSignature(element)
 
     override fun signatureRange(declaration: PsiElement): TextRange? {
       declaration as PyFunction
@@ -103,7 +103,7 @@ class PySuggestedRefactoringSupport : SuggestedRefactoringSupport {
 
   private class RenameSupport(private val mainSupport: PySuggestedRefactoringSupport) : SupportInternal {
 
-    override fun isApplicable(element: PsiElement): Boolean = isAvailableForRename(element)
+    override fun isApplicable(element: PsiElement): Boolean = Helper.isAvailableForRename(element)
     override fun signatureRange(declaration: PsiElement): TextRange? = mainSupport.nameRange(declaration)
   }
 }

@@ -5,7 +5,11 @@ package org.jetbrains.kotlin.idea.core.script.k2.modules
 
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.SdkId
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
@@ -14,8 +18,8 @@ interface KotlinScriptEntityBuilder : WorkspaceEntityBuilder<KotlinScriptEntity>
     override var entitySource: EntitySource
     var virtualFileUrl: VirtualFileUrl
     var dependencies: MutableList<KotlinScriptLibraryEntityId>
-    var configuration: ScriptCompilationConfigurationEntity?
     var sdkId: SdkId?
+    var configurationId: ScriptCompilationConfigurationId?
     var relatedModuleIds: MutableList<ModuleId>
     var reports: MutableList<ScriptDiagnosticData>
 }

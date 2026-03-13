@@ -18,6 +18,7 @@ object Starter {
     })
   }
 
-  fun newContext(testName: String, testCase: TestCase<*>, preserveSystemDir: Boolean = false): IDETestContext =
-    newTestContainer().newContext(testName = testName, testCase = testCase, preserveSystemDir = preserveSystemDir)
+  fun newContext(testName: String, testCase: TestCase<*>, preserveSystemDir: Boolean = false): IDETestContext {
+    return newTestContainer().newContext(testName = testName, testCase = testCase, preserveSystemDir = preserveSystemDir)
+  }
 }

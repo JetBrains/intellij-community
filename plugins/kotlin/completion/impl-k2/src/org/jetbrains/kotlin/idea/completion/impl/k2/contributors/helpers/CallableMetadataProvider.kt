@@ -1,6 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.completion.contributors.helpers
+package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers
 
 import com.intellij.util.applyIf
 import kotlinx.serialization.Serializable
@@ -44,7 +44,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.buildClassTypeWithStarProjections
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.resolveToExpandedSymbol
-import org.jetbrains.kotlin.idea.completion.lookups.isExtensionCall
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.isExtensionCall
 import org.jetbrains.kotlin.idea.completion.reference
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression

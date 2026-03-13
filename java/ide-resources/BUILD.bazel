@@ -13,4 +13,12 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":ide-resources_resources"]
 )
+
+jvm_library(
+  name = "ide-resources_test_lib",
+  module_name = "intellij.java.ide.resources",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":ide-resources"]
+)
 ### auto-generated section `build intellij.java.ide.resources` end

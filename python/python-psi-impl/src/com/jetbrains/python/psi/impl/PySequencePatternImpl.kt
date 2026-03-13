@@ -11,12 +11,13 @@ import com.jetbrains.python.psi.PySingleStarPattern
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl
-import com.jetbrains.python.psi.types.PyLiteralType.Companion.upcastLiteralToClass
 import com.jetbrains.python.psi.types.PyNeverType
 import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyTypeUtil
+import com.jetbrains.python.psi.types.PyTypeUtil.components
+import com.jetbrains.python.psi.types.PyTypeUtil.convertToType
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.PyUnpackedTupleType
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -45,7 +46,7 @@ class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySeque
     }
 
     if (sequenceCaptureType == null) return expectedType
-    return sequenceCaptureType.toList()
+    return sequenceCaptureType.components
       .map { intersect(it, expectedType, context) }
       .let { PyUnionType.union(it) }
   }
@@ -55,7 +56,7 @@ class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySeque
     val allElementsExhaustive = elements.all { PyClassPatternImpl.isExhaustive(it, context) }
     if (!allElementsExhaustive) return false
     val captureType = getSequenceCaptureType(context) ?: return false
-    return captureType.toList().all { type -> type.isHeterogeneousTuple() }
+    return captureType.components.all { type -> type.isHeterogeneousTuple() }
   }
 
   override fun getCaptureTypeForChild(pattern: PyPattern, context: TypeEvalContext): PyType? {
@@ -64,7 +65,7 @@ class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySeque
     // This is done to skip group- and as-patterns
     val sequenceMember = pattern.findParentInFile(withSelf = true) { el -> this === el.parent }
     if (sequenceMember is PySingleStarPattern) {
-      return sequenceType.toList()
+      return sequenceType.components
         .flatMap { sequenceMember.getCapturedTypesFromSequenceType(it, context) }
         .let { PyUnionType.union(it) }
         .let { wrapInListType(it) }
@@ -72,7 +73,7 @@ class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySeque
 
     val idx = elements.indexOf(sequenceMember)
 
-    return sequenceType.toList()
+    return sequenceType.components
       .map { getElementTypeSkippingStar(it, idx, context) }
       .let { PyUnionType.union(it) }
   }
@@ -89,7 +90,7 @@ class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySeque
       }
     }
     else {
-      val upcast = PyTypeUtil.convertToType(sequence, "typing.Sequence", this, context)
+      val upcast = sequence.convertToType("typing.Sequence", this, context)
       return (upcast as? PyCollectionType)?.iteratedItemType
     }
   }
@@ -101,9 +102,9 @@ class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySeque
   private fun PySequencePattern.getSequenceCaptureType(context: TypeEvalContext): PyType? {
     val captureTypes: PyType? = PyCaptureContext.getCaptureType(this, context)
 
-    val potentialMatchingTypes = captureTypes.toList()
+    val potentialMatchingTypes = captureTypes.components
       .filter { it !is PyClassType || it.classQName !in listOf("str", "bytes", "bytearray") }
-      .filter { PyTypeUtil.convertToType(it, "typing.Sequence", this, context) != null }
+      .filter { it.convertToType("typing.Sequence", this, context) != null }
 
     val hasStar = elements.any { it is PySingleStarPattern }
     val types = potentialMatchingTypes.mapNotNull {
@@ -114,12 +115,12 @@ class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySeque
 
   fun wrapInListType(elementType: PyType?): PyType? {
     val list = PyBuiltinCache.getInstance(this).getClass("list") ?: return null
-    return PyCollectionTypeImpl(list, false, listOf(upcastLiteralToClass(elementType)))
+    return PyCollectionTypeImpl(list, false, listOf(PyTypeUtil.widenLiteralAndNumeric(elementType)))
   }
 
   fun wrapInSequenceType(elementType: PyType?): PyType? {
     val sequence = PyPsiFacade.getInstance(getProject()).createClassByQName("typing.Sequence", this) ?: return null
-    return PyCollectionTypeImpl(sequence, false, listOf(upcastLiteralToClass(elementType)))
+    return PyCollectionTypeImpl(sequence, false, listOf(PyTypeUtil.widenLiteralAndNumeric(elementType)))
   }
 }
 
@@ -129,15 +130,12 @@ private fun PySingleStarPattern.getCapturedTypesFromSequenceType(sequenceType: P
     val idx = sequenceParent.elements.indexOf(this)
     return sequenceType.elementTypes.subList(idx, idx + sequenceType.elementCount - sequenceParent.elements.size + 1)
   }
-  val upcast = PyTypeUtil.convertToType(sequenceType, "typing.Sequence", this, context)
+  val upcast = sequenceType.convertToType("typing.Sequence", this, context)
   if (upcast is PyCollectionType) {
     return listOf(upcast.getIteratedItemType())
   }
   return listOf()
 }
-
-// Use it like PyTypeUtil#toStream
-internal fun PyType?.toList(): List<PyType?> = if (this is PyUnionType) members.toList() else listOf(this)
 
 @OptIn(ExperimentalContracts::class)
 private fun PyType?.isHeterogeneousTuple(): Boolean {

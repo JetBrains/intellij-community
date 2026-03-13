@@ -12,7 +12,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap
 
 // SearchScope may cache hashcode, see JavaDoc of com.intellij.psi.search.SearchScope.calcHashCode
 @Suppress("EqualsOrHashCode")
-internal class LibrarySourcesScope(
+class LibrarySourcesScope(
     project: Project,
     private val library: Library
 ) : LibraryScopeBase(project, VirtualFile.EMPTY_ARRAY, library.getFiles(OrderRootType.SOURCES)), CombinableSourceAndClassRootsScope {

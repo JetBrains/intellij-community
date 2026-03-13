@@ -6,7 +6,13 @@ import com.intellij.codeInsight.daemon.impl.Divider;
 import com.intellij.codeInsight.daemon.impl.InspectionVisitorOptimizer;
 import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.DynamicGroupTool;
+import com.intellij.codeInspection.ex.GlobalInspectionContextEx;
+import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectListener;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.ToolLanguageUtil;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManagerImpl;
@@ -26,7 +32,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.PsiRecursiveVisitor;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
@@ -38,7 +50,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -357,8 +376,8 @@ public final class InspectionEngine {
         if (holder.hasResults()) {
           for (ProblemDescriptor descriptor : holder.getResults()) {
             PsiElement element = descriptor.getPsiElement();
-            if (element == null || !ignoreSuppressedElements || !SuppressionUtil.inspectionResultSuppressed(element, tool)) {
-              LocalInspectionToolWrapper wrapper = getRedirectedToolWrapper(toolWrapper, descriptor);
+            LocalInspectionToolWrapper wrapper = getRedirectedToolWrapper(toolWrapper, descriptor);
+            if (element == null || !ignoreSuppressedElements || !SuppressionUtil.inspectionResultSuppressed(element, wrapper.getTool())) {
               resultDescriptors.computeIfAbsent(wrapper, x -> new ArrayList<>()).add(descriptor);
             }
           }
@@ -372,8 +391,7 @@ public final class InspectionEngine {
     return resultDescriptors;
   }
 
-  private static @Nullable LocalInspectionToolWrapper getRedirectedToolWrapper(LocalInspectionToolWrapper toolWrapper,
-                                                                               ProblemDescriptor descriptor) {
+  private static LocalInspectionToolWrapper getRedirectedToolWrapper(LocalInspectionToolWrapper toolWrapper, ProblemDescriptor descriptor) {
     if (descriptor instanceof ProblemDescriptorWithReporterName name && toolWrapper.getTool() instanceof DynamicGroupTool groupTool) {
       String reportingToolName = name.getReportingToolShortName();
       for (LocalInspectionToolWrapper child : groupTool.getChildren()) {
@@ -397,8 +415,7 @@ public final class InspectionEngine {
         if (toolWrapper instanceof LocalInspectionToolWrapper local) {
           Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> problemDescriptors =
             inspectEx(Collections.singletonList(local), psiFile, psiFile.getTextRange(), psiFile.getTextRange(),
-                      false,
-                      false, true, new EmptyProgressIndicator(), PairProcessor.alwaysTrue());
+                      false, false, true, new EmptyProgressIndicator(), PairProcessor.alwaysTrue());
 
           for (List<ProblemDescriptor> group : problemDescriptors.values()) {
             result.addAll(group);

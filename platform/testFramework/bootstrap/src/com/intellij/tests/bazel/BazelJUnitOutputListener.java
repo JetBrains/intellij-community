@@ -6,8 +6,17 @@
  */
 package com.intellij.tests.bazel;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import com.intellij.tests.IgnoreException;
+import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.UniqueId;
+import org.junit.platform.engine.reporting.ReportEntry;
+import org.junit.platform.launcher.TestExecutionListener;
+import org.junit.platform.launcher.TestIdentifier;
+import org.junit.platform.launcher.TestPlan;
 
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.IOException;
@@ -27,17 +36,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamWriter;
 
-import com.intellij.tests.IgnoreException;
-import org.junit.platform.engine.TestExecutionResult;
-import org.junit.platform.engine.UniqueId;
-import org.junit.platform.engine.reporting.ReportEntry;
-import org.junit.platform.launcher.TestExecutionListener;
-import org.junit.platform.launcher.TestIdentifier;
-import org.junit.platform.launcher.TestPlan;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class BazelJUnitOutputListener implements TestExecutionListener, Closeable {
   public static final Logger LOG = Logger.getLogger(BazelJUnitOutputListener.class.getName());

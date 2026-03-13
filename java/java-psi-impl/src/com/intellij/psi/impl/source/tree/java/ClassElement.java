@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -95,10 +95,8 @@ public class ClassElement extends CompositeElement implements Constants {
     }
 
     if (isEnum()) {
-      ASTNode maybeSemicolonPlace = findEnumConstantListDelimiterPlace();
-      if (!ENUM_CONSTANT_LIST_ELEMENTS_BIT_SET.contains(first.getElementType())
-          // if we are not inside the class itself, skip finding an element
-        && !(maybeSemicolonPlace != null && maybeSemicolonPlace.getElementType() == LBRACE)) {
+      if (!ENUM_CONSTANT_LIST_ELEMENTS_BIT_SET.contains(first.getElementType()) && !DOC_COMMENT_TOKENS.contains(first.getElementType())) {
+        ASTNode semicolonPlace = findEnumConstantListDelimiterPlace();
         boolean commentsOrWhiteSpaces = true;
         for (ASTNode child = first; child != null; child = child.getTreeNext()) {
           if (!PsiImplUtil.isWhitespaceOrComment(child)) {
@@ -106,15 +104,15 @@ public class ClassElement extends CompositeElement implements Constants {
             break;
           }
         }
-        if (!commentsOrWhiteSpaces && (maybeSemicolonPlace == null || maybeSemicolonPlace.getElementType() != SEMICOLON)) {
-            final LeafElement semicolon = Factory.createSingleLeafElement(SEMICOLON, ";", 0, 1,
-                                                                          SharedImplUtil.findCharTableByTree(this), getManager());
-            addInternal(semicolon, semicolon, maybeSemicolonPlace, Boolean.FALSE);
-            maybeSemicolonPlace = semicolon;
+        if (!commentsOrWhiteSpaces && (semicolonPlace == null || semicolonPlace.getElementType() != SEMICOLON)) {
+          final LeafElement semicolon = Factory.createSingleLeafElement(SEMICOLON, ";", 0, 1,
+                                                                        SharedImplUtil.findCharTableByTree(this), getManager());
+          addInternal(semicolon, semicolon, semicolonPlace, Boolean.FALSE);
+          semicolonPlace = semicolon;
         }
         for (ASTNode run = anchor; run != null; run = run.getTreeNext()) {
-          if (run == maybeSemicolonPlace) {
-            anchor = before.booleanValue() ? maybeSemicolonPlace.getTreeNext() : maybeSemicolonPlace;
+          if (run == semicolonPlace) {
+            anchor = before.booleanValue() ? semicolonPlace.getTreeNext() : semicolonPlace;
             if (anchor != null && PsiImplUtil.isWhitespaceOrComment(anchor)) {
               anchor = PsiTreeUtil.skipWhitespacesAndCommentsForward(anchor.getPsi()).getNode();
             }

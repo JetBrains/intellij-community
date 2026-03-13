@@ -22,7 +22,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.TreeSet;
 
 @ApiStatus.Internal
 public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
@@ -101,7 +105,7 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
   private boolean tryAppendUsage(@NotNull T element) {
     final UsageView view = myUsageView.get();
     if (view != null && !((UsageViewImpl)view).isDisposed()) {
-      return ReadAction.compute(() -> {
+      return ReadAction.computeBlocking(() -> {
         Usage usage = createUsage(element);
         if (usage == null) {
           return false;

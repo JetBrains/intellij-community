@@ -62,7 +62,8 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy implements D
 
   @Override
   public @NotNull Tokenizer<?> getTokenizer(PsiElement element) {
-    if (element instanceof JsonStringLiteral && !useTextLevelSpellchecking()) {
+    if (element instanceof JsonStringLiteral) {
+      if (useTextLevelSpellchecking()) return EMPTY_TOKENIZER;
       if (isInjectedLanguageFragment(element)) {
         return EMPTY_TOKENIZER;
       }

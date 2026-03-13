@@ -9,7 +9,11 @@ import com.intellij.settingsSync.core.git.table.TitleRow
 import com.intellij.util.ui.UIUtil
 import icons.SettingsSyncIcons
 import org.jetbrains.annotations.Nls
-import java.awt.*
+import java.awt.AlphaComposite
+import java.awt.BasicStroke
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.RenderingHints
 import java.awt.geom.Ellipse2D
 import java.awt.geom.Line2D
 

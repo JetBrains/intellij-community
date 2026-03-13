@@ -12,11 +12,11 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.Color;
 import javax.swing.Icon;
 import javax.swing.JList;
 import javax.swing.JTable;
 import javax.swing.JTree;
+import java.awt.Color;
 
 import static com.intellij.openapi.fileChooser.FileElement.isFileHidden;
 import static com.intellij.openapi.util.IconLoader.getTransparentIcon;

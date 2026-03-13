@@ -245,6 +245,8 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
                message("inspection.data.flow.report.nullable.methods.that.always.return.a.non.null.value")),
       checkbox("IGNORE_ASSERT_STATEMENTS",
                message("inspection.data.flow.ignore.assert.statements")),
+      checkbox("REPORT_MATCHED_EXCEPTION",
+               message("inspection.data.flow.report.match.exception.problem")),
       checkbox("REPORT_UNSOUND_WARNINGS",
                message("inspection.data.flow.report.problems.that.happen.only.on.some.code.paths")),
       JavaInspectionControls.button(

@@ -2,6 +2,7 @@
 // ERROR: No value passed for parameter 'foo'
 // ERROR: No value passed for parameter 'foo'
 // ERROR: No value passed for parameter 'foo'
+// K2_ERROR: Unresolved reference 'foo'.
 // K2_AFTER_ERROR: No value passed for parameter 'foo'.
 // K2_AFTER_ERROR: No value passed for parameter 'foo'.
 // K2_AFTER_ERROR: No value passed for parameter 'foo'.

@@ -40,4 +40,28 @@ jvm_library(
     "//java/java-psi-api:psi",
   ]
 )
+
+jvm_library(
+  name = "k1_test_lib",
+  module_name = "kotlin.injection.k1",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_k1",
+  runtime_deps = [
+    ":k1",
+    "//platform/core-api:core_test_lib",
+    "//plugins/kotlin/injection/base:kotlin-base-injection_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/analysis:analysis_test_lib",
+    "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
+    "//plugins/kotlin/base/fe10/code-insight:code-insight_test_lib",
+    "//plugins/kotlin/core:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
+    "//plugins/kotlin/idea:idea_test_lib",
+    "//plugins/IntelliLang:langInjection_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+  ]
+)
 ### auto-generated section `build kotlin.injection.k1` end

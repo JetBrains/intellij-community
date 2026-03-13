@@ -32,9 +32,8 @@ internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
   private val NON_DEFAULT_SHELL = GROUP.registerEvent(
     "non.default.shell",
     EventFields.String("shell", TerminalShellInfoStatistics.KNOWN_SHELLS.toList()),
-    "User modified the default shell path"
   )
-  private val NON_DEFAULT_TAB_NAME = GROUP.registerEvent("non.default.tab.name", "User modified the default terminal tab name")
+  private val NON_DEFAULT_TAB_NAME = GROUP.registerEvent("non.default.tab.name")
   private val NON_DEFAULT_ENGINE = GROUP.registerEvent(
     "non.default.engine",
     EventFields.Enum<TerminalEngine>("engine")
@@ -49,13 +48,9 @@ internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
   )
   private val NON_DEFAULT_COMMAND_COMPLETION_MODE = GROUP.registerEvent(
     "non.default.command.completion.mode",
-    EventFields.Enum<TerminalCommandCompletionMode>("mode"),
-    "Users preference of showing completion popup automatically"
+    EventFields.Enum<TerminalCommandCompletionMode>("mode")
   )
-  private val NON_DEFAULT_FONT_NAME = GROUP.registerEvent(
-    "non.default.font.name",
-    "User modified the default terminal font name",
-  )
+  private val NON_DEFAULT_FONT_NAME = GROUP.registerEvent("non.default.font.name")
   private val NON_DEFAULT_FONT_SIZE = GROUP.registerEvent(
     "non.default.font.size", 
     EventFields.Float("font_size"),

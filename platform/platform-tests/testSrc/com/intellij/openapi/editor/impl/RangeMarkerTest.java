@@ -313,7 +313,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     String s = "12345\n \n12345";
     RangeMarker marker = createMarker(s, 6, 8);
 
-    replaceString(marker.getDocument(), 0, s.length(), s.replaceAll(" ", ""));
+    replaceString(marker.getDocument(), 0, s.length(), s.replace(" ", ""));
 
     assertValidMarker(marker, 6, 7);
   }
@@ -426,11 +426,11 @@ public class RangeMarkerTest extends LightPlatformTestCase {
         public void documentChanged(@NotNull DocumentEvent e) {
           events.add(e);
         }
-      });
+      }, getTestRootDisposable());
       synchronizer.commitTransaction(document);
       assertEquals(newText, document.getText());
       DocumentEvent event = assertOneElement(events);
-      assertEquals("DocumentEventImpl[myOffset=22, myOldLength=28, myNewLength=0].", event.toString());
+      assertEquals("DocumentEventImpl[myOffset=22, myOldLength=28, myNewLength=0]", event.toString());
     });
 
   }

@@ -227,7 +227,7 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
 
     try {
       getModelFetchPhases().forEach(phase -> {
-        GradleOpenTelemetry.runWithSpan(phase.getName(), __ -> {
+        GradleOpenTelemetry.runWithSpan(phase.getName() + "-gradle", __ -> {
           Set<ProjectImportModelProvider> modelProviders = myModelProviders.getOrDefault(phase, Collections.emptySet());
           populateModels(buildController, modelConsumer, gradleBuilds, modelProviders);
           sendPendingState(buildController, models, phase);

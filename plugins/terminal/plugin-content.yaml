@@ -6,6 +6,9 @@
 - name: lib/modules/intellij.terminal.cloud.jar
   contentModules:
   - name: intellij.terminal.cloud
+- name: lib/modules/intellij.terminal.frontend.jar
+  contentModules:
+  - name: intellij.terminal.frontend
 - name: lib/modules/intellij.terminal.frontend.split.jar
   contentModules:
   - name: intellij.terminal.frontend.split
@@ -25,5 +28,4 @@
   - name: intellij.terminal.completion
   contentModules:
   - name: intellij.terminal.backend
-  - name: intellij.terminal.frontend
   - name: intellij.terminal.sh

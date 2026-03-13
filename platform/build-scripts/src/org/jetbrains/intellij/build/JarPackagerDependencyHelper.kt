@@ -59,6 +59,7 @@ internal class JarPackagerDependencyHelper(private val outputProvider: ModuleOut
       return moduleName != "intellij.rider.test.framework" &&
              moduleName != "intellij.rider.test.build.shared" &&
              moduleName != "intellij.rider.test.framework.core" &&
+             moduleName != "intellij.rider.test.framework.perforator" &&
              moduleName != "intellij.rider.test.framework.testng" &&
              moduleName != "intellij.rider.test.framework.junit" &&
              moduleName != "intellij.rider.test.framework.unit" &&
@@ -68,7 +69,7 @@ internal class JarPackagerDependencyHelper(private val outputProvider: ModuleOut
     return moduleName.endsWith("._test")
   }
 
-  fun getPluginIdByModule(pluginModule: JpsModule): String {
+  suspend fun getPluginIdByModule(pluginModule: JpsModule): String {
     // it is ok to read the plugin descriptor with unresolved x-include as the ID should be specified at the root
     val root = readXmlAsModel(getUnprocessedPluginXmlContent(module = pluginModule, outputProvider = outputProvider))
     val element = root.getChild("id") ?: root.getChild("name") ?: throw IllegalStateException("Cannot find attribute id or name (module=$pluginModule)")

@@ -8,7 +8,7 @@ TypeRepresentation:a.pythonTypeRepresentation
       PsiElement(Py:IDENTIFIER)('f')
     PyParameterListRepresentation
       PsiElement(Py:LPAR)('(')
-      PyNamedParameterTypeRepresentation
+      PyNamedParameterTypeRepresentation('callback')
         PsiElement(Py:IDENTIFIER)('callback')
         PsiElement(Py:COLON)(':')
         PsiWhiteSpace(' ')

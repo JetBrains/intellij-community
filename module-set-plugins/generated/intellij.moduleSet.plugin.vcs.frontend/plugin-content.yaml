@@ -1,0 +1,6 @@
+- name: lib/moduleSet-plugin-vcs-frontend.jar
+  modules:
+  - name: intellij.moduleSet.plugin.vcs.frontend
+- name: lib/modules/intellij.platform.vcs.impl.frontend.jar
+  contentModules:
+  - name: intellij.platform.vcs.impl.frontend

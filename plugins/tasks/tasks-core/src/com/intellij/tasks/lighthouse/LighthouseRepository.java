@@ -3,6 +3,7 @@ package com.intellij.tasks.lighthouse;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Comment;
@@ -21,7 +22,6 @@ import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.jdom.Element;
-import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,7 +92,7 @@ public final class LighthouseRepository extends BaseRepositoryImpl {
     while (tasks.size() < max) {
       HttpMethod method = doREST(url + "&page=" + page, false, client);
       InputStream stream = method.getResponseBodyAsStream();
-      Element element = new SAXBuilder(false).build(stream).getRootElement();
+      Element element = JDOMUtil.load(stream);
       if ("nil-classes".equals(element.getName())) break;
       if (!"tickets".equals(element.getName())) {
         LOG.warn("Error fetching issues for: " + url + ", HTTP status code: " + method.getStatusCode());
@@ -258,7 +258,7 @@ public final class LighthouseRepository extends BaseRepositoryImpl {
     if (!Comparing.strEqual(projectId, myProjectId)) return null;
     HttpMethod method = doREST("/projects/" + myProjectId + "/tickets/" + realId +".xml", false, login());
     InputStream stream = method.getResponseBodyAsStream();
-    Element element = new SAXBuilder(false).build(stream).getRootElement();
+    Element element = JDOMUtil.load(stream);
     return element.getName().equals("ticket") ? createIssue(element) : null;
   }
 

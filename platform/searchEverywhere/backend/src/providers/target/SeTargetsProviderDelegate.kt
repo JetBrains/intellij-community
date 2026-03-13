@@ -15,10 +15,21 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.scopes.SearchScopesInfo
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeExtendedInfo
+import com.intellij.platform.searchEverywhere.SeItem
+import com.intellij.platform.searchEverywhere.SeItemsProvider
+import com.intellij.platform.searchEverywhere.SeLegacyItem
+import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SePreviewInfo
+import com.intellij.platform.searchEverywhere.SePreviewInfoFactory
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
-import com.intellij.platform.searchEverywhere.providers.*
+import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
+import com.intellij.platform.searchEverywhere.providers.ScopeChooserActionProviderDelegate
+import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
+import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
+import com.intellij.platform.searchEverywhere.providers.SeTypeVisibilityStateProviderDelegate
+import com.intellij.platform.searchEverywhere.providers.getExtendedInfo
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetsFilter
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.intellij.psi.codeStyle.NameUtil
@@ -57,17 +68,13 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
     Disposer.register(parentDisposable, this)
   }
 
-  suspend fun <T> collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
+  suspend fun <T> collectItems(params: SeParams, collector: SeItemsProvider.Collector, operationDisposable: Disposable? = null) {
     val inputQuery = params.inputQuery
     val defaultMatchers = createDefaultMatchers(inputQuery)
 
     scopeProviderDelegate?.let { scopeProviderDelegate ->
       SeEverywhereFilter.isEverywhere(params.filter)?.let { isEverywhere ->
-        val selectedScopeId = scopeProviderDelegate.searchScopesInfo.getValue()?.let { searchScopesInfo ->
-          if (isEverywhere) searchScopesInfo.everywhereScopeId else searchScopesInfo.projectScopeId
-        } ?: return@let
-
-        scopeProviderDelegate.applyScope(selectedScopeId, false)
+        scopeProviderDelegate.applyScope(isEverywhere, false)
       } ?: run {
         val targetsFilter = SeTargetsFilter.from(params.filter)
         SeTypeVisibilityStateProviderDelegate.applyTypeVisibilityStates<T>(contributor, targetsFilter.hiddenTypes)
@@ -83,7 +90,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
 
         return collector.put(SeTargetItem(legacyItem, matchers, weight, contributor, contributor.getExtendedInfo(legacyItem), contributorWrapper.contributor.isMultiSelectionSupported))
       }
-    })
+    }, operationDisposable)
   }
 
   suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
@@ -112,17 +119,11 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
       }) return null
 
     val rangeResult = readAction {
-      val range = usageInfo.smartPointer.psiRange ?: try {
-        usageInfo.navigationRange
-      }
-      catch (_: Exception) {
-        return@readAction null
-      }
-      range?.let { it.startOffset to it.endOffset }
+      SearchEverywherePreviewFetcher.readRangeFromUsageInfo(usageInfo)
     }
     val (startOffset, endOffset) = rangeResult ?: return null
 
-    return SePreviewInfoFactory().create(usageInfo.virtualFile!!.rpcId(), listOf(startOffset to endOffset))
+    return SePreviewInfoFactory.create(usageInfo.virtualFile!!.rpcId(), listOf(startOffset to endOffset))
   }
 
   /**

@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.idea.completion.contributors.keywords.OverrideKeywordHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.keywords.OverrideKeywordHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSetupScope
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor

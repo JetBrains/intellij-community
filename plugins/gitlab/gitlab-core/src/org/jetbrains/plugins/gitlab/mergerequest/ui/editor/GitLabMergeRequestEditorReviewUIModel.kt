@@ -3,13 +3,17 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.mapStatefulToStateful
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.async.transformConsecutiveSuccesses
+import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterActionableChangesModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlaysModel
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel.Ranged.Adjustable.AdjustmentDisabledReason
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewNavigableEditorViewModel
 import com.intellij.collaboration.ui.codereview.editor.MutableCodeReviewEditorGutterChangesModel
 import com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil
@@ -22,6 +26,7 @@ import com.intellij.collaboration.util.getOrNull
 import com.intellij.collaboration.util.syncOrToggleAll
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
+import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.util.cancelOnDispose
@@ -32,6 +37,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNoteLocation
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 /**
@@ -48,6 +54,7 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     CodeReviewEditorGutterActionableChangesModel,
     CodeReviewEditorInlaysModel<GitLabMergeRequestEditorMappedComponentModel>,
     CodeReviewEditorGutterControlsModel,
+    CodeReviewCommentableEditorModel.WithMultilineComments,
     CodeReviewNavigableEditorViewModel {
 
   private val postReviewRanges = MutableStateFlow<List<Range>?>(null)
@@ -96,13 +103,28 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   override fun requestNewComment(lineIdx: Int) {
     val ranges = postReviewRanges.value ?: return
     val originalLine = ReviewInEditorUtil.transferLineFromAfter(ranges, lineIdx)?.takeIf { it >= 0 } ?: return
-    fileVm.requestNewDiscussion(originalLine, true)
+    val location = GitLabNoteLocation(Side.RIGHT, originalLine, Side.RIGHT, originalLine)
+    fileVm.requestNewDiscussion(location, true)
   }
 
   override fun cancelNewComment(lineIdx: Int) {
     val ranges = postReviewRanges.value ?: return
     val originalLine = ReviewInEditorUtil.transferLineFromAfter(ranges, lineIdx)?.takeIf { it >= 0 } ?: return
-    fileVm.cancelNewDiscussion(originalLine)
+    fileVm.cancelNewDiscussion(Side.RIGHT to originalLine)
+  }
+
+  override fun requestNewComment(lineRange: LineRange) {
+    val ranges = postReviewRanges.value ?: return
+    val startLine = ReviewInEditorUtil.transferLineFromAfter(ranges, lineRange.start)?.takeIf { it >= 0 } ?: return
+    val originalLine = ReviewInEditorUtil.transferLineFromAfter(ranges, lineRange.end)?.takeIf { it >= 0 } ?: return
+    val location = GitLabNoteLocation(Side.RIGHT, startLine, Side.RIGHT, originalLine)
+    fileVm.requestNewDiscussion(location, true)
+  }
+
+  override fun canCreateComment(lineRange: LineRange): Boolean {
+    val gutterControls = gutterControlsState.value ?: return false
+    return gutterControls.isLineCommentable(lineRange.start) &&
+           gutterControls.isLineCommentable(lineRange.end)
   }
 
   override fun toggleComments(lineIdx: Int) {
@@ -110,8 +132,8 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     GitLabStatistics.logToggledComments(project)
   }
 
-  fun cancelNewDiscussion(originalLine: Int) {
-    fileVm.cancelNewDiscussion(originalLine)
+  fun cancelNewDiscussion(lineLocation: DiffLineLocation) {
+    fileVm.cancelNewDiscussion(lineLocation)
   }
 
   override fun getBaseContent(lines: LineRange): String? = fileVm.getBaseContent(lines)
@@ -184,12 +206,12 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     return inlay.isVisible.value
   }
 
-  private fun StateFlow<Int?>.shiftLine(): StateFlow<Int?> =
-    combineState(postReviewRanges) { line, ranges ->
-      if (ranges != null && line != null) {
-        ReviewInEditorUtil.transferLineToAfter(ranges, line).takeIf { it >= 0 }
-      }
-      else null
+  private fun StateFlow<GitLabNoteLocation?>.shiftLineRange(): StateFlow<LineRange?> =
+    combineState(postReviewRanges) { vmsLocation, ranges ->
+      if (ranges == null || vmsLocation == null) return@combineState null
+      val start = ReviewInEditorUtil.transferLineToAfter(ranges, vmsLocation.startLineIdx)
+      val end = ReviewInEditorUtil.transferLineToAfter(ranges, vmsLocation.lineIdx)
+      LineRange(start, end)
     }
 
   private fun Int.shiftLineToAfter(): Int? {
@@ -205,23 +227,42 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   private inner class ShiftedDiscussion(vm: GitLabMergeRequestEditorDiscussionViewModel)
     : GitLabMergeRequestEditorMappedComponentModel.Discussion<GitLabMergeRequestEditorDiscussionViewModel>(vm) {
     override val isVisible: StateFlow<Boolean> = vm.isVisible.combineState(hiddenState) { visible, hidden -> visible && !hidden }
-    override val line: StateFlow<Int?> = vm.line.shiftLine()
+    override val range: StateFlow<LineRange?> = vm.location.shiftLineRange()
+    override val line: StateFlow<Int?> = range.mapState { it?.end }
   }
 
   private inner class ShiftedDraftNote(vm: GitLabMergeRequestEditorDraftNoteViewModel)
     : GitLabMergeRequestEditorMappedComponentModel.DraftNote<GitLabMergeRequestEditorDraftNoteViewModel>(vm) {
     override val isVisible: StateFlow<Boolean> = vm.isVisible.combineState(hiddenState) { visible, hidden -> visible && !hidden }
-    override val line: StateFlow<Int?> = vm.line.shiftLine()
+    override val range: StateFlow<LineRange?> = vm.location.shiftLineRange()
+    override val line: StateFlow<Int?> = range.mapState { it?.end }
   }
 
-  private inner class ShiftedNewDiscussion(vm: GitLabMergeRequestEditorNewDiscussionViewModel)
-    : GitLabMergeRequestEditorMappedComponentModel.NewDiscussion<GitLabMergeRequestEditorNewDiscussionViewModel>(vm) {
+  private inner class ShiftedNewDiscussion(vm: GitLabMergeRequestEditorNewDiscussionViewModel) :
+    GitLabMergeRequestEditorMappedComponentModel.NewDiscussion<GitLabMergeRequestEditorNewDiscussionViewModel>(vm) {
     override val key: Any = vm.key
     override val isVisible: StateFlow<Boolean> = MutableStateFlow(true)
-    override val line: StateFlow<Int?> = vm.line.shiftLine()
+    override val range: StateFlow<LineRange?> = vm.location.shiftLineRange()
+    override val line: StateFlow<Int?> = range.mapState { it?.end }
+    override val adjustmentDisabledReason =
+      MutableStateFlow(AdjustmentDisabledReason.UNSUPPORTED_VERSION.takeIf { !vm.isMultilinePositionSupported })
+    override fun adjustRange(newStart: Int?, newEnd: Int?) {
+      if (newStart == null && newEnd == null) return
+      val ranges = postReviewRanges.value ?: emptyList()
+      val transferredStart = newStart?.let {
+        val startLine = ReviewInEditorUtil.transferLineFromAfter(ranges, it)?.takeIf { it >= 0 } ?: return@let null
+        Side.RIGHT to startLine
+      }
+      val transferredEnd = newEnd?.let {
+        val endLine = ReviewInEditorUtil.transferLineFromAfter(ranges, it)?.takeIf { it >= 0 } ?: return@let null
+        Side.RIGHT to endLine
+      }
+      vm.updateLineRange(transferredStart, transferredEnd)
+      vm.requestFocus()
+    }
 
     override fun cancel() {
-      vm.line.value?.let(::cancelNewDiscussion)
+      vm.location.value?.let { cancelNewDiscussion(it.side to it.lineIdx) }
     }
   }
 }

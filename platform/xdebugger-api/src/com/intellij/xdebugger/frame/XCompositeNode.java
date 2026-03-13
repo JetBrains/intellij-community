@@ -6,7 +6,7 @@ import com.intellij.xdebugger.Obsolescent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * Represents a node with children in a debugger tree. This interface isn't supposed to be implemented by a plugin.

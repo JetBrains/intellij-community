@@ -15,7 +15,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.util.PlatformUtils.*;
+import static com.intellij.util.PlatformUtils.isAppCode;
+import static com.intellij.util.PlatformUtils.isDataGrip;
+import static com.intellij.util.PlatformUtils.isPyCharm;
+import static com.intellij.util.PlatformUtils.isRider;
 
 @ApiStatus.Internal
 public final class FormatOnSaveInfoProvider extends ActionOnSaveInfoProvider {

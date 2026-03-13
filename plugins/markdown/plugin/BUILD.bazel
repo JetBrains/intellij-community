@@ -24,6 +24,18 @@ jvm_library(
   module_name = "intellij.markdown.plugin.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  runtime_deps = [":plugin-main"]
+  runtime_deps = [
+    ":plugin-main",
+    "//plugins/markdown/fenceInjection:fenceInjection_test_lib",
+    "//plugins/markdown/frontmatter:frontmatter_test_lib",
+    "//plugins/markdown/frontmatter/toml:toml_test_lib",
+    "//plugins/markdown/frontmatter/yaml:yaml_test_lib",
+    "//plugins/markdown/images:images_test_lib",
+    "//plugins/markdown/model:model_test_lib",
+    "//plugins/markdown/spellchecker:spellchecker_test_lib",
+    "//plugins/markdown/xml:xml_test_lib",
+    "//plugins/markdown/compose:compose-preview_test_lib",
+    "//plugins/markdown/core/frontend:frontend_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.markdown.plugin.main` end

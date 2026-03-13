@@ -1,4 +1,5 @@
 // "Wrap argument with parentheses" "true"
+// K2_ERROR: Calls in the form of 'suspend {}' are deprecated because 'suspend' in this context will have the meaning of a modifier. Surround the lambda with parentheses: 'suspend({ ... })'.
 infix fun Int.suspend(bar: () -> Unit) {}
 
 fun foo() {

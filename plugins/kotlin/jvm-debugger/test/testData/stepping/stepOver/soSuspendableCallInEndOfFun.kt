@@ -39,5 +39,5 @@ suspend fun run() {
     }
 }
 
-// STEP_OVER: 3
+// STEP_OVER: 4
 // REGISTRY: debugger.kotlin.step.through.inline.lambdas=false

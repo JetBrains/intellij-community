@@ -1,27 +1,30 @@
  // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.structuralsearch.MatchVariableConstraint;
-import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.structuralsearch.StructuralSearchProfile;
-import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
-import com.intellij.structuralsearch.plugin.ui.UIUtil;
-import com.intellij.ui.ContextHelpLabel;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.TextFieldWithAutoCompletion;
-import com.intellij.util.containers.JBIterable;
+ import com.intellij.openapi.actionSystem.ActionManager;
+ import com.intellij.openapi.actionSystem.IdeActions;
+ import com.intellij.openapi.keymap.KeymapUtil;
+ import com.intellij.openapi.util.text.StringUtil;
+ import com.intellij.psi.PsiElement;
+ import com.intellij.structuralsearch.MatchVariableConstraint;
+ import com.intellij.structuralsearch.SSRBundle;
+ import com.intellij.structuralsearch.StructuralSearchProfile;
+ import com.intellij.structuralsearch.plugin.ui.Configuration;
+ import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
+ import com.intellij.structuralsearch.plugin.ui.UIUtil;
+ import com.intellij.ui.ContextHelpLabel;
+ import com.intellij.ui.SimpleColoredComponent;
+ import com.intellij.ui.TextFieldWithAutoCompletion;
+ import com.intellij.util.containers.JBIterable;
 
-import javax.swing.*;
-import java.util.Collections;
-import java.util.List;
+ import javax.swing.GroupLayout;
+ import javax.swing.JComponent;
+ import javax.swing.JLabel;
+ import javax.swing.LayoutStyle;
+ import java.util.Collections;
+ import java.util.List;
 
-public class ContextFilter extends FilterAction {
+ public class ContextFilter extends FilterAction {
 
   public ContextFilter() {
     super(SSRBundle.messagePointer("context.filter.name"));

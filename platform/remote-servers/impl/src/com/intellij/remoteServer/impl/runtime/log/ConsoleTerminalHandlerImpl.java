@@ -8,8 +8,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.io.*;
+import javax.swing.JComponent;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
 public class ConsoleTerminalHandlerImpl extends TerminalHandlerBase {

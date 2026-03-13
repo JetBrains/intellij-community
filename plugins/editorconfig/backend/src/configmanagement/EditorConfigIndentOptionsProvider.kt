@@ -52,7 +52,7 @@ internal class EditorConfigIndentOptionsProvider : FileIndentOptionsProvider() {
 
 
   private fun applyCodeStyleSettings(project: Project,
-                                     properties: ResourceProperties,
+                                     properties: Map<String, String>,
                                      file: VirtualFile,
                                      settings: CodeStyleSettings): CommonCodeStyleSettings.IndentOptions? {
     // Apply indent options

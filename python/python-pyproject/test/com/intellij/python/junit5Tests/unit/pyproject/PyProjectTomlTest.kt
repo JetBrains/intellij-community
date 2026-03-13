@@ -30,7 +30,7 @@ class PyProjectTomlTest {
     val configContents = "[proj"
 
     // WHEN
-    val result = PyProjectToml.Companion.parse(configContents)
+    val result = PyProjectToml.parse(configContents)
 
     // THEN
     Assertions.assertThat(result.toml.errors()).isNotEmpty()
@@ -51,7 +51,7 @@ class PyProjectTomlTest {
       bar="test bar"
       baz="test baz"
     """.trimIndent()
-    val pyproject = PyProjectToml.Companion.parse(configContents)
+    val pyproject = PyProjectToml.parse(configContents)
 
     // WHEN
     val testTool = pyproject.getTool(TestPyProject)
@@ -75,7 +75,7 @@ class PyProjectTomlTest {
     """.trimIndent()
 
     // WHEN
-    val pyproject = PyProjectToml.Companion.parse(configContents)
+    val pyproject = PyProjectToml.parse(configContents)
     val testTool = pyproject.getTool(TestPyProject)
 
     // THEN
@@ -101,7 +101,7 @@ class PyProjectTomlTest {
     """.trimIndent()
 
     // WHEN
-    val pyproject = PyProjectToml.Companion.parse(configContents)
+    val pyproject = PyProjectToml.parse(configContents)
     val testTool = pyproject.getTool(TestPyProject)
 
     // THEN
@@ -120,7 +120,7 @@ class PyProjectTomlTest {
       name="Some project"
       version="1.2.3"
     """.trimIndent()
-    val pyproject = PyProjectToml.Companion.parse(configContents)
+    val pyproject = PyProjectToml.parse(configContents)
 
     // WHEN
     val testTool = pyproject.getTool(TestPyProject)
@@ -133,7 +133,7 @@ class PyProjectTomlTest {
   @ParameterizedTest(name = "{0}")
   @MethodSource("parseTestCases")
   fun parseTests(name: String, pyprojectToml: String, expectedProjectTable: PyProjectTable?, expectedIssues: List<PyProjectIssue>) {
-    val result = PyProjectToml.Companion.parse(pyprojectToml)
+    val result = PyProjectToml.parse(pyprojectToml)
     val unwrapped = result
 
     assertEquals(expectedProjectTable, unwrapped.project)

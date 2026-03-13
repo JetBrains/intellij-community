@@ -1,5 +1,6 @@
 // "Opt in for 'AliasMarker' on 'AliasMarkerUsage'" "true"
 // PRIORITY: HIGH
+// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@AliasMarker' or '@OptIn(AliasMarker::class)'
 
 
 @RequiresOptIn

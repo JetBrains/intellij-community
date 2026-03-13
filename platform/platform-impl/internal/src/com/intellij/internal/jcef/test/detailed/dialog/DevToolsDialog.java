@@ -5,13 +5,12 @@ package com.intellij.internal.jcef.test.detailed.dialog;
 import org.cef.browser.CefBrowser;
 import org.jetbrains.annotations.ApiStatus;
 
+import javax.swing.JDialog;
 import java.awt.BorderLayout;
 import java.awt.Frame;
 import java.awt.Point;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-
-import javax.swing.JDialog;
 
 @ApiStatus.Internal
 public class  DevToolsDialog extends JDialog {

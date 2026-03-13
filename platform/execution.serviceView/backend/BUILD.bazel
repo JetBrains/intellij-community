@@ -29,4 +29,25 @@ jvm_library(
     "//platform/util",
   ]
 )
+
+jvm_library(
+  name = "backend_test_lib",
+  module_name = "intellij.platform.execution.serviceView.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":backend",
+    "//platform/execution.serviceView:execution.serviceView_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+    "//fleet/rpc:rpc_test_lib",
+    "//platform/extensions:extensions_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/project/shared:project_test_lib",
+    "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+    "//platform/kernel/backend:backend_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/util:util_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.execution.serviceView.backend` end

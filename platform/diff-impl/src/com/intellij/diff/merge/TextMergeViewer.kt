@@ -8,6 +8,8 @@ import com.intellij.diff.merge.MergeTool.MergeViewer
 import com.intellij.diff.merge.MergeUtil.ProxyDiffContext
 import com.intellij.diff.requests.ContentDiffRequest
 import com.intellij.diff.requests.ProxySimpleDiffRequest
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings
+import com.intellij.diff.tools.util.base.TextDiffViewerUtil
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.ThreeSide
 import com.intellij.openapi.diff.DiffBundle
@@ -44,7 +46,7 @@ open class TextMergeViewer(
 
     components.closeHandler = {
       MergeUtil.showExitWithoutApplyingChangesDialog(this, mergeRequest, mergeContext, viewer.isContentModified).also {
-        viewer.logMergeCancelled(viewer.myContentModified, it)
+        viewer.logMergeCancelled(viewer.isContentModified, it)
       }
     }
 
@@ -74,7 +76,22 @@ open class TextMergeViewer(
     mergeRequest: TextMergeRequest,
     mergeViewer: TextMergeViewer,
   ): MergeThreesideViewer {
-    return MergeThreesideViewer(context, request, mergeContext, mergeRequest, mergeViewer)
+    val project = context.getProject()
+
+    val cachedModel = IterativeResolveSupport.getData(mergeRequest)
+    if (cachedModel != null) {
+      val current = TextDiffViewerUtil.getTextSettings(context)
+      current.isAutoResolveImportConflicts =
+        cachedModel.precalculatedData?.isAutoResolveImportConflicts ?: current.isAutoResolveImportConflicts
+      current.ignorePolicy = cachedModel.precalculatedData?.ignorePolicy ?: current.ignorePolicy
+      context.putUserData(TextDiffSettings.KEY, current)
+      return MergeThreesideViewer(context, request, mergeContext, mergeRequest, mergeViewer, cachedModel)
+    }
+    val conflictResolver = LangSpecificMergeConflictResolverWrapper(context.getProject(), mergeRequest.getContents())
+    val model = MergeConflictModel(project, mergeRequest, conflictResolver)
+
+    Disposer.register(this, model)
+    return MergeThreesideViewer(context, request, mergeContext, mergeRequest, mergeViewer, model)
   }
 
   private fun createMergeThreesideViewer(mergeContext: MergeContext, mergeRequest: TextMergeRequest): MergeThreesideViewer {

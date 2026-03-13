@@ -2,6 +2,7 @@
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.navigation.ChooseByNameContributor
+import com.intellij.navigation.ChooseByNameContributorWithDisposableCleanup
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator

@@ -41,10 +41,15 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
   }
 
   /**
-   * Here, a file is considered local if it is accessible by the OS of the IDE.
-   * JVM internals assume that all files are local to it.
+   * Checks whether the file resides on the local OS filesystem (as opposed to being routed
+   * to a remote provider such as IJent/EEL via {@code MultiRoutingFileSystem}).
+   * <p>
+   * Used by {@link #getZipFileWrapper(Path)} to choose between native {@code ZipFile}
+   * ({@link JavaZipFileWrapper}) and pure-Java {@link JBZipFileWrapper}, and by
+   * {@link ZipHandler#acquireZipHandle()} to skip the JDK-4425695 freshness check
+   * for remote files where it doesn't apply.
    */
-  private static boolean isFileLocal(Path file) {
+  static boolean isFileLocal(Path file) {
     FileSystem fileFs = file.getFileSystem();
     if (fileFs.equals(FileSystems.getDefault())) {
       try {

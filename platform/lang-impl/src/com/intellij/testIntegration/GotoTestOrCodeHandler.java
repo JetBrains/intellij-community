@@ -26,7 +26,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -51,7 +51,7 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
         () -> {
           Collection<PsiElement> classes =
-            ReadAction.compute(() -> TestFinderHelper.findClassesForTest(selectedElement));
+            ReadAction.computeBlocking(() -> TestFinderHelper.findClassesForTest(selectedElement));
           candidates.addAll(classes);
         },
         TestFinderHelper.getSearchingForClassesForTestProgressTitle(selectedElement), true, file.getProject())) {
@@ -62,7 +62,7 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
       final Ref<Boolean> navigateToTestImmediatelyRef = new Ref<>(false);
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
         () -> {
-          Collection<PsiElement> tests = ReadAction.compute(() -> TestFinderHelper.findTestsForClass(selectedElement));
+          Collection<PsiElement> tests = ReadAction.computeBlocking(() -> TestFinderHelper.findTestsForClass(selectedElement));
           candidates.addAll(tests);
           navigateToTestImmediatelyRef.set(candidates.size() == 1 && TestFinderHelper.navigateToTestImmediately(candidates.get(0)));
         },

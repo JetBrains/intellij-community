@@ -51,8 +51,8 @@ grammar {
         (common.attrs.aria.implicit.img | common.attrs.aria)?,
         attribute x { Coordinate.datatype }?,
         attribute y { Coordinate.datatype }?,
-        attribute width { Length.datatype },
-        attribute height { Length.datatype },
+        attribute width { Length.datatype }?,
+        attribute height { Length.datatype }?,
         [ a:defaultValue = "xMidYMid meet" ]
         attribute preserveAspectRatio {
             PreserveAspectRatioSpec.datatype

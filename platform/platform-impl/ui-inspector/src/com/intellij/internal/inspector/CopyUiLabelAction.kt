@@ -17,7 +17,15 @@ import java.awt.Container
 import java.awt.datatransfer.StringSelection
 import java.awt.event.MouseEvent
 import javax.accessibility.AccessibleText
-import javax.swing.*
+import javax.swing.AbstractButton
+import javax.swing.DefaultListCellRenderer
+import javax.swing.JComboBox
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JTable
+import javax.swing.JTree
+import javax.swing.ListCellRenderer
 import javax.swing.border.TitledBorder
 import javax.swing.plaf.basic.BasicComboPopup
 import javax.swing.table.DefaultTableCellRenderer

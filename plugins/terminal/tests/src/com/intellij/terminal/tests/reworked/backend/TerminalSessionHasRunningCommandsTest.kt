@@ -82,7 +82,7 @@ class TerminalSessionHasRunningCommandsTest(private val eelHolder: EelHolder) {
     get() = eelHolder.eel
 
   @TestFactory
-  fun `default scenario (no,yes,no)`() = withShellPathAndShellIntegration(eelApi, 60.seconds) { shellPath, shellIntegration ->
+  fun `default scenario (no,yes,no)`() = withShellPathAndShellIntegration(eelApi, 60.seconds) { shellPath, shellIntegration, _ ->
     TerminalOptionsProvider.instance::shellIntegration.setValueInTest(shellIntegration, this.asDisposable())
     val (session, shellProcess) = startTerminalSession(shellPath, this)
     echoShellVersion(session, shellPath)

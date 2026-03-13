@@ -1,0 +1,18 @@
+- name: lib/agent-workbench-sessions.jar
+  modules:
+  - name: intellij.agent.workbench.plugin
+  contentModules:
+  - name: intellij.agent.workbench.common
+  - name: intellij.agent.workbench.claude.common
+  - name: intellij.agent.workbench.claude.sessions
+  - name: intellij.agent.workbench.codex.common
+  - name: intellij.agent.workbench.filewatch
+  - name: intellij.agent.workbench.codex.sessions
+  - name: intellij.agent.workbench.sessions.core
+  - name: intellij.agent.workbench.prompt
+  - name: intellij.agent.workbench.prompt.vcs
+  - name: intellij.agent.workbench.prompt.testrunner
+  - name: intellij.agent.workbench.sessions
+  - name: intellij.agent.workbench.sessions.actions
+  - name: intellij.agent.workbench.sessions.toolwindow
+  - name: intellij.agent.workbench

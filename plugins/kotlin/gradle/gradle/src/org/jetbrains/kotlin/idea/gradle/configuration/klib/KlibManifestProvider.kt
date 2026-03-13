@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.gradle.configuration.klib
 
 import com.intellij.util.containers.orNull
-import org.jetbrains.kotlin.library.KLIB_MANIFEST_FILE_NAME
+import org.jetbrains.kotlin.library.KlibConstants.KLIB_MANIFEST_FILE_NAME
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path

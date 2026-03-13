@@ -1,4 +1,6 @@
 // "Assign to property" "true"
+// K2_ERROR: 'val' cannot be reassigned.
+// K2_ERROR: Assignment type mismatch: actual type is 'Int', but 'String' was expected.
 class Test {
     var foo = 1
 

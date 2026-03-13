@@ -57,10 +57,24 @@ import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -470,7 +484,7 @@ public final class PassExecutorService implements Disposable {
         });
 
         if (!success) {
-          myUpdateProgress.cancel();
+          myUpdateProgress.cancel("tryReadAction() returned false");
         }
       }, myUpdateProgress);
 
@@ -513,7 +527,7 @@ public final class PassExecutorService implements Disposable {
     try {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (isDisposed() || !fileEditor.isValid()) {
-          updateProgress.cancel();
+          updateProgress.cancel("isDisposed()="+isDisposed()+"; fileEditor.isValid()="+fileEditor.isValid());
         }
         if (updateProgress.isCanceled()) {
           log(updateProgress, pass, " is canceled during apply, sorry");
@@ -547,7 +561,7 @@ public final class PassExecutorService implements Disposable {
             VirtualFile virtualFile = fileEditor.getFile();
             Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
             RangeHighlighter[] highlighters = document == null ? RangeHighlighter.EMPTY_ARRAY : DocumentMarkupModel.forDocument(document, myProject, true).getAllHighlighters();
-            List<RangeHighlighter> sorted = ContainerUtil.sorted(Arrays.asList(highlighters), Segment.BY_START_OFFSET_THEN_END_OFFSET);
+            List<RangeHighlighter> sorted = ContainerUtil.filter(ContainerUtil.sorted(Arrays.asList(highlighters), Segment.BY_START_OFFSET_THEN_END_OFFSET), h->h.isValid());
             log(updateProgress, pass, "result markup=" + StringUtil.join(sorted, h -> h.toString(), "\n   "));
           }
           log(updateProgress, pass, "Stopping. ");
@@ -597,10 +611,10 @@ public final class PassExecutorService implements Disposable {
       Document document = pass instanceof TextEditorHighlightingPass text ? text.getDocument() : null;
       CharSequence docText = document == null ? "" : ": '" + StringUtil.first(document.getCharsSequence(), 10, true)+ "'";
       String message = StringUtil.repeatSymbol(' ', IdeaForkJoinWorkerThreadFactory.getThreadNum() * 4)
-                       + " " + (pass == null ? "" : pass + " ")
+                       + (pass == null ? "" : pass + " ")
                        + StringUtil.join(info, Functions.TO_STRING(), " ")
                        + "; progress=" + progressIndicator
-                       + (docText.isEmpty() ? "" : " " + docText);
+                       + docText;
       LOG.debug(message);
     }
   }

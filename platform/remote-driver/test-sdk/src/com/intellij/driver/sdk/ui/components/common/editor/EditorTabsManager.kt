@@ -5,6 +5,7 @@ import com.intellij.driver.sdk.ui.components.common.EditorTabsUiComponent
 import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.hasFocus
 import com.intellij.driver.sdk.ui.remote.Component
+import com.intellij.driver.sdk.waitFor
 import java.awt.Point
 
 /**
@@ -20,16 +21,20 @@ class EditorTabsManager(val ideaFrame: IdeaFrameUI) {
    * Main method that allows to get all editor tabs in the whole ide frame space being sorted by default from LEFT to RIGHT and TOP to BOTTOM directions
    */
   fun getAllEditorTabs(editorSortDirection: EditorTabsGeometryWrapper.EditorSortDirection = EditorTabsGeometryWrapper.EditorSortDirection.LEFT_TO_RIGHT): List<EditorTabsGeometryWrapper> {
-    return editorSortDirection.sorter(findAllEditorTabComponents()).map { editorTab -> EditorTabsGeometryWrapper(editorTabsUiComponent = editorTab) }
+    return editorSortDirection.sorter(findAllEditorTabComponents())
+      .map { editorTab -> EditorTabsGeometryWrapper(editorTabsUiComponent = editorTab) }
   }
 
   fun getAllEditorTabsThatHaveFileOpened(
     tabValue: String,
     editorSortDirection: EditorTabsGeometryWrapper.EditorSortDirection = EditorTabsGeometryWrapper.EditorSortDirection.LEFT_TO_RIGHT,
   ): List<EditorTabsGeometryWrapper> {
-    return getAllEditorTabs(editorSortDirection).filter {
-      it.editorTabsUiComponent.getTabs().any { tab -> tab.text.equals(tabValue, true) }
-    }
+    val checker = { it: EditorTabsGeometryWrapper -> it.editorTabsUiComponent.getTabs().any { tab -> tab.text.equals(tabValue, true) } }
+    return waitFor(message = "Editor tab with opened file '$tabValue' should exist",
+                   errorMessage = { "There's no editor tab with file '$tabValue' inside" },
+                   getter = { getAllEditorTabs(editorSortDirection) },
+                   checker = { it.any { checker(it) } })
+      .filter { checker(it) }
   }
 
 }

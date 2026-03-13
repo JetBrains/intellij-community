@@ -6,6 +6,7 @@ import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.util.createDocumentBuilderFactory
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KotlinIdeaReplBundle
 import org.jetbrains.kotlin.cli.common.repl.replNormalizeLineBreaks
@@ -29,7 +30,6 @@ import org.w3c.dom.Element
 import org.xml.sax.InputSource
 import java.io.ByteArrayInputStream
 import java.nio.charset.Charset
-import javax.xml.parsers.DocumentBuilderFactory
 
 @K1Deprecation
 data class SeverityDetails(val severity: Severity, val description: String, val range: TextRange)
@@ -42,7 +42,7 @@ class ReplOutputHandler(
 ) : OSProcessHandler(process, commandLine) {
 
     private var isBuildInfoChecked = false
-    private val factory = DocumentBuilderFactory.newDefaultInstance()
+    private val factory = createDocumentBuilderFactory()
     private val outputProcessor = ReplOutputProcessor(runner)
     private val inputBuffer = StringBuilder()
 

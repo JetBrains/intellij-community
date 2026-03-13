@@ -1,18 +1,17 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.KaSymbolBasedReference
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.base.psi.canBeUsedInImport
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBeUsedAsExtension
+import org.jetbrains.kotlin.idea.references.KtDefaultAnnotationArgumentReference
 import org.jetbrains.kotlin.idea.references.KtMultiReference
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
@@ -33,7 +32,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.castAll
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 
 internal object KotlinReferenceRestoringHelper {
-    @OptIn(KaImplementationDetail::class)
     fun collectSourceReferenceInfos(sourceFile: KtFile, startOffsets: IntArray, endOffsets: IntArray): List<KotlinSourceReferenceInfo> {
         var currentStartOffsetInPastedText = 0
 
@@ -41,9 +39,10 @@ internal object KotlinReferenceRestoringHelper {
             // delta between the source text offset and the offset in the text to be pasted
             val deltaBetweenStartOffsets = currentStartOffsetInPastedText - startOffset
 
-            val elements = sourceFile.collectElementsOfTypeInRange<KtElement>(startOffset, endOffset)
-                .filterNot { it is KtSimpleNameExpression && !it.canBeUsedInImport() }
-                .filter { it.mainReference is KaSymbolBasedReference }
+            val elements = sourceFile.collectElementsOfTypeInRange<KtElement>(startOffset, endOffset).filterNot { element ->
+                element is KtSimpleNameExpression && !element.canBeUsedInImport() ||
+                        element.mainReference.let { it == null || it is KtDefaultAnnotationArgumentReference }
+            }
 
             val infos = elements.map { element ->
                 KotlinSourceReferenceInfo(

@@ -190,7 +190,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
 
   @Override
   public Module @NotNull [] getModules() {
-    Module module = ReadAction.compute(() -> getConfigurationModule().getModule());
+    Module module = ReadAction.computeBlocking(() -> getConfigurationModule().getModule());
     return module == null ? Module.EMPTY_ARRAY : new Module[]{module};
   }
 

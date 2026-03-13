@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil.getSitePackagesDirectory
 import org.jetbrains.annotations.ApiStatus
 
@@ -41,7 +42,7 @@ class PythonSdkUpdateProjectActivity : ProjectActivity, DumbAware {
 }
 
 @ApiStatus.Internal
-suspend fun refreshPaths(project: Project, sdk: Sdk, reason: Any) {
+suspend fun refreshPaths(project: Project, sdk: Sdk) {
   // Background refreshing breaks structured concurrency: there is a some activity in background that locks files.
   // Temporary folders can't be deleted on Windows due to that.
   // That breaks tests.
@@ -56,7 +57,9 @@ suspend fun refreshPaths(project: Project, sdk: Sdk, reason: Any) {
     RefreshQueue.getInstance().refresh(true, listOfNotNull(getSitePackagesDirectory(sdk), sdk.associatedModuleDir))
   }
 
-  PythonSdkUpdater.scheduleUpdate(sdk, project, false)
+  PyPackageCoroutine.launch(project) {
+    PythonSdkUpdater.scheduleUpdate(sdk, project, false)
+  }
 }
 
 internal fun dropUpdaterInHeadless(): Boolean {

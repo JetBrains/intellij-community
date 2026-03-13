@@ -4,6 +4,7 @@
 // K2_ACTIONS_LIST: Create extension function 'A<Int>.foo'
 // K2_ACTIONS_LIST: Create member function 'A.foo'
 // K2_ACTIONS_LIST: Add 'i =' to argument
+// K2_ERROR: No value passed for parameter 's'.
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction

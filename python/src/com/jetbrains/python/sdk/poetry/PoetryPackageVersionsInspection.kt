@@ -33,12 +33,11 @@ internal class PoetryPackageVersionsInspection : LocalInspectionTool() {
     isOnTheFly: Boolean,
     session: LocalInspectionToolSession,
   ): PsiElementVisitor {
-    return PoetryFileVisitor(holder, session)
+    return PoetryFileVisitor(holder)
   }
 
   class PoetryFileVisitor(
     val holder: ProblemsHolder,
-    session: LocalInspectionToolSession,
   ) : PsiElementVisitor() {
     @RequiresBackgroundThread
     private fun guessModule(element: PsiElement): Module? {

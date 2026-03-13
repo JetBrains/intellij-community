@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:jspecify"],
   runtime_deps = ["@lib//:jspecify"]
 )
+
+jvm_library(
+  name = "jspecify_test_lib",
+  module_name = "intellij.libraries.jspecify",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:jspecify"],
+  runtime_deps = [":jspecify"]
+)
 ### auto-generated section `build intellij.libraries.jspecify` end

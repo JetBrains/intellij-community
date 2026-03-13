@@ -70,6 +70,3 @@ class HotSwapStatusNotificationManager private constructor(private val project: 
     }
   }
 }
-
-@ApiStatus.Internal
-const val NOTIFICATION_TIME_SECONDS: Int = 3

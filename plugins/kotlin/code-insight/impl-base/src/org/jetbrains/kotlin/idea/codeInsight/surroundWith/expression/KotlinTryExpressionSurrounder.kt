@@ -6,9 +6,9 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement.KotlinTrySurrounderBase
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement.TryCatchExceptionUtil
@@ -81,7 +81,7 @@ sealed class KotlinTryExpressionSurrounder : KotlinControlFlowExpressionSurround
         val newElement = psiFactory.createExpression(getPattern(exceptions).replace("$0", expression.text))
         val replaced = expression.replace(newElement) as KtTryExpression
 
-        shortenReferences(replaced, ShortenOptions.DEFAULT, classShortenStrategy = { ShortenStrategy.SHORTEN_AND_IMPORT })
+        shortenReferences(replaced, ShortenOptionsForIde.DEFAULT, classShortenStrategy = { ShortenStrategy.SHORTEN_AND_IMPORT })
 
         replaced.catchClauses
             .mapNotNull { it.catchParameter?.typeReference }

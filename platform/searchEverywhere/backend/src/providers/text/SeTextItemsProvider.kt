@@ -13,10 +13,26 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.scopes.SearchScopesInfo
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeExtendedInfo
+import com.intellij.platform.searchEverywhere.SeExtendedInfoProvider
+import com.intellij.platform.searchEverywhere.SeItem
+import com.intellij.platform.searchEverywhere.SeItemsPreviewProvider
+import com.intellij.platform.searchEverywhere.SeItemsProvider
+import com.intellij.platform.searchEverywhere.SeLegacyItem
+import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SePreviewInfo
+import com.intellij.platform.searchEverywhere.SePreviewInfoFactory
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
+import com.intellij.platform.searchEverywhere.SeSearchScopesProvider
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.presentations.SeTextSearchItemPresentation
-import com.intellij.platform.searchEverywhere.providers.*
+import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
+import com.intellij.platform.searchEverywhere.providers.ScopeChooserActionProviderDelegate
+import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
+import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
+import com.intellij.platform.searchEverywhere.providers.SeTextFilter
+import com.intellij.platform.searchEverywhere.providers.SeWrappedLegacyContributorItemsProvider
+import com.intellij.platform.searchEverywhere.providers.getExtendedInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -132,7 +148,7 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
     val legacyItem = (item as? SeTextSearchItem)?.item ?: return null
     val navigationOffsets = legacyItem.usage.mergedInfos.map { it.navigationRange.startOffset to it.navigationRange.endOffset }
 
-    return SePreviewInfoFactory().create(legacyItem.usage.file.rpcId(), navigationOffsets)
+    return SePreviewInfoFactory.create(legacyItem.usage.file.rpcId(), navigationOffsets)
   }
 
   override fun dispose() {

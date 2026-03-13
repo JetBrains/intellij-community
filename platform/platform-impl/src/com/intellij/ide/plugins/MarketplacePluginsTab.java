@@ -3,50 +3,79 @@ package com.intellij.ide.plugins;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.marketplace.PluginSearchResult;
-import com.intellij.ide.plugins.marketplace.ranking.MarketplaceLocalRanker;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
-import com.intellij.ide.plugins.newui.*;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.ide.plugins.newui.ListPluginComponent;
+import com.intellij.ide.plugins.newui.MultiSelectionEventHandler;
+import com.intellij.ide.plugins.newui.NoOpPluginsViewCustomizer;
+import com.intellij.ide.plugins.newui.PluginDetailsPageComponent;
+import com.intellij.ide.plugins.newui.PluginInstallationState;
+import com.intellij.ide.plugins.newui.PluginLogo;
+import com.intellij.ide.plugins.newui.PluginManagerCustomizer;
+import com.intellij.ide.plugins.newui.PluginModelFacade;
+import com.intellij.ide.plugins.newui.PluginUiModel;
+import com.intellij.ide.plugins.newui.PluginUiModelAdapter;
+import com.intellij.ide.plugins.newui.PluginUpdatesService;
+import com.intellij.ide.plugins.newui.PluginsGroup;
+import com.intellij.ide.plugins.newui.PluginsGroupComponent;
+import com.intellij.ide.plugins.newui.PluginsGroupComponentWithProgress;
+import com.intellij.ide.plugins.newui.PluginsTab;
+import com.intellij.ide.plugins.newui.PluginsViewCustomizer;
+import com.intellij.ide.plugins.newui.PluginsViewCustomizerKt;
+import com.intellij.ide.plugins.newui.SearchPopup;
+import com.intellij.ide.plugins.newui.SearchQueryParser;
+import com.intellij.ide.plugins.newui.SearchResultPanel;
+import com.intellij.ide.plugins.newui.SearchUpDownPopupController;
+import com.intellij.ide.plugins.newui.SearchWords;
+import com.intellij.ide.plugins.newui.UiPluginManager;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource;
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserStartupActivityKt;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.labels.LinkListener;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import kotlinx.coroutines.CoroutineScope;
-import org.jetbrains.annotations.*;
-import org.jspecify.annotations.NonNull;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.accessibility.AccessibleContext;
-import javax.accessibility.AccessibleRole;
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.KeyEvent;
+import javax.swing.JComponent;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
-import static com.intellij.ide.plugins.PluginManagerConfigurablePanel.*;
+import static com.intellij.ide.plugins.PluginManagerConfigurablePanel.applyUpdates;
+import static com.intellij.ide.plugins.PluginManagerConfigurablePanel.clearUpdates;
+import static com.intellij.ide.plugins.PluginManagerConfigurablePanel.createScrollPane;
+import static com.intellij.ide.plugins.PluginManagerConfigurablePanel.registerCopyProvider;
 
 @ApiStatus.Internal
 class MarketplacePluginsTab extends PluginsTab {
@@ -64,7 +93,6 @@ class MarketplacePluginsTab extends PluginsTab {
   private Runnable myMarketplaceRunnable;
 
   private final DefaultActionGroup myMarketplaceSortByGroup;
-  private LinkComponent myMarketplaceSortByAction;
 
   private List<String> myTagsSorted;
   private List<String> myVendorsSorted;
@@ -263,13 +291,16 @@ class MarketplacePluginsTab extends PluginsTab {
           myMarketplacePanel.initialSelection();
 
           myPluginUpdatesService.calculateUpdates(updates -> {
-            if (ContainerUtil.isEmpty(updates)) {
+            List<PluginUiModel> updateModels = updates == null ? List.of() : updates.stream()
+              .filter(plugin -> myPluginModelFacade.isEnabled(plugin))
+              .toList();
+            if (ContainerUtil.isEmpty(updateModels)) {
               clearUpdates(myMarketplacePanel);
               clearUpdates(myMarketplaceSearchPanel.getPanel());
             }
             else {
-              applyUpdates(myMarketplacePanel, updates);
-              applyUpdates(myMarketplaceSearchPanel.getPanel(), updates);
+              applyUpdates(myMarketplacePanel, updateModels);
+              applyUpdates(myMarketplaceSearchPanel.getPanel(), updateModels);
             }
             selectionListener.accept(myMarketplacePanel);
             selectionListener.accept(myMarketplaceSearchPanel.getPanel());
@@ -350,60 +381,6 @@ class MarketplacePluginsTab extends PluginsTab {
       }
     };
 
-    myMarketplaceSortByAction = new LinkComponent() {
-      @Override
-      protected boolean isInClickableArea(Point pt) {
-        return true;
-      }
-
-      @Override
-      public AccessibleContext getAccessibleContext() {
-        if (accessibleContext == null) {
-          accessibleContext = new AccessibleLinkComponent();
-        }
-        return accessibleContext;
-      }
-
-      protected class AccessibleLinkComponent extends AccessibleLinkLabel {
-        @Override
-        public AccessibleRole getAccessibleRole() {
-          return AccessibleRole.COMBO_BOX;
-        }
-      }
-    };
-    myMarketplaceSortByAction.setIcon(new Icon() {
-      @Override
-      public void paintIcon(Component c, Graphics g, int x, int y) {
-        getIcon().paintIcon(c, g, x, y + 1);
-      }
-
-      @Override
-      public int getIconWidth() {
-        return getIcon().getIconWidth();
-      }
-
-      @Override
-      public int getIconHeight() {
-        return getIcon().getIconHeight();
-      }
-
-      private static @NotNull Icon getIcon() {
-        return AllIcons.General.ButtonDropTriangle;
-      }
-    }); // TODO: icon
-    myMarketplaceSortByAction.setPaintUnderline(false);
-    myMarketplaceSortByAction.setIconTextGap(JBUIScale.scale(4));
-    myMarketplaceSortByAction.setHorizontalTextPosition(SwingConstants.LEFT);
-    myMarketplaceSortByAction.setForeground(PluginsGroupComponent.SECTION_HEADER_FOREGROUND);
-
-    //noinspection unchecked
-    myMarketplaceSortByAction.setListener(
-      (component, __) -> showRightBottomPopup(component.getParent().getParent(), IdeBundle.message("plugins.configurable.sort.by"),
-                                              myMarketplaceSortByGroup), null);
-
-    DumbAwareAction.create(event -> myMarketplaceSortByAction.doClick())
-      .registerCustomShortcutSet(KeyEvent.VK_DOWN, 0, myMarketplaceSortByAction);
-
     MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
     marketplaceController.setSearchResultEventHandler(eventHandler);
 
@@ -427,163 +404,8 @@ class MarketplacePluginsTab extends PluginsTab {
 
     Project project = ProjectUtil.getActiveProject();
 
-    myMarketplaceSearchPanel =
-      new SearchResultPanel(marketplaceController, panel, true, 0, 0) {
-        @Override
-        @SuppressWarnings("unchecked")
-        protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result, AtomicBoolean runQuery) {
-          int searchIndex = PluginManagerUsageCollector.updateAndGetSearchIndex();
-
-          SearchQueryParser.Marketplace parser = new SearchQueryParser.Marketplace(query);
-
-          Map<PluginUiModel, Double> pluginToScore = null;
-
-          if (parser.internal) {
-            try {
-              PluginsViewCustomizer.PluginsGroupDescriptor groupDescriptor =
-                PluginsViewCustomizerKt.getPluginsViewCustomizer().getInternalPluginsGroupDescriptor();
-              if (groupDescriptor != null) {
-                if (parser.searchQuery == null) {
-                  result.addDescriptors(groupDescriptor.getPlugins());
-                }
-                else {
-                  for (IdeaPluginDescriptor pluginDescriptor : groupDescriptor.getPlugins()) {
-                    if (StringUtil.containsIgnoreCase(pluginDescriptor.getName(), parser.searchQuery)) {
-                      result.addDescriptor(pluginDescriptor);
-                    }
-                  }
-                }
-                result.removeDuplicates();
-                result.sortByName();
-                return;
-              }
-            }
-            catch (Exception e) {
-              LOG.error("Error while loading internal plugins group", e);
-            }
-          }
-
-          PluginModelAsyncOperationsExecutor.INSTANCE.getCustomRepositoriesPluginMap(myCoroutineScope, map -> {
-            Map<String, List<PluginUiModel>> customRepositoriesMap = (Map<String, List<PluginUiModel>>)map;
-            if (parser.suggested && project != null) {
-              List<@NotNull PluginUiModel> plugins =
-                PluginsAdvertiserStartupActivityKt.findSuggestedPlugins(project, customRepositoriesMap);
-              result.addModels(plugins);
-              updateSearchPanel(result, runQuery, plugins);
-            }
-            else if (!parser.repositories.isEmpty()) {
-              for (String repository : parser.repositories) {
-                List<PluginUiModel> descriptors = customRepositoriesMap.get(repository);
-                if (descriptors == null) {
-                  continue;
-                }
-                if (parser.searchQuery == null) {
-                  result.addModels(descriptors);
-                }
-                else {
-                  for (PluginUiModel descriptor : descriptors) {
-                    if (StringUtil.containsIgnoreCase(descriptor.getName(), parser.searchQuery)) {
-                      result.addModel(descriptor);
-                    }
-                  }
-                }
-              }
-              result.removeDuplicates();
-              result.sortByName();
-              updateSearchPanel(result, runQuery, result.getModels());
-            }
-            else {
-              PluginModelAsyncOperationsExecutor.INSTANCE
-                .performMarketplaceSearch(myCoroutineScope,
-                                          parser.getUrlQuery(),
-                                          !result.getModels().isEmpty(),
-                                          (searchResult, updates) -> {
-                                            applySearchResult(result, searchResult, (List<PluginUiModel>)updates, customRepositoriesMap,
-                                                              parser, pluginToScore, searchIndex);
-                                            updatePanel(runQuery);
-                                            return null;
-                                          });
-            }
-            return null;
-          });
-        }
-
-        private void updateSearchPanel(@NonNull PluginsGroup result, AtomicBoolean runQuery, List<@NotNull PluginUiModel> plugins) {
-          Set<PluginId> ids = plugins.stream().map(it -> it.getPluginId()).collect(Collectors.toSet());
-          result.getPreloadedModel().setInstalledPlugins(UiPluginManager.getInstance().findInstalledPluginsSync(ids));
-          result.getPreloadedModel().setPluginInstallationStates(UiPluginManager.getInstance().getInstallationStatesSync());
-          updatePanel(runQuery);
-        }
-
-        private void applySearchResult(@NotNull PluginsGroup result,
-                                       PluginSearchResult searchResult,
-                                       List<PluginUiModel> updates,
-                                       Map<String, List<PluginUiModel>> customRepositoriesMap,
-                                       SearchQueryParser.Marketplace parser,
-                                       Map<PluginUiModel, Double> pluginToScore,
-                                       int searchIndex) {
-          if (searchResult.getError() != null) {
-            ApplicationManager.getApplication().invokeLater(
-              () -> myPanel.getEmptyText()
-                .setText(IdeBundle.message("plugins.configurable.search.result.not.loaded"))
-                .appendSecondaryText(
-                  IdeBundle.message("plugins.configurable.check.internet"),
-                  StatusText.DEFAULT_ATTRIBUTES, null), ModalityState.any()
-            );
-          }
-          // compare plugin versions between marketplace & custom repositories
-          List<PluginUiModel> customPlugins = ContainerUtil.flatten(customRepositoriesMap.values());
-          Collection<PluginUiModel> plugins =
-            RepositoryHelper.mergePluginModelsFromRepositories(searchResult.getPlugins(),
-                                                               customPlugins,
-                                                               false);
-          result.addModels(0, new ArrayList<>(plugins));
-
-          if (parser.searchQuery != null) {
-            List<PluginUiModel> descriptors = ContainerUtil.filter(customPlugins,
-                                                                   descriptor -> StringUtil.containsIgnoreCase(
-                                                                     descriptor.getName(),
-                                                                     parser.searchQuery));
-            result.addModels(0, descriptors);
-          }
-
-          result.removeDuplicates();
-
-          final var localRanker = MarketplaceLocalRanker.getInstanceIfEnabled();
-          if (localRanker != null) {
-            pluginToScore = localRanker.rankPlugins(parser, result.getModels());
-          }
-
-          if (!result.getModels().isEmpty()) {
-            String title = IdeBundle.message("plugin.manager.action.label.sort.by.1");
-
-            for (AnAction action : myMarketplaceSortByGroup.getChildren(ActionManager.getInstance())) {
-              MarketplaceSortByAction sortByAction = (MarketplaceSortByAction)action;
-              sortByAction.setState(parser);
-              if (sortByAction.myState) {
-                title = IdeBundle.message("plugin.manager.action.label.sort.by",
-                                          sortByAction.myOption.getPresentableNameSupplier().get());
-              }
-            }
-
-            myMarketplaceSortByAction.setText(title);
-            result.addRightAction(myMarketplaceSortByAction);
-
-            if (!ContainerUtil.isEmpty(updates)) {
-              myPostFillGroupCallback = () -> {
-                applyUpdates(myPanel, updates);
-                selectionListener.accept(myMarketplacePanel);
-                selectionListener.accept(myMarketplaceSearchPanel.getPanel());
-              };
-            }
-          }
-          Set<PluginId> ids = result.getModels().stream().map(it -> it.getPluginId()).collect(Collectors.toSet());
-          result.getPreloadedModel().setInstalledPlugins(UiPluginManager.getInstance().findInstalledPluginsSync(ids));
-          result.getPreloadedModel().setPluginInstallationStates(UiPluginManager.getInstance().getInstallationStatesSync());
-          PluginManagerUsageCollector.INSTANCE.performMarketplaceSearch(ProjectUtil.getActiveProject(), parser, result.getModels(),
-                                                                        searchIndex, pluginToScore);
-        }
-      };
+    myMarketplaceSearchPanel = new MarketplacePluginsTabSearchResultPanel(myCoroutineScope, marketplaceController, panel, project, selectionListener,
+                                                                          myMarketplaceSortByGroup, () -> myMarketplacePanel);
     return myMarketplaceSearchPanel;
   }
 
@@ -745,11 +567,11 @@ class MarketplacePluginsTab extends PluginsTab {
     }
 
     if (showAllPredicate.test(group)) {
-      group.rightAction = new PluginManagerConfigurablePanel.LinkLabelButton<>(IdeBundle.message("plugins.configurable.show.all"),
-                                                                               null,
-                                                                               searchListener,
-                                                                               showAllQuery);
-      group.rightAction.setBorder(JBUI.Borders.emptyRight(5));
+      group.mainAction = new PluginManagerConfigurablePanel.LinkLabelButton<>(IdeBundle.message("plugins.configurable.show.all"),
+                                                                              null,
+                                                                              searchListener,
+                                                                              showAllQuery);
+      group.mainAction.setBorder(JBUI.Borders.emptyRight(5));
     }
 
     if (!group.getModels().isEmpty()) {
@@ -813,9 +635,10 @@ class MarketplacePluginsTab extends PluginsTab {
     }
   }
 
-  private final class MarketplaceSortByAction extends ToggleAction implements DumbAware {
-    private final MarketplaceTabSearchSortByOptions myOption;
-    private boolean myState;
+  @ApiStatus.Internal
+  final class MarketplaceSortByAction extends ToggleAction implements DumbAware {
+    final MarketplaceTabSearchSortByOptions myOption;
+    boolean myState;
     private boolean myVisible;
 
     private MarketplaceSortByAction(@NotNull MarketplaceTabSearchSortByOptions option) {

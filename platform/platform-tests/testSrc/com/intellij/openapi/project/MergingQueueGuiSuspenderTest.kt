@@ -1,10 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
+import com.intellij.platform.ide.progress.suspender.TaskSuspender
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import io.kotest.common.runBlocking
 import junit.framework.TestCase
 import org.junit.Ignore
 import org.junit.Test
@@ -25,24 +26,27 @@ private fun Phaser.arriveAndAwaitAdvanceWithTimeout() {
 @RunWith(JUnit4::class)
 @Ignore("Test fails because MergingQueueGuiSuspender has race conditions")
 class MergingQueueGuiSuspenderConcurrentTest() : BasePlatformTestCase() {
+  override fun runInDispatchThread(): Boolean {
+    return false
+  }
+
   @Test
   fun testConcurrentAccessToTheSameSuspender() {
     val guiSuspender = MergingQueueGuiSuspender()
-    val progress = ProgressIndicatorBase()
     val maxCount = 1000
     val maxThreads = 8
     val maxDelayNs = 1000L
     val phaser = Phaser(maxThreads + 1)
     val exception = AtomicReference<Throwable>()
 
-    fun suspendingTask(suspender: ProgressSuspender, id: Char) {
+    fun suspendingTask(suspender: TaskSuspender, id: Char) {
       try {
         phaser.arriveAndAwaitAdvanceWithTimeout()
         guiSuspender.suspendAndRun("test activity $id", Runnable {
           repeat(maxCount) {
-            TestCase.assertTrue(suspender.isSuspended)
+            TestCase.assertTrue(suspender.isPaused())
             LockSupport.parkNanos(Random.nextLong(maxDelayNs))
-            TestCase.assertTrue(suspender.isSuspended)
+            TestCase.assertTrue(suspender.isPaused())
           }
         })
       }
@@ -54,25 +58,25 @@ class MergingQueueGuiSuspenderConcurrentTest() : BasePlatformTestCase() {
       }
     }
 
-    ProgressManager.getInstance().runProcess(
-      {
-        ProgressSuspender.markSuspendable(progress, "Paused from test").use { suspender ->
-          guiSuspender.setCurrentSuspenderAndSuspendIfRequested(suspender) {
-            TestCase.assertFalse(suspender.isSuspended)
 
-            repeat(maxThreads) {
-              Thread { suspendingTask(suspender, '1') }.start()
-            }
+    runBlocking {
+      val suspender = TaskSuspender.suspendable("Paused from text")
+      withBackgroundProgress(project, "", suspender) {
+        guiSuspender.setCurrentSuspenderAndSuspendIfRequested(suspender) {
+          TestCase.assertFalse(suspender.isPaused())
 
-            phaser.arriveAndAwaitAdvanceWithTimeout() // start all threads
-            phaser.arriveAndAwaitAdvanceWithTimeout() // wait for all threads to complete
-            phaser.arriveAndDeregister()
-
-            TestCase.assertFalse(suspender.isSuspended)
+          repeat(maxThreads) {
+            Thread { suspendingTask(suspender, '1') }.start()
           }
-        }
-      }, progress)
 
+          phaser.arriveAndAwaitAdvanceWithTimeout() // start all threads
+          phaser.arriveAndAwaitAdvanceWithTimeout() // wait for all threads to complete
+          phaser.arriveAndDeregister()
+
+          TestCase.assertFalse(suspender.isPaused())
+        }
+      }
+    }
     exception.get()?.printStackTrace()
     TestCase.assertNull(exception.get())
   }
@@ -84,51 +88,51 @@ class MergingQueueGuiSuspenderConcurrentTest() : BasePlatformTestCase() {
 
     val exception = AtomicReference<Throwable>()
 
-    ProgressManager.getInstance().runProcess(
-      {
-        ProgressSuspender.markSuspendable(progress, "Paused from test").use { suspender ->
-          guiSuspender.setCurrentSuspenderAndSuspendIfRequested(suspender) {
-            TestCase.assertFalse(suspender.isSuspended)
-            val phaser = Phaser(4)
+    runBlocking {
+      val suspender = TaskSuspender.suspendable("Paused from text")
+      withBackgroundProgress(project, "", suspender) {
+        guiSuspender.setCurrentSuspenderAndSuspendIfRequested(suspender) {
+          TestCase.assertFalse(suspender.isPaused())
+          val phaser = Phaser(4)
 
-            Thread {
-              guiSuspender.suspendAndRun("task that suspends progress", Runnable {
-                phaser.arriveAndAwaitAdvanceWithTimeout() // 1
-                phaser.arriveAndAwaitAdvanceWithTimeout() // 2
-                phaser.arriveAndAwaitAdvanceWithTimeout() // 3
-                phaser.arriveAndDeregister() // 4
-              })
-            }.start()
-
-            Thread {
+          Thread {
+            guiSuspender.suspendAndRun("task that suspends progress", Runnable {
               phaser.arriveAndAwaitAdvanceWithTimeout() // 1
-              phaser.arriveAndDeregister() // 2
-              progress.checkCanceled() // this task is suspended by previous thread
-            }.start()
+              phaser.arriveAndAwaitAdvanceWithTimeout() // 2
+              phaser.arriveAndAwaitAdvanceWithTimeout() // 3
+              phaser.arriveAndDeregister() // 4
+            })
+          }.start()
 
-            Thread {
-              try {
-                phaser.arriveAndAwaitAdvanceWithTimeout() // 1
-                phaser.arriveAndAwaitAdvanceWithTimeout() // 2
-                Thread.sleep(100) // let progress.checkCancel take effect in the previous thread
-                suspender.resumeProcess() // this is our user who wants to resume the indicator
-                phaser.arriveAndAwaitAdvanceWithTimeout() // 3
-              }
-              catch (t: Throwable) {
-                exception.set(t)
-              }
-              finally {
-                phaser.arriveAndDeregister() // 4
-              }
-            }.start()
+          Thread {
+            phaser.arriveAndAwaitAdvanceWithTimeout() // 1
+            phaser.arriveAndDeregister() // 2
+            progress.checkCanceled() // this task is suspended by previous thread
+          }.start()
 
-            repeat(4) { phaser.arriveAndAwaitAdvanceWithTimeout() }
-            phaser.arriveAndDeregister()
+          Thread {
+            try {
+              phaser.arriveAndAwaitAdvanceWithTimeout() // 1
+              phaser.arriveAndAwaitAdvanceWithTimeout() // 2
+              Thread.sleep(100) // let progress.checkCancel take effect in the previous thread
+              suspender.resume() // this is our user who wants to resume the indicator
+              phaser.arriveAndAwaitAdvanceWithTimeout() // 3
+            }
+            catch (t: Throwable) {
+              exception.set(t)
+            }
+            finally {
+              phaser.arriveAndDeregister() // 4
+            }
+          }.start()
 
-            TestCase.assertFalse(suspender.isSuspended)
-          }
+          repeat(4) { phaser.arriveAndAwaitAdvanceWithTimeout() }
+          phaser.arriveAndDeregister()
+
+          TestCase.assertFalse(suspender.isPaused())
         }
-      }, progress)
+      }
+    }
 
     exception.get()?.printStackTrace()
     TestCase.assertNull(exception.get())
@@ -153,7 +157,7 @@ class MergingQueueGuiSuspenderNestingTest(private val suspendPattern: String) : 
     val exception = AtomicReference<Throwable?>()
     val actualOrder = ConcurrentLinkedDeque<Char>()
 
-    fun suspendingTask(suspender: ProgressSuspender, suspendPattern: String, id: Char) {
+    fun suspendingTask(suspender: TaskSuspender, suspendPattern: String, id: Char) {
       try {
         while (suspendPattern[phaser.phase] != id) {
           phaser.arriveAndAwaitAdvanceWithTimeout()
@@ -162,14 +166,14 @@ class MergingQueueGuiSuspenderNestingTest(private val suspendPattern: String) : 
 
         guiSuspender.suspendAndRun("test activity $id", Runnable {
           do {
-            TestCase.assertTrue(suspender.isSuspended)
+            TestCase.assertTrue(suspender.isPaused())
             phaser.arriveAndAwaitAdvanceWithTimeout()
-            TestCase.assertTrue(suspender.isSuspended)
+            TestCase.assertTrue(suspender.isPaused())
           }
           while (suspendPattern[phaser.phase] != id)
           actualOrder.add(id)
 
-          TestCase.assertTrue(suspender.isSuspended)
+          TestCase.assertTrue(suspender.isPaused())
         })
       }
       catch (t: Throwable) {
@@ -180,22 +184,22 @@ class MergingQueueGuiSuspenderNestingTest(private val suspendPattern: String) : 
       }
     }
 
-    ProgressManager.getInstance().runProcess(
-      {
-        ProgressSuspender.markSuspendable(progress, "Paused from test").use { suspender ->
-          guiSuspender.setCurrentSuspenderAndSuspendIfRequested(suspender) {
-            TestCase.assertFalse(suspender.isSuspended)
+    runBlocking {
+      val suspender = TaskSuspender.suspendable("Paused from text")
+      withBackgroundProgress(project, "", suspender) {
+        guiSuspender.setCurrentSuspenderAndSuspendIfRequested(suspender) {
+          TestCase.assertFalse(suspender.isPaused())
 
-            Thread { suspendingTask(suspender, suspendPattern, '1') }.start()
-            Thread { suspendingTask(suspender, suspendPattern, '2') }.start()
+          Thread { suspendingTask(suspender, suspendPattern, '1') }.start()
+          Thread { suspendingTask(suspender, suspendPattern, '2') }.start()
 
-            repeat(suspendPattern.length) { phaser.arriveAndAwaitAdvanceWithTimeout() }
-            phaser.arriveAndDeregister()
+          repeat(suspendPattern.length) { phaser.arriveAndAwaitAdvanceWithTimeout() }
+          phaser.arriveAndDeregister()
 
-            TestCase.assertFalse(suspender.isSuspended)
-          }
+          TestCase.assertFalse(suspender.isPaused())
         }
-      }, progress)
+      }
+    }
 
     exception.get()?.printStackTrace()
     TestCase.assertNull(exception.get())

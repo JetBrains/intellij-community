@@ -2,10 +2,16 @@
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.PluginManagementPolicy
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginNode
+import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests.Companion.getLastCompatiblePluginUpdate
-import com.intellij.ide.plugins.newui.*
+import com.intellij.ide.plugins.newui.PluginNodeModelBuilderFactory
+import com.intellij.ide.plugins.newui.PluginUiModel
+import com.intellij.ide.plugins.newui.PluginUiModelAdapter
+import com.intellij.ide.plugins.newui.loadAllPluginDetailsSync
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.thisLogger
@@ -52,7 +58,7 @@ class InstallAndEnableTask(
   )
 
 
-  private suspend fun loadPlugins() = runInterruptible { //for proper cancellation
+  suspend fun loadPlugins(): Unit = runInterruptible { //for proper cancellation
     try {
       val marketplacePlugins: List<PluginUiModel> = runBlockingCancellable { MarketplaceRequests.loadLastCompatiblePluginModels(pluginIds) }
       val customPluginNodes = runBlockingCancellable {

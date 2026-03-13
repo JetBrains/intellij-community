@@ -5,18 +5,10 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionUiKind;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
@@ -40,13 +32,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
-import java.awt.Component;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -446,9 +434,6 @@ public class PyDebugValue extends XNamedValue implements PyXDebugValue {
 
   private void setAdditionalLinks(@NotNull XValueNode node) {
     if (node instanceof XValueNodeEx valueNode) {
-      if (checkAndEnableViewAsImageVisibility(this)) {
-        addViewAsImageLink(valueNode);
-      }
       addConfigureTypeRendererLink(valueNode);
     }
   }
@@ -566,90 +551,16 @@ public class PyDebugValue extends XNamedValue implements PyXDebugValue {
       return;
     }
 
-    if (node instanceof XValueNodeEx valueNode) {
-      addViewAsImageLink(valueNode);
-    }
+    addAdditionalHyperlinks(node);
+
     String linkText = PydevBundle.message("pydev.view.as", postfix);
     node.setFullValueEvaluator(new PyNumericContainerValueEvaluator(linkText, myFrameAccessor, treeName));
   }
 
-  protected static void addViewAsImageLink(XValueNodeEx valueNode) {
-    PyDebugValue debugValue = (PyDebugValue)valueNode.getXValue();
-    if (!checkAndShowViewAsImageOnScreen(debugValue))
-      return;
-    addViewAsImageHyperlink(valueNode);
-  }
-
-  protected static void addViewAsImageHyperlink(XValueNodeEx valueNode) {
-    String viewAsImageText = PydevBundle.message("pydev.view.as.image");
-    valueNode.addAdditionalHyperlink(new XDebuggerTreeNodeHyperlink(viewAsImageText) {
-      @Override
-      public void onClick(MouseEvent event) {
-        AnAction action = ActionManager.getInstance().getAction("JupyterShowAsImageAction");
-        DataContext dataContext = DataManager.getInstance().getDataContext((Component)event.getSource());
-        AnActionEvent actionEvent = AnActionEvent.createEvent(action,
-                                                              dataContext,
-                                                              null,
-                                                              "JupyterShowAsImageAction",
-                                                              ActionUiKind.NONE,
-                                                              null);
-        action.actionPerformed(actionEvent);
-      }
-
-      @Override
-      public boolean alwaysOnScreen() {
-        return true;
-      }
-    });
-  }
-
-  protected static boolean checkAndShowViewAsImageOnScreen(PyDebugValue debugValue) {
-      return Registry.is("actions.show.as.image.visibility", false)
-             && !PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)
-             && checkAndEnableViewAsImageVisibility(debugValue);
-  }
-
-  private static boolean checkAndEnableViewAsImageVisibility(PyDebugValue debugValue) {
-    String nodeType = debugValue.getType();
-    return switch (Objects.requireNonNull(nodeType)) {
-      case NodeTypes.NDARRAY_NODE_TYPE, NodeTypes.EAGER_TENSOR_NODE_TYPE, NodeTypes.RESOURCE_VARIABLE_NODE_TYPE,
-           NodeTypes.SPARSE_TENSOR_NODE_TYPE, NodeTypes.TENSOR_NODE_TYPE -> {
-        int[] shape = extractShape(debugValue);
-        String arrayElementType = debugValue.getArrayElementType();
-        boolean isConvertibleDataType = arrayElementType != null && !arrayElementType.isEmpty() &&
-                                  (arrayElementType.contains("float") || arrayElementType.contains("bool") || arrayElementType.contains("int"));
-        yield isConvertibleDataType && isConvertibleArrayShape(shape);
-      }
-      case NodeTypes.IMAGE_NODE_TYPE, NodeTypes.PNG_IMAGE_NODE_TYPE, NodeTypes.JPEG_IMAGE_NODE_TYPE, NodeTypes.FIGURE_NODE_TYPE -> true;
-      default -> false;
-    };
-  }
-
-  private static int[] extractShape(PyDebugValue debugValue) {
-    String shapeString = debugValue.getShape() == null ? "" : debugValue.getShape();
-    return Arrays.stream(shapeString.replace("(", "").replace(")", "").split(","))
-      .map(String::trim)
-      .mapToInt(s -> {
-        try {
-          return Integer.parseInt(s);
-        }
-        catch (NumberFormatException e) {
-          return Integer.MIN_VALUE;
-        }
-      })
-      .filter(value -> value != Integer.MIN_VALUE)
-      .toArray();
-  }
-
-  private static boolean isConvertibleArrayShape(int[] shape) {
-    if (shape == null || shape.length == 0) {
-      return false;
+  private void addAdditionalHyperlinks(XValueNode valueNode) {
+    if (valueNode instanceof XValueNodeEx valueNodeEx) {
+      PyDebugValueAdditionalHyperlinkProvider.Companion.computeHyperlink(this, valueNodeEx);
     }
-    return switch (shape.length) {
-      case 1, 2 -> true;
-      case 3 -> shape[2] == 3 || shape[2] == 4 || shape[2] == 1;
-      default -> false;
-    };
   }
 
   @Override

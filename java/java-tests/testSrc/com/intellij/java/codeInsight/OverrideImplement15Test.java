@@ -19,38 +19,33 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.generation.JavaOverrideMethodsHandler;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
-import com.intellij.codeInsight.generation.OverrideImplementUtil;
-import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.impl.ImplementAbstractMethodHandler;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
-public class OverrideImplement15Test extends LightJavaCodeInsightTestCase {
+public class OverrideImplement15Test extends OverrideImplementBaseTest {
   private static final String BASE_DIR = "/codeInsight/overrideImplement/";
+
+  @Override
+  protected String getBaseDir() {
+    return BASE_DIR;
+  }
 
   @Override
   protected LanguageLevel getLanguageLevel() {
@@ -167,35 +162,5 @@ public class OverrideImplement15Test extends LightJavaCodeInsightTestCase {
     final JavaOverrideMethodsHandler handler = new JavaOverrideMethodsHandler();
     assertTrue(handler.isValidFor(getEditor(), getFile()));
     assertFalse(handler.isAvailableForQuickList(getEditor(), getFile(), new MapDataContext()));
-  }
-
-  private void doTest(boolean copyJavadoc) { doTest(copyJavadoc, null); }
-
-  private void doTest(boolean copyJavadoc, @Nullable Boolean toImplement) {
-    String name = getTestName(false);
-    configureByFile(BASE_DIR + "before" + name + ".java");
-    int offset = getEditor().getCaretModel().getOffset();
-    PsiElement context = getFile().findElementAt(offset);
-    PsiClass psiClass = PsiTreeUtil.getParentOfType(context, PsiClass.class);
-    assert psiClass != null;
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      if (toImplement == null) {
-        PsiClassType[] implement = psiClass.getImplementsListTypes();
-        final PsiClass superClass = implement.length == 0 ? psiClass.getSuperClass() : implement[0].resolve();
-        assert superClass != null;
-        PsiMethod method = superClass.getMethods()[0];
-        final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, psiClass, PsiSubstitutor.EMPTY);
-        final List<PsiMethodMember> candidates = Collections.singletonList(new PsiMethodMember(method,
-                                                                                               OverrideImplementExploreUtil
-                                                                                                 .correctSubstitutor(method,
-                                                                                                                     substitutor)));
-        OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(getEditor(), psiClass, candidates, copyJavadoc, true);
-      }
-      else {
-        OverrideImplementUtil.chooseAndOverrideOrImplementMethods(getProject(), getEditor(), psiClass, toImplement);
-      }
-    });
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    checkResultByFile(BASE_DIR + "after" + name + ".java");
   }
 }

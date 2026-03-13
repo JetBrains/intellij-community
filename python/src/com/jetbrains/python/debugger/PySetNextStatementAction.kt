@@ -12,9 +12,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.xdebugger.XDebugSession
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil.getCaretPosition
 import com.jetbrains.python.debugger.pydev.PyDebugCallback
 
 class PySetNextStatementAction : XDebuggerActionBase(true) {
@@ -24,7 +24,7 @@ class PySetNextStatementAction : XDebuggerActionBase(true) {
     setNextStatementActionHandler = object : XDebuggerSuspendedActionHandler() {
       override fun perform(session: XDebugSession, dataContext: DataContext) {
         val debugProcess = session.debugProcess as? PyDebugProcess ?: return
-        val position = XDebuggerUtilImpl.getCaretPosition(session.project, dataContext) ?: return
+        val position = getCaretPosition(dataContext) ?: return
         val editor = CommonDataKeys.EDITOR.getData(dataContext) ?: FileEditorManager.getInstance(session.project).selectedTextEditor
         val suspendContext = debugProcess.session.suspendContext
         ApplicationManager.getApplication().executeOnPooledThread(Runnable {

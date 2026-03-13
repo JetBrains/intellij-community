@@ -5,7 +5,7 @@ import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.jsonProtocol.JsonParseMethod
 import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
-import java.util.*
+import java.util.Arrays
 
 internal class ReaderRoot<R>(val type: Class<R>, private val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<*>?>) {
   private val visitedInterfaces = HashSet<Class<*>>(1)

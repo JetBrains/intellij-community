@@ -1,8 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorCustomElementRenderer;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -13,7 +20,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Point;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -520,24 +527,29 @@ public class EditorInlayTest extends AbstractEditorTest {
     Inlay<?> inlay2 = EditorTestUtil.addBlockInlay(editor, 0, false, false, 10, 10);
     Inlay<?> inlay3 = EditorTestUtil.addAfterLineEndInlay(editor, 0, 10);
 
-    // TODO: inlays can be registered after Editor disposal
+    // inlays can be registered after Editor disposal, as many existing calls do not handle nullable result
     assertNotNull(inlay1);
     assertNotNull(inlay2);
     assertNotNull(inlay3);
 
-    CheckedDisposable disposable1 = Disposer.newCheckedDisposable();
-    try {
-      boolean registered = Disposer.tryRegister(inlay1, disposable1);
-      // TODO: inlays are not disposed after Editor disposal either
-      assertTrue(registered);
-    }
-    finally {
-      Disposer.dispose(disposable1);
+    assertFalse(inlay1.isValid());
+    assertFalse(inlay2.isValid());
+    assertFalse(inlay3.isValid());
 
-      // FIXME: Disposer.register(inlay, ...) triggers True-Positive 'Memory leak detected' in 'LastInSuiteTest'
-      //      Remove when the inlays are fixed
-      Disposer.dispose(inlay1);
-    }
+    Disposable disposable = Disposer.newDisposable();
+    assertFalse(Disposer.tryRegister(inlay1, disposable));
+    assertFalse(Disposer.tryRegister(inlay2, disposable));
+    assertFalse(Disposer.tryRegister(inlay3, disposable));
+
+    assertThrows(RuntimeException.class, () -> {
+      Disposer.register(inlay1, disposable);
+    });
+    assertThrows(RuntimeException.class, () -> {
+      Disposer.register(inlay2, disposable);
+    });
+    assertThrows(RuntimeException.class, () -> {
+      Disposer.register(inlay3, disposable);
+    });
   }
 
   public void testInlayAreDisposables1() {
@@ -561,21 +573,14 @@ public class EditorInlayTest extends AbstractEditorTest {
         EditorFactory.getInstance().releaseEditor(editor);
       }
 
-      // FIXME: BUG - Inlays are NOT disposed with editor
-      assertFalse(disposable1.isDisposed());
-      assertFalse(disposable2.isDisposed());
-      assertFalse(disposable3.isDisposed());
+      assertTrue(disposable1.isDisposed());
+      assertTrue(disposable2.isDisposed());
+      assertTrue(disposable3.isDisposed());
     }
     finally {
       Disposer.dispose(disposable1);
       Disposer.dispose(disposable2);
       Disposer.dispose(disposable3);
-
-      // FIXME: Disposer.register(inlay, ...) triggers True-Positive 'Memory leak detected' in 'LastInSuiteTest'
-      //      Remove when the inlays are fixed
-      Disposer.dispose(inlay1);
-      Disposer.dispose(inlay2);
-      Disposer.dispose(inlay3);
     }
   }
 
@@ -602,10 +607,9 @@ public class EditorInlayTest extends AbstractEditorTest {
       assertFalse(inlay2.isValid());
       assertFalse(inlay3.isValid());
 
-      // WARN: Inlays are NOT disposed on range invalidation
-      assertFalse(disposable1.isDisposed());
-      assertFalse(disposable2.isDisposed());
-      assertFalse(disposable3.isDisposed());
+      assertTrue(disposable1.isDisposed());
+      assertTrue(disposable2.isDisposed());
+      assertTrue(disposable3.isDisposed());
     }
     finally {
       EditorFactory.getInstance().releaseEditor(editor);
@@ -613,12 +617,6 @@ public class EditorInlayTest extends AbstractEditorTest {
       Disposer.dispose(disposable1);
       Disposer.dispose(disposable2);
       Disposer.dispose(disposable3);
-
-      // FIXME: Disposer.register(inlay, ...) triggers True-Positive 'Memory leak detected' in 'LastInSuiteTest'
-      //      Remove when the inlays are fixed
-      Disposer.dispose(inlay1);
-      Disposer.dispose(inlay2);
-      Disposer.dispose(inlay3);
     }
   }
 

@@ -5,7 +5,7 @@ import com.intellij.application.options.codeStyle.arrangement.ArrangementConstan
 import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 

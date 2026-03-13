@@ -454,6 +454,9 @@ fun PsiElement.startOffsetInAncestor(ancestor: PsiElement): Int {
 
 inline fun <reified T : PsiElement> PsiElement.childrenOfType(): List<T> = PsiTreeUtil.getChildrenOfTypeAsList(this, T::class.java)
 
+val PsiElement.childrenSequence: Sequence<PsiElement>
+  get() = generateSequence(this.firstChild) { it.nextSibling }
+
 //<editor-fold desc="Deprecated Stuff">
 @Suppress("unused")
 @Deprecated("Use firstLeaf() instead", ReplaceWith("firstLeaf()"))

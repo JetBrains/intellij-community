@@ -4,19 +4,24 @@ View root() {
       Tasks() {
         build setup() {
           init()
+          updateDaemonJvm()
           wrapper()
         }
         help() {
+          artifactTransforms()
           buildEnvironment()
-          components()
           dependencies()
           dependencyInsight()
-          dependentComponents()
           help()
-          model()
+          javaToolchains()
+          outgoingVariants()
           projects()
           properties()
+          resolvableConfigurations()
           tasks()
+        }
+        other() {
+          prepareKotlinBuildScriptModel()
         }
       }
     }
@@ -34,26 +39,29 @@ View root() {
         }
         build setup() {
           init()
+          updateDaemonJvm()
           wrapper()
         }
         documentation() {
           javadoc()
         }
         help() {
+          artifactTransforms()
           buildEnvironment()
-          components()
           dependencies()
           dependencyInsight()
-          dependentComponents()
           help()
-          model()
+          javaToolchains()
+          outgoingVariants()
           projects()
           properties()
+          resolvableConfigurations()
           tasks()
         }
         other() {
           compileJava()
           compileTestJava()
+          prepareKotlinBuildScriptModel()
           processResources()
           processTestResources()
         }
@@ -93,19 +101,24 @@ View root() {
       Tasks() {
         build setup() {
           init()
+          updateDaemonJvm()
           wrapper()
         }
         help() {
+          artifactTransforms()
           buildEnvironment()
-          components()
           dependencies()
           dependencyInsight()
-          dependentComponents()
           help()
-          model()
+          javaToolchains()
+          outgoingVariants()
           projects()
           properties()
+          resolvableConfigurations()
           tasks()
+        }
+        other() {
+          prepareKotlinBuildScriptModel()
         }
       }
       number-utils() {
@@ -124,15 +137,16 @@ View root() {
             javadoc()
           }
           help() {
+            artifactTransforms()
             buildEnvironment()
-            components()
             dependencies()
             dependencyInsight()
-            dependentComponents()
             help()
-            model()
+            javaToolchains()
+            outgoingVariants()
             projects()
             properties()
+            resolvableConfigurations()
             tasks()
           }
           other() {
@@ -163,15 +177,16 @@ View root() {
             javadoc()
           }
           help() {
+            artifactTransforms()
             buildEnvironment()
-            components()
             dependencies()
             dependencyInsight()
-            dependentComponents()
             help()
-            model()
+            javaToolchains()
+            outgoingVariants()
             projects()
             properties()
+            resolvableConfigurations()
             tasks()
           }
           other() {

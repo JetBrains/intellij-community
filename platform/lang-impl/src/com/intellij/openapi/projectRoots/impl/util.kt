@@ -10,7 +10,11 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.provider.*
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.LocalEelMachine
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.getEelMachine
+import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import org.jetbrains.annotations.ApiStatus

@@ -19,4 +19,16 @@ jvm_library(
     "@lib//:jetbrains-annotations",
   ]
 )
+
+jvm_library(
+  name = "types_test_lib",
+  module_name = "intellij.grid.types",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  runtime_deps = [
+    ":types",
+    "//platform/util-rt:util-rt_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.grid.types` end

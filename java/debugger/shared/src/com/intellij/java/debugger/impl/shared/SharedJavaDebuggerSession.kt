@@ -3,50 +3,49 @@ package com.intellij.java.debugger.impl.shared
 
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerSessionDto
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManager
+import com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManagerExtension
+import com.intellij.xdebugger.frame.XDescriptor
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class SharedJavaDebuggerSession(dto: JavaDebuggerSessionDto, private val cs: CoroutineScope) {
-  private val stateFlow = dto.stateFlow.toFlow()
-    .stateIn(cs, SharingStarted.Eagerly, dto.initialState)
-  private val areRenderersMutedFlow = MutableStateFlow(dto.areRenderersMutedInitial)
+class SharedJavaDebuggerSession(dto: JavaDebuggerSessionDto, cs: CoroutineScope) {
+  private val _state = MutableStateFlow(dto.initialState)
+  private val _areRenderersMuted = MutableStateFlow(dto.areRenderersMutedInitial)
 
   init {
-    cs.launch {
-      dto.areRenderersMutedFlow.toFlow().collect {
-        areRenderersMutedFlow.value = it
-      }
-    }
+    cs.launch { dto.stateFlow.toFlow().collectLatest { _state.value = it } }
+    cs.launch { dto.areRenderersMutedFlow.toFlow().collectLatest { _areRenderersMuted.value = it } }
   }
 
-  val isAttached: Boolean get() = stateFlow.value.isAttached
-  val isEvaluationPossible: Boolean get() = stateFlow.value.isEvaluationPossible
+  val isAttached: Boolean get() = _state.value.isAttached
+  val isEvaluationPossible: Boolean get() = _state.value.isEvaluationPossible
 
   var areRenderersMuted: Boolean
-    get() = areRenderersMutedFlow.value
-    set(value) {
-      areRenderersMutedFlow.value = value
-    }
+    get() = _areRenderersMuted.value
+    set(value) { _areRenderersMuted.value = value }
 
   internal var isAsyncStacksEnabled: Boolean = true
-
-  fun close() {
-    cs.cancel()
-  }
 
   companion object {
     @JvmStatic
     fun findSession(e: AnActionEvent): SharedJavaDebuggerSession? {
       val project = e.project ?: return null
       val sessionProxy = DebuggerUIUtil.getSessionProxy(e) ?: return null
-      return SharedJavaDebuggerManager.getInstance(project).getJavaSession(sessionProxy.id)
+      return FrontendDescriptorStateManager.getInstance(project).getProcessDescriptorState(sessionProxy.id) as? SharedJavaDebuggerSession
     }
   }
 }
+
+internal class JavaDebuggerSessionDtoStateExtension : FrontendDescriptorStateManagerExtension {
+  override fun createState(descriptor: XDescriptor, cs: CoroutineScope): Any? {
+    if (descriptor !is JavaDebuggerSessionDto) return null
+    return SharedJavaDebuggerSession(descriptor, cs)
+  }
+}
+

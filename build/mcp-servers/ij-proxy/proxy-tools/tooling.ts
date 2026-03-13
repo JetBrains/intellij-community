@@ -1,33 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import {buildProxyToolingData, TOOL_MODES} from './registry'
+import {buildProxyToolingData} from './registry'
 import type {ReadCapabilities, SearchCapabilities, ToolArgs, ToolSpecLike, UpstreamToolCaller} from './types'
-
-export {TOOL_MODES} from './registry'
-
-type ToolMode = typeof TOOL_MODES[keyof typeof TOOL_MODES]
-
-export interface ToolModeInfo {
-  mode: ToolMode
-  warning?: string
-}
-
-export function resolveToolMode(rawValue: unknown): ToolModeInfo {
-  if (rawValue === undefined || rawValue === null || rawValue === '') {
-    return {mode: TOOL_MODES.CODEX}
-  }
-  const normalized = String(rawValue).trim().toLowerCase()
-  if (normalized === '' || normalized === TOOL_MODES.CODEX) {
-    return {mode: TOOL_MODES.CODEX}
-  }
-  if (normalized === TOOL_MODES.CC || normalized === 'claude' || normalized === 'claude-code' || normalized === 'claude_code') {
-    return {mode: TOOL_MODES.CC}
-  }
-  return {
-    mode: TOOL_MODES.CODEX,
-    warning: `Unknown JETBRAINS_MCP_TOOL_MODE '${rawValue}', defaulting to codex.`
-  }
-}
 
 const DISABLE_NEW_SEARCH_ENV = 'JETBRAINS_MCP_PROXY_DISABLE_NEW_SEARCH'
 
@@ -81,29 +55,30 @@ export function resolveReadCapabilities(
     if (name) names.add(name)
   }
 
-  return {capabilities: {hasReadFile: names.has('read_file')}}
+  return {
+    capabilities: {
+      hasReadFile: names.has('read_file'),
+      hasApplyPatch: names.has('apply_patch')
+    }
+  }
 }
 
 export function createProxyTooling({
   projectPath,
   callUpstreamTool,
-  toolMode,
   searchCapabilities,
   readCapabilities
 }: {
   projectPath: string
   callUpstreamTool: UpstreamToolCaller
-  toolMode: ToolMode
   searchCapabilities: SearchCapabilities
   readCapabilities: ReadCapabilities
 }): {
   proxyToolSpecs: ToolSpecLike[]
   proxyToolNames: Set<string>
   runProxyToolCall: (toolName: string, args: ToolArgs) => Promise<unknown>
-  toolMode: ToolMode
 } {
-  const resolvedMode = toolMode === TOOL_MODES.CC ? TOOL_MODES.CC : TOOL_MODES.CODEX
-  const {proxyToolSpecs, proxyToolNames, handlers} = buildProxyToolingData(resolvedMode, {
+  const {proxyToolSpecs, proxyToolNames, handlers} = buildProxyToolingData({
     projectPath,
     callUpstreamTool,
     searchCapabilities,
@@ -118,5 +93,5 @@ export function createProxyTooling({
     return await handler(args)
   }
 
-  return {proxyToolSpecs, proxyToolNames, runProxyToolCall, toolMode: resolvedMode}
+  return {proxyToolSpecs, proxyToolNames, runProxyToolCall}
 }

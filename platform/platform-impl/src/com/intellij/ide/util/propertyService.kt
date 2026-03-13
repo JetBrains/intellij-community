@@ -11,7 +11,7 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
-import java.util.*
+import java.util.TreeMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiConsumer
 import java.util.function.Predicate

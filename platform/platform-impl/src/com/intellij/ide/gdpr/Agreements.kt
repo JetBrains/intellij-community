@@ -18,7 +18,8 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.AppUIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.*
+import java.util.Locale
+import java.util.ResourceBundle
 import kotlin.system.exitProcess
 
 fun showEndUserAndDataSharingAgreements(agreement: EndUserAgreement.Document) {

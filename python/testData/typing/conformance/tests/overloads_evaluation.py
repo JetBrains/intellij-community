@@ -142,7 +142,7 @@ def check_expand_bool(v: bool) -> None:
 
 class Color(Enum):
     RED = 1
-    BLUE = 1
+    BLUE = 2
 
 
 @overload

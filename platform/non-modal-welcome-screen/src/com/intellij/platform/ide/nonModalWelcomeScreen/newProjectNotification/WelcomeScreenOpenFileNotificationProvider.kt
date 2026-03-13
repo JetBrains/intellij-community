@@ -15,14 +15,10 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider.Companion.getWelcomeScreenProjectPath
-import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider.Companion.isWelcomeScreenProject
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.createOptionsToOpenDotIdeaOrCreateNewIfNotExists
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenAppScopeHolder
-import com.intellij.platform.ide.nonModalWelcomeScreen.newProjectNotification.WelcomeScreenSingleFileOpeningCollector.logNotificationClosed
-import com.intellij.platform.ide.nonModalWelcomeScreen.newProjectNotification.WelcomeScreenSingleFileOpeningCollector.logNotificationOpenButtonClicked
-import com.intellij.platform.ide.nonModalWelcomeScreen.newProjectNotification.WelcomeScreenSingleFileOpeningCollector.logNotificationShown
-import com.intellij.platform.ide.nonModalWelcomeScreen.newProjectNotification.WelcomeScreenSingleFileOpeningCollector.logNotificationSuppressed
+import com.intellij.platform.ide.nonModalWelcomeScreen.isWelcomeExperienceProjectSync
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
@@ -47,7 +43,7 @@ private class WelcomeScreenProjectCloseHandler {
   init {
     ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
       override fun projectClosingBeforeSave(project: Project) {
-        if (isWelcomeScreenProject(project)) {
+        if (project.isWelcomeExperienceProjectSync()) {
           val fileEditorManager = FileEditorManager.getInstance(project)
           filesToCloseOnProjectClose.forEach { file ->
             fileEditorManager.closeFile(file)
@@ -107,23 +103,27 @@ abstract class WelcomeScreenOpenFileNotificationProvider : EditorNotificationPro
     project: Project,
     file: VirtualFile,
   ): Function<FileEditor, JComponent?>? {
-    if (!isWelcomeScreenProject(project)) return null
+    if (!project.isWelcomeExperienceProjectSync()) {
+      return null
+    }
     if (file is LightVirtualFile ||
         file.path in closedNotificationFiles ||
         ScratchUtil.isScratch(file) ||
         file.extension == "http"
-    ) return null
+    ) {
+      return null
+    }
 
     // Pre-compute the project root in the background thread
     val projectRootInfo = selectProjectRoot(file)
 
     if (projectRootInfo.result == ProjectRootResult.SUPPRESS_NOTIFICATION) {
-      logNotificationSuppressed()
+      WelcomeScreenSingleFileOpeningCollector.logNotificationSuppressed()
 
       return null
     }
 
-    projectRootInfo.result.asOpeningStrategy { logNotificationShown(it) }
+    projectRootInfo.result.asOpeningStrategy { WelcomeScreenSingleFileOpeningCollector.logNotificationShown(it) }
 
     return Function { fileEditor -> createNotificationPanel(project, file, fileEditor, projectRootInfo) }
   }
@@ -151,7 +151,7 @@ abstract class WelcomeScreenOpenFileNotificationProvider : EditorNotificationPro
     }
 
     panel.createActionLabel(buttonLabelText) {
-      projectRootInfo.result.asOpeningStrategy { logNotificationOpenButtonClicked(it) }
+      projectRootInfo.result.asOpeningStrategy { WelcomeScreenSingleFileOpeningCollector.logNotificationOpenButtonClicked(it) }
 
       service<WelcomeScreenProjectCloseHandler>().addFileToCloseOnProjectClose(file)
       WelcomeScreenAppScopeHolder.getInstance().coroutineScope.launch {
@@ -166,7 +166,7 @@ abstract class WelcomeScreenOpenFileNotificationProvider : EditorNotificationPro
       }
     }
     panel.setCloseAction {
-      projectRootInfo.result.asOpeningStrategy { logNotificationClosed(it) }
+      projectRootInfo.result.asOpeningStrategy { WelcomeScreenSingleFileOpeningCollector.logNotificationClosed(it) }
 
       closedNotificationFiles.add(file.path)
       EditorNotifications.getInstance(project).updateNotifications(file)

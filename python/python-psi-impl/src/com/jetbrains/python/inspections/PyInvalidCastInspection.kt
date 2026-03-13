@@ -18,7 +18,7 @@ import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyType
-import com.jetbrains.python.psi.types.PyTypeUtil
+import com.jetbrains.python.psi.types.PyTypeUtil.isOverlappingWith
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyInvalidCastInspection : PyInspection() {
@@ -38,7 +38,7 @@ class PyInvalidCastInspection : PyInspection() {
         val targetType = Ref.deref(targetTypeRef)
         val actualType = myTypeEvalContext.getType(args[1])
 
-        if (PyTypeUtil.isOverlappingWith(targetType, actualType, myTypeEvalContext)) return
+        if (targetType.isOverlappingWith(actualType, myTypeEvalContext)) return
         val fromName = PythonDocumentationProvider.getTypeName(actualType, myTypeEvalContext)
         val toName = PythonDocumentationProvider.getVerboseTypeName(targetType, myTypeEvalContext)
 

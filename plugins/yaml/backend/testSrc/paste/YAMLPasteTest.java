@@ -100,6 +100,88 @@ public abstract class YAMLPasteTest extends BasePlatformTestCase {
     doTest("- line1\n- line2\n- line3");
   }
 
+  public void testPasteLinesIntoEmptySequenceItem_oneLine() {
+    doTest("- item", ".oneLine");
+  }
+
+  public void testPasteLinesIntoEmptySequenceItem_oneLineDashWithoutSpace() {
+    doTest("-item", ".oneLineDashWithoutSpace");
+  }
+  public void testPasteLinesIntoEmptySequenceItem_severalLines() {
+    doTest("- item1\n- item2\n- item3", ".severalLines");
+  }
+
+  public void testPasteLinesIntoEmptySequenceItem_severalLinesDashesWithoutSpaces() {
+    doTest("-item1\n-item2\n-item3", ".severalLinesDashesWithoutSpaces");
+  }
+
+  public void testPasteLinesIntoEmptySequenceItem_severalLinesSomeWithoutDashes() {
+    doTest("- item1\nitem2\n- item3", ".severalLinesSomeWithoutDashes");
+  }
+
+  public void testPasteLinesIntoNonEmptySequenceItem_oneLine() {
+    doTest("- item", ".oneLine");
+  }
+
+  public void testPasteLinesIntoNonEmptySequenceItem_oneLineDashWithoutSpace() {
+    doTest("-item", ".oneLineDashWithoutSpace");
+  }
+  public void testPasteLinesIntoNonEmptySequenceItem_severalLines() {
+    doTest("- item1\n- item2\n- item3", ".severalLines");
+  }
+
+  public void testPasteLinesIntoNonEmptySequenceItem_severalLinesDashesWithoutSpaces() {
+    doTest("-item1\n-item2\n-item3", ".severalLinesDashesWithoutSpaces");
+  }
+
+  public void testPasteLinesIntoNonEmptySequenceItem_severalLinesSomeWithoutDashes() {
+    doTest("- item1\nitem2\n- item3", ".severalLinesSomeWithoutDashes");
+  }
+
+  public void testPasteLinesIntoNonEmptySequenceItemInTheEnd_oneLine() {
+    doTest("- item", ".oneLine");
+  }
+
+  public void testPasteLinesIntoNonEmptySequenceItemInTheEnd_oneLineDashWithoutSpace() {
+    doTest("-item", ".oneLineDashWithoutSpace");
+  }
+
+  public void testPasteLinesIntoNonEmptySequenceItemInTheEnd_severalLines() {
+    doTest("- item1\n- item2\n- item3", ".severalLines");
+  }
+
+  public void testPasteLinesIntoNonEmptySequenceItemInTheEnd_severalLinesDashesWithoutSpaces() {
+    doTest("-item1\n-item2\n-item3", ".severalLinesDashesWithoutSpaces");
+  }
+
+  public void testPasteLinesIntoNonEmptySequenceItemInTheEnd_severalLinesSomeWithoutDashes() {
+    doTest("- item1\nitem2\n- item3", ".severalLinesSomeWithoutDashes");
+  }
+
+  public void testPasteLinesIntoNonEmptySequenceItemInTheEndAfterSpace_oneLine() {
+    doTest("- item", ".oneLine");
+  }
+
+  public void testPasteLinesIntoNonEmptySequenceItemInTheEndAfterSpace_oneLineDashWithoutSpace() {
+    doTest("-item", ".oneLineDashWithoutSpace");
+  }
+
+  public void testPasteLinesIntoNonEmptySequenceItemInTheEndAfterSpace_severalLines() {
+    doTest("- item1\n- item2\n- item3", ".severalLines");
+  }
+
+  public void testPasteLinesIntoNonEmptySequenceItemInTheEndAfterSpace_severalLinesDashesWithoutSpaces() {
+    doTest("-item1\n-item2\n-item3", ".severalLinesDashesWithoutSpaces");
+  }
+
+  public void testPasteLinesIntoNonEmptySequenceItemInTheEndAfterSpace_severalLinesSomeWithoutDashes() {
+    doTest("- item1\nitem2\n- item3", ".severalLinesSomeWithoutDashes");
+  }
+
+  public void testPasteLinesIntoSequenceItemWithDashInside() {
+    doTest("- item1\n- item2\n- item3");
+  }
+
   public void testPasteLinesIntoFilledSequence() {
     doTest("just-text");
   }

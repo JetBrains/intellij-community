@@ -25,4 +25,19 @@ jvm_library(
     "//libraries/kotlinx/coroutines/core",
   ]
 )
+
+jvm_library(
+  name = "workspace_test_lib",
+  module_name = "intellij.platform.backend.workspace",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_workspace",
+  runtime_deps = [
+    ":workspace",
+    "//platform/util:util_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.backend.workspace` end

@@ -10,6 +10,7 @@
     <module name="intellij.libraries.lz4"/>
     <module name="intellij.libraries.mvstore"/>
     <module name="intellij.libraries.netty.buffer"/>
+    <module name="intellij.platform.util.coroutines"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

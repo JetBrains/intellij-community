@@ -93,7 +93,7 @@ public abstract class RestCommandLineState extends PythonCommandLineState {
   @Override
   protected ProcessHandler doCreateProcess(GeneralCommandLine commandLine) throws ExecutionException {
     final Runnable afterTask = getAfterTask();
-    ProcessHandler processHandler = PythonProcessRunner.createProcess(commandLine, false);
+    ProcessHandler processHandler = PythonProcessRunner.createProcess(commandLine);
     if (afterTask != null) {
       processHandler.addProcessListener(new ProcessListener() {
         @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -45,9 +45,10 @@ public abstract class LightJavaInspectionTestCase extends LightJavaCodeInsightFi
 
       final Project project = myFixture.getProject();
       final HighlightDisplayKey displayKey = HighlightDisplayKey.find(inspection.getShortName());
+      assert displayKey != null;
       final InspectionProfileImpl currentProfile = ProjectInspectionProfileManager.getInstance(project).getCurrentProfile();
       final HighlightDisplayLevel errorLevel = currentProfile.getErrorLevel(displayKey, null);
-      if (errorLevel == HighlightDisplayLevel.DO_NOT_SHOW) {
+      if (errorLevel == HighlightDisplayLevel.DO_NOT_SHOW || errorLevel == HighlightDisplayLevel.WEAK_WARNING) {
         currentProfile.setErrorLevel(displayKey, HighlightDisplayLevel.WARNING, project);
       }
     }
@@ -90,19 +91,21 @@ public abstract class LightJavaInspectionTestCase extends LightJavaCodeInsightFi
   }
 
   protected final void checkQuickFix(String name, @Language("JAVA") String result) {
-    final IntentionAction intention = myFixture.getAvailableIntention(name);
-    assertNotNull(intention);
-    myFixture.launchAction(intention);
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    invokeIntention(name);
     myFixture.checkResult(result);
   }
 
-  protected final void checkQuickFix(String intentionName) {
-    final IntentionAction intention = myFixture.getAvailableIntention(intentionName);
-    assertNotNull("Intention \"" + intentionName + "\" not found.", intention);
+  protected final void checkQuickFix(String name) {
+    invokeIntention(name);
+    myFixture.checkResultByFile(getTestName(false) + ".after.java");
+  }
+
+  private void invokeIntention(String name) {
+    assertFalse("No <caret> in " + myFixture.getFile().getName(), myFixture.getCaretOffset() == 0);
+    final IntentionAction intention = myFixture.getAvailableIntention(name);
+    assertNotNull("Intention \"" + name + "\" not found\navailable intentions: " + myFixture.getAvailableIntentions(), intention);
     myFixture.launchAction(intention);
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    myFixture.checkResultByFile(getTestName(false) + ".after.java");
   }
 
   protected final void checkQuickFixAll() { 

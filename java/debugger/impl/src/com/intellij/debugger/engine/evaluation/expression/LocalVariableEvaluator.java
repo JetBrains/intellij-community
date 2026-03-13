@@ -44,105 +44,78 @@ class LocalVariableEvaluator implements ModifiableEvaluator {
   private final String myLocalVariableName;
   private final boolean myCanScanFrames;
 
-  // TODO remove non-final fields, see IDEA-366793
-  @Deprecated
-  private EvaluationContextImpl myContext;
-  @Deprecated
-  private LocalVariableProxyImpl myEvaluatedVariable;
-  @Deprecated
-  private DecompiledLocalVariable myEvaluatedDecompiledVariable;
-
   LocalVariableEvaluator(String localVariableName, boolean canScanFrames) {
     myLocalVariableName = localVariableName;
     myCanScanFrames = canScanFrames;
   }
 
   @Override
-  public @NotNull ModifiableValue evaluateModifiable(EvaluationContextImpl context) throws EvaluateException {
+  public @NotNull ModifiableValue evaluateModifiable(@NotNull EvaluationContextImpl context) throws EvaluateException {
     StackFrameProxyImpl frameProxy = context.getFrameProxy();
     if (frameProxy == null) {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.no.stackframe"));
     }
 
-    try {
-      ThreadReferenceProxyImpl threadProxy = null;
-      int lastFrameIndex = -1;
-      PsiVariable variable = null;
-      DebugProcessImpl process = context.getDebugProcess();
+    ThreadReferenceProxyImpl threadProxy = null;
+    int lastFrameIndex = -1;
+    PsiVariable variable = null;
+    DebugProcessImpl process = context.getDebugProcess();
 
-      boolean topFrame = true;
+    boolean topFrame = true;
 
-      while (true) {
-        try {
-          LocalVariableProxyImpl local = frameProxy.visibleVariableByName(myLocalVariableName);
-          if (local != null) {
-            if (topFrame ||
-                variable.equals(resolveVariable(frameProxy, myLocalVariableName, context.getProject(), process))) {
-              myEvaluatedVariable = local;
-              myContext = context;
-              return new ModifiableValue(frameProxy.getValue(local), new MyModifier(context, local, null));
-            }
+    while (true) {
+      try {
+        LocalVariableProxyImpl local = frameProxy.visibleVariableByName(myLocalVariableName);
+        if (local != null) {
+          if (topFrame ||
+              variable.equals(resolveVariable(frameProxy, myLocalVariableName, context.getProject(), process))) {
+            return new ModifiableValue(frameProxy.getValue(local), new MyModifier(context, local, null));
           }
         }
-        catch (EvaluateException e) {
-          if (!(e.getCause() instanceof AbsentInformationException)) {
-            throw e;
-          }
-
-          // try to look in slots
-          try {
-            Map<DecompiledLocalVariable, Value> vars = LocalVariablesUtil.fetchValues(frameProxy, process, true);
-            for (Map.Entry<DecompiledLocalVariable, Value> entry : vars.entrySet()) {
-              DecompiledLocalVariable var = entry.getKey();
-              if (var.getMatchedNames().contains(myLocalVariableName) || var.getDefaultName().equals(myLocalVariableName)) {
-                myEvaluatedDecompiledVariable = var;
-                myContext = context;
-                return new ModifiableValue(entry.getValue(), new MyModifier(context, null, var));
-              }
-            }
-          }
-          catch (Exception e1) {
-            LOG.info(e1);
-          }
-        }
-
-        if (myCanScanFrames) {
-          if (topFrame) {
-            variable = resolveVariable(frameProxy, myLocalVariableName, context.getProject(), process);
-            if (variable == null) break;
-          }
-          if (threadProxy == null /* initialize it lazily */) {
-            threadProxy = frameProxy.threadProxy();
-            lastFrameIndex = threadProxy.frameCount() - 1;
-          }
-          int currentFrameIndex = frameProxy.getFrameIndex();
-          if (currentFrameIndex < lastFrameIndex) {
-            frameProxy = threadProxy.frame(currentFrameIndex + 1);
-            if (frameProxy != null) {
-              topFrame = false;
-              continue;
-            }
-          }
-        }
-
-        break;
       }
-      throw EvaluateExceptionUtil.createEvaluateException(
-        JavaDebuggerBundle.message("evaluation.error.local.variable.missing", myLocalVariableName));
-    }
-    catch (EvaluateException e) {
-      myEvaluatedVariable = null;
-      myContext = null;
-      throw e;
-    }
-  }
+      catch (EvaluateException e) {
+        if (!(e.getCause() instanceof AbsentInformationException)) {
+          throw e;
+        }
 
-  @Override
-  public Modifier getModifier() {
-    if ((myEvaluatedVariable != null || myEvaluatedDecompiledVariable != null) && myContext != null) {
-      return new MyModifier(myContext, myEvaluatedVariable, myEvaluatedDecompiledVariable);
+        // try to look in slots
+        try {
+          Map<DecompiledLocalVariable, Value> vars = LocalVariablesUtil.fetchValues(frameProxy, process, true);
+          for (Map.Entry<DecompiledLocalVariable, Value> entry : vars.entrySet()) {
+            DecompiledLocalVariable var = entry.getKey();
+            if (var.getMatchedNames().contains(myLocalVariableName) || var.getDefaultName().equals(myLocalVariableName)) {
+              return new ModifiableValue(entry.getValue(), new MyModifier(context, null, var));
+            }
+          }
+        }
+        catch (Exception e1) {
+          LOG.info(e1);
+        }
+      }
+
+      if (myCanScanFrames) {
+        if (topFrame) {
+          variable = resolveVariable(frameProxy, myLocalVariableName, context.getProject(), process);
+          if (variable == null) break;
+        }
+        if (threadProxy == null /* initialize it lazily */) {
+          threadProxy = frameProxy.threadProxy();
+          lastFrameIndex = threadProxy.frameCount() - 1;
+        }
+        int currentFrameIndex = frameProxy.getFrameIndex();
+        if (currentFrameIndex < lastFrameIndex) {
+          frameProxy = threadProxy.frame(currentFrameIndex + 1);
+          if (frameProxy != null) {
+            topFrame = false;
+            continue;
+          }
+        }
+      }
+
+      break;
     }
-    return null;
+    throw EvaluateExceptionUtil.createEvaluateException(
+      JavaDebuggerBundle.message("evaluation.error.local.variable.missing", myLocalVariableName));
   }
 
   private static @Nullable PsiVariable resolveVariable(final StackFrameProxy frame,

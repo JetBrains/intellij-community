@@ -11,11 +11,9 @@ import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.sm.FileUrlProvider;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
-import com.intellij.junit.testFramework.JUnitLibrary;
 import com.intellij.junit.testFramework.JUnitProjectDescriptor;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -24,10 +22,15 @@ import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.junit.testFramework.MavenTestLib.JUNIT5;
+import static com.intellij.pom.java.LanguageLevel.HIGHEST;
+
 public class JUnitUniqueIdTest extends LightJavaCodeInsightFixtureTestCase {
+  public static final LightProjectDescriptor descriptor = new JUnitProjectDescriptor(HIGHEST, JUNIT5);
+
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return new JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUnitLibrary.JUNIT5);
+    return descriptor;
   }
 
   public void testValidateUniqueId() {

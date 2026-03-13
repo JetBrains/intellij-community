@@ -1,4 +1,5 @@
 // "Create Label 'foo'@" "true"
+// K2_ERROR: Label does not denote a reachable loop.
 
 fun test() {
     while (true) {

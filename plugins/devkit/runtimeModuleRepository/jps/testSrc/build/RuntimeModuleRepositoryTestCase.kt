@@ -14,7 +14,7 @@ import kotlin.io.path.writeText
 abstract class RuntimeModuleRepositoryTestCase : JpsBuildTestCase() {
   override fun setUp() {
     super.setUp()
-    addModule(RUNTIME_REPOSITORY_MARKER_MODULE)
+    addModule(RUNTIME_REPOSITORY_MARKER_MODULE.stringId)
     JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myProject).outputUrl = getUrl("out")
     val projectDir = Path(getAbsolutePath("project"))
     val modulesXml = projectDir.resolve(".idea/modules.xml")

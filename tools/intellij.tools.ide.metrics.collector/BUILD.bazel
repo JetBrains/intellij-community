@@ -8,6 +8,12 @@ create_kotlinc_options(
 )
 
 resourcegroup(
+  name = "ide-metrics-collector_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+resourcegroup(
   name = "ide-metrics-collector_test_resources",
   srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
@@ -18,6 +24,7 @@ jvm_library(
   module_name = "intellij.tools.ide.metrics.collector",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ide-metrics-collector_resources"],
   kotlinc_opts = ":custom_ide-metrics-collector",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -47,23 +54,35 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//libraries/jackson/jackson",
+    "//libraries/jackson/jackson:jackson_test_lib",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "//libraries/jackson/databind",
+    "//libraries/jackson/databind:databind_test_lib",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
-    "@lib//:kotlin-test-assertions-core-jvm",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
+    "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
+    "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
     "@lib//:junit5",
     "//libraries/mockito",
+    "//libraries/mockito:mockito_test_lib",
     "@lib//:mockito-junit-jupiter",
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "//platform/diagnostic/telemetry.exporters",
+    "//platform/diagnostic/telemetry.exporters:telemetry.exporters_test_lib",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "//tools/intellij.tools.ide.util.common:ide-util-common",
+    "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
     "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
     "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
     "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
     "@lib//:assert_j",
   ]
 )

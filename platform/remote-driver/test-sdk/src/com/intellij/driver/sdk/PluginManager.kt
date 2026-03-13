@@ -3,6 +3,7 @@ package com.intellij.driver.sdk
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.utility
+import com.intellij.driver.model.OnDispatcher
 
 fun Driver.getPlugin(id: String): PluginDescriptor? {
   return utility<PluginManagerCore>().getPlugin(utility(PluginId::class).getId(id))
@@ -43,9 +44,12 @@ interface PluginManagerCore {
   fun getLoadedPlugins(): Array<PluginDescriptor>
   fun arePluginsInitialized(): Boolean
   fun isLoaded(pluginId: PluginId): Boolean
+  fun isDisabled(pluginId: PluginId): Boolean
 }
 
 fun Driver.isPluginLoaded(id: String): Boolean = utility<PluginManagerCore>().isLoaded(utility<PluginId>().getId(id))
+
+fun Driver.isPluginDisabled(id: String): Boolean = utility<PluginManagerCore>().isDisabled(utility<PluginId>().getId(id))
 
 @Remote("com.intellij.openapi.extensions.PluginDescriptor")
 interface PluginDescriptor {
@@ -55,3 +59,35 @@ interface PluginDescriptor {
   fun getName(): String
   fun getVersion(): String
 }
+
+@Remote("com.intellij.ide.plugins.DynamicPlugins")
+interface DynamicPlugins {
+  fun loadPlugins(plugins: List<PluginDescriptor>, project: Project?): Boolean
+}
+
+/**
+ * Enables and loads a plugin dynamically without requiring IDE restart.
+ *
+ * @param id Plugin ID string
+ * @return true if plugin was enabled and loaded successfully
+ */
+fun Driver.loadPluginDynamically(id: String): Boolean = withContext(OnDispatcher.EDT) {
+    val pluginId = utility(PluginId::class).getId(id)
+    val descriptor = utility<PluginManagerCore>().getPlugin(pluginId)!!
+    utility<DynamicPlugins>().loadPlugins(listOf(descriptor), null)
+  }
+
+/**
+ * Enables the Ultimate module plugin (subscription mode) dynamically.
+ *
+ * This is a convenience wrapper around [loadPluginDynamically] specifically for the
+ * "com.intellij.modules.ultimate" plugin.
+ *
+ * **Important:** Enabling the Ultimate module may trigger license validation checks.
+ *
+ * @see [com.intellij.ide.starter.ide.IDETestContext.disableUltimateModule]
+ *
+ * @return true if the Ultimate module was enabled and loaded successfully
+ */
+fun Driver.enableUltimateModule(): Boolean = loadPluginDynamically("com.intellij.modules.ultimate")
+

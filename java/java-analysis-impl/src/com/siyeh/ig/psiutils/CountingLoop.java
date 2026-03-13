@@ -22,8 +22,6 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
  * Represents a loop of form {@code for(int/long counter = initializer; counter </<= bound; counter++/--)}
- *
- * @author Tagir Valeev
  */
 public final class CountingLoop {
   final @NotNull PsiLocalVariable myCounter;

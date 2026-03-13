@@ -3,8 +3,8 @@
  */
 package com.intellij.openapi.ui.panel;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
 
 public interface GridBagPanelBuilder extends PanelBuilder {
   int gridWidth();

@@ -14,7 +14,6 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
@@ -79,7 +78,8 @@ public class VariableOfTypeMacro extends Macro {
 
     final ArrayList<PsiElement> array = new ArrayList<>();
     PsiType type = MacroUtil.resultToPsiType(result, context);
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
+    PsiFile file = context.getPsiFile();
+    if (file == null) return null;
     PsiElement place = file.findElementAt(offset);
 
     PsiVariable[] variables = MacroUtil.getVariablesVisibleAt(place, "");

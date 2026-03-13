@@ -10,16 +10,24 @@ import com.intellij.platform.debugger.impl.shared.InlineBreakpointsCache
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDependentBreakpointManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointInstallationInfo
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
 import com.intellij.util.ThrowableRunnable
 import com.intellij.xdebugger.XDebuggerUtil
-import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointInstallationInfo
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointListener
-import com.intellij.xdebugger.impl.breakpoints.*
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointItem
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
+import java.util.concurrent.CompletableFuture
 
 private class MonolithBreakpointManager(val breakpointManager: XBreakpointManagerImpl) : XBreakpointManagerProxy {
   override val breakpointsDialogSettings: XBreakpointsDialogState?
@@ -92,11 +100,12 @@ private class MonolithBreakpointManager(val breakpointManager: XBreakpointManage
     return lastRemovedBreakpoint.asProxy()
   }
 
-  override fun removeBreakpoint(breakpoint: XBreakpointProxy) {
+  override fun removeBreakpoint(breakpoint: XBreakpointProxy): CompletableFuture<Void?> {
     if (breakpoint !is MonolithBreakpointProxy) {
-      return
+      return CompletableFuture.completedFuture(null)
     }
     breakpointManager.removeBreakpoint(breakpoint.breakpoint)
+    return CompletableFuture.completedFuture(null)
   }
 
   override fun restoreRemovedBreakpoint(breakpoint: XBreakpointProxy) {
@@ -113,6 +122,12 @@ private class MonolithBreakpointManager(val breakpointManager: XBreakpointManage
       return
     }
     breakpointManager.copyLineBreakpoint(breakpoint.breakpoint, file.url, line)
+  }
+
+  override fun onBreakpointRemoval(breakpoint: XLineBreakpointProxy, session: XDebugSessionProxy) {
+    if (breakpoint !is MonolithLineBreakpointProxy) return
+    val monolithSession = MonolithXDebugManagerProxy.findSessionImpl(session)
+    monolithSession.checkActiveNonLineBreakpointOnRemoval(breakpoint.breakpoint)
   }
 
   override fun rememberRemovedBreakpoint(breakpoint: XBreakpointProxy) {

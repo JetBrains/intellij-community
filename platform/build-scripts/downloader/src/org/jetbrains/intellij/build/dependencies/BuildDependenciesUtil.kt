@@ -357,8 +357,12 @@ private class EntryNameConverter(private val archiveFile: Path, private val targ
         target.resolve(split[1])
       }
     }
-    check(normalizedName.startsWith(
-      leadingComponentPrefix!!)) { "$archiveFile: entry name '$normalizedName' should start with previously found prefix '$leadingComponentPrefix'" }
+    if (!normalizedName.startsWith(leadingComponentPrefix!!)) {
+      if (isDirectory && "$normalizedName/" == leadingComponentPrefix) {
+        return null
+      }
+      error("$archiveFile: entry name '$normalizedName' should start with previously found prefix '$leadingComponentPrefix'")
+    }
     return target.resolve(normalizedName.substring(leadingComponentPrefix!!.length))
   }
 }

@@ -680,7 +680,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     if (psiFile == null) return null;
     VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return null;
-    int line = ReadAction.compute(() -> {
+    int line = ReadAction.computeBlocking(() -> {
       Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
       return (document == null) ? -1 : document.getLineNumber(element.getTextRange().getStartOffset());
     });

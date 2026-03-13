@@ -6,7 +6,8 @@ package com.intellij.analysis;
 import com.intellij.analysis.dialog.ModelScopeItem;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JRadioButton;
 import java.util.List;
 
 @ApiStatus.Internal

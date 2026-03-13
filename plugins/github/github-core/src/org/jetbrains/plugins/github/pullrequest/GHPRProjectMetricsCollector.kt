@@ -27,45 +27,31 @@ import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 internal class GHPRProjectMetricsCollector : ProjectUsagesCollector() {
   @Suppress("CompanionObjectInExtension")
   private companion object {
-    private val GROUP = EventLogGroup(
-      "vcs.github.project", 1,
-      recorder = "FUS",
-      description = "Collects metrics about GitHub Plugin usage."
-    )
+    private val GROUP = EventLogGroup("vcs.github.project", 1)
 
     private val PR_STATISTICS_ALL = GROUP.registerEvent(
       "pr.statistics.all",
       EventFields.RoundedInt("value", description = "Total number of PRs in project (rounded up to the first power of 2)."),
-      description = "#PR statistics: open."
     )
     private val PR_STATISTICS_OPEN = GROUP.registerEvent(
       "pr.statistics.open",
       EventFields.RoundedInt("value", description = "Total number of open PRs in project (rounded up to the first power of 2)."),
-      description = "#PR statistics: open."
     )
     private val PR_STATISTICS_OPEN_AUTHOR = GROUP.registerEvent(
       "pr.statistics.open.author",
-      EventFields.RoundedInt("value",
-                      description = "Total number of open PRs in project authored by the current user (rounded up to the first power of 2)."),
-      description = "#PR statistics: open > author."
+      EventFields.RoundedInt("value", description = "Total number of open PRs in project authored by the current user (rounded up to the first power of 2)."),
     )
     private val PR_STATISTICS_OPEN_ASSIGNEE = GROUP.registerEvent(
       "pr.statistics.open.assignee",
-      EventFields.RoundedInt("value",
-                      description = "Total number of open PRs in project assigned to the current user (rounded up to the first power of 2)."),
-      description = "#PR statistics: open > assignee."
+      EventFields.RoundedInt("value", description = "Total number of open PRs in project assigned to the current user (rounded up to the first power of 2)."),
     )
     private val PR_STATISTICS_OPEN_REVIEW_ASSIGNED = GROUP.registerEvent(
       "pr.statistics.open.reviewer",
-      EventFields.RoundedInt("value",
-                      description = "Total number of open PRs in project assigned to the current user as reviewer (rounded up to the first power of 2)."),
-      description = "#PR statistics: open > reviewer."
+      EventFields.RoundedInt("value", description = "Total number of open PRs in project assigned to the current user as reviewer (rounded up to the first power of 2)."),
     )
     private val PR_STATISTICS_OPEN_REVIEWED = GROUP.registerEvent(
       "pr.statistics.open.reviewed",
-      EventFields.RoundedInt("value",
-                      description = "Total number of open PRs in project reviewed by the current user (rounded up to the first power of 2)."),
-      description = "#PR statistics: open > reviewed."
+      EventFields.RoundedInt("value", description = "Total number of open PRs in project reviewed by the current user (rounded up to the first power of 2)."),
     )
   }
 

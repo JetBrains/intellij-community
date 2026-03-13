@@ -10,7 +10,7 @@ import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.ui.SimpleListCellRenderer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JList;
 
 import static com.intellij.openapi.util.text.StringUtil.collapseWhiteSpace;
 import static com.intellij.openapi.util.text.StringUtil.shortenTextWithEllipsis;

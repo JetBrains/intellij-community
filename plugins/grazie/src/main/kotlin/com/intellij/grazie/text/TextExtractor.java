@@ -5,6 +5,7 @@ import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy;
 import com.intellij.grazie.ide.language.LanguageGrammarChecking;
+import com.intellij.grazie.utils.HighlightingUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
@@ -65,6 +66,7 @@ public abstract class TextExtractor {
   private static final Pattern NOINSPECTION_SUPPRESSION = Pattern.compile(SuppressionUtil.COMMON_SUPPRESS_REGEXP);
   private static final Pattern PROPERTY_SUPPRESSION = Pattern.compile("\\s*suppress inspection \"" + LocalInspectionTool.VALID_ID_PATTERN + "\"");
   private static final Pattern LICENSE_PATTERN = Pattern.compile("(?i)License.*?(as is|MIT|GNU|GPL|Apache|BSD)", Pattern.DOTALL);
+  private static final Pattern KEY_PATTERN = Pattern.compile("-----BEGIN PUBLIC KEY-----.*?(-----END PUBLIC KEY-----)", Pattern.DOTALL);
 
   /**
    * Extract text from the given PSI element, if possible.
@@ -281,7 +283,13 @@ public abstract class TextExtractor {
   private static boolean shouldIgnore(TextContent content) {
     return isSuppressionComment(content) ||
            isCopyrightComment(content) ||
+           isKeyLike(content) ||
            hasIntersectingInjection(content, content.getContainingFile());
+  }
+
+  private static boolean isKeyLike(TextContent content) {
+    return content.getDomain() == TextContent.TextDomain.PLAIN_TEXT &&
+           KEY_PATTERN.matcher(content.toString()).matches();
   }
 
   private static boolean isCopyrightComment(TextContent content) {
@@ -322,6 +330,8 @@ public abstract class TextExtractor {
   /**
    * Extract all text contents from a file view provider that match the specified domains.
    * Traverses through all PSI elements in all root files of the view provider and collects matching text contents.
+   * <p>
+   * Cached version of this function can be used. See {@link HighlightingUtil#getCheckedFileTexts} or {@link HighlightingUtil#getAllFileTexts}
    */
   public static Set<TextContent> findAllTextContents(FileViewProvider vp, Set<TextContent.TextDomain> domains) {
     Set<TextContent> allContents = new HashSet<>();

@@ -2,8 +2,14 @@
 package com.intellij.openapi.project
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.AccessToken
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -24,6 +30,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.ConcurrencyUtil
@@ -36,8 +43,24 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.getAndUpdate
+import kotlinx.coroutines.flow.updateAndGet
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Async
 import org.jetbrains.annotations.NonNls
@@ -756,9 +779,23 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
         LOG.infoWithDebug("Processing dumb queue under modal progress (start)", startTrace)
         (ApplicationManager.getApplication() as ApplicationImpl).executeSuspendingWriteAction(myProject, IndexingBundle.message(
           "progress.indexing.title")) {
+          val indicator = ProgressManager.getInstance().progressIndicator
           processTask.use {
-            processTask.run(
-              ProgressManager.getInstance().progressIndicator)
+            processTask(object : RawProgressReporter {
+              override fun text(text: @NlsContexts.ProgressText String?) {
+                indicator?.text = text
+              }
+
+              override fun details(details: @NlsContexts.ProgressDetails String?) {
+                indicator?.text2 = details
+              }
+
+              override fun fraction(fraction: Double?) {
+                if (fraction != null) {
+                  indicator?.fraction = fraction
+                }
+              }
+            })
           }
         }
       }
@@ -825,7 +862,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   fun hasScheduledTasks(): Boolean {
     // when queued on EDT, dumb mode starts immediately, but executor does not start immediately - it schedules start to the end of the EDT
     // queue to give a chance to invoke completeJustSubmittedTasks and index files under modal progress.
-    return scheduledTasksScope.coroutineContext.job.children.firstOrNull() != null
+    return scheduledTasksScope.coroutineContext.job.children.firstOrNull() != null || guiDumbTaskRunner.hasScheduledTasks()
   }
 
   companion object {

@@ -98,6 +98,10 @@ public interface AsyncFileListener {
      * from the same list. For example, the {@link VFileEvent#getFile()} may be invalid (if it was deleted by that further event),
      * {@link VFileCreateEvent#getFile()} may return null, property value in
      * {@link com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent} may be already outdated, etc.
+     *
+     * <p>Note that if a directory with other files/directories inside is created, this listener will receive {@link VFileCreateEvent} only for the topmost directory.
+     * To iterate over all the created files use {@link com.intellij.openapi.roots.FileIndex#iterateContentUnderDirectory} and provide the file from the {@link VFileCreateEvent}.
+     * Otherwise, excluded files might be added to the VFS which may lead to performance problems.</p>
      */
     @RequiresWriteLock
     // can be executed on any thread

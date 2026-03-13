@@ -27,4 +27,26 @@ jvm_library(
     "//platform/searchEverywhere/frontend",
   ]
 )
+
+jvm_library(
+  name = "testFramework_test_lib",
+  module_name = "intellij.platform.searchEverywhere.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//platform/searchEverywhere/shared:searchEverywhere",
+    "//platform/searchEverywhere/shared:searchEverywhere_test_lib",
+    "//platform/searchEverywhere/backend",
+    "//platform/searchEverywhere/backend:backend_test_lib",
+    "//platform/searchEverywhere/frontend",
+    "//platform/searchEverywhere/frontend:frontend_test_lib",
+  ],
+  runtime_deps = [
+    ":testFramework",
+    "//platform/searchEverywhere/shared:searchEverywhere_test_lib",
+    "//platform/searchEverywhere/backend:backend_test_lib",
+    "//platform/searchEverywhere/frontend:frontend_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.searchEverywhere.testFramework` end

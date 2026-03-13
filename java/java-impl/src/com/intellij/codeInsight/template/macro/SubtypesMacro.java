@@ -15,7 +15,6 @@ import com.intellij.codeInsight.template.TextResult;
 import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
@@ -77,7 +76,7 @@ public final class SubtypesMacro extends Macro {
   }
 
   private static LookupElement[] suggestSubTypes(ExpressionContext context, PsiType type) {
-    final PsiFile file = PsiDocumentManager.getInstance(context.getProject()).getPsiFile(context.getEditor().getDocument());
+    final PsiFile file = context.getPsiFile();
     final PsiElement element = file.findElementAt(context.getStartOffset());
 
     final Set<LookupElement> set = new LinkedHashSet<>();

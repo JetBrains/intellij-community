@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.lang
 
 import com.intellij.lang.Language
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.extensions.ExtensionPointName
 
 /**
@@ -19,6 +20,10 @@ interface MarkdownCompatibilityChecker {
   }
 
   fun isSupportedLanguage(language: Language): Boolean
+  
+  fun isSupportedContext(language: Language, dataContext: DataContext?): Boolean {
+    return isSupportedLanguage(language)
+  }
 }
 
 class DefaultMarkdownCompatibilityChecker : MarkdownCompatibilityChecker {

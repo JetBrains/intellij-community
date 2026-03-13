@@ -97,12 +97,28 @@ internal class TerminalCompletionPowerShellEscapingTest : BasePlatformTestCase()
     }
   }
 
+  @Test
+  fun `single quotes inside suggestion are escaped`() {
+    doTest { fixture ->
+      fixture.mockSuggestions(
+        prefixReplacementIndex = 0,
+        "it's a test",
+        "dummy"
+      )
+      fixture.type("test_cmd ")
+      fixture.callCompletionPopup()
+      fixture.insertCompletionItem("it's a test")
+      fixture.assertCommandTextState("test_cmd 'it''s a test<cursor>'")
+    }
+  }
+
   private fun doTest(block: suspend (TerminalCompletionFixture) -> Unit) = timeoutRunBlocking(context = Dispatchers.EDT) {
     val fixtureScope = childScope("TerminalCompletionFixture")
     val startupOptions = TerminalStartupOptionsImpl(
       shellCommand = listOf("powershell.exe"),
       workingDirectory = System.getProperty("user.home"),
-      envVariables = emptyMap()
+      envVariables = emptyMap(),
+      pid = null,
     )
     val session = EchoingTerminalSession(startupOptions, fixtureScope.childScope("EchoingTerminalSession"))
     doWithCompletionFixture(project, session, fixtureScope) { fixture ->

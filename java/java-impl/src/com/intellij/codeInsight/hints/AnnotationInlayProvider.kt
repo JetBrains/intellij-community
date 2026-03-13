@@ -41,6 +41,7 @@ import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -103,29 +104,26 @@ public class AnnotationInlayProvider : InlayHintsProvider {
             for ((index, originalParameter) in typeParameterList.typeParameters.withIndex()) {
               val parameter = element.typeParameters.getOrNull(index) ?: return@whenOptionEnabled
               val manager = ExternalAnnotationsManager.getInstance(project)
-              processTypeParameterRecursively(parameter, originalParameter, sink)
-              parameter.extendsList.referenceElements.zip(originalParameter.extendsList.referencedTypes)
-                .forEach { (referenceElement, classType) ->
-                  if (referenceElement == null || classType == null) {
-                    return@forEach
-                  }
-                  classType.annotations
-                    .filter(manager::isExternalAnnotation)
-                    .forEach {
-                      showAnnotationInlay(sink, it, project, referenceElement)
-                    }
-                }
-              if (originalParameter.superTypes.size == 1 && parameter.extendsList.referenceElements.isEmpty()) {
-                if (originalParameter.superTypes[0].equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-                  manager.findExternalAnnotations(originalParameter)
-                    .forEach {
-                      // it is not really correct, because
-                      // annotations should be applied to object, like: `T extends @NotNull Object`
-                      // but it is too long, so let's apply it to type parameters
-                      showAnnotationInlay(sink, it, project, parameter)
-                    }
-                }
-              }
+              processTypeParameterAnnotationRecursively(parameter, originalParameter,
+                                                        { sinkReferenceElement, sinkOriginalType ->
+                                                sinkOriginalType.annotations
+                                                  .filter(manager::isExternalAnnotation)
+                                                  .forEach {
+                                                    showAnnotationInlay(sink, it, project, sinkReferenceElement)
+                                                  }
+                                              },
+                                                        { sinkOriginalElement, sinkElement ->
+                                                showPsiTypeElement(sinkOriginalElement, sinkElement, sink)
+                                              },
+                                                        {sinkOriginalParameter, sinkParameter  ->
+                                                manager.findExternalAnnotations(sinkOriginalParameter)
+                                                  .forEach {
+                                                    // it is not really correct, because
+                                                    // annotations should be applied to object, like: `T extends @NotNull Object`
+                                                    // but it is too long, so let's apply it to type parameters
+                                                    showAnnotationInlay(sink, it, project, sinkParameter)
+                                                  }
+                                              })
             }
           }
         }
@@ -196,47 +194,6 @@ public class AnnotationInlayProvider : InlayHintsProvider {
           }
       }
 
-      private fun processTypeParameterRecursively(parameter: PsiTypeParameter, originalParameter: PsiTypeParameter, sink: InlayTreeSink) {
-        fun recursiveProcessTypeElement(element: PsiElement, originalElement: PsiElement) {
-          if (element is PsiTypeElement && originalElement is PsiTypeElement) {
-            showPsiTypeElement(originalElement, element, sink)
-          }
-          element.children.zip(originalElement.children)
-            .forEach { (nestedElement, nestedOriginalElement) ->
-              if (nestedElement is PsiTypeElement && nestedOriginalElement is PsiTypeElement) {
-                recursiveProcessTypeElement(nestedElement, nestedOriginalElement)
-              }
-              if (nestedElement is PsiReferenceParameterList && nestedOriginalElement is PsiReferenceParameterList) {
-                nestedElement.typeParameterElements.zip(nestedOriginalElement.typeParameterElements).forEach { nested ->
-                  recursiveProcessTypeElement(nested.first, nested.second)
-                }
-              }
-              if (nestedElement is PsiJavaCodeReferenceElement && nestedOriginalElement is PsiJavaCodeReferenceElement) {
-                val originalTypeParameterElements = nestedOriginalElement.parameterList?.typeParameterElements
-                val typeParameterElements = nestedElement.parameterList?.typeParameterElements
-                if (typeParameterElements != null && originalTypeParameterElements != null) {
-                  typeParameterElements.zip(originalTypeParameterElements).forEach { nested ->
-                    recursiveProcessTypeElement(nested.first, nested.second)
-                  }
-                }
-              }
-            }
-        }
-
-        parameter.extendsList.referenceElements.zip(originalParameter.superTypes)
-          .forEach { (referenceElement, originalType) ->
-            if (referenceElement == null || originalType !is PsiClassReferenceType) return@forEach
-            val parameterList = referenceElement.parameterList
-            val originalParameterList = originalType.reference.parameterList
-            if (parameterList == null || originalParameterList == null) return@forEach
-            parameterList.typeParameterElements.zip(originalParameterList.typeParameterElements)
-              .forEach { (parameter, originalParameter) ->
-                if (parameter == null || originalParameter == null) return@forEach
-                recursiveProcessTypeElement(parameter, originalParameter)
-              }
-          }
-      }
-
       private fun showAnnotationInlay(
         sink: InlayTreeSink,
         annotation: PsiAnnotation,
@@ -277,6 +234,77 @@ public class AnnotationInlayProvider : InlayHintsProvider {
       is PsiVariable -> calculateSuffixOffset(element.typeElement)
       is PsiTypeParameter -> element.textRange.endOffset
       else -> 0
+    }
+  }
+}
+
+/**
+ * Processes type parameter annotations recursively by comparing elements between a given parameter and its original version.
+ *
+ * @param parameter the current type parameter to process.
+ * @param originalParameter the original type parameter used as a reference for processing.
+ * @param sinkReferenceElement a callback invoked for each reference element found during the processing, providing the mapped reference element and its corresponding original type.
+ * @param sinkPsiTypeElement a callback invoked for each type element found during the processing, providing the original type element and the processed element.
+ * @param sinkObjectExtendParameter a callback invoked if the type parameter implicitly extends `java.lang.Object` without any explicit type bounds.
+ */
+public fun processTypeParameterAnnotationRecursively(
+  parameter: PsiTypeParameter,
+  originalParameter: PsiTypeParameter,
+  sinkReferenceElement: (
+    referenceElement: PsiJavaCodeReferenceElement,
+    originalType: PsiClassType
+  ) -> Unit,
+  sinkPsiTypeElement: (
+    originalElement: PsiTypeElement,
+    element: PsiTypeElement,
+  ) -> Unit,
+  sinkObjectExtendParameter: (
+    originalParameter: PsiTypeParameter,
+    parameter: PsiTypeParameter,
+  )-> Unit
+) {
+  fun recursiveProcessTypeElement(element: PsiElement, originalElement: PsiElement) {
+    if (element is PsiTypeElement && originalElement is PsiTypeElement) {
+      sinkPsiTypeElement(originalElement, element)
+    }
+    element.children.zip(originalElement.children)
+      .forEach { (nestedElement, nestedOriginalElement) ->
+        if (nestedElement is PsiTypeElement && nestedOriginalElement is PsiTypeElement) {
+          recursiveProcessTypeElement(nestedElement, nestedOriginalElement)
+        }
+        if (nestedElement is PsiReferenceParameterList && nestedOriginalElement is PsiReferenceParameterList) {
+          nestedElement.typeParameterElements.zip(nestedOriginalElement.typeParameterElements).forEach { nested ->
+            recursiveProcessTypeElement(nested.first, nested.second)
+          }
+        }
+        if (nestedElement is PsiJavaCodeReferenceElement && nestedOriginalElement is PsiJavaCodeReferenceElement) {
+          val originalTypeParameterElements = nestedOriginalElement.parameterList?.typeParameterElements
+          val typeParameterElements = nestedElement.parameterList?.typeParameterElements
+          if (typeParameterElements != null && originalTypeParameterElements != null) {
+            typeParameterElements.zip(originalTypeParameterElements).forEach { nested ->
+              recursiveProcessTypeElement(nested.first, nested.second)
+            }
+          }
+        }
+      }
+  }
+
+  parameter.extendsList.referenceElements.zip(originalParameter.superTypes)
+    .forEach { (referenceElement: PsiJavaCodeReferenceElement?, originalType: PsiClassType?) ->
+      if (referenceElement == null || originalType !is PsiClassReferenceType) return@forEach
+      val parameterList = referenceElement.parameterList
+      val originalParameterList = originalType.reference.parameterList
+      if (parameterList == null || originalParameterList == null) return@forEach
+      sinkReferenceElement(referenceElement, originalType)
+      parameterList.typeParameterElements.zip(originalParameterList.typeParameterElements)
+        .forEach { (parameter, originalParameter) ->
+          if (parameter == null || originalParameter == null) return@forEach
+          recursiveProcessTypeElement(parameter, originalParameter)
+        }
+    }
+  if (originalParameter.superTypes.size == 1 && parameter.extendsList.referenceElements.isEmpty()) {
+    if (originalParameter.superTypes[0].equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+      sinkObjectExtendParameter(originalParameter, parameter)
     }
   }
 }

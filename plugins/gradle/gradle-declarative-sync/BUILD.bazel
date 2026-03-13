@@ -30,6 +30,28 @@ jvm_library(
     "//libraries/jackson/jackson",
   ]
 )
+
+jvm_library(
+  name = "declarativeSync_test_lib",
+  module_name = "intellij.gradle.declarativeSync",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":declarativeSync",
+    "//plugins/gradle:gradle_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/external-system-impl:externalSystem-impl_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/util:util_test_lib",
+    "//android/gradle-dsl:gradle-dsl_test_lib",
+    "//android/gradle-dsl-flags:gradle-dsl-flags_test_lib",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//libraries/jackson/databind:databind_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.gradle.declarativeSync` end
 
 ### auto-generated section `build intellij.gradle.declarativeSync.tests` start
@@ -47,26 +69,44 @@ jvm_library(
   srcs = glob(["testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//plugins/gradle:gradle-tests",
     "//plugins/gradle:gradle-tests_test_lib",
     "//plugins/gradle/gradle-declarative-sync:declarativeSync",
+    "//plugins/gradle/gradle-declarative-sync:declarativeSync_test_lib",
+    "//android/android-test-framework:testFramework",
     "//android/android-test-framework:testFramework_test_lib",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-tests",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
     "//platform/util",
+    "//platform/util:util_test_lib",
+    "//android/app-inspection/inspectors/database:android-app-inspection-inspectors-database-tests",
     "//android/app-inspection/inspectors/database:android-app-inspection-inspectors-database-tests_test_lib",
     "//platform/external-system-impl:externalSystem-impl",
+    "//platform/external-system-impl:externalSystem-impl_test_lib",
     "//platform/util-ex",
+    "//platform/util-ex:util-ex_test_lib",
+    "//platform/external-system-impl:externalSystem-tests",
     "//platform/external-system-impl:externalSystem-tests_test_lib",
     "//platform/backend/workspace",
+    "//platform/backend/workspace:workspace_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/gradle",
+    "//plugins/gradle:gradle_test_lib",
     "//android/gradle-dsl-flags",
+    "//android/gradle-dsl-flags:gradle-dsl-flags_test_lib",
     "//android/gradle-dsl",
+    "//android/gradle-dsl:gradle-dsl_test_lib",
     "//platform/workspace/storage",
+    "//platform/workspace/storage:storage_test_lib",
     "//android/gradle-dsl-declarative",
+    "//android/gradle-dsl-declarative:gradle-dsl-declarative_test_lib",
     "//platform/workspace/jps",
+    "//platform/workspace/jps:jps_test_lib",
   ],
   runtime_deps = [":declarativeSync-tests"]
 )

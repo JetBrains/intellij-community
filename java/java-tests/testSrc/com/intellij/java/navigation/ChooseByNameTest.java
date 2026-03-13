@@ -30,6 +30,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiRecordComponent;
+import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.TestIndexingModeSupporter;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ObjectUtils;
@@ -57,7 +58,7 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     TestSuite suite = new TestSuite();
     suite.addTestSuite(ChooseByNameTest.class);
     TestIndexingModeSupporter.addTest(ChooseByNameTest.class, new TestIndexingModeSupporter.FullIndexSuite(), suite);
-    return suite;
+    return TestFrameworkUtil.flattenSuite(suite);
   }
 
   public void test_goto_class_order_by_matching_degree() {

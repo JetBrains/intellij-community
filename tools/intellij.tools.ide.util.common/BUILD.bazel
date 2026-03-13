@@ -25,4 +25,16 @@ jvm_library(
     "@lib//:kotlin-stdlib",
   ]
 )
+
+jvm_library(
+  name = "ide-util-common_test_lib",
+  module_name = "intellij.tools.ide.util.common",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_ide-util-common",
+  runtime_deps = [
+    ":ide-util-common",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.tools.ide.util.common` end

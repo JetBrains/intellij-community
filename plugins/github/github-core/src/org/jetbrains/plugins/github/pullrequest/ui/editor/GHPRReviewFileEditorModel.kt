@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.editor
 import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.flatMapLatestEach
 import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.async.mapStateInNow
 import com.intellij.collaboration.async.mapStatefulToStateful
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
@@ -11,6 +12,7 @@ import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterAct
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorModel
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel.Ranged.Adjustable.AdjustmentDisabledReason
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewNavigableEditorViewModel
 import com.intellij.collaboration.ui.codereview.editor.MutableCodeReviewEditorGutterChangesModel
 import com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil
@@ -25,7 +27,6 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
@@ -36,6 +37,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
+import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChange
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import java.util.UUID
@@ -85,7 +87,7 @@ internal class GHPRReviewFileEditorModel internal constructor(
 
   override val inlays: StateFlow<Collection<GHPREditorMappedComponentModel>> = combine(
     fileVm.threads.mapStatefulToStateful { ShiftedThread(it) },
-    fileVm.newComments.mapStatefulToStateful { ShiftedNewComment(cs, it) },
+    fileVm.newComments.mapStatefulToStateful { ShiftedNewComment(this, it) },
   ) { threads, new ->
     // very explicit ordering: if we order back to front, loading of editor appears smoother (most initial loading happens off-screen)
     threads.sortedByDescending { it.line.value ?: -1 } + new
@@ -208,9 +210,8 @@ internal class GHPRReviewFileEditorModel internal constructor(
     override val line: StateFlow<Int?> = range.mapState { it?.end }
   }
 
-  private inner class ShiftedNewComment(parentCs: CoroutineScope, vm: GHPRReviewFileEditorNewCommentViewModel)
+  private inner class ShiftedNewComment(cs: CoroutineScope, vm: GHPRReviewFileEditorNewCommentViewModel)
     : GHPREditorMappedComponentModel.NewComment<GHPRReviewNewCommentEditorViewModel>(vm) {
-    private val cs = parentCs.childScope("${this::class.simpleName}")
     override val key: Any = "NEW_${UUID.randomUUID()}"
     override val range: StateFlow<LineRange?> =
       combineState(cs, vm.position, postReviewRanges) { position, postReviewRanges ->
@@ -219,6 +220,10 @@ internal class GHPRReviewFileEditorModel internal constructor(
       }
     override val line: StateFlow<Int?> = range.mapState { it?.end }
     override val isVisible: StateFlow<Boolean> = MutableStateFlow(true)
+    override val adjustmentDisabledReason = vm.text.mapStateInNow(cs) {
+      if (GHSuggestedChange.containsSuggestedChange(it)) AdjustmentDisabledReason.SUGGESTED_CHANGE
+      else null
+    }
 
     override fun adjustRange(newStart: Int?, newEnd: Int?) {
       if (newStart == null && newEnd == null) return

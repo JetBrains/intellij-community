@@ -24,4 +24,21 @@ jvm_library(
     "//platform/analysis-api:analysis",
   ]
 )
+
+jvm_library(
+  name = "builtInServer_test_lib",
+  module_name = "intellij.platform.builtInServer",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":builtInServer",
+    "//platform/core-api:core_test_lib",
+    "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.builtInServer` end

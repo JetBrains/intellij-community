@@ -33,10 +33,16 @@
     <extensionPoint dynamic="true" name="editorAppearanceConfigurable" beanClass="com.intellij.application.options.editor.EditorAppearanceConfigurableEP">
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable"/>
     </extensionPoint>
+    <extensionPoint dynamic="true" qualifiedName="com.intellij.editorAppearanceInlineDocHandler" beanClass="com.intellij.application.options.editor.InlineDocAdditionalHandlerEP">
+      <with attribute="instance" implements="com.intellij.application.options.editor.InlineDocsAdditionalConfigurable"/>
+    </extensionPoint>
     <extensionPoint dynamic="true" name="editorTabsConfigurable" beanClass="com.intellij.application.options.editor.EditorTabsConfigurableEP">
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable" />
     </extensionPoint>
     <extensionPoint dynamic="true" name="editorSmartKeysConfigurable" beanClass="com.intellij.application.options.editor.EditorSmartKeysConfigurableEP">
+      <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable"/>
+    </extensionPoint>
+    <extensionPoint dynamic="true" name="editorCompletionConfigurable" beanClass="com.intellij.application.options.EditorCompletionConfigurableEP">
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable"/>
     </extensionPoint>
 
@@ -114,11 +120,6 @@
     </extensionPoint>
 
     <extensionPoint name="lang.structureViewExtension" interface="com.intellij.ide.structureView.StructureViewExtension" dynamic="true"/>
-
-    <extensionPoint name="lang.logicalStructureElementsProvider" beanClass="com.intellij.openapi.util.ClassExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.ide.structureView.logical.LogicalStructureElementsProvider"/>
-    </extensionPoint>
-    <extensionPoint name="lang.logicalStructureTreeElementProvider" interface="com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider" dynamic="true"/>
 
     <extensionPoint name="lang.surroundDescriptor" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.surroundWith.SurroundDescriptor"/>
@@ -387,6 +388,9 @@
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.declarative.InlayActionHandler"/>
     </extensionPoint>
+    <extensionPoint name="codeInsight.inlayInteractionHandler"
+                    interface="com.intellij.codeInsight.hints.declarative.impl.interaction.InlayInteractionHandler"
+                    dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.codeInsight.inlayProviderFactory"
                     interface="com.intellij.codeInsight.hints.InlayHintsProviderFactory"
@@ -419,6 +423,10 @@
     <extensionPoint qualifiedName="com.intellij.codeInsight.daemonBoundCodeVisionProvider"
                     interface="com.intellij.codeInsight.hints.codeVision.DaemonBoundCodeVisionProvider"
                     dynamic="true" />
+
+    <extensionPoint qualifiedName="com.intellij.codeVisionContextExtensionProvider"
+                    interface="com.intellij.codeInsight.codeVision.CodeVisionContextExtensionProvider"
+                    dynamic="true"/>
 
     <extensionPoint name="codeVisionPainterProvider" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.codeVision.ui.renderers.painters.ICodeVisionEntryBasePainter"/>

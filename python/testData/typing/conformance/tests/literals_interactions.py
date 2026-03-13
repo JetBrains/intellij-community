@@ -43,7 +43,7 @@ def open(path: _PathType, mode: str) -> IO[Any]:
 
 
 def open(path: _PathType, mode: Any) -> Any:
-    pass
+    raise NotImplementedError
 
 
 assert_type(open("path", "r"), IO[str])

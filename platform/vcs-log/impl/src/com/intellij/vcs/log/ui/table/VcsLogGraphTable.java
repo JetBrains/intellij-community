@@ -99,6 +99,7 @@ import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -625,12 +626,35 @@ public class VcsLogGraphTable extends TableWithProgress
   public void jumpToGraphRow(int graphRow, boolean focus) {
     int rowIndex = getModel().fromGraphToTableRow(graphRow);
     if (rowIndex >= 0 && rowIndex <= getRowCount() - 1) {
-      scrollRectToVisible(getCellRect(rowIndex, 0, false));
+      scrollToRowIndex(rowIndex);
       setRowSelectionInterval(rowIndex, rowIndex);
       if (focus && !hasFocus()) {
         IdeFocusManager.getInstance(myLogData.getProject()).requestFocus(this, true);
       }
     }
+  }
+
+  private void scrollToRowIndex(int rowIndex) {
+    if (!Registry.is("vcs.log.table.show.centered")) {
+      scrollRectToVisible(getCellRect(rowIndex, 0, false));
+      return;
+    }
+
+    Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(this);
+    int visibleRowCount = visibleRows.second - visibleRows.first + 1;
+    if (visibleRowCount <= 0) {
+      scrollRectToVisible(getCellRect(rowIndex, 0, false));
+      return;
+    }
+
+    int top = Math.max(0, rowIndex - (visibleRowCount - 1) / 2);
+    int bottom = Math.min(getRowCount() - 1, top + visibleRowCount - 1);
+    // Adjust top if we're near the bottom of the table
+    if (bottom == getRowCount() - 1) {
+      top = Math.max(0, bottom - visibleRowCount + 1);
+    }
+    Rectangle bounds = getCellRect(top, 0, true).union(getCellRect(bottom, 0, true));
+    scrollRectToVisible(bounds);
   }
 
   @Override

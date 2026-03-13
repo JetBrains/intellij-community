@@ -1,9 +1,13 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <plugin id="org.jetbrains.idea.reposearch"/>
-    <plugin id="org.jetbrains.idea.maven"/>
     <plugin id="org.intellij.groovy"/>
+    <module name="intellij.maven"/>
+    <module name="intellij.gradle.java"/>
+    <module name="intellij.gradle.java.groovy"/>
+    <module name="intellij.repository.search.common"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
     <repositoryProvider implementation="org.jetbrains.plugins.gradle.integrations.maven.GradleMavenRepositoryProvider"/>
@@ -21,5 +25,6 @@
         implementation="org.jetbrains.plugins.gradle.integrations.maven.GradleMavenProjectImportNotificationListener"/>
     <completion.contributor language="Groovy" order="first"
                             implementationClass="org.jetbrains.plugins.gradle.integrations.maven.codeInsight.completion.MavenDependenciesGradleCompletionContributor"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.integrations.maven.MavenRepositoriesHolder"/>
   </extensions>
 </idea-plugin>

@@ -6,7 +6,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.system.OS
 import com.sun.jna.Structure
 import com.sun.jna.platform.unix.LibC
-import com.sun.jna.platform.win32.*
+import com.sun.jna.platform.win32.Advapi32
+import com.sun.jna.platform.win32.Kernel32
+import com.sun.jna.platform.win32.Kernel32Util
+import com.sun.jna.platform.win32.WinDef
+import com.sun.jna.platform.win32.WinNT
 import com.sun.jna.ptr.IntByReference
 import org.jetbrains.annotations.ApiStatus
 

@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitSession
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.commit.CommitToAmend
 import com.intellij.vcs.commit.CommitAuthorTracker
 import com.intellij.vcs.commit.CommitChecksResult
 import com.intellij.vcs.commit.CommitProjectPanelAdapter
@@ -86,7 +87,7 @@ class GitStageCommitWorkflowHandler(
     val superCheckResult = super.checkCommit(sessionInfo)
     ui.commitProgressUi.isEmptyRoots = ui.includedRoots.isEmpty()
     ui.commitProgressUi.isUnmerged = ui.conflictedRoots.any { ui.rootsToCommit.contains(it) }
-    ui.commitProgressUi.isCommitAll = ui.isCommitAll && !amendCommitHandler.isAmendCommitMode
+    ui.commitProgressUi.isCommitAll = ui.isCommitAll && amendCommitHandler.commitToAmend is CommitToAmend.None
     return superCheckResult &&
            !ui.commitProgressUi.isEmptyRoots &&
            !ui.commitProgressUi.isUnmerged

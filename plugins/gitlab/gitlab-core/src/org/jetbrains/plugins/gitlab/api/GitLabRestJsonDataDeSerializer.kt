@@ -18,7 +18,6 @@ import java.io.Reader
 import java.text.SimpleDateFormat
 import java.util.TimeZone
 
-
 object GitLabRestJsonDataDeSerializer : JsonDataSerializer, JsonDataDeserializer {
 
   private val mapper: ObjectMapper = gitlabJacksonMapper()
@@ -28,15 +27,16 @@ object GitLabRestJsonDataDeSerializer : JsonDataSerializer, JsonDataDeserializer
   internal fun gitlabJacksonMapper(): ObjectMapper =
     jacksonMapperBuilder()
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+      .configure(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE, true)
       .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
       .configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false)
       .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
       .serializationInclusion(JsonInclude.Include.NON_NULL)
       .visibility(VisibilityChecker.Std(JsonAutoDetect.Visibility.NONE,
-                                           JsonAutoDetect.Visibility.NONE,
-                                           JsonAutoDetect.Visibility.NONE,
-                                           JsonAutoDetect.Visibility.NONE,
-                                           JsonAutoDetect.Visibility.ANY))
+                                        JsonAutoDetect.Visibility.NONE,
+                                        JsonAutoDetect.Visibility.NONE,
+                                        JsonAutoDetect.Visibility.NONE,
+                                        JsonAutoDetect.Visibility.ANY))
       .build()
 
   internal fun ObjectMapper.genericConfig(): ObjectMapper =

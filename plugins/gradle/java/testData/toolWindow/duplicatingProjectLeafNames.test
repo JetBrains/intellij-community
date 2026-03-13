@@ -3,48 +3,55 @@ View root() {
     Tasks() {
       build setup() {
         init()
+        updateDaemonJvm()
         wrapper()
       }
       help() {
+        artifactTransforms()
         buildEnvironment()
-        components()
         dependencies()
         dependencyInsight()
-        dependentComponents()
         help()
-        model()
+        javaToolchains()
+        outgoingVariants()
         projects()
         properties()
+        resolvableConfigurations()
         tasks()
+      }
+      other() {
+        prepareKotlinBuildScriptModel()
       }
     }
     p1() {
       Tasks() {
         help() {
+          artifactTransforms()
           buildEnvironment()
-          components()
           dependencies()
           dependencyInsight()
-          dependentComponents()
           help()
-          model()
+          javaToolchains()
+          outgoingVariants()
           projects()
           properties()
+          resolvableConfigurations()
           tasks()
         }
       }
       leaf() {
         Tasks() {
           help() {
+            artifactTransforms()
             buildEnvironment()
-            components()
             dependencies()
             dependencyInsight()
-            dependentComponents()
             help()
-            model()
+            javaToolchains()
+            outgoingVariants()
             projects()
             properties()
+            resolvableConfigurations()
             tasks()
           }
         }
@@ -52,30 +59,32 @@ View root() {
       sub() {
         Tasks() {
           help() {
+            artifactTransforms()
             buildEnvironment()
-            components()
             dependencies()
             dependencyInsight()
-            dependentComponents()
             help()
-            model()
+            javaToolchains()
+            outgoingVariants()
             projects()
             properties()
+            resolvableConfigurations()
             tasks()
           }
         }
         sp1() {
           Tasks() {
             help() {
+              artifactTransforms()
               buildEnvironment()
-              components()
               dependencies()
               dependencyInsight()
-              dependentComponents()
               help()
-              model()
+              javaToolchains()
+              outgoingVariants()
               projects()
               properties()
+              resolvableConfigurations()
               tasks()
             }
           }
@@ -85,30 +94,32 @@ View root() {
     p2() {
       Tasks() {
         help() {
+          artifactTransforms()
           buildEnvironment()
-          components()
           dependencies()
           dependencyInsight()
-          dependentComponents()
           help()
-          model()
+          javaToolchains()
+          outgoingVariants()
           projects()
           properties()
+          resolvableConfigurations()
           tasks()
         }
       }
       leaf() {
         Tasks() {
           help() {
+            artifactTransforms()
             buildEnvironment()
-            components()
             dependencies()
             dependencyInsight()
-            dependentComponents()
             help()
-            model()
+            javaToolchains()
+            outgoingVariants()
             projects()
             properties()
+            resolvableConfigurations()
             tasks()
           }
         }
@@ -116,45 +127,48 @@ View root() {
       p2sub() {
         Tasks() {
           help() {
+            artifactTransforms()
             buildEnvironment()
-            components()
             dependencies()
             dependencyInsight()
-            dependentComponents()
             help()
-            model()
+            javaToolchains()
+            outgoingVariants()
             projects()
             properties()
+            resolvableConfigurations()
             tasks()
           }
         }
         sub() {
           Tasks() {
             help() {
+              artifactTransforms()
               buildEnvironment()
-              components()
               dependencies()
               dependencyInsight()
-              dependentComponents()
               help()
-              model()
+              javaToolchains()
+              outgoingVariants()
               projects()
               properties()
+              resolvableConfigurations()
               tasks()
             }
           }
           sp2() {
             Tasks() {
               help() {
+                artifactTransforms()
                 buildEnvironment()
-                components()
                 dependencies()
                 dependencyInsight()
-                dependentComponents()
                 help()
-                model()
+                javaToolchains()
+                outgoingVariants()
                 projects()
                 properties()
+                resolvableConfigurations()
                 tasks()
               }
             }

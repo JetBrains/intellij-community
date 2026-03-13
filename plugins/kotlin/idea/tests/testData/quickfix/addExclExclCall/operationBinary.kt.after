@@ -1,4 +1,5 @@
 // "Add non-null asserted (p!!) call" "true"
+// K2_ERROR: Operator call is prohibited on a nullable receiver of type 'SafeType?'. Use '?.'-qualified call instead.
 
 class SafeType {
     operator fun plus(arg: Int) {}

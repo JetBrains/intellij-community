@@ -36,6 +36,7 @@ import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withContext
 import java.awt.Dimension
 import java.nio.file.Path
 import java.util.function.Supplier
@@ -67,8 +68,8 @@ class PythonLanguageRuntimeUI(
     mainPanel = PythonAddCustomInterpreter(
       model = model,
       module = module,
-      errorSink = ShowingMessageErrorSync,
-      limitExistingEnvironments = true,
+      errorSink = ShowingMessageErrorSync.withProject(project),
+      limitExistingEnvironments = false,
       bestGuessCreateSdkInfo = CompletableDeferred(value = null)
     )
 
@@ -81,7 +82,7 @@ class PythonLanguageRuntimeUI(
     dialogPanel.launchOnShow(
       debugName = "PythonLanguageRuntimeUI launchOnShow",
       context = TraceContext(
-        title = message("tracecontext.add.remote.python.sdk.dialog", targetEnvironmentConfiguration.getTargetType().displayName),
+        title = message("trace.context.add.remote.python.sdk.dialog", targetEnvironmentConfiguration.getTargetType().displayName),
         parentTraceContext = null
       )
     ) {
@@ -114,17 +115,15 @@ class PythonLanguageRuntimeUI(
     val sdkManager = mainPanel.currentSdkManager
 
     val sdk = runWithModalProgressBlocking(project, message("python.sdk.progress.setting.up.environment")) {
-      val sdk = sdkManager.getOrCreateSdkWithModal(ModuleOrProject.ModuleAndProject(module)).onFailure {
-        errorSink.emit(it)
-      }.successOrNull
-
-      sdk?.let {
-        configurePythonSdk(project, module, it)
-        project.pySdkService.persistSdk(it)
-        PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(it, false)
+      withContext(TraceContext(message("trace.context.add.remote.python.sdk.dialog", targetSupplier.get().getTargetType().displayName))) {
+        sdkManager.getOrCreateSdkWithModal(ModuleOrProject.ModuleAndProject(module)).onFailure {
+          errorSink.emit(it)
+        }.successOrNull?.also {
+          configurePythonSdk(project, module, it)
+          project.pySdkService.persistSdk(it)
+          PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(it, false)
+        }
       }
-
-      sdk
     }
 
 

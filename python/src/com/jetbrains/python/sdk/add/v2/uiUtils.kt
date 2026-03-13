@@ -63,6 +63,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.Component
+import java.awt.Dimension
 import java.nio.file.InvalidPathException
 import javax.swing.JList
 import javax.swing.JTextField
@@ -341,7 +342,7 @@ internal class PythonInterpreterComboBox<P : PathHolder>(
 
   init {
     renderer = PythonSdkComboBoxListCellRenderer { isLoading.get() }
-    preferredSize = JBUI.size(preferredSize)
+    preferredSize = preferredSize.withAdjustedWidth
     val newOnPathSelected: (String) -> Unit = { rawPath ->
       runWithModalProgressBlocking(ModalTaskOwner.guess(), message("python.sdk.validating.environment")) {
         val pathOnFileSystem = fileSystem.parsePath(rawPath).onFailure { error ->
@@ -451,7 +452,7 @@ private fun ExtendableTextComponent.removeLoadingExtension() {
 internal fun <P : PathHolder> createInstallCondaFix(model: PythonAddInterpreterModel<P>): ActionLink? {
   if ((model.fileSystem as? FileSystem.Eel)?.eelApi != localEel) return null
 
-  return ActionLink(message("sdk.create.custom.venv.install.fix.title", "Miniconda", "")) {
+  return ActionLink(message("sdk.create.custom.venv.install.fix.title", "Miniconda")) {
     PythonSdkFlavor.clearExecutablesCache()
     CondaInstallManager.installLatest(null)
     runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.progress.title.detect.executable")) {
@@ -460,4 +461,10 @@ internal fun <P : PathHolder> createInstallCondaFix(model: PythonAddInterpreterM
   }
 }
 
-
+/**
+ * A dimension with adjusted width that fits the container as calculated by [JBUI.size]. The height remains unchanged, not to affect the
+ * scaling applied by the zoom setting.
+ */
+internal val Dimension.withAdjustedWidth: Dimension
+  get() =
+    Dimension(JBUI.size(this).width, height)

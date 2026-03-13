@@ -26,6 +26,11 @@ class InvalidRequestMethod(ParseException):
 
     def __init__(self, method: str) -> None: ...
 
+class ExpectationFailed(ParseException):
+    expect: str
+
+    def __init__(self, expect: str) -> None: ...
+
 class InvalidHTTPVersion(ParseException):
     version: str | tuple[int, int]
 

@@ -118,7 +118,8 @@ object IdeProductImp : IdeProduct {
     productCode = "RR",
     platformPrefix = "RustRover",
     executableFileName = "rustrover",
-    fullName = "RustRover"
+    fullName = "RustRover",
+    qodanaProductCode = "QDRST"
   )
 
   /** Rider */
@@ -126,7 +127,8 @@ object IdeProductImp : IdeProduct {
     productCode = "RD",
     platformPrefix = "Rider",
     executableFileName = "rider",
-    fullName = "Rider"
+    fullName = "Rider",
+    qodanaProductCode = "QDNET"
   )
 
   /** Gateway */

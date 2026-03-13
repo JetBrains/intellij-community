@@ -4,7 +4,6 @@ import com.intellij.ide.hierarchy.call.CallHierarchyElementProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
@@ -22,13 +21,13 @@ import java.util.stream.Collectors;
 public class LombokFieldHierarchyElementProvider implements CallHierarchyElementProvider {
 
   @Override
-  public @NotNull Collection<PsiElement> provideReferencedMembers(@NotNull PsiMember psiMember) {
-    // only PsiFields are supported now
-    if(!(psiMember instanceof PsiField)) {
+  public @NotNull Collection<PsiMember> provideReferencedMembers(@NotNull PsiMember psiMember) {
+    // only for PsiFields and PsiMethods now
+    if (!(psiMember instanceof PsiField) && !(psiMember instanceof PsiMethod psiMethod && psiMethod.isConstructor())) {
       return Collections.emptyList();
     }
 
-    // skip early if no lombok in current module
+    // skip early if no lombok in the current module
     final Module module = ModuleUtilCore.findModuleForPsiElement(psiMember);
     if (!LombokLibraryUtil.hasLombokClasses(module)) {
       return Collections.emptyList();
@@ -36,47 +35,34 @@ public class LombokFieldHierarchyElementProvider implements CallHierarchyElement
 
     final PsiClass containingClass = psiMember.getContainingClass();
     if (containingClass != null) {
-      final Collection<PsiElement> result = new ArrayList<>();
-
-      Arrays.stream(containingClass.getMethods())
-        .filter(LombokLightMethodBuilder.class::isInstance)
-        .map(LombokLightMethodBuilder.class::cast)
-        .filter(psiMethod -> psiMethod.getNavigationElement() == psiMember || psiMethod.hasRelatedMember(psiMember))
-        .forEach(result::add);
-
-      Arrays.stream(containingClass.getInnerClasses())
-        .map(PsiClass::getMethods)
-        .flatMap(Arrays::stream)
-        .filter(LombokLightMethodBuilder.class::isInstance)
-        .map(LombokLightMethodBuilder.class::cast)
-        .filter(psiMethod -> psiMethod.hasRelatedMember(psiMember))
-        .forEach(result::add);
-
-      return result;
+      if (psiMember instanceof PsiField) {
+        return findRelatedMethodsForPsiField(psiMember, containingClass);
+      }
+      else {
+        return findRelatedMethodsForPsiMethod(psiMember, containingClass);
+      }
     }
     return Collections.emptyList();
   }
 
-  @Override
-  public @NotNull List<PsiMethod> provideReferencedMethods(@NotNull PsiMethod methodToFind) {
-    // skip early if no lombok in current module
-    final Module module = ModuleUtilCore.findModuleForPsiElement(methodToFind);
-    if (!LombokLibraryUtil.hasLombokClasses(module)) {
-      return Collections.emptyList();
-    }
+  private static @NotNull Collection<PsiMember> findRelatedMethodsForPsiField(@NotNull PsiMember psiMember,
+                                                                              @NotNull PsiClass containingClass) {
+    final Collection<PsiMember> result = new ArrayList<>();
 
-    if (methodToFind.isConstructor()) {
-      final PsiClass containingClass = methodToFind.getContainingClass();
-      if (null != containingClass) {
-        return Arrays.stream(containingClass.getInnerClasses())
-          .map(PsiClass::getMethods)
-          .flatMap(Arrays::stream)
-          .filter(LombokLightMethodBuilder.class::isInstance)
-          .map(LombokLightMethodBuilder.class::cast)
-          .filter(methodBuilder -> methodBuilder.hasRelatedMember(methodToFind))
-          .collect(Collectors.toList());
-      }
-    }
-    return Collections.emptyList();
+    Arrays.stream(containingClass.getMethods()).filter(LombokLightMethodBuilder.class::isInstance).map(LombokLightMethodBuilder.class::cast)
+      .filter(psiMethod -> psiMethod.getNavigationElement() == psiMember || psiMethod.hasRelatedMember(psiMember))
+      .forEach(result::add);
+
+    Arrays.stream(containingClass.getInnerClasses()).map(PsiClass::getMethods).flatMap(Arrays::stream)
+      .filter(LombokLightMethodBuilder.class::isInstance).map(LombokLightMethodBuilder.class::cast)
+      .filter(psiMethod -> psiMethod.hasRelatedMember(psiMember)).forEach(result::add);
+
+    return result;
+  }
+
+  private static @NotNull List<PsiMember> findRelatedMethodsForPsiMethod(@NotNull PsiMember psiMember, @NotNull PsiClass containingClass) {
+    return Arrays.stream(containingClass.getInnerClasses()).map(PsiClass::getMethods).flatMap(Arrays::stream)
+      .filter(LombokLightMethodBuilder.class::isInstance).map(LombokLightMethodBuilder.class::cast)
+      .filter(methodBuilder -> methodBuilder.hasRelatedMember(psiMember)).collect(Collectors.toList());
   }
 }

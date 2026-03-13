@@ -12,7 +12,7 @@ import java.awt.Point
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
 import java.awt.event.MouseMotionListener
-import java.util.*
+import java.util.EventListener
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import kotlin.math.abs

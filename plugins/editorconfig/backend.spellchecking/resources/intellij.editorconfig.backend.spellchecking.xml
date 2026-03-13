@@ -1,0 +1,14 @@
+<!-- Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.editorconfig.backend"/>
+    <module name="intellij.editorconfig.common"/>
+    <module name="intellij.spellchecker"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <spellchecker.support
+      language="EditorConfig"
+      implementationClass="com.intellij.editorconfig.backend.spellchecking.EditorConfigSpellcheckerStrategy"/>
+  </extensions>
+</idea-plugin>

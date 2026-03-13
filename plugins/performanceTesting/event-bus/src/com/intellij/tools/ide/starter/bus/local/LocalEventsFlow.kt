@@ -17,6 +17,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withTimeout
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
 import kotlin.jvm.internal.CallableReference
@@ -33,6 +34,9 @@ class LocalEventsFlow : EventsFlow {
   private val subscribersLock = ReentrantReadWriteLock()
   private var parentJob = Job()
   private var scope = CoroutineScope(Dispatchers.IO) + parentJob
+  private companion object {
+    private val eventIdCounter = AtomicLong(0)
+  }
 
   // In case using class as subscriber. eg MyClass::class
   override fun getSubscriberObject(subscriber: Any) = if (subscriber is CallableReference) subscriber::class.toString() else subscriber
@@ -47,7 +51,7 @@ class LocalEventsFlow : EventsFlow {
     val eventClassName = eventClass.simpleName
     val subscriberName = getSubscriberObject(subscriber)
     subscribers[eventClassName]?.removeIf { it.subscriberName == subscriberName }
-    LOG.debug("Unsubscribing $subscriberName for $eventClassName")
+    LOG.info("Unsubscribing $subscriberName for $eventClassName")
   }
 
   private fun <EventType : Event> subscribe(
@@ -68,7 +72,7 @@ class LocalEventsFlow : EventsFlow {
         return false
       }
       val newSubscriber = Subscriber(subscriberObject, timeout, executeOnce = executeOnce, sequential = sequential, callback)
-      LOG.debug("New subscriber $newSubscriber for $eventClassName")
+      LOG.info("New subscriber $newSubscriber for $eventClassName")
       subscribers.computeIfAbsent(eventClassName) { CopyOnWriteArrayList() }.add(newSubscriber)
       return true
     }
@@ -91,6 +95,7 @@ class LocalEventsFlow : EventsFlow {
   ): Boolean = subscribe(eventClass, subscriber, executeOnce = false, timeout, sequential = sequential, callback)
 
   override fun <T : Event> postAndWaitProcessing(event: T) {
+    val eventId = eventIdCounter.incrementAndGet()
     val eventClassName = event.javaClass.simpleName
     val subscribersForEvent = subscribersLock.writeLock().withLock {
       subscribers[eventClassName]?.toList().also { allSubscribersForEvent ->
@@ -106,17 +111,19 @@ class LocalEventsFlow : EventsFlow {
     }
 
     val (blockingSubscribers, nonblockingSubscribers) = subscribersForEvent.partition { it.sequential }
-    val exceptions = processSequentially(blockingSubscribers, eventClassName, event) +
-                     processInParallel(nonblockingSubscribers, eventClassName, event)
+    LOG.info("[$eventId] PostAndWait start for $eventClassName: total=${subscribersForEvent.size}, sequential=${blockingSubscribers.size}, parallel=${nonblockingSubscribers.size}")
+    val exceptions = processSequentially(eventId, blockingSubscribers, eventClassName, event) +
+                     processInParallel(eventId, nonblockingSubscribers, eventClassName, event)
 
-    LOG.debug("All exceptions: $exceptions")
+    LOG.info("[$eventId] PostAndWait finished for $eventClassName. Exceptions: $exceptions")
     if (exceptions.isNotEmpty()) {
       val exceptionsString = exceptions.joinToString(separator = "\n") { e -> "${exceptions.indexOf(e) + 1}) ${e.message}" }
-      throw IllegalArgumentException("Exceptions occurred while processing subscribers. $exceptionsString")
+      throw IllegalArgumentException("[$eventId] Exceptions occurred while processing subscribers. $exceptionsString")
     }
   }
 
   private fun <T : Event> processInParallel(
+    eventId: Long,
     subscribersForEvent: List<Subscriber<out Event>>,
     eventClassName: String,
     event: T,
@@ -127,17 +134,17 @@ class LocalEventsFlow : EventsFlow {
       // and finish before the 'catch' block is executed. Using CompletableDeferred ensures we wait
       // until either successful completion or proper exception handling has occurred.
       val result = CompletableDeferred<Unit>()
-      LOG.debug("Post event $eventClassName for $subscriber.")
+      LOG.debug("[$eventId] Post event $eventClassName for $subscriber")
       // Launching a new coroutine for each subscriber
-      scope.launch(Dispatchers.IO + CoroutineName("Processing $eventClassName for $subscriber")) {
-        LOG.debug("Start execution $eventClassName for $subscriber")
+      scope.launch(Dispatchers.IO + CoroutineName("[$eventId] Processing $eventClassName for $subscriber")) {
+        LOG.debug("[$eventId] Start execution $eventClassName for $subscriber")
         // Enforces a timeout for the entire subscriber execution
         withTimeout(subscriber.timeout) {
           // Ensures the operation inside is interruptible — if the thread is blocked,
           // it will be interrupted when the coroutine is cancelled (e.g. by timeout)
           runInterruptible {
             try {
-              runBlocking(CoroutineName("Processing $eventClassName for $subscriber")) {
+              runBlocking(CoroutineName("[$eventId] Processing $eventClassName for $subscriber")) {
                 subscriber.callback(event)
               }
               result.complete(Unit)
@@ -148,19 +155,19 @@ class LocalEventsFlow : EventsFlow {
             }
           }
         }
-        LOG.debug("Finished execution $eventClassName for $subscriber")
+        LOG.debug("[$eventId] Finished execution $eventClassName for $subscriber")
       }
-      return@map result
+      return@map result to subscriber
     }
 
-    runBlocking(CoroutineName("Awaiting for subscribers $subscribersForEvent")) {
+    runBlocking(CoroutineName("[$eventId] Awaiting for subscribers $subscribersForEvent")) {
       // awaitAll shouldn't be used as it would stop after the first exception from any coroutine
-      tasks.forEach {
+      tasks.forEach { (task, subscriber) ->
         try {
-          it.await()
+          task.await()
         }
         catch (e: Throwable) {
-          LOG.info("Exception occurred while processing $e")
+          LOG.info("[$eventId] Exception occurred while processing $e for $subscriber")
           exceptions.add(e)
         }
       }
@@ -169,34 +176,35 @@ class LocalEventsFlow : EventsFlow {
   }
 
   private fun <T : Event> processSequentially(
+    eventId: Long,
     subscribersForEvent: List<Subscriber<out Event>>,
     eventClassName: String,
     event: T,
   ): CopyOnWriteArrayList<Throwable> {
     val exceptions = CopyOnWriteArrayList<Throwable>()
     // Execute strictly one-by-one in the current thread (wrapped with runBlocking for suspend compatibility)
-    runBlocking(CoroutineName("Processing consequently $eventClassName for ${subscribersForEvent.size} subscribers")) {
+    runBlocking(CoroutineName("[$eventId] Processing sequentially $eventClassName for ${subscribersForEvent.size} subscribers")) {
       @Suppress("UNCHECKED_CAST")
       val typed = subscribersForEvent as List<Subscriber<T>>
       for (subscriber in typed) {
-        LOG.debug("Start execution $eventClassName for $subscriber")
+        LOG.debug("[$eventId] Start sequential execution $eventClassName for $subscriber")
         try {
           withTimeout(subscriber.timeout) {
             // If the code inside blocks a thread, make it interruptible for cooperative cancellation
             runInterruptible {
               // We need a blocking bridge to call suspend callback from interruptible block
-              runBlocking(CoroutineName("Processing $eventClassName for $subscriber")) {
+              runBlocking(CoroutineName("[$eventId] Processing $eventClassName for $subscriber sequentially")) {
                 subscriber.callback(event)
               }
             }
           }
         }
         catch (e: Throwable) {
-          LOG.info("Exception occurred while processing $eventClassName for $subscriber: $e")
+          LOG.info("[$eventId] Exception occurred while sequential processing $eventClassName for $subscriber: $e")
           exceptions.add(e)
         }
         finally {
-          LOG.debug("Finished execution $eventClassName for $subscriber")
+          LOG.debug("[$eventId] Finished sequential execution $eventClassName for $subscriber")
         }
       }
     }

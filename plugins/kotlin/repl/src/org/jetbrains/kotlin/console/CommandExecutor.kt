@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.console
 
+import com.intellij.execution.console.history.CommandHistory
 import com.intellij.execution.process.BaseOSProcessHandler
 import com.intellij.openapi.command.WriteCommandAction
 import org.jetbrains.kotlin.K1Deprecation

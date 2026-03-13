@@ -15,10 +15,11 @@
  */
 package com.intellij.ui.treeStructure.treetable;
 
-import javax.swing.*;
+import javax.swing.AbstractCellEditor;
+import javax.swing.JTable;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Component;
 import java.util.EventObject;
 
 /**

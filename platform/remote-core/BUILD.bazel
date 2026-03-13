@@ -30,4 +30,23 @@ jvm_library(
     "@lib//:slf4j-jdk14",
   ]
 )
+
+jvm_library(
+  name = "remote-core_test_lib",
+  module_name = "intellij.platform.remote.core",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":remote-core",
+    "//platform/core-api:core_test_lib",
+    "//platform/credential-store:credential-store_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//libraries/guava:guava_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.remote.core` end

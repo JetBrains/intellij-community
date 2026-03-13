@@ -1,9 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.test
 
-import com.intellij.platform.externalSystem.testFramework.*
 import com.intellij.externalSystem.JavaProjectData
 import com.intellij.openapi.externalSystem.model.DataNode
+import com.intellij.platform.externalSystem.testFramework.AbstractNode
+import com.intellij.platform.externalSystem.testFramework.Project
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.execution.ParametersListUtil
 

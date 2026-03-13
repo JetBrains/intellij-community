@@ -16,6 +16,15 @@ ij_any_line_comment_at_first_column = false
 ij_javascript_force_semicolon_style = true
 ij_javascript_use_semicolon_after_statement = false
 
+;======Java=====
+[*.java]
+
+; IJI-3282 Disable star imports in monorepo code style
+ij_java_class_count_to_use_import_on_demand = 9999
+ij_java_names_count_to_use_import_on_demand = 9999
+ij_java_packages_to_use_import_on_demand =
+;======Java=====
+
 ;======Kotlin=====
 [{*.kt,*.kts}]
 ij_kotlin_code_style_defaults = KOTLIN_OFFICIAL
@@ -40,6 +49,9 @@ ij_kotlin_call_parameters_right_paren_on_new_line = unset
 ij_kotlin_call_parameters_new_line_after_left_paren = unset
 ij_kotlin_if_rparen_on_new_line = unset
 
-; IJI-3282
+; IJI-3282 Disable star imports in monorepo code style
 ij_kotlin_name_count_to_use_star_import = 9999
+ij_kotlin_name_count_to_use_star_import_for_members = 9999
+ij_kotlin_packages_to_use_import_on_demand =
+
 ;=====Kotlin=====

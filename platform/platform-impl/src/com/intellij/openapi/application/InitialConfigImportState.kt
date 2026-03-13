@@ -6,6 +6,7 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.application.CustomConfigMigrationOption.SetProperties
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Files
@@ -50,6 +51,7 @@ object InitialConfigImportState {
 
   @JvmStatic
   fun isStartupWizardEnabled(): Boolean =
+    !PlatformUtils.isJetBrainsClient() &&
     !AppMode.isRemoteDevHost() &&
     System.getProperty("intellij.startup.wizard", if (ApplicationManagerEx.isInIntegrationTest()) "false" else "true").toBoolean()
 

@@ -5,7 +5,10 @@ import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus;
 import com.intellij.execution.services.ServiceViewActionUtils;
 import com.intellij.execution.services.ServiceViewContributor;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CheckedActionGroup;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
@@ -18,7 +21,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-import static com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus.*;
+import static com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus.CONFIGURED;
+import static com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus.FAILED;
+import static com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus.STARTED;
+import static com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus.STOPPED;
 
 final class RunDashboardFilterActionGroup extends ServiceViewActionProvider.DefaultFrontendServiceViewActionGroup implements CheckedActionGroup, DumbAware {
 

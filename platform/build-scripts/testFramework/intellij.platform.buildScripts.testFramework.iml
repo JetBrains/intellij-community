@@ -60,8 +60,8 @@
     <orderEntry type="module" module-name="intellij.platform.ide.bootstrap" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
-    <orderEntry type="module" module-name="intellij.platform.plugins.testFramework" />
-    <orderEntry type="module" module-name="intellij.platform.plugins.parser.impl" />
+    <orderEntry type="module" module-name="intellij.platform.pluginSystem.testFramework" />
+    <orderEntry type="module" module-name="intellij.platform.pluginSystem.parser.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
     <orderEntry type="library" name="tcServiceMessages" level="project" />
     <orderEntry type="module" module-name="intellij.platform.buildData" />

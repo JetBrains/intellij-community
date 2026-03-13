@@ -1,7 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
-import com.intellij.execution.*
+import com.intellij.execution.DefaultExecutionTarget
+import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.ExecutionTarget
+import com.intellij.execution.ExecutionTargetManager
+import com.intellij.execution.Executor
+import com.intellij.execution.RunManager
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction
 import com.intellij.execution.impl.EditConfigurationsDialog
 import com.intellij.execution.runToolbar.components.ComboBoxArrowComponent
@@ -11,7 +17,16 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.ui.UISettings.Companion.isIdeHelpTooltipEnabled
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedCustomPanel
@@ -34,7 +49,11 @@ import java.awt.Dimension
 import java.awt.Font
 import java.awt.Point
 import java.beans.PropertyChangeEvent
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.SwingUtilities
+import javax.swing.UIManager
 
 @ApiStatus.Internal
 open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction(), RTRunConfiguration {

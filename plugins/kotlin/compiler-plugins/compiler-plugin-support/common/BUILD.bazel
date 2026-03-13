@@ -22,4 +22,24 @@ jvm_library(
     "//plugins/kotlin/base/compiler-configuration",
   ]
 )
+
+jvm_library(
+  name = "kotlin-compilerPlugins-support_test_lib",
+  module_name = "intellij.kotlin.compilerPlugins.support",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":kotlin-compilerPlugins-support",
+    "//platform/core-api:core_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//plugins/kotlin/base/jps:jps_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/external-system-api:externalSystem_test_lib",
+    "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.kotlin.compilerPlugins.support` end

@@ -38,4 +38,34 @@ jvm_library(
     "//platform/statistics",
   ]
 )
+
+jvm_library(
+  name = "migration_test_lib",
+  module_name = "intellij.kotlin.migration",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":migration",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+    "//plugins/kotlin/formatter:formatter_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/external-system-api:externalSystem_test_lib",
+    "//platform/external-system-impl:externalSystem-impl_test_lib",
+    "//platform/statistics:statistics_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.kotlin.migration` end

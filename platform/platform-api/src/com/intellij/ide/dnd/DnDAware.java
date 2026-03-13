@@ -4,8 +4,8 @@ package com.intellij.ide.dnd;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
 
 public interface DnDAware {

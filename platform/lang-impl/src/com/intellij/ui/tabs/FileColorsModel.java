@@ -209,7 +209,7 @@ public final class FileColorsModel implements Cloneable {
       return null;
     }
 
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       final FileColorConfiguration configuration = findConfiguration(file);
       if (configuration != null && configuration.isValid(project)) {
         return configuration.getColorID();

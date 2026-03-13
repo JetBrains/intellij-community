@@ -34,12 +34,20 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-test-assertions-core-jvm",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/util/coroutines",
+    "//platform/util/coroutines:coroutines_test_lib",
     "//platform/eel",
+    "//platform/eel:eel_test_lib",
   ],
-  exports = ["//platform/eel"]
+  exports = [
+    "//platform/eel",
+    "//platform/eel:eel_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.platform.ijent` end
 

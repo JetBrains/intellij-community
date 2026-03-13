@@ -1,24 +1,22 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
 
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.openapi.application.backgroundWriteAction
-import com.intellij.psi.PsiFileFactory
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFile
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntilAssertSucceeds
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.jetbrains.python.PythonLanguage
-import com.jetbrains.python.inspections.interpreter.InterpreterSettingsQuickFix
-import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.inspections.interpreter.InterpreterFix
+import com.jetbrains.python.inspections.interpreter.BusyGuardExecutor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertIterableEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -33,15 +31,11 @@ class PyAsyncFileInspectionRunnerTest {
 
   private val projectFixture = projectFixture()
   private val module by projectFixture.moduleFixture()
-  private lateinit var pyFile: PyFile
-  private lateinit var expectedFixes: List<LocalQuickFix>
+  private lateinit var expectedFixes: List<InterpreterFix>
 
   @BeforeEach
-  fun setUp(): Unit = runBlocking {
-    pyFile = backgroundWriteAction {
-      PsiFileFactory.getInstance(projectFixture.get()).createFileFromText("test.py", PythonLanguage.getInstance(), "print(1)") as PyFile
-    }
-    expectedFixes = listOf(InterpreterSettingsQuickFix(module))
+  fun setUp() {
+    expectedFixes = listOf(TestInterpreterFix("Test Fix"))
   }
 
   @Test
@@ -53,11 +47,13 @@ class PyAsyncFileInspectionRunnerTest {
     }
 
     // We expect the first call to return null immediately (as we don't have calculated result yet)
-    assertNull(runner.runInspection(pyFile, module))
+    assertNull(runner.runInspection(module))
 
     barrier.complete(Unit)
     waitUntilAssertSucceeds(timeout = 5.seconds) {
-      assertIterableEquals(expectedFixes, runner.runInspection(pyFile, module))
+      val result = runner.runInspection(module)
+      assertNotNull(result)
+      assertEquals(expectedFixes.size, result!!.size)
     }
   }
 
@@ -70,18 +66,22 @@ class PyAsyncFileInspectionRunnerTest {
     }
 
     waitUntilAssertSucceeds(timeout = 5.seconds) {
-      assertIterableEquals(expectedFixes, runner.runInspection(pyFile, module))
+      val result = runner.runInspection(module)
+      assertNotNull(result)
+      assertEquals(expectedFixes.size, result!!.size)
     }
 
     (1..100).map {
       launch {
         val randomDelay = Random.nextInt(2000).milliseconds
         delay(randomDelay)
-        runner.runInspection(pyFile, module)
+        runner.runInspection(module)
       }
     }.joinAll()
 
-    assertIterableEquals(expectedFixes, runner.runInspection(pyFile, module))
+    val result = runner.runInspection(module)
+    assertNotNull(result)
+    assertEquals(expectedFixes.size, result!!.size)
     assertEquals(1, callCount)
   }
 
@@ -95,21 +95,31 @@ class PyAsyncFileInspectionRunnerTest {
     }
 
     // First run, no result yet
-    assertNull(runner.runInspection(pyFile, module))
+    assertNull(runner.runInspection(module))
 
     // Wait for the result of the first run
     waitUntilAssertSucceeds(timeout = 5.seconds) {
-      assertIterableEquals(expectedFixes, runner.runInspection(pyFile, module))
+      val result = runner.runInspection(module)
+      assertNotNull(result)
+      assertEquals(expectedFixes.size, result!!.size)
       assertEquals(1, callCount)
     }
 
     // Should start second run, no result from the cache is returned
-    assertNull(runner.runInspection(pyFile, module))
+    assertNull(runner.runInspection(module))
 
     // Wait for the result of the second run
     waitUntilAssertSucceeds(timeout = 5.seconds) {
-      assertIterableEquals(expectedFixes, runner.runInspection(pyFile, module))
+      val result = runner.runInspection(module)
+      assertNotNull(result)
+      assertEquals(expectedFixes.size, result!!.size)
       assertEquals(2, callCount)
     }
+  }
+}
+
+private class TestInterpreterFix(val name: String) : InterpreterFix {
+  override fun createActionLink(module: Module, project: Project, psiFile: PsiFile, executor: BusyGuardExecutor): com.intellij.ui.components.ActionLink {
+    return com.intellij.ui.components.ActionLink(name) {}
   }
 }

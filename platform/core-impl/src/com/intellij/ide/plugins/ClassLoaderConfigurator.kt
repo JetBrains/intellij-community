@@ -146,6 +146,7 @@ class ClassLoaderConfigurator(
                                       || module.moduleId.name == "intellij.rider.plugins.fsharp.test.cases"
                                       || module.moduleId.name == "intellij.rider.plugins.godot.test.cases"
                                       || module.moduleId.name == "intellij.rider.plugins.unity.test.cases"
+                                      || module.moduleId.name == "intellij.rider.plugins.sqlproj.test.cases"
                                       || module.moduleId.name == "intellij.rider.plugins.unreal.link.test.cases"
                                       || module.moduleId.name == "intellij.rider.test.cases.qodana"
                                       || module.moduleId.name == "intellij.rider.test.cases.consoles"

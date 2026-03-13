@@ -19,15 +19,14 @@ open class CurrentTestMethodProvider : TestExecutionListener {
       return
     }
 
-    val methodSource = testIdentifier.source.get() as? MethodSource ?: return
+    val methodSource = testIdentifier.source.orElse(null) as? MethodSource ?: return
 
     // TODO: include here current argument (for test template, dynamic tests, parametrized tests)
     di.direct.instance<CurrentTestMethod>().set(
       TestMethod(
         name = methodSource.methodName,
-        clazz = methodSource.javaClass.name,
-        clazzSimpleName = methodSource.javaClass.simpleName,
-        displayName = testIdentifier.displayName
+        displayName = testIdentifier.displayName,
+        testClass = methodSource.javaClass,
       )
     )
   }

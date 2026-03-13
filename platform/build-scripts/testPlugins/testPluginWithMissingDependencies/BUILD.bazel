@@ -13,4 +13,12 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":testPluginWithMissingDependencies_resources"]
 )
+
+jvm_library(
+  name = "testPluginWithMissingDependencies_test_lib",
+  module_name = "intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":testPluginWithMissingDependencies"]
+)
 ### auto-generated section `build intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` end

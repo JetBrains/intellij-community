@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.regex.Pattern;
 
 /**
@@ -175,6 +175,35 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
     public int getWeight() {
       return myWeight;
     }
+  }
+
+  /**
+   * Defines vertical positioning of the icon when {@link #getAlignment()} is {@link Alignment#LINE_NUMBERS}.
+   * Has no effect for other alignment values.
+   */
+  @ApiStatus.Internal
+  public enum VerticalAlignment {
+    /**
+     * The icon is vertically aligned with the line number (default behavior).
+     */
+    ON_LINE,
+    /**
+     * The icon is positioned between the current line and the previous line
+     * (or at the top of the editor if this is the first line).
+     */
+    BETWEEN_LINES
+  }
+
+  /**
+   * Returns the vertical alignment of the icon when {@link #getAlignment()} is {@link Alignment#LINE_NUMBERS}.
+   * <p>
+   * This method has no effect when alignment is not {@link Alignment#LINE_NUMBERS}.
+   *
+   * @return the vertical alignment of the icon
+   */
+  @ApiStatus.Internal
+  public @NotNull VerticalAlignment getVerticalAlignment() {
+    return VerticalAlignment.ON_LINE;
   }
 
   @Override

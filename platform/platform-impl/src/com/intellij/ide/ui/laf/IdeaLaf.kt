@@ -6,7 +6,13 @@ package com.intellij.ide.ui.laf
 import com.intellij.icons.AllIcons
 import com.intellij.ui.ColoredSideBorder
 import com.intellij.ui.TableActions
-import com.intellij.ui.plaf.beg.*
+import com.intellij.ui.plaf.beg.BegBorders
+import com.intellij.ui.plaf.beg.BegPopupMenuBorder
+import com.intellij.ui.plaf.beg.BegRadioButtonUI
+import com.intellij.ui.plaf.beg.BegTabbedPaneUI
+import com.intellij.ui.plaf.beg.BegTableUI
+import com.intellij.ui.plaf.beg.BegToggleButtonUI
+import com.intellij.ui.plaf.beg.BegTreeUI
 import com.intellij.ui.scale.JBUIScale.getSystemFontData
 import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus

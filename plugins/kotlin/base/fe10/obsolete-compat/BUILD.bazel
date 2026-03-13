@@ -38,4 +38,26 @@ jvm_library(
     "//java/java-psi-api:psi",
   ]
 )
+
+jvm_library(
+  name = "obsolete-compat_test_lib",
+  module_name = "kotlin.base.fe10.obsolete-compat",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_obsolete-compat",
+  runtime_deps = [
+    ":obsolete-compat",
+    "//platform/core-api:core_test_lib",
+    "//plugins/kotlin/base/psi:psi_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+    "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
+    "//plugins/kotlin/base/fe10/code-insight:code-insight_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/external-system-api:externalSystem_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+  ]
+)
 ### auto-generated section `build kotlin.base.fe10.obsolete-compat` end

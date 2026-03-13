@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -246,6 +247,7 @@ public final class GitRepositoryFiles {
     return file(myMergeSquashPath);
   }
 
+  @ApiStatus.Internal
   public void updateCustomPaths(@NotNull GitConfig.Core core) {
     String hooksPath = core.getHooksPath();
     if (hooksPath != null) {

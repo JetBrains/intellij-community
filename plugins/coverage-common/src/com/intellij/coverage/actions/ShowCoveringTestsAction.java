@@ -92,7 +92,7 @@ public final class ShowCoveringTestsAction extends AnAction {
       }
       ThrowableComputable<List<PsiImplementationViewElement>, RuntimeException> computeTestElements =
         () -> ContainerUtil.map(coverageEngine.findTestsByNames(testNames, project),
-                                el -> ReadAction.compute(() -> new PsiImplementationViewElement(el)));
+                                el -> ReadAction.computeBlocking(() -> new PsiImplementationViewElement(el)));
       final List<PsiImplementationViewElement> elements =
         ProgressManager.getInstance().runProcessWithProgressSynchronously(computeTestElements,
                                                                           CoverageBundle.message("dialog.title.find.tests.by.names"), true,

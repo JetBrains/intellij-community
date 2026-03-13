@@ -18,9 +18,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.application
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeBackendOnlyActionBase
 import com.sun.jdi.ObjectReference
 
@@ -53,7 +53,7 @@ internal class PsiViewerDebugAction : XDebuggerTreeBackendOnlyActionBase() {
           val languageId = psiFileObj.getLanguageId(debugProcess, evalContext)
           val language = Language.findLanguageByID(languageId) ?: return
 
-          DebuggerUIUtil.invokeLater {
+          application.invokeLater {
             val editorFactory = EditorFactory.getInstance()
             val document = editorFactory.createDocument(fileText)
             val editor = editorFactory.createEditor(document) as EditorEx

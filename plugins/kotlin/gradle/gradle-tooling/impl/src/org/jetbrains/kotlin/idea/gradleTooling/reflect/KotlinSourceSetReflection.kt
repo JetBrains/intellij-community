@@ -15,6 +15,7 @@ interface KotlinSourceSetReflection {
     val languageSettings: KotlinLanguageSettingsReflection?
     val kotlin: SourceDirectorySet?
     val resources: SourceDirectorySet?
+    val generatedSources: SourceDirectorySet?
     val dependsOn: Set<KotlinSourceSetReflection>
     val additionalVisibleSourceSets: Set<KotlinSourceSetReflection>
     val androidSourceSetInfo: KotlinAndroidSourceSetInfoReflection?
@@ -34,6 +35,10 @@ private class KotlinSourceSetReflectionImpl(override val instance: Named) : Kotl
 
     override val resources: SourceDirectorySet? by lazy {
         instance.callReflectiveGetter("getResources", logger)
+    }
+
+    override val generatedSources: SourceDirectorySet? by lazy {
+        instance.callReflectiveGetter("getGeneratedKotlin", logger)
     }
 
     override val dependsOn: Set<KotlinSourceSetReflection> by lazy {

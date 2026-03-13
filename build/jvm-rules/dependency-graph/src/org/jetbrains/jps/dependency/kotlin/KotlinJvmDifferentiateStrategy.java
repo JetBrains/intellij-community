@@ -16,6 +16,7 @@ import kotlin.metadata.jvm.JvmMethodSignature;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.BackDependencyIndex;
+import org.jetbrains.jps.dependency.Delta;
 import org.jetbrains.jps.dependency.DifferentiateContext;
 import org.jetbrains.jps.dependency.Graph;
 import org.jetbrains.jps.dependency.Node;
@@ -61,6 +62,7 @@ import static org.jetbrains.jps.util.Iterators.find;
 import static org.jetbrains.jps.util.Iterators.flat;
 import static org.jetbrains.jps.util.Iterators.isEmpty;
 import static org.jetbrains.jps.util.Iterators.map;
+import static org.jetbrains.jps.util.Iterators.recurse;
 import static org.jetbrains.jps.util.Iterators.unique;
 
 /**
@@ -170,7 +172,7 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
           map(filter(container.getTypeAliases(), ta -> !KJvmUtils.isPrivate(ta)), KmTypeAlias::getName)
         )))) {
           context.affectUsage(new LookupNameUsage(scopeName, symbolName));
-          debug(context, "Affect ", "lookup '" + symbolName + "'", " usage owned by node '", addedClass.getName(), "'");
+          debug(context, "Affect ", "lookup '" + symbolName + "'", " usage owned by '", scopeName, "' ", "(node '", addedClass.getName(), "')");
         }
 
         boolean conflictsFound = false;
@@ -657,9 +659,57 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
         debug(context, "A type alias declaration is contained in a source compiled with errors; affecting lookup usages ", alias.getName());
         affectMemberLookupUsages(context, jvmClass, alias.getName(), present, cache);
       }
+
+      if (meta != null) {
+        KotlinOverridesChecker overridesChecker = KotlinOverridesChecker.forClass(jvmClass);
+        if (overridesChecker.hasOverridableMembers()) {
+          // walk all subclasses and mark those that override something
+          for (JvmClass subClass : flat(map(present.allSubclasses(jvmClass.getReferenceID()), id -> present.getNodes(id, JvmClass.class)))) {
+            if (overridesChecker.hasOverrideMatchingMembers(subClass)) {
+              affectNodeSources(context, subClass.getReferenceID(), "Class" + jvmClass.getName() + " compiled with errors. Subclass " + subClass.getName() + " overrides one or more members from it. Affecting " , present);
+            }
+          }
+        }
+      }
     }
-    
+
+    if (!isEmpty(nodes)) {
+      Graph graph = context.getGraph();
+      Delta delta = context.getDelta();
+      Iterable<NodeSource> compiledSources = delta.getSources();
+      Iterable<NodeSource> sourcesWithErrors = filter(delta.getBaseSources(), s -> !contains(compiledSources, s)); // all sources for which no output has been registered
+
+      Set<@NotNull ReferenceID> modifiedNodes = collect(flat(map(delta.getBaseSources(), src -> map(graph.getNodes(src), Node::getReferenceID))), new HashSet<>());
+      for (NodeSource errSrc : sourcesWithErrors) {
+        affectMutualDependentSources(context, errSrc, modifiedNodes, present);
+      }
+    }
+
     return true;
+  }
+
+  // Handle dependencies between source files like {a.kt -> b.kt -> ... -> a.kt}.
+  // if a.kt is modified and has been compiled with errors, all sources forming the cycle are marked for recompilation,
+  private void affectMutualDependentSources(DifferentiateContext context, NodeSource errSrc, Set<@NotNull ReferenceID> modifiedNodes, Utils present) {
+    Graph graph = context.getGraph();
+    Predicate<? super NodeSource> belongsToCurrentChunk = context.getParams().belongsToCurrentCompilationChunk();
+    Function<ReferenceID, Iterable<ReferenceID>> getDependentNodes = nodeID ->
+      unique(
+        map(
+          filter(
+            flat(map(filter(graph.getDependingNodes(nodeID), depId -> !modifiedNodes.contains(depId) && !isEmpty(filter(graph.getSources(depId), belongsToCurrentChunk))), depId -> present.getNodes(depId, JvmClass.class))),
+            depCls -> depCls.getFlags().hasImplicitTypes()
+          ),
+          JVMClassNode::getReferenceID
+        )
+      );
+
+    for (JvmClass errNode : graph.getNodes(errSrc, JvmClass.class)) {
+      for (ReferenceID dependent : recurse(errNode.getReferenceID(), getDependentNodes, false)) {
+        debug(context, "Node " + dependent + " contains implicit types in its public API" );
+        affectNodeSources(context, dependent, "Source "+ errSrc.toString() + " compiled with errors or yielded no output on initial compilation round; affecting mutually dependent source ", present);
+      }
+    }
   }
 
   @Override
@@ -791,12 +841,17 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
   }
 
   private void affectLookupUsages(DifferentiateContext context, Iterable<JvmNodeReferenceID> symbolOwners, String symbolName, Utils utils, @Nullable Predicate<Node<?, ?>> constraint) {
+    // on source level the lookup symbol can be defined in a companion object
+    Iterable<JvmNodeReferenceID> companions = map(flat(map(symbolOwners, o -> utils.getNodes(o, JvmClass.class))), cls -> {
+      String companionName = KJvmUtils.getCompanionObjectName(cls);
+      return companionName != null? new JvmNodeReferenceID(cls.getName() + "/" + companionName) : null;
+    });
     // since '$' is both a valid bytecode name symbol and inner class name separator, for every class name containing '$' use additional classname with '/'
-    Iterable<JvmNodeReferenceID> owners = filter(flat(symbolOwners, map(symbolOwners, o -> {
+    Iterable<JvmNodeReferenceID> owners = filter(flat(List.of(symbolOwners, companions, map(symbolOwners, o -> {
       String original = o.getNodeName();
       String normalized = original.replace('$', '/'); // inner class names on Kotlin lookups level use '/' separators instead of '$'
       return normalized.equals(original)? null : new JvmNodeReferenceID(normalized);
-    })), Objects::nonNull);
+    }))), Objects::nonNull);
 
     affectUsages(context, "lookup '" + symbolName + "'" , owners, id -> {
       String kotlinName = KJvmUtils.getKotlinName(id, utils);

@@ -19,4 +19,17 @@ jvm_library(
     "//jps/jps-builders:build",
   ]
 )
+
+jvm_library(
+  name = "java-jps_test_lib",
+  module_name = "intellij.space.java.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  runtime_deps = [
+    ":java-jps",
+    "//platform/util:util_test_lib",
+    "//jps/jps-builders:build_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.space.java.jps` end

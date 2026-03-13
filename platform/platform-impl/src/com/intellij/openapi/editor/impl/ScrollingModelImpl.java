@@ -7,7 +7,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorCoreUtil;
+import com.intellij.openapi.editor.EditorThreading;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollPositionCalculator;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.ScrollingModel;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
@@ -30,10 +37,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,7 +68,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
   private final DocumentListener documentListener = new DocumentListener() {
     @Override
     public void beforeDocumentChange(@NotNull DocumentEvent e) {
-      if (!supplier.getEditor().getDocument().isInBulkUpdate()) {
+      if (!supplier.getEditor().getUiDocument().isInBulkUpdate()) {
         cancelAnimatedScrolling(true);
       }
     }
@@ -79,7 +88,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
 
   void initListeners() {
     supplier.getScrollPane().getViewport().addChangeListener(viewportChangeListener);
-    supplier.getEditor().getDocument().addDocumentListener(documentListener);
+    supplier.getEditor().getUiDocument().addDocumentListener(documentListener);
   }
 
   /**
@@ -93,7 +102,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     // and the requested position is located somewhere around.
     // We don't want to position the viewport in a way that most of its area is used to represent that virtual empty space.
     // So, we tweak vertical offset if necessary.
-    int maxY = Math.max(editor.getLineHeight(), editor.getDocument().getLineCount() * editor.getLineHeight());
+    int maxY = Math.max(editor.getLineHeight(), editor.getUiDocument().getLineCount() * editor.getLineHeight());
     int minPreferredY = maxY - getVisibleArea().height * 2 / 3;
     final int currentOffset = getVerticalScrollOffset();
     int offsetToUse = Math.min(minPreferredY, currentOffset);
@@ -344,7 +353,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
 
   @ApiStatus.Internal
   public void dispose() {
-    supplier.getEditor().getDocument().removeDocumentListener(documentListener);
+    supplier.getEditor().getUiDocument().removeDocumentListener(documentListener);
     supplier.getScrollPane().getViewport().removeChangeListener(viewportChangeListener);
   }
 

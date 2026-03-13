@@ -34,19 +34,13 @@ internal abstract class ApplySelectedChangesActionBase protected constructor(
     val editor = e.getData(CommonDataKeys.EDITOR)
 
     val side = viewer.getEditorSide(editor)
-    if (side == null) {
-      presentation.setEnabledAndVisible(false)
-      return
+    when {
+      side == null || !isVisible(side) ->  presentation.setEnabledAndVisible(false)
+      else -> {
+        presentation.setText(getText(side))
+        presentation.setEnabledAndVisible(isSomeChangeSelected(side) && !viewer.isExternalOperationInProgress)
+      }
     }
-
-    if (!isVisible(side)) {
-      presentation.setEnabledAndVisible(false)
-      return
-    }
-
-    presentation.setText(getText(side))
-
-    presentation.setEnabledAndVisible(isSomeChangeSelected(side) && !viewer.isExternalOperationInProgress)
   }
 
   final override fun actionPerformed(e: AnActionEvent) {
@@ -195,7 +189,7 @@ internal class ResolveSelectedChangesAction(
   }
 
   override fun getText(side: ThreeSide): String {
-    return DiffBundle.message("action.presentation.merge.resolve.using.side.text", side.index)
+    return DiffBundle.message("action.presentation.merge.resolve.using.side.text", this@ResolveSelectedChangesAction.side.index)
   }
 
   override fun isVisible(side: ThreeSide): Boolean {

@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:kotlin-reflect"],
   runtime_deps = ["@lib//:kotlin-reflect"]
 )
+
+jvm_library(
+  name = "reflect_test_lib",
+  module_name = "intellij.libraries.kotlin.reflect",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:kotlin-reflect"],
+  runtime_deps = [":reflect"]
+)
 ### auto-generated section `build intellij.libraries.kotlin.reflect` end

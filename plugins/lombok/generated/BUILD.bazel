@@ -14,4 +14,12 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   resources = [":generated_resources"]
 )
+
+jvm_library(
+  name = "generated_test_lib",
+  module_name = "intellij.lombok.generated",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":generated"]
+)
 ### auto-generated section `build intellij.lombok.generated` end

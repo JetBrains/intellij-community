@@ -12,6 +12,7 @@ import com.intellij.codeInsight.completion.ReferenceExpressionCompletionContribu
 import com.intellij.codeInsight.completion.StaticMemberProcessor;
 import com.intellij.codeInspection.magicConstant.MagicCompletionContributor;
 import com.intellij.modcompletion.ModCompletionItem;
+import com.intellij.modcompletion.ModCompletionResult;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.pom.java.JavaFeature;
@@ -100,7 +101,7 @@ final class JavaMembersGetter {
     myParameters = parameters;
   }
 
-  public void addMembers(boolean searchInheritors, final Consumer<? super com.intellij.modcompletion.ModCompletionItem> results) {
+  public void addMembers(boolean searchInheritors, final ModCompletionResult results) {
     if (MagicCompletionContributor.getAllowedValues(myParameters.getPosition()) != null) {
       return;
     }
@@ -137,7 +138,7 @@ final class JavaMembersGetter {
     return true;
   }
 
-  public void processMembers(final Consumer<? super ModCompletionItem> results, final @Nullable PsiClass where,
+  public void processMembers(final ModCompletionResult results, final @Nullable PsiClass where,
                              final boolean acceptMethods, final boolean searchInheritors) {
     if (where == null || isPrimitiveClass(where)) return;
 
@@ -180,7 +181,7 @@ final class JavaMembersGetter {
   }
 
   private void doProcessMembers(boolean acceptMethods,
-                                Consumer<? super ModCompletionItem> results,
+                                ModCompletionResult results,
                                 boolean isExpectedTypeMember,
                                 PsiClass origClass,
                                 Collection<? extends PsiElement> declarations) {
@@ -237,7 +238,7 @@ final class JavaMembersGetter {
     "java.time.temporal.TemporalField", new ConstantClass("java.time.temporal.ChronoField", LanguageLevel.JDK_1_8, null)
   );
 
-  private void addKnownConstants(Consumer<? super ModCompletionItem> results) {
+  private void addKnownConstants(ModCompletionResult results) {
     PsiFile file = myParameters.getOriginalFile();
     ConstantClass constantClass = CONSTANT_SUGGESTIONS.get(myExpectedType.getCanonicalText());
     if (constantClass != null && PsiUtil.getLanguageLevel(file).isAtLeast(constantClass.languageLevel)) {
@@ -258,7 +259,7 @@ final class JavaMembersGetter {
     }
   }
 
-  private void addConstantsFromReferencedClassesInSwitch(final Consumer<? super ModCompletionItem> results) {
+  private void addConstantsFromReferencedClassesInSwitch(final ModCompletionResult results) {
     if (!JavaCompletionContributor.IN_SWITCH_LABEL.accepts(myPlace)) return;
     PsiSwitchBlock block = Objects.requireNonNull(PsiTreeUtil.getParentOfType(myPlace, PsiSwitchBlock.class));
     final Set<PsiField> fields = ReferenceExpressionCompletionContributor.findConstantsUsedInSwitch(block);
@@ -275,7 +276,7 @@ final class JavaMembersGetter {
     }
   }
 
-  private void addConstantsFromTargetClass(Consumer<? super ModCompletionItem> results, boolean searchInheritors) {
+  private void addConstantsFromTargetClass(ModCompletionResult results, boolean searchInheritors) {
     PsiElement parent = myPlace.getParent();
     if (!(parent instanceof PsiReferenceExpression)) {
       return;

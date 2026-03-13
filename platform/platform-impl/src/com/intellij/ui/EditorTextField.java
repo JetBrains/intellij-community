@@ -18,7 +18,13 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.EditorThreading;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -51,6 +57,9 @@ import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.ui.dsl.builder.VerticalComponentGap;
+import com.intellij.ui.dsl.gridLayout.GridLayout;
+import com.intellij.ui.dsl.gridLayout.GridLayoutKt;
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps;
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsKt;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IJSwingUtilities;
@@ -67,9 +76,25 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.CellRendererPane;
+import javax.swing.JComponent;
+import javax.swing.JTable;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import java.awt.AWTEvent;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -161,7 +186,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
         if (myEditor == null) initEditor();
       }
     });
-    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGapsKt.UnscaledGaps(3));
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY);
     putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
   }
 
@@ -724,6 +749,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
       if (!shouldHaveBorder()) {
         editor.setBorder(null);
+        updateVisualPaddings(UnscaledGaps.EMPTY);
       }
 
       if (myIsViewer) {
@@ -810,6 +836,17 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   protected void setupBorder(@NotNull EditorEx editor) {
     editor.setBorder(new DarculaEditorTextFieldBorder(this, editor));
+    updateVisualPaddings(UnscaledGapsKt.UnscaledGaps(3));
+  }
+
+  private void updateVisualPaddings(@NotNull UnscaledGaps visualPaddings) {
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, visualPaddings);
+
+    var parent = getParent();
+    if (parent != null && parent.getLayout() instanceof GridLayout) {
+      // Update padding if the editor text field is already in the view hierarchy
+      GridLayoutKt.setVisualPadding(this, visualPaddings);
+    }
   }
 
   private void setupEditorFont(final EditorEx editor) {

@@ -45,4 +45,29 @@ jvm_library(
     "//plugins/kotlin/j2k/k1.new",
   ]
 )
+
+jvm_library(
+  name = "k1.old_test_lib",
+  module_name = "kotlin.j2k.k1.old",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_k1.old",
+  runtime_deps = [
+    ":k1.old",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/core:core_test_lib",
+    "//plugins/kotlin/idea:idea_test_lib",
+    "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//java/java-psi-impl:psi-impl_test_lib",
+    "//plugins/kotlin/j2k/shared:shared_test_lib",
+    "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
+    "//java/java-analysis-impl:analysis-impl_test_lib",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/fe10/code-insight:code-insight_test_lib",
+    "//plugins/kotlin/j2k/k1.new:k1.new_test_lib",
+  ]
+)
 ### auto-generated section `build kotlin.j2k.k1.old` end

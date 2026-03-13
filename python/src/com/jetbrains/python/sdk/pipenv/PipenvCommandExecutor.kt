@@ -12,7 +12,6 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ToolCommandExecutor
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.createSdk
-import com.jetbrains.python.sdk.detectToolExecutableOrNull
 import com.jetbrains.python.sdk.runTool
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +19,8 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.SystemDependent
 import java.nio.file.Path
+import kotlin.io.path.createFile
+import kotlin.io.path.exists
 import kotlin.io.path.pathString
 
 private val PIPENV_TOOL: ToolCommandExecutor = ToolCommandExecutor("pipenv") {
@@ -32,11 +33,6 @@ suspend fun runPipEnv(dirPath: Path?, vararg args: String): PyResult<String> = P
 @Internal
 suspend fun <T> runPipEnv(dirPath: Path?, vararg args: String, transformer: ProcessOutputTransformer<T>): PyResult<T> =
   PIPENV_TOOL.runTool(dirPath = dirPath, args = args, transformer = transformer)
-
-
-@Internal
-@JvmOverloads
-internal fun detectPipEnvExecutableOrNull(eel: EelApi = localEel): Path? = PIPENV_TOOL.detectToolExecutableOrNull(eel)
 
 /**
  * Returns the configured pipenv executable or detects it automatically.
@@ -82,6 +78,16 @@ suspend fun setupPipEnv(
   basePythonBinaryPath: PythonBinary?,
   installPackages: Boolean,
 ): PyResult<@SystemDependent String> {
+  val pipfile = projectPath.resolve(PipEnvFileHelper.PIP_FILE)
+
+  if (!pipfile.exists()) {
+    // Currently, if a Pipenv file exists inside the user's home directory, then it will NOT create a new Pipenv in the current project
+    // directory, but instead use the one in the home directory. This has an effect that new projects are created without the Pipenv file,
+    // which results in a broken project setup. If an empty Pipenv file is created in the project directory beforehand, then pipenv will use
+    // and populate that file instead.
+    pipfile.createFile()
+  }
+
   when {
     installPackages -> {
       val pythonArgs = if (basePythonBinaryPath != null) listOf("--python", basePythonBinaryPath.pathString) else emptyList()

@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.RawText;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -37,6 +38,7 @@ import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.YAMLDocument;
 import org.jetbrains.yaml.psi.YAMLFile;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.YAMLSequenceItem;
 import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
 import org.jetbrains.yaml.psi.impl.YAMLBlockSequenceImpl;
 import org.jetbrains.yaml.refactoring.rename.YamlKeyValueRenameInputValidator;
@@ -188,27 +190,31 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
       return indentText(text, StringUtil.repeatSymbol(' ', indent), shouldInsertIndentAtTheEnd(caretOffset, document));
     }
 
+    int lineEndOffset = document.getLineEndOffset(lineNumber);
+    String lineText = document.getText(new TextRange(lineStartOffset, lineEndOffset));
+    boolean isTargetLineEmptyItem = lineText.trim().equals("-");
+
     // if we have separate lines pasted into a sequence, turn each line into a sequence item
-    return adjustListItems(lines, indent + fixOffset(document, caretOffset));
+    return adjustListItems(lines, indent + fixOffset(document, caretOffset), isTargetLineEmptyItem);
   }
 
   private static int fixOffset(Document document, int caretOffset) {
-    // the initially computed indent includes everything before the caret,
-    // so we have to trim the '-' prefix and following ws
     CharSequence sequence = document.getCharsSequence();
-    int offset = 0;
-    while (sequence.charAt(caretOffset - 1 + offset) != '-') {
-      offset--;
+    int lineStartOffset = DocumentUtil.getLineStartOffset(caretOffset, document);
+    int dashPos = -1;
+    for (int i = lineStartOffset; i < caretOffset; i++) {
+      if (sequence.charAt(i) == '-') {
+        dashPos = i;
+        break;
+      }
     }
-    return offset - 1;
+    if (dashPos == -1) return 0;
+    return dashPos - caretOffset;
   }
 
-  private static String adjustListItems(List<String> lines, int indent) {
-    String firstLine = lines.get(0).substring(YAMLTextUtil.getStartIndentSize(lines.get(0)));
-    // if we are pasting a list of sequence items into a sequence,
-    //  there is a high probability that we are inlining them into that sequence, so do that
-    String firstLineAdjusted = ContainerUtil.and(lines, s -> s.trim().startsWith("-"))
-                               ? StringUtil.trimLeading(StringUtil.trimStart(firstLine, "-")) : firstLine;
+  private static String adjustListItems(List<String> lines, int indent, boolean isTargetLineEmptyItem) {
+    String firstLine = lines.getFirst().substring(YAMLTextUtil.getStartIndentSize(lines.getFirst()));
+    String firstLineAdjusted = isTargetLineEmptyItem ? StringUtil.trimLeading(StringUtil.trimStart(firstLine, "- ")) : firstLine;
     return StreamEx.of(lines)
       .skip(1)
       .map(line -> {
@@ -217,7 +223,7 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
           // do not indent empty lines at all
           return "";
         }
-        else if (line.trim().startsWith("-")) {
+        else if (line.trim().startsWith("- ")) {
           return StringUtil.repeatSymbol(' ', indent) + StringUtil.trimLeading(line);
         }
         else {
@@ -280,16 +286,36 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
     else {
       previousElement = PsiTreeUtil.prevLeaf(element, true);
     }
-    if (PsiUtilCore.getElementType(previousElement) == TokenType.WHITE_SPACE) previousElement = PsiTreeUtil.prevLeaf(previousElement, true);
-
-    if (PsiUtilCore.getElementType(previousElement) == YAMLTokenTypes.INDENT ||
-        PsiUtilCore.getElementType(previousElement) == YAMLTokenTypes.EOL) {
-      return LineAdjustmentMode.Indent;
+    while (previousElement != null) {
+      IElementType type = PsiUtilCore.getElementType(previousElement);
+      if (type == YAMLTokenTypes.INDENT || type == YAMLTokenTypes.EOL) {
+        return LineAdjustmentMode.Indent;
+      }
+      if (type != TokenType.WHITE_SPACE) {
+        break;
+      }
+      previousElement = PsiTreeUtil.prevLeaf(previousElement, true);
     }
 
+    // Identifying if the line with the caret is a list item
     if (PsiUtilCore.getElementType(previousElement) == YAMLTokenTypes.SEQUENCE_MARKER ||
         PsiUtilCore.getElementType(previousElement) == YAMLTokenTypes.TEXT && previousElement.textMatches("-")) {
       return LineAdjustmentMode.ListItem;
+    }
+
+    YAMLSequenceItem sequenceItem = PsiTreeUtil.getParentOfType(previousElement, YAMLSequenceItem.class);
+    if (sequenceItem != null) {
+      Document document = file.getViewProvider().getDocument();
+      if (document != null) {
+        int itemLine = document.getLineNumber(sequenceItem.getTextRange().getStartOffset());
+        int caretLine = document.getLineNumber(caretOffset);
+
+        // Ensure the sequence marker is on the same line as the caret
+        // to avoid detecting list markers from previous lines
+        if (itemLine == caretLine) {
+          return LineAdjustmentMode.ListItem;
+        }
+      }
     }
 
     return LineAdjustmentMode.None;

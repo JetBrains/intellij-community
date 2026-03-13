@@ -17,10 +17,14 @@ class DefaultKotlinLibraryVersionProviderTest : BasePlatformTestCase() {
     }
 
     private fun getCoroutinesVersion(version: LanguageVersion): String? {
+        return getCoroutinesVersion("${version.major}.${version.minor}.0")
+    }
+
+    private fun getCoroutinesVersion(version: String): String? {
         val groupId = "org.jetbrains.kotlinx"
         val artifactId = "kotlinx-coroutines-core"
 
-        KotlinJpsPluginSettings.getInstance(project).setVersion("${version.major}.${version.minor}.0")
+        KotlinJpsPluginSettings.getInstance(project).setVersion(version)
 
         return provider.getVersion(myFixture.module, groupId, artifactId)
     }
@@ -35,7 +39,19 @@ class DefaultKotlinLibraryVersionProviderTest : BasePlatformTestCase() {
     }
 
     fun testUnknownKotlin() {
-        assertNull(getCoroutinesVersion(LanguageVersion.KOTLIN_1_0))
+        assertNotNull(getCoroutinesVersion(LanguageVersion.KOTLIN_1_0))
+    }
+
+    fun testVeryHighNonExistingKotlin() {
+        val version = getCoroutinesVersion("99.9.0")
+        assertNotNull(version)
+        assertEquals(version, getHighestCoroutinesVersionFromCompatibilityStore())
+    }
+
+    private fun getHighestCoroutinesVersionFromCompatibilityStore(): String? {
+        val compatibilityStore = KotlinLibrariesCompatibilityStore.getInstance()
+        val versions = compatibilityStore.getVersions("org.jetbrains.kotlinx", "kotlinx-coroutines-core") ?: return null
+        return compatibilityStore.getLatestVersion(versions)
     }
 
     fun testSpecificCoroutinesVersions() {

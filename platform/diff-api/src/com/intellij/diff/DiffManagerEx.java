@@ -1,18 +1,21 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff;
 
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.merge.MergeRequest;
+import com.intellij.diff.merge.MergeRequestHandler;
 import com.intellij.diff.merge.MergeRequestProducer;
 import com.intellij.diff.merge.MergeTool;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@ApiStatus.NonExtendable
 public abstract class DiffManagerEx extends DiffManager {
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static @NotNull DiffManagerEx getInstance() {
@@ -41,4 +44,10 @@ public abstract class DiffManagerEx extends DiffManager {
   public abstract @NotNull List<DiffTool> getDiffTools();
 
   public abstract @NotNull List<MergeTool> getMergeTools();
+
+  /**
+   * Gets the handler that will be used to show the merge
+   */
+  @ApiStatus.Internal
+  public abstract @NotNull MergeRequestHandler getHandler(@Nullable Project project, @NotNull MergeRequest request);
 }

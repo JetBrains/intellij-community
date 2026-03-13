@@ -1777,6 +1777,19 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       element.lookupString.contains("Parameter info", ignoreCase = true) })
   }
 
+  fun testShowLiveTemplate() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A {
+          void foo() {
+              .<caret>
+          }
+      }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertNotNull(elements.firstOrNull { element -> element.lookupString.contains("Live template", ignoreCase = true) })
+  }
+
   private class TestHintManager : HintManagerImpl() {
     var called: Boolean = false
     override fun showInformationHint(editor: Editor, component: JComponent, position: Short, onHintHidden: Runnable?) {

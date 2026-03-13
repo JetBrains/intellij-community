@@ -42,21 +42,39 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/credential-store",
+    "//platform/credential-store:credential-store_test_lib",
     "//platform/platform-api:ide",
+    "//platform/platform-api:ide_test_lib",
     "//platform/platform-impl:ide-impl",
     "//platform/built-in-server-api:builtInServer",
+    "//platform/built-in-server-api:builtInServer_test_lib",
     "//platform/external-process-auth-helper/rt",
+    "//platform/external-process-auth-helper/rt:rt_test_lib",
     "//platform/built-in-server:builtInServer-impl",
+    "//platform/built-in-server:builtInServer-impl_test_lib",
     "//platform/platform-util-netty:ide-util-netty",
     "//libraries/netty/codec-http:libraries-netty-codec-http",
+    "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
     "//libraries/netty/buffer",
+    "//libraries/netty/buffer:buffer_test_lib",
     "@lib//:junit5",
     "//platform/eel",
+    "//platform/eel:eel_test_lib",
     "//platform/eel-provider",
+    "//platform/eel-provider:eel-provider_test_lib",
     "//platform/util/coroutines",
+    "//platform/util/coroutines:coroutines_test_lib",
   ],
-  exports = ["//platform/built-in-server:builtInServer-impl"]
+  exports = [
+    "//platform/built-in-server:builtInServer-impl",
+    "//platform/built-in-server:builtInServer-impl_test_lib",
+  ],
+  runtime_deps = [
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/platform-util-netty:ide-util-netty_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.platform.externalProcessAuthHelper` end
 

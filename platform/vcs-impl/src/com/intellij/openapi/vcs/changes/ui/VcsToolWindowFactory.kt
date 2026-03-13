@@ -19,8 +19,9 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.openapi.vcs.ex.VcsActivationListener
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
+import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.openapi.wm.ex.ToolWindowEx
-import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.vcs.impl.shared.ui.ToolWindowLazyContent
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.content.Content
@@ -108,8 +109,11 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   internal companion object {
-    fun canBeAvailableInProject(project: Project) = TrustedProjects.isProjectTrusted(project) &&
-                                                    !WelcomeScreenProjectProvider.isWelcomeScreenProject(project)
+    fun canBeAvailableInProject(project: Project): Boolean {
+      @Suppress("DEPRECATION")
+      return TrustedProjects.isProjectTrusted(project) &&
+             !ProjectFrameCapabilitiesService.getInstanceSync().has(project, ProjectFrameCapability.SUPPRESS_VCS_UI)
+    }
   }
 }
 

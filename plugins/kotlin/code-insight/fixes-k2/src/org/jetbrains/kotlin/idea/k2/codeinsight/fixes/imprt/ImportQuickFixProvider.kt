@@ -52,12 +52,12 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
     override fun KaSession.createQuickFixes(diagnostic: KaDiagnosticWithPsi<*>): List<IntentionAction> = getFixes(diagnostic)
 
     context(_: KaSession)
-    fun getFixes(diagnostic: KaDiagnosticWithPsi<*>): List<ImportQuickFix> {
+    fun getFixes(diagnostic: KaDiagnosticWithPsi<*>): List<IntentionAction> {
         return getFixes(setOf(diagnostic))
     }
 
     context(session: KaSession)
-    fun getFixes(diagnostics: Set<KaDiagnosticWithPsi<*>>): List<ImportQuickFix> {
+    fun getFixes(diagnostics: Set<KaDiagnosticWithPsi<*>>): List<IntentionAction> {
         val factories: List<AbstractImportQuickFixFactory> = listOf(
             UnresolvedNameReferenceImportQuickFixFactory,
             MismatchedArgumentsImportQuickFixFactory,
@@ -106,12 +106,12 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
     internal fun KaSession.createImportFix(
         position: KtElement,
         data: ImportData,
-    ): ImportQuickFix {
+    ): IntentionAction {
         val text = ImportFixHelper.calculateTextForFix(
             data.importsInfo,
             suggestions = data.uniqueFqNameSortedImportCandidates.map { (candidate, _) -> candidate.getFqName() }
         )
-        return ImportQuickFix(position, text, data.importVariants)
+        return KotlinAddImportActionFactory.getInstance().createAddImportFix(position, text, data.importVariants)
     }
 
     context(_: KaSession)

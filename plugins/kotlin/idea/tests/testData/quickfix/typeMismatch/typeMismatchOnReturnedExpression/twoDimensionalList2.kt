@@ -1,5 +1,6 @@
 // "Change type of 'b' to 'List<List<Int>>'" "true"
 // WITH_STDLIB
+// K2_ERROR: Initializer type mismatch: expected 'List<Int>', actual 'List<List<Int>>'.
 val a: List<Int> = listOf(1)
 val b: List<Int> = <caret>listOf(a)
 

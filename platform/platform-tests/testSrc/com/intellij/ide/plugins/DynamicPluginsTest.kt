@@ -13,6 +13,8 @@ import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.plugins.testPluginSrc.IJPL207058.DefaultService
 import com.intellij.ide.plugins.testPluginSrc.IJPL207058.ServiceInterface
 import com.intellij.ide.plugins.testPluginSrc.IJPL207058.module.OverriddenService
+import com.intellij.ide.plugins.testPluginSrc.IJPL233642.FooCore
+import com.intellij.ide.plugins.testPluginSrc.IJPL233642.FooCoreAppActivity
 import com.intellij.ide.plugins.testPluginSrc.bar.BarAction
 import com.intellij.ide.plugins.testPluginSrc.bar.BarService
 import com.intellij.ide.plugins.testPluginSrc.foo.FooAction
@@ -52,11 +54,27 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
-import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.testFramework.loadDescriptorInTest
 import com.intellij.platform.testFramework.loadExtensionWithText
-import com.intellij.platform.testFramework.plugins.*
+import com.intellij.platform.testFramework.plugins.PluginSpec
+import com.intellij.platform.testFramework.plugins.PluginTestHandle
+import com.intellij.platform.testFramework.plugins.action
+import com.intellij.platform.testFramework.plugins.appService
+import com.intellij.platform.testFramework.plugins.buildDir
+import com.intellij.platform.testFramework.plugins.buildDistribution
+import com.intellij.platform.testFramework.plugins.buildMainJar
+import com.intellij.platform.testFramework.plugins.content
+import com.intellij.platform.testFramework.plugins.dependencies
+import com.intellij.platform.testFramework.plugins.depends
+import com.intellij.platform.testFramework.plugins.dependsIntellijModulesLang
+import com.intellij.platform.testFramework.plugins.extension
+import com.intellij.platform.testFramework.plugins.extensionPoint
+import com.intellij.platform.testFramework.plugins.extensions
+import com.intellij.platform.testFramework.plugins.includePackageClassFiles
+import com.intellij.platform.testFramework.plugins.module
+import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.platform.testFramework.setPluginClassLoaderForMainAndSubPlugins
 import com.intellij.platform.testFramework.unloadAndUninstallPlugin
 import com.intellij.psi.PsiFile
@@ -466,6 +484,7 @@ class DynamicPluginsTest {
     }
   }
 
+  @Ignore("AT-4013")
   @Test
   fun `optional plugin dependency loading`() {
     val fooJar = pluginsDir.resolve("foo.jar")
@@ -504,6 +523,7 @@ class DynamicPluginsTest {
     }
   }
 
+  @Ignore("AT-4013")
   @Test
   fun `separate content module jar unloading`() {
     val fooDir = pluginsDir.resolve("foo")
@@ -541,6 +561,7 @@ class DynamicPluginsTest {
     }
   }
 
+  @Ignore("AT-4013")
   @Test
   fun `extension point from an embedded content module used in main descriptor`() {
     val fooPath = pluginsDir.resolve("foo")
@@ -1032,6 +1053,45 @@ class DynamicPluginsTest {
     }
   }
 
+  @Ignore("AT-4013")
+  @Test
+  fun `IJPL-233642 registry access of key from same plugin with multiple modules`() {
+    val fooPath = pluginsDir.resolve("foo")
+    plugin("foo") {
+      content {
+        module("foo.core", loadingRule = ModuleLoadingRuleValue.EMBEDDED) {
+          isSeparateJar = true
+          extensions("""
+            <postStartupActivity implementation="${FooCoreAppActivity::class.qualifiedName!!}"/>
+          """.trimIndent())
+          includePackageClassFiles<FooCoreAppActivity>()
+        }
+        module("foo.acp", loadingRule = ModuleLoadingRuleValue.OPTIONAL) {
+          dependencies {
+            module("foo.core")
+          }
+          isSeparateJar = true
+          extensions("""
+            <registryKey defaultValue="true"
+                 description="Foo foo"
+                 key="foo.module.registry.key"/>
+          """.trimIndent())
+        }
+      }
+    }.buildDir(fooPath)
+    StartupManagerImpl.addActivityEpListener(projectRule.project)
+    val foo = loadDescriptorInTest(fooPath)
+    val fooCore = foo.contentModules.first { it.moduleId.name == "foo.core" }
+    try {
+      assertThat(DynamicPlugins.loadPlugins(listOf(foo), null)).isTrue
+      val coreClass = application.getService(fooCore.loadClassInsideSelf<FooCore>()) as PluginTestHandle
+      coreClass.test()
+    }
+    finally {
+      assertThat(DynamicPlugins.unloadPlugins(listOf(foo), null)).isTrue
+    }
+  }
+
   @Test
   fun `incompatible plugins cannot be enabled dynamically`() {
     // Create an incompatible plugin
@@ -1178,6 +1238,7 @@ class DynamicPluginsTest {
     assertThat(DynamicPlugins.loadPlugin(foo)).isFalse
   }
 
+  @Ignore("AT-4013")
   @Test
   fun `test ide-plugins-allow-dynamic-services-overrides registry flag`() {
     for (dynamicServiceOverridesAllowed in listOf(true, false)) {

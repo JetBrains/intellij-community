@@ -48,7 +48,9 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/jewel/ui",
     "//platform/jewel/ui:ui_test_lib",
     "//platform/jewel/foundation",
@@ -56,18 +58,25 @@ jvm_library(
     "//platform/jewel/ide-laf-bridge",
     "//platform/jewel/ide-laf-bridge:ide-laf-bridge_test_lib",
     "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
     "//platform/platform-impl:ide-impl",
     "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
     "@lib//:jetbrains-annotations",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//libraries/compose-runtime-desktop",
+    "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
     "//libraries/skiko",
+    "//libraries/skiko:skiko_test_lib",
     "@lib//:jetbrains-compose-components-ui-tooling-preview-desktop",
     "@lib//:junit4",
     "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
+    "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
   ],
   exports = [
     "//platform/jewel/ui",
@@ -78,6 +87,7 @@ jvm_library(
     "//platform/jewel/ide-laf-bridge:ide-laf-bridge_test_lib",
     "@lib//:jetbrains-compose-components-ui-tooling-preview-desktop",
   ],
+  runtime_deps = ["//platform/platform-impl:ide-impl_test_lib"],
   plugins = ["@lib//:compose-plugin"]
 )
 ### auto-generated section `build intellij.platform.compose` end

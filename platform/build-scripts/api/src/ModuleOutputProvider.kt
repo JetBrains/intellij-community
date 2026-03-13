@@ -14,8 +14,6 @@ interface ModuleOutputProvider {
    */
   fun getAllModules(): List<JpsModule> = emptyList()
 
-  fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean = false): ByteArray?
-
   fun findModule(name: String): JpsModule?
 
   /**
@@ -51,5 +49,5 @@ interface ModuleOutputProvider {
   suspend fun findFileInAnyModuleOutput(relativePath: String, moduleNamePrefix: String? = null, processedModules: MutableSet<String>? = null): ByteArray? = null
 
   @Experimental
-  suspend fun readFileContentFromModuleOutputAsync(module: JpsModule, relativePath: String, forTests: Boolean = false): ByteArray?
+  suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean = false): ByteArray?
 }

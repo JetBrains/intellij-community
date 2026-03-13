@@ -11,11 +11,17 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.junit.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 @RunWith(JUnit4::class)
@@ -40,22 +46,27 @@ internal class InlineCompletionSuggestionTest : InlineCompletionTestCase() {
   @Test
   fun `test nested variants creation is forbidden`() = myFixture.testInlineCompletion {
     init(PlainTextFileType.INSTANCE)
+    val finishedComputation = AtomicBoolean(false)
     registerSuggestion {
       variant {
         emit(InlineCompletionGrayTextElement("1"))
       }
       variant {
         emit(InlineCompletionGrayTextElement("2"))
-        variant {
-          emit(InlineCompletionGrayTextElement("3"))
+
+        assertThrows<IllegalStateException> {
+          variant {
+            emit(InlineCompletionGrayTextElement("3"))
+          }
         }
       }
+      finishedComputation.set(true)
     }
 
     callInlineCompletion()
     provider.computeNextElements(3, await = false)
     delay()
-    assertInlineHidden() // exception occurred, some problems with detecting exceptions occurred inside Dispatchers.Default
+    assertTrue(finishedComputation.get())
   }
 
   @Test

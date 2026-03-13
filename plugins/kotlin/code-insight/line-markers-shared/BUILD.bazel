@@ -39,4 +39,32 @@ jvm_library(
     "//plugins/kotlin/frontend-independent",
   ]
 )
+
+jvm_library(
+  name = "kotlin-code-insight-line-markers-shared_test_lib",
+  module_name = "kotlin.code-insight.line-markers.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":kotlin-code-insight-line-markers-shared",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/platforms:platforms_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//plugins/kotlin/base/indices:indices_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/execution-impl:execution-impl_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/kotlin.searching:kotlin.searching_test_lib",
+    "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
+  ]
+)
 ### auto-generated section `build kotlin.code-insight.line-markers.shared` end

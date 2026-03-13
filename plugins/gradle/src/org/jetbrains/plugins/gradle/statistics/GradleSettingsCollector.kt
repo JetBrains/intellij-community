@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Version
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
@@ -80,7 +81,7 @@ internal class GradleSettingsCollector : ProjectUsagesCollector() {
     usages.add(GRADLE_JVM_TYPE.metric(ExternalSystemUsageFields.getJreType(setting.gradleJvm)))
     usages.add(GRADLE_JVM_VERSION.metric(ExternalSystemUsageFields.getJreVersion(project, setting.gradleJvm)))
 
-    val gradleVersion = setting.resolveGradleVersion()
+    val gradleVersion = GradleInstallationManager.guessGradleVersion(setting) ?: GradleVersion.current()
     if (gradleVersion.isSnapshot) {
       usages.add(GRADLE_VERSION.metric(anonymizeGradleVersion(gradleVersion.baseVersion) + ".SNAPSHOT"))
     }

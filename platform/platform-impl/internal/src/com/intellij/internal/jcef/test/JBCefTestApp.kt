@@ -1,8 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.jcef.test
 
-import com.intellij.internal.jcef.test.cases.*
 import com.intellij.internal.jcef.test.aggrtest.AggressiveRouterTest
+import com.intellij.internal.jcef.test.cases.ContextMenu
+import com.intellij.internal.jcef.test.cases.DetailedFrame
+import com.intellij.internal.jcef.test.cases.KeyboardEvents
+import com.intellij.internal.jcef.test.cases.MessageRouterTests
+import com.intellij.internal.jcef.test.cases.PerformanceTest
+import com.intellij.internal.jcef.test.cases.ResourceHandler
 import com.intellij.internal.jcef.test.detailed.handler.ClientSchemeHandler
 import com.intellij.internal.jcef.test.detailed.handler.SearchSchemeHandler
 import com.intellij.internal.jcef.test.rhtest.RequestHandlingRESTApiTest
@@ -31,7 +36,13 @@ import java.awt.Component
 import java.awt.GridLayout
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
-import javax.swing.*
+import javax.swing.BorderFactory
+import javax.swing.BoxLayout
+import javax.swing.JFrame
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JScrollPane
+import javax.swing.JSplitPane
 
 internal class JBCefTestApp : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {

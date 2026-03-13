@@ -1,5 +1,6 @@
 // "Create interface 'A'" "true"
 // ERROR: Unresolved reference: B
+// K2_ERROR: Unresolved reference 'A'.
 // K2_AFTER_ERROR: Unresolved reference 'B'.
 package p
 

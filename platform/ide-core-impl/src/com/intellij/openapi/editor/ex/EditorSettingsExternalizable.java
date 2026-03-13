@@ -8,7 +8,11 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.SettingsCategory;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.actions.CaretStopOptions;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
@@ -25,7 +29,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.*;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @State(name = "EditorSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE, perClient = true)
@@ -66,6 +75,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean SHOW_INTENTION_BULB = true;
     public boolean IS_CARET_BLINKING = true;
     public int CARET_BLINKING_PERIOD = BLINKING_RANGE.initial;
+    @ApiStatus.Experimental public boolean IS_SMOOTH_CARET_BLINKING = false;
     public boolean IS_RIGHT_MARGIN_SHOWN = true;
     public boolean ARE_LINE_NUMBERS_SHOWN = true;
     public @NotNull EditorSettings.LineNumerationType LINE_NUMERATION = EditorSettings.LineNumerationType.ABSOLUTE;
@@ -85,7 +95,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
     public boolean IS_BLOCK_CURSOR = false;
     public boolean IS_FULL_LINE_HEIGHT_CURSOR = false;
-    @ApiStatus.Experimental public boolean IS_ANIMATED_CARET = false;
+    @ApiStatus.Experimental public boolean IS_SMOOTH_CARET_MOVEMENT = false;
     @ApiStatus.Experimental public @NotNull EditorSettings.CaretEasing CARET_EASING = EditorSettings.CaretEasing.NINJA;
     public boolean IS_HIGHLIGHT_SELECTION_OCCURRENCES = true;
     public boolean IS_WHITESPACES_SHOWN = false;
@@ -536,15 +546,15 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   @ApiStatus.Experimental
-  public boolean isAnimatedCaret() {
-    return myOptions.IS_ANIMATED_CARET;
+  public boolean isSmoothCaretMovement() {
+    return myOptions.IS_SMOOTH_CARET_MOVEMENT;
   }
 
   @ApiStatus.Experimental
-  public void setAnimatedCaret(boolean val) {
-    boolean old = myOptions.IS_ANIMATED_CARET;
+  public void setSmoothCaretMovement(boolean val) {
+    boolean old = myOptions.IS_SMOOTH_CARET_MOVEMENT;
     if (old == val) return;
-    myOptions.IS_ANIMATED_CARET = val;
+    myOptions.IS_SMOOTH_CARET_MOVEMENT = val;
     myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_ANIMATED_CARET, old, val);
   }
 
@@ -737,6 +747,18 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myPropertyChangeSupport.firePropertyChange(PropNames.PROP_CARET_BLINKING_PERIOD, old, newValue);
   }
 
+  @ApiStatus.Experimental
+  public boolean isSmoothBlinkCaret() {
+    return myOptions.IS_SMOOTH_CARET_BLINKING;
+  }
+
+  @ApiStatus.Experimental
+  public void setSmoothBlinkCaret(boolean smoothBlinkCaret) {
+    boolean old = myOptions.IS_SMOOTH_CARET_BLINKING;
+    if (old == smoothBlinkCaret) return;
+    myOptions.IS_SMOOTH_CARET_BLINKING = smoothBlinkCaret;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_SMOOTH_CARET_BLINKING, old, smoothBlinkCaret);
+  }
 
   public boolean isEnsureNewLineAtEOF() {
     return myOptions.IS_ENSURE_NEWLINE_AT_EOF;
@@ -1157,6 +1179,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public static final @NonNls String PROP_SHOW_INTENTION_BULB = "showIntentionBulb";
     public static final @NonNls String PROP_IS_CARET_BLINKING = "isCaretBlinking";
     public static final @NonNls String PROP_CARET_BLINKING_PERIOD = "caretBlinkingPeriod";
+    @ApiStatus.Experimental public static final @NonNls String PROP_IS_SMOOTH_CARET_BLINKING = "isSmoothCaretBlinking";
     public static final @NonNls String PROP_IS_RIGHT_MARGIN_SHOWN = "isRightMarginShown";
     public static final @NonNls String PROP_ARE_LINE_NUMBERS_SHOWN = "areLineNumbersShown";
     public static final @NonNls String PROP_ARE_LINE_NUMBERS_AFTER_ICONS = "areLineNumbersAfterIcons";
@@ -1177,7 +1200,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public static final @NonNls String PROP_SMART_HOME = "smartHome";
     public static final @NonNls String PROP_IS_BLOCK_CURSOR = "isBlockCursor";
     public static final @NonNls String PROP_IS_FULL_LINE_HEIGHT_CURSOR = "isFullLineHeightCursor";
-    @ApiStatus.Experimental public static final @NonNls String PROP_IS_ANIMATED_CARET = "isAnimatedCaret";
+    @ApiStatus.Experimental public static final @NonNls String PROP_IS_ANIMATED_CARET = "isSmoothCaretMovement";
     @ApiStatus.Experimental public static final @NonNls String PROP_CARET_EASING = "caretEasing";
     public static final @NonNls String PROP_IS_HIGHLIGHT_SELECTION_OCCURRENCES = "isHighlightSelectionOccurrences";
     public static final @NonNls String PROP_IS_WHITESPACES_SHOWN = "isWhitespacesShown";

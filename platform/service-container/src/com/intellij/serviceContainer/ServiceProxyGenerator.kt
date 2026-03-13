@@ -4,11 +4,15 @@ package com.intellij.serviceContainer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.io.toByteArray
 import com.intellij.util.lang.ClassPath.ClassDataConsumer
-import org.jetbrains.org.objectweb.asm.*
+import org.jetbrains.org.objectweb.asm.ClassWriter
+import org.jetbrains.org.objectweb.asm.Label
+import org.jetbrains.org.objectweb.asm.MethodVisitor
+import org.jetbrains.org.objectweb.asm.Opcodes
+import org.jetbrains.org.objectweb.asm.Type
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.nio.ByteBuffer
-import java.util.*
+import java.util.LinkedList
 
 internal interface ServiceProxyInstrumentation {
   fun setForwarding(forwardTo: Lazy<Any>?)

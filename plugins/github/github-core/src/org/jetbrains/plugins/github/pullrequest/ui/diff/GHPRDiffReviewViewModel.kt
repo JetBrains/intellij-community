@@ -110,7 +110,7 @@ internal class GHPRDiffReviewViewModelImpl(
       GHPRNewCommentDiffViewModelImpl(it.position, it)
     }
   override val newComments: StateFlow<Collection<GHPRNewCommentDiffViewModel>> =
-    newCommentsContainer.mappingState.mapState { it.values }
+    newCommentsContainer.mappedState
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override val aiComments: StateFlow<Collection<GHPRAICommentViewModel>> =

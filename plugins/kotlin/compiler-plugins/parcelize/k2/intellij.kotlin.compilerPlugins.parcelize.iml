@@ -31,7 +31,7 @@
     <orderEntry type="library" name="kotlinc.analysis-api-k2" level="project" />
     <orderEntry type="library" name="kotlinc.parcelize-compiler-plugin" level="project" />
     <orderEntry type="module" module-name="intellij.kotlin.base.util" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.common" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize.common" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.api" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="intellij.java.psi" />

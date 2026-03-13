@@ -39,6 +39,13 @@ class CommitSupportTest : GrazieTestBase() {
     checkCommitMessage("<TYPO descr=\"Typo: In word 'typopo'\">typopo</TYPO> [grazie]: june is here")
   }
 
+  fun `test mass apply is not available in commit messages`() {
+    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN))
+    configureCommit(myFixture, "This is <caret><GRAMMAR_ERROR descr=\"EN_A_VS_AN\">a</GRAMMAR_ERROR> error")
+    myFixture.checkHighlighting()
+    assertNull(myFixture.getAvailableIntention("Accept all writing suggestions…"))
+  }
+
   private fun checkCommitMessage(text: String) {
     configureCommit(myFixture, text)
     myFixture.checkHighlighting()

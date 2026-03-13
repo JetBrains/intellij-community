@@ -10,16 +10,16 @@ import kotlinx.serialization.json.JsonIgnoreUnknownKeys
 sealed class ServerConfig
 
 @Serializable
-class CursorSSEConfig(val url: String) : ServerConfig()
+class CursorNetworkConfig(val url: String, val type: String) : ServerConfig()
 
 @Serializable
-class WindsurfSSEConfig(val serverUrl: String) : ServerConfig()
+class WindsurfNetworkConfig(val serverUrl: String, val type: String) : ServerConfig()
 
 @Serializable
-class VSCodeSSEConfig(val url: String, val type: String) : ServerConfig()
+class VSCodeNetworkConfig(val url: String, val type: String) : ServerConfig()
 
 @Serializable
-class ClaudeCodeSSEConfig(val url: String, val type: String) : ServerConfig()
+class ClaudeCodeNetworkConfig(val url: String, val type: String) : ServerConfig()
 
 @Serializable
 class CodexStreamableHttpConfig(val url: String) : ServerConfig()

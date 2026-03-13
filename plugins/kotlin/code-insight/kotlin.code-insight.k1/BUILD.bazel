@@ -42,44 +42,99 @@ jvm_library(
 
 jvm_library(
   name = "kotlin-code-insight-k1_test_lib",
+  module_name = "kotlin.code-insight.k1",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  srcs = glob([], allow_empty = True),
   kotlinc_opts = ":custom_kotlin-code-insight-k1",
-  associates = [":kotlin-code-insight-k1"],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc-kotlin-compiler-common",
-    "//platform/code-style-api:codeStyle",
-    "//platform/core-api:core",
-    "//plugins/kotlin/base/fe10/analysis",
-    "//plugins/kotlin/base/code-insight",
+  runtime_deps = [
+    ":kotlin-code-insight-k1",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
     "//plugins/kotlin/base/code-insight:code-insight_test_lib",
-    "//platform/core-impl",
-    "//plugins/kotlin/idea",
-    "//plugins/kotlin/core",
-    "@lib//:kotlinc-kotlin-compiler-fe10",
-    "//java/java-psi-api:psi",
-    "//java/testFramework",
-    "@lib//:junit4",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//plugins/kotlin/test-framework:test-framework_test_lib",
-    "//plugins/kotlin/base/test:test_test_lib",
-    "//plugins/kotlin/base/plugin",
-    "//plugins/kotlin/base/plugin:plugin_test_lib",
-    "//plugins/kotlin/tests-common:common-tests_test_lib",
-    "//plugins/kotlin/plugin/k1",
-    "//platform/lang-impl",
-    "//plugins/kotlin/kotlin.ide",
+    "//platform/core-impl:core-impl_test_lib",
+    "//plugins/kotlin/idea:idea_test_lib",
+    "//plugins/kotlin/core:core_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//plugins/kotlin/kotlin.ide:kotlin.ide_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.code-insight.k1` end
 
-### auto-generated section `test kotlin.code-insight.k1` start
+### auto-generated section `build kotlin.code-insight.k1.tests` start
+create_kotlinc_options(
+  name = "custom_kotlin-code-insight-k1-tests",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
+
+jvm_library(
+  name = "kotlin-code-insight-k1-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "kotlin-code-insight-k1-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-code-insight-k1-tests",
+  associates = [
+    "//plugins/kotlin/code-insight/kotlin.code-insight.k1:kotlin-code-insight-k1",
+    "//plugins/kotlin/code-insight/kotlin.code-insight.k1:kotlin-code-insight-k1_test_lib",
+  ],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/code-style-api:codeStyle",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
+    "//plugins/kotlin/idea",
+    "//plugins/kotlin/idea:idea_test_lib",
+    "//plugins/kotlin/core",
+    "//plugins/kotlin/core:core_test_lib",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-api:psi_test_lib",
+    "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "@lib//:junit4",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/test-framework",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//plugins/kotlin/base/test",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/tests-common:common-tests",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/kotlin/plugin/k1",
+    "//plugins/kotlin/plugin/k1:k1_test_lib",
+    "//platform/lang-impl",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//plugins/kotlin/kotlin.ide",
+    "//plugins/kotlin/kotlin.ide:kotlin.ide_test_lib",
+  ],
+  runtime_deps = [":kotlin-code-insight-k1-tests"]
+)
+### auto-generated section `build kotlin.code-insight.k1.tests` end
+
+### auto-generated section `test kotlin.code-insight.k1.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "kotlin-code-insight-k1_test",
-  runtime_deps = [":kotlin-code-insight-k1_test_lib"]
+  name = "kotlin-code-insight-k1-tests_test",
+  runtime_deps = [":kotlin-code-insight-k1-tests_test_lib"]
 )
-### auto-generated section `test kotlin.code-insight.k1` end
+### auto-generated section `test kotlin.code-insight.k1.tests` end

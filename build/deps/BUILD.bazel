@@ -13,4 +13,16 @@ jvm_library(
     "//libraries/kotlinx/coroutines/core",
   ]
 )
+
+jvm_library(
+  name = "dependencies_test_lib",
+  module_name = "intellij.idea.community.build.dependencies",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":dependencies",
+    "//platform/build-scripts/downloader:downloader_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.idea.community.build.dependencies` end

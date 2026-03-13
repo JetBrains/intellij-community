@@ -1,8 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
+import com.intellij.codeowners.runtime.resolver.TestClassCodeOwnerResolverImpl
 import com.intellij.platform.testFramework.teamCity.generifyErrorMessage
 import com.intellij.platform.testFramework.teamCity.reportTestFailure
+
+private val codeOwnerResolver: TestClassCodeOwnerResolverImpl? by lazy {
+  try {
+    TestClassCodeOwnerResolverImpl()
+  }
+  catch (_: Exception) {
+    null
+  }
+}
 
 internal fun ErrorLog.reportAsFailures() {
   val errors = takeLoggedErrors()
@@ -20,6 +30,7 @@ internal fun ErrorLog.reportAsFailures() {
 private fun logAsTeamcityTestFailure(error: LoggedError) {
   val message = findMessage(error)
   val stackTraceContent = error.stackTraceToString()
+  val owner = TestLoggerFactory.getCurrentTestClass()?.let { codeOwnerResolver?.getOwnerGroupName(it) }
   val testName = if (message == null) {
     "Error logged without message"
   } else {
@@ -27,7 +38,7 @@ private fun logAsTeamcityTestFailure(error: LoggedError) {
       .replace("[:.()]".toRegex(), " ")
       .replace(" +".toRegex(), " ")
   }
-  System.out.reportTestFailure(testName, message ?: "", stackTraceContent)
+  System.out.reportTestFailure(testName, message ?: "", stackTraceContent, owner)
 }
 
 private fun findMessage(t: Throwable): String? {

@@ -8,7 +8,9 @@ from types import FrameType
 
 from gunicorn.config import Config
 from gunicorn.glogging import Logger as GLogger
-from gunicorn.http import RequestParser
+from gunicorn.http import Request, RequestParser
+from gunicorn.http2.connection import HTTP2ServerConnection
+from gunicorn.uwsgi.parser import UWSGIParser
 
 from .._types import _AddressType
 from . import base
@@ -19,8 +21,9 @@ class TConn:
     client: _AddressType
     server: _AddressType
     timeout: float | None
-    parser: RequestParser | None
+    parser: HTTP2ServerConnection | UWSGIParser | RequestParser | None
     initialized: bool
+    is_http2: bool
 
     def __init__(self, cfg: Config, sock: socket.socket, client: _AddressType, server: _AddressType) -> None: ...
     def init(self) -> None: ...
@@ -64,4 +67,6 @@ class ThreadWorker(base.Worker):
     def run(self) -> None: ...
     def finish_request(self, conn: TConn, fs: Future[bool]) -> None: ...
     def handle(self, conn: TConn) -> bool: ...
-    def handle_request(self, req: RequestParser, conn: TConn) -> bool: ...
+    def handle_http2(self, conn: TConn) -> bool: ...
+    def handle_http2_request(self, req: Request, conn: TConn, h2_conn: HTTP2ServerConnection) -> None: ...
+    def handle_request(self, req: Request, conn: TConn) -> bool: ...

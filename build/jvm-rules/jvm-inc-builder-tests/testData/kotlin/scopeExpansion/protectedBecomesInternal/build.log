@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_scopeExpansion_protectedBecomesInternal-a.kotlin_module
+  test/A.class
+End of files
+Compiling files:
+  kotlin/scopeExpansion/protectedBecomesInternal/a/a.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_scopeExpansion_protectedBecomesInternal-a.kotlin_module
+  usage/B.class
+End of files
+Compiling files:
+  kotlin/scopeExpansion/protectedBecomesInternal/a/b.kt
+End of files
+------------------------------------------
+Exit code: OK

@@ -11,7 +11,13 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsLibraryReference
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference
 import org.jetbrains.jps.model.library.sdk.JpsSdkType
-import org.jetbrains.jps.model.module.*
+import org.jetbrains.jps.model.module.JpsDependencyElement
+import org.jetbrains.jps.model.module.JpsLibraryDependency
+import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsModuleDependency
+import org.jetbrains.jps.model.module.JpsModuleReference
+import org.jetbrains.jps.model.module.JpsModuleSourceDependency
+import org.jetbrains.jps.model.module.JpsSdkDependency
 
 internal sealed class JpsDependencyElementBridge(parentElement: JpsDependenciesListBridge) 
   : JpsCompositeElementBase<JpsDependencyElementBridge>(), JpsDependencyElement {

@@ -23,4 +23,20 @@ jvm_library(
   ],
   runtime_deps = ["//platform/backend"]
 )
+
+jvm_library(
+  name = "vcs_test_lib",
+  module_name = "intellij.performanceTesting.vcs",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":vcs",
+    "//platform/diff-api:diff_test_lib",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/vcs-api:vcs_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/backend:backend_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.performanceTesting.vcs` end

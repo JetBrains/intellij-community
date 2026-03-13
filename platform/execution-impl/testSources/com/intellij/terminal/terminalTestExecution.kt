@@ -1,7 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal
 
-import com.intellij.execution.process.*
+import com.intellij.execution.process.KillableProcessHandler
+import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.process.ProcessListener
+import com.intellij.execution.process.ProcessTerminatedListener
+import com.intellij.execution.process.PtyBasedProcess
+import com.intellij.execution.process.SelfKiller
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.eel.EelExecApi.Pty
 import com.intellij.platform.eel.ExecuteProcessException
@@ -12,11 +18,11 @@ import com.intellij.util.io.BaseOutputReader
 import com.jediterm.core.util.TermSize
 import com.pty4j.windows.conpty.WinConPtyProcess
 import kotlinx.coroutines.CompletableDeferred
-import org.junit.jupiter.api.Assumptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions
+import org.junit.jupiter.api.Assumptions
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.CompletableFuture

@@ -24,9 +24,19 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.AWTEvent;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
@@ -36,11 +46,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-import static com.intellij.ui.render.RenderersKt.fontInfoRenderer;
-
 public abstract class AbstractFontOptionsPanel extends JPanel implements OptionsPanel {
-
-  private static final ListCellRenderer<Object> DEFAULT_FONT_COMBO_RENDERER = fontInfoRenderer(true);
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
@@ -214,15 +220,13 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
 
   protected AbstractFontCombo<?> createPrimaryFontCombo() {
     FontComboBox primaryCombo = new FontComboBox();
-    //noinspection unchecked
-    primaryCombo.setRenderer(DEFAULT_FONT_COMBO_RENDERER);
+    primaryCombo.setupDefaultRenderer(true, false);
     return primaryCombo;
   }
 
   protected AbstractFontCombo<?> createSecondaryFontCombo() {
-     FontComboBox secondaryCombo = new FontComboBox(false, false, true);
-    //noinspection unchecked
-    secondaryCombo.setRenderer(DEFAULT_FONT_COMBO_RENDERER);
+    FontComboBox secondaryCombo = new FontComboBox(false, false, true);
+    secondaryCombo.setupDefaultRenderer(true, false);
     return secondaryCombo;
   }
 

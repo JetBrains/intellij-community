@@ -2,6 +2,11 @@
 package com.jetbrains.python.sdk;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.TypeAdapter;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
+import com.google.gson.stream.JsonWriter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
@@ -23,6 +28,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -60,7 +66,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   private String myAssociatedModulePath;
   private Path myRequiredTxtPath;
 
-  private final Gson myGson = new Gson();
+  private final Gson myGson = new GsonBuilder().registerTypeAdapter(Path.class, new PathSerializer()).create();
 
 
   public PythonSdkAdditionalData() {
@@ -100,14 +106,6 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     myRequiredTxtPath = from.myRequiredTxtPath;
     myFlavorAndData = from.myFlavorAndData;
     myUUID = from.myUUID;
-  }
-
-  /**
-   * Temporary hack to deal with leagcy conda. Use constructor instead
-   */
-  @ApiStatus.Internal
-  public final void changeFlavorAndData(@NotNull PyFlavorAndData<?, ?> flavorAndData) {
-    this.myFlavorAndData = flavorAndData;
   }
 
   /**
@@ -295,5 +293,27 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     Set<VirtualFile> ret = new LinkedHashSet<>();
     Collections.addAll(ret, paths.getFiles());
     return ret;
+  }
+
+  private static class PathSerializer extends TypeAdapter<@Nullable Path> {
+    @Override
+    public void write(JsonWriter out, @Nullable Path value) throws IOException {
+      if (value == null) {
+        out.nullValue();
+      }
+      else {
+        out.value(value.toString());
+      }
+    }
+
+    @Override
+    public @Nullable Path read(JsonReader in) throws IOException {
+      if (in.peek() == JsonToken.NULL) {
+        in.nextNull();
+        return null;
+      }
+
+      return Path.of(in.nextString());
+    }
   }
 }

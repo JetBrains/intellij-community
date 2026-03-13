@@ -9,7 +9,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
@@ -33,10 +32,15 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.impl.util.DisposableUtilKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public abstract class DfaAssistBase implements Disposable {
 
@@ -99,7 +103,7 @@ public abstract class DfaAssistBase implements Disposable {
 
   protected void cleanUp() {
     UIUtil.invokeLaterIfNeeded(() -> {
-      ReadAction.run(() -> Disposer.dispose(myMarkup));
+      ReadAction.runBlocking(() -> Disposer.dispose(myMarkup));
     });
   }
 
@@ -114,7 +118,7 @@ public abstract class DfaAssistBase implements Disposable {
         editor.getDocument().addDocumentListener(new DocumentListener() {
           @Override
           public void beforeDocumentChange(@NotNull DocumentEvent event) {
-            ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(DfaAssistMarkup.this));
+            DisposableUtilKt.disposeInEdt(DfaAssistMarkup.this);
           }
         }, this);
       }

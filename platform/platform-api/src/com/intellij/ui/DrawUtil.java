@@ -6,7 +6,9 @@ import com.intellij.ide.RemoteDesktopService;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.paint.LinePainter2D;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 
 public final class DrawUtil {
   private DrawUtil() {

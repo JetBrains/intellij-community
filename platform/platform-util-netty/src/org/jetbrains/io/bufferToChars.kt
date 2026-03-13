@@ -6,7 +6,6 @@ import io.netty.buffer.ByteBufUtil
 import io.netty.util.CharsetUtil
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
-import java.nio.charset.CharacterCodingException
 import java.nio.charset.CharsetDecoder
 
 fun ByteBuf.readIntoCharBuffer(byteCount: Int = readableBytes(), charBuffer: CharBuffer) {

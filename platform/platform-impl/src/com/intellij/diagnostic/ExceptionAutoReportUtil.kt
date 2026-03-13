@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.PluginUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
@@ -34,8 +35,24 @@ object ExceptionAutoReportUtil {
   val isAutoReportEnabled: Boolean
     get() {
       if (!isAutoReportVisible) return false
+      if (AppMode.isRunningFromDevBuild() || PluginManagerCore.isRunningFromSources()) return false
+      return isAutoReportAllowedByUser()
+    }
+
+  private fun isAutoReportAllowedByUser(): Boolean {
+    if (ConsentOptions.getInstance().isEAP && ExceptionEAPAutoReportManager.getInstance().enabledInEAP) return true
+    val (consent, needsReconfirm) = getConsentAndNeedsReconfirm()
+    return consent?.isAccepted == true && !needsReconfirm
+  }
+
+  @JvmStatic
+  val isAutoReportEnabledOrUndecided: Boolean
+    get() {
+      if (!isAutoReportVisible) return false
+      if (AppMode.isRunningFromDevBuild() || PluginManagerCore.isRunningFromSources()) return false
+      if (ConsentOptions.getInstance().isEAP && ExceptionEAPAutoReportManager.getInstance().enabledInEAP) return true
       val (consent, needsReconfirm) = getConsentAndNeedsReconfirm()
-      return consent?.isAccepted == true && !needsReconfirm
+      return consent?.isAccepted == true || needsReconfirm
     }
 
   private fun getConsentAndNeedsReconfirm(): Pair<Consent?, Boolean> {
@@ -47,7 +64,8 @@ object ExceptionAutoReportUtil {
   }
 
   fun shouldOfferEnablingAutoReport(): Boolean {
-    if (!isAutoReportVisible) return false
+    if (!isAutoReportVisible || ConsentOptions.getInstance().isEAP) return false
+    if (AppMode.isRunningFromDevBuild() || PluginManagerCore.isRunningFromSources()) return false
     val (consent, needsReconfirm) = getConsentAndNeedsReconfirm()
     if (consent == null) return false
     // the feature is already enabled
@@ -89,7 +107,10 @@ object ExceptionAutoReportUtil {
   }
 
   private fun isDefaultSubmitter(submitter: ITNReporter): Boolean {
-    return submitter.javaClass == ITNReporter::class.java
+    val cls = submitter.javaClass
+    return cls == ITNReporter::class.java
+           || cls.name == $$"com.intellij.rustrover.RustRoverMessagePoolAutoReporter$MyITNReporter"
+           && ApplicationManager.getApplication().isEAP
   }
 }
 

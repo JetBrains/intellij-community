@@ -1,10 +1,16 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.completion.impl.TopPriorityLookupElement;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.Classifier;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupArranger;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupEx;
+import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.lookup.impl.EmptyLookupItem;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,7 +40,18 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import static com.intellij.codeInsight.util.CodeCompletionKt.CodeCompletion;
@@ -79,11 +96,16 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   @ApiStatus.Internal
   protected final MultiMap<CompletionSorterImpl, LookupElement> groupItemsBySorter(@NotNull Iterable<? extends LookupElement> source) {
     MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = MultiMap.createLinked();
+
     for (LookupElement element : source) {
-      inputBySorter.putValue(obtainSorter(element), element);
+      CompletionSorterImpl sorter = obtainSorter(element);
+      inputBySorter.putValue(sorter, element);
     }
+
     for (CompletionSorterImpl sorter : inputBySorter.keySet()) {
-      inputBySorter.put(sorter, sortByPresentation(inputBySorter.get(sorter)));
+      Collection<LookupElement> lookupElements = inputBySorter.get(sorter);
+      List<LookupElement> sortedByPresentation = sortByPresentation(lookupElements);
+      inputBySorter.put(sorter, sortedByPresentation);
     }
 
     return inputBySorter;
@@ -105,7 +127,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
       Collection<LookupElement> thisSorterItems = inputBySorter.get(sorter);
       for (LookupElement element : thisSorterItems) {
         map.put(element, new SmartList<>(new Pair<>("frozen", myFrozenItems.contains(element)),
-                                                    new Pair<>("sorter", sorterNumber)));
+                                         new Pair<>("sorter", sorterNumber)));
       }
       ProcessingContext context = createContext();
       Classifier<LookupElement> classifier = myClassifiers.get(sorter);
@@ -192,7 +214,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
         }
         super.addElement(element, presentation);
       }
-      trimToLimit(context);
+      trimToHalfLimit(context);
     }
   }
 
@@ -203,11 +225,13 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   public void batchUpdate(@NotNull Runnable runnable) {
     if (Boolean.TRUE.equals(isInBatchUpdate.get())) {
       runnable.run();
-    } else {
+    }
+    else {
       isInBatchUpdate.set(true);
       try {
         runnable.run();
-      } finally {
+      }
+      finally {
         isInBatchUpdate.remove();
       }
       if (!batchItems.isEmpty()) {
@@ -218,12 +242,12 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
 
   private void flushBatch() {
     synchronized (this) {
-      for (Pair<LookupElement, LookupElementPresentation> pair: batchItems) {
+      for (Pair<LookupElement, LookupElementPresentation> pair : batchItems) {
         super.addElement(pair.first, pair.second);
       }
       batchItems.clear();
     }
-    trimToLimit(createContext());
+    trimToHalfLimit(createContext());
   }
 
   @Override
@@ -236,24 +260,31 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     myProcess.itemSelected(lookupItem, completionChar);
   }
 
-  private void trimToLimit(@NotNull ProcessingContext context) {
+  /**
+   * If the number of items exceeds the limit, trim the list to half the limit.
+   */
+  private void trimToHalfLimit(@NotNull ProcessingContext context) {
     List<LookupElement> removed;
     synchronized (this) {
       if (myItems.size() < myLimit) return;
-
-      List<LookupElement> items = getMatchingItems();
-      Iterator<LookupElement> iterator = sortByRelevance(groupItemsBySorter(items)).iterator();
 
       Set<LookupElement> retainedSet = new ReferenceOpenHashSet<>();
       retainedSet.addAll(getTopPriorityItems());
       retainedSet.addAll(getPrefixItems(true));
       retainedSet.addAll(getPrefixItems(false));
       retainedSet.addAll(myFrozenItems);
-      while (retainedSet.size() < myLimit / 2 && iterator.hasNext()) {
-        retainedSet.add(iterator.next());
-      }
 
-      if (!iterator.hasNext()) return;
+      int halfLimit = myLimit / 2;
+      if (retainedSet.size() < halfLimit) {
+        List<LookupElement> items = getMatchingItems();
+        Iterator<LookupElement> iterator = sortByRelevance(groupItemsBySorter(items)).iterator();
+
+        while (retainedSet.size() < halfLimit && iterator.hasNext()) {
+          retainedSet.add(iterator.next());
+        }
+
+        if (!iterator.hasNext()) return;
+      }
 
       removed = retainItems(retainedSet);
       if (!myOverflow) {
@@ -272,11 +303,11 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     }
   }
 
-  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "HardCodedStringLiteral"})
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private void printTestWarning() {
     System.err.println("Your test might miss some lookup items, because only " + (myLimit / 2) + " most relevant items are guaranteed to be shown in the lookup. You can:");
     System.err.println("1. Make the prefix used for completion longer, so that there are less suggestions.");
-    System.err.println("2. Increase 'ide.completion.variant.limit' (using RegistryValue#setValue with a test root disposable).");
+    System.err.println("2. Increase 'ide.completion.variant.limit' (using `Registry.get(\"ide.completion.variant.limit\").setValue(10000, getTestRootDisposable())`).");
     System.err.println("3. Ignore this warning.");
   }
 
@@ -370,7 +401,8 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
           .filter(item -> !isCustomElements(item));
       }
 
-      Iterable<? extends LookupElement> sortedByRelevance = sortByRelevance(groupItemsBySorter(filteredIterableItems));
+      MultiMap<CompletionSorterImpl, LookupElement> sortedGroups = groupItemsBySorter(filteredIterableItems);
+      Iterable<? extends LookupElement> sortedByRelevance = sortByRelevance(sortedGroups);
 
       sortedByRelevance = applyFinalSorter(sortedByRelevance);
 
@@ -478,7 +510,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   @ApiStatus.Internal
   @Override
   final protected boolean isTopPriorityItem(@Nullable LookupElement item) {
-    return item != null && Boolean.TRUE.equals(item.getUserData(TopPriorityLookupElement.TOP_PRIORITY_ITEM));
+    return item != null && TopPriorityLookupElement.isTopPriorityItem(item);
   }
 
   /**
@@ -486,7 +518,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
    */
   private boolean isNeverAutoselectedTopPriorityItem(@Nullable LookupElement item) {
     if (item == null || !isTopPriorityItem(item)) return false;
-    return Boolean.TRUE.equals(item.getUserData(TopPriorityLookupElement.NEVER_AUTOSELECT_TOP_PRIORITY_ITEM));
+    return TopPriorityLookupElement.isNeverAutoselectTopPriorityItem(item);
   }
 
   private void freezeTopItems(@NotNull LookupElementListPresenter lookup, @NotNull LinkedHashSet<? extends LookupElement> model) {
@@ -517,7 +549,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
                                              @NotNull LinkedHashSet<? super LookupElement> model) {
     if (!lookup.isSelectionTouched()) {
       LookupElement lastSelection = lookup.getCurrentItem();
-      if (items.contains(lastSelection) && lastSelection!=null && !isCustomElements(lastSelection)) {
+      if (items.contains(lastSelection) && lastSelection != null && !isCustomElements(lastSelection)) {
         model.add(lastSelection);
       }
     }

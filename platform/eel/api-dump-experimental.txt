@@ -296,6 +296,7 @@ f:com.intellij.platform.eel.EelProxyKtHelpersKt
 - *sf:eelProxy():com.intellij.platform.eel.eelProxyKtHelpers$EelProxy
 *:com.intellij.platform.eel.EelTunnelsApi
 - *a:getConnectionToRemotePort(com.intellij.platform.eel.EelTunnelsApi$GetConnectionToRemotePortArgs,kotlin.coroutines.Continuation):java.lang.Object
+- a:getDescriptor():com.intellij.platform.eel.EelDescriptor
 - *a:listenOnUnixSocket(com.intellij.platform.eel.EelTunnelsApi$ListenOnUnixSocketTemporaryPathOptions,kotlin.coroutines.Continuation):java.lang.Object
 - *a:listenOnUnixSocket(com.intellij.platform.eel.path.EelPath,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.eel.EelTunnelsApi$Connection
@@ -390,6 +391,9 @@ f:com.intellij.platform.eel.EelTunnelsApiKt
 - com.intellij.platform.eel.EelTunnelsApi
 *:com.intellij.platform.eel.EelTunnelsWindowsApi
 - com.intellij.platform.eel.EelTunnelsApi
+*f:com.intellij.platform.eel.EelUnavailableException
+- java.io.IOException
+- getMessage():java.lang.String
 *:com.intellij.platform.eel.EelUserInfo
 - a:getHome():com.intellij.platform.eel.path.EelPath
 *:com.intellij.platform.eel.EelUserPosixInfo

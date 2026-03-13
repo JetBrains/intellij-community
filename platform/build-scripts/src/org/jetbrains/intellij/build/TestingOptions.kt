@@ -5,7 +5,7 @@ import com.intellij.TestCaseLoader
 import com.intellij.util.SystemProperties
 import com.intellij.util.text.nullize
 import org.jetbrains.intellij.build.TestingOptions.Companion.ALL_EXCLUDE_DEFINED_GROUP
-import org.jetbrains.intellij.build.TestingOptions.Companion.BOOTSTRAP_SUITE_DEFAULT
+import org.jetbrains.intellij.build.impl.JUnitRunConfigurationProperties
 
 private val OLD_TEST_GROUP = System.getProperty("idea.test.group", TestingOptions.ALL_EXCLUDE_DEFINED_GROUP)
 private val OLD_TEST_PATTERNS = System.getProperty("idea.test.patterns")
@@ -24,7 +24,6 @@ private val OLD_MAIN_MODULE = System.getProperty("module.to.make")
 open class TestingOptions {
   companion object {
     const val ALL_EXCLUDE_DEFINED_GROUP: String = "ALL_EXCLUDE_DEFINED"
-    const val BOOTSTRAP_SUITE_DEFAULT: String = "com.intellij.tests.BootstrapTests"
     const val PERFORMANCE_TESTS_ONLY_FLAG: String = "idea.performance.tests"
     const val TEST_JRE_PROPERTY: String = "intellij.build.test.jre"
     const val REDIRECT_STDOUT_TO_FILE: String = "intellij.build.test.redirectStdoutToFile"
@@ -44,6 +43,13 @@ open class TestingOptions {
    * [testGroups] will be ignored.
    */
   var testPatterns: String? = System.getProperty("intellij.build.test.patterns").nullize(nullizeSpaces = true) ?: OLD_TEST_PATTERNS
+
+  /**
+   * Semicolon-separated JUnit 5 tag expressions to include; only tests tagged with at least one of these are executed.
+   * Supports JUnit Platform tag expressions (e.g. `"slow"`, `"slow;integration"`).
+   * If not specified, no tag filtering is applied.
+   */
+  var testTags: String? = System.getProperty("intellij.build.test.tags").nullize(nullizeSpaces = true)
 
   /**
    * Semicolon-separated names of JUnit run configurations in the project which need to be executed. If this option is specified,
@@ -82,7 +88,9 @@ open class TestingOptions {
   var jvmMemoryOptions: String? = System.getProperty("intellij.build.test.jvm.memory.options", OLD_JVM_MEMORY_OPTIONS)
 
   /**
-   * Specifies a module which classpath will be used to search the test classes.
+   * Specifies a module which classpath will be used to search the test classes by default.
+   *
+   * If [searchScope] is set to `singleModule`, only tests from the main module are searched.
    */
   var mainModule: String? = System.getProperty("intellij.build.test.main.module").nullize(nullizeSpaces = true) ?: OLD_MAIN_MODULE
 
@@ -90,11 +98,6 @@ open class TestingOptions {
    * Abort tests execution if [mainModule] does not match the module specified in the Run Configuration from [testConfigurations].
    */
   var validateMainModule: Boolean = System.getProperty("intellij.build.test.main.module.validate")?.toBooleanStrict() ?: false
-
-  /**
-   * Specifies a custom test suite, [BOOTSTRAP_SUITE_DEFAULT] is using by default.
-   */
-  var bootstrapSuite: String = System.getProperty("intellij.build.test.bootstrap.suite", BOOTSTRAP_SUITE_DEFAULT)
 
   /**
    * Specifies path to runtime which will be used to run tests.
@@ -177,6 +180,11 @@ open class TestingOptions {
   var attemptCount: Int = System.getProperty("intellij.build.test.attempt.count")?.toInt() ?: 1
 
   /**
+   * Number of full test runs. Each run executes all selected tests from scratch.
+   */
+  var repeatCount: Int = System.getProperty("intellij.build.test.repeat.count")?.toInt() ?: 1
+
+  /**
    * @see [com.intellij.TestCaseLoader.matchesCurrentBucket]
    */
   var bucketsCount: Int = System.getProperty(TestCaseLoader.TEST_RUNNERS_COUNT_FLAG)?.toInt() ?: 1
@@ -197,6 +205,15 @@ open class TestingOptions {
 
   /** Skip running (and collection) of JUnit3/4 tests */
   val shouldSkipJUnit34Tests: Boolean = SystemProperties.getBooleanProperty("intellij.build.test.skip.tests.junit34", false)
+
+  /**
+   * Test search scope, for local runs only.
+   * Allowed values:
+   * - singleModule
+   * - moduleWithDependencies
+   * By default, tests are searched across module dependencies.
+   */
+  val searchScope: String = System.getProperty("intellij.build.test.search.scope", JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized)
 
   /**
    * If `true` then a test process's stdout is redirected to a file,

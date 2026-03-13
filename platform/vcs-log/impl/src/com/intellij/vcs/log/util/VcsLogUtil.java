@@ -395,12 +395,18 @@ public final class VcsLogUtil {
     return ContainerUtil.newHashSet(projectRoots).containsAll(roots);
   }
 
-  public static void invokeOnChange(@NotNull VcsLogUi ui, @NotNull Runnable runnable) {
-    invokeOnChange(ui, runnable, Conditions.alwaysTrue());
+  /**
+   * Invokes the given runnable once when the data pack is updated
+   */
+  public static void invokeOnceOnDataChange(@NotNull VcsLogUi ui, @NotNull Runnable runnable) {
+    invokeOnceOnDataChange(ui, runnable, Conditions.alwaysTrue());
   }
 
-  public static void invokeOnChange(@NotNull VcsLogUi ui, @NotNull Runnable runnable,
-                                    @NotNull Condition<? super VcsLogDataPack> condition) {
+  /**
+   * Invokes the given runnable once when the data pack is updated if the given condition is met
+   */
+  public static void invokeOnceOnDataChange(@NotNull VcsLogUi ui, @NotNull Runnable runnable,
+                                            @NotNull Condition<? super VcsLogDataPack> condition) {
     ui.addLogListener(new VcsLogListener() {
       @Override
       public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
@@ -432,12 +438,11 @@ public final class VcsLogUtil {
    * Requests to load more filtered commits.
    *
    * @param ui       target {@link VcsLogUiEx} instance.
-   * @param onLoaded will be called upon task completion on the EDT.
    * @see VcsLogUtil#canRequestMore(VisiblePack)
    */
-  public static void requestToLoadMore(@NotNull VcsLogUiEx ui, @NotNull Runnable onLoaded) {
+  public static void requestToLoadMore(@NotNull VcsLogUiEx ui) {
     MORE_REQUESTED.set(ui.getDataPack(), true);
-    ui.getRefresher().moreCommitsNeeded(onLoaded);
+    ui.getRefresher().moreCommitsNeeded();
   }
 
   /**

@@ -23,4 +23,20 @@ jvm_library(
     "//libraries/junit4",
   ]
 )
+
+jvm_library(
+  name = "testcontainers_test_lib",
+  module_name = "intellij.libraries.testcontainers",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "@lib//:testcontainers",
+    "@lib//:testcontainers-junit-jupiter",
+  ],
+  runtime_deps = [
+    ":testcontainers",
+    "//libraries/junit5:junit5_test_lib",
+    "//libraries/junit4:junit4_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.libraries.testcontainers` end

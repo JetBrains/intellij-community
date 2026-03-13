@@ -1,0 +1,9 @@
+{
+  "mainFile": "A/src/a/test.kt",
+  "type": "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS",
+  "targetPackage": "b",
+  "targetSourceRoot": "B/src",
+  "withRuntime": "true",
+  "enabledInK1": "false",
+  "enabledInK2": "true"
+}

@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.libraries.jackson.annotations` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "annotations_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "annotations",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":annotations_resources"],
+  exports = ["@lib//:libraries-jackson-annotations-jackson-annotations"],
+  runtime_deps = ["@lib//:libraries-jackson-annotations-jackson-annotations"]
+)
+
+jvm_library(
+  name = "annotations_test_lib",
+  module_name = "intellij.libraries.jackson.annotations",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-jackson-annotations-jackson-annotations"],
+  runtime_deps = [":annotations"]
+)
+### auto-generated section `build intellij.libraries.jackson.annotations` end

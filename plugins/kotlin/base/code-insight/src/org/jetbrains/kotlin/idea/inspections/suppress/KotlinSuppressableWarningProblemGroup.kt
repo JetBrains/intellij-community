@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class KotlinSuppressableWarningProblemGroup(private val factoryName: String) : SuppressableProblemGroup {
-    override fun getProblemName() = factoryName
+    override fun getProblemName(): String = factoryName
 
     override fun getSuppressActions(element: PsiElement?): Array<SuppressIntentionAction> {
         return if (element != null) {
@@ -52,21 +52,29 @@ fun createSuppressWarningActions(element: PsiElement, severity: Severity, suppre
             current is KtDeclaration && current !is KtDestructuringDeclaration -> {
                 val declaration = current
                 val kind = DeclarationKindDetector.detect(declaration)
-                if (kind != null ) {
+                if (kind != null) {
                     actions.add(KotlinSuppressIntentionAction(declaration, suppressionKey, kind))
                 }
                 suppressAtStatementAllowed = false
             }
 
             current is KtExpression && suppressAtStatementAllowed -> {
-                // Add suppress action at first statement
-                if (current.parent is KtBlockExpression || current.parent is KtDestructuringDeclaration) {
-                    val kind = if (current.parent is KtBlockExpression)
-                        KotlinBaseCodeInsightBundle.message("declaration.kind.statement")
-                    else
-                        KotlinBaseCodeInsightBundle.message("declaration.kind.initializer")
+                val hostKind = when {
+                    current.parent is KtBlockExpression -> AnnotationHostKind(
+                        KotlinBaseCodeInsightBundle.message("declaration.kind.statement"), null, true
+                    )
 
-                    val hostKind = AnnotationHostKind(kind, null, true)
+                    current.parent is KtDestructuringDeclaration -> AnnotationHostKind(
+                        KotlinBaseCodeInsightBundle.message("declaration.kind.initializer"), null, true
+                    )
+
+                    current.parent is KtNamedFunction && (current.parent as KtNamedFunction).bodyExpression == current -> AnnotationHostKind(
+                        KotlinBaseCodeInsightBundle.message("declaration.kind.statement"), null, true
+                    )
+
+                    else -> null
+                }
+                if (hostKind != null) {
                     actions.add(KotlinSuppressIntentionAction(current, suppressionKey, hostKind))
                     suppressAtStatementAllowed = false
                 }
@@ -151,6 +159,7 @@ private object DeclarationKindDetector : KtVisitor<AnnotationHostKind?, Unit?>()
                 )
                 AnnotationHostKind(kind, name, newLineNeeded = true)
             }
+
             d.parent is KtObjectLiteralExpression -> null
             else -> {
                 val kind = KotlinBaseCodeInsightBundle.message("declaration.kind.object")

@@ -19,4 +19,17 @@ jvm_library(
     "//libraries/junit5-launcher",
   ]
 )
+
+jvm_library(
+  name = "junit5-vintage_test_lib",
+  module_name = "intellij.libraries.junit5.vintage",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:junit5Vintage"],
+  runtime_deps = [
+    ":junit5-vintage",
+    "//libraries/junit4:junit4_test_lib",
+    "//libraries/junit5-launcher:junit5-launcher_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.libraries.junit5.vintage` end

@@ -24,4 +24,23 @@ jvm_library(
     "//java/java-impl:impl",
   ]
 )
+
+jvm_library(
+  name = "util-compiler-classpath_test_lib",
+  module_name = "kotlin.util.compiler-classpath",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":util-compiler-classpath",
+    "//libraries/asm:asm_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/lz4:lz4_test_lib",
+    "//java/java-psi-impl:psi-impl_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/external-system-api:externalSystem_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//java/java-impl:impl_test_lib",
+  ]
+)
 ### auto-generated section `build kotlin.util.compiler-classpath` end

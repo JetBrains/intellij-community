@@ -71,11 +71,6 @@ class TargetGradleConnector(environmentConfigurationProvider: TargetEnvironmentC
     return this
   }
 
-  fun useClasspathDistribution(): GradleConnector {
-    distribution = TargetGradleDistribution(distributionFactory.classpathDistribution)
-    return this
-  }
-
   override fun useBuildDistribution(): GradleConnector {
     distribution = null
     return this

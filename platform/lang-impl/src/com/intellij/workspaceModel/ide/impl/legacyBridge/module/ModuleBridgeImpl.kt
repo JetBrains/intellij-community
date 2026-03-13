@@ -57,7 +57,7 @@ open class ModuleBridgeImpl(
   override fun canStoreSettings(): Boolean = imlFilePointer != null && componentStore !is NonPersistentStore
 
   override fun rename(newName: String, newModuleFileUrl: VirtualFileUrl?, notifyStorage: Boolean) {
-    imlFilePointer = newModuleFileUrl as VirtualFileUrlBridge
+    imlFilePointer = newModuleFileUrl as? VirtualFileUrlBridge
     rename(newName, notifyStorage)
   }
 

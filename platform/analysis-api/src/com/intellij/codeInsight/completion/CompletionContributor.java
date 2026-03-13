@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.LanguageExtensionWithAny;
+import com.intellij.modcompletion.ModCompletionItemFilter;
 import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
@@ -20,15 +21,18 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Consumer;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * <b>Completion FAQ</b><p>
@@ -225,24 +229,37 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
   }
 
   public static @NotNull List<CompletionContributor> forParameters(@NotNull CompletionParameters parameters) {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       PsiElement position = parameters.getPosition();
-      return forLanguageHonorDumbness(PsiUtilCore.getLanguageAtOffset(position.getContainingFile(), parameters.getOffset()),
-                                      position.getProject());
+      Language language = PsiUtilCore.getLanguageAtOffset(position.getContainingFile(), parameters.getOffset());
+      return forLanguageHonorDumbness(language, position.getProject());
     });
   }
 
+  @ApiStatus.Internal
   public static @NotNull List<CompletionContributor> forLanguage(@NotNull Language language) {
-    List<CompletionContributor> contributors = INSTANCE.forKey(language);
-    if (ModCompletionItemProvider.modCommandCompletionEnabled()) {
-      contributors =
-        ContainerUtil.concat(ContainerUtil.map(ModCompletionItemProvider.forLanguage(language), CompletionItemContributor::new), contributors);
+    boolean isRDFrontend = NewRdCompletionSupport.isFrontendRdCompletionOn() && PlatformUtils.isJetBrainsClient();
+
+    List<CompletionContributor> contributors;
+    if (isRDFrontend) {
+      contributors = ContainerUtil.filter(INSTANCE.forKey(language), c -> c instanceof FrontendCompletionContributor);
     }
-    return contributors;
+    else {
+      contributors = INSTANCE.forKey(language);
+    }
+
+    List<ModCompletionItemFilter> filters = ModCompletionItemFilter.EP_NAME.allForLanguage(language);
+    return Stream.concat(
+      ModCompletionItemProvider.forLanguage(language).stream()
+        .filter(ModCompletionItemProvider::isEnabled)
+        .map(provider -> new CompletionItemContributor(provider, ContainerUtil.filter(filters, f -> f.isApplicableFor(provider)))),
+      contributors.stream()).toList();
   }
 
+  @ApiStatus.Internal
   public static @NotNull List<CompletionContributor> forLanguageHonorDumbness(@NotNull Language language, @NotNull Project project) {
-    return DumbService.getInstance(project).filterByDumbAwareness(forLanguage(language));
+    List<CompletionContributor> contributors = forLanguage(language);
+    return DumbService.getInstance(project).filterByDumbAwareness(contributors);
   }
 
   private static final LanguageExtension<CompletionContributor> INSTANCE = new LanguageExtensionWithAny<>(EP.getName());

@@ -3,11 +3,12 @@ package com.intellij.ide;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.ClientProperty;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.awt.event.MouseEvent;
 import java.util.function.Supplier;
 
@@ -20,7 +21,8 @@ public final class HelpTooltipManager extends HelpTooltip {
   }
 
   public void showTooltip(@NotNull JComponent component, @NotNull MouseEvent event) {
-    setTitle(component.getToolTipText(event));
+    String tooltipText = component.getToolTipText(event);
+    setTitle(tooltipText != null ? HtmlChunk.raw(tooltipText) : null);
     Supplier<String> shortcutSupplier = ClientProperty.get(component, SHORTCUT_PROPERTY);
     setShortcut(shortcutSupplier == null ? null : shortcutSupplier.get());
 

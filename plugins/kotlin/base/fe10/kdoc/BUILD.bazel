@@ -32,4 +32,25 @@ jvm_library(
     "//java/java-indexing-impl:indexing-impl",
   ]
 )
+
+jvm_library(
+  name = "kdoc_test_lib",
+  module_name = "kotlin.base.fe10.kdoc",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_kdoc",
+  runtime_deps = [
+    ":kdoc",
+    "//platform/core-api:core_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//plugins/kotlin/base/psi:psi_test_lib",
+    "//plugins/kotlin/base/indices:indices_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//platform/util:util_test_lib",
+    "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//java/java-indexing-impl:indexing-impl_test_lib",
+  ]
+)
 ### auto-generated section `build kotlin.base.fe10.kdoc` end

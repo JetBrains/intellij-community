@@ -6,9 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.NonExtendable
 interface GitWorkingTreeHolder {
-
   fun getWorkingTrees(): Collection<GitWorkingTree>
 
-  fun reload()
-
+  fun scheduleReload()
 }

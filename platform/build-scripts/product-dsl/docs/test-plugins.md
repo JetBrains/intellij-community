@@ -55,7 +55,7 @@ testPlugin(
 
 ## Allow Missing Plugin Dependencies
 
-If a DSL test plugin depends on a plugin that is not resolvable in the test plugin scope, the generator emits an error and skips the plugin dependency. To suppress this error for known/expected cases, list those plugin IDs in `allowedMissingPluginIds`.
+If a DSL test plugin depends on a plugin that is not resolvable in the test plugin scope, the dependency planner reports an error and skips the plugin dependency. To suppress this error for known/expected cases, list those plugin IDs in `allowedMissingPluginIds`.
 
 ```kotlin
 testPlugin(
@@ -81,7 +81,8 @@ testPlugin(
 }
 ```
 
-This only suppresses generator errors for unresolved plugin dependencies; it does not add the dependency.
+This only suppresses unresolvable dependency errors; it does not add the dependency.
+Test plugin allowlists are DSL-only; suppressions.json does not include test plugin allowlists.
 
 ## Test Plugin Detection
 
@@ -127,6 +128,8 @@ val isTestPlugin = content.isTestPlugin ||
 
 Created via `testPlugin {}` in `getProductContentDescriptor()`:
 - Plugin XML is **auto-generated** from Kotlin DSL
+- The generated file is fully owned by the DSL generator (`TestPluginXmlGenerator`): existing `plugin.xml`
+  content is replaced on regeneration, and dependency-updater region semantics do not apply
 - `isDslDefined = true` in `PluginContentInfo`
 - Auto-fixes (like structural violation fixes) are **skipped** - fix in Kotlin instead
 
@@ -163,6 +166,8 @@ When a test plugin's content modules have JPS module dependencies with descripto
 
 - **Resolvable** = available in the same product: module sets + bundled production plugin content + `additionalBundledPluginTargetNames` (target names; other test plugins excluded)
 - **Unresolvable** = not found anywhere
+
+For DSL test plugins, JPS dependency targets also support a test-descriptor fallback: if target `X` has no descriptor `X.xml` but has `X._test.xml`, auto-add treats the dependency as `X._test`.
 
 Only **unresolvable** modules are auto-added to the test plugin content.
 

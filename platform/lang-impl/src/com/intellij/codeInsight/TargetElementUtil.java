@@ -16,7 +16,11 @@ import com.intellij.openapi.editor.EditorCoreUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.BitUtil;
@@ -242,7 +246,8 @@ public class TargetElementUtil  {
   }
 
   public boolean acceptImplementationForReference(@Nullable PsiReference reference, @Nullable PsiElement element) {
-    TargetElementEvaluatorEx2 evaluator = element != null ? TargetElementUtilBase.getElementEvaluatorsEx2(ReadAction.compute(element::getLanguage)) : null;
+    var evaluator = element != null ?
+                    TargetElementUtilBase.getElementEvaluatorsEx2(ReadAction.computeBlocking(element::getLanguage)) : null;
     return evaluator == null || evaluator.acceptImplementationForReference(reference, element);
   }
 

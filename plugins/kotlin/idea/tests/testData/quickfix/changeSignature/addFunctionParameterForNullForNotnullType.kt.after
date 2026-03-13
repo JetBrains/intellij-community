@@ -1,4 +1,6 @@
 // "Add 1st parameter to function 'foo'" "true"
+// K2_ERROR: Null cannot be a value of a non-null type 'String'.
+// K2_ERROR: Too many arguments for 'fun foo(s: String): Unit'.
 
 fun foo(s1: Nothing?, s: String) = Unit
 fun test() {

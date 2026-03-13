@@ -49,4 +49,35 @@ jvm_library(
     "//java/java-indexing-impl:indexing-impl",
   ]
 )
+
+jvm_library(
+  name = "kotlin-code-insight-structural-search-k1_test_lib",
+  module_name = "kotlin.code-insight.structural-search.k1",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-code-insight-structural-search-k1",
+  runtime_deps = [
+    ":kotlin-code-insight-structural-search-k1",
+    "//libraries/guava:guava_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//plugins/kotlin/base/psi:psi_test_lib",
+    "//plugins/kotlin/base/indices:indices_test_lib",
+    "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+    "//plugins/kotlin/base/analysis:analysis_test_lib",
+    "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
+    "//plugins/kotlin/base/fe10/code-insight:code-insight_test_lib",
+    "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared_test_lib",
+    "//plugins/kotlin/core:core_test_lib",
+    "//plugins/kotlin/idea:idea_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/structuralsearch:structuralSearch_test_lib",
+    "//platform/duplicates-analysis:duplicates-analysis_test_lib",
+    "//java/java-indexing-impl:indexing-impl_test_lib",
+  ]
+)
 ### auto-generated section `build kotlin.code-insight.structural-search.k1` end

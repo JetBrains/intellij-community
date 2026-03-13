@@ -12,14 +12,23 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.JBTabsBorder;
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.impl.*;
+import com.intellij.ui.tabs.impl.DefaultTabPainterAdapter;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.impl.SingleHeightTabs;
+import com.intellij.ui.tabs.impl.TabLabel;
+import com.intellij.ui.tabs.impl.TabPainterAdapter;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.Map;
 import java.util.Objects;
 

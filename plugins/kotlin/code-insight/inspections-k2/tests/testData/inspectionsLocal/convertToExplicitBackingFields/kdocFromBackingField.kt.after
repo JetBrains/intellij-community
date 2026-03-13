@@ -1,0 +1,8 @@
+// COMPILER_ARGUMENTS: -Xexplicit-backing-fields
+class Service {
+    /**
+     * Some useful documentation
+     */
+    val apiKey: CharSequence
+        field = "secret_string"
+}

@@ -29,33 +29,13 @@ export function createProjectPathManager({
     const hasCamel = Object.prototype.hasOwnProperty.call(args, 'projectPath')
 
     if (desiredKey === 'projectPath') {
-      if (hasCamel) {
-        if (hasSnake) delete args.project_path
-        if (args.projectPath == null) args.projectPath = projectPath
-        return
-      }
-      if (hasSnake) {
-        args.projectPath = args.project_path
-        delete args.project_path
-        if (args.projectPath == null) args.projectPath = projectPath
-        return
-      }
+      if (hasSnake) delete args.project_path
       args.projectPath = projectPath
       return
     }
 
     if (desiredKey === 'project_path') {
-      if (hasSnake) {
-        if (hasCamel) delete args.projectPath
-        if (args.project_path == null) args.project_path = projectPath
-        return
-      }
-      if (hasCamel) {
-        args.project_path = args.projectPath
-        delete args.projectPath
-        if (args.project_path == null) args.project_path = projectPath
-        return
-      }
+      if (hasCamel) delete args.projectPath
       args.project_path = projectPath
     }
   }

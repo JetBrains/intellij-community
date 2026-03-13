@@ -1,4 +1,5 @@
 // "Replace with generated @PublishedApi bridge call '`access$prop`'" "true"
+// K2_ERROR: Protected function call from public-API inline function is prohibited.
 
 open class ABase {
     protected var prop = 1

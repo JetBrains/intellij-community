@@ -4,7 +4,7 @@ package com.intellij.serialization
 import com.amazon.ion.IonType
 import com.intellij.util.SmartList
 import java.lang.reflect.ParameterizedType
-import java.util.*
+import java.util.Collections
 
 // marker value of a collection that skipped because empty
 private const val EMPTY_SKIPPED_COLLECTION = 0

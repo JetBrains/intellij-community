@@ -9,4 +9,5 @@ data class TerminalStartupOptionsImpl(
   override val shellCommand: List<String>,
   override val workingDirectory: String,
   override val envVariables: Map<String, String>,
+  override val pid: Long?,
 ) : TerminalStartupOptions

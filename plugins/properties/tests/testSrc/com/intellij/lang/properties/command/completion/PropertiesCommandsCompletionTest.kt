@@ -30,7 +30,7 @@ class PropertiesCommandsCompletionTest : LightFixtureCompletionTestCase() {
       a.b.c.<caret>=some.strange
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    assertNotNull(elements.firstOrNull { element -> element.lookupString.contains("Show usages", ignoreCase = true) })
+    assertNotNull(elements.firstOrNull { element -> element.lookupString.contains("Go to declaration or usages", ignoreCase = true) })
   }
 
   fun testReformat() {
@@ -43,6 +43,46 @@ class PropertiesCommandsCompletionTest : LightFixtureCompletionTestCase() {
     myFixture.checkResult("""
         a.b.c=some.strange 
         """.trimIndent())
+  }
+
+  fun testMoveLineUp() {
+    myFixture.configureByText(PropertiesFileType.INSTANCE, """
+      a.b.c=first
+      d.e.f=second.<caret>
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    selectItem(elements.first { element -> element.lookupString.contains("Move line up", ignoreCase = true) })
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+    myFixture.checkResult("""
+      d.e.f=second
+      a.b.c=first
+      
+      """.trimIndent())
+  }
+
+  fun testMoveLineUpMultiline() {
+    myFixture.configureByText(PropertiesFileType.INSTANCE, """
+      a.b.c=first
+      d.e.f=second \.<caret>
+        some
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertNull(elements.firstOrNull { element -> element.lookupString.contains("Move line up", ignoreCase = true) })
+  }
+
+  fun testMoveLineDown() {
+    myFixture.configureByText(PropertiesFileType.INSTANCE, """
+      a.b.c=first.<caret>
+      d.e.f=second
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    selectItem(elements.first { element -> element.lookupString.contains("Move line down", ignoreCase = true) })
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+    myFixture.checkResult("""
+      d.e.f=second
+      a.b.c=first
+      
+      """.trimIndent())
   }
 
   fun testDoubleDot() {

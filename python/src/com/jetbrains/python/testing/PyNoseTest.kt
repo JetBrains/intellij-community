@@ -8,8 +8,8 @@ import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
 import com.jetbrains.python.PythonHelper
+import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 
 /**

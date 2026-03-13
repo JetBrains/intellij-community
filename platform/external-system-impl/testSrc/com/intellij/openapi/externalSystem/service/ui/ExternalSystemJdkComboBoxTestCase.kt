@@ -8,7 +8,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import java.io.File
-import java.util.*
+import java.util.Properties
 
 @Suppress("PropertyName")
 abstract class ExternalSystemJdkComboBoxTestCase : ExternalSystemTestCase() {

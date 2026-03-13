@@ -1,5 +1,6 @@
 // "Remove @JvmField annotation" "true"
 // WITH_STDLIB
+// K2_ERROR: JvmField cannot be applied to a property that overrides some other property.
 interface I {
     val x: Int
 }

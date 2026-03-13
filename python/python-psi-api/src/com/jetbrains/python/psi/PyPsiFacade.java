@@ -45,6 +45,10 @@ public abstract class PyPsiFacade {
    * @param qName  qualified name of the required class
    * @param anchor arbitrary element located in the same module/SDK as the required class
    */
+  public @Nullable PyClass createClassByQName(@NotNull QualifiedName qName, @NotNull PsiElement anchor) {
+    return createClassByQName(qName.toString(), anchor);
+  }
+
   public abstract @Nullable PyClass createClassByQName(@NotNull String qName, @NotNull PsiElement anchor);
 
   public abstract @Nullable String findShortestImportableName(@NotNull VirtualFile targetFile, @NotNull PsiElement anchor);

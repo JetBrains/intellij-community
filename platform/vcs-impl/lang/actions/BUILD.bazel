@@ -17,4 +17,15 @@ jvm_library(
     "//platform/vcs-impl",
   ]
 )
+
+jvm_library(
+  name = "actions_test_lib",
+  module_name = "intellij.platform.vcs.impl.lang.actions",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":actions",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.vcs.impl.lang.actions` end

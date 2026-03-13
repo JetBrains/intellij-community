@@ -1,4 +1,5 @@
 // "Change to 'var'" "true"
+// K2_ERROR: A 'val' property cannot have a setter.
 class A() {
     val a: Int = 0
         <caret>set(v: Int) {}

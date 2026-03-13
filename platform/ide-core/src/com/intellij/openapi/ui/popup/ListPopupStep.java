@@ -28,6 +28,15 @@ public interface ListPopupStep<T> extends PopupStep<T> {
    */
   boolean isSelectable(T value);
 
+  /**
+   * Checks if the specified item closes the popup when executed.
+   *
+   * @param value the value to check.
+   * @return true if the value can be executed and the popup closes,
+   *         false if the menu item only opens a submenu or toggles a setting, leaving the popup open.
+   */
+  default boolean isClosableOnExecute(T value) { return !hasSubstep(value); }
+
   default boolean isFinal(T value) {
     return !hasSubstep(value);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.shortenRefs;
 
@@ -509,6 +509,16 @@ public abstract class K1ShortenRefsTestGenerated extends AbstractK1ShortenRefsTe
         @TestMetadata("classObject.kt")
         public void testClassObject() throws Exception {
             runTest("testData/shortenRefs/classObject.kt");
+        }
+
+        @TestMetadata("companionReferenceInsideOfClass.kt")
+        public void testCompanionReferenceInsideOfClass() throws Exception {
+            runTest("testData/shortenRefs/companionReferenceInsideOfClass.kt");
+        }
+
+        @TestMetadata("companionReferenceInsideOfClass_conflict.kt")
+        public void testCompanionReferenceInsideOfClass_conflict() throws Exception {
+            runTest("testData/shortenRefs/companionReferenceInsideOfClass_conflict.kt");
         }
 
         @TestMetadata("descriptorsChangeAfterImportInsertion.kt")

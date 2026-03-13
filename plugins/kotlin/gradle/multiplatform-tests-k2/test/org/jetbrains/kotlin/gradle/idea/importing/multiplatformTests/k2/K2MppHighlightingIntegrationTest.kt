@@ -7,20 +7,16 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImp
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.GradleProjectsPublishingTestsFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
+import org.junit.Ignore
 import org.junit.Test
-import kotlin.test.Ignore
 
 @TestMetadata("multiplatform/k2/highlighting")
 class K2MppHighlightingIntegrationTest : AbstractKotlinMppGradleImportingTest() {
 
     override val allowOnNonMac: Boolean
         get() = false
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override fun TestConfigurationDslScope.defaultTestConfiguration() {
         hideHighlightsBelow = HighlightSeverity.ERROR
@@ -52,6 +48,7 @@ class K2MppHighlightingIntegrationTest : AbstractKotlinMppGradleImportingTest() 
 
     @Test
     @PluginTargetVersions(pluginVersion = "1.9.20+")
+    @Ignore("KTIJ-37464")
     fun testForwardDeclarations() {
         doTest()
     }

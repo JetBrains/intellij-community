@@ -22,9 +22,6 @@ import com.intellij.codeInsight.template.Macro;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TextResult;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,10 +34,8 @@ final class CurrentPackageMacro extends Macro {
 
   @Override
   public Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
-    Project project = context.getProject();
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
-    if (!(file instanceof PsiJavaFile)) return new TextResult ("");
-    return new TextResult (((PsiJavaFile)file).getPackageName());
+    if (!(context.getPsiFile() instanceof PsiJavaFile javaFile)) return new TextResult("");
+    return new TextResult(javaFile.getPackageName());
   }
 
   @Override

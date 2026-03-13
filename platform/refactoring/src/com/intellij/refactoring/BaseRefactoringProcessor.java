@@ -21,7 +21,10 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.NlsContexts.Command;
@@ -45,7 +48,14 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.usages.*;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageInfoSearcherAdapter;
+import com.intellij.usages.UsageSearcher;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UnknownUsagesInUnloadedModules;
 import com.intellij.usages.impl.UsageViewEx;
 import com.intellij.usages.rules.PsiElementUsage;
@@ -59,11 +69,25 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
 import java.awt.event.ActionEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Provides common infrastructure for building refactorings.
@@ -276,7 +300,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
     final Runnable findUsagesRunnable = () -> {
       try {
-        refUsages.set(ReadAction.compute(this::findUsages));
+        refUsages.set(ReadAction.computeBlocking(this::findUsages));
       }
       catch (UnknownReferenceTypeException e) {
         refErrorLanguage.set(e.getElementLanguage());
@@ -323,7 +347,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
 
     if (!anyException.isNull()) {
-      //do not proceed if find usages fails
+      //do not proceed if Find Usages fails
       return;
     }
     assert !refUsages.isNull(): "Null usages from processor " + this;
@@ -506,7 +530,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
    *
    * @param project   project
    * @param conflicts map with conflict messages and locations
-   * @return true if refactoring could proceed or false if refactoring should be cancelled
+   * @return true if refactoring could proceed or false if refactoring should be canceled
    */
   public static boolean processConflicts(@NotNull Project project, @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
     if (conflicts.isEmpty()) return true;
@@ -610,14 +634,14 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       myTransaction = listenerManager.startTransaction();
       final Map<RefactoringHelper, Object> preparedData = new LinkedHashMap<>();
       final Runnable prepareHelpersRunnable = () -> {
-        RefactoringEventData data = ReadAction.compute(() -> getBeforeData());
+        RefactoringEventData data = ReadAction.computeBlocking(() -> getBeforeData());
         PsiElement[] elements = data != null ? data.getUserData(RefactoringEventData.PSI_ELEMENT_ARRAY_KEY) : null;
         PsiElement primaryElement = data != null ? data.getUserData(RefactoringEventData.PSI_ELEMENT_KEY) : null;
         PsiElement[] allElements = elements != null ? ArrayUtil.append(elements, primaryElement) : new PsiElement[]{primaryElement};
         for (final RefactoringHelper<?> helper : RefactoringHelper.EP_NAME.getExtensionList()) {
           if (!DumbService.getInstance(myProject).isUsableInCurrentContext(helper)) continue;
 
-          Object operation = ReadAction.compute(() -> {
+          Object operation = ReadAction.computeBlocking(() -> {
             return helper.prepareOperation(writableUsageInfos, ContainerUtil.filter(allElements, e -> e != null));
           });
           preparedData.put(helper, operation);

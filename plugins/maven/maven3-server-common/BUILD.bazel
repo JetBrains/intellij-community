@@ -20,4 +20,25 @@ jvm_library(
     "@lib//:maven-server-m3-common-org-apache-lucene-lucene-core-2-4-1-provided",
   ]
 )
+
+jvm_library(
+  name = "server-m3-common_test_lib",
+  module_name = "intellij.maven.server.m3.common",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  runtime_deps = [
+    ":server-m3-common",
+    "//plugins/maven-server-api:maven-server_test_lib",
+    "//libraries/commons/logging:logging_test_lib",
+    "@lib//:maven-server-m3-common-org-sonatype-nexus-nexus-indexer-artifact-1-0-1-provided",
+    "@lib//:maven-server-m3-common-org-sonatype-nexus-nexus-indexer-3-0-4-provided",
+    "@lib//:maven-server-m3-common-org-apache-maven-shared-maven-dependency-tree-1-2-provided",
+    "@lib//:maven-server-m3-common-org-apache-maven-archetype-archetype-common-2-2-provided",
+    "@lib//:maven-server-m3-common-org-apache-maven-maven-compat-3-6-0-provided",
+    "@lib//:maven-server-m3-common-com-google-inject-guicen-no_aop-4-2-1-provided",
+    "//platform/util/jdom:jdom_test_lib",
+    "@lib//:maven-server-m3-common-org-apache-lucene-lucene-core-2-4-1-provided",
+  ]
+)
 ### auto-generated section `build intellij.maven.server.m3.common` end

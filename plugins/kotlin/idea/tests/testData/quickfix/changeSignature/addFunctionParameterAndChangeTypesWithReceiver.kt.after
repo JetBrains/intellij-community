@@ -1,4 +1,6 @@
 // "Change the signature of function 'withReceiver'" "true"
+// K2_ERROR: Argument type mismatch: actual type is 'Boolean', but 'Int' was expected.
+// K2_ERROR: Too many arguments for 'fun String.withReceiver(i: Int): Unit'.
 
 fun String.withReceiver(i: Boolean, i1: Int) {}
 

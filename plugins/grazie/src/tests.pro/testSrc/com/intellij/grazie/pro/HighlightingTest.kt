@@ -433,9 +433,9 @@ class HighlightingTest : BaseTestCase() {
     myFixture.checkHighlighting()
 
     myFixture.configureByText("a.md", """
-      There are some English words and some other cases, e.g. "<STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Typography.VARIANT_QUOTE_PUNCTUATION">h",</STYLE_SUGGESTION> "--help"
+      There are some English words and some other cases, e.g. "h", "--help"
             
-      The quote check is *also* working in fragments "with <STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Typography.VARIANT_QUOTE_PUNCTUATION">markup",</STYLE_SUGGESTION> right?
+      The quote check is *also* working in fragments "with markup", right?
      """.trimIndent()
     )
     myFixture.checkHighlighting()

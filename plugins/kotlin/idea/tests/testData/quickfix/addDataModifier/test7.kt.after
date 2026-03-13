@@ -1,4 +1,6 @@
 // "Make 'Foo' data class" "true"
+// K2_ERROR: Destructuring of type 'Foo' requires operator function 'component1()'.
+// K2_ERROR: Destructuring of type 'Foo' requires operator function 'component2()'.
 data class Foo(internal val bar: String, var baz: Int)
 
 fun test() {

@@ -21,11 +21,14 @@ jvm_library(
   associates = [":sqlite"],
   deps = [
     "//platform/util",
+    "//platform/util:util_test_lib",
     "@lib//:kotlin-stdlib",
     "//platform/util-ex",
+    "//platform/util-ex:util-ex_test_lib",
     "@lib//:junit5",
     "@lib//:assert_j",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.sqlite` end

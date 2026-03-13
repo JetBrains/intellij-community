@@ -24,4 +24,18 @@ jvm_library(
     ":libraries_junit4_provided",
   ]
 )
+
+jvm_library(
+  name = "rt_test_lib",
+  module_name = "intellij.java.rt",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  runtime_deps = [
+    ":rt",
+    "@lib//:java-rt-ant-1-7-1-provided",
+    "//libraries/junit4",
+    "//libraries/junit4:junit4_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.java.rt` end

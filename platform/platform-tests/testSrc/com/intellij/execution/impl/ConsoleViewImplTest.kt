@@ -3,7 +3,12 @@ package com.intellij.execution.impl
 
 import com.intellij.concurrency.JobScheduler
 import com.intellij.execution.ConsoleFolding
-import com.intellij.execution.filters.*
+import com.intellij.execution.filters.ConsoleDependentInputFilterProvider
+import com.intellij.execution.filters.ConsoleFilterProvider
+import com.intellij.execution.filters.ConsoleInputFilterProvider
+import com.intellij.execution.filters.Filter
+import com.intellij.execution.filters.HyperlinkInfo
+import com.intellij.execution.filters.InputFilter
 import com.intellij.execution.process.AnsiEscapeDecoderTest
 import com.intellij.execution.process.NopProcessHandler
 import com.intellij.execution.process.ProcessHandler
@@ -16,7 +21,11 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.CaretState
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.FoldRegion
+import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.editor.actionSystem.TypedAction
 import com.intellij.openapi.editor.ex.EditorEx
@@ -28,8 +37,13 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.testFramework.*
+import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
+import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.PerformanceUnitTest
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.registerExtension
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.Alarm
 import com.intellij.util.Consumer
@@ -38,7 +52,7 @@ import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.UIUtil
 import java.io.ByteArrayOutputStream
-import java.util.*
+import java.util.Arrays
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -283,7 +297,7 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
         UIUtil.dispatchAllInvocationEvents()
         console.waitAllRequests()
         val model = DocumentMarkupModel.forDocument(console.editor!!.document, project, true)
-        val highlighter = assertOneElement(model.allHighlighters)
+        val highlighter = assertOneElement(model.allHighlighters.filter{it.isValid})
         assertEquals(TextRange(0, console.editor!!.document.textLength), highlighter.textRange)
       }.start()
     }
@@ -1060,15 +1074,15 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
     get() =
       lines to placeholderText!!
 
-  private val allRangeHighlighters: MutableList<RangeHighlighter>
+  private val allRangeHighlighters: List<RangeHighlighter>
     get() {
       val model = DocumentMarkupModel.forDocument(consoleEditor.document, project, true)
       val highlighters = model.allHighlighters
       Arrays.sort(highlighters, Comparator.comparingInt { obj: RangeMarker -> obj.startOffset }.thenComparingInt { obj: RangeMarker -> obj.endOffset })
-      return mutableListOf(*highlighters)
+      return highlighters.filter{it.isValid}
     }
 
-  private fun assertMarkersEqual(actual: MutableList<out RangeHighlighter>, vararg expected: ExpectedHighlighter) {
+  private fun assertMarkersEqual(actual: List<RangeHighlighter>, vararg expected: ExpectedHighlighter) {
     assertEquals(expected.size, actual.size)
     for (i in expected.indices) {
       assertMarkerEquals(expected[i], actual[i])

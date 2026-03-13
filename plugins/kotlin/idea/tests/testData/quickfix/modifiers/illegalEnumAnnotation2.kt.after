@@ -1,4 +1,5 @@
 // "Remove 'enum' modifier" "true"
+// K2_ERROR: Modifier 'enum' is not applicable to 'member function'.
 class A() {
     <caret>fun foo() {}
 }

@@ -15,7 +15,7 @@
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_kotlin//kotlin/internal:defs.bzl", KotlinInfo = "KtJvmInfo")
 load("//:rules/impl/compiler-plugins.bzl", "compiler_plugins_from", "exported_compiler_plugins_from")
-load("//:rules/impl/kotlinc-options.bzl", "KotlincOptions", "kotlinc_options_to_flags")
+load("//:rules/impl/kotlinc-options.bzl", "KotlincExtraOptionsInfo", "KotlincOptions", "kotlinc_options_to_flags")
 
 visibility("private")
 
@@ -36,7 +36,7 @@ KtWasmJsBin = provider(
 )
 
 def _wasmjs_kotlinc_options(kotlinc_options):
-    jvm_specific_options = ["x_jvm_default", "jvm_target"]
+    jvm_specific_options = ["jvm_default", "jvm_target"]
     filtered_options = {
         k: getattr(kotlinc_options, k)
         for k in dir(kotlinc_options)
@@ -45,7 +45,9 @@ def _wasmjs_kotlinc_options(kotlinc_options):
     return KotlincOptions(**filtered_options)
 
 def _create_wasmjs_compilation_common_args(ctx):
-    kotlinc_options = _wasmjs_kotlinc_options(ctx.attr.kotlinc_opts[KotlincOptions])
+    kotlinc_opts_target = ctx.attr.kotlinc_opts
+    kotlinc_options = _wasmjs_kotlinc_options(kotlinc_opts_target[KotlincOptions])
+    kotlinc_extra_options = kotlinc_opts_target[KotlincExtraOptionsInfo]
 
     args = ctx.actions.args()
     args.set_param_file_format("multiline")
@@ -53,7 +55,7 @@ def _create_wasmjs_compilation_common_args(ctx):
     args.add("-Xwasm")
     args.add("-Xwasm-target=js")
     args.add("-Xmulti-platform")
-    args.add_all(kotlinc_options_to_flags(kotlinc_options))
+    args.add_all(kotlinc_options_to_flags(kotlinc_options, kotlinc_extra_options))
 
     args.add("-ir-output-name", "%s_%s" % (ctx.attr.module_name, ctx.label.name))
 

@@ -22,8 +22,8 @@ public enum MavenConfigSettings {
   FAIL_NEVER("fn", "fail-never", Function.identity()),
   THREADS("T", "threads", b -> b.hasArg()),
   ALTERNATE_USER_SETTINGS("s", "settings", b -> b.hasArg()),
-  ALTERNATE_GLOBAL_SETTINGS("gs", "global-settings", b -> b.hasArg());
-
+  ALTERNATE_GLOBAL_SETTINGS("gs", "global-settings", b -> b.hasArg()),
+  ALTERNATE_TOOLCHAINS_SETTINGS("t", "toolchains", b -> b.hasArg());
   final String key;
   final String longKey;
   final Function<Option.Builder, Option.Builder> builderFunction;

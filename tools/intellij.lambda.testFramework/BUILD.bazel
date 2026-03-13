@@ -59,4 +59,46 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
   ]
 )
+
+jvm_library(
+  name = "lambda-testFramework_test_lib",
+  module_name = "intellij.lambda.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_lambda-testFramework",
+  runtime_deps = [
+    ":lambda-testFramework",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/editor-ui-ex:editor-ex_test_lib",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//libraries/junit5:junit5_test_lib",
+    "//libraries/junit5-launcher:junit5-launcher_test_lib",
+    "//libraries/junit5-params:junit5-params_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/execution-impl:execution-impl_test_lib",
+    "//platform/remoteDev-util:remoteDev-util_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//plugins/performanceTesting/core:performanceTesting_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/xdebugger-api:debugger_test_lib",
+    "//platform/xdebugger-impl:debugger-impl_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/usageView:usageView_test_lib",
+    "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
+    "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
+    "//tools/intellij.tools.ide.starter.junit5:ide-starter-junit5_test_lib",
+    "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline_test_lib",
+    "//tools/intellij.tools.ide.starter.driver:ide-starter-driver_test_lib",
+    "//libraries/rd/framework:framework_test_lib",
+    "//libraries/rd/core:core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.lambda.testFramework` end

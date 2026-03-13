@@ -36,7 +36,7 @@ start.browser.with.js.debugger: mit &<TYPO descr="Typo: In word 'JavaScrpit'">Ja
 settings.browsers.column.path: <TYPO descr="Typo: In word 'Pfda'">Pfda</TYPO>
 settings.browsers.column.name: <TYPO descr="Typo: In word 'Naem'">Naem</TYPO>
 settings.browsers.column.family: <TYPO descr="Typo: In word 'Famielie'">Famielie</TYPO>
-settings.browsers.system.default: <TYPO descr="Typo: In word 'Systemstandrad'">Systemstandrad</TYPO>
+settings.browsers.system.default: Systemstandrad
 settings.browsers.first.listed: <TYPO descr="Typo: In word 'Erste'">Erste</TYPO> <TYPO descr="Typo: In word 'aufgelistete'">aufgelistete</TYPO>
 settings.browsers.show.browser.popup.in.the.editor: Browser-Popup im <TYPO descr="Typo: In word 'Editro'">Editro</TYPO> <TYPO descr="Typo: In word 'anzeigen'">anzeigen</TYPO>
 settings.browsers.show.browser.popup.html: Für HMTL-Dateien
@@ -104,7 +104,7 @@ button.move.up: <TYPO descr="Typo: In word 'Nach'">Nach</TYPO> &<TYPO descr="Typ
 button.move.down: <TYPO descr="Typo: In word 'Nach'">Nach</TYPO> &<TYPO descr="Typo: In word 'untne'">untne</TYPO>
 button.restore.selection: "{0} <TYPO descr="Typo: In word 'wiederherstelen'">wiederherstelen</TYPO>"
 button.restore.selected.groups: <TYPO descr="Typo: In word 'Ausgewählte'">Ausgewählte</TYPO> <TYPO descr="Typo: In word 'Gruppne'">Gruppne</TYPO> <TYPO descr="Typo: In word 'wiederherstellen'">wiederherstellen</TYPO>
-button.restore.last.state: <TYPO descr="Typo: In word 'Letzten'">Letzten</TYPO> <TYPO descr="Typo: In word 'Zustand'">Zustand</TYPO> <TYPO descr="Typo: In word 'wiederherstelen'">wiederherstelen</TYPO>
+button.restore.last.state: <TYPO descr="Typo: In word 'Letzten'">Letzten</TYPO> Zustand <TYPO descr="Typo: In word 'wiederherstelen'">wiederherstelen</TYPO>
 button.restore.defaults: Standards <TYPO descr="Typo: In word 'wiederherstelen'">wiederherstelen</TYPO>
 button.restore.all: &Alle Standards <TYPO descr="Typo: In word 'wiederherstelen'">wiederherstelen</TYPO>
 progress.deleting: <TYPO descr="Typo: In word 'Wird'">Wird</TYPO> <TYPO descr="Typo: In word 'gelöshct'">gelöshct</TYPO>
@@ -864,7 +864,7 @@ checkbox.keep.popups.for.toggles: Popups für <TYPO descr="Typo: In word 'Umscha
 file.encodings.configurable: <TYPO descr="Typo: In word 'Dateikodierungen'">Dateikodierungen</TYPO>
 file.encodings.not.configured: <TYPO descr="Typo: In word 'Kodierungen'">Kodierungen</TYPO> <TYPO descr="Typo: In word 'sind'">sind</TYPO> <TYPO descr="Typo: In word 'nicht'">nicht</TYPO> <TYPO descr="Typo: In word 'konfiguriert'">konfiguriert</TYPO>
 encodings.dialog.caption: Fügen Sie den Pfad zu einer Datei oder einem Verzeichnis hinzu und wählen Sie die Kodierung aus, die {0} verwenden soll.<br>Dateien und Verzeichnisse erben die Kodierung vom übergeordneten Verzeichnis oder von der Projektkodierung.<br>Eingebaute Dateikodierungen in JSP-, HTML- und XML-Dateien überschreiben diese Einstellungen.
-encoding.name.system.default: "<<TYPO descr="Typo: In word 'Systemstandard'">Systemstandard</TYPO>: {0}>"
+encoding.name.system.default: "<Systemstandard: {0}>"
 encoding.name.properties.default: "<Properties-Standard: {0}>"
 quick.lists.presentable.name: <TYPO descr="Typo: In word 'Schnelllisten'">Schnelllisten</TYPO>
 error.saving.statistics: "<TYPO descr="Typo: In word 'Fehler'">Fehler</TYPO> <TYPO descr="Typo: In word 'beim'">beim</TYPO> <TYPO descr="Typo: In word 'Speichern'">Speichern</TYPO> der <TYPO descr="Typo: In word 'Systeminformationen'">Systeminformationen</TYPO>: {0}"

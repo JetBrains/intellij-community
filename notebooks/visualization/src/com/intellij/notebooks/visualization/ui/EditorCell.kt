@@ -68,7 +68,7 @@ class EditorCell(
   }
 
   fun update() {
-    editor.updateManager.update { ctx -> update(ctx) }
+    editor.notebookViewUpdater.update { ctx -> update(ctx) }
   }
 
   fun update(updateCtx: UpdateContext) {
@@ -87,7 +87,7 @@ class EditorCell(
     view?.updateIfInVisibleRect()
   }
 
-  fun updateOutputs(): Unit = editor.updateManager.update {
+  fun updateOutputs(): Unit = editor.notebookViewUpdater.update {
     outputs.updateOutputs()
   }
 
@@ -119,7 +119,7 @@ class EditorCell(
   }
 
   /** Called only in RD mode with a ready list of NotebookOutputDataKey, to avoid reading data from JSON which is missing on the frontend. */
-  fun updateOutputs(keys: List<NotebookOutputDataKey>): Unit = editor.updateManager.update {
+  fun updateOutputs(keys: List<NotebookOutputDataKey>): Unit = editor.notebookViewUpdater.update {
     outputs.outputs.set(keys.map { EditorCellOutput(it) })
   }
 

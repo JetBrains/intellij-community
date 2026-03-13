@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-ktor-server-cio-ktor-server-cio-internal"],
   runtime_deps = ["@lib//:libraries-ktor-server-cio-ktor-server-cio-internal"]
 )
+
+jvm_library(
+  name = "libraries-ktor-server-cio_test_lib",
+  module_name = "intellij.libraries.ktor.server.cio",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-ktor-server-cio-ktor-server-cio-internal"],
+  runtime_deps = [":libraries-ktor-server-cio"]
+)
 ### auto-generated section `build intellij.libraries.ktor.server.cio` end

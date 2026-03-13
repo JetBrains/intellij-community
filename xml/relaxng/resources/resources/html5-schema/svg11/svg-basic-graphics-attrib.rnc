@@ -1,4 +1,5 @@
 namespace a = "http://relaxng.org/ns/compatibility/annotations/1.0"
+namespace xsd = "http://www.w3.org/2001/XMLSchema-datatypes"
 
 
 ##
@@ -45,9 +46,17 @@ grammar {
         }?
     SVG.visibility.attrib =
         attribute visibility { string "visible" | string "hidden" | string "collapse" | string "inherit" }?
+    SVG.transform-origin.attrib =
+        attribute transform-origin { xsd:string }?
+    SVG.transform-box.attrib =
+        attribute transform-box {
+            string "content-box" | string "border-box" | string "fill-box" | string "stroke-box" | string "view-box"
+        }?
     SVG.Graphics.extra.attrib = empty
     SVG.Graphics.attrib &=
         SVG.display.attrib,
         SVG.visibility.attrib,
+        SVG.transform-origin.attrib,
+        SVG.transform-box.attrib,
         SVG.Graphics.extra.attrib
 }

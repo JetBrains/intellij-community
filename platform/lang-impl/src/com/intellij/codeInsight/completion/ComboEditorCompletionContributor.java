@@ -12,7 +12,7 @@ import com.intellij.ui.StringComboboxEditor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
 
 @ApiStatus.Internal
 public final class ComboEditorCompletionContributor extends CompletionContributor implements DumbAware {

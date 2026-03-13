@@ -3,6 +3,7 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.Service
@@ -14,15 +15,25 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
-import com.intellij.openapi.projectRoots.*
+import com.intellij.openapi.projectRoots.JdkUtil
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkType
+import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType.notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType
 import com.intellij.openapi.projectRoots.impl.UnknownSdkTracker
+import com.intellij.openapi.projectRoots.isMockSdk
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.ui.configuration.*
+import com.intellij.openapi.roots.ui.configuration.SdkDetector
 import com.intellij.openapi.roots.ui.configuration.SdkDetector.DetectedSdkListener
+import com.intellij.openapi.roots.ui.configuration.UnknownSdk
+import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix
+import com.intellij.openapi.roots.ui.configuration.UnknownSdkFixConfigurator
+import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix
+import com.intellij.openapi.roots.ui.configuration.UnknownSdkMultipleDownloadsFix
+import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.UnknownSdkLookup
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.JarFileSystem
@@ -338,7 +349,7 @@ class JdkAuto : UnknownSdkResolver {
         indicator.text = ProjectBundle.message("progress.text.checking.existing.jdks")
 
         val result = mutableListOf<JavaLocalSdkFix>()
-        for (it in ApplicationManager.getApplication().runReadAction(Computable { ProjectJdkTable.getInstance().allJdks})) {
+        for (it in runReadActionBlocking { ProjectJdkTable.getInstance().allJdks}) {
           if (it.sdkType != sdkType) {
             continue
           }

@@ -123,6 +123,32 @@ fun ideCommon() = moduleSet("ide.common") {
 }
 ```
 
+### `plugin(name)` - Create Pluginized Module Set
+
+```kotlin
+fun plugin(
+  name: String,
+  pluginId: String? = null,
+  outputModule: String? = null,
+  addToMainModule: Boolean = true,
+  block: ModuleSetBuilder.() -> Unit
+): ModuleSet
+```
+
+Creates a module set and marks it to be materialized as a standalone bundled plugin wrapper.
+The Product DSL pipeline generates the wrapper module files, `plugin-content.yaml`, and `modules.xml` entries during generation.
+The resulting set must not be referenced through product-level or nested `moduleSet(...)` composition; bundle the generated wrapper plugin module instead.
+
+```kotlin
+fun recentFiles() = plugin("recentFiles") {
+  module("intellij.platform.recentFiles")
+  module("intellij.platform.recentFiles.frontend")
+  module("intellij.platform.recentFiles.backend")
+}
+```
+
+Set `addToMainModule = false` when the wrapper must not be added to `intellij.moduleSet.plugin.main` for flat-classpath launches.
+
 ## Parameters Reference
 
 ### `alias` - Module Alias
@@ -184,7 +210,7 @@ See [programmatic-content.md](programmatic-content.md) for details on content vs
 /**
  * VCS frontend modules.
  */
-fun vcsFrontend(): ModuleSet = moduleSet("vcs.frontend") {
+fun vcsFrontend(): ModuleSet = plugin("vcs.frontend") {
   module("intellij.platform.vcs.impl.frontend")
 }
 ```

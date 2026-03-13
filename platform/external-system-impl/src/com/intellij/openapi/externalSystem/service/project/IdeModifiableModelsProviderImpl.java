@@ -32,7 +32,12 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridge;
-import com.intellij.workspaceModel.ide.legacyBridge.*;
+import com.intellij.workspaceModel.ide.legacyBridge.LibraryModifiableModelBridge;
+import com.intellij.workspaceModel.ide.legacyBridge.ModifiableFacetModelBridge;
+import com.intellij.workspaceModel.ide.legacyBridge.ModifiableModuleModelBridge;
+import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge;
+import com.intellij.workspaceModel.ide.legacyBridge.ProjectLibraryTableBridge;
+import com.intellij.workspaceModel.ide.legacyBridge.ProjectModifiableLibraryTableBridge;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +65,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
 
   @Override
   protected ModifiableModuleModel doGetModifiableModuleModel() {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       ModuleManager moduleManager = ModuleManager.getInstance(myProject);
       ModifiableModuleModel modifiableModel = ((ModuleManagerBridgeImpl)moduleManager).getModifiableModel(getActualStorageBuilder());
       Module[] modules = modifiableModel.getModules();
@@ -83,7 +88,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
       }
     };
 
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       ModuleRootManagerEx rootManager = ModuleRootManagerEx.getInstanceEx(module);
       return ((ModuleRootComponentBridge)rootManager).getModifiableModel(getActualStorageBuilder(), rootConfigurationAccessor);
     });

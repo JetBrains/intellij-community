@@ -1,5 +1,6 @@
 // "Opt in for 'MyExperimentalAPI' on containing class 'Bar'" "true"
 // PRIORITY: HIGH
+// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@a.b.MyExperimentalAPI' or '@OptIn(a.b.MyExperimentalAPI::class)'
 
 package a.b
 

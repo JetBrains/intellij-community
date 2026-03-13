@@ -531,4 +531,9 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   public @Nullable InstrumentationBreakpointState getInstrumentationInfo(@NotNull Requestor requestor) {
     return myInstrumentationInfo.get(requestor);
   }
+
+  @ApiStatus.Internal
+  public void deleteInstrumentationInfoFor(@NotNull Requestor requestor) {
+    myInstrumentationInfo.remove(requestor);
+  }
 }

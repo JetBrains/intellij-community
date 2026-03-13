@@ -27,7 +27,9 @@ interface PolySymbolCodeCompletionItem {
   val offset: Int
   val icon: Icon?
   val typeText: String?
+  val typeTextGreyed: Boolean
   val tailText: String?
+  val tailTextGreyed: Boolean
   val caseSensitive: Boolean
 
   @get:JvmName("isCompleteAfterInsert")
@@ -41,6 +43,8 @@ interface PolySymbolCodeCompletionItem {
   val symbol: PolySymbol?
   val insertHandler: PolySymbolCodeCompletionItemInsertHandler?
 
+  val asyncCustomizers: List<PolySymbolCodeCompletionItem.() -> PolySymbolCodeCompletionItem>
+
   fun withPrefix(prefix: String): PolySymbolCodeCompletionItem
 
   fun addToResult(
@@ -48,6 +52,8 @@ interface PolySymbolCodeCompletionItem {
     result: CompletionResultSet,
     baselinePriorityValue: Double = PolySymbol.Priority.NORMAL.value,
   )
+
+  fun buildLookupElement(location: PsiElement): LookupElement
 
   fun withName(name: String): PolySymbolCodeCompletionItem
 
@@ -75,9 +81,13 @@ interface PolySymbolCodeCompletionItem {
 
   fun withTypeText(typeText: String?): PolySymbolCodeCompletionItem
 
-  fun withTypeText(typeTextProvider: () -> String?): PolySymbolCodeCompletionItem
+  fun withTypeText(typeText: String?, greyed: Boolean): PolySymbolCodeCompletionItem
 
   fun withTailText(tailText: String?): PolySymbolCodeCompletionItem
+
+  fun withTailText(tailText: String?, greyed: Boolean): PolySymbolCodeCompletionItem
+
+  fun withAsyncCustomizer(asyncCustomizer: PolySymbolCodeCompletionItem.() -> PolySymbolCodeCompletionItem): PolySymbolCodeCompletionItem
 
   fun withCaseSensitive(value: Boolean): PolySymbolCodeCompletionItem
 

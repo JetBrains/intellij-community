@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.getOrThrow
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.packaging.PyPackageVersionComparator
 import com.jetbrains.python.packaging.cache.PythonPackageCache
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
@@ -62,8 +62,12 @@ internal class CondaPackageCache : PythonPackageCache<String> {
     withContext(Dispatchers.IO) {
       val targetConfig = sdk.targetEnvConfiguration
       val binaryToExec = sdk.getCondaBinToExecute()
-      val baseConda = PyCondaEnv.getEnvs(binaryToExec).getOrThrow()
-        .first { it.envIdentity is PyCondaEnvIdentity.UnnamedEnv && it.envIdentity.isBase }
+      val envs = PyCondaEnv.getEnvs(binaryToExec).orLogException(thisLogger()) ?: return@withContext
+      val baseConda = envs.firstOrNull { it.envIdentity is PyCondaEnvIdentity.UnnamedEnv && it.envIdentity.isBase }
+      if (baseConda == null) {
+        thisLogger().warn("No base conda environment found, skipping package cache refresh")
+        return@withContext
+      }
 
       val helpersAware = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project)
       val communityHelpers = helpersAware.preparePyCharmHelpers().helpers.first()

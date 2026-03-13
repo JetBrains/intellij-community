@@ -93,7 +93,7 @@ public class FindUsagesHandlerBase {
   public boolean processUsagesInText(final @NotNull PsiElement element,
                                      @NotNull Processor<? super UsageInfo> processor,
                                      @NotNull GlobalSearchScope searchScope) {
-    Collection<String> stringToSearch = ReadAction.compute(() -> getStringsToSearch(element));
+    Collection<String> stringToSearch = ReadAction.computeBlocking(() -> getStringsToSearch(element));
     if (stringToSearch == null) return true;
     return FindUsagesHelper.processUsagesInText(element, stringToSearch, false, searchScope, processor);
   }

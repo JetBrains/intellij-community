@@ -1,7 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.completion.common.protocol
 
-import com.intellij.openapi.editor.impl.EditorId
+import com.intellij.codeInsight.lookup.LookupFocusDegree
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.project.ProjectId
 import kotlinx.serialization.Serializable
 
@@ -10,20 +11,27 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 sealed interface RpcLookupElementEvent {
+  /**
+   * The lookup state changed. Only changed properties are included (null means not changed).
+   */
   @Serializable
-  data class SelectedItem(
+  data class LookupStateChanged(
     val requestId: RpcCompletionRequestId,
-    val arrangementId: RpcCompletionArrangementId,
-    val itemId: RpcCompletionItemId?,
-    val itemPattern: String,
-    val prefixLength: Int,
+    val selectedItemId: RpcSelectedItem?,
+    val focusDegree: LookupFocusDegree? = null,
+    val sortedItemIds: List<RpcCompletionItemId>? = null,
   ) : RpcLookupElementEvent {
-    override fun toString(): String = buildToString("SelectedItem") {
+    override fun toString(): String = buildToString("LookupStateChanged") {
       field("requestId", requestId)
-      field("itemId", itemId)
+      fieldWithNullDefault("selectedItemId", selectedItemId)
+      fieldWithNullDefault("focusDegree", focusDegree)
+      fieldWithNullDefault("sortedItemIds", sortedItemIds)
     }
   }
 
+  /**
+   * the lookup is closed without completion
+   */
   @Serializable
   data class Cancel(val projectId: ProjectId) : RpcLookupElementEvent {
     override fun toString(): String = buildToString("Cancel") {
@@ -31,12 +39,35 @@ sealed interface RpcLookupElementEvent {
     }
   }
 
+  /**
+   * the lookup is closed with completion
+   */
   @Serializable
-  data class Show(val projectId: ProjectId, val editor: EditorId) : RpcLookupElementEvent {
-    override fun toString(): String = buildToString("Show") {
+  data class ItemSelected(val projectId: ProjectId) : RpcLookupElementEvent {
+    override fun toString(): String = buildToString("ItemSelected") {
       field("projectId", projectId)
-      field("editor", editor)
     }
+  }
+
+}
+
+
+@Serializable
+data class RpcSelectedItem(val value: RpcCompletionItemId? = null) {
+  override fun toString(): String = buildToString("RpcSelectedItem") {
+    fieldWithNullDefault("value", value)
   }
 }
 
+fun Logger.logLookupElementEvent(event: RpcLookupElementEvent) {
+  if (isTraceEnabled) {
+    trace(event.toString())
+  }
+  else if (isDebugEnabled) {
+    when (event) {
+      is RpcLookupElementEvent.Cancel -> debug("Lookup cancelled by client")
+      is RpcLookupElementEvent.ItemSelected -> debug("Lookup item selected")
+      is RpcLookupElementEvent.LookupStateChanged -> debug("Lookup state changed: ${event.selectedItemId} ${event.focusDegree} ${event.sortedItemIds?.size}")
+    }
+  }
+}

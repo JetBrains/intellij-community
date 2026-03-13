@@ -13,14 +13,24 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.*
+import com.intellij.openapi.projectRoots.impl.DependentSdkType
+import com.intellij.openapi.projectRoots.impl.UnknownSdkCollector
+import com.intellij.openapi.projectRoots.impl.UnknownSdkCollectorQueue
+import com.intellij.openapi.projectRoots.impl.UnknownSdkContributor
+import com.intellij.openapi.projectRoots.impl.UnknownSdkSnapshot
+import com.intellij.openapi.projectRoots.impl.UnknownSdkTrackerTask
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.text.VersionComparatorUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.time.Duration.Companion.seconds
 
 /**

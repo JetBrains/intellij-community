@@ -11,6 +11,7 @@ import com.intellij.build.BuildTreeNavigationContext
 import com.intellij.build.BuildTreeNode
 import com.intellij.build.BuildViewId
 import com.intellij.build.SelectedBuildTreeNode
+import com.intellij.ide.CommonActionsManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.OccurenceNavigator
 import com.intellij.ide.OccurenceNavigatorSupport
@@ -25,10 +26,10 @@ import com.intellij.ide.util.treeView.NodeRenderer
 import com.intellij.ide.util.treeView.PathElementIdProvider
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -177,14 +178,8 @@ internal class BuildTreeView(
     tree.addTreeSelectionListener(::onTreeSelectionChanged)
     tree.addMouseListener(object : PopupHandler() {
       override fun invokePopup(comp: Component?, x: Int, y: Int) {
-        val actionManager = ActionManager.getInstance()
-        val groupId = "BuildTree"
-        val group = actionManager.getAction(groupId) as? ActionGroup
-        if (group == null) {
-          LOG.warn("'$groupId' context menu action group not found")
-          return
-        }
-        val popupMenu = actionManager.createActionPopupMenu("BuildView", group)
+        val group = getContextMenuGroup()
+        val popupMenu = ActionManager.getInstance().createActionPopupMenu("BuildView", group)
         popupMenu.setTargetComponent(tree)
         val menu = popupMenu.getComponent()
         menu.show(comp, x, y)
@@ -198,6 +193,32 @@ internal class BuildTreeView(
     }
 
     return tree
+  }
+
+  private fun getContextMenuGroup() = DefaultActionGroup().apply {
+    addIfFound("BuildTree.Main")
+    addSeparator()
+    if (backendNavigationAndFiltering) {
+      addIfFound("BuildTree.FilteringAndNavigation")
+    }
+    else {
+      addIfFound("BuildViewFilterWarnings")
+      addIfFound("BuildViewFilterSuccessful")
+      addSeparator()
+      val cam = CommonActionsManager.getInstance()
+      add(cam.createPrevOccurenceAction(occurenceNavigatorSupport))
+      add(cam.createNextOccurenceAction(occurenceNavigatorSupport))
+    }
+  }
+
+  private fun DefaultActionGroup.addIfFound(actionOrGroupId: String) {
+    val action = ActionManager.getInstance().getAction(actionOrGroupId)
+    if (action == null) {
+      LOG.warn("Action or group '$actionOrGroupId' not found")
+    }
+    else {
+      add(action)
+    }
   }
 
   override fun getComponent(): JComponent {
@@ -416,8 +437,8 @@ internal class BuildTreeView(
         return (node as? MyNode)?.occurrenceNavigatable?.navigatable()
     }
 
-    override fun getNextOccurenceActionName() = ""
-    override fun getPreviousOccurenceActionName() = ""
+    override fun getNextOccurenceActionName() = IdeBundle.message("action.next.problem")
+    override fun getPreviousOccurenceActionName() = IdeBundle.message("action.previous.problem")
   }
 
   private inner class MyNode(content: BuildTreeNode) : DefaultMutableTreeNode(content), PathElementIdProvider {

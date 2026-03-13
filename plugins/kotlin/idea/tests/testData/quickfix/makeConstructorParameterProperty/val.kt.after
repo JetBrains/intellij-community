@@ -1,4 +1,5 @@
 // "Make constructor parameter a property" "true"
+// K2_ERROR: Unresolved reference 'foo'.
 
 class A(<selection>private<caret></selection> val foo: String) {
     fun bar() {

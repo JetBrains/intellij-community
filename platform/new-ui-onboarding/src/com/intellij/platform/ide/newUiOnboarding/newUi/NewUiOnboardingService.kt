@@ -5,8 +5,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
 import com.intellij.platform.ide.newUiOnboarding.newUi.NewUiOnboardingStatistics.OnboardingStartingPlace
 import kotlinx.coroutines.CoroutineScope
@@ -24,8 +22,6 @@ internal class NewUiOnboardingService(private val project: Project, private val 
       NewUiOnboardingStatistics.logOnboardingStarted(project, OnboardingStartingPlace.WELCOME_DIALOG)
     }
     else {
-      val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MEET_NEW_UI)
-      toolWindow?.activate(null)
       NewUiOnboardingStatistics.logWelcomeDialogSkipPressed(project)
     }
   }

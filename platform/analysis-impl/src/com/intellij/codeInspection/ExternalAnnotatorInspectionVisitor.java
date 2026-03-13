@@ -39,13 +39,13 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
       return ProblemDescriptor.EMPTY_ARRAY;
     }
 
-    Init info = ReadAction.compute(() -> annotator.collectInformation(file));
+    Init info = ReadAction.computeBlocking(() -> annotator.collectInformation(file));
     if (info != null) {
       Result annotationResult = annotator.doAnnotate(info);
       if (annotationResult == null) {
         return ProblemDescriptor.EMPTY_ARRAY;
       }
-      return ReadAction.compute(() -> AnnotationSessionImpl.computeWithSession(file, true, annotator, annotationHolder -> {
+      return ReadAction.computeBlocking(() -> AnnotationSessionImpl.computeWithSession(file, true, annotator, annotationHolder -> {
         ((AnnotationHolderImpl)annotationHolder).applyExternalAnnotatorWithContext(file, annotationResult);
         ((AnnotationHolderImpl)annotationHolder).assertAllAnnotationsCreated();
         return ProblemDescriptorUtil.convertToProblemDescriptors((AnnotationHolderImpl)annotationHolder, file);

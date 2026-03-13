@@ -14,8 +14,28 @@ import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.impl.filterByQueryParams
 import com.intellij.polySymbols.impl.selectBest
-import com.intellij.polySymbols.query.*
-import com.intellij.polySymbols.utils.*
+import com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
+import com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParamsData
+import com.intellij.polySymbols.query.PolySymbolCompoundScope
+import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
+import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParamsData
+import com.intellij.polySymbols.query.PolySymbolMatch
+import com.intellij.polySymbols.query.PolySymbolNameConversionRules
+import com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams
+import com.intellij.polySymbols.query.PolySymbolNameMatchQueryParamsData
+import com.intellij.polySymbols.query.PolySymbolNamesProvider
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolQueryExecutorListener
+import com.intellij.polySymbols.query.PolySymbolQueryParams
+import com.intellij.polySymbols.query.PolySymbolQueryResultsCustomizer
+import com.intellij.polySymbols.query.PolySymbolQueryStack
+import com.intellij.polySymbols.query.PolySymbolScope
+import com.intellij.polySymbols.query.PolySymbolWithPattern
+import com.intellij.polySymbols.utils.asSingleSymbol
+import com.intellij.polySymbols.utils.hideFromCompletion
+import com.intellij.polySymbols.utils.nameSegments
+import com.intellij.polySymbols.utils.qualifiedName
+import com.intellij.polySymbols.utils.withMatchedName
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.PlatformUtils
@@ -39,7 +59,7 @@ class PolySymbolQueryExecutorImpl(
 
   override val allowResolve: Boolean = if (PlatformUtils.isJetBrainsClient()) false else allowResolve
 
-  private val rootScope: List<PolySymbolScope> = initializeCompoundScopes(rootScope)
+  internal val rootScope: List<PolySymbolScope> = initializeCompoundScopes(rootScope)
   private var nestingLevel: Int = 0
 
   override var keepUnresolvedTopLevelReferences: Boolean = false
@@ -353,10 +373,6 @@ class PolySymbolQueryExecutorImpl(
         .sortAndDeduplicate()
       result
     }
-
-
-  override fun getModificationCount(): Long =
-    rootScope.sumOf { it.modificationCount } + namesProvider.modificationCount + resultsCustomizer.modificationCount
 
   @RequiresReadLock
   private fun <T, P : PolySymbolQueryParams> runQuery(

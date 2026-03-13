@@ -5,7 +5,7 @@ import com.intellij.notebooks.visualization.UpdateContext
 import com.intellij.notebooks.visualization.controllers.NotebookCellController
 import com.intellij.openapi.util.Disposer
 import java.awt.Rectangle
-import java.util.*
+import java.util.Collections
 
 abstract class EditorCellViewComponent : NotebookCellController {
   protected var parent: EditorCellViewComponent? = null

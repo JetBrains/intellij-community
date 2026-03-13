@@ -3,7 +3,6 @@ package com.intellij.python.pyproject.model.internal.autoImportBridge
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectAware
@@ -11,13 +10,13 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectListener
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectReloadContext
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.project.stateStore
-import com.intellij.python.pyproject.model.internal.PyProjectTomlBundle
+import com.intellij.python.pyproject.model.internal.PY_PROJECT_SYSTEM_ID
+import com.intellij.python.pyproject.model.internal.PyProjectScopeService
 import com.intellij.python.pyproject.model.internal.notifyModelRebuilt
 import com.intellij.python.pyproject.model.internal.pyProjectToml.walkFileSystemNoTomlContent
 import com.intellij.python.pyproject.model.internal.pyProjectToml.walkFileSystemWithTomlContent
@@ -26,9 +25,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
@@ -40,7 +36,7 @@ class PyExternalSystemProjectAware private constructor(
   private val project: Project,
   private val projectRootDir: Path,
 ) : ExternalSystemProjectAware {
-  override val projectId: ExternalSystemProjectId = ExternalSystemProjectId(SYSTEM_ID, projectRootDir.pathString)
+  override val projectId: ExternalSystemProjectId = ExternalSystemProjectId(PY_PROJECT_SYSTEM_ID, projectRootDir.pathString)
 
 
   @get:RequiresBackgroundThread
@@ -69,7 +65,7 @@ class PyExternalSystemProjectAware private constructor(
   }
 
   override fun reloadProject(context: ExternalSystemProjectReloadContext) {
-    project.service<PyExternalSystemProjectAwareService>().scope.launchTracked {
+    project.service<PyProjectScopeService>().scope.launchTracked {
       reloadProjectImpl()
     }
   }
@@ -115,17 +111,12 @@ class PyExternalSystemProjectAware private constructor(
      */
     @ApiStatus.Internal
     @VisibleForTesting
-    suspend fun create(project: Project): PyExternalSystemProjectAware {
+    fun create(project: Project): PyExternalSystemProjectAware {
       assert(!project.isDefault) { "Default project not supported" }
-      val baseDir = withContext(Dispatchers.IO) {
-        // guessPath doesn't work: it returns first module path
-        project.stateStore.projectBasePath
-      }
+      // guessPath doesn't work: it returns first module path
+      val baseDir = project.stateStore.projectBasePath
       return PyExternalSystemProjectAware(project, baseDir)
     }
-
-    @Suppress("DialogTitleCapitalization") //pyproject.toml can't be capitalized
-    private val SYSTEM_ID = ProjectSystemId("pyproject.toml", PyProjectTomlBundle.message("intellij.python.pyproject.system.name"))
   }
 }
 
@@ -134,8 +125,5 @@ class PyExternalSystemProjectAware private constructor(
 private val PROJECT_AWARE_TOPIC: Topic<ExternalSystemProjectListener> =
   Topic(ExternalSystemProjectListener::class.java, Topic.BroadcastDirection.NONE)
 
-
-@Service(Service.Level.PROJECT)
-private class PyExternalSystemProjectAwareService(val scope: CoroutineScope)
 
 private val log = fileLogger()

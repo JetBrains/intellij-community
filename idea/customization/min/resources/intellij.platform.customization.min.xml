@@ -35,7 +35,7 @@
     </group>
 
     <group id="WelcomeScreen.DefaultNewProjectActionGroup" class="com.intellij.ide.actions.DefaultNewProjectActionGroup">
-      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
+      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="before" relative-to-action="WelcomeScreen.OpenProject"/>
     </group>
 
     <action id="WelcomeScreen.DefaultNewProjectAction" class="com.intellij.ide.actions.DefaultNewProjectAction">

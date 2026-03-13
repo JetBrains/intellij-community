@@ -9,7 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 
-class PushSettingsToServerCommand(text: @NonNls String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
+internal class PushSettingsToServerCommand(text: @NonNls String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {
     const val PREFIX: @NonNls String = CMD_PREFIX + "pushSettingsToServer"
   }

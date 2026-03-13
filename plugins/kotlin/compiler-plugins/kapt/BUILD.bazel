@@ -26,4 +26,21 @@ jvm_library(
     "//plugins/gradle:gradle-common",
   ]
 )
+
+jvm_library(
+  name = "kapt_test_lib",
+  module_name = "intellij.kotlin.compilerPlugins.kapt",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":kapt",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//plugins/kotlin/gradle/gradle-java:gradle-java_test_lib",
+    "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//plugins/gradle:gradle-common_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.kotlin.compilerPlugins.kapt` end

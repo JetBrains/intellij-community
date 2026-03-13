@@ -1,4 +1,5 @@
 // "Add constructor parameters from A(vararg String)" "true"
+// K2_ERROR: This type has a constructor, so it must be initialized here.
 open class A(vararg strings: String = arrayOf("a", "b"))
 
 class B : A<caret>

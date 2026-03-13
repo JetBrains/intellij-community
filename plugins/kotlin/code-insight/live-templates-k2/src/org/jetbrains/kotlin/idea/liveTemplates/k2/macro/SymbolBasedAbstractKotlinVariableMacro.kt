@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.ExpectedExpressionMatcherProvider
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
-import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.liveTemplates.macro.KotlinMacro
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -62,8 +62,7 @@ abstract class SymbolBasedAbstractKotlinVariableMacro : KotlinMacro() {
         val psiDocumentManager = PsiDocumentManager.getInstance(project)
         psiDocumentManager.commitAllDocuments()
 
-        val document = context.editor?.document ?: return null
-        val file = psiDocumentManager.getPsiFile(document) as? KtFile ?: return null
+        val file = context.psiFile as? KtFile ?: return null
 
         val targetElement = file.findElementAt(context.startOffset) ?: return null
         val contextElement = targetElement.getNonStrictParentOfType<KtElement>() ?: return null

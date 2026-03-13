@@ -6,8 +6,18 @@ import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemDescriptorBase;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionRVContentProvider;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.QuickFixAction;
+import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.codeInspection.ex.Tools;
 import com.intellij.codeInspection.offlineViewer.OfflineInspectionRVContentProvider;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -26,12 +36,26 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorKind;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -39,7 +63,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -47,9 +75,19 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.*;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.ScrollableContentBorder;
+import com.intellij.ui.Side;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.util.Alarm;
@@ -60,15 +98,29 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 
@@ -498,7 +550,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
     }
     EditorEx previewEditor = null;
     if (previewPanel == null) {
-      final Pair<JComponent, EditorEx> panelAndEditor = ReadAction.compute(() -> createBaseRightComponentFor(problemCount, refEntity));
+      var panelAndEditor = ReadAction.computeBlocking(() -> createBaseRightComponentFor(problemCount, refEntity));
       previewPanel = panelAndEditor.getFirst();
       previewEditor = panelAndEditor.getSecond();
     }
@@ -529,7 +581,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
     }
     if (previewEditor != null) {
       EditorEx editor = previewEditor;
-      ReadAction.run(() -> ProblemPreviewEditorPresentation.setupFoldingsAndHighlightProblems(editor, this));
+      ReadAction.runBlocking(() -> ProblemPreviewEditorPresentation.setupFoldingsAndHighlightProblems(editor, this));
     }
     mySplitter.setSecondComponent(editorPanel);
   }
@@ -643,7 +695,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
   }
 
   void addProblemDescriptors(InspectionToolWrapper<?,?> wrapper, RefEntity refElement, CommonProblemDescriptor[] descriptors) {
-    updateTree(() -> ReadAction.run(() -> {
+    updateTree(() -> ReadAction.runBlocking(() -> {
       if (!isDisposed()) {
         final AnalysisUIOptions uiOptions = myGlobalInspectionContext.getUIOptions();
         final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(wrapper);
@@ -724,7 +776,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
       final HighlightDisplayKey key = HighlightDisplayKey.find(defaultToolWrapper.getShortName());
       for (ScopeToolState state : myProvider.getTools(currentTools)) {
         InspectionToolWrapper<?,?> toolWrapper = state.getTool();
-        if (ReadAction.compute(() -> myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper))) {
+        if (ReadAction.computeBlocking(() -> myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper))) {
           addTool(toolWrapper,
                   profile.getErrorLevel(key, state.getScope(getProject()), getProject()),
                   isGroupedBySeverity,
@@ -903,7 +955,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
         InspectionToolWrapper<?,?> toolWrapper = state.getTool();
         ThreeState hasReportedProblems = context.getPresentation(toolWrapper).hasReportedProblems();
         if (hasReportedProblems == ThreeState.NO) continue;
-        if (hasReportedProblems == ThreeState.YES || ReadAction.compute(() -> contentProvider.checkReportedProblems(context, toolWrapper))) {
+        if (hasReportedProblems == ThreeState.YES || ReadAction.computeBlocking(() -> contentProvider.checkReportedProblems(context, toolWrapper))) {
           return true;
         }
       }

@@ -11,6 +11,7 @@ import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.lw.PropertiesProvider;
 import org.jdom.Document;
 import org.jdom.input.SAXBuilder;
+import org.jetbrains.annotations.NotNull;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -41,11 +42,27 @@ public final class Utils {
 
   private static SAXParser createParser() {
     try {
-      return SAXParserFactory.newInstance().newSAXParser();
+      SAXParserFactory factory = SAXParserFactory.newInstance();
+      try {
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+      }
+      catch (Exception ignored) {
+      }
+      return factory.newSAXParser();
     }
     catch (Exception e) {
       return null;
     }
+  }
+
+  private static @NotNull SAXBuilder createBuilder() {
+    SAXBuilder builder = new SAXBuilder();
+    builder.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+    builder.setFeature("http://xml.org/sax/features/external-general-entities", false);
+    builder.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+    return builder;
   }
 
   /**
@@ -56,7 +73,7 @@ public final class Utils {
       throw new AlienFormFileException();
     }
 
-    final Document document = new SAXBuilder().build(new StringReader(formFileContent), "UTF-8");
+    final Document document = createBuilder().build(new StringReader(formFileContent), "UTF-8");
 
     return getRootContainerFromDocument(document, provider);
   }
@@ -70,7 +87,7 @@ public final class Utils {
    * @throws Exception if there is a problem with parsing DOM
    */
   public static LwRootContainer getRootContainer(final URL formFile, final PropertiesProvider provider) throws Exception {
-    final Document document = new SAXBuilder().build(formFile);
+    final Document document = createBuilder().build(formFile);
     return getRootContainerFromDocument(document, provider);
   }
 
@@ -90,7 +107,7 @@ public final class Utils {
   }
 
   public static LwRootContainer getRootContainer(final InputStream stream, final PropertiesProvider provider) throws Exception {
-    final Document document = new SAXBuilder().build(stream, "UTF-8");
+    final Document document = createBuilder().build(stream, "UTF-8");
 
     return getRootContainerFromDocument(document, provider);
   }

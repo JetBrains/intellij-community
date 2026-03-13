@@ -1,8 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(FlowPreview::class)
 
 package com.intellij.openapi.wm.impl
 
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.ClientId.Companion.withExplicitClientId
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
@@ -17,7 +19,20 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionGroupWrapper
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.ActionWrapperUtil
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.Constraints
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
+import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.application.ApplicationManager
@@ -29,15 +44,34 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
-import com.intellij.openapi.util.*
-import com.intellij.openapi.wm.*
+import com.intellij.openapi.util.ActionCallback
+import com.intellij.openapi.util.BusyObject
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.ExpirableRunnable
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.wm.FocusWatcher
+import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.ToolWindowContentUiType
+import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowType
+import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
+import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.toolWindow.FocusTask
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.toolWindow.ToolWindowProperty
-import com.intellij.ui.*
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.ComponentTreeWatcher
+import com.intellij.ui.ComponentUtil
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.LayeredIcon
+import com.intellij.ui.ScrollPaneTracker
+import com.intellij.ui.ScrollableContentBorder
+import com.intellij.ui.UIBundle
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerEvent
@@ -52,7 +86,11 @@ import com.intellij.util.SingleAlarm
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.ui.*
+import com.intellij.util.ui.ComponentWithEmptyText
+import com.intellij.util.ui.EDT
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StatusText
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.collections.immutable.PersistentList
@@ -66,6 +104,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.AWTEvent
 import java.awt.Color
 import java.awt.Component
@@ -75,10 +114,17 @@ import java.awt.event.ComponentEvent
 import java.awt.event.InputEvent
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.LayoutFocusTraversalPolicy
+import javax.swing.SwingUtilities
 import kotlin.math.abs
+import kotlin.time.Duration.Companion.milliseconds
 
-@ApiStatus.Internal class ToolWindowImpl(
+private val LOG = logger<ToolWindowManagerImpl>()
+
+@Internal class ToolWindowImpl(
   @JvmField val toolWindowManager: ToolWindowManagerImpl,
   private val id: String,
   private val canCloseContent: Boolean,
@@ -90,6 +136,7 @@ import kotlin.math.abs
   private var isAvailable: Boolean = true,
   private var stripeTitleProvider: Supplier<@NlsContexts.TabTitle String>,
 ) : ToolWindowEx {
+  private val toolWindowClientId = ClientId.current
   private val contentFactory: AtomicReference<ToolWindowFactory?> = AtomicReference(contentFactory)
 
   @JvmField
@@ -142,7 +189,9 @@ import kotlin.math.abs
   private var tabsSplittingAllowed: Boolean = false
 
   private val contentManager = SynchronizedClearableLazy {
-    val result = createContentManager()
+    val result = withExplicitClientId(toolWindowClientId) {
+      createContentManager()
+    }
     if (toolWindowManager.isNewUi) {
       result.addContentManagerListener(UpdateBackgroundContentManager())
     }
@@ -161,18 +210,18 @@ import kotlin.math.abs
 
     toolWindowManager.coroutineScope.launch {
       moveOrResizeRequests
-        .debounce(100)
+        .debounce(100.milliseconds)
         .collectLatest {
           withContext(Dispatchers.EDT) {
             val decorator = decorator
             if (decorator != null) {
-              toolWindowManager.log().debug { "Invoking scheduled tool window $id bounds update" }
+              LOG.debug { "Invoking scheduled tool window $id bounds update" }
               toolWindowManager.movedOrResized(decorator)
             }
             val updatedWindowInfo = toolWindowManager.getLayout().getInfo(getId())
             if (updatedWindowInfo != null) {
               this@ToolWindowImpl.windowInfo = updatedWindowInfo
-              toolWindowManager.log().debug { "Updated window info: $updatedWindowInfo" }
+              LOG.debug { "Updated window info: $updatedWindowInfo" }
             }
           }
         }
@@ -193,8 +242,8 @@ import kotlin.math.abs
 
   internal fun updateContentBackgroundColors() {
     val color = JBUI.CurrentTheme.ToolWindow.background()
-
-    for (content in contentManager.value.contents) {
+    val contentManager = contentManager.valueIfInitialized ?: return
+    for (content in contentManager.contents) {
       InternalDecoratorImpl.setBackgroundRecursively(content.component, color)
     }
   }
@@ -245,8 +294,8 @@ import kotlin.math.abs
     decorator.applyWindowInfo(windowInfo)
     decorator.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent) {
-        if (toolWindowManager.log().isTraceEnabled) {
-          toolWindowManager.log().trace("Tool window $id internal decorator resized to ${decorator.bounds}, scheduling bounds update")
+        if (LOG.isTraceEnabled) {
+          LOG.trace("Tool window $id internal decorator resized to ${decorator.bounds}, scheduling bounds update")
         }
         onMovedOrResized()
       }
@@ -287,7 +336,7 @@ import kotlin.math.abs
   internal fun hasTopToolbar(): Boolean {
     val decorator = decorator ?: return false
     val header = decorator.header
-    val headerBounds = SwingUtilities.convertRectangle(header.parent, header.bounds, decorator)
+    val headerBounds = ComponentUtil.convertRectangle(header.parent, header.bounds, decorator)
     val component = UIUtil.getDeepestComponentAt(
       decorator, headerBounds.width/2, headerBounds.height * 3 / 2)
     return UIUtil.getParentOfType(ActionToolbar::class.java, component) != null
@@ -332,7 +381,7 @@ import kotlin.math.abs
   private fun isTouchingHeader(component: JComponent): Boolean {
     return componentBoundsSatisfy(component) { componentBounds, decorator ->
       val header = decorator.header
-      val headerBounds = SwingUtilities.convertRectangle(header.parent, header.bounds, decorator)
+      val headerBounds = ComponentUtil.convertRectangle(header.parent, header.bounds, decorator)
       componentBounds.y == headerBounds.y + headerBounds.height
     }
   }
@@ -361,7 +410,7 @@ import kotlin.math.abs
       return false
     }
     else {
-      val componentBounds = SwingUtilities.convertRectangle(component.parent, component.bounds, decorator)
+      val componentBounds = ComponentUtil.convertRectangle(component.parent, component.bounds, decorator)
       return predicate(componentBounds, decorator)
     }
   }
@@ -375,10 +424,10 @@ import kotlin.math.abs
   }
 
   internal fun applyWindowInfo(info: WindowInfo) {
-    if (toolWindowManager.log().isDebugEnabled) {
-      toolWindowManager.log().debug("Applying window info: $info")
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Applying window info: $info")
       if (windowInfo.contentUiType != info.contentUiType) {
-        toolWindowManager.log().debug("Content UI type changed: ${windowInfo.contentUiType} -> ${info.contentUiType}")
+        LOG.debug("Content UI type changed: ${windowInfo.contentUiType} -> ${info.contentUiType}")
       }
     }
     windowInfo = info
@@ -608,7 +657,7 @@ import kotlin.math.abs
 
   override fun getStripeTitle(): String = stripeTitleProvider.get()
 
-  override fun getStripeTitleProvider() = stripeTitleProvider
+  override fun getStripeTitleProvider(): Supplier<@NlsContexts.TabTitle String> = stripeTitleProvider
 
   override fun setIcon(newIcon: Icon) {
     EDT.assertIsEdt()
@@ -653,7 +702,7 @@ import kotlin.math.abs
     stripeTitleProvider = title
   }
 
-  override fun getStripeShortTitleProvider() = stripeShortTitleProvider
+  override fun getStripeShortTitleProvider(): Supplier<@NlsContexts.TabTitle String>? = stripeShortTitleProvider
 
   override fun setStripeShortTitleProvider(title: Supplier<String>) {
     stripeShortTitleProvider = title

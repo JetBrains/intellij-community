@@ -142,10 +142,10 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
 
         // add other methods with augmented references to methodToFind
         for (CallHierarchyElementProvider provider : CallHierarchyElementProvider.EP_NAME.getExtensionList()) {
-          final Collection<PsiMethod> referencedMethods = provider.provideReferencedMethods(methodToFind);
-          referencedMethods.forEach(referencedMethod -> {
+          final Collection<PsiMember> referencedMethods = provider.provideReferencedMembers(methodToFind);
+          referencedMethods.forEach(referencedMember -> {
             final Map<PsiMember, NodeDescriptor<?>> nodeDescriptorMap = data.getResultMap();
-            nodeDescriptorMap.computeIfAbsent(referencedMethod,
+            nodeDescriptorMap.computeIfAbsent(referencedMember,
                                               psiMember -> new CallHierarchyNodeDescriptor(myProject, descriptor, psiMember,
                                                                                            false, true));
           });

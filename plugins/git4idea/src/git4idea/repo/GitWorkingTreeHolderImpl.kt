@@ -3,23 +3,42 @@ package git4idea.repo
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.platform.util.coroutines.childScope
 import git4idea.GitWorkingTree
 import git4idea.commands.Git
 import git4idea.remoteApi.GitRepositoryFrontendSynchronizer
 import git4idea.workingTrees.GitListWorktreeLineListener
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
-class GitWorkingTreeHolderImpl(repository: GitRepository) : GitWorkingTreeHolder,
-                                                            GitRepositoryDataHolder(repository, "GitWorkingTreeHolder") {
-  private var workingTrees: Collection<GitWorkingTree> = emptyList()
+internal class GitWorkingTreeHolderImpl(private val repository: GitRepository) : GitWorkingTreeHolder {
+  private val cs = repository.coroutineScope.childScope("GitWorkingTreeHolderImpl")
 
-  override fun getWorkingTrees(): Collection<GitWorkingTree> {
-    return workingTrees
+  private val updateLock = Mutex()
+  private val _state = MutableStateFlow<Collection<GitWorkingTree>>(emptyList())
+
+  override fun getWorkingTrees(): Collection<GitWorkingTree> = _state.value
+
+  override fun scheduleReload() {
+    cs.launch { updateState() }
   }
 
-  override suspend fun updateState() {
-    workingTrees = readWorkingTreesFromGit()
-    BackgroundTaskUtil.syncPublisher(repository.project, GitRepositoryFrontendSynchronizer.TOPIC).workingTreesLoaded(repository)
+  fun reloadBlocking() {
+    runBlockingCancellable { updateState() }
+  }
+
+  suspend fun updateState() {
+    updateLock.withLock {
+      _state.value = withContext(Dispatchers.IO) {
+        readWorkingTreesFromGit()
+      }
+      repository.project.messageBus.syncPublisher(GitRepositoryFrontendSynchronizer.TOPIC).workingTreesLoaded(repository)
+    }
   }
 
   private fun readWorkingTreesFromGit(): Collection<GitWorkingTree> {

@@ -2,9 +2,14 @@
 package com.intellij.util.indexing
 
 import com.intellij.openapi.util.io.ByteArraySequence
-import com.intellij.psi.stubs.*
+import com.intellij.psi.stubs.ObjectStubBase
+import com.intellij.psi.stubs.SerializedStubTree
+import com.intellij.psi.stubs.Stub
+import com.intellij.psi.stubs.StubElement
+import com.intellij.psi.stubs.StubIdList
+import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Base64
 
 @ApiStatus.Internal
 object IndexDataPresenter {

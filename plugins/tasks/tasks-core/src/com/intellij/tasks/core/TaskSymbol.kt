@@ -9,6 +9,7 @@ import com.intellij.markdown.utils.doc.DocMarkdownToHtmlConverter
 import com.intellij.model.Pointer
 import com.intellij.model.Pointer.hardPointer
 import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.project.Project
@@ -22,6 +23,7 @@ import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbol.TextAttributesKeyProperty
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolProperty
 import com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
@@ -155,11 +157,14 @@ sealed class AbstractTaskSymbol : PolySymbol, DocumentationSymbol {
       description(description.toString())
     }
 
+  @PolySymbol.Property(TextAttributesKeyProperty::class)
+  private val textAttributesKey: TextAttributesKey
+    get() = EditorColors.REFERENCE_HYPERLINK_COLOR
+
   override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
     when (property) {
-      PolySymbol.PROP_IJ_TEXT_ATTRIBUTES_KEY -> property.tryCast(EditorColors.REFERENCE_HYPERLINK_COLOR.externalName)
       TASK_PROPERTY -> property.tryCast(task)
-      else -> null
+      else -> super.get(property)
     }
 
   override val presentation: TargetPresentation

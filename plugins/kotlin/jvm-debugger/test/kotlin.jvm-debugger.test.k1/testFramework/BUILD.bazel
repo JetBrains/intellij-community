@@ -1,0 +1,89 @@
+### skip generation section `test kotlin.jvm-debugger.test.k1.testFramework`
+
+### auto-generated section `build kotlin.jvm-debugger.test.k1.testFramework` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_testFramework",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
+
+jvm_library(
+  name = "testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "testFramework_test_lib",
+  module_name = "kotlin.jvm-debugger.test.k1.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_testFramework",
+  deps = [
+    "@lib//:kotlin-test",
+    "@lib//:kotlinc-kotlin-compiler-cli",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//plugins/stream-debugger-core:debugger-streams-core",
+    "//plugins/stream-debugger-core:debugger-streams-core_test_lib",
+    "//plugins/stream-debugger-core/testFramework",
+    "//plugins/stream-debugger-core/testFramework:testFramework_test_lib",
+    "//java/debugger/openapi:java-debugger",
+    "//java/debugger/openapi:java-debugger_test_lib",
+    "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
+    "//plugins/stream-debugger:java-debugger-streams",
+    "//plugins/stream-debugger:java-debugger-streams_test_lib",
+    "//java/execution/openapi:java-execution",
+    "//java/execution/openapi:java-execution_test_lib",
+    "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/tests-common:common-tests",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/kotlin/jvm-debugger/core",
+    "//plugins/kotlin/jvm-debugger/core:core_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/execution",
+    "//platform/execution:execution_test_lib",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-api:externalSystem_test_lib",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/lang-core",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
+    "//plugins/kotlin/base/scripting/scripting.k1",
+    "//plugins/kotlin/base/scripting/scripting.k1:scripting.k1_test_lib",
+    "//plugins/kotlin/base/test",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common",
+    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common:common_test_lib",
+    "//plugins/kotlin/jvm-debugger/core-fe10",
+    "//plugins/kotlin/jvm-debugger/core-fe10:core-fe10_test_lib",
+    "//plugins/kotlin/jvm-debugger/evaluation",
+    "//plugins/kotlin/jvm-debugger/evaluation:evaluation_test_lib",
+    "//plugins/kotlin/jvm-debugger/sequence:kotlin-jvm-debugger-sequence-k1",
+    "//plugins/kotlin/jvm-debugger/sequence:kotlin-jvm-debugger-sequence-k1_test_lib",
+    "//plugins/kotlin/jvm-debugger/testFramework",
+    "//plugins/kotlin/jvm-debugger/testFramework:testFramework_test_lib",
+  ],
+  runtime_deps = [
+    ":testFramework",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+  ]
+)
+### auto-generated section `build kotlin.jvm-debugger.test.k1.testFramework` end

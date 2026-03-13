@@ -27,4 +27,28 @@ jvm_library(
   ],
   exports = ["//platform/remote-servers/agent-rt:remoteServers-agent-rt"]
 )
+
+jvm_library(
+  name = "remoteServers_test_lib",
+  module_name = "intellij.platform.remoteServers",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//platform/remote-servers/agent-rt:remoteServers-agent-rt",
+    "//platform/remote-servers/agent-rt:remoteServers-agent-rt_test_lib",
+  ],
+  runtime_deps = [
+    ":remoteServers",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/remote-servers/agent-rt:remoteServers-agent-rt_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.remoteServers` end

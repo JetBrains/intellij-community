@@ -12,7 +12,14 @@ import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Font
-import javax.swing.*
+import javax.swing.Action
+import javax.swing.Box
+import javax.swing.BoxLayout
+import javax.swing.Icon
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.SwingConstants
 import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.LabelUI
 

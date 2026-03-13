@@ -8,10 +8,12 @@ import com.jetbrains.python.packaging.management.findPackageSpecification
 import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.packaging.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.repository.PyPackageRepository
+import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
+import kotlin.collections.emptyList
 
 open class PythonPackage(name: String, val version: String, val isEditableMode: Boolean) {
   companion object {
@@ -28,17 +30,17 @@ open class PythonPackage(name: String, val version: String, val isEditableMode: 
   open val sourceRepoIcon: Icon? = null
 
   override fun toString(): String {
-    return "PythonPackage(name='$name', version='$version')"
+    return "PythonPackage(name='${this@PythonPackage.name}', version='$version')"
   }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is PythonPackage) return false
-    return name == other.name && version == other.version && isEditableMode == other.isEditableMode
+    return this@PythonPackage.name == other.name && version == other.version && isEditableMode == other.isEditableMode
   }
 
   override fun hashCode(): Int {
-    var result = name.hashCode()
+    var result = this@PythonPackage.name.hashCode()
     result = HASH_MULTIPLIER * result + version.hashCode()
     result = HASH_MULTIPLIER * result + isEditableMode.hashCode()
     return result
@@ -51,8 +53,44 @@ open class PythonPackage(name: String, val version: String, val isEditableMode: 
 
   @ApiStatus.Internal
   fun toPyPackage(): PyPackage {
-    return PyPackage(name, version)
+    return PyPackage(this@PythonPackage.name, version)
   }
+
+  @ApiStatus.Internal
+  fun toPyRequirement(): PyRequirement {
+    val versionSpec = if (version.isNotEmpty()) {
+      pyRequirementVersionSpec(PyRequirementRelation.EQ, version)
+    } else {
+      null
+    }
+    return pyRequirement(presentableName, versionSpec)
+  }
+}
+
+/**
+ * Converts a list of [PythonPackage] to a list of [PyRequirement].
+ * Each package is converted to a requirement with an exact version constraint.
+ */
+@ApiStatus.Internal
+fun List<PythonPackage>.toRequirements(): List<PyRequirement> = map { it.toPyRequirement() }
+
+/**
+ * Converts a [PyRequirement] to a [PythonPackage].
+ */
+@ApiStatus.Internal
+fun PyRequirement.toPythonPackage(): PythonPackage {
+  val exactVersionSpec = versionSpecs.firstOrNull { it.relation == PyRequirementRelation.EQ }
+  return PythonPackage(presentableTextWithoutVersion, exactVersionSpec?.version ?: "", isEditable)
+}
+
+/**
+ * Converts a list of [PyRequirement] to a list of [PythonPackage].
+ * Only requirements with exact version constraints (==) are converted.
+ * Requirements without exact versions are filtered out.
+ */
+@ApiStatus.Internal
+fun List<PyRequirement>.toPythonPackages(): List<PythonPackage> {
+  return mapNotNull { it.toPythonPackage() }
 }
 
 class PythonOutdatedPackage(name: String, version: String, val latestVersion: String)

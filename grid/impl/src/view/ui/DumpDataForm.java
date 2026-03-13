@@ -45,7 +45,6 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.ui.LabeledComponentNoThrow;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Disposer;
@@ -62,6 +61,9 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -77,6 +79,7 @@ import javax.swing.JEditorPane;
 import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Window;
 import java.awt.event.FocusEvent;
@@ -122,8 +125,8 @@ public class DumpDataForm {
   private static final int MAX_SOURCE_HEIGHT = 100;
   private static final Logger LOG = Logger.getInstance(DumpDataForm.class);
   private static final Set<String> EXTRACTORS_NO_TRANSPOSE = Set.of("SQL-Insert-Statements.sql.groovy",
-                                                                               "JSON-Groovy.json.groovy",
-                                                                               "Python-DataFrame.py.groovy");
+                                                                    "JSON-Groovy.json.groovy",
+                                                                    "Python-DataFrame.py.groovy");
   private final Project myProject;
   private final DumpSource<?> mySource;
   private final @NotNull Supplier<? extends Window> myWindowSupplier;
@@ -132,20 +135,19 @@ public class DumpDataForm {
   private final JBPanelWithEmptyText emptyTextPanel =
     new JBPanelWithEmptyText().withEmptyText(DataGridBundle.message("settings.database.DumpDialog.Preview.NoPreview"));
 
-  public JPanel myPanel;
-  private JBCheckBox myAddComputed;
-  private JBCheckBox myAddGenerated;
-  private JBCheckBox myAddTableDefinition;
-  private LabeledComponent<JComponent> myPreviewLabeledComponent;
-  private JBCheckBox myTranspose;
-  private JBLabel myAddColumnsLabel;
-  private LabeledComponentNoThrow<TextFieldWithBrowseButton> myOutputFileOrDirectory;
+  public final JPanel myPanel;
+  private final JBCheckBox myAddComputed;
+  private final JBCheckBox myAddGenerated;
+  private final JBCheckBox myAddTableDefinition;
+  private final LabeledComponent<JComponent> myPreviewLabeledComponent;
+  private final JBCheckBox myTranspose;
+  private final JBLabel myAddColumnsLabel;
+  private final LabeledComponent<TextFieldWithBrowseButton> myOutputFileOrDirectory;
   private final OutputPathManager myOutputPathManager;
-  private LabeledComponentNoThrow<ComboBox<DataExtractorFactory>> myExtractorCombobox;
-  private LabeledComponentNoThrow<JBScrollPane> mySourceLabeledComponent;
-  private JBCheckBox myAddColumnHeader;
-  private JBCheckBox myAddRowHeader;
-  private JBCheckBox myAddQuery;
+  private final LabeledComponent<ComboBox<DataExtractorFactory>> myExtractorCombobox;
+  private final JBCheckBox myAddColumnHeader;
+  private final JBCheckBox myAddRowHeader;
+  private final JBCheckBox myAddQuery;
 
   protected Disposable myDisposable;
 
@@ -159,9 +161,97 @@ public class DumpDataForm {
     mySource = source;
     myWindowSupplier = windowSupplier;
     mySupportsAddQuery = supportsAddQuery;
+    LabeledComponent<JBScrollPane> sourceLabeledComponent;
+    {
+      myPanel = new JPanel();
+      myPanel.setLayout(new GridLayoutManager(3, 2, JBUI.emptyInsets(), -1, -1));
+      final JPanel panel1 = new JPanel();
+      panel1.setLayout(new BorderLayout(0, 0));
+      myPanel.add(panel1, new GridConstraints(0, 1, 3, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                              new Dimension(400, 500), null, 0, false));
+      myPreviewLabeledComponent = new LabeledComponent<>();
+      myPreviewLabeledComponent.setLabelInsets(JBUI.insetsBottom(5));
+      myPreviewLabeledComponent.setText(DataGridBundle.message("settings.database.DumpDialog.Preview"));
+      panel1.add(myPreviewLabeledComponent, BorderLayout.CENTER);
+      final JPanel panel2 = new JPanel();
+      panel2.setLayout(new GridLayoutManager(12, 4, JBUI.emptyInsets(), -1, -1));
+      myPanel.add(panel2, new GridConstraints(0, 0, 2, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_VERTICAL, 1,
+                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                              new Dimension(400, -1), new Dimension(400, -1), new Dimension(400, -1), 0, false));
+      myAddComputed = new JBCheckBox(DataGridBundle.message("settings.database.DumpDialog.ComputedColumns"));
+      panel2.add(myAddComputed, new GridConstraints(3, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, 1,
+                                                    GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myAddColumnsLabel = new JBLabel(DataGridBundle.message("settings.database.DumpDialog.AddColumns"));
+      panel2.add(myAddColumnsLabel,
+                 new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myAddGenerated = new JBCheckBox(DataGridBundle.message("settings.database.DumpDialog.GeneratedColumns"));
+      panel2.add(myAddGenerated,
+                 new GridConstraints(3, 2, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final Spacer spacer1 = new Spacer();
+      panel2.add(spacer1, new GridConstraints(3, 3, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                              GridConstraints.SIZEPOLICY_CAN_GROW, 1, null, null, null, 0, false));
+      final Spacer spacer2 = new Spacer();
+      panel2.add(spacer2, new GridConstraints(9, 2, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+                                              GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(-1, 10), null, 0, false));
+      myTranspose = new JBCheckBox(DataGridBundle.message("settings.database.DumpDialog.Transpose"));
+      panel2.add(myTranspose,
+                 new GridConstraints(4, 0, 1, 4, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myAddTableDefinition = new JBCheckBox(DataGridBundle.message("settings.database.DumpDialog.AddTableDefinition"));
+      panel2.add(myAddTableDefinition,
+                 new GridConstraints(7, 0, 1, 4, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myOutputFileOrDirectory = LabeledComponent.create(
+        new TextFieldWithBrowseButton(),
+        DataGridBundle.message("settings.database.DumpDialog.SaveTo.File")
+      );
+      panel2.add(myOutputFileOrDirectory, new GridConstraints(10, 0, 1, 4, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                              null, null, null, 0, false));
+      myExtractorCombobox = LabeledComponent.create(
+        new ComboBox<>(),
+        DataGridBundle.message("settings.database.DumpDialog.Extractor")
+      );
+      panel2.add(myExtractorCombobox, new GridConstraints(2, 0, 1, 4, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                          GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                          GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                          new Dimension(295, -1), new Dimension(295, -1), 0, false));
+      sourceLabeledComponent = LabeledComponent.create(
+        new JBScrollPane(),
+        DataGridBundle.message("settings.database.DumpDialog.Source")
+      );
+      sourceLabeledComponent.setLabelInsets(JBUI.insetsBottom(5));
+      panel2.add(sourceLabeledComponent, new GridConstraints(0, 0, 1, 4, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL,
+                                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                             null, null, null, 0, false));
+      final Spacer spacer3 = new Spacer();
+      panel2.add(spacer3, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+                                              GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(-1, 10), null, 0, false));
+      final Spacer spacer4 = new Spacer();
+      panel2.add(spacer4, new GridConstraints(11, 0, 1, 4, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+                                              GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+      myAddColumnHeader = new JBCheckBox(DataGridBundle.message("settings.database.DumpDialog.AddColumnHeader"));
+      panel2.add(myAddColumnHeader,
+                 new GridConstraints(5, 0, 1, 4, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myAddRowHeader = new JBCheckBox(DataGridBundle.message("settings.database.DumpDialog.AddRowHeader"));
+      panel2.add(myAddRowHeader,
+                 new GridConstraints(6, 0, 1, 4, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myAddQuery = new JBCheckBox(DataGridBundle.message("settings.database.DumpDialog.Excel.AddQuery"));
+      panel2.add(myAddQuery,
+                 new GridConstraints(8, 0, 1, 4, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+    }
     String sourceText = getSourceText(mySource);
     if (sourceText == null) {
-      mySourceLabeledComponent.setVisible(false);
+      sourceLabeledComponent.setVisible(false);
     }
     else {
       JEditorPane pane = new JEditorPane();
@@ -170,7 +260,7 @@ public class DumpDataForm {
       pane.setText(sourceText);
       pane.setBackground(UIUtil.getPanelBackground());
 
-      JBScrollPane scrollPane = mySourceLabeledComponent.getComponent();
+      JBScrollPane scrollPane = sourceLabeledComponent.getComponent();
       scrollPane.setViewportView(pane);
       if (scrollPane.getPreferredSize().height > MAX_SOURCE_HEIGHT) {
         scrollPane.setPreferredSize(new Dimension(-1, 100));
@@ -218,7 +308,9 @@ public class DumpDataForm {
                           : new OutputDirectoryPathManager();
     myOutputFileOrDirectory.setText(myOutputPathManager.getFieldName());
     final String defaultFileName = prepareFileName(getName(mySource));
-    myOutputFileOrDirectory.getComponent().setText(getDefaultPath(defaultFileName, currentFactory));
+    if (currentFactory != null) {
+      myOutputFileOrDirectory.getComponent().setText(getDefaultPath(defaultFileName, currentFactory));
+    }
     myOutputFileOrDirectory.getComponent().getTextField().addFocusListener(new FocusListener() {
       @Override
       public void focusGained(FocusEvent e) {
@@ -353,10 +445,16 @@ public class DumpDataForm {
   public void updatePreview() {
     List<? extends GridRow> rows;
     List<? extends GridColumn> columns;
+    String previewLabelText = DataGridBundle.message("settings.database.DumpDialog.Preview");
     DataGrid grid = mySource instanceof DataGridSource ? ((DataGridSource)mySource).getGrid() : null;
     if (grid != null) {
       GridModel<GridRow, GridColumn> model = grid.getDataModel(DataAccessType.DATABASE_DATA);
-      rows = model.getRows(ModelIndexSet.forRows(grid, IntStream.range(0, Math.min(MAX_ROWS_FOR_PREVIEW, model.getRowCount())).toArray()));
+      int previewRowsCount = model.getRowCount();
+      if (previewRowsCount > MAX_ROWS_FOR_PREVIEW) {
+        previewRowsCount = MAX_ROWS_FOR_PREVIEW;
+        previewLabelText = DataGridBundle.message("settings.database.DumpDialog.Preview.Head", previewRowsCount);
+      }
+      rows = model.getRows(ModelIndexSet.forRows(grid, IntStream.range(0, previewRowsCount).toArray()));
       columns = model.getAllColumnsForExtraction();
     }
     else {
@@ -385,6 +483,7 @@ public class DumpDataForm {
                                    rows,
                                    grid != null ? grid.getVisibleColumns().asArray() : new int[]{});
     emptyTextPanel.setVisible(false);
+    myPreviewLabeledComponent.setText(previewLabelText);
     TextResultView.updateEditorText(myViewer, myProject,
                                     out.getString(),
                                     guessLanguage()
@@ -452,13 +551,23 @@ public class DumpDataForm {
   }
 
   public interface OutputPathManager {
-    @NotNull Path getFilePath(@NotNull Path dirPath, @NotNull String defaultName, @NotNull String extension);
+    @NotNull
+    Path getFilePath(@NotNull Path dirPath, @NotNull String defaultName, @NotNull String extension);
+
     @NlsContexts.Label
-    @NotNull String getFieldName();
-    @NotNull Path updateFileExtension(@NotNull Path filePath, @NotNull String extension);
-    @NotNull Path adjustChosenFile(@NotNull Path path, @NotNull String defaultName, @NotNull String extension);
+    @NotNull
+    String getFieldName();
+
+    @NotNull
+    Path updateFileExtension(@NotNull Path filePath, @NotNull String extension);
+
+    @NotNull
+    Path adjustChosenFile(@NotNull Path path, @NotNull String defaultName, @NotNull String extension);
+
     @NlsContexts.DialogMessage
-    @Nullable String validatePath(String path);
+    @Nullable
+    String validatePath(String path);
+
     void focusGained(@NotNull TextFieldWithBrowseButton field);
   }
 

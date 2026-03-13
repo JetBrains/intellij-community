@@ -12,7 +12,6 @@ import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.grazie.cloud.GrazieCloudConnector.Companion.seemsCloudConnected
-import com.intellij.grazie.grammar.LanguageToolChecker
 import com.intellij.grazie.ide.fus.AcceptanceRateTracker
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
@@ -26,12 +25,14 @@ import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieYtReportAction
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.spellcheck.TypoProblem
 import com.intellij.grazie.text.TextChecker.ProofreadingContext
+import com.intellij.grazie.utils.NaturalTextDetector.seemsNatural
 import com.intellij.grazie.utils.getTextDomain
 import com.intellij.grazie.utils.isGrammar
 import com.intellij.grazie.utils.isSpelling
 import com.intellij.grazie.utils.toProofreadingContext
 import com.intellij.lang.annotation.ProblemGroup
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -50,6 +51,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.CancellationException
 
 private val LOG = Logger.getInstance(CheckerRunner::class.java)
 
@@ -73,7 +75,7 @@ class CheckerRunner(val text: TextContent) {
 
   fun run(allCheckers: List<TextChecker>, checkedDomains: Set<TextContent.TextDomain>): List<TextProblem> {
     if (text.isBlank() || allCheckers.isEmpty()) return emptyList()
-    val checkers = if (text.domain !in checkedDomains) allCheckers.filterNot { it.isGrammar() } else allCheckers
+    val checkers = if (text.domain in checkedDomains && seemsNatural(text)) allCheckers else allCheckers.filterNot { it.isGrammar() }
     val languageDetectionRequired = checkers.any { it.isGrammar() } || checkers.any { it.isSpelling() } && seemsCloudConnected()
     return filter(doRun(checkers, text.toProofreadingContext(languageDetectionRequired)))
   }
@@ -100,11 +102,28 @@ class CheckerRunner(val text: TextContent) {
    * so that problems from the first checkers can override intersecting problems from others.
    */
   private fun doRun(checkers: List<TextChecker>, context: ProofreadingContext): Collection<TextProblem> {
+    // Spelling text checker optimization
+    // To get rid of expensive cancellable overhead,
+    // in case if cloud checking is disabled
+    if (checkers.size == 1 && checkers.first().isSpelling()) {
+      val checker = checkers.first()
+      return catching {
+        if (seemsCloudConnected() && checker is ExternalTextChecker) {
+          runBlockingCancellable {
+            checker.checkExternally(context)
+          }
+        }
+        else {
+          checker.check(context)
+        }
+      } ?: emptyList()
+    }
+
     return runBlockingCancellable {
       val deferred = checkers.map { checker ->
         when (checker) {
-          is ExternalTextChecker -> async { checker.checkExternally(context) }
-          else -> async(start = CoroutineStart.LAZY) { checker.check(context) }
+          is ExternalTextChecker -> async { catching { checker.checkExternally(context) } ?: emptyList()}
+          else -> async(start = CoroutineStart.LAZY) { catching { checker.check(context) } ?: emptyList() }
         }
       }
       for (job in deferred) {
@@ -289,6 +308,17 @@ class CheckerRunner(val text: TextContent) {
                     "PSI language: ${psi.language.id}, TextContent.fileRanges: ${problem.text.rangesInFile}")
         }
       }
+    }
+  }
+
+
+  private inline fun <T> catching(function: () -> T): T? {
+    try {
+      return function()
+    } catch (e: Throwable) {
+      if (e is CancellationException) throw e
+      thisLogger().error(e)
+      return null
     }
   }
 }

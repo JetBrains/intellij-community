@@ -4,7 +4,7 @@ package com.intellij.openapi.actionSystem;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Component;
 
 /**
  * Transient components like popup contents can retarget

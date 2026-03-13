@@ -24,4 +24,17 @@ jvm_library(
     "//platform/util/base",
   ]
 )
+
+jvm_library(
+  name = "product_test_lib",
+  module_name = "intellij.platform.runtime.product",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_product",
+  runtime_deps = [
+    ":product",
+    "//platform/runtime/repository:repository_test_lib",
+    "//platform/util/base:base_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.runtime.product` end

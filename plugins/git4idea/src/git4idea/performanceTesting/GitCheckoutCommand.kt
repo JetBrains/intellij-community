@@ -14,6 +14,7 @@ import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitBrancher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.await
 import org.jetbrains.concurrency.toPromise
@@ -24,6 +25,7 @@ import org.jetbrains.concurrency.toPromise
  * Example: %gitCheckout master
  * Example: %gitCheckout origin/1.1.11 1.1.11
  */
+@ApiStatus.Internal
 class GitCheckoutCommand(text: String, line: Int) : AbstractCommand(text, line, true) {
   companion object {
     const val PREFIX = "${CMD_PREFIX}gitCheckout"

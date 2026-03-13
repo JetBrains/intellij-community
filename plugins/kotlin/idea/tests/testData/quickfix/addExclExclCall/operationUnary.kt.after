@@ -1,4 +1,5 @@
 // "Add non-null asserted (p!!) call" "true"
+// K2_ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'SafeType?'.
 
 class SafeType {
     operator fun unaryMinus() {}

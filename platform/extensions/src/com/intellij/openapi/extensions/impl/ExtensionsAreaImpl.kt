@@ -7,7 +7,15 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.*
+import com.intellij.openapi.extensions.BaseExtensionPointName
+import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.openapi.extensions.ExtensionDescriptor
+import com.intellij.openapi.extensions.ExtensionPoint
+import com.intellij.openapi.extensions.ExtensionPointDescriptor
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.ExtensionsArea
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.containers.with
 import com.intellij.util.containers.withAll
@@ -16,7 +24,7 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.lang.reflect.Modifier
-import java.util.*
+import java.util.Collections
 
 private val LOG: Logger
   get() = logger<ExtensionsAreaImpl>()
@@ -122,6 +130,16 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
                                     pluginDescriptor = pluginDescriptor,
                                     isInterface = interfaceClassName != null,
                                     dynamic = dynamic)
+    }
+  }
+
+  fun registerExtensions(
+    extensions: Map<String, List<ExtensionDescriptor>>,
+    pluginDescriptor: PluginDescriptor,
+    listenerCallbacks: MutableList<ExtensionPointDeferredListenersNotification>?,
+  ) {
+    for ((descriptors, point) in intersectMaps(extensions, nameToPointMap)) {
+      point.registerExtensions(descriptors, pluginDescriptor = pluginDescriptor, listenerCallbacks)
     }
   }
 
@@ -303,3 +321,16 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
   override fun toString(): String = componentManager.toString()
 }
 
+private fun <K, V1, V2> intersectMaps(first: Map<K, V1>, second: Map<K, V2>): Sequence<Pair<V1, V2>> {
+  // Make sure we iterate the smaller map
+  return if (first.size < second.size) {
+    first.asSequence().mapNotNull { (key, firstValue) ->
+      second[key]?.let { secondValue -> firstValue to secondValue }
+    }
+  }
+  else {
+    second.asSequence().mapNotNull { (key, secondValue) ->
+      first[key]?.let { firstValue -> firstValue to secondValue }
+    }
+  }
+}

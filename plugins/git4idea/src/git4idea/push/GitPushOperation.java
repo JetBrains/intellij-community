@@ -114,7 +114,7 @@ public class GitPushOperation {
     return ForceMode.NONE;
   }
 
-  public GitPushOperation(@NotNull Project project,
+  GitPushOperation(@NotNull Project project,
                           @NotNull GitPushSupport pushSupport,
                           @NotNull @Unmodifiable Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
                           @Nullable GitPushTagMode tagMode,

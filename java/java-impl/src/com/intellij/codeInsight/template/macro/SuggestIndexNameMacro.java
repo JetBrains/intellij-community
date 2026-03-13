@@ -8,9 +8,7 @@ import com.intellij.codeInsight.template.Macro;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TextResult;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDeclarationStatement;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiIdentifier;
@@ -34,10 +32,10 @@ public final class SuggestIndexNameMacro extends Macro {
   public Result calculateResult(Expression @NotNull [] params, final ExpressionContext context) {
     if (params.length != 0) return null;
 
-    final Project project = context.getProject();
     final int offset = context.getStartOffset();
 
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
+    PsiFile file = context.getPsiFile();
+    if (file == null) return null;
     PsiElement place = file.findElementAt(offset);
     PsiVariable[] vars = MacroUtil.getVariablesVisibleAt(place, "");
   ChooseLetterLoop:

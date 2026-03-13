@@ -4,6 +4,7 @@ package com.intellij.execution.configuration
 import com.intellij.execution.ExecutionBundle
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.vfs.VirtualFile
@@ -16,7 +17,8 @@ import java.awt.Component
 import javax.swing.JComponent
 
 class EnvFilesDialog(parentComponent: JComponent,
-                     envFilePaths: List<String>): DialogWrapper(parentComponent, true) {
+                     envFilePaths: List<String>,
+                     val project: Project? = null): DialogWrapper(parentComponent, true) {
   private val model = CollectionListModel(envFilePaths)
   private val list = JBList(model)
   init {
@@ -26,7 +28,7 @@ class EnvFilesDialog(parentComponent: JComponent,
   }
   override fun createCenterPanel(): DialogPanel {
     val component = ToolbarDecorator.createDecorator(list).setAddAction {
-      addEnvFile(list) { model.add(it) }
+      addEnvFile(list, null, project) { model.add(it) }
     }.createPanel()
     return panel {
       row {
@@ -40,8 +42,14 @@ class EnvFilesDialog(parentComponent: JComponent,
   val paths: List<String> = model.items
 }
 
+
+@Deprecated("Use addEnvFile(component, toSelect, project, consumer")
 fun addEnvFile(component: Component, toSelect: VirtualFile? = null, consumer: (s: String) -> Unit) {
-  FileChooser.chooseFiles(FileChooserDescriptorFactory.createMultipleFilesNoJarsDescriptor(), null, component, toSelect,
+  addEnvFile(component, toSelect, null, consumer)
+}
+
+fun addEnvFile(component: Component, toSelect: VirtualFile? = null, project: Project? = null, consumer: (s: String) -> Unit) {
+  FileChooser.chooseFiles(FileChooserDescriptorFactory.createMultipleFilesNoJarsDescriptor(), project, component, toSelect,
                           { files ->
                             files.forEach { consumer(it.path) }
                           })

@@ -73,25 +73,24 @@ public class UnnecessaryFullyQualifiedNameFixTest extends IGQuickFixesTestCase {
     );
   }
 
-  @SuppressWarnings("DanglingJavadoc")
   public void testPackageInfo() {
     doTest(
       """
         /**
-         * @see javax.annotation.Generated
+         * @see javax.annotation.Nonnull
          */
-        @/**/javax.annotation.Generated
+        @/**/javax.annotation.Nonnull
         package p;
         """,
 
       """
         /**
-         * @see javax.annotation.Generated
+         * @see javax.annotation.Nonnull
          */
-        @Generated
+        @Nonnull
         package p;
 
-        import javax.annotation.Generated;""",
+        import javax.annotation.Nonnull;""",
       JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT, "package-info.java");
   }
 
@@ -160,20 +159,7 @@ public class UnnecessaryFullyQualifiedNameFixTest extends IGQuickFixesTestCase {
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {
-      """
-package javax.annotation;
-import java.lang.annotation.*;
-import static java.lang.annotation.ElementType.*;
-import static java.lang.annotation.RetentionPolicy.*;
-@Documented
-@Retention(SOURCE)
-@Target({PACKAGE, TYPE, ANNOTATION_TYPE, METHOD, CONSTRUCTOR, FIELD,
-        LOCAL_VARIABLE, PARAMETER})
-public @interface Generated {
-   String[] value();
-   String date() default "";
-   String comments() default "";
-}"""
+      "package javax.annotation; public @interface Nonnull {}"
     };
   }
 }

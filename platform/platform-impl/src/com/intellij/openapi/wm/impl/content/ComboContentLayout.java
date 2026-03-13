@@ -10,11 +10,13 @@ import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ui.JBUI;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 final class ComboContentLayout extends ContentLayout {
   ContentComboLabel comboLabel;

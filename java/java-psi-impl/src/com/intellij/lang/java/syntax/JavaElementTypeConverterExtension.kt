@@ -320,6 +320,7 @@ internal val javaPsiElementTypeConverter: ElementTypeConverter = elementTypeConv
   JavaDocSyntaxTokenType.DOC_TAG_VALUE_SLASH to JavaDocTokenType.DOC_TAG_VALUE_SLASH,
   JavaDocSyntaxTokenType.DOC_TAG_VALUE_SHARP_TOKEN to JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN,
   JavaDocSyntaxTokenType.DOC_TAG_VALUE_DOUBLE_SHARP_TOKEN to JavaDocTokenType.DOC_TAG_VALUE_DOUBLE_SHARP_TOKEN,
+  JavaDocSyntaxTokenType.DOC_TAG_FORMAT_STRING to JavaDocTokenType.DOC_TAG_FORMAT_STRING,
   JavaDocSyntaxTokenType.DOC_CODE_FENCE to JavaDocTokenType.DOC_CODE_FENCE,
   JavaDocSyntaxTokenType.DOC_RBRACKET to JavaDocTokenType.DOC_RBRACKET,
   JavaDocSyntaxTokenType.DOC_LBRACKET to JavaDocTokenType.DOC_LBRACKET,

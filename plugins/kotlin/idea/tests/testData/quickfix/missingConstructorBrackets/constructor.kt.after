@@ -1,4 +1,5 @@
 // "Add empty brackets after primary constructor" "true"
+// K2_ERROR: Data class must have at least one primary constructor parameter.
 // K2_AFTER_ERROR: Data class must have at least one primary constructor parameter.
 // ERROR: Data class must have at least one primary constructor parameter
 // ERROR: Unresolved reference: JvmOverloads

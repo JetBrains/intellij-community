@@ -6,9 +6,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
+import com.intellij.openapi.roots.JavaSyntheticLibrary
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy
 import com.intellij.openapi.roots.impl.RootFileValidityChecker
+import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -22,6 +27,7 @@ import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetExclusionCondition
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2IntMaps
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
@@ -64,7 +70,7 @@ internal class NonIncrementalContributors(private val project: Project) {
           }
           val newRoots = HashSet<VirtualFile>()
           Object2IntMaps.fastForEach(newExcludedRoots) { 
-            fileSets.putValue(it.key, ExcludedFileSet.ByFileKind(it.intValue, NonIncrementalMarker))
+            fileSets.putValue(it.key, ExcludedFileSet.ByFileKind(it.key, it.intValue, NonIncrementalMarker))
             newRoots.add(it.key)
           }
           newExcludedUrls.forEach {
@@ -160,12 +166,12 @@ internal class NonIncrementalContributors(private val project: Project) {
         registerRoots(binaryRoots, WorkspaceFileKind.EXTERNAL, if (library is JavaSyntheticLibrary) LibraryRootFileSetData(null) else DummyWorkspaceFileSetData)
         val excludedRoots = checkNotNull(library.excludedRoots, "getExcludedRoots()", library) ?: emptySet<VirtualFile>()
         excludedRoots.forEach {
-          result.putValue(it, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.EXTERNAL, NonIncrementalMarker))
+          result.putValue(it, ExcludedFileSet.ByFileKind(it, WorkspaceFileKindMask.EXTERNAL, NonIncrementalMarker))
         }
         library.unitedExcludeCondition?.let { condition ->
-          val predicate = { file: VirtualFile -> condition.value(file) }
+          val exclusionCondition = UnifiedLibraryExclusionCondition(library, condition)
           (library.sourceRoots + library.binaryRoots).forEach { root ->
-            result.putValue(root, ExcludedFileSet.ByCondition(root, predicate, NonIncrementalMarker, EntityStorageKind.MAIN))
+            result.putValue(root, ExcludedFileSet.ByCondition(root, exclusionCondition, NonIncrementalMarker, EntityStorageKind.MAIN))
           }
         }
       }
@@ -200,7 +206,22 @@ internal class NonIncrementalContributors(private val project: Project) {
 
 private object SyntheticLibrarySourceRootData : ModuleOrLibrarySourceRootData
 
+private class UnifiedLibraryExclusionCondition(
+  private val library: SyntheticLibrary,
+  private val condition: Condition<in VirtualFile>,
+) : WorkspaceFileSetExclusionCondition {
+  override fun shouldExclude(file: VirtualFile): Boolean = condition.value(file)
+
+  override fun equals(other: Any?): Boolean {
+    return other is UnifiedLibraryExclusionCondition && library == other.library
+  }
+
+  override fun hashCode(): Int = library.hashCode()
+}
+
 private object NonIncrementalMarker : EntityPointer<WorkspaceEntity> {
   override fun resolve(storage: EntityStorage): WorkspaceEntity? = null
   override fun isPointerTo(entity: WorkspaceEntity): Boolean = false
+  override fun isPointerToEntityOfSameTypeAs(other: EntityPointer<*>): Boolean = other === this
+  override fun classHashcode(): Int = 0
 }

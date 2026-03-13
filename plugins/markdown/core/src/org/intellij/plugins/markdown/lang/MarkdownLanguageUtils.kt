@@ -1,6 +1,7 @@
 package org.intellij.plugins.markdown.lang
 
 import com.intellij.lang.Language
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.vfs.VirtualFile
@@ -9,8 +10,8 @@ fun Language.isMarkdownLanguage(): Boolean {
   return this == MarkdownLanguage.INSTANCE
 }
 
-fun Language.supportsMarkdown(): Boolean {
-  return MarkdownCompatibilityChecker.EP_NAME.extensionList.any { it.isSupportedLanguage(this) }
+fun Language.supportsMarkdown(dataContext: DataContext? = null): Boolean {
+  return MarkdownCompatibilityChecker.EP_NAME.extensionList.any { it.isSupportedContext(this, dataContext) }
 }
 
 fun FileType.isMarkdownType(): Boolean {

@@ -1,5 +1,5 @@
 import re
-from _typeshed import Unused
+from _typeshed import Incomplete, Unused
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from functools import cached_property
 from json.decoder import JSONDecoder
@@ -7,6 +7,8 @@ from typing import Any, ClassVar, Literal, TypedDict, TypeVar, overload, type_ch
 from typing_extensions import Never, Required, TypeAlias, deprecated
 from urllib.request import Request, _DataType
 from xml.etree import ElementTree as ET
+
+from yt_dlp.utils import PagedList
 
 from ..cache import Cache
 from ..cookies import LenientSimpleCookie, YoutubeDLCookieJar
@@ -17,22 +19,101 @@ from ..YoutubeDL import YoutubeDL
 
 @type_check_only
 class _InfoDict(TypedDict, total=False):
-    age_limit: int
-    availability: Literal["private", "premium_only", "subscriber_only", "needs_auth", "unlisted", "public"] | None
-    available_at: int
-    creator: str | None
-    comment_count: int | None
-    duration: int | None
-    formats: list[dict[str, Any]] | None
     id: Required[str]
-    like_count: int | None
-    tags: list[str] | None
-    thumbnail: str | None
-    timestamp: int | float | None
     title: str | None
-    uploader: str | None
+    formats: list[dict[str, Any]] | None
+    available_at: int
     url: str | None
+    ext: str | None
+    format: str | None
+    player_url: str | None
+    direct: bool | None
+    alt_title: str | None
+    display_id: Incomplete
+    thumbnails: list[dict[str, Incomplete]] | None
+    thumbnail: str | None
+    description: str | None
+    uploader: str | None
+    license: str | None
+    creators: list[str] | None
+    timestamp: int | float | None
+    upload_date: Incomplete
+    release_timestamp: Incomplete
+    release_date: Incomplete
+    release_year: Incomplete
+    modified_timestamp: Incomplete
+    modified_date: Incomplete
+    uploader_id: Incomplete
+    uploader_url: str | None
+    channel: str | None
+    channel_id: Incomplete
+    channel_url: str | None
+    channel_follower_count: int | None
+    channel_is_verified: Incomplete
+    location: Incomplete
+    subtitles: Incomplete
+    automatic_captions: Incomplete
+    duration: int | None
+    view_count: int | None
+    concurrent_view_count: int | None
+    save_count: int | None
+    like_count: int | None
+    dislike_count: int | None
+    repost_count: int | None
+    average_rating: Incomplete
+    comment_count: int | None
+    comments: Incomplete
+    age_limit: int
+    webpage_url: str | None
+    categories: list[str] | None
+    tags: list[str] | None
+    cast: list[Incomplete] | None
+    is_live: bool | None
+    was_live: bool | None
+    live_status: Literal["is_live", "is_upcoming", "was_live", "not_live", "post_live"] | None
+    start_time: Incomplete
+    end_time: Incomplete
+    chapters: Incomplete
+    heatmap: Incomplete
+    playable_in_embed: bool | str | None
+    availability: Literal["private", "premium_only", "subscriber_only", "needs_auth", "unlisted", "public"] | None
+    media_type: str | None
+    _old_archive_ids: Incomplete
+    _format_sort_fields: Incomplete
+    chapter: str | None
+    chapter_number: int | None
+    chapter_id: str | None
+    series: str | None
+    series_id: str | None
+    season: str | None
+    season_number: int | None
+    season_id: str | None
+    episode: Incomplete
+    episode_number: int | None
+    episode_id: str | None
+    track: str | None
+    track_number: int | None
+    track_id: str | None
+    artists: list[str] | None
+    composers: list[str] | None
+    genres: list[str] | None
+    album: str | None
+    album_type: str | None
+    album_artists: list[str] | None
+    disc_number: int | None
+    section_start: Incomplete
+    section_end: Incomplete
+    rows: int | None
+    columns: int | None
+    playlist_count: int | None
+    entries: Iterable[_InfoDict] | PagedList
     requested_formats: Iterable[_InfoDict]
+    # deprecated fields:
+    composer: Incomplete
+    artist: Incomplete
+    genre: Incomplete
+    album_artist: Incomplete
+    creator: str | None
 
 _StrNoDefaultOrNone: TypeAlias = str | None | type[NO_DEFAULT]
 _T = TypeVar("_T")

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
@@ -12,6 +12,7 @@ import com.intellij.compiler.progress.CompilerMessagesService;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.DefaultMessageHandler;
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.java.JavaBundle;
@@ -62,6 +63,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -102,8 +104,8 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.SwingUtilities;
 import javax.swing.event.HyperlinkEvent;
-import java.io.File;
 import java.lang.ref.WeakReference;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -567,10 +569,13 @@ public final class CompileDriver {
 
             if (canCleanBuildSystemData) {
               cancelPreload.waitFor();
-              File[] systemFiles = buildManager.getProjectSystemDirectory(myProject).listFiles();
-              if (systemFiles != null && systemFiles.length > 0) {
-                buildSystemDataCleanupTask.set(new TaskFutureAdapter<>(FileUtil.asyncDelete(Arrays.asList(systemFiles))));
-              }
+              buildSystemDataCleanupTask.set(new TaskFutureAdapter<>(ProcessIOExecutorService.INSTANCE.submit(() -> {
+                for (Path path : NioFiles.list(buildManager.getProjectSystemDir(myProject))) {
+                  //noinspection UseOptimizedEelFunctions
+                  NioFiles.deleteRecursively(path);
+                }
+                return null;
+              })));
             }
             else {
               if (cleanBuildRequested) {

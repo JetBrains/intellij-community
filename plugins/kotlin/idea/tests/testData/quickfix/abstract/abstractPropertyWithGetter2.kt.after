@@ -1,4 +1,6 @@
 // "Remove getter and initializer from property" "true"
+// K2_ERROR: Property with getter implementation cannot be abstract.
+// K2_ERROR: Property with initializer cannot be abstract.
 abstract class B {
     abstract val i: Int<caret>
 }

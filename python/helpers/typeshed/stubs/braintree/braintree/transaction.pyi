@@ -178,6 +178,7 @@ class Transaction(Resource):
     network_transaction_id: Incomplete
     payment_facilitator: PaymentFacilitator
     transfer: Transfer
+    partially_authorized: bool
     subscription_id: str
     created_at: datetime
     def __init__(self, gateway, attributes) -> None: ...

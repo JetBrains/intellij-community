@@ -555,7 +555,7 @@ public class GitExecutableDetector {
   /**
    * @deprecated use {@link #getBashExecutablePath(Project, String)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @Nullable String getBashExecutablePath(@NotNull String gitExecutable) {
     return getBashExecutablePath(null, gitExecutable);
   }

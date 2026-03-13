@@ -1,4 +1,5 @@
 // "Reorder parameters" "true"
+// K2_ERROR: Parameter 'y' is uninitialized here.
 fun Int.foo(
     x: Int = y<caret>,
     y: Int = this

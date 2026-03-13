@@ -1,0 +1,4 @@
+- name: dist.all/lib/intellij.platform.execution.jar
+  modules:
+  - name: intellij.platform.execution
+  - name: intellij.platform.ide.core.plugins

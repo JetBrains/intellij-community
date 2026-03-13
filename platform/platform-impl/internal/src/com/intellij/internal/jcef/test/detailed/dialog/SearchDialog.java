@@ -5,11 +5,6 @@ package com.intellij.internal.jcef.test.detailed.dialog;
 import org.cef.browser.CefBrowser;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.awt.BorderLayout;
-import java.awt.Frame;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -18,6 +13,10 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import java.awt.BorderLayout;
+import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 @ApiStatus.Internal
 public class  SearchDialog extends JDialog {

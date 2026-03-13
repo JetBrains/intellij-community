@@ -41,9 +41,8 @@
     <orderEntry type="module" module-name="intellij.kotlin.searching.test" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerReferenceIndex.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.bundled-compiler-plugins-support" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support.bundled" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.uast.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize.common.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.copyright.tests" />
     <orderEntry type="module" module-name="intellij.kotlin.injection.tests" scope="RUNTIME" />
@@ -74,5 +73,23 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.facet.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.images.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.regexp.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.analysis.platform.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.projectStructure.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.scripting.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.fir.testFramework" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.lineMarkers.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.liveTemplates.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.postfixTemplates.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.java.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.scripting.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.highlighting.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.refactorings.move.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.refactorings.rename.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.test.parcelize" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.util.test-generator-fir" scope="TEST" />
   </component>
 </module>

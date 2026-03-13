@@ -16,7 +16,12 @@ import com.intellij.util.animation.JBAnimator
 import com.intellij.util.animation.animation
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.*
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Insets
+import java.awt.Point
+import java.awt.Rectangle
 
 @Internal
 class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {

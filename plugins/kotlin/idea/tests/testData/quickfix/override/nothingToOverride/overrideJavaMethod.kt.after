@@ -1,5 +1,6 @@
 // "Change function signature to 'fun next(bits: Int): Int'" "true"
 // RUNTIME_WITH_FULL_JDK
+// K2_ERROR: 'next' overrides nothing. Potential signatures for overriding:<br>fun next(bits: Int): Int
 import java.util.Random
 
 class MyRandom : Random() {

@@ -1,5 +1,5 @@
 ### auto-generated section `build intellij.kotlin.compilerPlugins.support.tests` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "tests",
@@ -13,32 +13,35 @@ jvm_library(
   ]
 )
 
-jvm_provided_library(
-  name = "plugins_kotlin_plugin_k2_provided",
-  lib = "//plugins/kotlin/plugin/k2"
-)
-
 jvm_library(
   name = "tests_test_lib",
   module_name = "intellij.kotlin.compilerPlugins.support.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
+    "//plugins/kotlin/plugin/k2",
+    "//plugins/kotlin/plugin/k2:k2_test_lib",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-jps-common",
     "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
     "//platform/lang-core",
+    "//platform/lang-core:lang-core_test_lib",
     "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//plugins/kotlin/base/facet/tests",
     "//plugins/kotlin/base/facet/tests:tests_test_lib",
     "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/test",
     "//plugins/kotlin/base/test:test_test_lib",
-    ":plugins_kotlin_plugin_k2_provided",
   ],
   runtime_deps = [":tests"]
 )

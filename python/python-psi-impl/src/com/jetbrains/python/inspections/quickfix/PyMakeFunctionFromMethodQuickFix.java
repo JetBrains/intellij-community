@@ -93,7 +93,9 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
       if (addImport)
         AddImportHelper.addImport((PsiNamedElement)finalElement, usageFile, element);
 
-      PyUtil.removeQualifier(element);
+      if (element.isValid()) {
+        PyUtil.removeQualifier(element);
+      }
       removeFormerImport(usageFile, addImport);
     }
     else {

@@ -50,6 +50,8 @@ datatypes w = "http://whattf.org/datatype-draft"
 	common.attrs.editing &=
 		(	common.attrs.inputmode?
 		&	common.attrs.spellcheck?
+		&	common.attrs.autocorrect?
+		&	common.attrs.writingsuggestions?
 		&	common.attrs.autocapitalize?
 		&	common.attrs.enterkeyhint?
 		)
@@ -75,6 +77,20 @@ datatypes w = "http://whattf.org/datatype-draft"
 
 	common.attrs.spellcheck =
 		attribute spellcheck {
+			w:string "true" | w:string "false" | w:string ""
+		}
+
+## Autocorrection
+
+	common.attrs.autocorrect =
+		attribute autocorrect {
+			w:string "on" | w:string "off" | w:string ""
+		}
+
+## Writing suggestions
+
+	common.attrs.writingsuggestions  =
+		attribute writingsuggestions {
 			w:string "true" | w:string "false" | w:string ""
 		}
 
@@ -136,13 +152,19 @@ datatypes w = "http://whattf.org/datatype-draft"
 	dialog.attrs =
 		(	common.attrs
 		&	dialog.attrs.open?
+		&	dialog.attrs.closedby?
 		&	(	common.attrs.aria.implicit.dialog
 			|	common.attrs.aria.role.alertdialog
+			|	common.attrs.aria.role.dialog
 			)?
 		)
 		dialog.attrs.open =
 			attribute open {
 				w:string "open" | w:string ""
+			}
+		dialog.attrs.closedby =
+			attribute closedby {
+				w:string "any" | w:string "closerequest" | w:string "none"
 			}
 	dialog.inner =
 		( common.inner.flow )
@@ -155,7 +177,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 	menu.attrs =
 		(	common.attrs
 		&	(	common.attrs.aria.implicit.list
-			|	common.attrs.aria.role.directory
 			|	common.attrs.aria.role.group
 			|	common.attrs.aria.role.list
 			|	common.attrs.aria.role.listbox
@@ -229,10 +250,15 @@ datatypes w = "http://whattf.org/datatype-draft"
 	details.attrs =
 		(	common.attrs
 		&	details.attrs.open?
+		&	details.attrs.name?
 		&	(	common.attrs.aria.implicit.group # aria-expanded must be true if open attr present; check by assertions
 			|	common.attrs.aria.role.group
 			)?
 		)
+		details.attrs.name =
+			attribute name {
+				w:non-empty-string
+			}
 		details.attrs.open =
 			attribute open {
 				w:string "open" | w:string ""
@@ -250,9 +276,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		element summary { summary.inner & summary.attrs }
 	summary.attrs =
 		(	common.attrs
-		&	(	common.attrs.aria.implicit.button
-			|	common.attrs.aria.role.button
-			)?
+		&	common.attrs.aria?
 		)
 	summary.inner =
 		(	common.inner.phrasing

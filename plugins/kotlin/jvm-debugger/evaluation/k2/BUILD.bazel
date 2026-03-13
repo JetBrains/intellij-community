@@ -35,4 +35,30 @@ jvm_library(
     "//plugins/kotlin/jvm-debugger/core",
   ]
 )
+
+jvm_library(
+  name = "kotlin-jvm-debugger-evaluation_test_lib",
+  module_name = "intellij.kotlin.jvm.debugger.evaluation",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":kotlin-jvm-debugger-evaluation",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections_test_lib",
+    "//java/debugger/impl:impl_test_lib",
+    "//java/debugger/openapi:java-debugger_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//java/java-analysis-impl:analysis-impl_test_lib",
+    "//plugins/kotlin/jvm-debugger/base/util:util_test_lib",
+    "//plugins/kotlin/jvm-debugger/evaluation:evaluation_test_lib",
+    "//libraries/asm:asm_test_lib",
+    "//platform/xdebugger-impl:debugger-impl_test_lib",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
+    "//plugins/kotlin/base/psi:psi_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util/multiplatform:multiplatform_test_lib",
+    "//plugins/kotlin/jvm-debugger/core:core_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.kotlin.jvm.debugger.evaluation` end

@@ -25,7 +25,11 @@ import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
@@ -203,8 +207,8 @@ class HighlightVisitorRunner {
           }
           if (!failed) {
             GeneralHighlightingPass.LOG.error("In file: " + psiFile.getViewProvider().getVirtualFile(), e);
+            failed = true;
           }
-          failed = true;
         }
         for (int j = oldSize; j < holder.size(); j++) {
           HighlightInfo info = holder.get(j);

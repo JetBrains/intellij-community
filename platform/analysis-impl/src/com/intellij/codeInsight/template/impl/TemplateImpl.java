@@ -3,18 +3,45 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TextResult;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.ModTemplateBuilder;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.options.SchemeElement;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
 
 public class TemplateImpl extends TemplateBase implements SchemeElement {
   private @NlsSafe String myKey;
@@ -377,8 +404,146 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     Collections.swap(getSegments(), 0, segmentNumber);
   }
 
+  /**
+   * Performs a template execution within ModCommand context. The template is not actually executed, but
+   * contributes to {@link ModPsiUpdater} to form the final {@link ModCommand}.
+   * <p>
+   *   Note that not all the template behavior is implemented yet, and not everything is supported in ModCommands at all,
+   *   so expect that complex templates that use rare features may not work correctly.
+   * </p>
+   * 
+   * @param updater {@link ModPsiUpdater} to use.
+   */
+  @ApiStatus.Internal
+  public void update(@NotNull ModPsiUpdater updater, @NotNull TemplateStateProcessor processor) {
+    parseSegments();
+    int start = updater.getCaretOffset();
+    String text = getTemplateText();
+    Document document = updater.getDocument();
+    document.insertString(start, text);
+    RangeMarker wholeTemplate = document.createRangeMarker(start, start + text.length());
+    Map<String, Variable> variableMap = StreamEx.of(getVariables()).toMap(Variable::getName, Function.identity());
+    Project project = updater.getProject();
+    PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
+    List<Segment> segments = getSegments();
+    record MarkerInfo(Segment segment, RangeMarker marker) {}
+    List<MarkerInfo> markers = ContainerUtil.map(segments, segment -> {
+      RangeMarker marker = document.createRangeMarker(start + segment.offset, start + segment.offset);
+      marker.setGreedyToRight(true);
+      return new MarkerInfo(segment, marker);
+    });
+    ModTemplateBuilder builder = null;
+    RangeMarker endMarker = null;
+    for (MarkerInfo info : markers) {
+      Segment segment = info.segment;
+      if (segment.name.equals("END")) {
+        TextRange range = processor.insertNewLineIndentMarker(updater.getPsiFile(), document, info.marker.getStartOffset());
+        if (range != null) {
+          endMarker = document.createRangeMarker(range);
+        } else {
+          endMarker = info.marker;
+        }
+        continue;
+      }
+      Variable variable = variableMap.get(segment.name);
+      if (variable != null) {
+        manager.commitDocument(document);
+        PsiElement element = updater.getPsiFile().findElementAt(info.marker.getStartOffset());
+        if (element != null) {
+          if (!variable.isAlwaysStopAt()) {
+            Result result = variable.getExpression().calculateResult(new DummyContext(info.marker.getTextRange(), element, updater.getPsiFile()));
+            if (result != null) {
+              document.replaceString(info.marker.getStartOffset(), info.marker.getEndOffset(), result.toString());
+            }
+          } else {
+            if (builder == null) builder = updater.templateBuilder();
+            builder.field(element, info.marker.getTextRange().shiftLeft(element.getTextRange().getStartOffset()), segment.name,
+                          variable.getExpression());
+          }
+        }
+      }
+    }
+    for (TemplateOptionalProcessor proc : DumbService.getDumbAwareExtensions(project, TemplateOptionalProcessor.EP_NAME)) {
+      if (proc instanceof ModCommandAwareTemplateOptionalProcessor mcProcessor) {
+        mcProcessor.processText(this, updater, wholeTemplate);
+      }
+    }
+
+    if (isToReformat()) {
+      List<MarkerInfo> emptyValues = new ArrayList<>();
+      for (MarkerInfo info : markers) {
+        if (info.marker.getStartOffset() == info.marker.getEndOffset()) {
+          document.insertString(info.marker.getStartOffset(), "a");
+          emptyValues.add(info);
+        }
+      }
+      manager.commitDocument(document);
+      CodeStyleManager.getInstance(project)
+        .reformatText(updater.getPsiFile(), wholeTemplate.getStartOffset(), wholeTemplate.getEndOffset());
+      for (MarkerInfo value : emptyValues) {
+        document.deleteString(value.marker.getStartOffset(), value.marker.getEndOffset());
+      }
+    }
+    if (endMarker == null) {
+      endMarker = document.createRangeMarker(wholeTemplate.getEndOffset(), wholeTemplate.getEndOffset());
+    }
+    document.deleteString(endMarker.getStartOffset(), endMarker.getEndOffset());
+    if (builder != null) {
+      builder.finishAt(endMarker.getStartOffset());
+    } else {
+      updater.moveCaretTo(endMarker.getStartOffset());
+    }
+    endMarker.dispose();
+    for (MarkerInfo info : markers) {
+      info.marker.dispose();
+    }
+    wholeTemplate.dispose();
+  }
+
   @Override
   public String toString() {
     return myGroupName +"/" + myKey;
+  }
+
+  @ApiStatus.Internal
+  public static class DummyContext implements ExpressionContext {
+    private final @NotNull TextRange myRange;
+    private final @NotNull PsiElement myElement;
+    private final @NotNull PsiFile myFile;
+
+    public DummyContext(@NotNull TextRange range, @NotNull PsiElement element, @NotNull PsiFile file) {
+      myRange = range;
+      myElement = element;
+      myFile = file;
+    }
+
+    @Override
+    public Project getProject() { return myFile.getProject(); }
+
+    @Override
+    public @Nullable PsiFile getPsiFile() {
+      return myFile;
+    }
+
+    @Override
+    public @Nullable Editor getEditor() { return null; }
+
+    @Override
+    public int getStartOffset() { return myRange.getStartOffset(); }
+
+    @Override
+    public int getTemplateStartOffset() { return myRange.getStartOffset(); }
+
+    @Override
+    public int getTemplateEndOffset() { return myRange.getEndOffset(); }
+
+    @Override
+    public <T> T getProperty(Key<T> key) { return null; }
+
+    @Override
+    public @Nullable PsiElement getPsiElementAtStartOffset() { return myElement.isValid() ? myElement : null; }
+
+    @Override
+    public @Nullable TextResult getVariableValue(String variableName) { return null; }
   }
 }

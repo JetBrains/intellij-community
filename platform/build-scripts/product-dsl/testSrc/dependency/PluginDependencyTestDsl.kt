@@ -12,6 +12,8 @@ import kotlinx.coroutines.GlobalScope
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 import org.jetbrains.intellij.build.productLayout.config.SuppressionConfig
+import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlanOutput
+import org.jetbrains.intellij.build.productLayout.deps.PluginDependencyPlanOutput
 import org.jetbrains.intellij.build.productLayout.discovery.ContentModuleInfo
 import org.jetbrains.intellij.build.productLayout.discovery.ModuleSetGenerationConfig
 import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
@@ -23,6 +25,7 @@ import org.jetbrains.intellij.build.productLayout.pipeline.ContentModuleOutput
 import org.jetbrains.intellij.build.productLayout.pipeline.DataSlot
 import org.jetbrains.intellij.build.productLayout.pipeline.DiscoveryResult
 import org.jetbrains.intellij.build.productLayout.pipeline.ErrorSlot
+import org.jetbrains.intellij.build.productLayout.pipeline.GenerationMode
 import org.jetbrains.intellij.build.productLayout.pipeline.GenerationModel
 import org.jetbrains.intellij.build.productLayout.pipeline.ModuleSetsOutput
 import org.jetbrains.intellij.build.productLayout.pipeline.PipelineNode
@@ -31,9 +34,11 @@ import org.jetbrains.intellij.build.productLayout.pipeline.ProductModuleDepsOutp
 import org.jetbrains.intellij.build.productLayout.pipeline.ProductsOutput
 import org.jetbrains.intellij.build.productLayout.pipeline.Slots
 import org.jetbrains.intellij.build.productLayout.pipeline.SuppressionConfigOutput
+import org.jetbrains.intellij.build.productLayout.pipeline.TestPluginDependencyPlanOutput
 import org.jetbrains.intellij.build.productLayout.pipeline.TestPluginsOutput
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
+import org.jetbrains.intellij.build.productLayout.util.GeneratedArtifactWritePolicy
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -401,14 +406,14 @@ class TestPluginBuilder(private val name: String) {
   /** If true, plugin dependencies are auto-derived from JPS deps. */
   var isTestPlugin: Boolean = false
   private val contentModules = LinkedHashSet<String>()
-  private val contentLoadings = LinkedHashMap<String, com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue?>()
+  private val contentLoadings = LinkedHashMap<String, com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue?>()
   private val moduleDependencies = LinkedHashSet<String>()
 
   fun content(vararg modules: String) {
     contentModules.addAll(modules)
   }
 
-  fun content(moduleName: String, loading: com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue?) {
+  fun content(moduleName: String, loading: com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue?) {
     contentModules.add(moduleName)
     contentLoadings.put(moduleName, loading)
   }
@@ -469,9 +474,9 @@ class TestProductBuilder(private val name: String) {
 
 @JpsTestDsl
 class TestModuleSetBuilder(private val name: String) {
-  private val modules = LinkedHashMap<String, com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue?>()
+  private val modules = LinkedHashMap<String, com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue?>()
 
-  fun module(moduleName: String, loading: com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue? = null) {
+  fun module(moduleName: String, loading: com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue? = null) {
     modules.put(moduleName, loading)
   }
 
@@ -483,7 +488,7 @@ internal data class TestPluginSpec(
   @JvmField val pluginId: String?,
   @JvmField val isTestPlugin: Boolean,
   @JvmField val contentModules: Set<String>,
-  @JvmField val contentLoadings: Map<String, com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue?> = emptyMap(),
+  @JvmField val contentLoadings: Map<String, com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue?> = emptyMap(),
   @JvmField val moduleDependencies: Set<String> = emptySet(),
 )
 
@@ -501,7 +506,7 @@ internal data class TestProductSpec(
 
 internal data class TestModuleSetSpec(
   @JvmField val name: String,
-  @JvmField val modules: Map<String, com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue?>,
+  @JvmField val modules: Map<String, com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue?>,
 )
 
 internal class PluginTestSetupContext(
@@ -615,7 +620,7 @@ internal fun buildPluginGraphFromTestSetup(
           }
           for (module in pluginContent.contentModules) {
             val loading = module.loadingMode
-                          ?: com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue.OPTIONAL
+                          ?: com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.OPTIONAL
             content(module.name.value, loading)
           }
           for (moduleDep in pluginContent.moduleDependencies) {
@@ -630,7 +635,7 @@ internal fun buildPluginGraphFromTestSetup(
           }
           for (module in pluginContent.contentModules) {
             val loading = module.loadingMode
-                          ?: com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue.OPTIONAL
+                          ?: com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.OPTIONAL
             content(module.name.value, loading)
           }
           for (moduleDep in pluginContent.moduleDependencies) {
@@ -685,10 +690,6 @@ internal fun createTestModuleOutputProvider(project: JpsProject): ModuleOutputPr
     override val useTestCompilationOutput: Boolean
       get() = true
 
-    override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray {
-      throw UnsupportedOperationException("Not needed for this test")
-    }
-
     override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
       throw UnsupportedOperationException("Not needed for this test")
     }
@@ -701,7 +702,7 @@ internal fun createTestModuleOutputProvider(project: JpsProject): ModuleOutputPr
 
     override fun getAllModules(): List<JpsModule> = project.modules
 
-    override suspend fun readFileContentFromModuleOutputAsync(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray {
+    override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray {
       throw UnsupportedOperationException("Not needed for this test")
     }
 
@@ -763,6 +764,7 @@ internal fun testGenerationModel(
   pluginContentCache: PluginContentCache? = null,
   suppressionConfig: SuppressionConfig = SuppressionConfig(),
   updateSuppressions: Boolean = false,
+  suppressionConfigPath: Path? = null,
   pluginAllowedMissingDependencies: Map<ContentModuleName, Set<ContentModuleName>> = emptyMap(),
   testLibraryAllowedInModule: Map<ContentModuleName, Set<String>> = emptyMap(),
   productAllowedMissing: Map<String, Set<ContentModuleName>> = emptyMap(),
@@ -770,6 +772,7 @@ internal fun testGenerationModel(
   val effectiveOutputProvider = outputProvider ?: stubModuleOutputProvider()
   val effectiveFileUpdater = fileUpdater ?: DeferredFileUpdater(Path.of("."))
   val effectivePluginContentCache = pluginContentCache ?: stubPluginContentCache()
+  val generationMode = if (updateSuppressions) GenerationMode.UPDATE_SUPPRESSIONS else GenerationMode.NORMAL
   return GenerationModel(
     discovery = DiscoveryResult(
       moduleSetsByLabel = emptyMap(),
@@ -785,6 +788,7 @@ internal fun testGenerationModel(
       projectLibraryToModuleMap = effectiveOutputProvider.getProjectLibraryToModuleMap(),
       pluginAllowedMissingDependencies = pluginAllowedMissingDependencies,
       testLibraryAllowedInModule = testLibraryAllowedInModule,
+      suppressionConfigPath = suppressionConfigPath,
     ),
     projectRoot = Path.of("."),
     outputProvider = effectiveOutputProvider,
@@ -792,6 +796,7 @@ internal fun testGenerationModel(
     descriptorCache = ModuleDescriptorCache(effectiveOutputProvider, GlobalScope),
     pluginContentCache = effectivePluginContentCache,
     fileUpdater = effectiveFileUpdater,
+    generatedArtifactWritePolicy = GeneratedArtifactWritePolicy(generationMode, effectiveFileUpdater),
     scope = GlobalScope,
     pluginGraph = pluginGraph,
     dslTestPluginsByProduct = emptyMap(),
@@ -800,6 +805,7 @@ internal fun testGenerationModel(
     productAllowedMissing = productAllowedMissing,
     suppressionConfig = suppressionConfig,
     updateSuppressions = updateSuppressions,
+    generationMode = generationMode,
   )
 }
 
@@ -835,6 +841,22 @@ internal suspend fun runValidationRule(
           else -> error("Slot override for CONTENT_MODULE must be ContentModuleOutput")
         }
         ctx.publish(slot as DataSlot<ContentModuleOutput>, output)
+      }
+      Slots.CONTENT_MODULE_PLAN -> {
+        val output = when (val override = slotOverrides[slot]) {
+          null -> ContentModuleDependencyPlanOutput(plans = emptyList())
+          is ContentModuleDependencyPlanOutput -> override
+          else -> error("Slot override for CONTENT_MODULE_PLAN must be ContentModuleDependencyPlanOutput")
+        }
+        ctx.publish(slot as DataSlot<ContentModuleDependencyPlanOutput>, output)
+      }
+      Slots.PLUGIN_DEPENDENCY_PLAN -> {
+        val output = when (val override = slotOverrides[slot]) {
+          null -> PluginDependencyPlanOutput(plans = emptyList())
+          is PluginDependencyPlanOutput -> override
+          else -> error("Slot override for PLUGIN_DEPENDENCY_PLAN must be PluginDependencyPlanOutput")
+        }
+        ctx.publish(slot as DataSlot<PluginDependencyPlanOutput>, output)
       }
       Slots.PLUGIN_XML -> {
         val output = when (val override = slotOverrides[slot]) {
@@ -876,6 +898,14 @@ internal suspend fun runValidationRule(
         }
         ctx.publish(slot as DataSlot<TestPluginsOutput>, output)
       }
+      Slots.TEST_PLUGIN_DEPENDENCY_PLAN -> {
+        val output = when (val override = slotOverrides[slot]) {
+          null -> TestPluginDependencyPlanOutput(plans = emptyList())
+          is TestPluginDependencyPlanOutput -> override
+          else -> error("Slot override for TEST_PLUGIN_DEPENDENCY_PLAN must be TestPluginDependencyPlanOutput")
+        }
+        ctx.publish(slot as DataSlot<TestPluginDependencyPlanOutput>, output)
+      }
       Slots.SUPPRESSION_CONFIG -> {
         val output = when (val override = slotOverrides[slot]) {
           null -> SuppressionConfigOutput(moduleCount = 0, suppressionCount = 0, configModified = false)
@@ -905,10 +935,6 @@ private fun stubModuleOutputProvider(): ModuleOutputProvider {
 
     override fun findModule(name: String): JpsModule? = null
     override fun findRequiredModule(name: String): JpsModule = error("Module not found: $name")
-    override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray {
-      throw UnsupportedOperationException("Stub")
-    }
-
     override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
       throw UnsupportedOperationException("Stub")
     }
@@ -919,7 +945,7 @@ private fun stubModuleOutputProvider(): ModuleOutputProvider {
 
     override fun getProjectLibraryToModuleMap(): Map<String, String> = emptyMap()
 
-    override suspend fun readFileContentFromModuleOutputAsync(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray {
+    override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray {
       throw UnsupportedOperationException("Stub")
     }
 

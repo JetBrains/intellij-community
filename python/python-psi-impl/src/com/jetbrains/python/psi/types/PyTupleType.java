@@ -56,7 +56,7 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
   }
 
   private static @Nullable String getTypeName(@Nullable PyType type) {
-    return type == null ? PyNames.UNKNOWN_TYPE : type.getName();
+    return type == null ? PyNames.ANY_TYPE : type.getName();
   }
 
   @Override

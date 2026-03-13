@@ -8,14 +8,15 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
 import org.jetbrains.intellij.build.productLayout.discovery.PluginSource
+import org.jetbrains.intellij.build.productLayout.discovery.PluginXmlOverride
 import org.jetbrains.intellij.build.productLayout.discovery.extractPluginContent
 import org.jetbrains.intellij.build.productLayout.model.ErrorSink
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 
 /**
  * Interface for plugin content retrieval with on-demand discovery support.
- * Used by [org.jetbrains.intellij.build.productLayout.generator.PluginXmlDependencyGenerator] and
- * [org.jetbrains.intellij.build.productLayout.generator.ContentModuleDependencyGenerator] to resolve plugin dependencies.
+ * Used by [org.jetbrains.intellij.build.productLayout.generator.PluginDependencyPlanner] and
+ * [org.jetbrains.intellij.build.productLayout.generator.ContentModuleDependencyPlanner] to resolve plugin dependencies.
  *
  * @see PluginContentCache for production implementation
  */
@@ -47,6 +48,7 @@ internal class PluginContentCache(
   private val xIncludeCache: AsyncCache<String, ByteArray?>,
   private val skipXIncludePaths: Set<String>,
   private val xIncludePrefixFilter: (String) -> String?,
+  private val pluginXmlOverrides: Map<TargetName, PluginXmlOverride> = emptyMap(),
   scope: CoroutineScope,
   private val errorSink: ErrorSink,
 ) : PluginContentProvider {
@@ -60,7 +62,12 @@ internal class PluginContentCache(
    * @param isTest Whether this is a test plugin (determines source and production-only flag)
    * @return PluginContentInfo if module has META-INF/plugin.xml, null otherwise
    */
-  suspend fun extract(plugin: TargetName, isTest: Boolean): PluginContentInfo? {
+  suspend fun extract(
+    plugin: TargetName,
+    isTest: Boolean,
+    pluginXmlOverride: PluginXmlOverride? = null,
+  ): PluginContentInfo? {
+    val effectiveOverride = pluginXmlOverride ?: pluginXmlOverrides[plugin]
     return cache.getOrPut(plugin) {
       val source = if (isTest) PluginSource.TEST else PluginSource.BUNDLED
       extractPluginContent(
@@ -71,6 +78,7 @@ internal class PluginContentCache(
         prefixFilter = xIncludePrefixFilter,
         onlyProductionSources = !isTest,
         source = source,
+        pluginXmlOverride = effectiveOverride,
         errorSink = errorSink,
       )
     }
@@ -81,6 +89,14 @@ internal class PluginContentCache(
    * Called for each DSL test plugin during graph building.
    */
   suspend fun addDslTestPlugin(pluginModule: TargetName, content: PluginContentInfo) {
+    addPrecomputedPlugin(pluginModule, content)
+  }
+
+  /**
+   * Adds pre-computed plugin content to the cache.
+   * Used for generated wrapper plugins whose descriptors are not yet present on disk.
+   */
+  suspend fun addPrecomputedPlugin(pluginModule: TargetName, content: PluginContentInfo) {
     cache.getOrPut(pluginModule) { content }
   }
 
@@ -103,6 +119,7 @@ internal class PluginContentCache(
         prefixFilter = xIncludePrefixFilter,
         onlyProductionSources = true,
         source = PluginSource.DISCOVERED,
+        pluginXmlOverride = pluginXmlOverrides[pluginModule],
         errorSink = errorSink,
       )
     }

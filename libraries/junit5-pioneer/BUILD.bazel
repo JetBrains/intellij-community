@@ -19,4 +19,17 @@ jvm_library(
     "//libraries/junit5-params",
   ]
 )
+
+jvm_library(
+  name = "junit5-pioneer_test_lib",
+  module_name = "intellij.libraries.junit5.pioneer",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:junit5Pioneer"],
+  runtime_deps = [
+    ":junit5-pioneer",
+    "//libraries/junit5-launcher:junit5-launcher_test_lib",
+    "//libraries/junit5-params:junit5-params_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.libraries.junit5.pioneer` end

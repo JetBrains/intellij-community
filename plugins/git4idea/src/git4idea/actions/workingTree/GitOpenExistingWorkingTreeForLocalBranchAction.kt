@@ -14,8 +14,7 @@ class GitOpenExistingWorkingTreeForLocalBranchAction :
   GitSingleRefAction<GitReference>({ GitBundle.message("action.open.worktree.for.a.branch.text") }) {
 
   override fun isEnabledForRef(ref: GitReference, repositories: List<GitRepository>): Boolean {
-    val repository = repositories.singleOrNull() ?: return false
-    return getWorkingTreeWithRef(ref, repository, true) != null
+    return getWorkingTreeWithRef(ref, repositories, true) != null
   }
 
   override fun updateIfEnabledAndVisible(e: AnActionEvent, project: Project, repositories: List<GitRepository>, reference: GitReference) {
@@ -25,8 +24,7 @@ class GitOpenExistingWorkingTreeForLocalBranchAction :
 
   override fun actionPerformed(e: AnActionEvent, project: Project, repositories: List<GitRepository>, reference: GitReference) {
     GitWorkingTreesNewBadgeUtil.workingTreesFeatureWasUsed()
-    val repository = repositories.singleOrNull() ?: return
-    val workingTree = getWorkingTreeWithRef(reference, repository, true) ?: return
-    GitWorkingTreesService.getInstance(repository.project).openWorkingTreeProject(workingTree)
+    val workingTree = getWorkingTreeWithRef(reference, repositories, true) ?: return
+    GitWorkingTreesService.getInstance(project).openWorkingTreeProject(workingTree)
   }
 }

@@ -2,7 +2,6 @@
 package com.intellij.util.indexing.roots
 
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.SdkType
@@ -67,19 +66,10 @@ class IndexingIteratorsProviderImpl(
       val root = fileSet.root
       val customData = fileSet.data
       if (customData is ModuleRelatedRootData) {
-        if (!isNestedRootOfModuleContent(root, customData.module, index)) {
-          iterators.add(ModuleFilesIteratorImpl(customData.module, root, fileSet.recursive, true))
-        }
+        processModuleRoot(fileSet, project)?.let(iterators::add)
       }
       else if (fileSet.kind.isContent) {
-        val rootHolder: IndexingRootHolder
-        if (fileSet.recursive) {
-          rootHolder = IndexingRootHolder.fromFile(root)
-        }
-        else {
-          rootHolder = IndexingRootHolder.fromFileNonRecursive(root)
-        }
-        iterators.add(GenericContentEntityIteratorImpl(entityPointer, rootHolder))
+        iterators.add(GenericDependencyIterator.forContentRoot(entityPointer, fileSet.recursive, root))
       }
       else {
         val entity = entityPointer.resolve(storage)
@@ -140,35 +130,5 @@ class IndexingIteratorsProviderImpl(
       }
     }
     return iterators
-  }
-
-  private fun isNestedRootOfModuleContent(root: VirtualFile, module: Module, workspaceFileIndex: WorkspaceFileIndexEx): Boolean {
-    val parent = root.getParent()
-    if (parent == null) {
-      return false
-    }
-    val fileInfo = workspaceFileIndex.getFileInfo(
-      parent,
-      honorExclusion = false,
-      includeContentSets = true,
-      includeContentNonIndexableSets = true,
-      includeExternalSets = false,
-      includeExternalSourceSets = false,
-      includeExternalNonIndexableSets = false,
-      includeCustomKindSets = false
-    )
-    return fileInfo.findFileSet { fileSet -> hasRecursiveRootFromModuleContent(fileSet, module) } != null
-  }
-
-  private fun hasRecursiveRootFromModuleContent(fileSet: WorkspaceFileSetWithCustomData<*>, module: Module): Boolean {
-    if (!fileSet.recursive) {
-      return false
-    }
-    return isInContent(fileSet, module)
-  }
-
-  private fun isInContent(fileSet: WorkspaceFileSetWithCustomData<*>, module: Module): Boolean {
-    val data = fileSet.data
-    return data is ModuleRelatedRootData && module == data.module
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -39,7 +39,15 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.usages.*;
+import com.intellij.usages.FindUsagesProcessPresentation;
+import com.intellij.usages.PsiElementUsageTarget;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageLimitUtil;
+import com.intellij.usages.UsageSearcher;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,10 +58,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -162,7 +177,7 @@ final class SearchForUsagesRunnable implements Runnable {
   }
 
   private @NotNull @Unmodifiable Collection<String> getUnloadedModulesBelongingToScope() {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       if (!(mySearchScopeToWarnOfFallingOutOf instanceof GlobalSearchScope)) return Collections.emptySet();
       Collection<UnloadedModuleDescription> unloadedInSearchScope =
         ((GlobalSearchScope)mySearchScopeToWarnOfFallingOutOf).getUnloadedModulesBelongingToScope();
@@ -230,7 +245,7 @@ final class SearchForUsagesRunnable implements Runnable {
   }
 
   private static @NotNull String getPresentablePath(@NotNull VirtualFile virtualFile) {
-    return "'" + ReadAction.compute(virtualFile::getPresentableUrl) + "'";
+    return "'" + ReadAction.computeBlocking(virtualFile::getPresentableUrl) + "'";
   }
 
   private @NotNull HyperlinkListener createGotToOptionsListener(UsageTarget @NotNull [] targets) {
@@ -264,7 +279,7 @@ final class SearchForUsagesRunnable implements Runnable {
     if (!(target instanceof PsiElementUsageTarget)) {
       return null;
     }
-    return ReadAction.compute(((PsiElementUsageTarget)target)::getElement);
+    return ReadAction.computeBlocking(((PsiElementUsageTarget)target)::getElement);
   }
 
   private static void flashUsageScriptaculously(@NotNull Usage usage) {
@@ -302,8 +317,9 @@ final class SearchForUsagesRunnable implements Runnable {
     if (myUsageViewRef.compareAndSet(null, usageView)) {
       // associate progress only if created successfully, otherwise Dispose will cancel the actual progress, see IDEA-195542
       PsiElement element = getPsiElement(mySearchFor);
-      ReadAction.run(() -> UsageViewStatisticsCollector.logSearchStarted(myProject, usageView, CodeNavigateSource.FindToolWindow, element,
-                                                                         mySearchFor.length));
+      ReadAction.runBlocking(
+        () -> UsageViewStatisticsCollector.logSearchStarted(myProject, usageView, CodeNavigateSource.FindToolWindow, element, mySearchFor.length)
+      );
       usageView.associateProgress(indicator);
       usageView.setSearchInProgress(true);
       if (myProcessPresentation.isShowFindOptionsPrompt()) {
@@ -390,7 +406,7 @@ final class SearchForUsagesRunnable implements Runnable {
         UsageViewEx usageView = getUsageView(originalIndicator, startSearchStamp);
 
         TooManyUsagesStatus tooManyUsagesStatus= TooManyUsagesStatus.getFrom(originalIndicator);
-        if (usageCount > UsageLimitUtil.USAGES_LIMIT && tooManyUsagesStatus.switchTooManyUsagesStatus()) {
+        if (usageCount > UsageLimitUtil.getSearchResultLimit() && tooManyUsagesStatus.switchTooManyUsagesStatus()) {
           myTooManyUsages.set(true);
 
           PsiElement element = getPsiElement(mySearchFor);
@@ -405,7 +421,7 @@ final class SearchForUsagesRunnable implements Runnable {
                                                                     : TooManyUsagesUserAction.Continued,
                                                                     elementClass, scopeText, language);
           UsageViewManagerImpl.showTooManyUsagesWarningLater(myProject, tooManyUsagesStatus, originalIndicator, usageView,
-            () -> UsageViewBundle.message("find.excessive.usage.count.prompt"), onUserClicked);
+                                                             null, onUserClicked);
 
           UsageViewStatisticsCollector.logTooManyDialog(myProject, myUsageViewRef.get(), TooManyUsagesUserAction.Shown,
                                                         elementClass, scopeText, language);

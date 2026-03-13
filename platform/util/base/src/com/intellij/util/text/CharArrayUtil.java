@@ -50,6 +50,13 @@ public final class CharArrayUtil {
     CharArrayUtilKmp.getChars(src, dst, srcOffset, dstOffset, len);
   }
 
+  /**
+   * @return if a CharSequence wraps a char[] array and provides direct access to this array -> returns the wrapped array,
+   * returns null otherwise
+   *
+   * @see CharSequenceBackedByArray
+   * @see java.nio.CharBuffer#array()
+   */
   public static char @Nullable [] fromSequenceWithoutCopying(@Nullable CharSequence seq) {
     return CharArrayUtilKmp.fromSequenceWithoutCopying(seq);
   }
@@ -193,7 +200,8 @@ public final class CharArrayUtil {
   private static void assertRegionIndicesInRange(int s1Length, int start1, int end1,
                                                  int s2Length, int start2, int end2) {
     if (start1 < 0 || start1 > end1 || end1 > s1Length || start2 < 0 || start2 > end2 || end2 > s2Length) {
-      throw new IllegalArgumentException("Indices out of bounds: (" + start1 + ", " + end1 + ") of CharSequence length " + s1Length + " vs (" + start2 + ", " + end2 + ") of CharSequence length " + s2Length);
+      throw new IllegalArgumentException("Indices out of bounds: (" + start1 + ", " + end1 + ") of CharSequence length " + s1Length +
+                                         " vs (" + start2 + ", " + end2 + ") of CharSequence length " + s2Length);
     }
   }
 
@@ -419,6 +427,14 @@ public final class CharArrayUtil {
     return true;
   }
 
+  /**
+   * Make a {@link Reader} from given {@link CharSequence}.
+   * If {@link CharSequence} wraps a char[], and provides access to the underlying buffer -- wraps this char[] for faster access,
+   * otherwise just wraps given {@link CharSequence}
+   *
+   * @see CharSequenceBackedByArray
+   * @see java.nio.CharBuffer#array()
+   */
   public static @NotNull Reader readerFromCharSequence(@NotNull CharSequence text) {
     char[] chars = fromSequenceWithoutCopying(text);
     return chars == null ? new CharSequenceReader(text) : new UnsyncCharArrayReader(chars, 0, text.length());

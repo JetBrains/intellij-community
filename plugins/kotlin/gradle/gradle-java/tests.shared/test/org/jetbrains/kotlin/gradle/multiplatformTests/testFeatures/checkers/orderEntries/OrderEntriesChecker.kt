@@ -5,21 +5,18 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ExportableOrderEntry
 import com.intellij.openapi.roots.JdkOrderEntry
-import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderEntry
-import org.jetbrains.kotlin.analyzer.ModuleInfo
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.ModuleReportData
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.PrinterContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.WorkspaceModelChecker
-import org.jetbrains.kotlin.idea.base.facet.implementedModules
-import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
-import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForTest
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModules
 
 // Sorting is configured in TestConfiguration
 object OrderEntriesChecker : WorkspaceModelChecker<OrderEntriesChecksConfiguration>(respectOrder = true) {
@@ -56,7 +53,6 @@ object OrderEntriesChecker : WorkspaceModelChecker<OrderEntriesChecksConfigurati
         }
     }
 
-    @OptIn(K1ModeProjectStructureApi::class)
     override fun PrinterContext.buildReportDataForModule(module: Module): List<ModuleReportData> {
         val orderEntries = runReadAction { ModuleRootManager.getInstance(module).orderEntries }
         val filteredEntries = orderEntries.filterNot { shouldRemoveOrderEntry(it) }
@@ -64,21 +60,22 @@ object OrderEntriesChecker : WorkspaceModelChecker<OrderEntriesChecksConfigurati
 
         val testConfig = testConfiguration.getConfiguration(OrderEntriesChecker)
 
-        val dependsOnModules = module.implementedModules.toSet()
-        val friendModules: Collection<ModuleInfo> = module.sourceModuleInfos.singleOrNull()
-            ?.modulesWhoseInternalsAreVisible()
-            .orEmpty()
-            .toSet()
+        val kaSourceModules = module.toKaSourceModules()
+        val dependsOnModules: Set<KaModule> = kaSourceModules.flatMap { it.directDependsOnDependencies }.toSet()
+        val friendModules: Set<KaModule> = kaSourceModules.flatMap { it.directFriendDependencies }.toSet()
 
         val orderEntriesRendered = buildList {
             for (entry in filteredEntries) {
-                val moduleInfos: Set<IdeaModuleInfo> = getModuleInfos(entry)
-                val orderEntryModule = (entry as? ModuleOrderEntry)?.module
+                val kaModule = (entry as? ModuleOrderEntry)
+                    ?.module
+                    ?.let { it.toKaSourceModuleForProduction() ?: it.toKaSourceModuleForTest() }
                 add(
                     render(
                         orderEntry = entry,
-                        isDependsOn = orderEntryModule in dependsOnModules,
-                        isFriend = moduleInfos.isNotEmpty() && friendModules.containsAll(moduleInfos)
+                        isDependsOn = kaModule != null && kaModule in dependsOnModules,
+                        // A module is marked as friend only if it's in friendModules AND not in dependsOnModules.
+                        // If a module is both a friend and depends-on, we only show the "refines" marker.
+                        isFriend = kaModule != null && kaModule in friendModules && kaModule !in dependsOnModules
                     )
                 )
             }
@@ -163,35 +160,6 @@ object OrderEntriesChecker : WorkspaceModelChecker<OrderEntriesChecksConfigurati
             .replace(projectRoot.path, "{{PROJECT_ROOT}}")
             .replace(projectRoot.absolutePath, "{{PROJECT_ROOT}}")
             .removePrefix("Gradle: ")
-
-    @K1ModeProjectStructureApi
-    private fun PrinterContext.getModuleInfos(orderEntry: OrderEntry): Set<IdeaModuleInfo> {
-        when (orderEntry) {
-            is ModuleOrderEntry -> return setOfNotNull(orderEntry.module?.toModuleInfo())
-
-            is LibraryOrderEntry -> {
-                val library = orderEntry.library ?: return emptySet()
-                return runReadAction { LibraryInfoCache.getInstance(project)[library] }.toSet()
-            }
-
-
-            is JdkOrderEntry -> return setOf(SdkInfo(project, orderEntry.jdk ?: return emptySet()))
-
-            else -> return emptySet()
-        }
-    }
-
-    @K1ModeProjectStructureApi
-    private fun Module.toModuleInfo(): IdeaModuleInfo? {
-        val sourceModuleInfos = sourceModuleInfos
-        check(sourceModuleInfos.size <= 1) {
-            "Unexpected multiple module infos for module ${this.name}\n" +
-                    "This can happen if main/test are imported as source roots of\n" +
-                    "single Module, instead of being imported as two different Modules\n" +
-                    "This configuration is not expected in MPP environment (and tests)"
-        }
-        return sourceModuleInfos.singleOrNull()
-    }
 
     private val STDLIB_MODULES = setOf(
         "org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}}", // Before 1.9.20

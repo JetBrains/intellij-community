@@ -19,12 +19,27 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.IJSwingUtilities
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Rectangle
+import java.awt.Window
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleState
+import javax.swing.JComponent
+import javax.swing.JFrame
+import javax.swing.JLayeredPane
+import javax.swing.JPanel
+import javax.swing.JRootPane
+import javax.swing.MenuElement
+import javax.swing.MenuSelectionManager
+import javax.swing.SwingUtilities
 import javax.swing.event.ChangeListener
 
 
@@ -79,7 +94,7 @@ internal class ExpandableMenu(
     return !SystemInfoRt.isMac && Registry.`is`("ide.main.menu.expand.horizontal")
   }
 
-  private fun isShowing(): Boolean {
+  fun isShowing(): Boolean {
     return expandedMenuBar != null
   }
 
@@ -89,7 +104,7 @@ internal class ExpandableMenu(
     ideMenuHelper.updateUI()
   }
 
-  fun switchState(actionMenuToShow: ActionMenu? = null, itemInd: Int = 0) {
+  fun switchState(actionMenuToShow: ActionMenu? = null, itemInd: Int = 0, selectOnlyHeaderMenu: Boolean = false) {
     if (isShowing() && actionMenuToShow == null) {
       hideExpandedMenuBar()
       return
@@ -117,11 +132,11 @@ internal class ExpandableMenu(
 
     // The first menu usage has no selection in the menu. Fix it by invokeLater
     ApplicationManager.getApplication().invokeLater {
-      selectMenu(actionMenu = actionMenuToShow, itemInd = itemInd)
+      selectMenu(actionMenu = actionMenuToShow, itemInd = itemInd, selectOnlyHeaderMenu = selectOnlyHeaderMenu)
     }
   }
 
-  private fun selectMenu(actionMenu: ActionMenu? = null, itemInd: Int) {
+  private fun selectMenu(actionMenu: ActionMenu? = null, itemInd: Int, selectOnlyHeaderMenu: Boolean = false) {
     var menu = ideMenu.getMenu(itemInd)
     if (actionMenu != null) {
       for (m in ideMenu.rootMenuItems) {
@@ -135,8 +150,11 @@ internal class ExpandableMenu(
     menu ?: return
 
     val subElements = menu.popupMenu.subElements
-    if (subElements.isEmpty()) {
+    if (subElements.isEmpty() || selectOnlyHeaderMenu) {
       MenuSelectionManager.defaultManager().selectedPath = arrayOf<MenuElement>(ideMenu, menu)
+      ApplicationManager.getApplication().invokeLater {
+        menu.accessibleContext.firePropertyChange(AccessibleContext.ACCESSIBLE_STATE_PROPERTY, null, AccessibleState.SELECTED)
+      }
     }
     else {
       MenuSelectionManager.defaultManager().selectedPath = arrayOf<MenuElement>(ideMenu, menu, menu.popupMenu, subElements[0])

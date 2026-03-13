@@ -2,6 +2,7 @@
 package com.intellij.platform.execution.serviceView
 
 import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.dashboard.RunDashboardManagerProxy
 import com.intellij.execution.services.ServiceViewContributor
 import com.intellij.execution.services.ServiceViewManager
 import com.intellij.execution.services.ServiceViewToolWindowDescriptor
@@ -20,7 +21,11 @@ import com.intellij.platform.execution.serviceView.splitApi.ServiceViewConfigura
 import com.intellij.platform.execution.serviceView.splitApi.ServiceViewConfigurationTypeSettings
 import com.intellij.platform.execution.serviceView.splitApi.ServiceViewRpc
 import com.intellij.platform.project.projectId
-import com.intellij.ui.*
+import com.intellij.ui.ColoredTreeCellRenderer
+import com.intellij.ui.DoubleClickListener
+import com.intellij.ui.IdeUICustomization
+import com.intellij.ui.JBColor
+import com.intellij.ui.TreeSpeedSearch
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
@@ -34,7 +39,11 @@ import java.awt.BorderLayout
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.MutableTreeNode
@@ -162,9 +171,7 @@ internal class ConfigureServicesDialog(private val project: Project, settings: S
 
   override fun doOKAction() {
     (ServiceViewManager.getInstance(project) as ServiceViewManagerImpl).setExcludedContributors(excludedServicesTree.getServices())
-    ServiceViewCoroutineScopeProvider.getInstance(project).cs.launch {
-      ServiceViewRpc.getInstance().saveConfigurationTypes(project.projectId(), includedServicesTree.getTypes())
-    }
+    RunDashboardManagerProxy.getInstance(project).types = includedServicesTree.getTypes()
     super.doOKAction()
   }
 }

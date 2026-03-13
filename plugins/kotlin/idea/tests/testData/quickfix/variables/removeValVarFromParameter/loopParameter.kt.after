@@ -1,4 +1,5 @@
 // "Remove 'val' from parameter" "true"
+// K2_ERROR: 'val' on loop parameter is prohibited.
 fun f(list: List<String>) {
     for (x in list) {
 

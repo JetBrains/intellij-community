@@ -37,6 +37,23 @@ sealed interface FileUpdateStrategy {
 }
 
 /**
+ * No-op file updater used when XML writes must be suppressed (e.g., update-suppressions mode).
+ */
+internal object NoopFileUpdateStrategy : FileUpdateStrategy {
+  override fun updateIfChanged(path: Path, newContent: String): FileChangeStatus = FileChangeStatus.UNCHANGED
+
+  override fun writeIfChanged(path: Path, oldContent: String, newContent: String): FileChangeStatus = FileChangeStatus.UNCHANGED
+
+  override fun delete(path: Path) = Unit
+
+  override fun getDiffs(): List<FileDiff> = emptyList()
+}
+
+internal fun FileUpdateStrategy.withUpdateSuppressions(updateSuppressions: Boolean): FileUpdateStrategy {
+  return if (updateSuppressions) NoopFileUpdateStrategy else this
+}
+
+/**
  * Deferred file writer - collects changes during generation,
  * commits only when explicitly requested.
  * Use when you want to validate before writing.

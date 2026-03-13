@@ -58,9 +58,8 @@ object Utils {
   @JvmStatic
   var isEnabledInTests: Boolean = false
 
-  fun ResourceProperties.configValueForKey(key: String): String {
-    val prop = properties[key] ?: return ""
-    val value = prop.sourceValue.trim()
+  fun Map<String, String>.configValueForKey(key: String): String {
+    val value = get(key)?.trim() ?: return ""
     return if (value in UNSET_VALUES) "" else value
   }
 
@@ -253,7 +252,7 @@ object Utils {
            (!ApplicationManager.getApplication().isUnitTestMode() || isEnabledInTests)
   }
 
-  fun processEditorConfig(project: Project, file: VirtualFile): Pair<ResourceProperties, List<VirtualFile>> {
+  fun processEditorConfig(project: Project, file: VirtualFile): Pair<Map<String, String>, List<VirtualFile>> {
     EDITOR_CONFIGS.set(file, null)
     val filePath = getFilePath(project, file)
     if (filePath != null) {
@@ -265,7 +264,7 @@ object Utils {
       thisLogger().warn("${file.presentableUrl} is a broken link")
     }
     thisLogger().debug { "null filepath for ${file.name}" }
-    return Pair(ResourceProperties.Builder().build(), emptyList())
+    return Pair(emptyMap(), emptyList())
   }
 
   fun relatedEditorConfigFiles(vCodeFile: VirtualFile): List<VirtualFile> {

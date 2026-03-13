@@ -18,6 +18,25 @@ jvm_library(
     "//plugins/editorconfig/backend",
     "//plugins/jsonpath",
     "//platform/vcs-log/impl",
+    "@lib//:jetbrains-annotations",
+    "//platform/util",
+    "//platform/util/base",
+  ]
+)
+
+jvm_library(
+  name = "module_test_lib",
+  module_name = "intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":module",
+    "//platform/vcs-api:vcs_test_lib",
+    "//plugins/editorconfig/backend:backend_test_lib",
+    "//plugins/jsonpath:jsonpath_test_lib",
+    "//platform/vcs-log/impl:impl_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util/base:base_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module` end

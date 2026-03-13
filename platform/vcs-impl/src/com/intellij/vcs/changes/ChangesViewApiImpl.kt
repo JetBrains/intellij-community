@@ -7,6 +7,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.vcs.AbstractVcsHelper
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
@@ -79,8 +80,14 @@ internal class ChangesViewApiImpl : ChangesViewApi {
   override suspend fun showResolveConflictsDialog(projectId: ProjectId, changeIds: List<ChangeId>) = projectScoped(projectId) { project ->
     LOG.trace { "Showing resolve conflicts dialog for ${changeIds.size} changes" }
     val changes = ChangesViewChangeIdProvider.getInstance(project).getChangeListChanges(changeIds)
-    withContext(Dispatchers.EDT) {
-      AbstractVcsHelper.getInstance(project).showMergeDialog(ChangesUtil.iterateFiles(changes).toList())
+    val files = ChangesUtil.iterateFiles(changes).toList()
+    if (files.isEmpty()) return@projectScoped
+
+    val vcsManager = ProjectLevelVcsManager.getInstance(project)
+    val provider = files.firstNotNullOfOrNull { file -> vcsManager.getVcsFor(file)?.mergeProvider } ?: return@projectScoped
+
+    withContext(Dispatchers.UiWithModelAccess) {
+      AbstractVcsHelper.getInstance(project).showMergeDialog(files, provider)
     }
   }
 

@@ -1,4 +1,5 @@
 // "Change type of 'complex' to '(Int) -> Long'" "true"
+// K2_ERROR: Return type mismatch: expected 'String', actual 'Long'.
 
 val complex: (Int) -> String
     get() = { it.toLong()<caret> }

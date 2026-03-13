@@ -22,4 +22,29 @@ jvm_library(
     "//java/java-frontback-psi-api:frontback-psi",
   ]
 )
+
+jvm_library(
+  name = "testFramework_test_lib",
+  module_name = "intellij.junit.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//plugins/junit",
+    "//plugins/junit:junit_test_lib",
+    "//java/java-frontback-psi-api:frontback-psi",
+    "//java/java-frontback-psi-api:frontback-psi_test_lib",
+  ],
+  runtime_deps = [
+    ":testFramework",
+    "//jvm/jvm-analysis-testFramework:analysis-testFramework_test_lib",
+    "//plugins/junit:junit_test_lib",
+    "//java/java-frontback-psi-api:frontback-psi_test_lib",
+    "//java/testFramework:testFramework_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.junit.testFramework` end

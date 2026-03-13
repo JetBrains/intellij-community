@@ -5,13 +5,13 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.codeinsight.utils.RemoveExplicitTypeArgumentsUtils
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlineAnonymousFunctionProcessor
@@ -77,7 +77,7 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
         val facility = ShortenReferencesFacility.getInstance()
         return pointers.mapNotNull { p ->
             val ktElement = p.element ?: return@mapNotNull null
-            val shorten = facility.shorten(ktElement, ShortenOptions.ALL_ENABLED)
+            val shorten = facility.shorten(ktElement, ShortenOptionsForIde.ALL_ENABLED)
             p.element ?: shorten as? KtElement
         }
     }

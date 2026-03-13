@@ -22,7 +22,7 @@
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker"/>
-    <applicationService serviceImplementation="com.intellij.openapi.roots.ui.configuration.SdkDetector" open="true"/>
+    <applicationService serviceImplementation="com.intellij.openapi.roots.ui.configuration.SdkDetector"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.SdkPopupFactory"
                         serviceImplementation="com.intellij.openapi.roots.ui.configuration.PlatformSdkPopupFactory"/>

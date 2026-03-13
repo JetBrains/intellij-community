@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.contents;
 
+import com.intellij.diff.impl.AssignmentTracker;
+import com.intellij.diff.impl.FileAssignmentTracker;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -19,6 +21,8 @@ public class FileContentImpl extends DiffContentBase implements FileContent {
   private final @NotNull FileType myType;
   private final @Nullable VirtualFile myHighlightFile;
 
+  private final AssignmentTracker myAssignmentTracker;
+
   public FileContentImpl(@Nullable Project project, @NotNull VirtualFile file) {
     this(project, file, file);
   }
@@ -31,6 +35,7 @@ public class FileContentImpl extends DiffContentBase implements FileContent {
     myProject = project;
     myType = file.getFileType();
     myHighlightFile = highlightFile;
+    myAssignmentTracker = new FileAssignmentTracker(project, file);
   }
 
   @Override
@@ -55,7 +60,7 @@ public class FileContentImpl extends DiffContentBase implements FileContent {
 
   @Override
   public void onAssigned(boolean isAssigned) {
-    if (isAssigned) DiffUtil.refreshOnFrameActivation(myFile);
+    myAssignmentTracker.onAssigned(isAssigned);
   }
 
   @Override

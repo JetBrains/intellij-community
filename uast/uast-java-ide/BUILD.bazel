@@ -22,4 +22,23 @@ jvm_library(
   ],
   exports = ["//uast/uast-java:java-uast"]
 )
+
+jvm_library(
+  name = "java-uast-ide_test_lib",
+  module_name = "intellij.java.uast.ide",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//uast/uast-java:java-uast",
+    "//uast/uast-java:java-uast_test_lib",
+  ],
+  runtime_deps = [
+    ":java-uast-ide",
+    "//java/java-impl:impl_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//uast/uast-java:java-uast_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.java.uast.ide` end

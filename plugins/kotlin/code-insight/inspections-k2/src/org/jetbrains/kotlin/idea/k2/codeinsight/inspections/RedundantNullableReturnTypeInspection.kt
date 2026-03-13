@@ -10,26 +10,19 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
-import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
-import org.jetbrains.kotlin.name.JvmStandardClassIds.TRANSIENT_ANNOTATION_FQ_NAME
-import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.ReturnTypeNullabilityUtil
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtNullableType
 import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.KtVisitorVoid
-import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 
 internal class RedundantNullableReturnTypeInspection :
@@ -61,33 +54,8 @@ internal class RedundantNullableReturnTypeInspection :
         return listOf(questionMark.textRangeIn(element))
     }
 
-    override fun KaSession.prepareContext(element: KtCallableDeclaration): Unit? {
-        if (element.isOverridable() || hasJvmTransientAnnotation(element)) return null
-
-        val actualReturnTypes = when (element) {
-            is KtNamedFunction -> {
-                val bodyExpression = element.bodyExpression ?: return null
-                actualReturnTypes(bodyExpression, element)
-            }
-
-            is KtProperty -> {
-                val initializer = element.initializer
-                val getter = element.accessors.singleOrNull { it.isGetter }
-                val getterBody = getter?.bodyExpression
-
-                buildList {
-                    if (initializer != null) addAll(actualReturnTypes(initializer, element))
-                    if (getterBody != null) addAll(actualReturnTypes(getterBody, getter))
-                }
-            }
-
-            else -> return null
-        }
-
-        if (actualReturnTypes.isEmpty() || actualReturnTypes.any { it.isNullable }) return null
-
-        return Unit
-    }
+    override fun KaSession.prepareContext(element: KtCallableDeclaration): Unit? =
+        ReturnTypeNullabilityUtil.hasOnlyNonNullableReturns(element).asUnit
 
     override fun getProblemDescription(element: KtCallableDeclaration, context: Unit): String =
         if (element is KtProperty)
@@ -107,29 +75,5 @@ internal class RedundantNullableReturnTypeInspection :
             val innerType = typeElement.innerType ?: return
             typeElement.replace(innerType)
         }
-    }
-}
-
-private fun KaSession.actualReturnTypes(
-    expression: KtExpression,
-    declaration: KtDeclaration,
-): List<KaType> {
-    val returnTypes = expression.collectDescendantsOfType<KtReturnExpression> {
-        it.targetSymbol == declaration.symbol
-    }.map {
-        it.returnedExpression?.expressionType
-    }
-
-    return if (expression is KtBlockExpression) {
-        returnTypes
-    } else {
-        returnTypes + expression.expressionType
-    }.filterNotNull()
-}
-
-private fun KaSession.hasJvmTransientAnnotation(declaration: KtCallableDeclaration): Boolean {
-    val symbol = (declaration.symbol as? KaPropertySymbol)?.backingFieldSymbol ?: return false
-    return symbol.annotations.any {
-        it.classId?.asSingleFqName() == TRANSIENT_ANNOTATION_FQ_NAME
     }
 }

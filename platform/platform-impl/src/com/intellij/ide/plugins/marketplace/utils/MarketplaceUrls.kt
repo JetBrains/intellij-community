@@ -103,7 +103,9 @@ object MarketplaceUrls {
       "id" to descriptor.pluginId.idString,
       "build" to ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber),
       "uuid" to uuid,
-      "updatedFrom" to updatedFrom
+      "updatedFrom" to updatedFrom,
+      "os" to buildOsParameter(),
+      "arch" to CpuArch.CURRENT.name
     )
    descriptor.channel?.let {
       parameters["channel"] = it

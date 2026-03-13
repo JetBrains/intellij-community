@@ -27,7 +27,6 @@ class TextMergeChange(
   var isOnesideAppliedConflict: Boolean = false
     private set
 
-  @get:ApiStatus.Internal
   var isResolvedWithAI: Boolean = false
     private set
 

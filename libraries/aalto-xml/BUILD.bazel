@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:aalto-xml"],
   runtime_deps = ["@lib//:aalto-xml"]
 )
+
+jvm_library(
+  name = "aalto-xml_test_lib",
+  module_name = "intellij.libraries.aalto.xml",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:aalto-xml"],
+  runtime_deps = [":aalto-xml"]
+)
 ### auto-generated section `build intellij.libraries.aalto.xml` end

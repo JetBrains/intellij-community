@@ -4,11 +4,11 @@ Entry point: `ContentModuleDependencyValidator` (`NodeIds.PLUGIN_CONTENT_MODULE_
 
 ## Overview
 
-Validates dependencies of plugin content modules within each product using graph-only content module dependency edges computed by `ContentModuleDependencyGenerator`.
+Validates dependencies of plugin content modules within each product using graph-only content module dependency edges computed by `ContentModuleDependencyPlanner`.
 
 ## Inputs
 
-- Slot: `Slots.CONTENT_MODULE` (content module dependency edges in the graph).
+- Slot: `Slots.CONTENT_MODULE_PLAN` (content module dependency edges in the graph).
 - Graph: product-to-plugin-to-content containment, content module dependency edges, loading modes.
 - Config: product `allowMissingDependencies`.
 

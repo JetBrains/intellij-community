@@ -2,7 +2,7 @@
 package com.intellij.platform.locking.impl.listeners
 
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 
 /**
  * Provides the possibility to react to the acquisition and release of the RWI lock.

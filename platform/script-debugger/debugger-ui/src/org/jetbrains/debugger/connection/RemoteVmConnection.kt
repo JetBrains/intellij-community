@@ -14,7 +14,11 @@ import com.intellij.util.io.connectRetrying
 import com.intellij.util.io.socketConnection.ConnectionStatus
 import com.intellij.xdebugger.XDebuggerBundle
 import io.netty.bootstrap.Bootstrap
-import org.jetbrains.concurrency.*
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.errorIfNotMessage
+import org.jetbrains.concurrency.rejectedPromise
+import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.debugger.Vm
 import org.jetbrains.io.NettyUtil
 import java.net.ConnectException

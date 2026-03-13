@@ -12,7 +12,7 @@ jvm_library(
   srcs = glob(["src/main/kotlin/**/*.kt"], exclude = ["src/main/kotlin/com/jetbrains/fleet/rpc/plugin/gradle/RpcGradlePlugin.kt"]),
   visibility = ["//visibility:public"],
   deps = [
-    "@rules_jvm//jvm-inc-builder:patched-kotlin-compiler-for-bazel",
+    "@rules_jvm//jvm-inc-builder:kotlin-compiler-for-bazel",
   ],
   resources = [":rpc-compiler-plugin_resources"],
 )

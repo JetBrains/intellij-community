@@ -8,7 +8,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Objects;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.function.Function;
 
 public class FormatOnSaveOptionsBase<S extends FormatOnSaveOptionsBase.StateBase> implements PersistentStateComponent<S>, Cloneable {

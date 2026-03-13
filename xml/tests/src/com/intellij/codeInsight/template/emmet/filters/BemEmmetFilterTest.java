@@ -32,7 +32,7 @@ public class BemEmmetFilterTest extends EmmetAbbreviationTestSuite {
     addTest(".b1>.b2_m1>.__e1+.____e2_m2|bem",
             "<div class=\"b1\">\n\t<div class=\"b2 b2_m1\">\n\t\t<div class=\"b2__e1\"></div>\n\t\t<div class=\"b1__e2 b1__e2_m2\"></div>\n\t</div>\n</div>");
     addTest(".b>.__e1>.__e2|bem", "<div class=\"b\">\n\t<div class=\"b__e1\">\n\t\t<div class=\"b__e2\"></div>\n\t</div>\n</div>");
-    addTest(".b>.__e1>.____e2|bem", "<div class=\"b\">\n\t<div class=\"b__e1\">\n\t\t<div class=\"b__e2\"></div>\n\t</div>\n</div>");
+    addTestWithName(".b>.__e1>.____e2|bem", ".b>.__e1>.____e2|bem #2", "<div class=\"b\">\n\t<div class=\"b__e1\">\n\t\t<div class=\"b__e2\"></div>\n\t</div>\n</div>");
     addTest(".b._mod|bem", "<div class=\"b b_mod\"></div>");
     addTest("form.search-form._wide>input.-query-string+input:s.-btn_large|bem",
             "<form action=\"\" class=\"search-form search-form_wide\"><input type=\"text\" class=\"search-form__query-string\"><input\n" +
@@ -47,8 +47,8 @@ public class BemEmmetFilterTest extends EmmetAbbreviationTestSuite {
   }
 
   private void addBem2Tests() {
-    addTest(".b_m1._m2|bem", "<div class=\"b b_m1 b_m2\"></div>");
-    addTest(".b._mod|bem", "<div class=\"b b_mod\"></div>");
+    addTestWithName(".b_m1._m2|bem", ".b_m1._m2|bem #2", "<div class=\"b b_m1 b_m2\"></div>");
+    addTestWithName(".b._mod|bem", ".b._mod|bem #2", "<div class=\"b b_mod\"></div>");
   }
 
   private void addRegressionTests() {
@@ -64,7 +64,7 @@ public class BemEmmetFilterTest extends EmmetAbbreviationTestSuite {
 
   private void addConfigurableTests() {
     addTest(".b9m|bem", "<div class=\"b b9m\"></div>", createBemTestInitializer("__", "9", "-"), "html");
-    addTest(".b9m|bem", "<div class=\"b9mb9m\"></div>", createBemTestInitializer("", "", ""), "html");
+    addTestWithName(".b9m|bem", ".b9m|bem #2", "<div class=\"b9mb9m\"></div>", createBemTestInitializer("", "", ""), "html");
     addTest(".b>.Ыe|bem", """
       <div class="b">
           <div class="bЫe"></div>
@@ -93,5 +93,9 @@ public class BemEmmetFilterTest extends EmmetAbbreviationTestSuite {
 
   private void addTest(String sourceData, String expectedData) {
     addTest(sourceData, expectedData, "html");
+  }
+
+  private void addTestWithName(String sourceData, String name, String expectedData) {
+    super.addTestWithName(sourceData, name, expectedData, null, "html");
   }
 }

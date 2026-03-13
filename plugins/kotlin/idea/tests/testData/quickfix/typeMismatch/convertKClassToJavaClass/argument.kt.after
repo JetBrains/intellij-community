@@ -1,6 +1,7 @@
 // "Convert 'KClass' to 'Class'" "true"
 // PRIORITY: HIGH
 // WITH_STDLIB
+// K2_ERROR: Argument type mismatch: actual type is 'KClass<String>', but 'Class<*>' was expected.
 
 fun main() {
     acceptClass(String::class.java)

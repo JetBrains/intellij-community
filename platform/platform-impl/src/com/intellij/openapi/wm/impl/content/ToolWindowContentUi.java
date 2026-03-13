@@ -7,7 +7,19 @@ import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
@@ -19,16 +31,31 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowContentUiType;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.toolWindow.ToolWindowEventSource;
 import com.intellij.toolWindow.ToolWindowHeader;
 import com.intellij.toolWindow.ToolWindowPane;
-import com.intellij.ui.*;
+import com.intellij.ui.ClientProperty;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.MouseDragHelper;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.content.*;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.ui.content.ContentUI;
+import com.intellij.ui.content.TabGroupId;
+import com.intellij.ui.content.TabbedContent;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.ui.tabs.impl.MorePopupAware;
@@ -43,8 +70,20 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.SwingUtilities;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Window;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
@@ -88,6 +127,9 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
   private final JPanel tabComponent = new TabPanel();
   private final DefaultActionGroup tabActionGroup = new DefaultActionGroup();
   private ActionToolbar tabToolbar = null;
+
+  /** Content for which the action popup menu is opened at this moment */
+  private @Nullable Content contentOfPopup;
 
   public ToolWindowContentUi(@NotNull ToolWindowImpl window,
                              @NotNull ContentManager contentManager,
@@ -629,8 +671,30 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
       group.add(toolWindowGroup);
     }
 
-    final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, group);
-    popupMenu.getComponent().show(comp, x, y);
+    JPopupMenu popup = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, group).getComponent();
+    popup.addPopupMenuListener(new PopupMenuListener() {
+      @Override
+      public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+        contentOfPopup = selectedContent;
+      }
+
+      @Override
+      public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+        reset();
+      }
+
+      @Override
+      public void popupMenuCanceled(PopupMenuEvent e) {
+        reset();
+      }
+
+      private void reset() {
+        contentOfPopup = null;
+        popup.removePopupMenuListener(this);
+      }
+    });
+
+    popup.show(comp, x, y);
   }
 
   private static @NotNull AnAction createSplitTabsAction(@NotNull TabbedContent content) {
@@ -797,6 +861,11 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
   /** Checks if the selected content component or one of its descendants has focus. */
   @ApiStatus.Internal public Boolean isActive() {
     return UIUtil.isFocusAncestor(contentComponent);
+  }
+
+  @ApiStatus.Internal
+  public boolean isPopupOpenedForContent(@NotNull Content content) {
+    return contentOfPopup == content;
   }
 
   /**

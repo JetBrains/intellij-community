@@ -2,11 +2,12 @@ package com.intellij.ide.starter.process.exec
 
 import com.intellij.ide.starter.config.ConfigurationStorage
 import com.intellij.ide.starter.config.logEnvVariables
-import com.intellij.ide.starter.coroutine.CommonScope.perClassSupervisorScope
+import com.intellij.ide.starter.coroutine.CommonScope.scopeForProcesses
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.ide.starter.utils.getThrowableText
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
+import com.intellij.util.system.OS
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +25,8 @@ import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 import kotlin.io.path.exists
 import kotlin.io.path.readText
+import kotlin.jvm.optionals.getOrDefault
+import kotlin.jvm.optionals.getOrNull
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -53,6 +56,33 @@ class ProcessExecutor(
         process.destroyForcibly()
       }
     }
+  }
+
+  /**
+   * Returns the set of Processes to spare when killing descendants of an exited process.
+   * Preserves processes that are part of the IDE update/restart mechanism and all their children,
+   * so the patcher can finish applying the patch and the IDE can be re-launched.
+   *
+   * Roots that trigger preservation (and their full subtrees):
+   *  - `restarter.exe` / `restarter` — waits for the IDE to die, runs the patcher, then re-launches the IDE
+   */
+  private fun collectUpdateRelatedProcesses(allDescendants: List<ProcessHandle>): Set<ProcessHandle> {
+    val updateProcesses = HashSet<ProcessHandle>()
+    val restarterProcess = if (OS.CURRENT == OS.Windows) "restarter.exe" else "restarter"
+    allDescendants
+      .filter { process ->
+        restarterProcess == process.info().command()
+          .getOrDefault("").substringAfterLast('/').substringAfterLast('\\')
+      }
+      .forEach { root ->
+        logOutput("  ... skipping update-related process and its children: PID=${root.pid()} cmd=${root.info().command().getOrNull()}")
+        updateProcesses.add(root)
+        root.descendants().forEach { child ->
+          logOutput("  ... skipping child of update-related process: PID=${child.pid()} cmd=${child.info().command().getOrNull()}")
+          updateProcesses.add(child)
+        }
+      }
+    return updateProcesses
   }
 
   private fun redirectProcessOutput(
@@ -202,7 +232,7 @@ class ProcessExecutor(
     @Suppress("BlockingMethodInNonBlockingContext") val process = processBuilder.start()
 
     val processId = process.pid()
-    val onProcessCreatedJob: Job = perClassSupervisorScope.launch(Dispatchers.IO + CoroutineName("On process $presentableName created job")) {
+    val onProcessCreatedJob: Job = scopeForProcesses.launch(Dispatchers.IO + CoroutineName("On process $presentableName created job")) {
       if (!silent) logOutput("  ... started external process `$presentableName` with process ID = $processId")
       onProcessCreated(process, processId)
     }
@@ -263,6 +293,9 @@ class ProcessExecutor(
         killProcess()
       }
       process.destroyForcibly()
+      val descendants = process.descendants().toList()
+      val skipProcesses = collectUpdateRelatedProcesses(descendants)
+      descendants.filter { it !in skipProcesses }.forEach { it.destroyForcibly() }
 
       try {
         Runtime.getRuntime().removeShutdownHook(shutdownHookThread)

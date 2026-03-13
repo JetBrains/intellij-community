@@ -2,6 +2,12 @@
   <module value="com.intellij.modules.scriptDebugger.backend"/>
   <dependencies>
     <module name="intellij.platform.backend"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.scriptDebugger.protocolReaderRuntime"/>
+    <module name="intellij.platform.util.ex"/>
+    <!-- endregion -->
   </dependencies>
 </idea-plugin>

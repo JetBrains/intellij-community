@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.remoteApi
 
-import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.repo.repositoryId
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -37,7 +36,7 @@ import kotlin.time.Duration.Companion.seconds
 
 private typealias SharedRefUtil = GitRefUtil
 
-class GitRepositoryApiImpl : GitRepositoryApi {
+internal class GitRepositoryApiImpl : GitRepositoryApi {
   override suspend fun getRepositoriesEvents(projectId: ProjectId): Flow<GitRepositoryEvent> =
     projectScopedCallbackFlow(projectId) { project, messageBusConnection ->
       val synchronizer = Synchronizer(project, this)
@@ -120,10 +119,6 @@ class GitRepositoryApiImpl : GitRepositoryApi {
         tagsUpdated(it)
       })
       messageBusConnection.subscribe(GitVcsSettings.GitVcsSettingsListener.TOPIC, object : GitVcsSettings.GitVcsSettingsListener {
-        override fun pathToGitChanged() {}
-
-        override fun branchGroupingSettingsChanged(key: GroupingKey, state: Boolean) {}
-
         override fun showTagsChanged(value: Boolean) {
           if (value) {
             cs.launch { getAllRepositories(project).forEach { tagsUpdated(it) } }

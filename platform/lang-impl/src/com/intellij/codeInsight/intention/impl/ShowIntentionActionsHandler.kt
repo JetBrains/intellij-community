@@ -34,6 +34,7 @@ import com.intellij.modcommand.ModCommandService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
@@ -80,10 +81,10 @@ open class ShowIntentionActionsHandler : CodeInsightActionHandler {
       return ApplicationManager.getApplication().runWriteIntentReadAction(ThrowableComputable {
         val prioritizedRunnable = ThrowableComputable<CachedIntentions, RuntimeException> {
           ProgressManager.getInstance().computePrioritized(ThrowableComputable {
-            DaemonCodeAnalyzerImpl.waitForLazyQuickFixesUnderCaret(file, editor)
-            ApplicationManager.getApplication().runReadAction(ThrowableComputable {
+            DaemonCodeAnalyzerImpl.waitForLazyQuickFixesUnderCaret(project, editor)
+            runReadActionBlocking {
               CachedIntentions.createAndUpdateActions(project, file, editor, ShowIntentionsPass.getActionsToShow(editor, file))
-            })
+            }
           })
         }
 

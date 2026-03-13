@@ -38,6 +38,20 @@ jvm_library(
     "@lib//:completion_ml_ranking_models-completion-ranking-sh-exp",
   ]
 )
+
+jvm_library(
+  name = "completion-ml-ranking-models_test_lib",
+  module_name = "intellij.completionMlRankingModels",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":completion-ml-ranking-models",
+    "//plugins/completion-ml-ranking:completion-ml-ranking_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/platform-impl/internal:internal_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.completionMlRankingModels` end
 
 ### auto-generated section `build intellij.completionMlRankingModels.tests` start
@@ -54,12 +68,18 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
     "@lib//:junit4",
     "//plugins/completion-ml-ranking-models",
+    "//plugins/completion-ml-ranking-models:completion-ml-ranking-models_test_lib",
     "//plugins/completion-ml-ranking",
+    "//plugins/completion-ml-ranking:completion-ml-ranking_test_lib",
     "//platform/platform-impl/internal",
   ],
-  runtime_deps = [":completionMlRankingModels-tests"]
+  runtime_deps = [
+    ":completionMlRankingModels-tests",
+    "//platform/platform-impl/internal:internal_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.completionMlRankingModels.tests` end
 

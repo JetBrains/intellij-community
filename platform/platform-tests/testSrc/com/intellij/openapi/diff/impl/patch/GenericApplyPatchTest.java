@@ -25,7 +25,12 @@ import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 import org.junit.Assert;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class GenericApplyPatchTest extends TestCase {
   public void testSeveralSteps() {

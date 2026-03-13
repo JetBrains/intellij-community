@@ -1,4 +1,5 @@
 // "Remove setter from property" "true"
+// K2_ERROR: 'lateinit' modifier is not allowed on properties with a custom getter or setter.
 
 class A {
     <caret>lateinit var str: String

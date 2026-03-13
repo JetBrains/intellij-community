@@ -46,14 +46,12 @@ internal val PLATFORM_CORE_MODULES = java.util.List.of(
   "intellij.platform.remote.core",
   "intellij.platform.remoteServers.agent.rt",
   "intellij.platform.usageView",
-  "intellij.platform.execution",
 
   "intellij.platform.editor.ex",
   "intellij.platform.lvcs",
   "intellij.platform.macro",
   "intellij.platform.remoteServers.impl",
   "intellij.platform.structureView.impl",
-  "intellij.platform.testRunner",
   "intellij.platform.rd.community",
   "intellij.remoteDev.util",
   "intellij.platform.feedback",
@@ -379,7 +377,7 @@ private suspend fun computePartialListToResolveIncludesAndCollectProductModules(
  * @param context the build context
  * @return map from library name to the library module that exports it
  */
-fun collectExportedLibrariesFromLibraryModules(
+suspend fun collectExportedLibrariesFromLibraryModules(
   layout: PlatformLayout,
   context: BuildContext,
 ): Map<String, String> {
@@ -604,7 +602,7 @@ private suspend fun computeImplicitRequiredModules(
   return requiredModules
 }
 
-private fun computeContentModulesPluginsWhichUseIdeaClassloader(context: BuildContext): Set<String> {
+private suspend fun computeContentModulesPluginsWhichUseIdeaClassloader(context: BuildContext): Set<String> {
   val bundledPlugins = getPluginLayoutsByJpsModuleNames(modules = context.getBundledPluginModules(), productLayout = context.productProperties.productLayout)
   return bundledPlugins.flatMapTo(LinkedHashSet()) {
     getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(pluginMainModule = it.mainModule, cacheContainer = null, context = context)

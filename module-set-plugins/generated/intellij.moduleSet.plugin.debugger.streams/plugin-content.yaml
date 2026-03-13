@@ -1,0 +1,12 @@
+- name: lib/moduleSet-plugin-debugger-streams.jar
+  modules:
+  - name: intellij.moduleSet.plugin.debugger.streams
+- name: lib/modules/intellij.debugger.streams.backend.jar
+  contentModules:
+  - name: intellij.debugger.streams.backend
+- name: lib/modules/intellij.debugger.streams.core.jar
+  contentModules:
+  - name: intellij.debugger.streams.core
+- name: lib/modules/intellij.debugger.streams.shared.jar
+  contentModules:
+  - name: intellij.debugger.streams.shared

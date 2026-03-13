@@ -7,7 +7,6 @@ import com.intellij.ide.actions.WhatsNewUtil
 import com.intellij.idea.AppMode
 import com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.Service
@@ -51,17 +50,10 @@ private class WhatsNewEnvironmentAccessorImpl : WhatsNewEnvironmentAccessor {
   override fun isDefaultWhatsNewEnabledAndReadyToShow(): Boolean {
     val updateStrategyCustomization = UpdateStrategyCustomization.getInstance()
     val enabledModernWay = updateStrategyCustomization.showWhatIsNewPageAfterUpdate
-    @Suppress("DEPRECATION") val enabledLegacyWay = ApplicationInfoEx.getInstanceEx().isShowWhatsNewOnUpdate
 
-    if (enabledModernWay || enabledLegacyWay) {
+    if (enabledModernWay) {
       val problem = "This could lead to issues with the Vision-based What's New. Mixing of web-based and Vision-based What's New is not supported."
-      if (enabledModernWay) {
-        logger.error("${updateStrategyCustomization.javaClass}'s showWhatIsNewPageAfterUpdate is overridden to true. $problem")
-      }
-
-      if (enabledLegacyWay) {
-        logger.error("show-on-update attribute on the <whatsnew> element in the application info XML is set. $problem")
-      }
+      logger.error("${updateStrategyCustomization.javaClass}'s showWhatIsNewPageAfterUpdate is overridden to true. $problem")
 
       if (WhatsNewUtil.isWhatsNewAvailable()) { // if we are really able to show old What's New here, then terminate.
         return true
@@ -81,7 +73,6 @@ internal class WhatsNewStatus {
 }
 
 internal class WhatsNewShowOnStartCheckService(private val environment: WhatsNewEnvironmentAccessor) : ProjectActivity {
-  @Suppress("unused") // used by the component container
   constructor() : this(WhatsNewEnvironmentAccessorImpl())
 
   private val wasStarted = AtomicBoolean(false)

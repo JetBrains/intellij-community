@@ -15,4 +15,19 @@ jvm_library(
   exports = ["//plugins/textmate"],
   runtime_deps = ["//plugins/textmate"]
 )
+
+jvm_library(
+  name = "common_test_lib",
+  module_name = "intellij.textmate.common",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//plugins/textmate",
+    "//plugins/textmate:textmate_test_lib",
+  ],
+  runtime_deps = [
+    ":common",
+    "//plugins/textmate:textmate_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.textmate.common` end

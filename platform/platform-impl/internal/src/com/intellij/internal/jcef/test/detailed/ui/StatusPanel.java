@@ -4,13 +4,12 @@ package com.intellij.internal.jcef.test.detailed.ui;
 
 import org.jetbrains.annotations.ApiStatus;
 
-import java.awt.Dimension;
-
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import java.awt.Dimension;
 
 @ApiStatus.Internal
 public class  StatusPanel extends JPanel {

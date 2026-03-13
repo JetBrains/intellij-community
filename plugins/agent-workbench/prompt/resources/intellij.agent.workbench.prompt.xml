@@ -1,0 +1,38 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.sessions.core"/>
+    <module name="intellij.markdown"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <resource-bundle>messages.AgentPromptBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <agent.workbench.promptManualContextSource implementation="com.intellij.agent.workbench.prompt.context.AgentPromptProjectPathsManualContextSource"/>
+    <agent.workbench.promptManualContextSource implementation="com.intellij.agent.workbench.prompt.context.uiPicker.AgentPromptUIContextManualContextSource"/>
+    <agent.workbench.promptContextContributor implementation="com.intellij.agent.workbench.prompt.context.AgentPromptEditorContextContributor"/>
+    <agent.workbench.promptContextContributor implementation="com.intellij.agent.workbench.prompt.context.AgentPromptProjectViewSelectionContextContributor"/>
+    <agent.workbench.promptContextContributor implementation="com.intellij.agent.workbench.prompt.context.AgentPromptSelectedEditorFallbackContextContributor"/>
+    <agent.workbench.promptContextContributor implementation="com.intellij.agent.workbench.prompt.context.AgentPromptTreeSelectionContextContributor"/>
+  </extensions>
+
+  <actions resource-bundle="messages.AgentPromptBundle">
+    <action
+      id="AgentWorkbenchPrompt.OpenGlobalPalette"
+      class="com.intellij.agent.workbench.prompt.actions.AgentWorkbenchGlobalPromptAction">
+      <keyboard-shortcut first-keystroke="control BACK_SLASH" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="meta BACK_SLASH" keymap="Mac OS X 10.5+"/>
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+
+    <action
+      id="AgentWorkbenchPrompt.OpenGlobalPaletteAutoSelect"
+      class="com.intellij.agent.workbench.prompt.actions.AgentWorkbenchGlobalPromptAutoSelectAction">
+      <keyboard-shortcut first-keystroke="alt control BACK_SLASH" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="alt meta BACK_SLASH" keymap="Mac OS X 10.5+"/>
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+  </actions>
+</idea-plugin>

@@ -12,6 +12,7 @@ data class SharedChangeDocument(
   val documentId: UID,
   val operationId: UID,
   val operation: Operation,
+  val docToDb: Boolean,
   val seed: Long, 
 )
 

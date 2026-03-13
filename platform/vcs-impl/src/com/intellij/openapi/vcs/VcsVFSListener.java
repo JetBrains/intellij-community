@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
 import com.intellij.openapi.vcs.changes.ignore.IgnoreFilesProcessorImpl;
@@ -455,6 +456,10 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   protected boolean isEventIgnored(@NotNull VFileEvent event) {
+    if (Registry.is("vcs.files.processing.do.nothing", false)) {
+      return true;
+    }
+
     FilePath filePath = getEventFilePath(event);
     return !isUnderMyVcs(filePath) || myChangeListManager.isIgnoredFile(filePath);
   }
@@ -484,11 +489,11 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   private boolean allowedDeletion(@NotNull VFileEvent event) {
-    return VcsFileListenerIgnoredFilesProvider.isDeletionAllowed(myProject, getEventFilePath(event));
+    return VcsFileListenerIgnoredFilesProvider.isDeletionAllowed(myProject, getEventFilePath(event), event.getRequestor());
   }
 
   private boolean allowedAddition(@NotNull VFileEvent event) {
-    return VcsFileListenerIgnoredFilesProvider.isAdditionAllowed(myProject, getEventFilePath(event));
+    return VcsFileListenerIgnoredFilesProvider.isAdditionAllowed(myProject, getEventFilePath(event), event.getRequestor());
   }
 
   @RequiresBackgroundThread
@@ -838,7 +843,6 @@ public abstract class VcsVFSListener implements Disposable {
 
   @TestOnly
   protected final void waitForEventsProcessedInTestMode() {
-    myExternalFilesProcessor.waitForEventsProcessedInTestMode();
     myProjectConfigurationFilesProcessor.waitForEventsProcessedInTestMode();
     myIgnoreFilesProcessor.waitForEventsProcessedInTestMode();
   }

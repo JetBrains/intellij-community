@@ -28,6 +28,8 @@ internal class Oid private constructor(private val bytes: ByteArray) {
       }
       return Oid(bytes)
     }
+
+    fun fromHash(hash: Hash): Oid = fromHex(hash.asString())
   }
 
   fun hex(): String {

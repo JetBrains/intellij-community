@@ -4,7 +4,12 @@ package com.intellij.platform.searchEverywhere.frontend
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeItemData
+import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SePreviewInfo
+import com.intellij.platform.searchEverywhere.SeProviderId
+import com.intellij.platform.searchEverywhere.SeResultEvent
+import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus

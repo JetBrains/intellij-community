@@ -1062,11 +1062,6 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
             runTest("inlineFunCallSite/function/");
         }
 
-        @TestMetadata("functionIndirect")
-        public void testFunctionIndirect() throws Exception {
-            runTest("inlineFunCallSite/functionIndirect/");
-        }
-
         @TestMetadata("getter")
         public void testGetter() throws Exception {
             runTest("inlineFunCallSite/getter/");
@@ -3141,11 +3136,19 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
             KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
         }
 
-        // todo: do we need to run other two tests in this cathegory?
-
         @TestMetadata("protectedBecomesInternal")
         public void testProtectedBecomesInternal() throws Exception {
             runTest("scopeExpansion/protectedBecomesInternal");
+        }
+
+        @TestMetadata("changeTypeAliasAndUsage")
+        public void testChangeTypeAliasAndUsage() throws Exception {
+            runTest("scopeExpansion/changeTypeAliasAndUsage");
+        }
+
+        @TestMetadata("protectedBecomesPublicAccessedTroughChild")
+        public void testProtectedBecomesPublicAccessedTroughChild() throws Exception {
+            runTest("scopeExpansion/protectedBecomesPublicAccessedTroughChild");
         }
     }
 

@@ -1,8 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionElementsMerger;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.lang.Language;
@@ -13,14 +19,30 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @ApiStatus.Internal
 public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspectionTool {
@@ -116,18 +138,24 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
           InspectionToolWrapper<?, ?> toolWrapper = entry.getKey();
           String toolId = entry.getValue();
           toolWrapper.initialize(globalContext);
-          Collection<CommonProblemDescriptor> descriptors;
+          List<ProblemDescriptor> descriptors;
           if (toolWrapper instanceof LocalInspectionToolWrapper local) {
             if (local.isUnfair()) {
               continue; // can't work with passes other than LocalInspectionPass
             }
-            LocalInspectionTool tool = local.getTool();
+            String id = toolWrapper.getMainToolId();
+            List<LocalInspectionToolWrapper> wrappers;
+            if (id != null) {
+              LocalInspectionToolWrapper mainTool = (LocalInspectionToolWrapper)((InspectionProfileImpl)profile).getToolById(id, psiFile);
+              wrappers = mainTool != null ? List.of(local, mainTool) : List.of(local);
+            }
+            else {
+              wrappers = List.of(local);
+            }
             List<ProblemDescriptor> found = Collections.synchronizedList(new ArrayList<>());
             // shouldn't use standard ProblemsHolder because it filters out suppressed elements by default
-            InspectionEngine.inspectEx(Collections.singletonList(new LocalInspectionToolWrapper(tool)), psiFile, psiFile.getTextRange(),
-                                       psiFile.getTextRange(), false,
-                                       true, false, ProgressIndicatorProvider.getGlobalProgressIndicator(),
-                                       (wrapper, descriptor) -> found.add(descriptor));
+            InspectionEngine.inspectEx(wrappers, psiFile, psiFile.getTextRange(), psiFile.getTextRange(), false, true, false, 
+                                       ProgressIndicatorProvider.getGlobalProgressIndicator(), (__, descriptor) -> found.add(descriptor));
             descriptors = new ArrayList<>(found);
           }
           else if (toolWrapper instanceof GlobalInspectionToolWrapper global) {
@@ -144,7 +172,7 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
             Collection<String> suppressedIds = e.getValue();
             PsiElement suppressedScope = e.getKey();
             if (!suppressedIds.contains(toolId)) continue;
-            for (CommonProblemDescriptor descriptor : descriptors) {
+            for (ProblemDescriptor descriptor : descriptors) {
               if (!(descriptor instanceof ProblemDescriptor problemDescriptor)) continue;
               PsiElement element = problemDescriptor.getPsiElement();
               if (element == null) continue;

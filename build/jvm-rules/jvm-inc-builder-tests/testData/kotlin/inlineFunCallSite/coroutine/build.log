@@ -1,0 +1,20 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_inlineFunCallSite_coroutine-a.kotlin_module
+  inline/InlineKt.class
+End of files
+Compiling files:
+  kotlin/inlineFunCallSite/coroutine/a/inline.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_inlineFunCallSite_coroutine-a.kotlin_module
+  usage/Controller.class
+  usage/UsageKt$async$1.class
+  usage/UsageKt$bar$1.class
+  usage/UsageKt.class
+End of files
+Compiling files:
+  kotlin/inlineFunCallSite/coroutine/a/usage.kt
+End of files
+------------------------------------------
+Exit code: OK

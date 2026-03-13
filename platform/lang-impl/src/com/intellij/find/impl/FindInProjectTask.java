@@ -89,7 +89,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 
-import static com.intellij.find.impl.FindInProjectUtil.FIND_IN_FILES_SEARCH_IN_NON_INDEXABLE;
 import static com.intellij.openapi.roots.impl.FilesScanExecutor.processOnAllThreadsInReadActionWithRetries;
 import static com.intellij.util.containers.ContainerUtil.sorted;
 
@@ -166,7 +165,7 @@ final class FindInProjectTask {
     String moduleName = findModel.getModuleName();
     moduleToSearchIn = moduleName == null ?
                        null :
-                       ReadAction.compute(() -> ModuleManager.getInstance(project).findModuleByName(moduleName));
+                       ReadAction.computeBlocking(() -> ModuleManager.getInstance(project).findModuleByName(moduleName));
 
     Predicate<CharSequence> fileNamePatternCondition = FindInProjectUtil.createFileMaskCondition(findModel.getFileFilter());
 
@@ -374,7 +373,7 @@ final class FindInProjectTask {
     progressIndicator.setText(text);
     progressIndicator.setText2(FindBundle.message("find.searching.for.string.in.file.occurrences.progress", occurrenceCount));
 
-    Pair.NonNull<PsiFile, VirtualFile> pair = ReadAction.compute(() -> findFile(virtualFile));
+    Pair.NonNull<PsiFile, VirtualFile> pair = ReadAction.computeBlocking(() -> findFile(virtualFile));
     if (pair == null) return true;
 
     Set<UsageInfo> processedUsages =
@@ -456,17 +455,16 @@ final class FindInProjectTask {
     SearchScope customScope = findModel.isCustomScope() ? findModel.getCustomScope() : null;
     GlobalSearchScope globalCustomScope = customScope == null ? null : GlobalSearchScopeUtil.toGlobalSearchScope(customScope, project);
     boolean searchInLibs = globalCustomScope != null
-                           && ReadAction.compute(() -> globalCustomScope.isSearchInLibraries());
+                           && ReadAction.computeBlocking(() -> globalCustomScope.isSearchInLibraries());
 
     boolean unfoldSubdirs = directoryToSearchIn != null
                             && findModel.isWithSubdirectories();
 
     boolean ignoreExcluded = directoryToSearchIn != null
                              && !Registry.is("find.search.in.excluded.dirs")
-                             && !ReadAction.compute(() -> projectFileIndex.isExcluded(directoryToSearchIn));
+                             && !ReadAction.computeBlocking(() -> projectFileIndex.isExcluded(directoryToSearchIn));
     boolean locateClassSources = directoryToSearchIn != null
-                                 && ReadAction.compute(() -> projectFileIndex.getClassRootForFile(directoryToSearchIn)) != null;
-
+                                 && ReadAction.computeBlocking(() -> projectFileIndex.getClassRootForFile(directoryToSearchIn)) != null;
 
     //wrap into concurrent deque for multi-threaded processing
     ConcurrentLinkedDeque<Object> searchItemsDeque = new ConcurrentLinkedDeque<>(searchItems);
@@ -629,10 +627,16 @@ final class FindInProjectTask {
       //Don't wrap those files in cache-avoiding wrappers: indexable files are scanned, and hence (will be) cached in VFS anyway:
       searchItems.addAll(indexes.getIndexableFilesProviders(project));
 
-      if (Boolean.TRUE.equals(project.getUserData(FIND_IN_FILES_SEARCH_IN_NON_INDEXABLE))) {
+      if (Registry.is("find.in.files.in.non.indexable.enable")) {
+        boolean searchInLibraries = switch (customScope) {
+          case null -> false; // default scope is 'Project', no libraries there
+          case GlobalSearchScope globalSearchScope -> globalSearchScope.isSearchInLibraries();
+          default -> true;
+        };
+
         //MAYBE RC: currently nonIndexableFiles() returns transient files already -- but maybe it is safer to return _regular_ files
         //          from nonIndexableFiles(), and wrap them all into transient here, in a unified way?
-        searchItems.add(ReadAction.nonBlocking(() -> FilesDeque.nonIndexableDequeue(project)).executeSynchronously());
+        searchItems.add(ReadAction.nonBlocking(() -> FilesDeque.nonIndexableDequeue(project, searchInLibraries)).executeSynchronously());
       }
     }
 

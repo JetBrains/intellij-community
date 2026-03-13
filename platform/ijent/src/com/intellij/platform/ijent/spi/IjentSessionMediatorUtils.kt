@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.platform.ijent.spi
 
@@ -173,7 +173,7 @@ object IjentSessionMediatorUtils {
         }
 
       val dateTimeDiff = try {
-        java.time.Duration.between(ZonedDateTime.parse(rawRemoteDateTime), hostDateTime).toKotlinDuration()
+        java.time.Duration.between(hostDateTime, ZonedDateTime.parse(rawRemoteDateTime)).toKotlinDuration()
       }
       catch (_: DateTimeParseException) {
         val logger = lastLoggingHandler ?: logger::info

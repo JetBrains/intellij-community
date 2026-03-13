@@ -80,16 +80,18 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-dataframe-compiler-plugin", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-common", kotlincCoordinates)
 
-        if (!isCommunity) {
-            kotlincForIdeWithStandardNaming("kotlinc.kotlin-objcexport-header-generator", kotlincCoordinates)
-            kotlincForIdeWithStandardNaming("kotlinc.kotlin-swift-export", kotlincCoordinates)
-        }
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-objcexport-header-generator", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-swift-export", kotlincCoordinates)
 
         kotlincWithStandardNaming("kotlinc.kotlin-scripting-common", kotlincCoordinates)
         kotlincWithStandardNaming("kotlinc.kotlin-scripting-dependencies", kotlincCoordinates)
         kotlincWithStandardNaming("kotlinc.kotlin-scripting-compiler-impl", kotlincCoordinates)
         kotlincWithStandardNaming("kotlinc.kotlin-scripting-jvm", kotlincCoordinates)
         kotlincWithStandardNaming("kotlinc.kotlin-script-runtime", kotlincCoordinates, transitive = true)
+
+        kotlincWithStandardNaming("kotlinc.kotlin-build-tools-api", kotlincCoordinates)
+        kotlincWithStandardNaming("kotlinc.kotlin-build-tools-impl", kotlincCoordinates)
+        kotlincWithStandardNaming("kotlinc.kotlin-build-tools-cri-impl", kotlincCoordinates)
 
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-plugin-tests", jpsPluginCoordinates, repository = INTELLIJ_DEPENDENCIES_REPOSITORY)
         kotlincWithStandardNaming("kotlinc.kotlin-dist", jpsPluginCoordinates, postfix = "-for-ide", repository = INTELLIJ_DEPENDENCIES_REPOSITORY)

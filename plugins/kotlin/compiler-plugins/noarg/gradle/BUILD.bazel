@@ -27,4 +27,21 @@ jvm_library(
     "//plugins/gradle:gradle-common",
   ]
 )
+
+jvm_library(
+  name = "gradle_test_lib",
+  module_name = "kotlin.compiler-plugins.noarg.gradle",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":gradle",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/jps:jps_test_lib",
+    "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
+    "//plugins/kotlin/gradle/gradle-java:gradle-java_test_lib",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support_test_lib",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/gradle:gradle_test_lib",
+    "//plugins/gradle:gradle-common_test_lib",
+  ]
+)
 ### auto-generated section `build kotlin.compiler-plugins.noarg.gradle` end

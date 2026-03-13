@@ -6,6 +6,7 @@ create_kotlinc_options(
   name = "custom_codepoints",
   opt_in = ["kotlin.concurrent.atomics.ExperimentalAtomicApi"],
   x_consistent_data_class_copy_visibility = True,
+  x_context_parameters = True,
   x_lambdas = "class"
 )
 
@@ -24,12 +25,25 @@ jvm_library(
   name = "codepoints",
   module_name = "fleet.util.codepoints",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True),
   resources = [":codepoints_resources"],
   kotlinc_opts = ":custom_codepoints",
   deps = [
     "@lib//:kotlin-stdlib",
     ":fleet_util_multiplatform_provided",
+  ]
+)
+
+jvm_library(
+  name = "codepoints_test_lib",
+  module_name = "fleet.util.codepoints",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_codepoints",
+  runtime_deps = [
+    ":codepoints",
+    "//fleet/util/multiplatform",
+    "//fleet/util/multiplatform:multiplatform_test_lib",
   ]
 )
 ### auto-generated section `build fleet.util.codepoints` end

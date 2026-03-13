@@ -18,6 +18,7 @@ import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaPolyadicPartAnchor;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaSwitchDeconstructionLabelAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaSwitchLabelTakenAnchor;
 import com.intellij.codeInspection.dataFlow.java.inliner.AccessorInliner;
 import com.intellij.codeInspection.dataFlow.java.inliner.AllNotNullInliner;
@@ -117,6 +118,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaCodeFragment;
@@ -264,6 +266,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import static com.intellij.codeInspection.dataFlow.NullabilityProblemKind.deconstructionMatchException;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_ASSERTION_ERROR;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_ERROR;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION;
@@ -1361,7 +1364,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
               PsiField field = PropertyUtil.getFieldOfGetter(accessor);
               VariableDescriptor descriptor = field == null ? new GetterDescriptor(accessor) : new PlainDescriptor(field);
               DfaVariableValue accessorDfaVar = getFactory().getVarFactory().createVariableValue(descriptor, patternDfaVar);
-              addInstruction(new PushInstruction(accessorDfaVar, null));
+              JavaSwitchDeconstructionLabelAnchor labelAnchor = new JavaSwitchDeconstructionLabelAnchor(patternComponent);
+              addInstruction(new PushInstruction(accessorDfaVar, labelAnchor));
+              if (JavaPsiSwitchUtil.mayCauseMatchExceptionDuringDeconstruction(deconstructionPattern, recordComponent, patternComponent, Set.of())) {
+                addNullCheck(deconstructionMatchException.problem(labelAnchor, patternComponent));
+              }
               processPattern(sourcePattern, patternComponent, substitutor.substitute(recordComponent.getType()), null, endPatternOffset);
             }
           }

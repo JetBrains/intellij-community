@@ -1,37 +1,71 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.platform.searchEverywhere.frontend.vm
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.SearchTopHitProvider.Companion.getTopHitAccelerator
-import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.ide.actions.searcheverywhere.HistoryIterator
+import com.intellij.ide.actions.searcheverywhere.PREVIEW_ACTION_ID
+import com.intellij.ide.actions.searcheverywhere.PreviewExperiment
+import com.intellij.ide.actions.searcheverywhere.SEHeaderActionListener
 import com.intellij.ide.actions.searcheverywhere.SEHeaderActionListener.Companion.SE_HEADER_ACTION_TOPIC
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
+import com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewFetcher
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI.PREVIEW_EVENTS
+import com.intellij.ide.actions.searcheverywhere.SearchHistoryList
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IncompleteDependenciesService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeSession
-import com.intellij.platform.searchEverywhere.frontend.*
+import com.intellij.platform.searchEverywhere.frontend.SeSelectionResult
+import com.intellij.platform.searchEverywhere.frontend.SeTab
+import com.intellij.platform.searchEverywhere.frontend.SeTabInfo
+import com.intellij.platform.searchEverywhere.frontend.SeTabsCustomizer
+import com.intellij.platform.searchEverywhere.frontend.ml.SeMlService
 import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionsTab
+import com.intellij.platform.searchEverywhere.frontend.withPrevious
 import com.intellij.platform.searchEverywhere.providers.SeLegacyContributors
+import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.toProviderId
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.psi.PsiManager
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.SystemProperties
 import com.intellij.util.asDisposable
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -40,7 +74,6 @@ class SePopupVm(
   val coroutineScope: CoroutineScope,
   val session: SeSession,
   private val project: Project?,
-  initialDummyTabs: List<SeDummyTabVm>,
   tabs: List<SeTab>,
   deferredTabs: List<SuspendLazyProperty<SeTab?>>,
   adaptedTabs: SuspendLazyProperty<List<SeTab>>,
@@ -108,6 +141,10 @@ class SePopupVm(
       prev?.setActive(false)
       next.setActive(true)
       next
+    }
+
+    coroutineScope.launch(Dispatchers.UI) {
+      _searchPattern.collect { pattern -> SeLog.log(SeLog.PATTERN) { "SePopupVm: received pattern ['$pattern']" } }
     }
 
     _searchPattern.value = initialSearchPattern ?: run {
@@ -205,15 +242,11 @@ class SePopupVm(
     )
 
     if (PreviewExperiment.isExperimentEnabled && previewFetcher != null) {
-      previewConfigurationFlow = combine(currentTabFlow, showPreviewSetting) { tabVm, previewSetting ->
-        tabVm.isPreviewEnabled.getValue() to previewSetting
-      }.mapLatest { (tabPreviewEnabled, previewSetting) ->
-        if (tabPreviewEnabled) {
-          if (previewSetting) SePreviewConfiguration(previewFetcher.project, this::fetchPreview)
+      previewConfigurationFlow = currentTabFlow.flatMapLatest { tabVm ->
+        val tabPreviewEnabled = tabVm.isPreviewEnabled.getValue()
+        showPreviewSetting.map { previewSetting ->
+          if (tabPreviewEnabled && previewSetting) SePreviewConfiguration(previewFetcher.project, this::fetchPreview)
           else SePreviewConfiguration(previewFetcher.project, null)
-        }
-        else {
-          SePreviewConfiguration(previewFetcher.project, null)
         }
       }
     }
@@ -225,11 +258,11 @@ class SePopupVm(
   suspend fun itemsSelected(indexedItems: List<Pair<Int, SeItemData>>, areIndexesOriginal: Boolean, modifiers: Int): List<SeSelectionResult> {
     val currentTab = currentTab
 
+    SeMlService.getInstanceIfEnabled()?.onResultsSelected(indexedItems)
+
     return coroutineScope {
       indexedItems.map { item ->
-        async {
-          currentTab.itemSelected(item, areIndexesOriginal, modifiers, searchPattern.value)
-        }
+        async { currentTab.itemSelected(item, areIndexesOriginal, modifiers, searchPattern.value) }
       }.awaitAll()
     }
   }
@@ -276,6 +309,7 @@ class SePopupVm(
   }
 
   fun setSearchText(text: String) {
+    SeLog.log(SeLog.PATTERN) { "SePopupVm: setting text: ['$text']" }
     _searchPattern.value = text
   }
 

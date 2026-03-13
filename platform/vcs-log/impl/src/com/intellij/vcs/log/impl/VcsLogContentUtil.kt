@@ -177,7 +177,7 @@ object VcsLogContentUtil {
  *
  * !NB: must be iterated synchronously on EDT
  */
-internal fun ContentManager.contentComponentSequence(): Sequence<Pair<Content, JComponent>> = sequence {
+internal fun ContentManager.contentComponentSequence(): Sequence<Pair<Content, JComponent>> =
   sequence {
     for (content in getContents()) {
       if (content is TabbedContent) {
@@ -190,4 +190,3 @@ internal fun ContentManager.contentComponentSequence(): Sequence<Pair<Content, J
       }
     }
   }
-}

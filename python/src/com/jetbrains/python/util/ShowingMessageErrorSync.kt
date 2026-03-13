@@ -2,6 +2,7 @@
 package com.jetbrains.python.util
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -46,5 +47,9 @@ object ShowingMessageErrorSync : ErrorSink {
         }
       }
     }
+  }
+
+  fun withProject(project: Project): ErrorSink = ErrorSink {
+    emit(PyErrorDetail(it.error, project))
   }
 }

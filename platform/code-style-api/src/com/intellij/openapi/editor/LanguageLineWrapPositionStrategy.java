@@ -45,7 +45,7 @@ public final class LanguageLineWrapPositionStrategy extends LanguageExtension<Li
     Project project = editor.getProject();
     if (project != null && !project.isDisposed()) {
       try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162826")) {
-        LineWrapPositionStrategy strategy = ReadAction.compute(() -> {
+        LineWrapPositionStrategy strategy = ReadAction.computeBlocking(() -> {
           PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
           if (file == null) {
             return null;

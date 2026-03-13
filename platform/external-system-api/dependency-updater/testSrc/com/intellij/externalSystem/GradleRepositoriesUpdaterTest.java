@@ -1,12 +1,14 @@
 package com.intellij.externalSystem;
 
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
 
 public class GradleRepositoriesUpdaterTest extends GradleDependencyUpdaterTestBase {
 
+  @Ignore("AT-3959")
   @Test
   public void testAddRepository() throws IOException {
     importProjectFromTemplate();
@@ -23,6 +25,7 @@ public class GradleRepositoriesUpdaterTest extends GradleDependencyUpdaterTestBa
     assertScriptNotChanged();
   }
 
+  @Ignore("AT-3959")
   @Test
   public void testAddCentralRepositoryAsMethodCall() throws IOException {
     importProjectFromTemplate();

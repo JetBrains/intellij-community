@@ -28,4 +28,25 @@ jvm_library(
     "//platform/lang-impl",
   ]
 )
+
+jvm_library(
+  name = "modules_test_lib",
+  module_name = "intellij.devkit.modules",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":modules",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//jps/model-serialization:model-serialization_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.devkit.modules` end

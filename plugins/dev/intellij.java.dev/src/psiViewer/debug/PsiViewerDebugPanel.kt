@@ -48,13 +48,13 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.application
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.sun.jdi.ObjectReference
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
@@ -197,7 +197,7 @@ internal class PsiViewerDebugPanel(
               val psiFileObj = debugProcess.invokeMethod(psiElemObj, GET_CONTAINING_FILE, evalContext) as? ObjectReference ?: return
               val fileText = psiFileObj.getText(debugProcess, evalContext) ?: return
               val psiRangeInFile = psiElemObj.getTextRange(debugProcess, evalContext) ?: return
-              DebuggerUIUtil.invokeLater {
+              application.invokeLater {
                 expressionRange = psiRangeInFile
                 editor.document.setReadOnly(false)
                 try {

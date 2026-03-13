@@ -30,6 +30,7 @@ class RemDevDriverRunner : DriverRunner {
     expectedKill: Boolean,
     expectedExitCode: Int,
     collectNativeThreads: Boolean,
+    pauseOnIndexing: Duration?,
     configure: IDERunContext.() -> Unit,
   ): BackgroundRun {
     require(context.isRemDevContext()) { "for split-mode context should be instance of ${IDERemDevTestContext::class.java.simpleName}" }
@@ -48,12 +49,15 @@ class RemDevDriverRunner : DriverRunner {
              expectedKill,
              expectedExitCode,
              collectNativeThreads,
-             configure)
+             pauseOnIndexing = pauseOnIndexing,
+             configure = configure)
     val joinLink = backendRun.driver.remoteDevDirectLink()
 
     // should be run before the actual frontend start as otherwise we miss IdeLaunchEvent
     val frontendDriverWithLogging =
-      DriverWithDetailedLogging(RemDevFrontendDriver(JmxHost(address = remoteDevDriverOptions.frontendOptions.address)))
+      DriverWithDetailedLogging(RemDevFrontendDriver(JmxHost(address = remoteDevDriverOptions.frontendOptions.address)) {
+        backendRun.driver::beforeCall
+      })
 
     val (frontendStartResult, frontendProcess) = IDEFrontendHandler(context.frontendIDEContext,
                                                                     remoteDevDriverOptions.frontendOptions,

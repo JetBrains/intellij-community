@@ -1,18 +1,22 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.Objects;
 
 import static com.intellij.openapi.editor.impl.InlayKeys.ID_BEFORE_DISPOSAL;
@@ -28,7 +32,7 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
 
   @SuppressWarnings("AbstractMethodCallInConstructor")
   InlayImpl(@NotNull EditorImpl editor, int offset, boolean relatesToPrecedingText, @NotNull R renderer) {
-    super(editor.getDocument(), offset, offset, false, true);
+    super(editor.getUiDocument(), offset, offset, false, true);
     myEditor = editor;
     myRelatedToPrecedingText = relatesToPrecedingText;
     myRenderer = renderer;
@@ -71,7 +75,7 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
 
   @Override
   public void repaint() {
-    if (isValid() && !myEditor.isDisposed() && !myEditor.getDocument().isInBulkUpdate() && !myEditor.getInlayModel().isInBatchMode()) {
+    if (isValid() && !myEditor.isDisposed() && !myEditor.getUiDocument().isInBulkUpdate() && !myEditor.getInlayModel().isInBatchMode()) {
       JComponent contentComponent = myEditor.getContentComponent();
       if (contentComponent.isShowing()) {
         Rectangle bounds = getBounds();
@@ -87,6 +91,12 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
 
   abstract void doUpdate();
 
+  /**
+   * WARNING: for legacy reasons implements both {@link Disposable#dispose()} and {@link RangeMarker#dispose()}.
+   * These have different contracts.
+   * <p>
+   * We rely on {@link IntervalTreeImpl#fireAfterRemoved(RangeMarkerEx)} for proper {@link Disposable} disposal.
+   */
   @Override
   public void dispose() {
     EditorImpl.assertIsDispatchThread();

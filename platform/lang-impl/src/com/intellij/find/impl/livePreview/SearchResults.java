@@ -353,7 +353,7 @@ public class SearchResults implements DocumentListener, CaretListener {
       CompletableFuture<SearchArea> future = new CompletableFuture<>();
       try {
         SwingUtilities.invokeAndWait(() -> {
-          var result = ReadAction.compute(() -> getLocalSearchArea(editor, findModel));
+          var result = ReadAction.computeBlocking(() -> getLocalSearchArea(editor, findModel));
           future.complete(result);
         });
       }

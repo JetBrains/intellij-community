@@ -21,7 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile
 @Service(Service.Level.PROJECT)
 internal class ExternalReportImportManager(private val project: Project) {
   enum class Source {
-    DIALOG, ACTION, EMPTY_TOOLWINDOW, UNKNOWN
+    DIALOG, ACTION, EMPTY_TOOLWINDOW, FILE_OPEN, UNKNOWN
   }
 
   companion object {
@@ -51,6 +51,15 @@ internal class ExternalReportImportManager(private val project: Project) {
     if (!suites.isEmpty()) {
       ExternalCoverageWatchManager.getInstance(project).addRootsToWatch(suites)
     }
+  }
+
+  fun openSuiteFromFile(file: VirtualFile, source: Source): Boolean {
+    val runner = getCoverageRunner(file) ?: return false
+    // Ensure VFS timestamp is updated before reading data from the report file.
+    VfsUtil.markDirtyAndRefresh(false, false, false, file)
+    val suite = CoverageDataManager.getInstance(project).addExternalCoverageSuite(VfsUtilCore.virtualToIoFile(file), runner) ?: return false
+    openSuites(listOf(suite), false, source)
+    return true
   }
 
   fun chooseAndImportCoverageReportsFromDisc(): List<CoverageSuite> {
@@ -85,7 +94,7 @@ internal class ExternalReportImportManager(private val project: Project) {
 }
 
 
-private fun getCoverageRunner(file: VirtualFile): CoverageRunner? {
+internal fun getCoverageRunner(file: VirtualFile): CoverageRunner? {
   for (runner in CoverageRunner.EP_NAME.extensionList) {
     for (extension in runner.dataFileExtensions) {
       if (Comparing.strEqual(file.extension, extension) && runner.canBeLoaded(VfsUtilCore.virtualToIoFile(file))) return runner

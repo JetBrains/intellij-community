@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.diagnostic.dto.JsonChangedFilesDuringIndexingStatistics
@@ -39,7 +39,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
         val now = ZonedDateTime.now(ZoneOffset.UTC)
         scanningHistory.createScanningDumbModeCallBack().accept(now)
       }
-      ReadAction.run<RuntimeException> {
+      runReadActionBlocking {
         if (!project.isDisposed) {
           project.getService(DumbModeFromScanningTrackerService::class.java).setScanningDumbModeStartCallback(callback)
         }
@@ -48,7 +48,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     }
 
     fun finishDumbModeBeginningTracking(project: Project) {
-      ReadAction.run<RuntimeException> {
+      runReadActionBlocking {
         if (!project.isDisposed) {
           project.getService(DumbModeFromScanningTrackerService::class.java).cleanScanningDumbModeStartCallback()
         }

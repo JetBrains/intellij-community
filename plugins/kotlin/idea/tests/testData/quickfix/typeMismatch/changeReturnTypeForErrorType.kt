@@ -1,5 +1,7 @@
 // "Change return type of enclosing function 'test' to 'Any'" "true"
 // ERROR: Unresolved reference: unknownVariable
+// K2_ERROR: Return type mismatch: expected 'Int', actual 'Boolean'.
+// K2_ERROR: Unresolved reference 'unknownVariable'.
 // K2_AFTER_ERROR: Unresolved reference 'unknownVariable'.
 
 fun test(): Int {

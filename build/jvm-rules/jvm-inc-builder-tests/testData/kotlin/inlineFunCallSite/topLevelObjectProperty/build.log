@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_inlineFunCallSite_topLevelObjectProperty-a.kotlin_module
+  inline/InlineKt.class
+End of files
+Compiling files:
+  kotlin/inlineFunCallSite/topLevelObjectProperty/a/inline.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_inlineFunCallSite_topLevelObjectProperty-a.kotlin_module
+  usage/Usage.class
+End of files
+Compiling files:
+  kotlin/inlineFunCallSite/topLevelObjectProperty/a/Usage.kt
+End of files
+------------------------------------------
+Exit code: OK

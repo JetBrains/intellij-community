@@ -12,6 +12,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,10 +39,12 @@ public final class UnixProcessManager {
   private static final Logger LOG = Logger.getInstance(UnixProcessManager.class);
 
   private static final MethodHandle signalStringToIntConverter;
+
   static {
     try {
       Class<?> signalClass = Class.forName("sun.misc.Signal");
-      MethodHandle signalConstructor = MethodHandles.publicLookup().findConstructor(signalClass, MethodType.methodType(void.class, String.class));
+      MethodHandle signalConstructor =
+        MethodHandles.publicLookup().findConstructor(signalClass, MethodType.methodType(void.class, String.class));
       MethodHandle getNumber = MethodHandles.publicLookup().findVirtual(signalClass, "getNumber", MethodType.methodType(int.class));
       signalStringToIntConverter = MethodHandles.filterReturnValue(signalConstructor, getNumber);
     }
@@ -97,14 +100,22 @@ public final class UnixProcessManager {
    */
   public static int getPortableSignalNumber(@NotNull String signalName) {
     switch (signalName) {
-      case "HUP": return SIGHUP;
-      case "INT": return SIGINT;
-      case "QUIT": return SIGQUIT;
-      case "ABRT": return SIGABRT;
-      case "KILL": return SIGKILL;
-      case "ALRM": return SIGALRM;
-      case "TERM": return SIGTERM;
-      default: return -1;
+      case "HUP":
+        return SIGHUP;
+      case "INT":
+        return SIGINT;
+      case "QUIT":
+        return SIGQUIT;
+      case "ABRT":
+        return SIGABRT;
+      case "KILL":
+        return SIGKILL;
+      case "ALRM":
+        return SIGALRM;
+      case "TERM":
+        return SIGTERM;
+      default:
+        return -1;
     }
   }
 
@@ -133,6 +144,21 @@ public final class UnixProcessManager {
     if (pid <= 0) {
       throw new IllegalArgumentException("Invalid PID: " + pid + " (killing all user processes in one shot is prohibited here)");
     }
+    return sendSignalImpl(pid, signal);
+  }
+
+  /**
+   * Same as {@link #sendSignal(int, int)}, but sends signal to the process group
+   */
+  @ApiStatus.Internal
+  public static int sendSignalToGroup(int pid, int signal) {
+    if (pid == 0) {
+      throw new IllegalArgumentException("Pid 0 is prohibited");
+    }
+    return sendSignalImpl(-pid, signal);
+  }
+
+  private static int sendSignalImpl(int pid, int signal) {
     checkCLib();
     return Java8Helper.C_LIB.kill(pid, signal);
   }
@@ -248,7 +274,10 @@ public final class UnixProcessManager {
     }
   }
 
-  private static void processCommandOutput(Process process, Processor<? super String> processor, boolean skipFirstLine, boolean throwOnError) throws IOException {
+  private static void processCommandOutput(Process process,
+                                           Processor<? super String> processor,
+                                           boolean skipFirstLine,
+                                           boolean throwOnError) throws IOException {
     try (BufferedReader stdOutput = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
       try (BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8))) {
         if (skipFirstLine) {

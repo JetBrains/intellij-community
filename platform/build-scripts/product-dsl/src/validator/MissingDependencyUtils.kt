@@ -7,11 +7,13 @@ import com.intellij.platform.pluginGraph.EDGE_ALLOWS_MISSING
 import com.intellij.platform.pluginGraph.GraphScope
 import com.intellij.platform.pluginGraph.ProductNode
 import com.intellij.platform.pluginGraph.containsEdge
+import org.jetbrains.intellij.build.productLayout.debug
 
 internal fun GraphScope.collectMissingModuleDependencies(
-    productId: Int,
+    product: ProductNode,
     modulesToValidate: Iterable<ContentModuleNode>,
 ): Map<ContentModuleName, MutableSet<ContentModuleName>> {
+  val productName by lazy { product.name() }
   val missingDeps = HashMap<ContentModuleName, MutableSet<ContentModuleName>>()
 
   for (contentModule in modulesToValidate) {
@@ -19,16 +21,29 @@ internal fun GraphScope.collectMissingModuleDependencies(
     val isCritical = contentModule.isCritical()
 
     contentModule.transitiveDeps { dep ->
-      if (containsEdge(EDGE_ALLOWS_MISSING, productId, dep.id)) {
+      val depName = dep.name()
+      if (containsEdge(EDGE_ALLOWS_MISSING, product.id, dep.id)) {
+        debug("missingDeps") {
+          "skip reason=allowMissing product=$productName source=${moduleName.value} dep=${depName.value} critical=$isCritical"
+        }
         return@transitiveDeps
       }
-      if (ProductNode(productId).containsAvailableContentModule(dep)) {
+      if (product.containsAvailableContentModule(dep)) {
+        debug("missingDeps") {
+          "skip reason=availableInProduct product=$productName source=${moduleName.value} dep=${depName.value} critical=$isCritical"
+        }
         return@transitiveDeps
       }
       if (!isCritical && hasContentSource(dep.id)) {
+        debug("missingDeps") {
+          "skip reason=nonCriticalAndHasSource product=$productName source=${moduleName.value} dep=${depName.value}"
+        }
         return@transitiveDeps
       }
-      missingDeps.computeIfAbsent(dep.name()) { HashSet() }.add(moduleName)
+      missingDeps.computeIfAbsent(depName) { HashSet() }.add(moduleName)
+      debug("missingDeps") {
+        "missing product=$productName source=${moduleName.value} dep=${depName.value} critical=$isCritical"
+      }
     }
   }
 

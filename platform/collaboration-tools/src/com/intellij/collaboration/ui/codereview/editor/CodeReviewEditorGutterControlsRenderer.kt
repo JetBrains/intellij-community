@@ -11,8 +11,16 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.editor.*
-import com.intellij.openapi.editor.event.*
+import com.intellij.openapi.editor.CustomFoldRegion
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.FoldRegion
+import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.ScrollType
+import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.editor.event.EditorMouseListener
+import com.intellij.openapi.editor.event.EditorMouseMotionListener
+import com.intellij.openapi.editor.event.SelectionEvent
+import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUIUtil
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -382,6 +390,7 @@ private constructor(
       }
 
       val commentable: Boolean by lazy {
+        if (ReviewInEditorUtil.isLastBlankLine(editor.document, logicalLine)) return@lazy false
         state.isLineCommentable(logicalLine)
       }
     }

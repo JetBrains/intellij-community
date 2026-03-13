@@ -9,7 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.refactoring.RefactoringBundle
@@ -26,8 +26,15 @@ import com.intellij.usages.UsageView
 import com.intellij.usages.UsageViewManager
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.util.containers.toArray
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import kotlin.coroutines.Continuation
@@ -66,9 +73,9 @@ internal fun CoroutineScope.appendUsages(
   })
   launch(CoroutineName("appendUsages")) {
     for (pointer: UsagePointer in channel) {
-      runReadAction {
-        val renameUsage: RenameUsage = pointer.dereference() ?: return@runReadAction
-        val usageViewUsage: Usage = asUsage(renameUsage, newName) ?: return@runReadAction
+      runReadActionBlocking {
+        val renameUsage: RenameUsage = pointer.dereference() ?: return@runReadActionBlocking
+        val usageViewUsage: Usage = asUsage(renameUsage, newName) ?: return@runReadActionBlocking
         usageView.appendUsage(usageViewUsage)
       }
     }

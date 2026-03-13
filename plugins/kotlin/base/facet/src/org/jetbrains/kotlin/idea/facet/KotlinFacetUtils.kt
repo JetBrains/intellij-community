@@ -190,7 +190,7 @@ fun applyCompilerArgumentsToFacetSettings(
             if (arguments.javaClass == this.javaClass) {
                 copyBeanTo(arguments, this) { property, value -> value != property.get(emptyArgs) }
             }
-            this.pluginOptions = joinPluginOptions(oldPluginOptions, arguments.pluginOptions)
+            this.pluginOptions = joinPluginOptions(oldPluginOptions, arguments.pluginOptions) ?: emptyArray()
 
             this.convertPathsToSystemIndependent()
 

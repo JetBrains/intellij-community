@@ -13,6 +13,14 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":editorconfig-plugin_resources"]
 )
+
+jvm_library(
+  name = "editorconfig-plugin_test_lib",
+  module_name = "intellij.editorconfig.plugin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":editorconfig-plugin"]
+)
 ### auto-generated section `build intellij.editorconfig.plugin` end
 
 ### auto-generated section `build intellij.editorconfig.plugin.main` start
@@ -33,6 +41,12 @@ jvm_library(
   module_name = "intellij.editorconfig.plugin.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  runtime_deps = [":editorconfig-plugin-main"]
+  runtime_deps = [
+    ":editorconfig-plugin-main",
+    "//plugins/editorconfig:editorconfig-plugin_test_lib",
+    "//plugins/editorconfig/common:common_test_lib",
+    "//plugins/editorconfig/frontend:frontend_test_lib",
+    "//plugins/editorconfig/backend:backend_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.editorconfig.plugin.main` end

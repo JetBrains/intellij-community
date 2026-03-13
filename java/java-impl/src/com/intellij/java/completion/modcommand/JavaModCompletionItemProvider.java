@@ -7,7 +7,7 @@ import com.intellij.modcompletion.ModCompletionItemProvider;
 import org.jetbrains.annotations.NotNullByDefault;
 
 @NotNullByDefault
-abstract class JavaModCompletionItemProvider implements ModCompletionItemProvider {
+public abstract class JavaModCompletionItemProvider implements ModCompletionItemProvider {
   @Override
   public CompletionSorter getSorter(CompletionContext context) {
     return JavaCompletionSorting.getSorter(context, context.matcher());

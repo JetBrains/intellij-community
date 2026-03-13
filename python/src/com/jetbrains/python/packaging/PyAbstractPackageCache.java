@@ -154,6 +154,7 @@ public abstract class PyAbstractPackageCache {
     public PackageInfo() {
     }
 
+
     public @Nullable List<String> getVersions() {
       return myVersions != null ? Collections.unmodifiableList(myVersions) : null;
     }

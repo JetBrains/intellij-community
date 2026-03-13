@@ -675,6 +675,10 @@ public class InlineMethodTest extends LightJavaCodeInsightTestCase {
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());
   }
 
+  public void testThrowCallSite() { doTest(); }
+
+  public void testThrowCallSiteReturn() { doTest(); }
+
   @Override
   protected Sdk getProjectJDK() {
     return getTestName(false).contains("Src") ? IdeaTestUtil.getMockJdk17() : super.getProjectJDK();

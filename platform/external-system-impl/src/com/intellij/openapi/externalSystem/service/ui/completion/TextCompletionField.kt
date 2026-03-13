@@ -6,7 +6,11 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.externalSystem.service.ui.completion.collector.TextCompletionCollector
-import com.intellij.openapi.observable.util.*
+import com.intellij.openapi.observable.util.lockOrSkip
+import com.intellij.openapi.observable.util.onceWhenFocusGained
+import com.intellij.openapi.observable.util.whenCaretMoved
+import com.intellij.openapi.observable.util.whenFocusGained
+import com.intellij.openapi.observable.util.whenTextChanged
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.addKeyboardAction
 import com.intellij.openapi.ui.getKeyStrokes

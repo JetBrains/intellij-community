@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,6 +91,19 @@ public interface PsiDirectory extends PsiFileSystemItem {
    */
   @Nullable
   PsiFile findFile(@NotNull @NonNls String name);
+
+  /**
+   * Finds a file with the specified name in this directory for the given {@param scope}.
+   *
+   * @param name  the name of the file to find.
+   * @param scope the scope to search for the file.
+   * @return the file instance, or null if no file with such a name is found in the given {@param scope}.
+   */
+  @ApiStatus.Experimental
+  @Nullable
+  default PsiFile findFile(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope) {
+    return findFile(name);
+  }
 
   /**
    * Creates a subdirectory with the specified name in the directory.

@@ -17,7 +17,7 @@ import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.breakpoints.BreakpointsUsageCollector.TYPE_FIELD
 
 internal class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
@@ -70,11 +70,11 @@ internal class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
     res.add(TOTAL_DISABLED.metric(breakpoints.count { !it.isEnabled }))
     res.add(TOTAL_NON_SUSPENDING.metric(breakpoints.count { it.suspendPolicy == SuspendPolicy.NONE }))
 
-    if (breakpoints.any { !XDebuggerUtilImpl.isEmptyExpression(it.conditionExpression) }) {
+    if (breakpoints.any { !DebuggerUIUtil.isEmptyExpression(it.conditionExpression) }) {
       res.add(USING_CONDITION.metric(true))
     }
 
-    if (breakpoints.any { !XDebuggerUtilImpl.isEmptyExpression(it.logExpressionObject) }) {
+    if (breakpoints.any { !DebuggerUIUtil.isEmptyExpression(it.logExpressionObject) }) {
       res.add(USING_LOG_EXPRESSION.metric(true))
     }
 

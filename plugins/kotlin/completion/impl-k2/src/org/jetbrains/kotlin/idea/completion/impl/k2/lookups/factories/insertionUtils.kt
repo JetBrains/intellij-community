@@ -1,6 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.completion.lookups.factories
+package org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories
 
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.openapi.util.TextRange
@@ -11,14 +11,15 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.components.QualifierToShortenInfo
-import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ThisLabelToShortenInfo
 import org.jetbrains.kotlin.analysis.api.components.TypeToShortenInfo
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.CompanionReferenceToShorten
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.ShortenCommandForIde
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectPossibleReferenceShorteningsForIde
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
-import org.jetbrains.kotlin.idea.completion.doPostponedOperationsAndUnblockDocument
+import org.jetbrains.kotlin.idea.completion.impl.k2.doPostponedOperationsAndUnblockDocument
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtContextParameterList
@@ -46,7 +47,7 @@ import org.jetbrains.kotlin.psi.KtTypeReference
  */
 internal fun InsertionContext.insertAndShortenReferencesInStringUsingTemporarySuffix(
     string: String,
-    shortenCommand: ShortenCommand? = null,
+    shortenCommand: ShortenCommandForIde? = null,
 ) {
     val file = file as? KtFile
         ?: return
@@ -92,7 +93,7 @@ internal fun InsertionContext.insertAndShortenReferencesInStringUsingTemporarySu
         && editor.caretModel.caretCount == 1
     ) {
         try {
-            ShortenCommandWrapper(
+            ShortenCommandForIdeWrapper(
                 delegate = shortenCommand,
                 copy = file,
             )
@@ -151,10 +152,10 @@ private fun PsiElement.isContextReceiverWithoutFunctionalTypeDeclaration(): Bool
 }
 
 @OptIn(KaImplementationDetail::class)
-private class ShortenCommandWrapper(
-    delegate: ShortenCommand,
+private class ShortenCommandForIdeWrapper(
+    delegate: ShortenCommandForIde,
     private val copy: KtFile,
-) : ShortenCommand {
+) : ShortenCommandForIde {
 
     override val targetFile: SmartPsiElementPointer<KtFile> =
         copy.createSmartPointer()
@@ -189,6 +190,13 @@ private class ShortenCommandWrapper(
     override val kDocQualifiersToShorten: List<SmartPsiElementPointer<KDocName>> =
         delegate.kDocQualifiersToShorten
             .mapNotNull { it.findSameElementInCopy() }
+
+    override val companionReferencesToShorten: List<CompanionReferenceToShorten> =
+        delegate.companionReferencesToShorten
+            .mapNotNull { (companionReferenceToShorten) ->
+                companionReferenceToShorten.findSameElementInCopy()
+                    ?.let { CompanionReferenceToShorten(it) }
+            }
 
     private fun <T : KtElement> T.findSameElementInCopy(): T? =
         PsiTreeUtil.findSameElementInCopy(this, copy)

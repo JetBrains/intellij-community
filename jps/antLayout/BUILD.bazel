@@ -16,4 +16,16 @@ jvm_library(
   kotlinc_opts = "@community//:k8",
   deps = ["@lib//ant/lib:ant-provided"]
 )
+
+jvm_library(
+  name = "tools-jps-antTasks_test_lib",
+  module_name = "intellij.tools.jps.antTasks",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  runtime_deps = [
+    ":tools-jps-antTasks",
+    "@lib//ant/lib:ant-provided",
+  ]
+)
 ### auto-generated section `build intellij.tools.jps.antTasks` end

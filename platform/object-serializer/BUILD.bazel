@@ -33,20 +33,34 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/ion",
+    "//libraries/ion:ion_test_lib",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "//libraries/kotlin/reflect",
+    "//libraries/kotlin/reflect:reflect_test_lib",
     "//platform/util/jdom",
+    "//platform/util/jdom:jdom_test_lib",
     "//platform/util-ex",
+    "//platform/util-ex:util-ex_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
     "//platform/object-serializer:objectSerializer-annotations",
+    "//platform/object-serializer:objectSerializer-annotations_test_lib",
     "//libraries/lz4",
+    "//libraries/lz4:lz4_test_lib",
     "@lib//:assert_j",
     "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
     "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
     "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
     "//platform/util/xmlDom",
+    "//platform/util/xmlDom:xmlDom_test_lib",
     "//platform/settings",
+    "//platform/settings:settings_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.objectSerializer` end
@@ -67,6 +81,15 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["annotations/**/*.kt", "annotations/**/*.java", "annotations/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8"
+)
+
+jvm_library(
+  name = "objectSerializer-annotations_test_lib",
+  module_name = "intellij.platform.objectSerializer.annotations",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  runtime_deps = [":objectSerializer-annotations"]
 )
 ### auto-generated section `build intellij.platform.objectSerializer.annotations` end
 
@@ -94,13 +117,18 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:junit4",
     "//platform/testFramework/extensions:testExtensions",
+    "//platform/testFramework/extensions:testExtensions_test_lib",
     "@lib//:assert_j",
     "//platform/object-serializer",
     "//platform/object-serializer:object-serializer_test_lib",
     "//platform/util-ex",
+    "//platform/util-ex:util-ex_test_lib",
     "//platform/object-serializer:objectSerializer-annotations",
+    "//platform/object-serializer:objectSerializer-annotations_test_lib",
     "//libraries/ion",
+    "//libraries/ion:ion_test_lib",
     "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
   ],
   runtime_deps = [":objectSerializer-tests"]
 )

@@ -5,6 +5,7 @@ import com.intellij.application.options.EditorFontsConstants
 import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.ide.util.RunOnceUtil
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
@@ -137,8 +138,10 @@ class TerminalFontSettingsService(private val coroutineScope: CoroutineScope) : 
   }
 
   private fun fireListeners() {
-    for (listener in listeners) {
-      listener.fontSettingsChanged()
+    runInEdt {
+      for (listener in listeners) {
+        listener.fontSettingsChanged()
+      }
     }
   }
 }

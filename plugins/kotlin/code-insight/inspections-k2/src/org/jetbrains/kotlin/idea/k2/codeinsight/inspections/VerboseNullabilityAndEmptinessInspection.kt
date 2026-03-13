@@ -11,16 +11,18 @@ import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -67,12 +69,12 @@ internal class VerboseNullabilityAndEmptinessInspection :
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean {
         val nullCheckExpression = findNullCheckExpression(element)
         val nullCheck = getNullCheck(nullCheckExpression) ?: return false
-        
+
         val binaryExpression = findBinaryExpression(nullCheckExpression) ?: return false
         val operationToken = binaryExpression.operationToken
 
         if (!isValidOperatorCombination(nullCheck.isEqualNull, operationToken)) return false
-        
+
         val contentCheckExpression = findContentCheckExpression(nullCheckExpression, binaryExpression) ?: return false
         val contentCheck = getContentCheck(contentCheckExpression) ?: return false
 
@@ -80,13 +82,13 @@ internal class VerboseNullabilityAndEmptinessInspection :
 
         val replacementName = contentCheck.data.replacementName
         if (isInsideFunctionImplementation(element, replacementName)) return false
-        
+
         return super.isApplicableByPsi(element)
     }
 
     private fun isValidOperatorCombination(isEqualNull: Boolean, operationToken: IElementType): Boolean {
         return (!isEqualNull && operationToken == KtTokens.ANDAND) ||  // a != null && a.isNotEmpty()
-               (isEqualNull && operationToken == KtTokens.OROR)         // a == null || a.isEmpty()
+                (isEqualNull && operationToken == KtTokens.OROR)         // a == null || a.isEmpty()
     }
 
     override fun KaSession.prepareContext(element: KtBinaryExpression): Context? {
@@ -117,8 +119,8 @@ internal class VerboseNullabilityAndEmptinessInspection :
         val contentCheckFunction = resolveToFunctionSymbol(contentCheck.call) ?: return null
         if (!checkTargetFunctionReceiver(contentCheck.call)) return null
 
-        val overriddenFunctions = getAllOverriddenSymbols(contentCheckFunction).filterIsInstance<KaFunctionSymbol>() + contentCheckFunction
-        if (overriddenFunctions.none { getCallableFqName(it) in contentCheck.data.callableNames }) return null
+        val overriddenFunctions = contentCheckFunction.allOverriddenSymbols + contentCheckFunction
+        if (overriddenFunctions.none { it.callableId in contentCheck.data.callableIds }) return null
 
         val hasExplicitReceiver = contentCheck.target.singleOrNull()?.expression !is KtCallExpression
         val replacementName = contentCheck.data.replacementName
@@ -197,8 +199,7 @@ internal class VerboseNullabilityAndEmptinessInspection :
      */
     private fun KaSession.checkTargetFunctionReceiver(expression: KtCallExpression): Boolean {
         val call = expression.resolveToCall()?.successfulFunctionCallOrNull() ?: return false
-        val receiverSymbol = call.partiallyAppliedSymbol
-        val type = receiverSymbol.dispatchReceiver?.type ?: receiverSymbol.extensionReceiver?.type ?: return false
+        val type = call.dispatchReceiver?.type ?: call.extensionReceiver?.type ?: return false
 
         val isNotNullable = !type.isMarkedNullable
         val isNotPrimitiveArray = type !is KaUsualClassType || !type.isPrimitiveArray()
@@ -322,7 +323,7 @@ internal class VerboseNullabilityAndEmptinessInspection :
         return ContentCheck(target, callExpression, contentFunction, contentFunction.isPositiveCheck xor isNegated)
     })
 
-    internal class ContentFunction(val isPositiveCheck: Boolean, val replacementName: String, vararg val callableNames: String)
+    internal class ContentFunction(val isPositiveCheck: Boolean, val replacementName: String, val callableIds: Set<CallableId>)
 }
 
 private typealias TargetChain = List<TargetChunk>
@@ -341,28 +342,42 @@ data class TargetChunk(val expression: KtExpression) {
     }
 }
 
-private val contentCheckingFunctions: Map<String, VerboseNullabilityAndEmptinessInspection.ContentFunction> = mapOf(
-    "isEmpty" to VerboseNullabilityAndEmptinessInspection.ContentFunction(
-        isPositiveCheck = false, replacementName = "isNullOrEmpty",
-        "kotlin.collections.Collection.isEmpty",
-        "kotlin.collections.Map.isEmpty",
-        "kotlin.collections.isEmpty",
-        "kotlin.text.isEmpty"
-    ),
-    "isBlank" to VerboseNullabilityAndEmptinessInspection.ContentFunction(
-        isPositiveCheck = false, replacementName = "isNullOrBlank",
-        "kotlin.text.isBlank"
-    ),
-    "isNotEmpty" to VerboseNullabilityAndEmptinessInspection.ContentFunction(
-        isPositiveCheck = true, replacementName = "isNullOrEmpty",
-        "kotlin.collections.isNotEmpty",
-        "kotlin.text.isNotEmpty"
-    ),
-    "isNotBlank" to VerboseNullabilityAndEmptinessInspection.ContentFunction(
-        isPositiveCheck = true, replacementName = "isNullOrBlank",
-        "kotlin.text.isNotBlank"
+private val contentCheckingFunctions: Map<String, VerboseNullabilityAndEmptinessInspection.ContentFunction> = buildMap {
+    val isEmptyName = Name.identifier("isEmpty")
+    val isNotEmptyName = Name.identifier("isNotEmpty")
+    put(
+        "isEmpty", VerboseNullabilityAndEmptinessInspection.ContentFunction(
+            isPositiveCheck = false, replacementName = "isNullOrEmpty",
+            setOf(
+                CallableId(ClassId.topLevel(StandardNames.FqNames.collection), isEmptyName),
+                CallableId(ClassId.topLevel(StandardNames.FqNames.map), isEmptyName),
+                CallableId(StandardClassIds.BASE_COLLECTIONS_PACKAGE, isEmptyName),
+                CallableId(StandardClassIds.BASE_TEXT_PACKAGE, isEmptyName)
+            )
+        )
     )
-)
+    put(
+        "isBlank", VerboseNullabilityAndEmptinessInspection.ContentFunction(
+            isPositiveCheck = false, replacementName = "isNullOrBlank",
+            setOf(CallableId(StandardClassIds.BASE_TEXT_PACKAGE, Name.identifier("isBlank")))
+        )
+    )
+    put(
+        "isNotEmpty", VerboseNullabilityAndEmptinessInspection.ContentFunction(
+            isPositiveCheck = true, replacementName = "isNullOrEmpty",
+            setOf(
+                CallableId(StandardClassIds.BASE_COLLECTIONS_PACKAGE, isNotEmptyName),
+                CallableId(StandardClassIds.BASE_TEXT_PACKAGE, isNotEmptyName)
+            )
+        )
+    )
+    put(
+        "isNotBlank", VerboseNullabilityAndEmptinessInspection.ContentFunction(
+            isPositiveCheck = true, replacementName = "isNullOrBlank",
+            setOf(CallableId(StandardClassIds.BASE_TEXT_PACKAGE, Name.identifier("isNotBlank")))
+        )
+    )
+}
 
 /**
  * Finds the topmost expression that contains the null check, including any negation operators.
@@ -461,7 +476,7 @@ private fun KaSession.resolve(chunk: TargetChunk): Any? {
 
         is KtCallExpression -> {
             val call = chunk.expression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-            getSingleReceiver(call.partiallyAppliedSymbol.dispatchReceiver, call.partiallyAppliedSymbol.extensionReceiver)
+            getSingleReceiver(call.dispatchReceiver, call.extensionReceiver)
         }
 
         is KtNameReferenceExpression -> {
@@ -562,33 +577,7 @@ private fun KaSession.hasSmartCast(chunk: TargetChunk): Boolean {
  */
 private fun KaSession.resolveToFunctionSymbol(expression: KtCallExpression): KaFunctionSymbol? {
     val call = expression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-    return call.partiallyAppliedSymbol.symbol
-}
-
-/**
- * Gets all overridden symbols for a function. Currently returns only the function itself.
- * This is a placeholder for potential future enhancement to handle inheritance hierarchies.
- */
-private fun getAllOverriddenSymbols(function: KaFunctionSymbol): Sequence<KaCallableSymbol> {
-    return sequenceOf(function)
-}
-
-/**
- * Attempts to get the fully qualified name of a callable function.
- * Handles built-in Kotlin functions by constructing FQ names manually.
- */
-private fun getCallableFqName(function: KaFunctionSymbol): String? {
-    return (function as? KaNamedFunctionSymbol)?.let { namedFunction ->
-        // Try to get the full qualified name using a simple approach
-        namedFunction.name.asString().let { name ->
-            // For built-in functions, we need to construct the FQ name manually
-            when (name) {
-                in setOf("isEmpty", "isNotEmpty") -> "kotlin.collections.$name"
-                in setOf("isBlank", "isNotBlank") -> "kotlin.text.$name"
-                else -> name
-            }
-        }
-    }
+    return call.symbol
 }
 
 /**

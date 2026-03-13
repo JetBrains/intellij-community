@@ -18,15 +18,15 @@ import javax.swing.JPanel
   "Custom Python SDKs support was removed from python plugin for IDEA because of UI/UX unification with PyCharm",
   level = DeprecationLevel.ERROR
 )
-@Suppress("DEPRECATION_ERROR")
-class PyAddSdkGroupPanel(private val nameGetter: Supplier<@Nls String>,
+class PyAddSdkGroupPanel @Suppress("DEPRECATION_ERROR") constructor(private val nameGetter: Supplier<@Nls String>,
+
                          panelIcon: Icon,
                          val panels: List<PyAddSdkPanel>,
                          defaultPanel: PyAddSdkPanel
-) : PyAddSdkPanel() {
+) : @Suppress("DEPRECATION_ERROR") PyAddSdkPanel() {
   override val panelName: String get() = nameGetter.get() // NON-NLS
   override val icon: Icon = panelIcon
-  var selectedPanel: PyAddSdkPanel = defaultPanel
+  var selectedPanel: @Suppress("DEPRECATION_ERROR") PyAddSdkPanel = defaultPanel
   private val changeListeners: MutableList<Runnable> = mutableListOf()
 
   override var newProjectPath: String?
@@ -59,7 +59,7 @@ class PyAddSdkGroupPanel(private val nameGetter: Supplier<@Nls String>,
       panel.addChangeListener(listener)
     }
   }
-
+  @Suppress("DEPRECATION_ERROR")
   private fun createRadioButtonPanel(panels: List<PyAddSdkPanel>, defaultPanel: PyAddSdkPanel): JPanel {
     val buttonMap = panels.map { JBRadioButton(it.panelName) to it }.toMap(linkedMapOf())
     ButtonGroup().apply {

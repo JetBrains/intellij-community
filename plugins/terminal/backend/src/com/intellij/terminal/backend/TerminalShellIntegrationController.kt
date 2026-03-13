@@ -4,6 +4,7 @@ package com.intellij.terminal.backend
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.EventDispatcher
 import com.jediterm.terminal.Terminal
+import kotlinx.coroutines.CancellationException
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import java.util.HexFormat
 import java.util.Locale
@@ -27,14 +28,17 @@ internal class TerminalShellIntegrationController(terminalController: Terminal) 
           else -> LOG.warn("Unknown shell integration event: $args")
         }
       }
+      catch (e: CancellationException) {
+        throw e
+      }
       catch (t: Throwable) {
-        LOG.warn("Exception during processing shell integration event: $args", t)
+        LOG.error("Exception during processing shell integration event: $args", t)
       }
     }
   }
 
   private fun processInitializedEvent(args: List<String>) {
-    val currentDirectory = Param.CURRENT_DIRECTORY.getDecodedValue(args.getOrNull(1))
+    val currentDirectory = Param.CURRENT_DIRECTORY.getDecodedValueOrNull(args.getOrNull(1))
     dispatcher.multicaster.initialized(currentDirectory)
   }
 
@@ -50,7 +54,7 @@ internal class TerminalShellIntegrationController(terminalController: Terminal) 
       currentCommand = null
 
       val exitCode = Param.EXIT_CODE.getIntValue(args.getOrNull(1))
-      val currentDirectory = Param.CURRENT_DIRECTORY.getDecodedValue(args.getOrNull(2))
+      val currentDirectory = Param.CURRENT_DIRECTORY.getDecodedValueOrNull(args.getOrNull(2))
       dispatcher.multicaster.commandFinished(command, exitCode, currentDirectory)
     }
   }

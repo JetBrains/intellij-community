@@ -1,51 +1,36 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.model.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionService
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import org.jetbrains.idea.maven.completion.MavenDependencySearchService
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
 import org.jetbrains.idea.maven.dom.model.completion.MavenAbstractPluginExtensionCompletionContributor.Companion.findPluginByArtifactId
 import org.jetbrains.idea.maven.dom.model.completion.MavenAbstractPluginExtensionCompletionContributor.Companion.isPluginOrExtension
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
+import org.jetbrains.idea.maven.model.MavenDependencyCompletionItem
+import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription
-import org.jetbrains.idea.reposearch.DependencySearchService
-import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import java.util.function.Consumer
 
 open class MavenVersionCompletionContributor : MavenCoordinateCompletionContributor("version") {
-    override suspend fun find(service: DependencySearchService,
-                              coordinates: MavenDomShortArtifactCoordinates,
-                              parameters: CompletionParameters,
-                              consumer: (RepositoryArtifactData) -> Unit) {
-    val searchParameters = createSearchParameters(parameters)
+  override suspend fun find(service: MavenDependencySearchService,
+                            coordinates: MavenDomShortArtifactCoordinates,
+                            parameters: CompletionParameters,
+                            consumer: (MavenRepoArtifactInfo) -> Unit) {
+    val (useCache, useLocalOnly) = createSearchParameters(parameters)
     val groupId = trimDummy(coordinates.groupId.stringValue)
     val artifactId = trimDummy(coordinates.artifactId.stringValue)
 
     val artifactDataConsumer = RepositoryArtifactDataConsumer(artifactId, groupId, consumer)
     if (isPluginOrExtension(coordinates) && groupId.isEmpty()) {
-      return findPluginByArtifactId(service, artifactId, searchParameters, artifactDataConsumer)
+      return findPluginByArtifactId(service, artifactId, useCache, useLocalOnly, artifactDataConsumer)
     }
 
-    return service.suggestPrefixAsync(groupId, artifactId, searchParameters, artifactDataConsumer)
+    return service.suggestPrefix(groupId, artifactId, useCache, useLocalOnly, artifactDataConsumer)
   }
 
   override fun fillAfter(result: CompletionResultSet) {
@@ -57,7 +42,7 @@ open class MavenVersionCompletionContributor : MavenCoordinateCompletionContribu
 
   override fun fillResult(coordinates: MavenDomShortArtifactCoordinates,
                           result: CompletionResultSet,
-                          item: MavenRepositoryArtifactInfo,
+                          item: MavenRepoArtifactInfo,
                           completionPrefix: String) {
     result.addAllElements(
       item.items.map { dci: MavenDependencyCompletionItem ->
@@ -75,13 +60,11 @@ open class MavenVersionCompletionContributor : MavenCoordinateCompletionContribu
 
   private class RepositoryArtifactDataConsumer(private val myArtifactId: String,
                                                private val myGroupId: String,
-                                               private val myConsumer: Consumer<RepositoryArtifactData>) : Consumer<RepositoryArtifactData> {
-    override fun accept(rad: RepositoryArtifactData) {
-      if (rad is MavenRepositoryArtifactInfo) {
-        if (rad.artifactId == myArtifactId &&
-            (myGroupId.isEmpty() || rad.groupId == myGroupId)) {
-          myConsumer.accept(rad)
-        }
+                                               private val myConsumer: Consumer<MavenRepoArtifactInfo>) : Consumer<MavenRepoArtifactInfo> {
+    override fun accept(rad: MavenRepoArtifactInfo) {
+      if (rad.artifactId == myArtifactId &&
+          (myGroupId.isEmpty() || rad.groupId == myGroupId)) {
+        myConsumer.accept(rad)
       }
     }
   }

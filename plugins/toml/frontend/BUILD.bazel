@@ -25,4 +25,22 @@ jvm_library(
     "//platform/lang-impl",
   ]
 )
+
+jvm_library(
+  name = "frontend_test_lib",
+  module_name = "intellij.toml.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":frontend",
+    "//plugins/toml/core:core_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.toml.frontend` end

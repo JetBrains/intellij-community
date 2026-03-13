@@ -2,14 +2,18 @@
 package com.intellij.internal.statistic
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.events.IntEventField
+import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.containers.SmartHashSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.atomic.AtomicInteger
 
 private val LOG = logger<StructuredIdeActivity>()

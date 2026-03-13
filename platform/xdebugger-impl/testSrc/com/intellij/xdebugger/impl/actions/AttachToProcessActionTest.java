@@ -10,19 +10,28 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xdebugger.attach.*;
+import com.intellij.xdebugger.attach.LocalAttachHost;
+import com.intellij.xdebugger.attach.XAttachDebugger;
+import com.intellij.xdebugger.attach.XAttachDebuggerProvider;
+import com.intellij.xdebugger.attach.XAttachHost;
+import com.intellij.xdebugger.attach.XAttachPresentationGroup;
+import com.intellij.xdebugger.attach.XAttachProcessPresentationGroup;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.xdebugger.impl.actions.AttachToProcessAction.*;
+import static com.intellij.xdebugger.impl.actions.AttachToProcessAction.AttachToProcessItem;
+import static com.intellij.xdebugger.impl.actions.AttachToProcessAction.RecentItem;
+import static com.intellij.xdebugger.impl.actions.AttachToProcessAction.addToRecent;
+import static com.intellij.xdebugger.impl.actions.AttachToProcessAction.doCollectAttachProcessItems;
+import static com.intellij.xdebugger.impl.actions.AttachToProcessAction.getRecentItems;
 
 public class AttachToProcessActionTest extends HeavyPlatformTestCase {
 

@@ -1,7 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic
 
-import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.EmptyEventLogFilesProvider
+import com.intellij.internal.statistic.eventLog.EventLogFile
+import com.intellij.internal.statistic.eventLog.EventLogFilesProvider
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogger
+import com.intellij.internal.statistic.eventLog.escape
+import com.intellij.internal.statistic.eventLog.escapeExceptData
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import com.jetbrains.fus.reporting.model.lion3.LogEventAction
 import com.jetbrains.fus.reporting.model.lion3.LogEventGroup

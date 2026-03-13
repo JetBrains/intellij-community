@@ -1,4 +1,5 @@
 // "Specify super type 'I' explicitly" "true"
+// K2_ERROR: Abstract member cannot be accessed directly.
 
 interface I {
     fun foo(): String = "default"

@@ -13,7 +13,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Changeable;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * @author Konstantin Bulenkov

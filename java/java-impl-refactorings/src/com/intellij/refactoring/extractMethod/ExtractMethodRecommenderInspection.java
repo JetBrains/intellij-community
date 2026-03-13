@@ -16,6 +16,7 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.JavaTokenType;
@@ -541,9 +542,8 @@ public final class ExtractMethodRecommenderInspection extends AbstractBaseJavaLo
 
     @Override
     public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      String input = myInputNames.isEmpty() ? JavaAnalysisBundle.message("inspection.extract.method.nothing") : "<b>(" + myInputNames + ")</b>";
-      return new IntentionPreviewInfo.Html(
-        JavaAnalysisBundle.message("inspection.extract.method.preview.html", myLength,input,myOutputName));
+      String input = myInputNames.isEmpty() ? JavaAnalysisBundle.message("inspection.extract.method.nothing") : "<b>(" + StringUtil.escapeXmlEntities(myInputNames) + ")</b>";
+      return new IntentionPreviewInfo.Html(JavaAnalysisBundle.message("inspection.extract.method.preview.html", myLength, input, StringUtil.escapeXmlEntities(myOutputName)));
     }
 
     private void shouldUseParent() {

@@ -10,7 +10,6 @@ plugins {
   id("fleet.module-publishing-conventions")
   id("fleet.open-source-module-conventions")
   alias(libs.plugins.dokka)
-  id("fleet.sdk-repositories-publishing-conventions")
   // GRADLE_PLUGINS__MARKER_START
   id("fleet-module")
   alias(jps.plugins.expects)
@@ -30,6 +29,7 @@ kotlin {
   compilerOptions.freeCompilerArgs = listOf(
     "-Xlambdas=class",
     "-Xconsistent-data-class-copy-visibility",
+    "-Xcontext-parameters",
     "-Xwasm-kclass-fqn",
     "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
     "-progressive",
@@ -38,8 +38,6 @@ kotlin {
   wasmJs {
     browser {}
   }
-  iosArm64 {}
-  iosSimulatorArm64 {}
   sourceSets.jvmMain.configure { resources.srcDir(layout.projectDirectory.dir("../resources")) }
   sourceSets.commonMain.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcCommonMain")) }
   sourceSets.commonMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesCommonMain")) }
@@ -55,10 +53,6 @@ kotlin {
   sourceSets.wasmJsMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesWasmJsMain")) }
   sourceSets.wasmJsTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcWasmJsTest")) }
   sourceSets.wasmJsTest.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesWasmJsTest")) }
-  sourceSets.iosMain.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcIosMain")) }
-  sourceSets.iosMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesIosMain")) }
-  sourceSets.iosTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcIosTest")) }
-  sourceSets.iosTest.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesIosTest")) }
   sourceSets.commonMain.dependencies {
     implementation(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains", module = "annotations")
@@ -67,9 +61,6 @@ kotlin {
       isTransitive = false
     }
     compileOnly(project(":fleet.util.multiplatform"))
-  }
-  sourceSets.iosMain.dependencies {
-    api(project(":fleet.util.multiplatform"))
   }
   sourceSets.jvmMain.dependencies {
     compileOnly(project(":fleet.util.multiplatform"))

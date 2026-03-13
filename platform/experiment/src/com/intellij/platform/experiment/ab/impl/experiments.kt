@@ -11,7 +11,7 @@ import com.intellij.platform.experiment.ab.impl.statistic.ABExperimentCountColle
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.*
+import java.util.EnumSet
 import kotlin.math.absoluteValue
 
 /**

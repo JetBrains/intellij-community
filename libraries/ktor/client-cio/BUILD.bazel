@@ -23,4 +23,24 @@ jvm_library(
     "//libraries/ktor/network-tls:libraries-ktor-network-tls",
   ]
 )
+
+jvm_library(
+  name = "libraries-ktor-client-cio_test_lib",
+  module_name = "intellij.libraries.ktor.client.cio",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = [
+    "@lib//:libraries-ktor-client-cio-ktor-client-cio-internal",
+    "//libraries/ktor/client",
+    "//libraries/ktor/client:client_test_lib",
+    "//libraries/ktor/network-tls:libraries-ktor-network-tls",
+    "//libraries/ktor/network-tls:libraries-ktor-network-tls_test_lib",
+  ],
+  runtime_deps = [
+    ":libraries-ktor-client-cio",
+    "//libraries/ktor/client:client_test_lib",
+    "//libraries/ktor/network-tls:libraries-ktor-network-tls_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.libraries.ktor.client.cio` end

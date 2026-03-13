@@ -55,4 +55,37 @@ jvm_library(
     "//plugins/kotlin/base/project-structure",
   ]
 )
+
+jvm_library(
+  name = "kotlin-j2k_test_lib",
+  module_name = "intellij.kotlin.j2k",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-j2k",
+  runtime_deps = [
+    ":kotlin-j2k",
+    "//java/java-psi-api:psi_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
+    "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+    "//plugins/kotlin/base/psi:psi_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/code-insight/api:api_test_lib",
+    "//plugins/kotlin/code-insight/fixes-k2:kotlin-codeInsight-fixes_test_lib",
+    "//plugins/kotlin/code-insight/utils:utils_test_lib",
+    "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
+    "//plugins/kotlin/j2k/shared:shared_test_lib",
+    "//platform/refactoring:refactoring_test_lib",
+    "//java/java-analysis-impl:analysis-impl_test_lib",
+    "//java/java-indexing-api:indexing_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common_test_lib",
+    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.kotlin.j2k` end

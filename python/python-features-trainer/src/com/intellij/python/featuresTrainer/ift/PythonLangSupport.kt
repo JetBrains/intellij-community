@@ -131,6 +131,7 @@ internal class PythonLangSupport(private val errorSink: ErrorSink = ShowingMessa
   }
 
   private fun showSdkChoosingDialog(existingSdks: List<Sdk>, context: UserDataHolder): Sdk? {
+    @Suppress("DEPRECATION_ERROR")
     val baseSdkField = PySdkPathChoosingComboBox()
 
     val warningPlaceholder = JLabel()

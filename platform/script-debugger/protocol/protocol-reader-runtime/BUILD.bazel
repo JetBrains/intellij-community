@@ -24,4 +24,21 @@ jvm_library(
   ],
   runtime_deps = ["//platform/backend"]
 )
+
+jvm_library(
+  name = "protocol-reader-runtime_test_lib",
+  module_name = "intellij.platform.scriptDebugger.protocolReaderRuntime",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":protocol-reader-runtime",
+    "//libraries/gson:gson_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/backend:backend_test_lib",
+    "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/netty/buffer:buffer_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.scriptDebugger.protocolReaderRuntime` end

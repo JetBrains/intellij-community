@@ -13,7 +13,6 @@ import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService.Companion.DUMB_MODE
-import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.DumbService.Companion.isDumbAware
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.util.Computable
@@ -213,12 +212,12 @@ abstract class DumbService {
     }
     while (true) {
       waitForSmartMode()
-      val success = ReadAction.compute<Boolean, RuntimeException> {
+      val success = ReadAction.computeBlocking<Boolean, RuntimeException> {
         if (project.isDisposed) {
           throw ProcessCanceledException()
         }
         if (isDumb) {
-          return@compute false
+          return@computeBlocking false
         }
         r.run()
         true

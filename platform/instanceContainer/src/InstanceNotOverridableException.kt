@@ -7,8 +7,8 @@ class InstanceNotOverridableException @Internal internal constructor(
   serviceInterface: String,
   existingImpl: String,
   newImpl: String?,
-) : IllegalStateException("Override failed for $serviceInterface: " +
+) : IllegalStateException("Incorrect override for $serviceInterface: " +
                           if (newImpl != null)
-                            "$newImpl attempts to override $existingImpl, but the existing implementation is not overriddable (not declared as 'open=true')"
+                            "$newImpl overrides $existingImpl even though the existing implementation is not overridable (not declared as 'open=true')"
                           else
-                            "Existing instance $existingImpl is attempted to be removed, but it is not overriddable (not declared as 'open=true')")
+                            "Existing instance $existingImpl is removed even though it is not overridable (not declared as 'open=true')")

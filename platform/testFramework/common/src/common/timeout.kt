@@ -2,12 +2,22 @@
 package com.intellij.testFramework.common
 
 import com.intellij.diagnostic.ThreadDumper
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.util.io.findOrCreateFile
 import com.intellij.util.DebugAttachDetectorArgs
 import com.intellij.util.io.blockingDispatcher
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.TestOnly
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.io.path.writeText
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -45,7 +55,12 @@ fun <T> timeoutRunBlocking(
         Result.success(value)
       }
       catch (e: TimeoutCancellationException) {
-        println(ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), false).rawDump)
+        val threadDump = ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), false).rawDump
+        val dumpFile = PathManager.getLogDir()
+          .findOrCreateFile("threadDump-timeoutRunBlocking-${System.currentTimeMillis()}.log")
+          .apply { writeText(threadDump) }
+        coroutineName?.let { println("\u001B[33m$it job timed out\u001B[0m") }
+        println("\u001B[33mCaptured thread dump: file:${dumpFile.toAbsolutePath()}\u001B[0m")
         job.cancel(e)
         Result.failure(AssertionError(e))
       }

@@ -67,17 +67,6 @@ public class PythonPathEditor extends SdkPathEditor {
     }
   }
 
-  public void reload(@Nullable SdkModificator sdkModificator) {
-    if (sdkModificator != null) {
-      List<VirtualFile> list = ImmutableList.copyOf(sdkModificator.getRoots(getOrderRootType()));
-      resetPath(myPathListModel.reload(list));
-      setModified(true);
-    }
-    else {
-      setEnabled(false);
-    }
-  }
-
   @Override
   public void apply(SdkModificator sdkModificator) {
     sdkModificator.removeRoots(getOrderRootType());
@@ -152,7 +141,6 @@ public class PythonPathEditor extends SdkPathEditor {
     private final List<VirtualFile> myFilteredOut = new ArrayList<>();
     private final DefaultListModel<VirtualFile> myListModel;
     private final OrderRootType myOrderRootType;
-    private final Set<VirtualFile> myUserAddedToRemove = new HashSet<>();
 
     PathListModel(OrderRootType orderRootType, DefaultListModel<VirtualFile> listModel) {
       myOrderRootType = orderRootType;
@@ -172,7 +160,6 @@ public class PythonPathEditor extends SdkPathEditor {
         if (!myFoundFiles.contains(file)) {
           if (!myExcluded.remove(file)) { //if it was excluded we only delete exclusion mark
             myAdded.add(file);
-            myUserAddedToRemove.remove(file);
           }
           else {
             myFoundFiles.add(file);
@@ -192,7 +179,6 @@ public class PythonPathEditor extends SdkPathEditor {
         if (myAdded.contains(e.first)) {
           toRemove.add(e.second);
           myAdded.remove(e.first);
-          myUserAddedToRemove.add(e.first);
         }
         else if (myExcluded.contains(e.first)) {
           myExcluded.remove(e.first);
@@ -243,23 +229,12 @@ public class PythonPathEditor extends SdkPathEditor {
       return "";
     }
 
-    public @NotNull List<VirtualFile> reload(@NotNull List<VirtualFile> list) {
-      myFoundFiles.clear();
-      myFoundFiles.addAll(list);
-      List<VirtualFile> result = filterOutStubs(list, myFilteredOut);
-      result.removeAll(myUserAddedToRemove);
-      result.addAll(myAdded);
-
-      return result;
-    }
-
     public @NotNull List<VirtualFile> reset(@NotNull List<VirtualFile> list, @NotNull SdkModificator modificator) {
       myFilteredOut.clear();
       List<VirtualFile> result = filterOutStubs(list, myFilteredOut);
 
       myFoundFiles.clear();
       myFoundFiles.addAll(list);
-      myUserAddedToRemove.clear();
 
       if (modificator.getSdkAdditionalData() instanceof PythonSdkAdditionalData data) {
         setAdded(data.getAddedPathFiles());

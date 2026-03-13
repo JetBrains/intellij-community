@@ -17,7 +17,7 @@ create_kotlinc_options(
 jvm_library(
   name = "test",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob([], allow_empty = True),
   runtime_deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
@@ -29,17 +29,22 @@ jvm_library(
   name = "test_test_lib",
   module_name = "fleet.lsp.protocol.test",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_test",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-io-core",
     "//fleet/ktor/client/cio",
+    "//fleet/ktor/client/cio:cio_test_lib",
     "//fleet/ktor/client/core",
+    "//fleet/ktor/client/core:core_test_lib",
     "//fleet/ktor/network/tls",
+    "//fleet/ktor/network/tls:tls_test_lib",
     "//fleet/lsp.protocol",
+    "//fleet/lsp.protocol:lsp.protocol_test_lib",
     "//fleet/test-runtime",
+    "//fleet/test-runtime:test-runtime_test_lib",
   ],
   runtime_deps = [":test"]
 )

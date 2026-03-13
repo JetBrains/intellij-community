@@ -9,9 +9,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JPasswordField;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Component;
 
 final class PasswordInputDialog extends Messages.InputDialog {
   PasswordInputDialog(@NlsContexts.DialogMessage String message,

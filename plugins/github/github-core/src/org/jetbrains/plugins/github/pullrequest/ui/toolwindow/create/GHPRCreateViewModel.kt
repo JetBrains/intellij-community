@@ -55,7 +55,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.FlowCollector
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -237,7 +236,7 @@ internal class GHPRCreateViewModelImpl(
       .stateIn(cs, SharingStarted.Eagerly, null)
 
   override val assigneesVm: LabeledListPanelViewModel<GHUser> = MetadataListViewModel(cs) {
-    dataContext.repositoryDataService.loadIssuesAssignees()
+    dataContext.repositoryDataService.loadPotentialIssuesAssignees()
   }
   override val reviewersVm: LabeledListPanelViewModel<GHPullRequestRequestedReviewer> = MetadataListViewModel(cs) {
     dataContext.repositoryDataService.loadPotentialReviewers().filter { it.id != dataContext.securityService.currentUser.id }
@@ -580,7 +579,9 @@ internal class GHPRCreateViewModelImpl(
     val defaultBranch = repoData.getDefaultRemoteBranch()
     val currentBranch = baseGitRepo.currentBranch
     val currentBranchTrackInfo = currentBranch?.let { baseGitRepo.getBranchTrackInfo(it.name) }
-    val headRepo = currentBranchTrackInfo?.remote?.let { remote -> repositories.find { it.remote.remote == remote } } ?: baseRepo
+    val headRepo = currentBranchTrackInfo?.remote?.let { remote ->
+      repositories.find { it.gitRepository.root == baseGitRepo.root && it.remote.remote == remote }
+    } ?: baseRepo
     return BranchesState(baseRepo, defaultBranch, headRepo, currentBranch)
   }
 
@@ -591,19 +592,12 @@ internal class GHPRCreateViewModelImpl(
 }
 
 private class MetadataListViewModel<T>(cs: CoroutineScope, itemsLoader: suspend () -> List<T>) : LabeledListPanelViewModel<T> {
-  override val isEditingAllowed: Boolean = true
   override val items = MutableStateFlow(emptyList<T>())
 
   // Eagerly load the data on creation, so that the reviewer panel is populated immediately.
   override val selectableItems: StateFlow<ComputedResult<List<T>>> =
     computationStateFlow(flowOf(Unit)) { itemsLoader() }
       .stateIn(cs, SharingStarted.Eagerly, ComputedResult.loading())
-  override val adjustmentProcessState: StateFlow<ComputedResult<Unit>?> = MutableStateFlow(null)
-  override val editRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
-
-  override fun requestEdit() {
-    editRequests.tryEmit(Unit)
-  }
 
   override fun adjustList(newList: List<T>) {
     items.value = newList

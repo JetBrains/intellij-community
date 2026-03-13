@@ -176,7 +176,7 @@ class PersistentRangeMarker extends RangeMarkerImpl {
   public int getStartOffset() {
     // load document in case this is a lazy persistent marker and the document wasn't loaded yet, because we need to convert (line;col) to offset first in this case
     if (!isDocumentLoaded()) {
-      ReadAction.run(()->getDocument());
+      ReadAction.runBlocking(()->getDocument());
     }
     return super.getStartOffset();
   }
@@ -185,7 +185,7 @@ class PersistentRangeMarker extends RangeMarkerImpl {
   public int getEndOffset() {
     // load document in case this is a lazy persistent marker and the document wasn't loaded yet, because we need to convert (line;col) to offset first in this case
     if (!isDocumentLoaded()) {
-      ReadAction.run(()->getDocument());
+      ReadAction.runBlocking(()->getDocument());
     }
     return super.getEndOffset();
   }

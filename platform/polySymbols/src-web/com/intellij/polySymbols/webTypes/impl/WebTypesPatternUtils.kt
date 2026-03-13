@@ -9,11 +9,37 @@ import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.impl.canUnwrapSymbols
 import com.intellij.polySymbols.patterns.ComplexPatternOptions
 import com.intellij.polySymbols.patterns.PolySymbolPattern
-import com.intellij.polySymbols.patterns.impl.*
-import com.intellij.polySymbols.query.*
+import com.intellij.polySymbols.patterns.impl.CompletionAutoPopupPattern
+import com.intellij.polySymbols.patterns.impl.CompletionParameters
+import com.intellij.polySymbols.patterns.impl.ComplexPattern
+import com.intellij.polySymbols.patterns.impl.ComplexPatternConfigProvider
+import com.intellij.polySymbols.patterns.impl.ListParameters
+import com.intellij.polySymbols.patterns.impl.MatchParameters
+import com.intellij.polySymbols.patterns.impl.RegExpPattern
+import com.intellij.polySymbols.patterns.impl.SPECIAL_MATCHED_CONTRIB
+import com.intellij.polySymbols.patterns.impl.SequencePattern
+import com.intellij.polySymbols.patterns.impl.StaticPattern
+import com.intellij.polySymbols.patterns.impl.SymbolReferencePattern
+import com.intellij.polySymbols.patterns.impl.applyIcons
+import com.intellij.polySymbols.query.PolySymbolMatch
+import com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolQueryStack
+import com.intellij.polySymbols.query.PolySymbolWithPattern
 import com.intellij.polySymbols.utils.namespace
 import com.intellij.polySymbols.webTypes.WebTypesJsonOrigin
-import com.intellij.polySymbols.webTypes.json.*
+import com.intellij.polySymbols.webTypes.json.ListReference
+import com.intellij.polySymbols.webTypes.json.NamePatternBase
+import com.intellij.polySymbols.webTypes.json.NamePatternDefault
+import com.intellij.polySymbols.webTypes.json.NamePatternRegex
+import com.intellij.polySymbols.webTypes.json.NamePatternRoot
+import com.intellij.polySymbols.webTypes.json.NamePatternTemplate
+import com.intellij.polySymbols.webTypes.json.codeCompletion
+import com.intellij.polySymbols.webTypes.json.getSymbolKind
+import com.intellij.polySymbols.webTypes.json.list
+import com.intellij.polySymbols.webTypes.json.resolve
+import com.intellij.polySymbols.webTypes.json.toApiStatus
+import com.intellij.polySymbols.webTypes.json.wrap
 
 internal fun NamePatternRoot.wrap(defaultDisplayName: String?, origin: WebTypesJsonOrigin): PolySymbolPattern =
   when (val value = value) {

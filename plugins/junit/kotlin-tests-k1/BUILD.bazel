@@ -16,18 +16,29 @@ jvm_library(
   deps = [
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//plugins/junit/kotlin-tests-shared",
     "//plugins/junit/kotlin-tests-shared:kotlin-tests-shared_test_lib",
+    "//plugins/kotlin/base/test",
     "//plugins/kotlin/base/test:test_test_lib",
     "//jvm/jvm-analysis-testFramework:analysis-testFramework",
+    "//jvm/jvm-analysis-testFramework:analysis-testFramework_test_lib",
     "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//plugins/kotlin/idea",
+    "//plugins/kotlin/idea:idea_test_lib",
     "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//plugins/kotlin/code-insight/api",
+    "//plugins/kotlin/code-insight/api:api_test_lib",
   ],
-  runtime_deps = [":kotlin-tests-k1"]
+  runtime_deps = [
+    ":kotlin-tests-k1",
+    "//plugins/kotlin/plugin/k1:k1_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.junit.kotlin.tests.k1` end
 

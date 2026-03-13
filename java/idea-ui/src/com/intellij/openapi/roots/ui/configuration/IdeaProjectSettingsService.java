@@ -14,7 +14,6 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
-import static com.intellij.workspaceModel.ide.legacyBridge.LibraryBridgesKt.findLibraryBridge;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.entities.LibraryEntity;
@@ -24,6 +23,8 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridges;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.workspaceModel.ide.legacyBridge.LibraryBridgesKt.findLibraryBridge;
 
 
 public final class IdeaProjectSettingsService extends ProjectSettingsService implements ArtifactAwareProjectSettingsService {

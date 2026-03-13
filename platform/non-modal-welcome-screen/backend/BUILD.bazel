@@ -24,4 +24,21 @@ jvm_library(
     "//platform/core-ui",
   ]
 )
+
+jvm_library(
+  name = "backend_test_lib",
+  module_name = "intellij.platform.ide.nonModalWelcomeScreen.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":backend",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/non-modal-welcome-screen:non-modal-welcome-screen_test_lib",
+    "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+    "//platform/project/shared:project_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen.backend` end

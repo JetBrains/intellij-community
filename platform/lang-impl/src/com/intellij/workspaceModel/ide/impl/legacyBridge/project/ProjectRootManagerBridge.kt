@@ -9,15 +9,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import kotlinx.coroutines.CoroutineScope
 
 class ProjectRootManagerBridge(project: Project, coroutineScope: CoroutineScope) : ProjectRootManagerComponent(project, coroutineScope) {
-
-  private val moduleDependencyIndex
-    get() = ModuleDependencyIndex.getInstance(project)
-
   override fun getOrderRootsCache(project: Project): OrderRootsCache {
     return OrderRootsCacheBridge(project, project)
-  }
-
-  internal fun setupTrackedLibrariesAndJdks() {
-    moduleDependencyIndex.setupTrackedLibrariesAndJdks()
   }
 }

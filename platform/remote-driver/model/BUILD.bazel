@@ -18,4 +18,12 @@ jvm_library(
     "@lib//:kotlin-stdlib",
   ]
 )
+
+jvm_library(
+  name = "model_test_lib",
+  module_name = "intellij.driver.model",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":model"]
+)
 ### auto-generated section `build intellij.driver.model` end

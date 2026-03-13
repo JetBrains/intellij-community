@@ -1,6 +1,6 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.compilerPlugin.lombok.maven">
   <dependencies>
-    <plugin id="org.jetbrains.idea.maven"/>
+    <module name="intellij.maven"/>
     <module name="intellij.kotlin.maven"/>
     <module name="intellij.kotlin.compilerPlugins.support.maven"/>
   </dependencies>

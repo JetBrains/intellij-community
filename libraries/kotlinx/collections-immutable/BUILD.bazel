@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:kotlinx-collections-immutable"],
   runtime_deps = ["@lib//:kotlinx-collections-immutable"]
 )
+
+jvm_library(
+  name = "libraries-kotlinx-collections-immutable_test_lib",
+  module_name = "intellij.libraries.kotlinx.collections.immutable",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:kotlinx-collections-immutable"],
+  runtime_deps = [":libraries-kotlinx-collections-immutable"]
+)
 ### auto-generated section `build intellij.libraries.kotlinx.collections.immutable` end

@@ -33,6 +33,7 @@ jvm_library(
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
     "@lib//:opentelemetry",
     "@lib//:jspecify-provided",
+    "@lib//:gradle",
     ":platform_extensions_provided",
   ]
 )
@@ -47,20 +48,28 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlin/reflect",
+    "//libraries/kotlin/reflect:reflect_test_lib",
     "@lib//:kotlin-tooling-core",
     "@lib//:kotlin-gradle-plugin-idea-proto",
     "@lib//:kotlin-gradle-plugin-idea",
     "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-tooling",
+    "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-tooling_test_lib",
     "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
     "//plugins/kotlin/base/project-model",
+    "//plugins/kotlin/base/project-model:project-model_test_lib",
     "//plugins/gradle/tooling-extension-api:toolingExtension",
+    "//plugins/gradle/tooling-extension-api:toolingExtension_test_lib",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-impl_test_lib",
     "@lib//:junit4",
     "@lib//:kotlin-test-junit",
     "@lib//:kotlin-test",
+    "//platform/extensions",
+    "//platform/extensions:extensions_test_lib",
     "@lib//:opentelemetry",
     "@lib//:jspecify-provided",
-    ":platform_extensions_provided",
+    "@lib//:gradle",
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.tooling.impl` end

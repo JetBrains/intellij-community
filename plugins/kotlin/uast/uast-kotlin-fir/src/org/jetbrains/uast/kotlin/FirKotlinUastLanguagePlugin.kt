@@ -52,7 +52,8 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
 
     private val PsiElement.isSupportedElement: Boolean
         get() {
-            val ktFile = containingFile?.let(::unwrapFakeFileForLightClass) as? KtFile ?: return false
+            val containingPhysicalFile = (containingFile?.context ?: this).containingFile
+            val ktFile = containingPhysicalFile?.let(::unwrapFakeFileForLightClass) as? KtFile ?: return false
             return ApplicationManager.getApplication().service<FirKotlinUastResolveProviderService>().isSupportedFile(ktFile)
         }
 

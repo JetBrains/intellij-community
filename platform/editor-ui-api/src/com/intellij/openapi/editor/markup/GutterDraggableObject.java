@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.awt.*;
+import java.awt.Cursor;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.dnd.DragSource;
 

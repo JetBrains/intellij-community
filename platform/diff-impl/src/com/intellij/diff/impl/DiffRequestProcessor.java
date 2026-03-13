@@ -1198,7 +1198,7 @@ public abstract class DiffRequestProcessor
   /**
    * @deprecated only for compatibility
    **/
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected static abstract class DelegatingNavigationAction extends AnAction implements DumbAware {
     private final @NotNull AnAction delegate;
 
@@ -1385,7 +1385,7 @@ public abstract class DiffRequestProcessor
       request.onAssigned(isAssigned);
     }
     catch (Exception e) {
-      LOG.error(e);
+      LOG.error(Logger.shouldRethrow(e) ? new RuntimeException(e) : e);
     }
   }
 

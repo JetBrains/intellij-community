@@ -9,6 +9,7 @@ import org.jetbrains.jps.dependency.DifferentiateContext;
 import org.jetbrains.jps.dependency.DifferentiateParameters;
 import org.jetbrains.jps.dependency.DifferentiateStrategy;
 import org.jetbrains.jps.dependency.Graph;
+import org.jetbrains.jps.dependency.LogConsumer;
 import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.dependency.ReferenceID;
@@ -23,8 +24,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static org.jetbrains.jps.util.Iterators.filter;
 import static org.jetbrains.jps.util.Iterators.flat;
@@ -33,7 +32,6 @@ import static org.jetbrains.jps.util.Iterators.map;
 import static org.jetbrains.jps.util.Iterators.unique;
 
 public final class KotlinSourceOnlyDifferentiateStrategy implements DifferentiateStrategy {
-  private static final Logger LOG = Logger.getLogger("#org.jetbrains.jps.dependency.kotlin.KotlinSourceOnlyDifferentiateStrategy");
 
   @Override
   public boolean differentiate(DifferentiateContext context, Iterable<Node<?, ?>> nodesBefore, Iterable<Node<?, ?>> nodesAfter, Iterable<Node<?, ?>> nodesWithErrors) {
@@ -80,6 +78,7 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
     }
 
     Set<NodeSource> affectedSources = new HashSet<>();
+    LogConsumer logger = context.getParams().logConsumer();
     if (!affectedUsages.isEmpty()) {
       Predicate<NodeSource> unmodifiedKtSources = s -> !baseSources.contains(s) && !isEmpty(filter(graph.getNodes(s, JvmClass.class), KJvmUtils::isKotlinNode));
 
@@ -87,7 +86,9 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
 
       for (NodeSource src : filter(supertypeSources, unmodifiedKtSources)) {
         if (!isEmpty(filter(flat(map(graph.getNodes(src), Node::getUsages)), affectedUsages::contains))) {
-          LOG.log(Level.FINE, "Parent Kotlin class in a class hierarchy is not marked for compilation, while it may be using a potentially changed type alias or has compiler-inferred types based on potentially changed types. Affecting  " + src);
+          logger.consume(
+            "Parent Kotlin class in a class hierarchy is not marked for compilation, while it may be using a potentially changed type alias or has compiler-inferred types based on potentially changed types. Affecting  " + src
+          );
           affectedSources.add(src);
         }
       }
@@ -104,7 +105,9 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
 
     if (!affectedSealedClasses.isEmpty()) {
       for (NodeSource src : filter(unique(flat(map(flat(map(affectedSealedClasses, id -> KJvmUtils.withAllSubclassesIfSealed(present, id))), present::getNodeSources))), s -> !baseSources.contains(s))) {
-        LOG.log(Level.FINE, "Sealed class or subclass of a sealed class is about to be recompiled => sealed classes should be always compiled together with all its subclasses. Affecting  " + src);
+        logger.consume(
+          "Sealed class or subclass of a sealed class is about to be recompiled => sealed classes should be always compiled together with all its subclasses. Affecting  " + src
+        );
         context.affectNodeSource(src);
       }
     }

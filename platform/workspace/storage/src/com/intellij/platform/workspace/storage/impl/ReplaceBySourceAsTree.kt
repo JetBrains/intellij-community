@@ -4,13 +4,18 @@ package com.intellij.platform.workspace.storage.impl
 import com.google.common.collect.HashBiMap
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.ConnectionId
+import com.intellij.platform.workspace.storage.DummyParentEntitySource
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.SymbolicEntityId
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import org.jetbrains.annotations.TestOnly
-import java.util.*
+import java.util.Random
 
 /**
  * This is map ot entities to itself to get quick get by equals.
@@ -909,14 +914,13 @@ internal class ReplaceBySourceAsTree {
       }
       else {
         val oppositeEntityData = oppositeStorage.entityDataByIdOrDie(rootEntity.id)
-        goalStorage.entities(rootEntity.id.clazz.findWorkspaceEntity())
-          .filter {
-            val itId = (it as WorkspaceEntityBase).id
-            if (goalState[itId] != null) return@filter false
-            goalStorage.entityDataByIdOrDie(itId).equalsByKey(oppositeEntityData) && goalStorage.refs.getParentRefsOfChild(itId.asChild())
-              .isEmpty()
-          }
-          .firstOrNull()
+        val entityClass = rootEntity.id.clazz.findWorkspaceEntity()
+        val data = goalStorage.entitiesByType[entityClass.toClassId()]?.all()?.firstOrNull { entityData ->
+          if (!entityData.equalsByKey(oppositeEntityData)) return@firstOrNull false
+          val itId = entityData.createEntityId()
+          goalState[itId] == null && goalStorage.refs.getParentRefsOfChild(itId.asChild()).isEmpty()
+        }
+        data?.createEntity(goalStorage)
       }
     }
   }

@@ -15,7 +15,17 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
@@ -47,11 +57,24 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JRootPane;
+import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.LayoutManager;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.event.MouseEvent;
 
 final class LookupUi {
@@ -69,6 +92,7 @@ final class LookupUi {
   private final @Nullable JComponent myBottomPanel;
 
   private int myMaximumHeight = Integer.MAX_VALUE;
+  private int myPreventShrinkMinHeight = 0;
   private Boolean myPositionedAbove = null;
 
   LookupUi(@NotNull LookupImpl lookup, Advertiser advertiser, JBList<?> list, boolean showBottomPanel) {
@@ -185,7 +209,7 @@ final class LookupUi {
     }
 
     LookupElement item = lookup.getCurrentItem();
-    if (item != null && ReadAction.compute(() -> item.isValid())) {
+    if (item != null && ReadAction.computeBlocking(() -> item.isValid())) {
       ReadAction.nonBlocking(() -> lookup.getActionsFor(item))
         .expireWhen(() -> !item.isValid() || hintAlarm.isDisposed())
         .finishOnUiThread(modalityState, actions -> {
@@ -233,21 +257,32 @@ final class LookupUi {
       return;
     }
 
-    if (lookup.myResizePending || itemsChanged) {
-      myMaximumHeight = Integer.MAX_VALUE;
+    // Check if we should prevent shrinking for this refresh cycle
+    if (LookupShrinkSuppressor.takePreventShrinkOnce(lookup) && lookup.getComponent().isShowing()) {
+      myPreventShrinkMinHeight = lookup.getComponent().getHeight();
     }
-    Rectangle rectangle = calculatePosition();
-    myMaximumHeight = rectangle.height;
 
-    if (lookup.myResizePending || itemsChanged) {
-      lookup.myResizePending = false;
-      lookup.pack();
-      rectangle = calculatePosition();
+    try {
+      if (lookup.myResizePending || itemsChanged) {
+        myMaximumHeight = Integer.MAX_VALUE;
+      }
+      Rectangle rectangle = calculatePosition();
+      myMaximumHeight = rectangle.height;
+
+      if (lookup.myResizePending || itemsChanged) {
+        lookup.myResizePending = false;
+        lookup.pack();
+        rectangle = calculatePosition();
+      }
+      lookup.updateLocation(rectangle.getLocation());
+
+      if (reused || selectionVisible || onExplicitAction) {
+        lookup.ensureSelectionVisible(false);
+      }
     }
-    lookup.updateLocation(rectangle.getLocation());
-
-    if (reused || selectionVisible || onExplicitAction) {
-      lookup.ensureSelectionVisible(false);
+    finally {
+      // Reset the minimum height after the refresh cycle (one-shot)
+      myPreventShrinkMinHeight = 0;
     }
   }
 
@@ -413,6 +448,8 @@ final class LookupUi {
           int width = Math.max(listWidth, bottomPanelSize.width);
           width = Math.min(width, Registry.intValue("ide.completion.max.width"));
           int height = Math.min(panelHeight, myMaximumHeight);
+          // Apply minimum height to prevent shrinking when the flag is set
+          height = Math.max(height, myPreventShrinkMinHeight);
 
           return new Dimension(width, height);
         }

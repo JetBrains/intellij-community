@@ -80,7 +80,7 @@ public class OfflineProblemDescriptor {
   }
 
   public @Nullable RefEntity getRefElement(@NotNull RefManager refManager) {
-    return ReadAction.compute(() -> refManager.getProject().isDisposed() ? null : refManager.getReference(myType, myFQName));
+    return ReadAction.computeBlocking(() -> refManager.getProject().isDisposed() ? null : refManager.getReference(myType, myFQName));
   }
 
   @Override

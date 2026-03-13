@@ -79,21 +79,19 @@ internal class ChangesViewDelegatingInclusionModel(
 
   override fun addInclusion(items: Collection<Any>) {
     LOG.trace { "Adding ${items.size} items to inclusion" }
-    if (inclusionState.addAll(items)) {
-      fireInclusionChanged()
-      updateRequests.tryEmit {
-        ChangesViewInclusionModelApi.getInstance().add(project.projectId(), items.toDto())
-      }
+    inclusionState.addAll(items)
+    fireInclusionChanged()
+    updateRequests.tryEmit {
+      ChangesViewInclusionModelApi.getInstance().add(project.projectId(), items.toDto())
     }
   }
 
   override fun removeInclusion(items: Collection<Any>) {
     LOG.trace { "Removing ${items.size} items from inclusion" }
-    if (inclusionState.removeAll(items.toSet())) {
-      fireInclusionChanged()
-      updateRequests.tryEmit {
-        ChangesViewInclusionModelApi.getInstance().remove(project.projectId(), items.toDto())
-      }
+    inclusionState.removeAll(items.toSet())
+    fireInclusionChanged()
+    updateRequests.tryEmit {
+      ChangesViewInclusionModelApi.getInstance().remove(project.projectId(), items.toDto())
     }
   }
 
@@ -108,11 +106,10 @@ internal class ChangesViewDelegatingInclusionModel(
 
   override fun retainInclusion(items: Collection<Any>) {
     LOG.trace { "Retaining ${items.size} items in inclusion" }
-    if (inclusionState.retainAll(items.toSet())) {
-      fireInclusionChanged()
-      updateRequests.tryEmit {
-        ChangesViewInclusionModelApi.getInstance().retain(project.projectId(), items.toDto())
-      }
+    inclusionState.retainAll(items.toSet())
+    fireInclusionChanged()
+    updateRequests.tryEmit {
+      ChangesViewInclusionModelApi.getInstance().retain(project.projectId(), items.toDto())
     }
   }
 

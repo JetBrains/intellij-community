@@ -6,3 +6,6 @@ import com.jediterm.terminal.TtyConnector
 interface ProxyTtyConnector : TtyConnector {
   val connector: TtyConnector
 }
+
+val TtyConnector.original: TtyConnector
+  get() = if (this is ProxyTtyConnector) this.connector.original else this

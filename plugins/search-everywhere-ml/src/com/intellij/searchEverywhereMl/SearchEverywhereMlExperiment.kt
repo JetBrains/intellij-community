@@ -19,7 +19,8 @@ object SearchEverywhereMlExperiment {
   const val VERSION: Int = 2
   const val NUMBER_OF_GROUPS: Int = 4
 
-  var isExperimentalMode: Boolean = StatisticsUploadAssistant.isSendAllowed() && ApplicationManager.getApplication().isEAP
+  var isExperimentalMode: Boolean = java.lang.Boolean.getBoolean("fus.internal.test.mode")
+                                    || (StatisticsUploadAssistant.isSendAllowed() && ApplicationManager.getApplication().isEAP)
     @TestOnly set
 
   val isAllowed: Boolean
@@ -31,9 +32,13 @@ object SearchEverywhereMlExperiment {
    *
    * When set to a non-null value, it forces the experiment group to the specified integer.
    * A null value indicates that no override is applied, and the default group assignment logic is used.
+   *
+   * Initialized from the `search.everywhere.ml.test.experiment.group` system property
+   * to support IDE Starter integration tests where registry values set during the playback
+   * script are restored before SE events are logged.
    */
   @TestOnly
-  var experimentGroupOverride: Int? = null
+  var experimentGroupOverride: Int? = System.getProperty("search.everywhere.ml.test.experiment.group")?.toIntOrNull()
 
   /**
    * Determines the experiment group number for a feature, based on various conditions.

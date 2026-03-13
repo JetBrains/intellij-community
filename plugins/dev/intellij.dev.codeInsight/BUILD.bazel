@@ -17,7 +17,23 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/util",
     "//platform/analysis-api:analysis",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
   runtime_deps = ["//platform/backend"]
+)
+
+jvm_library(
+  name = "codeInsight_test_lib",
+  module_name = "intellij.dev.codeInsight",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":codeInsight",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/backend:backend_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.dev.codeInsight` end

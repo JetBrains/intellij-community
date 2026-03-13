@@ -7,8 +7,11 @@ import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.WindowConstants;
+import java.awt.Component;
+import java.awt.Window;
 
 public class AuthenticationDialog extends DialogWrapper {
   private final AuthenticationPanel panel;

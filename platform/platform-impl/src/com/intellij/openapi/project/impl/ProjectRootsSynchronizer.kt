@@ -1,9 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
@@ -12,19 +10,17 @@ import com.intellij.platform.workspace.storage.entities
 import com.intellij.workspaceModel.ide.ProjectRootEntity
 import com.intellij.workspaceModel.ide.registerProjectRoot
 import kotlinx.coroutines.flow.filter
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 
 @Internal
 class ProjectRootsSynchronizer : ProjectActivity {
   companion object {
+    /**
+     * Registers project roots from [ProjectRootPersistentStateComponent] to the workspace model
+     */
     @VisibleForTesting
     suspend fun doRegister(project: Project) {
-      if (!Registry.`is`("ide.create.project.root.entity")) {
-        return
-      }
-
       val projectRootsComponent = project.serviceAsync<ProjectRootPersistentStateComponent>()
       val roots = projectRootsComponent.projectRootUrls
       val virtualFileUrlManager = project.serviceAsync<WorkspaceModel>().getVirtualFileUrlManager()
@@ -35,9 +31,11 @@ class ProjectRootsSynchronizer : ProjectActivity {
   }
 
   override suspend fun execute(project: Project) {
-    doRegister(project)
-    return
+    if (!Registry.`is`("ide.create.project.root.entity")) {
+      return
+    }
 
+    doRegister(project)
     launchListener(project)
   }
 

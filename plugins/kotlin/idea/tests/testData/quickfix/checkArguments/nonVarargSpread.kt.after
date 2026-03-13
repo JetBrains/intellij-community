@@ -1,4 +1,5 @@
 // "Remove '*'" "true"
+// K2_ERROR: The spread operator (*foo) can only be applied in a vararg position.
 fun join(x : Int, vararg a : String) : String {
     val b = StringBuilder(x.toString())
     for (s in a) {

@@ -21,11 +21,11 @@ load(
     _KtCompilerPluginInfo = "KtCompilerPluginInfo",
     _KtPluginConfiguration = "KtPluginConfiguration",
 )
+load("@rules_kotlin//kotlin/internal:opts.bzl", "JavacOptions")
 load("//:rules/common-attrs.bzl", "add_dicts")
 load("//:rules/impl/associates.bzl", "get_associates")
 load("//:rules/impl/builder-args.bzl", "init_builder_args")
 load("//:rules/impl/compiler-plugins.bzl", "collect_compiler_plugins_for_export", "compiler_plugins_from", "exported_compiler_plugins_from")
-load("//:rules/impl/javac-options.bzl", "JavacOptions")
 load("//:rules/impl/kotlinc-options.bzl", "KotlincOptions")
 load("//:rules/resource.bzl", "ResourceGroupInfo")
 

@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
@@ -380,10 +379,6 @@ public abstract class PyPackageManagementService extends PackageManagementServic
       mySdk = sdk;
       myPythonVersion = sdk != null ? sdk.getVersionString() : null;
       myInterpreterPath = sdk != null ? sdk.getHomePath() : null;
-    }
-
-    public static @Nullable PyPackageInstallationErrorDescription createFromMessage(@Nullable @NlsContexts.DetailedDescription String message) {
-      return message != null ? new PyPackageInstallationErrorDescription(message, null, null, null, null, null) : null;
     }
 
     public @Nullable @NlsSafe String getPackageName() {

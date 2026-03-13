@@ -3,7 +3,12 @@
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 
 import com.intellij.debugger.impl.instanceOf
-import com.sun.jdi.*
+import com.sun.jdi.ArrayReference
+import com.sun.jdi.BooleanValue
+import com.sun.jdi.LongValue
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.StringReference
+import com.sun.jdi.ThreadReference
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 

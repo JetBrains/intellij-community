@@ -194,14 +194,6 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     TRANSIENT_KEY.set(region, true);
   }
 
-  /**
-   * @deprecated use {@link #markTransient(FoldRegion)}
-   */
-  @Deprecated
-  public static void markAsNotPersistent(@NotNull FoldRegion region) {
-    markTransient(region);
-  }
-
   static boolean isTransient(@Nullable FoldRegion region) {
     return TRANSIENT_KEY.isIn(region);
   }
@@ -228,25 +220,6 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     DaemonCodeAnalyzerEx.getInstanceEx(myProject).restart("CodeFoldingManagerImpl.scheduleAsyncFoldingUpdate");
   }
 
-  @RequiresEdt
-  private void initFolding(@NotNull Editor editor) {
-    Document document = editor.getDocument();
-    ThreadingAssertions.assertEventDispatchThread();
-    editor.getFoldingModel().runBatchFoldingOperation(() -> {
-      ThreadingAssertions.assertEventDispatchThread();
-      DocumentFoldingInfo documentFoldingInfo = getOrCreateDocumentFoldingInfo(document);
-      EditorFactory.getInstance().editors(document, myProject)
-        .filter(otherEditor -> otherEditor != editor && isFoldingsInitializedInEditor(otherEditor))
-        .findFirst()
-        .ifPresent(otherEditor -> documentFoldingInfo.loadFromEditor(otherEditor));
-
-      documentFoldingInfo.setToEditor(editor);
-      documentFoldingInfo.clear();
-
-      setFoldingsInitializedInEditor(editor);
-    });
-  }
-
   @Override
   public @Nullable FoldRegion findFoldRegion(@NotNull Editor editor, int startOffset, int endOffset) {
     return FoldingUtil.findFoldRegion(editor, startOffset, endOffset);
@@ -264,9 +237,9 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
       return;
     }
     PsiDocumentManager.getInstance(myProject).commitDocument(editor.getDocument());
-    Runnable runnable = updateFoldRegions(editor, false);
-    if (runnable != null) {
-      runnable.run();
+    FoldingUpdate.Result result = updateFoldRegions(editor, false, false);
+    if (result != null) {
+      result.edtRunnable().run();
     }
   }
 
@@ -274,25 +247,46 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
   @RequiresBackgroundThread
   @RequiresReadLock
   public @Nullable Runnable updateFoldRegionsAsync(@NotNull Editor editor, boolean firstTime) {
+    return updateFoldRegionsAsync(editor, firstTime, false);
+  }
+
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  @RequiresReadLock
+  public @Nullable Runnable updateFoldRegionsAsync(@NotNull Editor editor, boolean firstTime, boolean quick) {
     ThreadingAssertions.assertBackgroundThread();
     ThreadingAssertions.assertReadAccess();
     if (!editor.getSettings().isAutoCodeFoldingEnabled()) {
       return null;
     }
-    Runnable runnable = updateFoldRegions(editor, firstTime);
+    FoldingUpdate.Result result = updateFoldRegions(editor, firstTime, quick);
+    Document document = editor.getDocument();
+    DocumentFoldingInfo documentFoldingInfo = getOrCreateDocumentFoldingInfo(document);
+    EditorFactory.getInstance().editors(document, myProject)
+      .filter(otherEditor -> otherEditor != editor && isFoldingsInitializedInEditor(otherEditor))
+      .findFirst()
+      .ifPresent(otherEditor -> documentFoldingInfo.loadFromEditor(otherEditor));
+    if (firstTime && !isFoldingsInitializedInEditor(editor)) {
+      documentFoldingInfo.computeExpandRanges();
+    }
     return () -> {
-      if (runnable != null) {
-        runnable.run();
+      ThreadingAssertions.assertEventDispatchThread();
+      if (result != null) {
+        result.edtRunnable().run();
       }
       if (firstTime && !isFoldingsInitializedInEditor(editor)) {
-        initFolding(editor);
+        editor.getFoldingModel().runBatchFoldingOperation(() -> {
+          documentFoldingInfo.applyFoldingExpandedState(editor);
+          documentFoldingInfo.clear();
+        });
+        setFoldingsInitializedInEditor(editor);
       }
     };
   }
 
-  private @Nullable Runnable updateFoldRegions(@NotNull Editor editor, boolean firstTime) {
+  private @Nullable FoldingUpdate.Result updateFoldRegions(@NotNull Editor editor, boolean firstTime, boolean quick) {
     PsiFile psiFile = getPsiFileForFolding(myProject, editor.getDocument());
-    return psiFile == null ? null : FoldingUpdate.updateFoldRegions(editor, psiFile, firstTime);
+    return psiFile == null ? null : FoldingUpdate.updateFoldRegions(editor, psiFile, firstTime, quick);
   }
 
   @Override
@@ -305,6 +299,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     return info;
   }
 
+  @RequiresEdt
   @Override
   public void restoreFoldingState(@NotNull Editor editor, @NotNull CodeFoldingState state) {
     ThreadingAssertions.assertEventDispatchThread();

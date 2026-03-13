@@ -17,17 +17,23 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.options.SchemeManagerFactory
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.profile.codeInspection.InspectionProfileManager
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.serviceContainer.NonInjectable
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import kotlinx.coroutines.CoroutineScope
 import org.jdom.Element
 import org.jdom.JDOMException
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Path
@@ -36,28 +42,39 @@ import java.nio.file.Path
        category = SettingsCategory.CODE,
        storages = [Storage(value = "editor.xml")],
        additionalExportDirectory = InspectionProfileManager.INSPECTION_DIR)
-open class ApplicationInspectionProfileManager @TestOnly @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory)
-  : ApplicationInspectionProfileManagerBase(schemeManagerFactory), PersistentStateComponent<Element> {
+class ApplicationInspectionProfileManager @TestOnly @NonInjectable @Internal constructor(coroutineScope: CoroutineScope, schemeManagerFactory: SchemeManagerFactory) :
+  ApplicationInspectionProfileManagerBase(schemeManagerFactory), PersistentStateComponent<Element> {
 
-  open val converter: InspectionProfileConvertor
-    @ApiStatus.Internal
+  val converter: InspectionProfileConvertor
+    @Internal
     get() = InspectionProfileConvertor(this)
 
   val rootProfileName: String
     get() = schemeManager.currentSchemeName ?: InspectionProfile.DEFAULT_PROFILE_NAME
 
   @Suppress("TestOnlyProblems")
-  constructor() : this(SchemeManagerFactory.getInstance())
+  @Internal
+  constructor(coroutineScope: CoroutineScope) : this(coroutineScope, SchemeManagerFactory.getInstance())
 
   companion object {
     @JvmStatic
+    @RequiresBlockingContext
     fun getInstanceImpl(): ApplicationInspectionProfileManager {
       return InspectionProfileManager.getInstance() as ApplicationInspectionProfileManager
     }
   }
 
   init {
-    registerProvidedSeverities()
+    syncProvidedSeverities(notifyListeners = false)
+    SeveritiesProvider.EP_NAME.point.addExtensionPointListener(coroutineScope, false, object : ExtensionPointListener<SeveritiesProvider> {
+      override fun extensionAdded(extension: SeveritiesProvider, pluginDescriptor: PluginDescriptor) {
+        syncProvidedSeverities(notifyListeners = true)
+      }
+
+      override fun extensionRemoved(extension: SeveritiesProvider, pluginDescriptor: PluginDescriptor) {
+        syncProvidedSeverities(notifyListeners = true)
+      }
+    })
   }
 
   @TestOnly
@@ -69,7 +86,7 @@ open class ApplicationInspectionProfileManager @TestOnly @NonInjectable construc
     }
   }
 
-  override fun getState(): Element? {
+  override fun getState(): Element {
     val state = Element("state")
     severityRegistrar.writeExternal(state)
     return state
@@ -90,9 +107,13 @@ open class ApplicationInspectionProfileManager @TestOnly @NonInjectable construc
     try {
       return super.loadProfile(path)
     }
-    catch (e: IOException) { throw e }
-    catch (e: JDOMException) { throw e }
-    catch (ignored: Exception) {
+    catch (e: IOException) {
+      throw e
+    }
+    catch (e: JDOMException) {
+      throw e
+    }
+    catch (_: Exception) {
       val message = InspectionsBundle.message("inspection.error.loading.message", 0, Path.of(path))
       ApplicationManager.getApplication().invokeLater(
         { Messages.showErrorDialog(message, InspectionsBundle.message("inspection.errors.occurred.dialog.title")) },
@@ -101,19 +122,55 @@ open class ApplicationInspectionProfileManager @TestOnly @NonInjectable construc
 
     return getProfile(path, false)
   }
-}
 
-private fun registerProvidedSeverities() {
-  val map = HashMap<String, HighlightInfoType>()
-  SeveritiesProvider.EP_NAME.forEachExtensionSafe { provider ->
-    for (t in provider.severitiesHighlightInfoTypes) {
-      val highlightSeverity = t.getSeverity(null)
-      val icon = if (t is HighlightInfoType.Iconable) IconLoader.createLazy { t.icon } else null
-      map.put(highlightSeverity.name, t)
-      HighlightDisplayLevel.registerSeverity(highlightSeverity, t.attributesKey, icon)
+  private fun syncProvidedSeverities(notifyListeners: Boolean) {
+    val providedSeverities = LinkedHashMap<String, HighlightDisplayLevel.SeverityDescriptor>()
+    val providedTypes = LinkedHashMap<String, HighlightInfoType>()
+    SeveritiesProvider.EP_NAME.forEachExtensionSafe { provider ->
+      for (highlightInfoType in provider.severitiesHighlightInfoTypes) {
+        val severity = highlightInfoType.getSeverity(null)
+        val severityName = severity.name
+        val iconable = highlightInfoType as? HighlightInfoType.Iconable
+        // Keep provider icons lazy when the dynamic EP refresh rebuilds HighlightDisplayLevel state.
+        // IconLoader.createLazy preserves icon-patcher/path-transform behavior, and reusing the same
+        // lazy icon instance lets HighlightDisplayLevel expose identical icon/outlineIcon objects.
+        val lazyIcon = iconable?.let { IconLoader.createLazy { it.icon } }
+        providedSeverities.remove(severityName)
+        providedTypes.remove(severityName)
+        providedSeverities[severityName] = HighlightDisplayLevel.SeverityDescriptor(
+          severity = severity,
+          attributesKey = highlightInfoType.attributesKey,
+          icon = lazyIcon,
+        )
+        // Preserve the original provider type instead of flattening it to HighlightInfoTypeImpl so
+        // provider-specific contracts such as Iconable survive add/remove syncs.
+        providedTypes[severityName] = highlightInfoType
+      }
+    }
+
+    HighlightDisplayLevel.syncProvidedSeverities(providedSeverities)
+    val removedSeverities = if (notifyListeners) SeverityRegistrar.syncProvidedSeverities(providedTypes)
+    else SeverityRegistrar.syncProvidedSeveritiesSilently(providedTypes)
+    if (notifyListeners && removedSeverities.isNotEmpty()) {
+      normalizeRemovedProvidedSeverities(removedSeverities.toSet())
     }
   }
-  if (map.isNotEmpty()) {
-    SeverityRegistrar.registerStandard(map)
+
+  private fun normalizeRemovedProvidedSeverities(removedSeverities: Set<String>) {
+    val projectManagers = (ProjectManager.getInstanceIfCreated()?.openProjects ?: emptyArray()).asSequence().filterNot { it.isDisposed }.mapNotNull {
+      it.getServiceIfCreated(InspectionProjectProfileManager::class.java) as? ProjectInspectionProfileManager
+    }.toList()
+
+    for (profile in normalizeRemovedSeverities(removedSeverities)) {
+      for (projectManager in projectManagers) {
+        projectManager.fireProfileChanged(profile)
+      }
+    }
+
+    for (projectManager in projectManagers) {
+      for (profile in projectManager.normalizeRemovedSeverities(removedSeverities)) {
+        projectManager.fireProfileChanged(profile)
+      }
+    }
   }
 }

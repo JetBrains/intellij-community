@@ -21,4 +21,16 @@ jvm_library(
     "@lib//:lucene-core",
   ]
 )
+
+jvm_library(
+  name = "lucene.common_test_lib",
+  module_name = "intellij.libraries.lucene.common",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "@lib//:lucene-analysis-common",
+    "@lib//:lucene-core",
+  ],
+  runtime_deps = [":lucene.common"]
+)
 ### auto-generated section `build intellij.libraries.lucene.common` end

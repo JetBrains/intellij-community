@@ -474,7 +474,7 @@ public class DirectoryChooser extends DialogWrapper {
     @Nullable Map<PsiDirectory,String> postfixes
   ) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ReadAction.run(() -> fillItems(directories, postfixToShow, postfixes)),
+      () -> ReadAction.runBlocking(() -> fillItems(directories, postfixToShow, postfixes)),
       LangBundle.message("progress.title.validating"), true, project
     );
     if (defaultSelection == null) {

@@ -1086,7 +1086,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
       return new DnDDragStartBean(new TransferableWrapper() {
         @Override
         public List<File> asFileList() {
-          return ReadAction.compute(() -> PsiCopyPasteManager.asFileList(psiElements));
+          return ReadAction.computeBlocking(() -> PsiCopyPasteManager.asFileList(psiElements));
         }
 
         @Override

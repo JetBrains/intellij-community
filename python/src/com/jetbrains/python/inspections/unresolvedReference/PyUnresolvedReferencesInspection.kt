@@ -76,22 +76,29 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
   @JvmField
   var ignoredIdentifiers: List<String> = ArrayList()
 
+  @JvmField
+  var strictClassAttributes: Boolean = true
+
   override fun createVisitor(holder: ProblemsHolder, session: LocalInspectionToolSession): PyUnresolvedReferencesVisitor =
     Visitor(holder,
             ignoredIdentifiers,
             PyInspectionVisitor.getContext(session),
-            getEffectiveLanguageLevel(session.file))
+            getEffectiveLanguageLevel(session.file),
+            strictClassAttributes)
 
   override fun getOptionsPane(): OptPane = OptPane.pane(
     OptPane.stringList("ignoredIdentifiers",
-                       PyPsiBundle.message("INSP.unresolved.refs.ignore.references.label")))
+                       PyPsiBundle.message("INSP.unresolved.refs.ignore.references.label")),
+    OptPane.checkbox("strictClassAttributes",
+                     PyPsiBundle.message("INSP.unresolved.refs.strict.class.attr.option")))
 
   private class Visitor(
     holder: ProblemsHolder,
     ignoredIdentifiers: List<String>,
     context: TypeEvalContext,
     languageLevel: LanguageLevel,
-  ) : PyUnresolvedReferencesVisitor(holder, ignoredIdentifiers, context, languageLevel) {
+    strictClassAttributes: Boolean,
+  ) : PyUnresolvedReferencesVisitor(holder, ignoredIdentifiers, context, languageLevel, strictClassAttributes) {
 
     override fun getInstallPackageQuickFixes(
       node: PyElement,

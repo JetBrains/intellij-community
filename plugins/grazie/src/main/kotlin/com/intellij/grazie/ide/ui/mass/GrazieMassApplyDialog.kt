@@ -12,7 +12,6 @@ import com.intellij.grazie.icons.GrazieIcons
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix.toRangeReplacements
 import com.intellij.grazie.ide.ui.PaddedListCellRenderer
 import com.intellij.grazie.text.CheckerRunner
-import com.intellij.grazie.text.ProofreadingProblems
 import com.intellij.grazie.text.TextProblem
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionManager
@@ -74,15 +73,15 @@ private val appliedChange = Key<Int>("grazie.mass.apply.change.index")
 
 class GrazieMassApplyDialog : DialogWrapper {
   private val text: String
-  private val problems: ProofreadingProblems
+  private val problems: List<TextProblem>
   private val project: Project
   private val editor: EditorEx
   private val undoManager: DocumentUndoManager
   private val highlightings = HighlightedProblems()
   private val massOptionComboBox by lazy { CollectionComboBoxModel(MassOptions.entries) }
 
-  constructor(file: PsiFile, problems: ProofreadingProblems) : super(file.project) {
-    check(!problems.isEmpty) { "In order to apply mass fixes, there must be at least one problem to fix" }
+  constructor(file: PsiFile, problems: List<TextProblem>) : super(file.project) {
+    check(problems.isNotEmpty()) { "In order to apply mass fixes, there must be at least one problem to fix" }
     this.text = file.text
     this.project = file.project
     this.problems = problems
@@ -138,8 +137,7 @@ class GrazieMassApplyDialog : DialogWrapper {
   }
 
   private fun createDoAction(isUndo: Boolean): AnAction {
-    val text =
-      if (isUndo) GrazieBundle.message("grazie.mass.apply.dialog.editor.undo") else GrazieBundle.message("grazie.mass.apply.dialog.editor.redo")
+    val text = if (isUndo) GrazieBundle.message("grazie.mass.apply.dialog.editor.undo") else GrazieBundle.message("grazie.mass.apply.dialog.editor.redo")
     val icon = if (isUndo) AllIcons.Diff.Revert else IconUtil.flip(AllIcons.Diff.Revert, true)
     val undoAction = object : AnAction(text, null, icon) {
       override fun actionPerformed(e: AnActionEvent) {
@@ -206,7 +204,7 @@ class GrazieMassApplyDialog : DialogWrapper {
   private fun setupHighlightings() {
     val document = editor.document
     addRangeHighlighter(editor, TextRange(0, document.textLength), BASE_TEXT_ATTRIBUTES)
-    val textRanges = problems.textRanges
+    val textRanges = getTextRanges(problems)
     textRanges.forEach { range -> addRangeHighlighter(editor, range, REGULAR_TEXT_ATTRIBUTES) }
     this.highlightings.update(editor, getHighlightings())
     setupFolding(textRanges)
@@ -261,7 +259,7 @@ class GrazieMassApplyDialog : DialogWrapper {
   }
 
   private fun getHighlightings(): List<Highlighting> =
-    problems.problems.map { problem ->
+    problems.map { problem ->
       val highlightRanges = problem.highlightRanges
         .map { problem.text.textRangeToFile(it) }
         .map { addRangeHighlighter(editor, it, BOLD_TEXT_ATTRIBUTES) }
@@ -312,6 +310,12 @@ private fun addRangeHighlighter(editor: Editor, range: TextRange, textAttribute:
     textAttribute.first,
     HighlighterTargetArea.EXACT_RANGE
   )
+}
+
+private fun getTextRanges(problems: List<TextProblem>): List<TextRange> {
+  val ranges = problems.flatMap { it.text.rangesInFile }
+    .sortedBy { it.startOffset }.distinct()
+  return TextRangeUtil.mergeRanges(ranges)
 }
 
 private enum class ChangeType {

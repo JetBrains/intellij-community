@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
+import com.intellij.util.ReflectionUtil
 import com.intellij.vcs.git.actions.GitSingleRefActions
 import com.intellij.vcs.git.actions.branch.GitBranchActionToBeWrapped
 import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil
@@ -17,7 +18,6 @@ import git4idea.GitTag
 import git4idea.GitWorkingTree
 import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.actions.branch.GitBranchActionsUtil
-import git4idea.actions.ref.GitSingleRefAction.Companion.getWorkingTreeWithRef
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
@@ -30,7 +30,7 @@ abstract class GitSingleRefAction<T : GitReference>(
 ) : GitBranchActionToBeWrapped, DumbAwareAction(dynamicText) {
 
   @Suppress("UNCHECKED_CAST")
-  protected open val refClass: KClass<T> = GitReference::class as KClass<T>
+  protected open val refClass: Class<T> = GitReference::class.java as Class<T>
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
@@ -71,7 +71,7 @@ abstract class GitSingleRefAction<T : GitReference>(
       else -> null
     }
 
-    return refClass.safeCast(ref)
+    return if (refClass.isInstance(ref)) refClass.cast(ref) else null
   }
 
   private fun isEnabledAndVisible(project: Project?, repositories: List<GitRepository>?, ref: T?): Boolean =
@@ -88,23 +88,13 @@ abstract class GitSingleRefAction<T : GitReference>(
     }
 
     /**
-     * Only local branches are checked for working trees.
-     * Tags are immutable and therefore may be easily used in multiple working trees simultaneously.
-     *
-     * See also [getWorkingTreeWithRef]
+     * @return true if there is at least one repository having a working tree (excluding the repository itself) with the given reference checked out.
      */
-    internal fun isCurrentRefInAnyRepoOrWorkingTree(
-      ref: GitReference,
-      repositories: List<GitRepository>,
-      checkOnlyNonCurrentWorkingTrees: Boolean = false,
-    ): Boolean {
-      if (!GitWorkingTreesUtil.isWorkingTreesFeatureEnabled() || ref !is GitLocalBranch) {
-        return isCurrentRefInAnyRepo(ref, repositories)
-      }
-
-      return repositories.any { repository ->
-        getWorkingTreeWithRef(ref, repository, checkOnlyNonCurrentWorkingTrees) != null
-      }
+    fun isCurrentRefInAnyOtherWorkingTree(ref: GitReference, repositories: List<GitRepository>): Boolean {
+      // Only local branches are checked for working trees.
+      // Tags are immutable and therefore may be easily used in multiple working trees simultaneously.
+      return if (!GitWorkingTreesUtil.isWorkingTreesFeatureEnabled() || ref !is GitLocalBranch) false
+      else repositories.any { repository -> getWorkingTreeWithRef(ref, repository, true) != null }
     }
 
     /**
@@ -115,5 +105,11 @@ abstract class GitSingleRefAction<T : GitReference>(
         repository.workingTreeHolder.getWorkingTrees()
       }
     }
+
+    internal fun getWorkingTreeWithRef(reference: GitReference, repositories: List<GitRepository>, skipCurrentWorkingTree: Boolean): GitWorkingTree? {
+      val repository = repositories.singleOrNull() ?: return null
+      return getWorkingTreeWithRef(reference, repository, skipCurrentWorkingTree)
+    }
   }
 }
+

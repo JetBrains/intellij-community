@@ -28,9 +28,11 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "@lib//:jna",
     "@lib//:junit5",
     "//libraries/hamcrest",
+    "//libraries/hamcrest:hamcrest_test_lib",
   ]
 )
 ### auto-generated section `build intellij.community.wintools` end

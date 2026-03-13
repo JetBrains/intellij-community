@@ -3,7 +3,11 @@ package com.intellij.openapi.options.newEditor.settings
 
 import com.intellij.CommonBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
@@ -18,6 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.impl.FileStatusProvider
 import com.intellij.openapi.vfs.VirtualFile
@@ -90,10 +95,9 @@ class SettingsFileEditorProvider : FileEditorProvider, FileStatusProvider, Edito
       FileStatus.NOT_CHANGED
   }
 
-  override fun getEditorTabTooltipText(project: Project, virtualFile: VirtualFile): @NlsContexts.Tooltip String? {
-    if (virtualFile !is SettingsVirtualFile)
-      return super.getEditorTabTooltipText(project, virtualFile)
-    return CommonBundle.settingsTitle()
+  override fun getEditorTabTooltipHtml(project: Project, virtualFile: VirtualFile): HtmlChunk? {
+    if (virtualFile !is SettingsVirtualFile) return null
+    return HtmlChunk.text(CommonBundle.settingsTitle())
   }
 
   override fun getEditorTabTitle(project: Project, virtualFile: VirtualFile): @NlsContexts.TabTitle String? {

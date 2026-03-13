@@ -600,6 +600,11 @@ public abstract class HighLevelSmartCompletionHandlerTestGenerated extends Abstr
             runTest("../../completion/testData/handlers/smart/MultipleArgsIntoBrackets.kt");
         }
 
+        @TestMetadata("MultipleArgsIntoBracketsWithComma.kt")
+        public void testMultipleArgsIntoBracketsWithComma() throws Exception {
+            runTest("../../completion/testData/handlers/smart/MultipleArgsIntoBracketsWithComma.kt");
+        }
+
         @TestMetadata("MultipleArgsItem.kt")
         public void testMultipleArgsItem() throws Exception {
             runTest("../../completion/testData/handlers/smart/MultipleArgsItem.kt");
@@ -608,6 +613,26 @@ public abstract class HighLevelSmartCompletionHandlerTestGenerated extends Abstr
         @TestMetadata("MultipleArgsItemByTab.kt")
         public void testMultipleArgsItemByTab() throws Exception {
             runTest("../../completion/testData/handlers/smart/MultipleArgsItemByTab.kt");
+        }
+
+        @TestMetadata("MultipleArgsWithComma.kt")
+        public void testMultipleArgsWithComma() throws Exception {
+            runTest("../../completion/testData/handlers/smart/MultipleArgsWithComma.kt");
+        }
+
+        @TestMetadata("MultipleArgsWithExistingBracket.kt")
+        public void testMultipleArgsWithExistingBracket() throws Exception {
+            runTest("../../completion/testData/handlers/smart/MultipleArgsWithExistingBracket.kt");
+        }
+
+        @TestMetadata("MultipleArgsWithExistingParen.kt")
+        public void testMultipleArgsWithExistingParen() throws Exception {
+            runTest("../../completion/testData/handlers/smart/MultipleArgsWithExistingParen.kt");
+        }
+
+        @TestMetadata("MultipleArgsWithTwoMatching.kt")
+        public void testMultipleArgsWithTwoMatching() throws Exception {
+            runTest("../../completion/testData/handlers/smart/MultipleArgsWithTwoMatching.kt");
         }
 
         @TestMetadata("NamedArgument1.kt")

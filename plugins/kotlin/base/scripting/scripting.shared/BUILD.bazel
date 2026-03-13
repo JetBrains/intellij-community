@@ -47,4 +47,38 @@ jvm_library(
     "//platform/statistics",
   ]
 )
+
+jvm_library(
+  name = "scripting.shared_test_lib",
+  module_name = "intellij.kotlin.base.scripting.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":scripting.shared",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
+    "//platform/util-class-loader:util-classLoader_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//plugins/kotlin/scripting:scripting_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared_test_lib",
+    "//java/java-psi-impl:psi-impl_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/external-system-impl:externalSystem-impl_test_lib",
+    "//platform/external-system-api:externalSystem_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//platform/statistics:statistics_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.kotlin.base.scripting.shared` end

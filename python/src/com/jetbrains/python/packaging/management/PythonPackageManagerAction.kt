@@ -86,7 +86,9 @@ abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwa
 
       PythonPackageManagerUI.forPackageManager(manager).executeCommand(e.presentation.text) {
         execute(e, manager).mapSuccess {
-          DaemonCodeAnalyzer.getInstance(psiFile.project).restart(psiFile, this)
+          runReadAction {
+            DaemonCodeAnalyzer.getInstance(psiFile.project).restart(psiFile, "PythonPackageManagerAction")
+          }
           manager.sdk.associatedModuleDir?.refresh(true, false)
         }
       }

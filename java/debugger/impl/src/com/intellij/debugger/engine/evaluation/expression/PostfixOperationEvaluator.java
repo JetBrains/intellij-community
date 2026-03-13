@@ -10,8 +10,6 @@ public class PostfixOperationEvaluator implements ModifiableEvaluator {
 
   private final Evaluator myIncrementImpl;
 
-  private Modifier myModifier;
-
   public PostfixOperationEvaluator(Evaluator operandEvaluator, Evaluator incrementImpl) {
     myOperandEvaluator = DisableGC.create(operandEvaluator);
     myIncrementImpl = DisableGC.create(incrementImpl);
@@ -20,14 +18,9 @@ public class PostfixOperationEvaluator implements ModifiableEvaluator {
   @Override
   public @NotNull ModifiableValue evaluateModifiable(@NotNull EvaluationContextImpl context) throws EvaluateException {
     ModifiableValue modifiableValue = myOperandEvaluator.evaluateModifiable(context);
-    myModifier = modifiableValue.getModifier();
+    Modifier modifier = modifiableValue.getModifier();
     Object operationResult = myIncrementImpl.evaluate(context);
-    AssignmentEvaluator.assign(myModifier, operationResult, context);
+    AssignmentEvaluator.assign(modifier, operationResult, context);
     return modifiableValue;
-  }
-
-  @Override
-  public Modifier getModifier() {
-    return myModifier;
   }
 }

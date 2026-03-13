@@ -23,7 +23,8 @@ import com.intellij.testFramework.EditorTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 public class EditorUtilTest extends AbstractEditorTest {
   public void testGetNotFoldedLineStartEndOffsets() {

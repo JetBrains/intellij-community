@@ -482,8 +482,8 @@ private fun isInTypeShed(element: PsiElement): Boolean {
 private enum class Priority {
   USER_STUB, // pyi file located in user's project
   USER_CODE, // py file located in user's project
-  PROVIDED_STUB, // pyi file provided with installed lib and located inside it
   STUB_PACKAGE, // pyi file located in some stub package
+  PROVIDED_STUB, // pyi file provided with installed lib and located inside it
   INLINE_PACKAGE, // py file located in some inline package
   TYPESHED, // pyi file located in typeshed
   THIRD_PARTY_SDK, // project-specific sdk, e.g Google App Engine one

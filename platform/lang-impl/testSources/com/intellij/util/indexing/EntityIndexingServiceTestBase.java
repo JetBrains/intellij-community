@@ -20,7 +20,13 @@ import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 public abstract class EntityIndexingServiceTestBase extends HeavyPlatformTestCase {

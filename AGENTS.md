@@ -10,8 +10,6 @@ repository: monorepo
 
 **Critical:** These guidelines MUST be followed at all times.
 
-**Reference Index:** @./.ai/ai-topic-index.md
-
 ## Project Invariants
 
 - The repository is a large monorepo with multiple IDE products and plugins.
@@ -24,12 +22,7 @@ repository: monorepo
 Special handling applies to the directories below. If a file you touch lives under one of these roots, you must activate that module's rules first (read the referenced doc before edits or reviews). These rules override general guidelines if they conflict.
 
 - **Product DSL** (`community/platform/build-scripts/product-dsl/`): read `./.claude/rules/product-dsl.md` before changing anything in this tree.
-- **Codex Task skill** (`.codex/skills/task/`): read `.codex/skills/task/task-skill-dev-rule.md` before edits or reviews.
 
-- **Task MCP server** (`community/build/mcp-servers/task/`):
-  - `community/build/mcp-servers/task/beads-semantics.md` is the source for `.codex/skills/task/references/beads-quickref.md` (do not edit the derived file).
-  - Tests: `community/build/mcp-servers/task/task-mcp.test.mjs`.
-  - Bazel: do not run Bazel build and tests here.
 - **IJ Proxy MCP server** (`community/build/mcp-servers/ij-proxy/`):
   - Tests: run `bun run build` and `bun test`.
   - Bazel: do not run Bazel build and tests here.
@@ -40,10 +33,11 @@ Special handling applies to the directories below. If a file you touch lives und
 
 ### After Code Changes
 
-- **Full Bazel compilation after code changes:** run `./bazel-build-all.cmd` via terminal command tool (not JetBrains MCP terminal). Skip if only `.js`, `.mjs`, `.md`, `.txt`, or `.json` files are modified.
+- **Run affected tests:** `./tests.cmd -Dintellij.build.test.patterns=<FQN or wildcard>` (**FQN required; simple class names do not match**), or `node --test <file>` for `*.test.mjs`.
+  `tests.cmd` performs Bazel compilation internally, so a separate `bazel build` step is not needed when tests will be run.
+  Module-specific rules may override the runner. Skip if plugin has no tests. See [TESTING](./.agents/skills/testing/SKILL.md).
+- **Bazel compilation without tests:** when only verifying compilation (no tests to run), use `bazel build <target>` for affected modules. Skip if only `.js`, `.mjs`, `.md`, `.txt`, or `.json` files are modified.
 - After modifying `*.iml`, `BUILD.bazel`, or `.idea/` files: run `./build/jpsModelToBazel.cmd`.
-- Run affected tests: `./tests.cmd -Dintellij.build.test.patterns=<FQN or wildcard>` (**FQN required; simple class names do not match**), or `node --test <file>` for `*.test.mjs`.
-  Module-specific rules may override the runner. Skip if plugin has no tests. See [TESTING-internals](./.ai/topics/TESTING-internals.md).
 
 ### After Writing Code
 
@@ -57,6 +51,7 @@ Preserve IDE-serialized .iml files in canonical form. Do not:
 - add comments
 - auto-format
 - normalize (structure or whitespace)
+- add a trailing newline at end of file
 - prune (remove) empty tags
 - reorder elements or attributes
 
@@ -96,7 +91,7 @@ Available via ijproxy or JetBrains MCP. Use these for semantic operations; avoid
 - Refactors: `rename` (ijproxy) / `rename_refactoring` (JetBrains MCP); use for renames and avoid manual search/replace.
 - Formatting: `reformat_file`
 - Concurrency checks: `find_threading_requirements_usages`, `find_lock_requirements_usages`
-- Project structure: `get_project_modules`, `get_project_dependencies`, `get_repositories`
+- Project structure & VCS: `get_project_modules`, `get_project_dependencies`, `get_repositories`, `git_status`
 - Run configs: `get_run_configurations`, `execute_run_configuration`
 
 ### Tooling rules
@@ -107,7 +102,7 @@ Available via ijproxy or JetBrains MCP. Use these for semantic operations; avoid
 
 - Never shell for file ops (`cat`, `sed`, `find`, `grep`) on repo paths, except the client fallback (`./tools/fd.cmd`, `./tools/rg.cmd`) when no MCP is available.
 
-- Shell OK for: git, build/test.
+- Shell OK for: git (prefer `git_status` if the tool is available), build/test.
 - Outside repo: native shell permitted.
 
 ## Individual Preferences

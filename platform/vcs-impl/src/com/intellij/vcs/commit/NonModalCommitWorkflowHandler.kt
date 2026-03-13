@@ -135,7 +135,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   override fun executionEnded() = updateDefaultCommitActionEnabled()
 
   override fun updateDefaultCommitActionName() {
-    ui.defaultCommitActionName = getDefaultCommitActionName(amendCommitHandler.isAmendCommitMode, willSkipCommitChecks())
+    ui.defaultCommitActionName = getDefaultCommitActionName(amendCommitHandler.commitToAmend !is CommitToAmend.None, willSkipCommitChecks())
   }
 
   protected open fun getDefaultCommitActionName(isAmend: Boolean, isSkipCommitChecks: Boolean): @Nls String {
@@ -146,7 +146,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     executor: CommitExecutor?,
     isSkipCommitChecks: Boolean,
   ): @Nls(capitalization = Nls.Capitalization.Sentence) String {
-    val isAmend = amendCommitHandler.isAmendCommitMode
+    val isAmend = amendCommitHandler.commitToAmend !is CommitToAmend.None
     val actionText: @Nls String = getActionTextWithoutEllipsis(workflow.vcses, executor, isAmend, isSkipCommitChecks,
                                                                removeMnemonic = true)
     return capitalize(toLowerCase(actionText))
@@ -623,7 +623,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
 
   override fun getState(): CommitWorkflowHandlerState {
-    val isAmend = amendCommitHandler.isAmendCommitMode
+    val isAmend = amendCommitHandler.commitToAmend !is CommitToAmend.None
     val isSkipCommitChecks = willSkipCommitChecks()
     return CommitWorkflowHandlerState(isAmend, isSkipCommitChecks)
   }

@@ -12,8 +12,8 @@
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
-    <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.test" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.jvm-debugger.test" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.test.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
@@ -25,6 +25,6 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.compose-compiler-plugin" level="project" />
     <orderEntry type="module" module-name="intellij.android.streaming" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-compose" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.android.adt.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.test.compose.testFramework" scope="TEST" />
   </component>
 </module>

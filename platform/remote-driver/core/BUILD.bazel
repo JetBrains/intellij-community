@@ -25,4 +25,20 @@ jvm_library(
     "//libraries/commons/lang3",
   ]
 )
+
+jvm_library(
+  name = "driver-impl_test_lib",
+  module_name = "intellij.driver.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":driver-impl",
+    "//platform/remote-driver/model:model_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//platform/util:util_test_lib",
+    "//libraries/commons/lang3:lang3_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.driver.impl` end

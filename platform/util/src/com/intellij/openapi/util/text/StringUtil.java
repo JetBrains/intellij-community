@@ -63,9 +63,8 @@ public class StringUtil {
   public static final String NON_BREAK_SPACE = "\u00A0";
 
   private static final class HtmlPatterns {
-    // "(?>" removes backtraces; this is not just important for matching speed, but also to stop stack overflows
-    private static final Pattern HTML_PATTERN = Pattern.compile("(?><[^>]*>)", Pattern.MULTILINE);
-    private static final Pattern BREAKS_PATTERN = Pattern.compile("(?><[bB][rR](?>\\s*)/?\\s*>)");
+    private static final Pattern HTML_PATTERN = Pattern.compile("<[^>]*+>", Pattern.MULTILINE);
+    private static final Pattern BREAKS_PATTERN = Pattern.compile("<br\\s*+/?\\s*+>", Pattern.CASE_INSENSITIVE);
   }
 
   private static final class Splitters {
@@ -1773,6 +1772,17 @@ public class StringUtil {
     }
 
     return true;
+  }
+
+  @Contract(pure = true)
+  public static boolean endsWithIgnoreWhitespaces(@NotNull CharSequence text, @NotNull CharSequence suffix) {
+    int i = text.length();
+    for (; i > 0; i--) {
+      if (!Strings.isWhiteSpace(text.charAt(i - 1))) {
+        break;
+      }
+    }
+    return endsWith(text, 0, i, suffix);
   }
 
   @Contract(pure = true)

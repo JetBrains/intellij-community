@@ -5,10 +5,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.VisualPosition
-import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.scale.JBUIScale.scale
 import java.awt.Graphics2D
 import java.awt.RenderingHints
 import java.awt.geom.Path2D
@@ -151,8 +150,8 @@ internal class SelectionLinePainter(
   private val editor: EditorImpl,
   private val lineExtensionWidth: Double,
 ) {
-  private val radius = lineHeight / 6.0
-  private val selectionBg = editor.colorsScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR)
+  private val radius = scale(lineHeight / 6.0f).toDouble()
+  private val selectionBg = editor.selectionModel.textAttributes.backgroundColor
   private val leftExtensionWidth = if (editor.isRightAligned) lineExtensionWidth else 0.0
   private val rightExtensionWidth = if (editor.isRightAligned) 0.0 else lineExtensionWidth
 
@@ -182,8 +181,12 @@ internal class SelectionLinePainter(
     it.selectionStart <= cfr.startOffset && cfr.endOffset <= it.selectionEnd
   }
 
-  private fun isBlockInlayInSelection(block: Inlay<*>) = allCarets.any {
-    it.selectionStart <= block.offset && block.offset <= it.selectionEnd
+  private fun isBlockInlayInSelection(block: Inlay<*>) = caretSelections.any {
+    val bounds = block.bounds ?: return@any false
+    val (start, end) = Pair(editor.visualPositionToXY(it.start), editor.visualPositionToXY(it.end))
+    val selectedRange = start.y..end.y
+
+    bounds.y in selectedRange && (bounds.y + bounds.height) in selectedRange
   }
 
   private val customFoldRegions by lazy {
@@ -349,13 +352,6 @@ internal class SelectionLinePainter(
   private fun isSelectionRightBound(block: SelectionRectangle): Boolean {
     val visualLine = yToVisualLine(block.topLeft.y.toInt())
     return customFoldRegionsFor(visualLine).isNotEmpty() || caretSelectionsForLine(visualLine).hasSelectionEnd(false, block.bottomRight.x)
-  }
-
-  fun isInSelection(x: Float, y: Int, width: Float): Boolean {
-    val line = yToVisualLine(y)
-
-    val selection = caretSelectionsForLine(line).selectionContaining(x.toDouble()) ?: return false
-    return selection.contains((x + width).toDouble())
   }
 
   private fun paintRoundedBlock(block: SelectionRectangle, cornerTypes: Array<CornerType>) {
@@ -583,11 +579,15 @@ internal class SelectionLinePainter(
     return Pair(bottomLeftType, bottomRightType)
   }
 
-  fun paintAllBlockInlaysAbove(bottomVisualLine: Int) {
-    val belowBlockInlays = editor.inlayModel.getBlockElementsForVisualLine(bottomVisualLine - 1, false)
-    val aboveBlockInlays = editor.inlayModel.getBlockElementsForVisualLine(bottomVisualLine, true)
+  private fun allBlockInlaysAbove(bottomVisualLine: Int): List<Inlay<*>> =
+    editor.inlayModel.getBlockElementsForVisualLine(bottomVisualLine - 1, false) +
+      editor.inlayModel.getBlockElementsForVisualLine(bottomVisualLine, true)
 
-    val allInlays = belowBlockInlays + aboveBlockInlays
+  fun isAllBlockInlaysAboveSelected(bottomVisualLine: Int): Boolean =
+    allBlockInlaysAbove(bottomVisualLine).all { isBlockInlayInSelection(it) }
+
+  fun paintAllBlockInlaysAbove(bottomVisualLine: Int) {
+    val allInlays = allBlockInlaysAbove(bottomVisualLine)
     assert(allInlays.isNotEmpty()) { "There should be at least one block inlay" }
 
     val (firstInlay, lastInlay) = allInlays.run { Pair(first(), last()) }
@@ -656,8 +656,8 @@ internal class SelectionLinePainter(
   }
 
   private fun paint(rect: Rectangle2D) {
-    if (Registry.`is`("editor.old.full.horizontal.selection.enabled") || editor.isColumnMode) {
-      LOG.error("Using the new selection painting is disabled or editor is in column mode but SelectionLinePainter.paint was called, proceeding with caution")
+    if (!editor.shouldUseNewSelection()) {
+      LOG.error("Using the new selection painting is disabled but SelectionLinePainter.paint was called, proceeding with caution")
       EditorPainter.fillRectExact(
         graphics,
         rect,

@@ -1,12 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.drag
 
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.ui.AbstractPainter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.util.JBHiDPIScaledImage
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
-import java.awt.*
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Graphics2D
+import java.awt.Image
+import java.awt.Point
+import java.awt.Rectangle
+import java.awt.RenderingHints
 import javax.swing.JLabel
 import javax.swing.SwingUtilities
 
@@ -56,6 +64,8 @@ internal class GlassPaneDragImageView(private val glassPane: IdeGlassPane) : Dra
       repaint()
     }
 
+  internal var drawRoundRect = true
+
   private fun repaint() {
     glassPaneComponent?.repaint()
   }
@@ -79,7 +89,20 @@ internal class GlassPaneDragImageView(private val glassPane: IdeGlassPane) : Dra
         val size = size
         val location = Point(location)
         SwingUtilities.convertPointFromScreen(location, component)
-        g2.fillRect(location.x, location.y, size.width, size.height)
+
+        if (InternalUICustomization.getInstance()?.isRoundedTabDuringDrag == true) {
+          val arcSize = JBUI.scale(20)
+
+          (g2 as Graphics2D).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+          g2.fillRoundRect(location.x, location.y, size.width, size.height, arcSize, arcSize)
+          if (drawRoundRect) {
+            g2.drawRoundRect(location.x, location.y, size.width, size.height, arcSize, arcSize)
+          }
+        }
+        else {
+          g2.fillRect(location.x, location.y, size.width, size.height)
+        }
+
         StartupUiUtil.drawImage(g2, image, location.x, location.y, observer = component)
       }
       finally {

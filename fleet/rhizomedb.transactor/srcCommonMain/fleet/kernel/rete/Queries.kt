@@ -6,7 +6,6 @@ import com.jetbrains.rhizomedb.EID
 import com.jetbrains.rhizomedb.Entity
 import com.jetbrains.rhizomedb.EntityAttribute
 import com.jetbrains.rhizomedb.EntityType
-import com.jetbrains.rhizomedb.all
 import com.jetbrains.rhizomedb.entity
 import com.jetbrains.rhizomedb.fromIndexValue
 import com.jetbrains.rhizomedb.get
@@ -28,8 +27,15 @@ suspend fun <T, R> StateQuery<T>.withCurrentMatch(f: suspend CoroutineScope.(T) 
 /**
  * Will wait until Maybe emits a match and then run with it once.
  */
-suspend fun <T, R> Query<Maybe, T>.withFirstMatch(f: suspend CoroutineScope.(T) -> R): WithMatchResult<R> {
+suspend fun <T, R> Query<Maybe, T>.withFirstMatchResult(f: suspend CoroutineScope.(T) -> R): WithMatchResult<R> {
   return matchesFlow().firstNotNull { it.withMatch(f) }
+}
+
+/**
+ * Will wait until Maybe emits a match and then run with it once while the match is valid.
+ */
+suspend fun <T, R> Query<Maybe, T>.withFirstMatch(f: suspend CoroutineScope.(T) -> R): R {
+  return withFirstMatchResult(f = f).getOrThrow()
 }
 
 /**
@@ -394,7 +400,7 @@ fun <T, U> Query<*, T>.onMatch(f: (Match<T>) -> U): JoinHand<T, U> =
  * Emits a match for every value of an [attribute] of input [Query].
  * Similar to [Entity.get] but for [Query]
  * */
-operator fun <C : Cardinality, E : Entity, T : Any> Query<C, E>.get(attribute: EntityAttribute<E, T>): Query<C, T> =
+fun <C : Cardinality, E : Entity, T : Any> Query<C, E>.get(attribute: EntityAttribute<E, T>): Query<C, T> =
   rawMap { m -> m.value.eid }
     .getAttribute(attribute.attr)
     .rawMap { match -> attribute.fromIndexValue(match.value) }

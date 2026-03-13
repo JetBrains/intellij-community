@@ -2,6 +2,7 @@
 package com.intellij.collaboration.ui.codereview.details.model
 
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 
 interface CodeReviewStatusViewModel {
@@ -19,7 +20,9 @@ interface CodeReviewStatusViewModel {
    * IMPORTANT: meaning is flipped due to a naming typo
    * false if every required conversation was resolved, true otherwise
    */
+  @Deprecated("Not used in a shared code. Use the property on implementation and give it a better name")
   val requiredConversationsResolved: SharedFlow<Boolean>
+    get() = MutableStateFlow(false)
 
   val ciJobs: SharedFlow<List<CodeReviewCIJob>>
 

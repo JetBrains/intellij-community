@@ -299,7 +299,12 @@ fun KotlinPsiRange.getPhysicalTextRange(): TextRange {
     return (elements.singleOrNull() as? KtExpression)?.extractableSubstringInfo?.contentRange ?: textRange
 }
 
-fun isObjectOrNonInnerClass(e: PsiElement): Boolean = e is KtObjectDeclaration || (e is KtClass && !e.isInner())
+fun isObjectOrNonInnerClass(e: PsiElement): Boolean {
+    if (e is KtObjectDeclaration) {
+        return !e.isObjectLiteral()
+    }
+    return e is KtClass && !e.isInner()
+}
 
 fun <T : KtDeclaration> insertDeclaration(declaration: T, targetSibling: PsiElement): T {
     val targetParent = targetSibling.parent

@@ -6,7 +6,7 @@ import com.intellij.openapi.keymap.KeymapGroupFactory;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.util.NlsActions;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 final class KeymapGroupFactoryImpl extends KeymapGroupFactory {
   @Override

@@ -47,7 +47,7 @@
       <th>2</th>
       <td>3</td>
       <td>NaN</td>
-      <td>None</td>
+      <td>NaN</td>
       <td>{'age': 35, 'height': None}</td>
       <td>[4.4, None]</td>
       <td>4.4+5.0j</td>

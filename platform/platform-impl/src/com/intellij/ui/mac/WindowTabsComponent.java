@@ -4,7 +4,13 @@ package com.intellij.ui.mac;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.components.ComponentManagerEx;
@@ -17,9 +23,18 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.ui.*;
+import com.intellij.ui.ClientProperty;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.InplaceButton;
+import com.intellij.ui.IslandsState;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.components.panels.Wrapper;
@@ -36,7 +51,12 @@ import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.UiDecorator;
-import com.intellij.ui.tabs.impl.*;
+import com.intellij.ui.tabs.impl.JBDefaultTabPainter;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.impl.MorePopupAware;
+import com.intellij.ui.tabs.impl.TabLabel;
+import com.intellij.ui.tabs.impl.TabLayout;
+import com.intellij.ui.tabs.impl.TabPainterAdapter;
 import com.intellij.ui.tabs.impl.singleRow.WindowTabsLayout;
 import com.intellij.ui.tabs.impl.themes.DefaultTabTheme;
 import com.intellij.util.ui.GraphicsUtil;
@@ -48,14 +68,38 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPopupMenu;
+import javax.swing.SwingUtilities;
 import javax.swing.event.PopupMenuEvent;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 @ApiStatus.Internal
 public final class WindowTabsComponent extends JBTabsImpl {
@@ -194,6 +238,21 @@ public final class WindowTabsComponent extends JBTabsImpl {
       }
 
       @Override
+      protected int getDropTargetArc() {
+        return JBUI.scale(JBUI.getInt("Island.arc", 10));
+      }
+
+      @Override
+      public int getDropTargetTopOffset() {
+        return 0;
+      }
+
+      @Override
+      public int getDropTargetBottomOffset() {
+        return 0;
+      }
+
+      @Override
       public Dimension getPreferredSize() {
         return new Dimension(super.getPreferredSize().width, JBUI.scale(TAB_HEIGHT));
       }
@@ -268,6 +327,13 @@ public final class WindowTabsComponent extends JBTabsImpl {
   protected @NotNull TabPainterAdapter createTabPainterAdapter() {
     return new TabPainterAdapter() {
       private final JBTabPainter myTabPainter = new JBDefaultTabPainter(new DefaultTabTheme() {
+        @Override
+        public @Nullable Color getBackground() {
+          return IslandsState.Companion.isEnabled()
+                 ? JBColor.namedColor("MainWindow.background", JBColor.PanelBackground)
+                 : super.getBackground();
+        }
+
         @Override
         public int getTopBorderThickness() {
           return 0;
@@ -401,7 +467,10 @@ public final class WindowTabsComponent extends JBTabsImpl {
 
   private void createTabItem(@NotNull IdeFrameImpl tabFrame, int index, boolean selection) {
     TabInfo info = new TabInfo(new JLabel());
-    info.setObject(tabFrame).setText(tabFrame.getTitle()).setTooltipText(tabFrame.getTitle()); //NON-NLS
+    String tabTitle = tabFrame.getTitle(); //NON-NLS
+    info.setObject(tabFrame)
+      .setText(tabTitle)
+      .setTooltipText(HtmlChunk.text(tabTitle));
     info.setTabLabelActions(createTabActions(tabFrame), ActionPlaces.UNKNOWN);
     info.setDefaultForeground(JBUI.CurrentTheme.MainWindow.Tab.foreground(selection, false));
 
@@ -425,7 +494,10 @@ public final class WindowTabsComponent extends JBTabsImpl {
       Disposer.register(myParentDisposable, () -> tabFrame.removeWindowListener(listener));
     }
 
-    PropertyChangeListener listener = event -> info.setText((String)event.getNewValue()).setTooltipText((String)event.getNewValue());
+    PropertyChangeListener listener = event -> {
+      String title = (String)event.getNewValue();
+      info.setText(title).setTooltipText(HtmlChunk.text(title));
+    };
     tabFrame.addPropertyChangeListener("title", listener);
     info.getComponent().putClientProperty(TITLE_LISTENER_KEY, listener);
 

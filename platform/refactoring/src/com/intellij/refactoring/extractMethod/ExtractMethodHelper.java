@@ -27,7 +27,11 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dennis.Ushakov
@@ -49,7 +53,7 @@ public final class ExtractMethodHelper {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         if (myProject == null || myProject.isDisposed()) return;
-        final List<SimpleMatch> duplicates = ReadAction.compute(() -> finder.findDuplicates(scope, generatedMethod));
+        final List<SimpleMatch> duplicates = ReadAction.computeBlocking(() -> finder.findDuplicates(scope, generatedMethod));
 
         ApplicationManager.getApplication().invokeLater(() -> replaceDuplicates(callElement, editor, replacer, duplicates));
       }
@@ -77,7 +81,7 @@ public final class ExtractMethodHelper {
       return ProgressManager.getInstance().runProcessWithProgressSynchronously(
         (ThrowableComputable<List<SimpleMatch>, RuntimeException>)() -> {
           ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
-          return ReadAction.compute(() -> finder.findDuplicates(searchScopes, generatedMethod));
+          return ReadAction.computeBlocking(() -> finder.findDuplicates(searchScopes, generatedMethod));
         }, RefactoringBundle.message("searching.for.duplicates"), true, project);
     }
     catch (ProcessCanceledException e) {

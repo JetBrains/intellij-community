@@ -1,7 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.UtilBundle;
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -15,7 +16,6 @@ import com.intellij.util.PathUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThreeState;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
@@ -59,7 +58,6 @@ import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -74,7 +72,10 @@ import static java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE;
  */
 @ApiStatus.NonExtendable
 @ApiStatus.Obsolete
+@SuppressWarnings({"NonFinalUtilityClass", "IO_FILE_USAGE", "IOStreamConstructor"})
 public class FileUtil {
+  /** @deprecated async delete is no longer used */
+  @Deprecated
   public static final String ASYNC_DELETE_EXTENSION = ".__del__";
 
   public static final int REGEX_PATTERN_FLAGS = SystemInfoRt.isFileSystemCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE;
@@ -228,6 +229,7 @@ public class FileUtil {
         throw new IOException("File length reported negative, probably doesn't exist");
       }
 
+      //noinspection deprecation
       if (FileUtilRt.isTooLarge(len)) {
         throw new FileTooBigException("Attempt to load '" + file + "' in memory buffer, file length is " + len + " bytes.");
       }
@@ -235,22 +237,6 @@ public class FileUtil {
       bytes = loadBytes(stream, (int)len);
     }
     return bytes;
-  }
-
-  /**
-   * use {@link com.intellij.openapi.vfs.VfsUtilCore#loadNBytes}
-   * or {@link InputStream#readNBytes(int)}
-   */
-  @Deprecated
-  public static byte @NotNull [] loadFirstAndClose(@NotNull InputStream stream, int maxLength) throws IOException {
-    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-    try {
-      copy(stream, maxLength, buffer);
-    }
-    finally {
-      stream.close();
-    }
-    return buffer.toByteArray();
   }
 
   public static @NotNull String loadTextAndClose(@NotNull InputStream stream) throws IOException {
@@ -330,64 +316,21 @@ public class FileUtil {
     return result;
   }
 
+  /** @deprecated obsolete; use regular delete instead */
+  @Deprecated
   public static @NotNull Future<Void> asyncDelete(@NotNull File file) {
     return asyncDelete(Collections.singleton(file));
   }
 
+  /** @deprecated obsolete; use regular delete instead */
+  @Deprecated
   public static @NotNull Future<Void> asyncDelete(@NotNull Collection<? extends File> files) {
-    List<File> tempFiles = new ArrayList<>();
-    for (File file : files) {
-      File tempFile = renameToTempFileOrDelete(file);
-      if (tempFile != null) {
-        tempFiles.add(tempFile);
-      }
-    }
-    return tempFiles.isEmpty() ? CompletableFuture.completedFuture(null) : AppExecutorUtil.getAppExecutorService().submit(() -> {
-      Thread currentThread = Thread.currentThread();
-      int priority = currentThread.getPriority();
-      currentThread.setPriority(Thread.MIN_PRIORITY);
-      try {
-        for (File tempFile : tempFiles) {
-          delete(tempFile);
-        }
-      }
-      finally {
-        currentThread.setPriority(priority);
+    return ProcessIOExecutorService.INSTANCE.submit(() -> {
+      for (File file : files) {
+        delete(file);
       }
       return null;
     });
-  }
-
-  private static @Nullable File renameToTempFileOrDelete(@NotNull File file) {
-    String tempDir = getTempDirectory();
-    boolean isSameDrive = true;
-    if (SystemInfoRt.isWindows) {
-      String tempDirDrive = tempDir.substring(0, 2);
-      String fileDrive = file.getAbsolutePath().substring(0, 2);
-      isSameDrive = tempDirDrive.equalsIgnoreCase(fileDrive);
-    }
-
-    if (isSameDrive) {
-      // the optimization is reasonable only if destination dir is located on the same drive
-      String originalFileName = file.getName();
-      File tempFile = getTempFile(originalFileName, tempDir);
-      if (file.renameTo(tempFile)) {
-        return tempFile;
-      }
-    }
-
-    delete(file);
-
-    return null;
-  }
-
-  private static @NotNull File getTempFile(@NotNull String originalFileName, @NotNull String parent) {
-    int randomSuffix = (int)(System.currentTimeMillis() % 1000);
-    for (int i = randomSuffix; ; i++) {
-      String name = "___" + originalFileName + i + ASYNC_DELETE_EXTENSION;
-      File tempFile = new File(parent, name);
-      if (!tempFile.exists()) return tempFile;
-    }
   }
 
   public static boolean delete(@NotNull File file) {
@@ -682,6 +625,7 @@ public class FileUtil {
     return FileUtilRt.toCanonicalPath(path, separatorChar, true);
   }
 
+  @SuppressWarnings("unused")
   @Contract("null -> null; !null->!null")
   public static String toCanonicalUriPath(@Nullable String path) {
     return FileUtilRt.toCanonicalPath(path, '/', false);
@@ -1054,7 +998,6 @@ public class FileUtil {
       File toFile = new File(toDir, fromFile.getName());
       success = success && fromFile.renameTo(toFile);
     }
-    //noinspection ResultOfMethodCallIgnored
     fromDir.delete();
 
     return success;
@@ -1600,8 +1543,9 @@ public class FileUtil {
       try {
         // If there is no trove4j library in the classpath, we will fail with ClassNotFoundException
         // and FILE_HASHING_STRATEGY will not be initialized
-        Class<?> clazz = Class.forName("gnu.trove.TObjectHashingStrategy");
+        Class.forName("gnu.trove.TObjectHashingStrategy");
 
+        //noinspection deprecation
         FILE_HASHING_STRATEGY_temp = new TObjectHashingStrategy<File>() {
           @Override
           public int computeHashCode(File object) {
@@ -1619,7 +1563,7 @@ public class FileUtil {
       } finally {
         //We cannot use TObjectHashingStrategy explicitly to declare the variable, as NoClassDefFoundError could be thrown 
         // if trove4j is not available
-        //noinspection CastCanBeRemovedNarrowingVariableType,unchecked
+        //noinspection CastCanBeRemovedNarrowingVariableType,unchecked,deprecation
         FILE_HASHING_STRATEGY = (TObjectHashingStrategy<File>)FILE_HASHING_STRATEGY_temp;
       }
   }

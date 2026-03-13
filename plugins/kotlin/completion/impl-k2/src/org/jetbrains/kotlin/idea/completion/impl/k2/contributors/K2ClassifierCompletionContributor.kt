@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementPresentation
@@ -15,11 +16,9 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKind
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.containingSymbol
-import org.jetbrains.kotlin.analysis.api.components.defaultType
-import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.components.memberScope
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.components.staticDeclaredMemberScope
+import org.jetbrains.kotlin.analysis.api.components.upperBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -29,15 +28,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.ShortenCommandForIde
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectPossibleReferenceShorteningsForIde
-import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiers
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.getAliasNameIfExists
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.staticScope
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionContributor
@@ -45,12 +38,18 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSetupScope
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2ContributorSectionPriority
 import org.jetbrains.kotlin.idea.completion.impl.k2.allowsOnlyNamedArguments
+import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.CompletionVisibilityChecker
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.FirClassifierProvider.getAvailableClassifiers
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.KtSymbolWithOrigin
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.getAliasNameIfExists
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.staticScope
 import org.jetbrains.kotlin.idea.completion.impl.k2.isAfterRangeOperator
-import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
-import org.jetbrains.kotlin.idea.completion.lookups.factories.shortenCommand
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirLookupElementFactory
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.shortenCommand
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.reference
-import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinAnnotationTypeNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinCallableReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
@@ -138,6 +137,13 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
 
     context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
     override fun shouldExecute(): Boolean {
+        if (context.positionContext.explicitReceiver == null && context.weighingContext.expectedType != null &&
+            context.completionContext.parameters.completionType == CompletionType.SMART
+        ) {
+            // This is handled by the K2TypeInstantiationContributor
+            return false
+        }
+
         return !context.positionContext.isAfterRangeOperator() && !context.positionContext.allowsOnlyNamedArguments()
     }
 
@@ -164,8 +170,12 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
             symbol.containingSymbol?.staticScope?.let(scopesToCheck::add)
         }
 
-        context.expectedType?.symbol?.takeIf { it.modality == KaSymbolModality.SEALED }?.let(::addContainingScopesToCheck)
-        context.preferredSubtype?.symbol?.let(::addContainingScopesToCheck)
+        context.expectedType?.upperBoundIfFlexible()?.symbol
+            ?.takeIf { it.modality == KaSymbolModality.SEALED }
+            ?.let(::addContainingScopesToCheck)
+
+        context.preferredSubtype?.upperBoundIfFlexible()?.symbol
+            ?.let(::addContainingScopesToCheck)
 
         val scopeClassifiers = scopesToCheck
             .asSequence()
@@ -188,7 +198,6 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
 
                 createClassifierLookupElement(
                     classifierSymbol = classifierSymbol,
-                    expectedType = context.expectedType,
                     importingStrategy = getImportingStrategy(
                         context = sectionContext.completionContext,
                         importStrategyDetector = sectionContext.importStrategyDetector,
@@ -197,7 +206,6 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
                     ),
                     aliasName = aliasName,
                     positionContext = positionContext,
-                    visibilityChecker = sectionContext.visibilityChecker,
                 ).map {
                     it.applyWeighs(symbolWithOrigin)
                 }
@@ -208,7 +216,6 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
 
     context(_: KaSession, sectionContext: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
     private fun completeWithoutReceiverFromIndex() {
-        val weighingContext = sectionContext.weighingContext
         val indexClassifiers = if (sectionContext.prefixMatcher.prefix.isNotEmpty()) {
             getAvailableClassifiersFromIndex(
                 positionContext = sectionContext.positionContext,
@@ -221,7 +228,6 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
                 .flatMap { classifierSymbol ->
                     createClassifierLookupElement(
                         classifierSymbol = classifierSymbol,
-                        expectedType = weighingContext.expectedType,
                         importingStrategy = getImportingStrategy(
                             context = sectionContext.completionContext,
                             importStrategyDetector = sectionContext.importStrategyDetector,
@@ -229,7 +235,6 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
                             aliasName = null,
                         ),
                         positionContext = sectionContext.positionContext,
-                        visibilityChecker = sectionContext.visibilityChecker,
                     ).map {
                         it.applyWeighs(
                             symbolWithOrigin = KtSymbolWithOrigin(classifierSymbol),
@@ -261,9 +266,7 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
                 }.flatMap { symbolWithOrigin ->
                     createClassifierLookupElement(
                         classifierSymbol = symbolWithOrigin.symbol,
-                        expectedType = sectionContext.weighingContext.expectedType,
                         positionContext = sectionContext.positionContext,
-                        visibilityChecker = sectionContext.visibilityChecker,
                     ).map { it.applyWeighs(symbolWithOrigin) }
                 }.forEach { addElement(it) }
         } else {
@@ -287,10 +290,8 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
             .flatMap {
                 createClassifierLookupElement(
                     classifierSymbol = it,
-                    expectedType = context.weighingContext.expectedType,
                     importingStrategy = ImportStrategy.AddImport(nameToImport),
                     positionContext = context.positionContext,
-                    visibilityChecker = context.visibilityChecker
                 )
             }.map { it.withPresentableText(selectorExpression.text + "." + it.lookupString) }
     }
@@ -299,33 +300,9 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
     private fun createClassifierLookupElement(
         classifierSymbol: KaClassifierSymbol,
         positionContext: KotlinNameReferencePositionContext,
-        visibilityChecker: CompletionVisibilityChecker,
-        expectedType: KaType? = null,
         aliasName: Name? = null,
         importingStrategy: ImportStrategy = ImportStrategy.DoNothing,
     ): Sequence<LookupElementBuilder> = sequence {
-        if (classifierSymbol is KaNamedClassSymbol &&
-            classifierSymbol.classKind != KaClassKind.OBJECT &&
-            classifierSymbol.classKind != KaClassKind.ENUM_CLASS &&
-            classifierSymbol.modality != KaSymbolModality.SEALED &&
-            classifierSymbol.modality != KaSymbolModality.ABSTRACT &&
-            expectedType != null &&
-            classifierSymbol.defaultType.isSubtypeOf(expectedType)
-        ) {
-            val constructorSymbols = classifierSymbol.memberScope.constructors
-                .filter { visibilityChecker.isVisible(it, positionContext) }
-                .toList()
-
-            yieldIfNotNull(
-                KotlinFirLookupElementFactory.createConstructorCallLookupElement(
-                    containingSymbol = classifierSymbol,
-                    visibleConstructorSymbols = constructorSymbols,
-                    importingStrategy = importingStrategy,
-                    aliasName = aliasName
-                )
-            )
-        }
-
         yieldIfNotNull(KotlinFirLookupElementFactory.createClassifierLookupElement(classifierSymbol, importingStrategy, aliasName))
     }.map { builder ->
         when (importingStrategy) {
@@ -386,7 +363,7 @@ private class K2ClassifierLookupElementRenderer(
     }
 
     @RequiresReadLock
-    private fun collectPossibleReferenceShortenings(): ShortenCommand? {
+    private fun collectPossibleReferenceShortenings(): ShortenCommandForIde? {
         val file = position.element
             ?.copy() as? KtFile
             ?: return null

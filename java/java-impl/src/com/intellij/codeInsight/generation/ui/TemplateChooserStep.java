@@ -219,6 +219,10 @@ public abstract class TemplateChooserStep extends StepAdapter {
     return myPanel;
   }
 
+  protected String getSelectedTemplate() {
+    return (String) myComboBox.getSelectedItem();
+  }
+
   protected abstract void setErrorText(@NlsContexts.DialogMessage @Nullable String errorText, JComponent component);
   protected abstract boolean isDisposed();
 }

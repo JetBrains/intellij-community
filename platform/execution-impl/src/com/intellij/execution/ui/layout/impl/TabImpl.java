@@ -7,7 +7,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 @ApiStatus.Internal
 public final class TabImpl extends AbstractTab implements Tab {

@@ -4,7 +4,11 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.util.xmlb.*
+import com.intellij.util.xmlb.BeanBinding
+import com.intellij.util.xmlb.DomAdapter
+import com.intellij.util.xmlb.JdomAdapter
+import com.intellij.util.xmlb.SerializationFilter
+import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.lang.invoke.MethodHandles

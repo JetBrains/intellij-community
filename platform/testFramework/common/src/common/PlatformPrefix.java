@@ -25,7 +25,8 @@ public final class PlatformPrefix {
     "Ruby",
     "PhpStorm",
     "RustRover",
-    "UltimateLangXml", "Idea", "PlatformLangXml"
+    "LanguageServer",
+    "UltimateLangXml", "Idea", "PlatformLangXml",
   };
 
   private static boolean ourPlatformPrefixInitialized;

@@ -30,11 +30,11 @@ public class XslEmmetAbbreviationTest extends EmmetAbbreviationTestSuite {
    * Tests from https://github.com/emmetio/emmet/blob/master/javascript/unittest/tests/expandAbbreviation.js
    */
   public void addXslTests() {
-    addTest("tmatch", "<xsl:template match=\"\" mode=\"\"></xsl:template>", "xsl");
-    addTest("choose", "<xsl:choose><xsl:when test=\"\"></xsl:when><xsl:otherwise></xsl:otherwise></xsl:choose>", "xsl");
+    super.addTestWithName("tmatch", "tmatch #2", "<xsl:template match=\"\" mode=\"\"></xsl:template>", null, "xsl");
+    super.addTestWithName("choose", "choose #2", "<xsl:choose><xsl:when test=\"\"></xsl:when><xsl:otherwise></xsl:otherwise></xsl:choose>", null, "xsl");
     addTest("xsl:variable>div+p", "<xsl:variable><div></div><p></p></xsl:variable>", "xsl");
     addTest("var>div+p", "<xsl:variable name=\"\"><div></div><p></p></xsl:variable>", "xsl");
-    addTest("ap", "<xsl:apply-templates select=\"\" mode=\"\" />", "xsl");
+    super.addTestWithName("ap", "ap #2", "<xsl:apply-templates select=\"\" mode=\"\" />", null, "xsl");
     addTest("ap>wp*2",
             "<xsl:apply-templates select=\"\" mode=\"\"><xsl:with-param name=\"\" select=\"\" /><xsl:with-param name=\"\" select=\"\" /></xsl:apply-templates>",
             "xsl");

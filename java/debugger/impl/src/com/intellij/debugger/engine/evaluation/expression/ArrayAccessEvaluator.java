@@ -27,19 +27,13 @@ class ArrayAccessEvaluator implements ModifiableEvaluator {
   private final Evaluator myArrayReferenceEvaluator;
   private final Evaluator myIndexEvaluator;
 
-  // TODO remove non-final fields, see IDEA-366793
-  @Deprecated
-  private ArrayReference myEvaluatedArrayReference;
-  @Deprecated
-  private int myEvaluatedIndex;
-
   ArrayAccessEvaluator(Evaluator arrayReferenceEvaluator, Evaluator indexEvaluator) {
     myArrayReferenceEvaluator = arrayReferenceEvaluator;
     myIndexEvaluator = indexEvaluator;
   }
 
   @Override
-  public @NotNull ModifiableValue evaluateModifiable(EvaluationContextImpl context) throws EvaluateException {
+  public @NotNull ModifiableValue evaluateModifiable(@NotNull EvaluationContextImpl context) throws EvaluateException {
     if (!(myArrayReferenceEvaluator.evaluate(context) instanceof ArrayReference evaluatedArrayReference)) {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.array.reference.expected"));
     }
@@ -51,21 +45,11 @@ class ArrayAccessEvaluator implements ModifiableEvaluator {
 
     try {
       Value value = evaluatedArrayReference.getValue(evaluatedIndex);
-      myEvaluatedArrayReference = evaluatedArrayReference;
-      myEvaluatedIndex = evaluatedIndex;
       return new ModifiableValue(value, new MyModifier(evaluatedArrayReference, evaluatedIndex));
     }
     catch (Exception e) {
       throw EvaluateExceptionUtil.createEvaluateException(e);
     }
-  }
-
-  @Override
-  public Modifier getModifier() {
-    if (myEvaluatedArrayReference != null) {
-      return new MyModifier(myEvaluatedArrayReference, myEvaluatedIndex);
-    }
-    return null;
   }
 
   private static class MyModifier implements Modifier {

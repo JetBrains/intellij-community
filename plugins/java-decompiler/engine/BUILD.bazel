@@ -22,10 +22,14 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":engine"],
   deps = [
-    "@lib//:junit4",
-    "@lib//:assert_j",
     "@lib//:jetbrains-annotations",
-    "@lib//:hamcrest",
+    "//java/java-runtime:rt",
+    "//java/java-runtime:rt_test_lib",
+    "@lib//:junit6",
+    "@lib//:junit6Params",
+    "@lib//:junit6Launcher",
+    "@lib//:eclipse",
+    "@lib//:org-codehaus-groovy-groovy",
   ]
 )
 ### auto-generated section `build intellij.java.decompiler.engine` end

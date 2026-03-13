@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":pycharm-community-ide-impl-promotion_resources"],
   deps = [
+    "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/projectModel-api:projectModel",
@@ -28,6 +29,30 @@ jvm_library(
     "//platform/core-ui",
     "//python/ide/customization.shared",
     "//platform/platform-impl/update-checker",
+  ]
+)
+
+jvm_library(
+  name = "pycharm-community-ide-impl-promotion_test_lib",
+  module_name = "intellij.pycharm.community.ide.impl.promotion",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":pycharm-community-ide-impl-promotion",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//python/ide/impl:impl_test_lib",
+    "//python:python-community-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//libraries/http-client:http-client_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//python/ide/customization.shared:customization.shared_test_lib",
+    "//platform/platform-impl/update-checker:update-checker_test_lib",
   ]
 )
 ### auto-generated section `build intellij.pycharm.community.ide.impl.promotion` end

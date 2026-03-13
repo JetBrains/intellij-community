@@ -7,7 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -356,14 +356,14 @@ private inline fun getRequest(
   specificEndOffset: Int? = null,
   crossinline getLookupElement: () -> LookupElement? = { null },
 ): InlineCompletionRequest? {
-  return runReadAction {
+  return runReadActionBlocking {
     if (editor.caretModel.caretCount != 1 ||
         editor.document.isInBulkUpdate /* caret position is not valid */ ) {
-      return@runReadAction null
+      return@runReadActionBlocking null
     }
     val caret = specificCaret ?: editor.caretModel.currentCaret
-    val project = editor.project ?: return@runReadAction null
-    val file = specificFile ?: getPsiFile(caret, project) ?: return@runReadAction null
+    val project = editor.project ?: return@runReadActionBlocking null
+    val file = specificFile ?: getPsiFile(caret, project) ?: return@runReadActionBlocking null
     val offset = caret.offset
     InlineCompletionRequest(
       event = event,

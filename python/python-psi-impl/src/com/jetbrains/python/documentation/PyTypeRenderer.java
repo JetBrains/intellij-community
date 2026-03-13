@@ -18,7 +18,6 @@ import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
-import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterListType;
 import com.jetbrains.python.psi.types.PyCallableType;
@@ -220,7 +219,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     }
 
     @Override
-    public @NotNull HtmlChunk visitPyIntersectionType(com.jetbrains.python.psi.types.@NotNull PyIntersectionType intersectionType) {
+    public @NotNull HtmlChunk visitPyIntersectionType(@NotNull PyIntersectionType intersectionType) {
       // There is no way to represent intersections through the standard type hints at the moment
       return visitUnknownType();
     }
@@ -284,7 +283,9 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     HtmlBuilder result = new HtmlBuilder();
     boolean renderTypeArgumentList = !genericType.getElementTypes().isEmpty();
     String className = genericType.getName();
-    if (renderTypeArgumentList && !isGenericBuiltinsAvailable() && PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.containsKey(className)) {
+    if (renderTypeArgumentList &&
+        !isGenericBuiltinsAvailable() &&
+        PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.containsKey(className)) {
       className = PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.get(className);
       if (isRenderingFqn()) {
         className = PyTypingTypeProvider.TYPING + "." + className;
@@ -350,7 +351,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
         return renderUnionOfLiterals(literalsAndOthers.first);
       }
       return renderUnion(ContainerUtil.prepend(
-        ContainerUtil.map(literalsAndOthers.second, this::render),
+        ContainerUtil.map(literalsAndOthers.second, this::renderUnionMember),
         renderUnionOfLiterals(literalsAndOthers.first)
       ));
     }
@@ -361,7 +362,21 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
       // Always put Any at the end of the union
       return renderUnion(List.of(render(PyUnionType.union(ContainerUtil.skipNulls(unionType.getMembers()))), visitUnknownType()));
     }
-    return renderUnion(ContainerUtil.map(unionType.getMembers(), this::render));
+    return renderUnion(ContainerUtil.map(unionType.getMembers(), this::renderUnionMember));
+  }
+
+  private @NotNull HtmlChunk renderUnionMember(@Nullable PyType member) {
+    HtmlChunk rendered = render(member);
+    // Add parentheses around intersections in unions when using | & syntax for clarity: (A & B) | C instead of A & B | C
+    // Not needed for Union[...] syntax
+    if (member instanceof PyIntersectionType && isBitwiseOrUnionAvailable()) {
+      return new HtmlBuilder()
+        .append(styled("(", PyHighlighter.PY_PARENTHS))
+        .append(rendered)
+        .append(styled(")", PyHighlighter.PY_PARENTHS))
+        .toFragment();
+    }
+    return rendered;
   }
 
   @Override
@@ -383,8 +398,8 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
       .append(styled("[", PyHighlighter.PY_BRACKETS))
       .append(StreamEx
                 .of(literals)
-                .map(PyLiteralType::getExpression)
-                .map(expr -> styledExpression(expr))
+                .map(PyLiteralType::getExpressionText)
+                .map(HtmlChunk::raw)
                 .collect(HtmlChunk.toFragment(styled(", ", PyHighlighter.PY_COMMA))))
       .append(styled("]", PyHighlighter.PY_BRACKETS))
       .toFragment();
@@ -423,7 +438,19 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
 
   @Override
   public @NotNull HtmlChunk visitPyIntersectionType(@NotNull PyIntersectionType intersectionType) {
-    return renderList(ContainerUtil.map(intersectionType.getMembers(), this::render), " & ");
+    return renderList(ContainerUtil.map(intersectionType.getMembers(), member -> {
+      HtmlChunk rendered = render(member);
+      // Add parentheses around unions in intersections when using | & syntax for clarity: (A | B) & C instead of A | B & C
+  
+      if (member instanceof PyUnionType && isBitwiseOrUnionAvailable()) {
+        return new HtmlBuilder()
+          .append(styled("(", PyHighlighter.PY_PARENTHS))
+          .append(rendered)
+          .append(styled(")", PyHighlighter.PY_PARENTHS))
+          .toFragment();
+      }
+      return rendered;
+    }), " & ");
   }
 
   private static @Nullable Pair<@NotNull List<PyLiteralType>, @NotNull List<PyType>> extractLiterals(@NotNull PyUnionType type) {
@@ -466,8 +493,14 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   }
 
   @Override
+  public HtmlChunk visitAnyType() {
+    return HtmlChunk.raw(isRenderingFqn() ? PyTypingTypeProvider.ANY : PyNames.ANY_TYPE); //NON-NLS
+  }
+
+  @Override
   public HtmlChunk visitUnknownType() {
-    return HtmlChunk.raw(isRenderingFqn() ? "typing.Any" : "Any"); //NON-NLS
+    // TODO: show "Unknown" instead of "typing.Any" when we convert to it
+    return visitAnyType();
   }
 
   @Override
@@ -533,10 +566,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
       case ", " -> {
         yield styled(separator, PyHighlighter.PY_COMMA);
       }
-      case " | " -> {
-        yield styled(separator, PyHighlighter.PY_OPERATION_SIGN);
-      }
-      case " & " -> {
+      case " | ", " & " -> {
         yield styled(separator, PyHighlighter.PY_OPERATION_SIGN);
       }
       default -> {
@@ -589,16 +619,13 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     result.append(HtmlChunk.raw(isRenderingFqn() ? "typing.Literal" : "Literal")); //NON-NLS
     result.append("[");
     @Nullable String classQName = literalType.getClassQName();
-    if (isRenderingFqn() && classQName != null && literalType.getExpression() instanceof PyReferenceExpression refExpr) {
+    if (isRenderingFqn() && classQName != null && literalType.getEnumMemberName() != null) {
       result.append(classQName);
-      if (refExpr.getName() != null) {
-        result.append(".");
-        result.append(refExpr.getName());
-      }
+      result.append(".");
+      result.append(literalType.getEnumMemberName());
     }
     else {
-      String enumOrLiteral = StringUtil.notNullize(literalType.getExpression().getText()).trim();
-      result.appendRaw(enumOrLiteral); // append raw since the literal can include quotes: Literal["foo"]
+      result.appendRaw(literalType.getExpressionText()); // append raw since the literal can include quotes: Literal["foo"]
     }
     result.append("]");
     return result.toFragment();

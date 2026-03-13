@@ -326,12 +326,14 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
             case CANONICAL -> recordBuilder.addCanonicalCtor(psiMethod);
             case DELEGATING -> recordBuilder.addCtor(psiMethod);
             case CUSTOM -> {
-              if (canonicalCtorCandidate != null) {
-                recordBuilder.addDelegatingCtor(canonicalCtorCandidate.constructor(),
-                                                psiMethod,
-                                                constructorCandidate.fieldNamesToInitializers(),
-                                                constructorCandidate.otherStatements());
-              }
+              String[] fieldNamesInOrder = myRecordCandidate.getFieldsToAccessorCandidates().keySet().stream()
+                .map(PsiField::getName)
+                .toArray(String[]::new);
+
+              recordBuilder.addDelegatingCtor(fieldNamesInOrder,
+                                              psiMethod,
+                                              constructorCandidate.fieldNamesToInitializers(),
+                                              constructorCandidate.otherStatements());
             }
           }
         }

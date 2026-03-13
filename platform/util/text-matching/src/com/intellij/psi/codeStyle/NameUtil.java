@@ -4,10 +4,14 @@ package com.intellij.psi.codeStyle;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.NameUtilCore;
+import com.intellij.util.text.matching.CharArrayUtilKt;
 import com.intellij.util.text.matching.KeyboardLayoutConverter;
+import com.intellij.util.text.matching.MatchedFragment;
 import com.intellij.util.text.matching.MatchingMode;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -401,6 +405,89 @@ public final class NameUtil {
     }
     return buf.toString();
 
+  }
+
+  @ApiStatus.Internal
+  public static int evaluateCaseMatching(
+    boolean valuedStartMatch,
+    int patternIndex,
+    boolean humpStartMatchedUpperCase,
+    int nameIndex,
+    boolean afterGap,
+    boolean isHumpStart,
+    char nameChar,
+    boolean[] isLowerCase,
+    boolean[] isUpperCase,
+    char[] pattern
+  ) {
+    if (afterGap && isHumpStart && isLowerCase[patternIndex]) return -10; // disprefer when there's a hump but nothing in the pattern indicates the user meant it to be hump
+    if (nameChar == pattern[patternIndex]) {
+      if (isUpperCase[patternIndex]) return 50; // strongly prefer user's uppercase matching uppercase: they made an effort to press Shift
+      if (nameIndex == 0 && valuedStartMatch) return 150; // the very first letter case distinguishes classes in Java etc
+      if (isHumpStart) return 1; // if lowercase matches lowercase hump start, that also means something
+      return 0;
+    }
+    if (isHumpStart) return -1; // disfavor hump starts where pattern letter case doesn't match name case
+    if (isLowerCase[patternIndex] && humpStartMatchedUpperCase) return -1; // disfavor lowercase non-humps matching uppercase in the name
+    return 0;
+  }
+
+  @ApiStatus.Internal
+  public static int calculateHumpedMatchingScore(
+    char @NotNull [] pattern, @NotNull String name, boolean valueStartCaseMatch, @Nullable List<MatchedFragment> fragments,
+    boolean @NotNull [] isLowerCase, boolean @NotNull [] isUpperCase, char @NotNull [] hardSeparators
+  ) {
+    if (fragments == null) return Integer.MIN_VALUE;
+    if (fragments.isEmpty()) return 0;
+
+    final var first = fragments.getFirst();
+    final var startMatch = first.getStartOffset() == 0;
+    final var valuedStartMatch = startMatch && valueStartCaseMatch;
+
+    var matchingCase = 0;
+    var p = -1;
+
+    var skippedHumps = 0;
+    var nextHumpStart = 0;
+    var humpStartMatchedUpperCase = false;
+    for (final var range : fragments) {
+      for (var i = range.getStartOffset(); i < range.getEndOffset(); i++) {
+        final var afterGap = i == range.getStartOffset() && first != range;
+        var isHumpStart = false;
+        while (nextHumpStart <= i) {
+          if (nextHumpStart == i) {
+            isHumpStart = true;
+          }
+          else if (afterGap) {
+            skippedHumps++;
+          }
+          nextHumpStart = NameUtilCore.nextWord(name, nextHumpStart);
+        }
+
+        final var c = name.charAt(i);
+        p = CharArrayUtilKt.indexOf(pattern, c, p + 1, pattern.length, /*ignoreCase =*/ true);
+        if (p < 0) {
+          break;
+        }
+
+        if (isHumpStart) {
+          humpStartMatchedUpperCase = c == pattern[p] && isUpperCase[p];
+        }
+
+        matchingCase += NameUtil.evaluateCaseMatching(valuedStartMatch, p, humpStartMatchedUpperCase, i, afterGap, isHumpStart, c, isLowerCase, isUpperCase, pattern);
+      }
+    }
+
+    final var startIndex = first.getStartOffset();
+    final var afterSeparator = CharArrayUtilKt.indexOfAny(name, hardSeparators, /*start =*/ 0, /*end =*/ startIndex) >= 0;
+    final var wordStart = startIndex == 0 || NameUtilCore.isWordStart(name, startIndex) && !NameUtilCore.isWordStart(name, startIndex - 1);
+    final var finalMatch = fragments.getLast().getEndOffset() == name.length();
+
+    return (wordStart ? 1000 : 0) +
+           matchingCase - fragments.size() + -skippedHumps * 10 +
+           (afterSeparator ? 0 : 2) +
+           (startMatch ? 1 : 0) +
+           (finalMatch ? 1 : 0);
   }
 
   /**

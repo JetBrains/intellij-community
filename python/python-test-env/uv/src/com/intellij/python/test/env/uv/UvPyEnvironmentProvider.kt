@@ -2,14 +2,22 @@
 package com.intellij.python.test.env.uv
 
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.python.test.env.core.*
+import com.intellij.python.test.env.core.CacheKey
+import com.intellij.python.test.env.core.PyEnvironment
+import com.intellij.python.test.env.core.PyEnvironmentProvider
+import com.intellij.python.test.env.core.PyEnvironmentSpec
+import com.intellij.python.test.env.core.executeProcess
 import com.intellij.util.system.OS
 import com.jetbrains.python.PythonBinary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.createDirectories
+import kotlin.io.path.deleteRecursively
+import kotlin.io.path.exists
+import kotlin.io.path.pathString
 
 /**
  * Specification for UV Python environment with mandatory version pinning.

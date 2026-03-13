@@ -110,7 +110,8 @@ public interface MarkupModel extends UserDataHolder {
 
   /**
    * Returns all highlighter instances contained in the model.
-   *
+   * If the model is changed in background (e.g. {@link com.intellij.openapi.editor.impl.DocumentMarkupModel}) then the result
+   * can contain invalid range highlighters. Clients must filter them out.
    * @return the array of highlighter instances.
    */
   @NotNull

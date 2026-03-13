@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:xz"],
   runtime_deps = ["@lib//:xz"]
 )
+
+jvm_library(
+  name = "xz_test_lib",
+  module_name = "intellij.libraries.xz",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:xz"],
+  runtime_deps = [":xz"]
+)
 ### auto-generated section `build intellij.libraries.xz` end

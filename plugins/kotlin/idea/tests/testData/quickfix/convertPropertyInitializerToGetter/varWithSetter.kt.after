@@ -1,4 +1,6 @@
 // "Convert property initializer to getter" "true"
+// K2_ERROR: Property in interface cannot have a backing field.
+// K2_ERROR: Property initializers in interfaces are prohibited.
 
 fun String.foo() = "bar"
 fun nop() {

@@ -30,6 +30,29 @@ jvm_library(
     "//platform/ml-api:ml",
   ]
 )
+
+jvm_library(
+  name = "turboComplete_test_lib",
+  module_name = "intellij.turboComplete",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":turboComplete",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//plugins/completion-ml-ranking:completion-ml-ranking_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/ml-impl:ml-impl_test_lib",
+    "//platform/platform-impl/internal:internal_test_lib",
+    "//platform/ml-api:ml_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.turboComplete` end
 
 ### auto-generated section `build intellij.turboComplete.tests` start
@@ -47,8 +70,10 @@ jvm_library(
   deps = [
     "@lib//:junit5",
     "//plugins/turboComplete",
+    "//plugins/turboComplete:turboComplete_test_lib",
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
     "//platform/ml-impl",
     "//platform/ml-impl:ml-impl_test_lib",
   ],

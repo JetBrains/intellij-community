@@ -1,0 +1,45 @@
+<html>
+<body>
+<p>Detects usage of legacy <code>apply</code> plugin methods in Gradle build scripts.</p>
+<p>
+  If the plugin is a core plugin, or it comes from the <code>gradlePluginPortal</code>,
+  offers a quick-fix to convert the legacy syntax to the preferred <code>plugins</code> block syntax.
+  The <code>buildscript</code> block will be automatically modified to remove redundant dependencies,
+  and in the case it becomes empty, it will be removed as well.
+</p>
+<p><b>Core Plugin example:</b></p>
+<pre><code lang="kotlin">
+apply(plugin = "java") // highlights this line
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code lang="kotlin">
+plugins {
+    id("java")
+}
+</code></pre>
+
+<p><b>External Plugin example:</b></p>
+<pre><code lang="kotlin">
+buildscript {
+    repositories {
+        gradlePluginPortal()
+    }
+
+    dependencies {
+        classpath("com.google.protobuf:com.google.protobuf.gradle.plugin:0.9.4")
+    }
+}
+
+apply(plugin = "com.google.protobuf") // reports this line
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code lang="kotlin">
+plugins {
+    id("com.google.protobuf").version("0.9.4")
+}
+</code></pre>
+
+<p>Best practice described <a
+  href="https://docs.gradle.org/9.3.0/userguide/best_practices_general.html#use_the_plugins_block">here</a>.</p>
+</body>
+</html>

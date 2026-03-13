@@ -21,4 +21,18 @@ jvm_library(
     "//libraries/hash4j",
   ]
 )
+
+jvm_library(
+  name = "core-ui_test_lib",
+  module_name = "intellij.platform.core.ui",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":core-ui",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//libraries/hash4j:hash4j_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.core.ui` end

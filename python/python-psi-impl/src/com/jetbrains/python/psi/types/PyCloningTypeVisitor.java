@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.IdentityHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -138,8 +137,8 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
         )
       )
     );
-    return new PyTypedDictType("TypedDict", substitutedTDFields, typedDictType.myClass, PyTypedDictType.DefinitionLevel.INSTANCE,
-                               List.of());
+    return new PyTypedDictType(typedDictType.getName(), substitutedTDFields, typedDictType.myClass, typedDictType.isDefinition(),
+                               typedDictType.getDeclarationElement());
   }
 
   @Override
@@ -198,18 +197,9 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
 
   @Override
   public PyType visitPyCallableType(@NotNull PyCallableType callableType) {
-    List<PyCallableParameter> parameters = callableType.getParameters(myTypeEvalContext);
+    PyCallableParameterVariadicType clonedParametersType = clone(callableType.getParametersType(myTypeEvalContext));
     return new PyCallableTypeImpl(
-      parameters != null ? ContainerUtil.map(parameters, parameter ->
-        new PyCallableParameterImpl(
-          parameter.getName(),
-          Ref.create(clone(parameter.getType(myTypeEvalContext))),
-          parameter.getDefaultValue(),
-          parameter.getParameter(),
-          parameter.isPositionalContainer(),
-          parameter.isKeywordContainer(),
-          parameter.getDeclarationElement()
-        )) : null,
+      clonedParametersType,
       clone(callableType.getReturnType(myTypeEvalContext)),
       callableType.getCallable(),
       callableType.getModifier(),

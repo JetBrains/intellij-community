@@ -63,8 +63,6 @@ import java.util.function.Consumer;
 
 /**
  * A helper class which represents an expression mapped to the functional interface (like lambda, method reference or normal reference)
- *
- * @author Tagir Valeev
  */
 public abstract class FunctionHelper {
   private static final Logger LOG = Logger.getInstance(FunctionHelper.class);

@@ -2,10 +2,10 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.rules.ProjectModelRule
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule

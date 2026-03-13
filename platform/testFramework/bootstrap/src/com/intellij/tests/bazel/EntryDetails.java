@@ -6,11 +6,12 @@
  */
 package com.intellij.tests.bazel;
 
-import static org.junit.platform.launcher.LauncherConstants.STDERR_REPORT_ENTRY_KEY;
-import static org.junit.platform.launcher.LauncherConstants.STDOUT_REPORT_ENTRY_KEY;
+import org.junit.platform.engine.reporting.ReportEntry;
 
 import java.util.Map;
-import org.junit.platform.engine.reporting.ReportEntry;
+
+import static org.junit.platform.launcher.LauncherConstants.STDERR_REPORT_ENTRY_KEY;
+import static org.junit.platform.launcher.LauncherConstants.STDOUT_REPORT_ENTRY_KEY;
 
 class EntryDetails {
 

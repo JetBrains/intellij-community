@@ -36,24 +36,4 @@ public abstract class TestClassesFilter {
   protected static boolean matchesAnyPattern(Collection<Pattern> patterns, String className) {
     return ContainerUtil.exists(patterns, pattern -> pattern.matcher(className).matches());
   }
-
-  public static class And extends TestClassesFilter {
-    private final TestClassesFilter first;
-    private final TestClassesFilter second;
-
-    public And(TestClassesFilter first, TestClassesFilter second) {
-      this.first = first;
-      this.second = second;
-    }
-
-    @Override
-    public boolean matches(String className, @Nullable String moduleName) {
-      return first.matches(className, moduleName) && second.matches(className, moduleName);
-    }
-
-    @Override
-    public String toString() {
-      return "TestClassesFilter.And{" + first + ", " + second + '}';
-    }
-  }
 }

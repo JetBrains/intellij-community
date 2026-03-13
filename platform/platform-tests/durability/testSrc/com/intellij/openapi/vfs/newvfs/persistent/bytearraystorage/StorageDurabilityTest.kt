@@ -1,8 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.bytearraystorage
 
-import com.intellij.openapi.vfs.newvfs.persistent.*
-import kotlinx.coroutines.*
+import com.intellij.openapi.vfs.newvfs.persistent.App
+import com.intellij.openapi.vfs.newvfs.persistent.AppAgent
+import com.intellij.openapi.vfs.newvfs.persistent.AppController
+import com.intellij.openapi.vfs.newvfs.persistent.InteractionResult
+import com.intellij.openapi.vfs.newvfs.persistent.User
+import com.intellij.openapi.vfs.newvfs.persistent.UserAgent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.EOFException

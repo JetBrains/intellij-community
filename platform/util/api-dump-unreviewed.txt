@@ -1066,7 +1066,6 @@ Fc:com.intellij.openapi.util.io.FileUtil
 - s:loadFileText(java.io.File):C[]
 - s:loadFileText(java.io.File,java.lang.String):C[]
 - s:loadFileText(java.io.File,java.nio.charset.Charset):C[]
-- s:loadFirstAndClose(java.io.InputStream,I):B[]
 - s:loadLines(java.io.BufferedReader):java.util.List
 - s:loadLines(java.io.File):java.util.List
 - s:loadLines(java.io.File,java.lang.String):java.util.List
@@ -2294,6 +2293,7 @@ f:com.intellij.util.concurrency.SynchronizedClearableLazy
 - <init>(kotlin.jvm.functions.Function0):V
 - f:compareAndDrop(java.lang.Object):Z
 - f:drop():java.lang.Object
+- f:dropSynchronously():java.lang.Object
 - get():java.lang.Object
 - f:getValue():java.lang.Object
 - f:getValueIfInitialized():java.lang.Object
@@ -3963,7 +3963,6 @@ e:com.intellij.util.io.Decompressor$EscapingSymlinkPolicy
 - s:values():com.intellij.util.io.Decompressor$EscapingSymlinkPolicy[]
 f:com.intellij.util.io.Decompressor$Tar
 - com.intellij.util.io.Decompressor
-- <init>(java.io.File):V
 - <init>(java.io.InputStream):V
 - <init>(java.nio.file.Path):V
 f:com.intellij.util.io.Decompressor$Zip
@@ -4519,14 +4518,6 @@ com.intellij.util.io.storage.RecordDataOutput
 - java.io.DataOutput
 - a:close():V
 - a:getRecordId():I
-com.intellij.util.io.storage.RefCountingContentStorage
-- com.intellij.util.io.CleanableStorage
-- com.intellij.util.io.storage.IStorage
-- a:acquireNewRecord():I
-- a:acquireRecord(I):V
-- a:getRecordsCount():I
-- a:getRefCount(I):I
-- a:releaseRecord(I):V
 c:com.intellij.util.io.storage.Storage
 - com.intellij.util.io.storage.IStorage
 - <init>(java.nio.file.Path):V

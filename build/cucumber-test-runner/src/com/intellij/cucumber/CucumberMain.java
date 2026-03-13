@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cucumber;
 
 import com.intellij.TestCaseLoader;
@@ -6,6 +6,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.testFramework.UITestUtil;
+import com.intellij.testFramework.bucketing.HashingBucketingScheme;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.EdtInvocationManager;
 import cucumber.runtime.Runtime;
@@ -84,7 +85,7 @@ public final class CucumberMain {
 
                 List<Resource> result = new ArrayList<>();
                 for (Resource resource : resources) {
-                  if (TestCaseLoader.matchesCurrentBucket(resource.getPath())) {
+                  if (HashingBucketingScheme.matchesCurrentBucketViaHashing(resource.getPath())) {
                     result.add(resource);
                   }
                 }

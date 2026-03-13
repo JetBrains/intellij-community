@@ -314,7 +314,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
               y = attr.ib(default=0)
               z = attr.ib(default=attr.Factory(list))
              \s
-          Weak1(1, <warning descr="Expected type 'int', got 'str' instead">"str"</warning>, <warning descr="Expected type 'list', got 'int' instead">2</warning>)
+          Weak1(1, <warning descr="Expected type 'int', got 'str' instead">"str"</warning>, <warning descr="Expected type 'list[_T]', got 'int' instead">2</warning>)
           
           
           @attr.s
@@ -867,7 +867,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-44974
   public void testParenthesizedBitwiseOrUnionOfUnionsAssignNone() {
     doTestByText(
-      "bar: int | ((list | dict) | (float | str)) = <warning descr=\"Expected type 'int | list | dict | float | str', got 'None' instead\">None</warning>");
+      "bar: int | ((list | dict) | (float | str)) = <warning descr=\"Expected type 'int | list[Any] | dict[Any, Any] | float | str', got 'None' instead\">None</warning>");
   }
 
   // PY-44974
@@ -1478,6 +1478,51 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-80837
+  public void testParameterDefaultValueType() {
+    doTestByText("""
+                   from typing import Literal
+                   
+                   def f(
+                       a: str = "ok",
+                       b: int = <warning descr="Expected type 'int', got 'str' instead">"not ok"</warning>,
+                       c: Literal[True] = True,
+                       d: Literal[True] = <warning descr="Expected type 'Literal[True]', got 'Literal[False]' instead">False</warning>
+                   ): ...
+                   """);
+  }
+
+  // PY-80837
+  public void testClassAttributeDefaultValueType() {
+    doTestByText("""
+                   from typing import Literal
+                   
+                   class A:
+                       a: str = "ok"
+                       b: int = <warning descr="Expected type 'int', got 'str' instead">"string"</warning>
+                       c: Literal[True] = True
+                       d: Literal[True] = <warning descr="Expected type 'Literal[True]', got 'Literal[False]' instead">False</warning>
+                   
+                       annotated: int
+                       annotated = <warning descr="Expected type 'int', got 'str' instead">"string"</warning>
+                   """);
+  }
+
+  // PY-80837
+  public void testEnumAttributeDefaultValueType() {
+    doTestByText("""
+                   from enum import Enum, IntEnum
+                   
+                   class MyIntEnum(IntEnum):
+                       OK = 1
+                       BAD = <warning descr="Expected type 'int', got 'str' instead">"string"</warning>
+                   
+                   class MyEnum(Enum):
+                       OK = 1
+                       BAD = <warning descr="Expected type 'int', got 'str' instead">"string"</warning>
+                   """);
+  }
+
   // PY-53611
   public void testTypedDictRequiredNotRequiredEquivalence() {
     runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
@@ -1844,6 +1889,22 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-63820
+  public void testVariadicGenericEmptyArgsCall() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> doTestByText("""
+                   from typing import TypeVarTuple
+                   
+                   Ts = TypeVarTuple('Ts')
+                   
+                   
+                   def foo(*args: *Ts) -> None:
+                       pass
+                   
+                   
+                   foo()
+                   """));
+  }
+
   // PY-53105
   public void testVariadicGenericArgumentByCallableInFunction() {
     doTestByText("""
@@ -1860,7 +1921,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    foo(1, baz, args=(0, 'foo', 1.0, False))
                    
                    foo(1, bar, <warning descr="Expected type 'tuple[int, str]' (matched generic type 'tuple[*Ts]'), got 'tuple[str, int]' instead">args=('foo', 0)</warning>)
-                   foo(1, baz, <warning descr="Expected type 'tuple[int, str, float, bool]' (matched generic type 'tuple[*Ts]'), got 'tuple[str, int, float, bool]' instead">args=('foo', 0, 1.0, False)</warning>)
+                   foo(1, baz, <warning descr="Expected type 'tuple[int, str, float | int, bool]' (matched generic type 'tuple[*Ts]'), got 'tuple[str, int, float, bool]' instead">args=('foo', 0, 1.0, False)</warning>)
                    """);
   }
 
@@ -2178,7 +2239,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    
                    
                    y: Float32Array[Height] = Array()
-                   takes_float_array_of_specific_shape(<warning descr="Expected type 'Array[float, Height, Width]', got 'Array[float, Height]' instead">y</warning>)
+                   takes_float_array_of_specific_shape(<warning descr="Expected type 'Array[float | int, Height, Width]', got 'Array[float | int, Height]' instead">y</warning>)
                    """);
   }
 
@@ -2207,7 +2268,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    
                    
                    y: Float32Array[Height, Width] = Array()
-                   takes_float_array_of_specific_shape(<warning descr="Expected type 'Array[float, Height]', got 'Array[float, Height, Width]' instead">y</warning>)
+                   takes_float_array_of_specific_shape(<warning descr="Expected type 'Array[float | int, Height]', got 'Array[float | int, Height, Width]' instead">y</warning>)
                    """);
   }
 
@@ -2866,7 +2927,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                    def func(p1: tuple[int, int], p2: tuple[float, complex]):
                        t1: tuple[float, complex] = p1
-                       t2: tuple[int, int] = <warning descr="Expected type 'tuple[int, int]', got 'tuple[float, complex]' instead">p2</warning>
+                       t2: tuple[int, int] = <warning descr="Expected type 'tuple[int, int]', got 'tuple[float | int, complex | float | int]' instead">p2</warning>
                    """);
   }
 
@@ -3426,24 +3487,24 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-86463
   public void testInheritedGenericProtocol() {
     doTestByText("""
-      from typing import Protocol, overload
-      
-      class P[T](Protocol):
-          def method(self, x: T) -> T:
-              pass
-      
-      class P2[T](P[T], Protocol):
-          pass
-      
-      class Impl:
-          def method(self, x: int) -> int:
-              ...
-      
-      def expects_P2_str(x: P2[str]):
-          pass
-      
-      expr = expects_P2_str(<warning descr="Expected type 'P2[str]', got 'Impl' instead">Impl()</warning>)
-      """);
+                   from typing import Protocol, overload
+                   
+                   class P[T](Protocol):
+                       def method(self, x: T) -> T:
+                           pass
+                   
+                   class P2[T](P[T], Protocol):
+                       pass
+                   
+                   class Impl:
+                       def method(self, x: int) -> int:
+                           ...
+                   
+                   def expects_P2_str(x: P2[str]):
+                       pass
+                   
+                   expr = expects_P2_str(<warning descr="Expected type 'P2[str]', got 'Impl' instead">Impl()</warning>)
+                   """);
   }
 
   // PY-76822
@@ -3548,9 +3609,9 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    
                    
                    # PY-25989
-                   assert_type(max(1, 2.6), float)
-                   assert_type(max(2.6, 1), float)
-                   max(1, <warning descr="Expected type 'int' (matched generic type 'SupportsRichComparisonT ≤: SupportsDunderLT[Any] | SupportsDunderGT[Any]'), got 'object' instead">object()</warning>)    
+                   assert_type(max(1, 2.6), float | int)
+                   assert_type(max(2.6, 1), float | int)
+                   max(1, <warning descr="Expected type 'int' (matched generic type 'SupportsRichComparisonT ≤: SupportsDunderLT[Any] | SupportsDunderGT[Any]'), got 'object' instead">object()</warning>)
                    
                    
                    def bar[T: int, str](v1: T, v2: T) -> T:
@@ -3566,58 +3627,58 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-76860
   public void testSelfVsSpecificClassInReturn() {
     doTestByText("""
-                  from typing import Self
-                  class Shape:
-                     def method2(self) -> Self:
-                         # This should result in a type error.
-                         return <warning descr="Expected type 'Self@Shape', got 'Shape' instead">Shape()</warning>  # E
-                  
-                     def method3(self) -> Self:
-                         return self # OK
-                  """);
+                   from typing import Self
+                   class Shape:
+                      def method2(self) -> Self:
+                          # This should result in a type error.
+                          return <warning descr="Expected type 'Self@Shape', got 'Shape' instead">Shape()</warning>  # E
+                   
+                      def method3(self) -> Self:
+                          return self # OK
+                   """);
   }
 
   // PY-76860
   public void testSelfVsSpecificClassInTargetExpr() {
     doTestByText("""
-                  from typing import Self
-                  class Shape:
-                     def method2(self):
-                         my_instance: Self = <warning descr="Expected type 'Self@Shape', got 'Shape' instead">Shape()</warning> # E
-                         my_instance: Self = self # OK
-                  """);
+                   from typing import Self
+                   class Shape:
+                      def method2(self):
+                          my_instance: Self = <warning descr="Expected type 'Self@Shape', got 'Shape' instead">Shape()</warning> # E
+                          my_instance: Self = self # OK
+                   """);
   }
 
   // PY-76860
   public void testSelfVsSpecificSuperClassInAncestor() {
     doTestByText("""
-                  from typing import Self, override
-                  class Shape:
-                     def method2(self) -> Self:
-                         return self
-                  
-                  class Circle(Shape):
-                      @override
+                   from typing import Self, override
+                   class Shape:
                       def method2(self) -> Self:
-                          return <warning descr="Expected type 'Self@Circle', got 'Shape' instead">Shape()</warning>
-                  """);
+                          return self
+                   
+                   class Circle(Shape):
+                       @override
+                       def method2(self) -> Self:
+                           return <warning descr="Expected type 'Self@Circle', got 'Shape' instead">Shape()</warning>
+                   """);
   }
 
   // PY-76860
   public void testSpecificClassInsteadOfSelfInCallExpr() {
     doTestByText("""
-                 from typing import Self
-                 class Shape:
-                     def method2(self):
-                         self.method3(<warning descr="Expected type 'Self@Shape', got 'Shape' instead">Shape()</warning>) # E
-                         self.method3(self) # OK
-                         self.method4(<warning descr="Expected type 'list[Self@Shape]', got 'list[Shape]' instead">[Shape()]</warning>) # E
-                         self.method4([self])  # OK
-                         ...
-                 
-                     def method3(self, x: Self): ...
-                     def method4(self, x: list[Self]): ...
-                 """);
+                   from typing import Self
+                   class Shape:
+                       def method2(self):
+                           self.method3(<warning descr="Expected type 'Self@Shape', got 'Shape' instead">Shape()</warning>) # E
+                           self.method3(self) # OK
+                           self.method4(<warning descr="Expected type 'list[Self@Shape]', got 'list[Shape]' instead">[Shape()]</warning>) # E
+                           self.method4([self])  # OK
+                           ...
+                   
+                       def method3(self, x: Self): ...
+                       def method4(self, x: list[Self]): ...
+                   """);
   }
 
   // PY-76886
@@ -3642,28 +3703,28 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
   public void testSelfVsDunderClass() {
     doTestByText("""
-                  from typing import Self
-                  class ConcreteComparable:
-                      def clone(self) -> Self:
-                          return self.__class__() # OK
-                      def clone_cls(self) -> type[Self]:
-                          return self.__class__ # OK
-                  """);
+                   from typing import Self
+                   class ConcreteComparable:
+                       def clone(self) -> Self:
+                           return self.__class__() # OK
+                       def clone_cls(self) -> type[Self]:
+                           return self.__class__ # OK
+                   """);
   }
 
   public void testSelfInUnions() {
     doTestByText("""
-                 from typing import Self
-                 class MyClass:
-                     def foo(self):
-                         y1: Self | None = self
-                         y2: Self | None = None
-                         y3: Self | int = self
-                         y4: Self | int = 3
-                         y5: Self | int | list[Self] = [self]
-                         y6: Self | int | list[Self] = <warning descr="Expected type 'Self@MyClass | int | list[Self@MyClass]', got 'list[int]' instead">[3]</warning> # E
-                         y7: Self | int | list[Self] = <warning descr="Expected type 'Self@MyClass | int | list[Self@MyClass]', got 'str' instead">"str"</warning> # E
-                 """);
+                   from typing import Self
+                   class MyClass:
+                       def foo(self):
+                           y1: Self | None = self
+                           y2: Self | None = None
+                           y3: Self | int = self
+                           y4: Self | int = 3
+                           y5: Self | int | list[Self] = [self]
+                           y6: Self | int | list[Self] = <warning descr="Expected type 'Self@MyClass | int | list[Self@MyClass]', got 'list[int]' instead">[3]</warning> # E
+                           y7: Self | int | list[Self] = <warning descr="Expected type 'Self@MyClass | int | list[Self@MyClass]', got 'str' instead">"str"</warning> # E
+                   """);
   }
 
   public void testSelfAssignedToOtherTypeGood() {
@@ -3802,43 +3863,43 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
   // PY-85997
   public void testRecursiveProtocolAndImplementationUsingSelf() {
-    fixme("Recursive protocol definitions cause infinite recursion during matching", StackOverflowPreventedException.class, () -> {
+    fixme("Recursive protocol definitions cause infinite recursion during matching", StackOverflowPreventedException.class, "", () -> {
       RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
       doTestByText("""
-                   from typing import Self, Protocol
-                   
-                   class MyProtocol[T](Protocol):
-                       def __next__(self) -> T: ...
-                       def __iter__(self) -> MyProtocol[T]: ...
-                   
-                   class MyIterable[T]:
-                       def __next__(self) -> T: ...
-                       def __iter__(self) -> Self: ...
-                   
-                   ys: MyIterable[str] = MyIterable[str]()
-                   xs: MyProtocol[str] = ys
-                   """);
+                     from typing import Self, Protocol
+                     
+                     class MyProtocol[T](Protocol):
+                         def __next__(self) -> T: ...
+                         def __iter__(self) -> MyProtocol[T]: ...
+                     
+                     class MyIterable[T]:
+                         def __next__(self) -> T: ...
+                         def __iter__(self) -> Self: ...
+                     
+                     ys: MyIterable[str] = MyIterable[str]()
+                     xs: MyProtocol[str] = ys
+                     """);
     });
   }
 
   // PY-85997
   public void testRecursiveProtocolAndImplementationReferringToItself() {
-    fixme("Recursive protocol definitions cause infinite recursion during matching", StackOverflowPreventedException.class, () -> {
+    fixme("Recursive protocol definitions cause infinite recursion during matching", StackOverflowPreventedException.class, "", () -> {
       RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
       doTestByText("""
-                   from typing import Self, Protocol
-                   
-                   class MyProtocol[T](Protocol):
-                       def __next__(self) -> T: ...
-                       def __iter__(self) -> MyProtocol[T]: ...
-                   
-                   class MyIterable[T]:
-                       def __next__(self) -> T: ...
-                       def __iter__(self) -> MyIterable[T]: ...
-                   
-                   ys: MyIterable[str] = MyIterable[str]()
-                   xs: MyProtocol[str] = ys
-                   """);
+                     from typing import Self, Protocol
+                     
+                     class MyProtocol[T](Protocol):
+                         def __next__(self) -> T: ...
+                         def __iter__(self) -> MyProtocol[T]: ...
+                     
+                     class MyIterable[T]:
+                         def __next__(self) -> T: ...
+                         def __iter__(self) -> MyIterable[T]: ...
+                     
+                     ys: MyIterable[str] = MyIterable[str]()
+                     xs: MyProtocol[str] = ys
+                     """);
     });
   }
 
@@ -3859,10 +3920,10 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    
                        f4: Callable[[float], float] = cb1  # OK
                        f5: Callable[[float], float] = cb2  # OK
-                       f6: Callable[[float], float] = <warning descr="Expected type '(float) -> float', got '(int) -> int' instead">cb3</warning>  # Error
+                       f6: Callable[[float], float] = <warning descr="Expected type '(float | int) -> float | int', got '(int) -> int' instead">cb3</warning>  # Error
                    
                        f7: Callable[[int], int] = cb1  # OK
-                       f8: Callable[[int], int] = <warning descr="Expected type '(int) -> int', got '(float) -> float' instead">cb2</warning>  # Error
+                       f8: Callable[[int], int] = <warning descr="Expected type '(int) -> int', got '(float | int) -> float | int' instead">cb2</warning>  # Error
                        f9: Callable[[int], int] = cb3  # OK
                    """);
   }
@@ -4113,6 +4174,22 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  public void testEllipsisDefaultArgumentInProtocolMethod() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   class A(Protocol):
+                       def f(self, a: str = ...):
+                           pass""");
+  }
+
+  public void testEllipsisDefaultArgumentInMethod() {
+    doTestByText("""
+                   class A:
+                       def f(self, a: str = <warning descr="Expected type 'str', got 'EllipsisType' instead">...</warning>):
+                           pass""");
+  }
+
   // PY-76883
   public void testCallableSubtypingKeywordOnlyOrder() {
     doTestByText("""
@@ -4213,5 +4290,258 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    c: C = <warning descr="Expected type 'C', got 'A & B' instead">a_and_b</warning>
                    """);
   }
-}
 
+  // PY-86902
+  public void testVarPositionalParamAssignment() {
+    doTestByText("""
+                   def f(*args: str, argv: tuple[str, ...]) -> None:
+                       args = argv
+                   """);
+  }
+
+  // PY-86902
+  public void testVarKeywordParamAssignment() {
+    doTestByText("""
+                   def f(args: dict[str, str], **kwargs: str) -> None:
+                       kwargs = args
+                   """);
+  }
+
+  // PY-65497
+  public void testPropertyCall() {
+    doTestByText("""
+                   class Foo:
+                       def _get_serial_number(self) -> str:
+                           return "42"
+                   
+                       serial_number = property(_get_serial_number)
+                   """);
+  }
+
+  // PY-64359
+  public void testTupleDictValues() {
+    doTestByText("""
+                   def f(a: dict[str, int]):
+                       b: tuple[int, ...] = tuple(a.values())
+                   """);
+  }
+
+  // PY-86873
+  public void testNestedListUnpacking() {
+    doTestByText("""
+                   def f(edges: list[list[int]]):
+                       [[node_a], second_edge] = edges
+                       a: int = node_a
+                       c: list[int] = second_edge
+                   """);
+  }
+
+  // PY-87802
+  public void testCallableProtocolWithAdditionalAttributeAssignment() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   class Proto(Protocol):
+                       other_attribute: int
+                   
+                       def __call__(self, x: int) -> None:
+                           pass
+                   
+                   
+                   def f(x: int) -> None:
+                       pass
+                   
+                   
+                   v: Proto = <warning descr="Expected type 'Proto', got '(x: int) -> None' instead">f</warning>""");
+  }
+
+  // PY-87801
+  public void testCallableProtocolWithOverloadsFunctionAssignment() {
+    doTestByText("""
+                   from typing import Protocol, overload, Any
+                   
+                   class Proto(Protocol):
+                       @overload
+                       def __call__(self, x: int) -> int:
+                           ...
+                   
+                       @overload
+                       def __call__(self, x: str) -> str:
+                           ...
+                   
+                       def __call__(self, x: Any) -> Any:
+                           ...
+                   
+                   def f(x: int) -> Any:
+                       return x
+                   
+                   cb: Proto = <warning descr="Expected type 'Proto', got '(x: int) -> Any' instead">f</warning>""");
+  }
+
+  // PY-87801
+  public void testCallableProtocolWithOverloadsFunctionWithOverloadsAssignment() {
+    doTestByText("""
+                   from typing import Protocol, overload, Any
+                   
+                   class Proto(Protocol):
+                       @overload
+                       def __call__(self, x: int) -> int:
+                           ...
+                   
+                       @overload
+                       def __call__(self, x: str) -> str:
+                           ...
+                   
+                       def __call__(self, x: Any) -> Any:
+                           ...
+                   
+                   @overload
+                   def f(x: str) -> str: ...
+                   
+                   @overload
+                   def f(x: int) -> int: ...
+                   
+                   def f(x: Any) -> Any:
+                       return x
+                   
+                   cb: Proto = f""");
+  }
+
+  // PY-87801
+  public void testCallableProtocolWithOverloadsFunctionWithOverloadsNotMatchingAssignment() {
+    doTestByText("""
+                   from typing import Protocol, overload, Any
+                   
+                   class Proto(Protocol):
+                       @overload
+                       def __call__(self, x: int) -> int:
+                           ...
+                   
+                       @overload
+                       def __call__(self, x: str) -> str:
+                           ...
+                   
+                       def __call__(self, x: Any) -> Any:
+                           ...
+                   
+                   class A:
+                       pass
+                   
+                   @overload
+                   def f(x: str) -> str: ...
+                   
+                   @overload
+                   def f(x: A) -> A: ...
+                   
+                   def f(x: Any) -> Any:
+                       return x
+                   
+                   cb: Proto = <warning descr="Expected type 'Proto', got '(x: Any) -> Any' instead">f</warning>""");
+  }
+
+  public void testWildcardSignatures() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   class Expected(Protocol):
+                       def __call__(self, *args, **kwargs): ...
+                   
+                   class Actual(Protocol):
+                       def __call__(self, a: float, *, key: str): ...
+                   
+                   def foo(e: Expected, a: Actual):
+                       _: Expected = a
+                       _: Actual = e
+                   """);
+  }
+
+  // PY-56613
+  public void testGenericAttributeAssignment() {
+    doTestByText("""
+                   class C[T]:
+                       attr: list[T]
+                   
+                   c: C[int]
+                   c.attr = <warning descr="Expected type 'list[int]', got 'list[str]' instead">["foo"]</warning>
+                   """);
+  }
+
+  // PY-85974
+  public void testSelfAttributeAssignment() {
+    doTestByText("""
+                   from typing import Self
+                   
+                   class Node:
+                       next: Self | None
+
+                   c: Node
+                   c.next = Node()
+                   """);
+  }
+
+  // PY-87575
+  public void testIterDefinedInMetaclass() {
+    myFixture.enableInspections(PyAssertTypeInspection.class);
+    doTestByText("""
+     from collections.abc import Iterator
+     from typing import assert_type
+     
+     # always has the the highest priority on type
+     class MyIterMeta(type):
+         def __iter__(self) -> Iterator[int]: ...
+     
+     class MyClass(metaclass=MyIterMeta): ...
+     
+     class MyRedefinedIter(MyClass):
+         def __iter__(self) -> Iterator[bool]: ...
+     
+     # str redefines __iter__
+     class MyFromStr(str, MyRedefinedIter): ...
+     
+     assert_type(iter(MyClass), Iterator[int])
+     assert_type(iter(MyRedefinedIter), Iterator[int])
+     assert_type(iter(MyFromStr), Iterator[int])
+     assert_type(iter(MyRedefinedIter()), Iterator[bool])
+     assert_type(iter(MyFromStr()), Iterator[str])
+     """);
+  }
+
+  // PY-87344
+  public void testTypeOfIteratorOfEnumTypeAndInstance() {
+    doTestByText("""
+                   from enum import Enum
+                   from typing import Self
+                   
+                   class Color(Enum):
+                       RED = "red"
+                   
+                       @classmethod
+                       def all(cls) -> set[Self]:
+                           return set(cls)
+                   
+                       def foo(self):
+                           # __iter__ is defined in EnumMeta, thus, for definitions only
+                           return set(<warning descr="Expected type 'Iterable[Any]' (matched generic type 'Iterable[_T]'), got 'Self@Color' instead">self</warning>)
+                   """);
+  }
+
+  // PY-87344
+  public void testTypeOfIteratorOfStrEnumTypeAndInstance() {
+    doTestByText("""
+                   from enum import StrEnum
+                   from typing import Self
+                   
+                   
+                   class Variant(StrEnum):
+                       CREATED = "created"
+                   
+                       @classmethod
+                       def values(cls) -> set[Self]:
+                           return set(cls)
+                   
+                       def foo(self):
+                           # StrEnum inherits str which inherits Iterable[str], thus, iterable for both instance and definition
+                           return set(self) # OK
+                   """);
+  }
+}

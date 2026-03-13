@@ -1,5 +1,6 @@
 // "Add 'testng' to classpath" "true"
 // ERROR: Unresolved reference: BeforeMethod
+// K2_ERROR: Unresolved reference 'BeforeMethod'.
 // K2_AFTER_ERROR: Unresolved reference 'BeforeMethod'.
 // WITH_STDLIB
 

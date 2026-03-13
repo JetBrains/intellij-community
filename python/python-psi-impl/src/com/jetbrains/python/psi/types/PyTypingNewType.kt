@@ -14,11 +14,9 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class PyTypingNewType(
   val classType: PyClassType,
-  private val name: String,
+  override val name: String,
   private val declaration: PyTargetExpression?,
 ) : PyClassType by classType {
-
-  override fun getName(): String = name
 
   override fun getCallType(context: TypeEvalContext, callSite: PyCallSiteExpression): PyType? {
     return PyTypingNewType(classType.toInstance(), name, declaration)
@@ -32,7 +30,7 @@ class PyTypingNewType(
     return if (isDefinition) PyTypingNewType(classType.toInstance(), name, declaration) else this
   }
 
-  override fun isBuiltin(): Boolean = false
+  override val isBuiltin: Boolean = false
 
   override fun isCallable(): Boolean = classType.isCallable || isDefinition
 
@@ -45,6 +43,10 @@ class PyTypingNewType(
     else {
       null
     }
+  }
+
+  override fun getParametersType(context: TypeEvalContext): PyCallableParameterVariadicType? {
+    return getParameters(context)?.let { PyCallableParameterListTypeImpl(it) }
   }
 
   override fun getSuperClassTypes(context: TypeEvalContext): List<PyClassLikeType> = listOf(classType)
@@ -62,9 +64,9 @@ class PyTypingNewType(
   }
 
   override fun resolveMember(name: String, location: PyExpression?, direction: AccessDirection, resolveContext: PyResolveContext)
-    : MutableList<out RatedResolveResult>? {
+    : List<RatedResolveResult>? {
     return if (name == PyNames.CLASS_GETITEM) {
-      mutableListOf()
+      listOf()
     }
     else {
       classType.resolveMember(name, location, direction, resolveContext)
@@ -75,7 +77,7 @@ class PyTypingNewType(
     return listOf(classType) + classType.getAncestorTypes(context)
   }
 
-  override fun getDeclarationElement(): PyQualifiedNameOwner? = declaration ?: classType.declarationElement
+  override val declarationElement: PyQualifiedNameOwner? = declaration ?: classType.declarationElement
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -94,7 +96,7 @@ class PyTypingNewType(
     return 31 * classType.hashCode() + name.hashCode()
   }
 
-  override fun <T : Any?> acceptTypeVisitor(visitor: PyTypeVisitor<T?>): T? {
+  override fun <T> acceptTypeVisitor(visitor: PyTypeVisitor<T>): T? {
     if (visitor is PyTypeVisitorExt) {
       return visitor.visitPyTypingNewType(this)
     }
@@ -107,7 +109,19 @@ class PyTypingNewType(
  * For type annotations {@link com.jetbrains.python.psi.types.PyTypingNewType} is used.
  */
 @ApiStatus.Internal
-class PyTypingNewTypeFactoryType(private val type: PyTypingNewType)
+class PyTypingNewTypeFactoryType(type: PyTypingNewType)
   : PyCallableTypeImpl(listOf(PyCallableParameterImpl.nonPsi(type.classType.toInstance())), type.toInstance()) {
-  override fun getName(): String = type.name
+  override val name: String = type.name
+
+  override fun resolveMember(
+    name: String,
+    location: PyExpression?,
+    direction: AccessDirection,
+    resolveContext: PyResolveContext,
+  ): List<RatedResolveResult>? {
+    if (name == "__or__") {
+      return listOf(RatedResolveResult(RatedResolveResult.RATE_NORMAL, null))
+    }
+    return super.resolveMember(name, location, direction, resolveContext)
+  }
 }

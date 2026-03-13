@@ -2,7 +2,6 @@
 package com.intellij.platform.execution.dashboard.backend
 
 import com.intellij.execution.ExecutionBundle
-import com.intellij.execution.RunManager
 import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.dashboard.RunDashboardServiceId
 import com.intellij.execution.impl.RunDialog
@@ -13,15 +12,22 @@ import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.execution.dashboard.BackendLuxedRunDashboardContentManager
-import com.intellij.platform.execution.dashboard.RunDashboardCoroutineScopeProvider
 import com.intellij.platform.execution.dashboard.RunDashboardManagerImpl
-import com.intellij.platform.execution.dashboard.splitApi.*
+import com.intellij.platform.execution.dashboard.splitApi.NavigateToServiceEvent
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardConfigurationDto
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardConfigurationId
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardLuxedContentEvent
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceDto
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceRpc
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardSettingsDto
+import com.intellij.platform.execution.dashboard.splitApi.ServiceCustomizationDto
+import com.intellij.platform.execution.dashboard.splitApi.ServiceStatusDto
+import com.intellij.platform.execution.dashboard.splitApi.findConfigurationValue
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.withContext
 
 internal class RunDashboardServiceRpcImpl : RunDashboardServiceRpc {
@@ -84,14 +90,9 @@ internal class RunDashboardServiceRpcImpl : RunDashboardServiceRpc {
     }
   }
 
-  override suspend fun getAvailableConfigurations(projectId: ProjectId): Flow<Set<RunDashboardConfigurationDto>> {
+  override suspend fun getAvailableConfigurations(projectId: ProjectId): Flow<List<RunDashboardConfigurationDto>> {
     val project = projectId.findProjectOrNull() ?: return emptyFlow()
-    // todo backend state with updates
-    val availableConfigurations = RunManager.getInstance(project).allSettings.map { configurationSettings ->
-      val configurationId = configurationSettings.configuration.storeGlobally(RunDashboardCoroutineScopeProvider.getInstance(project).cs)
-      RunDashboardConfigurationDto(configurationSettings.type.id, configurationSettings.name, configurationSettings.folderName, configurationId)
-    }.toSet()
-    return flowOf(availableConfigurations)
+    return RunDashboardManagerImpl.getInstance(project).availableConfigurations
   }
 
   override suspend fun getExcludedConfigurations(projectId: ProjectId): Flow<Set<String>> {

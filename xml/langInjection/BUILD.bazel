@@ -30,6 +30,34 @@ jvm_library(
     "//xml/xml-parser:parser",
     "//platform/core-ui",
     "//platform/util/jdom",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+  ]
+)
+
+jvm_library(
+  name = "langInjection_test_lib",
+  module_name = "intellij.xml.langInjection",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":langInjection",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//xml/impl:impl_test_lib",
+    "//RegExpSupport:regexp_test_lib",
+    "//xml/xml-psi-api:psi_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//libraries/jaxen:jaxen_test_lib",
+    "//plugins/IntelliLang:langInjection_test_lib",
+    "//xml/xml-parser:parser_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.xml.langInjection` end

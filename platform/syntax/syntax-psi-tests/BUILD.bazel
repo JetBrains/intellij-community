@@ -18,22 +18,29 @@ jvm_library(
     "//platform/syntax/syntax-extensions:extensions",
     "//platform/syntax/syntax-extensions:extensions_test_lib",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "//platform/util-rt",
     "//platform/util-rt:util-rt_test_lib",
     "//platform/syntax/syntax-api:syntax",
     "//platform/syntax/syntax-api:syntax_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "@lib//:kotlin-stdlib",
     "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
     "//platform/syntax/syntax-util:util",
+    "//platform/syntax/syntax-util:util_test_lib",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "@lib//:junit5",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
   ],
-  runtime_deps = [":psi-tests"]
+  runtime_deps = [
+    ":psi-tests",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.platform.syntax.psi.tests` end
 

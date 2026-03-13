@@ -1,10 +1,27 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.xml.psi"/>
-    <module name="intellij.xml.parser"/>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.jackson3.databind"/>
+    <module name="intellij.libraries.jackson3.module.kotlin"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.polySymbols"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.regexp"/>
+    <module name="intellij.xml.parser"/>
+    <module name="intellij.xml.psi"/>
     <module name="intellij.xml.syntax"/>
   </dependencies>
+  <!-- endregion -->
 
   <projectListeners>
     <listener class="com.intellij.polySymbols.html.HtmlPolyContextChangeListener"

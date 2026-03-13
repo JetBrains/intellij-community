@@ -1,4 +1,8 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.base.fe10.analysisApiPlatform">
+  <dependencies>
+    <module name="intellij.kotlin.base.analysis.platform"/>
+    <module name="kotlin.base.fe10.project-structure"/>
+  </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService

@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.types
 
-import com.jetbrains.python.isPrivate
+import com.jetbrains.python.PyNames.isPrivate
+import com.jetbrains.python.psi.impl.ParamHelper
 import org.jetbrains.annotations.ApiStatus
 import java.util.ArrayDeque
 
@@ -31,9 +32,6 @@ object PyCallableParameterMapping {
 
     val acceptsPositionalArgument =
       kind == ParameterKind.POSITIONAL_ONLY || kind == ParameterKind.POSITIONAL_OR_KEYWORD || kind == ParameterKind.POSITIONAL_CONTAINER
-
-    val acceptsKeywordArgument =
-      kind == ParameterKind.KEYWORD_ONLY || kind == ParameterKind.POSITIONAL_OR_KEYWORD || kind == ParameterKind.KEYWORD_CONTAINER
   }
 
   /**
@@ -54,6 +52,12 @@ object PyCallableParameterMapping {
   ): PyTypeParameterMapping? {
     val expectedCategorizedParameters = categorizeParameters(expectedCallableParameters, context) ?: return null
     val actualCategorizedParameters = categorizeParameters(actualCallableParameters, context) ?: return null
+
+    // Special handling for wildcard signatures (*args, **kwargs)
+    // Wildcard signatures match with any other signature
+    if (ParamHelper.isWildcardSignature(expectedCallableParameters, context)) {
+      return PyTypeParameterMapping.mapByShape(emptyList(), emptyList())
+    }
 
     val expectedParameters = ArrayDeque(expectedCategorizedParameters)
     val actualParameters = ArrayDeque(actualCategorizedParameters)
@@ -114,7 +118,6 @@ object PyCallableParameterMapping {
         ParameterKind.POSITIONAL_OR_KEYWORD -> {
           if (actualParameter.kind == ParameterKind.POSITIONAL_OR_KEYWORD) {
             when {
-              expectedParameter.parameter.isSelf && actualParameter.parameter.isSelf -> continue
               expectedParameter.name != actualParameter.name -> return null
               expectedParameter.hasDefault && !actualParameter.hasDefault -> return null
             }
@@ -158,10 +161,11 @@ object PyCallableParameterMapping {
         // *args can consume multiple positional parameters
         ParameterKind.POSITIONAL_CONTAINER -> {
           val argsType = expectedParameter.getArgumentType(context)
-          // Consume all remaining positional parameters
+          // Consume all remaining parameters until we meet the corresponding *args container (error otherwise)
           var actualPositional = actualParameters.pop()
           while (actualParameters.isNotEmpty() && !actualPositional.parameter.isPositionalContainer) {
-            if (!actualPositional.acceptsPositionalArgument || !actualPositional.hasDefault) {
+            // Parameter can't be omitted, or there can't possibly be *args in the actual signature after it
+            if (!actualPositional.hasDefault || !actualPositional.acceptsPositionalArgument) {
               return null
             }
             expectedTypes.add(argsType)
@@ -176,19 +180,26 @@ object PyCallableParameterMapping {
             // All positional parameters and the corresponding container are consumed, so we can pop the container
             expectedParameters.pop()
           }
+          else {
+            // Positional container must be present in the actual signature
+            return null
+          }
         }
         // **kwargs can consume multiple keyword parameters
         ParameterKind.KEYWORD_CONTAINER -> {
           val kwargsType = expectedParameter.getArgumentType(context)
-          // Consume all remaining keyword parameters
+          // Consume all remaining parameters until we meet the corresponding **kwargs container (error otherwise)
           var actualKeywordParam = actualParameters.pop()
           while (actualParameters.isNotEmpty() && !actualKeywordParam.parameter.isKeywordContainer) {
-            if (!(actualKeywordParam.acceptsKeywordArgument) || !actualKeywordParam.hasDefault) {
+            // Parameter can't be omitted
+            if (!actualKeywordParam.hasDefault && actualKeywordParam.kind != ParameterKind.POSITIONAL_CONTAINER) {
               return null
             }
-            expectedTypes.add(kwargsType)
-            actualTypes.add(actualKeywordParam.getArgumentType(context))
-
+            // skip the types of positional-only parameters with defaults and positional container
+            if (actualKeywordParam.kind == ParameterKind.KEYWORD_ONLY || actualKeywordParam.kind == ParameterKind.POSITIONAL_OR_KEYWORD) {
+              expectedTypes.add(kwargsType)
+              actualTypes.add(actualKeywordParam.getArgumentType(context))
+            }
             actualKeywordParam = actualParameters.pop()
           }
           // match keyword containers themselves
@@ -196,6 +207,10 @@ object PyCallableParameterMapping {
             expectedTypes.add(kwargsType)
             actualTypes.add(actualKeywordParam.getArgumentType(context))
             expectedParameters.pop()
+          }
+          else {
+            // Keyword container must be present in the actual signature
+            return null
           }
         }
         // TypeVarTuple (*Ts) consumes a calculated number of positional parameters
@@ -324,7 +339,7 @@ object PyCallableParameterMapping {
           val isPositionalOnly = paramName == null || isPrivate(paramName)
           if (isPositionalOnly) {
             parameters.lastOrNull()?.let {
-              if (it.kind != ParameterKind.POSITIONAL_ONLY && it.kind != ParameterKind.TYPE_VAR_TUPLE) {
+              if (it.kind != ParameterKind.POSITIONAL_ONLY && it.kind != ParameterKind.TYPE_VAR_TUPLE && !it.parameter.isSelf) {
                 // Previous parameter should also be positional-only in this case
                 return null
               }

@@ -21,7 +21,7 @@ class CurrentProjectInfo(project: Project) : Disposable {
   private var _filesCount: Int = 0
 
   init {
-    if (!ApplicationManager.getApplication().isUnitTestMode) {
+    if (!ApplicationManager.getApplication().isUnitTestMode && !project.isDefault) {
       alarm.addRequest({ updateStats(project) }, 10)
     }
   }

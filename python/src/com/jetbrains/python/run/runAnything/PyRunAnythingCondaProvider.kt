@@ -2,8 +2,8 @@
 package com.jetbrains.python.run.runAnything
 
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.python.community.impl.conda.icons.PythonCommunityImplCondaIcons
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.packaging.conda.CondaPackageManager
 import com.jetbrains.python.packaging.conda.CondaPackageRepository
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -21,11 +21,11 @@ class PyRunAnythingCondaProvider : PyRunAnythingPackageProvider() {
   override fun getCompletionGroupTitle(): @Nls String = PyBundle.message("python.run.anything.conda.provider")
 
   override fun getIcon(value: String): Icon {
-    return PythonIcons.Python.Anaconda
+    return PythonCommunityImplCondaIcons.Anaconda
   }
 
   override fun getHelpIcon(): Icon {
-    return PythonIcons.Python.Anaconda
+    return PythonCommunityImplCondaIcons.Anaconda
   }
 
   override fun getDefaultCommands(): Sequence<String> {

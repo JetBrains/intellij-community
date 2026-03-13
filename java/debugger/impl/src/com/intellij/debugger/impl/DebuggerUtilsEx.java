@@ -97,8 +97,8 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XValueContainer;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.ui.ExecutionPointHighlighterProvider;
 import com.jetbrains.jdi.ArrayReferenceImpl;
 import com.jetbrains.jdi.JNITypeParser;
 import com.jetbrains.jdi.LocationImpl;
@@ -190,7 +190,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return null;
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static ReferenceType getSuperClass(final @NotNull String baseQualifiedName, @NotNull ReferenceType checkedType) {
     if (baseQualifiedName.equals(checkedType.name())) {
       return checkedType;
@@ -266,7 +266,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   /**
    * @deprecated Use {@link DebuggerSettingsUtils#readFilters} directly
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static ClassFilter[] readFilters(List<? extends Element> children) {
     return DebuggerSettingsUtils.readFilters(children);
   }
@@ -274,7 +274,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   /**
    * @deprecated Use {@link DebuggerSettingsUtils#writeFilters} directly
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void writeFilters(@NotNull Element parentNode,
                                   @NonNls String tagName,
                                   ClassFilter[] filters) throws WriteExternalException {
@@ -550,12 +550,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
         fileType = file != null ? file.getFileType() : null;
       }
     }
-    for (CodeFragmentFactory factory : CodeFragmentFactory.EXTENSION_POINT_NAME.getExtensionList()) {
-      if (factory != defaultFactory && (fileType == null || factory.getFileType().equals(fileType)) && factory.isContextAccepted(context)) {
-        return factory;
-      }
-    }
-    return defaultFactory;
+    @Nullable FileType finalFileType = fileType;
+    CodeFragmentFactory factory = CodeFragmentFactory.EXTENSION_POINT_NAME.findFirstSafe(f -> {
+      return f != defaultFactory &&
+             (finalFileType == null || f.getFileType().equals(finalFileType)) &&
+             f.isContextAccepted(context);
+    });
+    return factory != null ? factory : defaultFactory;
   }
 
   public static @NotNull CodeFragmentFactory findAppropriateCodeFragmentFactory(final TextWithImports text, final PsiElement context) {
@@ -904,7 +905,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
-  private static class JavaXSourcePosition implements XSourcePosition, ExecutionPointHighlighter.HighlighterProvider {
+  private static class JavaXSourcePosition implements XSourcePosition, ExecutionPointHighlighterProvider {
     private final SourcePosition mySourcePosition;
     private final @NotNull VirtualFile myFile;
 

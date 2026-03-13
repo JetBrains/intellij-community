@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
@@ -37,6 +38,16 @@ public final class DebuggerTreeNodeExpression {
     PsiExpression result = (PsiExpression)expressionWithThis.copy();
 
     PsiClass thisClass = PsiTreeUtil.getContextOfType(result, PsiClass.class, true);
+
+    if (thisClass instanceof PsiAnonymousClass) {
+      // ChangeContextUtil.encodeContextInfo skips PsiAnonymousClass,
+      // so re-create expression with named base class context for proper this-substitution
+      PsiClass baseClass = ((PsiAnonymousClass)thisClass).getBaseClassType().resolve();
+      if (baseClass != null) {
+        result = JavaPsiFacade.getElementFactory(result.getProject()).createExpressionFromText(result.getText(), baseClass);
+        thisClass = baseClass;
+      }
+    }
 
     boolean castNeeded = true;
 

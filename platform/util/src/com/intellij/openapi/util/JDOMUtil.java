@@ -12,21 +12,58 @@ import com.intellij.util.text.CharSequenceReader;
 import com.intellij.util.xml.dom.StaxFactory;
 import com.intellij.xml.util.XmlStringUtil;
 import org.codehaus.stax2.XMLStreamReader2;
-import org.jdom.*;
+import org.jdom.Attribute;
+import org.jdom.Content;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.IllegalNameException;
+import org.jdom.JDOMException;
+import org.jdom.JDOMInterner;
+import org.jdom.Namespace;
+import org.jdom.Parent;
+import org.jdom.Text;
+import org.jdom.Verifier;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.xml.stream.XMLStreamException;
-import java.awt.*;
-import java.io.*;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.UncheckedIOException;
+import java.io.Writer;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.ClosedFileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
-import java.util.*;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
@@ -868,7 +905,7 @@ public final class JDOMUtil {
    *     myStoredElement = JDOMUtil.internElement(element);
    *   }
    *   }</pre>
-   * - When you need to save interned element back to JDOM and/or modify/add it, use {@link ImmutableElement#clone()}
+   * - When you need to save interned element back to JDOM and/or modify/add it, use {@link org.jdom.ImmutableElement#clone()}
    * to obtain mutable modifiable Element.
    * E.g.: <pre>{@code
    *   void writeExternal(Element element) {

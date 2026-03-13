@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.jackson3.jar
+  modules:
+  - name: intellij.libraries.jackson3
+    libraries:
+      jackson3:
+      - name: $MAVEN_REPOSITORY$/tools/jackson/core/jackson-core/3/jackson-core-3.jar

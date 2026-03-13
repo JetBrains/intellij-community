@@ -13,8 +13,14 @@ import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataStorage
 import org.jetbrains.plugins.gradle.jvmcompat.asSafeJsonObject
 import org.jetbrains.plugins.gradle.jvmcompat.asSafeString
 
-class KotlinLibraryCompatibilityEntry(): BaseState() {
-    constructor(groupId: String, artifactId: String, versions: Map<String, String>) : this() {
+/**
+ * It's called with the type mentioned to distinguish it from the widely used [KotlinVersion]
+ */
+typealias KotlinVersionString = String
+typealias LibraryVersion = String
+
+class KotlinLibraryCompatibilityEntry() : BaseState() {
+    constructor(groupId: String, artifactId: String, versions: Map<KotlinVersionString, LibraryVersion>) : this() {
         this.artifactId = artifactId
         this.groupId = groupId
         this.versions.putAll(versions)
@@ -22,12 +28,13 @@ class KotlinLibraryCompatibilityEntry(): BaseState() {
 
     var artifactId: String? by string()
     var groupId: String? by string()
-    var versions: MutableMap<String, String> by map()
+    var versions: MutableMap<KotlinVersionString, LibraryVersion> by map()
 }
 
 class KotlinLibrariesCompatibilityState() : IdeVersionedDataState() {
     var libraries by list<KotlinLibraryCompatibilityEntry>()
-    constructor(librariesList: List<KotlinLibraryCompatibilityEntry>): this() {
+
+    constructor(librariesList: List<KotlinLibraryCompatibilityEntry>) : this() {
         libraries.addAll(librariesList)
     }
 }
@@ -79,7 +86,7 @@ class KotlinLibrariesCompatibilityStore : IdeVersionedDataStorage<KotlinLibrarie
      * Returns the map of Kotlin version to the respective library version for the
      * library with the [groupId] and [artifactId].
      */
-    fun getVersions(groupId: String, artifactId: String): Map<String, String>? {
+    fun getVersions(groupId: String, artifactId: String): Map<KotlinVersionString, LibraryVersion>? {
         return findLibraryEntry(groupId, artifactId)?.let { return it.versions }
     }
 
@@ -87,8 +94,19 @@ class KotlinLibrariesCompatibilityStore : IdeVersionedDataStorage<KotlinLibrarie
      * Returns the latest library version for the [groupId] and [artifactId].
      * The latest version is the one defined for the highest Kotlin version.
      */
-    fun getLatestVersion(groupId: String, artifactId: String): String? {
-        return findLibraryEntry(groupId, artifactId)?.versions?.toList()?.maxBy { it.first }?.second
+    fun getLatestVersion(groupId: String, artifactId: String): LibraryVersion? {
+        return findLibraryEntry(groupId, artifactId)?.versions?.getLatest()
+    }
+
+    /**
+     * Returns the latest library version from [versions].
+     */
+    fun getLatestVersion(versions: Map<KotlinVersionString, LibraryVersion>): LibraryVersion? {
+        return versions.getLatest()
+    }
+
+    private fun Map<KotlinVersionString, LibraryVersion>.getLatest(): LibraryVersion? {
+        return this.toList().maxByOrNull { it.first }?.second
     }
 
     companion object {

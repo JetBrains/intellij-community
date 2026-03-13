@@ -3,9 +3,14 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteIntentReadAction
-import com.intellij.openapi.editor.*
+import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.editor.ComponentInlayAlignment
+import com.intellij.openapi.editor.ComponentInlayRenderer
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorHostedComponent
+import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.InlayProperties
 import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FoldingListener
@@ -248,7 +253,7 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
 
     // Step 4: Layout inlay components
     // Do as read action, because com.intellij.openapi.editor.Inlay.getBounds requires it
-    ReadAction.run<Throwable> {
+    runReadActionBlocking {
       for (inlay in inlays) {
         val component = inlay.renderer.component
         val componentBounds = inlay.bounds

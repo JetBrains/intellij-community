@@ -13,6 +13,7 @@ import com.intellij.ide.bookmark.ui.tree.LineNode
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.impl.AbstractUrl
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -212,11 +213,7 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
           this@LineBookmarkProvider.afterDocumentChange(document)
         }
       }, project)
-      getInstance().addAsyncFileListener(object : AsyncFileListener {
-        override fun prepareChange(events: List<out VFileEvent>): AsyncFileListener.ChangeApplier? {
-          return this@LineBookmarkProvider.prepareChange(events)
-        }
-      }, project)
+      getInstance().addAsyncFileListenerBackgroundable({ events -> this@LineBookmarkProvider.prepareChange(events) }, project)
 
       project.messageBus.connect().subscribe<FileDocumentManagerListener>(FileDocumentManagerListener.TOPIC, object : FileDocumentManagerListener {
         override fun beforeFileContentReload(file: VirtualFile, document: Document) {
@@ -236,7 +233,11 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
       else -> BookmarkProvider.EP.findExtension(LineBookmarkProvider::class.java, project)
     }
 
-    fun readLineText(bookmark: LineBookmark?): String? = bookmark?.let { readLineText(it.file, it.line) }
+    fun readLineText(bookmark: LineBookmark?): String? = bookmark?.let {
+      runReadActionBlocking {
+        readLineText(it.file, it.line)
+      }
+    }
 
     private fun readLineText(file: VirtualFile, line: Int): String? {
       val document = FileDocumentManager.getInstance().getDocument(file) ?: return null

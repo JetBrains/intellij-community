@@ -12,8 +12,8 @@ import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.implCommon.handlers.NamedArgumentInsertHandler
-import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
-import org.jetbrains.kotlin.idea.completion.lookups.renderVerbose
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.KotlinLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.renderVerbose
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.renderer.render
 

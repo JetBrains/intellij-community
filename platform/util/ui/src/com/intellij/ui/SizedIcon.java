@@ -91,6 +91,14 @@ public final class SizedIcon extends JBCachingScalableIcon implements MenuBarIco
     }
   }
 
+  public int getSizedWidth() {
+    return myWidth;
+  }
+
+  public int getSizedHeight() {
+    return myHeight;
+  }
+
   @Override
   public int getIconWidth() {
     return (int)ceil(scaleVal(myWidth));
@@ -99,5 +107,10 @@ public final class SizedIcon extends JBCachingScalableIcon implements MenuBarIco
   @Override
   public int getIconHeight() {
     return (int)ceil(scaleVal(myHeight));
+  }
+
+  @Override
+  public String toString() {
+    return "SizedIcon for " + myDelegate;
   }
 }

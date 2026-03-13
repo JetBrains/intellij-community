@@ -1,4 +1,5 @@
 // "Create class 'Foo'" "true"
+// K2_ERROR: Unresolved reference 'Foo'.
 
 class A<T>(val n: T) {
     fun test() = this.<caret>Foo(2, "2")

@@ -4,8 +4,13 @@ package com.intellij.platform.ide.menu
 import com.intellij.diagnostic.UILatencyLogger
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator.decorateTextIfNeeded
+import com.intellij.openapi.actionSystem.impl.MenuCancelledControlFlowException
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.actionSystem.impl.actionholder.createActionRef
@@ -18,6 +23,7 @@ import com.intellij.ui.icons.getMenuBarIcon
 import com.intellij.ui.mac.screenmenu.Menu
 import javax.swing.JFrame
 
+@Throws(MenuCancelledControlFlowException::class)
 internal fun createMacNativeActionMenu(context: DataContext?,
                                        place: String,
                                        group: ActionGroup,
@@ -52,7 +58,7 @@ internal fun createMacNativeActionMenu(context: DataContext?,
       logger<Menu>().error(e)
     }
     finally {
-      UILatencyLogger.MAIN_MENU_LATENCY.log(System.currentTimeMillis() - menuPeer.openTimeMs);
+      UILatencyLogger.logMainMenuLatency(System.currentTimeMillis() - menuPeer.openTimeMs);
     }
   }
   menuPeer.listenPresentationChanges(presentation)

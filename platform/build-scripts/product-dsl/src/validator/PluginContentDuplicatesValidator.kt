@@ -7,8 +7,6 @@ import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginGraph
 import com.intellij.platform.pluginGraph.PluginNode
 import com.intellij.platform.pluginGraph.ProductNode
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.intellij.build.productLayout.model.error.DuplicatePluginContentModulesError
 import org.jetbrains.intellij.build.productLayout.model.error.ValidationError
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
@@ -33,14 +31,8 @@ internal object PluginContentDuplicatesValidator : PipelineNode {
 
   override suspend fun execute(ctx: ComputeContext) {
     val model = ctx.model
-    coroutineScope {
-      model.pluginGraph.query {
-        products { product ->
-          launch {
-            ctx.emitErrors(validateDuplicatePluginContentModulesForProduct(product, model.pluginGraph))
-          }
-        }
-      }
+    ctx.emitErrorsPerProduct(model.pluginGraph) { product ->
+      validateDuplicatePluginContentModulesForProduct(product, model.pluginGraph)
     }
   }
 }

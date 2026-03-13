@@ -31,6 +31,29 @@ jvm_library(
     "@lib//:jetbrains-annotations",
   ]
 )
+
+jvm_library(
+  name = "jps_test_lib",
+  module_name = "intellij.groovy.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  runtime_deps = [
+    ":jps",
+    "//jps/model-api:model_test_lib",
+    "@community//build:build-javac-rt_test_lib",
+    "//platform/util:util_test_lib",
+    "//jps/jps-builders:build_test_lib",
+    "//plugins/groovy/rt-constants:constants-rt_test_lib",
+    "//jps/model-serialization:model-serialization_test_lib",
+    "//jps/model-impl:model-impl_test_lib",
+    "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
+    "@lib//:eclipse-provided",
+    "//platform/util-class-loader:util-classLoader_test_lib",
+    "//libraries/asm:asm_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.groovy.jps` end
 
 ### auto-generated section `build intellij.groovy.jps.tests` start
@@ -52,7 +75,9 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//plugins/groovy/jps-plugin:jps",
+    "//plugins/groovy/jps-plugin:jps_test_lib",
     "//plugins/groovy/rt-constants:constants-rt",
+    "//plugins/groovy/rt-constants:constants-rt_test_lib",
     "@lib//:kotlin-stdlib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

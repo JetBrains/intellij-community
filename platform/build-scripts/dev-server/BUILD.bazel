@@ -33,4 +33,34 @@ jvm_library(
   ],
   runtime_deps = ["//libraries/xz"]
 )
+
+jvm_library(
+  name = "buildScripts-devBuildServer_test_lib",
+  module_name = "intellij.platform.buildScripts.devBuildServer",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":buildScripts-devBuildServer",
+    "//platform/build-scripts:build-scripts_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//build/tasks:tasks_test_lib",
+    "//platform/util:util_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/build-scripts/downloader:downloader_test_lib",
+    "//platform/boot:boot_test_lib",
+    "//platform/util-class-loader:util-classLoader_test_lib",
+    "//platform/util/rt-java8:rt-java8_test_lib",
+    "//libraries/xz:xz_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/hash4j:hash4j_test_lib",
+    "//platform/diagnostic/telemetry.exporters:telemetry.exporters_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/util/zip:zip_test_lib",
+    "//libraries/kotlinx/serialization/protobuf:protobuf_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.buildScripts.devBuildServer` end

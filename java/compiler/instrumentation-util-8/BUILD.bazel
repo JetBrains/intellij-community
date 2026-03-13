@@ -16,4 +16,16 @@ jvm_library(
   kotlinc_opts = "@community//:k8",
   deps = ["//java/compiler/instrumentation-util"]
 )
+
+jvm_library(
+  name = "java-compiler-instrumentationUtil-java8_test_lib",
+  module_name = "intellij.java.compiler.instrumentationUtil.java8",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  runtime_deps = [
+    ":java-compiler-instrumentationUtil-java8",
+    "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.java.compiler.instrumentationUtil.java8` end

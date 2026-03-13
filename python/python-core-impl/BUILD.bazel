@@ -31,4 +31,28 @@ jvm_library(
     "//platform/core-impl",
   ]
 )
+
+jvm_library(
+  name = "community-core-impl_test_lib",
+  module_name = "intellij.python.community.core.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":community-core-impl",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//python/python-psi-api:psi_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//RegExpSupport:regexp_test_lib",
+    "//libraries/guava:guava_test_lib",
+    "//python/python-psi-impl:psi-impl_test_lib",
+    "//python/python-sdk:sdk_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.python.community.core.impl` end

@@ -1,4 +1,5 @@
 // "Change parameter 'n' type of function 'foo' to 'T'" "true"
+// K2_ERROR: Argument type mismatch: actual type is 'T (of fun <T> bar)', but 'Int' was expected.
 fun <T> bar(t: T) {
     fun foo(n: T) {
 

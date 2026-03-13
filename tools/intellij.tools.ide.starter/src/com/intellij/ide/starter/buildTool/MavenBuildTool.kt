@@ -32,7 +32,7 @@ open class MavenBuildTool(testContext: IDETestContext) : BuildTool(BuildToolType
       get() = Path.of(getMavenRepositoryPath())
 
     private const val MAVEN_DAEMON_NAME = "MavenServerIndexerMain"
-    private fun destroyMavenIndexerProcessIfExists() {
+    private suspend fun destroyMavenIndexerProcessIfExists() {
       findAndKillProcessesBySubstring(MAVEN_DAEMON_NAME)
     }
   }

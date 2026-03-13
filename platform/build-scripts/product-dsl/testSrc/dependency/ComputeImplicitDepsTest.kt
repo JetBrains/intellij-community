@@ -265,6 +265,22 @@ class ComputeImplicitDepsTest {
     }
 
     @Test
+    fun `self JPS dependency is excluded from implicit deps`() {
+      val graph = pluginGraph {
+        moduleWithScopedDeps("my.module", "my.module" to "COMPILE")
+      }
+
+      val implicitDeps = graph.query {
+        computeImplicitDeps(ContentModuleName("my.module"))
+      }
+
+      assertThat(implicitDeps)
+        .describedAs("Self dependencies should not be treated as implicit deps")
+        .doesNotContain(ContentModuleName("my.module"))
+        .isEmpty()
+    }
+
+    @Test
     fun `XML dep not in JPS is not implicit`() {
       // Setup: Module with XML dep that's not in JPS
       val graph = pluginGraph {

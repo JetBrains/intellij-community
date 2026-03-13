@@ -11,5 +11,3 @@ fun foo(){
 }
 
 // ELEMENT: val
-
-// IGNORE_K2

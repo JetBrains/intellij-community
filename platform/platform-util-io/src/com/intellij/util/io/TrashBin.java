@@ -63,7 +63,8 @@ public final class TrashBin {
   }
 
   public static boolean canMoveToTrash(@NotNull VirtualFile file) {
-    return file.isInLocalFileSystem() && canMoveToTrash(file.toNioPath());
+    var path = file.isInLocalFileSystem() ? file.getFileSystem().getNioPath(file) : null;
+    return path != null && canMoveToTrash(path);
   }
 
   public static void moveToTrash(@NotNull Path path) throws IOException {

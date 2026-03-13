@@ -4,20 +4,24 @@ package com.jetbrains.python;
 import com.jetbrains.python.fixtures.PyLexerTestCase;
 import com.jetbrains.python.lexer.PyFStringLiteralLexer;
 import com.jetbrains.python.lexer.PyStringLiteralLexer;
+import org.junit.jupiter.api.Test;
 
 
 public class PyStringLiteralLexerTest extends PyLexerTestCase {
+  @Test
   public void testBackslashN() {  // PY-1313
     PyLexerTestCase.doLexerTest("u\"\\N{LATIN SMALL LETTER B}\"", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_UNICODE),
                                 "Py:SINGLE_QUOTED_UNICODE", "VALID_STRING_ESCAPE_TOKEN", "Py:SINGLE_QUOTED_UNICODE");
   }
 
+  @Test
   public void testRawBackslashN() {
     doLexerTest("r'[\\w\\']'", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_STRING), true,
                 "r'[\\w\\']'");
   }
 
   // PY-20921
+  @Test
   public void testIllegalPrefixes() {
     doLexerTest("ff'foo'", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_UNICODE), "Py:SINGLE_QUOTED_UNICODE");
     doLexerTest("fff'foo'", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_UNICODE), "Py:SINGLE_QUOTED_UNICODE");
@@ -25,6 +29,7 @@ public class PyStringLiteralLexerTest extends PyLexerTestCase {
   }
 
   // PY-21399
+  @Test
   public void testBackslashBreaksAnyEscapeSequence() {
     doLexerTest("'\\u\\')", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_UNICODE), true, "'", "\\u", "\\'", ")");
     doLexerTest("'\\u\\')", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_UNICODE),
@@ -43,6 +48,7 @@ public class PyStringLiteralLexerTest extends PyLexerTestCase {
   }
 
   // PY-40863
+  @Test
   public void testFStringDoubleCurleyBrace() {
     doLexerTest("a{{b", new PyFStringLiteralLexer(PyTokenTypes.FSTRING_TEXT), true, "a", "{{", "b");
     doLexerTest("a\\}}b", new PyFStringLiteralLexer(PyTokenTypes.FSTRING_RAW_TEXT), true, "a", "\\", "}}", "b");

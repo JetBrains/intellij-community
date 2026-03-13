@@ -35,19 +35,29 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/commons/text",
+    "//libraries/commons/text:text_test_lib",
     "//platform/indexing-api:indexing",
+    "//platform/indexing-api:indexing_test_lib",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
     "//platform/platform-impl:ide-impl",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/ml-logs",
+    "//platform/ml-logs:ml-logs_test_lib",
     "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
     "//platform/util/jdom",
+    "//platform/util/jdom:jdom_test_lib",
     "//libraries/kotlin/test:libraries-kotlinTest",
+    "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
     "@lib//:junit5",
     "//platform/core-impl",
-  ]
+    "//platform/core-impl:core-impl_test_lib",
+  ],
+  runtime_deps = ["//platform/platform-impl:ide-impl_test_lib"]
 )
 ### auto-generated section `build intellij.findUsagesMl` end
 

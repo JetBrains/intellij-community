@@ -44,16 +44,24 @@ jvm_library(
   associates = [":jps"],
   deps = [
     "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "//jps/jps-builders:build",
+    "//jps/jps-builders:build_test_lib",
     "//platform/runtime/repository",
+    "//platform/runtime/repository:repository_test_lib",
     "@lib//:kotlin-stdlib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//jps/jps-builders:build-tests",
     "//jps/jps-builders:build-tests_test_lib",
     "//jps/model-serialization",
+    "//jps/model-serialization:model-serialization_test_lib",
     "//plugins/devkit/runtimeModuleRepository/generator",
+    "//plugins/devkit/runtimeModuleRepository/generator:generator_test_lib",
     "//libraries/hash4j",
+    "//libraries/hash4j:hash4j_test_lib",
   ]
 )
 ### auto-generated section `build intellij.devkit.runtimeModuleRepository.jps` end

@@ -75,7 +75,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements Lo
   /**
    * @deprecated use {@link AddAnnotationModCommandAction} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public AddAnnotationPsiFix(@NotNull String fqn,
                              @NotNull PsiModifierListOwner modifierListOwner,
                              String @NotNull ... annotationsToRemove) {
@@ -96,7 +96,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements Lo
   /**
    * @deprecated use {@link AddAnnotationModCommandAction} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public AddAnnotationPsiFix(@NotNull String fqn,
                              @NotNull PsiModifierListOwner modifierListOwner,
                              PsiNameValuePair @NotNull [] values,

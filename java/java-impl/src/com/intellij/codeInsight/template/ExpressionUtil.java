@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
@@ -32,14 +31,15 @@ public final class ExpressionUtil {
      final Project project = context.getProject();
      final int offset = context.getStartOffset();
 
-     Document document = context.getEditor().getDocument();
-     PsiDocumentManager.getInstance(project).commitDocument(document);
+     PsiFile file = context.getPsiFile();
+     if (file == null) return null;
+
+     PsiDocumentManager.getInstance(project).commitDocument(file.getFileDocument());
 
      String[] names = null;
-     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
      PsiElement element = file.findElementAt(offset);
-     if (element instanceof PsiIdentifier){
-       names = getNamesForIdentifier(project, (PsiIdentifier)element);
+     if (element instanceof PsiIdentifier identifier){
+       names = getNamesForIdentifier(project, identifier);
      }
      else{
        final PsiFile fileCopy = (PsiFile)file.copy();

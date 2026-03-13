@@ -25,4 +25,22 @@ jvm_library(
     "//platform/lang-api:lang",
   ]
 )
+
+jvm_library(
+  name = "frontend_test_lib",
+  module_name = "intellij.platform.execution.serviceView.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":frontend",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/execution.serviceView:execution.serviceView_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/kernel/rpc:rpc_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/lang-api:lang_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.execution.serviceView.frontend` end

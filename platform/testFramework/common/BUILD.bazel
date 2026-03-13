@@ -53,4 +53,41 @@ jvm_library(
     "//platform/build-scripts/downloader",
   ]
 )
+
+jvm_library(
+  name = "common_test_lib",
+  module_name = "intellij.platform.testFramework.common",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  javac_opts = ":custom-javac-options",
+  runtime_deps = [
+    ":common",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/bootstrap/coroutine:coroutine_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/jbr:jbr_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/indexing-impl:indexing-impl_test_lib",
+    "//platform/boot:boot_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util-class-loader:util-classLoader_test_lib",
+    "//platform/platform-impl/bootstrap:bootstrap_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//platform/service-container:service-container_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/platform-util-netty:ide-util-netty_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/testFramework/core:core_test_lib",
+    "//platform/diagnostic:diagnostic_test_lib",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//platform/platform-impl/bootstrap/kernel:kernel_test_lib",
+    "//platform/build-scripts/downloader:downloader_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.testFramework.common` end

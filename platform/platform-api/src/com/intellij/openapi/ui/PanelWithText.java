@@ -18,8 +18,11 @@ package com.intellij.openapi.ui;
 
 import com.intellij.xml.util.XmlStringUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 
 public class PanelWithText extends JPanel {
   private final JLabel myLabel = new JLabel();

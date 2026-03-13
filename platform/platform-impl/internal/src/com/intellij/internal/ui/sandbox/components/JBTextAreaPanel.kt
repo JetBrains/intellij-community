@@ -6,7 +6,11 @@ import com.intellij.internal.ui.sandbox.initWithText
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBTextArea
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.rows
+import com.intellij.ui.dsl.builder.text
 import javax.swing.JComponent
 
 internal class JBTextAreaPanel : UISandboxPanel {

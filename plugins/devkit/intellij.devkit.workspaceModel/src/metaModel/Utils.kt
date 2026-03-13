@@ -8,8 +8,12 @@ interface ObjMetaElementWithPsi {
   val sourcePsi: PsiElement?
 }
 
-fun unsupportedType(type: String?, psiToHighlight: PsiElement? = null): ValueType<*> {
-  throw MetaModelBuilderException("Unsupported type '$type'", psiToHighlight)
+fun entityMetaError(message: String, psiToHighlight: PsiElement?): ValueType<*> {
+  throw MetaModelBuilderException(message, psiToHighlight)
+}
+
+fun unsupportedType(type: String?): ValueType<*> {
+  throw InternalMetaModelBuilderException("Unsupported type '$type'")
 }
 
 class MetaProblem(val message: String, val psiToHighlight: PsiElement?)

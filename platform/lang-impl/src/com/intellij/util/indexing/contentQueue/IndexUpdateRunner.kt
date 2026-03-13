@@ -4,6 +4,7 @@
 package com.intellij.util.indexing.contentQueue
 
 import com.intellij.openapi.application.readActionUndispatched
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.ThrottledLogger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
@@ -57,7 +58,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.FileNotFoundException
@@ -188,7 +188,7 @@ class IndexUpdateRunner(
 
     val filesToIndexCount = fileSet.size()
     TRACER.spanBuilder("doIndexFiles").setAttribute("files", filesToIndexCount.toLong()).useWithScope {
-      withContext(Dispatchers.IO + CoroutineName("Indexing(${project.locationHash}")) {
+      withContext(Dispatchers.IO + CoroutineName("Indexing(${project.locationHash})")) {
         //Ideally, we should launch a coroutine for each file in a fileSet, and let the coroutine scheduler do it's job
         // of distributing the load across available CPUs.
         // But the fileSet could be quite large (10-100-1000k files), so it could be quite a load for a scheduler.
@@ -215,14 +215,16 @@ class IndexUpdateRunner(
 
                 ensureActive()
               }
+              LOG.debug("Coroutine $workerNo has finished gracefully")
             }
-            //FIXME RC: for profiling, remove afterwards
             catch (e: Throwable) {
-              LOG.info("Coroutine $workerNo finished exceptionally", e)
+              if (e !is ControlFlowException) {
+                LOG.warn("Coroutine $workerNo finished exceptionally", e)
+              }
+              else {
+                LOG.warn("Coroutine $workerNo finished exceptionally: ${e.message}")
+              }
               throw e
-            }
-            finally {
-              LOG.info("Coroutine $workerNo finished gracefully")
             }
           }
         }
@@ -299,7 +301,7 @@ class IndexUpdateRunner(
       statistics: IndexingFileSetStatistics,
     ) {
       val file = fileIndexingRequest.file
-      if( !fileIndexingRequest.isDeleteRequest && !file.isValid ){
+      if (!fileIndexingRequest.isDeleteRequest && !file.isValid) {
         //this is a bandage for the annoying 'Alien file...' errors in tests: in real life it shouldn't be possible to come
         //  here with an invalid file, but in a (badly isolated) tests it could happen
         LOG.warn("Invalid (alien?) file: #${(file as VirtualFileWithId).id}")
@@ -316,7 +318,14 @@ class IndexUpdateRunner(
         val workspaceFileIndex = WorkspaceFileIndex.getInstance(project)
         val excluded = readActionUndispatched {
           val isIndexable = workspaceFileIndex.isIndexable(file)
-          val belongsToNonIndexable = workspaceFileIndex.findFileSet(file, true, false, includeContentNonIndexableSets = true, false, false, includeExternalNonIndexableSets = true, false) != null
+          val belongsToNonIndexable = workspaceFileIndex.findFileSet(file,
+                                                                     true,
+                                                                     false,
+                                                                     includeContentNonIndexableSets = true,
+                                                                     false,
+                                                                     false,
+                                                                     includeExternalNonIndexableSets = true,
+                                                                     false) != null
           // We don't want to just exclude all !isIndexable,
           // because they may be contributed by an indexing contributor while WorkspaceFileIndex is not aware about it.
           // We only want to exclude the files that are explicitly registered as non indexable.
@@ -593,7 +602,9 @@ private class UsedMemorySoftLimiter(private val softLimitOfTotalBytesUsed: Long)
     while (true) { //CAS-loop
       val _totalBytesUsed = totalBytesUsed.get()
       if (_totalBytesUsed > softLimitOfTotalBytesUsed) {
-        yield()
+        //Without this delay most of cpu time is spent inside coroutine scheduler since it is spinning non-stop
+        //This bug is reproducible with big Jupyter files 100mb or more, we need a time to parse it and other coroutines wait the parse finish
+        delay(10)
         continue
       }
 

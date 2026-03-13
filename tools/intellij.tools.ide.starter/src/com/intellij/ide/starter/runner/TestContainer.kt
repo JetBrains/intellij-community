@@ -20,7 +20,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import kotlin.io.path.div
-import kotlin.reflect.jvm.isAccessible
 
 typealias IDEDataPathsProvider = (testName: String, testDirectory: Path, useInMemoryFileSystem: Boolean) -> IDEDataPaths
 
@@ -49,6 +48,11 @@ interface TestContainer {
     fun applyDefaultVMOptions(context: IDETestContext): IDETestContext {
       return when (context.testCase.ideInfo == IdeProductProvider.AI) {
         true -> context
+          .addProjectToTrustedLocations()
+          .disableFusSendingOnIdeClose()
+          .disableReportingStatisticsToProduction()
+          .disableReportingStatisticToJetStat()
+          .disableMigrationNotification()
           .applyVMOptionsPatch {
             overrideDirectories(context.paths)
             withEnv("STUDIO_VM_OPTIONS", context.ide.patchedVMOptionsFile.toString())
@@ -96,8 +100,14 @@ interface TestContainer {
     TestContainer.installPerformanceTestingPluginIfMissing(context)
   }
 
-  fun newContext(testName: String, testCase: TestCase<*>, preserveSystemDir: Boolean = false): IDETestContext =
-    newContext(testName, testCase, preserveSystemDir, computeWithSpan("download and unpack project") { testCase.projectInfo.downloadAndUnpackProject() })
+  fun newContext(testName: String, testCase: TestCase<*>, preserveSystemDir: Boolean = false): IDETestContext {
+    return newContext(
+      testName = testName,
+      testCase = testCase,
+      preserveSystemDir = preserveSystemDir,
+      projectHome = computeWithSpan("download and unpack project") { testCase.projectInfo.downloadAndUnpackProject() },
+    )
+  }
 
   /**
    * Creates a context from the `existingContext` one. The difference from the [newContext] method is that the project is not set up, but

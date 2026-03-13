@@ -236,7 +236,8 @@ public final class EditorGutterLayout {
     );
 
     List<GutterArea> rightEdgeAreasForLineNumbersAfterIcons = List.of(
-      area(FOLDING_AREA, myEditorGutter::getFoldingAreaWidthForLineNumbersAfterIcons)
+      area(FOLDING_AREA, myEditorGutter::getFoldingAreaWidth),
+      areaGap(3).as(EditorMouseEventArea.FOLDING_OUTLINE_AREA)
     );
 
     List<GutterArea> extraRightFreePainters = List.of(

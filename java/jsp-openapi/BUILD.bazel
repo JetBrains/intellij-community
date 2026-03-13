@@ -23,4 +23,24 @@ jvm_library(
   exports = ["//java/jsp-base-openapi:jsp-base"],
   runtime_deps = ["//platform/backend"]
 )
+
+jvm_library(
+  name = "jsp_test_lib",
+  module_name = "intellij.jsp",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//java/jsp-base-openapi:jsp-base",
+    "//java/jsp-base-openapi:jsp-base_test_lib",
+  ],
+  runtime_deps = [
+    ":jsp",
+    "//java/java-psi-api:psi_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//xml/xml-psi-api:psi_test_lib",
+    "//platform/backend:backend_test_lib",
+    "//java/jsp-base-openapi:jsp-base_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.jsp` end

@@ -6,8 +6,6 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
     <module name="intellij.libraries.stream"/>
-    <module name="intellij.platform.core"/>
-
     <module name="intellij.platform.backend"/>
     <plugin id="com.intellij.modules.java-capable"/>
   </dependencies>

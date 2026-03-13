@@ -12,7 +12,7 @@ import com.intellij.util.xmlb.XmlSerializer
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.time.Instant
-import java.util.*
+import java.util.UUID
 
 /**
  * @param metaInfo Meta-information about this snapshot: when and where it was in created, etc.

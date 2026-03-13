@@ -7,12 +7,12 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.util.ThreeState
+import com.intellij.util.io.Compressor
+import com.intellij.util.io.Compressor.Tar.Compression
+import com.intellij.util.io.Decompressor
 import com.intellij.util.io.zip.JBZipEntry
 import com.intellij.util.io.zip.JBZipFile
-import org.rauschig.jarchivelib.ArchiveFormat
-import org.rauschig.jarchivelib.ArchiverFactory
-import org.rauschig.jarchivelib.CompressionType
-import java.io.File
+import com.intellij.util.system.OS
 import java.io.IOException
 import java.io.OutputStream
 import java.nio.charset.StandardCharsets
@@ -28,17 +28,15 @@ import java.time.Instant
 import java.util.zip.GZIPOutputStream
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.createDirectories
-import kotlin.io.path.deleteIfExists
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.div
-import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.fileSize
 import kotlin.io.path.inputStream
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.name
 import kotlin.io.path.outputStream
 import kotlin.io.path.readAttributes
 import kotlin.io.path.setLastModifiedTime
@@ -62,7 +60,7 @@ object FileSystem {
     }
   }
 
-  fun countFiles(path: Path) = Files.walk(path).use { it.count() }
+  fun countFiles(path: Path): Long = Files.walk(path).use { it.count() }
 
   fun hasAtLeastFiles(path: Path, minCount: Long): Boolean =
     Files.walk(path).use { stream ->
@@ -77,17 +75,14 @@ object FileSystem {
 
   fun compressToZip(sourceToCompress: Path, outputArchive: Path) {
     if (sourceToCompress.extension == "zip") {
-      logOutput("Looks like $sourceToCompress already compressed to zip file")
+      logOutput("Looks like $sourceToCompress is already a zip file")
       return
     }
 
-    if (outputArchive.exists())
-      outputArchive.deleteRecursivelyQuietly()
+    outputArchive.deleteRecursivelyQuietly()
+    outputArchive.parent.createDirectories()
 
-    val outputArchiveParentDir = outputArchive.parent.apply { createDirectories() }
-
-    val archiver = ArchiverFactory.createArchiver(ArchiveFormat.ZIP)
-    archiver.create(outputArchive.nameWithoutExtension, outputArchiveParentDir.toFile(), sourceToCompress.toFile())
+    Compressor.Zip(outputArchive).use { it.addDirectory(sourceToCompress) }
   }
 
   fun unpackZip(zipFile: Path, targetDir: Path, map: (name: String) -> String? = { it }) {
@@ -134,9 +129,9 @@ object FileSystem {
       }
     }
     catch (e: Throwable) {
+      zipFile.deleteRecursivelyQuietly()
       targetDir.deleteRecursivelyQuietly()
-      zipFile.deleteIfExists()
-      throw IOException("Failed to unpack $zipFile to $targetDir. ${e.message}", e)
+      throw Exception("Failed to unpack $zipFile. File and unpack targets are removed. ${e.message}", e)
     }
   }
 
@@ -185,16 +180,13 @@ object FileSystem {
     logOutput("Extracting $archive to $targetDir")
     //project archive may be empty
     Files.createDirectories(targetDir)
-    val name = archive.fileName.toString()
 
     try {
-      when {
-        name.endsWith(".zip") ||
-        name.endsWith(".ijx") ||
-        name.endsWith(".jar") -> unpackZip(archive, targetDir)
-
-        name.endsWith(".tar.gz") -> unpackTarGz(archive, targetDir)
-        else -> error("Archive $name is not supported")
+      val ext = if (archive.name.endsWith(".tar.gz")) "tar.gz" else archive.extension
+      when (ext) {
+        "zip", "ijx", "jar" -> unpackZip(archive, targetDir)
+        "tar.gz" -> unpackTarGz(archive, targetDir)
+        else -> error("Archive ${archive.name} is not supported")
       }
     }
     catch (e: IOException) {
@@ -210,17 +202,9 @@ object FileSystem {
     }
   }
 
-  fun compressToTar(source: Path, outputArchive: Path, compressionType: CompressionType? = null) {
-    val archiver = if (compressionType == null) ArchiverFactory.createArchiver(ArchiveFormat.TAR)
-    else ArchiverFactory.createArchiver(ArchiveFormat.TAR, compressionType)
-
-    val outputArchiveParentDir = outputArchive.parent.apply { createDirectories() }
-    archiver.create(outputArchive.nameWithoutExtension, outputArchiveParentDir.toFile(), source.toFile())
-  }
-
-  fun unpackTarGz(tarFile: File, targetDir: File) {
-    targetDir.deleteRecursively()
-    unpackTarGz(tarFile.toPath(), targetDir.toPath())
+  fun compressToTar(source: Path, outputArchive: Path, compression: Compression = Compression.NONE) {
+    outputArchive.parent.createDirectories()
+    Compressor.Tar(outputArchive, compression).use { it.addDirectory(source) }
   }
 
   /**
@@ -239,29 +223,27 @@ object FileSystem {
   fun Path.listDirectoryEntriesQuietly(): List<Path>? = runCatching { listDirectoryEntries() }.getOrNull()
 
   // TODO: use com.intellij.platform.eel.EelApi.getArchive when it's ready?
-  private fun unpackTarGz(tarFile: Path, targetDir: Path) {
-    require(tarFile.fileName.toString().endsWith(".tar.gz")) { "File $tarFile must be tar.gz archive" }
+  fun unpackTarGz(tarFile: Path, targetDir: Path) {
+    require(tarFile.name.endsWith(".tar.gz")) { "File $tarFile must be tar.gz archive" }
 
     try {
-      if (SystemInfo.isWindows) {
-        val archiver = ArchiverFactory.createArchiver(ArchiveFormat.TAR, CompressionType.GZIP)
-        archiver.extract(tarFile.toFile(), targetDir.toFile())
-      }
-      else if (SystemInfo.isLinux || SystemInfo.isMac) {
-        Files.createDirectories(targetDir)
-        ProcessExecutor(
+      Files.createDirectories(targetDir)
+      when (OS.CURRENT) {
+        OS.Windows -> Decompressor.Tar(tarFile).extract(targetDir)
+        OS.Linux, OS.macOS -> ProcessExecutor(
           presentableName = "extract-tar",
           workDir = targetDir,
           timeout = 10.minutes,
           stderrRedirect = ExecOutputRedirect.ToStdOut("tar"),
           args = listOf("tar", "-z", "-x", "-f", tarFile.toAbsolutePath().toString(), "-C", targetDir.toAbsolutePath().toString())
         ).start()
+        else -> error("Unsupported OS: ${System.getProperty("os.name")}")
       }
     }
     catch (e: Exception) {
+      tarFile.deleteRecursivelyQuietly()
       targetDir.deleteRecursivelyQuietly()
-      tarFile.deleteIfExists()
-      throw Exception("Failed to unpack $tarFile. ${e.message}. File and unpack targets are removed.", e)
+      throw Exception("Failed to unpack $tarFile. File and unpack targets are removed. ${e.message}", e)
     }
   }
 
@@ -294,19 +276,30 @@ object FileSystem {
 
   fun Path.getFileOrDirectoryPresentableSize(): String {
     // explicitly call readAttributes() to reduce the number of system calls
-    val attributes = readAttributes<BasicFileAttributes>()
+    val attributes = try {
+      readAttributes<BasicFileAttributes>()
+    }
+    catch (_: Exception) {
+      return "N/A"
+    }
     val size: Long = if (attributes.isRegularFile) {
       attributes.size()
     }
     else {
-      Files.walk(this).use { pathStream ->
-        pathStream.mapToLong { p: Path ->
-          val attributes = p.readAttributes<BasicFileAttributes>()
-          if (attributes.isRegularFile) {
-            attributes.size()
-          }
-          else 0
-        }.sum()
+      try {
+        Files.walk(this).use { pathStream ->
+          pathStream.mapToLong { p: Path ->
+            val attributes = p.readAttributes<BasicFileAttributes>()
+            if (attributes.isRegularFile) {
+              attributes.size()
+            }
+            else 0
+          }.sum()
+        }
+      }
+      catch (_: Exception) {
+        // Files may be deleted by concurrent processes (e.g., IDE indexer) during the walk
+        return "N/A"
       }
     }
     return size.formatSize()
@@ -315,16 +308,22 @@ object FileSystem {
   fun Path.getDirectoryTreePresentableSizes(depth: Int = 1): String {
     val thisPath = this
     return buildString {
-      Files.walk(thisPath, depth).use { dirStream ->
-        dirStream.forEach { child ->
-          if (child == thisPath) {
-            appendLine("Total size: ${thisPath.getFileOrDirectoryPresentableSize()}")
-          }
-          else {
-            val indent = "  ".repeat(thisPath.relativize(child).nameCount)
-            appendLine("$indent${thisPath.relativize(child)}: " + child.getFileOrDirectoryPresentableSize())
+      try {
+        Files.walk(thisPath, depth).use { dirStream ->
+          dirStream.forEach { child ->
+            if (child == thisPath) {
+              appendLine("Total size: ${thisPath.getFileOrDirectoryPresentableSize()}")
+            }
+            else {
+              val indent = "  ".repeat(thisPath.relativize(child).nameCount)
+              appendLine("$indent${thisPath.relativize(child)}: " + child.getFileOrDirectoryPresentableSize())
+            }
           }
         }
+      }
+      catch (_: Exception) {
+        // Files may be deleted by concurrent processes (e.g., IDE indexer) during the walk
+        appendLine("(some entries skipped due to concurrent file changes)")
       }
     }
   }

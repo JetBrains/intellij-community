@@ -337,7 +337,7 @@ public class VfsUtilCore {
           children = visitor.getChildrenIterable(file);
           if (children == null) {
             VirtualFile[] childrenArray = file.getChildren(/* requireSorted: */ !visitor.childrenMayBeUnsorted());
-            if (childrenArray.length > 0) {
+            if (childrenArray != null && childrenArray.length > 0) {
               children = Arrays.asList(childrenArray);
             }
           }

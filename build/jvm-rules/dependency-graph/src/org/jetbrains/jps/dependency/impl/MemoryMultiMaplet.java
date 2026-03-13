@@ -3,6 +3,7 @@ package org.jetbrains.jps.dependency.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.MultiMaplet;
+import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.util.Iterators;
 
 import java.io.IOException;
@@ -12,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 public final class MemoryMultiMaplet<K, V, C extends Collection<V>> implements MultiMaplet<K, V> {
@@ -34,23 +36,18 @@ public final class MemoryMultiMaplet<K, V, C extends Collection<V>> implements M
   @Override
   public @NotNull Iterable<V> get(K key) {
     C col = myMap.get(key);
-    return col != null? col : Collections.emptySet();
+    return col != null? col : myEmptyCollection;
   }
 
   @Override
   public void put(K key, @NotNull Iterable<? extends V> values) {
     //noinspection unchecked
-    myMap.put(key, ensureCollection(values));
-  }
-
-  private C ensureCollection(Iterable<? extends V> seq) {
-    if (myEmptyCollection instanceof Set && seq instanceof Set) {
-      return (C)seq;
+    if (Iterators.isEmpty(values)) {
+      myMap.remove(key);
     }
-    if (myEmptyCollection instanceof List && seq instanceof List) {
-      return (C)seq;
+    else {
+      myMap.put(key, Iterators.collect(values, myCollectionFactory.get()));
     }
-    return Iterators.collect(seq, myCollectionFactory.get());
   }
 
   @Override
@@ -68,10 +65,35 @@ public final class MemoryMultiMaplet<K, V, C extends Collection<V>> implements M
   }
 
   @Override
+  public void appendValues(K key, @NotNull Iterable<? extends V> toAppend) {
+    if (!Iterators.isEmpty(toAppend)) {
+      C values = myMap.get(key);
+      if (values == null) {
+        myMap.put(key, values = myCollectionFactory.get());
+      }
+      for (V val : toAppend) {
+        values.add(val);
+      }
+    }
+  }
+
+  @Override
   public void removeValue(K key, V value) {
     C values = myMap.get(key);
     if (values != null) {
       values.remove(value);
+    }
+  }
+
+  @Override
+  public void removeValues(K key, @NotNull Iterable<? extends V> toRemove) {
+    if (!Iterators.isEmpty(toRemove)) {
+      C values = myMap.get(key);
+      if (values != null) {
+        for (V value : toRemove) {
+          values.remove(value);
+        }
+      }
     }
   }
 
@@ -88,5 +110,10 @@ public final class MemoryMultiMaplet<K, V, C extends Collection<V>> implements M
   @Override
   public void flush() throws IOException {
     // empty
+  }
+
+  @Override
+  public void update(K key, @NotNull Iterable<V> dataAfter, BiFunction<? super Iterable<V>, ? super Iterable<V>, Difference.Specifier<? extends V, ?>> diffComparator) {
+    put(key, dataAfter);
   }
 }

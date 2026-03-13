@@ -7,5 +7,3 @@ fun g() {
 }
 
 // EXIST: { lookupString:"object", itemText:"object : A<...>{...}" }
-
-// IGNORE_K2

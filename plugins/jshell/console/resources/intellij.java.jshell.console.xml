@@ -1,6 +1,5 @@
 <idea-plugin visibility="public">
   <dependencies>
-    <plugin id="com.intellij.modules.lang"/>
     <module name="intellij.java.backend"/>
   </dependencies>
 

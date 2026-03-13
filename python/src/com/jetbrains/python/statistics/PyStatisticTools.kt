@@ -182,6 +182,11 @@ val Sdk.executionType: InterpreterTarget
       else -> LOCAL
     }
 
+/**
+ * This method is for statistics only and might be somewhat inaccurate.
+ * Moreover, interpreters will become a pluggable system soon, so there will be no predefined enum.
+ * Please, do not use it.
+ */
 val Sdk.interpreterType: InterpreterType
   get() = when {
     // The order of checks is important here since e.g. a pipenv is a virtualenv
@@ -190,7 +195,7 @@ val Sdk.interpreterType: InterpreterType
     isPoetry -> POETRY
     isHatch -> HATCH
     this.isCondaVirtualEnv || this.sdkAdditionalData.asSafely<PythonSdkAdditionalData>()?.flavor is CondaEnvSdkFlavor -> CONDAVENV
-    VirtualEnvReader().isPyenvSdk(getHomePath()) -> PYENV
+    homePath?.contains(PYENV_PATTERN) == true -> PYENV
     this.isVirtualEnv -> VIRTUALENV
     else -> REGULAR
   }
@@ -213,3 +218,4 @@ private val PyTargetAwareAdditionalData.executionType: InterpreterTarget
       }
     } ?: REMOTE_UNKNOWN
 
+private val PYENV_PATTERN = Regex("[/\\\\]${VirtualEnvReader.PYENV_DEFAULT_DIR_NAME}[/\\\\]")

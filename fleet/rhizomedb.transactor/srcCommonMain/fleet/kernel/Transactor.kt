@@ -118,7 +118,7 @@ suspend fun transactor(): Transactor {
 /**
  * Subscribes to all changes applied to this Kernel.
  *
- * If the underlying buffer of [ChangesBufferSize] is overflown, the channel will get closed with an exception.
+ * If the underlying buffer of [LogBufferSizeDefault] is overflown, the channel will get closed with an exception.
  * Changes performed by subscriber are guaranteed to be seen in the channel.
  * The provided channel is already managed, no need to consume it.
  * This is an error to consume the channel out of scope of Subscriber fn.
@@ -198,7 +198,7 @@ private data class ChangeTask(
  */
 interface KernelMetaKey<V : Any> : Key<V, Transactor>
 
-private const val ChangesBufferSize: Int = 1000
+const val LogBufferSizeDefault: Int = 1000
 private const val DispatchBufferSize: Int = 1000
 
 /**
@@ -297,6 +297,7 @@ sealed interface SubscriptionEvent {
 suspend fun <T> withTransactor(
   middleware: TransactorMiddleware = TransactorMiddleware.Identity,
   defaultPart: Int = CommonPart,
+  logBufferSize: Int = LogBufferSizeDefault,
   body: suspend CoroutineScope.(Transactor) -> T,
 ): T =
   spannedScope("withKernel") {
@@ -323,30 +324,21 @@ suspend fun <T> withTransactor(
         }
       }.dbAfter
 
-    val priorityDispatchChannel: Channel<ChangeTask> = Channel(capacity = DispatchBufferSize,
-                                                               onUndeliveredElement = { it.resultDeferred.cancel() })
-    val backgroundDispatchChannel: Channel<ChangeTask> = Channel(capacity = 32,
-                                                                 onUndeliveredElement = { it.resultDeferred.cancel() })
-    val sharedFlow = MutableSharedFlow<TransactorEvent>(replay = 1,
-                                                        extraBufferCapacity = ChangesBufferSize,
-                                                        onBufferOverflow = BufferOverflow.DROP_OLDEST)
-
-    val dbState = object : StateFlow<DB> {
-      override val replayCache: List<DB>
-        get() = sharedFlow.replayCache.map { it.db() }
-
-      override val value: DB
-        get() = sharedFlow.replayCache.let { replayCache ->
-          require(replayCache.size == 1) {
-            "replayCache size=${replayCache.size}"
-          }
-          replayCache[0].db()
-        }
-
-      override suspend fun collect(collector: FlowCollector<DB>): Nothing {
-        sharedFlow.collect { collector.emit(it.db()) }
-      }
-    }
+    val priorityDispatchChannel: Channel<ChangeTask> = Channel(
+      capacity = DispatchBufferSize,
+      onUndeliveredElement = { it.resultDeferred.cancel() },
+    )
+    val backgroundDispatchChannel: Channel<ChangeTask> = Channel(
+      capacity = 32,
+      onUndeliveredElement = { it.resultDeferred.cancel() },
+    )
+    val sharedFlow = MutableSharedFlow<TransactorEvent>(
+      replay = 1,
+      extraBufferCapacity = logBufferSize,
+      onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
+    val stateFlow = MutableStateFlow<DB>(initialDb)
+    sharedFlow.emit(TransactorEvent.Init(timestamp = 0L, db = initialDb))
 
     val transactor = object : Transactor {
       override val middleware: TransactorMiddleware get() = middleware
@@ -355,7 +347,7 @@ suspend fun <T> withTransactor(
       override val meta: MutableOpenMap<Transactor> = OpenMap<Transactor>().mutable()
 
       override val dbState: StateFlow<DB>
-        get() = dbState
+        get() = stateFlow
 
       override fun changeAsync(f: ChangeScope.() -> Unit): Deferred<Change> {
         val deferred = CompletableDeferred<Change>()
@@ -411,44 +403,14 @@ suspend fun <T> withTransactor(
         }.also { span.completeWithResult(it) }.getOrThrow()
       }
 
-      override val log = flow {
-        sharedFlow.fold(null as Long?) { prevTs, event ->
-          when (event) {
-            is TransactorEvent.Init -> {
-              emit(SubscriptionEvent.First(event.db))
-              event.timestamp
-            }
-            is TransactorEvent.SequentialChange -> {
-              val e = when {
-                prevTs == null -> {
-                  SubscriptionEvent.First(event.change.dbAfter)
-                }
-                prevTs + 1 == event.timestamp -> {
-                  SubscriptionEvent.Next(event.change)
-                }
-                else -> {
-                  SubscriptionEvent.Reset(event.change.dbAfter)
-                }
-              }
-              emit(e)
-              event.timestamp
-            }
-            is TransactorEvent.TheEnd -> {
-              currentCoroutineContext().ensureActive()
-              throw CancellationException("Transactor is terminated", event.reason)
-            }
-          }
-        }
-      }
+      override val log = logSubscription(sharedFlow)
 
       override fun toString(): String {
         return "Kernel@$kernelId"
       }
     }
 
-    sharedFlow.emit(TransactorEvent.Init(timestamp = 0L, db = initialDb))
-
-    newSingleThreadCoroutineDispatcher("Kernel event loop thread ${kernelId}", DispatcherPriority.HIGH).use { coroutineDispatcher ->
+    newSingleThreadCoroutineDispatcher("Kernel event loop thread $kernelId", DispatcherPriority.HIGH).use { coroutineDispatcher ->
       launch(CoroutineName("Transactor loop $transactor") + coroutineDispatcher, start = CoroutineStart.ATOMIC) {
         consumeAll(priorityDispatchChannel, backgroundDispatchChannel) {
           spannedScope("kernel changes") {
@@ -460,7 +422,7 @@ suspend fun <T> withTransactor(
                 // in a sense the cancellation is a rogue one, we should treat it as a simple change failure, and thus keep it INSIDE runCatching
                 changeTask.rendezvous.await()
                 val timedChange = measureTimedValue {
-                  val dbBefore = dbState.value
+                  val dbBefore = stateFlow.value
                   span("change", {
                     set("ts", (dbBefore.timestamp + 1).toString())
                     cause = changeTask.causeSpan
@@ -480,6 +442,7 @@ suspend fun <T> withTransactor(
                               location = changeTask.causeSpan)
                 val change = timedChange.value
                 Transactor.logger.trace { "[$transactor] broadcasting change [${change.dbBefore.timestamp} -> ${change.dbAfter.timestamp}] $change" }
+                stateFlow.value = change.dbAfter
                 check(sharedFlow.tryEmit(
                   TransactorEvent.SequentialChange(
                     timestamp = ts++,
@@ -511,6 +474,8 @@ suspend fun <T> withTransactor(
         }
       }.apply {
         invokeOnCompletion { x ->
+          // TheEnd marks the flow as terminated in case someone is consuming the log out of scope
+          // not updating [stateFlow] here, because a database is always a database, it won't change anything
           check(sharedFlow.tryEmit(TransactorEvent.TheEnd(x))) {
             "changeFlow should have been created with drop-oldest"
           }
@@ -526,6 +491,61 @@ suspend fun <T> withTransactor(
           priorityDispatchChannel.close(); backgroundDispatchChannel.close()
         }
       }
+    }
+  }
+
+private sealed interface SubscriptionState {
+  data object Initial : SubscriptionState
+  data class Active(val ts: Long) : SubscriptionState
+  data object Overflow : SubscriptionState
+}
+
+private fun logSubscription(sharedFlow: SharedFlow<TransactorEvent>): Flow<SubscriptionEvent> =
+  flow {
+    var state: SubscriptionState = SubscriptionState.Initial
+    while (true) {
+      sharedFlow.takeWhile { event ->
+        state = when (event) {
+          is TransactorEvent.Init -> {
+            emit(SubscriptionEvent.First(event.db))
+            SubscriptionState.Active(event.timestamp)
+          }
+          is TransactorEvent.SequentialChange -> {
+            when (val s = state) {
+              is SubscriptionState.Initial -> {
+                emit(SubscriptionEvent.First(event.change.dbAfter))
+                SubscriptionState.Active(event.timestamp)
+              }
+              is SubscriptionState.Active -> {
+                if (s.ts + 1 == event.timestamp) {
+                  emit(SubscriptionEvent.Next(event.change))
+                  SubscriptionState.Active(event.timestamp)
+                }
+                else {
+                  /*
+                    the buffer was overflown, we have to start from scratch.
+                    the important detail is relieving the pressure by starting a new buffer.
+                    this way consumers will have enough time to process the snapshot and catch up.
+                    if we continue with the same overflown buffer, we demand from them to consume the next event before
+                    the next transaction arrives or the buffer will be overflown again.
+                    to maintain consistency of the log, we will emit reset on the next iteration of the loop
+                  */
+                  SubscriptionState.Overflow
+                }
+              }
+              is SubscriptionState.Overflow -> {
+                emit(SubscriptionEvent.Reset(event.change.dbAfter))
+               SubscriptionState.Active(event.timestamp)
+              }
+            }
+          }
+          is TransactorEvent.TheEnd -> {
+            currentCoroutineContext().ensureActive()
+            throw CancellationException("Transactor is terminated", event.reason)
+          }
+        }
+        state !is SubscriptionState.Overflow
+      }.collect {}
     }
   }
 

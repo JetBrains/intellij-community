@@ -31,7 +31,7 @@ public class PyYieldExpressionImpl extends PyElementImpl implements PyYieldExpre
       final PyType type = e != null ? context.getType(e) : null;
       var generatorDesc = PyTypingTypeProvider.GeneratorTypeDescriptor.fromGeneratorOrProtocol(type, context);
       if (generatorDesc != null) {
-        return generatorDesc.returnType();
+        return generatorDesc.returnType;
       }
       return PyBuiltinCache.getInstance(this).getNoneType();
     }
@@ -58,7 +58,7 @@ public class PyYieldExpressionImpl extends PyElementImpl implements PyYieldExpre
         var returnType = context.getReturnType(function);
         var generatorDesc = PyTypingTypeProvider.GeneratorTypeDescriptor.fromGeneratorOrProtocol(returnType, context);
         if (generatorDesc != null) {
-          return generatorDesc.sendType();
+          return generatorDesc.sendType;
         }
       }
     }
@@ -68,7 +68,7 @@ public class PyYieldExpressionImpl extends PyElementImpl implements PyYieldExpre
       final PyType type = e != null ? context.getType(e) : null;
       var generatorDesc = PyTypingTypeProvider.GeneratorTypeDescriptor.fromGeneratorOrProtocol(type, context);
       if (generatorDesc != null) {
-        return generatorDesc.sendType();
+        return generatorDesc.sendType;
       }
       return PyBuiltinCache.getInstance(this).getNoneType();
     }

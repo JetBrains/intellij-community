@@ -2,14 +2,6 @@
 package com.intellij.internal.statistic.eventLog.connection
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.util.DefaultIndenter
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.MapperFeature
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.databind.json.JsonMapper
 import com.intellij.internal.statistic.eventLog.EventLogApplicationInfo
 import com.jetbrains.fus.reporting.FusJsonSerializer
 import com.jetbrains.fus.reporting.configuration.ConfigurationClient
@@ -19,6 +11,15 @@ import com.jetbrains.fus.reporting.jvm.JvmHttpClient
 import com.jetbrains.fus.reporting.jvm.ProxyInfo
 import com.jetbrains.fus.reporting.model.serialization.SerializationException
 import org.jetbrains.annotations.ApiStatus
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.StreamReadFeature
+import tools.jackson.core.util.DefaultIndenter
+import tools.jackson.core.util.DefaultPrettyPrinter
+import tools.jackson.databind.DeserializationFeature
+import tools.jackson.databind.MapperFeature
+import tools.jackson.databind.SerializationFeature
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.kotlinModule
 import java.util.concurrent.TimeUnit
 
 /**
@@ -58,9 +59,10 @@ open class EventLogUploadSettingsClient(
     private val SERIALIZATION_MAPPER: JsonMapper by lazy {
       JsonMapper
         .builder()
+        .addModule(kotlinModule())
         .enable(MapperFeature.REQUIRE_SETTERS_FOR_GETTERS)
         .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-        .serializationInclusion(JsonInclude.Include.NON_NULL)
+        .changeDefaultPropertyInclusion { it.withValueInclusion(JsonInclude.Include.NON_NULL) }
         .defaultPrettyPrinter(CustomPrettyPrinter())
         .build()
     }
@@ -68,8 +70,9 @@ open class EventLogUploadSettingsClient(
     private val DESERIALIZATION_MAPPER: JsonMapper by lazy {
       JsonMapper
         .builder()
+        .addModule(kotlinModule())
         .enable(DeserializationFeature.USE_LONG_FOR_INTS)
-        .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
+        .enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION)
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
         .build()
     }
@@ -99,8 +102,8 @@ open class EventLogUploadSettingsClient(
     constructor() : super()
     constructor(base: DefaultPrettyPrinter?) : super(base)
 
-    override fun writeObjectFieldValueSeparator(g: JsonGenerator) {
-      g.writeRaw(": ")
+    override fun writeObjectNameValueSeparator(g: JsonGenerator?) {
+      g?.writeRaw(": ")
     }
 
     override fun writeEndArray(g: JsonGenerator, nrOfValues: Int) {

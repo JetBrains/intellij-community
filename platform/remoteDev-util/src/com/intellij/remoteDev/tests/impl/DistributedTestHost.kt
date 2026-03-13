@@ -4,6 +4,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.codeWithMe.clientId
 import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.diagnostic.logs.DebugLogLevel
@@ -14,8 +15,15 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -24,20 +32,41 @@ import com.intellij.openapi.rd.util.setSuspend
 import com.intellij.openapi.ui.isFocusAncestor
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.remoteDev.tests.*
+import com.intellij.remoteDev.tests.AgentContext
+import com.intellij.remoteDev.tests.ClientAgentContextImpl
+import com.intellij.remoteDev.tests.DistributedTestPlayer
+import com.intellij.remoteDev.tests.DistributedTestsAgentConstants
+import com.intellij.remoteDev.tests.GatewayAgentContextImpl
+import com.intellij.remoteDev.tests.HostAgentContextImpl
 import com.intellij.remoteDev.tests.impl.utils.getArtifactsFileName
 import com.intellij.remoteDev.tests.impl.utils.runLogged
 import com.intellij.remoteDev.tests.impl.utils.waitSuspending
-import com.intellij.remoteDev.tests.modelGenerated.*
+import com.intellij.remoteDev.tests.modelGenerated.RdAgentType
+import com.intellij.remoteDev.tests.modelGenerated.RdProductInfo
+import com.intellij.remoteDev.tests.modelGenerated.RdProductType
+import com.intellij.remoteDev.tests.modelGenerated.RdTestSession
+import com.intellij.remoteDev.tests.modelGenerated.distributedTestModel
 import com.intellij.ui.AppIcon
 import com.intellij.ui.WinFocusStealer
+import com.intellij.util.io.blockingDispatcher
 import com.intellij.util.ui.EDT.isCurrentThreadEdt
 import com.intellij.util.ui.ImageUtil
-import com.jetbrains.rd.framework.*
+import com.jetbrains.rd.framework.IdKind
+import com.jetbrains.rd.framework.Identities
+import com.jetbrains.rd.framework.Protocol
+import com.jetbrains.rd.framework.Serializers
+import com.jetbrains.rd.framework.SocketWire
 import com.jetbrains.rd.util.lifetime.EternalLifetime
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.viewNotNull
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.Component
@@ -72,11 +101,6 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
       System.getProperty(DistributedTestsAgentConstants.sourcePathProperty, PathManager.getHomePath()).let(::File)
     }
 
-    /**
-     * ID of the plugin which contains test code.
-     * Currently, only test code of the client part is put to a separate plugin.
-     */
-    const val TEST_PLUGIN_ID: String = "com.intellij.tests.plugin"
     const val TEST_PLUGIN_DIRECTORY_NAME: String = "tests-plugin"
   }
 
@@ -240,8 +264,14 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
         }
 
         session.getProductCodeAndVersion.setSuspend(sessionBgtDispatcher) { _, _ ->
+          val namesInfo = ApplicationNamesInfo.getInstance()
           ApplicationInfo.getInstance().build.let {
-            RdProductInfo(productCode = it.productCode, productVersion = it.asStringWithoutProductCode())
+            RdProductInfo(
+              productCode = it.productCode,
+              productVersion = it.asStringWithoutProductCode(),
+              productName = namesInfo.productName,
+              productFullName = namesInfo.fullProductName,
+            )
           }
         }
 
@@ -327,6 +357,11 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
         session.makeScreenshot.setSuspend(sessionBgtDispatcher) { _, fileName ->
           makeScreenshot(fileName)
+        }
+
+
+        session.dumpThreads.setSuspend(sessionBgtDispatcher) { _, _ ->
+          dumpThreads()
         }
 
         session.projectsAreInitialised.setSuspend(sessionBgtDispatcher) { _, _ ->
@@ -494,6 +529,23 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
             }
             makeScreenshotOfComponent(screenshotFile, window)
           }
+          true
+        }
+        catch (e: Throwable) {
+          LOG.warn("Test action 'makeScreenshot' hasn't finished successfully", e)
+          false
+        }
+      }
+    }
+  }
+
+  private suspend fun dumpThreads(): Boolean {
+    return runLogged("Dumping threads") {
+      @Suppress("OPT_IN_USAGE")
+      withContext(blockingDispatcher + NonCancellable) { // even if there is a modal window opened
+        return@withContext try {
+          val dump = PerformanceWatcher.getInstance().dumpThreads("Test session", true, false) ?: return@withContext false
+          LOG.info("Thread dump is saved at: $dump")
           true
         }
         catch (e: Throwable) {

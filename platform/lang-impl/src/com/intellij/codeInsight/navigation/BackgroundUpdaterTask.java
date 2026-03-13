@@ -24,7 +24,7 @@ public abstract class BackgroundUpdaterTask extends BackgroundUpdaterTaskBase<Ps
     return (o1, o2) -> {
       int diff = comparator.compare(o1, o2);
       if (diff == 0) {
-        return ReadAction.compute(() -> PsiUtilCore.compareElementsByPosition(o1, o2));
+        return ReadAction.computeBlocking(() -> PsiUtilCore.compareElementsByPosition(o1, o2));
       }
       return diff;
     };

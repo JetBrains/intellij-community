@@ -1,5 +1,6 @@
 // "Specify 'List<Any>' return type for enclosing function 'test2'" "true"
 // WITH_STDLIB
+// K2_ERROR: Return type mismatch: expected 'Unit', actual 'List<Any>'.
 
 fun test2(ss: List<Any>) {
     return ss.map { it }<caret>

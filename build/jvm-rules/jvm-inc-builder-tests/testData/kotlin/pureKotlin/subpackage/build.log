@@ -1,0 +1,11 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_subpackage-a.kotlin_module
+  outer/nested/NestedKt$main$1.class
+  outer/nested/NestedKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/subpackage/a/nested.kt
+End of files
+------------------------------------------
+Exit code: OK

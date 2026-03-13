@@ -17,9 +17,7 @@ package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiArrayType;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
@@ -37,10 +35,10 @@ public final class ArrayVariableMacro extends VariableTypeMacroBase {
   protected PsiElement[] getVariables(Expression[] params, final ExpressionContext context) {
     if (params.length != 0) return null;
 
-    Project project = context.getProject();
     final int offset = context.getStartOffset();
     final ArrayList<PsiVariable> array = new ArrayList<>();
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
+    PsiFile file = context.getPsiFile();
+    if (file == null) return null;
     PsiElement place = file.findElementAt(offset);
     PsiVariable[] variables = MacroUtil.getVariablesVisibleAt(place, "");
     for (PsiVariable variable : variables) {

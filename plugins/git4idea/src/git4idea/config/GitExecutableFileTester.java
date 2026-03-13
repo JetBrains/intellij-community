@@ -163,7 +163,7 @@ class GitExecutableFileTester {
     }
 
     LOG.debug("Acquiring git version for " + executable);
-    GitLineHandler handler = new GitLineHandler(null,
+    GitLineHandler handler = new GitLineHandler(project,
                                                 workingDirectory,
                                                 executable,
                                                 GitCommand.VERSION,

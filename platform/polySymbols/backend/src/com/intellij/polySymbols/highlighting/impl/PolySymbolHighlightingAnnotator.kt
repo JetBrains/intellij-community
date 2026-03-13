@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.getOrCreateUserDataUnsafe
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbol.TextAttributesKeyProperty
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.PolySymbolNameSegment.MatchProblem
@@ -49,7 +50,7 @@ import com.intellij.psi.util.startOffset
 import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.PropertyKey
-import java.util.*
+import java.util.LinkedList
 
 private val INSPECTION_TOOL_INFO_CACHE = Key.create<MutableMap<String, InspectionToolInfo>>("polySymbols.inspectionTools")
 
@@ -129,8 +130,7 @@ internal class PolySymbolHighlightingAnnotator : Annotator {
             PolySymbolHighlightingCustomizer.getSymbolTextAttributes(host, symbol, depth)
               ?.let { return@mapNotNull it }
 
-            symbol[PolySymbol.PROP_IJ_TEXT_ATTRIBUTES_KEY]
-              ?.let { TextAttributesKey.find(it) }
+            symbol[TextAttributesKeyProperty]
               ?.let { return@mapNotNull it }
 
             if (symbol.kind != parentKind)
@@ -244,7 +244,7 @@ internal class PolySymbolHighlightingAnnotator : Annotator {
   ): List<InspectionToolInfo> =
     symbolKinds
       .mapNotNull { symbolType ->
-        PolySymbolInspectionToolMappingEP.Companion.get(symbolType.namespace, symbolType.kindName, problemKind)?.toolShortName
+        PolySymbolInspectionToolMappingEP.get(symbolType.namespace, symbolType.kindName, problemKind)?.toolShortName
       }.map {
         map.computeIfAbsent(it) { createToolInfo(it, holder.currentAnnotationSession.file) }
       }

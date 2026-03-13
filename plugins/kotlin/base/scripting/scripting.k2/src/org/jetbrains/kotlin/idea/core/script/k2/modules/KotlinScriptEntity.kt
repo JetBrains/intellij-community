@@ -11,8 +11,8 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 interface KotlinScriptEntity : WorkspaceEntity {
     val virtualFileUrl: VirtualFileUrl
     val dependencies: List<KotlinScriptLibraryEntityId>
-    val configuration: ScriptCompilationConfigurationEntity?
     val sdkId: SdkId?
+    val configurationId: ScriptCompilationConfigurationId?
 
     @Suppress("RemoveExplicitTypeArguments")
     val relatedModuleIds: List<ModuleId>

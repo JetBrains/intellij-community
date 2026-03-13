@@ -6,6 +6,7 @@ create_kotlinc_options(
   name = "custom_andel",
   opt_in = ["kotlin.concurrent.atomics.ExperimentalAtomicApi"],
   x_consistent_data_class_copy_visibility = True,
+  x_context_parameters = True,
   x_lambdas = "class"
 )
 
@@ -19,7 +20,7 @@ jvm_library(
   name = "andel",
   module_name = "fleet.andel",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True),
   resources = [":andel_resources"],
   kotlinc_opts = ":custom_andel",
   deps = [
@@ -35,5 +36,24 @@ jvm_library(
     "//fleet/fastutil",
   ],
   exports = ["//fleet/bifurcan"]
+)
+
+jvm_library(
+  name = "andel_test_lib",
+  module_name = "fleet.andel",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_andel",
+  exports = [
+    "//fleet/bifurcan",
+    "//fleet/bifurcan:bifurcan_test_lib",
+  ],
+  runtime_deps = [
+    ":andel",
+    "//fleet/util/core:core_test_lib",
+    "//fleet/util/codepoints:codepoints_test_lib",
+    "//fleet/bifurcan:bifurcan_test_lib",
+    "//fleet/fastutil:fastutil_test_lib",
+  ]
 )
 ### auto-generated section `build fleet.andel` end

@@ -15,7 +15,11 @@ import org.cef.handler.CefMessageRouterHandlerAdapter
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.FlowLayout
-import javax.swing.*
+import javax.swing.JButton
+import javax.swing.JCheckBox
+import javax.swing.JPanel
+import javax.swing.JScrollPane
+import javax.swing.JTextField
 
 internal class MessageRouterTests : JBCefTestAppFrame.TestCase() {
   override fun getDisplayName() = "JS message tests"

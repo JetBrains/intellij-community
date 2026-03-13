@@ -10,7 +10,7 @@ import com.intellij.util.net.internal.ProxyMigrationService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class HttpProxyConfigurable extends ConfigurableBase<ConfigurableUi<ProxySettings>, ProxySettings> implements Configurable.NoMargin {
   private final ProxySettings proxySettings;

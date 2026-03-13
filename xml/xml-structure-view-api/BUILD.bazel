@@ -21,4 +21,19 @@ jvm_library(
   ],
   runtime_deps = ["//platform/backend"]
 )
+
+jvm_library(
+  name = "structureView_test_lib",
+  module_name = "intellij.xml.structureView",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":structureView",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//xml/xml-psi-api:psi_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/backend:backend_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.xml.structureView` end

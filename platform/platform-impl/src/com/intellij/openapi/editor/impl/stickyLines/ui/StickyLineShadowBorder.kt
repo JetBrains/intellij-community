@@ -3,7 +3,11 @@ package com.intellij.openapi.editor.impl.stickyLines.ui
 
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.registry.Registry
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Insets
 import javax.swing.border.LineBorder
 
 

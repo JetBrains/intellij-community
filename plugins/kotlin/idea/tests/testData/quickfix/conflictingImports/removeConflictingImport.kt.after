@@ -1,4 +1,7 @@
 // "Remove conflicting import for 'java.util.ArrayList'" "true"
+// K2_ERROR: Conflicting import: imported name 'ArrayList' is ambiguous.
+// K2_ERROR: Conflicting import: imported name 'HashMap' is ambiguous.
+// K2_ERROR: Overload resolution ambiguity between candidates:<br>class ArrayList<E : Any!> : AbstractList<E!>, RandomAccess, Cloneable, Serializable, MutableList<E><br>class HashMap<K : Any!, V : Any!> : AbstractMap<K!, V!>, Cloneable, Serializable, MutableMap<K, V>
 package test
 
 import java.util.HashMap as ArrayList

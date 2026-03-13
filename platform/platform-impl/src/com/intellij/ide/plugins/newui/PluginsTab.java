@@ -4,7 +4,11 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.MultiPanel;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,9 +28,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.awt.event.KeyEvent;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -58,7 +64,7 @@ public abstract class PluginsTab {
     searchTextField.setTextIgnoreEvents(query);
     IdeFocusManager.getGlobalInstance()
       .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(searchTextField, true));
-    searchPanel.setEmpty();
+    searchPanel.setEmptyQuery();
     showSearchPanel(query);
   };
 
@@ -226,7 +232,7 @@ public abstract class PluginsTab {
   protected abstract @NotNull SearchResultPanel createSearchPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener);
 
   public @Nullable String getSearchQuery() {
-    if (searchPanel == null || searchPanel.isEmpty()) {
+    if (searchPanel == null || searchPanel.isQueryEmpty()) {
       return null;
     }
     String query = searchPanel.getQuery();
@@ -244,7 +250,7 @@ public abstract class PluginsTab {
   }
 
   public void showSearchPanel(@NotNull String query) {
-    if (searchPanel.isEmpty()) {
+    if (searchPanel.isQueryEmpty()) {
       cardPanel.select(SEARCH_PANEL, true);
       detailsPage.showPlugin(null);
     }
@@ -253,7 +259,7 @@ public abstract class PluginsTab {
   }
 
   public void hideSearchPanel() {
-    if (!searchPanel.isEmpty()) {
+    if (!searchPanel.isQueryEmpty()) {
       onSearchReset();
       cardPanel.select(DEFAULT_PANEL, true);
       searchPanel.setQuery("");

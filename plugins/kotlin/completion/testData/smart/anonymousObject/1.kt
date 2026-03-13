@@ -4,5 +4,3 @@ var a : Foo = <caret>
 
 // ABSENT: Foo
 // EXIST: { lookupString:"object", itemText:"object : Foo{...}" }
-
-// IGNORE_K2

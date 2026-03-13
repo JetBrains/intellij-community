@@ -1,5 +1,6 @@
 // IGNORE_K1
 // "Initialize with constructor parameter" "true"
+// K2_ERROR: Property must be initialized or be abstract.
 class User(n: Int) {
     constructor(n: Int, s: String) : this(n)
 

@@ -11,6 +11,7 @@ import com.intellij.lang.jvm.types.JvmType
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiPackage
 import com.intellij.psi.PsiType
 import com.intellij.psi.util.PsiTreeUtil
@@ -245,7 +246,17 @@ object K2CreateFunctionFromUsageUtil {
             expectedArgumentType = guessAccessibleTypeByArguments(receiverType, expectedArgumentType)
         }
         val jvmParameterType = expectedArgumentType?.convertToJvmType(argumentExpression!!)
-        val expectedType = if (jvmParameterType == null) ExpectedTypeWithNullability.INVALID_TYPE else ExpectedKotlinType.create(expectedArgumentType, jvmParameterType)
+        val expectedType = when (jvmParameterType) {
+                    null if expectedArgumentType != null ->
+                        ExpectedTypeWithNullability.createExpectedKotlinType(
+                            PsiType.getJavaLangObject(
+                                argumentExpression!!.manager,
+                                argumentExpression.resolveScope
+                            ), Nullability.UNKNOWN
+                        )
+                    null -> ExpectedTypeWithNullability.INVALID_TYPE
+                    else -> ExpectedKotlinType.create(expectedArgumentType, jvmParameterType)
+                }
         val names = parameterNames?.toList() ?: listOf(defaultParameterName)
         val nameArray = (if (isTheOnlyAnnotationParameter && parameterNameAsString==null) listOf("value") + names else names).toTypedArray()
         return expectedParameter(expectedType, *nameArray)

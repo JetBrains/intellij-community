@@ -32,13 +32,18 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "@lib//:jetbrains-annotations",
     "//libraries/guava",
+    "//libraries/guava:guava_test_lib",
     "//libraries/protobuf",
+    "//libraries/protobuf:protobuf_test_lib",
     "//libraries/javax/annotation",
+    "//libraries/javax/annotation:annotation_test_lib",
     "@lib//:junit5",
     "@lib//:execution-process-mediator-common-com-willowtreeapps-assertk-assertk-jvm",
     "//libraries/grpc",
+    "//libraries/grpc:grpc_test_lib",
   ]
 )
 ### auto-generated section `build intellij.execution.process.mediator.common` end

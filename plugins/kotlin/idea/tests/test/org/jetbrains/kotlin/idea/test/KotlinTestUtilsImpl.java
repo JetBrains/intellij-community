@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.cli.FrontendConfigurationKeys;
+import org.jetbrains.kotlin.cli.CompilerConfigurationCreationKt;
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys;
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity;
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation;
@@ -13,8 +13,6 @@ import org.jetbrains.kotlin.cli.common.messages.MessageCollector;
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles;
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment;
 import org.jetbrains.kotlin.cli.jvm.config.JvmContentRootsKt;
-import org.jetbrains.kotlin.cli.pipeline.AbstractConfigurationPhaseKt;
-import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar;
 import org.jetbrains.kotlin.config.CommonConfigurationKeys;
 import org.jetbrains.kotlin.config.CompilerConfiguration;
 import org.jetbrains.kotlin.config.JVMConfigurationKeys;
@@ -22,7 +20,9 @@ import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts;
 import org.jetbrains.kotlin.test.TestJdkKind;
 
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static org.jetbrains.kotlin.idea.test.KotlinTestUtils.getCurrentProcessJdkHome;
 
@@ -47,9 +47,8 @@ public final class KotlinTestUtilsImpl {
 
     @NotNull
     public static CompilerConfiguration newConfiguration() {
-        CompilerConfiguration configuration = new CompilerConfiguration();
+        CompilerConfiguration configuration = CompilerConfigurationCreationKt.create(CompilerConfiguration.Companion);
         configuration.put(CommonConfigurationKeys.MODULE_NAME, TEST_MODULE_NAME);
-        configuration.put(FrontendConfigurationKeys.EXTENSIONS_STORAGE, new CompilerPluginRegistrar.ExtensionStorage());
 
         configuration.put(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY, new MessageCollector() {
             @Override
@@ -112,7 +111,6 @@ public final class KotlinTestUtilsImpl {
         );
 
         setupIdeaStandaloneExecution();
-        AbstractConfigurationPhaseKt.registerExtensionStorage(configuration);
 
         return configuration;
     }

@@ -14,7 +14,6 @@ import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiVariable;
@@ -65,7 +64,8 @@ public final class SuggestVariableNameMacro extends Macro {
     DumbService dumbService = DumbService.getInstance(project);
     String[] names = dumbService.computeWithAlternativeResolveEnabled(() -> ExpressionUtil.getNames(context));
     if (names == null || names.length == 0) return names;
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
+    PsiFile file = context.getPsiFile();
+    if (file == null) return names;
     PsiElement e = file.findElementAt(context.getStartOffset());
     PsiVariable[] vars = dumbService.computeWithAlternativeResolveEnabled(() -> MacroUtil.getVariablesVisibleAt(e, ""));
     LinkedList<String> namesList = new LinkedList<>(Arrays.asList(names));

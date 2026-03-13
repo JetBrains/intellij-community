@@ -24,7 +24,7 @@ import org.jetbrains.annotations.PropertyKey;
 /**
  * @deprecated use {@link ExtendsListModCommandFix}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   // we don't modify this class
   @SafeFieldForPreview protected final @Nullable SmartPsiElementPointer<PsiClass> myClassToExtendFromPointer;

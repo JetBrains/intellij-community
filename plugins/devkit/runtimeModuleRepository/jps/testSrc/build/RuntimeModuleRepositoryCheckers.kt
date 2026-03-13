@@ -21,12 +21,12 @@ private fun checkRuntimeModuleRepository(
   buildRepositoryData: RawRuntimeModuleRepositoryData,
   expected: RawDescriptorListBuilder.() -> Unit,
 ) {
-  val actualIds = buildRepositoryData.allIds.filter { it != RUNTIME_REPOSITORY_MARKER_MODULE && it != "${RUNTIME_REPOSITORY_MARKER_MODULE}${RuntimeModuleId.TESTS_NAME_SUFFIX}" }
+  val actualIds = buildRepositoryData.allModuleIds.filter { it != RUNTIME_REPOSITORY_MARKER_MODULE && it != RUNTIME_REPOSITORY_TESTS_MARKER_MODULE }
   val builder = RawDescriptorListBuilder()
   builder.expected()
-  JpsBuildTestCase.assertSameElements(actualIds, builder.descriptors.map { it.id })
+  JpsBuildTestCase.assertSameElements(actualIds, builder.descriptors.map { it.moduleId })
   for (expectedDescriptor in builder.descriptors) {
-    JpsBuildTestCase.assertEquals("Different data for '${expectedDescriptor.id}'.", expectedDescriptor, buildRepositoryData.findDescriptor(expectedDescriptor.id)!!)
+    JpsBuildTestCase.assertEquals("Different data for '${expectedDescriptor.moduleId.presentableName}'.", expectedDescriptor, buildRepositoryData.findDescriptor(expectedDescriptor.moduleId)!!)
   }
 }
 
@@ -45,8 +45,9 @@ class RawDescriptorListBuilder {
   }
 
   fun descriptor(id: String, resources: List<String>, dependencies: List<String>) {
-    descriptors.add(RawRuntimeModuleDescriptor.create(id, resources, dependencies))
+    descriptors.add(RawRuntimeModuleDescriptor.create(RuntimeModuleId.raw(id), resources, dependencies.map { RuntimeModuleId.raw(it) }))
   }
 }
 
-const val RUNTIME_REPOSITORY_MARKER_MODULE: String = "intellij.idea.community.main"
+internal val RUNTIME_REPOSITORY_MARKER_MODULE: RuntimeModuleId = RuntimeModuleId.module("intellij.idea.community.main")
+internal val RUNTIME_REPOSITORY_TESTS_MARKER_MODULE: RuntimeModuleId = RuntimeModuleId.moduleTests("intellij.idea.community.main")

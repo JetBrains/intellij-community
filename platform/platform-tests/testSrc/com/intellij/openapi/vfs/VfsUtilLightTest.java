@@ -10,7 +10,9 @@ import java.util.Arrays;
 
 import static com.intellij.mock.MockVirtualFile.dir;
 import static com.intellij.mock.MockVirtualFile.file;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class VfsUtilLightTest extends BareTestFixtureTestCase {
   private static VirtualFile myRoot;

@@ -94,6 +94,14 @@ function normalizePortList(
   return candidates
 }
 
+function formatProbedPortList(candidates: PortCandidate[]): string {
+  return candidates.map((candidate) => String(candidate.port)).join(', ')
+}
+
+function buildEndpointNotFoundMessage(candidates: PortCandidate[]): string {
+  return `Failed to locate MCP stream endpoint. Probed ports: ${formatProbedPortList(candidates)}. Install the "MCP Server" plugin and ensure it is enabled in Settings | Tools | MCP Server.`
+}
+
 class StreamTransportImpl implements McpStreamTransport {
   _options: StreamTransportOptions
   _queue: QueueEntry[]
@@ -256,8 +264,10 @@ class StreamTransportImpl implements McpStreamTransport {
           }
 
           if (!targetUrl) {
-            if (warn) warn('No reachable MCP stream ports found during scan')
-            throw new Error('Failed to locate MCP stream endpoint')
+            if (warn) {
+              warn(`No reachable MCP stream ports found during scan. Probed ports: ${formatProbedPortList(candidates)}`)
+            }
+            throw new Error(buildEndpointNotFoundMessage(candidates))
           }
         }
 

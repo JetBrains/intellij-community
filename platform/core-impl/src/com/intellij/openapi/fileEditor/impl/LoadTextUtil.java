@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.openapi.vfs.transformer.TextPresentationTransformers;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -30,9 +31,10 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -56,57 +58,90 @@ public final class LoadTextUtil {
 
   private LoadTextUtil() { }
 
-  private static @NotNull ConvertResult convertLineSeparatorsToSlashN(@NotNull CharBuffer buffer) {
-    int dst = 0;
-    char prev = ' ';
+  /**
+   * Converts all line separators ('\r', '\r\n') into a 'standard' Unix 1-char '\n'-separator.
+   * Works only on [position, limit] range of the buffer, modifies the buffer in-place, also modifies buffer.limit()
+   * if some shortening (e.g. '\r\n' -> '\n') has happened.
+   * BEWARE: method may work unpredictably if several different line-separators are used together in the same buffer!
+   *
+   * @return the CharSequence with only '\n' line-separator, plus numbers of all 3 different kinds of new-lines
+   * met during the original buffer scanning.
+   */
+  @VisibleForTesting
+  @Internal
+  public static @NotNull ConvertResult convertLineSeparatorsToSlashN(@NotNull CharBuffer buffer) {
     int crCount = 0;
     int lfCount = 0;
     int crlfCount = 0;
 
-    int length = buffer.length();
+    int targetPos = buffer.position();
+    int limit = buffer.limit();
+    char previousCh = ' '; //anything but '\r' will do
     char[] bufferArray = CharArrayUtil.fromSequenceWithoutCopying(buffer);
-
-    for (int src = 0; src < length; src++) {
-      char c = bufferArray != null ? bufferArray[src] : buffer.charAt(src);
-      switch (c) {
-        case '\r':
-          if (bufferArray != null) {
-            bufferArray[dst++] = '\n';
-          }
-          else {
-            buffer.put(dst++, '\n');
-          }
-          crCount++;
-          break;
-        case '\n':
-          if (prev == '\r') {
-            crCount--;
-            crlfCount++;
-          }
-          else {
-            if (bufferArray != null) {
-              bufferArray[dst++] = '\n';
+    if (bufferArray == null) {
+      for (int sourcePos = buffer.position(); sourcePos < limit; sourcePos++) {
+        char ch = buffer.get(sourcePos);
+        switch (ch) {
+          case '\r':
+            buffer.put(targetPos++, '\n');
+            crCount++;
+            break;
+          case '\n':
+            if (previousCh == '\r') {
+              crCount--;
+              crlfCount++;
             }
             else {
-              buffer.put(dst++, '\n');
+              buffer.put(targetPos++, '\n');
+              lfCount++;
             }
-            lfCount++;
-          }
-          break;
-        default:
-          if (bufferArray != null) {
-            bufferArray[dst++] = c;
-          }
-          else {
-            buffer.put(dst++, c);
-          }
-          break;
+            break;
+          default:
+            //buffer.put(targetPos, ch);
+            if (targetPos != sourcePos) { //skip dummy update
+              buffer.put(targetPos, ch);
+            }
+            targetPos++;
+            break;
+        }
+        previousCh = ch;
       }
-      prev = c;
+    }
+    else {
+      //optimization: working with char[] is faster (more optimizations in play) than with CharBuffer
+      for (int sourcePos = buffer.position(); sourcePos < limit; sourcePos++) {
+        char ch = bufferArray[sourcePos];
+        switch (ch) {
+          case '\r':
+            bufferArray[targetPos++] = '\n';
+            crCount++;
+            break;
+          case '\n':
+            if (previousCh == '\r') {
+              crCount--;
+              crlfCount++;
+            }
+            else {
+              bufferArray[targetPos++] = '\n';
+              lfCount++;
+            }
+            break;
+          default:
+            //bufferArray[targetPos] = ch;
+            if (targetPos != sourcePos) {  //skip dummy update
+              bufferArray[targetPos] = ch;
+            }
+            targetPos++;
+            break;
+        }
+        previousCh = ch;
+      }
     }
 
-    CharSequence result = buffer.length() == dst ? buffer : buffer.subSequence(0, dst);
-    return new ConvertResult(result, crCount, lfCount, crlfCount);
+    if (targetPos < limit) {
+      buffer.limit(targetPos);
+    }
+    return new ConvertResult(buffer, crCount, lfCount, crlfCount);
   }
 
   private static final char UNDEFINED_CHAR = 0xFDFF;
@@ -247,7 +282,7 @@ public final class LoadTextUtil {
     }
   }
 
-  @ApiStatus.Internal
+  @Internal
   public static class DetectResult {
     public final Charset hardCodedCharset;
     public final CharsetToolkit.GuessedEncoding guessed;
@@ -262,9 +297,9 @@ public final class LoadTextUtil {
 
   // guess from a file type or a content
   private static @NotNull DetectResult detectHardCharset(@NotNull VirtualFile virtualFile,
-                                                byte @NotNull [] internalBuffer,
-                                                int length,
-                                                @NotNull FileType fileType) {
+                                                         byte @NotNull [] internalBuffer,
+                                                         int length,
+                                                         @NotNull FileType fileType) {
     String charsetName = fileType.getCharset(virtualFile, internalBuffer); // todo[cdr]
     Charset charset = charsetName == null ? null : CharsetToolkit.forName(charsetName);
     DetectResult detectResult = guessFromContent(virtualFile, internalBuffer, length);
@@ -348,7 +383,7 @@ public final class LoadTextUtil {
   }
 
 
-  @ApiStatus.Internal
+  @Internal
   public static @NotNull DetectResult guessFromContent(@NotNull VirtualFile virtualFile, byte @NotNull [] content) {
     return guessFromContent(virtualFile, content, content.length);
   }
@@ -362,7 +397,7 @@ public final class LoadTextUtil {
     try {
       DetectResult info;
       if (GUESS_UTF) {
-        info = guessFromBytes(content, length, getDefaultCharsetFromEncodingManager(virtualFile));
+        info = guessFromBytes(content, length, getDefaultCharsetFromEncodingManager(virtualFile), virtualFile);
         if (info.BOM != null) {
           detectedFromBytes = AutoDetectionReason.FROM_BOM;
         }
@@ -380,7 +415,10 @@ public final class LoadTextUtil {
     }
   }
 
-  private static @NotNull DetectResult guessFromBytes(byte @NotNull [] content, int endOffset, @NotNull Charset defaultCharset) {
+  private static @NotNull DetectResult guessFromBytes(byte @NotNull [] content,
+                                                      int endOffset,
+                                                      @NotNull Charset defaultCharset,
+                                                      @NotNull VirtualFile virtualFile) {
     if (endOffset == 0) {
       return new DetectResult(null, CharsetToolkit.GuessedEncoding.SEVEN_BIT, null);
     }
@@ -390,7 +428,9 @@ public final class LoadTextUtil {
       byte[] bom = ObjectUtils.notNull(CharsetToolkit.getMandatoryBom(charset), CharsetToolkit.UTF8_BOM);
       return new DetectResult(charset, null, bom);
     }
-    CharsetToolkit.GuessedEncoding guessed = toolkit.guessFromContent(0, endOffset);
+    String extension = virtualFile.getExtension();
+    int encodingDetectionLimit = FileSizeLimit.getEncodingDetectionLimit(extension);
+    CharsetToolkit.GuessedEncoding guessed = toolkit.guessFromContent(0, Math.min(encodingDetectionLimit, endOffset));
     if (guessed == CharsetToolkit.GuessedEncoding.VALID_UTF8) {
       return new DetectResult(StandardCharsets.UTF_8, CharsetToolkit.GuessedEncoding.VALID_UTF8, null); //UTF detected, ignore all directives
     }
@@ -430,7 +470,7 @@ public final class LoadTextUtil {
     write(project, file, requestor, newText, -1);
   }
 
-  @ApiStatus.Internal
+  @Internal
   public static void write(@Nullable Project project,
                            @NotNull VirtualFile virtualFile,
                            @NotNull Object requestor,
@@ -614,7 +654,7 @@ public final class LoadTextUtil {
     return getTextByBinaryPresentation(bytes, virtualFile, saveDetectedSeparators, saveBOM, true);
   }
 
-  @ApiStatus.Internal
+  @Internal
   public static @NotNull CharSequence getTextByBinaryPresentation(byte @NotNull [] bytes,
                                                                   @NotNull VirtualFile virtualFile,
                                                                   boolean saveDetectedSeparators,
@@ -632,7 +672,7 @@ public final class LoadTextUtil {
     }
   }
 
-  @ApiStatus.Internal
+  @Internal
   public static @NotNull Set<String> detectAllLineSeparators(@NotNull VirtualFile virtualFile) {
     byte[] bytes;
     try {
@@ -742,8 +782,11 @@ public final class LoadTextUtil {
     return convertLineSeparatorsToSlashN(charBuffer);
   }
 
-  private static class ConvertResult {
-    private final @NotNull CharSequence text;
+  @VisibleForTesting
+  @Internal
+  public static class ConvertResult {
+    public final @NotNull CharSequence text;
+
     private final int CR_count;
     private final int LF_count;
     private final int CRLF_count;

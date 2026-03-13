@@ -7,5 +7,3 @@ fun f(): Int {
 
 //ELEMENT: bar
 //CHAR: \t
-
-// IGNORE_K2

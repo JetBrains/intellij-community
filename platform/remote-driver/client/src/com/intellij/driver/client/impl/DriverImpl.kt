@@ -1,8 +1,25 @@
 package com.intellij.driver.client.impl
 
-import com.intellij.driver.client.*
-import com.intellij.driver.model.*
-import com.intellij.driver.model.transport.*
+import com.intellij.driver.client.Driver
+import com.intellij.driver.client.PolymorphRef
+import com.intellij.driver.client.PolymorphRefRegistry
+import com.intellij.driver.client.ProjectRef
+import com.intellij.driver.client.Remote
+import com.intellij.driver.client.RequiresLockSemantics
+import com.intellij.driver.client.Timed
+import com.intellij.driver.model.DriverIllegalStateException
+import com.intellij.driver.model.LockSemantics
+import com.intellij.driver.model.OnDispatcher
+import com.intellij.driver.model.ProductVersion
+import com.intellij.driver.model.RdTarget
+import com.intellij.driver.model.transport.NewInstanceCall
+import com.intellij.driver.model.transport.Ref
+import com.intellij.driver.model.transport.RefCall
+import com.intellij.driver.model.transport.RefList
+import com.intellij.driver.model.transport.RemoteCall
+import com.intellij.driver.model.transport.RemoteCallResult
+import com.intellij.driver.model.transport.ServiceCall
+import com.intellij.driver.model.transport.UtilityCall
 import java.awt.IllegalComponentStateException
 import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
@@ -13,7 +30,7 @@ import javax.management.AttributeNotFoundException
 import javax.management.InstanceNotFoundException
 import kotlin.reflect.KClass
 
-open class DriverImpl(host: JmxHost, override val isRemDevMode: Boolean) : Driver {
+open class DriverImpl(host: JmxHost, override val isRemDevMode: Boolean, override val beforeCall: (Driver.() -> Unit)? = null) : Driver {
   private val invoker: Invoker = JmxCallHandler.jmx(Invoker::class.java, host)
   private val sessionHolder = ThreadLocal<Session>()
 
@@ -215,7 +232,18 @@ open class DriverImpl(host: JmxHost, override val isRemDevMode: Boolean) : Drive
     }
   }
 
+  private val isInsideBeforeCall: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
+
   private fun makeCall(call: RemoteCall): RemoteCallResult {
+    if (!isInsideBeforeCall.get()) {
+      isInsideBeforeCall.set(true)
+      try {
+        beforeCall?.invoke(this)
+      }
+      finally {
+        isInsideBeforeCall.set(false)
+      }
+    }
     return try {
       invoker.invoke(call)
     }

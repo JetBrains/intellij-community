@@ -21,4 +21,17 @@ jvm_library(
     "//platform/statistics",
   ]
 )
+
+jvm_library(
+  name = "ext_test_lib",
+  module_name = "intellij.searchEverywhereMl.ranking.ext",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":ext",
+    "//platform/util:util_test_lib",
+    "//platform/extensions:extensions_test_lib",
+    "//platform/statistics:statistics_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.searchEverywhereMl.ranking.ext` end

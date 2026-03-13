@@ -1,0 +1,35 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.agent.workbench.chat"/>
+    <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.codex.common"/>
+    <module name="intellij.agent.workbench.filewatch"/>
+    <module name="intellij.agent.workbench.json"/>
+    <module name="intellij.agent.workbench.sessions.actions"/>
+    <module name="intellij.agent.workbench.sessions"/>
+    <module name="intellij.agent.workbench.sessions.core"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <resource-bundle>messages.CodexSessionsBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <agent.workbench.sessionProviderBridge
+      id="agentWorkbenchCodex"
+      order="before agentWorkbenchClaude"
+      implementation="com.intellij.agent.workbench.codex.sessions.CodexAgentSessionProviderBridge"/>
+    <agent.workbench.sessionProviderBehavior
+      id="agentWorkbenchCodexBehavior"
+      implementation="com.intellij.agent.workbench.codex.sessions.CodexAgentSessionProviderBehavior"/>
+  </extensions>
+
+  <actions>
+    <action
+      id="AgentWorkbenchSessions.BindPendingCodexThreadFromEditorTab"
+      icon="AllIcons.Actions.Attach"
+      class="com.intellij.agent.workbench.codex.sessions.actions.AgentSessionsBindPendingCodexThreadFromEditorTabAction">
+      <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="AgentWorkbenchSessions.EditorTabPopup.SeparatorBeforeCloseActions"/>
+    </action>
+  </actions>
+</idea-plugin>

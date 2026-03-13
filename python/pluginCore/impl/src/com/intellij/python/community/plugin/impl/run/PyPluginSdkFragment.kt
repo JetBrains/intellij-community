@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.plugin.impl.run
 
 import com.intellij.application.options.ModulesComboBox
@@ -22,7 +22,7 @@ import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class PyPluginSdkFragment<T : AbstractPythonRunConfiguration<*>> : SettingsEditorFragment<T, JPanel>(
+internal class PyPluginSdkFragment<T : AbstractPythonRunConfiguration<*>> : SettingsEditorFragment<T, JPanel>(
   "py.plugin.interpreter", null, null, JPanel(GridBagLayout()), SettingsEditorFragmentType.COMMAND_LINE, null, null,
   { true }), PyInterpreterModeNotifier {
 

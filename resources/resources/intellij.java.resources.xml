@@ -1,6 +1,0 @@
-<idea-plugin visibility="public">
-  <dependencies>
-    <module name="intellij.regexp"/>
-    <module name="intellij.platform.backend"/>
-  </dependencies>
-</idea-plugin>

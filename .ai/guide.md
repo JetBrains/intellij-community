@@ -6,8 +6,6 @@ To regenerate, run `node community/.ai/render-guides.mjs`.
 
 **Critical:** These guidelines MUST be followed at all times.
 
-**Reference Index:** @./.ai/ai-topic-index.md
-
 ## Project Invariants
 
 - The repository is a large monorepo with multiple IDE products and plugins.
@@ -21,10 +19,11 @@ To regenerate, run `node community/.ai/render-guides.mjs`.
 
 ### After Code Changes
 
-- {{COMPILATION_RULE}}
+- **Run affected tests:** `./tests.cmd -Dintellij.build.test.patterns=<FQN or wildcard>` (**FQN required; simple class names do not match**), or `node --test <file>` for `*.test.mjs`.
+  `tests.cmd` performs Bazel compilation internally, so a separate `bazel build` step is not needed when tests will be run.
+  Module-specific rules may override the runner. Skip if plugin has no tests. See [TESTING](../.agents/skills/testing/SKILL.md).
+- **Bazel compilation without tests:** when only verifying compilation (no tests to run), use `bazel build <target>` for affected modules. Skip if only `.js`, `.mjs`, `.md`, `.txt`, or `.json` files are modified.
 - After modifying `*.iml`, `BUILD.bazel`, or `.idea/` files: run `./build/jpsModelToBazel.cmd`.
-- Run affected tests: `./tests.cmd -Dintellij.build.test.patterns=<FQN or wildcard>` (**FQN required; simple class names do not match**), or `node --test <file>` for `*.test.mjs`.
-  Module-specific rules may override the runner. Skip if plugin has no tests. See [TESTING-internals](./topics/TESTING-internals.md).
 
 ### After Writing Code
 
@@ -38,6 +37,7 @@ Preserve IDE-serialized .iml files in canonical form. Do not:
 - add comments
 - auto-format
 - normalize (structure or whitespace)
+- add a trailing newline at end of file
 - prune (remove) empty tags
 - reorder elements or attributes
 
@@ -54,9 +54,8 @@ Preserve IDE-serialized .iml files in canonical form. Do not:
 - List dir: `mcp__ijproxy__list_dir`
 <!-- /IF_TOOL:CODEX -->
 <!-- IF_TOOL:CLAUDE -->
-- Read: `read`
-- Edit: `edit`
-- Write: `write`
+- Read: `read_file`
+- Edit/Write: `apply_patch`
 - **Search symbols (preferred):** `search_symbol`
 - Find files (glob): `search_file`
 - Search text: `search_text`
@@ -92,7 +91,7 @@ Available via ijproxy or JetBrains MCP. Use these for semantic operations; avoid
 - Refactors: `rename` (ijproxy) / `rename_refactoring` (JetBrains MCP); use for renames and avoid manual search/replace.
 - Formatting: `reformat_file`
 - Concurrency checks: `find_threading_requirements_usages`, `find_lock_requirements_usages`
-- Project structure: `get_project_modules`, `get_project_dependencies`, `get_repositories`
+- Project structure & VCS: `get_project_modules`, `get_project_dependencies`, `get_repositories`, `git_status`
 - Run configs: `get_run_configurations`, `execute_run_configuration`
 
 ### Tooling rules
@@ -110,7 +109,7 @@ Available via ijproxy or JetBrains MCP. Use these for semantic operations; avoid
 <!-- IF_EDITION:COMMUNITY -->
 - Never shell for file ops (`cat`, `sed`, `find`, `grep`) on repo paths, except the client fallback (`./tools/fd.cmd`, `./tools/rg.cmd`) when no MCP is available.
 <!-- /IF_EDITION:COMMUNITY -->
-- Shell OK for: git, build/test.
+- Shell OK for: git (prefer `git_status` if the tool is available), build/test.
 - Outside repo: native shell permitted.
 
 {{PARTIAL:knowledge-mcps}}

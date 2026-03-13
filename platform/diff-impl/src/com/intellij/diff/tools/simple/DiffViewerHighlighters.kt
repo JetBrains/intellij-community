@@ -7,6 +7,7 @@ import com.intellij.diff.util.DiffGutterOperation
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.ThreeSide
+import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -18,29 +19,9 @@ abstract class DiffViewerHighlighters(
   protected open var innerFragments: MergeInnerDifferences?,
   protected val editorProvider: (ThreeSide) -> EditorEx,
 ) {
-
   private val _highlighters: MutableList<RangeHighlighter> = mutableListOf()
   private val _innerHighlighters: MutableList<RangeHighlighter> = mutableListOf()
   private val _operations: MutableList<DiffGutterOperation> = mutableListOf()
-
-  protected val highlighters: List<RangeHighlighter> get() = _highlighters
-  protected val innerHighlighters: List<RangeHighlighter> get() = _innerHighlighters
-  protected val operations: List<DiffGutterOperation> get() = _operations
-
-  @RequiresEdt
-  protected fun addHighlighters(highlighters: Collection<RangeHighlighter>) {
-    _highlighters.addAll(highlighters)
-  }
-
-  @RequiresEdt
-  protected fun addHighlighter(highlighter: RangeHighlighter) {
-    _highlighters.add(highlighter)
-  }
-
-  @RequiresEdt
-  protected fun addInnerHighlighters(highlighters: Collection<RangeHighlighter>) {
-    _innerHighlighters.addAll(highlighters)
-  }
 
   @RequiresEdt
   protected fun addOperation(operation: DiffGutterOperation?) {
@@ -49,7 +30,7 @@ abstract class DiffViewerHighlighters(
 
   @RequiresEdt
   protected fun installHighlighters() {
-    assert(highlighters.isEmpty())
+    assert(_highlighters.isEmpty())
 
     createHighlighter(ThreeSide.BASE)
     if (change.isChange(Side.LEFT)) createHighlighter(ThreeSide.LEFT)
@@ -58,7 +39,7 @@ abstract class DiffViewerHighlighters(
 
   @RequiresEdt
   protected fun installInnerHighlighters() {
-    assert(innerHighlighters.isEmpty())
+    assert(_innerHighlighters.isEmpty())
 
     createInnerHighlighter(ThreeSide.BASE)
     if (change.isChange(Side.LEFT)) createInnerHighlighter(ThreeSide.LEFT)
@@ -83,6 +64,16 @@ abstract class DiffViewerHighlighters(
   @RequiresEdt
   fun destroyInnerHighlighters() {
     disposeAndClear(_innerHighlighters, RangeHighlighter::dispose)
+  }
+
+  fun destroyInnerHighlighters(document: DocumentEx) {
+    _innerHighlighters.removeAll { highlighter ->
+      (highlighter.document == document).also { shouldRemove ->
+        if (shouldRemove) {
+          highlighter.dispose()
+        }
+      }
+    }
   }
 
   @RequiresEdt
@@ -113,7 +104,7 @@ abstract class DiffViewerHighlighters(
     for (fragment in ranges) {
       val innerStart = start + fragment.startOffset
       val innerEnd = start + fragment.endOffset
-      addInnerHighlighters(DiffDrawUtil.createInlineHighlighter(editor, innerStart, innerEnd, change.diffType))
+      _innerHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, innerStart, innerEnd, change.diffType))
     }
   }
 
@@ -127,12 +118,18 @@ abstract class DiffViewerHighlighters(
     val resolved = change.isResolved(side)
     val ignored = !resolved && innerFragments != null
     val shouldHideWithoutLineNumbers = side == ThreeSide.BASE && !change.isChange(Side.LEFT) && change.isChange(Side.RIGHT)
-    addHighlighters(DiffDrawUtil.LineHighlighterBuilder(editor, startLine, endLine, type)
-                          .withIgnored(ignored)
-                          .withResolved(resolved)
-                          .withHideWithoutLineNumbers(shouldHideWithoutLineNumbers)
-                          .withHideStripeMarkers(side == ThreeSide.BASE)
-                          .done())
+    _highlighters.addAll(DiffDrawUtil.LineHighlighterBuilder(editor, startLine, endLine, type)
+                           .withIgnored(ignored)
+                           .withResolved(resolved)
+                           .withHideWithoutLineNumbers(shouldHideWithoutLineNumbers)
+                           .withHideStripeMarkers(side == ThreeSide.BASE)
+                           .done())
+  }
+
+  fun updateOperations(force: Boolean) {
+    for (operation in _operations) {
+      operation.update(force)
+    }
   }
 
   companion object {

@@ -24,6 +24,23 @@ jvm_library(
     "//platform/util",
   ]
 )
+
+jvm_library(
+  name = "dependency-updater_test_lib",
+  module_name = "intellij.platform.externalSystem.dependencyUpdater",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":dependency-updater",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/util:util_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.externalSystem.dependencyUpdater` end
 
 ### auto-generated section `build intellij.platform.externalSystem.dependencyUpdater.tests` start
@@ -36,7 +53,8 @@ resourcegroup(
 jvm_library(
   name = "externalSystem-dependencyUpdater-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["@lib//:kotlin-stdlib"]
 )
 
 jvm_library(
@@ -47,20 +65,36 @@ jvm_library(
   resources = [":externalSystem-dependencyUpdater-tests_test_resources"],
   deps = [
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/external-system-api/dependency-updater",
+    "//platform/external-system-api/dependency-updater:dependency-updater_test_lib",
     "//java/openapi:java",
+    "//java/openapi:java_test_lib",
+    "@lib//:kotlin-stdlib",
     "//plugins/groovy/groovy-psi:psi",
+    "//plugins/groovy/groovy-psi:psi_test_lib",
     "//plugins/gradle",
+    "//plugins/gradle:gradle_test_lib",
+    "//platform/external-system-impl:externalSystem-tests",
     "//platform/external-system-impl:externalSystem-tests_test_lib",
     "//plugins/gradle/java",
+    "//plugins/gradle/java:java_test_lib",
+    "//plugins/gradle:gradle-tests",
     "//plugins/gradle:gradle-tests_test_lib",
     "//plugins/gradle/gradle-dependency-updater:dependencyUpdater",
+    "//plugins/gradle/gradle-dependency-updater:dependencyUpdater_test_lib",
     "//plugins/maven",
+    "//plugins/maven:maven_test_lib",
     "//plugins/maven/testFramework",
+    "//plugins/maven/testFramework:testFramework_test_lib",
     "//xml/xml-psi-api:psi",
+    "//xml/xml-psi-api:psi_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/java-runtime:rt",
+    "//java/java-runtime:rt_test_lib",
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
   ],
   runtime_deps = [":externalSystem-dependencyUpdater-tests"]
 )

@@ -33,19 +33,26 @@ jvm_library(
   associates = [":vcs-log-graph-impl"],
   deps = [
     "//platform/util",
+    "//platform/util:util_test_lib",
     "//platform/vcs-log/graph-api:vcs-log-graph",
+    "//platform/vcs-log/graph-api:vcs-log-graph_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:junit4",
     "@lib//:kotlin-stdlib",
     "//libraries/guava",
+    "//libraries/guava:guava_test_lib",
     "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
     "@lib//:assert_j",
     "//libraries/kotlin/test:libraries-kotlinTest",
+    "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
   ],
   exports = [
     "//platform/util",
+    "//platform/util:util_test_lib",
     "//platform/vcs-log/graph-api:vcs-log-graph",
+    "//platform/vcs-log/graph-api:vcs-log-graph_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.log.graph.impl` end

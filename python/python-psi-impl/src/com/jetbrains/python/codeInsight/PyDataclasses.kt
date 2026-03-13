@@ -12,6 +12,7 @@ import com.jetbrains.python.codeInsight.PyDataclassParameters.Type
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyDecoratable
 import com.jetbrains.python.psi.PyDecorator
@@ -25,9 +26,10 @@ import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.impl.IntentionalUnstubbing
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.StubAwareComputation
-import com.jetbrains.python.psi.impl.mapArguments
 import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
 import com.jetbrains.python.psi.impl.stubs.PyDataclassStubImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
@@ -40,6 +42,7 @@ import com.jetbrains.python.psi.types.PyCallableParameterImpl
 import com.jetbrains.python.psi.types.PyCallableTypeImpl
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.pyi.PyiUtil
 
 
 object PyDataclassNames {
@@ -53,6 +56,7 @@ object PyDataclassNames {
     const val DATACLASSES_KW_ONLY: String = "dataclasses.KW_ONLY"
     const val DUNDER_POST_INIT: String = "__post_init__"
     const val DUNDER_SLOTS: String = PyNames.SLOTS
+    const val DUNDER_MATCH_ARGS: String = PyNames.MATCH_ARGS
     val DECORATOR_PARAMETERS: List<String> = listOf("init", "repr", "eq", "order", "unsafe_hash", "frozen", "match_args", "kw_only", "slots")
     val HELPER_FUNCTIONS: Set<String> = setOf(DATACLASSES_FIELDS, DATACLASSES_ASDICT, "dataclasses.astuple", DATACLASSES_REPLACE)
   }
@@ -64,6 +68,7 @@ object PyDataclassNames {
     val ATTRS_EVOLVE: Set<String> = setOf("attr.evolve", "attrs.evolve")
     val ATTRS_FROZEN: Set<String> = setOf("attr.frozen", "attrs.frozen")
     const val DUNDER_POST_INIT: String = "__attrs_post_init__"
+    const val DUNDER_ATTRS: String = "__attrs_attrs__"
     val DECORATOR_PARAMETERS: List<String> = listOf(
       "these",
       "repr_ns",
@@ -267,9 +272,10 @@ private fun parseDataclassParametersFromAST(cls: PyClass, context: TypeEvalConte
         val types = decoratorAndTypeAndMarkedCallee(cls.project)
         val decoratorAndTypeAndMarkedCallee = types.firstOrNull { it.first == decoratorQualifiedName } ?: continue
 
-        val mapping = decorator.mapArguments(
-          PyCallableTypeImpl(decoratorAndTypeAndMarkedCallee.third, null),
-          context ?: TypeEvalContext.codeInsightFallback(cls.project)
+        val mapping = PyCallExpressionHelper.mapArguments(
+            decorator,
+            PyCallableTypeImpl(decoratorAndTypeAndMarkedCallee.third, null),
+            context ?: TypeEvalContext.codeInsightFallback(cls.project)
         )
 
         val builder = PyDataclassParametersBuilder(decoratorAndTypeAndMarkedCallee.second, decoratorAndTypeAndMarkedCallee.first)
@@ -780,13 +786,25 @@ fun resolveDataclassFieldParameters(
     else -> null
   }
   if (fieldSpecifierCallable == null) return null
+
+  val shouldMatchOverloads = PyiUtil.getOverloads(fieldSpecifierCallable, context).isNotEmpty()
+  val resolvedCallable = if (shouldMatchOverloads) {
+    val callExpression = IntentionalUnstubbing.onFileOf(field) {
+      field.findAssignedValue() as? PyCallExpression
+    }
+    val overload = callExpression?.let { PyCallExpressionHelper.selectMatchingOverload(fieldSpecifierCallable, it, context) }
+    overload ?: fieldSpecifierCallable
+  }
+  else {
+    fieldSpecifierCallable
+  }
+
   return PyDataclassFieldParameters(
     hasDefault = fieldStub?.hasDefault() ?: false,
     hasDefaultFactory = fieldStub?.hasDefaultFactory() ?: false,
     // TODO Should we delegate to dataclass parameters init here?
-    // TODO support overloading init with Literal types
-    initValue = fieldStub?.initValue() ?: getArgumentDefault("init", fieldSpecifierCallable) ?: true,
-    kwOnly = fieldStub?.kwOnly() ?: getArgumentDefault("kw_only", fieldSpecifierCallable) ?: dataclassParams.kwOnly,
+    initValue = fieldStub?.initValue() ?: getArgumentDefault("init", resolvedCallable) ?: true,
+    kwOnly = fieldStub?.kwOnly() ?: getArgumentDefault("kw_only", resolvedCallable) ?: dataclassParams.kwOnly,
     alias = fieldStub?.alias,
   )
 }

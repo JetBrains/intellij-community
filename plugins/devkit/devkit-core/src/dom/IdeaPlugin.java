@@ -191,6 +191,6 @@ public interface IdeaPlugin extends DomElement {
    * @deprecated the corresponding tag in plugin.xml is not supported anymore, this method is used to highlight occurrences of such a tag
    */
   @SuppressWarnings("SpellCheckingInspection")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull List<? extends Helpset> getHelpsets();
 }

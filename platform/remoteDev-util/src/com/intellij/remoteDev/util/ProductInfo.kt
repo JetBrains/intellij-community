@@ -2,7 +2,7 @@ package com.intellij.remoteDev.util
 
 import com.google.gson.GsonBuilder
 import com.intellij.openapi.util.NlsSafe
-import java.util.*
+import java.util.Locale
 
 
 // NOTE: add more fields if needed

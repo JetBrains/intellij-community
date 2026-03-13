@@ -1,5 +1,6 @@
 // IGNORE_K1
 // "Initialize with constructor parameter" "true"
+// K2_ERROR: Property must be initialized.
 val n: Int = 1
 
 class A(m: Int = n, n1: Int) {

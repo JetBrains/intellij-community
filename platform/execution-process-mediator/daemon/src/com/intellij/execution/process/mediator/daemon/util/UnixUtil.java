@@ -2,7 +2,11 @@
 package com.intellij.execution.process.mediator.daemon.util;
 
 import com.intellij.execution.process.mediator.daemon.util.NativeCall.NativeCallException;
-import com.sun.jna.*;
+import com.sun.jna.Library;
+import com.sun.jna.Memory;
+import com.sun.jna.Native;
+import com.sun.jna.Platform;
+import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

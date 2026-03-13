@@ -1,10 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.pushDown
 
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.refactoring.RefactoringBundle
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -14,11 +12,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor.Empty
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
-import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.applyMarking
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.clearMarking
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.markElements
-import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.renderForConflicts
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.pushDown.KotlinPushDownProcessor
 import org.jetbrains.kotlin.name.FqName
@@ -68,17 +64,6 @@ internal class K2PushDownProcessor(
     membersToMove: List<KotlinMemberInfo>,
 ) : KotlinPushDownProcessor(project) {
     override val context: K2PushDownContext = K2PushDownContext(sourceClass, membersToMove)
-
-    override fun renderSourceClassForConflicts(): String = myProject.runSynchronouslyWithProgress(
-        RefactoringBundle.message("detecting.possible.conflicts"),
-        canBeCanceled = true,
-    ) {
-        runReadAction {
-            analyze(context.sourceClass) {
-                context.sourceClass.symbol.renderForConflicts(analysisSession = this)
-            }
-        }
-    } ?: ""
 
     override fun analyzePushDownConflicts(
         usages: Array<out UsageInfo>,

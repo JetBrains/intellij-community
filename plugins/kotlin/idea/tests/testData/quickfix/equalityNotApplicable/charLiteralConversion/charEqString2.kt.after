@@ -1,4 +1,5 @@
 // "Convert string to character literal" "true"
+// K2_ERROR: Operator '==' cannot be applied to 'String' and 'Char'.
 fun test(c: Char): Boolean {
     return '\t' == c
 }

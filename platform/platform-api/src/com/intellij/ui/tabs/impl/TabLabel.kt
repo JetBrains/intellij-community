@@ -2,7 +2,15 @@
 package com.intellij.ui.tabs.impl
 
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionWrapperUtil
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoolean
 import com.intellij.openapi.project.DumbAware
@@ -10,8 +18,15 @@ import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.Strings
-import com.intellij.ui.*
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
+import com.intellij.ui.InplaceButton
+import com.intellij.ui.IslandsState
+import com.intellij.ui.LayeredIcon
+import com.intellij.ui.RelativeFont
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleColoredText
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.scale.JBUIScale.scale
@@ -21,14 +36,34 @@ import com.intellij.ui.tabs.UiDecorator.UiDecoration
 import com.intellij.ui.tabs.impl.JBTabsImpl.Companion.isSelectionClick
 import com.intellij.ui.tabs.impl.TabLabel.MergedUiDecoration
 import com.intellij.util.MathUtil
-import com.intellij.util.ui.*
+import com.intellij.util.ui.Centerizer
+import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil.labelFont
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.*
+import java.awt.BorderLayout
 import java.awt.BorderLayout.NORTH
 import java.awt.BorderLayout.SOUTH
-import java.awt.event.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.Font
+import java.awt.GradientPaint
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Insets
+import java.awt.Rectangle
+import java.awt.RenderingHints
+import java.awt.event.FocusEvent
+import java.awt.event.FocusListener
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import java.util.function.Function
 import javax.accessibility.Accessible
 import javax.accessibility.AccessibleContext
@@ -286,7 +321,18 @@ open class TabLabel @Internal constructor(
     if (tabs.isDropTarget(info)) {
       if (tabs.dropSide == -1) {
         g.color = JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND
-        g.fillRect(0, 0, width, height)
+
+        if (IslandsPainterProvider.getInstance()?.isRoundedTabDuringDrag() == true) {
+          val arc = getDropTargetArc()
+          val offsetTop = getDropTargetTopOffset()
+          val offsetBottom = getDropTargetBottomOffset()
+
+          (g as Graphics2D).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+          g.fillRoundRect(0, offsetTop, width, height - offsetBottom, arc, arc)
+        }
+        else {
+          g.fillRect(0, 0, width, height)
+        }
       }
       return
     }
@@ -296,14 +342,22 @@ open class TabLabel @Internal constructor(
       paintFadeout(g)
     }
   }
+  @Internal
+  protected open fun getDropTargetArc(): Int = JBUI.CurrentTheme.MainToolbar.Button.hoverArc().get()
+
+  @Internal
+  protected open fun getDropTargetTopOffset(): Int = JBUI.scale(6)
+
+  @Internal
+  protected open fun getDropTargetBottomOffset(): Int = getDropTargetTopOffset() * 2 + JBUI.scale(1)
 
   protected open fun shouldPaintFadeout(): Boolean = !Registry.`is`("ui.simplified", false) && tabs.isSingleRow
 
   protected fun paintFadeout(g: Graphics) {
     val g2d = g.create() as Graphics2D
     try {
-      val isTabOccupiesWholeHeight = IslandsPainterProvider.getInstance()?.isTabOccupiesWholeHeight() != false
-      val tabBg = if (isTabOccupiesWholeHeight) effectiveBackground else tabs.tabPainter.getBackgroundColor()
+      val isIslands = IslandsState.isEnabled()
+      val tabBg = if (isIslands) tabs.tabPainter.getBackgroundColor() else effectiveBackground
       val transparent = ColorUtil.withAlpha(tabBg, 0.0)
       val borderThickness = tabs.borderThickness
       val width = JBUI.scale(MathUtil.clamp(Registry.intValue("ide.editor.tabs.fadeout.width", 10), 1, 200))
@@ -319,8 +373,18 @@ open class TabLabel @Internal constructor(
       val contentRect = labelPlaceholder.bounds
       // Fadeout for right side before pin/close button (needed only in side placements and in squeezing layout)
       if (contentRect.width < labelPlaceholder.preferredSize.width + tabs.tabHGap) {
-        if (isTabOccupiesWholeHeight) { // Can be implemented later for isTabOccupiesWholeHeight
-          val rightRect = Rectangle(contentRect.x + contentRect.width - width, borderThickness, width, rect.height - 2 * borderThickness)
+        val rightRect = Rectangle(contentRect.x + contentRect.width - width, borderThickness, width, rect.height - 2 * borderThickness)
+        if (isIslands) {
+          val composedBg = IslandsPainterProvider.getInstance()?.getEditorTabComposedBgColor(
+            tabs, tabs.tabPainter, info.tabColor, tabs.isActiveTabs(info), isHovered, isSelected)
+          if (composedBg != null) {
+            val labelCoord = SwingUtilities.convertPoint(label, 0, 0, this)
+            rightRect.y = labelCoord.y
+            rightRect.height = label.height
+            paintGradientRect(g2d, rightRect, ColorUtil.withAlpha(composedBg, 0.0), composedBg)
+          }
+        }
+        else {
           paintGradientRect(g2d, rightRect, transparent, tabBg)
         }
       }

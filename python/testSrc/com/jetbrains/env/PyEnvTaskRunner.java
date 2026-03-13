@@ -11,7 +11,6 @@ import com.intellij.python.test.env.core.PyEnvironmentFactory;
 import com.intellij.python.test.env.core.PythonVersionKt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.LoggingRule;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;

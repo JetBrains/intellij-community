@@ -26,6 +26,7 @@ import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.inspections.PyConstructorSignatureUtil;
 import com.jetbrains.python.inspections.PyInspectionExtension;
 import com.jetbrains.python.inspections.PyInspectionVisitor;
 import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
@@ -133,7 +134,7 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     if (owner instanceof PyFunction pyFunction && PyiUtil.isOverload(pyFunction, myTypeEvalContext)) {
       return;
     }
-    if (!(owner instanceof PyClass) && !callsLocals(owner)) {
+    if (!callsLocals(owner)) {
       collectAllWrites(owner);
     }
     owner.accept(new PyRecursiveElementVisitor() {
@@ -155,6 +156,10 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
       if (typeParameterList != null) {
         scopeWrites.addAll(typeParameterList.getTypeParameters());
       }
+    }
+    if (owner instanceof PyClass) {
+      myScopeWrites.put(owner, Collections.unmodifiableSet(scopeWrites));
+      return;
     }
     final Instruction[] instructions = ControlFlowCache.getControlFlow(owner).getInstructions();
     for (Instruction instruction : instructions) {
@@ -187,7 +192,7 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         if (element == null || !PsiTreeUtil.isAncestor(owner, element, false)) {
           continue;
         }
-        // Ignore arguments of import statement
+        // Ignore arguments of the import statement
         if (PyImportStatementNavigator.getImportStatementByElement(element) != null) {
           continue;
         }
@@ -303,7 +308,7 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
                                                               int startInstruction,
                                                               @Nullable PsiElement scopeAnchor) {
     Set<PsiElement> readsFromInstruction = new HashSet<>();
-    // Check if the element is declared out of scope, mark all out of scope write accesses as used
+    // Check if the element is declared out of scope, mark all out-of-scope write accesses as used
     if (scopeAnchor != null) {
       final ScopeOwner declOwner = ScopeUtil.getDeclarationScopeOwner(scopeAnchor, name);
       if (declOwner != null && declOwner != owner) {
@@ -319,7 +324,7 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     }
     ControlFlowUtil.iteratePrev(startInstruction, instructions, inst -> {
       final PsiElement instElement = inst.getElement();
-      // Mark function as used
+      // Mark the function as used
       if (instElement instanceof PyFunction) {
         if (name.equals(((PyFunction)instElement).getName())) {
           readsFromInstruction.add(instElement);
@@ -425,7 +430,7 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
                                             ? (PyNamedParameter)element
                                             : (PyNamedParameter)element.getParent();
           name = namedParameter.getName();
-          // When function is inside a class, first parameter may be either self or cls which is always 'used'.
+          // When the function is inside a class, the first parameter may be either self or cls which is always 'used'.
           if (namedParameter.isSelf()) {
             continue;
           }
@@ -436,6 +441,13 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           PyClass containingClass = null;
           PyParameterList paramList = PsiTreeUtil.getParentOfType(element, PyParameterList.class);
           if (paramList != null && paramList.getParent() instanceof PyFunction func) {
+            if (PyUtil.isInitMethod(func)) {
+              final List<PyFunction> complementaryMethods =
+                PyConstructorSignatureUtil.findComplementaryConstructors(func, myTypeEvalContext);
+              if (!complementaryMethods.isEmpty()) {
+                continue;
+              }
+            }
             containingClass = func.getContainingClass();
             if (containingClass != null &&
                 PyUtil.isInitMethod(func) &&
@@ -610,7 +622,7 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
       final PyFile pyFile = (PyFile)PyElementGenerator.getInstance(element.getProject()).createDummyFile(LanguageLevel.getDefault(),
                                                                                                          "for _ in tuples:\n  pass"
       );
-      final PyExpression target = ((PyForStatement)pyFile.getStatements().get(0)).getForPart().getTarget();
+      final PyExpression target = ((PyForStatement)pyFile.getStatements().getFirst()).getForPart().getTarget();
       if (target != null) {
         element.replace(target);
       }

@@ -5,7 +5,17 @@ import com.intellij.collaboration.async.cancelAndJoinSilently
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
-import com.intellij.collaboration.ui.codereview.editor.*
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorModel
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewNavigableEditorViewModel
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewRendererFactory
+import com.intellij.collaboration.ui.codereview.editor.EditorMapped
+import com.intellij.collaboration.ui.codereview.editor.RendererFactory
+import com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil
+import com.intellij.collaboration.ui.codereview.editor.controlInlaysIn
+import com.intellij.collaboration.ui.codereview.editor.renderInlays
 import com.intellij.collaboration.util.HashingUtil
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
@@ -19,9 +29,21 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
@@ -188,7 +210,12 @@ suspend fun DiffViewerBase.showCodeReview(editorRenderer: EditorCodeReviewRender
                 viewer.editor,
                 viewer.side,
                 { loc -> loc.takeIf { it.first == viewer.side }?.second },
-                { lineIdx -> DiffLineLocation(viewer.side, lineIdx) },
+                { lineIdx ->
+                  DiffLineLocation(viewer.side, lineIdx).takeUnless {
+                    ReviewInEditorUtil.isLastBlankLine(editor.document,
+                                                       lineIdx)
+                  }
+                },
                 { line -> if (viewer.side == Side.LEFT) line to -1 else -1 to line }
               )
             }
@@ -200,8 +227,11 @@ suspend fun DiffViewerBase.showCodeReview(editorRenderer: EditorCodeReviewRender
                 null,
                 { (side, lineIdx) -> viewer.transferLineToOnesideStrict(side, lineIdx).takeIf { it >= 0 } },
                 { lineIdx ->
-                  val (indices, side) = viewer.transferLineFromOneside(lineIdx)
-                  side.select(indices).takeIf { it >= 0 }?.let { side to it }
+                  val (indices, side) = viewer.transferLineFromOnesideStrict(lineIdx) ?: return@editorRenderer null
+                  val sideLineIdx = side.select(indices).takeIf { it >= 0 } ?: return@editorRenderer null
+                  // Check line against the document of original side
+                  if (ReviewInEditorUtil.isLastBlankLine(viewer.getDocument(side), sideLineIdx)) return@editorRenderer null
+                  side to sideLineIdx
                 },
                 { line ->
                   val (leftLine, rightLine) = viewer.transferLineFromOneside(line).first
@@ -217,7 +247,12 @@ suspend fun DiffViewerBase.showCodeReview(editorRenderer: EditorCodeReviewRender
                   viewer.editor1,
                   Side.LEFT,
                   { (side, lineIdx) -> lineIdx.takeIf { side == Side.LEFT } },
-                  { lineIdx -> DiffLineLocation(Side.LEFT, lineIdx) },
+                  { lineIdx ->
+                    DiffLineLocation(Side.LEFT, lineIdx).takeUnless {
+                      ReviewInEditorUtil.isLastBlankLine(editor1.document,
+                                                         lineIdx)
+                    }
+                  },
                   { line -> line to viewer.transferPosition(Side.RIGHT, LineCol(line, 0)).line }
                 )
               }
@@ -226,7 +261,12 @@ suspend fun DiffViewerBase.showCodeReview(editorRenderer: EditorCodeReviewRender
                   viewer.editor2,
                   Side.RIGHT,
                   { (side, lineIdx) -> lineIdx.takeIf { side == Side.RIGHT } },
-                  { lineIdx -> DiffLineLocation(Side.RIGHT, lineIdx) },
+                  { lineIdx ->
+                    DiffLineLocation(Side.RIGHT, lineIdx).takeUnless {
+                      ReviewInEditorUtil.isLastBlankLine(editor2.document,
+                                                         lineIdx)
+                    }
+                  },
                   { line -> viewer.transferPosition(Side.LEFT, LineCol(line, 0)).line to line }
                 )
               }

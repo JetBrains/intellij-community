@@ -7,6 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.util.elementType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -35,7 +36,7 @@ class SortModifiersInspection : KotlinApplicableInspectionBase.Simple<KtModifier
         val modifiers = element.modifierKeywordTokens()
         if (modifiers.isEmpty()) return false
         val sortedModifiers = sortModifiers(modifiers)
-        return modifiers != sortedModifiers || element.modifiersBeforeAnnotations()
+        return modifiers != sortedModifiers || element.modifiersBeforeAnnotations() || element.modifierBeforeContextParameterList()
     }
 
     override fun buildVisitor(
@@ -46,7 +47,7 @@ class SortModifiersInspection : KotlinApplicableInspectionBase.Simple<KtModifier
     }
 
     override fun getApplicableRanges(element: KtModifierList): List<TextRange> {
-        val modifierElements = element.allChildren.toList()
+        val modifierElements = element.allChildren
         val startElement = modifierElements.firstOrNull { it.node.elementType is KtModifierKeywordToken } ?: return emptyList()
         val endElement = modifierElements.lastOrNull { it.node.elementType is KtModifierKeywordToken } ?: return emptyList()
         return listOf(TextRange(startElement.startOffset, endElement.endOffset).shiftLeft(element.startOffset))
@@ -80,16 +81,11 @@ class SortModifiersInspection : KotlinApplicableInspectionBase.Simple<KtModifier
     }
 
     private fun KtModifierList.modifiersBeforeAnnotations(): Boolean {
-        val modifierElements = this.allChildren.toList()
-        var modifiersBeforeAnnotations = false
-        var seenModifiers = false
-        for (modifierElement in modifierElements) {
-            if (modifierElement.node.elementType is KtModifierKeywordToken) {
-                seenModifiers = true
-            } else if (seenModifiers && (modifierElement is KtAnnotationEntry || modifierElement is KtAnnotation)) {
-                modifiersBeforeAnnotations = true
-            }
-        }
-        return modifiersBeforeAnnotations
+        val firstAnnotation = allChildren.indexOfFirst { it is KtAnnotationEntry || it is KtAnnotation }
+        return firstAnnotation != -1 &&
+                allChildren.take(firstAnnotation).any { it.node.elementType is KtModifierKeywordToken }
     }
+
+    private fun KtModifierList.modifierBeforeContextParameterList() = allChildren.last.elementType !is KtModifierKeywordToken
+
 }

@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:fastutil-min"],
   runtime_deps = ["@lib//:fastutil-min"]
 )
+
+jvm_library(
+  name = "fastutil_test_lib",
+  module_name = "intellij.libraries.fastutil",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:fastutil-min"],
+  runtime_deps = [":fastutil"]
+)
 ### auto-generated section `build intellij.libraries.fastutil` end

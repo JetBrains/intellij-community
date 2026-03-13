@@ -1,4 +1,5 @@
 // "Add initializer" "true"
+// K2_ERROR: Property must be initialized.
 <caret>var n: Int
     set(value: Int) {}
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.InitializePropertyQuickFixFactory$AddInitializerFix

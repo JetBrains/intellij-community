@@ -4,6 +4,7 @@ package com.intellij.notebooks.visualization.ui
 import com.intellij.notebooks.ui.bind
 import com.intellij.notebooks.visualization.outputs.NotebookOutputInlayShowable
 import com.intellij.notebooks.visualization.outputs.impl.CollapsingComponent
+import com.intellij.notebooks.visualization.ui.NotebookUiUtils.intersectsEvenIfEmpty
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.GutterIconRenderer
@@ -87,7 +88,7 @@ class EditorCellOutputView internal constructor(
     val component = component.mainComponent as? NotebookOutputInlayShowable ?: return
     if (component !is JComponent) return
     val componentRect = SwingUtilities.convertRectangle(component, component.bounds, editor.scrollPane.viewport.view)
-    component.shown = editor.scrollPane.viewport.viewRect.intersects(componentRect)
+    component.shown = editor.scrollPane.viewport.viewRect.intersectsEvenIfEmpty(componentRect)
   }
 
   override fun calculateBounds(): Rectangle {

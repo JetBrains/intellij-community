@@ -1,0 +1,40 @@
+<idea-plugin>
+  <id>com.intellij.agent.workbench</id>
+  <name>Agent Workbench</name>
+  <description><![CDATA[
+    Run and manage AI coding agents — Codex, Claude, and more — directly inside your IDE.
+    <ul>
+      <li><b>Quick Launch</b> — press <code>Cmd+\</code> / <code>Ctrl+\</code> from anywhere to start a new task or continue an existing one. Your current selection, file, and symbol are attached automatically.</li>
+      <li><b>AI Review</b> — press <code>Alt+Ctrl+\</code> / <code>Opt+Cmd+\</code> to review local changes or commits with AI and catch bugs, security issues, and style problems before they reach the main branch.</li>
+      <li><b>All Sessions in One Place</b> — browse, reopen, and resume AI sessions across providers, grouped by project.</li>
+      <li><b>Persistent Chat Tabs</b> — each session opens in its own editor tab and survives IDE restarts.</li>
+      <li><b>Separate Window Mode</b> — run AI chat in a dedicated frame so you can work on code and manage tasks side by side.</li>
+      <li><b>Automatic Context</b> — editor selections, VCS changes, project-view selections, and test results are collected and sent with your prompt so the agent has the context it needs.</li>
+    </ul>
+    <em>Experimental — features are under active development and may change without notice.</em>
+  ]]></description>
+  <vendor>JetBrains</vendor>
+  <content namespace="jetbrains">
+    <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.json"/>
+    <module name="intellij.agent.workbench.claude.common"/>
+    <module name="intellij.agent.workbench.claude.sessions"/>
+    <module name="intellij.agent.workbench.codex.common"/>
+    <module name="intellij.agent.workbench.codex.sessions"/>
+    <module name="intellij.agent.workbench.sessions.core"/>
+    <module name="intellij.agent.workbench.prompt"/>
+    <module name="intellij.agent.workbench.prompt.vcs"/>
+    <module name="intellij.agent.workbench.prompt.testrunner"/>
+    <module name="intellij.agent.workbench.sessions"/>
+    <module name="intellij.agent.workbench.sessions.actions"/>
+    <module name="intellij.agent.workbench.sessions.toolwindow"/>
+    <module name="intellij.agent.workbench.chat"/>
+    <module name="intellij.agent.workbench.filewatch"/>
+  </content>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="agent.workbench.codex.tui.patch.folding"
+                 defaultValue="false"
+                 description="Collapse large Codex TUI patch transcripts in Agent Workbench chat tabs"/>
+  </extensions>
+</idea-plugin>

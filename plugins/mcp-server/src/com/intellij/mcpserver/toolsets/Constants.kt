@@ -14,5 +14,5 @@ object Constants {
   const val MAX_LINES_COUNT_VALUE: Int = 1000
   const val MAX_USAGE_TEXT_CHARS: Int = 1000
   const val TRUNCATE_MODE_DESCRIPTION: String = "How to truncate the text: from the start, in the middle, at the end, or don't truncate at all"
-  val TRUCATE_MODE_VALUE: TruncateMode = TruncateMode.START
+  internal val TRUCATE_MODE_VALUE: TruncateMode = TruncateMode.START
 }

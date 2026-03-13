@@ -39,6 +39,10 @@ import java.awt.FontMetrics;
 import java.awt.Rectangle;
 import java.util.Collection;
 
+/**
+ * @deprecated This class is not used anymore. Please inline usages of its helper methods.
+ */
+@Deprecated(forRemoval = true)
 public final class UiUtils {
 
   private UiUtils() {

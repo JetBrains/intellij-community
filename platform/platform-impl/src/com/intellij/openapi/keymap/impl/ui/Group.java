@@ -1,14 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.keymap.KeymapGroup;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -132,12 +136,12 @@ public final class Group implements KeymapGroup {
   }
 
   public void normalizeSeparators() {
-    while (!myChildren.isEmpty() && (myChildren.get(0) instanceof Separator s) && s.getText() != null) {
-      myChildren.remove(0);
+    while (!myChildren.isEmpty() && (myChildren.getFirst() instanceof Separator s) && s.getText() != null) {
+      myChildren.removeFirst();
     }
 
-    while (!myChildren.isEmpty() && myChildren.get(myChildren.size() - 1) instanceof Separator) {
-      myChildren.remove(myChildren.size() - 1);
+    while (!myChildren.isEmpty() && myChildren.getLast() instanceof Separator) {
+      myChildren.removeLast();
     }
 
     for (int i = 1; i < myChildren.size() - 1; i++) {

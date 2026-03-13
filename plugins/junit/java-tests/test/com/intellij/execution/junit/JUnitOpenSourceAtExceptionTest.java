@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.Location;
@@ -22,7 +22,45 @@ public class JUnitOpenSourceAtExceptionTest extends LightJavaCodeInsightFixtureT
     myFixture.addClass("package junit.framework; public class TestCase {}");
   }
 
-  public void testStackTraceParseerAcceptsJavaStacktrace() {
+  public void testStackTraceParserAcceptsInnerClassStacktrace() {
+    myFixture.addClass("""
+                         package org.example;
+                         
+                         public class Outer1Test {
+                           public static class Outer2Test {
+                             public static class InnerTest extends junit.framework.TestCase {
+                               public void testMe() {
+                                 int i = 0;
+                                 fail();
+                               }
+                             }
+                           }
+                         }""");
+
+    final SMTestProxy testProxy = new SMTestProxy("testMe", false, "java:test://org.example.Outer1Test$Outer2Test$InnerTest/testMe");
+    testProxy.setTestFailed("failure", """
+      \tat junit.framework.Assert.fail(Assert.java:57)
+      \tat org.example.Outer1Test$Outer2Test$InnerTest.testMe(Dummy.java:9)
+      """, true);
+    final Project project = getProject();
+    final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
+    testProxy.setLocator(JavaTestLocator.INSTANCE);
+
+    final Location location = testProxy.getLocation(project, searchScope);
+    assertNotNull(location);
+    assertInstanceOf(location, MethodLocation.class);
+
+    final JUnitConfiguration configuration = new JUnitConfiguration("p", getProject());
+    final Navigatable descriptor =
+      testProxy.getDescriptor(location, new JUnitConsoleProperties(configuration, DefaultRunExecutor.getRunExecutorInstance()));
+    assertInstanceOf(descriptor, OpenFileDescriptor.class);
+    final OpenFileDescriptor fileDescriptor = (OpenFileDescriptor)descriptor;
+    final VirtualFile file = fileDescriptor.getFile();
+    assertNotNull(file);
+    assertEquals(8, fileDescriptor.getLine());
+  }
+
+  public void testStackTraceParserAcceptsJavaStacktrace() {
     myFixture.addClass("""
                          abstract class ATest extends junit.framework.TestCase {  public void testMe() {
                              int i = 0;

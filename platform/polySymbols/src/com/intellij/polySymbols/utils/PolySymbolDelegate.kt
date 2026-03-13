@@ -7,9 +7,18 @@ import com.intellij.navigation.NavigatableSymbol
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationTarget
-import com.intellij.polySymbols.*
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolApiStatus
+import com.intellij.polySymbols.PolySymbolKind
+import com.intellij.polySymbols.PolySymbolModifier
+import com.intellij.polySymbols.PolySymbolProperty
+import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.query.*
+import com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
+import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
+import com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams
+import com.intellij.polySymbols.query.PolySymbolQueryStack
+import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
 import com.intellij.polySymbols.refactoring.impl.PolySymbolDelegatedRenameTargetImpl
 import com.intellij.polySymbols.search.PolySymbolSearchTarget
@@ -42,7 +51,7 @@ interface PolySymbolDelegate<T : PolySymbol> : PolySymbol, PolySymbolScope {
     get() = delegate.priority
 
   override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
-    delegate[property]
+    super.get(property) ?: delegate[property]
 
   override fun getDocumentationTarget(location: PsiElement?): DocumentationTarget? =
     delegate.getDocumentationTarget(location)
@@ -91,9 +100,6 @@ interface PolySymbolDelegate<T : PolySymbol> : PolySymbol, PolySymbolScope {
     }
 
   override fun createPointer(): Pointer<out PolySymbolDelegate<T>>
-
-  override fun getModificationCount(): Long =
-    (delegate as? PolySymbolScope)?.modificationCount ?: 0
 
   companion object {
 

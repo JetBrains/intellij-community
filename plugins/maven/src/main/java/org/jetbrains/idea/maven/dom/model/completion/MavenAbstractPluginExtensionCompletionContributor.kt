@@ -2,40 +2,40 @@
 package org.jetbrains.idea.maven.dom.model.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
+import org.jetbrains.idea.maven.completion.MavenDependencySearchService
 import org.jetbrains.idea.maven.dom.model.MavenDomExtension
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
-import org.jetbrains.idea.reposearch.DependencySearchService
-import org.jetbrains.idea.reposearch.RepositoryArtifactData
-import org.jetbrains.idea.reposearch.SearchParameters
+import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 import java.util.function.Consumer
 
 
 abstract class MavenAbstractPluginExtensionCompletionContributor(tagName: String) : MavenCoordinateCompletionContributor(tagName) {
-    override suspend fun find(service: DependencySearchService,
+    override suspend fun find(service: MavenDependencySearchService,
                               coordinates: MavenDomShortArtifactCoordinates,
                               parameters: CompletionParameters,
-                              consumer: (RepositoryArtifactData) -> Unit) {
+                              consumer: (MavenRepoArtifactInfo) -> Unit) {
 
     val text: String = trimDummy(coordinates.xmlTag?.value?.text)
     val splitted = text.split(':')
-    val searchParameters = createSearchParameters(parameters)
+    val (useCache, useLocalOnly) = createSearchParameters(parameters)
     if (splitted.size < 2) {
-      return findPluginByArtifactId(service, text, searchParameters, consumer)
+      return findPluginByArtifactId(service, text, useCache, useLocalOnly, consumer)
     }
-    return service.suggestPrefixAsync(splitted[0], splitted[1], createSearchParameters(parameters), consumer)
+    return service.suggestPrefix(splitted[0], splitted[1], useCache, useLocalOnly, consumer)
   }
 
 
   companion object {
     @JvmStatic
-    suspend fun findPluginByArtifactId(service: DependencySearchService,
+    suspend fun findPluginByArtifactId(service: MavenDependencySearchService,
                                        text: String,
-                                       searchParameters: SearchParameters,
-                                       consumer: Consumer<RepositoryArtifactData>) {
+                                       useCache: Boolean,
+                                       useLocalOnly: Boolean,
+                                       consumer: Consumer<MavenRepoArtifactInfo>) {
       //todo: read groups from maven settings.xml
-      service.suggestPrefixAsync("org.apache.maven.plugins", text, searchParameters, consumer)
-      service.suggestPrefixAsync("org.codehaus.mojo", text, searchParameters, consumer)
+      service.suggestPrefix("org.apache.maven.plugins", text, useCache, useLocalOnly, consumer)
+      service.suggestPrefix("org.codehaus.mojo", text, useCache, useLocalOnly, consumer)
     }
 
     @JvmStatic

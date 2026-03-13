@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
-import org.jetbrains.kotlin.analysis.api.projectStructure.analysisContextModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.contextModule
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.contextParameters
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
@@ -102,7 +102,9 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
     override fun refineSignaturesWithResolve(state: SuggestedRefactoringState): SuggestedRefactoringState {
         val newDeclaration = state.declaration as? KtCallableDeclaration ?: return state
         val oldDeclaration = state.restoredDeclarationCopy() as? KtCallableDeclaration ?: return state
-        oldDeclaration.containingKtFile.virtualFile?.analysisContextModule = newDeclaration.getKaModule(newDeclaration.project, useSiteModule = null)
+
+        @OptIn(KaExperimentalApi::class)
+        oldDeclaration.containingKtFile.contextModule = newDeclaration.getKaModule(newDeclaration.project, useSiteModule = null)
 
         val descriptorWithOldSignature = allowAnalysisFromWriteAction { allowAnalysisOnEdt { analyzeCopy(oldDeclaration, KaDanglingFileResolutionMode.PREFER_SELF) { signatureTypes(oldDeclaration) } } } ?: return state
         val descriptorWithNewSignature = allowAnalysisFromWriteAction { allowAnalysisOnEdt { analyze(newDeclaration) { signatureTypes(newDeclaration) } } } ?: return state

@@ -21,6 +21,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
@@ -49,14 +50,14 @@ public final class LazyQuickFixUpdaterImpl implements LazyQuickFixUpdater {
 
   @Override
   @RequiresBackgroundThread
-  public void waitQuickFixesSynchronously(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull HighlightInfo info) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
-    ReadAction.run(() -> {
+  public void waitQuickFixesSynchronously(@NotNull HighlightInfo info, @NotNull Project project, @NotNull Document document) {
+    ThreadingAssertions.assertBackgroundThread();
+
+    ReadAction.runBlocking(() -> {
       try {
-        info.computeQuickFixesSynchronously(psiFile, editor.getDocument());
+        info.computeQuickFixesSynchronously(project, document);
       }
       catch (ExecutionException | InterruptedException ignored) {
-
       }
     });
   }
@@ -118,9 +119,11 @@ public final class LazyQuickFixUpdaterImpl implements LazyQuickFixUpdater {
 
   @TestOnly
   @RequiresEdt
-  public void waitForBackgroundJobIfStartedInTests(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull HighlightInfo info, long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+  public void waitForBackgroundJobIfStartedInTests(@NotNull Project project,
+                                                   @NotNull Document document,
+                                                   @NotNull HighlightInfo info, long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    AppExecutorUtil.getAppExecutorService().submit(() -> waitQuickFixesSynchronously(psiFile, editor, info))
+    AppExecutorUtil.getAppExecutorService().submit(() -> waitQuickFixesSynchronously(info, project, document))
     .get(timeout, unit);
   }
 }

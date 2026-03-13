@@ -1,0 +1,53 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.automaton"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.concurrency"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.rpc.topics"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint name="lang.logicalStructureTreeElementProvider" interface="com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider" dynamic="true"/>
+    <extensionPoint name="lang.logicalStructureElementsProvider" beanClass="com.intellij.openapi.util.ClassExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.ide.structureView.logical.LogicalStructureElementsProvider"/>
+    </extensionPoint>
+    <extensionPoint name="structurePopupProvider" interface="com.intellij.platform.structureView.impl.StructurePopupProvider" dynamic="true"/>
+  </extensionPoints>
+  <actions>
+    <action id="FileStructurePopup" class="com.intellij.ide.actions.ViewStructureAction">
+      <add-to-group group-id="GoToCodeGroup" anchor="before" relative-to-action="ShowFilePath"/>
+    </action>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <structureViewBuilder factoryClass="com.intellij.ide.highlighter.LanguageStructureViewBuilderProvider"/>
+    <selectInTarget implementation="com.intellij.ide.impl.StructureViewSelectInTarget"/>
+
+    <projectService serviceInterface="com.intellij.ide.structureView.StructureViewFactory"
+                    serviceImplementation="com.intellij.ide.structureView.impl.StructureViewFactoryImpl"/>
+
+    <toolWindow id="Structure" anchor="left" icon="AllIcons.Toolwindows.ToolWindowStructure" secondary="true"
+                factoryClass="com.intellij.ide.structureView.impl.StructureViewToolWindowFactory"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.structureView.StructureViewEventsCollector"/>
+
+    <structurePopupProvider implementation="com.intellij.ide.util.OldStructurePopupProviderImpl"/>
+
+    <registryKey key="frontend.structure.popup" defaultValue="false" description="Enables frontend side file structure popup" />
+  </extensions>
+</idea-plugin>

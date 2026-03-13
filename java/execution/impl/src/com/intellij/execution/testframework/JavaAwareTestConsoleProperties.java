@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.testframework;
 
@@ -105,7 +105,8 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
     final String[] stackTrace = new LineTokenizer(stacktrace).execute();
     for (String aStackTrace : stackTrace) {
       final StackTraceLine line = new StackTraceLine(containingClass.getProject(), aStackTrace);
-      if (methodName.equals(line.getMethodName()) && qualifiedName.equals(line.getClassName())) {
+      String className = getQualifiedName(line);
+      if (methodName.equals(line.getMethodName()) && qualifiedName.equals(className)) {
         lastLine = line;
         break;
       }
@@ -125,6 +126,12 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
       }
     }
     return null;
+  }
+
+  private static @Nullable String getQualifiedName(@NotNull StackTraceLine line) {
+    String className = line.getClassName();
+    if (className == null) return null;
+    return className.replace('$', '.');
   }
 
   public @Nullable DebuggerSession getDebugSession() {

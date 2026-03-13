@@ -87,7 +87,7 @@ final class MavenModuleReferenceSearcher extends QueryExecutorBase<PsiReference,
                                     @NotNull PsiDirectory directory,
                                     @NotNull Processor<? super PsiReference> consumer) {
     var projectsManager = MavenProjectsManager.getInstance(project);
-    if (!projectsManager.isMavenizedModule(module)) return;
+    if (!projectsManager.isInitialized() || !projectsManager.isMavenizedModule(module)) return;
     var mavenProject = projectsManager.findProject(module);
     if (null == mavenProject) return;
     var pomFile = mavenProject.getFile();

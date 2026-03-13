@@ -91,8 +91,10 @@ public abstract class AbstractBasicJavadocParsingTest extends AbstractBasicJavaP
   public void testIDEADEV_41403() { doTest(true); }
 
   public void testValueQualified() { doTest(true); }
+  public void testValueQualifiedBreak() { doTest(true); }
   public void testValueUnqualifiedWithHash() { doTest(true); }
   public void testValueUnqualifiedWithoutHash() { doTest(true); }
+  public void testValueWithFormat() { doTest(true); }
 
   public void testThrowsTag() { doTest(true); }
   public void testUsesTag() { doTest(true); }

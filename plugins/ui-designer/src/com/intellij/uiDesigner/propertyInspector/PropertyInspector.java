@@ -76,7 +76,9 @@ public final class PropertyInspector extends JPanel{
       new ActionListener() {
         @Override
         public void actionPerformed(final ActionEvent e) {
-          myInspectorTable.setShowExpertProperties(chkShowExpertProperties.isSelected());
+          WriteIntentReadAction.run(() -> {
+            myInspectorTable.setShowExpertProperties(chkShowExpertProperties.isSelected());
+          });
         }
       }
     );

@@ -1,4 +1,5 @@
 // "Initialize with constructor parameter" "true"
+// K2_ERROR: Property must be initialized or be abstract.
 open class RGrandAccessor(x: Int) {}
 
 open class RAccessor : RGrandAccessor {

@@ -5,19 +5,19 @@ import git4idea.rebase.GitRebaseEntry
 import kotlin.math.max
 import kotlin.math.min
 
-internal class GitRebaseTodoModel<T : GitRebaseEntry>(initialState: List<Element<T>>) {
+class GitRebaseTodoModel<T : GitRebaseEntry>(initialState: List<Element<T>>) {
   private val rows = ElementList(initialState)
 
   val elements: List<Element<T>>
     get() = rows.elements
 
-  fun canPick(indices: List<Int>) = anyOfType(indices) { it !is Type.NonUnite.KeepCommit.Pick && it !is Type.NonUnite.UpdateRef }
+  fun canPick(indices: List<Int>): Boolean = anyOfType(indices) { it !is Type.NonUnite.KeepCommit.Pick && it !is Type.NonUnite.UpdateRef }
 
   fun pick(indices: List<Int>) {
     keepCommitAction(indices, Type.NonUnite.KeepCommit.Pick)
   }
 
-  fun canEdit(indices: List<Int>) = anyOfType(indices) { it !is Type.NonUnite.KeepCommit.Edit && it !is Type.NonUnite.UpdateRef }
+  fun canEdit(indices: List<Int>): Boolean = anyOfType(indices) { it !is Type.NonUnite.KeepCommit.Edit && it !is Type.NonUnite.UpdateRef }
 
   fun edit(indices: List<Int>) {
     keepCommitAction(indices, Type.NonUnite.KeepCommit.Edit)
@@ -29,7 +29,7 @@ internal class GitRebaseTodoModel<T : GitRebaseEntry>(initialState: List<Element
     keepCommitAction(listOf(index), Type.NonUnite.KeepCommit.Reword(message))
   }
 
-  fun canDrop(indices: List<Int>) = anyOfType(indices) { it !is Type.NonUnite.Drop && it !is Type.NonUnite.UpdateRef }
+  fun canDrop(indices: List<Int>): Boolean = anyOfType(indices) { it !is Type.NonUnite.Drop && it !is Type.NonUnite.UpdateRef }
 
   fun drop(indices: List<Int>) {
     val elements = indices.map { rows[it] }.filter { it.type != Type.NonUnite.UpdateRef }
@@ -338,7 +338,7 @@ internal class GitRebaseTodoModel<T : GitRebaseEntry>(initialState: List<Element
       val children: List<UniteChild<T>>
         get() = _children
 
-      val uniteGroup
+      val uniteGroup: List<Element<T>>
         get() = listOf(this) + _children
 
       fun addChild(child: UniteChild<T>) {
@@ -351,9 +351,9 @@ internal class GitRebaseTodoModel<T : GitRebaseEntry>(initialState: List<Element
         }
       }
 
-      fun lastChildIndex() = _children.lastOrNull()?.index ?: index
+      fun lastChildIndex(): Int = _children.lastOrNull()?.index ?: index
 
-      fun newChildIndex() = lastChildIndex() + 1
+      fun newChildIndex(): Int = lastChildIndex() + 1
 
       fun removeChild(child: UniteChild<T>) {
         _children.remove(child)

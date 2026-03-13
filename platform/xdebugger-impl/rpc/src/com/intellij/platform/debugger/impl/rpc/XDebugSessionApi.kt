@@ -103,6 +103,7 @@ data class XDebugSessionDto(
   val leftToolbarActions: List<AnActionId>,
   val topToolbarActions: List<AnActionId>,
   val settingsActions: List<AnActionId>,
+  @Serializable(with = DeferredSerializer::class) val processDescriptor: Deferred<XDescriptor>?,
 )
 
 @ApiStatus.Internal
@@ -132,6 +133,7 @@ data class XExecutionStackDto(
   val executionStackId: XExecutionStackId,
   val displayName: @Nls String,
   val icon: IconId?,
+  val iconFlow: RpcFlow<IconId?>,
   @Serializable(with = DeferredSerializer::class) val descriptor: Deferred<XDescriptor>?,
   @Serializable(with = DeferredSerializer::class) val topFrame: Deferred<XStackFrameDto?>,
 )

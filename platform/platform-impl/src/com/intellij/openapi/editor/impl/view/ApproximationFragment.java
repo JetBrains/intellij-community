@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.impl.view;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Graphics2D;
 import java.util.function.Consumer;
 
 /**

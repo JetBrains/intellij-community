@@ -44,6 +44,7 @@ public final class MavenActionUtil {
     MavenProject result;
     final MavenProjectsManager manager = getProjectsManager(context);
     if (manager == null) return null;
+    if (!manager.isInitialized()) return null;
 
     final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(context);
     if (file != null) {

@@ -1,20 +1,20 @@
 from util import *
 
 def bad_type_aliases(
-    p1: <warning descr="Type hint is invalid or refers to the expression which is not a correct type">BadTypeAlias1</warning>,
-    p2: <warning descr="Type hint is invalid or refers to the expression which is not a correct type">BadTypeAlias2</warning>,
-    p3: <warning descr="Type hint is invalid or refers to the expression which is not a correct type">BadTypeAlias3</warning>,
-    p4: <warning descr="Type hint is invalid or refers to the expression which is not a correct type">BadTypeAlias4</warning>,
-    p5: <warning descr="Type hint is invalid or refers to the expression which is not a correct type">BadTypeAlias5</warning>,
-    p6: <warning descr="Type hint is invalid or refers to the expression which is not a correct type">BadTypeAlias6</warning>,
-    p7: <warning descr="Type hint is invalid or refers to the expression which is not a correct type">BadTypeAlias7</warning>,
-    p8: <warning descr="Type hint is invalid or refers to the expression which is not a correct type">BadTypeAlias8</warning>,
-    p9: <warning descr="Type hint is invalid or refers to the expression which is not a correct type">BadTypeAlias9</warning>,
-    p10: <warning descr="Type hint is invalid or refers to the expression which is not a correct type">BadTypeAlias10</warning>,
-    p11: <warning descr="Type hint is invalid or refers to the expression which is not a correct type">BadTypeAlias11</warning>,
-    p12: <warning descr="Type hint is invalid or refers to the expression which is not a correct type">BadTypeAlias12</warning>,
-    p13: <warning descr="Type hint is invalid or refers to the expression which is not a correct type">BadTypeAlias13</warning>,
-    p14: <warning descr="Type hint is invalid or refers to the expression which is not a correct type">BadTypeAlias14</warning>,
+    p1: <warning descr="Invalid type annotation">BadTypeAlias1</warning>,
+    p2: <warning descr="Invalid type annotation">BadTypeAlias2</warning>,
+    p3: <warning descr="Invalid type annotation">BadTypeAlias3</warning>,
+    p4: <warning descr="Invalid type annotation">BadTypeAlias4</warning>,
+    p5: <warning descr="Invalid type annotation">BadTypeAlias5</warning>,
+    p6: <warning descr="Invalid type annotation">BadTypeAlias6</warning>,
+    p7: <warning descr="Invalid type annotation">BadTypeAlias7</warning>,
+    p8: <warning descr="Invalid type annotation">BadTypeAlias8</warning>,
+    p9: <warning descr="Invalid type annotation">BadTypeAlias9</warning>,
+    p10: <warning descr="Invalid type annotation">BadTypeAlias10</warning>,
+    p11: <warning descr="Invalid type annotation">BadTypeAlias11</warning>,
+    p12: <warning descr="Invalid type annotation">BadTypeAlias12</warning>,
+    p13: <warning descr="Invalid type annotation">BadTypeAlias13</warning>,
+    p14: <warning descr="Invalid type annotation">BadTypeAlias14</warning>,
 ): pass
 
 def good_type_aliases(

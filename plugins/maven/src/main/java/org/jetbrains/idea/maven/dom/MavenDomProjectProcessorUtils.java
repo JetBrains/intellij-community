@@ -42,6 +42,10 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import static java.util.Comparator.comparing;
+import static java.util.Comparator.naturalOrder;
+import static java.util.Comparator.nullsLast;
+
 public final class MavenDomProjectProcessorUtils {
 
   public static final String DEFAULT_RELATIVE_PATH = "../pom.xml";
@@ -50,11 +54,14 @@ public final class MavenDomProjectProcessorUtils {
   }
 
   public static @NotNull Set<MavenDomProjectModel> getChildrenProjects(final @NotNull MavenDomProjectModel model) {
-    Set<MavenDomProjectModel> models = new HashSet<>();
+    Set<MavenDomProjectModel> unsorted = new HashSet<>();
+    collectChildrenProjects(model, unsorted);
 
-    collectChildrenProjects(model, models);
-
-    return models;
+    Set<MavenDomProjectModel> sorted = new LinkedHashSet<>();
+    unsorted.stream()
+      .sorted(comparing(m -> m.getArtifactId().getStringValue(), nullsLast(naturalOrder())))
+      .forEach(sorted::add);
+    return sorted;
   }
 
   private static void collectChildrenProjects(final @NotNull MavenDomProjectModel model,

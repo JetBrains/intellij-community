@@ -237,7 +237,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
         ui.text?.contains(startRebasingButtonText) == true
       }
       triggerOnNotification {
-        it.displayId == GitNotificationIdsHolder.REBASE_SUCCESSFUL
+        it.displayId == GitNotificationIdsHolder.COMMIT_EDIT_SUCCESS
       }
       test(waitEditorToBeReady = false) {
         ideFrame { button(startRebasingButtonText).click() }

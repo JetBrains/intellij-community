@@ -6,8 +6,8 @@ import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.debugger.impl.instanceOf
 import com.intellij.debugger.impl.DebuggerUtilsEx
+import com.intellij.debugger.impl.instanceOf
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl

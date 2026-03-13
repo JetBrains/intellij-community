@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorThreading;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -28,7 +29,7 @@ public final class TabOutScopesTrackerImpl implements TabOutScopesTracker {
 
   @Override
   public void registerScopeRange(@NotNull Editor editor, int rangeStart, int rangeEnd, int tabOutOffset) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    EditorThreading.assertWriteAllowed();
 
     if (editor.isDisposed()) throw new IllegalArgumentException(editor + " is already disposed");
     if (rangeStart > rangeEnd) {
@@ -107,7 +108,7 @@ public final class TabOutScopesTrackerImpl implements TabOutScopesTracker {
     private Tracker(@NotNull EditorImpl editor) {
       myEditor = editor;
       Disposable editorDisposable = editor.getDisposable();
-      myEditor.getDocument().addDocumentListener(this, editorDisposable);
+      myEditor.getUiDocument().addDocumentListener(this, editorDisposable);
     }
 
     private List<RangeMarker> getCurrentScopes(boolean create) {
@@ -118,7 +119,7 @@ public final class TabOutScopesTrackerImpl implements TabOutScopesTracker {
     }
 
     private void registerScope(final int offsetStart, final int offsetEnd, final int caretShift) {
-      RangeMarker marker = myEditor.getDocument().createRangeMarker(offsetStart, offsetEnd);
+      RangeMarker marker = myEditor.getUiDocument().createRangeMarker(offsetStart, offsetEnd);
       marker.setGreedyToLeft(true);
       marker.setGreedyToRight(true);
       if (caretShift > 1) marker.putUserData(CARET_SHIFT, caretShift);

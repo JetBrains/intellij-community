@@ -2,18 +2,19 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.gradleJava
 
+import com.intellij.openapi.externalSystem.model.Key
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AbstractAnnotationBasedCompilerPluginGradleImportHandler
 import org.jetbrains.kotlin.idea.gradleTooling.model.samWithReceiver.SamWithReceiverModel
-import org.jetbrains.kotlin.idea.jps.toJpsVersionAgnosticKotlinBundledPath
 import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverPluginNames
+import java.nio.file.Path
 
 class SamWithReceiverGradleProjectImportHandler : AbstractAnnotationBasedCompilerPluginGradleImportHandler<SamWithReceiverModel>() {
-    override val compilerPluginId = SamWithReceiverPluginNames.PLUGIN_ID
-    override val pluginName = "sam-with-receiver"
-    override val annotationOptionName = SamWithReceiverPluginNames.ANNOTATION_OPTION_NAME
-    override val pluginJarFileFromIdea: String = KotlinArtifacts.samWithReceiverCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
-    override val modelKey = SamWithReceiverProjectResolverExtension.KEY
+    override val compilerPluginId: String = SamWithReceiverPluginNames.PLUGIN_ID
+    override val pluginName: String = "sam-with-receiver"
+    override val annotationOptionName: String = SamWithReceiverPluginNames.ANNOTATION_OPTION_NAME
+    override val pluginJarFromIdea: Path = KotlinArtifacts.samWithReceiverCompilerPluginPath
+    override val modelKey: Key<SamWithReceiverModel> = SamWithReceiverProjectResolverExtension.KEY
 
     override fun getAnnotationsForPreset(presetName: String): List<String> {
         for ((name, annotations) in SamWithReceiverPluginNames.SUPPORTED_PRESETS.entries) {

@@ -1,9 +1,9 @@
 package com.intellij.cce.python.execution.output
 
+import com.intellij.util.createDocumentBuilder
 import org.w3c.dom.Document
 import org.xml.sax.InputSource
 import java.io.StringReader
-import javax.xml.parsers.DocumentBuilderFactory
 
 class PythonJunitProcessor() {
   /**
@@ -17,7 +17,7 @@ class PythonJunitProcessor() {
    */
   fun getTestExecutionSuccessRate(junitData: String): Double {
     val inputSource = InputSource(StringReader(junitData))
-    val document: Document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(inputSource)
+    val document: Document = createDocumentBuilder().parse(inputSource)
     document.documentElement.normalize()
 
     val attributes = document.getElementsByTagName("testsuite").item(0).attributes

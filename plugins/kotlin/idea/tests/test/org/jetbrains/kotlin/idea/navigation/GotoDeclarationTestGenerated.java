@@ -210,6 +210,31 @@ public class GotoDeclarationTestGenerated extends AbstractGotoDeclarationTest {
         runTest("testData/navigation/gotoDeclaration/navigationToLibrary.test");
     }
 
+    @TestMetadata("returnLabelToFunction.test")
+    public void testReturnLabelToFunction() throws Exception {
+        runTest("testData/navigation/gotoDeclaration/returnLabelToFunction.test");
+    }
+
+    @TestMetadata("returnLabeled.test")
+    public void testReturnLabeled() throws Exception {
+        runTest("testData/navigation/gotoDeclaration/returnLabeled.test");
+    }
+
+    @TestMetadata("returnNested.test")
+    public void testReturnNested() throws Exception {
+        runTest("testData/navigation/gotoDeclaration/returnNested.test");
+    }
+
+    @TestMetadata("returnNestedFunction.test")
+    public void testReturnNestedFunction() throws Exception {
+        runTest("testData/navigation/gotoDeclaration/returnNestedFunction.test");
+    }
+
+    @TestMetadata("returnUnlabeled.test")
+    public void testReturnUnlabeled() throws Exception {
+        runTest("testData/navigation/gotoDeclaration/returnUnlabeled.test");
+    }
+
     @TestMetadata("thisExtensionFunction.test")
     public void testThisExtensionFunction() throws Exception {
         runTest("testData/navigation/gotoDeclaration/thisExtensionFunction.test");

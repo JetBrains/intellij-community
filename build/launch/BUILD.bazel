@@ -33,15 +33,22 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/runtime/product",
+    "//platform/runtime/product:product_test_lib",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
     "//jps/model-serialization",
+    "//jps/model-serialization:model-serialization_test_lib",
     "//platform/build-scripts/downloader",
+    "//platform/build-scripts/downloader:downloader_test_lib",
     "@lib//:junit5",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/ijent/buildConstants",
+    "//platform/ijent/buildConstants:buildConstants_test_lib",
   ]
 )
 ### auto-generated section `build intellij.idea.tools.launch` end

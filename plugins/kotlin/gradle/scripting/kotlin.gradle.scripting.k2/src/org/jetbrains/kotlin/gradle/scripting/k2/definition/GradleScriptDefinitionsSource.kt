@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 class GradleScriptDefinitionsSource(val project: Project) : ScriptDefinitionsSource {
     override val definitions: Sequence<ScriptDefinition>
         get() = project.workspaceModel.currentSnapshot.entities(GradleScriptDefinitionEntity::class.java).map {
-            val compilationConfiguration = it.compilationConfiguration.deserialize()
+            val compilationConfiguration = it.compilationConfigurationData.deserialize()
             val hostConfiguration = it.hostConfiguration.deserialize()
             if (compilationConfiguration == null || hostConfiguration == null) {
                 ErrorGradleScriptDefinition()

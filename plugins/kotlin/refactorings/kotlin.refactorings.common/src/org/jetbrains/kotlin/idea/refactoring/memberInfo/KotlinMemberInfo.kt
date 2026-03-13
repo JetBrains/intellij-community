@@ -11,6 +11,8 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.classMembers.MemberInfoBase
 import com.intellij.refactoring.util.classMembers.MemberInfo
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
@@ -29,6 +31,7 @@ import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
+@OptIn(KaAllowAnalysisOnEdt::class)
 class KotlinMemberInfo @JvmOverloads constructor(
     member: KtNamedDeclaration,
     val isSuperClass: Boolean = false,
@@ -45,11 +48,11 @@ class KotlinMemberInfo @JvmOverloads constructor(
                 overrides = true
             }
         } else {
-            displayName = KotlinMemberInfoSupport.getInstance().renderMemberInfo(member)
+            displayName = allowAnalysisOnEdt { KotlinMemberInfoSupport.getInstance().renderMemberInfo(member) }
             if (isCompanionMember) {
                 displayName = KotlinBundle.message("member.info.companion.0", displayName)
             }
-            overrides = KotlinMemberInfoSupport.getInstance().getOverrides(member)
+            overrides = allowAnalysisOnEdt { KotlinMemberInfoSupport.getInstance().getOverrides(member) }
         }
     }
 }

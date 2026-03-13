@@ -1,24 +1,36 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
+import com.intellij.copyright.CopyrightManager
+import com.intellij.copyright.IdeCopyrightManager
 import com.intellij.devkit.workspaceModel.WorkspaceModelGenerator.Companion.RIDER_MODULES_PREFIX
 import com.intellij.devkit.workspaceModel.WorkspaceModelGenerator.Companion.modulesWithAbstractTypes
-import com.intellij.idea.IJIgnore
+import com.intellij.devkit.workspaceModel.codegen.writer.CodeWriter
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.javaSourceRoots
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runWriteActionAndWait
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.IntelliJProjectUtil
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.modules
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.findOrCreateDirectory
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.jps.entities.modifyContentRootEntity
 import com.intellij.platform.workspace.jps.serialization.impl.ErrorReporter
@@ -31,201 +43,297 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.pom.PomManager
+import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.IndexingTestUtil.Companion.suspendUntilIndexesAreReady
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
+import com.intellij.testFramework.junit5.fixture.disposableFixture
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import com.intellij.testFramework.junit5.fixture.testNameFixture
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
+import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.SerializationContextForTests
 import com.intellij.workspaceModel.ide.impl.jps.serialization.saveAffectedEntities
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_ROOT_ENTITY_TYPE_ID
+import com.maddyhome.idea.copyright.CopyrightProfile
 import junit.framework.AssertionFailedError
 import kotlinx.coroutines.runBlocking
+import org.editorconfig.Utils
+import org.editorconfig.configmanagement.extended.EditorConfigCodeStyleSettingsModifier
 import org.jetbrains.jps.model.serialization.PathMacroUtil
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assumptions.assumeTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
-import kotlin.io.path.invariantSeparatorsPathString
-import kotlin.io.path.pathString
 
-abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
-  private val LOG = logger<AbstractAllIntellijEntitiesGenerationTest>()
-
+abstract class AbstractAllIntellijEntitiesGenerationTest {
   private val virtualFileManager = IdeVirtualFileUrlManagerImpl()
 
-  override fun setUp() {
+  private val tempPath = tempPathFixture(prefix = this.javaClass.simpleName)
+  private val projectRoot: VirtualFile
+    get() = VfsUtil.findFile(tempPath.get(), true)!!
+  private val projectFixture =
+    projectFixture(pathFixture = tempPath, openProjectTask = OpenProjectTask { createModule = false }, openAfterCreation = true)
+  private val project: Project
+    get() = projectFixture.get()
+  private val testName = testNameFixture()
+  private val disposable = disposableFixture()
+
+  val actualSrcRoot: VirtualFile
+    get() = VfsUtil.findFile(tempPath.get().resolve("src").findOrCreateDirectory(), true)!!
+
+  val actualGenRoot: VirtualFile
+    get() = VfsUtil.findFile(tempPath.get().resolve("gen").findOrCreateDirectory(), true)!!
+
+  @BeforeEach
+  fun setUp(): Unit = runBlocking {
+    setupCopyright()
+    IntelliJProjectUtil.markAsIntelliJPlatformProject(project, true)
+    EditorConfigCodeStyleSettingsModifier.Handler.setEnabledInTests(true)
+    Utils.isEnabledInTests = true
+
     CodeGeneratorVersions.checkApiInInterface = false
     CodeGeneratorVersions.checkApiInImpl = false
     CodeGeneratorVersions.checkImplInImpl = false
-    super.setUp()
+
+    //enableKotlinOfficialCodeStyle(project)
+    val jdk = IdeaTestUtil.getMockJdk21()
+    writeAction {
+      ProjectJdkTable.getInstance().addJdk(jdk, disposable.get())
+    }
+
+    val wsm = project.workspaceModel
+    //@formatter:off
+    wsm.update("Setup project roots") {
+      val module = ModuleEntity("${this@AbstractAllIntellijEntitiesGenerationTest.javaClass.simpleName}_${testName}_module", listOf(ModuleSourceDependency), NonPersistentEntitySource)
+      val contentRoot = ContentRootEntity(projectRoot.toVirtualFileUrl(wsm.getVirtualFileUrlManager()), emptyList(), NonPersistentEntitySource)
+      module.contentRoots += contentRoot
+      contentRoot.sourceRoots += SourceRootEntity(actualSrcRoot.toVirtualFileUrl(wsm.getVirtualFileUrlManager()), JAVA_SOURCE_ROOT_ENTITY_TYPE_ID, NonPersistentEntitySource)
+      val genSourceRoot = SourceRootEntity(actualGenRoot.toVirtualFileUrl(wsm.getVirtualFileUrlManager()), JAVA_SOURCE_ROOT_ENTITY_TYPE_ID, NonPersistentEntitySource)
+      genSourceRoot.javaSourceRoots += JavaSourceRootPropertiesEntity(generated = true, packagePrefix = "", entitySource = NonPersistentEntitySource)
+      contentRoot.sourceRoots += genSourceRoot
+
+      it.addEntity(module)
+    }
+    //@formatter:on
+
+    val module = project.modules.first()
+    val model = readAction { ModuleRootManager.getInstance(module).getModifiableModel() }
+
+    LibrariesRequiredForWorkspace.workspaceStorage.add(model)
+    LibrariesRequiredForWorkspace.workspaceJpsEntities.add(model)
+    LibrariesRequiredForWorkspace.jetbrainsAnnotations.add(model)
+
+    writeAction {
+      model.sdk = jdk
+      model.commit()
+    }
+
+    suspendUntilIndexesAreReady(project)
+
+    // Load codegen jar on warm-up phase
+    CodegenJarLoader.getInstance(project).getClassLoader()
+    PomManager.getModel(project) // initialize PostprocessReformattingAspectImpl to enable reformatting after PSI changes
   }
 
-  override fun tearDown() {
-    super.tearDown()
+  private fun setupCopyright() {
+    val profile = CopyrightProfile().apply {
+      name = "AbstractAllIntellijEntitiesGenerationTest"
+      notice = "This copyright should not appear in the file."
+      }
+    IdeCopyrightManager.getInstance().replaceCopyright(profile.name, profile)
+    CopyrightManager.getInstance(project).defaultCopyright = profile
+    Disposer.register(project) {
+      IdeCopyrightManager.getInstance().removeCopyright(profile)
+    }
+  }
+
+  @AfterEach
+  fun tearDown(): Unit = runBlocking {
     CodeGeneratorVersions.checkApiInInterface = true
     CodeGeneratorVersions.checkApiInImpl = true
     CodeGeneratorVersions.checkImplInImpl = true
   }
 
-  override val testDataDirectory: File
-    get() = File(IdeaTestExecutionPolicy.getHomePathWithPolicy())
-
-  open fun `test generation of all entities in intellij codebase`() {
-    executeWorkspaceCodeGeneration(::compareIntellijWorkspaceCode)
+  @DisplayName("test generation of all entities in intellij codebase")
+  @ParameterizedTest(name = "Module {0}")
+  @MethodSource("modules")
+  open fun `test generation of all entities in intellij codebase`(
+    moduleName: String,
+    ultimateModuleEntity: ModuleEntity,
+    ultimateSourceRoot: SourceRootEntity,
+    ultimateStorage: MutableEntityStorage,
+    jpsProjectSerializer: JpsProjectSerializers,
+  ) {
+    executeWorkspaceCodeGeneration(ultimateModuleEntity,
+                                   ultimateSourceRoot,
+                                   ultimateStorage,
+                                   jpsProjectSerializer,
+                                   ::compareIntellijWorkspaceCode)
   }
 
-  @IJIgnore(issue = "IDEA-364751")
-  fun `test update code`() {
+  //@IJIgnore(issue = "IDEA-364751")
+  @ParameterizedTest(name = "Module {0}")
+  @MethodSource("modules")
+  @DisplayName("test update code")
+  fun `test update code`(
+    moduleName: String,
+    ultimateModuleEntity: ModuleEntity,
+    ultimateSourceRoot: SourceRootEntity,
+    ultimateStorage: MutableEntityStorage,
+    jpsProjectSerializer: JpsProjectSerializers,
+  ) {
     if (!SystemProperties.getBooleanProperty(UPDATE_PROPERTY_KEY, false)) {
+      assumeTrue(false, "Set ${UPDATE_PROPERTY_KEY} system property to 'true' to update entities code in the sources")
       println("Set ${UPDATE_PROPERTY_KEY} system property to 'true' to update entities code in the sources")
       return
     }
 
-    executeWorkspaceCodeGeneration(::updateIntellijWorkspaceCode)
+    executeWorkspaceCodeGeneration(ultimateModuleEntity,
+                                   ultimateSourceRoot,
+                                   ultimateStorage,
+                                   jpsProjectSerializer,
+                                   ::updateIntellijWorkspaceCode)
   }
 
   private fun executeWorkspaceCodeGeneration(
-    processGenerated: (MutableEntityStorage, SourceRootEntity, Pair<VirtualFile, VirtualFile>) -> Boolean,
-  ) {
-    val (storage, jpsProjectSerializer) = runBlocking { loadProjectIntellijProject() }
+    ultimateModuleEntity: ModuleEntity,
+    ultimateSourceRoot: SourceRootEntity,
+    ultimateStorage: MutableEntityStorage,
+    jpsProjectSerializer: JpsProjectSerializers,
+    processGenerated: suspend (MutableEntityStorage, SourceRootEntity, VirtualFile, VirtualFile) -> Boolean,
+  ): Unit = runBlocking {
+    println("Generating workspace code for module ${ultimateModuleEntity.name} [${ultimateSourceRoot.url.presentableUrl}]")
+    val ultimateSourceRootPath =
+      VirtualFileManager.getInstance().refreshAndFindFileByNioPath(Path.of(ultimateSourceRoot.url.presentableUrl))!!
 
-    val modulesToCheck = findModulesWhichRequireWorkspace(storage)
-    refreshCompilationOutputInVfs()
-
-    var storageChanged = false
-    modulesToCheck.forEachIndexed { index, (moduleEntity, sourceRoot) ->
-      println("[${index + 1}/${modulesToCheck.size}] Generating workspace code for module ${moduleEntity.name} [${sourceRoot.url.presentableUrl}]")
-      val isTestModule = sourceRoot.rootTypeId == JAVA_TEST_ROOT_ENTITY_TYPE_ID
-      val libraries = LibrariesRequiredForWorkspace.getRelatedLibraries(moduleEntity.name)
-      val gen = generateWorkspaceCode(moduleEntity, sourceRoot, isTestModule, libraries)
-      val thisChangesStorage = processGenerated(storage, sourceRoot, gen)
-      storageChanged = storageChanged || thisChangesStorage
+    writeAction {
+      VfsUtil.copyDirectory(this, ultimateSourceRootPath, actualSrcRoot, null)
     }
-    if (storageChanged) {
-      val affectedEntitySources = modulesToCheck.map { it.first.entitySource }.toSet()
-      (jpsProjectSerializer as JpsProjectSerializersImpl).saveAffectedEntities(storage,
-                                                                               affectedEntitySources,
-                                                                               createProjectConfigLocation())
+
+    writeAction {
+      val mergedEditorconfigContent = mergeEditorconfigsUpToTheDirectory(ultimateSourceRoot)!!
+
+      val editorconfigFile = projectRoot.findOrCreateChildData(this@AbstractAllIntellijEntitiesGenerationTest, ".editorconfig")
+      VfsUtil.saveText(editorconfigFile, mergedEditorconfigContent)
     }
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
-  }
 
-  private fun generateWorkspaceCode(
-    moduleEntity: ModuleEntity,
-    sourceRoot: SourceRootEntity,
-    isTestModule: Boolean,
-    libraries: List<RelatedLibrary>,
-  ): Pair<VirtualFile, VirtualFile> {
-    val path = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy())
-      .relativize(Path.of(sourceRoot.url.presentableUrl)).invariantSeparatorsPathString
-    LOG.info("Generating workspace code for module: ${moduleEntity.name}, path $path")
-    myFixture.copyDirectoryToProject(path, path)
-
-    if (moduleEntity.name == "intellij.javascript.backend") {
+    val isTestModule = ultimateSourceRoot.rootTypeId == JAVA_TEST_ROOT_ENTITY_TYPE_ID
+    val libraries = LibrariesRequiredForWorkspace.getRelatedLibraries(ultimateModuleEntity.name)
+    if (ultimateModuleEntity.name == "intellij.javascript.backend") {
       javascriptNodeModulesPackageExclusionFixForTests()
     }
 
-    if (libraries.isNotEmpty())
-      runWriteActionAndWait {
-        ModuleRootModificationUtil.updateModel(module) { model ->
+    val testProjectModule = project.modules[0]
+    if (libraries.isNotEmpty()) {
+      writeAction {
+        ModuleRootModificationUtil.updateModel(testProjectModule) { model ->
           for (library in libraries) {
             library.add(model)
           }
         }
       }
+    }
 
-    val srcAndGen = generateCode(
-      relativePathToEntitiesDirectory = path,
-      processAbstractTypes = moduleEntity.withAbstractTypes,
-      explicitApiEnabled = false,
-      isTestModule = isTestModule,
-      formatCode = true
-    )
+    suspendUntilIndexesAreReady(project)
 
-    if (libraries.isNotEmpty())
-      runWriteActionAndWait {
-        ModuleRootModificationUtil.updateModel(module) { model ->
-          for (library in libraries) {
-            library.remove(model)
-          }
-        }
-      }
+    CodeWriter.generate(project = project,
+                        module = testProjectModule,
+                        actualSrcRoot,
+                        processAbstractTypes = ultimateModuleEntity.withAbstractTypes,
+                        explicitApiEnabled = false,
+                        isTestSourceFolder = false,
+                        isTestModule = isTestModule,
+                        targetFolderGenerator = { actualGenRoot },
+                        existingTargetFolder = { actualGenRoot },
+                        formatCode = true)
+    FileDocumentManager.getInstance().saveAllDocuments()
 
-    return srcAndGen
+    val thisChangesStorage = processGenerated(ultimateStorage, ultimateSourceRoot, actualSrcRoot, actualGenRoot)
+    if (thisChangesStorage) {
+      (jpsProjectSerializer as JpsProjectSerializersImpl).saveAffectedEntities(ultimateStorage,
+                                                                               setOf(ultimateModuleEntity.entitySource),
+                                                                               createProjectConfigLocation())
+    }
   }
 
-  private fun updateIntellijWorkspaceCode(
-    storage: MutableEntityStorage,
-    sourceRoot: SourceRootEntity,
-    generated: Pair<VirtualFile, VirtualFile>,
+  private suspend fun updateIntellijWorkspaceCode(
+    ultimateStorage: MutableEntityStorage,
+    ultimateSourceRoot: SourceRootEntity,
+    newSrcRoot: VirtualFile,
+    newGenRoot: VirtualFile,
   ): Boolean {
-    val (srcRoot, genRoot) = generated
-
-    val result = runWriteActionAndWait {
+    return writeAction {
       var storageChanged = false
 
-      val genSourceRoot = findGenSourceRoot(sourceRoot) ?: createGenSourceRoot(storage, sourceRoot).also { storageChanged = true }
+      val ultimateGenSourceRoot = findGenSourceRoot(ultimateSourceRoot)
+                                  ?: createGenSourceRoot(ultimateStorage, ultimateSourceRoot).also { storageChanged = true }
 
-      val apiRootPath = Path.of(sourceRoot.url.presentableUrl)
-      val implRootPath = Path.of(genSourceRoot.url.presentableUrl)
-      val virtualFileManager = VirtualFileManager.getInstance()
-      val apiDir = virtualFileManager.refreshAndFindFileByNioPath(apiRootPath)!!
-      val implDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(implRootPath) ?: run {
-        VfsUtil.createDirectories(implRootPath.pathString)
+      val ultimateGenSourceRootVirtualFile = ultimateGenSourceRoot.url.toVirtualFile() ?: run {
+        VfsUtil.createDirectories(ultimateGenSourceRoot.url.presentableUrl)
       }
-      VfsUtil.copyDirectory(this, srcRoot, apiDir, VirtualFileFilter { it != genRoot })
-      VfsUtil.copyDirectory(this, genRoot, implDir, null)
+      VfsUtil.copyDirectory(this, newSrcRoot, ultimateSourceRoot.url.toVirtualFile()!!, null)
+      VfsUtil.copyDirectory(this, newGenRoot, ultimateGenSourceRootVirtualFile, null)
       storageChanged
     }
-
-    (tempDirFixture as LightTempDirTestFixtureImpl).deleteAll()
-    return result
   }
 
-  private fun compareIntellijWorkspaceCode(
+  private suspend fun compareIntellijWorkspaceCode(
     @Suppress("UNUSED_PARAMETER")
     storage: MutableEntityStorage,
-    sourceRoot: SourceRootEntity,
-    generated: Pair<VirtualFile, VirtualFile>,
+    ultimateSourceRoot: SourceRootEntity,
+    newSrcRoot: VirtualFile,
+    newGenRoot: VirtualFile,
   ): Boolean {
-    val (srcRoot, genRoot) = generated
-    val moduleEntity = sourceRoot.contentRoot.module
+    val moduleEntity = ultimateSourceRoot.contentRoot.module
 
-    val actualSrcPath = Path.of(sourceRoot.url.presentableUrl)
-    val actualGenPath = sourceRoot.contentRoot.sourceRoots.flatMap { it.javaSourceRoots }.firstOrNull { it.generated }?.let {
+    val ultimateSrcPath = Path.of(ultimateSourceRoot.url.presentableUrl)
+    val ultimateGenPath = ultimateSourceRoot.contentRoot.sourceRoots.flatMap { it.javaSourceRoots }.firstOrNull { it.generated }?.let {
       Path.of(it.sourceRoot.url.presentableUrl)
-    } ?: error("No generated source root for ${moduleEntity.name} ${sourceRoot.url.presentableUrl}")
-    val genIsInsideSrc = actualGenPath.startsWith(actualSrcPath) && actualGenPath != actualSrcPath
+    } ?: error("No generated source root for ${moduleEntity.name} ${ultimateSourceRoot.url.presentableUrl}")
+    val genIsInsideSrc = ultimateGenPath.startsWith(ultimateSrcPath) && ultimateGenPath != ultimateSrcPath
 
-    val expectedSrcDir = FileUtil.createTempDirectory(CodeGenerationTestBase::class.java.simpleName, "${testDirectoryName}_api", true)
-    runWriteActionAndWait {
-      val vfExpectedSrcDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(expectedSrcDir.toPath())!!
-      VfsUtil.copyDirectory(this, srcRoot, vfExpectedSrcDir, null)
-    }
+    //val expectedSrcDir = FileUtil.createTempDirectory(CodeGenerationTestBase::class.java.simpleName, "${testDirectoryName}_api", true)
+    //runWriteActionAndWait {
+    //  val vfExpectedSrcDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(expectedSrcDir.toPath())!!
+    //  VfsUtil.copyDirectory(this, newSrcRoot, vfExpectedSrcDir, null)
+    //}
 
+    val filePathFilter: (String) -> Boolean = { it.endsWith(".kt") && !it.endsWith("GradleJvmSupportDefaultData.kt") }
     if (genIsInsideSrc) {
-      expectedSrcDir.assertMatches(directoryContentOf(dir = actualSrcPath), filePathFilter = { it.endsWith(".kt") })
+      Path.of(newSrcRoot.presentableUrl)
+        .assertMatches(directoryContentOf(dir = ultimateSrcPath), filePathFilter = filePathFilter, ignoreEmptyDirectories = true)
     }
     else {
-      val expectedGenDir = FileUtil.createTempDirectory(CodeGenerationTestBase::class.java.simpleName, "${testDirectoryName}_impl", true)
-      FileUtil.copyDir(actualGenPath.toFile(), expectedGenDir)
-      runWriteActionAndWait {
-        val vfExpectedGenDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(expectedGenDir.toPath())!!
-        VfsUtil.copyDirectory(this, genRoot, vfExpectedGenDir, null)
-      }
-      expectedSrcDir.assertMatches(directoryContentOf(dir = actualSrcPath), filePathFilter = { it.endsWith(".kt") })
-      expectedGenDir.assertMatches(directoryContentOf(dir = actualGenPath), filePathFilter = { it.endsWith(".kt") })
+      //val expectedGenDir = FileUtil.createTempDirectory(CodeGenerationTestBase::class.java.simpleName, "${testDirectoryName}_impl", true)
+      //FileUtil.copyDir(ultimateGenPath.toFile(), expectedGenDir)
+      //runWriteActionAndWait {
+      //  val vfExpectedGenDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(expectedGenDir.toPath())!!
+      //  VfsUtil.copyDirectory(this, newGenRoot, vfExpectedGenDir, null)
+      //}
+      Path.of(newSrcRoot.presentableUrl)
+        .assertMatches(directoryContentOf(dir = ultimateSrcPath), filePathFilter = filePathFilter, ignoreEmptyDirectories = true)
+      Path.of(newGenRoot.presentableUrl)
+        .assertMatches(directoryContentOf(dir = ultimateGenPath), filePathFilter = filePathFilter, ignoreEmptyDirectories = true)
     }
 
-    (tempDirFixture as LightTempDirTestFixtureImpl).deleteAll()
     return false
   }
 
   private fun findGenSourceRoot(sourceRoot: SourceRootEntity): SourceRootEntity? {
-    val closest = sourceRoot.javaSourceRoots.filter { it.generated }.firstOrNull()
+    val closest = sourceRoot.javaSourceRoots.firstOrNull { it.generated }
     if (closest != null) {
       return closest.sourceRoot
     }
@@ -251,26 +359,6 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
     return result
   }
 
-  private suspend fun loadProjectIntellijProject(): Pair<MutableEntityStorage, JpsProjectSerializers> {
-    val mutableEntityStorage = MutableEntityStorage.create()
-    val configLocation = createProjectConfigLocation()
-    val context = SerializationContextForTests(virtualFileManager, CachingJpsFileContentReader(configLocation))
-    val jpsProjectSerializer = JpsProjectEntitiesLoader.loadProject(
-      configLocation = configLocation,
-      builder = mutableEntityStorage,
-      orphanage = mutableEntityStorage,
-      externalStoragePath = Paths.get("/tmp"),
-      errorReporter = TestErrorReporter,
-      context = context
-    )
-    return mutableEntityStorage to jpsProjectSerializer
-  }
-
-  private fun createProjectConfigLocation(): JpsProjectConfigLocation {
-    val projectDir = testDataDirectory.toVirtualFileUrl(virtualFileManager)
-    return JpsProjectConfigLocation.DirectoryBased(projectDir, projectDir.append(PathMacroUtil.DIRECTORY_STORE_NAME))
-  }
-
   internal object TestErrorReporter : ErrorReporter {
     override fun reportError(message: String, file: VirtualFileUrl) {
       throw AssertionFailedError("Failed to load ${file.url}: $message")
@@ -279,7 +367,7 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
 
   private fun javascriptNodeModulesPackageExclusionFixForTests() {
     runWriteActionAndWait {
-      myFixture.project.workspaceModel.updateProjectModel("remove node_modules exclusion in test") {
+      project.workspaceModel.updateProjectModel("remove node_modules exclusion in test") {
         it.replaceBySource({ it !is JpsFileEntitySource }, MutableEntityStorage.create())
       }
     }
@@ -287,6 +375,16 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
 
   companion object {
     private const val UPDATE_PROPERTY_KEY = "intellij.workspace.model.update.entities"
+
+    @JvmStatic
+    fun modules(): List<Arguments> = runBlocking {
+      val (storage, jpsProjectSerializer) = loadProjectIntellijProject()
+
+      val modulesToCheck = findModulesWhichRequireWorkspace(storage)
+      modulesToCheck.map { (module, source) ->
+        Arguments.of(module.name, module, source, storage, jpsProjectSerializer)
+      }
+    }
 
     private fun mergePatterns(vararg patterns: String): String {
       return patterns.joinToString("|") { "($it)" }
@@ -323,13 +421,14 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
       }
     }
 
-    private fun findModulesWhichRequireWorkspace(storage: EntityStorage): MutableSet<Pair<ModuleEntity, SourceRootEntity>> {
-      val modulesToCheck = mutableSetOf<Pair<ModuleEntity, SourceRootEntity>>()
+    private fun findModulesWhichRequireWorkspace(storage: EntityStorage): List<Pair<ModuleEntity, SourceRootEntity>> {
+      val modulesToCheck = mutableListOf<Pair<ModuleEntity, SourceRootEntity>>()
 
       srcRoots@ for (sourceRoot in storage.entities<SourceRootEntity>()) {
         val moduleEntity = sourceRoot.contentRoot.module
 
         if (moduleEntity.name in skippedModules) continue
+        //if (moduleEntity.name != "intellij.platform.externalSystem") continue
         if (sourceRoot.javaSourceRoots.none { !it.generated }) continue
 
         var toCheck = false
@@ -346,4 +445,67 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
       return modulesToCheck
     }
   }
+}
+
+private fun mergeEditorconfigsUpToTheDirectory(ultimateSourceRoot: SourceRootEntity): String? {
+  val homeDir = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy())
+  val sourceRootPath = ultimateSourceRoot.url.toVirtualFile()
+
+  val dirs = mutableListOf<VirtualFile>()
+
+  var dir: VirtualFile? = sourceRootPath
+  while (dir != null) {
+    dirs.add(dir)
+    if (dir == homeDir) return null
+    dir = dir.parent
+  }
+
+  val contents = mutableListOf<String>()
+
+  for (dir in dirs) {
+    val editorconfigFile = dir.findChild(".editorconfig")
+    if (editorconfigFile != null) {
+      val text = VfsUtil.loadText(editorconfigFile)
+      contents.add(";${editorconfigFile.url}\n" + text)
+      if (text.contains("root = true")) {
+        break
+      }
+    }
+  }
+
+  val merged = buildString {
+    contents.reversed().forEachIndexed { index, content ->
+      // Keep root=true only in the first file, strip from rest
+      val normalized = if (index > 0) content.replace(Regex("(?m)^root\\s*=\\s*true\\s*$"), "") else content
+      append(normalized.trim())
+      append("\n")
+    }
+  }
+  return merged
+}
+
+private suspend fun loadProjectIntellijProject(): Pair<MutableEntityStorage, JpsProjectSerializers> {
+  val virtualFileManager = IdeVirtualFileUrlManagerImpl()
+  val mutableEntityStorage = MutableEntityStorage.create()
+  val configLocation = createProjectConfigLocation()
+  val context = SerializationContextForTests(virtualFileManager, CachingJpsFileContentReader(configLocation))
+  val jpsProjectSerializer = JpsProjectEntitiesLoader.loadProject(
+    configLocation = configLocation,
+    builder = mutableEntityStorage,
+    orphanage = mutableEntityStorage,
+    externalStoragePath = Paths.get("/tmp"),
+    errorReporter = AbstractAllIntellijEntitiesGenerationTest.TestErrorReporter,
+    context = context
+  )
+  return mutableEntityStorage to jpsProjectSerializer
+}
+
+private fun createProjectConfigLocation(): JpsProjectConfigLocation {
+  val virtualFileManager = IdeVirtualFileUrlManagerImpl()
+  val projectDir = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy()).toVirtualFileUrl(virtualFileManager)
+  return JpsProjectConfigLocation.DirectoryBased(projectDir, projectDir.append(PathMacroUtil.DIRECTORY_STORE_NAME))
+}
+
+private fun VirtualFileUrl.toVirtualFile(): VirtualFile? {
+  return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(Path.of(presentableUrl))
 }

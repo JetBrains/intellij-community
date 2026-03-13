@@ -4,8 +4,10 @@
   <vendor>JetBrains</vendor>
   <category>JVM Tools</category>
   <dependencies>
-    <module name="intellij.java.backend"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.debugger.streams.core"/>
+    <module name="intellij.java.backend"/>
+    <!-- endregion -->
   </dependencies>
   <!--suppress PluginXmlValidity -->
   <content namespace="jetbrains">

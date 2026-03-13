@@ -1,9 +1,11 @@
 #  Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-import numpy as np
-import pandas as pd
+import sys
+import re
 import typing
 from collections import OrderedDict
-import sys
+
+import numpy as np
+import pandas as pd
 if sys.version_info < (3, 0):
     from collections import Iterable
 else:
@@ -124,7 +126,9 @@ def get_column_descriptions(table):
     described_result = __get_describe(table)
 
     if described_result is not None:
-        return get_data(described_result, None, None)
+        described_html = get_data(described_result, None, None)
+        exact_counts = __convert_to_df(described_result).loc["count"].tolist()
+        return __replace_count_row_values(described_html, exact_counts)
     else:
         return ""
 
@@ -143,6 +147,48 @@ def get_value_occurrences_count(table):
     return ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_NEXT_COLUMN_SEPARATOR.join(bin_counts)
 
 
+COUNT_ROW_HEADER = "<th>count</th>"
+TABLE_ROW_OPEN_TAG = "<tr>"
+TABLE_ROW_CLOSE_TAG = "</tr>"
+TABLE_CELL_PATTERN = re.compile(r"(<td>)(.*?)(</td>)")
+
+
+def __replace_count_row_values(described_html, exact_counts):
+    # type: (str, list) -> str
+    count_header_index = described_html.find(COUNT_ROW_HEADER)
+    if count_header_index < 0:
+        return described_html
+
+    row_start_index = described_html.rfind(TABLE_ROW_OPEN_TAG, 0, count_header_index)
+    row_end_index = described_html.find(TABLE_ROW_CLOSE_TAG, count_header_index)
+    if row_start_index < 0 or row_end_index < 0:
+        return described_html
+
+    row_end_index += len(TABLE_ROW_CLOSE_TAG)
+    count_row_html = described_html[row_start_index:row_end_index]
+    exact_counts_iter = iter(exact_counts)
+
+    def replace_count_cell(match):
+        try:
+            exact_count = next(exact_counts_iter)
+        except StopIteration:
+            return match.group(0)
+
+        old_value = match.group(2)
+        formatted_count = __format_exact_count_value(old_value, exact_count)
+        return "{}{}{}".format(match.group(1), formatted_count, match.group(3))
+
+    replaced_count_row_html = TABLE_CELL_PATTERN.sub(replace_count_cell, count_row_html)
+    return "{}{}{}".format(described_html[:row_start_index], replaced_count_row_html, described_html[row_end_index:])
+
+
+def __format_exact_count_value(old_value, exact_count):
+    # type: (str, int) -> str
+    if "." in old_value or "e" in old_value.lower():
+        return "{:.6f}".format(float(exact_count))
+    return str(int(exact_count))
+
+
 def get_inspection_none_count(table):
     def _calculate_none_count(cur_table):
         """Calculate missing values per column"""
@@ -150,7 +196,7 @@ def get_inspection_none_count(table):
         for col, missing_count in cur_table.isna().sum().items():
             if missing_count > 0:
                 results_per_column.append({
-                    "columnName": col,
+                    "columnName": str(col),
                     "value": str(missing_count)
                 })
 
@@ -188,8 +234,10 @@ def get_inspection_outliers(table):
 
                 if outliers_count > 0:
                     results_per_column.append({
-                        "columnName": col,
-                        "value": str(outliers_count)
+                        "columnName": str(col),
+                        "value": str(outliers_count),
+                        "detailFirst": str(lower_bound),
+                        "detailSecond": str(upper_bound)
                     })
 
         is_triggered = len(results_per_column) > 0
@@ -205,7 +253,7 @@ def get_inspection_constant_columns(table):
         for col in cur_table.columns:
             if cur_table[col].nunique(dropna=False) == 1:
                 results_per_column.append({
-                    "columnName": col,
+                    "columnName": str(col),
                     "value": str(cur_table[col].iloc[0])
                 })
 
@@ -214,6 +262,29 @@ def get_inspection_constant_columns(table):
         return __create_success_result(is_triggered, details)
 
     return __execute_inspection(table, _calculate_constant_columns, "CONSTANT_COLUMNS")
+
+
+def get_inspection_duplicate_column_names(table):
+    def _calculate_duplicate_column_names(cur_table):
+        from collections import defaultdict
+        tmp_results = defaultdict(list)
+
+        for idx, col in enumerate(cur_table.columns):
+            tmp_results[col].append(str(idx))
+
+        results_per_column_name = []
+        for col, columns_indexes in tmp_results.items():
+            if len(columns_indexes) > 1:
+                results_per_column_name.append({
+                    "columnName": str(col),
+                    "value": "Indexes: %s" % (", ".join(columns_indexes))
+                })
+
+        is_triggered = len(results_per_column_name) > 0
+        details = __create_per_column_details(results_per_column_name) if is_triggered else None
+        return __create_success_result(is_triggered, details)
+
+    return __execute_inspection(table, _calculate_duplicate_column_names, "DUPLICATE_COLUMN_NAMES")
 
 
 def __get_data_slice(table, start, end):
@@ -287,8 +358,8 @@ def __is_numeric(col_type):
     return col_type.kind in ['i', 'f', 'u']
 
 def __analyze_boolean_column(column):
-    res = column.value_counts().sort_index().to_dict(OrderedDict)
-    return __add_custom_key_value_separator(res.items())
+    value_counts = column.value_counts().sort_index()
+    return __add_custom_key_value_separator(zip(value_counts.index, value_counts.values))
 
 
 def __analyze_categorical_column(column):
@@ -303,14 +374,14 @@ def __analyze_categorical_column(column):
     if len(value_counts) <= 3 or float(len(value_counts)) / all_values * 100 <= ColumnVisualisationUtils.UNIQUE_VALUES_PERCENT:
         # If column contains <= 3 unique values no `Other` category is shown, but all of these values and their percentages
         num_unique_values_to_show_in_vis = ColumnVisualisationUtils.MAX_UNIQUE_VALUES_TO_SHOW_IN_VIS - (0 if len(value_counts) == 3 else 1)
-        top_values = value_counts.iloc[:num_unique_values_to_show_in_vis].apply(lambda v_c_share: round(v_c_share * 100, 1)).to_dict()
-        top_values = OrderedDict(top_values)
+        top_values_series = value_counts.iloc[:num_unique_values_to_show_in_vis].apply(lambda v_c_share: round(v_c_share * 100, 1))
+        top_values_list = list(zip(top_values_series.index, top_values_series.values))
         if len(value_counts) == 3:
-            top_values[ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_OTHER] = -1
+            top_values_list.append((ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_OTHER, -1))
         else:
             others_count = value_counts.iloc[num_unique_values_to_show_in_vis:].sum()
-            top_values[ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_OTHER] = round(others_count * 100, 1)
-        result = __add_custom_key_value_separator(top_values.items())
+            top_values_list.append((ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_OTHER, round(others_count * 100, 1)))
+        result = __add_custom_key_value_separator(top_values_list)
     else:
         vis_type = ColumnVisualisationType.UNIQUE
         top_values = len(value_counts)
@@ -320,7 +391,8 @@ def __analyze_categorical_column(column):
 
 def __analyze_numeric_column(column):
     if column.size <= ColumnVisualisationUtils.NUM_BINS:
-        res = column.value_counts().sort_index().to_dict()
+        value_counts = column.value_counts().sort_index()
+        res = zip(value_counts.index, value_counts.values)
     else:
         def format_function(x):
             if x == int(x):
@@ -332,9 +404,8 @@ def __analyze_numeric_column(column):
 
         # so the long dash will be correctly viewed both on Mac and Windows
         bin_labels = ['{} {} {}'.format(format_function(bin_edges[i]), DASH_SYMBOL, format_function(bin_edges[i+1])) for i in range(ColumnVisualisationUtils.NUM_BINS)]
-        bin_count_dict = {label: count for label, count in zip(bin_labels, counts)}
-        res = bin_count_dict
-    return __add_custom_key_value_separator(res.items())
+        res = zip(bin_labels, counts)
+    return __add_custom_key_value_separator(res)
 
 
 def __add_custom_key_value_separator(pairs_list):

@@ -18,4 +18,25 @@ jvm_library(
     "//java/java-runtime:rt",
   ]
 )
+
+jvm_library(
+  name = "junit-v5-rt_test_lib",
+  module_name = "intellij.junit.v5.rt",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = [
+    "//plugins/junit_rt:junit-rt",
+    "//plugins/junit_rt:junit-rt_test_lib",
+    "//java/java-runtime:rt",
+    "//java/java-runtime:rt_test_lib",
+  ],
+  runtime_deps = [
+    ":junit-v5-rt",
+    "//plugins/junit_rt:junit-rt_test_lib",
+    "//java/java-runtime:rt_test_lib",
+    "@lib//:junit5Launcher-provided",
+    "@lib//:junit5-provided",
+  ]
+)
 ### auto-generated section `build intellij.junit.v5.rt` end

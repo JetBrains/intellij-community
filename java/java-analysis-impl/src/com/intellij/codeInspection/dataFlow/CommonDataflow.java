@@ -10,6 +10,7 @@ import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceArgumentAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceReturnAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaPolyadicPartAnchor;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaSwitchDeconstructionLabelAnchor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
@@ -378,8 +379,10 @@ public final class CommonDataflow {
                            @NotNull DfaAnchor anchor,
                            @NotNull DfaMemoryState state) {
       JavaDfaListener.super.beforePush(args, value, anchor, state);
-      if (anchor instanceof JavaMethodReferenceArgumentAnchor || anchor instanceof JavaPolyadicPartAnchor ||
-          anchor instanceof JavaMethodReferenceReturnAnchor) {
+      if (anchor instanceof JavaMethodReferenceArgumentAnchor ||
+          anchor instanceof JavaPolyadicPartAnchor ||
+          anchor instanceof JavaMethodReferenceReturnAnchor ||
+          anchor instanceof JavaSwitchDeconstructionLabelAnchor) {
         myResult.add((JavaDfaAnchor)anchor, state, value);
       }
     }

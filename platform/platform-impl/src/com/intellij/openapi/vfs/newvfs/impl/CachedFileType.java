@@ -3,7 +3,7 @@ package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.FileContentUtilCore;
@@ -71,7 +71,7 @@ public final class CachedFileType {
     }
   }
 
-  static final class ReparseListener implements BulkFileListener {
+  static final class ReparseListener implements BulkFileListenerBackgroundable {
     @Override
     public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
       for (VFileEvent event : events) {

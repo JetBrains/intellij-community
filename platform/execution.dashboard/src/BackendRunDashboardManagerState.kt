@@ -10,9 +10,21 @@ import com.intellij.execution.dashboard.RunDashboardService
 import com.intellij.execution.dashboard.RunDashboardServiceId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.project.Project
-import com.intellij.platform.execution.dashboard.splitApi.*
+import com.intellij.platform.execution.dashboard.splitApi.CustomLinkDto
+import com.intellij.platform.execution.dashboard.splitApi.NavigateToServiceEvent
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardAdditionalServiceDto
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardConfigurationDto
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardMainServiceDto
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceDto
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardSettingsDto
+import com.intellij.platform.execution.dashboard.splitApi.ServiceCustomizationDto
+import com.intellij.platform.execution.dashboard.splitApi.ServiceStatusDto
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 internal class BackendRunDashboardManagerState(private val project: Project) {
   private val sharedSettings = MutableStateFlow(RunDashboardSettingsDto())
@@ -26,6 +38,7 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
   private val sharedStatuses = MutableSharedFlow<ServiceStatusDto>(1, 100, BufferOverflow.DROP_OLDEST)
   private val sharedConfigurationTypes = MutableStateFlow<Set<String>>(emptySet())
 
+  private val sharedAvailableConfigurations = MutableStateFlow<List<RunDashboardConfigurationDto>>(emptyList())
   private val sharedExcludedTypes = MutableStateFlow(emptySet<String>())
 
   private val sharedStateUpdatesQueue = BackendRunDashboardUpdatesQueue(
@@ -65,6 +78,20 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
     scheduleSharedStateUpdate {
       sharedSettings.value = RunDashboardSettingsDto(openRunningConfigInTab)
     }
+  }
+
+  fun fireAvailableConfigurationsUpdated(availableConfigurations: List<RunDashboardConfigurationDto>) {
+    scheduleSharedStateUpdate {
+      sharedAvailableConfigurations.value = availableConfigurations
+    }
+  }
+
+  fun getAvailableConfigurations(): Flow<List<RunDashboardConfigurationDto>> {
+    return sharedAvailableConfigurations.asStateFlow()
+  }
+
+  fun getCurrentAvailableConfigurations(): List<RunDashboardConfigurationDto> {
+    return sharedAvailableConfigurations.value
   }
 
   fun fireExcludedTypesUpdated(excludedTypes: Set<String>) {

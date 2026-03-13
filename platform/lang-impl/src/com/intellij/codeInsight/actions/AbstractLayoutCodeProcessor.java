@@ -17,7 +17,12 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -26,6 +31,7 @@ import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -400,8 +406,10 @@ public abstract class AbstractLayoutCodeProcessor {
     private PsiFile next;
 
     ProcessingTask(@NotNull ProgressIndicator indicator) {
-      myFileTreeIterator = ReadAction.compute(() -> build());
-      myCountingIterator = ReadAction.compute(() -> build());
+      var iteratorPair = ReadAction.computeBlocking(() -> Pair.pair(build(), build()));
+      myFileTreeIterator = iteratorPair.first;
+      myCountingIterator = iteratorPair.second;
+
       myProcessors = getAllProcessors();
       myProgressIndicator = indicator;
     }
@@ -435,7 +443,7 @@ public abstract class AbstractLayoutCodeProcessor {
     private record FileAndStatus(VirtualFile file, @NlsSafe String statusText) {}
 
     private @Nullable FileAndStatus shouldProcessFile(PsiFile psiFile) {
-      return ReadAction.compute(() -> {
+      return ReadAction.computeBlocking(() -> {
         VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiFile);
         if (virtualFile == null) return null;
 
@@ -463,7 +471,7 @@ public abstract class AbstractLayoutCodeProcessor {
             .executeSynchronously();
         }
         else {
-          PsiFile psiFile = ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(file));
+          PsiFile psiFile = ReadAction.computeBlocking(() -> PsiManager.getInstance(myProject).findFile(file));
           writeTask = psiFile != null ? processor.prepareTask(psiFile, myProcessChangedTextOnly) : null;
         }
         if (writeTask == null) continue;

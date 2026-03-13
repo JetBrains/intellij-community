@@ -8,21 +8,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePrefixTree
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.locks.ReadWriteLock
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
-import kotlin.concurrent.write
 
 open class BaseProjectDirectoriesImpl(val project: Project, scope: CoroutineScope) : BaseProjectDirectories(project) {
 
@@ -69,7 +66,13 @@ open class BaseProjectDirectoriesImpl(val project: Project, scope: CoroutineScop
 
     synchronized(lock) {
       oldRoots = virtualFilesTree.getRoots()
-      oldPossibleRoots.forEach { virtualFilesTree.remove(it) }
+      oldPossibleRoots.forEach {
+        if(!change.storageAfter.getVirtualFileUrlIndex().findEntitiesByUrl(
+            it.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())
+        ).iterator().hasNext()) {
+          virtualFilesTree.remove(it)
+        }
+      }
       newPossibleRoots.forEach { virtualFilesTree.add(it) }
       newRoots = virtualFilesTree.getRoots()
       baseDirectoriesSet = newRoots

@@ -126,7 +126,7 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
     override val author: GitLabUserDTO = note.author
     override val createdAt: Date? = note.createdAt
     override val isDraft: Boolean = note is GitLabMergeRequestDraftNote
-    override val serverUrl: URL = mr.glProject.serverPath.toURL()
+    override val serverUrl: URL = mr.serverPath.toURL()
 
     override val actionsVm: GitLabNoteAdminActionsViewModel? =
       if (note is MutableGitLabNote && note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, projectData, note) else null

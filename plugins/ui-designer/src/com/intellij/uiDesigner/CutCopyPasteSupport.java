@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.LwComponent;
@@ -17,9 +18,7 @@ import com.intellij.uiDesigner.lw.LwContainer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +33,6 @@ import java.util.List;
 
 public final class CutCopyPasteSupport implements CopyProvider, CutProvider, PasteProvider{
   private static final Logger LOG = Logger.getInstance(CutCopyPasteSupport.class);
-  private static final SAXBuilder SAX_BUILDER = new SAXBuilder();
 
   private final GuiEditor myEditor;
   private static final @NonNls String ELEMENT_SERIALIZED = "serialized";
@@ -139,10 +137,8 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
     final PsiPropertiesProvider provider = new PsiPropertiesProvider(editor.getModule());
 
     try {
-      //noinspection HardCodedStringLiteral
-      final Document document = SAX_BUILDER.build(new StringReader(serializedComponents), "UTF-8");
+      final Element rootElement = JDOMUtil.load(new StringReader(serializedComponents));
 
-      final Element rootElement = document.getRootElement();
       if (!rootElement.getName().equals(ELEMENT_SERIALIZED)) {
         return false;
       }

@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.copy.CopyClassesHandler;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.TestIndexingModeSupporter;
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -133,6 +134,6 @@ public class CopyClassTest extends LightMultiFileTestCase {
     TestSuite suite = new TestSuite();
     suite.addTestSuite(CopyClassTest.class);
     TestIndexingModeSupporter.addAllTests(CopyClassTest.class, suite);
-    return suite;
+    return TestFrameworkUtil.flattenSuite(suite);
   }
 }

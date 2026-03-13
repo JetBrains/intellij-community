@@ -1,5 +1,8 @@
 // "Create annotation 'bar'" "true"
 // ERROR: Unresolved reference: foo
+// K2_ERROR: Annotation argument must be a compile-time constant.
+// K2_ERROR: Unresolved reference 'bar'.
+// K2_ERROR: Unresolved reference 'foo'.
 // K2_AFTER_ERROR: Unresolved reference 'foo'.
 
 @[foo(1, "2", <caret>bar("3"))] fun test() {

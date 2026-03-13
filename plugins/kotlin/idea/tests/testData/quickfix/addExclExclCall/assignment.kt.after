@@ -1,5 +1,6 @@
 // "Add non-null asserted (s!!) call" "true"
 // WITH_STDLIB
+// K2_ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'String?'.
 var i = 0
 
 fun foo(s: String?) {

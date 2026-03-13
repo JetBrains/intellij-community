@@ -1,8 +1,13 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
     <module name="intellij.platform.editor"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.util.coroutines"/>
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <editorFactoryListener implementation="com.intellij.platform.editor.backend.BackendEditorFactoryListener"/>
     <applicationService serviceImplementation="com.intellij.platform.editor.backend.BackendEditors"

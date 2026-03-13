@@ -2,7 +2,11 @@
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildWithNulls
+import com.intellij.platform.workspace.storage.testEntities.entities.MySource
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentWithNulls
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyChildWithNulls
+import com.intellij.platform.workspace.storage.testEntities.entities.parentEntity
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 

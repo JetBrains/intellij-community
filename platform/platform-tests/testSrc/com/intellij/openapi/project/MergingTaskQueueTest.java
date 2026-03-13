@@ -1,19 +1,30 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.platform.util.progress.RawProgressReporter;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.junit5.TestApplication;
+import kotlin.Unit;
+import kotlinx.coroutines.Job;
+import kotlinx.coroutines.JobKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -22,7 +33,13 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @TestApplication
 @SuppressWarnings("unchecked")
@@ -41,7 +58,7 @@ public class MergingTaskQueueTest {
     while (true) {
       try (MergingTaskQueue.QueuedTask<?> nextTask = queue.extractNextTask()) {
         if (nextTask == null) return;
-        nextTask.executeTask();
+        nextTask.executeTask(new RawProgressReporter() {});
       }
     }
   }
@@ -387,7 +404,7 @@ public class MergingTaskQueueTest {
     try (MergingTaskQueue.QueuedTask<?> task = queue.extractNextTask()) {
       queue.disposePendingTasks();
       assertNull(isDisposed.get());
-      task.executeTask();
+      task.executeTask(new RawProgressReporter() {});
       fail();
     }
     catch (ProcessCanceledException ignore) {
@@ -413,7 +430,7 @@ public class MergingTaskQueueTest {
 
     Thread th = new Thread(() -> {
       try (MergingTaskQueue.QueuedTask<?> nextTask = queue.extractNextTask()) {
-        nextTask.executeTask();
+        nextTask.executeTask(new RawProgressReporter() {});
       }
       catch (Exception e) {
         LOG.error(e);
@@ -559,6 +576,71 @@ public class MergingTaskQueueTest {
     assertEquals(receiptWhenAdded, receiptWhenQueried);
     assertFalse(receiptWhenAdded.isAfter(receiptWhenQueried));
     assertFalse(receiptWhenQueried.isAfter(receiptWhenAdded));
+  }
+
+  private static class TaskWithRunnable implements MergeableQueueTask<TaskWithRunnable> {
+
+    private final Runnable r;
+
+    TaskWithRunnable(Runnable r) {
+      this.r = r;
+    }
+
+    @Override
+    public @Nullable MergingTaskQueueTest.TaskWithRunnable tryMergeWith(@NotNull MergingTaskQueueTest.TaskWithRunnable taskFromQueue) {
+      return this;
+    }
+
+    @Override
+    public void perform(@NotNull ProgressIndicator indicator) {
+      r.run();
+    }
+
+    @Override
+    public void dispose() {
+    }
+  }
+
+  @Test
+  public void testRunnablesGetCanceledOnCancellationOfContextJob() {
+    ProgressManager.getInstance(); // preload service so that it does not throw PCE
+
+    Job job = JobKt.Job(null);
+    TaskWithRunnable task = new TaskWithRunnable(() -> {
+      job.cancel(null);
+      ProgressManager.checkCanceled();
+    });
+
+    queue.addTask(task);
+    ThreadContext.installThreadContext(job, true, () -> {
+      try {
+        runAllTasks();
+        fail();
+      } catch (ProcessCanceledException e) {
+        // expected
+      }
+      return Unit.INSTANCE;
+    });
+  }
+
+  @Test
+  public void testExceptionGetsOverriddenByPCE() {
+    ProgressManager.getInstance(); // preload service so that it does not throw PCE
+
+    Job job = JobKt.Job(null);
+    TaskWithRunnable task = new TaskWithRunnable(() -> {
+      job.cancel(null);
+      throw new IllegalStateException(); // simulation of some broken invariant during dispose
+    });
+    queue.addTask(task);
+    ThreadContext.installThreadContext(job, true, () -> {
+      try {
+        runAllTasks();
+      } catch (ProcessCanceledException e) {
+        // expected
+      }
+      return Unit.INSTANCE;
+    });
   }
 
   private static void await(@NotNull CyclicBarrier b) {

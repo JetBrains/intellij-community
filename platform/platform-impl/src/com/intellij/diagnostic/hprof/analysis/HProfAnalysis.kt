@@ -21,9 +21,13 @@ import com.intellij.diagnostic.hprof.classstore.HProfMetadata
 import com.intellij.diagnostic.hprof.histogram.Histogram
 import com.intellij.diagnostic.hprof.navigator.ObjectNavigator
 import com.intellij.diagnostic.hprof.parser.HProfEventBasedParser
-import com.intellij.diagnostic.hprof.util.*
+import com.intellij.diagnostic.hprof.util.FileBackedIntList
+import com.intellij.diagnostic.hprof.util.FileBackedUByteList
+import com.intellij.diagnostic.hprof.util.FileBackedUShortList
 import com.intellij.diagnostic.hprof.util.HeapReportUtils.sectionHeader
 import com.intellij.diagnostic.hprof.util.HeapReportUtils.toShortStringAsCount
+import com.intellij.diagnostic.hprof.util.ListProvider
+import com.intellij.diagnostic.hprof.util.PartialProgressIndicator
 import com.intellij.diagnostic.hprof.visitors.RemapIDsVisitor
 import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.annotations.NonNls

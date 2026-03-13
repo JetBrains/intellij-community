@@ -14,7 +14,12 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -47,21 +52,49 @@ import com.intellij.ui.tabs.TabsUtil
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.*
-import kotlinx.coroutines.*
+import com.intellij.util.ui.EDT
+import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
+import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.*
-import java.awt.event.*
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.Graphics2D
+import java.awt.Point
+import java.awt.Shape
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
+import java.awt.event.MouseEvent
 import java.awt.geom.Rectangle2D
 import java.awt.geom.RoundRectangle2D
 import java.time.Instant
 import java.util.function.Function
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JSplitPane
+import javax.swing.SwingConstants
+import javax.swing.SwingUtilities
 import kotlin.math.roundToInt
 
 private val LOG = logger<EditorWindow>()
@@ -105,7 +138,7 @@ class EditorWindow internal constructor(
   val isDisposed: Boolean
     get() = !coroutineScope.isActive
 
-  private val removedTabs = ArrayDeque<Pair<String, FileEditorOpenOptions>>()
+  private val removedTabs = ArrayDeque<RemovedTabInfo>()
 
   val isShowing: Boolean
     get() = component.isShowing
@@ -646,12 +679,12 @@ class EditorWindow internal constructor(
   @RequiresEdt
   internal fun restoreClosedTab() {
     val info = removedTabs.removeLastOrNull() ?: return
-    val file = VirtualFileManager.getInstance().findFileByUrl(info.first) ?: return
+    val file = info.restoreFile() ?: return
     manager.openFileImpl(
       window = this,
       _file = file,
       entry = null,
-      options = info.second.copy(selectAsCurrent = true, requestFocus = true, waitForCompositeOpen = false),
+      options = info.openOptions.copy(selectAsCurrent = true, requestFocus = true, waitForCompositeOpen = false),
     )
   }
 
@@ -678,7 +711,8 @@ class EditorWindow internal constructor(
         val editorTabs = tabbedPane.editorTabs
         // composite could close itself on decomposition
         if (componentIndex >= 0) {
-          removedTabs.addLast(file.url to FileEditorOpenOptions(index = componentIndex, pin = composite.isPinned))
+          val openOptions = FileEditorOpenOptions(index = componentIndex, pin = composite.isPinned)
+          removedTabs.addLast(RemovedTabInfo(file, openOptions))
           if (removedTabs.size >= tabLimit) {
             removedTabs.removeFirst()
           }
@@ -1304,3 +1338,15 @@ private class MySplitPainter(
 
 internal val TabInfo.composite: EditorComposite
   get() = (component as EditorCompositePanel).composite
+
+private data class RemovedTabInfo(
+  private val file: VirtualFile,
+  val openOptions: FileEditorOpenOptions,
+) {
+  fun restoreFile(): VirtualFile? {
+    if (file.isValid) {
+      return file
+    }
+    return VirtualFileManager.getInstance().findFileByUrl(file.url)
+  }
+}

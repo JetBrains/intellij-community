@@ -1,19 +1,28 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui
 
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.ui
 import com.intellij.openapi.components.service
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Rectangle
-import javax.swing.*
+import javax.swing.JComboBox
+import javax.swing.JList
+import javax.swing.JTable
+import javax.swing.JTree
+import javax.swing.SwingUtilities
 import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal

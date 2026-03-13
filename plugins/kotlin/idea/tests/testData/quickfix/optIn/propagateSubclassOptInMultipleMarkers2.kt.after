@@ -1,5 +1,6 @@
 // "Propagate 'SubclassOptInRequired(UnstableApiB::class)' opt-in requirement to 'SomeImplementation'" "true"
 // WITH_STDLIB
+// K2_ERROR: This class or interface requires opt-in to be implemented. Its usage must be marked with '@UnstableApiB', '@OptIn(UnstableApiB::class)' or '@SubclassOptInRequired(UnstableApiB::class)'
 @file:OptIn(ExperimentalSubclassOptIn::class)
 
 @RequiresOptIn

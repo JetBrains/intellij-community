@@ -1,4 +1,5 @@
 // "Remove 'val' from parameter" "true"
+// K2_ERROR: 'val' on loop parameter is prohibited.
 class Pair<A, B>
 {
     operator fun component1(): A = null!!

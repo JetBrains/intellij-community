@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.copyPaste;
 
@@ -115,6 +115,16 @@ public class FirKotlinToKotlinMultiDollarStringsCopyPasteTestGenerated extends A
         runTest("../../idea/tests/testData/copyPaste/multiDollar/FromPrefixedToPrefixedLongTemplateEntry.kt");
     }
 
+    @TestMetadata("FromPrefixedToPrefixedLongTemplateEntryExactEntrySelection.kt")
+    public void testFromPrefixedToPrefixedLongTemplateEntryExactEntrySelection() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/multiDollar/FromPrefixedToPrefixedLongTemplateEntryExactEntrySelection.kt");
+    }
+
+    @TestMetadata("FromPrefixedToPrefixedLongTemplateEntryExactNestedEntrySelection.kt")
+    public void testFromPrefixedToPrefixedLongTemplateEntryExactNestedEntrySelection() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/multiDollar/FromPrefixedToPrefixedLongTemplateEntryExactNestedEntrySelection.kt");
+    }
+
     @TestMetadata("FromPrefixedToPrefixedPlainText.kt")
     public void testFromPrefixedToPrefixedPlainText() throws Exception {
         runTest("../../idea/tests/testData/copyPaste/multiDollar/FromPrefixedToPrefixedPlainText.kt");
@@ -123,6 +133,11 @@ public class FirKotlinToKotlinMultiDollarStringsCopyPasteTestGenerated extends A
     @TestMetadata("FromPrefixedToPrefixedShortNameEntry.kt")
     public void testFromPrefixedToPrefixedShortNameEntry() throws Exception {
         runTest("../../idea/tests/testData/copyPaste/multiDollar/FromPrefixedToPrefixedShortNameEntry.kt");
+    }
+
+    @TestMetadata("FromPrefixedToPrefixedShortNameEntryExactEntrySelection.kt")
+    public void testFromPrefixedToPrefixedShortNameEntryExactEntrySelection() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/multiDollar/FromPrefixedToPrefixedShortNameEntryExactEntrySelection.kt");
     }
 
     @TestMetadata("FromPrefixedToSimpleDangerousDollar.kt")

@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiArrayType;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
@@ -55,7 +54,7 @@ public final class IterableVariableMacro extends VariableTypeMacroBase {
 
     Project project = context.getProject();
     final int offset = context.getStartOffset();
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
+    PsiFile file = context.getPsiFile();
     assert file != null;
     PsiElement place = file.findElementAt(offset);
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);

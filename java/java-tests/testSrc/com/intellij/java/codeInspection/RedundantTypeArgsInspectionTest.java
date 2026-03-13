@@ -6,10 +6,12 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.miscGenerics.RedundantTypeArgsInspection;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21;
 
 public class RedundantTypeArgsInspectionTest extends LightDaemonAnalyzerTestCase {
 
@@ -19,8 +21,8 @@ public class RedundantTypeArgsInspectionTest extends LightDaemonAnalyzerTestCase
   }
 
   @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_1_6;
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21;
   }
 
   @NotNull
@@ -30,7 +32,6 @@ public class RedundantTypeArgsInspectionTest extends LightDaemonAnalyzerTestCase
   }
 
   private void doTest() {
-    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_6, getModule(), getTestRootDisposable());
     doTest("/inspection/redundantTypeArgs/" + getTestName(false) + ".java", true, false);
   }
 
@@ -51,6 +52,10 @@ public class RedundantTypeArgsInspectionTest extends LightDaemonAnalyzerTestCase
   }
   
   public void testTooManyArguments() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_17, () -> doTest());
+    doTest();
+  }
+
+  public void testNonGeneric() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> doTest());
   }
 }

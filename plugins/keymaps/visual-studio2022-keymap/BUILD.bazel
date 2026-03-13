@@ -13,4 +13,12 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":keymap-visualStudio2022_resources"]
 )
+
+jvm_library(
+  name = "keymap-visualStudio2022_test_lib",
+  module_name = "intellij.keymap.visualStudio2022",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":keymap-visualStudio2022"]
+)
 ### auto-generated section `build intellij.keymap.visualStudio2022` end

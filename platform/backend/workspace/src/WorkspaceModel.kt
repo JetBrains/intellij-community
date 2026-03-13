@@ -56,7 +56,16 @@ public interface WorkspaceModel {
   public fun updateProjectModel(description: @NonNls String, updater: (MutableEntityStorage) -> Unit)
 
   /**
-   * **Asynchronous** modification of the current model by calling [updater] and applying it to the storage. Has to be called outside any locks
+   * **Asynchronous** modification of the current model by calling [updater] and applying it to the storage. Has to be called outside any locks.
+   *
+   * For the first 3 attempts this method will try to call [updater] outside write action and only then acquire write action to apply the results.
+   * This would not succeed if [WorkspaceModel] is updated by another thread during [updater] calculation. If all of the attempts fail,
+   * [updater] would be called again inside write action to guarantee that [WorkspaceModel] is not updated during [updater] execution and
+   * applying of the results succeeds.
+   *
+   * It means that the [updater] may be called several times, therefore, it must not have any side effects. If you use a separate instance [MutableEntityStorage]
+   * to accumulate changes (not the one that is provided to the [updater]), then either calculate it beforehand and don't modify it inside [updater]
+   * (it's only possible if it doesn't depend on the state of the current model), or create [MutableEntityStorage] inside [updater].
    *
    * Use [description] to briefly describe what you update. This message will be logged and can be used for debugging purposes.
    *

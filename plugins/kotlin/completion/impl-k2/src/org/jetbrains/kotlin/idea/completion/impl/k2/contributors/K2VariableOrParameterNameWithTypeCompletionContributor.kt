@@ -31,8 +31,6 @@ import org.jetbrains.kotlin.idea.completion.NameFilter
 import org.jetbrains.kotlin.idea.completion.NameWithTypeCompletion
 import org.jetbrains.kotlin.idea.completion.NameWithTypeLookupElementDecorator
 import org.jetbrains.kotlin.idea.completion.asNameFilter
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.exclude
 import org.jetbrains.kotlin.idea.completion.hideLookupOnColon
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
@@ -40,12 +38,14 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSetupScope
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2ContributorSectionPriority
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalElementOfSelf
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.KtSymbolWithOrigin
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.TypeLookupObject
-import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.VariableOrParameterNameWithTypeWeigher.nameWithTypePriority
 import org.jetbrains.kotlin.idea.completion.suppressAutoInsertion
 import org.jetbrains.kotlin.idea.completion.suppressItemSelectionByCharsOnTyping
-import org.jetbrains.kotlin.idea.completion.weighers.VariableOrParameterNameWithTypeWeigher.nameWithTypePriority
-import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinPrimaryConstructorParameterPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleParameterPositionContext

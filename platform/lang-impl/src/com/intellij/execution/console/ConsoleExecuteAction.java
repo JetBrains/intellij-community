@@ -24,7 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class ConsoleExecuteAction extends DumbAwareAction {
   static final String CONSOLE_EXECUTE_ACTION_ID = "Console.Execute";

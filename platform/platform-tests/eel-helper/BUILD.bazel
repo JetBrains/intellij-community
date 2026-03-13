@@ -26,4 +26,19 @@ jvm_library(
     "@lib//:jline-terminal-jna",
   ]
 )
+
+jvm_library(
+  name = "eel-helper_test_lib",
+  module_name = "intellij.platform.eelHelper",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":eel-helper",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
+    "//libraries/jackson/databind:databind_test_lib",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//platform/util-rt:util-rt_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.eelHelper` end

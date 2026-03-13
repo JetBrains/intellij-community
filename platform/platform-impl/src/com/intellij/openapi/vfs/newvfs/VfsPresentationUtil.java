@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 import static com.intellij.openapi.util.text.StringUtil.escapeMnemonics;
 import static com.intellij.openapi.util.text.StringUtil.firstLast;

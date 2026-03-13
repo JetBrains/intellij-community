@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine
 
+import com.intellij.debugger.JvmDebuggerUtils
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
@@ -9,12 +10,13 @@ import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.debugger.ui.breakpoints.FilteredRequestor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.util.Key
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties
 import com.intellij.xdebugger.impl.breakpoints.BreakpointState
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
+import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.event.LocatableEvent
 import com.sun.jdi.request.EventRequest
@@ -25,6 +27,12 @@ import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties
 import kotlin.time.Duration
+
+
+internal class EnterAndExitEvaluationCheck(
+  @JvmField val enterBreakpointCheckFn: Method,
+  @JvmField val checkIsDoneFn: Method,
+)
 
 /**
  * Find some suspend context in which evaluation is possible.
@@ -149,7 +157,7 @@ private suspend fun <R> tryToBreakOnAnyMethodAndEvaluate(
 
 @ApiStatus.Internal
 fun <Self : XBreakpoint<P>, P : XBreakpointProperties<*>, S : BreakpointState> shouldInstrumentBreakpoint(xB: XBreakpointBase<Self, P, S>): Boolean {
-  if (!XBreakpointUtil.isBreakpointInstrumentationSwitchedOn()) {
+  if (!JvmDebuggerUtils.isBreakpointInstrumentationSwitchedOn()) {
     return false
   }
   if (xB.isLogMessage || xB.isLogStack) return false
@@ -163,6 +171,10 @@ fun <Self : XBreakpoint<P>, P : XBreakpointProperties<*>, S : BreakpointState> s
   val isConditionalBp = xB.conditionExpression != null && xB.isConditionEnabled
   return (isLoggingBp || isConditionalBp) && !(isLoggingBp && isConditionalBp)
 }
+
+@ApiStatus.Internal
+@JvmField
+val INSTRUMENTATION_CONDITION_HIT_CALLBACK = Key.create<(SuspendContextImpl) -> Unit>("INSTRUMENTATION_CONDITION_HIT_CALLBACK")
 
 @ApiStatus.Internal
 enum class ClientEvaluationExceptionType {

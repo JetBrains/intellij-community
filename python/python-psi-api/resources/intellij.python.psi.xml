@@ -41,8 +41,8 @@
     <extensionPoint qualifiedName="Pythonid.pythonDocumentationQuickInfoProvider"
                     interface="com.jetbrains.python.documentation.PythonDocumentationQuickInfoProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.typeEvalExternalTypeProvider"
-                    interface="com.jetbrains.python.psi.types.external.ExternalPyTypeResolverProvider"
+    <extensionPoint qualifiedName="Pythonid.typeEvalTypeEngineProvider"
+                    interface="com.jetbrains.python.psi.types.engine.PyTypeEngineProvider"
                     dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

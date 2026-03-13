@@ -18,7 +18,7 @@
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
-      <version>3.24.4-jb.2</version>
+      <version>3.25.5</version>
     </dependency>
     <dependency>
       <groupId>commons-cli</groupId>
@@ -33,7 +33,7 @@
     <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
-      <version>2.13.1</version>
+      <version>2.13.2</version>
     </dependency>
     <dependency>
       <groupId>commons-io</groupId>

@@ -1,10 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.otherIde
 
-import com.fasterxml.jackson.core.JsonParser.Feature
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -15,15 +11,19 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.findFileOrDirectory
 import com.intellij.openapi.vfs.isFile
+import tools.jackson.core.json.JsonReadFeature
+import tools.jackson.databind.DeserializationFeature
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.json.JsonMapper
 
 private val logger = logger<LaunchJsonUsagesCollector>()
 
-private val OBJECT_MAPPER = ObjectMapper()
+private val OBJECT_MAPPER = JsonMapper.builder()
   .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-  .configure(Feature.ALLOW_COMMENTS, true)
-  .configure(Feature.ALLOW_TRAILING_COMMA, true)
-  .configure(Feature.ALLOW_MISSING_VALUES, true)
-  .reader()
+  .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS)
+  .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
+  .enable(JsonReadFeature.ALLOW_MISSING_VALUES)
+  .build()
 
 internal class LaunchJsonUsagesCollector : ProjectUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP

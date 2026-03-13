@@ -2,9 +2,14 @@
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.DEPENDENCY_SUPPORT_FEATURE
+import com.intellij.ide.plugins.FILE_HANDLER_KIND
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginManagerConfigurable
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.ide.plugins.pluginRequiresUltimatePluginButItsDisabled
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -43,7 +48,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.BorderLayout
-import java.util.*
+import java.util.Collections
 import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JLabel

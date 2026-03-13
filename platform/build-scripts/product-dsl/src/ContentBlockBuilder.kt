@@ -25,7 +25,7 @@ package org.jetbrains.intellij.build.productLayout
 
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginId
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import org.jetbrains.intellij.build.productLayout.validator.rule.validateAndRecordAlias
 import org.jetbrains.intellij.build.productLayout.validator.rule.validateModuleSetOverrides
 import org.jetbrains.intellij.build.productLayout.validator.rule.validateNoDuplicateModules
@@ -58,6 +58,12 @@ internal fun buildContentBlocksAndChainMapping(
   val contentBlockByName = HashMap<String, ContentBlock>()
 
   fun traverse(moduleSet: ModuleSet, chain: List<String>, overrides: Map<ContentModuleName, ModuleLoadingRuleValue>) {
+    // Pluginized module sets are materialized as standalone bundled plugins and should not be inlined
+    // into product content blocks.
+    if (moduleSet.pluginSpec != null) {
+      return
+    }
+
     val setName = "$MODULE_SET_PREFIX${moduleSet.name}"
     
     // Check if already processed

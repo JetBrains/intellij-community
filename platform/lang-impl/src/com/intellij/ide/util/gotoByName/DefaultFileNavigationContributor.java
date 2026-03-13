@@ -13,6 +13,7 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.ApiStatus;
@@ -34,6 +35,7 @@ public final class DefaultFileNavigationContributor implements ChooseByNameContr
   }
 
   @Override
+  @RequiresBackgroundThread(generateAssertion = false)
   public void processElementsWithName(@NotNull String name,
                                       @NotNull Processor<? super NavigationItem> processor,
                                       @NotNull FindSymbolParameters parameters) {
@@ -41,6 +43,7 @@ public final class DefaultFileNavigationContributor implements ChooseByNameContr
   }
 
   @ApiStatus.Internal
+  @RequiresBackgroundThread(generateAssertion = false)
   public static void processElementsWithName(@NotNull String name,
                                              @NotNull Processor<? super NavigationItem> processor,
                                              @NotNull FindSymbolParameters parameters,

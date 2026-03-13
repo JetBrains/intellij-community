@@ -1,5 +1,6 @@
 // "Wrap element with 'arrayOf()' call" "true"
 // WITH_STDLIB
+// K2_ERROR: Argument type mismatch: actual type is 'String', but 'Array<String>' was expected.
 
 fun foo(a: String) {
     bar(a<caret>)

@@ -1330,6 +1330,16 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     @Override
+    public boolean shouldDebugJustMyCode() {
+      return myConsoleSettings.shouldDebugJustMyCode();
+    }
+
+    @Override
+    public void setDebugJustMyCode(boolean flag) {
+      LOG.warn("Tried to set debugJustMyCode flag for PythonConsoleRunParams, which is an unsupported operation");
+    }
+
+    @Override
     public @NotNull List<String> getEnvFilePaths() {
       return myEnvFiles;
     }

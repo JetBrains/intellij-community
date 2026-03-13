@@ -75,7 +75,8 @@ internal class FrontendTerminalHyperlinkFacade(
           attributes = style
           followedAttributes = followedStyle
           hoveredAttributes = hoveredStyle
-          layer = layer
+          isInvisibleLink = this@toEditorDecoration.isInvisibleLink
+          layer = this@toEditorDecoration.layer
         }
       }
       is TerminalHighlightingInfo -> style?.let { style ->

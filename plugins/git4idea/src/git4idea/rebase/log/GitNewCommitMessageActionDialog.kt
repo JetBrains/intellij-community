@@ -38,6 +38,7 @@ internal class GitNewCommitMessageActionDialog(
 ) : DialogWrapper(project, true) {
   private val commitEditor = createCommitEditor()
   private var onOk: (String) -> Unit = {}
+  private var onClose: () -> Unit = {}
   private var repositoryValidationResult: ValidationInfo? = null
 
   constructor(
@@ -82,8 +83,9 @@ internal class GitNewCommitMessageActionDialog(
     isOKActionEnabled = !isMessageEmpty
   }
 
-  fun show(onOk: (newMessage: String) -> Unit) {
+  fun show(onClose: () -> Unit = {}, onOk: (newMessage: String) -> Unit) {
     this.onOk = onOk
+    this.onClose = onClose
     show()
   }
 
@@ -116,6 +118,11 @@ internal class GitNewCommitMessageActionDialog(
     super.doOKAction()
 
     onOk(commitEditor.comment)
+  }
+
+  override fun doCancelAction() {
+    onClose.invoke()
+    super.doCancelAction()
   }
 
   override fun dispose() {

@@ -34,4 +34,28 @@ jvm_library(
     "@lib//:opentelemetry",
   ]
 )
+
+jvm_library(
+  name = "eel-impl_test_lib",
+  module_name = "intellij.platform.eel.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":eel-impl",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/util/base:base_test_lib",
+    "//platform/extensions:extensions_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//libraries/pty4j:pty4j_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/eel-provider:eel-provider_test_lib",
+    "//platform/core-nio-fs:core-nio-fs_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//libraries/hash4j:hash4j_test_lib",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.eel.impl` end

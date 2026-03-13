@@ -15,8 +15,8 @@
  */
 package com.intellij.ide.dnd;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLayeredPane;
+import java.awt.Rectangle;
 
 interface DropTargetHighlighter {
 

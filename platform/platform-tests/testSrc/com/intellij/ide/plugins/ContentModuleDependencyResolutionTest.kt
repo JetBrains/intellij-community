@@ -1,8 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
-import com.intellij.platform.testFramework.plugins.*
+import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
+import com.intellij.platform.testFramework.plugins.PluginSpecBuilder
+import com.intellij.platform.testFramework.plugins.buildDir
+import com.intellij.platform.testFramework.plugins.content
+import com.intellij.platform.testFramework.plugins.dependencies
+import com.intellij.platform.testFramework.plugins.module
 import com.intellij.testFramework.rules.InMemoryFsExtension
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -87,7 +91,7 @@ internal class ContentModuleDependencyResolutionTest {
       }
     }
     // namespaces are not active yet: (com.intellij.ide.plugins.PluginModuleId.useNamespaceInId)
-    if (System.getProperty("revert.IJPL220159") == "true") {
+    if (System.getProperty("intellij.platform.plugin.modules.use.namespace.in.id") == "true") {
       val foo = pluginSet.getEnabledModule("foo")
       val dependency = foo.moduleDependencies.modules.single()
       assertThat(dependency.name).isEqualTo("platform")
@@ -126,7 +130,7 @@ internal class ContentModuleDependencyResolutionTest {
       }
     }
     // namespaces are not active yet: (com.intellij.ide.plugins.PluginModuleId.useNamespaceInId)
-    if (System.getProperty("revert.IJPL220159") == "true") {
+    if (System.getProperty("intellij.platform.plugin.modules.use.namespace.in.id") == "true") {
       val bar = pluginSet.getEnabledModule("bar")
       val dependency = bar.moduleDependencies.modules.single()
       assertThat(dependency.name).isEqualTo("foo")

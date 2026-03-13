@@ -18,4 +18,23 @@ jvm_library(
     "//platform/tasks-platform-impl:tasks-impl",
   ]
 )
+
+jvm_library(
+  name = "java_test_lib",
+  module_name = "intellij.tasks.java",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":java",
+    "//platform/core-api:core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/tasks/tasks-api:tasks_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//java/debugger/openapi:java-debugger_test_lib",
+    "//java/debugger/impl:impl_test_lib",
+    "//platform/tasks-platform-api:tasks_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/tasks-platform-impl:tasks-impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.tasks.java` end

@@ -4,14 +4,18 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionToolResultExporter;
 import com.intellij.codeInspection.QuickFix;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.codeInspection.ex.HTMLComposerImpl;
+import com.intellij.codeInspection.ex.InspectionRVContentProvider;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.QuickFixAction;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public interface InspectionToolPresentation extends InspectionToolResultExporter {
   @Override

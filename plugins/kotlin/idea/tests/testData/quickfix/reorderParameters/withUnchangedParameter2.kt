@@ -1,4 +1,5 @@
 // "Reorder parameters" "true"
+// K2_ERROR: Parameter 'd' is uninitialized here.
 fun foo(
     a: String,
     b: String = d<caret>,

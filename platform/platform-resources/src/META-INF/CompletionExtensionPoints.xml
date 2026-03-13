@@ -63,6 +63,10 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.modcompletion.ModCompletionItemProvider"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.modcompletion.completionItemFilter" 
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.modcompletion.ModCompletionItemFilter"/>
+    </extensionPoint>
 
     <extensionPoint qualifiedName="com.intellij.codeInsight.completion.command.factory"
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">

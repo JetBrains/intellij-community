@@ -7,6 +7,7 @@ import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBro
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.idea.AppMode
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.application.ApplicationManager
@@ -28,10 +29,12 @@ import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.Strings
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.rpc.topics.broadcast
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.ui.DocumentAdapter
@@ -66,9 +69,7 @@ import com.intellij.ui.layout.enteredTextSatisfies
 import com.intellij.ui.layout.selected
 import com.intellij.ui.layout.selectedValueIs
 import com.intellij.ui.layout.selectedValueMatches
-import com.intellij.ui.render.fontInfoRenderer
 import com.intellij.util.PathUtil
-import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.system.OS
 import com.intellij.util.ui.initOnShow
@@ -89,14 +90,14 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.ui.TerminalContrastRatio
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
-import org.jetbrains.plugins.terminal.starter.ShellCustomizer
+import org.jetbrains.plugins.terminal.settings.TerminalSettingsProvider
+import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetectionService
 import org.jetbrains.plugins.terminal.util.updateActionShortcut
 import java.awt.Color
 import java.awt.Component
 import java.awt.event.ActionListener
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
 import javax.swing.JTextField
@@ -113,6 +114,18 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
   helpTopic = "reference.settings.terminal",
   _id = TERMINAL_CONFIGURABLE_ID
 ) {
+  private val additionalConfigurables: ClearableLazyValue<List<UnnamedConfigurable>> = ClearableLazyValue.create {
+    @Suppress("DEPRECATION")
+    val old = LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getBlockTerminalConfigurable(project) }
+    val new = TerminalSettingsProvider.EP_NAME.extensionList.mapNotNull { it.createConfigurable(project) }
+    new + old
+  }
+
+  private val blockTerminalConfigurables: ClearableLazyValue<List<UnnamedConfigurable>> = ClearableLazyValue.create {
+    @Suppress("DEPRECATION")
+    LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getBlockTerminalConfigurable(project) }
+  }
+
   override fun createPanel(): DialogPanel {
     val optionsProvider = TerminalOptionsProvider.instance
     val projectOptionsProvider = TerminalProjectOptionsProvider.getInstance(project)
@@ -124,7 +137,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
 
       panel {
         row {
-          val values = if (TerminalUtil.isGenOneTerminalOptionVisible()
+          val values = if (ExperimentalTerminalMigration.isExpTerminalOptionVisible()
                            // Normally, New Terminal can't be enabled if 'getGenOneTerminalVisibilityValue' is false.
                            // But if it is enabled for some reason (for example, the corresponding registry key was switched manually),
                            // show this option as well to avoid the errors.
@@ -225,7 +238,8 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
           }.bind(blockTerminalOptions::promptStyle)
 
           panel {
-            configurables(LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getBlockTerminalConfigurable(project) })
+            @Suppress("DEPRECATION")
+            configurables(blockTerminalConfigurables.value)
           }
 
         }.visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.NEW_TERMINAL))
@@ -393,16 +407,10 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
           checkBox(message("settings.override.ide.shortcuts"))
             .bindSelected(optionsProvider::overrideIdeShortcuts)
           cell(ActionLink(message("settings.configure.terminal.keybindings"), ActionListener { e ->
-            val settings = DataManager.getInstance().getDataContext(e.getSource() as ActionLink?).getData(Settings.KEY)
-            if (settings != null) {
-              val configurable = settings.find("preferences.keymap")
-              settings.select(configurable, "Terminal").doWhenDone(Runnable {
-                // Remove once https://youtrack.jetbrains.com/issue/IDEA-212247 is fixed
-                EdtExecutorService.getScheduledExecutorInstance().schedule(Runnable {
-                  settings.select(configurable, "Terminal")
-                }, 100, TimeUnit.MILLISECONDS)
-              })
-            }
+            // A hack: open the Keymap page and select the completion action (it is the first in the list of Terminal actions)
+            // Other ways of filtering the Keymap actions tree don't work reliably.
+            val dataContext = DataManager.getInstance().getDataContext(e.getSource() as? ActionLink)
+            openKeymapPageAndSelectAction(dataContext, "Terminal.CommandCompletion.Invoke")
           }).apply { toolTipText = message("settings.keymap.plugins.terminal") })
         }
         row {
@@ -425,8 +433,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
                          .and(ComponentPredicate.fromValue(RunCommandUsingIdeUtil.isVisible)))
         }
         panel {
-          configurables(ShellCustomizer.EP_NAME.extensionList.mapNotNull { it.getConfigurable(project) })
-          configurables(LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getConfigurable(project) })
+          configurables(additionalConfigurables.value)
         }
         row(message("settings.cursor.shape.label")) {
           comboBox(
@@ -438,22 +445,28 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
     }
   }
 
+  override fun disposeUIResources() {
+    super.disposeUIResources()
+    disposeConfigurables(additionalConfigurables)
+    disposeConfigurables(blockTerminalConfigurables)
+  }
+
+  private fun disposeConfigurables(lazy: ClearableLazyValue<List<UnnamedConfigurable>>) {
+    if (lazy.isCached) {
+      for (configurable in lazy.value) {
+        configurable.disposeUIResources()
+      }
+      lazy.drop()
+    }
+  }
+
   private fun createShellPathField(): TextFieldWithHistoryWithBrowseButton {
     val shellPathField = textFieldWithHistoryWithBrowseButton(
       project,
       FileChooserDescriptorFactory.singleFile().withDescription(message("settings.terminal.shell.executable.path.browseFolder.description")),
       historyProvider = {
-        // Use shells detector directly because this code is executed on backend.
-        // But in any other cases, shell should be fetched from backend using TerminalShellsDetectorApi.
-        TerminalShellsDetector.detectShells().map { shellInfo ->
-          val filteredOptions = shellInfo.options.filter {
-            // Do not show login and interactive options in the UI.
-            // They anyway will be substituted implicitly in the shell starting logic.
-            // So, there is no need to specify them in the settings.
-            it != LocalTerminalStartCommandBuilder.INTERACTIVE_CLI_OPTION && !LocalTerminalDirectRunner.LOGIN_CLI_OPTIONS.contains(it)
-          }
-          val shellCommand = (listOf(shellInfo.path) + filteredOptions)
-          ParametersListUtil.join(shellCommand)
+        runWithModalProgressBlocking(project, "") {
+          detectAvailableShellCommandLines(project)
         }
       },
     )
@@ -463,6 +476,24 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
       }
     })
     return shellPathField
+  }
+
+  private suspend fun detectAvailableShellCommandLines(project: Project): List<String> {
+    // Use shells detector directly because this code is executed on the backend.
+    // But in any other cases, shells should be fetched from the backend using TerminalShellsDetectionApi.
+    return TerminalShellsDetectionService.detectShells(project)
+      .environments
+      .flatMap { it.shells }
+      .map { shellInfo ->
+        val filteredOptions = shellInfo.options.filter {
+          // Do not show login and interactive options in the UI.
+          // They anyway will be substituted implicitly in the shell starting logic.
+          // So, there is no need to specify them in the settings.
+          it != LocalTerminalStartCommandBuilder.INTERACTIVE_CLI_OPTION && !LocalTerminalDirectRunner.LOGIN_CLI_OPTIONS.contains(it)
+        }
+        val shellCommand = (listOf(shellInfo.path) + filteredOptions)
+        ParametersListUtil.join(shellCommand)
+      }
   }
 }
 
@@ -582,7 +613,7 @@ private fun findColorByKey(vararg colorKeys: String): Color =
   throw IllegalStateException("Can't find color for keys " + colorKeys.contentToString())
 
 private fun fontComboBox(): FontComboBox = FontComboBox().apply {
-  renderer = fontInfoRenderer(true)
+  setupDefaultRenderer(true, false)
   isMonospacedOnly = true
 }
 
@@ -686,7 +717,11 @@ private fun Panel.actionShortcutComboboxWithEnabledCheckbox(
   }
 
   onApply {
-    updateActionShortcut(checkboxProperty.get(), comboboxProperty.get())
+    val checkboxChecked = checkboxProperty.get()
+    val shortcutItem = comboboxProperty.get()
+    if (checkboxChecked != initialCheckboxState || shortcutItem != initialComboboxState) {
+      updateActionShortcut(checkboxChecked, shortcutItem)
+    }
   }
   onReset {
     checkboxProperty.set(initialCheckboxState)
@@ -722,12 +757,17 @@ private fun Panel.actionShortcutComboboxWithEnabledCheckbox(
 
 private fun Row.changeActionShortcutLink(actionId: String): Cell<ActionLink> {
   return link(message("terminal.command.completion.shortcut.change")) {
-    val allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(it.source as Component))
-    val keymapPanel = allSettings?.find(KeymapPanel::class.java)
-    if (keymapPanel != null) {
-      allSettings.select(keymapPanel).doWhenDone {
-        keymapPanel.selectAction(actionId)
-      }
+    val dataContext = DataManager.getInstance().getDataContext(it.source as Component)
+    openKeymapPageAndSelectAction(dataContext, actionId)
+  }
+}
+
+private fun openKeymapPageAndSelectAction(dataContext: DataContext, actionId: String) {
+  val allSettings = Settings.KEY.getData(dataContext)
+  val keymapPanel = allSettings?.find(KeymapPanel::class.java)
+  if (keymapPanel != null) {
+    allSettings.select(keymapPanel).doWhenDone {
+      keymapPanel.selectAction(actionId)
     }
   }
 }

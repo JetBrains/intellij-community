@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.Disposable;
@@ -29,18 +29,40 @@ import java.util.List;
  */
 @ApiStatus.Internal
 public abstract class SmartPointerManagerEx extends SmartPointerManager implements Disposable {
+
+  /**
+   * This method is called when the PSI tree of the given file is going to be modified.
+   *
+   * @param file the target file
+   */
   public abstract void fastenBelts(@NotNull VirtualFile file);
 
+  /**
+   * Creates a smart pointer to a PSI element.
+   *
+   * @param element        the target element
+   * @param containingFile the containing file
+   * @param forInjected    whether the range is for injected content
+   * @param <E>            type of target element
+   * @return a smart pointer to the specified PSI element
+   */
   public abstract @NotNull <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element,
-                                                                                                         PsiFile containingFile,
+                                                                                                         @Nullable PsiFile containingFile,
                                                                                                          boolean forInjected);
 
+  /**
+   * Creates a smart pointer to a range within a file.
+   *
+   * @param file        the file containing the range
+   * @param range       the range to be pointed to
+   * @param forInjected whether the range is for injected content
+   * @return a smart pointer to the specified range
+   */
   public abstract @NotNull SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile file,
                                                                             @NotNull TextRange range,
                                                                             boolean forInjected);
 
-  @Nullable
-  public abstract SmartPointerTracker getTracker(@NotNull VirtualFile file);
+  public abstract @Nullable SmartPointerTracker getTracker(@NotNull VirtualFile file);
 
   public abstract void updatePointers(@NotNull Document document,
                                       @NotNull FrozenDocument frozen,
@@ -48,9 +70,11 @@ public abstract class SmartPointerManagerEx extends SmartPointerManager implemen
 
   public abstract void updatePointerTargetsAfterReparse(@NotNull VirtualFile file);
 
-  @NotNull
-  public abstract Project getProject();
+  public abstract @NotNull Project getProject();
 
-  @NotNull
-  public abstract PsiDocumentManagerEx getPsiDocumentManager();
+  public abstract @NotNull PsiDocumentManagerEx getPsiDocumentManager();
+
+  public static @NotNull SmartPointerManagerEx getInstanceEx(@NotNull Project project) {
+    return (SmartPointerManagerEx)getInstance(project);
+  }
 }

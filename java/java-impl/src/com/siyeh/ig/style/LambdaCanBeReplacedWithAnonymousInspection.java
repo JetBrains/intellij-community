@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -53,6 +53,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+// TODO(bartekpacia): Move to the "intelij.java.impl.inspections" module
+//  once the situation with JavaSafeDeleteProcessor in "intellij.java.impl.refactorings" depending on this class is resolved.
 public final class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
   private static final Logger LOG = Logger.getInstance(LambdaCanBeReplacedWithAnonymousInspection.class);
 

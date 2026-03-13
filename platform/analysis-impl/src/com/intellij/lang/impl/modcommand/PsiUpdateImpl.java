@@ -3,27 +3,55 @@ package com.intellij.lang.impl.modcommand;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.template.Expression;
-import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
-import com.intellij.codeInsight.template.TextResult;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.InjectionEditService;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.FutureVirtualFile;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCreateFile;
+import com.intellij.modcommand.ModDeleteFile;
+import com.intellij.modcommand.ModHighlight;
+import com.intellij.modcommand.ModLaunchEditorAction;
+import com.intellij.modcommand.ModNavigate;
+import com.intellij.modcommand.ModNothing;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.ModRegisterTabOut;
+import com.intellij.modcommand.ModShowConflicts;
 import com.intellij.modcommand.ModShowConflicts.Conflict;
+import com.intellij.modcommand.ModStartRename;
+import com.intellij.modcommand.ModStartTemplate;
+import com.intellij.modcommand.ModTemplateBuilder;
+import com.intellij.modcommand.ModUpdateFileText;
+import com.intellij.modcommand.ModUpdateReferences;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -35,7 +63,11 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -264,6 +296,7 @@ final class PsiUpdateImpl {
     private final Consumer<@NotNull Document> myCopyCleaner;
     private final List<ModHighlight.HighlightInfo> myHighlightInfos = new ArrayList<>();
     private final List<ModStartTemplate.TemplateField> myTemplateFields = new ArrayList<>();
+    private final Map<String, Result> myTemplateValues = new HashMap<>();
     private final List<ModLaunchEditorAction> myLaunchEditorActions = new ArrayList<>();
     private @NotNull Function<? super @NotNull PsiFile, ? extends @NotNull ModCommand> myTemplateFinishFunction = f -> nop();
     private @Nullable ModStartRename myRenameSymbol;
@@ -487,12 +520,17 @@ final class PsiUpdateImpl {
           }
           TextRange rangeForTemplate = templateRange(elementRange, rangeInElement);
           TextRange range = mapRange(rangeForTemplate);
-          Result result = expression.calculateResult(new DummyContext(range, element));
-          myTemplateFields.add(new ModStartTemplate.ExpressionField(range, varName, expression));
+          TemplateImpl.DummyContext context = new TemplateImpl.DummyContext(range, element, getPsiFile());
+          Result result = varName == null
+                          ? expression.calculateResult(context)
+                          : myTemplateValues.computeIfAbsent(varName, v -> expression.calculateResult(context));
           if (result != null) {
             FileTracker tracker = requireNonNull(myTracker); // guarded by getRange call
-            tracker.myDocument.replaceString(rangeForTemplate.getStartOffset(), rangeForTemplate.getEndOffset(), result.toString());
+            String fieldValue = result.toString();
+            tracker.myDocument.replaceString(rangeForTemplate.getStartOffset(), rangeForTemplate.getEndOffset(), fieldValue);
+            range = TextRange.from(range.getStartOffset(), fieldValue.length());
           }
+          myTemplateFields.add(new ModStartTemplate.ExpressionField(range, varName, expression));
           return this;
         }
 
@@ -788,40 +826,6 @@ final class PsiUpdateImpl {
     private @NotNull ModCommand getTemplateCommand() {
       if (myTemplateFields.isEmpty()) return nop();
       return new ModStartTemplate(navigationFile(), myTemplateFields, myTemplateFinishFunction);
-    }
-
-    private class DummyContext implements ExpressionContext {
-      private final TextRange myRange;
-      private final @NotNull PsiElement myElement;
-
-      private DummyContext(TextRange range, @NotNull PsiElement element) {
-        myRange = range;
-        myElement = element;
-      }
-
-      @Override
-      public Project getProject() { return myActionContext.project(); }
-
-      @Override
-      public @Nullable Editor getEditor() { return null; }
-
-      @Override
-      public int getStartOffset() { return myRange.getStartOffset(); }
-
-      @Override
-      public int getTemplateStartOffset() { return myRange.getStartOffset(); }
-
-      @Override
-      public int getTemplateEndOffset() { return myRange.getEndOffset(); }
-
-      @Override
-      public <T> T getProperty(Key<T> key) { return null; }
-
-      @Override
-      public @Nullable PsiElement getPsiElementAtStartOffset() { return myElement.isValid() ? myElement : null; }
-
-      @Override
-      public @Nullable TextResult getVariableValue(String variableName) { return null; }
     }
   }
 }

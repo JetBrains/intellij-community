@@ -4,11 +4,17 @@ package com.intellij.polySymbols.customElements
 import com.intellij.markdown.utils.doc.DocMarkdownToHtmlConverter
 import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.polySymbols.PolyContextKind
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.context.PolyContextKindRules
-import com.intellij.polySymbols.customElements.json.*
+import com.intellij.polySymbols.customElements.json.CustomElementClassOrMixinDeclaration
+import com.intellij.polySymbols.customElements.json.CustomElementsManifest
+import com.intellij.polySymbols.customElements.json.CustomElementsPackage
+import com.intellij.polySymbols.customElements.json.JavaScriptModule
+import com.intellij.polySymbols.customElements.json.SourceReference
+import com.intellij.polySymbols.customElements.json.adaptAllContributions
 import com.intellij.polySymbols.impl.StaticPolySymbolScopeBase
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolNameConversionRulesProvider
@@ -60,9 +66,9 @@ abstract class CustomElementsManifestScopeBase :
 
   override fun getNameConversionRulesProvider(context: PolyContext): PolySymbolNameConversionRulesProvider? =
     object : PolySymbolNameConversionRulesProvider {
+      override val modificationTracker: ModificationTracker = ModificationTracker.NEVER_CHANGED
       override fun getNameConversionRules(): PolySymbolNameConversionRules = PolySymbolNameConversionRules.empty()
       override fun createPointer(): Pointer<out PolySymbolNameConversionRulesProvider> = Pointer.hardPointer(this)
-      override fun getModificationCount(): Long = 0
     }
 
   protected class CustomElementsManifestJsonOriginImpl(

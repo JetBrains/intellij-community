@@ -41,8 +41,7 @@ abstract class Fe10AbstractKotlinVariableMacro<State> : KotlinMacro() {
         val psiDocumentManager = PsiDocumentManager.getInstance(project)
         psiDocumentManager.commitAllDocuments()
 
-        val document = context.editor?.document ?: return emptyList()
-        val psiFile = psiDocumentManager.getPsiFile(document) as? KtFile ?: return emptyList()
+        val psiFile = context.psiFile as? KtFile ?: return emptyList()
 
         val contextElement = psiFile.findElementAt(context.startOffset)?.getNonStrictParentOfType<KtElement>() ?: return emptyList()
 

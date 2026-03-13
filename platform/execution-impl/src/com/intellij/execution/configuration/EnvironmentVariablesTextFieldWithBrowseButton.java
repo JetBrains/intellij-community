@@ -8,6 +8,7 @@ import com.intellij.execution.util.EnvVariablesTable;
 import com.intellij.execution.util.EnvironmentVariable;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
@@ -19,9 +20,11 @@ import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.KeyStroke;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
@@ -29,7 +32,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWithBrowseButton.NoPathCompletion implements UserActivityProviderComponent {
   protected EnvironmentVariablesData myData = EnvironmentVariablesData.DEFAULT;
@@ -38,9 +45,20 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
   private @NotNull List<String> myEnvFilePaths = new ArrayList<>();
   private ExtendableTextComponent.Extension myEnvFilesExtension;
   private final List<ChangeListener> myEnvFilePathsChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final @Nullable Project myProject;
 
+  /**
+   * @deprecated Use {@link #EnvironmentVariablesTextFieldWithBrowseButton(Project project)}. Always pass the project explicitly, use
+   * {@code null} only if the environment field is not applicable to the current open project.
+   */
+  @Deprecated
   public EnvironmentVariablesTextFieldWithBrowseButton() {
+    this(null);
+  }
+
+  public EnvironmentVariablesTextFieldWithBrowseButton(@Nullable Project project) {
     super();
+    myProject = project;
     addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
@@ -72,7 +90,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
 
   private void browseForEnvFile() {
     if (myEnvFilePaths.isEmpty()) {
-      EnvFilesDialogKt.addEnvFile(getTextField(), null, s -> {
+      EnvFilesDialogKt.addEnvFile(getTextField(), null, myProject, s -> {
         myEnvFilePaths.add(s);
         updateText();
         fireEnvFilePathsChanged();
@@ -80,7 +98,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
       });
     }
     else {
-      EnvFilesDialog dialog = new EnvFilesDialog(this, myEnvFilePaths);
+      EnvFilesDialog dialog = new EnvFilesDialog(this, myEnvFilePaths, myProject);
       dialog.show();
       if (dialog.isOK()) {
         myEnvFilePaths = new ArrayList<>(dialog.getPaths());

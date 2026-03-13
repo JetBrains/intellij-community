@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-jcip-jcip"],
   runtime_deps = ["@lib//:libraries-jcip-jcip"]
 )
+
+jvm_library(
+  name = "jcip_test_lib",
+  module_name = "intellij.libraries.jcip",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-jcip-jcip"],
+  runtime_deps = [":jcip"]
+)
 ### auto-generated section `build intellij.libraries.jcip` end

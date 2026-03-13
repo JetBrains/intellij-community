@@ -11,7 +11,8 @@ accepted = [
     "Apache-2.0",
     "MIT",
     "ISC", # libloading, MIT / Apache 2.0 alike
-    "Unicode-DFS-2016" # jni -> [..] -> unicode-ident, OSI-approved
+    "Unicode-DFS-2016", # jni -> [..] -> unicode-ident, OSI-approved
+    "MPL-2.0", # native-dialog -> ... -> option-ext, OSI-approved
 ]
 
 # do not warn for our own crates

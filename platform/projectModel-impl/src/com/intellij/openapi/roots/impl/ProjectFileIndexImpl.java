@@ -6,7 +6,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -16,10 +18,17 @@ import com.intellij.platform.workspace.jps.entities.SdkEntity;
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
-import com.intellij.workspaceModel.core.fileIndex.impl.*;
+import com.intellij.workspaceModel.core.fileIndex.impl.ModuleContentOrSourceRootData;
+import com.intellij.workspaceModel.core.fileIndex.impl.ModuleOrLibrarySourceRootData;
+import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData;
+import com.intellij.workspaceModel.core.fileIndex.impl.ModuleSourceRootData;
+import com.intellij.workspaceModel.core.fileIndex.impl.UnloadedModuleContentRootData;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetImpl;
 import com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry;
 import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
@@ -28,7 +37,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.openapi.roots.impl.FileSet2RootDescriptor.findFileSetDescriptor;
 
@@ -47,7 +61,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
 
   @Override
   public boolean iterateContent(@NotNull ContentIterator processor, @Nullable VirtualFileFilter filter) {
-    Pair<List<VirtualFile>, List<VirtualFile>> rootsPair = ReadAction.compute(() -> {
+    Pair<List<VirtualFile>, List<VirtualFile>> rootsPair = ReadAction.computeBlocking(() -> {
       Set<VirtualFile> allRecursiveRoots = new LinkedHashSet<>();
       List<VirtualFile> allNonRecursiveRoots = new ArrayList<>();
       List<VirtualFile> allRecursiveNonIndexableRoots = new ArrayList<>();
@@ -236,6 +250,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     return myWorkspaceFileIndex.isInContent(fileOrDir);
   }
 
+  @Override
   public @Nullable VirtualFile getModuleSourceOrLibraryClassesRoot(@NotNull VirtualFile file) {
     WorkspaceFileInternalInfo info = myWorkspaceFileIndex.getFileInfo(file, true, true, true, true, false, false, false);
     WorkspaceFileSetWithCustomData<?> fileSet = info.findFileSet(it -> {
@@ -245,6 +260,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     return fileSet != null ? fileSet.getRoot() : null;
   }
 
+  @Override
   public @NotNull Collection<RootDescriptor> getModuleSourceOrLibraryClassesRoots(@NotNull VirtualFile file) {
     WorkspaceFileInternalInfo info = myWorkspaceFileIndex.getFileInfo(file, true, true, true, true, false, false, false);
     List<WorkspaceFileSetWithCustomData<?>> fileSets = info.findFileSets(it -> {
@@ -302,6 +318,11 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     WorkspaceFileSetWithCustomData<UnloadedModuleContentRootData> fileSet =
       myWorkspaceFileIndex.findFileSetWithCustomData(fileOrDir, false, true, true, false, false, false, false, UnloadedModuleContentRootData.class);
     return fileSet != null ? fileSet.getData().getModuleName() : null;
+  }
+
+  @Override
+  public @Nullable VirtualFile getWorkspaceContentFileSetRoot(@NotNull VirtualFile fileOrDir) {
+    return WorkspaceFileIndex.getInstance(myProject).getContentFileSetRoot(fileOrDir, true);
   }
 
   @Override

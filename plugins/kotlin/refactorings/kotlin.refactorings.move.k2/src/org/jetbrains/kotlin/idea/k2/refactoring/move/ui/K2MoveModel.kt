@@ -2,13 +2,10 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move.ui
 
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.observable.properties.AtomicBooleanProperty
-import com.intellij.openapi.observable.properties.MutableBooleanProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -24,7 +21,6 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.plus
 import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
 import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
@@ -34,7 +30,6 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationD
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveTargetModel.Declarations.MoveTargetType
-import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
@@ -57,15 +52,7 @@ sealed class K2MoveModel(private val observableUiSettings: ObservableUiSettings)
 
     abstract val target: K2MoveTargetModel
 
-    val searchForText: Setting = Setting.SEARCH_FOR_TEXT
-
-    val searchInComments: Setting = Setting.SEARCH_IN_COMMENTS
-
     abstract val inSourceRoot: Boolean
-
-    val searchReferences: Setting = Setting.SEARCH_REFERENCES
-
-    val mppDeclarations: Setting = Setting.MPP_DECLARATIONS
 
     abstract val moveCallBack: MoveCallback?
 
@@ -87,15 +74,14 @@ sealed class K2MoveModel(private val observableUiSettings: ObservableUiSettings)
 
         row {
             panel {
-                searchForText.createComboBox(this)
-                searchReferences.createComboBox(this, inSourceRoot)
+                createSettingComboBox(searchForText)
+                createSettingComboBox(searchReferences, inSourceRoot)
             }.align(AlignY.TOP + AlignX.LEFT)
             panel {
-                searchInComments.createComboBox(this)
-                mppDeclarations.createComboBox(
-                    panel = this,
+                createSettingComboBox(searchInComments)
+                createSettingComboBox(
+                    mppDeclarations, enabled = mppDeclarationSelectedObservable,
                     visible = mppDeclarationSelectedObservable,
-                    enabled = mppDeclarationSelectedObservable,
                 )
             }.align(AlignY.TOP + AlignX.RIGHT)
         }
@@ -104,81 +90,42 @@ sealed class K2MoveModel(private val observableUiSettings: ObservableUiSettings)
     override val mppDeclarationsSetting: ObservableProperty<Boolean>
         get() = mppDeclarations.observableProperty
 
-    enum class Setting(private val text: @NlsContexts.Checkbox String) {
-        SEARCH_FOR_TEXT(KotlinBundle.message("search.for.text.occurrences")) {
-            override var state: Boolean
-                get() {
-                    return KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT
-                }
-                set(value) {
-                    KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT = value
-                }
-        },
+    internal val searchForText: BoundMoveModelSetting = BoundMoveModelSetting(MoveModelSetting.SEARCH_FOR_TEXT)
 
-        SEARCH_IN_COMMENTS(KotlinBundle.message("search.in.comments.and.strings")) {
-            override var state: Boolean
-                get() {
-                    return KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS
-                }
-                set(value) {
-                    KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS = value
-                }
-        },
+    internal val searchInComments: BoundMoveModelSetting = BoundMoveModelSetting(MoveModelSetting.SEARCH_IN_COMMENTS)
 
+    internal val searchReferences: BoundMoveModelSetting = BoundMoveModelSetting(MoveModelSetting.SEARCH_REFERENCES)
 
-        SEARCH_REFERENCES(KotlinBundle.message("checkbox.text.search.references")) {
-            override var state: Boolean
-                get() {
-                    return KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_REFERENCES
-                }
-                set(value) {
-                    KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_REFERENCES = value
-                }
-        },
+    internal val mppDeclarations: BoundMoveModelSetting = BoundMoveModelSetting(MoveModelSetting.MPP_DECLARATIONS)
 
-        MPP_DECLARATIONS(KotlinBundle.message("label.text.move.expect.actual.counterparts")) {
-            override var state: Boolean
-                get() {
-                    return KotlinCommonRefactoringSettings.getInstance().MOVE_MPP_DECLARATIONS
-                }
-                set(value) {
-                    KotlinCommonRefactoringSettings.getInstance().MOVE_MPP_DECLARATIONS = value
-                }
-        };
+    private fun Panel.createSettingComboBox(
+        boundSetting: BoundMoveModelSetting,
+        enabled: Boolean = true,
+        visible: Boolean = true,
+    ) {
+        createSettingComboBox(
+            boundSetting = boundSetting,
+            enabled = ConstantBooleanObservableProperty(enabled),
+            visible = ConstantBooleanObservableProperty(visible),
+        )
+    }
 
-        abstract var state: Boolean
-        // lazy to avoid service access from constructor
-        internal val observableProperty: MutableBooleanProperty by lazy { AtomicBooleanProperty(state) }
-
-        fun createComboBox(
-            panel: Panel,
-            enabled: Boolean = true,
-            visible: Boolean = true,
-        ) {
-            createComboBox(
-                panel = panel,
-                enabled = ConstantBooleanObservableProperty(enabled),
-                visible = ConstantBooleanObservableProperty(visible)
-            )
-        }
-
-        fun createComboBox(
-            panel: Panel,
-            enabled: ObservableProperty<Boolean>,
-            visible: ObservableProperty<Boolean>,
-        ) {
-            panel.row {
-                val checkBox = checkBox(text).enabledIf(enabled).visibleIf(visible)
-                checkBox.onChanged { observableProperty.set(it.isSelected) }
-                // reset only is intentional
-                enabled.afterChange { isEnabled -> if (!isEnabled) checkBox.selected(false) }
-                checkBox.bindSelected(::state)
-                // value set in bindSelected doesn't trigger listeners
-                val initial = enabled.get() && state
-                checkBox.selected(initial)
-                observableProperty.set(initial)
-            }.layout(RowLayout.PARENT_GRID)
-        }
+    private fun Panel.createSettingComboBox(
+        boundSetting: BoundMoveModelSetting,
+        enabled: ObservableProperty<Boolean>,
+        visible: ObservableProperty<Boolean>,
+    ) {
+        row {
+            val checkBox = checkBox(boundSetting.text).enabledIf(enabled).visibleIf(visible)
+            checkBox.onChanged { boundSetting.observableProperty.set(it.isSelected) }
+            // reset only is intentional
+            enabled.afterChange { isEnabled -> if (!isEnabled) checkBox.selected(false) }
+            checkBox.bindSelected(boundSetting::state)
+            // value set in bindSelected doesn't trigger listeners
+            val initial = enabled.get() && boundSetting.state
+            checkBox.selected(initial)
+            boundSetting.observableProperty.set(initial)
+        }.layout(RowLayout.PARENT_GRID)
     }
 
     /**

@@ -90,7 +90,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
 
   @Override
   public @NotNull Condition<?> getExpiredCondition() {
-    return (Condition<Object>)o -> ReadAction.compute(() -> !isValid());
+    return (Condition<Object>)o -> ReadAction.computeBlocking(() -> !isValid());
   }
 
   /**

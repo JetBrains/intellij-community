@@ -1,5 +1,6 @@
 // "Reorder parameters" "true"
 // WITH_STDLIB
+// K2_ERROR: Parameter 'b' is uninitialized here.
 fun foo(
     c1: String,
     b: String,

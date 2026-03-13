@@ -58,7 +58,7 @@ final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
                                                      CachedValue<ConcurrentMap<TypeEvalConstraints, TypeEvalContext>> storage) {
     // map is thread safe but not atomic nor getValue() is, so in worst case several threads may produce same result
     // both explicit locking and computeIfAbsent leads to deadlock
-    final TypeEvalConstraints key = standard.getConstraints();
+    final TypeEvalConstraints key = ((TypeEvalContextImpl)standard).getConstraints();
     final ConcurrentMap<TypeEvalConstraints, TypeEvalContext> map = storage.getValue();
     final TypeEvalContext cachedContext = map.get(key);
     if (cachedContext != null) {

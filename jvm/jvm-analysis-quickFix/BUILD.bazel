@@ -25,4 +25,22 @@ jvm_library(
     "//java/java-analysis-api:analysis",
   ]
 )
+
+jvm_library(
+  name = "analysis-quickFix_test_lib",
+  module_name = "intellij.jvm.analysis.quickFix",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":analysis-quickFix",
+    "//jvm/jvm-analysis-refactoring:analysis-refactoring_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//uast/uast-common:uast_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//java/java-analysis-api:analysis_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.jvm.analysis.quickFix` end

@@ -6,6 +6,7 @@
 // ACTION: Add underscores
 // ACTION: Round using roundToLong()
 // ERROR: The floating-point literal does not conform to the expected type Long
+// K2_ERROR: Initializer type mismatch: expected 'Long', actual 'Double'.
 // K2_AFTER_ERROR: Initializer type mismatch: expected 'Long', actual 'Double'.
 
 val a : Long = 10000000000000000000.0<caret>

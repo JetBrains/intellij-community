@@ -1,8 +1,8 @@
 package com.intellij.execution.multilaunch.design
 
 import com.intellij.execution.multilaunch.design.columns.impl.ConditionColumn
-import com.intellij.execution.multilaunch.design.columns.impl.ExecutableNameColumn
 import com.intellij.execution.multilaunch.design.columns.impl.DisableDebuggingColumn
+import com.intellij.execution.multilaunch.design.columns.impl.ExecutableNameColumn
 import com.intellij.util.ui.ListTableModel
 import org.jetbrains.annotations.ApiStatus
 

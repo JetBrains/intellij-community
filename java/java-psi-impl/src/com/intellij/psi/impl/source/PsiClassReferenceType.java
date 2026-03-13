@@ -38,10 +38,15 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.psi.impl.source.tree.JavaSharedImplUtil.filteringTypeAnnotationProvider;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class PsiClassReferenceType extends PsiClassType.Stub {
   private final ClassReferencePointer myReference;
+  /**
+   * Annotations that precede qualifier if qualifier exists.
+   */
+  private final @NotNull TypeAnnotationProvider myQualifierAnnotationsProvider;
   private TypeNullability myNullability = null;
 
   public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel level) {
@@ -51,20 +56,25 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel level, PsiAnnotation @NotNull [] annotations) {
     super(level, annotations);
     myReference = ClassReferencePointer.constant(reference);
+    myQualifierAnnotationsProvider = TypeAnnotationProvider.EMPTY;
   }
 
   public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel level, @NotNull TypeAnnotationProvider provider) {
-    this(ClassReferencePointer.constant(reference), level, provider);
+    this(ClassReferencePointer.constant(reference), level, provider, TypeAnnotationProvider.EMPTY);
   }
 
-  PsiClassReferenceType(@NotNull ClassReferencePointer reference, LanguageLevel level, @NotNull TypeAnnotationProvider provider) {
-    this(reference, level, provider, null);
+  PsiClassReferenceType(@NotNull ClassReferencePointer reference,
+                        LanguageLevel level,
+                        @NotNull TypeAnnotationProvider provider,
+                        @NotNull TypeAnnotationProvider qualifierAnnotationsProvider) {
+    this(reference, level, provider, qualifierAnnotationsProvider, null);
   }
 
   private PsiClassReferenceType(@NotNull ClassReferencePointer reference, LanguageLevel level, @NotNull TypeAnnotationProvider provider,
-                        @Nullable TypeNullability nullability) {
+                                @NotNull TypeAnnotationProvider qualifierAnnotationsProvider, @Nullable TypeNullability nullability) {
     super(level, provider);
     myReference = reference;
+    myQualifierAnnotationsProvider = qualifierAnnotationsProvider;
     myNullability = nullability;
   }
 
@@ -84,6 +94,9 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
     PsiJavaCodeReferenceElement reference = myReference.retrieveReference();
     if (reference != null && reference.isValid()) {
       for (PsiAnnotation annotation : getAnnotations(false)) {
+        if (!annotation.isValid()) return false;
+      }
+      for (PsiAnnotation annotation : myQualifierAnnotationsProvider.getAnnotations()) {
         if (!annotation.isValid()) return false;
       }
       return true;
@@ -165,7 +178,16 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   @Override
   public @NotNull PsiClassType withNullability(@NotNull TypeNullability nullability) {
     if (myNullability == nullability) return this;
-    return new PsiClassReferenceType(myReference, myLanguageLevel, getAnnotationProvider(), nullability);
+    return new PsiClassReferenceType(myReference, myLanguageLevel, getAnnotationProvider(), myQualifierAnnotationsProvider, nullability);
+  }
+
+  /**
+   * Returns a copy of this PsiClassReferenceType with annotations from qualifierAnnotations parameter,
+   * which target is {@link PsiAnnotation.TargetType#TYPE_USE}, added to qualifier annotations.
+   */
+  public @NotNull PsiClassReferenceType withAddedQualifierAnnotations(@NotNull PsiAnnotation @NotNull [] qualifierAnnotations) {
+    TypeAnnotationProvider merged = filteringTypeAnnotationProvider(qualifierAnnotations, myQualifierAnnotationsProvider);
+    return new PsiClassReferenceType(myReference, myLanguageLevel, getAnnotationProvider(), merged, myNullability);
   }
 
   @Override
@@ -310,7 +332,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
     PsiElement qualifier = ref.getQualifier();
     String qualifierInfo = "";
     if (qualifier != null) {
-      PsiAnnotation[] qualifierAnnotations = getAnnotations(false);
+      PsiAnnotation[] qualifierAnnotations = myQualifierAnnotationsProvider.getAnnotations();
       if (qualifierAnnotations.length > 0 && qualifier instanceof PsiJavaCodeReferenceElement &&
           ((PsiJavaCodeReferenceElement)qualifier).resolve() instanceof PsiClass) {
         // Display qualifier if it's annotated
@@ -341,7 +363,10 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
     PsiJavaCodeReferenceElement reference = getReference();
     if (reference instanceof PsiAnnotatedJavaCodeReferenceElement) {
       PsiAnnotatedJavaCodeReferenceElement ref = (PsiAnnotatedJavaCodeReferenceElement)reference;
-      PsiAnnotation[] annotations = annotated ? getAnnotations(false) : PsiAnnotation.EMPTY_ARRAY;
+      PsiAnnotation[] annotations =
+        annotated
+        ? ArrayUtil.mergeArrays(getAnnotations(false), myQualifierAnnotationsProvider.getAnnotations())
+        : PsiAnnotation.EMPTY_ARRAY;
       return ref.getCanonicalText(annotated, annotations.length == 0 ? null : annotations);
     }
     return reference.getCanonicalText();

@@ -12,16 +12,13 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import kotlinx.coroutines.Dispatchers
+import com.intellij.util.ui.RawSwingDispatcher
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
@@ -81,7 +78,7 @@ object PluginInitializationErrorReporter {
     val actions = prepareActions(pluginsToDisable, pluginsToEnable)
     pluginErrors += actions.map { PluginLoadingError(null, it, null) }
 
-    withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+    withContext(RawSwingDispatcher) {
       val title = IdeBundle.message("title.plugin.error")
       val pluginErrorMessages = pluginErrors.map { it.htmlMessage }.toMutableList()
       val actions = linksToActions(pluginErrorMessages)

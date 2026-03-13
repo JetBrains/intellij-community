@@ -6,6 +6,7 @@ import com.intellij.collaboration.async.combineStateIn
 import com.intellij.collaboration.async.flatMapLatestEach
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.async.mapStateInNow
 import com.intellij.collaboration.async.mapStatefulToStateful
 import com.intellij.collaboration.async.stateFlowOf
 import com.intellij.collaboration.async.stateInNow
@@ -17,6 +18,7 @@ import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEdit
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlayRangeOutlineUtils
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorModel
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel.Ranged.Adjustable.AdjustmentDisabledReason
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewNavigableEditorViewModel
 import com.intellij.collaboration.util.Hideable
 import com.intellij.collaboration.util.RefComparisonChange
@@ -46,6 +48,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.ai.GHPRAICommentViewModel
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
+import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChange
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.lineLocation
@@ -123,8 +126,8 @@ private class DiffEditorModel(
   private val lineToLocation: (Int) -> DiffLineLocation?,
   @RequiresEdt private val lineToUnified: (Int) -> UnifiedCodeReviewItemPosition,
 ) : GHPRReviewDiffEditorModel {
-  private val threads = diffVm.threads.mapStatefulToStateful { MappedThread(cs, it) }.stateInNow(cs, emptyList())
-  private val newComments = diffVm.newComments.mapStatefulToStateful { MappedNewComment(it) }.stateInNow(cs, emptyList())
+  private val threads = diffVm.threads.mapStatefulToStateful { MappedThread(this, it) }.stateInNow(cs, emptyList())
+  private val newComments = diffVm.newComments.mapStatefulToStateful { MappedNewComment(this, it) }.stateInNow(cs, emptyList())
   private val aiComments = diffVm.aiComments.mapStatefulToStateful { MappedAIComment(it) }.stateInNow(cs, emptyList())
 
   override val inlays: StateFlow<Collection<GHPREditorMappedComponentModel>> =
@@ -255,21 +258,25 @@ private class DiffEditorModel(
     reviewVm.showDiffAtComment(commentId)
   }
 
-  private inner class MappedThread(parentCs: CoroutineScope, vm: GHPRReviewThreadDiffViewModel)
+  private inner class MappedThread(cs: CoroutineScope, vm: GHPRReviewThreadDiffViewModel)
     : GHPREditorMappedComponentModel.Thread<GHPRCompactReviewThreadViewModel>(vm) {
-    private val cs = parentCs.childScope(javaClass.name)
     override val isVisible: StateFlow<Boolean> = combineStateIn(cs, vm.mapping, hiddenState) { mapping, hidden -> mapping.isVisible && !hidden }
     override val range: StateFlow<LineRange?> = vm.mapping.mapState { it.location?.toLineRange(locationToLine) }
     override val line: StateFlow<Int?> = range.mapState { it?.end }
   }
 
-  private inner class MappedNewComment(vm: GHPRNewCommentDiffViewModel)
+  private inner class MappedNewComment(cs: CoroutineScope, vm: GHPRNewCommentDiffViewModel)
     : GHPREditorMappedComponentModel.NewComment<GHPRReviewNewCommentEditorViewModel>(vm) {
     override val key: Any = "NEW_${UUID.randomUUID()}"
     override val range: StateFlow<LineRange?> = vm.position.mapState { it.location.toLineRange(locationToLine) }
     override val line: StateFlow<Int?> = range.mapState { it?.end }
     override val isVisible: StateFlow<Boolean> = MutableStateFlow(true)
-
+    override val adjustmentDisabledReason = vm.text.mapStateInNow(cs) {
+      if (GHSuggestedChange.containsSuggestedChange(it)) {
+        AdjustmentDisabledReason.SUGGESTED_CHANGE
+      }
+      else null
+    }
     override fun adjustRange(newStart: Int?, newEnd: Int?) {
       if (!(newStart == null && newEnd == null)) {
         val range = range.value ?: return

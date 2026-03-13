@@ -26,4 +26,23 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl",
   ]
 )
+
+jvm_library(
+  name = "common_test_lib",
+  module_name = "intellij.editorconfig.common",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":common",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/code-style-impl:codeStyle-impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.editorconfig.common` end

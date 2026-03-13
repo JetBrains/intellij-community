@@ -1,4 +1,5 @@
 // "Create parameter '!u00A0'" "true"
+// K2_ERROR: Unresolved reference '!u00A0'.
 fun test(`!u00A0`: Int) {
     val t: Int = `!u00A0`
 }

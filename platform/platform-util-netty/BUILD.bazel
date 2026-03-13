@@ -18,4 +18,22 @@ jvm_library(
     "//libraries/kotlinx/coroutines/core",
   ]
 )
+
+jvm_library(
+  name = "ide-util-netty_test_lib",
+  module_name = "intellij.platform.ide.util.netty",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":ide-util-netty",
+    "//platform/core-api:core_test_lib",
+    "//libraries/guava:guava_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/netty/buffer:buffer_test_lib",
+    "//platform/util:util_test_lib",
+    "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.ide.util.netty` end

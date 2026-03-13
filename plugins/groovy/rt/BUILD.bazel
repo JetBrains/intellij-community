@@ -17,4 +17,21 @@ jvm_library(
     "//plugins/groovy/rt-constants:constants-rt",
   ]
 )
+
+jvm_library(
+  name = "rt_test_lib",
+  module_name = "intellij.groovy.rt",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = [
+    "@lib//:org-codehaus-groovy-groovy",
+    "//plugins/groovy/rt-constants:constants-rt",
+    "//plugins/groovy/rt-constants:constants-rt_test_lib",
+  ],
+  runtime_deps = [
+    ":rt",
+    "//plugins/groovy/rt-constants:constants-rt_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.groovy.rt` end

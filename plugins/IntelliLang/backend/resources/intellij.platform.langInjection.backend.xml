@@ -4,6 +4,9 @@
   <dependencies>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.langInjection"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.core.impl"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -23,4 +23,20 @@ jvm_library(
     "//platform/util",
   ]
 )
+
+jvm_library(
+  name = "testFramework_test_lib",
+  module_name = "intellij.debugger.streams.core.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":testFramework",
+    "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
+    "//libraries/stream:stream_test_lib",
+    "//plugins/stream-debugger-core:debugger-streams-core_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/xdebugger-api:debugger_test_lib",
+    "//platform/util:util_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.debugger.streams.core.testFramework` end

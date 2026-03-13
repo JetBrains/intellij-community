@@ -30,6 +30,25 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
   ]
 )
+
+jvm_library(
+  name = "progress_test_lib",
+  module_name = "intellij.platform.util.progress",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_progress",
+  runtime_deps = [
+    ":progress",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//libraries/guava:guava_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.util.progress` end
 
 ### auto-generated section `build intellij.platform.util.progress.tests` start
@@ -47,10 +66,14 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "@lib//:junit5",
     "//platform/util/progress",
+    "//platform/util/progress:progress_test_lib",
     "//platform/testFramework/common",
+    "//platform/testFramework/common:common_test_lib",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "@lib//:junit4",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

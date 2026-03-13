@@ -20,9 +20,33 @@ jvm_library(
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
-    "@lib//:com-jetbrains-fus-reporting-api",
+    "//libraries/jackson3/jackson:libraries-jackson3",
+    "//libraries/jackson3/databind",
+    "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin",
+    "@lib//:com-jetbrains-fus-reporting-fus-api",
     "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
   ],
   exports = ["//platform/statistics/config"]
+)
+
+jvm_library(
+  name = "uploader_test_lib",
+  module_name = "intellij.platform.statistics.uploader",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//platform/statistics/config",
+    "//platform/statistics/config:config_test_lib",
+  ],
+  runtime_deps = [
+    ":uploader",
+    "//platform/statistics/config:config_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/jackson/databind:databind_test_lib",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
+    "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+    "//libraries/jackson3/databind:databind_test_lib",
+    "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.platform.statistics.uploader` end

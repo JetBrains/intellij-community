@@ -187,7 +187,9 @@ v1: Callable[[], Coroutine[Any, Any, AsyncIterator[int]]] = generator29
 
 async def generator30() -> AsyncIterator[int]:
     raise NotImplementedError
-    yield
+    yield 1
 
 
-assert_type(generator30, Callable[[], AsyncIterator[int]])
+async def uses_generator30() -> None:
+    async for x in generator30():
+        assert_type(x, int)

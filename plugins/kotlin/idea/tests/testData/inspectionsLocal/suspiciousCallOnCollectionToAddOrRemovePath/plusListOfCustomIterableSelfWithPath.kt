@@ -1,0 +1,19 @@
+// PROBLEM: 'plus' call appends Path elements
+// FIX: Convert to 'plusElement' call (changes semantics)
+// IGNORE_K1
+// RUNTIME_WITH_FULL_JDK
+import java.nio.file.Path
+
+class MyPath(val value: String) : Iterable<MyPath> {
+    override fun iterator(): Iterator<MyPath> {
+        val iterator: Iterator<Path> = Path.of(value).iterator()
+        return object : Iterator<MyPath> {
+            override fun next(): MyPath = MyPath(iterator.next().toString())
+            override fun hasNext(): Boolean = iterator.hasNext()
+        }
+    }
+}
+
+fun test(list: List<MyPath>, path: MyPath) {
+    list <caret>+ path
+}

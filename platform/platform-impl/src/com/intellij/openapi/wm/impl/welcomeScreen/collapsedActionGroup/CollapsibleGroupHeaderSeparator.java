@@ -7,8 +7,11 @@ import com.intellij.ui.SeparatorWithText;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.SwingConstants;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 
 import static javax.swing.SwingConstants.CENTER;
 import static javax.swing.SwingUtilities.layoutCompoundLabel;

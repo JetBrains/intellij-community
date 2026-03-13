@@ -1,5 +1,6 @@
 // "Convert expression to 'Set' by inserting '.toSet()'" "true"
 // WITH_STDLIB
+// K2_ERROR: Assignment type mismatch: actual type is 'List<String>', but 'Set<String>' was expected.
 
 fun foo(a: List<String>) {
     val s: Set<String>

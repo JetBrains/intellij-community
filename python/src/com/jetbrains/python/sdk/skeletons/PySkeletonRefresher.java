@@ -26,7 +26,6 @@ import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.Component;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -67,7 +66,6 @@ public class PySkeletonRefresher {
   }
 
   public static void refreshSkeletonsOfSdk(@Nullable Project project,
-                                           @Nullable Component ownerComponent,
                                            @Nullable String skeletonsPath,
                                            @NotNull Sdk sdk)
     throws InvalidSdkException {
@@ -78,7 +76,7 @@ public class PySkeletonRefresher {
     }
     else {
       LOG.info("Refreshing skeletons for " + homePath);
-      final PySkeletonRefresher refresher = new PySkeletonRefresher(project, ownerComponent, sdk, skeletonsPath, indicator, null);
+      final PySkeletonRefresher refresher = new PySkeletonRefresher(project, sdk, skeletonsPath, indicator, null);
 
       changeGeneratingSkeletons(1);
       try {
@@ -105,7 +103,6 @@ public class PySkeletonRefresher {
    * @param indicator     to report progress of long operations
    */
   public PySkeletonRefresher(@Nullable Project project,
-                             @Nullable Component ownerComponent,
                              @NotNull Sdk sdk,
                              @Nullable String skeletonsPath,
                              @Nullable ProgressIndicator indicator,

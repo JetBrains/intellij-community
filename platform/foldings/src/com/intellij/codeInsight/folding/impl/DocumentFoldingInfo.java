@@ -22,21 +22,29 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiCompiledFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategy;
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyFactory;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FreezableArrayList;
 import com.intellij.util.text.StringTokenizer;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -55,6 +63,10 @@ final class DocumentFoldingInfo implements CodeFoldingState {
 
   private final @NotNull List<SignatureInfo> myInfos = ContainerUtil.createLockFreeCopyOnWriteList();
   private final @NotNull List<RangeMarker> myRangeMarkers = ContainerUtil.createLockFreeCopyOnWriteList();
+  /**
+   * null means {@link #computeExpandRanges()} was not called yet
+   */
+  private volatile @Nullable @Unmodifiable List<FoldingInfo> myComputedInfos;
   private static final String DEFAULT_PLACEHOLDER = "...";
   private static final @NonNls String ELEMENT_TAG = "element";
   private static final @NonNls String SIGNATURE_ATT = "signature";
@@ -75,6 +87,7 @@ final class DocumentFoldingInfo implements CodeFoldingState {
 
     int caretOffset = editor.getCaretModel().getOffset();
     FoldRegion[] foldRegions = editor.getFoldingModel().getAllFoldRegions();
+    FreezableArrayList<FoldingInfo> computedInfos = new FreezableArrayList<>(foldRegions.length);
     for (FoldRegion region : foldRegions) {
       if (!region.isValid() || region.shouldNeverExpand() || CodeFoldingManagerImpl.isTransient(region)) {
         continue;
@@ -95,36 +108,41 @@ final class DocumentFoldingInfo implements CodeFoldingState {
           myInfos.add(new SignatureInfo(signature, expanded));
         }
       }
+      computedInfos.add(new FoldingInfo(region.getPlaceholderText(), region.getTextRange(), expanded));
     }
+    myComputedInfos = computedInfos.emptyOrFrozen();
   }
 
   private void addRangeMarker(@NotNull Document document, @NotNull TextRange range, boolean expanded, @NotNull String placeholderText) {
     RangeMarker marker = document.createRangeMarker(range);
     myRangeMarkers.add(marker);
-    marker.putUserData(FOLDING_INFO_KEY, new FoldingInfo(placeholderText, expanded));
+    marker.putUserData(FOLDING_INFO_KEY, new FoldingInfo(placeholderText, range, expanded));
   }
 
   private static boolean isManuallyCreated(@NotNull FoldRegion region, @Nullable String signature) {
     return signature == null && !CodeFoldingManagerImpl.isAutoCreated(region);
   }
 
-  @RequiresEdt
-  @Override
-  public void setToEditor(@NotNull Editor editor) {
-    ThreadingAssertions.assertEventDispatchThread();
-    PsiManager psiManager = PsiManager.getInstance(myProject);
-    if (psiManager.isDisposed()) {
-      return;
-    }
+  @RequiresBackgroundThread
+  @RequiresReadLock
+  void computeExpandRanges() {
+    ThreadingAssertions.assertBackgroundThread();
+    ThreadingAssertions.assertReadAccess();
 
-    if (!myFile.isValid()) {
+    PsiManager psiManager;
+    PsiFile psiFile;
+    Document document;
+    if (myProject.isDisposed()
+        || (psiManager = PsiManager.getInstance(myProject)).isDisposed()
+        || !myFile.isValid()
+        || (psiFile = psiManager.findFile(myFile)) == null
+        || !(psiFile = psiFile instanceof PsiCompiledFile compiled ? compiled.getDecompiledPsiFile() : psiFile).isValid()
+        || (document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile)) == null
+    ) {
+      myComputedInfos = List.of();
       return;
     }
-    PsiFile psiFile = psiManager.findFile(myFile);
-    if (psiFile == null) {
-      return;
-    }
-
+    List<FoldingInfo> result = new ArrayList<>(myRangeMarkers.size() + myInfos.size());
     Map<PsiElement, FoldingDescriptor> ranges = null;
     for (SignatureInfo info : myInfos) {
       PsiElement element = FoldingPolicy.restoreBySignature(psiFile, info.signature);
@@ -133,7 +151,7 @@ final class DocumentFoldingInfo implements CodeFoldingState {
       }
 
       if (ranges == null) {
-        ranges = buildRanges(psiFile, editor.getDocument());
+        ranges = buildRanges(psiFile, document);
       }
       FoldingDescriptor descriptor = ranges.get(element);
       if (descriptor == null) {
@@ -141,11 +159,44 @@ final class DocumentFoldingInfo implements CodeFoldingState {
       }
 
       TextRange range = descriptor.getRange();
-      FoldRegion region = FoldingUtil.findFoldRegion(editor, range.getStartOffset(), range.getEndOffset());
-      if (region != null) {
-        expandRegionBlessForNewLife(editor, region, info.expanded);
+      result.add(new FoldingInfo(ObjectUtils.notNull(descriptor.getPlaceholderText(),DEFAULT_PLACEHOLDER), range, info.expanded));
+    }
+    for (RangeMarker marker : myRangeMarkers) {
+      if (!marker.isValid() || marker.getStartOffset() == marker.getEndOffset()) {
+        continue;
+      }
+      FoldingInfo info = marker.getUserData(FOLDING_INFO_KEY);
+      if (info != null) {
+        result.add(info);
       }
     }
+    myComputedInfos = ContainerUtil.createConcurrentList(result);
+  }
+
+  @RequiresEdt
+  void applyFoldingExpandedState(@NotNull Editor editor) {
+    ThreadingAssertions.assertEventDispatchThread();
+    assert !editor.isDisposed();
+
+    List<FoldingInfo> computedInfos = myComputedInfos;
+    if (computedInfos == null) {
+      throw new IllegalStateException("Must call computeExpandRanges() before calling applyFoldingExpandedState()");
+    }
+    for (FoldingInfo foldingInfo : computedInfos) {
+      TextRange range = foldingInfo.textRange();
+      FoldRegion region = FoldingUtil.findFoldRegion(editor, range.getStartOffset(), range.getEndOffset());
+      if (region != null) {
+        expandRegionBlessForNewLife(editor, region, foldingInfo.expanded());
+      }
+    }
+    myComputedInfos = List.of();
+  }
+
+  @RequiresEdt
+  @Override
+  public void setToEditor(@NotNull Editor editor) {
+    ThreadingAssertions.assertEventDispatchThread();
+
     for (RangeMarker marker : myRangeMarkers) {
       if (!marker.isValid() || marker.getStartOffset() == marker.getEndOffset()) {
         continue;
@@ -164,6 +215,7 @@ final class DocumentFoldingInfo implements CodeFoldingState {
       boolean expanded = info != null && info.expanded;
       expandRegionBlessForNewLife(editor, region, expanded);
     }
+    applyFoldingExpandedState(editor);
   }
 
   private static void expandRegionBlessForNewLife(@NotNull Editor editor, @NotNull FoldRegion region, boolean expanded) {
@@ -366,6 +418,6 @@ final class DocumentFoldingInfo implements CodeFoldingState {
   private record SignatureInfo(@NotNull String signature, boolean expanded) {
   }
 
-  private record FoldingInfo(@NotNull String placeHolder, boolean expanded) {
+  private record FoldingInfo(@NotNull String placeHolder, @NotNull TextRange textRange, boolean expanded) {
   }
 }

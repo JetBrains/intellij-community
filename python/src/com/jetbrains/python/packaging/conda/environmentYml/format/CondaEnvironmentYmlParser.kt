@@ -4,12 +4,11 @@ package com.jetbrains.python.packaging.conda.environmentYml.format
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.readText
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.parser.RequirementsParserHelper
@@ -19,19 +18,18 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object CondaEnvironmentYmlParser {
-  fun readNameFromFile(file: VirtualFile): String? = readFieldFromFile(file, "name")
-  fun readPrefixFromFile(file: VirtualFile): String? = readFieldFromFile(file, "prefix")
+  private val yamlMapper = ObjectMapper(YAMLFactory())
 
-  @RequiresBackgroundThread
-  private fun readFieldFromFile(file: VirtualFile, field: String): String? = runReadAction {
-    val text = FileDocumentManager.getInstance().getDocument(file)?.text ?: return@runReadAction null
-    val mapper = ObjectMapper(YAMLFactory())
-    val environment: JsonNode = mapper.readTree(text)
+  suspend fun readNameFromFile(file: VirtualFile): String? = readFieldFromFile(file, "name")
+  suspend fun readPrefixFromFile(file: VirtualFile): String? = readFieldFromFile(file, "prefix")
 
-    environment.path(field).asText().takeIf { it.isNotEmpty() }
+  private suspend fun readFieldFromFile(file: VirtualFile, field: String): String? {
+    val text = readAction { FileDocumentManager.getInstance().getDocument(file)?.text } ?: return null
+    val environment: JsonNode = yamlMapper.readTree(text)
+    return environment.path(field).asText().takeIf { it.isNotEmpty() }
   }
 
-  fun fromFile(file: VirtualFile): List<PyRequirement>? {
+  suspend fun fromFile(file: VirtualFile): List<PyRequirement>? {
     val pyRequirements = try {
       readDeps(file)
     }
@@ -43,10 +41,9 @@ object CondaEnvironmentYmlParser {
   }
 
   @Throws(IOException::class)
-  private fun readDeps(file: VirtualFile): List<PyRequirement> {
-    val text = FileDocumentManager.getInstance().getDocument(file)?.text ?: return emptyList()
-    val mapper = ObjectMapper(YAMLFactory())
-    val environment: JsonNode = mapper.readTree(text)
+  private suspend fun readDeps(file: VirtualFile): List<PyRequirement> {
+    val text = readAction { FileDocumentManager.getInstance().getDocument(file)?.text } ?: return emptyList()
+    val environment: JsonNode = yamlMapper.readTree(text)
 
     val result = mutableListOf<PyRequirement>()
 
@@ -122,8 +119,8 @@ object CondaEnvironmentYmlParser {
     return PyRequirementParser.fromLine("$packageName==$version")
   }
 
-  private fun parsePipListDeps(pipList: JsonNode, file: VirtualFile): List<PyRequirement> {
+  private suspend fun parsePipListDeps(pipList: JsonNode, file: VirtualFile): List<PyRequirement> {
     val pipText = pipList.filter { it.isTextual }.joinToString("\n") { it.asText() }
-    return PyRequirementParser.fromText(pipText, file, mutableSetOf<VirtualFile>())
+    return readAction { PyRequirementParser.fromText(pipText, file, mutableSetOf<VirtualFile>()) }
   }
 }

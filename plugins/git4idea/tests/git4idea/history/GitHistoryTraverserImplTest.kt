@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.changes.ChangesUtil
@@ -158,7 +157,7 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
 
     logData.refreshAndWait(repo, waitIndexFinishing = false)
     val indexingWaiter = CompletableFuture<GitHistoryTraverser.IndexedRoot>()
-    val indexWaiterDisposable = Disposable {}
+    val indexWaiterDisposable = Disposer.newDisposable()
     var blockExecutedCount = 0
     traverser.addIndexingListener(listOf(repo.root), testRootDisposable) { indexedRoots ->
       val indexedRoot = indexedRoots.single()

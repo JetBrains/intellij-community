@@ -9,23 +9,53 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.platform.scopes.SearchScopesInfo
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeItemData
+import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
+import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SePreviewInfo
+import com.intellij.platform.searchEverywhere.SeProviderId
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
+import com.intellij.platform.searchEverywhere.SeResultEndEvent
+import com.intellij.platform.searchEverywhere.SeResultEvent
+import com.intellij.platform.searchEverywhere.SeSession
+import com.intellij.platform.searchEverywhere.SeTransferEnd
+import com.intellij.platform.searchEverywhere.SeTransferEvent
+import com.intellij.platform.searchEverywhere.SeTransferItem
 import com.intellij.platform.searchEverywhere.equalityProviders.SeEqualityChecker
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendItemDataProvidersFacade
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendOnlyItemsProviderFactory
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendService
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
+import com.intellij.platform.searchEverywhere.isWildcard
 import com.intellij.platform.searchEverywhere.presentations.SeActionItemPresentation
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeLocalItemDataProvider
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
+import com.intellij.platform.searchEverywhere.providers.areCommandsSupported
+import com.intellij.platform.searchEverywhere.providers.isExtendedInfoEnabled
+import com.intellij.platform.searchEverywhere.providers.isPreviewEnabled
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
+import com.intellij.platform.searchEverywhere.toProviderId
 import com.intellij.platform.searchEverywhere.utils.SeResultsCountBalancer
 import com.intellij.platform.searchEverywhere.utils.initAsync
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
@@ -277,15 +307,15 @@ class SeTabDelegate(
     }
 
     suspend fun isPreviewEnabled(): Boolean {
-      return localProviders.values.any { it.isPreviewEnabled() } || frontendProvidersFacade?.isPreviewEnabled() == true
+      return localProviders.values.any { it.provider.isPreviewEnabled() } || frontendProvidersFacade?.isPreviewEnabled() == true
     }
 
     suspend fun isExtendedInfoEnabled(): Boolean {
-      return localProviders.values.any { it.isExtendedInfoEnabled() } || frontendProvidersFacade?.isExtendedInfoEnabled() == true
+      return localProviders.values.any { it.provider.isExtendedInfoEnabled() } || frontendProvidersFacade?.isExtendedInfoEnabled() == true
     }
 
     suspend fun isCommandsSupported(): Boolean {
-      return localProviders.values.any { it.isCommandsSupported() } || frontendProvidersFacade?.isCommandsSupported() == true
+      return localProviders.values.any { it.provider.areCommandsSupported() } || frontendProvidersFacade?.isCommandsSupported() == true
     }
   }
 

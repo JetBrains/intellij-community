@@ -56,14 +56,20 @@ public final class IndentInfo {
    */
   public @NotNull String generateNewWhiteSpace(@NotNull CommonCodeStyleSettings.IndentOptions options) {
     StringBuffer buffer = new StringBuffer();
+    boolean hasLineFeeds = myLineFeeds > 0;
+    // If alignment requests "skip tabs", still allow tabs for indentation at the line start.
+    boolean tabsAllowed = !myForceSkipTabulationsUsage || hasLineFeeds;
+    // Alignment may force "skip tabs" for this whitespace. If it starts a new line, keep tabs for indent
+    // but emit alignment as spaces even when SMART_TABS is off (tabs for indent, spaces for alignment).
+    boolean forceSmartTabs = myForceSkipTabulationsUsage && hasLineFeeds;
     for (int i = 0; i < myLineFeeds; i ++) {
       if (options.KEEP_INDENTS_ON_EMPTY_LINES && i > 0) {
         int spaces = myIndentEmptyLines ? myIndentSpaces + options.INDENT_SIZE : myIndentSpaces;
-        generateLineWhitespace(buffer, options, spaces, mySpaces, true);
+        generateLineWhitespace(buffer, options, spaces, mySpaces, true, forceSmartTabs);
       }
       buffer.append('\n');
     }
-    generateLineWhitespace(buffer, options, myIndentSpaces, mySpaces, !myForceSkipTabulationsUsage || myLineFeeds > 0);
+    generateLineWhitespace(buffer, options, myIndentSpaces, mySpaces, tabsAllowed, forceSmartTabs);
     return buffer.toString();
 
   }
@@ -72,9 +78,10 @@ public final class IndentInfo {
                                              @NotNull CommonCodeStyleSettings.IndentOptions options,
                                              int indentSpaces,
                                              int alignmentSpaces,
-                                             boolean tabsAllowed) {
+                                             boolean tabsAllowed,
+                                             boolean forceSmartTabs) {
     if (options.USE_TAB_CHARACTER && tabsAllowed) {
-      if (options.SMART_TABS) {
+      if (options.SMART_TABS || forceSmartTabs) {
         int tabCount = indentSpaces / options.TAB_SIZE;
         int leftSpaces = indentSpaces - tabCount * options.TAB_SIZE;
         StringUtil.repeatSymbol(buffer, '\t', tabCount);

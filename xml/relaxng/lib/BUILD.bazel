@@ -8,6 +8,18 @@ java_import(
 )
 
 java_import(
+  name = "relaxng-tests-rngom-20051226-patched",
+  jars = ["rngom-20051226-patched.jar"],
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "relaxng-tests-trang-core",
+  jars = ["trang-core.jar"],
+  visibility = ["//visibility:public"]
+)
+
+java_import(
   name = "relaxng-trang-core",
   jars = ["trang-core.jar"],
   visibility = ["//visibility:public"]

@@ -1,6 +1,5 @@
 com/intellij/application/options/schemes/SchemesCombo$MySchemeListItem
 com/intellij/diagnostic/ActivityCategory
-com/intellij/ide/RecentProjectColorInfo
 com/intellij/ide/actions/cache/RecoveryScope
 com/intellij/ide/errorTreeView/NewErrorTreeViewPanel$MessageViewState
 com/intellij/ide/gdpr/ConsentAttributes

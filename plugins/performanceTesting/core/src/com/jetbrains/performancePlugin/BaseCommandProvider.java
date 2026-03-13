@@ -96,6 +96,7 @@ import com.jetbrains.performancePlugin.commands.ReplaceBrowser;
 import com.jetbrains.performancePlugin.commands.ReplaceTextCommand;
 import com.jetbrains.performancePlugin.commands.RequestHeavyScanningOnNextStartCommand;
 import com.jetbrains.performancePlugin.commands.RunClassInPlugin;
+import com.jetbrains.performancePlugin.commands.RunClassInPluginModule;
 import com.jetbrains.performancePlugin.commands.RunConfigurationCommand;
 import com.jetbrains.performancePlugin.commands.RunServiceInPlugin;
 import com.jetbrains.performancePlugin.commands.SaveDocumentsAndSettingsCommand;
@@ -179,6 +180,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(OpenProjectViewCommand.PREFIX, OpenProjectViewCommand::new),
       Map.entry(MoveDirectoryCommand.PREFIX, MoveDirectoryCommand::new),
       Map.entry(RunClassInPlugin.PREFIX, RunClassInPlugin::new),
+      Map.entry(RunClassInPluginModule.PREFIX, RunClassInPluginModule::new),
       Map.entry(RunServiceInPlugin.PREFIX, RunServiceInPlugin::new),
       Map.entry(SetupProjectSdkCommand.PREFIX, SetupProjectSdkCommand::new),
       Map.entry(OpenProjectCommand.PREFIX, OpenProjectCommand::new),

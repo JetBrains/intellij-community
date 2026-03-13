@@ -3,7 +3,7 @@ package com.intellij.ide.actions.tree;
 
 import com.intellij.ui.TreeExpandCollapse;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 final class CollapseTreeNodeAction extends BaseTreeNodeAction {
   @Override

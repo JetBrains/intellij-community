@@ -1,20 +1,37 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer.fields
 
-import com.intellij.workspaceModel.codegen.impl.writer.classes.*
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
-import com.intellij.workspaceModel.codegen.impl.writer.*
+import com.intellij.workspaceModel.codegen.impl.writer.EntityLink
+import com.intellij.workspaceModel.codegen.impl.writer.EntityStorage
+import com.intellij.workspaceModel.codegen.impl.writer.EntityStorageInstrumentationApi
+import com.intellij.workspaceModel.codegen.impl.writer.LibraryRoot
+import com.intellij.workspaceModel.codegen.impl.writer.LinesBuilder
+import com.intellij.workspaceModel.codegen.impl.writer.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.codegen.impl.writer.MutableEntityStorageInstrumentation
+import com.intellij.workspaceModel.codegen.impl.writer.MutableWorkspaceList
+import com.intellij.workspaceModel.codegen.impl.writer.MutableWorkspaceSet
+import com.intellij.workspaceModel.codegen.impl.writer.SdkRoot
+import com.intellij.workspaceModel.codegen.impl.writer.VirtualFileUrl
+import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntityBase
+import com.intellij.workspaceModel.codegen.impl.writer.classes.`else`
+import com.intellij.workspaceModel.codegen.impl.writer.classes.`for`
+import com.intellij.workspaceModel.codegen.impl.writer.classes.`if`
+import com.intellij.workspaceModel.codegen.impl.writer.classes.ifElse
+import com.intellij.workspaceModel.codegen.impl.writer.classes.lineComment
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.getRefType
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.isRefType
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.kotlinClassName
+import com.intellij.workspaceModel.codegen.impl.writer.lines
 
 val ObjProperty<*, *>.implWsBuilderFieldCode: String
   get() = valueType.implWsBuilderBlockingCode(this)
 
 private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, optionalSuffix: String = ""): String = when (this) {
-  ValueType.Boolean, ValueType.Int -> """
+  ValueType.Boolean, ValueType.Int, ValueType.Char, ValueType.Long, ValueType.Float, ValueType.Double, ValueType.Short,
+  ValueType.Byte, ValueType.UByte, ValueType.UShort, ValueType.UInt, ValueType.ULong -> """
     override var ${field.javaName}: ${field.valueType.javaMutableType}$optionalSuffix
     get() = getEntityData().${field.javaName}
     set(value) {
@@ -323,7 +340,8 @@ fun LinesBuilder.implWsBuilderIsInitializedCode(field: ObjProperty<*, *>) {
       }.toString()
     }
 
-    is ValueType.Int, is ValueType.Boolean -> return
+    is ValueType.Int, is ValueType.Boolean, ValueType.Char, ValueType.Long, ValueType.Float, ValueType.Double,
+    ValueType.Short, ValueType.Byte, ValueType.UByte, ValueType.UShort, ValueType.UInt, ValueType.ULong -> return
     else -> {
       val capitalizedFieldName = javaName.replaceFirstChar { it.titlecaseChar() }
       isInitializedBaseCode(field, "!getEntityData().is${capitalizedFieldName}Initialized()")

@@ -15,7 +15,12 @@ import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertIs
+import kotlin.test.assertNotEquals
+import kotlin.test.assertNotSame
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class ExternalEntityMappingTest {
   companion object {

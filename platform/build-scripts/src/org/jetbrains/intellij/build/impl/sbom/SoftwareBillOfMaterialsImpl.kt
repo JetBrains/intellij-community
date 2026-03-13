@@ -47,6 +47,7 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryE
 import org.jetbrains.intellij.build.impl.projectStructureMapping.getIncludedModules
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
+import org.jetbrains.intellij.build.productLayout.util.mapConcurrent
 import org.jetbrains.intellij.build.retryWithExponentialBackOff
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
@@ -239,8 +240,11 @@ class SoftwareBillOfMaterialsImpl(
     return withContext(Dispatchers.IO) {
       distributions.associateWith { distribution ->
         getFiles(distribution)
-          .map { async(CoroutineName("checksums for $it")) { Checksums(it) } }
-          .awaitAll()
+          .mapConcurrent { file ->
+            withContext(CoroutineName("checksums for $file")) {
+              Checksums(file)
+            }
+          }
       }
     }.flatMap { (distribution, filesWithChecksums) ->
       filesWithChecksums.map {
@@ -502,14 +506,14 @@ class SoftwareBillOfMaterialsImpl(
           .libraries.asSequence()
       }.distinctBy {
         it.mavenDescriptor?.mavenId ?: it.name
-      }.map { library ->
+      }.toList().mapConcurrent { library ->
         val libraryName = getLibraryFilename(library)
-        async(CoroutineName("maven library $libraryName")) {
+        withContext(CoroutineName("maven library $libraryName")) {
           val libraryEntry = librariesBundledInDistributions.get(libraryName)
-          val libraryFile = libraryEntry?.libraryFile ?: return@async null
+          val libraryFile = libraryEntry?.libraryFile ?: return@withContext null
           val libraryLicense = context.productProperties.allLibraryLicenses.firstOrNull {
             it.getLibraryNames().contains(libraryName)
-          } ?: return@async null
+          } ?: return@withContext null
           val mavenDescriptor = library.mavenDescriptor
           if (mavenDescriptor != null) {
             mavenLibrary(mavenDescriptor = mavenDescriptor, libraryFile = libraryFile, libraryEntry = libraryEntry, libraryLicense = libraryLicense)
@@ -523,7 +527,7 @@ class SoftwareBillOfMaterialsImpl(
             ).takeIf { it.coordinates != null }
           }
         }
-      }.toList().mapNotNull { it.await() }
+      }.mapNotNull { it }
     }
   }
 

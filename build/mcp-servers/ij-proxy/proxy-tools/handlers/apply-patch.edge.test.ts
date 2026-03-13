@@ -161,7 +161,7 @@ describe('apply_patch handler (edge cases)', () => {
     const patch = buildPatch([
       '*** Begin Patch',
       '*** Update File: sample.txt',
-      '@@',
+      '@@ def sample()',
       '*alpha',
       '*** End Patch'
     ])
@@ -184,6 +184,22 @@ describe('apply_patch handler (edge cases)', () => {
     await rejects(
       () => handleApplyPatchTool({patch}, projectPath, callUpstreamTool),
       /Empty hunk in Update File/
+    )
+  })
+
+  it('errors when strict @@ pair hunk misses second delimiter', async () => {
+    const {callUpstreamTool} = createMockToolCaller()
+    const patch = buildPatch([
+      '*** Begin Patch',
+      '*** Update File: sample.txt',
+      '@@',
+      'alpha',
+      '*** End Patch'
+    ])
+
+    await rejects(
+      () => handleApplyPatchTool({patch}, projectPath, callUpstreamTool),
+      /Strict @@ pair hunk requires second @@ delimiter/
     )
   })
 

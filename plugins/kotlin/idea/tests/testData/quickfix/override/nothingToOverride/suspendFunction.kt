@@ -1,4 +1,6 @@
 // "Change function signature to 'suspend fun foo(x: String)'" "true"
+// K2_ERROR: 'foo' overrides nothing. Potential signatures for overriding:<br>suspend fun foo(x: String): Unit
+// K2_ERROR: Class 'Bar' is not abstract and does not implement abstract member:<br>suspend fun foo(x: String): Unit
 interface Foo {
     suspend fun foo(x: String)
 }

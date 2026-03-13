@@ -16,6 +16,7 @@ class Compiler(base.Compiler):
     static_lib_format = shared_lib_format
     exe_extension: ClassVar[str]
     initialized: bool
+    plat_name: str | None
     def initialize(self, plat_name: str | None = None) -> None: ...
     @property
     def out_extensions(self) -> dict[str, str]: ...

@@ -11,4 +11,12 @@ jvm_library(
     "@lib//:kotlin-stdlib",
   ]
 )
+
+jvm_library(
+  name = "testData_test_lib",
+  module_name = "intellij.tools.apiDump.testData",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":testData"]
+)
 ### auto-generated section `build intellij.tools.apiDump.testData` end

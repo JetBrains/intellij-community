@@ -18,11 +18,16 @@ package com.intellij.ui.treeStructure.treetable;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
 
-import javax.swing.*;
+import javax.swing.JTree;
+import javax.swing.RowSorter;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.List;
 
 public class ListTreeTableModelOnColumns extends DefaultTreeModel
   implements TreeTableModel, SortableColumnModel{

@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.model;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.net.URI;
@@ -147,6 +148,7 @@ public class MavenSource implements Serializable {
                                           String directory,
                                           List<String> includes,
                                           List<String> excludes,
+                                          @Nullable String module,
                                           String scope,
                                           String lang,
                                           String targetPath,
@@ -160,7 +162,12 @@ public class MavenSource implements Serializable {
       lang = JAVA_LANG;
     }
     if (directory == null) {
-      directory = "src/" + scope + "/" + lang;
+      if (module == null) {
+        directory = "src/" + scope + "/" + lang;
+      }
+      else {
+        directory = "src/" + module + "/" + scope + "/" + lang;
+      }
     }
     Path absolute = getAbsolutePath(projectPomFile.getParent(), directory);
     return new MavenSource(true, absolute.toString(), includes, excludes, scope, lang, targetPath, targetVersion, filtered, enabled);

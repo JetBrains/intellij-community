@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  JavaClass.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/removeGetter/a/JavaClass.java
+End of files
+Cleaning output files:
+  META-INF/kotlin_withJava_javaUsedInKotlin_removeGetter-a.kotlin_module
+  MainKt.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/removeGetter/a/main.kt
+End of files
+------------------------------------------
+Exit code: ERROR

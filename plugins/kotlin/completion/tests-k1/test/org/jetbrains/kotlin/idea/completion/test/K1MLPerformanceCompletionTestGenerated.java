@@ -628,9 +628,29 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 runTest("../testData/basic/common/callableReference/ExpressionQualifier.kt");
             }
 
+            @TestMetadata("ExtensionOnNestedClasses.kt")
+            public void testExtensionOnNestedClasses() throws Exception {
+                runTest("../testData/basic/common/callableReference/ExtensionOnNestedClasses.kt");
+            }
+
             @TestMetadata("GenericConstructor.kt")
             public void testGenericConstructor() throws Exception {
                 runTest("../testData/basic/common/callableReference/GenericConstructor.kt");
+            }
+
+            @TestMetadata("GenericExtensionCallableReference.kt")
+            public void testGenericExtensionCallableReference() throws Exception {
+                runTest("../testData/basic/common/callableReference/GenericExtensionCallableReference.kt");
+            }
+
+            @TestMetadata("GenericExtensionCallableReferenceWithTypeAlias.kt")
+            public void testGenericExtensionCallableReferenceWithTypeAlias() throws Exception {
+                runTest("../testData/basic/common/callableReference/GenericExtensionCallableReferenceWithTypeAlias.kt");
+            }
+
+            @TestMetadata("GenericNestedClassesExtensionReference.kt")
+            public void testGenericNestedClassesExtensionReference() throws Exception {
+                runTest("../testData/basic/common/callableReference/GenericNestedClassesExtensionReference.kt");
             }
 
             @TestMetadata("HigherOrderFunction.kt")
@@ -691,6 +711,66 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
             @TestMetadata("Unsupported.kt")
             public void testUnsupported() throws Exception {
                 runTest("../testData/basic/common/callableReference/Unsupported.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/basic/common/companionObject")
+        @PerformanceUnitTest
+        public static class CompanionObject extends AbstractK1MLPerformanceCompletionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("ForArguments.kt")
+            public void testForArguments() throws Exception {
+                runTest("../testData/basic/common/companionObject/ForArguments.kt");
+            }
+
+            @TestMetadata("FunctionsForExpectedType.kt")
+            public void testFunctionsForExpectedType() throws Exception {
+                runTest("../testData/basic/common/companionObject/FunctionsForExpectedType.kt");
+            }
+
+            @TestMetadata("NoUnrelatedValues.kt")
+            public void testNoUnrelatedValues() throws Exception {
+                runTest("../testData/basic/common/companionObject/NoUnrelatedValues.kt");
+            }
+
+            @TestMetadata("ValuesForExpectedType.kt")
+            public void testValuesForExpectedType() throws Exception {
+                runTest("../testData/basic/common/companionObject/ValuesForExpectedType.kt");
+            }
+
+            @TestMetadata("WithinCompanionObject.kt")
+            public void testWithinCompanionObject() throws Exception {
+                runTest("../testData/basic/common/companionObject/WithinCompanionObject.kt");
+            }
+
+            @TestMetadata("WithinInnerClass.kt")
+            public void testWithinInnerClass() throws Exception {
+                runTest("../testData/basic/common/companionObject/WithinInnerClass.kt");
+            }
+
+            @TestMetadata("WithinNestedClass.kt")
+            public void testWithinNestedClass() throws Exception {
+                runTest("../testData/basic/common/companionObject/WithinNestedClass.kt");
+            }
+
+            @TestMetadata("WithinNestedObject.kt")
+            public void testWithinNestedObject() throws Exception {
+                runTest("../testData/basic/common/companionObject/WithinNestedObject.kt");
+            }
+
+            @TestMetadata("WithinSameClass.kt")
+            public void testWithinSameClass() throws Exception {
+                runTest("../testData/basic/common/companionObject/WithinSameClass.kt");
             }
         }
 
@@ -766,11 +846,6 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
             @TestMetadata("SingleConstructor.kt")
             public void testSingleConstructor() throws Exception {
                 runTest("../testData/basic/common/constructor/SingleConstructor.kt");
-            }
-
-            @TestMetadata("SubclassConstructor.kt")
-            public void testSubclassConstructor() throws Exception {
-                runTest("../testData/basic/common/constructor/SubclassConstructor.kt");
             }
         }
 
@@ -2246,6 +2321,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
             @TestMetadata("SecondConstructorParameter.kt")
             public void testSecondConstructorParameter() throws Exception {
                 runTest("../testData/basic/common/override/SecondConstructorParameter.kt");
+            }
+
+            @TestMetadata("SecondConstructorParameterWithDuplicateClass.kt")
+            public void testSecondConstructorParameterWithDuplicateClass() throws Exception {
+                runTest("../testData/basic/common/override/SecondConstructorParameterWithDuplicateClass.kt");
             }
 
             @TestMetadata("Simple.kt")
@@ -4991,6 +5071,16 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
             @TestMetadata("TopLevelFromStandardLibrary.kt")
             public void testTopLevelFromStandardLibrary() throws Exception {
                 runTest("../testData/basic/java/TopLevelFromStandardLibrary.kt");
+            }
+
+            @TestMetadata("VariadicContextCallableAsExpression.kt")
+            public void testVariadicContextCallableAsExpression() throws Exception {
+                runTest("../testData/basic/java/VariadicContextCallableAsExpression.kt");
+            }
+
+            @TestMetadata("VariadicContextCallableSingleItem.kt")
+            public void testVariadicContextCallableSingleItem() throws Exception {
+                runTest("../testData/basic/java/VariadicContextCallableSingleItem.kt");
             }
         }
 

@@ -2,6 +2,7 @@
 // K2_ACTION: "class org.jetbrains.kotlin.idea.k2.codeinsight.fixes.SuperClassNotInitializedFactories$AddParametersFix" "false"
 // ACTION: Change to constructor invocation
 // ERROR: This type has a constructor, and thus must be initialized here
+// K2_ERROR: This type has a constructor, so it must be initialized here.
 // K2_AFTER_ERROR: This type has a constructor, so it must be initialized here.
 open class Base
 

@@ -3,6 +3,7 @@
 package com.intellij.mcpserver.toolsets
 
 import com.intellij.mcpserver.McpToolsetTestBase
+import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.toolsets.Constants.MAX_USAGE_TEXT_CHARS
 import com.intellij.mcpserver.toolsets.general.TextToolset
 import com.intellij.mcpserver.util.relativizeIfPossible

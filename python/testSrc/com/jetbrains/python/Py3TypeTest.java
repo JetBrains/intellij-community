@@ -159,6 +159,21 @@ public class Py3TypeTest extends PyTestCase {
       expr = d.pop("abc", None)""");
   }
 
+  // PY-83704
+  public void testPopFromDictWithDefaultNoneValue2() {
+    doTest("int | None", """
+      d: dict[str, int] = {"abc": 0, "1": 1}
+      expr = d.pop("abc", None)""");
+  }
+
+  // PY-83704
+  public void testPopFromDictWithDefaultNoneValue3() {
+    doTest("Any", """
+      from typing import Any
+      d: dict[str, Any] = {"abc": "s", "1": 1}
+      expr = d.pop("abc", None)""");
+  }
+
   // PY-83351
   public void testWhileStatementNarrowing() {
     doTest("int",
@@ -516,7 +531,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testAsyncDefReturnType() {
-    doTest("Coroutine[Any, Any, int]",
+    doTest("CoroutineType[Any, Any, int]",
            """
              async def foo(x):
                  await x
@@ -547,6 +562,18 @@ public class Py3TypeTest extends PyTestCase {
              
              async def bar():
                  expr = await foo()
+             """);
+  }
+
+  public void testAwaitOnTypingCoroutineAnnotation() {
+    doTest("int",
+           """
+             from typing import Any, Coroutine
+             
+             x: Coroutine[Any, Any, int]
+             
+             async def bar():
+                 expr = await x
              """);
   }
 
@@ -1084,7 +1111,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20757
   public void testMinElseNone() {
-    doTest("Any | None",
+    doTest("SupportsDunderLT[Any] | SupportsDunderGT[Any] | None",
            """
              def get_value(v):
                  if v:
@@ -1117,14 +1144,13 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testNumpyResolveRaterDoesNotIncreaseRateForNotNdarrayRightOperatorFoundInStub() {
-    myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
-    doTest("D1 | D2",
-           """
-             class D1(object):
-                 pass
-             class D2(object):
-                 pass
-             expr = D1() / D2()""");
+    doMultiFileTest("D1 | D2",
+                    """
+                      class D1(object):
+                          pass
+                      class D2(object):
+                          pass
+                      expr = D1() / D2()""");
   }
 
   // PY-22181
@@ -1226,33 +1252,31 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-21655
   public void testUsageOfFunctionDecoratedWithAsyncioCoroutine() {
-    myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
-    doTest("int",
-           """
-             import asyncio
-             @asyncio.coroutine
-             def foo():
-                 yield from asyncio.sleep(1)
-                 return 3
-             async def bar():
-                 expr = await foo()
-                 return expr""");
+    doMultiFileTest("int",
+                    """
+                      import asyncio
+                      @asyncio.coroutine
+                      def foo():
+                          yield from asyncio.sleep(1)
+                          return 3
+                      async def bar():
+                          expr = await foo()
+                          return expr""");
   }
 
   // PY-21655
   public void testUsageOfFunctionDecoratedWithTypesCoroutine() {
-    myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
-    doTest("int",
-           """
-             import asyncio
-             import types
-             @types.coroutine
-             def foo():
-                 yield from asyncio.sleep(1)
-                 return 3
-             async def bar():
-                 expr = await foo()
-                 return expr""");
+    doMultiFileTest("int",
+                    """
+                      import asyncio
+                      import types
+                      @types.coroutine
+                      def foo():
+                          yield from asyncio.sleep(1)
+                          return 3
+                      async def bar():
+                          expr = await foo()
+                          return expr""");
   }
 
   // PY-22513
@@ -1538,7 +1562,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-24067
   public void testAsyncFunctionReturnTypeInDocstring() {
-    doTest("Coroutine[Any, Any, int]",
+    doTest("CoroutineType[Any, Any, int]",
            """
              async def f():
                  ""\"
@@ -1550,7 +1574,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-27518
   public void testAsyncFunctionReturnTypeInNumpyDocstring() {
-    doTest("Coroutine[Any, Any, int]",
+    doTest("CoroutineType[Any, Any, int]",
            """
              async def f():
                  ""\"
@@ -1577,7 +1601,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-26643
   public void testReplaceSelfInCoroutine() {
-    doTest("Coroutine[Any, Any, B]",
+    doTest("CoroutineType[Any, Any, B]",
            """
              class A:
                  async def foo(self):
@@ -2024,7 +2048,7 @@ public class Py3TypeTest extends PyTestCase {
     doTest("int", "expr = round(1, 1)");
 
     doTest("int", "expr = round(1.1)");
-    doTest("float", "expr = round(1.1, 1)");
+    doTest("float | int", "expr = round(1.1, 1)");
 
     doTest("int", "expr = round(True)");
     doTest("int", "expr = round(True, 1)");
@@ -3682,7 +3706,7 @@ public class Py3TypeTest extends PyTestCase {
   // PY-34617
   public void testClassMethodUnderVersionCheck() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
-      doMultiFileTest("float",
+      doMultiFileTest("Union[float, int]",
                       """
                         from mod import Foo
                         expr = Foo().foo()
@@ -3721,7 +3745,7 @@ public class Py3TypeTest extends PyTestCase {
   public void testTypeCheckingMultiFile() {
     myFixture.addFileToProject("mod.py", """
       import typing
-
+      
       if not not typing.TYPE_CHECKING:
           v: int = -1
       else:
@@ -4392,41 +4416,6 @@ public class Py3TypeTest extends PyTestCase {
     doTest("EllipsisType", "expr = Ellipsis");
   }
 
-  // PY-80166, PY-80167
-  public void testVarianceObtainedFromTypeVarDeclaration() {
-    doTestTypeVarVariance(PyTypeVarType.Variance.INVARIANT, """
-      from typing import TypeVar
-      T = TypeVar("T")
-      expr: T
-      """);
-    doTestTypeVarVariance(PyTypeVarType.Variance.COVARIANT, """
-      from typing import TypeVar
-      T_co = TypeVar("T_co", covariant=True)
-      expr: T_co
-      """);
-    doTestTypeVarVariance(PyTypeVarType.Variance.CONTRAVARIANT, """
-      from typing import TypeVar
-      T_contra = TypeVar("T_contra", contravariant=True)
-      expr: T_contra
-      """);
-    doTestTypeVarVariance(PyTypeVarType.Variance.INFER_VARIANCE, """
-      from typing import TypeVar
-      T_inf = TypeVar("T_inf", infer_variance=True)
-      expr: T_inf
-      """);
-    doTestTypeVarVariance(PyTypeVarType.Variance.INVARIANT, """
-      from typing import TypeVar
-      T_wrong = TypeVar("T_wrong", covariant=True, contravariant=True)
-      expr: T_wrong
-      """);
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doTestTypeVarVariance(PyTypeVarType.Variance.INFER_VARIANCE, """
-        def foo[T]():
-          expr: T
-        """);
-    });
-  }
-
   // PY-37755
   public void testNonLocalType() {
     doTest("bool",
@@ -4584,15 +4573,33 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  // PY-86928
+  public void testProperlyImportedQualifiedNameInTypeHint() {
+    doMultiFileTest("MyClass", """
+      from lib import f
+      
+      expr = f()
+      """);
+  }
+
+  // PY-86928
+  public void testProperlyImportedQualifiedNameFromNamespacePackageInTypeHint() {
+    doMultiFileTest("MyClass", """
+      from lib import f
+      
+      expr = f()
+      """);
+  }
+
   // PY-81684
   public void testFunctionAlwaysRaisesReturnsNever() {
     // The function actually returns NoReturn, but its get converted to Never upon assignment to expr
     doTest("Never", """
-      def f():
-          raise Exception()
-    
-      expr = f()
-    """);
+        def f():
+            raise Exception()
+      
+        expr = f()
+      """);
   }
 
   // PY-85078
@@ -4764,7 +4771,7 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
-  @TestFor(issues="PY-28130")
+  @TestFor(issues = "PY-28130")
   public void testLambdaParameterUsesAssignmentContext() {
     doTest("int", """
       from typing import Callable
@@ -4773,7 +4780,7 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
-  @TestFor(issues="PY-28130")
+  @TestFor(issues = "PY-28130")
   public void testLambdaParameterUsesAssignmentContextSplitDefinition() {
     doTest("int", """
       from typing import Callable
@@ -4783,7 +4790,7 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
-  @TestFor(issues="PY-28130")
+  @TestFor(issues = "PY-28130")
   public void testLambdaParameterUsesAssignmentContextSplitDefinitionClass() {
     doTest("int", """
       from typing import Callable
@@ -4795,7 +4802,7 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
-  @TestFor(issues="PY-28130")
+  @TestFor(issues = "PY-28130")
   public void testLambdaParameterUsesParameterContext() {
     doTest("int", """
       from typing import Callable
@@ -4806,7 +4813,7 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
-  @TestFor(issues="PY-28130")
+  @TestFor(issues = "PY-28130")
   public void testLambdaParameterUsesReturnContext() {
     doTest("int", """
       from typing import Callable
@@ -4816,7 +4823,7 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
-  @TestFor(issues="PY-28130")
+  @TestFor(issues = "PY-28130")
   public void testLambdaUsesGenericContext() {
     doTest("int", """
       from typing import Callable
@@ -4827,7 +4834,7 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
-  @TestFor(issues="PY-28130")
+  @TestFor(issues = "PY-28130")
   public void testLambdaUsesGenericContextReceiver() {
     doTest("int", """
       from typing import Callable
@@ -4839,13 +4846,13 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
-  @TestFor(issues="PY-28130")
+  @TestFor(issues = "PY-28130")
   public void testLambdaParameterDoesntEndlessRecursion() {
     RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
     doTest("Any", "_ = lambda expr: expr");
   }
 
-  @TestFor(issues="PY-28130")
+  @TestFor(issues = "PY-28130")
   public void testLambdaAsNonAnnotatedFunctionReturnValue() {
     RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
     doTest("(x: Any) -> UnsafeUnion[int, Any]", """
@@ -4855,7 +4862,7 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
-  @TestFor(issues="PY-28130")
+  @TestFor(issues = "PY-28130")
   public void testLambdaAsNonAnnotatedVariableValue() {
     RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
     doTest("(x: Any) -> UnsafeUnion[int, Any]", """
@@ -4864,7 +4871,7 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
-  @TestFor(issues="PY-28130")
+  @TestFor(issues = "PY-28130")
   public void testLambdaAsNonAnnotatedParameterValue() {
     RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
     doTest("Any", """
@@ -4927,6 +4934,37 @@ public class Py3TypeTest extends PyTestCase {
           return p1.f()
       
       expr = a(C())
+      """);
+  }
+
+  // PY-88326
+  public void testGenericProtocolUnificationFromClassMethodSelfAnnotation() {
+    doTest("list[int]", """
+      from typing import Protocol, TypeVar
+      
+      T = TypeVar("T")
+      
+      class ProtoA(Protocol[T]):
+          @classmethod
+          def method1(cls, value: T) -> None:
+              ...
+      
+      class ProtoB(Protocol[T]):
+          def method2(self) -> T:
+              ...
+      
+      class ImplB:
+          def method2(self) -> int:
+              return 0
+      
+          @classmethod
+          def method1(cls: type[ProtoB[T]], value: list[T]) -> None:
+              pass
+      
+      def func1(x: ProtoA[T]) -> T:
+          raise NotImplementedError
+      
+      expr = func1(ImplB())
       """);
   }
 
@@ -5045,6 +5083,318 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  // PY-83206
+  public void testIntNotIsInstanceFloat() {
+    doTest("int", """
+      if not isinstance((x := 42), float):
+          expr = x
+      """);
+  }
+
+  // PY-83206
+  public void testFloatLiteralIsJustFloat() {
+    doTest("Never", """
+      a = .0
+      if isinstance(a, int):
+          expr = a
+      """);
+  }
+
+  // PY-83206
+  public void testIntFloatTowerIsInstanceNever() {
+    doTest("Never", """
+      def foo(y: int | float) -> None:
+          if isinstance(y, float):
+              if isinstance(y, int):
+                  expr = y
+      """);
+  }
+
+  // PY-83206 Disjoint base: @disjoint_base decorator makes classes disjoint
+  public void testDisjointBaseDecorator() {
+    doTest("Never", """
+      from typing_extensions import disjoint_base
+      
+      @disjoint_base
+      class A:
+          pass
+      
+      @disjoint_base
+      class B:
+          pass
+      
+      def foo(x: A) -> None:
+          if isinstance(x, B):
+              expr = x
+      """);
+  }
+
+  // PY-83206 Disjoint base: children of same disjoint base can intersect
+  public void testDisjointBaseSameBase() {
+    doTest("Child1 & Child2", """
+      from typing_extensions import disjoint_base
+      
+      @disjoint_base
+      class Base:
+          pass
+      
+      class Child1(Base):
+          pass
+      
+      class Child2(Base):
+          pass
+      
+      def foo(x: Child1) -> None:
+          if isinstance(x, Child2):
+              expr = x
+      """);
+  }
+
+  // PY-83206 Disjoint base: __slots__ makes classes disjoint
+  public void testSlotsAreDisjoint() {
+    doTest("Never", """
+      class A:
+          __slots__ = ['x']
+      
+      class B:
+          __slots__ = ['y']
+      
+      def foo(x: A) -> None:
+          if isinstance(x, B):
+              expr = x
+      """);
+  }
+
+  // PY-83206 Disjoint base: empty __slots__ is not disjoint
+  public void testEmptySlotsNotDisjoint() {
+    doTest("A & B", """
+      class A:
+          __slots__ = []
+      
+      class B:
+          __slots__ = []
+      
+      def foo(x: A) -> None:
+          if isinstance(x, B):
+              expr = x
+      """);
+  }
+
+  // PY-83206 Disjoint base: @dataclass(slots=True) creates disjoint base
+  public void testDataclassSlotsDisjoint() {
+    doTest("Never", """
+      from dataclasses import dataclass
+      
+      @dataclass(slots=True)
+      class A:
+          x: int
+      
+      @dataclass(slots=True)
+      class B:
+          y: str
+      
+      def foo(a: A) -> None:
+          if isinstance(a, B):
+              expr = a
+      """);
+  }
+
+  // PY-83206 Disjoint base: union with disjoint class filters correctly
+  public void testDisjointBaseWithUnion() {
+    doTest("(B & str) | (C & str)", """
+      from typing_extensions import disjoint_base
+      
+      @disjoint_base
+      class A:
+          pass
+      
+      class B:
+          pass
+      
+      class C:
+          pass
+      
+      def foo(x: A | B | C) -> None:
+          if isinstance(x, str):
+              expr = x
+      """);
+  }
+
+  // PY-86873
+  public void testNestedListUnpacking1() {
+    doTest("int", """
+      def f(edges: list[list[int]]):
+                       [[node_a], second_edge] = edges
+                       expr = node_a
+      """);
+  }
+
+  // PY-86873
+  public void testNestedListUnpacking2() {
+    doTest("list[int]", """
+      def f(edges: list[list[int]]):
+                       [[node_a], second_edge] = edges
+                       expr = second_edge
+      """);
+  }
+
+  // PY-86873
+  public void testNestedListUnpacking3() {
+    doTest("int", """
+      def f(edges: list[list[int]]):
+                       [edge, [node_b]] = edges
+                       expr = node_b
+      """);
+  }
+
+  // PY-86873
+  public void testNestedListUnpacking4() {
+    doTest("list[int]", """
+      def f(edges: list[list[int]]):
+                       [edge, [node_b]] = edges
+                       expr = edge
+      """);
+  }
+
+  // PY-86873
+  public void testNestedListUnpacking5() {
+    doTest("int", """
+      def f(edges: list[list[int]]):
+                       [edge, [node_b], edge_2] = edges
+                       expr = node_b
+      """);
+  }
+
+  // PY-86873
+  public void testNestedListUnpacking6() {
+    doTest("tuple[int, int, int]", """
+      def f(edges: list[list[int]]):
+                       [[node_a], [node_b], [node_c]] = edges
+                       expr = (node_a, node_b, node_c)
+      """);
+  }
+
+  // PY-86873
+  public void testNestedListDepth3Unpacking1() {
+    doTest("list[int]", """
+      def f(edges: list[list[list[int]]]):
+                       [edge, [node_a]] = edges
+                       expr = node_a
+      """);
+  }
+
+  // PY-86873
+  public void testNestedListDepth3Unpacking2() {
+    doTest("int", """
+      def f(edges: list[list[list[int]]]):
+                       [edge, [edge_2, [node_a]]] = edges
+                       expr = node_a
+      """);
+  }
+
+  // PY-86873
+  public void testNestedListDepth3Unpacking3() {
+    doTest("list[int]", """
+      def f(edges: list[list[list[int]]]):
+                       [edge, [edge_2, [node_a]]] = edges
+                       expr = edge_2
+      """);
+  }
+
+  // PY-86873
+  public void testNestedListDepth3Unpacking4() {
+    doTest("list[list[int]]", """
+      def f(edges: list[list[list[int]]]):
+                       [edge, [edge_2, [node_a]]] = edges
+                       expr = edge
+      """);
+  }
+
+  // PY-87575
+  public void testIterDefinedInMetaclass() {
+    doTest("set[int]", """
+      from collections.abc import Iterator
+      
+      class MyIterMeta(type):
+          def __iter__(self) -> Iterator[int]: ...
+      
+      class MyClass(metaclass=MyIterMeta): ...
+      
+      expr = set(MyClass)
+      """);
+  }
+
+  // PY-87575
+  public void testIterDefinedInMetaclassHasHigherPriorityThatInheritedClass() {
+    doTest("set[int]", """
+      from collections.abc import Iterator
+      
+      class MyIterMeta(type):
+          def __iter__(self) -> Iterator[int]: ...
+      
+      class IterBase:
+          def __iter__(self) -> Iterator[str]: ...
+      
+      class MyClass(IterBase, metaclass=MyIterMeta): ...
+      
+      expr = set(MyClass)
+      """);
+  }
+
+  // PY-87575
+  public void testIterDefinedInMetaclassHasHigherPriorityThatInheritedBuiltinStr() {
+    doTest("set[int]", """
+      from collections.abc import Iterator
+      
+      class MyIterMeta(type):
+          def __iter__(self) -> Iterator[int]: ...
+      
+      # even though str inherits Iterable[str], MyIterMeta.__iter__ will be called in runtime and has higher priority
+      class MyClass(str, metaclass=MyIterMeta): ...
+      
+      expr = set(MyClass)
+      """);
+  }
+
+  // PY-87344
+  public void testIteratorTypeCorrectlyInferredFromStrEnum() {
+    doTest("set[Variant]", """
+      from enum import StrEnum
+      from typing import Self
+
+      class Variant(StrEnum):
+          CREATED = "created"
+      
+          @classmethod
+          def values(cls) -> set[Self]:
+              return set(cls)
+      
+      expr = set(Variant)
+      """);
+  }
+
+  // PY-87344
+  public void testTypeOfSetOfStrEnumViaCls() {
+    doTest("set[Self@Variant]", """
+      from enum import StrEnum
+      from typing import Self
+      
+      class Variant(StrEnum):
+          CREATED = "created"
+      
+          @classmethod
+          def values(cls):
+              expr = set(cls)
+      """);
+  }
+  
+  // PY-88321
+  public void testListLiteralOfClassFloat() {
+    doTest("list[type[float]]", """
+      expr = [float]
+    """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
@@ -5057,15 +5407,6 @@ public class Py3TypeTest extends PyTestCase {
     assertType(expectedType, expr, TypeEvalContext.codeAnalysis(project, containingFile));
     assertProjectFilesNotParsed(containingFile);
     assertType(expectedType, expr, TypeEvalContext.userInitiated(project, containingFile));
-  }
-
-  private void doTestTypeVarVariance(PyTypeVarType.Variance variance, String text) {
-    myFixture.configureByText(PythonFileType.INSTANCE, text);
-    PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
-    assertNotNull(expr);
-    PyType type = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()).getType(expr);
-    assertInstanceOf(type, PyTypeVarType.class);
-    assertEquals(variance, ((PyTypeVarType)type).getVariance());
   }
 
   private void doMultiFileTest(@NotNull String expectedType, @NotNull String text) {

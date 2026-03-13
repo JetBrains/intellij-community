@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:kotlinx-datetime-jvm"],
   runtime_deps = ["@lib//:kotlinx-datetime-jvm"]
 )
+
+jvm_library(
+  name = "datetime_test_lib",
+  module_name = "intellij.libraries.kotlinx.datetime",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:kotlinx-datetime-jvm"],
+  runtime_deps = [":datetime"]
+)
 ### auto-generated section `build intellij.libraries.kotlinx.datetime` end

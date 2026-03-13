@@ -12,6 +12,7 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.RoamingType
@@ -27,6 +28,10 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.application
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.Collections
 
 private const val MODEL_CONTEXT_INTRO_URL = "https://modelcontextprotocol.io/introduction"
 
@@ -114,36 +119,42 @@ internal class McpClientDetectionActivity : ProjectActivity {
 
   internal class AutoconfigureAction(private val project: Project, private val unconfiguredClients: List<McpClient>, private val notification: Notification) : AnAction(McpServerBundle.message("mcp.unconfigured.clients.detected.configure.json")) {
     override fun actionPerformed(e: AnActionEvent) {
-      val clientsWithErrorDuringConfiguration = mutableSetOf<McpClient>()
-      for (client in unconfiguredClients) {
-        try {
-          client.configure()
+      e.coroutineScope.launch {
+        val clientsWithErrorDuringConfiguration = Collections.synchronizedSet(mutableSetOf<McpClient>())
+        for (client in unconfiguredClients) {
+          try {
+            client.autoConfigure()
+          }
+          catch (t: Throwable) {
+            thisLogger().warn(t)
+            clientsWithErrorDuringConfiguration.add(client)
+          }
         }
-        catch (t: Throwable) {
-          thisLogger().warn(t)
 
-          clientsWithErrorDuringConfiguration.add(client)
+        val configuredClients = unconfiguredClients.filter { it !in clientsWithErrorDuringConfiguration }
+        if (configuredClients.isNotEmpty()) {
+          withContext(Dispatchers.EDT) {
+            val doneNotification = NotificationGroupManager.getInstance().getNotificationGroup("MCP Server")
+              .createNotification(McpServerBundle.message("mcp.client.autoconfigured"),
+                                  McpServerBundle.message("mcp.server.client.restart.info", configuredClients.joinToString(", ") { it.mcpClientInfo.displayName }), NotificationType.INFORMATION)
+              .setDisplayId("mcp.client.autoconfigured")
+            doneNotification.notify(project)
+          }
+        }
+
+        if (clientsWithErrorDuringConfiguration.isNotEmpty()) {
+          withContext(Dispatchers.EDT) {
+            val errorNotification = NotificationGroupManager.getInstance().getNotificationGroup("MCP Server")
+              .createNotification(McpServerBundle.message("mcp.client.error.autoconfigured"),
+                                  McpServerBundle.message("mcp.server.error.autoconfigured.info", clientsWithErrorDuringConfiguration.joinToString(", ") { it.mcpClientInfo.displayName }), NotificationType.WARNING)
+              .setDisplayId("mcp.client.error.autoconfigured")
+            errorNotification.notify(project)
+            notification.expire()
+          }
         }
       }
-
-      val configuredClients = unconfiguredClients.filter { it !in clientsWithErrorDuringConfiguration }
-      if (configuredClients.isNotEmpty()) {
-        val doneNotification = NotificationGroupManager.getInstance().getNotificationGroup("MCP Server")
-          .createNotification(McpServerBundle.message("mcp.client.autoconfigured"),
-                              McpServerBundle.message("mcp.server.client.restart.info", configuredClients.joinToString(", ") { it.mcpClientInfo.displayName }), NotificationType.INFORMATION)
-          .setDisplayId("mcp.client.autoconfigured")
-        doneNotification.notify(project)
-      }
-
-      if (clientsWithErrorDuringConfiguration.isNotEmpty()) {
-        val errorNotification = NotificationGroupManager.getInstance().getNotificationGroup("MCP Server")
-          .createNotification(McpServerBundle.message("mcp.client.error.autoconfigured"),
-                              McpServerBundle.message("mcp.server.error.autoconfigured.info", clientsWithErrorDuringConfiguration.joinToString(", ") { it.mcpClientInfo.displayName }), NotificationType.WARNING)
-          .setDisplayId("mcp.client.error.autoconfigured")
-        errorNotification.notify(project)
-      }
-      notification.expire()
     }
+
   }
 
   private fun showMcpServerAutomaticConfigurationNotification(project: Project, unconfiguredClients: List<McpClient>) {

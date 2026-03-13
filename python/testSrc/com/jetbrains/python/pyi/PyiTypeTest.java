@@ -89,7 +89,7 @@ public class PyiTypeTest extends PyTestCase {
   }
 
   public void testFunctionType() {
-    doTest("(x: int) -> dict");
+    doTest("(x: int) -> dict[Any, Any]");
   }
 
   public void testModuleAttribute() {
@@ -97,7 +97,7 @@ public class PyiTypeTest extends PyTestCase {
   }
 
   public void testCoroutineType() {
-    doTest("Coroutine[Any, Any, int]");
+    doTest("CoroutineType[Any, Any, int]");
   }
 
   public void testPyiOnPythonPath() {

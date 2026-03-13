@@ -2,7 +2,10 @@
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.parseInput
-import com.intellij.openapi.vcs.ex.ExclusionState.*
+import com.intellij.openapi.vcs.ex.ExclusionState.ALL_EXCLUDED
+import com.intellij.openapi.vcs.ex.ExclusionState.ALL_INCLUDED
+import com.intellij.openapi.vcs.ex.ExclusionState.NO_CHANGES
+import com.intellij.openapi.vcs.ex.ExclusionState.PARTIALLY
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 
 class PartiallyExcludedChangesTest : BasePartiallyExcludedChangesTest() {

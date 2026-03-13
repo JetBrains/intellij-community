@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.tools.projectWizard.wizard
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
@@ -18,15 +20,26 @@ import org.jetbrains.plugins.gradle.setup.GradleNewProjectWizardTestCase
 import org.jetbrains.plugins.gradle.testFramework.util.ModuleInfo
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeEach
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 
 abstract class GradleKotlinNewProjectWizardTestCase : GradleNewProjectWizardTestCase() {
 
+    protected lateinit var parentDisposable: Disposable
+
+    @BeforeEach
+    open fun setUp() {
+        parentDisposable = Disposer.newDisposable()
+    }
+
     @AfterEach
-    fun tearDown() {
-        runAll({ KotlinSdkType.removeKotlinSdkInTests() })
+    open fun tearDown() {
+        runAll(
+            { KotlinSdkType.removeKotlinSdkInTests() },
+            { Disposer.dispose(parentDisposable) }
+        )
     }
 
     val Project.projectPath: String get() = basePath!!
@@ -64,7 +77,7 @@ abstract class GradleKotlinNewProjectWizardTestCase : GradleNewProjectWizardTest
     }
 
     fun ModuleInfo.Builder.withKotlinBuildFile(
-        kotlinJvmPluginVersion: String? = "2.3.0",
+        kotlinJvmPluginVersion: String? = "2.3.10",
         configure: GradleBuildScriptBuilder<*>.() -> Unit = {}
     ) {
         withBuildFile {

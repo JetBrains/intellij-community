@@ -10,6 +10,7 @@ import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.Key
+import com.intellij.util.createDocumentBuilderFactory
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.cli.common.repl.replInputAsXml
 import org.jetbrains.kotlin.cli.common.repl.replNormalizeLineBreaks
@@ -27,7 +28,6 @@ import org.w3c.dom.Element
 import org.xml.sax.InputSource
 import java.io.ByteArrayInputStream
 import java.nio.charset.Charset
-import javax.xml.parsers.DocumentBuilderFactory
 
 @K1Deprecation
 class KtScratchReplExecutor(file: org.jetbrains.kotlin.idea.jvm.k1.scratch.K1KotlinScratchFile) : org.jetbrains.kotlin.idea.jvm.k1.scratch.SequentialScratchExecutor(file) {
@@ -143,7 +143,7 @@ class KtScratchReplExecutor(file: org.jetbrains.kotlin.idea.jvm.k1.scratch.K1Kot
     }
 
     private inner class ReplOSProcessHandler(process: Process, commandLine: String) : com.intellij.execution.process.OSProcessHandler(process, commandLine) {
-        private val factory = DocumentBuilderFactory.newInstance()
+        private val factory = createDocumentBuilderFactory()
 
         override fun notifyTextAvailable(text: String, outputType: Key<*>) {
             if (text.startsWith("warning: classpath entry points to a non-existent location")) return

@@ -1,5 +1,6 @@
 // "Propagate 'MyExperimentalAPI' opt-in requirement to 'outer'" "true"
 // PRIORITY: HIGH
+// K2_ERROR: Base declaration of supertype 'Base' needs opt-in. The declaration override must be annotated with '@MyExperimentalAPI' or '@OptIn(MyExperimentalAPI::class)'
 
 @RequiresOptIn
 @Target(AnnotationTarget.FUNCTION)

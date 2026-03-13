@@ -1,4 +1,5 @@
 // "Add doubleArrayOf wrapper" "true"
+// K2_ERROR: Argument type mismatch: actual type is 'Double', but 'DoubleArray' was expected.
 
 annotation class ArrAnn(val name: DoubleArray)
 

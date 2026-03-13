@@ -1,4 +1,9 @@
-Subject: [PATCH] Fix cross-compilation from Linux to Windows and macOS
+Subject: [PATCH] Fix include filegroup to allow empty glob
+Add an alias for llvm-rc tool in order to be able to reuse LLVM to compile .rc files
+Add TODO
+Do not set `-no-canonical-prefixes` when cross-compiling to Windows
+Fix typo in passed Windows compiler args
+Fix cross-compilation from Linux to Windows and macOS
 Refactor tool path string building
 Sanitize reproducer
 Reason using abi instead of os target for `gcc_tool` to reflect reality
@@ -93,9 +98,9 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/toolchain/BUILD.llvm_repo_windows.tpl b/toolchain/BUILD.llvm_repo_windows.tpl
 new file mode 100644
---- /dev/null	(revision 186793fd0824d0950240f790343184899e205171)
-+++ b/toolchain/BUILD.llvm_repo_windows.tpl	(revision 186793fd0824d0950240f790343184899e205171)
-@@ -0,0 +1,209 @@
+--- /dev/null	(revision 856d55de4f9f24312c6dc015aebea15962aff2b6)
++++ b/toolchain/BUILD.llvm_repo_windows.tpl	(revision 856d55de4f9f24312c6dc015aebea15962aff2b6)
+@@ -0,0 +1,210 @@
 +# Copyright 2021 The Bazel Authors.
 +#
 +# Licensed under the Apache License, Version 2.0 (the "License");
@@ -154,6 +159,7 @@ new file mode 100644
 +            "include/**/c++/**",
 +            "lib/clang/*/include/**",
 +        ],
++        allow_empty = True,
 +    ),
 +)
 +
@@ -312,7 +318,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/toolchain/cc_toolchain_config.bzl b/toolchain/cc_toolchain_config.bzl
 --- a/toolchain/cc_toolchain_config.bzl	(revision ace6215bbfe8a76884646b2458b42380e2201607)
-+++ b/toolchain/cc_toolchain_config.bzl	(revision e184349fb6fdd66906346f69224a11ecc1fb11b2)
++++ b/toolchain/cc_toolchain_config.bzl	(revision 27c0bc7378a3f0bce997f582b5d94ec84af606c7)
 @@ -17,6 +17,10 @@
      "@rules_cc//cc/private/toolchain:unix_cc_toolchain_config.bzl",
      unix_cc_toolchain_config = "cc_toolchain_config",
@@ -453,12 +459,27 @@ diff --git a/toolchain/cc_toolchain_config.bzl b/toolchain/cc_toolchain_config.b
              "unknown",
              "unknown",
          ),
-@@ -161,23 +203,48 @@
+@@ -152,32 +194,61 @@
+     # line, so take precendence over any user supplied flags through --copts or
+     # such.
+     unfiltered_compile_flags = [
+-        # Do not resolve our symlinked resource prefixes to real paths.
+-        "-no-canonical-prefixes",
+         # Reproducibility
+         "-Wno-builtin-macro-redefined",
+         "-D__DATE__=\"redacted\"",
+         "-D__TIMESTAMP__=\"redacted\"",
          "-D__TIME__=\"redacted\"",
      ]
-
-+    sysroot_path = compiler_configuration["sysroot_path"]
++    # TODO: investigate the underlying bug of that failure, we should probably also have `-no-canonical-prefixes` set for Windows targets
++    if exec_os == "windows" or target_os != "windows":  # disabled as we observed some neon compilation failures (`lld-link: error: undefined symbol: neon_sriiq8`) on macOS and Linux when cross-compiling to Windows targets
++        unfiltered_compile_flags = [
++            # Do not resolve our symlinked resource prefixes to real paths.
++            "-no-canonical-prefixes",
++        ]
 +
++    sysroot_path = compiler_configuration["sysroot_path"]
+
      # Default compiler flags:
      compile_flags = [
          "--target=" + target_system_name,
@@ -484,7 +505,7 @@ diff --git a/toolchain/cc_toolchain_config.bzl b/toolchain/cc_toolchain_config.b
 +            "/D_WIN32",
 +            "/D_WINDOWS",
 +            "/clang:-fdebug-prefix-map={}=__bazel_toolchain_llvm_repo__/".format(toolchain_path_prefix),
-+            "/clang-I{}/include".format(sysroot_path),
++            "/clang:-I{}/include".format(sysroot_path),
 +        ])
 +    else:
 +        compile_flags.extend([
@@ -513,7 +534,7 @@ diff --git a/toolchain/cc_toolchain_config.bzl b/toolchain/cc_toolchain_config.b
 
      opt_compile_flags = [
          "-g0",
-@@ -188,18 +255,24 @@
+@@ -188,18 +259,24 @@
          "-fdata-sections",
      ]
 
@@ -545,7 +566,7 @@ diff --git a/toolchain/cc_toolchain_config.bzl b/toolchain/cc_toolchain_config.b
          link_flags.extend([
              "-lm",
          ])
-@@ -225,33 +298,53 @@
+@@ -225,33 +302,53 @@
          # lld is invoked as wasm-ld for WebAssembly targets.
          use_libtool = False
      else:
@@ -596,19 +617,19 @@ diff --git a/toolchain/cc_toolchain_config.bzl b/toolchain/cc_toolchain_config.b
 +        if compiler != "clang-cl":
 +            fail("Compiling to MSVC requires `clang-cl` compiler")
 +
-         cxx_flags = [
--            "-std=" + cxx_standard,
++        cxx_flags = [
 +            std_flag + cxx_standard,
 +            "-fms-compatibility",
 +            "-fms-extensions",
 +        ]
 +    elif stdlib == "builtin-libc++":
-+        cxx_flags = [
+         cxx_flags = [
+-            "-std=" + cxx_standard,
 +            std_flag + cxx_standard,
              "-stdlib=libc++",
          ]
 
-@@ -287,10 +380,9 @@
+@@ -287,10 +384,9 @@
                  "-lpthread",
                  "-ldl",
              ]
@@ -620,7 +641,7 @@ diff --git a/toolchain/cc_toolchain_config.bzl b/toolchain/cc_toolchain_config.b
              "-stdlib=libc++",
          ]
 
-@@ -300,7 +392,7 @@
+@@ -300,7 +396,7 @@
          ])
      elif stdlib == "dynamic-stdc++":
          cxx_flags = [
@@ -629,7 +650,7 @@ diff --git a/toolchain/cc_toolchain_config.bzl b/toolchain/cc_toolchain_config.b
              "-stdlib=libstdc++",
          ]
 
-@@ -309,16 +401,17 @@
+@@ -309,16 +405,17 @@
          ])
      elif stdlib == "stdc++":
          cxx_flags = [
@@ -652,7 +673,7 @@ diff --git a/toolchain/cc_toolchain_config.bzl b/toolchain/cc_toolchain_config.b
          ]
      elif stdlib == "none":
          cxx_flags = [
-@@ -353,6 +446,25 @@
+@@ -353,6 +450,25 @@
      ## NOTE: make variables are missing here; unix_cc_toolchain_config doesn't
      ## pass these to `create_cc_toolchain_config_info`.
 
@@ -678,7 +699,7 @@ diff --git a/toolchain/cc_toolchain_config.bzl b/toolchain/cc_toolchain_config.b
      # The requirements here come from
      # https://cs.opensource.google/bazel/bazel/+/master:src/main/starlark/builtins_bzl/common/cc/cc_toolchain_provider_helper.bzl;l=75;drc=f0150efd1cca473640269caaf92b5a23c288089d
      # https://cs.opensource.google/bazel/bazel/+/master:src/main/java/com/google/devtools/build/lib/rules/cpp/CcModule.java;l=1257;drc=6743d76f9ecde726d592e88d8914b9db007b1c43
-@@ -360,19 +472,20 @@
+@@ -360,19 +476,20 @@
      # https://github.com/bazelbuild/rules_cc/blob/fe41fc4ea219c9d3680ee536bba6681f3baf838e/cc/private/toolchain/unix_cc_toolchain_config.bzl#L1887
      # NOTE: Ensure these are listed in toolchain_tools in toolchain/internal/common.bzl.
      tool_paths = {
@@ -712,7 +733,7 @@ diff --git a/toolchain/cc_toolchain_config.bzl b/toolchain/cc_toolchain_config.b
      }
 
      # Start-end group linker support:
-@@ -431,33 +544,74 @@
+@@ -431,33 +548,74 @@
      if compiler_configuration["extra_unfiltered_compile_flags"] != None:
          unfiltered_compile_flags.extend(_fmt_flags(compiler_configuration["extra_unfiltered_compile_flags"], toolchain_path_prefix))
 
@@ -943,7 +964,7 @@ diff --git a/toolchain/internal/configure.bzl b/toolchain/internal/configure.bzl
          llvm_dist_label_prefix,
 -        exec_dl_ext,
      )
- 
+
      # Convenience macro to register all generated toolchains.
 @@ -354,6 +366,8 @@
          "wasm64": "wasm64-unknown-unknown",
@@ -952,7 +973,7 @@ diff --git a/toolchain/internal/configure.bzl b/toolchain/internal/configure.bzl
 +        "windows-x86_64": "x86_64-pc-windows-msvc",
 +        "windows-aarch64": "aarch64-pc-windows-msvc",
      }[target_pair]
- 
+
      cxx_builtin_include_directories = [
 @@ -387,6 +401,17 @@
              _join(sysroot_prefix, "/usr/include"),
@@ -975,7 +996,7 @@ diff --git a/toolchain/internal/configure.bzl b/toolchain/internal/configure.bzl
 @@ -643,7 +668,18 @@
  def _is_remote(rctx, exec_os, exec_arch):
      return not (_os_from_rctx(rctx) == exec_os and _arch_from_rctx(rctx) == exec_arch)
- 
+
 -def _convenience_targets_str(rctx, use_absolute_paths, llvm_dist_rel_path, llvm_dist_label_prefix, exec_dl_ext):
 +def _convenience_targets_str(rctx, use_absolute_paths, llvm_dist_rel_path, llvm_dist_label_prefix):
 +    ext = ""
@@ -999,7 +1020,7 @@ diff --git a/toolchain/internal/configure.bzl b/toolchain/internal/configure.bzl
 -            filename = "bin/{}".format(toolname)
 +            filename = "bin/{}{}".format(toolname, ext)
              filenames.append(filename)
- 
+
          for filename in filenames:
 @@ -671,9 +707,9 @@
          template = """
@@ -1012,7 +1033,7 @@ diff --git a/toolchain/internal/configure.bzl b/toolchain/internal/configure.bzl
 +    src = "{{llvm_dist_label_prefix}}bin/{bin_name}",
 +)""".format(name = name, bin_name = name + ext)
          tool_target_strs.append(template)
- 
+
      return "\n".join(lib_target_strs + tool_target_strs).format(
 Index: toolchain/internal/repo.bzl
 IDEA additional info:
@@ -1032,7 +1053,7 @@ diff --git a/toolchain/internal/repo.bzl b/toolchain/internal/repo.bzl
  load(
 @@ -418,17 +417,16 @@
  })
- 
+
  def llvm_repo_impl(rctx):
 -    os = _os(rctx)
 -    if os == "windows":
@@ -1041,7 +1062,7 @@ diff --git a/toolchain/internal/repo.bzl b/toolchain/internal/repo.bzl
 -
      llvm_version = _required_llvm_version_rctx(rctx)
      major_llvm_version = int(llvm_version.split(".")[0])
- 
+
 +    if rctx.os.name.startswith("windows"):
 +        template_file_label = "//toolchain:BUILD.llvm_repo_windows.tpl"
 +    else:
@@ -1053,3 +1074,17 @@ diff --git a/toolchain/internal/repo.bzl b/toolchain/internal/repo.bzl
              # The versioning changed.
              LLVM_VERSION = major_llvm_version if major_llvm_version >= 16 else llvm_version,
          ),
+Index: toolchain/aliases.bzl
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/toolchain/aliases.bzl b/toolchain/aliases.bzl
+--- a/toolchain/aliases.bzl	(revision 27c0bc7378a3f0bce997f582b5d94ec84af606c7)
++++ b/toolchain/aliases.bzl	(revision 1ac340f92f1ebe3df5ef81053da458bf8a18de9d)
+@@ -27,4 +27,5 @@
+     "llvm-cov",
+     "llvm-profdata",
+     "llvm-symbolizer",
++    "llvm-rc",
+ ]

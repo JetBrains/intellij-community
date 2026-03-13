@@ -1,8 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.k2.metaModel
 
+import com.intellij.devkit.workspaceModel.metaModel.InternalMetaModelBuilderException
 import com.intellij.devkit.workspaceModel.metaModel.MetaModelBuilderException
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceModelDefaults
+import com.intellij.devkit.workspaceModel.metaModel.entityMetaError
 import com.intellij.devkit.workspaceModel.metaModel.impl.CompiledObjModuleImpl
 import com.intellij.devkit.workspaceModel.metaModel.impl.ExtPropertyImpl
 import com.intellij.devkit.workspaceModel.metaModel.impl.ObjAnnotationImpl
@@ -145,7 +147,12 @@ internal class WorkspaceMetaModelBuilder(
                 // propertySymbol.overriddenDescriptors.isNotEmpty()
                 propertySymbol.allOverriddenSymbols.any()
             ) {
-              objType.addField(createOwnProperty(propertySymbol, propertyId, objType))
+              try {
+                val ownProperty = createOwnProperty(propertySymbol, propertyId, objType)
+                objType.addField(ownProperty)
+              } catch (e: InternalMetaModelBuilderException) {
+                entityMetaError("Unsupported property type '${e.message}'", propertySymbol.sourcePsiSafe() ?: classSymbol.sourcePsiSafe())
+              }
             }
           }
 
@@ -173,7 +180,12 @@ internal class WorkspaceMetaModelBuilder(
         registerModuleAbstractTypes()
 
         for ((extProperty, receiverClass) in extProperties) {
-          compiledObjModule.addExtension(createExtProperty(extProperty, receiverClass, extPropertyId++))
+          try {
+            val extPropertyMeta = createExtProperty(extProperty, receiverClass, extPropertyId++)
+            compiledObjModule.addExtension(extPropertyMeta)
+          } catch (e: InternalMetaModelBuilderException) {
+            entityMetaError("Unsupported property type '${e.message}'", extProperty.sourcePsiSafe())
+          }
         }
 
         compiledObjModule
@@ -193,8 +205,13 @@ internal class WorkspaceMetaModelBuilder(
             // FIXME: Check for module (inheritorSymbol.containingModule == this@ObjModuleStub.kaModule) removed because of problems with 
             //  kotlin.base.scripting in tests, might lead to other problems.
             if (inheritorSymbol != null && inheritorSymbol.packageName == compiledObjModule.name && inheritorSymbol.name.identifier != "NonPersistentEntitySource") {
-              val inheritorValueType = classSymbolToValueType(inheritorSymbol, hashMapOf(javaClassFqn to blobType), true)
-              inheritors.add(inheritorValueType)
+              try {
+                val inheritorValueType = classSymbolToValueType(inheritorSymbol, hashMapOf(javaClassFqn to blobType), true)
+                inheritors.add(inheritorValueType)
+              } catch (e: InternalMetaModelBuilderException) {
+                entityMetaError("Unsupported type '${e.message}'", inheritorSymbol.sourcePsiSafe())
+              }
+              
             }
           }
         }
@@ -267,7 +284,7 @@ internal class WorkspaceMetaModelBuilder(
           when {
             type.isSubtypeOf(StandardClassIds.List) -> return ValueType.List(genericType)
             type.isSubtypeOf(StandardClassIds.Set) -> return ValueType.Set(genericType)
-            else -> return unsupportedType(type.toString(), type.expandedSymbol?.sourcePsiSafe())
+            else -> return unsupportedType(type.toString())
           }
         }
 
@@ -285,7 +302,7 @@ internal class WorkspaceMetaModelBuilder(
         return classSymbolToValueType(symbol, knownTypes, processAbstractTypes)
       }
 
-      return unsupportedType(type.toString(), type.expandedSymbol?.sourcePsiSafe())
+      return unsupportedType(type.toString())
     }
 
     private fun KaSession.findObjClass(classSymbol: KaClassSymbol): ObjClass<*> {

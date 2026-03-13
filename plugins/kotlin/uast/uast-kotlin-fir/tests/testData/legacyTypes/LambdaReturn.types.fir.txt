@@ -54,23 +54,23 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                         ULambdaExpression [fun (@org.jetbrains.annotations.NotNull var a: int) {...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function1<? super @org.jetbrains.annotations.NotNull() java.lang.Integer, ? extends @org.jetbrains.annotations.NotNull() java.lang.String>
                             UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: int]
                                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                            UBlockExpression [{...}] : java.lang.String
+                            UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.String
                                 UIfExpression [if (a < 5) return "5"] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                     UBinaryExpression (operator = <) [a < 5] : boolean
                                         USimpleNameReferenceExpression (identifier = a) [a] : int
                                         ULiteralExpression (value = 5) [5] : int
                                     UReturnExpression [return "5"] : @org.jetbrains.annotations.NotNull() java.lang.Void
-                                        UPolyadicExpression (operator = +) ["5"] : java.lang.String
+                                        UPolyadicExpression (operator = +) ["5"] : @org.jetbrains.annotations.NotNull() java.lang.String
                                             ULiteralExpression (value = "5") ["5"] : java.lang.String
-                                UIfExpression [if (a > 0) return "1" else return "2"] : java.lang.String
+                                UIfExpression [if (a > 0) return "1" else return "2"] : @org.jetbrains.annotations.NotNull() java.lang.String
                                     UBinaryExpression (operator = >) [a > 0] : boolean
                                         USimpleNameReferenceExpression (identifier = a) [a] : int
                                         ULiteralExpression (value = 0) [0] : int
                                     UReturnExpression [return "1"] : @org.jetbrains.annotations.NotNull() java.lang.Void
-                                        UPolyadicExpression (operator = +) ["1"] : java.lang.String
+                                        UPolyadicExpression (operator = +) ["1"] : @org.jetbrains.annotations.NotNull() java.lang.String
                                             ULiteralExpression (value = "1") ["1"] : java.lang.String
                                     UReturnExpression [return "2"] : @org.jetbrains.annotations.NotNull() java.lang.Void
-                                        UPolyadicExpression (operator = +) ["2"] : java.lang.String
+                                        UPolyadicExpression (operator = +) ["2"] : @org.jetbrains.annotations.NotNull() java.lang.String
                                             ULiteralExpression (value = "2") ["2"] : java.lang.String
                 UDeclarationsExpression [var lam5: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.String> = fun (@org.jetbrains.annotations.NotNull var a: int) {...}]
                     ULocalVariable (name = lam5) [var lam5: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.String> = fun (@org.jetbrains.annotations.NotNull var a: int) {...}]
@@ -79,8 +79,8 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                             UBlockExpression [{...}]
                                 UReturnExpression [return "a" + a]
-                                    UBinaryExpression (operator = +) ["a" + a] : java.lang.String
-                                        UPolyadicExpression (operator = +) ["a"] : java.lang.String
+                                    UBinaryExpression (operator = +) ["a" + a] : @org.jetbrains.annotations.NotNull() java.lang.String
+                                        UPolyadicExpression (operator = +) ["a"] : @org.jetbrains.annotations.NotNull() java.lang.String
                                             ULiteralExpression (value = "a") ["a"] : java.lang.String
                                         USimpleNameReferenceExpression (identifier = a) [a] : int
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [bar({ var it: int ->...})] : @org.jetbrains.annotations.NotNull() kotlin.Unit

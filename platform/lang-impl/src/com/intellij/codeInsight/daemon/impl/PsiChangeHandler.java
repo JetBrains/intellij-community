@@ -4,7 +4,11 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.daemon.ChangeLocalityDetector;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -21,11 +25,19 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiTreeChangeAdapter;
+import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
@@ -62,8 +74,6 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
   }
 
   private void updateChangesForDocument(@NotNull Document document) {
-    Application application = ApplicationManager.getApplication();
-    application.assertIsDispatchThread();// to prevent changedElements corruption
     if (myProject.isDisposed()) {
       return;
     }
@@ -91,6 +101,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
     else {
       selectedPsiFile = getRawCachedPsiFile(selectedEditor.getDocument());
     }
+    Application application = ApplicationManager.getApplication();
     if (selectedPsiFile != null && !application.isUnitTestMode()) {
       application.invokeLater(() -> {
         if (!selectedEditor.isDisposed() &&
@@ -210,9 +221,9 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
   // handle queued elements
   @Override
   public void run() {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ThreadingAssertions.assertBackgroundThread();
 
-    ReadAction.run(() -> {
+    ReadAction.runBlocking(() -> {
       // assume changedElement won't change under read action
       flushUpdateFileStatusQueue();
     });

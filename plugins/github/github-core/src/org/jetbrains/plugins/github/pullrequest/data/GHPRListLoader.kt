@@ -51,7 +51,9 @@ internal class GHPRListLoader(
 
     requestReloadFlow = reloadRequests,
     requestRefreshFlow = refreshRequests,
-    requestChangeFlow = updateRequests
+    requestChangeFlow = updateRequests,
+
+    shouldTryToLoadAll = false
   ) { cursor ->
     val page = GraphQLRequestPagination(afterCursor = cursor, pageSize = 50)
     requestExecutor.executeSuspend(

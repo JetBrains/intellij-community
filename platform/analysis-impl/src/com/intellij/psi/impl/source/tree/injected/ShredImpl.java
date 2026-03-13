@@ -1,11 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.SmartPsiFileRange;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerEx;
@@ -56,7 +55,7 @@ class ShredImpl implements PsiLanguageInjectionHost.Shred {
                       @NotNull PsiLanguageInjectionHost newHost) {
     SmartPsiFileRange rangeMarker = relevantRangeInHost;
     Segment oldRangeInHostElementPSI = calcRangeInsideHostElement(false);
-    SmartPointerManagerEx pointerManager = (SmartPointerManagerEx)SmartPointerManager.getInstance(rangeMarker.getProject());
+    SmartPointerManagerEx pointerManager = SmartPointerManagerEx.getInstanceEx(rangeMarker.getProject());
     SmartPsiElementPointer<PsiLanguageInjectionHost> newHostPointer = pointerManager.createSmartPsiElementPointer(newHost, newHost.getContainingFile(), true);
 
     if (!rangeInHostElementPSI.equals(TextRange.create(oldRangeInHostElementPSI))) {

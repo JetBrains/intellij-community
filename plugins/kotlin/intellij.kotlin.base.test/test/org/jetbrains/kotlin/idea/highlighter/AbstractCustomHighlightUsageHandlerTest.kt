@@ -9,9 +9,11 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.util.concurrency.AppExecutorUtil
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.extractMarkerOffset
 import java.util.concurrent.Callable
@@ -23,7 +25,28 @@ abstract class AbstractCustomHighlightUsageHandlerTest : KotlinLightCodeInsightF
         const val CARET_TAG = "~"
     }
 
+    override fun setUp() {
+        super.setUp()
+        Registry.get("kotlin.highlight.stdlib.dsl.exit.points").setValue(true)
+    }
+
+    override fun tearDown() {
+        try {
+            Registry.get("kotlin.highlight.stdlib.dsl.exit.points").resetToDefault()
+        } catch (e: Throwable) {
+            addSuppressedException(e)
+        } finally {
+            super.tearDown()
+        }
+    }
+
     open fun doTest(unused: String) {
+        val disableDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
+
+        IgnoreTests.runTestIfNotDisabledByFileDirective(
+            dataFile().toPath(),
+            disableDirective
+        ) {
         myFixture.configureByFile(fileName())
 
         val editor = myFixture.editor
@@ -68,5 +91,5 @@ abstract class AbstractCustomHighlightUsageHandlerTest : KotlinLightCodeInsightF
             }
 
         data.checkResult(myFixture.file, infos, StringBuilder(document.text).insert(caret, CARET_TAG).toString())
-    }
+    }}
 }

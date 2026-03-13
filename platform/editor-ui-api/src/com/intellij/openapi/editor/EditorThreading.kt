@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.ThrowableComputable
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * Historically, Editor models required read lock for reading them.
@@ -35,6 +36,22 @@ interface EditorThreading {
      */
     @JvmStatic
     fun run(action: Runnable): Unit = ApplicationManager.getApplication().service<EditorThreading>().doRun(action)
+
+    @Internal
+    @JvmStatic
+    fun <T, E : Throwable> computeWritable(action: ThrowableComputable<T, E>): T = ApplicationManager.getApplication().service<EditorThreading>().doComputeWritable(action)
+
+    @Internal
+    @JvmStatic
+    fun runWritable(action: Runnable): Unit = ApplicationManager.getApplication().service<EditorThreading>().doRunWritable(action)
+
+    @Internal
+    @JvmStatic
+    fun assertWriteAllowed(): Unit = ApplicationManager.getApplication().service<EditorThreading>().doAssertWriteAllowed()
+
+    @Internal
+    @JvmStatic
+    fun write(action: Runnable): Unit = ApplicationManager.getApplication().service<EditorThreading>().doWrite(action)
   }
 
   fun doAssertInteractionAllowed()
@@ -42,4 +59,16 @@ interface EditorThreading {
   fun <T, E : Throwable> doCompute(action: ThrowableComputable<T, E>): T
 
   fun doRun(action: Runnable)
+
+  @Internal
+  fun <T, E : Throwable> doComputeWritable(action: ThrowableComputable<T, E>): T
+
+  @Internal
+  fun doRunWritable(action: Runnable)
+
+  @Internal
+  fun doAssertWriteAllowed()
+
+  @Internal
+  fun doWrite(action: Runnable)
 }

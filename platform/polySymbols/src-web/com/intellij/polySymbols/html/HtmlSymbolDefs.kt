@@ -7,7 +7,9 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolProperty
 import com.intellij.polySymbols.query.impl.PolySymbolMatchBase
+import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import com.intellij.polySymbols.utils.merge
+import com.intellij.psi.PsiElement
 
 const val NAMESPACE_HTML: String = "html"
 
@@ -23,14 +25,21 @@ val HTML_ATTRIBUTE_VALUES: PolySymbolKind = PolySymbolKind.Companion[NAMESPACE_H
 @JvmField
 val HTML_SLOTS: PolySymbolKind = PolySymbolKind.Companion[NAMESPACE_HTML, "slots"]
 
-val PolySymbol.htmlAttributeValue: PolySymbolHtmlAttributeValue?
-  get() = if (this is PolySymbolMatchBase)
-    this.reversedSegments().flatMap { it.symbols }.map { it[PROP_HTML_ATTRIBUTE_VALUE] }.merge()
-  else
-    this[PROP_HTML_ATTRIBUTE_VALUE]
-
 /**
  * A special property to support symbols representing HTML attributes.
  **/
-@JvmField
-val PROP_HTML_ATTRIBUTE_VALUE: PolySymbolProperty<PolySymbolHtmlAttributeValue> = PolySymbolProperty.Companion["html-attribute-value"]
+object HtmlAttributeValueProperty :
+  PolySymbolProperty<PolySymbolHtmlAttributeValue>("html-attribute-value", PolySymbolHtmlAttributeValue::class.java)
+
+fun PolySymbol.getHtmlAttributeValue(context: PsiElement?): PolySymbolHtmlAttributeValue? =
+  if (this is PolySymbolMatchBase)
+    this.reversedSegments().flatMap { it.symbols }.map { it.getHtmlAttributeValue(context) }.merge()
+  else {
+    val typeSupport = this[PolySymbolTypeSupport.TypeSupportProperty]
+    if (typeSupport != null)
+      typeSupport.withEvaluationLocation(context) {
+        this[HtmlAttributeValueProperty]
+      }
+    else
+      this[HtmlAttributeValueProperty]
+  }

@@ -1,0 +1,22 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_withJava_other_multifileDependantUsage-a.kotlin_module
+  OuterClass$InnerClass.class
+  OuterClass.class
+  Utils.class
+  Utils__PartAKt.class
+  Utils__PartBKt.class
+End of files
+Compiling files:
+  kotlin/withJava/other/multifileDependantUsage/a/partA.kt
+  kotlin/withJava/other/multifileDependantUsage/a/partB.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_withJava_other_multifileDependantUsage-a.kotlin_module
+  UsagePartBKt.class
+End of files
+Compiling files:
+  kotlin/withJava/other/multifileDependantUsage/a/usagePartB.kt
+End of files
+------------------------------------------
+Exit code: ERROR

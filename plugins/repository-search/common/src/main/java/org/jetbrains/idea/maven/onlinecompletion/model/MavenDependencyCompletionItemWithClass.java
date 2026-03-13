@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.onlinecompletion.model;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.model.MavenDependencyCompletionItem;
 
 import java.util.Collection;
 import java.util.Collections;

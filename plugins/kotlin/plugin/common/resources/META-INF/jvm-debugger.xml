@@ -72,6 +72,9 @@
     <debuggerEditorTextProvider
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.debugger.core.EnclosingKotlinEditorTextProvider"/>
+    <debugger.evaluationExpressionConverter
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.debugger.core.KotlinEvaluationExpressionConverter"/>
     <registryKey key="debugger.kotlin.analysis.api.editor.text.provider" defaultValue="true"
                  description="Use Analysis API-based implementation of 'EditorTextProvider'"/>
 

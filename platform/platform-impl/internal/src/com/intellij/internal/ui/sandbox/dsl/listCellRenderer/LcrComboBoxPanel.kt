@@ -15,8 +15,12 @@ import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.selected
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
-import javax.swing.*
+import java.util.Vector
+import javax.swing.DefaultComboBoxModel
+import javax.swing.JCheckBox
+import javax.swing.JComboBox
+import javax.swing.JComponent
+import javax.swing.ListCellRenderer
 
 internal class LcrComboBoxPanel : UISandboxPanel {
 

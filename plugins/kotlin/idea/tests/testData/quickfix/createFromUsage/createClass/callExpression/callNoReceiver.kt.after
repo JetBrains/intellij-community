@@ -6,6 +6,7 @@
 // K2_ACTIONS_LIST: Create enum 'Foo'
 // K2_ACTIONS_LIST: Create interface 'Foo'
 // K2_ACTIONS_LIST: Create function 'Foo'
+// K2_ERROR: Unresolved reference 'Foo'.
 fun test() = Foo(2, "2")
 
 class Foo(i: Int, s: String) {

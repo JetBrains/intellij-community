@@ -13,4 +13,16 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
   ]
 )
+
+jvm_library(
+  name = "recentProjects_test_lib",
+  module_name = "intellij.platform.ide.recentProjects",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":recentProjects",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.ide.recentProjects` end

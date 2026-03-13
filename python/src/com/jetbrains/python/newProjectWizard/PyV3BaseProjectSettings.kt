@@ -4,6 +4,7 @@ package com.jetbrains.python.newProjectWizard
 import com.intellij.openapi.GitRepositoryInitializer
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.PyBundle
@@ -17,6 +18,7 @@ import com.jetbrains.python.sdk.configurePythonSdk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Settings each Python project has: [sdkCreator] and [createGitRepository]
@@ -27,17 +29,26 @@ class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
   suspend fun generateAndGetSdk(module: Module, baseDir: VirtualFile, supportsNotEmptyModuleStructure: Boolean = false): PyResult<Pair<Sdk, InterpreterStatisticsInfo>> = coroutineScope {
     val project = module.project
     if (createGitRepository) {
-      launch(TraceContext(PyBundle.message("tracecontext.generating.git")) + Dispatchers.IO) {
+      launch(TraceContext(PyBundle.message("trace.context.generating.git")) + Dispatchers.IO) {
         withBackgroundProgress(project, PyBundle.message("new.project.git")) {
           GitRepositoryInitializer.getInstance()?.initRepository(project, baseDir, true) ?: error("No git service available")
         }
       }
     }
+
     if (supportsNotEmptyModuleStructure) {
-      sdkCreator.createPythonModuleStructure(module).getOr { return@coroutineScope it }
+      withBackgroundProgress(project, PyBundle.message("python.sdk.creating.python.module.structure")) {
+        withContext(Dispatchers.IO) {
+          sdkCreator.createPythonModuleStructure(module).also {
+            VfsUtil.markDirtyAndRefresh(false, true, true, baseDir)
+          }
+        }
+      }.getOr { return@coroutineScope it }
     }
-    val (sdk: Sdk, interpreterStatistics: InterpreterStatisticsInfo) = getSdkAndInterpreter(module)
-      .getOr { return@coroutineScope it }
+
+    val (sdk: Sdk, interpreterStatistics: InterpreterStatisticsInfo) = withBackgroundProgress(project, PyBundle.message("python.sdk.creating.python.sdk")) {
+      getSdkAndInterpreter(module)
+    }.getOr { return@coroutineScope it }
 
     configurePythonSdk(project, module, sdk)
     return@coroutineScope Result.success(Pair(sdk, interpreterStatistics))

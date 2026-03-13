@@ -2,7 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.util.system.OS;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -25,6 +25,8 @@ import javax.swing.SwingUtilities;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Frame;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.Window;
 import java.util.ArrayList;
 import java.util.List;
@@ -190,6 +192,89 @@ public final class ComponentUtil {
     return result;
   }
 
+  /**
+   * A potentially faster version of {@link SwingUtilities#convertRectangle(Component, Rectangle, Component)}
+   * <p>
+   *   See {@link #convertPoint(Component, Point, Component)} for an explanation.
+   * </p>
+   * @param source the source component, relative to which the {@code rectangle} is given
+   * @param rectangle the source rectangle
+   * @param destination the destination component, to which to convert
+   * @return a new instance of {@code Rectangle}, relative to {@code destination}
+   */
+  public static @NotNull Rectangle convertRectangle(
+    @NotNull Component source,
+    @NotNull Rectangle rectangle,
+    @NotNull Component destination
+  ) {
+    var point = new Point(rectangle.x, rectangle.y);
+    point =  convertPoint(source, point, destination);
+    return new Rectangle(point.x, point.y, rectangle.width, rectangle.height);
+  }
+
+  /**
+   * A potentially faster version of {@link SwingUtilities#convertPoint(Component, Point, Component)}
+   * <p>
+   *   Doesn't call {@link Component#getLocationOnScreen()} when {@code source} is in {@code destination}'s hierarchy or vice versa.
+   *   This means avoiding potentially expensive native calls, as everything can be computed very quickly relying only on the data that is already here.
+   * </p>
+   * @param source the source component, relative to which the {@code point} is given
+   * @param point the source point
+   * @param destination the destination component, to which to convert
+   * @return a new instance of {@code Point}, relative to {@code destination}
+   */
+  public static @NotNull Point convertPoint(@NotNull Component source, @NotNull Point point, @NotNull Component destination) {
+    // It doesn't matter which component we start from,
+    // but converting to an ancestor is a far more common case:
+    // e.g., converting several components to a common parent to compare their coordinates in one system.
+    // So we start going up from the source for the most fast-path scenario.
+    var result = new Point(point);
+    var currentSource = source;
+    // invariant: at the end of each iteration, result is in the currentSource's coordinate system
+    while (currentSource != destination) {
+      var sourceParent = currentSource.getParent();
+      if (sourceParent == null || sourceParent instanceof Window) break; // Windows are not positioned relative to each other
+      var sourceLocation = currentSource.getLocation();
+      result.x += sourceLocation.x;
+      result.y += sourceLocation.y;
+      currentSource = sourceParent;
+    }
+    if (currentSource == destination) return result; // the fast-path case: converting to an ancestor
+
+    // We've reached the ultimate parent (currentSource).
+    // Now we have the point relative to it.
+    // But we still have no clue about where our destination is,
+    // so let's start figuring that out.
+    var currentDestination = destination;
+    var destinationRelativeToCurrentDestinationX = 0;
+    var destinationRelativeToCurrentDestinationY = 0;
+    while (currentDestination != currentSource) {
+      var destinationParent = currentDestination.getParent();
+      if (destinationParent == null || destinationParent instanceof Window) break;
+      destinationRelativeToCurrentDestinationX += currentDestination.getX();
+      destinationRelativeToCurrentDestinationY += currentDestination.getY();
+      currentDestination = destinationParent;
+    }
+
+    // If the ultimate parents are the same, and we have the answer relative to currentSource,
+    // it means we now have the result relative to currentDestination (as it's the same).
+    // If they're not the same, delegate to SwingUtilities.convertPoint to convert between them.
+    if (currentDestination != currentSource) {
+      // We could've done everything instead of delegating,
+      // but there are some tricks inside that handle the showing / not showing cases,
+      // so the safest bet is to delegate, because at this point no meaningful optimization is possible anyway.
+      var difference = SwingUtilities.convertPoint(currentSource, 0, 0, currentDestination);
+      result.x += difference.x;
+      result.y += difference.y;
+    }
+
+    // Now we have the result relative to currentDestination.
+    // And we already know where it is relative to the original destination.
+    result.x -= destinationRelativeToCurrentDestinationX;
+    result.y -= destinationRelativeToCurrentDestinationY;
+    return result;
+  }
+
   private static <T extends JComponent> void findComponentsOfType(@Nullable JComponent parent,
                                                                   @NotNull Class<T> cls,
                                                                   @NotNull List<? super T> result) {
@@ -265,9 +350,11 @@ public final class ComponentUtil {
   }
 
   public static void decorateWindowHeader(@Nullable JRootPane pane) {
-    if (pane != null && SystemInfoRt.isMac) {
-      pane.putClientProperty("apple.awt.windowAppearance",
-                             StartupUiUtil.INSTANCE.isDarkTheme() ? "NSAppearanceNameVibrantDark" : "NSAppearanceNameVibrantLight");
+    if (pane != null && OS.CURRENT == OS.macOS) {
+      pane.putClientProperty(
+        "apple.awt.windowAppearance",
+        StartupUiUtil.INSTANCE.isDarkTheme() ? "NSAppearanceNameVibrantDark" : "NSAppearanceNameVibrantLight"
+      );
     }
   }
 }

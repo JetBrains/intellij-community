@@ -1,4 +1,8 @@
 // "Change 'object' to 'class'" "true"
+// K2_ERROR: None of the following candidates is applicable:<br><br>constructor(s: String): Foo<br>constructor(): Foo
+// K2_ERROR: Objects cannot have constructors.
+// K2_ERROR: Objects cannot have constructors.
+// K2_ERROR: Unresolved reference 'Foo'.
 annotation class Ann
 
 // comment

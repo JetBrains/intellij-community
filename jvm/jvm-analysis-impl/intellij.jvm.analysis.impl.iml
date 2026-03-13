@@ -31,5 +31,8 @@
     <orderEntry type="module" module-name="intellij.jvm.analysis.quickFix" />
     <orderEntry type="module" module-name="intellij.java.codeserver.core" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
   </component>
 </module>

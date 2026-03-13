@@ -25,11 +25,13 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "@lib//:junit5",
     "@lib//:jimfs",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/util-ex",
+    "//platform/util-ex:util-ex_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.testFramework.junit5.jimfs` end

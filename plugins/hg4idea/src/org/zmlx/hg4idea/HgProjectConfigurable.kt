@@ -29,7 +29,7 @@ class HgProjectConfigurable(val project: Project)
 
     return panel {
       row {
-        val pathSelector = VcsExecutablePathSelector(HgVcs.DISPLAY_NAME.get(), disposable,
+        val pathSelector = VcsExecutablePathSelector(project,HgVcs.DISPLAY_NAME.get(), disposable,
                                                      ExecutableHandler { executable -> testExecutable(executable) })
         cell(pathSelector.mainPanel)
           .align(AlignX.FILL)

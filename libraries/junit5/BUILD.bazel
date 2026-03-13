@@ -15,4 +15,13 @@ jvm_library(
   exports = ["@lib//:junit5"],
   runtime_deps = ["@lib//:junit5"]
 )
+
+jvm_library(
+  name = "junit5_test_lib",
+  module_name = "intellij.libraries.junit5",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:junit5"],
+  runtime_deps = [":junit5"]
+)
 ### auto-generated section `build intellij.libraries.junit5` end

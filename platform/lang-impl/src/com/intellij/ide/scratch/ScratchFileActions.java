@@ -60,7 +60,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider;
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService;
+import com.intellij.openapi.wm.ex.ProjectFrameCapability;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -129,7 +130,7 @@ public final class ScratchFileActions {
 
       boolean enabled = project != null && (
         e.isFromActionToolbar() ||
-        WelcomeScreenProjectProvider.Companion.isWelcomeScreenProject(project) ||
+        ProjectFrameCapabilitiesService.Companion.getInstanceSync().has(project, ProjectFrameCapability.WELCOME_EXPERIENCE) ||
         ActionPlaces.isMainMenuOrActionSearch(place) ||
         ActionPlaces.EDITOR_POPUP.equals(place) && hasSelection(editor) ||
         e.isFromContextMenu() && e.getData(LangDataKeys.IDE_VIEW) != null);

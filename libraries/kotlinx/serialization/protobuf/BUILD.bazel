@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-kotlinx-serialization-protobuf-kotlinx-serialization-protobuf"],
   runtime_deps = ["@lib//:libraries-kotlinx-serialization-protobuf-kotlinx-serialization-protobuf"]
 )
+
+jvm_library(
+  name = "protobuf_test_lib",
+  module_name = "intellij.libraries.kotlinx.serialization.protobuf",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-kotlinx-serialization-protobuf-kotlinx-serialization-protobuf"],
+  runtime_deps = [":protobuf"]
+)
 ### auto-generated section `build intellij.libraries.kotlinx.serialization.protobuf` end

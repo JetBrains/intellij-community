@@ -3,6 +3,7 @@ package com.intellij.ide.starter.junit5
 import com.intellij.ide.starter.junit5.helpers.ConnectingSocketApp
 import com.intellij.ide.starter.junit5.helpers.ListeningSocketApp
 import com.intellij.ide.starter.utils.PortUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.net.InetAddress
@@ -62,7 +63,7 @@ class PortUtilTest {
   }
 
   @Test
-  fun getProcessesUsingPort_returnsCurrentProcessPid_whenCurrentProcessListensOnPort() {
+  fun getProcessesUsingPort_returnsCurrentProcessPid_whenCurrentProcessListensOnPort(): Unit = timeoutRunBlocking {
     val port = findFreePort()
     val server = ServerSocket(port, 0, InetAddress.getLoopbackAddress())
     server.use { _ ->
@@ -75,7 +76,7 @@ class PortUtilTest {
   }
 
   @Test
-  fun killProcessesUsingPort_killsChildProcessListeningOnPort() {
+  fun killProcessesUsingPort_killsChildProcessListeningOnPort(): Unit = timeoutRunBlocking {
     val port = findFreePort()
     val child = startListeningProcess(port)
     val childPid = child.pid().toInt()
@@ -98,7 +99,7 @@ class PortUtilTest {
   }
 
   @Test
-  fun getProcessesUsingPort_returnsMultiplePids_whenTwoClientsConnected() {
+  fun getProcessesUsingPort_returnsMultiplePids_whenTwoClientsConnected(): Unit = timeoutRunBlocking {
     val port = findFreePort()
     ServerSocket(port, 0, InetAddress.getLoopbackAddress()).use {
       val c1 = startConnectingProcess(port)
@@ -121,7 +122,7 @@ class PortUtilTest {
   }
 
   @Test
-  fun killProcessesUsingPort_killsAllChildProcesses_whenListenerAndTwoClientsUsePort() {
+  fun killProcessesUsingPort_killsAllChildProcesses_whenListenerAndTwoClientsUsePort(): Unit = timeoutRunBlocking {
     val port = findFreePort()
     val listener = startListeningProcess(port)
     val client1 = startConnectingProcess(port)

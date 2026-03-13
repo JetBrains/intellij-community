@@ -60,6 +60,7 @@ import org.jetbrains.plugins.github.ai.GHPRAISummaryExtension
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRConnectedProjectViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHViewModelWithTextCompletion
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsFull
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsPickerComponentFactory
@@ -252,7 +253,9 @@ internal class GHPRFileEditorComponentFactory(
     val icon = CommentTextFieldFactory.IconConfig.of(CodeReviewChatItemUIUtil.ComponentType.FULL,
                                                      timelineVm.avatarIconsProvider, timelineVm.currentUser.avatarUrl)
 
-    return CodeReviewCommentTextFieldFactory.createIn(cs, vm, actions, icon)
+    return CodeReviewCommentTextFieldFactory.createIn(cs, vm, actions, icon) { editor ->
+      editor.putUserData(GHViewModelWithTextCompletion.MENTIONS_COMPLETION_KEY, vm)
+    }
   }
 
   private fun createMergedTimelineItem(detailsVm: GHPRDetailsTimelineViewModel): JComponent {

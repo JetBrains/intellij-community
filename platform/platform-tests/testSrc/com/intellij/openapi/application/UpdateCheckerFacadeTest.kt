@@ -2,8 +2,13 @@
 package com.intellij.openapi.application
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.IdeaPluginDependency
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.InstalledPluginsState
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.TestIdeaPluginDescriptor
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService
+import com.intellij.ide.plugins.updateBrokenPlugins
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.impl.ApplicationInfoImpl

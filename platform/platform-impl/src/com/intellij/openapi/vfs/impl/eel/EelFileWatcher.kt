@@ -2,6 +2,8 @@
 package com.intellij.openapi.vfs.impl.eel
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.impl.eel.EelFileWatcher.Companion.LOG
@@ -16,9 +18,16 @@ import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.provider.upgradeBlocking
 import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.*
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
@@ -37,8 +46,12 @@ class EelFileWatcher : PluggableFileWatcher() {
   @Volatile
   private var myShuttingDown = false
 
+  @Volatile
+  private var myRetryJob: Job? = null
+
   companion object {
-      val LOG = com.intellij.openapi.diagnostic.logger<EelFileWatcher>()
+      val LOG: Logger = logger<EelFileWatcher>()
+      private const val RETRY_DELAY_MS = 10_000L
   }
 
   override fun initialize(notificationSink: FileWatcherNotificationSink) {
@@ -59,9 +72,18 @@ class EelFileWatcher : PluggableFileWatcher() {
 
   override fun setWatchRoots(recursive: List<String>, flat: List<String>, shuttingDown: Boolean) {
     if (!isOperational) return
+    myRetryJob?.cancel()
+    myRetryJob = null
     val recursiveFiltered = filterAndNotifyManualWatchRoots(recursive)
-    val flatFiltered = filterAndNotifyManualWatchRoots(recursive)
-    if (recursiveFiltered.isEmpty() && flatFiltered.isEmpty()) return
+    val flatFiltered = filterAndNotifyManualWatchRoots(flat)
+    if (recursiveFiltered.isEmpty() && flatFiltered.isEmpty()) {
+      // EEL descriptor providers may not be ready during early startup.
+      // Schedule a one-time delayed retry to re-resolve paths that could not be matched.
+      if (!shuttingDown && (recursive.isNotEmpty() || flat.isNotEmpty())) {
+        scheduleRetryForUnresolvedRoots(recursive, flat)
+      }
+      return
+    }
 
     if (shuttingDown) {
       myShuttingDown = true
@@ -96,7 +118,15 @@ class EelFileWatcher : PluggableFileWatcher() {
   private fun filterAndNotifyManualWatchRoots(all: List<String>): List<EelPath> {
     val filtered = all
       .map(String::toNioPathOrNull)
-      .map { nioPath -> nioPath?.asEelPath() }
+      .map { nioPath ->
+        try {
+          nioPath?.asEelPath()
+        }
+        catch (e: EelPathException) {
+          LOG.debug("Cannot convert path to EelPath: $nioPath", e)
+          null
+        }
+      }
       .map { eelPath ->
         // The original IntelliJ platform's file watcher is responsible for local files.
         if (eelPath == null || eelPath.descriptor == LocalEelDescriptor) null
@@ -125,21 +155,85 @@ class EelFileWatcher : PluggableFileWatcher() {
 
     mySettingRoots.incrementAndGet()
     val scope = GlobalScope.childScope("IJentFileWatcher")
-    val eel = data.descriptor.upgradeBlocking()
 
-    val job = scope.launch {
-      val flow = eel.fs.watchChanges()
-      eel.fs.addWatchRoots(WatchOptionsBuilder().changeTypes(watchedOptions).paths(data.getWatchedPaths()).build())
-      val job = scope.launch { flow.collect { notifyChange(it, data) } }
+    try {
+      val eel = data.descriptor.toEelApiBlocking()
+
+      val job = scope.launch {
+        try {
+          val flow = eel.fs.watchChanges()
+          eel.fs.addWatchRoots(WatchOptionsBuilder().changeTypes(watchedOptions).paths(data.getWatchedPaths()).build())
+          scope.launch { flow.collect { notifyChange(it, data) } }
+        }
+        catch (e: Exception) {
+          LOG.warn("Failed to start watching for ${data.descriptor}", e)
+          reportManualWatchRoots(data)
+        }
+        finally {
+          mySettingRoots.decrementAndGet()
+        }
+      }
+
+      return {
+        job.cancel()
+        scope.cancel()
+        runBlocking { FileWatcherUtil.reset(eel) }
+      }
+    }
+    catch (e: Exception) {
+      LOG.warn("Failed to setup watcher for ${data.descriptor}", e)
       mySettingRoots.decrementAndGet()
-      job
-    }
-
-    return {
-      job.cancel()
       scope.cancel()
-      runBlocking { FileWatcherUtil.reset(eel) }
+      reportManualWatchRoots(data)
+      return {}
     }
+  }
+
+  /**
+   * Schedules a one-time delayed retry to re-resolve watch roots.
+   * This handles the case where EEL descriptor providers are not yet ready during early startup.
+   */
+  @OptIn(DelicateCoroutinesApi::class)
+  private fun scheduleRetryForUnresolvedRoots(recursive: List<String>, flat: List<String>) {
+    myRetryJob = GlobalScope.launch {
+      delay(RETRY_DELAY_MS)
+      if (myShuttingDown) return@launch
+
+      val recursiveResolved = resolveNonLocalPaths(recursive)
+      val flatResolved = resolveNonLocalPaths(flat)
+
+      if (recursiveResolved.isEmpty() && flatResolved.isEmpty()) return@launch
+
+      LOG.info("Delayed EEL watch root resolution succeeded for ${recursiveResolved.size + flatResolved.size} paths")
+
+      val newData = HashMap<EelDescriptor, EelData>()
+      sortRoots(recursiveResolved, newData, true)
+      sortRoots(flatResolved, newData, false)
+
+      newData.forEach { (key, incoming) ->
+        if (!myWatchedEels.containsKey(key)) {
+          myWatchedEels[key] = WatchedEel(incoming, setupWatcherJob(incoming))
+        }
+      }
+    }
+  }
+
+  private fun resolveNonLocalPaths(paths: List<String>): List<EelPath> {
+    return paths.mapNotNull { path ->
+      try {
+        val nioPath = path.toNioPathOrNull() ?: return@mapNotNull null
+        val eelPath = nioPath.asEelPath()
+        if (eelPath.descriptor != LocalEelDescriptor) eelPath else null
+      }
+      catch (_: EelPathException) {
+        null
+      }
+    }
+  }
+
+  private fun reportManualWatchRoots(data: EelData) {
+    val manualPaths = (data.recursive + data.flat).map { it.asNioPath().toString() }
+    myNotificationSink.notifyManualWatchRoots(this, manualPaths)
   }
 
   private fun notifyChange(change: PathChange, data: EelData) {
@@ -163,6 +257,8 @@ class EelFileWatcher : PluggableFileWatcher() {
   }
 
   private fun shutdownWatcherJobs() {
+    myRetryJob?.cancel()
+    myRetryJob = null
     myWatchedEels.values.forEach { it.cancel() }
     myWatchedEels.clear()
   }

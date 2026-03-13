@@ -39,8 +39,6 @@ enum class GitLabGQLQuery(val filePath: String) {
 
   @SinceGitLab("13.10")
   MERGE_REQUEST_ACCEPT("graphql/query/mergeRequestAccept.graphql"),
-  @SinceGitLab("13.1")
-  MERGE_REQUEST_CREATE("graphql/query/mergeRequestCreate.graphql"),
   @SinceGitLab("13.12")
   MERGE_REQUEST_SET_DRAFT("graphql/query/mergeRequestSetDraft.graphql"),
   @SinceGitLab("15.3")

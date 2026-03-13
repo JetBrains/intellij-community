@@ -22,4 +22,12 @@ jvm_library(
     ":icons_resources_1",
   ]
 )
+
+jvm_library(
+  name = "icons_test_lib",
+  module_name = "intellij.platform.icons",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":icons"]
+)
 ### auto-generated section `build intellij.platform.icons` end

@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.util.TextRange
-import java.util.*
+import java.util.ArrayDeque
 
 class NewIdentifierWatcher(private val maxIdentifiers: Int) {
   init {

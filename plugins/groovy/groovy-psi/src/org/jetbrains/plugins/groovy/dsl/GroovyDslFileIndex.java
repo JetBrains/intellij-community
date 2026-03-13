@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.ide.trustedProjects.TrustedProjects;
@@ -314,7 +314,6 @@ public final class GroovyDslFileIndex {
           // compilation output jar
           jarPath = switch (jarPath.getParentFile().getName()) {
             case "intellij.groovy.psi" -> new File(PathManager.getCommunityHomePath(), "plugins/groovy/groovy-psi/resources/");
-            case "intellij.groovy.grails" -> new File(PathManager.getHomePath(), "plugins/groovy/mvc/");
             default -> jarPath.getParentFile();
           };
         }

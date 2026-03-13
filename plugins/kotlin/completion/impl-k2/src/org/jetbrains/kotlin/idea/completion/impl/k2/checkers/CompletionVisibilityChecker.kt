@@ -1,10 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.completion.checkers
+package org.jetbrains.kotlin.idea.completion.impl.k2.checkers
 
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiModifierListOwner
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaUseSiteVisibilityChecker
@@ -16,8 +19,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.util.isJavaClassNotToBeUsedInKotlin
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Companion.useSiteModule
+import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters
+import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters.Companion.useSiteModule
 import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
@@ -47,6 +50,32 @@ internal class CompletionVisibilityChecker(
         return parentsWithSelf.any { it is KtModifierListOwner && it.hasModifier(visibility) }
     }
 
+    private fun canJavaElementBeVisible(element: PsiModifierListOwner): Boolean {
+        val containingClass = when (element) {
+            is PsiClass -> element.containingClass
+            is PsiMember -> element.containingClass
+            else -> null
+        }
+        if (element.hasModifier(JvmModifier.PRIVATE)) return false
+
+        // If it is a package private declaration, it might still be visible if it is in the same package
+        if (!element.hasModifier(JvmModifier.PUBLIC)) {
+            val containingFile = element.containingFile as? PsiJavaFile ?: return false
+            val declarationPackage = containingFile.packageName
+            val completionPackage = parameters.originalFile.packageFqName.asString()
+            if (declarationPackage != completionPackage) {
+                // We are package private, but we completing in a different package
+                return false
+            }
+        }
+
+        return when (element) {
+            is PsiClass -> containingClass == null || canJavaElementBeVisible(containingClass)
+            is PsiMember -> containingClass != null && canJavaElementBeVisible(containingClass)
+            else -> false
+        }
+    }
+
     fun canBeVisible(declaration: PsiElement): Boolean = forbidAnalysis("canBeVisible") {
         val originalFile = parameters.originalFile
         if (originalFile is KtCodeFragment) return true
@@ -67,8 +96,8 @@ internal class CompletionVisibilityChecker(
             } else {
                 return true
             }
-        } else if (declaration is PsiMember) {
-            return declaration.hasModifier(JvmModifier.PUBLIC) && declaration.containingClass?.hasModifier(JvmModifier.PUBLIC) == true
+        } else if (declaration.containingFile is PsiJavaFile && declaration is PsiModifierListOwner) {
+            return canJavaElementBeVisible(declaration)
         } else {
             return false
         }

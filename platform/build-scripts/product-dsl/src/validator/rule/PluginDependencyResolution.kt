@@ -33,7 +33,7 @@ import com.intellij.platform.pluginGraph.ProductNode
 import com.intellij.platform.pluginGraph.TargetName
 import com.intellij.platform.pluginGraph.containsEdge
 import com.intellij.platform.pluginGraph.contentLoadingMode
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 
 // region Test Plugin Detection
 

@@ -20,6 +20,8 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.wizards.MavenModuleBuilderHelper
+import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.idea.maven.isKotlinVersionAtLeast
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.DefaultRepository
 import java.io.IOException
@@ -109,6 +111,8 @@ class MavenKotlinModuleBuilderHelper(
     private fun getConditions(project: Project): Properties {
         val conditions = Properties()
         conditions.setProperty("KOTLIN_PLUGIN_WIZARD_VERSION", kotlinPluginWizardVersion)
+        val addExtensions = isKotlinVersionAtLeast(kotlinPluginWizardVersion, LanguageVersion.KOTLIN_2_4)
+        conditions.setProperty("EXTENSIONS_SUPPORT", addExtensions.toString())
         conditions.setProperty("MAVEN_SUREFIRE_PLUGIN_VERSION", Versions.MAVEN_PLUGINS.SUREFIRE.text)
         conditions.setProperty("MAVEN_FAILSAFE_PLUGIN_VERSION", Versions.MAVEN_PLUGINS.FAILSAFE.text)
         conditions.setProperty("MAVEN_CODEHAUS_MOJO_EXEC_PLUGIN_VERSION", Versions.MAVEN_PLUGINS.CODEHAUS_MOJO_EXEC.text)

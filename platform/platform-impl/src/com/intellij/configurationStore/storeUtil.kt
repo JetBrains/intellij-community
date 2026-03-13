@@ -11,9 +11,14 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.stateStore
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -186,13 +191,25 @@ fun getPerOsSettingsStorageFolderName(): String = when {
 }
 
 /**
+ * File names that are stored inside the options directory but may arrive with an environment-specific
+ * subdirectory prefix (e.g. "WSL-Ubuntu/jdk.table.xml"). Despite containing a path separator, they
+ * still need the "options/" prefix — unlike schema files which already carry their full relative path.
+ *
+ * Note: an identical set exists privately in OptionsDirectoryProcessor (intellij.java.compiler.impl),
+ * kept separate to avoid a cross-module dependency.
+ */
+private val ENVIRONMENT_SPECIFIC_OPTIONS_FILENAMES = setOf("jdk.table.xml", "applicationLibraries.xml")
+
+/**
  * Converts fileSpec passed to [StreamProvider]'s methods to a relative path from the root config directory.
  */
 @Internal
 fun getFileRelativeToRootConfig(fileSpecPassedToProvider: String): String =
   // For PersistentStateComponents the fileSpec is passed without the 'options' folder, e.g. 'editor.xml' or 'mac/keymaps.xml'
   // OTOH for schemas it is passed together with the containing folder, e.g. 'keymaps/my_keymap.xml'
-  if (!fileSpecPassedToProvider.contains("/") || fileSpecPassedToProvider.startsWith(getPerOsSettingsStorageFolderName() + "/")) {
+  if (!fileSpecPassedToProvider.contains("/")
+      || fileSpecPassedToProvider.startsWith(getPerOsSettingsStorageFolderName() + "/")
+      || ENVIRONMENT_SPECIFIC_OPTIONS_FILENAMES.any { fileSpecPassedToProvider.endsWith("/$it") }) {
     "${PathManager.OPTIONS_DIRECTORY}/${fileSpecPassedToProvider}"
   }
   else fileSpecPassedToProvider

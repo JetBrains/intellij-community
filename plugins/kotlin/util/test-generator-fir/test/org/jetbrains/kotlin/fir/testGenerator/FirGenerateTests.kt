@@ -13,6 +13,7 @@ import org.jetbrains.fir.uast.test.AbstractFirUastTypesTest
 import org.jetbrains.fir.uast.test.AbstractFirUastValuesTest
 import org.jetbrains.kotlin.fir.testGenerator.codeinsight.generateK2CodeInsightTests
 import org.jetbrains.kotlin.fir.testGenerator.gradle.generateK2GradleTests
+import org.jetbrains.kotlin.formatter.AbstractEnterHandlerTest
 import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.AbstractIdeKotlinAnnotationsResolverTest
 import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.dependents.AbstractModuleDependentsTest
 import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.inheritors.AbstractDirectInheritorsProviderTest
@@ -56,6 +57,7 @@ import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirLiteralKotlinToKotlinC
 import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirLiteralTextToKotlinCopyPasteTest
 import org.jetbrains.kotlin.idea.fir.documentation.AbstractFirQuickDocMultiplatformTest
 import org.jetbrains.kotlin.idea.fir.documentation.AbstractFirQuickDocTest
+import org.jetbrains.kotlin.idea.fir.editor.AbstractK2EnterHandlerTest
 import org.jetbrains.kotlin.idea.fir.externalAnnotations.AbstractK2ExternalAnnotationTest
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesFirTest
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesMultiModuleFirTest
@@ -66,6 +68,7 @@ import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinGroupUsagesBySimil
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinGroupUsagesBySimilarityFirTest
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinScriptFindUsagesFirTest
 import org.jetbrains.kotlin.idea.fir.folding.AbstractFirFoldingTest
+import org.jetbrains.kotlin.idea.fir.formatter.AbstractK2FormatterTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractK2AutoImportTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractK2FilteringAutoImportTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractK2JsOptimizeImportsTest
@@ -133,12 +136,14 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOT_AND_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
+import org.jetbrains.kotlin.testGenerator.model.TAnnotation
 import org.jetbrains.kotlin.testGenerator.model.TWorkspace
 import org.jetbrains.kotlin.testGenerator.model.model
 import org.jetbrains.kotlin.testGenerator.model.or
 import org.jetbrains.kotlin.testGenerator.model.testClass
 import org.jetbrains.kotlin.testGenerator.model.testGroup
 import org.jetbrains.kotlin.testGenerator.model.workspace
+import org.junit.Ignore
 
 fun main(@Suppress("UNUSED_PARAMETER", "unused") args: Array<String>) {
     generateK2Tests()
@@ -285,6 +290,33 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
         testClass<AbstractFirShortenRefsTest> {
             model("shortenRefsFir", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestWithMuting")
             model("shortenRefs/this", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestWithMuting")
+        }
+
+        testClass<AbstractK2EnterHandlerTest> {
+            model("editor/enterHandler", pattern = Patterns.forRegex("""^([^.]+)\.after\.kt.*$"""), testMethodName = "doNewlineTest", testClassName = "DirectSettings")
+            model("editor/enterHandler", pattern = Patterns.forRegex("""^([^.]+)\.after\.inv\.kt.*$"""), testMethodName = "doNewlineTestWithInvert", testClassName = "InvertedSettings")
+        }
+
+        testClass<AbstractK2FormatterTest> {
+            model("formatter", pattern = Patterns.forRegex("""^([^.]+)\.after\.kt.*$"""))
+            model(
+                "formatter/trailingComma",
+                pattern = Patterns.forRegex("""^([^.]+)\.call\.after\.kt.*$"""),
+                testMethodName = "doTestCallSite",
+                testClassName = "FormatterCallSite"
+            )
+            model(
+                "formatter",
+                pattern = Patterns.forRegex("""^([^.]+)\.after\.inv\.kt.*$"""),
+                testMethodName = "doTestInverted",
+                testClassName = "FormatterInverted"
+            )
+            model(
+                "formatter/trailingComma",
+                pattern = Patterns.forRegex("""^([^.]+)\.call\.after\.inv\.kt.*$"""),
+                testMethodName = "doTestInvertedCallSite",
+                testClassName = "FormatterInvertedCallSite",
+            )
         }
 
         run {

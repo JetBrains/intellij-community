@@ -1,5 +1,6 @@
 // "Add else branch" "true"
 // ERROR: Unresolved reference: TODO
+// K2_ERROR: 'if' must have both main and 'else' branches when used as an expression.
 fun foo(x: String?) {
     x ?: if (x == null) return else <selection><caret>TODO()</selection>
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
+import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.dsl.builder.impl.DialogPanelConfig
@@ -27,8 +28,10 @@ fun panel(init: Panel.() -> Unit): DialogPanel {
   builder.build()
   initPanel(dialogPanelConfig, result)
 
-  Registry.getColor("ui.kotlin.ui.dsl.color", null)?.let {
-    result.background = it
+  if (LoadingState.COMPONENTS_LOADED.isOccurred) {
+    Registry.getColor("ui.kotlin.ui.dsl.color", null)?.let {
+      result.background = it
+    }
   }
   return result
 }

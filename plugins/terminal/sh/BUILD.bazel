@@ -15,6 +15,7 @@ jvm_library(
   resources = [":sh_resources"],
   deps = [
     "//platform/core-api:core",
+    "@lib//:kotlin-stdlib",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//plugins/terminal",
@@ -23,5 +24,23 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
   ],
   runtime_deps = ["//platform/backend"]
+)
+
+jvm_library(
+  name = "sh_test_lib",
+  module_name = "intellij.terminal.sh",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":sh",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//plugins/terminal:terminal_test_lib",
+    "//plugins/sh/core:core_test_lib",
+    "//platform/backend:backend_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.terminal.sh` end

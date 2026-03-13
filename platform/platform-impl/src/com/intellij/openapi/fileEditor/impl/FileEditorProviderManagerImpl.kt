@@ -4,9 +4,14 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.diagnostic.PluginException
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.*
+import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SerializablePersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.LazyExtension
@@ -24,7 +29,13 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SlowOperations
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -51,7 +62,7 @@ class FileEditorProviderManagerImpl
 
     val suppressors = FileEditorProviderSuppressor.EP_NAME.extensionList
     val hasDocument by lazy {
-      ApplicationManager.getApplication().runReadAction<Boolean, RuntimeException> {
+      runReadActionBlocking {
         FileDocumentManager.getInstance().getDocument(file) != null
       }
     }
@@ -67,7 +78,7 @@ class FileEditorProviderManagerImpl
         continue
       }
 
-      if (ApplicationManager.getApplication().runReadAction<Boolean, RuntimeException> {
+      if (runReadActionBlocking {
           SlowOperations.knownIssue("IDEA-307300, EA-816241").use {
             checkProvider(project = project, file = file, provider = provider, suppressors = suppressors)
           }
@@ -194,7 +205,9 @@ class FileEditorProviderManagerImpl
     }
 
     updateState {
-      FileEditorProviderManagerState(it.selectedProviders + (computeKey(list) to composite.selectedWithProvider!!.provider.editorTypeId))
+      val selectedWithProvider = composite.selectedWithProvider
+      val selected = if (selectedWithProvider == null) it.selectedProviders else it.selectedProviders + (computeKey(list) to selectedWithProvider.provider.editorTypeId)
+      FileEditorProviderManagerState(selected)
     }
   }
 

@@ -35,13 +35,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
 import com.intellij.openapi.roots.JavadocOrderRootType;
-import com.intellij.openapi.roots.JdkOrderEntry;
-import com.intellij.openapi.roots.LibraryOrSdkOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.PersistentOrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.NlsSafe;
@@ -52,6 +48,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.platform.backend.workspace.VirtualFileUrls;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaDirectoryService;
@@ -119,6 +116,9 @@ import com.intellij.util.Url;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
+import com.intellij.workspaceModel.ide.LibraryEntities;
+import com.intellij.workspaceModel.ide.SdkEntities;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -131,7 +131,6 @@ import org.jspecify.annotations.NonNull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -143,7 +142,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledSignatureFragment;
-import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * @author Maxim.Mossienko
@@ -269,10 +267,19 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     if (file != null) {
       ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
       if (index.isInLibrary(file)) {
-        index.getOrderEntriesForFile(file).stream()
-          .filter(LibraryOrSdkOrderEntry.class::isInstance).findFirst()
-          .ifPresent(
-            entry -> appendStyledSpan(buffer, "[" + StringUtil.escapeXmlEntities(entry.getPresentableName()) + "] ", "color: #909090"));
+        String name = null;
+        var sdkEntity = ContainerUtil.getFirstItem(index.findContainingSdks(file));
+        if (sdkEntity != null) {
+          name = SdkEntities.getPresentableName(sdkEntity);
+        } else {
+          var libraryEntity = ContainerUtil.getFirstItem(index.findContainingLibraries(file));
+          if (libraryEntity != null) {
+            name = LibraryEntities.getPresentableName(libraryEntity);
+          }
+        }
+        if (name != null) {
+          appendStyledSpan(buffer, "[" + StringUtil.escapeXmlEntities(name) + "] ", "color: #909090");
+        }
       }
       else {
         Module module = index.getModuleForFile(file);
@@ -1136,32 +1143,17 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByFile(virtualFile, project);
     String altRelPath = javaModule != null ? javaModule.getName() + '/' + relPath : null;
 
-    for (OrderEntry orderEntry : fileIndex.getOrderEntriesForFile(virtualFile)) {
-      boolean altUrl =
-        orderEntry instanceof JdkOrderEntry && JavaSdkVersionUtil.isAtLeast(((JdkOrderEntry)orderEntry).getJdk(), JavaSdkVersion.JDK_11);
+    var roots = getRoots(fileIndex, virtualFile);
 
-      for (VirtualFile root : orderEntry.getFiles(JavadocOrderRootType.getInstance())) {
-        if (root.getFileSystem() == JarFileSystem.getInstance()) {
-          VirtualFile file = root.findFileByRelativePath(relPath);
-          if (file == null && altRelPath != null) file = root.findFileByRelativePath(altRelPath);
-          if (file != null) {
-            List<Url> urls = BuiltInWebBrowserUrlProviderKt.getBuiltInServerUrls(file, project, null);
-            if (!urls.isEmpty()) {
-              return ContainerUtil.map(urls, Url::toExternalForm);
-            }
+    for (var root : roots) {
+      if (root.getFileSystem() == JarFileSystem.getInstance()) {
+        VirtualFile file = root.findFileByRelativePath(relPath);
+        if (file == null && altRelPath != null) file = root.findFileByRelativePath(altRelPath);
+        if (file != null) {
+          List<Url> urls = BuiltInWebBrowserUrlProviderKt.getBuiltInServerUrls(file, project, null);
+          if (!urls.isEmpty()) {
+            return ContainerUtil.map(urls, Url::toExternalForm);
           }
-        }
-      }
-
-      String[] webUrls = JavadocOrderRootType.getUrls(orderEntry);
-      if (webUrls.length > 0) {
-        List<String> httpRoots = new ArrayList<>();
-        if (altUrl && altRelPath != null) {
-          httpRoots.addAll(notNull(PlatformDocumentationUtil.getHttpRoots(webUrls, altRelPath), Collections.emptyList()));
-        }
-        httpRoots.addAll(notNull(PlatformDocumentationUtil.getHttpRoots(webUrls, relPath), Collections.emptyList()));
-        if (!httpRoots.isEmpty()) {
-          return httpRoots;
         }
       }
     }
@@ -1253,5 +1245,34 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       }
     }
     return null;
+  }
+
+  private static List<VirtualFile> getRoots(ProjectFileIndex fileIndex, VirtualFile virtualFile) {
+    List<VirtualFile> result = new ArrayList<>();
+    var rootName = ((PersistentOrderRootType) JavadocOrderRootType.getInstance()).getSdkRootName();
+    var libraryRootType = LibraryBridgeImpl.Companion.toLibraryRootType(JavadocOrderRootType.getInstance());
+
+    for (var sdkEntity: fileIndex.findContainingSdks(virtualFile)) {
+      for (var sdkRoot : sdkEntity.getRoots()) {
+        if (sdkRoot.getType().getName().equals(rootName)) {
+          var root = VirtualFileUrls.getVirtualFile(sdkRoot.getUrl());
+          if (root != null) {
+            result.add(root);
+          }
+        }
+      }
+    }
+
+    for (var libraryEntity: fileIndex.findContainingLibraries(virtualFile)) {
+      for (var libraryRoot : libraryEntity.getRoots()) {
+        if (libraryRoot.getType().equals(libraryRootType)) {
+          var root = VirtualFileUrls.getVirtualFile(libraryRoot.getUrl());
+          if (root != null) {
+            result.add(root);
+          }
+        }
+      }
+    }
+    return result;
   }
 }

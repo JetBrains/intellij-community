@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
+import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.testFramework.plugins.buildDir
 import com.intellij.platform.testFramework.plugins.depends
 import com.intellij.platform.testFramework.plugins.extensions
@@ -24,13 +24,12 @@ class KotlinK1andK2ModesTest {
   private val rootDir: Path get() = inMemoryFs.fs.getPath("/")
 
   @Test
-  fun `plugin depending on kotlin disabled by default in K2 mode`() = withKotlinPluginMode(isK2 = true) {
+  fun `plugin depending on kotlin enabled by default in K2 mode`() = withKotlinPluginMode(isK2 = true) {
     plugin("foo") {
       depends("org.jetbrains.kotlin")
     }.buildDir(rootDir.resolve("foo"))
     val (_, reason) = getSinglePlugin(rootDir)
-    assertThat(reason).isNotNull()
-    assertThat(reason).isInstanceOf(PluginIsIncompatibleWithKotlinMode::class.java)
+    assertThat(reason).isNull()
   }
 
   @Test
@@ -67,14 +66,14 @@ class KotlinK1andK2ModesTest {
 
 
   @Test
-  fun `plugin optionally depending on kotlin plugin is not disabled by default in K2 mode and optional dependency is disabled`() = withKotlinPluginMode(isK2 = true) {
+  fun `plugin optionally depending on kotlin plugin is not disabled by default in K2 mode and optional dependency is enabled`() = withKotlinPluginMode(isK2 = true) {
     plugin("foo") {
       depends("org.jetbrains.kotlin", configFile = "kt.xml") { }
     }.buildDir(rootDir.resolve("foo"))
     val (plugin, reason) = getSinglePlugin(rootDir)
     assertThat(reason).isNull()
     val dependency = plugin.dependencies.single()
-    assertThat(dependency.subDescriptor).isNull()
+    assertThat(dependency.subDescriptor).isNotNull
   }
 
   @Test
@@ -91,7 +90,7 @@ class KotlinK1andK2ModesTest {
 }
 
 private fun getSinglePlugin(rootDir: Path): Pair<IdeaPluginDescriptorImpl, PluginNonLoadReason?> {
-  val allPlugins = PluginSetTestBuilder.fromPath(rootDir).discoverPlugins().second.discoveredPlugins.flatMap { it.plugins }
+  val allPlugins = PluginSetTestBuilder.fromPath(rootDir).discoverPlugins().second.pluginLists.flatMap { it.plugins }
   val plugin = allPlugins.single()
   return plugin to ProductPluginInitContext().validatePluginIsCompatible(plugin)
 }

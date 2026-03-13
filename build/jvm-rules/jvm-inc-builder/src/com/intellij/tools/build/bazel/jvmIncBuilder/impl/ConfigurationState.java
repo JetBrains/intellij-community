@@ -33,7 +33,7 @@ public class ConfigurationState {
   // Also consider advancing the version when
   //  - ABI generation logic changed (e.g. changes in ordering, filtering, etc)
   //  - Any changes in builder's logic implemented, that might affect sources processing
-  private static final int VERSION = 7;
+  private static final int VERSION = 8;
 
   private static final ConfigurationState EMPTY = new ConfigurationState(
     new PathSourceMapper(), NodeSourceSnapshot.EMPTY, List.of(), NodeSourceSnapshot.EMPTY, Map.of(), -1L
@@ -165,7 +165,13 @@ public class ConfigurationState {
   }
 
   // tracks names and order of classpath entries as well as content digests of all third-party dependencies
+  private Long myClassPathStructureDigest;
+
   public long getClasspathStructureDigest() {
+    Long cached = myClassPathStructureDigest;
+    if (cached != null) {
+      return cached;
+    }
     NodeSourceSnapshot deps = getLibraries();
 
     // digest name, count and order of classpath entries as well as content digests of all non-abi deps
@@ -175,7 +181,9 @@ public class ConfigurationState {
         return DataPaths.isLibraryTracked(path)? List.of(DataPaths.getLibraryName(path)) : List.of(DataPaths.getLibraryName(path), deps.getDigest(src));
       };
 
-    return Utils.digest(flat(map(deps.getElements(), digestMapper)));
+    long dig = Utils.digest(flat(map(deps.getElements(), digestMapper)));
+    myClassPathStructureDigest = dig;
+    return dig;
   }
 
   private static long buildFlagsDigest(Map<CLFlags, List<String>> flags) {

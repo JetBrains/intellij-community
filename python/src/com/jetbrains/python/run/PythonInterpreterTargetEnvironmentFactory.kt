@@ -77,7 +77,7 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
   fun getTargetModuleResidesOnImpl(module: Module): TargetConfigurationWithLocalFsAccess? = null
 
   override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor) {
-    if (!service<Available>().isAvailable(this, pluginDescriptor)) {
+    if (!service<Available>().isAvailable(this)) {
       throw ExtensionNotApplicableException.create()
     }
   }
@@ -87,17 +87,15 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
    * every [PythonInterpreterTargetEnvironmentFactory].
    */
   interface Available {
-    fun isAvailable(factory: PythonInterpreterTargetEnvironmentFactory, pluginDescriptor: PluginDescriptor): Boolean
+    fun isAvailable(factory: PythonInterpreterTargetEnvironmentFactory): Boolean
 
     /** It is supposed that PyCharm Pro supports all available Run Target interpreters. */
     class Default : Available {
-      override fun isAvailable(factory: PythonInterpreterTargetEnvironmentFactory, pluginDescriptor: PluginDescriptor): Boolean = true
+      override fun isAvailable(factory: PythonInterpreterTargetEnvironmentFactory): Boolean = true
     }
   }
 
   companion object {
-    const val UNKNOWN_INTERPRETER_VERSION = "unknown interpreter"
-
     @JvmStatic
     val EP_NAME = ExtensionPointName<PythonInterpreterTargetEnvironmentFactory>("Pythonid.interpreterTargetEnvironmentFactory")
 
@@ -126,8 +124,8 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
     fun by(configuration: TargetEnvironmentConfiguration): PythonInterpreterTargetEnvironmentFactory? =
       EP_NAME.extensionList.find { it.isFor(configuration) }
 
-    private fun getFallbackSdkName(data: PyTargetAwareAdditionalData, version: String?): String =
-      "Remote ${version ?: UNKNOWN_INTERPRETER_VERSION} (${data.interpreterPath})"
+    private fun getFallbackSdkName(data: PyTargetAwareAdditionalData, @Suppress("UNUSED_PARAMETER") version: String?): String =
+      "Remote (${data.interpreterPath})"
 
     /**
      * Note: let the target be immutable by default though this case seems to be invalid.

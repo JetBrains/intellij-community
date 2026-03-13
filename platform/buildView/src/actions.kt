@@ -31,10 +31,17 @@ internal abstract class CwmTailoredActionGroup : ActionGroup(), ActionRemoteBeha
   }
 }
 
-internal class BuildTreeContextMenuActionGroup : CwmTailoredActionGroup() {
+internal class BuildTreeMainContextMenuActionGroup : CwmTailoredActionGroup() {
   override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
     val view = e?.getData(BuildTreeConsoleView.COMPONENT_KEY) ?: return EMPTY_ARRAY
-    return view.getContextMenuGroup(e.dataContext).getChildren(e)
+    return view.getMainContextMenuGroup(e.dataContext).getChildren(e)
+  }
+}
+
+internal class BuildTreeFilteringAndNavigationContextMenuActionGroup : CwmTailoredActionGroup() {
+  override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
+    val view = e?.getData(BuildTreeConsoleView.COMPONENT_KEY) ?: return EMPTY_ARRAY
+    return view.getFilteringAndNavigationContextMenuGroup().getChildren(e)
   }
 }
 

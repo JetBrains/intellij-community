@@ -33,7 +33,11 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
@@ -160,7 +164,7 @@ public final class HighlightingSettingsPerFile extends HighlightingLevelManager 
     for (Map.Entry<String, FileHighlightingSetting[]> entry : entries) {
       String url = entry.getKey();
       // remove invalid entries to make sure we save only the valid ones
-      if (ReadAction.compute(() -> VirtualFileManager.getInstance().findFileByUrl(url)) != null) {
+      if (ReadAction.computeBlocking(() -> VirtualFileManager.getInstance().findFileByUrl(url)) != null) {
         Element child = new Element(SETTING_TAG);
         child.setAttribute(FILE_ATT, url);
         FileHighlightingSetting[] settings = entry.getValue();

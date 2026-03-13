@@ -2,6 +2,7 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters
 // WITH_STDLIB
 // API_VERSION: 2.2
+// K2_ERROR: Call to 'fun bar(): Unit' defined in 'Foo' uses an implicit receiver shadowed by a context parameter. Make the receiver explicit using 'this' or 'contextOf<Foo>()'.
 
 class Foo {
     fun bar() {

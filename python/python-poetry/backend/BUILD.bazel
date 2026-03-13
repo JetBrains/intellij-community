@@ -23,4 +23,19 @@ jvm_library(
     "//python/common",
   ]
 )
+
+jvm_library(
+  name = "backend_test_lib",
+  module_name = "intellij.python.community.impl.poetry.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":backend",
+    "//python/python-poetry/common:common_test_lib",
+    "//python/openapi:community_test_lib",
+    "//python/python-pyproject:pyproject_test_lib",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
+    "//python/common:common_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.python.community.impl.poetry.backend` end

@@ -40,19 +40,26 @@ jvm_library(
   deps = [
     "@lib//:jetbrains-annotations",
     "//libraries/http-client",
+    "//libraries/http-client:http-client_test_lib",
     "//libraries/commons/logging",
+    "//libraries/commons/logging:logging_test_lib",
     "@lib//:slf4j-api",
     "@lib//:slf4j-jdk14",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//libraries/maven-resolver-provider",
+    "//libraries/maven-resolver-provider:maven-resolver-provider_test_lib",
     "@lib//:java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-transport-file",
     "@lib//:java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-transport-http",
     "@lib//:java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-connector-basic",
     "//libraries/commons/lang3",
+    "//libraries/commons/lang3:lang3_test_lib",
     "//libraries/plexus-utils",
+    "//libraries/plexus-utils:plexus-utils_test_lib",
     "//libraries/commons/codec",
+    "//libraries/commons/codec:codec_test_lib",
     "//platform/util",
+    "//platform/util:util_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.aetherDependencyResolver` end

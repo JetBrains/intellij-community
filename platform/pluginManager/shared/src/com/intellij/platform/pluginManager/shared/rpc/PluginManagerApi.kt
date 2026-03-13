@@ -2,7 +2,13 @@
 package com.intellij.platform.pluginManager.shared.rpc
 
 import com.intellij.ide.plugins.api.PluginDto
-import com.intellij.ide.plugins.marketplace.*
+import com.intellij.ide.plugins.marketplace.CheckErrorsResult
+import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
+import com.intellij.ide.plugins.marketplace.InitSessionResult
+import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
+import com.intellij.ide.plugins.marketplace.PluginReviewComment
+import com.intellij.ide.plugins.marketplace.PluginSearchResult
+import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.IntellijInternalApi
@@ -37,6 +43,7 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun closeSession(sessionId: String)
   suspend fun setEnabledState(sessionId: String, pluginIds: List<PluginId>, enable: Boolean)
   suspend fun enablePlugins(sessionId: String, ids: List<PluginId>, bool: Boolean, id: ProjectId?): SetEnabledStateResult
+  suspend fun markPluginsAsDisabled(pluginIds: List<PluginId>)
   suspend fun isBundledUpdate(pluginIds: List<PluginId>): Boolean
   suspend fun isPluginRequiresUltimateButItIsDisabled(sessionId: String, pluginId: PluginId): Boolean
   suspend fun hasPluginRequiresUltimateButItsDisabled(ids: List<PluginId>): Boolean
@@ -63,7 +70,7 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun findInstalledPlugins(plugins: Set<PluginId>): Map<PluginId, PluginDto>
   suspend fun loadDescriptorById(pluginId: PluginId): PluginDto?
   suspend fun getCustomRepoTags(): Set<String>
-  suspend fun updateCustomRepositories(repositoryUrls: List<String>)
+  suspend fun updateCustomRepositories(addedRepositoryUrls: List<String>, removedRepositoryUrls: List<String>, ): List<String>
   suspend fun setPluginsAutoUpdateEnabled(enabled: Boolean)
 
 

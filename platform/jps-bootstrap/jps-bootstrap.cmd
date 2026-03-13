@@ -9,8 +9,8 @@ set JPS_BOOTSTRAP_PREPARE_DIR=%JPS_BOOTSTRAP_COMMUNITY_HOME%out\jps-bootstrap\
 
 setlocal
 
-set JBR_VERSION=21.0.8
-set JBR_BUILD=b1038.68
+set JBR_VERSION=21.0.10
+set JBR_BUILD=b1163.108
 if "%PROCESSOR_ARCHITECTURE%" == "ARM64" (
   set JBR_ARCH=windows-aarch64
 ) else (

@@ -353,8 +353,6 @@ abstract class MergeModelBase<S : MergeModelBase.State>(
 
   /*
    * Nearby changes could be affected as well (ex: by moveChangesAfterInsertion)
-   *
-   * null means all changes could be affected
    */
   @RequiresEdt
   private fun collectAffectedChanges(directChanges: IntList): IntList {
@@ -402,4 +400,3 @@ abstract class MergeModelBase<S : MergeModelBase.State>(
     private val LOG = Logger.getInstance(MergeModelBase::class.java)
   }
 }
-

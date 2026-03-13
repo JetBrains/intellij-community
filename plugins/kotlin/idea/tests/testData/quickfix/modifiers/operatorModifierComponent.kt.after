@@ -1,5 +1,7 @@
 // "Add 'operator' modifier" "true"
 // ERROR: 'operator' modifier is required on 'component2' in 'A'
+// K2_ERROR: 'operator' modifier is required on 'fun component1(): Int' defined in 'A'.
+// K2_ERROR: 'operator' modifier is required on 'fun component2(): Int' defined in 'A'.
 // K2_AFTER_ERROR: 'operator' modifier is required on 'fun component2(): Int' defined in 'A'.
 
 class A {

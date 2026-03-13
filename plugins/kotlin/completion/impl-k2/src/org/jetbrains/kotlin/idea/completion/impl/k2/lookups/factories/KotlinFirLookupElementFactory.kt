@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.completion.lookups.factories
+package org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
@@ -13,20 +13,20 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeProjection
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.BracketOperatorInsertionHandler
-import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupElementFactory
-import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.TypeLookupElementFactory
-import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
-import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.detectCallableOptions
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.Tail
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CallableInsertionOptions
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.detectCallableOptions
 import org.jetbrains.kotlin.idea.completion.priority
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -36,13 +36,20 @@ object KotlinFirLookupElementFactory {
     context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun createConstructorCallLookupElement(
-        containingSymbol: KaNamedClassSymbol,
+        containingSymbol: KaClassLikeSymbol,
         visibleConstructorSymbols: List<KaConstructorSymbol>,
+        inputTypeArgumentsAreRequired: Boolean,
         importingStrategy: ImportStrategy = ImportStrategy.DoNothing,
         aliasName: Name? = null,
     ): LookupElementBuilder? {
         if (visibleConstructorSymbols.isEmpty()) return null
-        return ClassLookupElementFactory.createConstructorLookup(containingSymbol, visibleConstructorSymbols, importingStrategy, aliasName)
+        return ClassLookupElementFactory.createConstructorLookup(
+            containingSymbol = containingSymbol,
+            constructorSymbols = visibleConstructorSymbols,
+            inputTypeArgumentsAreRequired = inputTypeArgumentsAreRequired,
+            importingStrategy = importingStrategy,
+            aliasName = aliasName
+        )
     }
 
     context(_: KaSession)
@@ -103,6 +110,21 @@ object KotlinFirLookupElementFactory {
         return indexingLookupElement
     }
 
+    context(_: KaSession)
+    fun createAnonymousObjectLookupElement(
+        classSymbol: KaClassSymbol,
+        typeArguments: List<KaTypeProjection>?,
+        importingStrategy: ImportStrategy = ImportStrategy.DoNothing,
+        aliasName: Name? = null,
+    ): LookupElementBuilder {
+        return ClassLookupElementFactory.createAnonymousObjectLookup(
+            symbol = classSymbol,
+            typeArguments = typeArguments,
+            importingStrategy = importingStrategy,
+            aliasName = aliasName
+        )
+    }
+
     fun createPackagePartLookupElement(packagePartFqName: FqName): LookupElement =
         PackagePartLookupElementFactory.createLookup(packagePartFqName)
 
@@ -120,4 +142,9 @@ object KotlinFirLookupElementFactory {
     context(_: KaSession)
     fun createTypeLookupElement(classSymbol: KaClassifierSymbol): LookupElement? =
         TypeLookupElementFactory.createLookup(classSymbol)
+
+
+    context(_: KaSession)
+    internal fun createMultipleArgumentsLookupElement(variableSymbols: List<KaNamedSymbol>, tail: Tail): LookupElement =
+        VariableLookupElementFactory.createMultipleArgumentsLookupElement(variableSymbols, tail)
 }

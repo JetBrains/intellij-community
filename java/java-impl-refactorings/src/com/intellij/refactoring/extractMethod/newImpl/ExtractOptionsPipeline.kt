@@ -31,9 +31,11 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeCastExpression
 import com.intellij.psi.PsiVariable
 import com.intellij.psi.formatter.java.MultipleFieldDeclarationHelper
+import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiTreeUtil.findChildrenOfType
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.RefactoringBundle
@@ -287,10 +289,13 @@ object ExtractMethodPipeline {
   }
 
   private fun withFilteredAnnotations(type: PsiType, context: PsiElement?): PsiType {
-    val project = type.annotations.firstOrNull()?.project ?: return type
+    val project = (type.annotations.firstOrNull() ?: (type as? PsiClassReferenceType)?.reference)?.project ?: return type
     val factory = PsiElementFactory.getInstance(project)
     val typeHolder = factory.createParameter("x", type, context)
-    typeHolder.type.annotations.filterNot { it.qualifiedName in annotationsToKeep }.forEach { it.delete() }
+    findChildrenOfType(typeHolder, PsiAnnotation::class.java)
+      .filterNotNull()
+      .filterNot { it.qualifiedName in annotationsToKeep }
+      .forEach { it.delete() }
     return typeHolder.type
   }
 

@@ -269,7 +269,6 @@
       </action>
       <action id="GotoRelated" class="com.intellij.ide.actions.GotoRelatedSymbolAction"/>
       <separator/>
-      <action id="FileStructurePopup" class="com.intellij.ide.actions.ViewStructureAction"/>
       <action id="ShowFilePath" class="com.intellij.ide.actions.ShowFilePathAction">
         <add-to-group group-id="RevealGroup" anchor="last"/>
       </action>
@@ -551,7 +550,7 @@
       <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction">
         <override-text place="GoToAction"/>
       </action>
-      <group class="com.intellij.ide.fileTemplates.actions.FileTemplateSeparator" id="FileTemplateSeparatorGroup"/>
+      <group id="FileTemplateSeparatorGroup" searchable="false"/> <!-- kept for backward compatibility -->
       <group id="NewWebDevelopment" class="com.intellij.ide.actions.NewWebDevelopmentGroup"/>
       <group id="NewMicroservices" class="com.intellij.ide.actions.NewMicroservicesGroup"/>
       <group id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>

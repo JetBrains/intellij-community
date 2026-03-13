@@ -2,7 +2,8 @@
 package com.intellij.platform.ide.menu
 
 import com.intellij.ide.IdeEventQueue
-import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.IdeFrameDecorator
+import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.status.ClockPanel
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ColorUtil
@@ -10,14 +11,23 @@ import com.intellij.util.ui.Animator
 import com.intellij.util.ui.MouseEventAdapter
 import com.intellij.util.ui.TimerUtil
 import com.intellij.util.ui.UIUtil
-import java.awt.*
+import java.awt.AWTEvent
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.RenderingHints
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.geom.GeneralPath
 import java.awt.geom.RoundRectangle2D
-import javax.swing.*
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JMenuItem
+import javax.swing.SwingUtilities
+import javax.swing.UIManager
 import kotlin.math.cos
 import kotlin.math.sqrt
 
@@ -58,11 +68,13 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeJMenuBar) : IdeMenu
       updateFullScreenControls(fullScreenProperty)
     }
 
-    IdeEventQueue.getInstance().addDispatcher(dispatcher = { event ->
-      if (state != IdeMenuBarState.EXPANDED && event is MouseEvent) {
-        considerRestartingAnimator(event)
+    IdeEventQueue.getInstance().addDispatcher(dispatcher = object : IdeEventQueue.NonLockedEventDispatcher {
+      override fun dispatch(e: AWTEvent): Boolean {
+        if (state != IdeMenuBarState.EXPANDED && e is MouseEvent) {
+          considerRestartingAnimator(e)
+        }
+        return false
       }
-      false
     }, scope = menuBar.coroutineScope)
   }
 

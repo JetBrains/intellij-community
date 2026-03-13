@@ -20,6 +20,20 @@ jvm_library(
     "//libraries/fastutil",
   ]
 )
+
+jvm_library(
+  name = "model-impl_test_lib",
+  module_name = "intellij.platform.jps.model.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  runtime_deps = [
+    ":model-impl",
+    "//platform/util:util_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.jps.model.impl` end
 
 ### auto-generated section `build intellij.platform.jps.model.tests` start
@@ -47,14 +61,18 @@ jvm_library(
   resources = [":model-tests_test_resources"],
   deps = [
     "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
     "//jps/model-impl",
+    "//jps/model-impl:model-impl_test_lib",
     "@lib//:kotlin-stdlib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:junit4",
     "@lib//:assert_j",
     "//platform/testFramework/extensions:testExtensions",
+    "//platform/testFramework/extensions:testExtensions_test_lib",
     "//jps/model-test-framework:model-testFramework",
+    "//jps/model-test-framework:model-testFramework_test_lib",
   ],
   runtime_deps = [":model-tests"]
 )

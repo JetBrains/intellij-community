@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-classgraph-classgraph"],
   runtime_deps = ["@lib//:libraries-classgraph-classgraph"]
 )
+
+jvm_library(
+  name = "classgraph_test_lib",
+  module_name = "intellij.libraries.classgraph",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-classgraph-classgraph"],
+  runtime_deps = [":classgraph"]
+)
 ### auto-generated section `build intellij.libraries.classgraph` end

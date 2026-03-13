@@ -49,6 +49,7 @@ import org.jetbrains.uast.UastUtils;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -223,10 +224,11 @@ public final class AnnotationContext {
     return result;
   }
 
+  private static final Set<String> ACCESSORS_NAMES = Set.of("KtUltraLightMethodForSourceDeclaration", "SymbolLightAccessorMethod");
   private static @Nullable PsiModifierListOwner getKotlinProperty(@NotNull PsiModifierListOwner owner) {
     if (!(owner instanceof PsiMethod method)) return null;
     // Looks ugly but without this check, owner.getNavigationElement() may load PSI or even call decompiler
-    if (!owner.getClass().getSimpleName().equals("KtUltraLightMethodForSourceDeclaration")) return null;
+    if (!ACCESSORS_NAMES.contains(owner.getClass().getSimpleName())) return null;
     String name = method.getName();
     boolean maybeGetter = (name.startsWith("get") || name.startsWith("is")) && method.getParameterList().isEmpty();
     boolean maybeSetter = name.startsWith("set") && method.getParameterList().getParametersCount() == 1;

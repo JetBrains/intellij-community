@@ -3,6 +3,7 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.execution.DefaultExecutionTarget
 import com.intellij.execution.ExecutionManager
+import com.intellij.execution.ExecutionTargetManager
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.impl.RunManagerImpl.Companion.getInstanceImpl
@@ -93,8 +94,11 @@ class DebugRunConfigurationCommand(text: String, line: Int) : AbstractCallbackBa
       val runnerAndConfigurationSettings = RunnerAndConfigurationSettingsImpl(runManager, configurationToRun)
       spanRef.set(spanBuilder.startSpan())
       scopeRef.set(spanRef.get().makeCurrent())
+
+      val targetManager = ExecutionTargetManager.getInstance(context.project)
+      val target = targetManager.findTarget(configurationToRun) ?: DefaultExecutionTarget.INSTANCE
       ExecutionManager.getInstance(context.project).restartRunProfile(context.project, DefaultDebugExecutor(),
-                                                                      DefaultExecutionTarget.INSTANCE, runnerAndConfigurationSettings,
+                                                                      target, runnerAndConfigurationSettings,
                                                                       null)
     }))
   }

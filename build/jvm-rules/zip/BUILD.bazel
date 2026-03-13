@@ -40,5 +40,3 @@ kt_jvm_library(
         "//:netty-common_import",
     ],
 )
-
-### skip generation section `build intellij.idea.community.build.zip`

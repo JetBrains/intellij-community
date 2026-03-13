@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
+import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProviderKt;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +17,7 @@ import java.util.Map;
  * as archaic.
  * But:
  * 1. There are few impls of CustomInputsIndexFileBasedIndexExtension -- it takes time to re-implement them.
- * 2. Also, there is {@link HashBasedIndexGenerator.InputMapExternalizerToStableBinary}
+ * 2. Also, there is {@link com.intellij.indexing.shared.generate.HashBasedIndexGenerator.InputMapExternalizerToStableBinary}
  * which uses CustomInputsIndexFileBasedIndexExtension-provided {@code Collection<Key>}-externalizer to implement
  * stable-binary representation version of InputMapExternalizer.
  * It is not clear how to do the same with this interface {@code Map<Key, Value>}-externalizer alone.

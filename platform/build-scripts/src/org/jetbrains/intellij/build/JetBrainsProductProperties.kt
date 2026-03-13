@@ -60,9 +60,9 @@ abstract class JetBrainsProductProperties : ProductProperties() {
     productLayout.addPlatformSpec { layout, _ -> layout.withModule(IJENT_BOOT_CLASSPATH_MODULE, PLATFORM_CORE_NIO_FS) }
   }
 
-  final override fun validatePlugin(pluginId: String?, result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> {
+  final override fun validatePlugin(pluginId: String?, result: PluginCreationResult<IdePlugin>): List<PluginProblem> {
     return buildList {
-      addAll(super.validatePlugin(pluginId, result, context).filterNot {
+      addAll(super.validatePlugin(pluginId, result).filterNot {
         isIntentionallyIgnored(it, pluginId) || isApplicableToThirdPartyPluginsOnly(it)
       })
       if (result is PluginCreationSuccess) {
@@ -84,7 +84,7 @@ private fun isIntentionallyIgnored(problem: PluginProblem, pluginId: String?): B
       // FIXME IDEA-356970
       pluginId == "com.intellij.plugins.projectFragments" ||
       // FIXME IJPL-169105
-      pluginId == "com.jetbrains.codeWithMe" ||
+      pluginId == "com.jetbrains.remoteDevelopment" ||
       // FIXME IJPL-159498
       pluginId == "org.jetbrains.plugins.docker.gateway" ||
       // for intellij.build.minimal

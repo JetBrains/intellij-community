@@ -4,8 +4,8 @@
 package org.jetbrains.intellij.build.productLayout.xml
 
 import com.intellij.platform.pluginGraph.ContentModuleName
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
-import com.intellij.platform.plugins.parser.impl.elements.xmlValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.xmlValue
 import org.jetbrains.intellij.build.productLayout.ContentBlock
 import org.jetbrains.intellij.build.productLayout.ContentModule
 import org.jetbrains.intellij.build.productLayout.JETBRAINS_NAMESPACE

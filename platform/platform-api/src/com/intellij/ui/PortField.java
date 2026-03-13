@@ -15,7 +15,7 @@
  */
 package com.intellij.ui;
 
-import javax.swing.*;
+import javax.swing.SpinnerNumberModel;
 
 public class PortField extends JBIntSpinner {
   public PortField() {

@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.wm.IdeFocusManager
 import io.opentelemetry.context.Context
@@ -19,9 +20,6 @@ import kotlinx.coroutines.withContext
  * Command to execute find usages in the tool window (not in the popup). This command does not take any arguments, it is assumed that the
  * caret has been moved to the appropriate location in the editor beforehand. Additionally, the command does not wait for find usages to
  * complete; that job is left to [FindUsagesInToolWindowWaitCommand].
- *
- * N.B., it is required to set `ide.find.result.count.warning.limit` if your test finds more than 1000 usages; the property should be set on
- * the test context as it requires a restart, and shouldn't be set dynamically inside this command.
  */
 class FindUsagesInToolWindowCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
@@ -34,6 +32,8 @@ class FindUsagesInToolWindowCommand(text: String, line: Int) : PerformanceComman
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
+    AdvancedSettings.setInt("ide.find.result.count.warning.limit", Integer.MAX_VALUE)
+
     val currentOTContext = Context.current()
     withContext(Dispatchers.EDT) {
       currentOTContext.makeCurrent().use {

@@ -7,31 +7,47 @@ import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.GraphScope
 import com.intellij.platform.pluginGraph.ModuleSetNode
 import com.intellij.platform.pluginGraph.PluginGraph
+import com.intellij.platform.pluginGraph.ProductNode
+
+private inline fun <T> PluginGraph.collectFromModuleSet(
+  moduleSetName: String,
+  crossinline collector: GraphScope.(ModuleSetNode, MutableSet<T>) -> Unit,
+): Set<T> {
+  return query {
+    val moduleSetNode = moduleSet(moduleSetName) ?: return@query emptySet()
+    val result = LinkedHashSet<T>()
+    collector(moduleSetNode, result)
+    result
+  }
+}
+
+private inline fun <T> PluginGraph.collectFromProduct(
+  productName: String,
+  crossinline collector: GraphScope.(ProductNode, MutableSet<T>) -> Unit,
+): Set<T> {
+  return query {
+    val productNode = product(productName) ?: return@query emptySet()
+    val result = LinkedHashSet<T>()
+    collector(productNode, result)
+    result
+  }
+}
 
 internal fun collectModuleSetModuleNames(graph: PluginGraph, moduleSetName: String): Set<ContentModuleName> {
-  return graph.query {
-    val moduleSetNode = moduleSet(moduleSetName) ?: return emptySet()
-    val result = HashSet<ContentModuleName>()
+  return graph.collectFromModuleSet(moduleSetName) { moduleSetNode, result ->
     moduleSetNode.modulesRecursive { result.add(it.name()) }
-    result
   }
 }
 
 internal fun collectModuleSetDirectModuleNames(graph: PluginGraph, moduleSetName: String): Set<ContentModuleName> {
-  return graph.query {
-    val moduleSetNode = moduleSet(moduleSetName) ?: return@query emptySet()
-    val result = HashSet<ContentModuleName>()
+  return graph.collectFromModuleSet(moduleSetName) { moduleSetNode, result ->
     moduleSetNode.containsModule { module, _ -> result.add(module.name()) }
-    result
   }
 }
 
 internal fun collectModuleSetDirectNestedNames(graph: PluginGraph, moduleSetName: String): Set<String> {
-  return graph.query {
-    val moduleSetNode = moduleSet(moduleSetName) ?: return@query emptySet()
-    val result = HashSet<String>()
+  return graph.collectFromModuleSet(moduleSetName) { moduleSetNode, result ->
     moduleSetNode.nestedSet { nestedSet -> result.add(nestedSet.name()) }
-    result
   }
 }
 
@@ -92,31 +108,22 @@ private fun GraphScope.buildModuleSetChain(
 }
 
 internal fun collectProductModuleSetNames(graph: PluginGraph, productName: String): Set<String> {
-  return graph.query {
-    val productNode = product(productName) ?: return@query emptySet()
-    val result = HashSet<String>()
+  return graph.collectFromProduct(productName) { productNode, result ->
     productNode.includesModuleSet { moduleSet -> result.add(moduleSet.name()) }
-    result
   }
 }
 
 internal fun collectDirectProductModuleNames(graph: PluginGraph, productName: String): Set<ContentModuleName> {
-  return graph.query {
-    val productNode = product(productName) ?: return@query emptySet()
-    val result = HashSet<ContentModuleName>()
+  return graph.collectFromProduct(productName) { productNode, result ->
     productNode.containsContent { module, _ -> result.add(module.name()) }
-    result
   }
 }
 
 internal fun collectProductModuleNames(graph: PluginGraph, productName: String): Set<ContentModuleName> {
-  return graph.query {
-    val productNode = product(productName) ?: return@query emptySet()
-    val result = HashSet<ContentModuleName>()
+  return graph.collectFromProduct(productName) { productNode, result ->
     productNode.containsContent { module, _ -> result.add(module.name()) }
     productNode.includesModuleSet { moduleSet ->
       moduleSet.modulesRecursive { result.add(it.name()) }
     }
-    result
   }
 }

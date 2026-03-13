@@ -26,6 +26,26 @@ jvm_library(
     "//platform/util:util-ui",
   ]
 )
+
+jvm_library(
+  name = "terminal_test_lib",
+  module_name = "intellij.java.terminal",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":terminal",
+    "@lib//:kotlin-stdlib-provided",
+    "//plugins/terminal:terminal_test_lib",
+    "//plugins/terminal/completion:completion_test_lib",
+    "//java/execution/impl:impl_test_lib",
+    "//java/java-impl:impl_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/execution-impl:execution-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/util:util-ui_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.java.terminal` end
 
 ### auto-generated section `build intellij.java.terminal.tests` start
@@ -44,15 +64,21 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
     "//java/java-terminal:terminal",
+    "//java/java-terminal:terminal_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//platform/platform-tests:tests",
     "//platform/platform-tests:tests_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/execution/impl",
+    "//java/execution/impl:impl_test_lib",
     "//plugins/terminal/completion",
     "//plugins/terminal/completion:completion_test_lib",
     "//plugins/terminal",
+    "//plugins/terminal:terminal_test_lib",
   ],
   runtime_deps = [":terminal-tests"]
 )

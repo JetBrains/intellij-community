@@ -14,12 +14,30 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.project.ProjectUtilCore;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.FileIndex;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
-import com.intellij.psi.*;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.VirtualFileSet;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.LocalSearchScope;
@@ -29,10 +47,19 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class AnalysisScope {
   private static final Logger LOG = Logger.getInstance(AnalysisScope.class);
@@ -177,7 +204,7 @@ public class AnalysisScope {
     if (filter != null && !filter.contains(virtualFile)) {
       return true;
     }
-    return !myIncludeTestSource && ReadAction.compute(() -> TestSourcesFilter.isTestSources(virtualFile, myProject));
+    return !myIncludeTestSource && ReadAction.computeBlocking(() -> TestSourcesFilter.isTestSources(virtualFile, myProject));
   }
 
   private @NotNull FileIndex getFileIndex() {
@@ -232,7 +259,7 @@ public class AnalysisScope {
           VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor<Void>() {
             @Override
             public @NotNull Result visitFileEx(@NotNull VirtualFile file) {
-              boolean ignored = ReadAction.compute(() -> fileIndex.isExcluded(file));
+              boolean ignored = ReadAction.computeBlocking(() -> fileIndex.isExcluded(file));
               if (!ignored && !file.isDirectory()) {
                 fileSet.add(file);
               }
@@ -268,7 +295,7 @@ public class AnalysisScope {
     accept(file -> {
       if (file.isDirectory()) return true;
       if (ProjectCoreUtil.isProjectOrWorkspaceFile(file)) return true;
-      boolean isInContent = ReadAction.compute(() -> fileIndex.isInContent(file));
+      boolean isInContent = ReadAction.computeBlocking(() -> fileIndex.isInContent(file));
       if (isInContent && !isFilteredOut(file) && !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {
         return processFile(file, visitor, psiManager, needReadAction, idempotent);
       }
@@ -299,7 +326,7 @@ public class AnalysisScope {
       PsiElement[] psiElements = lss.getScope();
       Set<VirtualFile> files = new HashSet<>();
       for (PsiElement element : psiElements) {
-        VirtualFile file = ReadAction.compute(() -> PsiUtilCore.getVirtualFile(element));
+        VirtualFile file = ReadAction.computeBlocking(() -> PsiUtilCore.getVirtualFile(element));
         if (file != null && files.add(file)) {
           if (!processor.process(file)) return false;
         }
@@ -310,7 +337,7 @@ public class AnalysisScope {
       return accept(dir, processor);
     }
     if (myElement != null) {
-      VirtualFile file = ReadAction.compute(() -> PsiUtilCore.getVirtualFile(myElement));
+      VirtualFile file = ReadAction.computeBlocking(() -> PsiUtilCore.getVirtualFile(myElement));
       return file == null || processor.process(file);
     }
 
@@ -338,7 +365,7 @@ public class AnalysisScope {
 
   private @NotNull ContentIterator createScopeIterator(@NotNull Processor<? super VirtualFile> processor, @Nullable SearchScope searchScope) {
     return fileOrDir -> {
-      boolean isInScope = ReadAction.compute(() -> {
+      boolean isInScope = ReadAction.computeBlocking(() -> {
         if (searchScope != null && !searchScope.contains(fileOrDir)) return false;
         if (isFilteredOut(fileOrDir)) return false;
         return !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(fileOrDir, myProject);

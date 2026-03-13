@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.ContainerUtil;
@@ -62,23 +63,39 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
 
     var problems = new LinkedList<String>();
     CommandProcessor.getInstance().executeCommand(project, () -> new Task.Modal(project, IdeBundle.message("progress.deleting"), true) {
+      private int counter = 0;
+
       @Override
+      @SuppressWarnings("DuplicatedCode")
       public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setIndeterminate(false);
-        var i = 0;
+        indicator.setIndeterminate(true);
+
         for (var file : files) {
-          if (indicator.isCanceled()) break;
-          indicator.setText(file.getPresentableUrl());
-          indicator.setFraction((double)i++ / files.length);
+          indicator.checkCanceled();
+          indicator.setText(IdeBundle.message("progress.already.deleted", counter));
+
+          if (toBin && TrashBin.canMoveToTrash(file)) {
+            LocalFileSystem.MOVE_TO_TRASH.set(file, Boolean.TRUE);
+            counter++;
+          }
+          else {
+            LocalFileSystem.DELETE_CALLBACK.set(file, p -> {
+              indicator.checkCanceled();
+              indicator.setText(IdeBundle.message("progress.already.deleted", counter));
+              counter++;
+            });
+          }
+
           try {
-            if (toBin && TrashBin.canMoveToTrash(file)) {
-              TrashBin.moveToTrash(file.toNioPath());
-            }
-            WriteAction.runAndWait(() -> file.delete(this));
+            WriteAction.run(() -> file.delete(this));
           }
           catch (IOException e) {
             LOG.info("Error when deleting " + file, e);
             problems.add(file.getName());
+          }
+          finally {
+            LocalFileSystem.MOVE_TO_TRASH.set(file, null);
+            LocalFileSystem.DELETE_CALLBACK.set(file, null);
           }
         }
       }

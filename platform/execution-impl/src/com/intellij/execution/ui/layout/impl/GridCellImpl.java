@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui.layout.impl;
 
-import com.intellij.execution.ui.layout.*;
+import com.intellij.execution.ui.layout.CellTransform;
+import com.intellij.execution.ui.layout.GridCell;
+import com.intellij.execution.ui.layout.PlaceInGrid;
+import com.intellij.execution.ui.layout.Tab;
+import com.intellij.execution.ui.layout.View;
+import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.execution.ui.layout.actions.CloseViewAction;
 import com.intellij.execution.ui.layout.actions.MinimizeViewAction;
 import com.intellij.openapi.Disposable;
@@ -20,15 +25,25 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
-import com.intellij.ui.tabs.impl.*;
+import com.intellij.ui.tabs.impl.DefaultTabPainterAdapter;
+import com.intellij.ui.tabs.impl.DragHelper;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.impl.SingleHeightTabs;
+import com.intellij.ui.tabs.impl.TabLabel;
+import com.intellij.ui.tabs.impl.TabPainterAdapter;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.SwingUtilities;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Window;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.HashSet;

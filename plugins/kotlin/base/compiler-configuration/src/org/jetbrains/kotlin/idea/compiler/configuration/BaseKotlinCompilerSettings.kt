@@ -88,11 +88,16 @@ abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(p
         @Suppress("UNCHECKED_CAST")
         val inheritedProperties = collectProperties(settings::class as KClass<T>, true)
         val defaultInstance = createSettings()
-        val invalidFields = inheritedProperties.filter { it.get(settings) != it.get(defaultInstance) }
+        val invalidFields = inheritedProperties.filter {
+            val currentValue = it.get(settings)
+            !(currentValue.isEmptyArray() || currentValue == it.get(defaultInstance))
+        }
         if (invalidFields.isNotEmpty()) {
             throw IllegalArgumentException("Following fields are expected to be left unchanged in ${settings.javaClass}: ${invalidFields.joinToString { it.name }}")
         }
     }
+
+    private fun Any?.isEmptyArray(): Boolean = this is Array<*> && isEmpty()
 
     protected open fun validateNewSettings(settings: T) {}
 

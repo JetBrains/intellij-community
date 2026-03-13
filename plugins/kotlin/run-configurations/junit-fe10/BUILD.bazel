@@ -37,4 +37,23 @@ jvm_library(
     "//java/execution/openapi:java-execution",
   ]
 )
+
+jvm_library(
+  name = "junit-fe10_test_lib",
+  module_name = "kotlin.run-configurations.junit-fe10",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_junit-fe10",
+  runtime_deps = [
+    ":junit-fe10",
+    "//platform/core-api:core_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//platform/util:util_test_lib",
+    "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//java/execution/openapi:java-execution_test_lib",
+  ]
+)
 ### auto-generated section `build kotlin.run-configurations.junit-fe10` end

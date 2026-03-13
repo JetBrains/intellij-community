@@ -2,6 +2,7 @@
 package com.intellij.platform.vcs.impl.frontend.changes
 
 import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
@@ -11,11 +12,13 @@ import com.intellij.openapi.vcs.changes.LocalChangesListView
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.openapi.vcs.changes.ui.installDndSupport
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.project.projectId
 import com.intellij.platform.vcs.changes.ChangesUtil
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
 import com.intellij.platform.vcs.impl.shared.changes.ChangesTreePath
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
+import com.intellij.platform.vcs.impl.shared.commit.CommitToolWindowViewModel
 import com.intellij.platform.vcs.impl.shared.rpc.BackendChangesViewEvent
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeId
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewApi
@@ -23,6 +26,7 @@ import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewDiffApi
 import com.intellij.util.application
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.launchOnShow
 import com.intellij.util.ui.tree.TreeUtil
 import fleet.rpc.client.durable
 import fleet.util.logging.logger
@@ -53,6 +57,12 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
   override fun initPanel() {
     super.initPanel()
     changesView.installDndSupport(cs.asDisposable())
+
+    changesView.launchOnShow("FrontendChangesView") {
+      if (!project.serviceAsync<CommitToolWindowViewModel>().canExcludeFromCommit.value) {
+        IdeFocusManager.getGlobalInstance().requestFocus(changesView, true)
+      }
+    }
   }
 
   private fun initializeSubscriptions(changesView: ChangesListView, cs: CoroutineScope) {

@@ -128,21 +128,25 @@ import static com.jetbrains.python.psi.PyUtil.as;
 public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor {
   private final ImmutableSet<String> myIgnoredIdentifiers;
   private final Version myVersion;
+  private final boolean myStrictClassAttributes;
   private volatile Boolean myIsEnabled = null;
   protected final List<PyPackageInstallAllProblemInfo> myUnresolvedRefs = Collections.synchronizedList(new ArrayList<>());
 
   protected PyUnresolvedReferencesVisitor(@Nullable ProblemsHolder holder,
                                           @NotNull List<String> ignoredIdentifiers,
                                           @NotNull TypeEvalContext context,
-                                          @NotNull LanguageLevel languageLevel) {
+                                          @NotNull LanguageLevel languageLevel,
+                                          boolean strictClassAttributes) {
     super(holder, context);
     myIgnoredIdentifiers = ImmutableSet.copyOf(ignoredIdentifiers);
     myVersion = new Version(languageLevel.getMajorVersion(), languageLevel.getMinorVersion(), 0);
+    myStrictClassAttributes = strictClassAttributes;
   }
 
   @Override
   public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
     checkSlotsAndProperties(node);
+    checkStrictClassAttributes(node);
   }
 
   private void checkSlotsAndProperties(PyQualifiedExpression node) {
@@ -150,13 +154,40 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     final String attrName = node.getReferencedName();
     if (qualifier != null && attrName != null) {
       final PyType type = replaceSelfWithItsScopeClass(myTypeEvalContext.getType(qualifier));
-      if (type instanceof PyClassType classType &&
+      if (type instanceof PyClassLikeType classType &&
           !classType.isAttributeWritable(attrName, myTypeEvalContext)) {
         final ASTNode nameNode = node.getNameElement();
         final PsiElement e = nameNode != null ? nameNode.getPsi() : node;
         registerProblem(e, PyPsiBundle.message("INSP.unresolved.refs.class.object.has.no.attribute", type.getName(), attrName));
       }
     }
+  }
+
+  private void checkStrictClassAttributes(PyQualifiedExpression node) {
+    if (!myStrictClassAttributes) return;
+
+    PyExpression qualifier = node.getQualifier();
+    String attrName = node.getReferencedName();
+    if (qualifier == null || attrName == null) return;
+
+    PyType type = myTypeEvalContext.getType(qualifier);
+
+    if (!(type instanceof PyClassType classType) || !classType.isDefinition()) return;
+    if (PyUtil.isObjectClass(classType.getPyClass())) return;
+    if (!ContainerUtil.isEmpty(classType.resolveMember(attrName, as(node, PyExpression.class),
+                                                       AccessDirection.READ, getResolveContext()))) {
+      return;
+    }
+    if (isDeclaredInSlots(type, attrName)) return;
+
+    PsiReference reference = node.getReference();
+    if (reference != null && ignoreUnresolvedMemberForType(type, reference, attrName)) return;
+
+    ASTNode nameNode = node.getNameElement();
+    final PsiElement e = nameNode != null ? nameNode.getPsi() : node;
+    registerProblem(e,
+                    PyPsiBundle.message("INSP.unresolved.refs.unresolved.attribute.for.class", attrName, type.getName()),
+                    ProblemHighlightType.WARNING);
   }
 
   private static @Nullable PyType replaceSelfWithItsScopeClass(@Nullable PyType type) {
@@ -382,7 +413,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
             return;
           }
           ContainerUtil.addAll(fixes, getCreateMemberFromUsageFixes(type, reference, refText));
-          if (type instanceof PyClassType classType) {
+          if (type instanceof PyClassLikeType classType) {
             if (reference instanceof PyOperatorReference) {
               String className = type.getName();
               if (classType.isDefinition()) {

@@ -14,8 +14,12 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.EelExecPosixApi
+import com.intellij.platform.eel.EelProcess
+import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.spawnProcess
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread

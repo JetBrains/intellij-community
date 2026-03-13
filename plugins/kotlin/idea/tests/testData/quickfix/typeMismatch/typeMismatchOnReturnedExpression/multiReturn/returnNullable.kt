@@ -1,4 +1,6 @@
 // "Specify 'String?' return type for enclosing function 'test'" "true"
+// K2_ERROR: Return type mismatch: expected 'Unit', actual 'String'.
+// K2_ERROR: Return type mismatch: expected 'Unit', actual 'String?'.
 fun test(x: String?) {
     if (true) return "foo"<caret>
     return x

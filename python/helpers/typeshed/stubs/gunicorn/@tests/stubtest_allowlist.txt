@@ -3,3 +3,7 @@ gunicorn._types
 
 # .pyi file doesn't exist
 gunicorn.__main__
+
+# Internal API stuff:
+gunicorn.config.Config.forwarded_allow_networks
+gunicorn.config.Config.proxy_allow_networks

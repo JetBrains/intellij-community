@@ -37,6 +37,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNoteLocation
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotePosition
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.data.filePath
@@ -48,7 +49,7 @@ import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewM
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModelBase
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestStandaloneDraftNoteViewModelBase
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditingViewModel
-import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModelWithAdjustablePosition
 import org.jetbrains.plugins.gitlab.ui.comment.onDoneIn
 import java.time.Instant.EPOCH
 import java.util.Date
@@ -56,7 +57,7 @@ import java.util.TreeSet
 
 private typealias DiscussionsFlow = StateFlow<ComputedResult<Collection<GitLabMergeRequestDiscussionViewModel>>>
 private typealias DraftNotesFlow = StateFlow<ComputedResult<Collection<GitLabMergeRequestStandaloneDraftNoteViewModelBase>>>
-private typealias NewDiscussionsFlow = Flow<Map<GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition, NewGitLabNoteViewModel>>
+private typealias NewDiscussionsFlow = StateFlow<List<NewGitLabNoteViewModelWithAdjustablePosition>>
 
 /**
  * Represents the discussions and notes in a merge request at a conceptual level.
@@ -78,7 +79,7 @@ interface GitLabMergeRequestDiscussionsViewModels {
   fun lookupPreviousComment(currentThreadId: String, isVisible: (String) -> Boolean): String?
 
   fun requestNewDiscussion(position: NewDiscussionPosition, focus: Boolean)
-  fun cancelNewDiscussion(position: NewDiscussionPosition)
+  fun cancelNewDiscussion(lineLocation: DiffLineLocation)
 
   class NewDiscussionPosition(val position: GitLabMergeRequestNewDiscussionPosition, val side: Side) {
     override fun equals(other: Any?): Boolean {
@@ -94,7 +95,7 @@ interface GitLabMergeRequestDiscussionsViewModels {
   }
 }
 
-fun GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition.mapToLocation(diffData: GitTextFilePatchWithHistory): DiffLineLocation? =
+fun GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition.mapToLocation(diffData: GitTextFilePatchWithHistory): GitLabNoteLocation? =
   position.mapToLocation(diffData, side)
 
 internal class GitLabMergeRequestDiscussionsViewModelsImpl(
@@ -126,8 +127,7 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
     }
     .stateInNow(cs, ComputedResult.loading())
 
-  private val _newDiscussions =
-    MutableStateFlow<Map<GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition, NewGitLabNoteViewModel>>(emptyMap())
+  private val _newDiscussions = MutableStateFlow<List<NewGitLabNoteViewModelWithAdjustablePosition>>(emptyList())
   override val newDiscussions: NewDiscussionsFlow = _newDiscussions.asStateFlow()
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -145,9 +145,8 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
     }
 
     val newDiscussionsData = _newDiscussions
-      .mapState { it.entries }
-      .mapStatefulToStateful { (position, note) ->
-        IntermediateDiscussionData(note.trackingId, Date(), 0, MutableStateFlow(position.position))
+      .mapStatefulToStateful { note ->
+        IntermediateDiscussionData(note.trackingId, Date(), 0, MutableStateFlow(note.position.value.position))
       }
 
     val allDiscussions =
@@ -176,32 +175,49 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
 
   override fun requestNewDiscussion(position: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition, focus: Boolean) {
     _newDiscussions.updateAndGet { currentNewDiscussions ->
-      if (!currentNewDiscussions.containsKey(position) && mergeRequest.canAddNotes) {
-        val vm = GitLabNoteEditingViewModel.forNewDiffNote(cs, project, projectData, mergeRequest, currentUser, position.position).apply {
+      if (!currentNewDiscussions.any { it.position.value == position.position } && mergeRequest.canAddNotes) {
+        val vm = GitLabNoteEditingViewModel.forNewDiffNote(cs, project, projectData, mergeRequest, currentUser, position).apply {
           onDoneIn(cs) {
-            cancelNewDiscussion(position)
+            cancelNewDiscussion(this)
           }
         }
-        currentNewDiscussions + (position to vm)
+        currentNewDiscussions + (vm)
       }
       else {
         currentNewDiscussions
       }
     }.apply {
       if (focus) {
-        get(position)?.requestFocus()
+        find { it.position.value == position.position }?.requestFocus()
       }
     }
   }
 
-  override fun cancelNewDiscussion(position: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition) {
+  private fun cancelNewDiscussion(oldVm: NewGitLabNoteViewModelWithAdjustablePosition) {
     _newDiscussions.update {
-      val oldVm = it[position]
-      val newMap = it - position
+      val newList = it - oldVm
       cs.launch {
-        oldVm?.destroy()
+        oldVm.destroy()
       }
-      newMap
+      newList
+    }
+  }
+
+  override fun cancelNewDiscussion(lineLocation: DiffLineLocation) {
+    _newDiscussions.update {
+      val oldVm = it.find { vm ->
+        val position = vm.position.value
+        val loc = position.side to if (position.side == Side.LEFT)
+          position.position.endLineIndexLeft
+        else
+          position.position.endLineIndexRight
+        loc == lineLocation
+      } ?: return@update it
+      val newList = it - oldVm
+      cs.launch {
+        oldVm.destroy()
+      }
+      newList
     }
   }
 

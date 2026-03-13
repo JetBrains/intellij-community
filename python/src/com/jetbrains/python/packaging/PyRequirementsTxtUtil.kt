@@ -6,23 +6,22 @@ import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
+import com.intellij.psi.search.FileTypeIndex
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindItem
@@ -31,7 +30,6 @@ import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiPackageUtil
-import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils
@@ -46,9 +44,14 @@ import com.jetbrains.python.statistics.SyncPythonRequirementsIdsHolder.Companion
 import com.jetbrains.python.statistics.SyncPythonRequirementsIdsHolder.Companion.SOME_REQUIREMENTS_FROM_BASE_FILES_WERE_NOT_UPDATED
 import com.jetbrains.python.util.runWithModalBlockingOrInBackground
 import org.jetbrains.annotations.ApiStatus
-import java.util.Locale
 import kotlin.io.path.Path
 
+private val PYTHON_EXTENSIONS = listOf("py", "ipynb")
+
+private fun pythonFileTypes(): List<FileType> {
+  val fileTypeManager = FileTypeManager.getInstance()
+  return PYTHON_EXTENSIONS.map { fileTypeManager.getFileTypeByExtension(it) }.filter { it !== UnknownFileType.INSTANCE }
+}
 
 /**
  * Holder class for generated requirements.
@@ -69,7 +72,10 @@ data class PyRequirementsAnalysisResult(
     fun empty(): PyRequirementsAnalysisResult = PyRequirementsAnalysisResult(emptyList(), emptyMap(), emptyList(), emptyList())
   }
 
-  fun withImportedPackages(importedPackages: MutableMap<String, PythonPackage>, settings: PyPackageRequirementsSettings): PyRequirementsAnalysisResult {
+  fun withImportedPackages(
+    importedPackages: MutableMap<String, PythonPackage>,
+    settings: PyPackageRequirementsSettings,
+  ): PyRequirementsAnalysisResult {
     val newCurrentFile = currentFileOutput + importedPackages.values.map {
       if (settings.specifyVersion) "${it.presentableName}${settings.versionSpecifier.separator}${it.version}" else it.presentableName
     }
@@ -77,29 +83,23 @@ data class PyRequirementsAnalysisResult(
   }
 }
 
-private class PyCollectImportsTask(
-  private val module: Module,
-  private val psiManager: PsiManager,
-  @NlsContexts.DialogTitle title: String,
-) : Task.WithResult<Set<String>, Exception>(module.project, title, true) {
+private suspend fun collectImports(module: Module, psiManager: PsiManager): Set<String> {
+  val moduleScope = module.moduleContentScope
 
-  override fun compute(indicator: ProgressIndicator): Set<String> {
-    val imported = mutableSetOf<String>()
-    ReadAction.run<Throwable> {
-      module.rootManager.fileIndex.iterateContent { virtualFile ->
-        indicator.checkCanceled()
-        val fileName = FileTypeRegistry.getInstance().getFileTypeByFileName(virtualFile.name)
-
-        if (PythonFileType.INSTANCE == fileName || fileName.defaultExtension == "ipynb") {
-          val findFile = psiManager.findFile(virtualFile)
-          val pyFile = findFile?.viewProvider?.allFiles?.firstOrNull { it is PyFile } as? PyFile ?: return@iterateContent true
-          addImports(pyFile, imported)
-        }
-        return@iterateContent true
-      }
-    }
-    return imported
+  val filesToProcess = readAction {
+    pythonFileTypes().flatMap { FileTypeIndex.getFiles(it, moduleScope) }
   }
+
+  // Process each file in its own short read action
+  val imported = mutableSetOf<String>()
+  for (virtualFile in filesToProcess) {
+    readAction {
+      val pyFile = psiManager.findFile(virtualFile)?.viewProvider?.allFiles?.firstNotNullOfOrNull { it as? PyFile } ?: return@readAction
+      addImports(pyFile, imported)
+    }
+  }
+
+  return imported
 }
 
 internal fun syncWithImports(module: Module) {
@@ -131,18 +131,19 @@ internal fun syncWithImports(module: Module) {
   }
 
   if (requirementsFile == null) {
-    val text = PyBundle.message("python.requirements.error.create.requirements.file")
     showNotification(
       notificationGroup = notificationGroup,
       type = NotificationType.WARNING,
-      text = text,
+      text = PyBundle.message("python.requirements.error.create.requirements.file"),
       project = module.project,
       displayId = CREATE_REQUIREMENTS_FILE_FAILED
     )
     return
   }
 
-  val matchResult = prepareRequirementsText(module, sdk, settings)
+  val matchResult = runWithModalBlockingOrInBackground(module.project, PyBundle.message("python.requirements.analyzing.imports.title")) {
+    prepareRequirementsText(module, sdk, settings)
+  }
 
   WriteCommandAction.runWriteCommandAction(module.project, PyBundle.message("python.requirements.action.name"), null, {
     val documentManager = FileDocumentManager.getInstance()
@@ -155,21 +156,19 @@ internal fun syncWithImports(module: Module) {
   psiManager.findFile(requirementsFile)?.navigate(true)
 
   if (matchResult.unhandledLines.isNotEmpty()) {
-    val text = PyBundle.message("python.requirements.warning.unhandled.lines", matchResult.unhandledLines.joinToString(", "))
     showNotification(
       notificationGroup = notificationGroup,
       type = NotificationType.WARNING,
-      text = text,
+      text = PyBundle.message("python.requirements.warning.unhandled.lines", matchResult.unhandledLines.joinToString(", ")),
       project = module.project,
       displayId = ANALYZE_ENTRIES_IN_REQUIREMENTS_FILE_FAILED
     )
   }
   if (matchResult.unchangedInBaseFiles.isNotEmpty()) {
-    val text = PyBundle.message("python.requirements.info.file.ref.dropped", matchResult.unchangedInBaseFiles.joinToString(", "))
     showNotification(
       notificationGroup = notificationGroup,
       type = NotificationType.INFORMATION,
-      text = text,
+      text = PyBundle.message("python.requirements.info.file.ref.dropped", matchResult.unchangedInBaseFiles.joinToString(", ")),
       project = module.project,
       displayId = SOME_REQUIREMENTS_FROM_BASE_FILES_WERE_NOT_UPDATED
     )
@@ -184,43 +183,38 @@ private fun showNotification(
   action: NotificationAction? = null,
   displayId: String,
 ) {
-  val notification = notificationGroup.createNotification(PyBundle.message("python.requirements.balloon"), text, type).setDisplayId(displayId)
+  val notification =
+    notificationGroup.createNotification(PyBundle.message("python.requirements.balloon"), text, type).setDisplayId(displayId)
   if (action != null) notification.addAction(action)
   notification.notify(project)
 }
 
 
-private fun prepareRequirementsText(module: Module, sdk: Sdk, settings: PyPackageRequirementsSettings): PyRequirementsAnalysisResult {
+private suspend fun prepareRequirementsText(
+  module: Module,
+  sdk: Sdk,
+  settings: PyPackageRequirementsSettings,
+): PyRequirementsAnalysisResult {
   val psiManager = PsiManager.getInstance(module.project)
+  val imports = collectImports(module, psiManager)
+  val installedPackages = PythonPackageManager.forSdk(module.project, sdk).listInstalledPackages()
 
-  val dialogTitle = PyBundle.message("python.requirements.analyzing.imports.title")
-  val task = PyCollectImportsTask(module, psiManager, dialogTitle)
-  task.queue()
+  val installedByName = installedPackages.associateBy { it.name }
+  val importedPackages = imports.flatMap { name ->
+    val normalized = PyPackageName.normalizePackageName(name)
+    val alias = PyPsiPackageUtil.moduleToPackageName(name, default = "")
+    listOfNotNull(installedByName[normalized], if (alias != normalized) installedByName[alias] else null)
+  }.associateByTo(mutableMapOf()) { it.name }
 
-  val installedPackages = runWithModalBlockingOrInBackground(module.project, PyBundle.message("python.packaging.list.packages")) {
-    PythonPackageManager.forSdk(module.project, sdk).listInstalledPackages()
-  }
-
-  val importedPackages = task.result.asSequence()
-    .flatMap { topLevelPackage ->
-      val alias = PyPsiPackageUtil.moduleToPackageName(topLevelPackage, default = "")
-      sequence {
-        yield(topLevelPackage)
-        if (alias.isNotEmpty()) yield(alias)
-      }.mapNotNull { name -> installedPackages.find { StringUtil.equalsIgnoreCase(it.name, name) } }
+  val existingResult = PythonRequirementTxtSdkUtils.findRequirementsTxt(sdk)?.let { requirementsFile ->
+    readAction {
+      psiManager.findFile(requirementsFile)?.let { psiFile ->
+        PyRequirementsFileVisitor(importedPackages, settings).visitRequirementsFile(psiFile)
+      }
     }
-    .map { it.name.lowercase(Locale.getDefault()) to it }
-    .toMap(mutableMapOf())
+  } ?: PyRequirementsAnalysisResult.empty()
 
-  val analysisResult = when (val requirementsFile = PyPackageUtil.findRequirementsTxt(module)) {
-    null -> PyRequirementsAnalysisResult.empty()
-    else -> {
-      val visitor = PyRequirementsFileVisitor(importedPackages, settings)
-      visitor.visitRequirementsFile(psiManager.findFile(requirementsFile)!!)
-    }
-  }
-
-  return analysisResult.withImportedPackages(importedPackages, settings)
+  return existingResult.withImportedPackages(importedPackages, settings)
 }
 
 private fun showSyncSettingsDialog(project: Project, settings: PyPackageRequirementsSettings, sdk: Sdk): Boolean {

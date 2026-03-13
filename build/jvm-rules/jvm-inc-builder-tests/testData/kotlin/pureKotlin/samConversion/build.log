@@ -1,0 +1,12 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_samConversion-a.kotlin_module
+  MainKt$main$1$1$1.class
+  MainKt$main$2.class
+  MainKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/samConversion/a/main.kt
+End of files
+------------------------------------------
+Exit code: OK

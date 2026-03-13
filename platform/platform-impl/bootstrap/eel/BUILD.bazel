@@ -18,4 +18,22 @@ jvm_library(
     "//platform/ijent/impl",
   ]
 )
+
+jvm_library(
+  name = "eel_test_lib",
+  module_name = "intellij.platform.ide.bootstrap.eel",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":eel",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/core-nio-fs:core-nio-fs_test_lib",
+    "//platform/eel:eel_test_lib",
+    "//platform/eel-provider:eel-provider_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ijent/buildConstants:buildConstants_test_lib",
+    "//platform/ijent/impl:impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.ide.bootstrap.eel` end

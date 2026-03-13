@@ -134,7 +134,7 @@ final class RecordBuilder {
   ///   }
   /// }
   /// ```
-  void addDelegatingCtor(PsiMethod canonicalCtor,
+  void addDelegatingCtor(String[] fieldNamesInOrder,
                          PsiMethod ctor,
                          Map<String, PsiExpression> fieldNamesToInitializers,
                          Set<PsiStatement> trailingStatements) {
@@ -145,13 +145,13 @@ final class RecordBuilder {
     PsiStatement[] statements = body.getStatements();
     CommentTracker ct = new CommentTracker();
     for (int i = 0; i < statements.length; i++) {
-      @NotNull PsiStatement statement = statements[i];
-      @Nullable PsiStatement nextStatement = i < statements.length - 1 ? statements[i + 1] : null;
+      PsiStatement statement = statements[i];
+      PsiStatement nextStatement = i < statements.length - 1 ? statements[i + 1] : null;
 
       if (!trailingStatements.contains(statement)) {
         final boolean isLastAssignmentStatement = nextStatement == null || trailingStatements.contains(nextStatement);
         if (isLastAssignmentStatement) {
-          PsiStatement delegatingCtorCall = createDelegatingCtorCall(canonicalCtor, fieldNamesToInitializers);
+          PsiStatement delegatingCtorCall = createDelegatingCtorCall(fieldNamesInOrder, fieldNamesToInitializers, ctor);
           ct.replaceAndRestoreComments(statement, delegatingCtorCall);
         }
         else {
@@ -164,14 +164,15 @@ final class RecordBuilder {
     myRecordText.append(ctor.getText());
   }
 
-  private static PsiStatement createDelegatingCtorCall(PsiMethod canonicalCtor,
-                                                       Map<String, PsiExpression> fieldNamesToInitializers) {
+  private static PsiStatement createDelegatingCtorCall(String[] fieldNamesInOrder,
+                                                       Map<String, PsiExpression> fieldNamesToInitializers,
+                                                       PsiElement context) {
     StringBuilder delegatingCtorInvocationText = new StringBuilder();
     delegatingCtorInvocationText.append("this(");
 
     List<PsiExpression> expressionsInCorrectOrder = new ArrayList<>();
-    for (PsiParameter canonicalCtorParameter : canonicalCtor.getParameterList().getParameters()) {
-      PsiExpression fieldInitializerExpr = fieldNamesToInitializers.get(canonicalCtorParameter.getName());
+    for (String fieldName : fieldNamesInOrder) {
+      PsiExpression fieldInitializerExpr = fieldNamesToInitializers.get(fieldName);
       if (fieldInitializerExpr != null) {
         expressionsInCorrectOrder.add(fieldInitializerExpr);
       }
@@ -180,8 +181,8 @@ final class RecordBuilder {
     delegatingCtorInvocationText.append(expressionsInCorrectOrder.stream().map(PsiExpression::getText).collect(Collectors.joining(", ")));
     delegatingCtorInvocationText.append(");");
 
-    PsiElementFactory factory = PsiElementFactory.getInstance(canonicalCtor.getProject());
-    return factory.createStatementFromText(delegatingCtorInvocationText.toString(), canonicalCtor);
+    PsiElementFactory factory = PsiElementFactory.getInstance(context.getProject());
+    return factory.createStatementFromText(delegatingCtorInvocationText.toString(), context);
   }
 
   void addCtor(PsiMethod ctor) {

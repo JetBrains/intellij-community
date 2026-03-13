@@ -24,7 +24,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
-import java.util.*
+import java.util.Locale
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -102,8 +102,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     val (javaAgents, nativeAgents) = countAgents()
     result += AGENTS_COUNT.metric(javaAgents, nativeAgents)
 
-    // proper detection is implemented only for Metal and Vulkan
-    if (SystemInfo.isMac) result += RENDERING.metric(getRenderingPipelineName())
+    result += RENDERING.metric(getRenderingPipelineName())
 
     result += OS_VM.metric(getOsVirtualization())
 

@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.completion
+package org.jetbrains.kotlin.idea.completion.impl.k2
 
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionInitializationContext
@@ -11,6 +11,7 @@ import com.intellij.codeInsight.completion.CompletionSorter
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.codeInsight.completion.PrefixMatcher
+import com.intellij.codeInsight.completion.impl.CompletionSorterImpl
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.patterns.PlatformPatterns.psiElement
@@ -18,16 +19,18 @@ import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.patterns.StandardPatterns
 import com.intellij.util.ProcessingContext
 import com.intellij.util.applyIf
+import org.jetbrains.kotlin.idea.completion.KDocTagCompletionProvider
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
-import org.jetbrains.kotlin.idea.completion.impl.k2.Completions
-import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionRunner
-import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionRunnerResult
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.K2SmartCompletionTailOffsetProviderImpl
 import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.CompletionEvent
 import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.CompletionSetupEvent
 import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.timeEvent
-import org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher.MatchesExpectedType
-import org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher.matchesExpectedType
-import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighers
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.ExpectedTypeWeigher.MatchesExpectedType
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.ExpectedTypeWeigher.matchesExpectedType
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.Weighers.applyWeighers
+import org.jetbrains.kotlin.idea.completion.kotlinIdentifierPartPattern
+import org.jetbrains.kotlin.idea.completion.kotlinIdentifierStartPattern
+import org.jetbrains.kotlin.idea.completion.markReplacementOffsetAsModified
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinPositionContextDetector
@@ -83,6 +86,9 @@ class KotlinFirCompletionContributor : CompletionContributor() {
         context.dummyIdentifier = identifierProviderService.provideDummyIdentifier(context)
 
         identifierProviderService.correctPositionForParameter(context)
+
+        // Mark replacement offsets for (smart) completion
+        K2SmartCompletionTailOffsetProviderImpl.calculateReplacementOffsets(context)
     }
 }
 
@@ -199,10 +205,15 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         parameters: KotlinFirCompletionParameters,
         positionContext: KotlinRawPositionContext,
     ): CompletionResultSet {
-        val sorter = CompletionSorter.defaultSorter(parameters.delegate, prefixMatcher)
-            .applyWeighers(positionContext)
+        val defaultSorter = CompletionSorter.defaultSorter(parameters.delegate, prefixMatcher)
 
-        return withRelevanceSorter(sorter)
+        // We do not want to use the `liftShorter` weigher because it promotes completion items that are often unexpected.
+        // See KTIJ-35873 for more details.
+        val sorter = (defaultSorter as? CompletionSorterImpl)
+            ?.withoutClassifiers { it.id == "liftShorter" }
+            ?: defaultSorter
+
+        return withRelevanceSorter(sorter.applyWeighers(positionContext))
     }
 
     private val AFTER_NUMBER_LITERAL = PsiJavaPatterns.psiElement().afterLeafSkipping(

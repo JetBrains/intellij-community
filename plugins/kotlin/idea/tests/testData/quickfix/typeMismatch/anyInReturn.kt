@@ -1,4 +1,5 @@
 // "Specify 'Any' return type for enclosing function 'foo'" "true"
+// K2_ERROR: Return type mismatch: expected 'Unit', actual 'A'.
 fun foo() {
     class A
 

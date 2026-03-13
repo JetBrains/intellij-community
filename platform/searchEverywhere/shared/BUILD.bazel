@@ -40,4 +40,38 @@ jvm_library(
     "//platform/statistics",
   ]
 )
+
+jvm_library(
+  name = "searchEverywhere_test_lib",
+  module_name = "intellij.platform.searchEverywhere",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//platform/lang-impl",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+  ],
+  runtime_deps = [
+    ":searchEverywhere",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/project/shared:project_test_lib",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+    "//platform/util/text-matching:text-matching_test_lib",
+    "//platform/usageView:usageView_test_lib",
+    "//platform/execution-impl:execution-impl_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/scopes:scopes_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//platform/lang-api:lang_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.searchEverywhere` end

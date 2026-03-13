@@ -6,11 +6,17 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JSeparator;
+import javax.swing.LookAndFeel;
+import javax.swing.SwingConstants;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicSeparatorUI;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 
 public class DarculaSeparatorUI extends BasicSeparatorUI {
   private static final JBValue STRIPE_WIDTH = new JBValue.Float(1);

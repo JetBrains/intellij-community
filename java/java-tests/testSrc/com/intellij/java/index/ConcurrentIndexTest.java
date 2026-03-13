@@ -4,6 +4,7 @@ package com.intellij.java.index;
 import com.intellij.idea.IJIgnore;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FCTSBackedLighterAST;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -45,15 +46,16 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
   public void test_concurrent_switching_with_checkCanceled() throws ExecutionException, InterruptedException {
     int N = Math.max(2, Runtime.getRuntime().availableProcessors());
     int halfN = N / 2;
+    Application app = ApplicationManager.getApplication();
     for (int iteration = 1; iteration <= 200; iteration++) {
-      final String name = "Foo" + iteration;
+      String name = "Foo" + iteration;
 
       myFixture.addFileToProject(name + ".java", "class " + name + " {}");
       List<Future<?>> futuresToWait = new ArrayList<>();
-      final CountDownLatch sameStartCondition = new CountDownLatch(N);
+      CountDownLatch sameStartCondition = new CountDownLatch(N);
 
       for (int i = 1; i <= halfN; i++) {
-        futuresToWait.add(ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        futuresToWait.add(app.executeOnPooledThread(() -> {
           sameStartCondition.countDown();
           try {
             sameStartCondition.await();
@@ -62,8 +64,8 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
             throw new RuntimeException(e);
           }
           for (int j = 0; j <= 10; j++) {
-            new BombedProgressIndicator(10).runBombed(() -> {
-              ApplicationManager.getApplication().runReadAction(() -> checkFindClass(name));
+            new BombedProgressIndicator(/*cancelAfter: */ 10 /*invocations*/).runBombed(() -> {
+              app.runReadAction(() -> checkFindClass(name));
             });
           }
         }));
@@ -71,7 +73,7 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
 
 
       for (int i = 1; i <= N - halfN; i++) {
-        futuresToWait.add(ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        futuresToWait.add(app.executeOnPooledThread(() -> {
           sameStartCondition.countDown();
           try {
             sameStartCondition.await();
@@ -79,7 +81,7 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
           catch (InterruptedException e) {
             throw new RuntimeException(e);
           }
-          ApplicationManager.getApplication().runReadAction(() -> checkFindClass(name));
+          app.runReadAction(() -> checkFindClass(name));
         }));
       }
 
@@ -96,31 +98,34 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
   public void test_cancellable_and_non_cancellable_progress() throws ExecutionException, InterruptedException {
     int N = Math.max(2, Runtime.getRuntime().availableProcessors());
     int halfN = N / 2;
-    final PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject(
+    PsiFileImpl psiFile = (PsiFileImpl)myFixture.addFileToProject(
       "Foo.java",
       "class Foo {" +
       "public void foo() {}\n".repeat(1000) +
       "}");
-    assertNotNull(myFixture.findClass("Foo").getNode());
+    assertNotNull("File.java is indexed by Stub index: Foo class could be found in Stub index",
+                  myFixture.findClass("Foo").getNode());
 
+    Application app = ApplicationManager.getApplication();
+    Project project = getProject();
     for (int i = 1; i <= 20; i++) {
       System.out.println("iteration " + i);
       int finalI = i;
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-        ((PsiJavaFile)file).getImportList()
-          .add(JavaPsiFacade.getElementFactory(getProject()).createImportStatementOnDemand("foo.bar" + finalI));
+      WriteCommandAction.runWriteCommandAction(project, () -> {
+        ((PsiJavaFile)psiFile).getImportList()
+          .add(JavaPsiFacade.getElementFactory(project).createImportStatementOnDemand("foo.bar" + finalI));
       });
       // Wait for com.intellij.codeInsight.daemon.impl.PsiChangeHandler$Change to release the reference
-      GCWatcher.tracking(file.getNode()).ensureCollectedWithinTimeout(5_000);
-      assertFalse(file.isContentsLoaded());
+      GCWatcher.tracking(psiFile.getNode()).ensureCollectedWithinTimeout(5_000);
+      assertFalse(psiFile.isContentsLoaded());
 
       List<Future<?>> futuresToWait = new ArrayList<>();
-      final CountDownLatch sameStartCondition = new CountDownLatch(N);
+      CountDownLatch sameStartCondition = new CountDownLatch(N);
 
       for (int j = 1; j <= halfN; j++) {
-        futuresToWait.add(ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          return new BombedProgressIndicator(10).runBombed(() -> {
-            ApplicationManager.getApplication().runReadAction(() -> {
+        futuresToWait.add(app.executeOnPooledThread(() -> {
+          return new BombedProgressIndicator(/*cancelAfter: */ 10 /*invocations*/).runBombed(() -> {
+            app.runReadAction(() -> {
               sameStartCondition.countDown();
               try {
                 sameStartCondition.await();
@@ -128,7 +133,8 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
               catch (InterruptedException e) {
                 throw new RuntimeException(e);
               }
-              assertNotNull(myFixture.findClass("Foo").getNode());
+              assertNotNull("File.java is indexed by Stub index: Foo class could be found in Stub index",
+                            myFixture.findClass("Foo").getNode());
             });
           });
         }));
@@ -136,8 +142,8 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
 
 
       for (int j = 1; j <= N - halfN; j++) {
-        futuresToWait.add(ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          ApplicationManager.getApplication().runReadAction(() -> {
+        futuresToWait.add(app.executeOnPooledThread(() -> {
+          app.runReadAction(() -> {
             sameStartCondition.countDown();
             try {
               sameStartCondition.await();
@@ -145,7 +151,8 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
             catch (InterruptedException e) {
               throw new RuntimeException(e);
             }
-            assertNotNull(myFixture.findClass("Foo").getNode());
+            assertNotNull("File.java is indexed by Stub index: Foo class could be found in Stub index",
+                          myFixture.findClass("Foo").getNode());
           });
         }));
       }
@@ -159,7 +166,7 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
   public void test_forceUpdateAffectsReadOfDataForUnsavedDocuments() throws ExecutionException, InterruptedException {
     int N = Math.max(2, Runtime.getRuntime().availableProcessors());
     int halfN = N / 2;
-    final PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject("Foo.java", "class Foo {" +
+    PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject("Foo.java", "class Foo {" +
                                                                                  "public void foo() {}\n".repeat(1000) +
                                                                                  "}");
     assertNotNull(myFixture.findClass("Foo").getNode());
@@ -179,7 +186,7 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
                                  "class Foo" + i + " {" + "public void foo() {}\n".repeat(1000) + "}");
 
       List<Future<?>> futuresToWait = new ArrayList<>();
-      final CountDownLatch sameStartCondition = new CountDownLatch(N);
+      CountDownLatch sameStartCondition = new CountDownLatch(N);
 
       for (int j = 1; j <= halfN; j++) {
         futuresToWait.add(ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -217,7 +224,7 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void test_concurrent_light_AST_access_during_uncommitted_document_indexing() throws ExecutionException, InterruptedException {
-    final PsiClass clazz = myFixture.addClass("class Bar { void foo(Object o) {}}");
+    PsiClass clazz = myFixture.addClass("class Bar { void foo(Object o) {}}");
 
     String text = " foo(null);";
     for (int i = 0; i <= 20; i++) {
@@ -228,7 +235,7 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
     text = "class Foo {{ " + text.repeat(200) + "}}";
 
     PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject("a.java", text);
-    final Document document = file.getViewProvider().getDocument();
+    Document document = file.getViewProvider().getDocument();
     for (int i = 1; i <= 5; i++) {
       WriteCommandAction.runWriteCommandAction(getProject(), () -> {
         document.insertString(document.getText().indexOf("null") + 1, " ");
@@ -251,7 +258,7 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
               });
           }
         }));
-      final Project project = getProject();// https://issues.apache.org/jira/browse/GROOVY-9562
+      Project project = getProject();// https://issues.apache.org/jira/browse/GROOVY-9562
       futures.add(((CoreProgressManager)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(
         new Task.Backgroundable(myFixture.getProject(), "findClass") {
           @Override

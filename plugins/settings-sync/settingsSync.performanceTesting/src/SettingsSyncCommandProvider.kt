@@ -3,7 +3,7 @@ package com.intellij.settingsSync.performanceTesting
 import com.jetbrains.performancePlugin.CommandProvider
 import com.jetbrains.performancePlugin.CreateCommand
 
-class SettingsSyncCommandProvider: CommandProvider {
+internal class SettingsSyncCommandProvider: CommandProvider {
     override fun getCommands(): MutableMap<String, CreateCommand> {
       return mutableMapOf(
         EnableSettingsSyncCommand.PREFIX to CreateCommand(::EnableSettingsSyncCommand),

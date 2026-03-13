@@ -13,7 +13,6 @@ describe('ij MCP proxy search', {timeout: SUITE_TIMEOUT_MS}, () => {
       buildUpstreamTool('search_in_files_by_text', {project_path: {type: 'string'}}, ['project_path'])
     ]
     await withProxy({
-      proxyEnv: {JETBRAINS_MCP_TOOL_MODE: 'cc'},
       tools,
       onToolCall({name, args}) {
         calls.push({name, args})
@@ -67,7 +66,6 @@ describe('ij MCP proxy search', {timeout: SUITE_TIMEOUT_MS}, () => {
     ]
     await withProxy({
       proxyEnv: {
-        JETBRAINS_MCP_TOOL_MODE: 'cc',
         JETBRAINS_MCP_PROXY_DISABLE_NEW_SEARCH: 'true'
       },
       tools,
@@ -113,7 +111,6 @@ describe('ij MCP proxy search', {timeout: SUITE_TIMEOUT_MS}, () => {
     ]
     await withProxy({
       proxyEnv: {
-        JETBRAINS_MCP_TOOL_MODE: 'cc',
         JETBRAINS_MCP_PROXY_DISABLE_NEW_SEARCH: 'true'
       },
       tools,
@@ -159,7 +156,6 @@ describe('ij MCP proxy search', {timeout: SUITE_TIMEOUT_MS}, () => {
     ]
     await withProxy({
       proxyEnv: {
-        JETBRAINS_MCP_TOOL_MODE: 'cc',
         JETBRAINS_MCP_PROXY_DISABLE_NEW_SEARCH: 'true'
       },
       tools,
@@ -196,7 +192,6 @@ describe('ij MCP proxy search', {timeout: SUITE_TIMEOUT_MS}, () => {
       buildUpstreamTool('find_files_by_glob', {project_path: {type: 'string'}}, ['project_path'])
     ]
     await withProxy({
-      proxyEnv: {JETBRAINS_MCP_TOOL_MODE: 'cc'},
       tools,
       onToolCall({name, args}) {
         calls.push({name, args})
@@ -234,7 +229,6 @@ describe('ij MCP proxy search', {timeout: SUITE_TIMEOUT_MS}, () => {
       buildUpstreamTool('search_in_files_by_regex', {project_path: {type: 'string'}}, ['project_path'])
     ]
     await withProxy({
-      proxyEnv: {JETBRAINS_MCP_TOOL_MODE: 'cc'},
       tools,
       onToolCall({name, args}) {
         calls.push({name, args})
@@ -281,7 +275,6 @@ describe('ij MCP proxy search', {timeout: SUITE_TIMEOUT_MS}, () => {
       buildUpstreamTool('find_files_by_glob', {project_path: {type: 'string'}}, ['project_path'])
     ]
     await withProxy({
-      proxyEnv: {JETBRAINS_MCP_TOOL_MODE: 'cc'},
       tools,
       onToolCall({name, args}) {
         calls.push({name, args})

@@ -142,7 +142,10 @@ f:com.intellij.openapi.actionSystem.Presentation
 - a:paint(com.intellij.openapi.editor.CustomFoldRegion,java.awt.Graphics2D,java.awt.geom.Rectangle2D,com.intellij.openapi.editor.markup.TextAttributes):V
 com.intellij.openapi.editor.EditorSettings
 - *a:getCaretEasing():com.intellij.openapi.editor.EditorSettings$CaretEasing
-- *a:isAnimatedCaret():Z
+- *a:isSmoothCaretBlinking():Z
+- *a:isSmoothCaretMovement():Z
+- *a:setSmoothCaretBlinking(Z):V
+- *a:setSmoothCaretMovement(Z):V
 *e:com.intellij.openapi.editor.EditorSettings$CaretEasing
 - java.lang.Enum
 - sf:EASE:com.intellij.openapi.editor.EditorSettings$CaretEasing
@@ -167,6 +170,8 @@ com.intellij.openapi.editor.FoldingModel
 - calcOffsetsToScroll(com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.openapi.editor.ScrollType,java.awt.Rectangle,javax.swing.JScrollPane):java.awt.Point
 - a:getHorizontalOffset(com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.openapi.editor.ScrollType,java.awt.Rectangle,javax.swing.JScrollPane):I
 - a:getVerticalOffset(com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.openapi.editor.ScrollType,java.awt.Rectangle,javax.swing.JScrollPane):I
+com.intellij.openapi.editor.colors.EditorColors
+- *sf:SELECTION_BACKGROUND_COLOR_INACTIVE:com.intellij.openapi.editor.colors.ColorKey
 a:com.intellij.openapi.editor.colors.EditorColorsManager
 - *a:getSchemeModificationCounter():J
 com.intellij.openapi.editor.highlighter.HighlighterIterator

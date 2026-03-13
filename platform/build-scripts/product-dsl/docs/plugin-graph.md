@@ -76,10 +76,10 @@ Indexes provide **O(1) lookup** by name+kind.
 The graph uses `@Volatile` store swapping for thread-safe updates:
 
 ```kotlin
-graph.updateWithModuleDependencies(results)  // swaps internal store
+updateGraphWithModuleDependencyPlans(graph, plans)  // swaps internal store
 ```
 
-This is called by `ContentModuleDependencyGenerator` after computing effective dependencies.
+This is called by `ContentModuleDependencyPlanner` after computing effective dependencies.
 
 ## DSL Usage
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.codegen
 
 import com.intellij.analysis.AnalysisBundle
@@ -190,14 +190,17 @@ class BuildersGeneratorTest {
       // The value is the pair of the old and the new content.
       val filesContent: Map<Path, Pair<Optional<String>, Optional<String>>> = fillRequests(tempProject, newEelModule, genSrcDirName)
 
-      for ((path, contentPair) in filesContent) {
-        if (contentPair.first.isPresent) {
-          val virtualFile = VfsUtil.findFile(path, true)!!
-          prettifyFile(tempProject, virtualFile)
+      // For some unclear reason, one call of prettification is not enouigh. On the second call, something can change in files.
+      repeat(2) {
+        for ((path, contentPair) in filesContent) {
+          if (contentPair.first.isPresent) {
+            val virtualFile = VfsUtil.findFile(path, true)!!
+            prettifyFile(tempProject, virtualFile)
+          }
         }
-      }
 
-      synchronizeVariousCaches(tempProject)
+        synchronizeVariousCaches(tempProject)
+      }
 
       val oldPrettifiedFiles = mutableMapOf<Path, String>()
 
@@ -233,17 +236,19 @@ class BuildersGeneratorTest {
           }
         }
       }
-
-      for ((path, contentPair) in filesContent) {
-        if (contentPair.second.isEmpty) continue
-        val virtualFile = VfsUtil.findFile(path, true) ?: error("Failed to find the VFS file for $path")
-        val (_, newContent) = contentPair
-        if (newContent.isPresent) {
-          prettifyFile(tempProject, virtualFile)
+      // For some unclear reason, one call of prettification is not enouigh. On the second call, something can change in files.
+      repeat(2) {
+        for ((path, contentPair) in filesContent) {
+          if (contentPair.second.isEmpty) continue
+          val virtualFile = VfsUtil.findFile(path, true) ?: error("Failed to find the VFS file for $path")
+          val (_, newContent) = contentPair
+          if (newContent.isPresent) {
+            prettifyFile(tempProject, virtualFile)
+          }
         }
-      }
 
-      synchronizeVariousCaches(tempProject)
+        synchronizeVariousCaches(tempProject)
+      }
 
       if (unimportantChanges.isNotEmpty()) {
         logger<BuildersGeneratorTest>().warn(

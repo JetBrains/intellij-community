@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -67,17 +68,23 @@ public interface FileSystemInterface {
     throw new UnsupportedOperationException("Method not implemented");
   }
 
+  @RequiresWriteLock
   @NotNull VirtualFile createChildDirectory(@Nullable Object requestor, @NotNull VirtualFile parent, @NotNull String dir)
     throws IOException;
 
+  @RequiresWriteLock
   @NotNull VirtualFile createChildFile(@Nullable Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException;
 
+  @RequiresWriteLock
   void deleteFile(Object requestor, @NotNull VirtualFile file) throws IOException;
 
+  @RequiresWriteLock
   void moveFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent) throws IOException;
 
+  @RequiresWriteLock
   void renameFile(Object requestor, @NotNull VirtualFile file, @NotNull String newName) throws IOException;
 
+  @RequiresWriteLock
   @NotNull VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String copyName)
     throws IOException;
 

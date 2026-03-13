@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import path from 'node:path'
 import {cwd, env} from 'node:process'
+import {fileURLToPath} from 'node:url'
 import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {Server} from '@modelcontextprotocol/sdk/server/index.js'
 import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js'
@@ -15,8 +16,7 @@ import {createProjectPathManager} from './project-path'
 import {createStreamTransport} from './stream-transport'
 import {setIdeVersion} from './workarounds'
 import {BLOCKED_TOOL_NAMES, getReplacedToolNames} from './proxy-tools/registry'
-import type {ToolModeInfo} from './proxy-tools/tooling'
-import {createProxyTooling, resolveReadCapabilities, resolveSearchCapabilities, resolveToolMode, TOOL_MODES} from './proxy-tools/tooling'
+import {createProxyTooling, resolveReadCapabilities, resolveSearchCapabilities} from './proxy-tools/tooling'
 import {extractTextFromResult} from './proxy-tools/shared'
 import type {ToolArgs, ToolResultLike, ToolSpecLike} from './proxy-tools/types'
 
@@ -75,14 +75,32 @@ function buildStreamUrl(port: number): string {
   return `http://${defaultHost}:${port}${defaultPath}`
 }
 
+function resolveProjectPath(rawValue: string | undefined): {projectPath: string; warning?: string} {
+  if (!rawValue) {
+    return {projectPath: path.resolve(cwd())}
+  }
+
+  if (rawValue.startsWith('file://')) {
+    try {
+      return {projectPath: path.resolve(fileURLToPath(new URL(rawValue)))}
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      return {
+        projectPath: path.resolve(rawValue),
+        warning: `Failed to parse JETBRAINS_MCP_PROJECT_PATH as a file URI (${message}); falling back to path resolution.`
+      }
+    }
+  }
+
+  return {projectPath: path.resolve(rawValue)}
+}
+
 const explicitProjectPath = env.JETBRAINS_MCP_PROJECT_PATH
-const projectPath = explicitProjectPath && explicitProjectPath.length > 0
-  ? path.resolve(explicitProjectPath)
-  : path.resolve(cwd())
+const projectPathResolution = resolveProjectPath(explicitProjectPath)
+const projectPath = projectPathResolution.projectPath
 const defaultProjectPathKey = 'project_path'
 const projectPathManager = createProjectPathManager({projectPath, defaultProjectPathKey})
 
-const toolModeInfo: ToolModeInfo = resolveToolMode(env.JETBRAINS_MCP_TOOL_MODE)
 const REPLACED_TOOL_NAMES = getReplacedToolNames()
 const BASE_BLOCKED_TOOL_NAMES = new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES])
 let searchCapabilities = resolveSearchCapabilities([]).capabilities
@@ -90,9 +108,6 @@ let readCapabilities = resolveReadCapabilities([]).capabilities
 
 function blockedToolMessage(toolName: string): string {
   if (toolName === 'create_new_file') {
-    if (toolModeInfo.mode === TOOL_MODES.CC) {
-      return `Tool '${toolName}' is not exposed by ij-proxy. Use 'write' instead.`
-    }
     return `Tool '${toolName}' is not exposed by ij-proxy. Use 'apply_patch' instead.`
   }
   return `Tool '${toolName}' is not exposed by ij-proxy.`
@@ -108,7 +123,6 @@ function updateProxyTooling(): void {
   const tooling = createProxyTooling({
     projectPath,
     callUpstreamTool,
-    toolMode: toolModeInfo.mode,
     searchCapabilities,
     readCapabilities
   })
@@ -131,8 +145,8 @@ function warn(message: string): void {
 
 void clearLogFile()
 
-if (toolModeInfo.warning) {
-  warn(toolModeInfo.warning)
+if (projectPathResolution.warning) {
+  warn(projectPathResolution.warning)
 }
 
 

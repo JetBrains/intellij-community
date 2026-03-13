@@ -7,8 +7,11 @@ import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.tree.TreeUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import java.awt.Dimension;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.util.Set;

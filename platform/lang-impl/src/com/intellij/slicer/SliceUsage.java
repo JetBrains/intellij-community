@@ -61,7 +61,7 @@ public abstract class SliceUsage extends UsageInfo2UsageAdapter {
   }
 
   public void processChildren(@NotNull Processor<? super SliceUsage> processor) {
-    final PsiElement element = ReadAction.compute(this::getElement);
+    final PsiElement element = ReadAction.computeBlocking(this::getElement);
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     indicator.checkCanceled();
 

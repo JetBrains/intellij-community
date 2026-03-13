@@ -51,6 +51,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * A handler for git commands
@@ -462,6 +463,11 @@ public abstract class GitHandler {
   }
 
   private void start() {
+    if (myProject == null && !TrustedProjects.isProjectTrusted(Objects.requireNonNull(getWorkingDirectory()))) {
+      throw new IllegalStateException("Shouldn't be possible to run a Git command in potentially untrusted project. " +
+                                      "Pass Project to GitHandler constructor if applicable.");
+    }
+
     if (myProject != null && !myProject.isDefault() && !TrustedProjects.isProjectTrusted(myProject)) {
       throw new IllegalStateException("Shouldn't be possible to run a Git command in the safe mode");
     }

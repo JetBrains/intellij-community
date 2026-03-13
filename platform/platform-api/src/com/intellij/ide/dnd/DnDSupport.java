@@ -10,8 +10,9 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Image;
+import java.awt.Point;
 import java.awt.dnd.DragSourceDropEvent;
 
 /**

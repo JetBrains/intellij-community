@@ -37,11 +37,11 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
 
   var initialMessage: String? = null
 
-  override var isAmendCommitMode: Boolean
-    get() = commitContext.isAmendCommitMode
+  override var commitToAmend: CommitToAmend
+    get() = commitContext.commitToAmend
     set(value) {
-      if (commitContext.isAmendCommitMode != value) {
-        commitContext.isAmendCommitMode = value
+      if (commitContext.commitToAmend != value) {
+        commitContext.commitToAmend = value
         amendCommitModeToggled()
       }
     }
@@ -49,7 +49,7 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
   protected open fun amendCommitModeToggled() {
     fireAmendCommitModeToggled()
 
-    if (isAmendCommitMode) setAmendMessage() else restoreBeforeAmendMessage()
+    if (commitToAmend is CommitToAmend.Last) setAmendMessage() else restoreBeforeAmendMessage()
     workflowHandler.updateDefaultCommitActionName()
   }
 
@@ -59,10 +59,21 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
 
   override fun isAmendCommitModeSupported(): Boolean =
     workflow.isDefaultCommitEnabled &&
-    workflow.vcses.mapNotNull { it.checkinEnvironment }.filterIsInstance<AmendCommitAware>().any { it.isAmendCommitSupported() }
+    getAmendCommitAwareCheckinEnvironments().any { it.isAmendCommitSupported() }
+
+  override fun isAmendSpecificCommitSupported(): Boolean = isAmendCommitModeSupported() &&
+                                                           getAmendCommitAwareCheckinEnvironments().any { it.isAmendSpecificCommitSupported() }
+
+  private fun getAmendCommitAwareCheckinEnvironments(): List<AmendCommitAware> = workflow.vcses.mapNotNull { it.checkinEnvironment }.filterIsInstance<AmendCommitAware>()
 
   override fun addAmendCommitModeListener(listener: AmendCommitModeListener, parent: Disposable) =
     amendCommitEventDispatcher.addListener(listener, parent)
+
+  override suspend fun getAmendSpecificCommitTargets(limit: Int): List<CommitToAmend.Specific> {
+    val singleRoot = getSingleRoot()
+    val amendAware = singleRoot?.vcs?.checkinEnvironment as? AmendCommitAware
+    return amendAware?.getAmendSpecificCommitTargets(singleRoot.path, limit) ?: emptyList()
+  }
 
   private fun setAmendMessage() {
     val beforeAmendMessage = workflowHandler.getCommitMessage()

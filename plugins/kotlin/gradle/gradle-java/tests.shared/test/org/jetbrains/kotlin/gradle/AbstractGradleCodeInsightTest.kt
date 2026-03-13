@@ -129,7 +129,7 @@ abstract class AbstractGradleCodeInsightTest : AbstractKotlinGradleCodeInsightBa
         )
     }
 
-    class TestFile internal constructor(val path: String, val content: String, val directives: Directives)
+    class TestFile(val path: String, val content: String, val directives: Directives)
 
     companion object {
         @JvmStatic

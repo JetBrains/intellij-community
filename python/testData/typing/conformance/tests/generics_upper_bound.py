@@ -34,13 +34,14 @@ def longer(x: ST, y: ST) -> ST:
         return y
 
 
-assert_type(longer([1], [1, 2]), list[int])
-assert_type(longer({1}, {1, 2}), set[int])
+def f(list1: list[int], list2: list[int], set1: set[int], set2: set[int]):
+    assert_type(longer(list1, list2), list[int])
+    assert_type(longer(set1, set2), set[int])
 
-# Type checkers that use a join rather than a union (like mypy)
-# will produce Collection[int] here instead of list[int] | set[int].
-# Both answers are conformant with the spec.
-assert_type(longer([1], {1, 2}), list[int] | set[int])  # E?
+    # Either answer here is conformant with the spec;
+    # exactly one should pass:
+    assert_type(longer(list1, set1), list[int] | set[int])  # E[mixed-collections]
+    assert_type(longer(list1, set1), Collection[int])  # E[mixed-collections]
 
 
 def requires_collection(c: Collection[int]) -> None: ...

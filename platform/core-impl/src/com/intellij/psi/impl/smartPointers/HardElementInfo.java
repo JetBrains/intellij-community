@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.util.Segment;
@@ -8,6 +8,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Holds a direct (hard) reference to a {@link PsiElement}. No range tracking or survival across
+ * reparse — used for non-physical PSI that cannot be restored by position (e.g., light elements).
+ */
 class HardElementInfo extends SmartPointerElementInfo {
   private final @NotNull PsiElement myElement;
 

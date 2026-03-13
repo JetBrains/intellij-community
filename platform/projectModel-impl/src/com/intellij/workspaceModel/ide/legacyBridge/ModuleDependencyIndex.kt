@@ -9,7 +9,7 @@ import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.SdkId
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.util.*
+import java.util.EventListener
 
 /**
  * Maintains index of libraries and SDKs referenced from project's modules. This is an internal low-level API, it isn't supposed to be used

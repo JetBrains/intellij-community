@@ -1,4 +1,5 @@
 // "Add non-null asserted (c!!) call" "true"
+// K2_ERROR: Non-nullable value required to call an 'iterator()' method in a for-loop.
 fun <T: Collection<Int>?> foo(c: T) {
     for (i in <caret>c) { }
 }

@@ -81,6 +81,11 @@ public class BuildNumberTest {
   }
 
   @Test
+  public void semVerSnapshotVersion() {
+    assertTrue(BuildNumber.fromString("IU-145.1.2-SNAPSHOT").isSnapshot());
+  }
+
+  @Test
   public void devSnapshotVersionWithProductCode() {
     BuildNumber b = BuildNumber.fromString("IU-__BUILD__");
     assertTrue(b.asString(), b.getBaselineVersion() >= 145 && b.getBaselineVersion() <= 3000);

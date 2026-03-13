@@ -10,6 +10,10 @@ import com.intellij.openapi.actionSystem.Separator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated The separator is no longer used in NewGroup
+ */
+@Deprecated
 public final class FileTemplateSeparator extends ActionGroup {
 
   @Override

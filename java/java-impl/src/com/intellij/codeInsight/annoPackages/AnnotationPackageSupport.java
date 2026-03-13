@@ -66,4 +66,12 @@ public interface AnnotationPackageSupport {
   default boolean canAnnotateLocals() {
     return true;
   }
+
+  /**
+   * @return true if the non-null annotation reported by this support is used for the instrumentation or code generation.
+   * In this case, it won't be reported as redundant if it appears in the scope of container non-null annotation.
+   */
+  default boolean isNonNullUsedForInstrumentation() {
+    return false;
+  }
 }

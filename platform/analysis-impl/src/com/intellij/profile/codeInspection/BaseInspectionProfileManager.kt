@@ -9,8 +9,9 @@ import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.project.Project
 import com.intellij.util.messages.MessageBus
+import org.jetbrains.annotations.ApiStatus.Internal
 
-abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  InspectionProjectProfileManager() {
+abstract class BaseInspectionProfileManager(messageBus: MessageBus) : InspectionProjectProfileManager() {
   protected abstract val schemeManager: SchemeManager<InspectionProfileImpl>
 
   private val severityRegistrar = SeverityRegistrar(messageBus)
@@ -21,6 +22,21 @@ abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  Inspectio
     for (profile in schemeManager.allSchemes) {
       profile.cleanup(project)
     }
+  }
+
+  @Internal
+  fun normalizeRemovedSeverities(removedSeverityNames: Set<String>): List<InspectionProfileImpl> {
+    if (removedSeverityNames.isEmpty()) {
+      return emptyList()
+    }
+
+    val changedProfiles = ArrayList<InspectionProfileImpl>()
+    for (profile in schemeManager.allSchemes) {
+      if (profile.normalizeRemovedSeverities(removedSeverityNames)) {
+        changedProfiles.add(profile)
+      }
+    }
+    return changedProfiles
   }
 
   fun addProfile(profile: InspectionProfileImpl) {

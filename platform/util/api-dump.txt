@@ -236,6 +236,8 @@ com.intellij.openapi.util.text.CharFilter
 - sf:NOT_WHITESPACE_FILTER:com.intellij.openapi.util.text.CharFilter
 - sf:WHITESPACE_FILTER:com.intellij.openapi.util.text.CharFilter
 - a:accept(C):Z
+Fc:com.intellij.openapi.util.text.StringUtil
+- s:endsWithIgnoreWhitespaces(java.lang.CharSequence,java.lang.CharSequence):Z
 com.intellij.ui.IconManager
 - sf:Companion:com.intellij.ui.IconManager$Companion
 - colorize(java.awt.Graphics2D,javax.swing.Icon,java.awt.Color):javax.swing.Icon
@@ -605,6 +607,41 @@ f:com.intellij.util.system.OS$WindowsInfo
 f:com.intellij.util.text.TextRangeUtil
 - s:mergeRanges(java.util.List):java.util.List
 - s:mergeRanges(java.util.List,I):java.util.List
+f:com.intellij.util.ui.JdkConstants
+@:com.intellij.util.ui.JdkConstants$AdjustableOrientation
+- java.lang.annotation.Annotation
+@:com.intellij.util.ui.JdkConstants$BoxLayoutAxis
+- java.lang.annotation.Annotation
+@:com.intellij.util.ui.JdkConstants$CalendarMonth
+- java.lang.annotation.Annotation
+@:com.intellij.util.ui.JdkConstants$CursorType
+- java.lang.annotation.Annotation
+@:com.intellij.util.ui.JdkConstants$FlowLayoutAlignment
+- java.lang.annotation.Annotation
+@:com.intellij.util.ui.JdkConstants$FontStyle
+- java.lang.annotation.Annotation
+@:com.intellij.util.ui.JdkConstants$HorizontalAlignment
+- java.lang.annotation.Annotation
+@:com.intellij.util.ui.JdkConstants$HorizontalScrollBarPolicy
+- java.lang.annotation.Annotation
+@:com.intellij.util.ui.JdkConstants$InputEventMask
+- java.lang.annotation.Annotation
+@:com.intellij.util.ui.JdkConstants$ListSelectionMode
+- java.lang.annotation.Annotation
+@:com.intellij.util.ui.JdkConstants$PatternFlags
+- java.lang.annotation.Annotation
+@:com.intellij.util.ui.JdkConstants$TabLayoutPolicy
+- java.lang.annotation.Annotation
+@:com.intellij.util.ui.JdkConstants$TabPlacement
+- java.lang.annotation.Annotation
+@:com.intellij.util.ui.JdkConstants$TitledBorderJustification
+- java.lang.annotation.Annotation
+@:com.intellij.util.ui.JdkConstants$TitledBorderTitlePosition
+- java.lang.annotation.Annotation
+@:com.intellij.util.ui.JdkConstants$TreeSelectionMode
+- java.lang.annotation.Annotation
+@:com.intellij.util.ui.JdkConstants$VerticalScrollBarPolicy
+- java.lang.annotation.Annotation
 com.intellij.util.xmlb.Accessor
 - a:getAnnotation(java.lang.Class):java.lang.annotation.Annotation
 - a:getGenericType():java.lang.reflect.Type

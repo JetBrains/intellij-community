@@ -3,8 +3,14 @@ package com.intellij.ui.components.panels
 
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import java.awt.*
-import javax.swing.SwingConstants.*
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.LayoutManager
+import java.awt.Rectangle
+import javax.swing.SwingConstants.CENTER
+import javax.swing.SwingConstants.LEFT
+import javax.swing.SwingConstants.RIGHT
 
 /**
  * This class is intended to lay out added components in a grid, which cells have the same size.

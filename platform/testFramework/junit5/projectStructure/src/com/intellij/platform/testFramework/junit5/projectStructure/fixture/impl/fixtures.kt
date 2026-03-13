@@ -2,14 +2,8 @@
 package com.intellij.platform.testFramework.junit5.projectStructure.fixture.impl
 
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.junit5.fixture.TestFixture
@@ -24,9 +18,7 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.nio.file.Path
-import kotlin.io.path.Path
 import kotlin.io.path.exists
-import kotlin.io.path.pathString
 import kotlin.io.path.writeText
 
 @TestOnly

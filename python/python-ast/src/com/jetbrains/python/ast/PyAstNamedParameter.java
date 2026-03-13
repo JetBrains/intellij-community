@@ -22,7 +22,7 @@ import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.ObjectUtils;
-import com.jetbrains.python.PyNamesKt;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.ast.impl.ParamHelperCore;
@@ -176,11 +176,11 @@ public interface PyAstNamedParameter extends PyAstParameter, PsiNamedElement, Ps
         thisSeen = true;
       }
       else if (!thisSeen) {
-        allBeforeThisPrivate &= param.getName() != null && PyNamesKt.isPrivate(param.getName());
+        allBeforeThisPrivate &= param.getName() != null && PyNames.isPrivate(param.getName());
       }
     }
     // Legacy-style positional only
-    return thisSeen && allBeforeThisPrivate && getName() != null && PyNamesKt.isPrivate(getName());
+    return thisSeen && allBeforeThisPrivate && getName() != null && PyNames.isPrivate(getName());
   }
 
   @Override

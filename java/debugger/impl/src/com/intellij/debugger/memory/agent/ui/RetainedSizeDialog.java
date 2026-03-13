@@ -22,7 +22,6 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.ObjectReference;
-import icons.PlatformDebuggerImplIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -150,7 +149,7 @@ public final class RetainedSizeDialog extends MemoryAgentDialog {
       if (!mySkipNotification && node instanceof XValueNodeImpl nodeImpl &&
           nodeImpl != nodeImpl.getTree().getRoot() && myHeldObjects.contains(getObjectReference(nodeImpl))) {
         XValuePresentation presentation = nodeImpl.getValuePresentation();
-        if (presentation != null && nodeImpl.getIcon() != PlatformDebuggerImplIcons.PinToTop.UnpinnedItem) {
+        if (presentation != null && nodeImpl.getIcon() != AllIcons.Debugger.PinToTop.UnpinnedItem) {
           highlightNode(nodeImpl);
         }
       }
@@ -160,7 +159,7 @@ public final class RetainedSizeDialog extends MemoryAgentDialog {
     public void highlightNode(@NotNull XValueNodeImpl node) {
       XValuePresentation presentation = node.getValuePresentation();
       Icon icon = node.getIcon();
-      if (presentation != null && icon != PlatformDebuggerImplIcons.PinToTop.UnpinnedItem) {
+      if (presentation != null && icon != AllIcons.Debugger.PinToTop.UnpinnedItem) {
         mySkipNotification = true;
         node.applyPresentation(
           myCachedIcons.computeIfAbsent(icon, nodeIcon -> LayeredIcon.layeredIcon(new Icon[]{nodeIcon, HELD_OBJECTS_MARK_ICON})),

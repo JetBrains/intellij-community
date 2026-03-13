@@ -1,5 +1,7 @@
 // "Change type of 'transformer' to '(Int) -> R'" "false"
 // WITH_STDLIB
+// K2_ERROR: Argument type mismatch: actual type is 'String', but '(Int) -> uninferred R (of fun <T, R> Iterable<T>.map)' was expected.
+// K2_ERROR: Cannot infer type for type parameter 'R'. Specify it explicitly.
 // K2_AFTER_ERROR: Argument type mismatch: actual type is 'String', but '(Int) -> uninferred R (of fun <T, R> Iterable<T>.map)' was expected.
 // K2_AFTER_ERROR: Cannot infer type for type parameter 'R'. Specify it explicitly.
 // ERROR: Type mismatch: inferred type is String but (TypeVariable(T)) -> TypeVariable(R) was expected

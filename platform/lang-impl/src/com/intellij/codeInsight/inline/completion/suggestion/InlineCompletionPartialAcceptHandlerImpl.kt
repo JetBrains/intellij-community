@@ -20,7 +20,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.LinkedList
 
 @ApiStatus.Experimental
 internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartialAcceptHandler {

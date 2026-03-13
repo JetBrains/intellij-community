@@ -8,8 +8,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JScrollPane;
+import javax.swing.JViewport;
+import java.awt.Component;
 import java.awt.event.MouseWheelEvent;
 import java.util.LinkedList;
 import java.util.List;

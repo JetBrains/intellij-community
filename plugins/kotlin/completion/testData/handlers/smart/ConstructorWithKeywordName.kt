@@ -9,4 +9,3 @@ fun f(){
 }
 
 // AUTOCOMPLETE_SETTING: true
-// IGNORE_K2

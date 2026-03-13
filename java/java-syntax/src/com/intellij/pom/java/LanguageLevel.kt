@@ -123,10 +123,10 @@ enum class LanguageLevel {
   }
 
   /**
-   * @return corresponding non-preview level; this if this level is non-preview already
+   * @return corresponding non-preview level, `this` for [JDK_X] and non-preview levels.
    */
   fun getNonPreviewLevel(): LanguageLevel {
-    if (!isPreview) return this
+    if (!isPreview || this == JDK_X) return this
     return requireNotNull(ourStandardVersions[myVersion.feature])
   }
 

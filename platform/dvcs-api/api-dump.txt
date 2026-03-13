@@ -84,8 +84,10 @@ com.intellij.dvcs.push.PushTarget
 - a:hasSomethingToPush():Z
 a:com.intellij.dvcs.push.PushTargetPanel
 - javax.swing.JPanel
+- com.intellij.openapi.Disposable
 - <init>():V
 - a:addTargetEditorListener(com.intellij.dvcs.push.ui.PushTargetEditorListener):V
+- dispose():V
 - editingStarted():V
 - a:fireOnCancel():V
 - a:fireOnChange():V

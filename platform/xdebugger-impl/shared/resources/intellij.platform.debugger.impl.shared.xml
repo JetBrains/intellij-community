@@ -13,12 +13,15 @@
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.debugger"/>
     <module name="intellij.platform.debugger.impl.rpc"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.rpc.topics"/>
+    <module name="intellij.platform.util.coroutines"/>
   </dependencies>
   <!-- endregion -->
 

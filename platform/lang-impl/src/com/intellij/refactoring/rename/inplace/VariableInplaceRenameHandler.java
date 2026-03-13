@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -33,7 +33,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
   public final boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
     final PsiElement element = PsiElementRenameHandler.getElement(dataContext);
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
+    final PsiFile file = editor instanceof EditorWindow window ? window.getInjectedFile() : CommonDataKeys.PSI_FILE.getData(dataContext);
     if (editor == null || file == null) return false;
 
     if (ourPreventInlineRenameFlag.get() != null) {
@@ -42,11 +42,9 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     return isAvailable(element, editor, file);
   }
 
-  protected boolean isAvailable(@Nullable PsiElement element,
-                                @NotNull Editor editor,
-                                @NotNull PsiFile file) {
-    final PsiElement nameSuggestionContext = file.findElementAt(editor.getCaretModel().getOffset());
+  protected boolean isAvailable(@Nullable PsiElement element, @NotNull Editor editor, @NotNull PsiFile file) {
     if (element == null || !element.isValid()) return false;
+    PsiElement nameSuggestionContext = file.findElementAt(editor.getCaretModel().getOffset());
     RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.getInstance().forContext(element);
     return supportProvider != null &&
            editor.getSettings().isVariableInplaceRenameEnabled() &&
@@ -54,15 +52,15 @@ public class VariableInplaceRenameHandler implements RenameHandler {
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     PsiElement element = PsiElementRenameHandler.getElement(dataContext);
     if (element == null) {
       if (LookupManager.getActiveLookup(editor) != null) {
         final PsiElement elementUnderCaret = file.findElementAt(editor.getCaretModel().getOffset());
         if (elementUnderCaret != null) {
           final PsiElement parent = elementUnderCaret.getParent();
-          if (parent instanceof PsiReference) {
-            element = ((PsiReference)parent).resolve();
+          if (parent instanceof PsiReference ref) {
+            element = ref.resolve();
           }
           else {
             element = PsiTreeUtil.getParentOfType(elementUnderCaret, PsiNamedElement.class);
@@ -81,9 +79,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     PsiElement @NotNull [] elements,
-                     @NotNull DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, @NotNull DataContext dataContext) {
     PsiElement element = elements.length == 1 ? elements[0] : null;
     if (element == null) element = PsiElementRenameHandler.getElement(dataContext);
     LOG.assertTrue(element != null);
@@ -94,7 +90,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     }
   }
 
-  protected boolean checkAvailable(final PsiElement elementToRename, final Editor editor, final DataContext dataContext) {
+  protected boolean checkAvailable(PsiElement elementToRename, Editor editor, DataContext dataContext) {
     if (!isAvailableOnDataContext(dataContext)) {
       LOG.error("Recursive invocation");
       RenameHandler handler = RenameHandlerRegistry.getInstance().getRenameHandler(dataContext);

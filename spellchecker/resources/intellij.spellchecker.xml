@@ -1,10 +1,21 @@
 <idea-plugin visibility="public">
   <module value="com.intellij.modules.spellchecker"/>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.backend"/>
-    <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.libraries.lucene.common"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.vcs.impl"/>
   </dependencies>
+  <!-- endregion -->
   <extensionPoints>
     <extensionPoint name="spellchecker.support" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.spellchecker.tokenizer.SpellcheckingStrategy"/>

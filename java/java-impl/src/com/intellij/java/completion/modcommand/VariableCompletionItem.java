@@ -60,13 +60,14 @@ final class VariableCompletionItem extends PsiUpdateCompletionItem<PsiVariable> 
   @NlsSafe private final @Nullable String myTailText;
   private final PsiSubstitutor mySubstitutor;
   private final @Nullable PsiClass myQualifierClass;
+  private final double myPriority;
 
   VariableCompletionItem(PsiVariable var) {
-    this(var, null, null, PsiSubstitutor.EMPTY, null);
+    this(var, null, null, PsiSubstitutor.EMPTY, null, 0);
   }
 
   VariableCompletionItem(PsiField field, boolean shouldImport) {
-    this(field, new MemberLookupHelper(field, field.getContainingClass(), shouldImport, false), null, PsiSubstitutor.EMPTY, null);
+    this(field, new MemberLookupHelper(field, field.getContainingClass(), shouldImport, false), null, PsiSubstitutor.EMPTY, null, 0);
   }
 
   /**
@@ -74,16 +75,18 @@ final class VariableCompletionItem extends PsiUpdateCompletionItem<PsiVariable> 
    * @param tailText specific tail text to insert (initializer text is used if not specified)
    */
   VariableCompletionItem(PsiVariable var, @Nls String tailText) {
-    this(var, null, tailText, PsiSubstitutor.EMPTY, null);
+    this(var, null, tailText, PsiSubstitutor.EMPTY, null, -1);
   }
 
-  private VariableCompletionItem(PsiVariable var, 
-                                 @Nullable MemberLookupHelper helper, 
+  private VariableCompletionItem(PsiVariable var,
+                                 @Nullable MemberLookupHelper helper,
                                  @Nullable @Nls String tailText,
                                  PsiSubstitutor substitutor,
-                                 @Nullable PsiClass qualifierClass) {
+                                 @Nullable PsiClass qualifierClass, 
+                                 double priority) {
     super(Objects.requireNonNull(var.getName()), var);
     myHelper = helper;
+    myPriority = priority;
     myTailText = tailText == null ? VariableLookupItem.getInitializerText(var) : tailText;
     myNegatable = TypeConversionUtil.isBooleanType(var.getType());
     mySubstitutor = substitutor;
@@ -91,7 +94,7 @@ final class VariableCompletionItem extends PsiUpdateCompletionItem<PsiVariable> 
   }
 
   public VariableCompletionItem withSubstitutor(PsiSubstitutor substitutor) {
-    return new VariableCompletionItem(contextObject(), myHelper, myTailText, substitutor, myQualifierClass);
+    return new VariableCompletionItem(contextObject(), myHelper, myTailText, substitutor, myQualifierClass, 0);
   }
 
   @ApiStatus.Internal
@@ -107,7 +110,7 @@ final class VariableCompletionItem extends PsiUpdateCompletionItem<PsiVariable> 
         aClass = origClass;
       }
       if (aClass != null && aClass.getName() != null) {
-        return new VariableCompletionItem(var, myHelper, myTailText, mySubstitutor, aClass);
+        return new VariableCompletionItem(var, myHelper, myTailText, mySubstitutor, aClass, 0);
       }
     }
     return this;
@@ -291,5 +294,10 @@ final class VariableCompletionItem extends PsiUpdateCompletionItem<PsiVariable> 
     ModCompletionItemPresentation presentation = new ModCompletionItemPresentation(main)
       .withMainIcon(() -> variable.getIcon(0));
     return presentation.withDetailText(JavaModCompletionUtils.typeMarkup(mySubstitutor.substitute(variable.getType())));
+  }
+
+  @Override
+  public double priority() {
+    return myPriority;
   }
 }

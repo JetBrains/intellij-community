@@ -1,9 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.intellij.idea.TestFor
 import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.psi.PsiManager
@@ -38,6 +35,8 @@ import com.intellij.util.indexing.diagnostic.dto.JsonRuntimeInfo
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
 import org.junit.Assert
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.io.BufferedReader
 import java.io.StringReader
 import java.nio.file.Files
@@ -91,7 +90,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
   }
 
   fun `test empty index diagnostic with default fields can be deserialized`() {
-    val mapper = jacksonObjectMapper().registerKotlinModule()
+    val mapper = jacksonObjectMapper()
 
     val indexDiagnostic = JsonIndexingActivityDiagnostic()
     println(mapper.writeValueAsString(indexDiagnostic))
@@ -160,7 +159,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
       )
     )
 
-    val mapper = jacksonObjectMapper().registerKotlinModule()
+    val mapper = jacksonObjectMapper()
 
     val deserialized = deserializeDiagnostic(mapper, indexDiagnostic)
     Assert.assertEquals(indexDiagnostic, deserialized)
@@ -249,7 +248,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
       )
     )
 
-    val mapper = jacksonObjectMapper().registerKotlinModule()
+    val mapper = jacksonObjectMapper()
 
     val deserialized = deserializeDiagnostic(mapper, indexDiagnostic)
     Assert.assertEquals(indexDiagnostic, deserialized)

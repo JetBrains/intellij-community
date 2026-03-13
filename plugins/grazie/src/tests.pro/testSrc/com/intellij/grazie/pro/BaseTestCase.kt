@@ -3,20 +3,16 @@ package com.intellij.grazie.pro
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieConfig.State.Processing
+import com.intellij.grazie.GrazieTestBase.Companion.installTestChecker
 import com.intellij.grazie.GrazieTestBase.Companion.maskSaxParserFactory
 import com.intellij.grazie.cloud.license.GrazieLoginManager
 import com.intellij.grazie.cloud.license.GrazieLoginState
-import com.intellij.grazie.grammar.LanguageToolChecker
-import com.intellij.grazie.grammar.LanguageToolChecker.TestChecker
-import com.intellij.grazie.text.TextChecker
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ui.CommitMessage
-import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
@@ -28,10 +24,6 @@ import org.junit.jupiter.api.BeforeEach
 @Suppress("JUnitTestCaseWithNoTests")
 open class BaseTestCase {
 
-  companion object {
-    val TEST_CHECKER: TestChecker = TestChecker()
-  }
-
   lateinit var myFixture: CodeInsightTestFixture
   val project: Project get() = myFixture.project
   val testRootDisposable: Disposable get() = myFixture.testRootDisposable
@@ -41,7 +33,7 @@ open class BaseTestCase {
   fun setUpBaseCase() {
     myFixture = createFixture()
     initCloudProcessing()
-    installLTTestChecker()
+    installTestChecker(testRootDisposable)
     maskSaxParserFactory(testRootDisposable)
   }
 
@@ -59,12 +51,6 @@ open class BaseTestCase {
   fun tearDownBaseCase() {
     resetGrazieConfiguration()
     myFixture.tearDown()
-  }
-
-  fun installLTTestChecker() {
-    val newExtensions = TextChecker.allCheckers()
-      .map { if (it is LanguageToolChecker) TEST_CHECKER else it }
-    ExtensionTestUtil.maskExtensions(ExtensionPointName("com.intellij.grazie.textChecker"), newExtensions, testRootDisposable)
   }
 
   fun initCloudProcessing() {

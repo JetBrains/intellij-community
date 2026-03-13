@@ -6,5 +6,3 @@ fun foo(): InputStream {
 
 // EXIST: ByteArrayInputStream
 // EXIST: FileInputStream
-
-// IGNORE_K2

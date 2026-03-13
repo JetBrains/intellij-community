@@ -1,0 +1,131 @@
+class TestDoubleCompoundOr {
+   void mainTest() {
+      int i = 0;// 3
+      int i12 = 0;
+      i -= 125;// 4
+      i += i12 | i;// 5
+      i += i12 | i;// 6
+      System.out.println("i1:" + i);// 7
+      int f1 = 1;// 8
+
+      do {
+         for(int var7 = 1; var7 < 6; ++var7) {// 10
+            i += var7 | i;// 11
+            System.out.println("i:" + i);// 12
+         }
+
+         ++f1;// 15
+      } while(f1 < 299);
+
+      System.out.println("result: " + i);// 17
+   }// 18
+
+   public static void main(String[] strArr) {
+      TestDoubleCompoundOr _instance = new TestDoubleCompoundOr();// 20
+      _instance.mainTest();// 21
+   }// 22
+}
+
+class 'TestDoubleCompoundOr' {
+   method 'mainTest ()V' {
+      0      2
+      1      2
+      2      3
+      3      3
+      4      4
+      5      4
+      6      4
+      8      5
+      9      5
+      a      5
+      c      5
+      e      6
+      f      6
+      10      6
+      12      6
+      13      7
+      14      7
+      15      7
+      16      7
+      17      7
+      18      7
+      19      7
+      1a      7
+      1b      7
+      1c      7
+      1d      7
+      1e      7
+      1f      8
+      20      8
+      21      11
+      22      11
+      23      11
+      24      11
+      25      11
+      26      11
+      2a      12
+      2b      12
+      2c      12
+      2e      12
+      2f      13
+      30      13
+      31      13
+      32      13
+      33      13
+      34      13
+      35      13
+      36      13
+      37      13
+      38      13
+      39      13
+      3a      13
+      3b      11
+      41      16
+      42      16
+      43      16
+      44      17
+      45      17
+      46      17
+      47      17
+      48      17
+      4b      19
+      4c      19
+      4d      19
+      4e      19
+      4f      19
+      50      19
+      51      19
+      52      19
+      53      19
+      54      19
+      55      19
+      56      19
+      57      20
+   }
+
+   method 'main ([Ljava/lang/String;)V' {
+      7      23
+      8      24
+      9      24
+      a      24
+      b      24
+      c      25
+   }
+}
+
+Lines mapping:
+3 <-> 3
+4 <-> 5
+5 <-> 6
+6 <-> 7
+7 <-> 8
+8 <-> 9
+10 <-> 12
+11 <-> 13
+12 <-> 14
+15 <-> 17
+17 <-> 20
+18 <-> 21
+20 <-> 24
+21 <-> 25
+22 <-> 26

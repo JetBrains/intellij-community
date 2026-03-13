@@ -1,0 +1,5 @@
+// FILE: build.gradle.kts
+// "EXPECTED-NAVIGATION-SUBSTRING": "val fromBuildSrc = "my-conventions.gradle.kts""
+plugins {
+    `my-<caret>conventions`
+}

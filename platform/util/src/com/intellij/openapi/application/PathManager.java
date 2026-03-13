@@ -260,8 +260,7 @@ public final class PathManager {
     return null;
   }
 
-  @Nullable
-  private static Path getIdeaHomeUpwards(Path start) {
+  private static @Nullable Path getIdeaHomeUpwards(Path start) {
     Path root = start.toAbsolutePath();
     do root = root.getParent();
     while (root != null && !isIdeaHome(root));
@@ -274,8 +273,7 @@ public final class PathManager {
    * (monorepo.devkit.use.bazel.compile=true)
    * this is a temporary solution while we're still using JPS model for ultimate monorepo
    */
-  @Nullable
-  private static Path getIdeaHomeFromBazelExecRoot(Path start) throws IOException {
+  private static @Nullable Path getIdeaHomeFromBazelExecRoot(Path start) throws IOException {
     String workspacePrefix = "WORKSPACE: ";
 
     Path root = start.toAbsolutePath();

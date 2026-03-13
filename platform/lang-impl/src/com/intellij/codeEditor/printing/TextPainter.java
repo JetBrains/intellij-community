@@ -28,7 +28,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.font.LineMetrics;
@@ -130,7 +133,7 @@ final class TextPainter extends BasePainter {
 
   private void setSegment(RangeMarker marker) {
     if (myRangeToPrint != null) {
-      ReadAction.run(() -> myRangeToPrint.dispose());
+      ReadAction.runBlocking(() -> myRangeToPrint.dispose());
     }
     myRangeToPrint = marker;
   }
@@ -201,7 +204,7 @@ final class TextPainter extends BasePainter {
           return NO_SUCH_PAGE;
         }
       }
-      return ReadAction.compute(() -> isValidRange(myRangeToPrint) ? PAGE_EXISTS : NO_SUCH_PAGE);
+      return ReadAction.computeBlocking(() -> isValidRange(myRangeToPrint) ? PAGE_EXISTS : NO_SUCH_PAGE);
     }
     else {
       myPerformActualDrawing = true;
@@ -210,8 +213,9 @@ final class TextPainter extends BasePainter {
     }
   }
 
-  private boolean printPageInReadAction(final Graphics2D g2d, final PageFormat pageFormat, @PropertyKey(resourceBundle = EditorBundle.BUNDLE) String progressMessageKey) {
-    return ReadAction.compute(() -> {
+  private boolean printPageInReadAction(Graphics2D g2d, PageFormat pageFormat,
+                                        @PropertyKey(resourceBundle = EditorBundle.BUNDLE) String progressMessageKey) {
+    return ReadAction.computeBlocking(() -> {
       if (!isValidRange(myRangeToPrint)) {
         return false;
       }
@@ -225,7 +229,7 @@ final class TextPainter extends BasePainter {
     myNumberOfPages = 0;
     final Ref<Boolean> firstPage = new Ref<>(Boolean.TRUE);
     final Ref<RangeMarker> tmpMarker = new Ref<>();
-    while (ReadAction.compute(() -> {
+    while (ReadAction.computeBlocking(() -> {
       if (firstPage.get()) {
         if (!isValidRange(myRangeToPrint)) {
           return false;

@@ -1,11 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.testFramework.query
 
-import com.intellij.polySymbols.testFramework.DebugOutputPrinter
-import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+import com.intellij.polySymbols.testFramework.DebugOutputPrinter
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import java.io.File

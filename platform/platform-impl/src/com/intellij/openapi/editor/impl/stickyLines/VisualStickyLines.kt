@@ -7,7 +7,6 @@ import com.intellij.util.DocumentUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Point
 import java.awt.Rectangle
-import kotlin.collections.HashSet
 import kotlin.math.max
 
 @Internal

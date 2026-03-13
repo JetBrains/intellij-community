@@ -97,9 +97,7 @@ private val SCREEN_RESOLUTION_FIELD: StringEventField = object : StringEventFiel
 private val SCREEN_RESOLUTION = GROUP.registerEvent("Screen.Resolution", Int("display_id"), SCREEN_RESOLUTION_FIELD)
 private val BACKGROUND_IMAGE_SET = Boolean("background_image_set")
 private val BACKGROUND_IMAGE = GROUP.registerEvent("background.image", BACKGROUND_IMAGE_SET)
-private val SWITCHED_FROM_CLASSIC_TO_ISLANDS = GROUP.registerEvent(
-  "switched.from.classic.to.islands", Boolean("value"),
-  "Indicates whether the user was switched during the Classic UI to Island UI migration")
+private val SWITCHED_FROM_CLASSIC_TO_ISLANDS = GROUP.registerEvent("switched.from.classic.to.islands", Boolean("value"))
 
 private suspend fun getDescriptors(): Set<MetricEvent> {
   val set = HashSet<MetricEvent>()

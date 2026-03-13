@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.filters;
 
 import com.intellij.java.syntax.parser.JavaKeywords;
@@ -14,6 +14,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class FilterUtil{
@@ -50,30 +51,31 @@ public final class FilterUtil{
     return null;
   }
 
-  public static PsiType getKeywordItemType(PsiElement context, final String keyword) {
-    if(JavaKeywords.CLASS.equals(keyword)){
+  public static @Nullable PsiType getKeywordItemType(@NotNull PsiElement context, @Nullable String keyword) {
+    if (JavaKeywords.CLASS.equals(keyword)) {
       return PsiType.getJavaLangClass(context.getManager(), context.getResolveScope());
     }
-    else if(JavaKeywords.TRUE.equals(keyword) || JavaKeywords.FALSE.equals(keyword)){
+    else if (JavaKeywords.TRUE.equals(keyword) || JavaKeywords.FALSE.equals(keyword)) {
       return PsiTypes.booleanType();
     }
-    else if(JavaKeywords.THIS.equals(keyword)){
+    else if (JavaKeywords.THIS.equals(keyword)) {
       PsiElement previousElement = getPreviousElement(context, false);
-      if(previousElement != null && ".".equals(previousElement.getText())){
+      if (previousElement != null && ".".equals(previousElement.getText())) {
         previousElement = getPreviousElement(previousElement, false);
         assert previousElement != null;
 
         final String className = previousElement.getText();
         PsiElement walker = context;
-        while(walker != null){
-          if(walker instanceof PsiClass && !(walker instanceof PsiAnonymousClass)){
-            if(className.equals(((PsiClass)walker).getName()))
+        while (walker != null) {
+          if (walker instanceof PsiClass && !(walker instanceof PsiAnonymousClass)) {
+            if (className.equals(((PsiClass)walker).getName())) {
               return getTypeByElement(walker, context);
+            }
           }
           walker = walker.getContext();
         }
       }
-      else{
+      else {
         final PsiClass owner = PsiTreeUtil.getContextOfType(context, PsiClass.class, true);
         return getTypeByElement(owner, context);
       }

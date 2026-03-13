@@ -21,15 +21,15 @@
     <orderEntry type="module" module-name="intellij.java.testFramework" />
     <orderEntry type="module-library" exported="" scope="TEST">
       <library name="ai.grazie.spell.hunspell.de" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:hunspell-de:0.2.327">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:hunspell-de:0.2.336">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-de/0.2.327/hunspell-de-0.2.327.jar">
-              <sha256sum>41ace2052e81a529fdaca24d9ac47a1323d7ac91a4e764481ef4b84477483b42</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-de/0.2.336/hunspell-de-0.2.336.jar">
+              <sha256sum>e4454be683ab6fd6d5626a2fd7d386ead4ee062e34cb923aad52595037357bec</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-de/0.2.327/hunspell-de-0.2.327.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-de/0.2.336/hunspell-de-0.2.336.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -37,15 +37,15 @@
     </orderEntry>
     <orderEntry type="module-library" exported="" scope="TEST">
       <library name="ai.grazie.spell.hunspell.ru" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:hunspell-ru:0.2.327">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:hunspell-ru:0.2.336">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-ru/0.2.327/hunspell-ru-0.2.327.jar">
-              <sha256sum>8c2b71691fbbc75cd6868aa6e7948f637470ba8b559cf6c98cacfe6b024f3513</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-ru/0.2.336/hunspell-ru-0.2.336.jar">
+              <sha256sum>8ebb7a3c23398f1a0282e17d81b31699289bf3b52ec13b869bf379e0c1687259</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-ru/0.2.327/hunspell-ru-0.2.327.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-ru/0.2.336/hunspell-ru-0.2.336.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -53,15 +53,15 @@
     </orderEntry>
     <orderEntry type="module-library" exported="" scope="TEST">
       <library name="ai.grazie.spell.hunspell.uk" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:hunspell-uk:0.2.327">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:hunspell-uk:0.2.336">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-uk/0.2.327/hunspell-uk-0.2.327.jar">
-              <sha256sum>155565ea33fdac34ffc3117bf645493a245a655eb2030b40f5f532348e72a81a</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-uk/0.2.336/hunspell-uk-0.2.336.jar">
+              <sha256sum>38f3f528331ae190200ce521bb5ea756a5c5b1f4e062b025565aeb3f75f3e800</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-uk/0.2.327/hunspell-uk-0.2.327.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-uk/0.2.336/hunspell-uk-0.2.336.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -366,5 +366,10 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jetCheck" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.images.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.regexp.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="TEST" />
   </component>
 </module>

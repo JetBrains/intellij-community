@@ -9,6 +9,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.MethodImplementor;
 import com.intellij.codeInsight.editorActions.FixDocCommentAction;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInspection.nullable.NullabilityAnnotationWrapper;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -47,6 +48,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JVMElementFactories;
 import com.intellij.psi.JVMElementFactory;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnnotationMemberValue;
 import com.intellij.psi.PsiAnnotationMethod;
 import com.intellij.psi.PsiClass;
@@ -203,9 +205,19 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
       results.add(result);
     }
 
+    results.forEach(OverrideImplementUtil::deleteAnnotationsRedundantInContainerScope);
     results.removeIf(m -> aClass.findMethodBySignature(m, false) != null);
 
     return results;
+  }
+
+  private static void deleteAnnotationsRedundantInContainerScope(PsiMethod method) {
+    for (PsiAnnotation annotation : PsiTreeUtil.findChildrenOfType(method, PsiAnnotation.class)) {
+      var wrapper = NullabilityAnnotationWrapper.from(annotation);
+      if (wrapper != null && wrapper.findContainerInfoForRedundantAnnotation() != null) {
+        annotation.delete();
+      }
+    }
   }
 
   private static @NotNull PsiClass copyClass(@NotNull PsiClass aClass) {

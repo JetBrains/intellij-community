@@ -2,7 +2,6 @@
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
-import com.intellij.ide.actions.runAnything.groups.RunAnythingCompletionGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.Service;
@@ -38,24 +37,26 @@ public final class RunAnythingCache implements PersistentStateComponent<RunAnyth
     if (visible != null) {
       return visible;
     }
-    if (group instanceof RunAnythingCompletionGroup) {
-      String name = ((RunAnythingCompletionGroup<?, ?>)group).getProvider().getClass().getCanonicalName();
-      Boolean providerValue = mySettings.myKeys.get(name);
-      if (providerValue != null) {
-        return providerValue;
-      }
-    }
     return true;
+  }
+
+
+  /**
+   * @deprecated Use {@link #saveGroupVisibilityKey(RunAnythingGroup, boolean)} instead
+   */
+  @Deprecated
+  public void saveGroupVisibilityKey(@NotNull String key, boolean visible) {
+    mySettings.myKeys.put(key, visible);
   }
 
   /**
    * Saves group visibility flag
    *
-   * @param key     to store visibility flag
+   * @param group     to store visibility flag
    * @param visible true if group should be shown
    */
-  public void saveGroupVisibilityKey(@NotNull String key, boolean visible) {
-    mySettings.myKeys.put(key, visible);
+  public void saveGroupVisibilityKey(@NotNull RunAnythingGroup group, boolean visible) {
+    mySettings.myKeys.put(group.getTitle(), visible);
   }
 
   @Override

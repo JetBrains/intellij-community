@@ -17,9 +17,13 @@ jvm_library(
     "@lib//:jmh-generator-annprocess",
     "@lib//:kotlin-stdlib",
     "//platform/util/zip",
+    "//platform/util/zip:zip_test_lib",
     "//platform/util/rt-java8",
+    "//platform/util/rt-java8:rt-java8_test_lib",
     "@community//build:zip",
+    "@community//build:zip_test_lib",
     "//libraries/hash4j",
+    "//libraries/hash4j:hash4j_test_lib",
   ],
   runtime_deps = [":benchmark"]
 )

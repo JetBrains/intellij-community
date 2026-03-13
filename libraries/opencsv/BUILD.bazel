@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-opencsv-opencsv"],
   runtime_deps = ["@lib//:libraries-opencsv-opencsv"]
 )
+
+jvm_library(
+  name = "opencsv_test_lib",
+  module_name = "intellij.libraries.opencsv",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-opencsv-opencsv"],
+  runtime_deps = [":opencsv"]
+)
 ### auto-generated section `build intellij.libraries.opencsv` end

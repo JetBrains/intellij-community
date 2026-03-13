@@ -25,4 +25,15 @@ jvm_library(
     "//libraries/kotlin/reflect",
   ]
 )
+
+jvm_library(
+  name = "detekt-compose-rules_test_lib",
+  module_name = "intellij.libraries.detekt.compose.rules",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":detekt-compose-rules",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.libraries.detekt.compose.rules` end

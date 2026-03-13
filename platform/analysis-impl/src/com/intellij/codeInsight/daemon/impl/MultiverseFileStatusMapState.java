@@ -11,7 +11,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 final class MultiverseFileStatusMapState implements FileStatusMapState {
   private final @NotNull Project myProject;
@@ -73,12 +76,30 @@ final class MultiverseFileStatusMapState implements FileStatusMapState {
   }
 
   @Override
-  public boolean allDirtyScopesAreNullFor(@NotNull List<? extends Document> documents) {
-    return documents.stream()
-      .map(d -> myDocumentToStatusMap.get(d))
-      .filter(m -> m != null)
-      .flatMap(m -> m.values().stream())
-      .allMatch(status -> !status.isDefensivelyMarkedForAnyPass() && status.isWolfPassFinished() && status.allDirtyScopesAreNull());
+  public boolean allDirtyScopesAreNullFor(@NotNull Document document) {
+    Map<CodeInsightContext, FileStatus> map = myDocumentToStatusMap.get(document);
+    if (map == null) {
+      return false;
+    }
+    for (FileStatus status : map.values()) {
+      if (status.isDefensivelyMarkedForAnyPass() || !status.isWolfPassFinished() || !status.allDirtyScopesAreNull()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public boolean allDirtyScopesAreNull() {
+    if (myDocumentToStatusMap.isEmpty()) {
+      return false;
+    }
+    for (Document document : myDocumentToStatusMap.keySet()) {
+      if (!allDirtyScopesAreNullFor(document)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override

@@ -24,6 +24,7 @@ class MavenModelVersionInlayHintCollector(val editor: Editor) : OwnBypassCollect
   override fun collectHintsForFile(file: PsiFile, sink: InlayTreeSink) {
     if (file !is XmlFile) return
     val manager = MavenProjectsManager.getInstance(file.project)
+    if (!manager.isInitialized) return
     val vFile = file.virtualFile
     if (manager.findProject(vFile) == null) return
     val modelTag = file.rootTag?.findFirstSubTag("modelVersion") ?: return

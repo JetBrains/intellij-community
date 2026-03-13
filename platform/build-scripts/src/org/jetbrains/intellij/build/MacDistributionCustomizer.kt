@@ -71,12 +71,14 @@ class MacCustomizerBuilder @PublishedApi internal constructor(private val projec
    * Path to alternative .icns file in macOS Big Sur style, relative to projectHome.
    * Specify as a relative string path - will be resolved against projectHome during build.
    */
+  @Deprecated("BigSur-style icons are now used by default")
   var icnsPathForAlternativeIcon: String? = null
 
   /**
    * Path to alternative .icns file in macOS Big Sur style for EAP, relative to projectHome.
    * Specify as a relative string path - will be resolved against projectHome during build.
    */
+  @Deprecated("BigSur-style icons are now used by default")
   var icnsPathForAlternativeIconForEAP: String? = null
 
   /**
@@ -140,7 +142,7 @@ class MacCustomizerBuilder @PublishedApi internal constructor(private val projec
   var extraExecutables: PersistentList<String> = persistentListOf()
 
   // Method override handlers (stored as lambdas)
-  private var copyAdditionalFilesHandler: (suspend (BuildContext, Path, JvmArchitecture) -> Unit)? = null
+  private var copyAdditionalFilesHandler: (suspend (Path, JvmArchitecture, BuildContext) -> Unit)? = null
   private var rootDirectoryNameHandler: ((ApplicationInfoProperties, String) -> String)? = null
   private var customIdeaPropertiesHandler: ((ApplicationInfoProperties) -> Map<String, String>)? = null
   private var binariesToSignHandler: ((BuildContext, JvmArchitecture) -> List<String>)? = null
@@ -151,7 +153,7 @@ class MacCustomizerBuilder @PublishedApi internal constructor(private val projec
    * Gets the current copyAdditionalFiles handler for wrapping purposes.
    * @return the current handler, or null if none is set
    */
-  fun getCopyAdditionalFilesHandler(): (suspend (BuildContext, Path, JvmArchitecture) -> Unit)? = copyAdditionalFilesHandler
+  fun getCopyAdditionalFilesHandler(): (suspend (Path, JvmArchitecture, BuildContext) -> Unit)? = copyAdditionalFilesHandler
 
   /**
    * Gets the current distributionUUID handler for checking if one is set.
@@ -165,7 +167,7 @@ class MacCustomizerBuilder @PublishedApi internal constructor(private val projec
    *
    * @param handler Lambda receiving context, targetDir, and arch
    */
-  fun copyAdditionalFiles(handler: suspend (context: BuildContext, targetDir: Path, arch: JvmArchitecture) -> Unit) {
+  fun copyAdditionalFiles(handler: suspend (targetDir: Path, arch: JvmArchitecture, context: BuildContext) -> Unit) {
     this.copyAdditionalFilesHandler = handler
   }
 
@@ -237,7 +239,9 @@ class MacCustomizerBuilder @PublishedApi internal constructor(private val projec
     init {
       builder.icnsPath?.let { icnsPath = projectHome.resolve(it) }
       builder.icnsPathForEAP?.let { icnsPathForEAP = projectHome.resolve(it) }
+      @Suppress("DEPRECATION")
       builder.icnsPathForAlternativeIcon?.let { icnsPathForAlternativeIcon = projectHome.resolve(it) }
+      @Suppress("DEPRECATION")
       builder.icnsPathForAlternativeIconForEAP?.let { icnsPathForAlternativeIconForEAP = projectHome.resolve(it) }
       builder.bundleIdentifier?.let { bundleIdentifier = it }
       builder.dmgImagePath?.let { dmgImagePath = projectHome.resolve(it) }
@@ -254,7 +258,7 @@ class MacCustomizerBuilder @PublishedApi internal constructor(private val projec
 
     override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
       super.copyAdditionalFiles(context = context, targetDir = targetDir, arch = arch)
-      builder.copyAdditionalFilesHandler?.invoke(context, targetDir, arch)
+      builder.copyAdditionalFilesHandler?.invoke(targetDir, arch, context)
     }
 
     override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {
@@ -336,7 +340,7 @@ open class MacDistributionCustomizer {
    *
    * Reference: [Apple Icon Image Format](https://en.wikipedia.org/wiki/Apple_Icon_Image_format).
    */
-  lateinit var icnsPath: Path
+  var icnsPath: Path? = null
 
   /**
    * Path to an .icns file for EAP builds (if `null`, [icnsPath] will be used).
@@ -346,11 +350,13 @@ open class MacDistributionCustomizer {
   /**
    * Path to an alternative .icns file in macOS Big Sur style
    */
+  @Deprecated("BigSur-style icons are now used by default")
   var icnsPathForAlternativeIcon: Path? = null
 
   /**
    * Path to an alternative .icns file in macOS Big Sur style for EAP
    */
+  @Deprecated("BigSur-style icons are now used by default")
   var icnsPathForAlternativeIconForEAP: Path? = null
 
   /**
@@ -370,7 +376,7 @@ open class MacDistributionCustomizer {
   /**
    * Path to an image which will be injected into the .dmg file.
    */
-  lateinit var dmgImagePath: Path
+  var dmgImagePath: Path? = null
 
   /**
    * The minimum version of macOS where the product is allowed to be installed.
@@ -457,7 +463,8 @@ open class MacDistributionCustomizer {
   }
 
   open fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, context: BuildContext): Sequence<String> {
-    val basePatterns = sequenceOf(
+    val basePatterns = if (context.options.isLanguageServer) sequenceOf("bin/${context.productProperties.baseFileName}")
+    else sequenceOf(
       "bin/*.sh",
       "plugins/**/*.sh",
       "bin/fsnotifier",

@@ -100,6 +100,12 @@ internal class DocumentationUI(
   private val switcher: DefinitionSwitcher<DocumentationRequest>
   private var contentKind: ContentKind? = null
 
+  /**
+   * When `true`, [DocumentationPageContent.Empty] skips all UI updates (text, scroll, images)
+   * and only emits [ContentUpdateKind.NoDocumentation] to the flow, so the popup can hide reactively.
+   */
+  var skipEmptyContent: Boolean = false
+
   private val customStyleFlow: MutableStateFlow<CustomStyle?> = MutableStateFlow(null)
 
   init {
@@ -289,6 +295,14 @@ internal class DocumentationUI(
         applyUIState(UIState.Reset)
       }
       DocumentationPageContent.Empty -> {
+        if (skipEmptyContent) {
+          // Don't touch UI at all — no clearImages, no text update, no scrollRectToVisible.
+          // Any of these can trigger Swing repaint that re-shows the hidden popup window.
+          // Just emit to the flow so the popup can react.
+          contentKind = ContentKind.NoDocumentation
+          check(myContentUpdates.tryEmit(ContentUpdateKind.NoDocumentation))
+          return
+        }
         clearImages()
         noDocumentationMessage()
         applyUIState(UIState.Reset)
@@ -348,7 +362,7 @@ internal class DocumentationUI(
   }
 
   private fun noDocumentationMessage() {
-    updateContent(message(CodeInsightBundle.message("no.documentation.found")), null, ContentKind.InfoMessage)
+    updateContent(message(CodeInsightBundle.message("no.documentation.found")), null, ContentKind.NoDocumentation)
   }
 
   private fun message(message: @Nls String): @Nls String {
@@ -391,6 +405,7 @@ internal class DocumentationUI(
     check(myContentUpdates.tryEmit(
       when (newContentKind) {
         ContentKind.InfoMessage -> ContentUpdateKind.InfoMessage
+        ContentKind.NoDocumentation -> ContentUpdateKind.NoDocumentation
         ContentKind.DocumentationPage -> if (oldContentKind != newContentKind)
           ContentUpdateKind.DocumentationPageOpened
         else
@@ -491,6 +506,7 @@ internal class DocumentationUI(
 
   private enum class ContentKind {
     InfoMessage,
+    NoDocumentation,
     DocumentationPage,
   }
 }

@@ -489,7 +489,7 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
   private @Nullable Sdk lookupGradleJvmByVersion(@NotNull JavaVersion sdkVersion) {
     var sdk = lookupGradleJvm();
     if (sdk == null) return null;
-    if (ExternalSystemJdkUtil.matchJavaVersion(sdkVersion, sdk.getVersionString())) {
+    if (matchJavaVersion(sdkVersion, sdk.getVersionString())) {
       return sdk;
     }
     return null;
@@ -497,10 +497,14 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
 
   private @Nullable Sdk lookupGradleJvm() {
     var projectSettings = getProjectSettings();
-    if (projectSettings == null) return null;
+    if (projectSettings == null) {
+      return null;
+    }
     var gradleJvm = projectSettings.getGradleJvm();
-    if (gradleJvm == null) return null;
-    return ExternalSystemJdkUtil.getJdk(resolverCtx.getProject(), gradleJvm);
+    if (gradleJvm == null) {
+      return null;
+    }
+    return ExternalSystemJdkUtil.resolveJdkName(resolverCtx.getProject(), gradleJvm);
   }
 
   private @Nullable GradleProjectSettings getProjectSettings() {

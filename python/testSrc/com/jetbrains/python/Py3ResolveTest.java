@@ -624,8 +624,8 @@ public class Py3ResolveTest extends PyResolveTestCase {
     );
   }
 
-  // PY-32963
-  public void testProvidedPyiInsteadStubPackage() {
+  // PY-32963, PY-86147
+  public void testStubPackageInsteadProvidedPyi() {
     final String path = "resolve/" + getTestName(false);
     myFixture.configureByFile(path + "/main.py");
 
@@ -636,7 +636,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
         final PsiFile file = element.getContainingFile();
         assertEquals("foo.pyi", file.getName());
-        assertEquals("pkg", file.getParent().getName());
+        assertEquals("pkg-stubs", file.getParent().getName());
       }
     );
   }
@@ -919,7 +919,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   // PY-82850
   public void testNonIdempotentComputation() {
-    PyTestCase.fixme("PY-83181", StackOverflowPreventedException.class, () -> {
+    PyTestCase.fixme("PY-83181", StackOverflowPreventedException.class, "", () -> {
       RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
 
       myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
@@ -933,7 +933,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   // PY-83803
   public void testNonIdempotentComputation2() {
-    PyTestCase.fixme("PY-83803", StackOverflowPreventedException.class, () -> {
+    PyTestCase.fixme("PY-83803", StackOverflowPreventedException.class, "", () -> {
       RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
 
       myFixture.configureByFile("resolve/" + getTestName(false) + ".py");

@@ -6,7 +6,7 @@ package org.jetbrains.intellij.build.productLayout.model.error
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.TargetName
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import org.jetbrains.intellij.build.productLayout.model.ModuleSourceInfo
 import org.jetbrains.intellij.build.productLayout.stats.AnsiStyle
 
@@ -17,12 +17,27 @@ import org.jetbrains.intellij.build.productLayout.stats.AnsiStyle
  * (e.g., intellij.python.community.plugin) but the generated XML doesn't have the corresponding
  * `<plugin id="..."/>` dependency, which would cause NoClassDefFoundError at runtime.
  */
+enum class MissingContentModulePluginDependencySuppressionKind {
+  /**
+   * Standard path: temporary suppression via suppressions.json.
+   */
+  SUPPRESSIONS_JSON,
+
+  /**
+   * Pure DSL-defined test-plugin content module: suppress in code via module-level allowedMissingPluginIds.
+   */
+  DSL_MODULE_ALLOWED_MISSING,
+}
+
 data class MissingContentModulePluginDependencyError(
   override val context: String,
   /** Content module with missing plugin dependencies */
   val contentModuleName: ContentModuleName,
   /** Plugin IDs that are depended on in IML but not declared in XML */
   @JvmField val missingPluginIds: Set<PluginId>,
+  @JvmField val suppressionKind: MissingContentModulePluginDependencySuppressionKind = MissingContentModulePluginDependencySuppressionKind.SUPPRESSIONS_JSON,
+  /** Proposed patches for quick fixes (descriptor update and suppression update). */
+  @JvmField val proposedPatches: List<ProposedPatch> = emptyList(),
   override val ruleName: String = "PluginValidation",
 ) : ValidationError {
   override val category: ErrorCategory get() = ErrorCategory.CONTENT_MODULE_PLUGIN_DEP_MISSING
@@ -43,9 +58,31 @@ data class MissingContentModulePluginDependencyError(
       appendLine("       ${s.gray}<depends><plugin id=\"${pluginId.value}\"/></depends>${s.reset}")
     }
     appendLine()
-    val kotlinCode = "\"${contentModuleName.value}\" to setOf(${missingPluginIds.sortedBy { it.value }.joinToString { "\"${it.value}\"" }}),"
-    appendLine("${s.blue}Or suppress temporarily:${s.reset} Add to contentModuleAllowedMissingPluginDeps in ModuleSetGenerationConfig:")
-    appendLine("       ${s.gray}$kotlinCode${s.reset}")
+    when (suppressionKind) {
+      MissingContentModulePluginDependencySuppressionKind.DSL_MODULE_ALLOWED_MISSING -> {
+        val suppressionCode = "module(\"${contentModuleName.value}\", allowedMissingPluginIds = listOf(${missingPluginIds.sortedBy { it.value }.joinToString { "\"${it.value}\"" }}))"
+        appendLine("${s.blue}Or suppress temporarily:${s.reset} Add module-level allowedMissingPluginIds in the DSL:")
+        appendLine("       ${s.gray}$suppressionCode${s.reset}")
+        appendLine("       ${s.gray}(for example inside testPlugin { ... })${s.reset}")
+      }
+
+      MissingContentModulePluginDependencySuppressionKind.SUPPRESSIONS_JSON -> {
+        val suppressionCode = "\"${contentModuleName.value}\": { \"suppressPlugins\": [${missingPluginIds.sortedBy { it.value }.joinToString { "\"${it.value}\"" }}] }"
+        appendLine("${s.blue}Or suppress temporarily:${s.reset} Add suppressPlugins in suppressions.json for this content module:")
+        appendLine("       ${s.gray}$suppressionCode${s.reset}")
+      }
+    }
+    if (proposedPatches.isNotEmpty()) {
+      appendLine()
+      appendLine("${s.blue}Proposed patch:${s.reset}")
+      for (patch in proposedPatches) {
+        appendLine("Patch (${patch.title}):")
+        for (line in patch.patch.lineSequence()) {
+          appendLine(line)
+        }
+        appendLine()
+      }
+    }
     appendLine()
     appendLine("${s.yellow}Why this matters:${s.reset} Without the plugin dependency declaration, classes from the plugin")
     appendLine("will not be available at runtime, causing NoClassDefFoundError.")
@@ -143,7 +180,7 @@ data class PluginDependencyError(
   @JvmField val moduleSourceInfo: Map<ContentModuleName, ModuleSourceInfo> = emptyMap(),
   /** Per-product breakdown: product name -> unresolved deps in that product */
   @JvmField val unresolvedByProduct: Map<String, Set<ContentModuleName>> = emptyMap(),
-  /** Dependencies that were filtered by dependencyFilter, per content module (for error message clarity) */
+  /** Dependencies filtered out from XML generation (auto-inferred JPS deps), per content module */
   @JvmField val filteredDependencies: Map<ContentModuleName, Set<ContentModuleName>> = emptyMap(),
   /** Structural violations: content module -> deps with violation (e.g., REQUIRED depending on OPTIONAL sibling) */
   @JvmField val structuralViolations: Map<ContentModuleName, Set<ContentModuleName>> = emptyMap(),
@@ -218,7 +255,7 @@ data class PluginDependencyError(
     for ((missingDep, needingModules) in missingDependencies.entries.sortedByDescending { it.value.size }) {
       val missingDepInfo = moduleSourceInfo.get(missingDep)
 
-      // Check if this dep was filtered out by dependencyFilter for any of the needing modules
+      // Check if this dep was filtered out during generation for any of the needing modules
       val isFiltered = needingModules.any { moduleName ->
         filteredDependencies.get(moduleName)?.contains(missingDep) == true
       }

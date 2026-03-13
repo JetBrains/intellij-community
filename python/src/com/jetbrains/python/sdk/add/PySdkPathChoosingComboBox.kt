@@ -82,7 +82,6 @@ private class PySdkListCellRendererExt : ListCellRenderer<PySdkComboBoxItem> {
  * A combobox with browse button for choosing a path to SDK, also capable of showing progress indicator.
  * To toggle progress indicator visibility use [setBusy] method.
  *
- * To fill this box in async mode use [addInterpretersToComboAsync]
  *
  */
 @Deprecated(
@@ -196,7 +195,8 @@ class PySdkPathChoosingComboBox @JvmOverloads constructor(
   }
 
   companion object {
-    class PySdkComboBoxTextAccessor(private val targetEnvironmentConfiguration: TargetEnvironmentConfiguration?) : TextComponentAccessor<JComboBox<PySdkComboBoxItem>> {
+    class PySdkComboBoxTextAccessor(private val targetEnvironmentConfiguration: TargetEnvironmentConfiguration?) :
+      TextComponentAccessor<JComboBox<PySdkComboBoxItem>> {
       override fun getText(component: JComboBox<PySdkComboBoxItem>): String =
         (component.selectedItem as? ExistingPySdkComboBoxItem)?.getText().orEmpty()
 
@@ -218,16 +218,10 @@ class PySdkPathChoosingComboBox @JvmOverloads constructor(
 }
 
 /**
- * Obtains a list of sdk on a pool using [sdkObtainer], then fills [sdkComboBox] on the EDT.
- */
-internal fun addInterpretersToComboAsync(sdkComboBox: PySdkPathChoosingComboBox, sdkObtainer: () -> List<Sdk>) {
-  addInterpretersToComboAsync(sdkComboBox, sdkObtainer, {})
-}
-
-/**
  * Obtains a list of sdk on a pool using [sdkObtainer], then fills [sdkComboBox] and calls [onAdded] on the EDT.
  */
 internal fun addInterpretersToComboAsync(
+  @Suppress("DEPRECATION_ERROR")
   sdkComboBox: PySdkPathChoosingComboBox,
   sdkObtainer: () -> List<Sdk>,
   onAdded: (List<Sdk>) -> Unit,
@@ -253,6 +247,8 @@ internal fun addInterpretersToComboAsync(
 /**
  * Keeps [NewPySdkComboBoxItem] if it is present in the combobox.
  */
+
+@Suppress("DEPRECATION_ERROR")
 private fun PySdkPathChoosingComboBox.removeAllItems() {
   if (childComponent.itemCount > 0 && childComponent.getItemAt(0) is NewPySdkComboBoxItem) {
     while (childComponent.itemCount > 1) {
@@ -270,7 +266,8 @@ private fun PySdkPathChoosingComboBox.removeAllItems() {
  */
 @ApiStatus.Internal
 fun addBaseInterpretersAsync(
-  sdkComboBox: PySdkPathChoosingComboBox,
+  sdkComboBox: @Suppress("DEPRECATION_ERROR") PySdkPathChoosingComboBox,
+
   existingSdks: List<Sdk>,
   module: Module?,
   context: UserDataHolder,

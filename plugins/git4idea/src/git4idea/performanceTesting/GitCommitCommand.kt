@@ -25,7 +25,7 @@ import kotlinx.coroutines.withContext
  * Command for committing file changes to git
  * Example - %gitCommit src/TheBestJavaClass.java, The Best Commit Ever
  */
-class GitCommitCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
+internal class GitCommitCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
 
   companion object {
     const val NAME = "gitCommit"

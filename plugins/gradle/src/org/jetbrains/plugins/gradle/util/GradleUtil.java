@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.GradleManager;
 import org.jetbrains.plugins.gradle.model.data.GradleProjectBuildScriptData;
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
@@ -427,7 +428,14 @@ public final class GradleUtil {
   public static @Nullable GradleVersion getGradleVersion(String externalProjectPath, Project project) {
     GradleSettings settings = GradleSettings.getInstance(project);
     GradleProjectSettings projectSettings = settings.getLinkedProjectSettings(externalProjectPath);
-    return projectSettings != null ? projectSettings.resolveGradleVersion() : null;
+    if (projectSettings == null) {
+      return null;
+    }
+    GradleVersion guessedGradleVersion = GradleInstallationManager.guessGradleVersion(projectSettings);
+    if (guessedGradleVersion == null) {
+      return GradleVersion.current();
+    }
+    return guessedGradleVersion;
   }
 
   @SuppressWarnings("unused") // used externally

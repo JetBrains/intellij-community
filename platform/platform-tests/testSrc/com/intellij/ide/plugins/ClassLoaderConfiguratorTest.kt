@@ -4,9 +4,13 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
-import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
-import com.intellij.platform.testFramework.plugins.*
+import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorBuilder
+import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
+import com.intellij.platform.testFramework.plugins.buildDir
+import com.intellij.platform.testFramework.plugins.content
+import com.intellij.platform.testFramework.plugins.depends
+import com.intellij.platform.testFramework.plugins.module
+import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsExtension
 import org.assertj.core.api.Assertions
@@ -99,7 +103,7 @@ internal class ClassLoaderConfiguratorTest {
         }
       }
     }.buildDir(rootDir.resolve("p_dependent"))
-    val plugins = PluginSetTestBuilder.fromPath(rootDir).discoverPlugins().second.discoveredPlugins.flatMap { it.plugins }
+    val plugins = PluginSetTestBuilder.fromPath(rootDir).discoverPlugins().second.pluginLists.flatMap { it.plugins }
     Assertions.assertThat(plugins).hasSize(2)
     val classLoaderConfigurator = ClassLoaderConfigurator(PluginSetBuilder(plugins.toSet()).createPluginSetWithEnabledModulesMap())
     classLoaderConfigurator.configure()
@@ -129,7 +133,7 @@ internal class ClassLoaderConfiguratorTest {
       depends("1-foo")
     }.buildDir(rootDir.resolve("2-bar"))
 
-    val plugins = PluginSetTestBuilder.fromPath(rootDir).discoverPlugins().second.discoveredPlugins.flatMap { it.plugins }
+    val plugins = PluginSetTestBuilder.fromPath(rootDir).discoverPlugins().second.pluginLists.flatMap { it.plugins }
     assertThat(plugins).hasSize(2)
     val barPlugin = plugins.get(1)
     assertThat(barPlugin.pluginId.idString).isEqualTo("2-bar")

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
 import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyWithAncestors;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -48,6 +49,17 @@ public interface PyClassLikeType extends PyCallableType, PyWithAncestors, PyInst
   Set<String> getMemberNames(boolean inherited, @NotNull TypeEvalContext context);
 
   boolean isValid();
+
+  /**
+   * @param name    name to check
+   * @param context type evaluation context
+   * @return true if attribute with the specified name could be created or updated.
+   * Does not take `typing.Final` into account.
+   * @see PyClass#getSlots(TypeEvalContext)
+   */
+  default boolean isAttributeWritable(@NotNull String name, @NotNull TypeEvalContext context) {
+    return true;
+  }
 
   @Nullable
   PyClassLikeType getMetaClassType(@NotNull TypeEvalContext context, boolean inherited);

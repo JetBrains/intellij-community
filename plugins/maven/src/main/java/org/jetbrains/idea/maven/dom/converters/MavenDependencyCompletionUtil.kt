@@ -12,8 +12,8 @@ import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils
 import org.jetbrains.idea.maven.dom.model.*
 import org.jetbrains.idea.maven.indices.IndicesBundle
 import org.jetbrains.idea.maven.indices.MavenArtifactSearchResult
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
+import org.jetbrains.idea.maven.model.MavenDependencyCompletionItem
+import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 import java.util.*
 import java.util.function.Function
 import javax.swing.Icon
@@ -95,7 +95,7 @@ object MavenDependencyCompletionUtil {
   }
 
   @JvmOverloads
-  fun lookupElement(info: MavenRepositoryArtifactInfo, presentableText: String = getPresentableText(info)): LookupElementBuilder {
+  fun lookupElement(info: MavenRepoArtifactInfo, presentableText: String = getPresentableText(info)): LookupElementBuilder {
     val elementBuilder = LookupElementBuilder.create(info, getLookupString(info))
       .withPresentableText(presentableText)
     elementBuilder.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any())
@@ -105,7 +105,7 @@ object MavenDependencyCompletionUtil {
     return elementBuilder
   }
 
-  fun getPresentableText(info: MavenRepositoryArtifactInfo): String {
+  fun getPresentableText(info: MavenRepoArtifactInfo): String {
     if (info.items.size == 1) {
       return getLookupString(info.items[0])
     }
@@ -120,7 +120,7 @@ object MavenDependencyCompletionUtil {
     return null
   }
 
-  fun getLookupString(info: MavenRepositoryArtifactInfo): String {
+  fun getLookupString(info: MavenRepoArtifactInfo): String {
     val infoItems = info.items
     if (infoItems.isNotEmpty()) {
       return getLookupString(infoItems[0])

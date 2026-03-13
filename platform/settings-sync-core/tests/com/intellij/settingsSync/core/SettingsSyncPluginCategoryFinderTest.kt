@@ -4,7 +4,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.getEnabledPlugin
 import com.intellij.idea.TestFor
 import com.intellij.openapi.components.SettingsCategory
-import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
+import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.testFramework.plugins.PluginSpecBuilder
 import com.intellij.platform.testFramework.plugins.buildDir
 import com.intellij.platform.testFramework.plugins.extensions
@@ -12,8 +12,8 @@ import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.settingsSync.core.plugins.SettingsSyncPluginCategoryFinder
 import com.intellij.testFramework.rules.InMemoryFsExtension
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
 class SettingsSyncPluginCategoryFinderTest {
 

@@ -1,0 +1,18 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.python.community.services.systemPython"/>
+    <module name="intellij.platform.testFramework.junit5.eel._test"/>
+    <module name="intellij.platform.testFramework.junit5._test"/>
+    <module name="intellij.python.community.junit5Tests.framework._test"/>
+    <module name="intellij.libraries.assertj.core"/>
+    <module name="intellij.libraries.junit5"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.coroutines"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationInitializedListener implementation="com.intellij.python.junit5Tests.env.systemPython.impl.SystemPythonRootsFixer"/>
+  </extensions>
+</idea-plugin>

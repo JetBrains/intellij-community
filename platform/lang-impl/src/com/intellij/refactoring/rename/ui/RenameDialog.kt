@@ -28,7 +28,6 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.asSafely
 import java.awt.event.ActionEvent
 import java.awt.event.ItemEvent
-import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComponent
 

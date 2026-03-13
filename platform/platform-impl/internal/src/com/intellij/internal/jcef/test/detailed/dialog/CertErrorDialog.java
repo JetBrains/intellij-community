@@ -6,9 +6,8 @@ import org.cef.callback.CefCallback;
 import org.cef.handler.CefLoadHandler.ErrorCode;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.awt.Frame;
-
 import javax.swing.JOptionPane;
+import java.awt.Frame;
 
 @ApiStatus.Internal
 public class  CertErrorDialog implements Runnable {

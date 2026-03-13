@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -19,6 +20,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -27,16 +29,17 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
+import com.intellij.psi.PsiManager;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils;
-import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementsTxtManager;
+import com.jetbrains.python.packaging.requirementsTxt.RequirementsTxtManipulationHelper;
 import com.jetbrains.python.packaging.setupPy.SetupPyHelpers;
-import com.jetbrains.python.packaging.setupPy.SetupPyManager;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyFile;
@@ -59,6 +62,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.jetbrains.python.packaging.setupPy.SetupPyHelpers.SETUP_PY;
+
 @ApiStatus.Internal
 public final class PyPackageUtil {
   public static final String SETUPTOOLS = "setuptools";
@@ -73,24 +78,31 @@ public final class PyPackageUtil {
   private PyPackageUtil() {
   }
 
+  @RequiresReadLock
   public static boolean hasSetupPy(@NotNull Module module) {
     return findSetupPy(module) != null;
   }
 
   @ApiStatus.Internal
   public static @Nullable VirtualFile findSetupPyFile(@NotNull Module module) {
-    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-    if (sdk == null) return null;
-    return SetupPyManager.getInstance(module.getProject(), sdk).getDependenciesFile();
+    var contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+    for (VirtualFile root : contentRoots) {
+      VirtualFile setupPy = VfsUtil.findRelativeFile(root, SETUP_PY);
+      if (setupPy != null) {
+        return setupPy;
+      }
+    }
+    return null;
   }
 
+  @RequiresReadLock
   public static @Nullable PyFile findSetupPy(@NotNull Module module) {
     Sdk sdk = PythonSdkUtil.findPythonSdk(module);
     if (sdk == null) {
       return SetupPyHelpers.detectSetupPyInModule(module);
     }
     else {
-      return SetupPyManager.getInstance(module.getProject(), sdk).getRequirementsPsiFile();
+      return findSetupPyPsiFileForSdk(module);
     }
   }
 
@@ -105,34 +117,50 @@ public final class PyPackageUtil {
       return PythonRequirementTxtSdkUtils.detectRequirementsTxtInModule(module);
     }
     else {
-      return PythonRequirementsTxtManager.getInstance(module.getProject(), sdk).getDependenciesFile();
+      return PythonRequirementTxtSdkUtils.findRequirementsTxt(sdk);
     }
   }
 
   @RequiresReadLock(generateAssertion = false)
   public static @Nullable List<PyRequirement> getRequirementsFromTxt(@NotNull Module module) {
-    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-    if (sdk == null) return null;
-
-    return PythonRequirementsTxtManager.getInstance(module.getProject(), sdk).getDependencies();
+    VirtualFile requirementsFile = findRequirementsTxt(module);
+    if (requirementsFile == null) return null;
+    List<PyRequirement> requirements = ReadAction.compute(() -> PyRequirementParser.fromFile(requirementsFile));
+    return requirements;
   }
 
-
+  @RequiresReadLock
   public static @Nullable List<PyRequirement> findSetupPyRequires(@NotNull Module module) {
-    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-    if (sdk == null) return null;
-    return SetupPyManager.getInstance(module.getProject(), sdk).getDependencies();
+    PyFile pyFile = findSetupPyPsiFileForSdk(module);
+    if (pyFile == null) return null;
+    return SetupPyHelpers.parseSetupPy(pyFile);
   }
 
+  @RequiresReadLock
   public static @Nullable Map<String, List<PyRequirement>> findSetupPyExtrasRequire(@NotNull Module module) {
-    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-    if (sdk == null) return null;
-    PyFile pyFile = SetupPyManager.getInstance(module.getProject(), sdk).getRequirementsPsiFile();
+    PyFile pyFile = findSetupPyPsiFileForSdk(module);
     if (pyFile == null) return null;
     return SetupPyHelpers.findSetupPyExtrasRequire(pyFile);
   }
 
+  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false)
+  private static @Nullable PyFile findSetupPyPsiFileForSdk(@NotNull Module module) {
+    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+    if (sdk == null) return null;
 
+    VirtualFile setupPyVFile = findSetupPyFile(module);
+    if (setupPyVFile == null) return null;
+
+    Project project = module.getProject();
+    return ReadAction.compute(() -> {
+      if (!setupPyVFile.isValid()) return null;
+      var psiFile = PsiManager.getInstance(project).findFile(setupPyVFile);
+      return (psiFile instanceof PyFile pyFile) ? pyFile : null;
+    });
+  }
+
+  @RequiresReadLock
   public static @NotNull List<String> getPackageNames(@NotNull Module module) {
     // TODO: Cache found module packages, clear cache on module updates
     final List<String> packageNames = new ArrayList<>();
@@ -152,6 +180,7 @@ public final class PyPackageUtil {
   }
 
 
+  @RequiresReadLock
   public static @Nullable PyCallExpression findSetupCall(@NotNull Module module) {
     PyFile pyFile = findSetupPy(module);
     if (pyFile == null) {
@@ -214,17 +243,21 @@ public final class PyPackageUtil {
     }.check(sdk);
   }
 
-
+  @RequiresBackgroundThread(generateAssertion = false)
   public static void addRequirementToTxtOrSetupPy(@NotNull Module module,
                                                   @NotNull String requirementName,
                                                   @NotNull LanguageLevel languageLevel) {
-    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-    if (sdk == null) return;
-    boolean isSuccess = PythonRequirementsTxtManager.getInstance(module.getProject(), sdk).addDependency(requirementName);
-    if (isSuccess) {
+    VirtualFile requirementsFile = findRequirementsTxt(module);
+    if (requirementsFile != null) {
+      RequirementsTxtManipulationHelper.addToRequirementsTxt(
+        module.getProject(), requirementsFile, requirementName);
       return;
     }
-    SetupPyManager.getInstance(module.getProject(), sdk).addDependency(requirementName);
+
+    PyFile setupPyFile = ReadAction.compute(() -> findSetupPy(module));
+    if (setupPyFile != null) {
+      SetupPyHelpers.addRequirementsToSetupPy(setupPyFile, requirementName, languageLevel);
+    }
   }
 
 

@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.hints.presentation.SpacePresentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileTypes.PlainTextLanguage
@@ -14,6 +12,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 
 class InlayHintsPassFactoryInternalTest : BasePlatformTestCase() {
 
@@ -42,13 +41,13 @@ class InlayHintsPassFactoryInternalTest : BasePlatformTestCase() {
       }
     }), testRootDisposable)
 
-    (DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl).mustWaitForSmartMode(false, testRootDisposable)
+    CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, testRootDisposable)
     DumbModeTestUtils.runInDumbModeSynchronously(myFixture.project) {
 
       myFixture.doHighlighting()
       assertEquals(1, myFixture.editor.inlayModel.getInlineElementsInRange(0, 1).size)
 
-      (DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl).mustWaitForSmartMode(true, testRootDisposable)
+      CodeInsightTestFixtureImpl.mustWaitForSmartMode(true, testRootDisposable)
     }
 
     myFixture.doHighlighting()

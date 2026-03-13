@@ -1,5 +1,6 @@
 // "Opt in for 'B' in containing file 'existingFileAnnotationWithPackage.kt'" "true"
 // WITH_STDLIB
+// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@p.B' or '@OptIn(p.B::class)'
 @file:OptIn(A::class, B::class)
 
 package p

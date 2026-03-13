@@ -1,4 +1,5 @@
 // "Make 'i' 'abstract'" "true"
+// K2_ERROR: Property must be initialized or be abstract.
 open class A() {
     var <caret>i : Int
 }

@@ -21,4 +21,19 @@ jvm_library(
     "//jps/model-api:model",
   ]
 )
+
+jvm_library(
+  name = "compilation-charts-jps_test_lib",
+  module_name = "intellij.compilation.charts.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  runtime_deps = [
+    ":compilation-charts-jps",
+    "//jps/jps-builders:build_test_lib",
+    "//platform/util:util_test_lib",
+    "//libraries/gson:gson_test_lib",
+    "//jps/model-api:model_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.compilation.charts.jps` end

@@ -36,7 +36,15 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
@@ -126,7 +134,8 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
   protected boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     if (!ProgressManager.getInstance()
-      .runProcessWithProgressSynchronously(() -> ReadAction.run(() -> collectConflicts(conflicts, refUsages)), RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) {
+      .runProcessWithProgressSynchronously(() -> ReadAction.runBlocking(() -> collectConflicts(conflicts, refUsages)),
+                                           RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) {
       return false;
     }
     return showConflicts(conflicts, refUsages.get());

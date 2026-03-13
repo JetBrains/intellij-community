@@ -2,10 +2,15 @@
 package com.intellij.polySymbols.query
 
 import com.intellij.model.Pointer
-import com.intellij.polySymbols.*
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolKind
+import com.intellij.polySymbols.PolySymbolModifier
+import com.intellij.polySymbols.PolySymbolQualifiedName
+import com.intellij.polySymbols.PolySymbolsTestsDebugOutputPrinter
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.framework.framework
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
+import com.intellij.polySymbols.polySymbolsTestsDataPath
 import com.intellij.polySymbols.testFramework.query.doTest
 import com.intellij.polySymbols.testFramework.query.printMatches
 import com.intellij.polySymbols.webTypes.json.parseWebTypesPath
@@ -414,8 +419,6 @@ class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
         }
 
         override fun createPointer(): Pointer<out PolySymbolScope> = Pointer.hardPointer(this)
-
-        override fun getModificationCount(): Long = 0
       }, null, testRootDisposable)
     doTest("html/elements/bar-bar", "vue", true, "nested-pattern")
   }

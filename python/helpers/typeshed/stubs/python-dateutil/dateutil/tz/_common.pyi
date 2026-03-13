@@ -10,9 +10,10 @@ __all__ = ["tzname_in_python2", "enfold"]
 
 _P = ParamSpec("_P")
 _R = TypeVar("_R")
+_DateTimeT = TypeVar("_DateTimeT", bound=datetime)
 
 def tzname_in_python2(namefunc: Callable[_P, _R]) -> Callable[_P, _R]: ...
-def enfold(dt: datetime, fold: int = 1): ...
+def enfold(dt: _DateTimeT, fold: int = 1) -> _DateTimeT: ...
 
 # Doesn't actually have ABCMeta as the metaclass at runtime,
 # but mypy complains if we don't have it in the stub.

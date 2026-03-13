@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.serialization
 
 import com.intellij.openapi.components.ComponentManager
@@ -29,22 +29,28 @@ abstract class ExtensionPointSerializer<Target : Any, Descriptor : Any>(
 ) : KSerializer<Descriptor> {
 
   fun toDescriptor(target: Target): Descriptor? {
-    val fqn = target.javaClass.name
-    val helper = findSerializerHelper(fqn) ?: return null
-    return helper.converter.toDescriptor(target)
+    val targetFqn = target.javaClass.name
+    return findAllImpl { bean -> bean.implementationClass == targetFqn }
+      .firstNotNullOfOrNull { helper -> helper.converter.toDescriptor(target) }
   }
 
-  private fun findNotNullSerializerHelper(fqn: String): SerializationHelper<Target, Descriptor> =
-    findSerializerHelper(fqn) ?: error("Cannot find serializer for $fqn")
+  private fun findSerializer(fqn: String): KSerializer<Any> {
+    // we don't care if fqn is Target or Descriptor. We just want to find any helper that is capable of loading its class.
+    val helpers = findAllImpl { bean ->
+      bean.descriptor == fqn || bean.implementationClass == fqn
+    }
+    val helper = helpers.firstOrNull() ?: error("Cannot find serializer for $fqn")
+    return helper.serializer
+  }
 
-  private fun findSerializerHelper(fqn: String): SerializationHelper<Target, Descriptor>? {
+  private fun findAllImpl(filter: (bean: ExtensionPointSerializerBean) -> Boolean): Sequence<SerializationHelper<Target, Descriptor>> {
     // todo maybe cache serializers?
-    val bean = epName.extensionList.find { bean ->
-      bean.implementationClass == fqn || bean.descriptor == fqn
-    } ?: return null
-
-    @Suppress("UNCHECKED_CAST")
-    return bean.instance as SerializationHelper<Target, Descriptor>
+    return epName.extensionList.asSequence()
+      .filter(filter)
+      .map { bean ->
+        @Suppress("UNCHECKED_CAST")
+        bean.instance as SerializationHelper<Target, Descriptor>
+      }
   }
 
   private val json: Json // TODO investigate if we need caching here
@@ -53,7 +59,8 @@ abstract class ExtensionPointSerializer<Target : Any, Descriptor : Any>(
       encodeDefaults = true
       serializersModule = SerializersModule {
         polymorphic(descriptorClass, this@ExtensionPointSerializer) {
-          epName.extensionList.map { bean ->
+          epName.extensionList.forEach { bean ->
+            @Suppress("UNCHECKED_CAST")
             val actualDescriptorClass = bean.instance.serializableClass.kotlin as KClass<Descriptor>
             subclass(actualDescriptorClass, this@ExtensionPointSerializer)
           }
@@ -68,7 +75,7 @@ abstract class ExtensionPointSerializer<Target : Any, Descriptor : Any>(
 
   override fun serialize(encoder: Encoder, value: Descriptor) {
     val fqn = value.javaClass.name
-    val (serializer, _) = findNotNullSerializerHelper(fqn)
+    val serializer = findSerializer(fqn)
     val element = json.encodeToJsonElement(serializer, value)
     val wrapper = SerializerWrapper(fqn, element)
     encoder.encodeSerializableValue(SerializerWrapper.serializer(), wrapper)
@@ -76,11 +83,10 @@ abstract class ExtensionPointSerializer<Target : Any, Descriptor : Any>(
 
   override fun deserialize(decoder: Decoder): Descriptor {
     val wrapper = decoder.decodeSerializableValue(SerializerWrapper.serializer())
-    val (serializer, _) = findNotNullSerializerHelper(wrapper.fqn)
+    val serializer = findSerializer(wrapper.fqn)
     @Suppress("UNCHECKED_CAST")
     return json.decodeFromJsonElement(serializer, wrapper.value) as Descriptor
   }
-  //}
 }
 
 @Serializable
@@ -144,17 +150,15 @@ class ExtensionPointSerializerBean : BaseKeyedLazyInstance<SerializationHelper<A
     componentManager: ComponentManager,
     pluginDescriptor: PluginDescriptor,
   ): KSerializer<Any> {
-    val serializableClass = componentManager.loadClass<Any>(fqn, pluginDescriptor)
+    try {
+      val serializableClass = componentManager.loadClass<Any>(fqn, pluginDescriptor)
 
-    val companionField = serializableClass.getField("Companion")
-    companionField.trySetAccessible()
-    val companion = companionField.get(null)!!
-
-    val serializerMethod = companion.javaClass.getMethod("serializer")
-    serializerMethod.trySetAccessible()
-
-    @Suppress("UNCHECKED_CAST")
-    return serializerMethod.invoke(companion) as KSerializer<Any>
+      val serializer = SerializerSearcher.findSerializer(serializableClass)
+      return serializer ?: error("Cannot find serializer in $fqn class")
+    }
+    catch (e: ReflectiveOperationException) {
+      throw IllegalStateException("Cannot find serializer in $fqn class", e)
+    }
   }
 
   override fun getKey(): String = implementationClass!!

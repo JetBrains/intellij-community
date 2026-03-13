@@ -13,6 +13,14 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":plugin_resources"]
 )
+
+jvm_library(
+  name = "plugin_test_lib",
+  module_name = "intellij.sh.plugin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":plugin"]
+)
 ### auto-generated section `build intellij.sh.plugin` end
 
 ### auto-generated section `build intellij.sh.plugin.main` start
@@ -36,6 +44,15 @@ jvm_library(
   module_name = "intellij.sh.plugin.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  runtime_deps = [":plugin-main"]
+  runtime_deps = [
+    ":plugin-main",
+    "//plugins/sh/plugin:plugin_test_lib",
+    "//plugins/sh/core:core_test_lib",
+    "//plugins/sh/backend:backend_test_lib",
+    "//plugins/sh/terminal:terminal_test_lib",
+    "//plugins/sh/copyright:copyright_test_lib",
+    "//plugins/sh/markdown:markdown_test_lib",
+    "//plugins/sh/python:python_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.sh.plugin.main` end

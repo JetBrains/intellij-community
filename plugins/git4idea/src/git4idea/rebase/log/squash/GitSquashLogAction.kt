@@ -8,6 +8,7 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.ui.table.size
 import git4idea.i18n.GitBundle
 import git4idea.inMemory.rebase.log.InMemoryRebaseOperations
+import git4idea.inMemory.rebase.log.RebaseEntriesSource
 import git4idea.rebase.GitSquashedCommitsMessage
 import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.rebase.log.GitMultipleCommitEditingAction
@@ -70,7 +71,7 @@ internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
     return withBackgroundProgress(commitEditingData.project, GitBundle.message("rebase.log.squash.progress.indicator.title")) {
       executeInMemoryWithFallback(
         inMemoryOperation = {
-          InMemoryRebaseOperations.squash(commitEditingData.repository, commitEditingData.logData, commitsToSquash, newMessage)
+          InMemoryRebaseOperations.squash(commitEditingData.repository, commitsToSquash, newMessage, RebaseEntriesSource.LogData(commitEditingData.logData))
         },
         fallbackOperation = {
           coroutineToIndicator {

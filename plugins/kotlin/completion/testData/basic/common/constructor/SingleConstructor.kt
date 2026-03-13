@@ -8,7 +8,6 @@ fun create(): SomeClassWithConstructor {
 
 
 // WITH_ORDER
-// We still always show the classifier first to match K1 behaviour
 // EXIST: {"lookupString": "SomeClassWithConstructor", "tailText": " (<root>)" }
 // EXIST: {"lookupString": "SomeClassWithConstructor", "tailText": "(a: Int) (<root>)" }
 // NOTHING_ELSE

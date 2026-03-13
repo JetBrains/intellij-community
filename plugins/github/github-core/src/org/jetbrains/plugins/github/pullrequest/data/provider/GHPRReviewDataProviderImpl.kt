@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.collaboration.api.dto.GraphQLNodesDTO
+import com.intellij.collaboration.async.BatchesLoader
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
@@ -11,10 +12,15 @@ import com.intellij.util.messages.MessageBus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReviewDTO
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
@@ -42,14 +48,30 @@ internal class GHPRReviewDataProviderImpl(parentCs: CoroutineScope,
   override val threadsNeedReloadSignal = threadsLoader.updatedSignal
 
   override suspend fun loadThreads(): List<GHPullRequestReviewThread> = threadsLoader.load()
-  override suspend fun signalThreadsNeedReload() = threadsLoader.clearCache()
 
+  override suspend fun signalThreadsNeedReload() {
+    threadsLoader.clearCache()
+    refreshParticipants()
+  }
 
   private val reviewLoader = LoaderWithMutableCache(cs) { reviewService.loadPendingReview(pullRequestId)?.toModel() }
   override val pendingReviewNeedsReloadSignal = reviewLoader.updatedSignal
 
   override suspend fun loadPendingReview(): GHPullRequestPendingReview? = reviewLoader.load()
   override suspend fun signalPendingReviewNeedsReload() = reviewLoader.clearCache()
+
+  private val _participantsNeedReloadSignal =
+    MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  override val participantsNeedReloadSignal: Flow<Unit> = _participantsNeedReloadSignal.asSharedFlow()
+
+  private val participantsBatchesLoader = BatchesLoader(cs, reviewService.getReviewParticipantsBatchesFlow(pullRequestId))
+
+  override fun participantsBatches(): Flow<List<GHUser>> { return participantsBatchesLoader.getBatches() }
+
+  private fun refreshParticipants() {
+    participantsBatchesLoader.cancel()
+    _participantsNeedReloadSignal.tryEmit(Unit)
+  }
 
   // TODO: load created threads and add to the loaded
   override suspend fun createReview(event: GHPullRequestReviewEvent?,

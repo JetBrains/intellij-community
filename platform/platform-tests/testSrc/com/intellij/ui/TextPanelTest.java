@@ -4,7 +4,7 @@ import com.intellij.openapi.wm.impl.status.TextPanel;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.awt.*;
+import java.awt.Dimension;
 
 public class TextPanelTest {
 

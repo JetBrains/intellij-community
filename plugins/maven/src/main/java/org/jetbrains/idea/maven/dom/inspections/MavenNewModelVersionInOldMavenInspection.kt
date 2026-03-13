@@ -57,10 +57,12 @@ class MavenNewModelVersionInOldMavenInspection : BasicDomElementsInspection<Mave
     val project = domFileElement.file.project
     val psiFile = domFileElement.file
     val vFile = psiFile.virtualFile
+    val projectsManager = MavenProjectsManager.getInstance(project)
+    if (!projectsManager.isInitialized) return
     val mavenProject =
-      MavenProjectsManager.getInstance(project).findProject(vFile) ?: return
+      projectsManager.findProject(vFile) ?: return
 
-    val rootProject = MavenProjectsManager.getInstance(project).findRootProject(mavenProject) ?: return
+    val rootProject = projectsManager.findRootProject(mavenProject) ?: return
 
     val projectModel = domFileElement.getRootElement()
     if (projectModel.modelVersion.stringValue == MavenConstants.MODEL_VERSION_4_0_0) return
@@ -118,7 +120,7 @@ class UpdateMavenWrapper(@Suppress("ActionIsNotPreviewFriendly") val mavenProjec
             workingDir.refresh(true, true) {
               MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings.mavenHomeType = MavenWrapper
               MavenDistributionsCache.getInstance(project).cleanCaches()
-              MavenServerManager.getInstance().shutdownMavenConnectors(project){true}
+              MavenServerManager.getInstance().shutdownMavenConnectors(project) { true }
               MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
             }
 

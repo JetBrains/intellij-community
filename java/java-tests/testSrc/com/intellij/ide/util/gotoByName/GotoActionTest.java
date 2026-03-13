@@ -234,7 +234,7 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testDetectedActionGroups() {
     assertEquals("Images", getPresentableGroupName(getProject(), "Zoom", "Images.Editor.ZoomIn"));
-    assertEquals("Search Everywhere", getPresentableGroupName(getProject(), "Next Tab", "SearchEverywhere.NextTab"));
+    assertEquals("Help", getPresentableGroupName(getProject(), "Open Log in Editor", "OpenLog"));
     assertEquals("Window | Editor Tabs", getPresentableGroupName(getProject(), "Close Unmodified", "CloseAllUnmodifiedEditors"));
     assertEquals("Tabs", getPresentableGroupName(getProject(), "Next Tab", "NextEditorTab"));
   }

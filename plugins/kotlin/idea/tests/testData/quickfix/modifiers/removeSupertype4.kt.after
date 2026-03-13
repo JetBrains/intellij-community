@@ -1,4 +1,5 @@
 // "Remove supertype" "true"
+// K2_ERROR: Only one class can appear in a supertype list.
 open class C1 {}
 open class C2 {}
 class C3: C1() /* Hello, world! */ {}

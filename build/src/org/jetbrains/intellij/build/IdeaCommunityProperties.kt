@@ -203,8 +203,6 @@ fun intellijCommunityBaseFragment(platformPrefix: String? = null): ProductModule
   include(CommunityProductFragments.javaIdeBaseFragment())
   deprecatedInclude("intellij.idea.community.customization", "META-INF/tips-intellij-idea-community.xml")
 
-  moduleSet(CommunityModuleSets.debuggerStreams())
-
   module("intellij.platform.coverage")
   module("intellij.platform.coverage.agent")
   module("intellij.xml.xmlbeans")

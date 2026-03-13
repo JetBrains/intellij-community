@@ -24,8 +24,6 @@ import java.util.function.Function;
 
 /**
  * A pair of {@link CallMatcher} and a transformer function which maps a call to some new object.
- *
- * @author Tagir Valeev
  */
 public class CallHandler<T> implements Function<PsiMethodCallExpression, T> {
   private final CallMatcher myMatcher;

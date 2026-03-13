@@ -4,11 +4,11 @@ package com.intellij.openapi.projectRoots.impl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import kotlinx.coroutines.CoroutineScope
@@ -34,7 +34,7 @@ internal abstract class UnknownSdkCollectorQueue(mergingTimeSpaceMillis : Int, c
   fun queue(task: UnknownSdkTrackerTask) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       val collector = task.createCollector() ?: return
-      val result = ApplicationManager.getApplication().runReadAction(Computable { collector.collectSdksUnderReadAction() })
+      val result = runReadActionBlocking { collector.collectSdksUnderReadAction() }
       task.onLookupCompleted(result)
       return
     }

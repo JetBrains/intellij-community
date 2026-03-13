@@ -177,7 +177,7 @@ class RuleIntentionTest : BaseTestCase() {
     myFixture.doHighlighting()
     assertOrderedEquals(
       myFixture.availableIntentions.map { it.text }.subList(0, 3),
-      "'anymore' implies a negative phrase, condition, or question",
+      "The word 'anymore' implies a negative phrase, condition, or question",
       "don't believe",
       "Configure contraction settings"
     )

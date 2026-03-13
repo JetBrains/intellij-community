@@ -44,13 +44,13 @@ public final class RefDirectoryImpl extends RefElementImpl implements RefDirecto
 
   @Override
   public void accept(@NotNull RefVisitor visitor) {
-    ReadAction.run(() -> visitor.visitDirectory(this));
+    ReadAction.runBlocking(() -> visitor.visitDirectory(this));
   }
 
   @Override
   public boolean isValid() {
     if (isDeleted()) return false;
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       if (getRefManager().getProject().isDisposed()) return false;
 
       VirtualFile directory = getVirtualFile();

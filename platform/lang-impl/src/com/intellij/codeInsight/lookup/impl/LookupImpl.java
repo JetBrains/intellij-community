@@ -1,14 +1,36 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CodeCompletionFeatures;
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
+import com.intellij.codeInsight.completion.CompletionItemLookupElement;
+import com.intellij.codeInsight.completion.CompletionLookupArrangerImpl;
+import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.FinishCompletionInfo;
+import com.intellij.codeInsight.completion.LookupElementListPresenter;
+import com.intellij.codeInsight.completion.ModCompletionInserter;
+import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.ShowHideIntentionIconLookupAction;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.LookupActionProvider;
+import com.intellij.codeInsight.lookup.LookupArranger;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementAction;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.lookup.LookupElementInsertStopper;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupEvent;
+import com.intellij.codeInsight.lookup.LookupEx;
+import com.intellij.codeInsight.lookup.LookupFocusDegree;
+import com.intellij.codeInsight.lookup.LookupGroupArranger;
+import com.intellij.codeInsight.lookup.LookupListener;
+import com.intellij.codeInsight.lookup.LookupPresentation;
+import com.intellij.codeInsight.lookup.LookupUtil;
 import com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction;
 import com.intellij.codeInsight.template.impl.actions.NextVariableAction;
 import com.intellij.codeWithMe.ClientId;
@@ -21,12 +43,19 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.modcompletion.ModCompletionItem;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DependentTransientComponent;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.client.ClientProjectSession;
 import com.intellij.openapi.client.ClientSessionsUtil;
 import com.intellij.openapi.command.CommandProcessor;
@@ -36,7 +65,14 @@ import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseListener;
+import com.intellij.openapi.editor.event.SelectionEvent;
+import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.progress.ProgressManager;
@@ -44,24 +80,39 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.ClickListener;
+import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ExpandableItemsHandler;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.LightweightHint;
+import com.intellij.ui.RelativeFont;
+import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.CollectConsumer;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.ui.Advertiser;
+import com.intellij.util.ui.EDT;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
@@ -70,22 +121,49 @@ import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.CoroutineScopeKt;
 import kotlinx.coroutines.Dispatchers;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
+import javax.swing.DefaultListSelectionModel;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListModel;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
+import javax.swing.ToolTipManager;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static com.intellij.codeInsight.lookup.LookupElement.LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS;
+import static com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS;
 import static kotlinx.coroutines.SupervisorKt.SupervisorJob;
 
 public class LookupImpl extends LightweightHint implements LookupEx, Disposable, LookupElementListPresenter {
@@ -117,14 +195,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private int myGuardedChanges;
 
   /**
-   * `myArranger` is the arranger that is used for collecting items.
+   * `myArranger` is the arranger used for collecting items.
    * Can be changed by calling {@link #setArranger} from any thread.
-   * Changing arranger usually means that completion process is updated (e.g., prefix changed, completion type changed, etc.)
+   * Changing arranger usually means that the completion process is updated (e.g., prefix changed, the completion type changed, etc.)
    */
   private volatile @NotNull LookupArranger myArranger;
 
   /**
-   * An arranger that is used for rendering. It's synchronized (i.e. replaced) with {@link #myArranger} during rendering.
+   * An arranger that is used for rendering. It's synchronized (i.e., replaced) with {@link #myArranger} during rendering.
    * See {@link #checkReused()}.
    * Accessed on EDT only. Note though, that {@link #myArranger} is usually the same instance, but it is accessed on any thread.
    */
@@ -132,7 +210,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   private boolean myStartCompletionWhenNothingMatches;
   boolean myResizePending;
-  private boolean myFinishing;
+  private boolean myFinishingCompletionATM;
   boolean myUpdating;
   private LookupUi myUi;
   private LookupPresentation myPresentation = new LookupPresentation.Builder().build();
@@ -166,10 +244,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     list.setSelectionModel(new NonSelectableListSelectionModel(list));
     list.setFocusable(false);
     list.setFixedCellWidth(50);
-    list.setBorder(null);
+    list.setBorder(JBUI.Borders.empty());
 
     // a new top level frame just got the focus. This is important to prevent screen readers
-    // from announcing the title of the top level frame when the list is shown (or hidden),
+    // from announcing the title of the top-level frame when the list is shown (or hidden),
     // as they usually do when a new top-level frame receives the focus.
     // This is not relevant on Mac. This breaks JBR a11y on Mac.
     if (SystemInfoRt.isWindows) {
@@ -212,10 +290,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public void setArranger(@NotNull LookupArranger arranger) {
-    Predicate<LookupElement> previousMatcher = myArranger.getAdditionalMatcher();
+    reuseAdditionalMatcher(myArranger, arranger);
     myArranger = arranger;
-    if (previousMatcher != null) {
-      myArranger.registerAdditionalMatcher(previousMatcher);
+  }
+
+  private static void reuseAdditionalMatcher(@NotNull LookupArranger oldArranger, @NotNull LookupArranger newArranger) {
+    Predicate<LookupElement> oldMatcher = oldArranger.getAdditionalMatcher();
+    if (oldMatcher != null) {
+      newArranger.setAdditionalMatcher(oldMatcher);
     }
   }
 
@@ -265,7 +347,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   /**
-   * let LookupImpl know that user changed selected element
+   * let LookupImpl know that the user changed the selected element
    * @see #isSelectionTouched()
    */
   public void markSelectionTouched() {
@@ -334,14 +416,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     cellRenderer.itemAdded(item, presentation);
     LookupArranger arranger = myArranger;
+    arranger.invokeWhenLookupElementAdded(item, () -> cellRenderer.itemAddedToArranger(item));
     arranger.registerMatcher(item, matcher);
     arranger.addElement(item, presentation);
-    cellRenderer.itemAddedToArranger(item);
     return true;
   }
 
   public void scheduleItemUpdate(@NotNull LookupElement item) {
-    // this check significantly affects perfomance with enabled assertions
+    // this check significantly affects performance with enabled assertions
     if (LOG.isTraceEnabled()) {
       LOG.assertTrue(getItems().contains(item), "Item isn't present in lookup");
     }
@@ -583,8 +665,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return false;
   }
 
-  //some items may have passed to myArranger from CompletionProgressIndicator for an older prefix
-  //these items won't be cleared during appending a new prefix (mayCheckReused = false)
+  //some items may have passed to myArranger from CompletionProgressIndicator for an older prefix.
+  //these items won't be cleared during appending a new prefix (mayCheckReused = false),
   //so these 'out of dated' items which were matched against an old prefix, should be now matched against the new, updated lookup prefix.
   private void clearIfLookupAndArrangerPrefixesMatch() {
     boolean isCompletionArranger = myArranger instanceof CompletionLookupArrangerImpl;
@@ -665,8 +747,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
                                  @NotNull PsiFile psiFile,
                                  CompletionItemLookupElement wrapper) {
     ModCompletionItem.InsertionContext insertionContext = new ModCompletionItem.InsertionContext(
-      completionChar == REPLACE_SELECT_CHAR ?
-      ModCompletionItem.InsertionMode.OVERWRITE : ModCompletionItem.InsertionMode.INSERT,
+      completionChar == REPLACE_SELECT_CHAR ? ModCompletionItem.InsertionMode.OVERWRITE : ModCompletionItem.InsertionMode.INSERT,
       completionChar);
     ActionContext actionContext = ActionContext.from(editor, psiFile);
     ActionContext finalActionContext = actionContext
@@ -677,11 +758,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     if (command == null) {
       command = ProgressManager.getInstance().runProcessWithProgressSynchronously(
         () -> ReadAction.nonBlocking(
-          () -> wrapper.computeCommand(finalActionContext, insertionContext)).executeSynchronously(),
+          () -> DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(
+            () -> wrapper.computeCommand(finalActionContext, insertionContext))).executeSynchronously(),
         AnalysisBundle.message("complete"), true, project);
     }
-    WriteAction.run(() -> editor.getDocument().deleteString(start, actionContext.offset()));
-    ModCommandExecutor.getInstance().executeInteractively(actionContext, command, editor);
+    ModCompletionInserter.executeModCommand(editor, psiFile, start, actionContext.offset(), command);
   }
 
   void finishLookupInWritableFile(char completionChar, @Nullable LookupElement item) {
@@ -704,7 +785,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CAMEL_HUMPS);
     }
 
-    myFinishing = true;
+    myFinishingCompletionATM = true;
     if (fireBeforeItemSelected(item, completionChar)) {
       if (item instanceof CompletionItemLookupElement wrapper) {
         PsiFile file = Objects.requireNonNull(getPsiFile(), "PsiFile must be known for ModCommand completion");
@@ -768,13 +849,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
           offset = LookupUtil.insertLookupInDocumentWindowIfNeeded(project, editor, caretOffset, prefixLength, lookupString);
         }
         catch (AssertionError ae) {
-          @SuppressWarnings("RedundantTypeArguments") // type argument is needed to suppress incorrent nullability issue
-          String classes = StreamEx
-            .<LookupElement>iterate(item, Objects::nonNull, i -> {
-              return i instanceof LookupElementDecorator ? ((LookupElementDecorator<?>)i).getDelegate() : null;
-            })
-            .map(le -> le.getClass().getName()).joining(" -> ");
-          LOG.error("When completing " + item + " (" + classes + ")", ae);
+          reportErrorAfterInsert(item, ae);
           return;
         }
         editor.getCaretModel().moveToOffset(offset);
@@ -783,6 +858,16 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     });
 
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+  }
+
+  private static void reportErrorAfterInsert(@NotNull LookupElement item, @NotNull AssertionError ae) {
+    @SuppressWarnings("RedundantTypeArguments") // type argument is needed to suppress incorrect nullability issue
+    String classes = StreamEx
+      .<LookupElement>iterate(item, Objects::nonNull, i -> {
+        return i instanceof LookupElementDecorator ? ((LookupElementDecorator<?>)i).getDelegate() : null;
+      })
+      .map(le -> le.getClass().getName()).joining(" -> ");
+    LOG.error("When completing " + item + " (" + classes + ")", ae);
   }
 
   @Override
@@ -819,6 +904,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return true;
   }
 
+  private boolean hasGuardedChanges() {
+    return myGuardedChanges > 0;
+  }
+
   @ApiStatus.Internal
   protected void updateLocation(@NotNull Point p) {
     myDisplayStrategy.updateLocation(this, editor, p);
@@ -828,7 +917,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   public boolean vetoesHiding() {
     if (isLookupDisposed()) return false;
     // the second condition means that the Lookup belongs to another connected client
-    return myGuardedChanges > 0 ||
+    return hasGuardedChanges() ||
            mySession != ClientSessionsUtil.getCurrentSessionOrNull(mySession.getProject()) ||
            LookupImplVetoPolicy.anyVetoesHiding(this);
   }
@@ -863,7 +952,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       return false;
     }
 
-    return WriteIntentReadAction.compute((Computable<Boolean>)() -> {
+    return WriteIntentReadAction.compute(() -> {
       LookupUsageTracker.trackLookup(myCreatedTimestamp, this);
       return doShowLookup();
     });
@@ -898,13 +987,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       list.setFocusable(true);
       setFocusRequestor(list);
 
+      @SuppressWarnings("removal")
       AnActionEvent actionEvent =
         AnActionEvent.createFromDataContext(ActionPlaces.EDITOR_POPUP, null, ((EditorImpl)editor).getDataContext());
       delegateActionToEditor(IdeActions.ACTION_EDITOR_BACKSPACE, null, actionEvent);
       delegateActionToEditor(IdeActions.ACTION_EDITOR_ESCAPE, null, actionEvent);
       delegateActionToEditor(IdeActions.ACTION_EDITOR_TAB, () -> new ChooseItemAction.Replacing(), actionEvent);
       delegateActionToEditor(IdeActions.ACTION_EDITOR_ENTER,
-        /* e.g. rename popup comes initially unfocused */
+        /* e.g., rename popup comes initially unfocused */
                              () -> getLookupFocusDegree() == LookupFocusDegree.UNFOCUSED
                                    ? new NextVariableAction()
                                    : new ChooseItemAction.FocusedOnly(),
@@ -957,7 +1047,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   private void addListeners() {
-    editor.getDocument().addDocumentListener(new DocumentListener() {
+    editor.getUiDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
         if (canHideOnChange()) {
@@ -1045,8 +1135,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
           AnAction completeAction = ActionManager.getInstance().getAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM);
           // the execution is wrapped into a command inside EditorAction
           if (completeAction != null && editor instanceof EditorEx) {
-            AnActionEvent dataContext = AnActionEvent.createFromDataContext(
-              ActionPlaces.UNKNOWN, null, ((EditorEx)editor).getDataContext());
+            @SuppressWarnings("removal")
+            AnActionEvent dataContext =
+              AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, ((EditorEx)editor).getDataContext());
             ActionUtil.performAction(completeAction, dataContext);
           }
           else {
@@ -1067,7 +1158,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   private boolean canHideOnChange() {
-    return myGuardedChanges == 0 && !myFinishing && !vetoesHidingOnChange() && ClientId.isCurrentlyUnderLocalId();
+    return !hasGuardedChanges() && !myFinishingCompletionATM && !vetoesHidingOnChange() && ClientId.isCurrentlyUnderLocalId();
   }
 
   private boolean vetoesHidingOnChange() {
@@ -1176,6 +1267,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
         listener.currentItemChanged(event);
       }
     }
+    cacheModCommandResult(currentItem);
+    myPreview.updatePreview(currentItem);
+  }
+
+  private void cacheModCommandResult(@Nullable LookupElement currentItem) {
     if (currentItem instanceof CompletionItemLookupElement wrapper && !PowerSaveMode.isEnabled()) {
       PsiFile file = getPsiFile();
       if (file != null) {
@@ -1191,7 +1287,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
           .submit(AppExecutorUtil.getAppExecutorService());
       }
     }
-    myPreview.updatePreview(currentItem);
   }
 
   private void fireUiRefreshed() {
@@ -1343,8 +1438,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   private void doHide(boolean fireCanceled, boolean explicitly) {
-    if (isLookupDisposed()) {
-      LOG.error(formatDisposeTrace());
+    AssertionError invalidError = prepareErrorIfInvalid();
+    if (invalidError != null) {
+      LOG.error(invalidError);
     }
     if (!mySession.getClientId().equals(ClientId.getCurrent())) {
       LOG.error(ClientId.getCurrent() + " tries to hide lookup of " + mySession.getClientId());
@@ -1393,12 +1489,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
   }
 
-  private @NotNull String formatDisposeTrace() {
-    return ExceptionUtil.getThrowableText(disposeTrace) + "\n============";
-  }
-
   /**
-   * @param mayCheckReused   pass {@code true} if you want refresh because lookup is reused for another completion process (e.g., prefix has changed, completion type has changed, etc.)
+   * @param mayCheckReused   pass {@code true} if you want refresh because lookup is reused for another completion process (e.g., prefix has changed, the completion type has changed, etc.)
    * @param onExplicitAction the method is called on explicit user action
    */
   public void refreshUi(boolean mayCheckReused, boolean onExplicitAction) {
@@ -1425,11 +1517,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   public void markReused() {
     EDT.assertIsEdt();
     LookupArranger copy = myArranger.createEmptyCopy();
-    Predicate<LookupElement> additionalMatcher = myArranger.getAdditionalMatcher();
-    if (additionalMatcher != null) {
-      copy.registerAdditionalMatcher(additionalMatcher);
-    }
-    myArranger = copy;
+    setArranger(copy);
 
     requestResize();
   }
@@ -1446,9 +1534,20 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public void checkValid() {
-    if (isLookupDisposed()) {
-      throw new AssertionError("Disposed at: " + formatDisposeTrace());
+    AssertionError error = prepareErrorIfInvalid();
+    if (error != null) {
+      throw error;
     }
+  }
+
+  private @Nullable AssertionError prepareErrorIfInvalid() {
+    if (!isLookupDisposed()) {
+      return null;
+    }
+
+    AssertionError error = new AssertionError("Lookup is disposed (see suppressed exception)");
+    error.addSuppressed(disposeTrace);
+    return error;
   }
 
   @Override

@@ -1,4 +1,5 @@
 // "Add non-null asserted (a!!) call" "true"
+// K2_ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'Int?'.
 fun foo(a: Int?) {
     a.<caret>plus(1)
 }

@@ -1,0 +1,25 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '2.3.0'
+}
+
+repositories {
+    mavenCentral()
+}
+
+// Task to create the directory so it exists during import
+def generatorTask = project.tasks.register("generator") {
+    def outputDirectory = project.layout.projectDirectory.dir("src/main/kotlinGen")
+    outputs.dir(outputDirectory)
+    doLast {
+        outputDirectory.file("generatedCommon.kt").asFile.writeText(
+                //language=kotlin
+                """
+            fun printHello() {
+                println("hello")
+            }
+            """.trimIndent()
+        )
+    }
+}
+
+kotlin.sourceSets.main.generatedKotlin.srcDir(generatorTask)

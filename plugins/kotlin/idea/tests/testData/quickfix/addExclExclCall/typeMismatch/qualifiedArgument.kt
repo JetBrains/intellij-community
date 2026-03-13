@@ -1,5 +1,6 @@
 // "Add non-null asserted (a.foo().single()!!) call" "true"
 // WITH_STDLIB
+// K2_ERROR: Argument type mismatch: actual type is 'Int?', but 'Int' was expected.
 
 class A {
     fun foo(): List<Int?> = listOf()

@@ -337,11 +337,11 @@
                      implementationClass="com.siyeh.ig.bugs.StaticCallOnSubclassInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StringConcatenationInFormatCall" bundle="messages.InspectionGadgetsBundle"
                      key="string.concatenation.in.format.call.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="com.siyeh.ig.bugs.StringConcatenationInFormatCallInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StringConcatenationInMessageFormatCall" bundle="messages.InspectionGadgetsBundle"
                      key="string.concatenation.in.message.format.call.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="com.siyeh.ig.bugs.StringConcatenationInMessageFormatCallInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StringConcatenationMissingWhitespace" bundle="messages.InspectionGadgetsBundle"
                      key="string.concatenation.missing.whitespace.display.name" groupBundle="messages.InspectionsBundle"
@@ -1342,6 +1342,16 @@
                      key="markdown.documentation.comments.migration.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids23" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.migration.MarkdownDocumentationCommentsMigrationInspection"/>
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA"
+                     shortName="MathClampMigration" bundle="messages.InspectionGadgetsBundle"
+                     key="inspection.clamp.migration.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids21" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.migration.MathClampMigrationInspection"/>
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA"
+                     shortName="ComparatorMinMaxCanBeUsed" bundle="messages.InspectionGadgetsBundle"
+                     key="comparator.min.max.can.be.used.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids26" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.migration.ComparatorMinMaxCanBeUsedInspection"/>
 
     <!--group.names.java.language.level.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="AnnotationClass" bundle="messages.InspectionGadgetsBundle" key="annotation.class.display.name"
@@ -2270,7 +2280,7 @@
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.style.ReturnThisInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifiableAnnotation" bundle="messages.InspectionGadgetsBundle"
                      key="simplifiable.annotation.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="com.siyeh.ig.style.SimplifiableAnnotationInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifiableEqualsExpression" bundle="messages.InspectionGadgetsBundle"
                      key="simplifiable.equals.expression.display.name" groupBundle="messages.InspectionsBundle"

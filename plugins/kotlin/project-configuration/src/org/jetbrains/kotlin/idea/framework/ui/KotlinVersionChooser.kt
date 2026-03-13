@@ -71,6 +71,7 @@ internal class KotlinVersionChooser(
             error.set(loadedVersions == null)
 
             val kotlinVersions = loadedVersions ?: listOf(ConfigureDialogWithModulesAndVersion.DEFAULT_KOTLIN_VERSION)
+
             comboBoxModel.addAll(kotlinVersions)
             @Suppress("HardCodedStringLiteral")
             comboBoxModel.selectedItem = kotlinVersions.firstOrNull()

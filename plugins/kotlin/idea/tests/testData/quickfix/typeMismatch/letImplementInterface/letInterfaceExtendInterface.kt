@@ -1,4 +1,5 @@
 // "Let 'C' extend interface 'A'" "true"
+// K2_ERROR: Argument type mismatch: actual type is 'C', but 'A' was expected.
 package let.extend
 
 fun bar() {

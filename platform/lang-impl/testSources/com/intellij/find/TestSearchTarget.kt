@@ -1,13 +1,22 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find
 
-import com.intellij.find.usages.api.*
+import com.intellij.find.usages.api.PsiUsage
+import com.intellij.find.usages.api.SearchTarget
+import com.intellij.find.usages.api.Usage
+import com.intellij.find.usages.api.UsageHandler
+import com.intellij.find.usages.api.UsageSearchParameters
+import com.intellij.find.usages.api.UsageSearcher
 import com.intellij.find.usages.impl.registerSymbolSearchTargetFactoryForTesting
 import com.intellij.find.usages.symbol.SymbolSearchTargetFactory
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
-import com.intellij.model.psi.*
+import com.intellij.model.psi.PsiExternalReferenceHost
+import com.intellij.model.psi.PsiSymbolReference
+import com.intellij.model.psi.PsiSymbolReferenceHints
+import com.intellij.model.psi.PsiSymbolReferenceProvider
+import com.intellij.model.psi.PsiSymbolReferenceProviderBean
 import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchRequest
 import com.intellij.model.search.SearchService

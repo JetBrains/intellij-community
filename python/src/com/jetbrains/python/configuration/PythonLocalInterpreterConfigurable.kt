@@ -26,7 +26,6 @@ import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 /**
  * Configurable for local Python interpreter.
  *
- * Replaces [EditSdkDialog].
  */
 class PythonLocalInterpreterConfigurable(private val project: Project, private val module: Module?, private val sdk: Sdk)
   : BoundConfigurable(sdk.name) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.module.impl.scopes
 
@@ -12,11 +12,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.search.impl.VirtualFileEnumeration
 import com.intellij.psi.search.impl.VirtualFileEnumerationAware
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.indexing.IndexingBundle
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.TestOnly
-import java.util.*
+import java.util.Collections
 import kotlin.concurrent.Volatile
 
 @Suppress("EqualsOrHashCode")
@@ -152,9 +153,9 @@ class ModuleWithDependenciesScope internal constructor(
       val entries = en.getRootEntries()
 
       var i = 1
-      val map = HashMap<VirtualFile, ScopeRootDescriptor>(entries.size)
+      val map = CollectionFactory.createSmallMemoryFootprintMap<VirtualFile, ScopeRootDescriptor>(entries.size)
       for (root in entries) {
-        map[root.root] = ScopeRootDescriptor(root.root, root.orderEntry, i++)
+        map[root.root] = ScopeRootDescriptor(root.orderEntry, i++)
       }
       return map
     }

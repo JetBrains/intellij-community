@@ -1,4 +1,5 @@
 // "Add constructor parameter 'param'" "false"
+// K2_ERROR: No value passed for parameter 'param'.
 // K2_AFTER_ERROR: No value passed for parameter 'param'.
 enum class Foo(val param: String) {
     ENTRY(<caret>)

@@ -8,7 +8,8 @@ import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.font.FontRenderContext;
 import java.lang.reflect.Method;
 import java.util.HashMap;

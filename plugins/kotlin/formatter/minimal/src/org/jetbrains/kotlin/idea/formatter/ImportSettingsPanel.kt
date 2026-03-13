@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings
 import org.jetbrains.kotlin.idea.core.formatter.KotlinPackageEntryTable
 import javax.swing.JCheckBox
+import javax.swing.JComponent
 import javax.swing.JRadioButton
 import javax.swing.table.AbstractTableModel
 
@@ -39,15 +40,15 @@ class ImportSettingsPanelWrapper(settings: CodeStyleSettings) : CodeStyleAbstrac
 
   override fun apply(settings: CodeStyleSettings) = importsPanel.apply(settings.kotlinCustomSettings)
 
-  override fun isModified(settings: CodeStyleSettings) = importsPanel.isModified(settings.kotlinCustomSettings)
+  override fun isModified(settings: CodeStyleSettings): Boolean = importsPanel.isModified(settings.kotlinCustomSettings)
 
-  override fun getPanel() = content
+  override fun getPanel(): JComponent = content
 
   override fun resetImpl(settings: CodeStyleSettings) {
     importsPanel.reset(settings.kotlinCustomSettings)
   }
 
-  override fun getTabTitle() = ApplicationBundle.message("title.imports")
+  override fun getTabTitle(): @NlsContexts.TabTitle String = ApplicationBundle.message("title.imports")
 }
 
 private class ImportSettingsPanel {
@@ -93,8 +94,8 @@ private class ImportSettingsPanel {
   }
 
   fun reset(settings: KotlinCodeStyleSettings) {
-    nameCountToUseStarImportSelector.value = settings.NAME_COUNT_TO_USE_STAR_IMPORT
-    nameCountToUseStarImportForMembersSelector.value = settings.NAME_COUNT_TO_USE_STAR_IMPORT_FOR_MEMBERS
+    nameCountToUseStarImportSelector.reset(settings.NAME_COUNT_TO_USE_STAR_IMPORT)
+    nameCountToUseStarImportForMembersSelector.reset(settings.NAME_COUNT_TO_USE_STAR_IMPORT_FOR_MEMBERS)
 
     cbImportNestedClasses.isSelected = settings.IMPORT_NESTED_CLASSES
 
@@ -163,17 +164,19 @@ private class ImportSettingsPanel {
         copy.removeEmptyPackages()
         return copy
       }
-      catch (ignored: CloneNotSupportedException) {
+      catch (_: CloneNotSupportedException) {
         throw IllegalStateException("Clone should be supported")
       }
     }
   }
 
-  class NameCountToUseStarImportSelector(private val title: @NlsContexts.BorderTitle String, private val default: Int) {
+  class NameCountToUseStarImportSelector(private val title: @NlsContexts.Label String, private val default: Int) {
     private lateinit var rbUseSingleImports: JRadioButton
     private lateinit var rbUseStarImports: JRadioButton
     private lateinit var rbUseStarImportsIfAtLeast: JRadioButton
     private lateinit var starImportLimitField: JBIntSpinner
+
+    private var userValue: Int = 0
 
     fun Panel.buildUi() {
       buttonsGroup(title) {
@@ -199,26 +202,29 @@ private class ImportSettingsPanel {
       }
     }
 
-    var value: Int
+    val value: Int
       get() {
         return when {
-          rbUseSingleImports.isSelected -> Int.MAX_VALUE
-          rbUseStarImports.isSelected -> 1
+          rbUseSingleImports.isSelected -> if (userValue > MAX_VALUE) userValue else Int.MAX_VALUE
+          rbUseStarImports.isSelected -> if (userValue < MIN_VALUE) userValue else 1
           else -> starImportLimitField.number
         }
       }
-      set(value) {
-        when {
-          value > MAX_VALUE -> rbUseSingleImports.isSelected = true
 
-          value < MIN_VALUE -> rbUseStarImports.isSelected = true
+    fun reset(value: Int) {
+      userValue = value
 
-          else -> {
-            rbUseStarImportsIfAtLeast.isSelected = true
-            starImportLimitField.number = value
-          }
+      when {
+        value > MAX_VALUE -> rbUseSingleImports.isSelected = true
+
+        value < MIN_VALUE -> rbUseStarImports.isSelected = true
+
+        else -> {
+          rbUseStarImportsIfAtLeast.isSelected = true
+          starImportLimitField.number = value
         }
       }
+    }
 
     companion object {
       private const val MIN_VALUE = 2

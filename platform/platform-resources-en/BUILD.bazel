@@ -13,4 +13,12 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":resources-en_resources"]
 )
+
+jvm_library(
+  name = "resources-en_test_lib",
+  module_name = "intellij.platform.resources.en",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":resources-en"]
+)
 ### auto-generated section `build intellij.platform.resources.en` end

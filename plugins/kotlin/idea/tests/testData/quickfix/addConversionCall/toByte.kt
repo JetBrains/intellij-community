@@ -1,4 +1,5 @@
 // "Convert expression to 'Byte'" "true"
+// K2_ERROR: Argument type mismatch: actual type is 'Int', but 'Byte' was expected.
 
 fun takeByte(x: Byte) {}
 

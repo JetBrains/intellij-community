@@ -52,6 +52,7 @@ import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.inspections.MavenModelInspection
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper
+import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.ComparisonFailure
@@ -418,16 +419,16 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
 
   protected suspend fun getDependencyCompletionVariants(
     f: VirtualFile,
-    lookupElementStringFunction: Function<in MavenRepositoryArtifactInfo?, String>,
+    lookupElementStringFunction: Function<in MavenRepoArtifactInfo?, String>,
   ): Set<String> {
     configTest(f)
     val variants = fixture.completeBasic()
 
     val result: MutableSet<String> = TreeSet()
     for (each in variants) {
-      val `object` = each.getObject()
-      if (`object` is MavenRepositoryArtifactInfo) {
-        result.add(lookupElementStringFunction.apply(`object`))
+      val o = each.getObject()
+      if (o is MavenRepoArtifactInfo) {
+        result.add(lookupElementStringFunction.apply(o))
       }
     }
     return result

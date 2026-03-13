@@ -2,7 +2,7 @@
 package com.intellij.openapi.project
 
 import com.intellij.util.messages.Topic
-import java.util.*
+import java.util.EventListener
 
 /**
  * Represents a listener for name changes of Project

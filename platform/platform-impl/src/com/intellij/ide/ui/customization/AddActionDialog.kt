@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.EmptyActionGroup
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ex.QuickListsManager
 import com.intellij.openapi.actionSystem.impl.ActionGroupStub
+import com.intellij.openapi.keymap.impl.ui.ActionTreeGroupUtil
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.ui.ComponentValidator
@@ -33,8 +34,8 @@ import javax.swing.tree.TreePath
 internal class AddActionDialog(private val customActionsSchema: CustomActionsSchema,
                                withNoneItem: Boolean) : DialogWrapper(false) {
   private val actionsTree: JTree = Tree().apply {
-    val rootGroup = ActionsTreeUtil.createMainGroup(null, null, QuickListsManager.getInstance().allQuickLists,
-                                                    null, true) {
+    val rootGroup = ActionTreeGroupUtil.createMainGroup(null, null, QuickListsManager.getInstance().allQuickLists,
+                                                        null, true) {
       action -> action !is Separator && action !is NonCustomizableAction &&
                 action !is EmptyAction && action !is EmptyActionGroup &&
                 !(action is ActionStub && action.className == EmptyAction::class.qualifiedName) &&

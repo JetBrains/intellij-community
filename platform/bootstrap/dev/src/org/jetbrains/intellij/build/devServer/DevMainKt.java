@@ -13,14 +13,13 @@ import java.util.Collection;
 
 // in java - don't use kotlin to avoid loading non-JDK classes
 public final class DevMainKt {
-
   private DevMainKt() { }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void main(String[] rawArgs) throws Throwable {
-    long start = System.currentTimeMillis();
+    var start = System.currentTimeMillis();
 
-    MethodHandles.Lookup lookup = MethodHandles.lookup();
+    var lookup = MethodHandles.lookup();
 
     if (!(DevMainKt.class.getClassLoader() instanceof PathClassLoader classLoader)) {
       System.err.println("********************************************************************************************");
@@ -32,7 +31,7 @@ public final class DevMainKt {
     }
 
     // separate method to not retain local variables like implClass
-    String mainClassName = build(lookup, classLoader);
+    var mainClassName = build(lookup, classLoader);
 
     System.setProperty("idea.vendor.name", "JetBrains");
     System.setProperty("idea.use.dev.build.server", "true");
@@ -40,7 +39,7 @@ public final class DevMainKt {
     //noinspection UseOfSystemOutOrSystemErr
     System.out.println("build completed in " + (System.currentTimeMillis() - start) + "ms");
 
-    Class<?> mainClass = classLoader.loadClass(mainClassName);
+    var mainClass = classLoader.loadClass(mainClassName);
     //noinspection ConfusingArgumentToVarargsMethod
     lookup.findStatic(mainClass, "main", MethodType.methodType(void.class, String[].class)).invokeExact(rawArgs);
   }
@@ -51,9 +50,8 @@ public final class DevMainKt {
     // do not use classLoader as a parent - make sure that we don't make the initial classloader dirty
     // (say, do not load kotlin coroutine classes)
     // also close the temporary classloader to unlock output jars on Windows
-    try (URLClassLoader tempClassLoader = new URLClassLoader(classLoader.getUrls().toArray(URL[]::new),
-                                                             ClassLoader.getPlatformClassLoader())) {
-      Class<?> implClass = tempClassLoader.loadClass("org.jetbrains.intellij.build.devServer.DevMainImpl");
+    try (var tempClassLoader = new URLClassLoader(classLoader.getUrls().toArray(URL[]::new), ClassLoader.getPlatformClassLoader())) {
+      var implClass = tempClassLoader.loadClass("org.jetbrains.intellij.build.devServer.DevMainImpl");
 
       //noinspection unchecked
       mainClassAndClassPath = (AbstractMap.SimpleImmutableEntry<String, Collection<Path>>)

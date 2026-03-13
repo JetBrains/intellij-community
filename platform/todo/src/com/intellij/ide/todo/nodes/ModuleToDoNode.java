@@ -104,7 +104,7 @@ public final class ModuleToDoNode extends BaseToDoNode<Module> {
     int count = 0;
     while (iterator.hasNext()) {
       final PsiFile psiFile = iterator.next();
-      count += ReadAction.compute(() -> getTreeStructure().getTodoItemCount(psiFile));
+      count += ReadAction.computeBlocking(() -> getTreeStructure().getTodoItemCount(psiFile));
     }
     return count;
   }

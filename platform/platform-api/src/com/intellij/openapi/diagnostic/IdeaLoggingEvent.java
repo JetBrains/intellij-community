@@ -3,6 +3,7 @@ package com.intellij.openapi.diagnostic;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -16,6 +17,7 @@ public class IdeaLoggingEvent {
   private final List<Attachment> myAttachments;
   private final @Nullable IdeaPluginDescriptor myPlugin;
   private final @Nullable Object myData;
+  private final @Nullable ProblematicPluginInfo myProblematicPluginInfo;
 
   public IdeaLoggingEvent(String message, Throwable throwable) {
     this(message, throwable, null);
@@ -26,7 +28,24 @@ public class IdeaLoggingEvent {
     myThrowable = throwable;
     myAttachments = List.of();
     myPlugin = null;
+    myProblematicPluginInfo = null;
     myData = data;
+  }
+
+  @ApiStatus.Internal
+  public IdeaLoggingEvent(
+    @Nullable String message,
+    @NotNull Throwable throwable,
+    @NotNull List<Attachment> attachments,
+    @Nullable ProblematicPluginInfo problematicPluginInfo,
+    @Nullable Object data
+  ) {
+    myMessage = message;
+    myThrowable = throwable;
+    myAttachments = attachments;
+    myData = data;
+    myProblematicPluginInfo = problematicPluginInfo;
+    myPlugin = problematicPluginInfo instanceof ProblematicPluginInfoBasedOnDescriptor ? ((ProblematicPluginInfoBasedOnDescriptor)problematicPluginInfo).getPluginDescriptor() : null;
   }
 
   public IdeaLoggingEvent(
@@ -40,6 +59,7 @@ public class IdeaLoggingEvent {
     myThrowable = throwable;
     myAttachments = Collections.unmodifiableList(attachments);
     myPlugin = plugin;
+    myProblematicPluginInfo = plugin != null ? new ProblematicPluginInfoBasedOnDescriptor(plugin) : null;
     myData = data;
   }
 
@@ -67,9 +87,22 @@ public class IdeaLoggingEvent {
     return myAttachments;
   }
 
-  /** Returns a descriptor of a plugin in which an exception has occurred. */
+  /**
+   * Returns a descriptor of a plugin in which an exception has occurred.
+   * <p>
+   * If the IDE is running in remote development mode and the exception was produced by the backend process, it returns {@code null}.
+   * Consider using {@link #getProblematicPluginInfo()} instead which handles such cases.
+   */
   public @Nullable IdeaPluginDescriptor getPlugin() {
     return myPlugin;
+  }
+
+  /**
+   * Returns information about a plugin that caused the exception.
+   */
+  @ApiStatus.Experimental
+  public final @Nullable ProblematicPluginInfo getProblematicPluginInfo() {
+    return myProblematicPluginInfo;
   }
 
   public @Nullable Object getData() {

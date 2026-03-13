@@ -1,4 +1,6 @@
 // "Apply all 'Add modifier' fixes in file" "true"
+// K2_ERROR: 'operator' modifier is required on 'fun minus(a: A): A' defined in 'A'.
+// K2_ERROR: 'operator' modifier is required on 'fun plus(a: A): A' defined in 'A'.
 class A {
     operator fun plus(a: A): A = A()
     operator fun minus(a: A): A = A()

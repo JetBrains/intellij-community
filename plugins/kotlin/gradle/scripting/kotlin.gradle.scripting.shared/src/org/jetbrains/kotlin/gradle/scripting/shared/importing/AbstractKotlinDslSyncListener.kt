@@ -60,7 +60,7 @@ abstract class AbstractKotlinDslSyncListener : ExternalSystemTaskNotificationLis
                 // roll back to specified in GRADLE_JVM if for some reason sync.javaHome points to corrupted SDK
                 val gradleJvm = GradleSettings.getInstance(project).getLinkedProjectSettings(sync.workingDir)?.gradleJvm
                 try {
-                    ExternalSystemJdkUtil.getJdk(project, gradleJvm)?.homePath
+                    ExternalSystemJdkUtil.resolveJdkName(project, gradleJvm)?.homePath
                 } catch (_: Exception) {
                     null
                 }

@@ -1,5 +1,6 @@
 // "Create abstract property 'A.foo'" "true"
 // K2_ACTION: "Create abstract property 'foo'" "true"
+// K2_ERROR: Unresolved reference 'foo'.
 abstract class A {
     abstract val foo: Boolean<caret>
 

@@ -235,4 +235,9 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
     }
     return Lists.newArrayList(myAttributeToParameterName.values());
   }
+
+  @Override
+  protected String getRefactoringId() {
+    return "refactoring.python.make.method.top.level";
+  }
 }

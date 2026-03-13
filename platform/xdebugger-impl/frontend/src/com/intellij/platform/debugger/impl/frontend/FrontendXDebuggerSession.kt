@@ -15,15 +15,39 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
-import com.intellij.platform.debugger.impl.frontend.frame.*
+import com.intellij.platform.debugger.impl.frontend.frame.FrontendDropFrameHandler
+import com.intellij.platform.debugger.impl.frontend.frame.FrontendXExecutionStack
+import com.intellij.platform.debugger.impl.frontend.frame.FrontendXExecutionStackGroup
+import com.intellij.platform.debugger.impl.frontend.frame.FrontendXStackFrame
+import com.intellij.platform.debugger.impl.frontend.frame.FrontendXSuspendContext
 import com.intellij.platform.debugger.impl.frontend.storage.FrontendXStackFramesStorage
 import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateStackFrame
-import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.debugger.impl.rpc.ErrorOccurredEvent
+import com.intellij.platform.debugger.impl.rpc.NewExecutionStackGroupsEvent
+import com.intellij.platform.debugger.impl.rpc.NewExecutionStacksEvent
+import com.intellij.platform.debugger.impl.rpc.SuspendData
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionApi
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionDataDto
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionDto
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionState
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionTabApi
+import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionEvent
+import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabDto
+import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabInfo
+import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabInfoCallback
+import com.intellij.platform.debugger.impl.rpc.XExecutionStackGroupsEvent
+import com.intellij.platform.debugger.impl.rpc.XSuspendContextDto
+import com.intellij.platform.debugger.impl.rpc.XValueMarkerId
+import com.intellij.platform.debugger.impl.rpc.actionIds
+import com.intellij.platform.debugger.impl.rpc.consoleView
+import com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManager
+import com.intellij.platform.debugger.impl.shared.childScopeCancelledOnSessionEvents
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XSmartStepIntoHandlerEntry
 import com.intellij.platform.debugger.impl.shared.proxy.XStackFramesListColorsCache
-import com.intellij.platform.debugger.impl.shared.childScopeCancelledOnSessionEvents
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
 import com.intellij.platform.execution.impl.frontend.createFrontendProcessHandler
 import com.intellij.platform.execution.impl.frontend.executionEnvironment
 import com.intellij.platform.util.coroutines.childScope
@@ -45,15 +69,32 @@ import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener
 import com.intellij.xdebugger.impl.rpc.sourcePosition
 import com.intellij.xdebugger.impl.rpc.toRpc
-import com.intellij.xdebugger.impl.ui.SplitDebuggerUIUtil
+import com.intellij.xdebugger.impl.ui.SplitDebuggerDataKeys
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
-import com.intellij.xdebugger.impl.util.XDebugMonolithUtils
 import com.intellij.xdebugger.ui.XDebugTabLayouter
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.ClosedSendChannelException
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.atomic.AtomicReference
@@ -204,6 +245,11 @@ class FrontendXDebuggerSession(
     DebuggerInlayListener.getInstance(project).startListening()
     sessionDto.initialSuspendData?.applyToCurrents()
     cs.launch {
+      val processDescriptorDeferred = sessionDto.processDescriptor
+      if (processDescriptorDeferred != null) {
+        val processDescriptor = processDescriptorDeferred.await()
+        FrontendDescriptorStateManager.getInstance(project).registerProcessDescriptor(id, processDescriptor, cs)
+      }
       sessionDto.sessionEvents.toFlow().collect { event ->
         with(event) {
           updateCurrents()
@@ -261,7 +307,9 @@ class FrontendXDebuggerSession(
         currentStackFrame.value = StackFrameUpdate.notifyChanged(newFrame)
       }
       is XDebuggerSessionEvent.BreakpointsMuted -> {}
-      XDebuggerSessionEvent.SettingsChanged -> {}
+      is XDebuggerSessionEvent.SettingsChanged -> {
+        updateState()
+      }
     }
   }
 
@@ -343,17 +391,18 @@ class FrontendXDebuggerSession(
     }
 
     val proxy = this@FrontendXDebuggerSession
+    val contentToReuse = tabInfo.contentToReuse
     val tab = withContext(Dispatchers.EDT) {
       // we need to await for the console view to be initialized before tab is created
       // so [consoleView] will return an up-to-date result
       consoleViewDeferred.await()
-      // TODO restore content to reuse on frontend if needed (it is not used now in create)
-      XDebugSessionTab.create(proxy, tabInfo.iconId?.icon(), tabInfo.executionEnvironmentProxyDto?.executionEnvironment(project, tabScope), null,
+
+      XDebugSessionTab.create(proxy, tabInfo.iconId?.icon(), tabInfo.executionEnvironmentProxyDto?.executionEnvironment(project, tabScope), contentToReuse,
                               tabInfo.forceNewDebuggerUi, tabInfo.withFramesCustomization, tabInfo.defaultFramesViewKey).apply {
         setAdditionalKeysProvider { sink ->
-          sink[SplitDebuggerUIUtil.SPLIT_RUN_CONTENT_DESCRIPTOR_KEY] = backendRunContentDescriptorId
+          sink[SplitDebuggerDataKeys.SPLIT_RUN_CONTENT_DESCRIPTOR_KEY] = backendRunContentDescriptorId
           if (executionEnvironmentId != null) {
-            sink[SplitDebuggerUIUtil.SPLIT_EXECUTION_ENVIRONMENT_KEY] = executionEnvironmentId
+            sink[SplitDebuggerDataKeys.SPLIT_EXECUTION_ENVIRONMENT_KEY] = executionEnvironmentId
           }
         }
         sessionTabDeferred.complete(this)
@@ -377,7 +426,7 @@ class FrontendXDebuggerSession(
 
     tabScope.launch(Dispatchers.EDT) {
       tabInfo.showTab.await()
-      tab.showTab()
+      tab.showTab(contentToReuse)
     }
 
     // don't subscribe on additional tabs if we have [ExecutionEnvironment] (it means this is Monolith)
@@ -496,7 +545,7 @@ class FrontendXDebuggerSession(
     // As a result, additional actions registered on the backend are added here as a flat list,
     // and separators e.g. from the original backend structure are not preserved.
     // We maintain two code paths: one for Monolith (preserving full group structure) and one for RemDev (flat view).
-    val monolithSession = XDebugMonolithUtils.findSessionById(id)
+    val monolithSession = XDebuggerEntityConverter.getSession(this)
     if (monolithSession != null) {
       monolithSession.debugProcess.registerAdditionalActions(leftToolbar, topLeftToolbar, settings)
     } else {

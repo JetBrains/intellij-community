@@ -26,9 +26,16 @@ import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.ListSelectionModel;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.List;
@@ -36,7 +43,11 @@ import java.util.function.Supplier;
 
 import static com.intellij.openapi.project.ProjectUtilCore.displayUrlRelativeToProject;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
-import static com.intellij.openapi.util.text.HtmlChunk.*;
+import static com.intellij.openapi.util.text.HtmlChunk.fragment;
+import static com.intellij.openapi.util.text.HtmlChunk.icon;
+import static com.intellij.openapi.util.text.HtmlChunk.nbsp;
+import static com.intellij.openapi.util.text.HtmlChunk.template;
+import static com.intellij.openapi.util.text.HtmlChunk.text;
 import static com.intellij.openapi.vfs.VfsUtilCore.VFS_SEPARATOR;
 import static com.intellij.openapi.vfs.VfsUtilCore.VFS_SEPARATOR_CHAR;
 

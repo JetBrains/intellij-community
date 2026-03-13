@@ -129,6 +129,7 @@ public final class FormSourceCodeGenerator {
   private final ArrayList<FormErrorInfo> myErrors;
   private boolean myNeedLoadLabelText;
   private boolean myNeedLoadButtonText;
+  private boolean myNeedNonNlsComment;
 
   private static final Map<Class<?>, LayoutSourceGenerator> ourComponentLayoutCodeGenerators = new HashMap<>();
   private static final Map<String, LayoutSourceGenerator> ourContainerLayoutCodeGenerators = new HashMap<>();
@@ -318,7 +319,7 @@ public final class FormSourceCodeGenerator {
 
     PsiElement anchor;
     if (myGenerateFinalFields) {
-      anchor = generateSourceFinalFields(newClass, module, methodText, classToBind, id2component);
+      anchor = generateSourceFinalFields(newClass, module, methodText, classToBind, id2component, rootContainer);
     }
     else {
       anchor = generateSourcesNoFinalFields(rootContainer, newClass, module, methodText);
@@ -458,7 +459,7 @@ public final class FormSourceCodeGenerator {
     return method;
   }
 
-  private static PsiElement generateSourceFinalFields(PsiClass newClass, Module module, String methodText, PsiClass classToBind, HashMap<String, LwComponent> id2component)
+  private static PsiElement generateSourceFinalFields(PsiClass newClass, Module module, String methodText, PsiClass classToBind, HashMap<String, LwComponent> id2component, LwRootContainer rootContainer)
     throws CodeGenerationException {
 
     final PsiManager psiManager = PsiManager.getInstance(module.getProject());
@@ -478,6 +479,20 @@ public final class FormSourceCodeGenerator {
 
         boundFields.add(boundField);
 
+        if (!boundField.hasModifierProperty(PsiModifier.FINAL)) {
+          Objects.requireNonNull(boundField.getModifierList()).setModifierProperty(PsiModifier.FINAL, true);
+        }
+      }
+    }
+
+    for (IButtonGroup group : rootContainer.getButtonGroups()) {
+      if (group.isBound()) {
+        PsiField boundField = newClass.findFieldByName(group.getName(), false);
+        if (boundField == null) {
+          throw new CodeGenerationException(null,
+                                            "Bound field '" + group.getName() + "' not found in class " + classToBind.getQualifiedName());
+        }
+        boundFields.add(boundField);
         if (!boundField.hasModifierProperty(PsiModifier.FINAL)) {
           Objects.requireNonNull(boundField.getModifierList()).setModifierProperty(PsiModifier.FINAL, true);
         }
@@ -801,7 +816,7 @@ public final class FormSourceCodeGenerator {
       if (oldLexem != newLexem) {
         return false;
       }
-      if (oldLexem != TokenType.WHITE_SPACE && !JavaDocElementType.DOC_COMMENT_TOKENS.contains(oldLexem)) {
+      if (oldLexem != TokenType.WHITE_SPACE && oldLexem != JavaDocElementType.DOC_COMMENT) {
         int oldStart = oldTextLexer.getTokenStart();
         int newStart = newTextLexer.getTokenStart();
         int oldLength = oldTextLexer.getTokenEnd() - oldTextLexer.getTokenStart();
@@ -1064,6 +1079,9 @@ public final class FormSourceCodeGenerator {
           continue;
         }
         else {
+          if (descriptor.isNoI18n()) {
+            myNeedNonNlsComment = true;
+          }
           value = descriptor.getValue();
         }
       }
@@ -1365,6 +1383,9 @@ public final class FormSourceCodeGenerator {
 
       Object value = e.getValue();
       if (value instanceof StringDescriptor) {
+        if (((StringDescriptor) value).isNoI18n()) {
+          myNeedNonNlsComment = true;
+        }
         push(((StringDescriptor) value).getValue());
       }
       else if (value instanceof Boolean) {
@@ -1467,6 +1488,10 @@ public final class FormSourceCodeGenerator {
           endMethod();
         }
       }
+      if (!haveGroupConstructor && group.isBound()) {
+        append(group.getName());
+        append("= new javax.swing.ButtonGroup();");
+      }
     }
   }
 
@@ -1494,6 +1519,9 @@ public final class FormSourceCodeGenerator {
       push((String)null);
     }
     else if (descriptor.getValue() != null) {
+      if (descriptor.isNoI18n()) {
+        myNeedNonNlsComment = true;
+      }
       push(descriptor.getValue());
     }
     else {
@@ -1695,7 +1723,12 @@ public final class FormSourceCodeGenerator {
     myIsFirstParameterStack.pop();
 
     if (myIsFirstParameterStack.isEmpty()) {
-      myBuffer.append(";\n");
+      myBuffer.append(';');
+      if (myNeedNonNlsComment) {
+        myBuffer.append(" //NON-NLS");
+        myNeedNonNlsComment = false;
+      }
+      myBuffer.append('\n');
     }
   }
 

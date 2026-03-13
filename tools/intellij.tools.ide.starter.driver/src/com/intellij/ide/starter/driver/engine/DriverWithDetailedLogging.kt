@@ -2,7 +2,6 @@ package com.intellij.ide.starter.driver.engine
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
-import com.intellij.driver.client.impl.JmxCallException
 import com.intellij.driver.model.LockSemantics
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.ui.ui
@@ -18,8 +17,11 @@ import com.intellij.ide.starter.utils.replaceSpecialCharactersWithHyphens
 import com.intellij.tools.ide.starter.bus.EventsBus
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
+import com.intellij.util.system.OS
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.div
@@ -62,19 +64,23 @@ internal class DriverWithDetailedLogging(private val driver: Driver, logUiHierar
   }
 
   private fun createErrorScreenshotOrNull(): String? {
-    try {
-      return this.takeScreenshot("driverError")
+    return try {
+      val future = CompletableFuture.supplyAsync { this.takeScreenshot("driverError") }
+      future.get(30, TimeUnit.SECONDS)
     }
-    catch (_: JmxCallException) {
-      return null
+    catch (e: Exception) {
+      logError("Failed to take error screenshot: ${e.message}")
+      null
     }
   }
 
   private fun saveHierarchy(path: String) {
     try {
-      ui.robotProvider.saveHierarchy(path)
+      val future = CompletableFuture.runAsync { ui.robotProvider.saveHierarchy(path) }
+      future.get(30, TimeUnit.SECONDS)
     }
-    catch (_: Throwable) {
+    catch (e: Exception) {
+      logError("Failed to save UI hierarchy: ${e.message}")
     }
   }
 
@@ -96,15 +102,18 @@ internal class DriverWithDetailedLogging(private val driver: Driver, logUiHierar
           logError("screenshot should be a regular file, but it is not: $screenshotPath")
         }
         else if (!CIServer.instance.isBuildRunningOnCI) {
-          append("Screenshot: file://${path.invariantSeparatorsPathString}\n".color(LogColor.BLUE))
+          val prefix = if (OS.CURRENT != OS.Windows) "file:/" else "file://"
+          append("Screenshot: $prefix${path.invariantSeparatorsPathString}\n".color(LogColor.BLUE))
         }
         else {
           runContext?.let { context ->
-            val artifactPath = context.contextName.replaceSpecialCharactersWithHyphens()
+            val artifactDir = context.contextName.replaceSpecialCharactersWithHyphens()
             val artifactName = path.name.replaceSpecialCharactersWithHyphens()
-            logOutput("Adding screenshot to metadata: $artifactPath/$artifactName")
-            TeamCityClient.publishTeamCityArtifacts(path, artifactPath, artifactName, false)
-            TeamCityCIServer.addTestMetadata(testName = null, TeamCityCIServer.TeamCityMetadataType.IMAGE, flowId = null, name = null, value = "$artifactPath/$artifactName")
+            val actualArtifactPathOnCi = TeamCityClient.publishTeamCityArtifacts(path, artifactDir, artifactName, false)
+            if (actualArtifactPathOnCi != null) {
+              logOutput("Adding screenshot to metadata: $actualArtifactPathOnCi")
+              TeamCityCIServer.addTestMetadata(testName = null, TeamCityCIServer.TeamCityMetadataType.IMAGE, flowId = null, name = null, value = actualArtifactPathOnCi)
+            }
           }
         }
       }

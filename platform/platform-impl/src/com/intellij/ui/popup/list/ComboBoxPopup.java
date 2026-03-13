@@ -12,12 +12,17 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.ui.*;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.GroupedComboBoxRenderer;
+import com.intellij.ui.GroupedElementsRenderer;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRendererComponent;
 import com.intellij.ui.dsl.listCellRenderer.LcrRow;
 import com.intellij.ui.popup.WizardPopup;
+import com.intellij.ui.render.CompositeRenderer;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -25,9 +30,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JSeparator;
+import javax.swing.ListCellRenderer;
+import javax.swing.ListModel;
+import javax.swing.ListSelectionModel;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
@@ -289,6 +302,13 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
         KotlinUIDslRendererComponent component =
           (KotlinUIDslRendererComponent)unwrappedRenderer.getListCellRendererComponent(myProxyList, value, -1, false, false);
         return component.getListSeparator();
+      }
+      if (unwrappedRenderer instanceof CompositeRenderer<?>) {
+        //noinspection unchecked
+        var component = unwrappedRenderer.getListCellRendererComponent(myProxyList, value, -1, false, false);
+        if (component instanceof KotlinUIDslRendererComponent dslRendererComponent) {
+          return dslRendererComponent.getListSeparator();
+        }
       }
 
       return null;

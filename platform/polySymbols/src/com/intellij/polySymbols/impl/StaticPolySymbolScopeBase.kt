@@ -2,6 +2,8 @@
 package com.intellij.polySymbols.impl
 
 import com.intellij.model.Pointer
+import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
@@ -10,7 +12,14 @@ import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.framework.FrameworkId
 import com.intellij.polySymbols.framework.framework
 import com.intellij.polySymbols.patterns.PolySymbolPattern
-import com.intellij.polySymbols.query.*
+import com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
+import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
+import com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams
+import com.intellij.polySymbols.query.PolySymbolNamesProvider
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolQueryParams
+import com.intellij.polySymbols.query.PolySymbolQueryStack
+import com.intellij.polySymbols.query.impl.PolySymbolQueryExecutorImpl
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
@@ -28,13 +37,9 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin>
 
   private val roots = mutableMapOf<Root, Origin>()
 
-  @JvmField
-  protected var modCount: Long = 0
-
   abstract override fun createPointer(): Pointer<out StaticPolySymbolScopeBase<Root, Contribution, Origin>>
 
-  final override fun getModificationCount(): Long =
-    modCount
+  final override val modificationTracker: ModificationTracker = SimpleModificationTracker()
 
   final override fun getMatchingSymbols(
     qualifiedName: PolySymbolQualifiedName,
@@ -169,13 +174,13 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin>
   }
 
   internal fun addRoot(root: Root?, origin: Origin) {
-    modCount++
+    (modificationTracker as SimpleModificationTracker).incModificationCount()
     if (root == null) return
     roots[root] = origin
   }
 
   internal fun removeRoot(root: Root?) {
-    modCount++
+    (modificationTracker as SimpleModificationTracker).incModificationCount()
     roots.remove(root)
   }
 
@@ -221,11 +226,11 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin>
       }
 
     fun checkForModifications() {
-      if (namesProvider.modificationCount != this.namesProviderTimestamp) {
+      if (namesProvider.modificationTracker.modificationCount != this.namesProviderTimestamp) {
         synchronized(this) {
-          if (namesProvider.modificationCount != this.namesProviderTimestamp) {
+          if (namesProvider.modificationTracker.modificationCount != this.namesProviderTimestamp) {
             mapsCache.clear()
-            this.namesProviderTimestamp = namesProvider.modificationCount
+            this.namesProviderTimestamp = namesProvider.modificationTracker.modificationCount
           }
         }
       }
@@ -240,15 +245,22 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin>
       symbolsCache.getOrPut(item) { item.withQueryExecutorContext(queryExecutor) }
 
     fun checkForModifications() {
-      if (queryExecutor.modificationCount != this.queryExecutorModificationCount) {
+      if (calcQueryExecutorModificationCount() != this.queryExecutorModificationCount) {
         synchronized(this) {
-          if (queryExecutor.modificationCount != this.queryExecutorModificationCount) {
+          val count = calcQueryExecutorModificationCount()
+          if (count != this.queryExecutorModificationCount) {
             symbolsCache.clear()
-            this.queryExecutorModificationCount = queryExecutor.modificationCount
+            this.queryExecutorModificationCount = count
           }
         }
       }
     }
+
+    private fun calcQueryExecutorModificationCount(): Long =
+      queryExecutor.namesProvider.modificationTracker.modificationCount +
+      (queryExecutor as PolySymbolQueryExecutorImpl).rootScope.sumOf {
+        (it as? StaticPolySymbolScope)?.modificationTracker?.modificationCount ?: 0L
+      }
 
   }
 

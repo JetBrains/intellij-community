@@ -13,6 +13,14 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":devkit_resources"]
 )
+
+jvm_library(
+  name = "devkit_test_lib",
+  module_name = "intellij.devkit",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":devkit"]
+)
 ### auto-generated section `build intellij.devkit` end
 
 ### auto-generated section `build intellij.devkit.plugin.main` start
@@ -37,8 +45,16 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     ":devkit-plugin-main",
+    "//plugins/devkit:devkit-plugin-main-noKotlin_test_lib",
+    "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit_test_lib",
+    "//plugins/devkit/intellij.kotlin.devkit/k1:k1_test_lib",
+    "//plugins/devkit/intellij.kotlin.devkit/k2:k2_test_lib",
+    "//plugins/devkit/devkit-kotlin-tests:kotlin-tests",
     "//plugins/devkit/devkit-kotlin-tests:kotlin-tests_test_lib",
+    "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel_test_lib",
+    "//plugins/devkit/intellij.devkit.workspaceModel/tests",
     "//plugins/devkit/intellij.devkit.workspaceModel/tests:tests_test_lib",
+    "//plugins/devkit/intellij.devkit.compose:compose_test_lib",
   ]
 )
 ### auto-generated section `build intellij.devkit.plugin.main` end
@@ -73,7 +89,22 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     ":devkit-plugin-main-noKotlin",
+    "//plugins/devkit:devkit_test_lib",
+    "//plugins/devkit/devkit-core:core_test_lib",
+    "//plugins/devkit/intellij.devkit.debugger:debugger_test_lib",
+    "//plugins/devkit/intellij.devkit.gradle:gradle_test_lib",
+    "//plugins/devkit/intellij.devkit.i18n:i18n_test_lib",
+    "//plugins/devkit/intellij.devkit.intelliLang:intelliLang_test_lib",
+    "//plugins/devkit/intellij.devkit.themes:themes_test_lib",
+    "//plugins/devkit/intellij.devkit.uiDesigner:uiDesigner_test_lib",
+    "//plugins/devkit/jps-plugin:jps_test_lib",
+    "//plugins/devkit/runtimeModuleRepository/jps:jps_test_lib",
+    "//plugins/devkit/intellij.devkit.scaffolding:scaffolding_test_lib",
+    "//plugins/devkit/devkit-java-tests:java-tests",
     "//plugins/devkit/devkit-java-tests:java-tests_test_lib",
+    "//plugins/devkit/intellij.devkit.stacktrace:stacktrace_test_lib",
+    "//plugins/devkit/api-dump:api-dump_test_lib",
+    "//plugins/devkit/api-dump-lang:apiDump-lang_test_lib",
   ]
 )
 ### auto-generated section `build intellij.devkit.plugin.main.noKotlin` end

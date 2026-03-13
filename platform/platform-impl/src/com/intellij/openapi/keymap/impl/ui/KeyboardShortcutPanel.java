@@ -4,8 +4,9 @@ package com.intellij.openapi.keymap.impl.ui;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.wm.IdeFocusManager;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.KeyStroke;
+import java.awt.LayoutManager;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;

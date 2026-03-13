@@ -1,13 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ExpirableExecutor
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.concurrency.AppExecutorUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.Executor
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
@@ -26,7 +30,8 @@ class ExpirableExecutorTest : LightPlatformTestCase() {
   }
 
   fun `test coroutine canceled once expired`() {
-    val disposable = Disposable { }.also { Disposer.register(testRootDisposable, it) }
+    val disposable = Disposer.newDisposable()
+    Disposer.register(testRootDisposable, disposable)
     val context = ExpirableExecutor.on(AppExecutorUtil.getAppExecutorService())
       .expireWith(disposable)
       .coroutineDispatchingContext()

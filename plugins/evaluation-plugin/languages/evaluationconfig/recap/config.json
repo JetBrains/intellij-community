@@ -1,0 +1,27 @@
+{
+  "outputDir": "bin/ml-eval-recap-output",
+  "strategy": {
+    "window": "TwoHours"
+  },
+  "fileDataset": {
+    "url": "config:./recap-eval"
+  },
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 100,
+    "filesLimit": 100,
+    "order": "LINEAR",
+    "trainTestSplit": 70,
+    "registry": ""
+  },
+  "reports": {
+    "evaluationTitle": "Recap Evaluation",
+    "defaultMetrics": [
+      "Sessions"
+    ],
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}

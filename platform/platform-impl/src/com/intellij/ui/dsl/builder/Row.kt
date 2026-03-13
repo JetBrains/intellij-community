@@ -15,6 +15,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.components.*
 import com.intellij.ui.components.fields.ExpandableTextField
+import com.intellij.ui.components.fields.ExtendableTextComponent
+import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.dsl.gridLayout.Grid
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
@@ -348,6 +350,15 @@ interface Row {
    */
   fun expandableTextField(parser: Function<in String, out MutableList<String>> = ParametersListUtil.DEFAULT_LINE_PARSER,
                           joiner: Function<in MutableList<String>, String> = ParametersListUtil.DEFAULT_LINE_JOINER): Cell<ExpandableTextField>
+
+  /**
+   * Creates extendable text field with [columns] set to [COLUMNS_SHORT].
+   * The field is useful when [extensions][ExtendableTextComponent.Extension] are needed.
+   *
+   * @see ExtendableTextField.addExtension
+   * @see ExtendableTextComponent.Extension.create
+   */
+  fun extendableTextField(): Cell<ExtendableTextField>
 
   /**
    * Creates integer text field with [columns] set to [COLUMNS_TINY]

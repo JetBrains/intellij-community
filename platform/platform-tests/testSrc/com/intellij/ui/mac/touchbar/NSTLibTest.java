@@ -4,7 +4,9 @@ package com.intellij.ui.mac.touchbar;
 import com.intellij.ui.mac.foundation.ID;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 public class NSTLibTest {

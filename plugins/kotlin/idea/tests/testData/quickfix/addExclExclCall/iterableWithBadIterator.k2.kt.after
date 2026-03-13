@@ -1,4 +1,5 @@
 // "Add non-null asserted (test!!) call" "true"
+// K2_ERROR: Non-nullable value required to call an 'iterator()' method in a for-loop.
 // K2_AFTER_ERROR: 'operator' modifier is required on 'fun iterator(): Iterator<Int>' defined in 'Some'.
 
 class Some {

@@ -370,7 +370,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     PyDataclassParameters dcParams = parseDataclassParameters(this, context);
     if (dcParams != null && dcParams.getSlots()) {
       List<String> result = new ArrayList<>();
-      var initVars = PyDataclassTypeProvider.Companion.getInitVars(this, dcParams, context);
+      var initVars = PyDataclassTypeProvider.Helper.getInitVars(this, dcParams, context);
       var initVarTargets = initVars == null ? emptySet() : ContainerUtil.map2Set(initVars, iv -> iv.getTargetExpression());
       var attributes = getClassAttributes();
 

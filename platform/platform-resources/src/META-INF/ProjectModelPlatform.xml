@@ -1,7 +1,7 @@
 <!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache" open="true"
+    <applicationService serviceInterface="com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache"
                         serviceImplementation="com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelCacheImpl"/>
     <projectService serviceInterface="com.intellij.platform.backend.workspace.WorkspaceModelCache"
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl"/>
@@ -10,4 +10,9 @@
     <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidatorBackgroundActivity"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.workspaceModel.ide.impl.WorkspaceModelFusLogger"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.workspaceModel.ide.impl.validation.NoUnexpectedWSMEntitiesOnFrontendListener"
+              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
+  </projectListeners>
 </idea-plugin>

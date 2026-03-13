@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -11,13 +11,13 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.XQuickEvaluateHandler;
-import com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManager;
+import com.intellij.platform.debugger.impl.ui.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.platform.debugger.impl.frontend.actions.CustomQuickEvaluateActionProviderKt.getEnabledCustomQuickEvaluateActionHandler;
+import static com.intellij.platform.debugger.impl.ui.actions.CustomQuickEvaluateActionProviderKt.getEnabledCustomQuickEvaluateActionHandler;
 
 @ApiStatus.Internal
 public class QuickEvaluateAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {

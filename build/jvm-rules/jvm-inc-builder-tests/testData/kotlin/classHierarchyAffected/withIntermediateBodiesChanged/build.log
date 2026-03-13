@@ -1,0 +1,26 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_withIntermediateBodiesChanged-a.kotlin_module
+  foo/DirectBase.class
+  foo/DirectChild.class
+  foo/DirectInter.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/withIntermediateBodiesChanged/a/DirectInter.kt
+  kotlin/classHierarchyAffected/withIntermediateBodiesChanged/a/direct.kt
+End of files
+------------------------------------------
+Exit code: OK
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_withIntermediateBodiesChanged-a.kotlin_module
+  foo/ReverseBase.class
+  foo/ReverseChild.class
+  foo/ReverseInter.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/withIntermediateBodiesChanged/a/ReverseInter.kt
+  kotlin/classHierarchyAffected/withIntermediateBodiesChanged/a/reverse.kt
+End of files
+------------------------------------------
+Exit code: OK

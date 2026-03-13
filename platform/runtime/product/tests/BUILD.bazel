@@ -5,7 +5,10 @@ jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  runtime_deps = ["//platform/runtime/product"]
+  runtime_deps = [
+    "//platform/runtime/product",
+    "@lib//:kotlin-stdlib",
+  ]
 )
 
 jvm_library(
@@ -15,11 +18,16 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//platform/runtime/product",
+    "//platform/runtime/product:product_test_lib",
+    "@lib//:kotlin-stdlib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/runtime/repository",
+    "//platform/runtime/repository:repository_test_lib",
+    "//platform/runtime/repository/tests",
     "//platform/runtime/repository/tests:tests_test_lib",
     "//libraries/assertj-core",
+    "//libraries/assertj-core:assertj-core_test_lib",
   ],
   runtime_deps = [":tests"]
 )

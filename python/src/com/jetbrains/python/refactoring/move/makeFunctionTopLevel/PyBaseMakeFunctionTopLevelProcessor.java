@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -257,6 +258,20 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     return inSameFile(element, myFunction) &&
            !belongsToFunction(element) &&
            !(ScopeUtil.getScopeOwner(element) instanceof PsiFile); 
+  }
+
+  @Override
+  protected @Nullable RefactoringEventData getBeforeData() {
+    final RefactoringEventData data = new RefactoringEventData();
+    data.addElements(List.of(myFunction));
+    return data;
+  }
+
+  @Override
+  protected @Nullable RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
+    final RefactoringEventData data = new RefactoringEventData();
+    data.addElements(List.of(myFunction));
+    return data;
   }
 
   protected static class AnalysisResult {

@@ -41,4 +41,25 @@ jvm_library(
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
+
+jvm_library(
+  name = "storage_test_lib",
+  module_name = "intellij.platform.workspace.storage",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_storage",
+  runtime_deps = [
+    ":storage",
+    "//libraries/guava:guava_test_lib",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//platform/util:util_test_lib",
+    "@lib//:junit4",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/caffeine:caffeine_test_lib",
+    "//libraries/kryo5:kryo5_test_lib",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//platform/diagnostic:diagnostic_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.workspace.storage` end

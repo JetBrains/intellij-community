@@ -23,6 +23,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.spellchecker.SpellCheckerManager.Companion.getInstance
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
@@ -54,6 +55,12 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
         if (oldSaxParserFactory != null) System.setProperty(saxParserKey, oldSaxParserFactory)
         else System.clearProperty(saxParserKey)
       }
+    }
+
+    @JvmStatic
+    fun installTestChecker(disposable: Disposable) {
+      val newExtensions = TextChecker.allCheckers().map { if (it is LanguageToolChecker) LanguageToolChecker.TestChecker() else it }
+      ExtensionTestUtil.maskExtensions(ExtensionPointName("com.intellij.grazie.textChecker"), newExtensions, disposable)
     }
 
     fun loadLangs(langs: Collection<Lang>, project: Project) {
@@ -100,13 +107,11 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
 
   override fun setUp() {
     super.setUp()
-    maskSaxParserFactory(testRootDisposable)
     myFixture.enableInspections(*inspectionTools)
 
+    maskSaxParserFactory(testRootDisposable)
+    installTestChecker(testRootDisposable)
     enableProofreadingFor(enabledLanguages)
-
-    val newExtensions = TextChecker.allCheckers().map { if (it is LanguageToolChecker) LanguageToolChecker.TestChecker() else it }
-    ExtensionTestUtil.maskExtensions(ExtensionPointName("com.intellij.grazie.textChecker"), newExtensions, testRootDisposable)
   }
 
   override fun tearDown() {

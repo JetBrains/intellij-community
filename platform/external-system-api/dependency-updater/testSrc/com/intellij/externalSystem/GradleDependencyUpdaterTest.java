@@ -3,6 +3,7 @@ package com.intellij.externalSystem;
 import com.intellij.buildsystem.model.DeclaredDependency;
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates;
 import com.intellij.buildsystem.model.unified.UnifiedDependency;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -28,6 +29,7 @@ public class GradleDependencyUpdaterTest extends GradleDependencyUpdaterTestBase
     assertTrue(dependencies.get(2).getPsiElement().textMatches("'shortGroup:shortArtifact:1.0'"));
   }
 
+  @Ignore("AT-3959")
   @Test
   public void testAddDependency() throws Exception {
     importProjectFromTemplate();

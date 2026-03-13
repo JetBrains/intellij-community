@@ -11,7 +11,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
-import org.jetbrains.kotlin.analysis.api.projectStructure.analysisContextModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.contextModule
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
@@ -74,7 +73,6 @@ internal class KotlinCommandCompletionFactory : CommandCompletionFactory, DumbAw
         val virtualFile = newFile.virtualFile
         val originalVirtualFile = originalFile.virtualFile
         if (virtualFile is LightVirtualFile && originalVirtualFile != null) {
-            virtualFile.analysisContextModule = originalFile.getKaModule(originalFile.project, useSiteModule = null)
             virtualFile.originalFile = originalVirtualFile
             virtualFile.fileType = originalVirtualFile.fileType
         }

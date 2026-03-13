@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.Language;
@@ -15,11 +15,16 @@ import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import org.jetbrains.annotations.NotNull;
 
 class SmartPsiFileRangePointerImpl extends SmartPsiElementPointerImpl<PsiFile> implements SmartPsiFileRange {
-  SmartPsiFileRangePointerImpl(@NotNull SmartPointerManagerEx manager, @NotNull PsiFile containingFile, @NotNull ProperTextRange range, boolean forInjected) {
+  SmartPsiFileRangePointerImpl(@NotNull SmartPointerManagerEx manager,
+                               @NotNull PsiFile containingFile,
+                               @NotNull ProperTextRange range,
+                               boolean forInjected) {
     super(manager, containingFile, createElementInfo(containingFile, range, forInjected));
   }
 
-  private static @NotNull SmartPointerElementInfo createElementInfo(@NotNull PsiFile containingFile, @NotNull ProperTextRange range, boolean forInjected) {
+  private static @NotNull SmartPointerElementInfo createElementInfo(@NotNull PsiFile containingFile,
+                                                                    @NotNull ProperTextRange range,
+                                                                    boolean forInjected) {
     Project project = containingFile.getProject();
     if (containingFile.getViewProvider() instanceof FreeThreadedFileViewProvider) {
       PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(project).getInjectionHost(containingFile);

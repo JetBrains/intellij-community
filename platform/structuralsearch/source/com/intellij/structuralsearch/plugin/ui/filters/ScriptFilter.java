@@ -16,8 +16,11 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.GroupLayout;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.LayoutStyle;
+import java.awt.Dimension;
 import java.util.List;
 
 /**

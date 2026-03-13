@@ -1,4 +1,5 @@
 // "Change to 'return@foo'" "true"
+// K2_ERROR: Null cannot be a value of a non-null type 'Unit'.
 inline fun foo(f: (Int) -> Int?) {}
 
 fun baz(): Int = 0

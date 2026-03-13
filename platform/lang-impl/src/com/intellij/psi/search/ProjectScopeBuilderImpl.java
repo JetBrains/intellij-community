@@ -11,8 +11,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFile;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -31,6 +33,7 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
   public @NotNull GlobalSearchScope buildEverythingScope() {
     return new EverythingGlobalScope(myProject) {
       final FileBasedIndexImpl myFileBasedIndex;
+      final WorkspaceFileIndex myWorkspaceFileIndex = WorkspaceFileIndex.getInstance(myProject);
 
       {
         FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
@@ -40,14 +43,32 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
                            : (FileBasedIndexImpl)fileBasedIndex;
       }
 
+      /// This method checks if a file belongs to the workspace.
+      ///
+      /// It accepts 4 types of files:
+      /// 1. Scratch files that are not hidden
+      /// 2. Indexable files
+      /// 3. Files in the workspace
+      /// 4. Every file without id, unless it is (1)
+      ///
+      /// To achieve this, the method performs 3 checks:
+      /// 1. If a file is a hidden scratch file. If it is, it's not part of the workspace.
+      /// 2. If a file is indexable, it is part of the workspace. This check prevents filtering out files registered by [com.intellij.util.indexing.IndexableSetContributor]
+      /// 3. If a file has id or is [CacheAvoidingVirtualFile], it is checked to be part of the workspace. Cache-avoiding files can be without id, so they are explicitly checked.
+      ///
+      /// If none of the above is applied to the file, it is considered to be part of the workspace. This is for historical reasons, to allow [com.intellij.testFramework.LightVirtualFile] instances, i.e., virtual files without an id
       @Override
       public boolean contains(@NotNull VirtualFile file) {
-        if (file instanceof VirtualFileWithId && myFileBasedIndex != null) {
-          return myFileBasedIndex.belongsToProjectIndexableFiles(file, myProject);
-        }
-
         RootType rootType = RootType.forFile(file);
         if (rootType != null && (rootType.isHidden() || rootType.isIgnored(myProject, file))) return false;
+
+        if (file instanceof VirtualFileWithId && myFileBasedIndex != null) {
+          if (myFileBasedIndex.belongsToProjectIndexableFiles(file, myProject)) return true;
+        }
+
+        if (file instanceof VirtualFileWithId || file instanceof CacheAvoidingVirtualFile) {
+          return myWorkspaceFileIndex.isInWorkspace(file);
+        }
         return true;
       }
     };

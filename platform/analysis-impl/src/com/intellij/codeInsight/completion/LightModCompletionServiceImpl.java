@@ -6,8 +6,8 @@ import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.WeighingContext;
-import com.intellij.modcompletion.ModCompletionItem;
 import com.intellij.modcompletion.ModCompletionItemProvider;
+import com.intellij.modcompletion.ModCompletionResult;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,8 +22,11 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNullByDefault;
 
-import java.util.*;
-import java.util.function.Consumer;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * A lightweight implementation of completion using ModCompletion providers 
@@ -33,7 +36,7 @@ import java.util.function.Consumer;
 @ApiStatus.Internal
 public final class LightModCompletionServiceImpl {
   public static void getItems(PsiFile file, int caretOffset, int invocationCount, CompletionType type,
-                              Consumer<ModCompletionItem> sink) {
+                              ModCompletionResult sink) {
     CharSequence sequence = file.getFileDocument().getCharsSequence();
     int start = findStart(caretOffset, sequence);
     DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
@@ -50,7 +53,7 @@ public final class LightModCompletionServiceImpl {
   }
 
   public static void getItems(PsiFile file, int startOffset, int caretOffset, int invocationCount, CompletionType type,  
-                              Consumer<ModCompletionItem> sink) {
+                              ModCompletionResult sink) {
     PsiElement element;
     PsiElement original = file.findElementAt(startOffset);
     if (startOffset == caretOffset) {
@@ -84,7 +87,7 @@ public final class LightModCompletionServiceImpl {
       });
     }
     EntryStream.of(sortMap)
-      .mapKeyValue((sorter, classifier) -> classifier.classify(allItems.get(sorter), processingContext))
+      .mapKeyValue((sorter, classifier) -> classifier.classify(allItems.getOrDefault(sorter, List.of()), processingContext))
       .flatMap(items -> StreamEx.of(items.spliterator()))
       .map(item -> ((CompletionItemLookupElement)item).item())
       .forEach(sink);

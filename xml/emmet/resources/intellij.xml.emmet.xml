@@ -21,6 +21,9 @@
                             implementationClass="com.intellij.codeInsight.template.emmet.completion.EmmetCompletionContributor"
                             id="xml.emmet"
                             order="after xml"/>
+    <defaultLiveTemplates file="liveTemplates/html_xml.xml"/>
+    <defaultLiveTemplates file="liveTemplates/zen_html.xml"/>
+    <defaultLiveTemplates file="liveTemplates/zen_xsl.xml"/>
 
     <editorTypedHandler implementationClass="com.intellij.codeInsight.template.emmet.EmmetPreviewTypedHandler" id="emmetPreview"/>
 
@@ -59,5 +62,6 @@
         </action>
       </group>
     </group>
+    <action id="SurroundWithTagTemplate" class="com.intellij.xml.actions.XmlSurroundWithTagTemplateAction" icon="AllIcons.Nodes.Tag"/>
   </actions>
 </idea-plugin>

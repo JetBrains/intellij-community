@@ -5,7 +5,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
-import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntity
+import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationData
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptEvaluationConfigurationEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptingHostConfigurationEntity
 
@@ -15,7 +15,7 @@ data class GradleScriptDefinitionEntityId(val id: String) : SymbolicEntityId<Gra
 
 interface GradleScriptDefinitionEntity : WorkspaceEntityWithSymbolicId {
     val definitionId: String
-    val compilationConfiguration: ScriptCompilationConfigurationEntity
+    val compilationConfigurationData: ScriptCompilationConfigurationData
     val hostConfiguration: ScriptingHostConfigurationEntity
     val evaluationConfiguration: ScriptEvaluationConfigurationEntity?
 

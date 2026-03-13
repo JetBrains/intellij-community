@@ -3532,6 +3532,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/changeSignature/addNothingReturnType.kt");
         }
 
+        @TestMetadata("addParameterGenericFunction.kt")
+        public void testAddParameterGenericFunction() throws Exception {
+            runTest("testData/quickfix/changeSignature/addParameterGenericFunction.kt");
+        }
+
         @TestMetadata("addParameterNotAvailableForBuiltins.kt")
         public void testAddParameterNotAvailableForBuiltins() throws Exception {
             runTest("testData/quickfix/changeSignature/addParameterNotAvailableForBuiltins.kt");
@@ -4647,9 +4652,9 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createClass/callExpression/inReturn2.kt");
                     }
 
-                    @TestMetadata("notApplicableInReturn.kt")
-                    public void testNotApplicableInReturn() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createClass/callExpression/notApplicableInReturn.kt");
+                    @TestMetadata("inReturnWithInapplicableFunctionType.kt")
+                    public void testInReturnWithInapplicableFunctionType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createClass/callExpression/inReturnWithInapplicableFunctionType.kt");
                     }
 
                     @TestMetadata("parameterClassIsInternal.kt")
@@ -9753,55 +9758,6 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/quickfix/destructingShortForm")
-    public static class DestructingShortForm extends AbstractK1QuickFixTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K1;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("entryUsedInLambda.kt")
-        public void testEntryUsedInLambda() throws Exception {
-            runTest("testData/quickfix/destructingShortForm/entryUsedInLambda.kt");
-        }
-
-        @TestMetadata("featureDisabled.kt")
-        public void testFeatureDisabled() throws Exception {
-            runTest("testData/quickfix/destructingShortForm/featureDisabled.kt");
-        }
-
-        @TestMetadata("fullForm.kt")
-        public void testFullForm() throws Exception {
-            runTest("testData/quickfix/destructingShortForm/fullForm.kt");
-        }
-
-        @TestMetadata("fullFormLambda.kt")
-        public void testFullFormLambda() throws Exception {
-            runTest("testData/quickfix/destructingShortForm/fullFormLambda.kt");
-        }
-
-        @TestMetadata("multipleEntriesSameOriginalName.kt")
-        public void testMultipleEntriesSameOriginalName() throws Exception {
-            runTest("testData/quickfix/destructingShortForm/multipleEntriesSameOriginalName.kt");
-        }
-
-        @TestMetadata("nestedScopeConflict.kt")
-        public void testNestedScopeConflict() throws Exception {
-            runTest("testData/quickfix/destructingShortForm/nestedScopeConflict.kt");
-        }
-
-        @TestMetadata("nonDataClass.kt")
-        public void testNonDataClass() throws Exception {
-            runTest("testData/quickfix/destructingShortForm/nonDataClass.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/equalityNotApplicable")
     public abstract static class EqualityNotApplicable extends AbstractK1QuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)
@@ -10664,6 +10620,21 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("explicitBackingFieldToInternal.kt")
+            public void testExplicitBackingFieldToInternal() throws Exception {
+                runTest("testData/quickfix/increaseVisibility/explicitBackingFieldToInternal.kt");
+            }
+
+            @TestMetadata("explicitBackingFieldToProtected.kt")
+            public void testExplicitBackingFieldToProtected() throws Exception {
+                runTest("testData/quickfix/increaseVisibility/explicitBackingFieldToProtected.kt");
+            }
+
+            @TestMetadata("explicitBackingFieldToPublic.kt")
+            public void testExplicitBackingFieldToPublic() throws Exception {
+                runTest("testData/quickfix/increaseVisibility/explicitBackingFieldToPublic.kt");
+            }
+
             @TestMetadata("exposedParameterType.kt")
             public void testExposedParameterType() throws Exception {
                 runTest("testData/quickfix/increaseVisibility/exposedParameterType.kt");
@@ -11481,6 +11452,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("constructorParam.kt")
         public void testConstructorParam() throws Exception {
             runTest("testData/quickfix/memberVisibilityCanBePrivate/constructorParam.kt");
+        }
+
+        @TestMetadata("interdependentProperties.kt")
+        public void testInterdependentProperties() throws Exception {
+            runTest("testData/quickfix/memberVisibilityCanBePrivate/interdependentProperties.kt");
         }
 
         @TestMetadata("internal.kt")
@@ -13224,9 +13200,14 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/optIn/classUseOptIn.kt");
             }
 
-            @TestMetadata("destructuringDeclaration.kt")
-            public void testDestructuringDeclaration() throws Exception {
-                runTest("testData/quickfix/optIn/destructuringDeclaration.kt");
+            @TestMetadata("destructuringDeclarationOnFunction.kt")
+            public void testDestructuringDeclarationOnFunction() throws Exception {
+                runTest("testData/quickfix/optIn/destructuringDeclarationOnFunction.kt");
+            }
+
+            @TestMetadata("destructuringDeclarationOnStatement.kt")
+            public void testDestructuringDeclarationOnStatement() throws Exception {
+                runTest("testData/quickfix/optIn/destructuringDeclarationOnStatement.kt");
             }
 
             @TestMetadata("existingFileAnnotationWithPackage.kt")
@@ -13671,6 +13652,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/override/nothingToOverride/addTypeParameter2.kt");
             }
 
+            @TestMetadata("changeFunctionGenericsReciever.kt")
+            public void testChangeFunctionGenericsReciever() throws Exception {
+                runTest("testData/quickfix/override/nothingToOverride/changeFunctionGenericsReciever.kt");
+            }
+
             @TestMetadata("changeFunctionReciever.kt")
             public void testChangeFunctionReciever() throws Exception {
                 runTest("testData/quickfix/override/nothingToOverride/changeFunctionReciever.kt");
@@ -13724,6 +13710,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             @TestMetadata("changeReturnType.kt")
             public void testChangeReturnType() throws Exception {
                 runTest("testData/quickfix/override/nothingToOverride/changeReturnType.kt");
+            }
+
+            @TestMetadata("changeReturnTypeGenerics.kt")
+            public void testChangeReturnTypeGenerics() throws Exception {
+                runTest("testData/quickfix/override/nothingToOverride/changeReturnTypeGenerics.kt");
             }
 
             @TestMetadata("changeTypeParameter.kt")
@@ -16488,6 +16479,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/returnInExpressionBody/explicitTypeInParentProperty.kt");
         }
 
+        @TestMetadata("implicitTypeInLambda.kt")
+        public void testImplicitTypeInLambda() throws Exception {
+            runTest("testData/quickfix/returnInExpressionBody/implicitTypeInLambda.kt");
+        }
+
         @TestMetadata("implicitTypeInParent.kt")
         public void testImplicitTypeInParent() throws Exception {
             runTest("testData/quickfix/returnInExpressionBody/implicitTypeInParent.kt");
@@ -16530,6 +16526,21 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
 
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("explicitThisLaunch.kt")
+        public void testExplicitThisLaunch() throws Exception {
+            runTest("testData/quickfix/runBlockingInSuspendFunction/explicitThisLaunch.kt");
+        }
+
+        @TestMetadata("implicitReceiverCoroutineContext.kt")
+        public void testImplicitReceiverCoroutineContext() throws Exception {
+            runTest("testData/quickfix/runBlockingInSuspendFunction/implicitReceiverCoroutineContext.kt");
+        }
+
+        @TestMetadata("implicitReceiverLaunch.kt")
+        public void testImplicitReceiverLaunch() throws Exception {
+            runTest("testData/quickfix/runBlockingInSuspendFunction/implicitReceiverLaunch.kt");
         }
 
         @TestMetadata("inNonSuspendLambda.kt")
@@ -16580,6 +16591,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("withContextWithReturns.kt")
         public void testWithContextWithReturns() throws Exception {
             runTest("testData/quickfix/runBlockingInSuspendFunction/withContextWithReturns.kt");
+        }
+
+        @TestMetadata("withTypeParameter.kt")
+        public void testWithTypeParameter() throws Exception {
+            runTest("testData/quickfix/runBlockingInSuspendFunction/withTypeParameter.kt");
         }
     }
 
@@ -17661,6 +17677,40 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/suppress/expressionBody")
+        public static class ExpressionBody extends AbstractK1QuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("inExpressionBody.kt")
+            public void testInExpressionBody() throws Exception {
+                runTest("testData/quickfix/suppress/expressionBody/inExpressionBody.kt");
+            }
+
+            @TestMetadata("inExpressionBody2.kt")
+            public void testInExpressionBody2() throws Exception {
+                runTest("testData/quickfix/suppress/expressionBody/inExpressionBody2.kt");
+            }
+
+            @TestMetadata("inExpressionBodyNewLine.kt")
+            public void testInExpressionBodyNewLine() throws Exception {
+                runTest("testData/quickfix/suppress/expressionBody/inExpressionBodyNewLine.kt");
+            }
+
+            @TestMetadata("inExpressionBodyReturnType.kt")
+            public void testInExpressionBodyReturnType() throws Exception {
+                runTest("testData/quickfix/suppress/expressionBody/inExpressionBodyReturnType.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/suppress/external")
         public static class External extends AbstractK1QuickFixTest {
             @java.lang.Override
@@ -17713,11 +17763,6 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 @TestMetadata("inDefaultArgument.kt")
                 public void testInDefaultArgument() throws Exception {
                     runTest("testData/quickfix/suppress/forStatement/unavailable/inDefaultArgument.kt");
-                }
-
-                @TestMetadata("inExpressionBody.kt")
-                public void testInExpressionBody() throws Exception {
-                    runTest("testData/quickfix/suppress/forStatement/unavailable/inExpressionBody.kt");
                 }
 
                 @TestMetadata("inLocalValInitializer.kt")

@@ -6,6 +6,7 @@ import com.intellij.database.datagrid.DataGridListener;
 import com.intellij.database.datagrid.GridColumn;
 import com.intellij.database.datagrid.GridHelper;
 import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.GridUtil;
 import com.intellij.database.datagrid.GridUtilCore;
 import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.run.ui.GridEditGuard;
@@ -27,7 +28,6 @@ import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -57,7 +57,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Action;
-import javax.swing.ActionMap;
 import javax.swing.JComponent;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
@@ -202,7 +201,7 @@ public class GridCellEditorTextField extends EditorTextField implements Disposab
         ActionUtil.performAction(action, e);
       }
     };
-    registerAction(editor, action, enterAndControlEnter);
+    GridUtil.registerAction(editor, action, enterAndControlEnter);
   }
 
   private void registerTabAction(final @NotNull EditorEx editor) {
@@ -231,45 +230,7 @@ public class GridCellEditorTextField extends EditorTextField implements Disposab
         }
       }
     };
-    registerAction(editor, action, tabAndShiftTab);
-  }
-
-  private void registerArrowAction(final @NotNull EditorEx editor) {
-    KeyboardShortcut up = KeyboardShortcut.fromString("UP");
-    KeyboardShortcut down = KeyboardShortcut.fromString("DOWN");
-    AnAction action = new DumbAwareAction("goToPreviousOrNextLineOrStopEditing") {
-      @Override
-      public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.EDT;
-      }
-
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        if (editor.getDocument().getLineCount() > 1) {
-          e.getPresentation().setEnabledAndVisible(false);
-          return;
-        }
-        KeyEvent keyEvent = ObjectUtils.tryCast(e.getInputEvent(), KeyEvent.class);
-        e.getPresentation().setEnabledAndVisible(keyEvent != null && LookupManager.getActiveLookup(getEditor()) == null);
-      }
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        KeyEvent keyEvent = (KeyEvent)e.getInputEvent();
-        JComponent gridComponent = myGrid.getPreferredFocusedComponent();
-        ActionMap actionMap = gridComponent.getActionMap();
-        Action action = up.getFirstKeyStroke().getKeyCode() == keyEvent.getKeyCode()
-                        ? actionMap.get("selectPreviousRow")
-                        : actionMap.get("selectNextRow");
-        if (action == null) return;
-        action.actionPerformed(new ActionEvent(gridComponent, keyEvent.getID(), keyEvent.toString(), keyEvent.getWhen(), keyEvent.getModifiers()));
-      }
-    };
-    registerAction(editor, action, new CustomShortcutSet(up, down));
-  }
-
-  private static void registerAction(@NotNull Editor editor, @NotNull AnAction action, @NotNull ShortcutSet shortcutSet) {
-    action.registerCustomShortcutSet(shortcutSet, editor.getComponent());
+    GridUtil.registerAction(editor, action, tabAndShiftTab);
   }
 
   private void installEditorSettingsProvider(final boolean multiline) {
@@ -293,7 +254,7 @@ public class GridCellEditorTextField extends EditorTextField implements Disposab
 
       registerEnterAction(editor, multiline);
       registerTabAction(editor);
-      if (multiline) registerArrowAction(editor);
+      if (multiline) GridUtil.registerArrowAction(editor, myGrid, this::getEditor);
     });
   }
 

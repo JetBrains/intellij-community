@@ -3,6 +3,7 @@ package com.intellij.execution.dashboard;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunContentDescriptorId;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
-import java.util.function.Predicate;
+import java.util.function.BiPredicate;
 
 @ApiStatus.Internal
 public interface RunDashboardUiManager {
@@ -34,7 +35,7 @@ public interface RunDashboardUiManager {
   Icon getToolWindowIcon();
 
   @NotNull
-  Predicate<Content> getReuseCondition();
+  BiPredicate<Content, @Nullable RunConfiguration> getReuseCondition();
 
   void setSelectedContent(@NotNull Content content);
 

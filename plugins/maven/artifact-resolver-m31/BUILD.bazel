@@ -23,4 +23,24 @@ jvm_library(
   ],
   exports = ["//plugins/maven/artifact-resolver/common"]
 )
+
+jvm_library(
+  name = "artifactResolver-m31_test_lib",
+  module_name = "intellij.maven.artifactResolver.m31",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = [
+    "//plugins/maven/artifact-resolver/common",
+    "//plugins/maven/artifact-resolver/common:common_test_lib",
+  ],
+  runtime_deps = [
+    ":artifactResolver-m31",
+    "@lib//:maven-artifact_resolver-m31-org-apache-maven-maven-core-3-0-5-provided",
+    "@lib//:maven-artifact_resolver-m31-org-sonatype-sisu-sisu-guice-no_aop-3-1-0-provided",
+    "@lib//:maven-artifact_resolver-m31-org-codehaus-plexus-plexus-component-annotations-1-5-5-provided",
+    "@lib//:maven-artifact_resolver-m31-org-eclipse-aether-aether-api-0-9-0-_m2-provided",
+    "//plugins/maven/artifact-resolver/common:common_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.maven.artifactResolver.m31` end

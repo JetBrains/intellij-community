@@ -69,9 +69,9 @@ class EelLocalExecPosixApi(
   ): EelPosixProcess {
     val process = executeImpl(generatedBuilder)
     val r = if (process is PtyProcess)
-      LocalEelPosixProcess.create(process, process::setWinSize)
+      LocalEelPosixProcess.create(process, process::setWinSize, platform)
     else
-      LocalEelPosixProcess.create(process, null)
+      LocalEelPosixProcess.create(process, null, platform)
     generatedBuilder.bindProcessToScopeIfSet(r)
     return r
   }

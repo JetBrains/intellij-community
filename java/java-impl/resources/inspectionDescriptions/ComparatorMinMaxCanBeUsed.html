@@ -1,0 +1,20 @@
+<html>
+<body>
+Reports <code>if</code> statements and ternary expressions with <code>Comparator.compare()</code> calls 
+that can be replaced with <code>Comparator.max()</code> or <code>Comparator.min()</code> calls.
+
+<p><b>Example:</b></p>
+<pre><code>
+Comparator&lt;String&gt; comp = Comparator.naturalOrder();
+String result = comp.compare(a, b) > 0 ? a : b;
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+Comparator&lt;String&gt; comp = Comparator.naturalOrder();
+String result = comp.max(a, b);
+</code></pre>
+<!-- tooltip end -->
+
+<p><small>New in 2026.1</small></p>
+</body>
+</html>

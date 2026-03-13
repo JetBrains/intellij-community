@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
@@ -85,9 +85,10 @@ internal class ModuleIndexableFilesIteratorImpl private constructor(private val 
     fileIterator: ContentIterator,
     fileFilter: VirtualFileFilter
   ): Boolean {
-    val index = runReadAction {
-      return@runReadAction if (module.isDisposed) null else ModuleRootManager.getInstance(module).fileIndex
+    val index = runReadActionBlocking {
+      if (module.isDisposed) null else ModuleRootManager.getInstance(module).fileIndex
     }
+
     if (index == null) return false
     if (roots == null) {
       return index.iterateContent(fileIterator, fileFilter)
@@ -98,7 +99,7 @@ internal class ModuleIndexableFilesIteratorImpl private constructor(private val 
         return false
       }
       return nonRecursiveRoots?.all { root ->
-        if (runReadAction { index.isInContent(root) } && fileFilter.accept(root)) fileIterator.processFile(root) else true
+        if (runReadActionBlocking { index.isInContent(root) } && fileFilter.accept(root)) fileIterator.processFile(root) else true
       } != false
     }
   }

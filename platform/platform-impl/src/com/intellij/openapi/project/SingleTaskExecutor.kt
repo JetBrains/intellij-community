@@ -2,11 +2,15 @@
 package com.intellij.openapi.project
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Progressive
 import com.intellij.openapi.util.EmptyRunnable
+import com.intellij.platform.util.progress.RawProgressReporter
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 
@@ -19,12 +23,12 @@ import java.util.function.Consumer
  * It is guaranteed that after [tryStartProcess] the task will be executed at least one more time. Task can reset scheduled
  * executions by invoking [clearScheduledFlag]
  */
-internal class SingleTaskExecutor(private val task: Progressive) {
-  internal interface AutoclosableProgressive : AutoCloseable, Progressive {
+internal class SingleTaskExecutor(private val task: Reportable) {
+  internal interface AutoclosableProgressive : AutoCloseable, Reportable {
     override fun close()
   }
 
-  private inner class StateAwareTask(private val task: Progressive) : AutoclosableProgressive {
+  private inner class StateAwareTask(private val task: Reportable) : AutoclosableProgressive {
     private val used = AtomicBoolean(false)
     override fun close() {
       if (used.compareAndSet(false, true)) {
@@ -32,9 +36,9 @@ internal class SingleTaskExecutor(private val task: Progressive) {
       }
     }
 
-    override fun run(indicator: ProgressIndicator) {
+    override fun invoke(reporter: RawProgressReporter) {
       if (used.compareAndSet(false, true)) {
-        runWithStateHandling { task.run(indicator) }
+        runWithStateHandling { task(reporter) }
       }
       else {
         LOG.error("StateAwareTask cannot be reused")
@@ -122,9 +126,10 @@ internal class SingleTaskExecutor(private val task: Progressive) {
   }
 
   val isRunning: StateFlow<Boolean> = IsRunningStateFlow(runState)
-  val modificationTrackerAsFlow: StateFlow<Long> = modificationCount
 
   companion object {
+    typealias Reportable = (RawProgressReporter) -> Unit
+
     private val LOG = Logger.getInstance(SingleTaskExecutor::class.java)
   }
 }

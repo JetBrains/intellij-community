@@ -5,6 +5,7 @@ import ai.grazie.gec.model.problem.Problem;
 import ai.grazie.gec.model.problem.ProblemFix;
 import ai.grazie.gec.model.problem.SuppressableKind;
 import ai.grazie.nlp.langs.Language;
+import ai.grazie.nlp.langs.LanguageISO;
 import ai.grazie.rules.Example;
 import ai.grazie.rules.MatchingResult;
 import ai.grazie.rules.NodeRuleMatch;
@@ -26,6 +27,7 @@ import com.intellij.grazie.GrazieConfig;
 import com.intellij.grazie.ide.inspection.ai.RephraseAction;
 import com.intellij.grazie.ide.inspection.auto.AutoFix;
 import com.intellij.grazie.ide.ui.configurable.StyleConfigurable;
+import com.intellij.grazie.jlanguage.Lang;
 import com.intellij.grazie.rule.ParsedSentence;
 import com.intellij.grazie.rule.RuleIdeClient;
 import com.intellij.grazie.rule.SentenceBatcher;
@@ -253,20 +255,13 @@ public final class TreeRuleChecker {
 
   private static ParameterValues calcParameters(List<ParsedSentence> sentences) {
     var parameters = new HashMap<String, String>();
-    var ltLanguage = sentences.getFirst().tree.language();
     Language language = sentences.getFirst().tree.treeSupport().getGrazieLanguage();
     TextContent content = sentences.getFirst().extractedText;
     LanguageToolkit toolkit = LanguageToolkit.forLanguage(language);
     toolkit.allParameters(RuleIdeClient.INSTANCE).forEach(p -> parameters.put(p.id(), getParamValue(p, language, content)));
-    if (language == Language.ENGLISH || language == Language.GERMAN) {
-      String[] countries = ltLanguage.getCountries();
-      if (countries.length > 0) {
-        String variant = countries[0];
-        if (language == Language.ENGLISH && variant.equals("GB") && GrazieConfig.Companion.get().getUseOxfordSpelling()) {
-          variant = ChangeLanguageVariant.BRITISH_OXFORD_ID;
-        }
-        parameters.put(Parameter.LANGUAGE_VARIANT, variant);
-      }
+    String variant = getLanguageVariant(language);
+    if (variant != null) {
+      parameters.put(Parameter.LANGUAGE_VARIANT, variant);
     }
     return new ParameterValues(parameters);
   }
@@ -282,6 +277,28 @@ public final class TreeRuleChecker {
       return param.defaultValue(textStyle, RuleIdeClient.INSTANCE).id();
     }
     return value;
+  }
+
+  private static @Nullable String getLanguageVariant(Language language) {
+    Lang lang = HighlightingUtil.findInstalledLang(language);
+    if (lang == null) return null;
+    return getLanguageVariant(lang);
+  }
+
+  public static @Nullable String getLanguageVariant(Lang lang) {
+    var ltLanguage = lang.getJLanguage();
+    if (ltLanguage == null) return null;
+    if (lang.getIso() == LanguageISO.EN || lang.getIso() == LanguageISO.DE) {
+      String[] countries = ltLanguage.getCountries();
+      if (countries.length > 0) {
+        String variant = countries[0];
+        if (lang.getIso() == LanguageISO.EN && variant.equals("GB") && GrazieConfig.Companion.get().getUseOxfordSpelling()) {
+          variant = ChangeLanguageVariant.BRITISH_OXFORD_ID;
+        }
+        return variant;
+      }
+    }
+    return null;
   }
 
   public static List<TreeProblem> checkTextLevelProblems(PsiFile file) {
@@ -636,6 +653,17 @@ public final class TreeRuleChecker {
     @Override
     public @NotNull TreeProblem copyWithProblemFixes(@NotNull List<ProblemFix> fixes) {
       return new TreeProblem(copyWithFixes(getSource(), fixes), getRule(), getText(), match, customFixes);
+    }
+
+    @Override
+    public @NotNull GrazieProblem copyWithHighlighting(ai.grazie.text.@NotNull TextRange @NotNull [] always,
+                                                       ai.grazie.text.@NotNull TextRange @NotNull [] onHover) {
+      return new TreeProblem(copyWithHighlighting(getSource(), always, onHover), getRule(), getText(), match, customFixes);
+    }
+
+    @Override
+    public @NotNull GrazieProblem copyWithInfoAndMessage(Problem.@NotNull KindInfo info, @NotNull String message) {
+      return new TreeProblem(copyWithInfoAndMessage(getSource(), info, message), getRule(), getText(), match, customFixes);
     }
   }
 }

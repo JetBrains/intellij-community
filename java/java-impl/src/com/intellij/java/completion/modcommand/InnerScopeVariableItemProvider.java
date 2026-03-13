@@ -3,22 +3,26 @@ package com.intellij.java.completion.modcommand;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix;
 import com.intellij.java.JavaBundle;
-import com.intellij.modcompletion.ModCompletionItem;
+import com.intellij.modcompletion.ModCompletionResult;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
 import org.jetbrains.annotations.NotNullByDefault;
 
-import java.util.function.Consumer;
-
 @NotNullByDefault
-final class InnerScopeVariableItemProvider extends JavaModCompletionItemProvider {
+final class InnerScopeVariableItemProvider extends JavaModCompletionItemProvider implements DumbAware {
   @Override
-  public void provideItems(CompletionContext context, Consumer<ModCompletionItem> sink) {
+  public void provideItems(CompletionContext context, ModCompletionResult sink) {
     if (context.invocationCount() < 1) return;
     PsiElement position = context.getPosition();
     for (PsiLocalVariable variable : BringVariableIntoScopeFix.findInnerScopeVariables(position)) {
       sink.accept(new VariableCompletionItem(
         variable, JavaBundle.message("completion.inner.scope.tail.text", BringVariableIntoScopeFix.getVariableDeclarationPlace(variable))));
     }
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return true;
   }
 }

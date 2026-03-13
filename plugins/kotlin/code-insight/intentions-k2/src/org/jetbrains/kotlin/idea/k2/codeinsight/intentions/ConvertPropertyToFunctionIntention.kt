@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.utils.hasExplicitBackingField
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.CollectAffectedCallablesUtils.getAffectedCallables
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertFunctionToPropertyAndViceVersaUtils.add
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertFunctionToPropertyAndViceVersaUtils.addConflictIfCantRefactor
@@ -95,6 +96,7 @@ class ConvertPropertyToFunctionIntention : PsiBasedModCommandAction<KtProperty>(
                 && (element.initializer == null || element.getter == null)
                 && !element.hasJvmFieldAnnotation()
                 && !element.hasModifier(KtTokens.CONST_KEYWORD)
+                && !element.hasExplicitBackingField()
     }
 
     private fun isApplicableByAnalyze(element: KtProperty): Boolean =

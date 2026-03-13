@@ -8,12 +8,12 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.xml.XmlFile
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil.invokeCompletion
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
+import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 
 class MavenArtifactIdInsertionHandler : MavenDependencyInsertionHandler() {
   override fun setDependency(
     context: InsertionContext,
-    completionItem: MavenRepositoryArtifactInfo,
+    completionItem: MavenRepoArtifactInfo,
     contextFile: XmlFile?, domCoordinates: MavenDomShortArtifactCoordinates
   ) {
     domCoordinates.getArtifactId().setStringValue(completionItem.getArtifactId())

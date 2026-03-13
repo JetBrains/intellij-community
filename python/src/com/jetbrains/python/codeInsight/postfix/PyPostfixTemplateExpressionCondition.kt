@@ -20,6 +20,7 @@ import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyLiteralStringType
+import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isNoneType
@@ -67,7 +68,9 @@ interface PyPostfixTemplateExpressionCondition : PostfixTemplateExpressionCondit
       val intType = builtinCache.intType
       val floatType = builtinCache.floatType
       val complexType = builtinCache.complexType
-      return type == intType || type == floatType || type == complexType
+      return PyTypeChecker.match(
+        PyUnionType.union(listOf(intType, floatType, complexType)), type, context
+      )
     }
 
     companion object {

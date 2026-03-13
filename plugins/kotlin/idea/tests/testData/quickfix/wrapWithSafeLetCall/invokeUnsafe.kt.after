@@ -1,5 +1,6 @@
 // "Wrap with '?.let { ... }' call" "true"
 // WITH_STDLIB
+// K2_ERROR: Reference has a nullable type 'Int?'. Use explicit '?.invoke' to make a function-like call instead.
 
 operator fun Int.invoke() = this
 

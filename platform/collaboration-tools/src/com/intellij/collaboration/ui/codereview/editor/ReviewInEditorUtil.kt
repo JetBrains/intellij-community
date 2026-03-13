@@ -2,6 +2,7 @@
 package com.intellij.collaboration.ui.codereview.editor
 
 import com.intellij.collaboration.ui.codereview.editor.action.CodeReviewInEditorToolbarActionGroup
+import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Range
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Constraints
@@ -137,6 +138,14 @@ object ReviewInEditorUtil {
     }
 
     showInspectionWidgetAction(editor, toolbarActionGroup)
+  }
+
+  fun isLastBlankLine(document: Document, lineIdx: Int): Boolean {
+    val lineCount = DiffUtil.getLineCount(document)
+    if (lineIdx != lineCount - 1) return false
+    val start = document.getLineStartOffset(lineIdx)
+    val end = document.getLineEndOffset(lineIdx)
+    return start == end
   }
 
   // Awaits cancellation indefinitely until scope is cancelled

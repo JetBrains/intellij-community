@@ -1,0 +1,42 @@
+<idea-plugin>
+  <resource-bundle>messages.AgentSessionsBundle</resource-bundle>
+
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.terminal"/>
+    <module name="intellij.agent.workbench.chat"/>
+    <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.sessions.core"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <agent.workbench.promptLauncher implementation="com.intellij.agent.workbench.sessions.service.AgentSessionPromptLauncherBridge"/>
+    <postStartupActivity implementation="com.intellij.agent.workbench.sessions.sleep.AgentSessionSleepPreventionStartupActivity"/>
+    <notificationGroup id="Agent Workbench Sessions" displayType="BALLOON" bundle="messages.AgentSessionsBundle"
+                       key="notification.group.agent.workbench.sessions"/>
+    <advancedSetting
+      id="agent.workbench.chat.open.in.dedicated.frame"
+      default="true"
+      bundle="messages.AgentSessionsBundle"
+      groupKey="advanced.settings.agent.workbench"/>
+    <advancedSetting
+      id="agent.workbench.prevent.system.sleep.while.working"
+      default="true"
+      bundle="messages.AgentSessionsBundle"
+      groupKey="advanced.settings.agent.workbench"/>
+    <projectFrameCapabilitiesProvider implementation="com.intellij.agent.workbench.sessions.frame.AgentWorkbenchProjectFrameCapabilitiesProvider"/>
+    <toolWindowLayoutProfileProvider implementation="com.intellij.agent.workbench.sessions.frame.AgentWorkbenchToolWindowLayoutProfileProvider"/>
+    <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="MainToolbarVCSGroup"/>
+    <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="ExecutionTargetsToolbarGroup"/>
+    <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="NewUiRunWidget"/>
+    <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="AIAssistantHubPopupAction"/>
+    <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="BuildSolutionBar"/>
+    <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="ActiveDeviceGroup"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
+    <hyperlinkNavigationInterceptor implementation="com.intellij.agent.workbench.sessions.service.AgentWorkbenchTerminalHyperlinkNavigationInterceptor"/>
+  </extensions>
+
+</idea-plugin>

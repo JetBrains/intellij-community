@@ -13,12 +13,18 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.util.containers.sequenceOfNotNull
-import com.intellij.util.indexing.testEntities.*
+import com.intellij.util.indexing.testEntities.ChildTestEntity
+import com.intellij.util.indexing.testEntities.ChildTestEntityBuilder
+import com.intellij.util.indexing.testEntities.ParentTestEntity
+import com.intellij.util.indexing.testEntities.ParentTestEntityBuilder
+import com.intellij.util.indexing.testEntities.SiblingEntity
+import com.intellij.util.indexing.testEntities.SiblingEntityBuilder
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertEquals
@@ -116,6 +122,8 @@ class WorkspaceFileIndexContributorDependenciesTest {
 
     childWorkspaceFileIndexContributor.numberOfCalls.set(0)
 
+    assertEquals("sibling property", childWorkspaceFileIndexContributor.latestSiblingProperty)
+
     model.update("Remove sibling") {
       it.removeEntity(siblingEntity)
     }
@@ -139,6 +147,7 @@ class WorkspaceFileIndexContributorDependenciesTest {
       child = ChildTestEntity("new child property", NonPersistentEntitySource)
     }
 
+    assertEquals("sibling property", childWorkspaceFileIndexContributor.latestSiblingProperty)
     childWorkspaceFileIndexContributor.numberOfCalls.set(0)
 
     val newSiblingEntity = SiblingEntity("new sibling property", NonPersistentEntitySource) {
@@ -149,7 +158,7 @@ class WorkspaceFileIndexContributorDependenciesTest {
       it.addEntity(newSiblingEntity)
     }
 
-    // one call through WorkspaceFileIndexData and the other through ProjectEntityIndexingService
+    assertEquals("new sibling property", childWorkspaceFileIndexContributor.latestSiblingProperty)
     assertEquals(3, childWorkspaceFileIndexContributor.numberOfCalls.get(), "ChildWorkspaceFileIndexContributor should be called after relative added")
   }
 
@@ -189,6 +198,7 @@ class WorkspaceFileIndexContributorDependenciesTest {
 
     override fun registerFileSets(entity: ParentTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
       latestChildProperty = entity.child?.customChildProperty
+      registrar.registerFileSet(entity.parentEntityRoot, WorkspaceFileKind.CUSTOM, entity, null)
     }
   }
 }

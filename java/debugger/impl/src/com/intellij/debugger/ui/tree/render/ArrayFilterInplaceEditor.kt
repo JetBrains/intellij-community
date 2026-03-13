@@ -23,7 +23,6 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.tree.TreeModelAdapter
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
@@ -69,7 +68,7 @@ class ArrayFilterInplaceEditor(
         }
       }
     })
-    ArrayAction.setArrayRenderer(if (XDebuggerUtilImpl.isEmptyExpression(expression))
+    ArrayAction.setArrayRenderer(if (DebuggerUIUtil.isEmptyExpression(expression))
                                    NodeRendererSettings.getInstance().arrayRenderer
                                  else
                                    ArrayRenderer.Filtered(expression),

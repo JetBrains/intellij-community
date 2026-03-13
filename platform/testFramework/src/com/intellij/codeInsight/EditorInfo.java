@@ -20,22 +20,23 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.common.EditorCaretTestUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class EditorInfo {
   private final String newFileText;
   public EditorCaretTestUtil.CaretAndSelectionState caretState;
 
-  public EditorInfo(final String fileText) {
+  public EditorInfo(@NotNull String fileText) {
     Document document = EditorFactory.getInstance().createDocument(fileText);
     caretState = EditorTestUtil.extractCaretAndSelectionMarkers(document, false);
     newFileText = document.getText();
   }
 
-  public String getNewFileText() {
+  public @NotNull String getNewFileText() {
     return newFileText;
   }
 
-  public void applyToEditor(Editor editor) {
+  public void applyToEditor(@NotNull Editor editor) {
     EditorTestUtil.setCaretsAndSelection(editor, caretState);
   }
 }

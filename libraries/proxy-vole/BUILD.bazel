@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:proxy-vole"],
   runtime_deps = ["@lib//:proxy-vole"]
 )
+
+jvm_library(
+  name = "proxy-vole_test_lib",
+  module_name = "intellij.libraries.proxy.vole",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:proxy-vole"],
+  runtime_deps = [":proxy-vole"]
+)
 ### auto-generated section `build intellij.libraries.proxy.vole` end

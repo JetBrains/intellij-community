@@ -19,6 +19,3 @@ class SimpleChild : SimpleParent() {
 // REF: [testModule_Common] (in test.ExpectedChildChild).foo(Int)
 // REF: [testModule_JVM] (in test.ExpectedChild).foo(Int)
 // REF: [testModule_JVM] (in test.ExpectedChildChildJvm).foo(Int)
-
-// K2_REF: [testModule_Common] (in test.ExpectedChildChild).foo(Int)
-// K2_REF: [testModule_JVM] (in test.ExpectedChildChildJvm).foo(Int)

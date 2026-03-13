@@ -21,8 +21,8 @@ import git4idea.ui.branch.GitCheckoutAndRebaseRemoteBranchWorkflow
 import git4idea.ui.branch.hasTrackingConflicts
 
 class GitCheckoutWithRebaseAction : GitSingleBranchAction(GitBundle.messagePointer("branches.checkout.and.rebase.onto.current")) {
-
-  override fun isEnabledForRef(ref: GitBranch, repositories: List<GitRepository>) = !isCurrentRefInAnyRepoOrWorkingTree(ref, repositories)
+  override fun isEnabledForRef(ref: GitBranch, repositories: List<GitRepository>): Boolean =
+    !(isCurrentRefInAnyRepo(ref, repositories) || isCurrentRefInAnyOtherWorkingTree(ref, repositories))
 
   override fun updateIfEnabledAndVisible(e: AnActionEvent, project: Project, repositories: List<GitRepository>, branch: GitBranch) {
     val description = GitBundle.message("branches.checkout.and.rebase.onto.in.one.step",

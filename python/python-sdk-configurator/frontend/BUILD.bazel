@@ -44,4 +44,34 @@ jvm_library(
   ],
   plugins = ["@lib//:compose-plugin"]
 )
+
+jvm_library(
+  name = "frontend_test_lib",
+  module_name = "intellij.python.sdkConfigurator.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_frontend",
+  runtime_deps = [
+    ":frontend",
+    "//python/python-sdk-configurator/common:common_test_lib",
+    "//platform/remote-topics/shared:rpc-topics_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/kernel/rpc:rpc_test_lib",
+    "//platform/extensions:extensions_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/project/shared:project_test_lib",
+    "//fleet/rpc:rpc_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
+    "//platform/jewel/ui:ui_test_lib",
+    "//platform/jewel/ide-laf-bridge:ide-laf-bridge_test_lib",
+    "//platform/compose:compose_test_lib",
+    "//libraries/skiko:skiko_test_lib",
+    "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
+    "//platform/jewel/foundation:foundation_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//python/common:common_test_lib",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
 ### auto-generated section `build intellij.python.sdkConfigurator.frontend` end

@@ -1,4 +1,5 @@
 // "Cast expression 'Foo<Number>()' to 'Foo<Int>'" "true"
+// K2_ERROR: Return type mismatch: expected 'Foo<Int>', actual 'Foo<Number>'.
 class Foo<out T>
 
 fun foo(): Foo<Int> {

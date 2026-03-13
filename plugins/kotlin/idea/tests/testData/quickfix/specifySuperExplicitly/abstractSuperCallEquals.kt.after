@@ -1,6 +1,8 @@
 // "Generate 'equals()'" "true"
 // WITH_STDLIB
 // ERROR: Abstract member cannot be accessed directly
+// K2_ERROR: Abstract member cannot be accessed directly.
+// K2_ERROR: Abstract member cannot be accessed directly.
 // K2_AFTER_ERROR: Abstract member cannot be accessed directly.
 
 interface I

@@ -4,7 +4,7 @@ package com.intellij.openapi.roots.libraries.ui;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public abstract class LibraryPropertiesEditor implements UnnamedConfigurable {
   @Override

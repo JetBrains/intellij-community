@@ -23,6 +23,18 @@ import org.jetbrains.intellij.build.productLayout.xml.includesPlatformLangPlugin
 import org.jetbrains.intellij.build.productLayout.xml.withEditorFold
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
+
+internal fun appendDefaultProductPluginMetadata(sb: StringBuilder, spec: ProductModulesContentSpec) {
+  // Add id/name/vendor if NOT getting them from xi:include (e.g., PlatformLangPlugin.xml)
+  if (!spec.includesPlatformLangPlugin()) {
+    sb.append("  <id>com.intellij</id>\n")
+    sb.append("  <name>IDEA CORE</name>\n")
+    if (spec.vendor != null) {
+      sb.append("  <vendor>${spec.vendor}</vendor>\n")
+    }
+  }
+}
 
 /**
  * Main entry point for generating XML files for both module sets and products.
@@ -36,8 +48,8 @@ import java.nio.file.Path
  * Generates an XML file for a module set.
  * Used to maintain backward compatibility with XML-based module set loading.
  * 
- * Module set XML files ALWAYS contain inlined module definitions - all direct modules
- * and nested module sets are expanded into `<module>` elements. The `inlineModuleSets`
+ * For non-pluginized module sets, XML files contain inlined module definitions - all direct
+ * modules and nested module sets are expanded into `<module>` elements. The `inlineModuleSets`
  * parameter (used in product XML generation) only affects whether PRODUCT XMLs reference
  * these files via xi:include or inline them directly.
  *
@@ -72,7 +84,7 @@ internal fun generateProductXml(
 ): ProductFileResult {
   // Determine which generator to recommend based on plugin.xml file location
   // Community products are under community/ directory, Ultimate products are not
-  val generatorCommand = (if (pluginXmlPath.toString().contains("/community/")) "CommunityModuleSets" else "UltimateGenerator") + GENERATOR_SUFFIX
+  val generatorCommand = (if (pluginXmlPath.invariantSeparatorsPathString.contains("/community/")) "CommunityModuleSets" else "UltimateGenerator") + GENERATOR_SUFFIX
 
   // Build complete plugin.xml file
   // inlineModuleSets = false means: use xi:include to reference module set XML files in product XML
@@ -86,14 +98,7 @@ internal fun generateProductXml(
       sb.appendXmlHeader(generatorCommand, productPropertiesClass)
     },
     metadataBuilder = { sb ->
-      // Add id/name/vendor if NOT getting from xi:include (e.g., PlatformLangPlugin.xml)
-      if (!spec.includesPlatformLangPlugin()) {
-        sb.append("  <id>com.intellij</id>\n")
-        sb.append("  <name>IDEA CORE</name>\n")
-        if (spec.vendor != null) {
-          sb.append("  <vendor>${spec.vendor}</vendor>\n")
-        }
-      }
+      appendDefaultProductPluginMetadata(sb = sb, spec = spec)
     },
     isUltimateBuild = isUltimateBuild
   )
@@ -288,7 +293,8 @@ fun buildProductContentXml(
     }
 
     // Generate module sets as xi:includes or inline content blocks
-    if (spec.moduleSets.isNotEmpty()) {
+    val hasRenderableModuleSets = spec.moduleSets.any { it.moduleSet.pluginSpec == null }
+    if (hasRenderableModuleSets) {
       if (inlineModuleSets) {
         // Generate single content block with all module sets inlined
         append("  <content namespace=\"$JETBRAINS_NAMESPACE\">\n")
@@ -310,7 +316,9 @@ fun buildProductContentXml(
       else {
         // Build set of module set names that are referenced at top-level WITH overrides
         // These cannot be brought in via `xi:include` from parent sets (would lose overrides)
-        val overriddenModuleSetNames = spec.moduleSets
+        val moduleSetsForProductContent = spec.moduleSets.filter { it.moduleSet.pluginSpec == null }
+
+        val overriddenModuleSetNames = moduleSetsForProductContent
           .filter { it.hasOverrides }
           .map { ModuleSetName(it.moduleSet.name) }
           .toSet()
@@ -318,7 +326,7 @@ fun buildProductContentXml(
         appendModuleSetsStrategyComment(spec, overriddenModuleSetNames)
 
         // Generate content for each top-level module set
-        for (moduleSetWithOverrides in spec.moduleSets) {
+        for (moduleSetWithOverrides in moduleSetsForProductContent) {
           appendModuleSetXml(
             moduleSetWithOverrides.moduleSet,
             moduleSetWithOverrides.loadingOverrides,

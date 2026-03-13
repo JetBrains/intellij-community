@@ -21,8 +21,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.ListModel;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -84,8 +89,9 @@ public final class JBListWithOpenInRightSplit<T> extends JBList<T> {
 
     AnAction action = ActionManager.getInstance().getAction(getActionId());
     if (action != null) {
-      String text = KeymapUtil.getFirstKeyboardShortcutText(action);
-      myTooltip = new HelpTooltip().setTitle(StringUtil.notNullize(action.getTemplatePresentation().getText())).setShortcut(text);
+      String tooltipText = StringUtil.notNullize(action.getTemplatePresentation().getText());
+      String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(action);
+      myTooltip = new HelpTooltip().setPlainTextTitle(tooltipText).setShortcut(shortcutText);
       myTooltip.installOn(this);
       HelpTooltip.setMasterPopupOpenCondition(this, () -> {
         return isHovered();

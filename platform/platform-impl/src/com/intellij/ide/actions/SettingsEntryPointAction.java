@@ -5,11 +5,22 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagementPolicy;
-import com.intellij.ide.ui.NewUiUtilKt;
 import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionButtonComponent;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.RightAlignedToolbarAction;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -25,19 +36,27 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.StatusBarWidget;
+import com.intellij.openapi.wm.StatusBarWidgetFactory;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.BadgeIconSupplier;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.IconManager;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
@@ -53,8 +72,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -72,8 +102,6 @@ public final class SettingsEntryPointAction extends ActionGroup
   private static final Logger LOG = Logger.getInstance(SettingsEntryPointAction.class);
 
   private static final BadgeIconSupplier GEAR_ICON = new BadgeIconSupplier(AllIcons.General.GearPlain);
-  private static final Icon NEW_UI_ICON =
-    IconManager.getInstance().withIconBadge(AllIcons.General.GearPlain, JBUI.CurrentTheme.IconBadge.NEW_UI);
   private static final BadgeIconSupplier IDE_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.IdeUpdate);
   private static final BadgeIconSupplier PLUGIN_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.PluginUpdate);
 
@@ -137,7 +165,7 @@ public final class SettingsEntryPointAction extends ActionGroup
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent event) {
-    if (event == null) return AnAction.EMPTY_ARRAY;
+    if (event == null) return EMPTY_ARRAY;
 
     DataContext context = event.getDataContext();
 
@@ -196,7 +224,7 @@ public final class SettingsEntryPointAction extends ActionGroup
         }
       }
     }
-    return result.toArray(AnAction.EMPTY_ARRAY);
+    return result.toArray(EMPTY_ARRAY);
   }
 
   private static @NotNull ListPopup createMainPopup(@NotNull ActionGroup group, @NotNull DataContext context, @Nullable String eventPlace) {
@@ -306,7 +334,7 @@ public final class SettingsEntryPointAction extends ActionGroup
             };
 
             float leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.getUnscaled();
-            Insets innerInsets = ((JBInsets)JBUI.CurrentTheme.Popup.Selection.innerInsets()).getUnscaled();
+            Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets().getUnscaled();
             panel.setBorder(JBUI.Borders.empty(12, (int)(leftRightInset + innerInsets.left), 12, 14));
 
             JPanel iconPanel = new NonOpaquePanel(new BorderLayout());
@@ -350,12 +378,9 @@ public final class SettingsEntryPointAction extends ActionGroup
 
   private static boolean ourShowPlatformUpdateIcon;
   private static boolean ourShowPluginsUpdateIcon;
-  private static boolean ourNewUiIcon = calculateOurNewUiIcon();
 
   public static void updateState() {
     resetActionIcon();
-
-    ourNewUiIcon = calculateOurNewUiIcon();
 
     boolean showPluginsUpdates = isShowPluginsUpdates();
 
@@ -394,10 +419,6 @@ public final class SettingsEntryPointAction extends ActionGroup
            !UpdateSettings.getInstance().getState().isPluginsAutoUpdateEnabled();
   }
 
-  private static boolean calculateOurNewUiIcon() {
-    return !ExperimentalUI.isNewUI() && !ExperimentalUI.Companion.isNewUiUsedOnce() && NewUiUtilKt.getNewUiPromotionDaysCount() < 14;
-  }
-
   private static @NotNull @Nls String getActionTooltip() {
     boolean updates = ourShowPlatformUpdateIcon || ourShowPluginsUpdateIcon;
     if (!updates) {
@@ -427,7 +448,7 @@ public final class SettingsEntryPointAction extends ActionGroup
     }
     String message = updates
                      ? IdeBundle.message("settings.entry.point.with.updates.tooltip")
-                     : IdeBundle.message(ourNewUiIcon ? "settings.entry.point.newUi.tooltip" : "settings.entry.point.tooltip");
+                     : IdeBundle.message("settings.entry.point.tooltip");
 
     List<String> tooltips =
       new ArrayList<>(ContainerUtil.mapNotNull(ActionProvider.EP_NAME.getExtensionList(), provider -> provider.getTooltip()));
@@ -445,7 +466,6 @@ public final class SettingsEntryPointAction extends ActionGroup
   private static void resetActionIcon() {
     ourShowPlatformUpdateIcon = false;
     ourShowPluginsUpdateIcon = false;
-    ourNewUiIcon = false;
   }
 
   private static @NotNull Icon calculateActionIcon() {
@@ -454,9 +474,6 @@ public final class SettingsEntryPointAction extends ActionGroup
     }
     if (ourShowPluginsUpdateIcon) {
       return ExperimentalUI.isNewUI() ? GEAR_ICON.getInfoIcon() : getCustomizedIcon(PLUGIN_UPDATE_ICON);
-    }
-    if (ourNewUiIcon) {
-      return NEW_UI_ICON;
     }
 
     return getCustomizedIcon(GEAR_ICON);
@@ -563,7 +580,7 @@ public final class SettingsEntryPointAction extends ActionGroup
   }
 
   /**
-   * Allows to modify a base icon provided by {@link BadgeIconSupplier}. The icon of the first extension which returns a non-null value
+   * Allows modifying a base icon provided by {@link BadgeIconSupplier}. The icon of the first extension which returns a non-null value
    * will be used.
    */
   public interface IconCustomizer {
@@ -583,7 +600,7 @@ public final class SettingsEntryPointAction extends ActionGroup
   }
 
   /**
-   * Marker interface to suppress automatic dots "..." addition after action name.
+   * Marker interface to suppress automatic dots "..." addition after the action name.
    */
   public interface NoDots {
   }

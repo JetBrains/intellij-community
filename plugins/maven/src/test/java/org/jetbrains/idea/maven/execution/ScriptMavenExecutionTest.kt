@@ -1,13 +1,19 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution
 
+import com.intellij.execution.configurations.ParametersList
+import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.idea.TestFor
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.testFramework.ExtensionTestUtil.addExtensions
 import com.intellij.util.io.copyRecursively
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.execution.run.MAVEN_EXECUTION_CONFIGURATOR
+import org.jetbrains.idea.maven.execution.run.MavenExecutionConfigurator
+import org.jetbrains.idea.maven.execution.run.MavenExecutionConfiguratorProvider
 import org.jetbrains.idea.maven.project.MavenInSpecificPath
 import org.jetbrains.idea.maven.project.MavenWrapper
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
@@ -378,8 +384,44 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
 
   }
 
+  @Test
+  fun testShouldExecuteMavenScriptWithExtension() = runBlocking {
+    importProjectAsync("""
+         <groupId>test</groupId>
+         <artifactId>project</artifactId>
+         <version>1</version>
+         """
+    )
+    createFakeProjectWrapper()
+    mavenGeneralSettings.mavenHomeType = MavenWrapper
+    addExtensions(MAVEN_EXECUTION_CONFIGURATOR, listOf(
+      object : MavenExecutionConfiguratorProvider {
+        override fun createConfigurator(environment: ExecutionEnvironment, myConfiguration: MavenRunConfiguration): MavenExecutionConfigurator? {
+          return MyTestConfiguratorExtension()
+        }
+
+      }
+    ), testRootDisposable)
+    val executionInfo = execute(params = MavenRunnerParameters(
+      true, projectPath.toCanonicalPath(),
+      null as String?,
+      mutableListOf("verify"), emptyList()))
+    assertTrue("Should run wrapper", executionInfo.stdout.contains(wrapperOutput))
+    assertTrue("Should execute maven script with env: ${executionInfo.stdout}", executionInfo.stdout.contains("MY_ADDED_TEST_ENV_NAME=MY_ADDED_TEST_ENV_VALUE"))
+    assertTrue("Should execute maven script with parameter: ${executionInfo.stdout}", executionInfo.system.contains(" test-parameter"))
+
+  }
+
+
   companion object {
     const val wrapperOutput = "WRAPPER REPLACEMENT in Intellij tests"
     const val mavenOutput = "MAVEN REPLACEMENT in Intellij tests"
+  }
+}
+
+private class MyTestConfiguratorExtension : MavenExecutionConfigurator {
+  override fun configureParameters(env: MutableMap<String, String>, parametersList: ParametersList) {
+    env["MY_ADDED_TEST_ENV_NAME"] = "MY_ADDED_TEST_ENV_VALUE"
+    parametersList.add("test-parameter")
   }
 }

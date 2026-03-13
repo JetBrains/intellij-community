@@ -62,11 +62,6 @@ abstract class JupyterAbstractAboveCellToolbar(
     g2d.fillRoundRect(0, 0, width, height, getArcSize(), getArcSize())
   }
 
-  override fun updateUI() {
-    background = if (JBColor.isBright()) JBColor.WHITE else null
-    super.updateUI()
-  }
-
   protected fun getArcSize(): Int = JBUI.scale(8)
   protected fun getHorizontalPadding(): Int = JBUI.scale(3)
   protected fun getVerticalPadding(): Int = JBUI.scale(3)

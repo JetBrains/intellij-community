@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore.keePass
 
-import com.intellij.credentialStore.*
+import com.intellij.credentialStore.CredentialAttributes
+import com.intellij.credentialStore.CredentialStore
+import com.intellij.credentialStore.Credentials
+import com.intellij.credentialStore.EncryptionSpec
+import com.intellij.credentialStore.createSecureRandom
+import com.intellij.credentialStore.generateBytes
 import com.intellij.credentialStore.kdbx.IncorrectMainPasswordException
 import com.intellij.credentialStore.kdbx.KdbxPassword
 import com.intellij.credentialStore.kdbx.KeePassDatabase
@@ -24,7 +29,7 @@ import java.io.Closeable
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.SecureRandom
-import java.util.*
+import java.util.Base64
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.exists
 

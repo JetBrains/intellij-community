@@ -81,6 +81,7 @@ internal fun createKotlinSourceSet(
     ),
     sourceDirs = emptySet(),
     resourceDirs = emptySet(),
+    generatedKotlinDirs = emptySet(),
     regularDependencies = emptyArray(),
     intransitiveDependencies = emptyArray(),
     declaredDependsOnSourceSets = declaredDependsOnSourceSets,

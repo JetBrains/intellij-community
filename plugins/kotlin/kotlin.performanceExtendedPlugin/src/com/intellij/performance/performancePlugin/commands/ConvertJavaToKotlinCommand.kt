@@ -13,7 +13,7 @@ import com.jetbrains.performancePlugin.commands.OpenFileCommand
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.kotlin.idea.actions.JavaToKotlinAction
+import org.jetbrains.kotlin.idea.actions.JavaToKotlinActionHandler
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 
 class ConvertJavaToKotlinCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
@@ -32,7 +32,7 @@ class ConvertJavaToKotlinCommand(text: String, line: Int) : PerformanceCommandCo
                 ?: throw IllegalArgumentException("There is no file $filePath")
 
             TelemetryManager.getTracer(Scope("javaToKotlin")).spanBuilder(NAME).use {
-                JavaToKotlinAction.Handler.convertFiles(
+                JavaToKotlinActionHandler.convertFiles(
                     files = listOf(javaFile),
                     project = project,
                     module = module,

@@ -19,7 +19,12 @@ import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.speedSearch.ListWithFilter
 import com.intellij.util.ui.JBUI
 import java.awt.Component
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.ListCellRenderer
+import javax.swing.ListSelectionModel
 
 internal class ExternalProjectSelector(
   property: ObservableMutableProperty<DependencyAnalyzerProject?>,

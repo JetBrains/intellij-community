@@ -85,6 +85,7 @@ import com.jetbrains.python.psi.types.PyNeverType;
 import com.jetbrains.python.psi.types.PySelfType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.PyTypeInferenceCspFactory;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
@@ -280,7 +281,10 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
                                            @NotNull Map<PyExpression, PyCallableParameter> parameters,
                                            @NotNull TypeEvalContext context) {
     if (PyTypeChecker.hasGenerics(type, context)) {
-      final var substitutions = PyTypeChecker.unifyGenericCall(receiver, parameters, context);
+      PyType callableType = context.getType(this);
+      PyCallableType callableTypeCasted = callableType instanceof PyCallableType ? (PyCallableType)callableType : null;
+      final var substitutions =
+        PyTypeInferenceCspFactory.unifyGenericCall(callSiteExpression, receiver, callableTypeCasted, parameters, context);
       if (substitutions != null) {
         // Special handling for __new__ constructor and factory methods of generic classes returning Self:
         //

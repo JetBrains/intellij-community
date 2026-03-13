@@ -18,7 +18,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 @ApiStatus.Internal
 public abstract class AppFontConfigurable implements SearchableConfigurable, Configurable.NoMargin, NoScroll {

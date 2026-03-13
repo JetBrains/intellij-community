@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision
 
 import com.intellij.codeInsight.codeVision.ui.CodeVisionView
@@ -11,6 +11,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorThreading
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
@@ -18,7 +20,9 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.rd.util.first
 import com.jetbrains.rd.util.lifetime.SequentialLifetimes
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseEvent
+import java.util.concurrent.CopyOnWriteArrayList
 
 // used externally
 val editorLensContextKey: Key<EditorCodeVisionContext> = Key<EditorCodeVisionContext>("EditorCodeLensContext")
@@ -31,14 +35,37 @@ val editorCodeVisionEntryKey: Key<CodeVisionEntry> = Key.create("EditorCodeVisio
 val Editor.lensContext: EditorCodeVisionContext?
   get() = getOrCreateCodeVisionContext(this)
 
+@get:ApiStatus.Internal
+val Editor.lensContextIfCreated: EditorCodeVisionContext?
+  get() = getUserData(editorLensContextKey)
+
 val RangeMarker.codeVisionEntryOrThrow: CodeVisionEntry
   get() = getUserData(codeVisionEntryOnHighlighterKey) ?: error("No CodeLensEntry for highlighter $this")
 
 private val LOG: Logger = logger<EditorCodeVisionContext>()
 
-open class EditorCodeVisionContext(
+@ApiStatus.Internal
+interface CodeVisionContextExtensionProvider {
+  companion object {
+    internal val EP_NAME: ExtensionPointName<CodeVisionContextExtensionProvider> =
+      ExtensionPointName.create("com.intellij.codeVisionContextExtensionProvider")
+  }
+
+  fun createCodeVisionContext(project: Project, editorContext: EditorCodeVisionContext): EditorCodeVisionContextExtension?
+}
+
+@ApiStatus.Internal
+interface EditorCodeVisionContextExtension {
+  val hasAnyPendingLenses: Boolean
+
+  fun clearLenses()
+
+  fun getValidResult(): Sequence<RangeMarker>
+}
+
+class EditorCodeVisionContext(
   private val codeVisionHost: CodeVisionHost,
-  val editor: Editor
+  val editor: Editor,
 ) {
   private val outputLifetimes: SequentialLifetimes = SequentialLifetimes((editor as EditorImpl).disposable.createLifetime())
   private var rangeMarkers: List<RangeMarker> = listOf()
@@ -46,15 +73,22 @@ open class EditorCodeVisionContext(
   private var hasPendingLenses = false
 
   private val submittedGroupings = ArrayList<Pair<TextRange, (Int) -> Unit>>()
-  val codeVisionModel : CodeVisionModel = CodeVisionModel()
+  val codeVisionModel: CodeVisionModel = CodeVisionModel()
 
   var zombies: List<Pair<TextRange, CodeVisionEntry>> = ArrayList()
+
+  private val _extensions: MutableList<EditorCodeVisionContextExtension> = CopyOnWriteArrayList()
+  val extensions: List<EditorCodeVisionContextExtension> get() = _extensions
 
   init {
     (editor as EditorImpl).disposable.createLifetime().onTermination {
       rangeMarkers.forEach { it.dispose() }
       codeVisionModel.removeLenses(rangeMarkers)
     }
+  }
+
+  internal fun registerExtension(extension: EditorCodeVisionContextExtension) {
+    _extensions.add(extension)
   }
 
   @RequiresEdt
@@ -68,12 +102,12 @@ open class EditorCodeVisionContext(
 
   // used by Rider
   @Suppress("unused")
-  open val hasAnyPendingLenses: Boolean
-    get() = hasPendingLenses
+  val hasAnyPendingLenses: Boolean
+    get() = hasPendingLenses || extensions.any { it.hasAnyPendingLenses }
 
   @RequiresEdt
   fun setZombieResults(lenses: List<Pair<TextRange, CodeVisionEntry>>) {
-     zombies = lenses.filter { (range, _) ->  range.isValidFor(editor.document) }.toList()
+    zombies = lenses.filter { (range, _) -> range.isValidFor(editor.document) }.toList()
     setResults(zombies)
   }
 
@@ -124,14 +158,22 @@ open class EditorCodeVisionContext(
     viewService.runWithReusingLenses {
       val lifetime = outputLifetimes.next()
       val mergedLenses = getValidResult().groupBy { editor.document.getLineNumber(it.startOffset) }
-      
+
       submittedGroupings.clear()
       for ((_, lineLenses) in mergedLenses) {
         if (lineLenses.isEmpty()) {
           continue
         }
 
-        val lastFilteredLineLenses = lineLenses.groupBy { it.codeVisionEntryOrThrow.providerId }.map { it.value.last() }
+        val lastFilteredLineLenses = lineLenses.groupBy { it.codeVisionEntryOrThrow.providerId }.flatMap { (providerId, lenses) ->
+          val provider = codeVisionHost.getProviderById(providerId)
+          if (provider?.singleEntryPerLine == true) {
+            listOf(lenses.last())
+          }
+          else {
+            lenses
+          }
+        }
         val groupedLenses = lastFilteredLineLenses.groupBy { codeVisionHost.getAnchorForEntry(it.codeVisionEntryOrThrow) }
 
         val anchoringRange = groupedLenses.first().value.first()
@@ -153,11 +195,15 @@ open class EditorCodeVisionContext(
     }
   }
 
-  open fun clearLenses() {
+  fun clearLenses() {
     setResults(emptyList())
+    extensions.forEach { it.clearLenses() }
   }
 
-  open fun getValidResult(): Sequence<RangeMarker> = rangeMarkers.asSequence().filter { it.isValid }
+  fun getValidResult(): Sequence<RangeMarker> {
+    return rangeMarkers.asSequence().filter { it.isValid } +
+           extensions.asSequence().flatMap { it.getValidResult() }
+  }
 
   fun getValidPairResult(): Sequence<Pair<TextRange, CodeVisionEntry>> = getValidResult().map {
     Pair(it.textRange, it.codeVisionEntryOrThrow)
@@ -189,7 +235,14 @@ private fun getOrCreateCodeVisionContext(editor: Editor): EditorCodeVisionContex
     LOG.warn("Project wasn't available from editor during creating of code vision context")
     return null
   }
-  val newContext = project.service<CodeVisionContextProvider>().createCodeVisionContext(editor)
+
+  val codeVisionHost = project.service<CodeVisionHost>()
+  val newContext = EditorCodeVisionContext(codeVisionHost, editor)
+
+  for (provider in CodeVisionContextExtensionProvider.EP_NAME.extensionList) {
+    val contextExtension = provider.createCodeVisionContext(project, newContext) ?: continue
+    newContext.registerExtension(contextExtension)
+  }
   editor.putUserData(editorLensContextKey, newContext)
   return newContext
 }

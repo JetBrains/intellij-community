@@ -10,7 +10,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExpandableActions
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Collections
 import javax.swing.JFrame
 
 @ApiStatus.Internal

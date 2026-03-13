@@ -5,10 +5,15 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
-import com.intellij.openapi.editor.actionSystem.*;
+import com.intellij.openapi.editor.actionSystem.EditorAction;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
+import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 final class EditorActionManagerImpl extends EditorActionManager {
   private ReadonlyFragmentModificationHandler myReadonlyFragmentsHandler = new DefaultReadOnlyFragmentModificationHandler();
@@ -43,7 +48,7 @@ final class EditorActionManagerImpl extends EditorActionManager {
   }
 
   @Override
-  public void setReadonlyFragmentModificationHandler(final @NotNull Document document, final ReadonlyFragmentModificationHandler handler) {
+  public void setReadonlyFragmentModificationHandler(final @NotNull Document document, @Nullable ReadonlyFragmentModificationHandler handler) {
     final Document doc = PsiDocumentManagerBase.getTopLevelDocument(document);
     if (doc instanceof DocumentImpl) {
       ((DocumentImpl)document).setReadonlyFragmentModificationHandler(handler);

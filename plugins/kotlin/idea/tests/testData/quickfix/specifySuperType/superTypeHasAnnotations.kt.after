@@ -1,4 +1,5 @@
 // "Specify supertype" "true"
+// K2_ERROR: Multiple supertypes available. Specify the intended supertype in angle brackets, e.g. 'super<Foo>'.
 interface Z {
     fun foo() {}
 }

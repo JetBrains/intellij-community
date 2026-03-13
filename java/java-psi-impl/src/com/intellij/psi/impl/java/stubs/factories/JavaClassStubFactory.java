@@ -5,6 +5,7 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.java.stubs.JavaClassElementType;
 import com.intellij.psi.impl.java.stubs.JavaStubElementType;
@@ -18,6 +19,7 @@ import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.stubs.LightStubElementFactory;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.JavaImplicitClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,6 +109,13 @@ public class JavaClassStubFactory implements LightStubElementFactory<PsiClassStu
 
 
     boolean isImplicit = node.getTokenType() == JavaElementType.IMPLICIT_CLASS;
+    if (isImplicit && parentStub instanceof PsiJavaFileStub) {
+      PsiJavaFile psiFile = ((PsiJavaFileStub)parentStub).getPsi();
+      if (psiFile != null) {
+        name = JavaImplicitClassUtil.getJvmName(psiFile.getName());
+      }
+    }
+
     final short flags = PsiClassStubImpl.packFlags(isDeprecatedByComment, isInterface, isEnum, isEnumConst, isAnonymous, isAnnotation,
                                                    isInQualifiedNew, hasDeprecatedAnnotation, false, false, hasDocComment, isRecord,
                                                    isImplicit, isValueClass);

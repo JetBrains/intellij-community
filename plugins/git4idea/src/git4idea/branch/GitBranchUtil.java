@@ -41,6 +41,7 @@ import git4idea.ui.branch.GitMultiRootBranchConfig;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -283,6 +284,7 @@ public final class GitBranchUtil {
     return collectCommon(groups, null);
   }
 
+  @ApiStatus.Internal
   public static @NotNull <T> List<T> collectCommon(@NotNull Stream<? extends Collection<T>> groups,
                                                    Hash.@Nullable Strategy<? super T> hashingStrategy) {
     List<T> common = new ArrayList<>();

@@ -1,7 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl
 
-import com.intellij.codeInsight.multiverse.*
+import com.intellij.codeInsight.multiverse.CodeInsightContext
+import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl
+import com.intellij.codeInsight.multiverse.ModuleContext
+import com.intellij.codeInsight.multiverse.ProjectModelContextBridge
+import com.intellij.codeInsight.multiverse.anyContext
+import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.thisLogger

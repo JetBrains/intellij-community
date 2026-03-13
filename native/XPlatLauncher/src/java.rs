@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 use std::ffi::{c_char, c_int, c_void, CStr, CString};
 use std::path::Path;
@@ -7,10 +7,12 @@ use std::sync::Mutex;
 use std::thread;
 use std::thread::JoinHandle;
 
-use anyhow::{anyhow, bail, Context, Error, Result};
-use jni::JNIEnv;
-use jni::objects::{JObject, JValue};
-use jni::sys::{jboolean, jint, jsize};
+use anyhow::{anyhow, bail, Context, Result};
+use jni::{jni_sig, jni_str, EnvUnowned, Outcome};
+use jni::objects::{JString, JValue};
+use jni::signature::MethodSignature;
+use jni::strings::{JNIStr, JNIString};
+use jni::sys::{jboolean, jint};
 use log::{debug, error};
 
 use crate::{jvm_property, ui};
@@ -33,7 +35,6 @@ const JVM_LIB_REL_PATH: &str = "lib/server/libjvm.so";
 static DEBUG_MODE: AtomicBool = AtomicBool::new(true);
 static HOOK_MESSAGES: Mutex<Option<Vec<String>>> = Mutex::new(None);
 
-#[no_mangle]
 extern "C" fn vfprintf_hook(fp: *const c_void, format: *const c_char, args: va_list::VaList<'_>) -> jint {
     extern "C" {
         fn vfprintf(fp: *const c_void, format: *const c_char, args: va_list::VaList<'_>) -> c_int;
@@ -46,14 +47,13 @@ extern "C" fn vfprintf_hook(fp: *const c_void, format: *const c_char, args: va_l
             let mut buffer = [0; 4096];
             let len = unsafe { vsnprintf(buffer.as_mut_ptr(), buffer.len(), format, args) };
             let message = unsafe { CStr::from_ptr(buffer.as_ptr()) }.to_string_lossy().to_string();
-            debug!("[JVM] vfprintf_hook: {:?}", message);
+            debug!("[JVM] vfprintf_hook: {message:?}");
             messages.push(message);
             len
         }
     }
 }
 
-#[no_mangle]
 extern "C" fn abort_hook() {
     error!("[JVM] abort_hook");
     match HOOK_MESSAGES.lock() {
@@ -64,12 +64,12 @@ extern "C" fn abort_hook() {
                 ui::show_error(gui, anyhow::format_err!(text))
             }
         }
-        Err(e) => error!("[JVM] HOOK_MESSAGES.lock() failed: {}", e)
+        Err(e) => error!("[JVM] HOOK_MESSAGES.lock() failed: {e}")
     }
 }
 
-const MAIN_METHOD_NAME: &str = "main";
-const MAIN_METHOD_SIGNATURE: &str = "([Ljava/lang/String;)V";
+const MAIN_METHOD_NAME: &JNIStr = jni_str!("main");
+const MAIN_METHOD_SIGNATURE: MethodSignature<'_, '_> = jni_sig!("([Ljava/lang/String;)V");
 
 type CreateJvmCall<'lib> = libloading::Symbol<
     'lib,
@@ -120,12 +120,16 @@ pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, main_cla
         };
 
         match call_main_method(jni_env, &main_class, args) {
-            Ok(_) => {
+            Outcome::Ok(_) => {
                 debug!("[JVM] main method finished peacefully");
                 std::process::exit(0);
             }
-            Err(e) => {
+            Outcome::Err(e) => {
                 error!("[JVM] main method failed: {e:?}");
+                std::process::exit(1);
+            }
+            Outcome::Panic(e) => {
+                error!("[JVM] main method panicked: {e:?}");
                 std::process::exit(1);
             }
         };
@@ -155,7 +159,7 @@ fn reset_signal_handler(signal: c_int) -> Result<()> {
     }
 }
 
-fn load_and_start_jvm(jre_home: &Path, vm_options: Vec<String>) -> Result<JNIEnv<'static>> {
+fn load_and_start_jvm<'a>(jre_home: &Path, vm_options: Vec<String>) -> Result<EnvUnowned<'a>> {
     let libjvm_path = jre_home.join(JVM_LIB_REL_PATH);
     debug!("[JVM] Loading {libjvm_path:?}");
     let libjvm = load_libjvm(&libjvm_path)?;
@@ -177,7 +181,7 @@ fn load_and_start_jvm(jre_home: &Path, vm_options: Vec<String>) -> Result<JNIEnv
             &mut jni_env as *mut *mut jni::sys::JNIEnv as *mut *mut c_void,
             &jvm_init_args as *const jni::sys::JavaVMInitArgs as *mut c_void)
     };
-    debug!("[JVM] JNI_CreateJavaVM(): {}", create_jvm_result);
+    debug!("[JVM] JNI_CreateJavaVM(): {create_jvm_result}");
 
     release_jvm_init_args(jni_options);
 
@@ -186,13 +190,13 @@ fn load_and_start_jvm(jre_home: &Path, vm_options: Vec<String>) -> Result<JNIEnv
             .map_err(|x| anyhow!("failed to acquire HOOK_MESSAGES mutex {x:?}"))?
             .as_ref()
             .context("failed to get as_ref from HOOK_MESSAGES.lock()")?.join("");
-        bail!("{}", if text.is_empty() { format!("Unknown error (JNI_CreateJavaVM: {})", create_jvm_result) } else { text });
+        bail!("{}", if text.is_empty() { format!("Unknown error (JNI_CreateJavaVM: {create_jvm_result})") } else { text });
     }
 
     *HOOK_MESSAGES.lock()
         .map_err(|x| anyhow!("failed to acquire HOOK_MESSAGES mutex {x:?}"))? = None;
 
-    let jni_env = unsafe { JNIEnv::from_raw(jni_env) }?;
+    let jni_env = unsafe { EnvUnowned::from_raw(jni_env) };
 
     Ok(jni_env)
 }
@@ -246,12 +250,14 @@ fn get_jvm_init_args(vm_options: Vec<String>) -> Result<(jni::sys::JavaVMInitArg
 fn convert_vm_options(vm_options: Vec<String>) -> Result<Vec<CString>> {
     use {
         windows::core::{BOOL, HSTRING, PCSTR},
-        windows::Win32::Globalization::{GetACP, CP_ACP, CP_UTF8, WC_NO_BEST_FIT_CHARS, WideCharToMultiByte}
+        windows::Win32::Globalization::{GetACP, CP_ACP, CP_UTF8, WC_NO_BEST_FIT_CHARS, WideCharToMultiByte},
+        winreg::enums::*,
+        winreg::RegKey,
     };
 
-    let mut strings = Vec::<CString>::with_capacity(vm_options.len());
+    let mut strings = Vec::<CString>::with_capacity(vm_options.len() + 1);
     let acp = unsafe { GetACP() };
-    debug!("[JVM] ACP={}", acp);
+    debug!("[JVM] ACP={acp}");
 
     for opt in vm_options {
         let str = if acp == CP_UTF8 {
@@ -267,11 +273,27 @@ fn convert_vm_options(vm_options: Vec<String>) -> Result<Vec<CString>> {
                 bail!("Cannot convert VM option string '{}' to ANSI code page ({}): {}", opt, acp, std::io::Error::last_os_error());
             }
             if failed.as_bool() {
-                bail!("Cannot convert VM option string '{}' to ANSI code page ({})", opt, acp);
+                bail!("Cannot convert VM option string '{opt}' to ANSI code page ({acp})");
             }
             CString::new(acp_bytes)
-        }.with_context(|| format!("Invalid VM option string: '{}'", opt))?;
+        }.with_context(|| format!("Invalid VM option string: '{opt}'"))?;
         strings.push(str);
+    }
+
+    if acp == CP_UTF8 {
+        let key = RegKey::predef(HKEY_LOCAL_MACHINE);
+        if let Ok(subkey) = key.open_subkey("SYSTEM\\CurrentControlSet\\Control\\Nls\\CodePage") {
+            if let Ok(sys_acp) = subkey.get_value::<String, _>("ACP") {
+                debug!("[JVM] system ACP={sys_acp}");
+                let value = match sys_acp.as_str() {
+                    "65001" => "UTF-8".to_string(),
+                    "1361" => "MS1361".to_string(),
+                    _ => "windows-".to_string() + sys_acp.as_str()
+                };
+                let property = jvm_property!("sun.jnu.encoding.sys", value);
+                strings.push(CString::new(property.as_bytes())?);
+            }
+        }
     }
 
     Ok(strings)
@@ -290,28 +312,29 @@ fn release_jvm_init_args(jni_options: Vec<jni::sys::JavaVMOption>) {
     jni_options.into_iter().for_each(|option| drop(unsafe { CString::from_raw(option.optionString) }));
 }
 
-fn call_main_method(mut jni_env: JNIEnv<'_>, main_class: &str, args: Vec<String>) -> Result<()> {
-    debug!("[JVM] Preparing args: {:?}", args);
-    let main_class_name = main_class.replace('.', "/");
-    let args_array = jni_env.new_object_array(args.len() as jsize, "java/lang/String", JObject::null())?;
-    for (i, arg) in args.iter().enumerate() {
-        jni_env.set_object_array_element(&args_array, i as jsize, jni_env.new_string(arg)?)?;
-    }
-    let main_args = vec![JValue::from(&args_array)];
-
-    debug!("[JVM] Calling '{}#main'", main_class_name);
-    match jni_env.call_static_method(main_class_name, MAIN_METHOD_NAME, MAIN_METHOD_SIGNATURE, &main_args) {
-        Ok(_) => Ok(()),
-        Err(e) => {
-            if let jni::errors::Error::JavaException = e {
-                jni_env.exception_describe()?
-            };
-            Err(Error::from(e))
+fn call_main_method(mut jni_env: EnvUnowned<'_>, main_class_name: &str, args: Vec<String>) -> Outcome<(), jni::errors::Error> {
+    jni_env.with_env(|env| {
+        debug!("[JVM] Preparing args: {args:?}");
+        let args_array = env.new_object_type_array::<JString<'_>>(args.len(), JString::null())?;
+        for (i, arg) in args.iter().enumerate() {
+            let string_obj = env.new_string(arg)?;
+            args_array.set_element(env, i, string_obj)?;
         }
-    }
+        let main_args = vec![JValue::from(&args_array)];
+
+        debug!("[JVM] Calling '{main_class_name}#main'");
+        let main_class = env.find_class(JNIString::new(main_class_name.replace('.', "/")))?;
+        let result = env.call_static_method(main_class, MAIN_METHOD_NAME, MAIN_METHOD_SIGNATURE, &main_args).map(|_| ());
+        if let Err(e) = &result {
+            if let jni::errors::Error::JavaException = e {
+                env.exception_describe();
+            }
+        }
+        result
+    }).into_outcome()
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(not(target_os = "macos"))]
 fn run_event_loop(join_handle: JoinHandle<()>) -> thread::Result<()> {
     debug!("Joining the JVM thread");
     join_handle.join()
@@ -338,10 +361,4 @@ fn run_event_loop(_join_handle: JoinHandle<()>) -> thread::Result<()> {
     }
 
     Ok(())
-}
-
-#[cfg(target_os = "linux")]
-fn run_event_loop(join_handle: JoinHandle<()>) -> thread::Result<()> {
-    debug!("Joining the JVM thread");
-    join_handle.join()
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.lang.java.JavaFindUsagesProvider;
@@ -224,7 +224,7 @@ public final class MoveClassesOrPackagesUtil {
   }
 
   // Does not process non-code usages!
-  public static PsiClass doMoveClass(PsiClass aClass, PsiDirectory moveDestination, boolean moveAllClassesInFile) throws IncorrectOperationException {
+  public static @NotNull PsiClass doMoveClass(@NotNull PsiClass aClass, @NotNull PsiDirectory moveDestination, boolean moveAllClassesInFile) throws IncorrectOperationException {
     PsiClass newClass;
     if (!moveAllClassesInFile) {
       for (MoveClassHandler handler : MoveClassHandler.EP_NAME.getExtensions()) {

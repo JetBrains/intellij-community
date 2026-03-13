@@ -1,4 +1,5 @@
 // "Add 'operator' modifier" "true"
+// K2_ERROR: 'operator' modifier is required on 'fun plus(a: A): A' defined in 'A'.
 class A {
     fun plus(a: A): A = A()
 }

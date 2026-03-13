@@ -2,9 +2,12 @@
 package com.intellij.platform.eel.impl.local
 
 import com.intellij.execution.process.UnixProcessManager
+import com.intellij.execution.process.UnixSignal
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelPosixProcess
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.channels.EelReceiveChannel
@@ -22,11 +25,36 @@ internal class LocalEelPosixProcess private constructor(
   private val process: Process,
   private val resizeWindow: ((WinSize) -> Unit)?,
   scope: CoroutineScope,
+  private val platform: EelPlatform.Posix,
 ) : EelPosixProcess {
   companion object {
+    /**
+     * Send signal to the process group. If failed, send it to the process itself.
+     * @return false if failed to send signal
+     */
+    private fun sendSignalToProcessGroup(process: Process, signal: UnixSignal, platform: EelPlatform.Posix): Boolean {
+      val code = when (platform) {
+        is EelPlatform.Darwin, is EelPlatform.FreeBSD -> signal.darwinCode
+        is EelPlatform.Linux -> signal.linuxCode
+      }
+      val pid = process.pid().toInt()
+      var result = UnixProcessManager.sendSignalToGroup(pid, code)
+      if (result != 0) {
+        logger.warn("Sending $code to group $pid failed: $result")
+        result = UnixProcessManager.sendSignal(pid, code)
+      }
+      if (result != 0) {
+        logger.warn("Sending $code to $pid led to error $result")
+        return false
+      }
+      return true
+    }
+
+    private val logger = fileLogger()
+
     @JvmStatic
-    suspend fun create(process: Process, resizeWindow: ((WinSize) -> Unit)?): LocalEelPosixProcess =
-      LocalEelPosixProcess(process, resizeWindow, ApplicationManager.getApplication().serviceAsync<EelLocalApiService>().scope)
+    suspend fun create(process: Process, resizeWindow: ((WinSize) -> Unit)?, platform: EelPlatform.Posix): LocalEelPosixProcess =
+      LocalEelPosixProcess(process, resizeWindow, ApplicationManager.getApplication().serviceAsync<EelLocalApiService>().scope, platform)
   }
 
   override val pid: EelApi.Pid = LocalPid(process.pid())
@@ -38,7 +66,8 @@ internal class LocalEelPosixProcess private constructor(
   }
 
   override suspend fun kill() {
-    process.destroyForcibly()
+    sendSignalToProcessGroup(process, UnixSignal.SIGKILL, platform)
+    process.destroyForcibly() // When signal failed, we still need to kill it
   }
 
   override fun convertToJavaProcess(): Process = process
@@ -52,7 +81,7 @@ internal class LocalEelPosixProcess private constructor(
   }
 
   override suspend fun interrupt() {
-    UnixProcessManager.sendSignal(process.pid().toInt(), UnixProcessManager.SIGINT)
+    sendSignalToProcessGroup(process, UnixSignal.SIGINT, platform)
   }
 
   /**
@@ -62,7 +91,7 @@ internal class LocalEelPosixProcess private constructor(
    * In contrast, the API user may send and receive data through stdio after invoking [terminate].
    */
   override suspend fun terminate() {
-    UnixProcessManager.sendSignal(process.pid().toInt(), UnixProcessManager.SIGTERM)
+    sendSignalToProcessGroup(process, UnixSignal.SIGTERM, platform)
   }
 }
 

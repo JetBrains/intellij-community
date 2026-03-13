@@ -30,9 +30,11 @@ import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.sdk.rootManager
+import org.jetbrains.annotations.ApiStatus
 
-
-internal object SetupPyHelpers {
+@ApiStatus.Internal
+object SetupPyHelpers {
   const val SETUP_PY: String = "setup.py"
   const val REQUIRES: String = "requires"
   const val INSTALL_REQUIRES: String = "install_requires"
@@ -51,6 +53,7 @@ internal object SetupPyHelpers {
     }
   }
 
+  @JvmStatic
   fun parseSetupPy(file: PyFile): List<PyRequirement>? {
     val setupCall = findSetupCall(file) ?: return null
 

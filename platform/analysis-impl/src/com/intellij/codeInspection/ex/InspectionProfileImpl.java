@@ -19,7 +19,15 @@ import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectTypeService;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -36,12 +44,21 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.NotNullLazyValue.lazy;
@@ -82,7 +99,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   private SchemeDataHolder<? super InspectionProfileImpl> myDataHolder;
 
   public InspectionProfileImpl(@NotNull String profileName) {
-    this(profileName, InspectionToolRegistrar.getInstance(), (BaseInspectionProfileManager)InspectionProfileManager.getInstance(), null, null);
+    this(profileName, InspectionToolRegistrar.getInstance(), (BaseInspectionProfileManager)InspectionProfileManager.getInstance(), null,
+         null);
   }
 
   public InspectionProfileImpl(@NotNull String profileName,
@@ -173,7 +191,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     myProjectLevel = projectLevel;
   }
 
-  public static @NotNull InspectionToolWrapper<?, ?> copyToolSettings(@NotNull InspectionToolWrapper<?,?> toolWrapper) {
+  public static @NotNull InspectionToolWrapper<?, ?> copyToolSettings(@NotNull InspectionToolWrapper<?, ?> toolWrapper) {
     InspectionToolWrapper<?, ?> inspectionTool = toolWrapper.createCopy();
     if (toolWrapper.isInitialized()) {
       Element config = new Element("config");
@@ -226,7 +244,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     }
   }
 
-  private static @Nullable String convertToShortName(@Nullable String displayName, @NotNull List<? extends InspectionToolWrapper<?, ?>> tools) {
+  private static @Nullable String convertToShortName(@Nullable String displayName,
+                                                     @NotNull List<? extends InspectionToolWrapper<?, ?>> tools) {
     if (displayName == null) return null;
     for (InspectionToolWrapper<?, ?> tool : tools) {
       if (displayName.equals(tool.getDisplayName())) {
@@ -351,15 +370,15 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       myProfileManager instanceof ProjectBasedInspectionProfileManager pm ? pm.getProject() : ApplicationManager.getApplication());
   }
 
-  public void collectDependentInspections(@NotNull InspectionToolWrapper<?,?> toolWrapper,
+  public void collectDependentInspections(@NotNull InspectionToolWrapper<?, ?> toolWrapper,
                                           @NotNull Set<? super InspectionToolWrapper<?, ?>> dependentEntries,
                                           Project project) {
     String mainToolId = toolWrapper.getMainToolId();
 
     if (mainToolId != null) {
-      InspectionToolWrapper<?,?> dependentEntryWrapper = getInspectionTool(mainToolId, project);
+      InspectionToolWrapper<?, ?> dependentEntryWrapper = getInspectionTool(mainToolId, project);
       if (dependentEntryWrapper == null) {
-        LOG.error("Can't find main tool: '" + mainToolId+"' which was specified in "+toolWrapper);
+        LOG.error("Can't find main tool: '" + mainToolId + "' which was specified in " + toolWrapper);
         return;
       }
       if (!dependentEntries.add(dependentEntryWrapper)) {
@@ -417,10 +436,10 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return tools == null ? null : tools.getTool();
   }
 
-  public InspectionToolWrapper<?,?> getToolById(@NotNull String id, @NotNull PsiElement element) {
+  public InspectionToolWrapper<?, ?> getToolById(@NotNull String id, @NotNull PsiElement element) {
     initInspectionTools();
     for (Tools toolList : myTools.values()) {
-      InspectionToolWrapper<?,?> tool = toolList.getInspectionTool(element);
+      InspectionToolWrapper<?, ?> tool = toolList.getInspectionTool(element);
       if (id.equals(tool.getID())) return tool;
     }
     return null;
@@ -430,7 +449,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     initInspectionTools();
     List<InspectionToolWrapper<?, ?>> result = null;
     for (Tools toolList : myTools.values()) {
-      InspectionToolWrapper<?,?> tool = toolList.getInspectionTool(element);
+      InspectionToolWrapper<?, ?> tool = toolList.getInspectionTool(element);
       if (id.equals(tool.getID())) {
         if (result == null) {
           result = new ArrayList<>();
@@ -591,13 +610,13 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     myDisposable = project != null ? Disposer.newDisposable(project, "[" + getClass().getSimpleName() + "] " + getName()) : null;
     myToolSupplier.addListener(new InspectionToolsSupplier.Listener() {
       @Override
-      public void toolAdded(@NotNull InspectionToolWrapper<?,?> inspectionTool) {
+      public void toolAdded(@NotNull InspectionToolWrapper<?, ?> inspectionTool) {
         addTool(project, inspectionTool, null);
         myProfileManager.fireProfileChanged(InspectionProfileImpl.this);
       }
 
       @Override
-      public void toolRemoved(@NotNull InspectionToolWrapper<?,?> inspectionTool) {
+      public void toolRemoved(@NotNull InspectionToolWrapper<?, ?> inspectionTool) {
         removeTool(inspectionTool);
         myProfileManager.fireProfileChanged(InspectionProfileImpl.this);
       }
@@ -615,7 +634,9 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   protected void copyToolsConfigurations(@Nullable Project project) {
   }
 
-  public final void addTool(@Nullable Project project, @NotNull InspectionToolWrapper<?, ?> toolWrapper, @Nullable Map<? super String, List<String>> dependencies) {
+  public final void addTool(@Nullable Project project,
+                            @NotNull InspectionToolWrapper<?, ?> toolWrapper,
+                            @Nullable Map<? super String, List<String>> dependencies) {
     String shortName = toolWrapper.getShortName();
     HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null) {
@@ -636,11 +657,13 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     }
 
     HighlightDisplayLevel baseLevel = myBaseProfile != null && myBaseProfile.getToolsOrNull(shortName, project) != null
-                                   ? myBaseProfile.getErrorLevel(key, project)
-                                   : HighlightDisplayLevel.DO_NOT_SHOW;
+                                      ? myBaseProfile.getErrorLevel(key, project)
+                                      : HighlightDisplayLevel.DO_NOT_SHOW;
     HighlightDisplayLevel defaultLevel = toolWrapper.getDefaultLevel();
     HighlightDisplayLevel level = baseLevel.getSeverity().compareTo(defaultLevel.getSeverity()) > 0 ? baseLevel : defaultLevel;
-    boolean enabled = myBaseProfile != null && myBaseProfile.getToolsOrNull(shortName, project) != null ? myBaseProfile.isToolEnabled(key) : toolWrapper.isEnabledByDefault();
+    boolean enabled = myBaseProfile != null && myBaseProfile.getToolsOrNull(shortName, project) != null
+                      ? myBaseProfile.isToolEnabled(key)
+                      : toolWrapper.isEnabledByDefault();
     ToolsImpl toolsList = new ToolsImpl(toolWrapper, level, !myLockedProfile && enabled, enabled);
     Element element = myUninitializedSettings.remove(shortName);
     try {
@@ -780,13 +803,14 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     final ToolsImpl tools = getTools(shortName, project);
     final var level = tools.getLevel(scopeName, project);
     if (keyName == null) {
-      keyName = SeverityRegistrar.getSeverityRegistrar(project).getHighlightInfoTypeBySeverity(level.getSeverity()).getAttributesKey().getExternalName();
+      keyName = SeverityRegistrar.getSeverityRegistrar(project).getHighlightInfoTypeBySeverity(level.getSeverity()).getAttributesKey()
+        .getExternalName();
     }
     String attributes = tools.getDefaultState().getTool().getDefaultEditorAttributes();
     tools.setEditorAttributesKey(Objects.equals(attributes, keyName) ? null : keyName, scopeName);
     mySchemeState = SchemeState.POSSIBLY_CHANGED;
   }
-  
+
   @Override
   public boolean isExecutable(@Nullable Project project) {
     initInspectionTools();
@@ -810,7 +834,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     ToolsImpl tools = myBaseProfile.getToolsOrNull(toolId, project);
     if (tools == null) return;
     InspectionToolWrapper<?, ?> baseDefaultWrapper = tools.getDefaultState().getTool();
-    ScopeToolState state = myTools.get(toolId).getTools().stream().filter(s -> scope == s.getScope(project)).findFirst().orElseThrow(IllegalStateException::new);
+    ScopeToolState state =
+      myTools.get(toolId).getTools().stream().filter(s -> scope == s.getScope(project)).findFirst().orElseThrow(IllegalStateException::new);
     state.setTool(copyToolSettings(baseDefaultWrapper));
     mySchemeState = SchemeState.POSSIBLY_CHANGED;
   }
@@ -902,7 +927,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   public boolean isToolEnabled(@NotNull HighlightDisplayKey key, @Nullable NamedScope namedScope, @NotNull Project project) {
-    return getTools(key.getShortName(), project).isEnabled(namedScope,project);
+    return getTools(key.getShortName(), project).isEnabled(namedScope, project);
   }
 
   public void removeScope(@NotNull String toolShortName, @NotNull String scopeName, @NotNull Project project) {
@@ -949,19 +974,40 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     mySchemeState = SchemeState.POSSIBLY_CHANGED;
   }
 
+  @Internal
+  public boolean normalizeRemovedSeverities(@NotNull Set<String> removedSeverityNames) {
+    if (!myInitialized || removedSeverityNames.isEmpty()) {
+      return false;
+    }
+
+    SeverityRegistrar severityRegistrar = getProfileManager().getSeverityRegistrar();
+    boolean changed = false;
+    for (ToolsImpl tools : myTools.values()) {
+      changed |= tools.normalizeRemovedSeverities(removedSeverityNames, severityRegistrar);
+    }
+    if (changed) {
+      profileChanged();
+    }
+    return changed;
+  }
+
   @Transient
-  public @NotNull HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, @Nullable NamedScope scope, @NotNull Project project) {
+  public @NotNull HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key,
+                                                      @Nullable NamedScope scope,
+                                                      @NotNull Project project) {
     ToolsImpl tools = getToolsOrNull(key.getShortName(), project);
     return tools != null ? tools.getLevel(scope, project) : HighlightDisplayLevel.WARNING;
   }
 
   @Transient
-  public @Nullable TextAttributesKey getEditorAttributesKey(@NotNull HighlightDisplayKey key, @Nullable NamedScope scope, @NotNull Project project) {
+  public @Nullable TextAttributesKey getEditorAttributesKey(@NotNull HighlightDisplayKey key,
+                                                            @Nullable NamedScope scope,
+                                                            @NotNull Project project) {
     ToolsImpl tools = getToolsOrNull(key.getShortName(), project);
     return tools != null ? tools.getEditorAttributesKey(scope, project) : null;
   }
 
-  public ScopeToolState addScope(@NotNull InspectionToolWrapper<?,?> toolWrapper,
+  public ScopeToolState addScope(@NotNull InspectionToolWrapper<?, ?> toolWrapper,
                                  @NotNull NamedScope scope,
                                  @NotNull HighlightDisplayLevel level,
                                  boolean enabled,
@@ -969,18 +1015,28 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return getTools(toolWrapper.getShortName(), project).prependTool(scope, toolWrapper, enabled, level);
   }
 
-  public void setErrorLevel(@NotNull HighlightDisplayKey key, @NotNull HighlightDisplayLevel level, @Nullable String scopeName, @NotNull Project project) {
+  public void setErrorLevel(@NotNull HighlightDisplayKey key,
+                            @NotNull HighlightDisplayLevel level,
+                            @Nullable String scopeName,
+                            @NotNull Project project) {
     getTools(key.getShortName(), project).setLevel(level, scopeName, project);
     mySchemeState = SchemeState.POSSIBLY_CHANGED;
   }
 
-  public void setErrorLevel(@NotNull List<? extends HighlightDisplayKey> keys, @NotNull HighlightDisplayLevel level, @Nullable String scopeName, @NotNull Project project) {
+  public void setErrorLevel(@NotNull List<? extends HighlightDisplayKey> keys,
+                            @NotNull HighlightDisplayLevel level,
+                            @Nullable String scopeName,
+                            @NotNull Project project) {
     for (HighlightDisplayKey key : keys) {
       setErrorLevel(key, level, scopeName, project);
     }
   }
 
-  public void setEditorAttributesKey(@NotNull List<? extends HighlightDisplayKey> keys, @Nullable TextAttributesKey attributesKey, @Nullable String scopeName, @NotNull Project project) {
+  @Internal
+  public void setEditorAttributesKey(@NotNull List<HighlightDisplayKey> keys,
+                                     @Nullable TextAttributesKey attributesKey,
+                                     @Nullable String scopeName,
+                                     @NotNull Project project) {
     for (HighlightDisplayKey key : keys) {
       setEditorAttributesKey(key.getShortName(), attributesKey == null ? null : attributesKey.getExternalName(), scopeName, project);
     }
@@ -1003,13 +1059,13 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   public void enableAllTools(@NotNull Project project) {
-    for (InspectionToolWrapper<?,?> entry : getInspectionTools(null)) {
+    for (InspectionToolWrapper<?, ?> entry : getInspectionTools(null)) {
       enableTool(entry.getShortName(), project);
     }
   }
 
   public void disableAllTools(@NotNull Project project) {
-    for (InspectionToolWrapper<?,?> entry : getInspectionTools(null)) {
+    for (InspectionToolWrapper<?, ?> entry : getInspectionTools(null)) {
       setToolEnabled(entry.getShortName(), false, project);
     }
   }

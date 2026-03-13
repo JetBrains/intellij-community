@@ -596,8 +596,8 @@ public class HtmlCompletionTest extends BasePlatformTestCase {
     final LookupElement[] items = myFixture.complete(CompletionType.BASIC);
     assertTrue(items.length > 3);
     assertEquals("media", items[0].getLookupString());
-    assertEquals("type", items[1].getLookupString());
-    assertEquals("about", items[2].getLookupString());
+    assertEquals("about", items[1].getLookupString());
+    assertEquals("accesskey", items[2].getLookupString());
   }
 
   public void testAnchorReferenceCompletion_WI4407() throws Exception {
@@ -801,11 +801,11 @@ public class HtmlCompletionTest extends BasePlatformTestCase {
                                                         Trinity.create("|", "embed", "|>"),
                                                         Trinity.create("<frameset>|", "frame", ">|"),
                                                         Trinity.create("<p>foo|", "hr", ">|"),
-                                                        Trinity.create("|", "img", " src=\"\"|>"),
+                                                        Trinity.create("|", "img", "|>"),
                                                         Trinity.create("|", "input", "|>"),
                                                         Trinity.create("<head>|", "link", "|>"),
                                                         Trinity.create("<head>|", "meta", "|>"),
-                                                        Trinity.create("<object>|", "param", " name=\"\" value=\"\"|>"),
+                                                        Trinity.create("<object>|", "param", " name=\"\" value=\"\">|"),
                                                         Trinity.create("<audio>|", "source", "|>"),
                                                         Trinity.create("<video>|", "track", " src=\"\"|>"),
                                                         Trinity.create("foo|bar", "wbr", ">|"))) {

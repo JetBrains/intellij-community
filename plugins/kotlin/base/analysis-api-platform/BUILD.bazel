@@ -53,4 +53,35 @@ jvm_library(
     "//java/codeserver/core",
   ]
 )
+
+jvm_library(
+  name = "kotlin-base-analysis-platform_test_lib",
+  module_name = "intellij.kotlin.base.analysis.platform",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-base-analysis-platform",
+  runtime_deps = [
+    ":kotlin-base-analysis-platform",
+    "//libraries/caffeine:caffeine_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+    "//plugins/kotlin/base/analysis:analysis_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//platform/util:util_test_lib",
+    "//plugins/kotlin/base/indices:indices_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//java/java-analysis-impl:analysis-impl_test_lib",
+    "//java/codeserver/core:core_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.kotlin.base.analysis.platform` end

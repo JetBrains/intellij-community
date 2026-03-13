@@ -34,6 +34,7 @@ import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.ui.pyModalBlocking
 import java.awt.Component
 import java.awt.Cursor
+import java.awt.Dimension
 import java.awt.event.ActionListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -197,7 +198,6 @@ class ManualPathEntryDialog(
 
   init {
     this.title = title
-    isResizable = false
     init()
   }
 
@@ -218,7 +218,7 @@ class ManualPathEntryDialog(
           .focused()
       }
     }.also {
-      it.preferredSize = JBUI.size(width, it.preferredHeight)
+      it.preferredSize = Dimension(width, it.preferredHeight)
     }
   }
 }

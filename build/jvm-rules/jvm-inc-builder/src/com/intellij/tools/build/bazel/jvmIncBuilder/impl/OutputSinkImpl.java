@@ -32,6 +32,7 @@ public class OutputSinkImpl implements OutputSink {
   private final Map<String, Collection<ConstantRef>> myConstantRefs = new HashMap<>();
   private final Map<String, Set<Usage>> myAdditionalUsages = new HashMap<>();
   private final Map<NodeSource, Set<Usage>> myPerSourceAdditionalUsages = new HashMap<>();
+  private final Set<NodeSource> mySourcesWithImplicitTypes = new HashSet<>();
   private final List<BuilderWithSources> myBuilders = new ArrayList<>();
   private final List<NodeWithSources> myNodes = new ArrayList<>();
 
@@ -106,7 +107,9 @@ public class OutputSinkImpl implements OutputSink {
       JvmClassNodeBuilder builder = bs.builder();
       Iterable<NodeSource> sources = bs.sources();
       Iterators.collect(sources, registeredSources);
-
+      if (Iterators.find(sources, mySourcesWithImplicitTypes::contains) != null) {
+        builder.setHasImplicitTypes();
+      }
       JvmNodeReferenceID nodeID = builder.getReferenceID();
       String nodeName = nodeID.getNodeName();
       addConstantUsages(builder, nodeName, myConstantRefs.remove(nodeName));
@@ -158,6 +161,7 @@ public class OutputSinkImpl implements OutputSink {
       myNodes.add(new NodeWithSources(node, sources));
     }
     myBuilders.clear();
+    mySourcesWithImplicitTypes.clear();
 
     for (Map.Entry<NodeSource, Set<Usage>> entry : myPerSourceAdditionalUsages.entrySet()) {
       NodeSource src = entry.getKey();
@@ -213,6 +217,11 @@ public class OutputSinkImpl implements OutputSink {
   @Override
   public void registerUsage(NodeSource source, Usage usage) {
     myPerSourceAdditionalUsages.computeIfAbsent(source, k -> Collections.synchronizedSet(new HashSet<>())).add(usage);
+  }
+
+  @Override
+  public void registerImplicitTypes(NodeSource source) {
+    mySourcesWithImplicitTypes.add(source);
   }
 
   private static void addImportUsages(JvmClassNodeBuilder builder, Collection<String> classImports, Collection<String> staticImports) {

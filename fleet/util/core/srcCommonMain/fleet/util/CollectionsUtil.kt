@@ -76,17 +76,6 @@ inline fun <T> Sequence<T>.mergedBy(crossinline selector: (T, T) -> Boolean): Se
   }
 }
 
-fun <T> ListIterator<T>.backwards(): ListIterator<T> {
-  return object : ListIterator<T> {
-    override fun hasNext(): Boolean = this@backwards.hasPrevious()
-    override fun hasPrevious(): Boolean = this@backwards.hasNext()
-    override fun next(): T = this@backwards.previous()
-    override fun previous(): T = this@backwards.next()
-    override fun nextIndex(): Int = this@backwards.previousIndex()
-    override fun previousIndex(): Int = this@backwards.nextIndex()
-  }
-}
-
 fun <K, V> Map<K, V>.merge(other: Map<K, V>, f: (K, V, V) -> V = { k, v1, v2 -> v2 }): Map<K, V> {
   val x = toMutableMap()
   other.forEach { (k, v) ->

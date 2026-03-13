@@ -7,9 +7,9 @@ import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
-import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.serialization.SerializationContext
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -71,13 +71,20 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
     }
   }
 
-  override fun saveModuleOptions(externalSystemOptions: ExternalSystemModuleOptionsEntity?,
-                                 moduleType: String?,
-                                 customImlData: ModuleCustomImlDataEntity?,
-                                 content: WritableJpsFileContent) {
+  override fun saveModuleOptions(
+    externalSystemOptions: ExternalSystemModuleOptionsEntity?,
+    moduleType: String?,
+    moduleEntitySource: EntitySource,
+    customImlData: ModuleCustomImlDataEntity?,
+    content: WritableJpsFileContent
+  ) {
     val fileUrlString = fileUrl.url
     if (FileUtil.extensionEquals(fileUrlString, "iml")) {
       logger<ExternalModuleImlFileEntitiesSerializer>().error("External serializer should not write to iml files. Path:$fileUrlString")
+    }
+    if (moduleEntitySource is JpsImportedEntitySource && moduleEntitySource.externalSystemId != externalSystemOptions?.externalSystem) {
+      LOG.error("External system ID mismatch: ModuleEntity.entitySource (${moduleEntitySource.externalSystemId}) != ExternalSystemModuleOptionsEntity.externalSystem (${externalSystemOptions?.externalSystem}). " +
+                "Module is probably misconfigured. It'll get '${externalSystemOptions?.externalSystem}' system ID after deserialization.")
     }
     if (externalSystemOptions != null) {
       val componentTag = JDomSerializationUtil.createComponentElement("ExternalSystem")

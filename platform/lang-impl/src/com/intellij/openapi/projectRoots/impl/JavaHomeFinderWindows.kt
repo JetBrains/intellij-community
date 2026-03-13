@@ -12,7 +12,7 @@ import com.intellij.openapi.util.io.WindowsRegistryUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
+import java.util.TreeSet
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.exists
 import kotlin.text.RegexOption.IGNORE_CASE

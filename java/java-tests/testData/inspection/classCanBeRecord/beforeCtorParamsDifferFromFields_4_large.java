@@ -7,6 +7,7 @@ class Problem<caret> {
   private final int myColumn;
   private final @NotNull String code;
 
+  // Notice: the names of parameters differs from declaration order of instance fields
   Problem(int line, int column, @NotNull String code) {
     myLine = line;
     myColumn = column;

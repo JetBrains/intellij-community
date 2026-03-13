@@ -45,6 +45,7 @@ public class MavenGeneralSettings implements Cloneable {
   private boolean useMavenConfig = true;
   private String threads;
   private boolean emulateTerminal = false;
+  private String overridenToolchainsPathString="";
 
   private MavenExecutionOptions.LoggingLevel outputLevel = MavenExecutionOptions.LoggingLevel.INFO;
   MavenExecutionOptions.ChecksumPolicy checksumPolicy = MavenExecutionOptions.ChecksumPolicy.NOT_SET;
@@ -222,6 +223,28 @@ public class MavenGeneralSettings implements Cloneable {
   @ApiStatus.Internal
   public @NotNull String getLocalRepository() {
     return overriddenLocalRepository;
+  }
+
+
+  /**
+   * Do not use this variable.
+   * Use MavenSettingsCache.getEffectiveToolchains instead
+   * @return local repository string. This string should not be used to create a file directly
+   */
+  @ApiStatus.Internal
+  public @NotNull String getToolchainsPathString() {
+    return overridenToolchainsPathString;
+  }
+
+  public void setToolchainsPathString(final @Nullable String overridenToolchainsPathString) {
+
+    if (!Objects.equals(this.overridenToolchainsPathString, overridenToolchainsPathString)) {
+      this.overridenToolchainsPathString = overridenToolchainsPathString;
+      if (myProject != null) {
+        MavenUtil.shutdownMavenConnectors(myProject);
+      }
+      changed();
+    }
   }
 
   public void setLocalRepository(final @Nullable String overriddenLocalRepository) {

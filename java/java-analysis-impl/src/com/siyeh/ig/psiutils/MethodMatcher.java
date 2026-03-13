@@ -9,7 +9,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiCall;
 import com.intellij.psi.PsiClass;
@@ -68,7 +67,7 @@ public class MethodMatcher implements OptionContainer {
     }
   }
 
-  public void add(@NotNull PsiMethod method) {
+  private void add(@NotNull PsiMethod method) {
     final PsiClass aClass = method.getContainingClass();
     if (aClass == null) {
       return;
@@ -97,7 +96,6 @@ public class MethodMatcher implements OptionContainer {
       }
       myMethodNamePatterns.set(index, pattern + '|' + methodName);
     }
-    ProjectInspectionProfileManager.getInstance(method.getProject()).fireProfileChanged();
   }
 
   protected @NotNull String getOptionName() {

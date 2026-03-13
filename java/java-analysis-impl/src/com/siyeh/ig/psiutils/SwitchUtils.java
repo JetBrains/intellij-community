@@ -974,12 +974,9 @@ public final class SwitchUtils {
    * Evaluates the exhaustiveness state of a switch block.
    *
    * @param switchBlock                          the PsiSwitchBlock to evaluate
-   * @param considerNestedDeconstructionPatterns flag indicating whether to consider nested deconstruction patterns. It is necessary to take into account,
-   *                                             because nested deconstruction patterns don't cover null values
    * @return exhaustiveness state.
    */
-  public static @NotNull SwitchExhaustivenessState evaluateSwitchCompleteness(@NotNull PsiSwitchBlock switchBlock,
-                                                                              boolean considerNestedDeconstructionPatterns) {
+  public static @NotNull SwitchExhaustivenessState evaluateSwitchCompleteness(@NotNull PsiSwitchBlock switchBlock) {
     PsiExpression selector = switchBlock.getExpression();
     if (selector == null) return SwitchExhaustivenessState.MALFORMED;
     PsiType selectorType = selector.getType();
@@ -998,15 +995,6 @@ public final class SwitchUtils {
       return SwitchExhaustivenessState.EXHAUSTIVE_NO_DEFAULT;
     }
     if (!needToCheckCompleteness && !isEnumSelector) return SwitchExhaustivenessState.INCOMPLETE;
-    // It is necessary because deconstruction patterns don't cover cases 
-    // when some of their components are null and deconstructionPattern too
-    if (!considerNestedDeconstructionPatterns) {
-      labelElements = ContainerUtil.filter(
-        labelElements, label -> !(label instanceof PsiDeconstructionPattern deconstructionPattern &&
-                                  ContainerUtil.or(
-                                    deconstructionPattern.getDeconstructionList().getDeconstructionComponents(),
-                                    component -> component instanceof PsiDeconstructionPattern)));
-    }
     boolean hasError = hasExhaustivenessError(switchBlock, labelElements);
     // if a switch block is needed to check completeness and switch is incomplete we let highlighting to inform about it as it's a compilation error
     if (!hasError) {

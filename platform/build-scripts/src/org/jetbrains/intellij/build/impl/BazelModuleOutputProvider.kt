@@ -3,17 +3,13 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.intellij.bazelEnvironment.BazelLabel
 import org.jetbrains.intellij.bazelEnvironment.BazelRunfiles
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ModuleOutputProvider
-import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
-import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
-import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
 
@@ -32,7 +28,7 @@ internal class BazelModuleOutputProvider(
   /**
    * Suspend version of [readFileContentFromModuleOutput] using cached zip file instances.
    */
-  override suspend fun readFileContentFromModuleOutputAsync(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
+  override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
     for (moduleOutput in getModuleOutputRootsImpl(module, forTests)) {
       zipFilePool.getData(moduleOutput, relativePath)?.let { return it }
     }
@@ -41,29 +37,6 @@ internal class BazelModuleOutputProvider(
 
   private val bazelTargetsMap: BazelTargetsInfo.TargetsFile by lazy {
     BazelTargetsInfo.loadBazelTargetsJson(projectHome)
-  }
-
-  override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
-    val result = getModuleOutputRootsImpl(module, forTests).mapNotNull { moduleOutput ->
-      if (Files.notExists(moduleOutput)) {
-        return@mapNotNull null
-      }
-      var fileContent: ByteArray? = null
-      readZipFile(moduleOutput) { name, data ->
-        if (name == relativePath) {
-          fileContent = data().toByteArray()
-          ZipEntryProcessorResult.STOP
-        }
-        else {
-          ZipEntryProcessorResult.CONTINUE
-        }
-      }
-      fileContent
-    }
-    check(result.size < 2) {
-      "More than one '$relativePath' file for module '${module.name}' in output roots"
-    }
-    return result.singleOrNull()
   }
 
   override fun getAllModules(): List<JpsModule> = modules
@@ -185,7 +158,7 @@ internal suspend fun findFileInAnyModuleOutput(
     if (processedModules != null && !processedModules.add(name)) {
       continue
     }
-    provider.readFileContentFromModuleOutputAsync(module = module, relativePath = relativePath, forTests = false)?.let {
+    provider.readFileContentFromModuleOutput(module = module, relativePath = relativePath, forTests = false)?.let {
       return it
     }
   }

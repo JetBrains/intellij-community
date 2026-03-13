@@ -20,6 +20,13 @@ public class IncorrectPlacement extends <warning descr="Nullability annotation i
   }
   
   <warning descr="Primitive type members cannot be annotated">@NotNull</warning> int[] data;
+
+  void testStaticNested() {
+    // No "Outer type is inherently non-null" warning. Reported error provides the same "Move annotation" fix.
+    <error descr="Static member qualifying type may not be annotated">@Nullable</error> IncorrectPlacement.StaticNested a1;
+    IncorrectPlacement.@Nullable StaticNested a2;
+  }
   
   class Inner {}
+  static class StaticNested {}
 }

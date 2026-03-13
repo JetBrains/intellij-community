@@ -26,8 +26,8 @@ import org.jetbrains.uast.visitor.UastVisitor
 
 private val runReadActionMethods: CallMatcher = CallMatcher.anyOf(
   CallMatcher.instanceCall("com.intellij.openapi.application.Application", "runReadAction", "runWriteIntentReadAction"),
-  CallMatcher.staticCall("com.intellij.openapi.application.ActionsKt", "runReadAction"),
-  CallMatcher.staticCall("com.intellij.openapi.application.ReadAction", "compute", "computeCancellable", "run"),
+  CallMatcher.staticCall("com.intellij.openapi.application.ActionsKt", "runReadAction", "runReadActionBlocking"),
+  CallMatcher.staticCall("com.intellij.openapi.application.ReadAction", "compute", "computeBlocking", "computeCancellable", "run", "runBlocking"),
   CallMatcher.instanceCall("com.intellij.openapi.application.ReadAction", "execute"),
   CallMatcher.instanceCall("com.intellij.openapi.application.NonBlockingReadAction", "executeSynchronously"), // no submit
 )

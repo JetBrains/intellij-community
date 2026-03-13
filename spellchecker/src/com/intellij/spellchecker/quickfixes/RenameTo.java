@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.quickfixes;
 
 import com.intellij.codeInsight.intention.EventTrackingIntentionAction;
@@ -13,11 +13,22 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiNamedElementWithCustomPresentation;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.SmartPsiFileRange;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
-import com.intellij.refactoring.rename.*;
+import com.intellij.refactoring.rename.PsiElementRenameHandler;
+import com.intellij.refactoring.rename.RenameHandler;
+import com.intellij.refactoring.rename.RenameHandlerRegistry;
+import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.statistics.SpellcheckerActionStatistics;
 import com.intellij.spellchecker.statistics.SpellcheckerRateTracker;
@@ -27,7 +38,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,7 +66,7 @@ public class RenameTo extends IntentionAndQuickFixAction implements Iconable, Ev
     if (element == null) return false;
     var presentationName = getPresentationName(element);
     if (presentationName == null) return false;
-    generateSuggestions(presentationName.getSecond(), element);
+    generateSuggestions(presentationName.getSecond(), presentationName.getFirst());
     this.namedPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(presentationName.getFirst());
     if (suggestions == null || suggestions.isEmpty()) return false;
     return true;
@@ -134,26 +145,30 @@ public class RenameTo extends IntentionAndQuickFixAction implements Iconable, Ev
     return handler;
   }
 
-  private void generateSuggestions(String name, PsiElement element) {
+  private void generateSuggestions(String name, PsiNamedElement namedElement) {
     if (suggestions == null) {
-      TextRange range = restoreRange();
+      TextRange range = getNameRelativeRange(namedElement);
       if (range == null) return;
       this.suggestions = SpellCheckerManager.getInstance(pointer.getProject()).getSuggestions(typo)
         .stream()
         .map(suggestion -> range.replace(name, suggestion))
-        .filter(suggestion -> RenameUtil.isValidName(element.getProject(), element, suggestion))
+        .filter(suggestion -> RenameUtil.isValidName(namedElement.getProject(), namedElement, suggestion))
         .distinct()
         .toList();
     }
   }
 
-  private @Nullable TextRange restoreRange() {
-    PsiElement element = pointer.getElement();
+  private @Nullable TextRange getNameRelativeRange(PsiNamedElement namedElement) {
     Segment rangeRelativeToFile = this.rangeRelativeToFile.getRange();
-    if (element == null || rangeRelativeToFile == null) return null;
+    if (rangeRelativeToFile == null) return null;
 
-    return TextRange.create(rangeRelativeToFile)
-      .shiftLeft(element.getTextRange().getStartOffset());
+    return namedElement instanceof PsiNameIdentifierOwner owner ?
+           adjustRangeRelativeToElement(owner.getNameIdentifier(), rangeRelativeToFile) :
+           adjustRangeRelativeToElement(pointer.getElement(), rangeRelativeToFile);
+  }
+
+  private static @Nullable TextRange adjustRangeRelativeToElement(PsiElement element, Segment rangeRelativeToFile) {
+    return element != null ? TextRange.create(rangeRelativeToFile).shiftLeft(element.getTextRange().getStartOffset()) : null;
   }
 
   private void runRenamer(PsiElement element, String suggestion) {

@@ -1,8 +1,14 @@
 <idea-plugin package="com.intellij.platform.navbar.monolith">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.navbar.frontend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.navbar.backend"/>
+    <module name="intellij.platform.navbar.frontend"/>
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.platform.navbar.frontend.NavBarServiceDelegate"
                     serviceImplementation="com.intellij.platform.navbar.monolith.MonolithNavbarServiceDelegate"/>

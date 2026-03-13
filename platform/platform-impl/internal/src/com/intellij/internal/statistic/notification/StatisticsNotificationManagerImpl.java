@@ -23,7 +23,7 @@ import com.intellij.util.Time;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Window;
 
 final class StatisticsNotificationManagerImpl implements StatisticsNotificationManager {
   @Override

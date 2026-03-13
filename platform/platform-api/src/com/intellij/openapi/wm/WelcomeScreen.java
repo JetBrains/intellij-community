@@ -3,7 +3,8 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
 
 /**
  * @author Konstantin Bulenkov

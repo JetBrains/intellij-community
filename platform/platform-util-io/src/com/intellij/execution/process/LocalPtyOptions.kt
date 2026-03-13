@@ -13,19 +13,20 @@ class LocalPtyOptions private constructor(val consoleMode: Boolean,
                                           val initialColumns: Int,
                                           val initialRows: Int,
                                           val useWinConPty: Boolean,
-                                          val winSuspendedProcessCallback: LongConsumer?) {
+                                          val winSuspendedProcessCallback: LongConsumer?,
+                                          val winConPtyInheritCursor: Boolean) {
 
   override fun toString(): String {
-    return "consoleMode=$consoleMode, useCygwinLaunch=$useCygwinLaunch, initialColumns=$initialColumns, initialRows=$initialRows, useWinConPty=$useWinConPty"
+    return "consoleMode=$consoleMode, useCygwinLaunch=$useCygwinLaunch, initialColumns=$initialColumns, initialRows=$initialRows, useWinConPty=$useWinConPty, conPtyInheritCursor=$winConPtyInheritCursor"
   }
 
   fun builder(): Builder {
-    return Builder(consoleMode, useCygwinLaunch, initialColumns, initialRows, useWinConPty, winSuspendedProcessCallback)
+    return Builder(consoleMode, useCygwinLaunch, initialColumns, initialRows, useWinConPty, winSuspendedProcessCallback, winConPtyInheritCursor)
   }
 
   companion object {
     @JvmStatic
-    fun defaults(): LocalPtyOptions = LocalPtyOptions(false, false, -1, -1, shouldUseWinConPty(), null)
+    fun defaults(): LocalPtyOptions = LocalPtyOptions(false, false, -1, -1, shouldUseWinConPty(), null, false)
 
     @JvmStatic
     @Internal
@@ -37,7 +38,8 @@ class LocalPtyOptions private constructor(val consoleMode: Boolean,
                                      private var initialColumns: Int,
                                      private var initialRows: Int,
                                      private var useWinConPty: Boolean,
-                                     private var winSuspendedProcessCallback: LongConsumer?) {
+                                     private var winSuspendedProcessCallback: LongConsumer?,
+                                     private var winConPtyInheritCursor: Boolean) {
     private val LOG: Logger = Logger.getInstance(Builder::class.java)
 
     /**
@@ -82,7 +84,10 @@ class LocalPtyOptions private constructor(val consoleMode: Boolean,
     @Internal
     fun useWinConPty(): Boolean = useWinConPty
 
-    fun build(): LocalPtyOptions = LocalPtyOptions(consoleMode, useCygwinLaunch, initialColumns, initialRows, useWinConPty, winSuspendedProcessCallback)
+    fun winConPtyInheritCursor(inheritCursor: Boolean): Builder = apply { this.winConPtyInheritCursor = inheritCursor }
+    fun winConPtyInheritCursor(): Boolean = winConPtyInheritCursor
+
+    fun build(): LocalPtyOptions = LocalPtyOptions(consoleMode, useCygwinLaunch, initialColumns, initialRows, useWinConPty, winSuspendedProcessCallback, winConPtyInheritCursor)
 
     fun set(options: LocalPtyOptions): Builder = apply {
       consoleMode = options.consoleMode
@@ -91,6 +96,7 @@ class LocalPtyOptions private constructor(val consoleMode: Boolean,
       initialRows = options.initialRows
       useWinConPty = options.useWinConPty
       winSuspendedProcessCallback = options.winSuspendedProcessCallback
+      winConPtyInheritCursor = options.winConPtyInheritCursor
     }
 
     override fun toString(): String {

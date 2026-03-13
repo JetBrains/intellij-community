@@ -42,7 +42,7 @@ def field1(
 
 
 def field2(*, init: bool = False, kw_only: bool = True) -> Any:
-    ...
+    raise NotImplementedError
 
 
 @dataclass_transform(kw_only_default=True, field_specifiers=(field1, field2))

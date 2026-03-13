@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.AbstractJavaErrorFixProvider;
@@ -15,6 +15,7 @@ import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiExpressionStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiSwitchBlock;
@@ -57,7 +58,9 @@ public final class AdditionalJavaErrorFixProvider extends AbstractJavaErrorFixPr
     String description = errorElement.getErrorDescription();
     if (description.equals(JavaPsiBundle.message("expected.semicolon"))) {
       info.accept(new InsertMissingTokenFix(";"));
-      HighlightFixUtil.registerFixesForExpressionStatement(info, parent);
+      if (parent instanceof PsiExpressionStatement statement) {
+        HighlightFixUtil.registerFixesForExpressionStatement(info, statement);
+      }
     }
     if (parent instanceof PsiTryStatement tryStatement && description.equals(JavaPsiBundle.message("expected.catch.or.finally"))) {
       info.accept(new AddExceptionToCatchFix(false));

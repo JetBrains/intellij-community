@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -13,12 +14,14 @@ import com.intellij.python.pyproject.model.api.ModuleCreateInfo
 import com.intellij.python.pyproject.model.api.SuggestedSdk
 import com.intellij.python.pyproject.model.api.getModuleInfo
 import com.intellij.python.pyproject.model.api.suggestSdk
+import com.intellij.python.pyproject.statistics.PyProjectTomlCollector
 import com.intellij.python.sdkConfigurator.backend.impl.ModulesSdkConfigurator.Companion.create
 import com.intellij.python.sdkConfigurator.backend.impl.ModulesSdkConfigurator.Companion.popModulesSDKConfigurator
 import com.intellij.python.sdkConfigurator.common.impl.ModuleDTO
 import com.intellij.python.sdkConfigurator.common.impl.ModuleName
 import com.jetbrains.python.PathShortener
 import com.jetbrains.python.Result
+import com.jetbrains.python.module.PyModuleService
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.createSdk
@@ -70,7 +73,7 @@ internal class ModulesSdkConfigurator private constructor(
         is ModuleCreateInfo.CreateSdkInfoWrapper -> {
           val version = when (val r = createInfo.createSdkInfo) {
             is CreateSdkInfo.ExistingEnv -> r.pythonInfo.languageLevel.toPythonVersion()
-            is CreateSdkInfo.WillCreateEnv -> null
+            is CreateSdkInfo.WillCreateEnv, is CreateSdkInfo.WillInstallTool -> null
           }
           ModuleDTO(moduleName,
                     path = createInfo.moduleDir?.let { pathShorter.toString(it) },
@@ -187,7 +190,8 @@ internal class ModulesSdkConfigurator private constructor(
  */
 @ApiStatus.Internal // Opened for tests only: we can't put tests here because configurators are in communuty.impl
 suspend fun configureSdkAutomatically(project: Project): Unit = withContext(Dispatchers.Default) {
-  val modules = project.modules
+  val moduleService = PyModuleService.getInstance()
+  val modules = project.modules.filter { moduleService.isPythonModule(it) }
 
   when (modules.size) {
     0 -> return@withContext
@@ -217,16 +221,19 @@ private suspend fun configureSdkForModuleAutomatically(module: Module, createEnv
     is ModuleCreateInfo.CreateSdkInfoWrapper -> {
       when (val info = moduleInfo.createSdkInfo) {
         is CreateSdkInfo.ExistingEnv -> {
-          info.createAndSetToModule(module)
+          info.createAndSetToModule(module) { sdk ->
+            PyProjectTomlCollector.sdkCreatedAutomatically(moduleInfo.moduleDir, moduleInfo.toolId)
+          }
         }
         is CreateSdkInfo.WillCreateEnv -> {
           if (createEnvIfNeeded) {
             info.createAndSetToModule(module)
           }
           else {
-            logger.trace { "${module.name} can't be configured automatically: no venv for ${info.intentionName}" }
+            logger.trace { "${module.name} can't be configured automatically: no venv for ${moduleInfo.toolId}" }
           }
         }
+        is CreateSdkInfo.WillInstallTool -> logger.trace { "${module.name} can't be configured automatically: no tool installed - ${moduleInfo.toolId}" }
       }
     }
     is ModuleCreateInfo.SameAs -> {
@@ -237,7 +244,7 @@ private suspend fun configureSdkForModuleAutomatically(module: Module, createEnv
   }
 }
 
-private suspend fun CreateSdkInfo.createAndSetToModule(module: Module) {
+private suspend fun CreateSdkInfo.createAndSetToModule(module: Module, onCreated: (Sdk) -> Unit = {}) {
   when (val r = getSdkCreator(module).createSdk()) {
     is Result.Failure -> {
       logger.trace { "Failed to create sdk for ${module.name} : ${r.error}" }
@@ -246,6 +253,7 @@ private suspend fun CreateSdkInfo.createAndSetToModule(module: Module) {
       val sdk = r.result
       module.pythonSdk = sdk
       logger.trace { "SDK creation result for  ${module.name} : $sdk" }
+      onCreated(sdk)
     }
   }
 }

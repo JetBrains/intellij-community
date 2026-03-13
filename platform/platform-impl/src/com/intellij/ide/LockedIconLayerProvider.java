@@ -6,7 +6,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 final class LockedIconLayerProvider implements IconLayerProvider {
   @Override

@@ -150,6 +150,7 @@ public class ProjectSdksModel implements SdkModel {
       }
       catch (InvalidPathException ignored) {
         // Ignored.
+        return eelMachine == LocalEelMachine.INSTANCE;
       }
     }
     return false;

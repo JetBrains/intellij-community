@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.Disposable;
@@ -526,6 +526,7 @@ public final class ContainerUtil {
    * unlike the {@link Collections#unmodifiableList(List)} (Subject to change in subsequent JDKs).
    */
   @Contract(pure = true)
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static @Unmodifiable @NotNull <E> ImmutableList<E> immutableList(@NotNull List<? extends E> list) {
     //noinspection unchecked
@@ -2321,7 +2322,7 @@ public final class ContainerUtil {
    * @return read-only list consisting of the only element {@code element}, or empty list if {@code element} is null
    */
   @Contract(pure = true)
-  public static @Unmodifiable @NotNull <T> List<T> createMaybeSingletonList(@Nullable T element) {
+  public static @Unmodifiable @NotNull <T> List<@NotNull T> createMaybeSingletonList(@Nullable T element) {
     //noinspection SSBasedInspection
     return element == null ? Collections.emptyList() : Collections.singletonList(element);
   }
@@ -2847,7 +2848,7 @@ public final class ContainerUtil {
   }
 
   @Contract(mutates = "param1")
-  public static <T> void addIfNotNull(@NotNull Collection<? super T> result, @Nullable T element) {
+  public static <T extends @NotNull Object> void addIfNotNull(@NotNull Collection<? super T> result, @Nullable T element) {
     if (element != null) {
       result.add(element);
     }

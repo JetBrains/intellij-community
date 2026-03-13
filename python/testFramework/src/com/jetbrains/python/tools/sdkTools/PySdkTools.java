@@ -128,7 +128,7 @@ public final class PySdkTools {
     commitChangesObeyWriteAction(modificator);
 
     PySkeletonRefresher
-      .refreshSkeletonsOfSdk(project, null, skeletonsPath, sdk);
+      .refreshSkeletonsOfSdk(project, skeletonsPath, sdk);
   }
 
   /**

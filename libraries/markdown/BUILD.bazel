@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:jetbrains-markdown"],
   runtime_deps = ["@lib//:jetbrains-markdown"]
 )
+
+jvm_library(
+  name = "markdown_test_lib",
+  module_name = "intellij.libraries.markdown",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:jetbrains-markdown"],
+  runtime_deps = [":markdown"]
+)
 ### auto-generated section `build intellij.libraries.markdown` end

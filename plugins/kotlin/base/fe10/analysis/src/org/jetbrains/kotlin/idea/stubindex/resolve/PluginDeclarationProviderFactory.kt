@@ -10,10 +10,12 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService
 import org.jetbrains.kotlin.idea.caches.project.projectSourceModules
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
@@ -60,7 +62,7 @@ class PluginDeclarationProviderFactory(
     private fun stubBasedPackageExists(name: FqName): Boolean {
         // We're only looking for source-based declarations
         return (moduleInfo as? IdeaModuleInfo)?.projectSourceModules()
-            ?.any { PerModulePackageCacheService.getInstance(project).packageExists(name, it) }
+            ?.any { PerModulePackageCacheService.getInstance(project).packageExists(name, it.toKaModule() as KaSourceModule) }
             ?: false
     }
 
@@ -94,7 +96,7 @@ class PluginDeclarationProviderFactory(
         val spiPackageExists = KotlinPackageIndexUtils.packageExists(fqName, project)
         val oldPackageExists = oldPackageExists(fqName)
         val cachedPackageExists =
-            moduleSourceInfo?.let { project.service<PerModulePackageCacheService>().packageExists(fqName, it) }
+            moduleSourceInfo?.let { project.service<PerModulePackageCacheService>().packageExists(fqName, it.toKaModule() as KaSourceModule) }
         val moduleModificationCount = moduleSourceInfo?.createModificationTracker()?.modificationCount
 
         val common = """

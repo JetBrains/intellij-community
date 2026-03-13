@@ -6,8 +6,10 @@ package org.jetbrains.intellij.build.impl.plugins
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.DistFile
 import org.jetbrains.intellij.build.InMemoryDistFileContent
@@ -21,7 +23,6 @@ import org.jetbrains.intellij.build.classPath.generatePluginClassPathFromPrebuil
 import org.jetbrains.intellij.build.classPath.writePluginClassPathHeader
 import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
 import org.jetbrains.intellij.build.impl.DistributionBuilderState
-import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PLUGINS_DIRECTORY
 import org.jetbrains.intellij.build.impl.PLUGIN_CLASSPATH
 import org.jetbrains.intellij.build.impl.PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE
@@ -47,7 +48,6 @@ internal suspend fun buildBundledPluginsForAllPlatforms(
   isUpdateFromSources: Boolean,
   buildPlatformJob: Deferred<List<DistributionFileEntry>>,
   searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
-  moduleOutputPatcher: ModuleOutputPatcher,
   descriptorCacheContainer: DescriptorCacheContainer,
   context: BuildContext,
 ): List<PluginBuildDescriptor> = coroutineScope {
@@ -58,7 +58,6 @@ internal suspend fun buildBundledPluginsForAllPlatforms(
       isUpdateFromSources = isUpdateFromSources,
       buildPlatformJob = buildPlatformJob,
       searchableOptionSet = searchableOptionSetDescriptor,
-      moduleOutputPatcher = moduleOutputPatcher,
       descriptorCacheContainer = descriptorCacheContainer,
       context = context,
     )
@@ -78,7 +77,6 @@ internal suspend fun buildBundledPluginsForAllPlatforms(
       context = context,
       searchableOptionSet = searchableOptionSetDescriptor,
       pluginDirs = pluginDirs,
-      moduleOutputPatcher = moduleOutputPatcher,
       descriptorCacheContainer = descriptorCacheContainer,
     )
   }
@@ -107,7 +105,6 @@ private suspend fun buildOsSpecificBundledPlugins(
   searchableOptionSet: SearchableOptionSetDescriptor?,
   pluginDirs: List<Pair<SupportedDistribution, Path>>,
   descriptorCacheContainer: DescriptorCacheContainer,
-  moduleOutputPatcher: ModuleOutputPatcher,
 ): Map<SupportedDistribution, List<PluginBuildDescriptor>> {
   return spanBuilder("build os-specific bundled plugins")
     .setAttribute("isUpdateFromSources", isUpdateFromSources)
@@ -134,13 +131,12 @@ private suspend fun buildOsSpecificBundledPlugins(
             .setAttribute("outDir", targetDir.toString())
             .use {
               buildPlugins(
-                moduleOutputPatcher = moduleOutputPatcher,
                 plugins = osSpecificPlugins,
                 os = os,
                 arch = arch,
                 targetDir = targetDir,
                 state = state,
-                buildPlatformJob = buildPlatformJob,
+                platformEntriesProvider = buildPlatformJob::await,
                 searchableOptionSet = searchableOptionSet,
                 descriptorCacheContainer = descriptorCacheContainer,
                 context = context,
@@ -158,7 +154,6 @@ internal suspend fun buildBundledPlugins(
   isUpdateFromSources: Boolean,
   buildPlatformJob: Deferred<List<DistributionFileEntry>>,
   searchableOptionSet: SearchableOptionSetDescriptor?,
-  moduleOutputPatcher: ModuleOutputPatcher,
   descriptorCacheContainer: DescriptorCacheContainer,
   context: BuildContext,
 ): List<PluginBuildDescriptor> {
@@ -176,19 +171,21 @@ internal suspend fun buildBundledPlugins(
       val targetDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY)
       val platformSpecificPluginDirs = getPluginDirs(context, isUpdateFromSources)
       val entries = buildPlugins(
-        moduleOutputPatcher = moduleOutputPatcher,
         plugins = pluginsToBundle,
         os = null,
         arch = null,
         targetDir = targetDir,
         state = state,
-        buildPlatformJob = buildPlatformJob,
+        platformEntriesProvider = buildPlatformJob::await,
         searchableOptionSet = searchableOptionSet,
         descriptorCacheContainer = descriptorCacheContainer,
         context = context,
       ) { layout, _ ->
         if (layout.hasPlatformSpecificResources) {
-          buildPlatformSpecificPluginResources(plugin = layout, targetDirs = platformSpecificPluginDirs, context = context)
+          val pluginDirs = platformSpecificPluginDirs.map {
+            it.first to it.second.resolve(layout.directoryName)
+          }
+          buildPlatformSpecificPluginResources(plugin = layout, pluginDirs = pluginDirs, context = context, isDevMode = false)
         }
         else {
           emptyList()
@@ -213,7 +210,7 @@ private fun getPluginDirs(context: BuildContext, isUpdateFromSources: Boolean): 
   }
 }
 
-private fun writePluginInfo(
+private suspend fun writePluginInfo(
   pluginDirs: List<Pair<SupportedDistribution, Path>>,
   common: List<PluginBuildDescriptor>,
   specific: Map<SupportedDistribution, List<PluginBuildDescriptor>>,
@@ -252,10 +249,12 @@ private fun writePluginInfo(
       descriptorCacheContainer = descriptorCacheContainer,
       context = context,
     )
-    out.write(commonClassPath)
-    additionalClassPath?.let { out.write(it) }
-    specificClasspath?.let { out.write(it) }
-    out.close()
+    withContext(Dispatchers.IO) {
+      out.write(commonClassPath)
+      additionalClassPath?.let { out.write(it) }
+      specificClasspath?.let { out.write(it) }
+      out.close()
+    }
 
     context.addDistFile(
       DistFile(

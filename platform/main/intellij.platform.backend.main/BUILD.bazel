@@ -37,6 +37,31 @@ jvm_library(
   module_name = "intellij.platform.backend.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  runtime_deps = [":backend-main"]
+  runtime_deps = [
+    ":backend-main",
+    "//platform/main/intellij.platform.main:main_test_lib",
+    "//platform/kernel/backend:backend_test_lib",
+    "//platform/navbar/backend:backend_test_lib",
+    "//platform/project/backend:backend_test_lib",
+    "//platform/progress/backend:backend_test_lib",
+    "//platform/xdebugger-impl/backend:backend_test_lib",
+    "//plugins/stream-debugger-core/intellij.debugger.streams.backend:debugger-streams-backend_test_lib",
+    "//platform/searchEverywhere/backend:backend_test_lib",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//platform/bookmarks/backend:backend_test_lib",
+    "//platform/recentFiles/backend:backend_test_lib",
+    "//platform/editor/backend:backend_test_lib",
+    "//platform/execution-impl/backend:backend_test_lib",
+    "//platform/execution.dashboard/backend:backend_test_lib",
+    "//spellchecker/xml:xml_test_lib",
+    "//platform/find/backend:backend_test_lib",
+    "//platform/todo/backend:backend_test_lib",
+    "//platform/managed-cache/managed.cache.backend:managed.cache.backend_test_lib",
+    "//platform/scopes/backend:backend_test_lib",
+    "//platform/remote-topics/backend:backend_test_lib",
+    "//platform/buildView/backend:backend_test_lib",
+    "//platform/lang-impl/backend:backend_test_lib",
+    "//platform/pluginManager/backend:backend_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.platform.backend.main` end

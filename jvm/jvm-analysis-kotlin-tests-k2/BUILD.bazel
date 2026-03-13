@@ -15,14 +15,22 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//jvm/jvm-analysis-testFramework:analysis-testFramework",
+    "//jvm/jvm-analysis-testFramework:analysis-testFramework_test_lib",
+    "//plugins/kotlin/base/test",
     "//plugins/kotlin/base/test:test_test_lib",
+    "//jvm/jvm-analysis-kotlin-tests-shared:analysis-kotlin-tests-shared",
     "//jvm/jvm-analysis-kotlin-tests-shared:analysis-kotlin-tests-shared_test_lib",
   ],
-  runtime_deps = [":analysis-kotlin-tests-k2"]
+  runtime_deps = [
+    ":analysis-kotlin-tests-k2",
+    "//plugins/kotlin/plugin/k2:k2_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.jvm.analysis.kotlin.tests.k2` end
 

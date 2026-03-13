@@ -1,0 +1,26 @@
+// FILE: before.kt
+// IGNORE_K1
+sealed class Foo {
+    data object Bar: Foo()
+    data object Baz: Foo()
+}
+
+fun foo(foo: Foo) = when(foo) {
+    is Foo.Bar -> blackhole(fo<caret>o)
+    is Foo.Baz -> blackhole(foo)
+}
+
+fun blackhole(v: Any) {}
+// FILE: after.kt
+// IGNORE_K1
+sealed class Foo {
+    data object <caret>Bar: Foo()
+    data object Baz: Foo()
+}
+
+fun foo(foo: Foo) = when(foo) {
+    is Foo.Bar -> blackhole(foo)
+    is Foo.Baz -> blackhole(foo)
+}
+
+fun blackhole(v: Any) {}

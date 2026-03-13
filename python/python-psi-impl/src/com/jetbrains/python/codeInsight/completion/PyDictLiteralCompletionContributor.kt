@@ -24,7 +24,7 @@ import com.jetbrains.python.psi.PySequenceExpression
 import com.jetbrains.python.psi.PySetLiteralExpression
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PyTupleExpression
-import com.jetbrains.python.psi.impl.getMappedParameters
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypedDictType
@@ -65,7 +65,7 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
   ) {
     val typeEvalContext = TypeEvalContext.codeCompletion(originalElement.project, originalElement.containingFile)
     val quote = getForcedQuote(possibleSequenceExpr, originalElement)
-    possibleSequenceExpr.getMappedParameters(PyResolveContext.defaultContext(typeEvalContext))?.forEach {
+    PyCallExpressionHelper.getMappedParameters(possibleSequenceExpr, PyResolveContext.defaultContext(typeEvalContext))?.forEach {
       addCompletionForTypedDictKeys(it.getType(typeEvalContext), possibleSequenceExpr, result, quote)
     }
   }

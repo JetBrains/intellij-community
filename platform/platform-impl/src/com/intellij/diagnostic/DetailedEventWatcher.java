@@ -19,21 +19,38 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.AWTEvent;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Queue;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.diagnostic.RunnablesListener.*;
-import static com.intellij.util.ReflectionUtil.*;
+import static com.intellij.diagnostic.RunnablesListener.InvocationDescription;
+import static com.intellij.diagnostic.RunnablesListener.InvocationInfo;
+import static com.intellij.diagnostic.RunnablesListener.TOPIC;
+import static com.intellij.diagnostic.RunnablesListener.WrapperDescription;
+import static com.intellij.util.ReflectionUtil.findFieldInHierarchy;
+import static com.intellij.util.ReflectionUtil.getFieldValue;
+import static com.intellij.util.ReflectionUtil.isAssignable;
+import static com.intellij.util.ReflectionUtil.isInstanceField;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
@@ -223,6 +240,10 @@ final class DetailedEventWatcher implements EventWatcher, Disposable {
   private static void addPluginCost(@NotNull Class<?> runnableClass,
                                     long duration) {
     ClassLoader loader = runnableClass.getClassLoader();
+    if (loader == null) {
+      return;
+    }
+
     String pluginId = PluginUtil.getPluginId(loader).getIdString();
     StartUpMeasurer.addPluginCost(pluginId,
                                   "invokeLater",

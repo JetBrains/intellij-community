@@ -2,6 +2,7 @@
 // ERROR: A 'return' expression required in a function with a block body ('{...}')
 // ERROR: Unresolved reference: TODO
 // ERROR: Unresolved reference: TODO
+// K2_ERROR: Enum entry 'KtEnumClass.ENUM_ENTRY' does not implement abstract members:<br>fun saySomething(): String<br>fun foo(): Unit
 
 interface KtInterface {
     fun foo()

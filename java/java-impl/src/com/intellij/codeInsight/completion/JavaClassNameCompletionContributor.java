@@ -66,8 +66,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, final @NotNull CompletionResultSet _result) {
-    if (parameters.getCompletionType() == CompletionType.CLASS_NAME ||
-      parameters.isExtendedCompletion() && mayContainClassName(parameters)) {
+    if (parameters.isExtendedCompletion() && mayContainClassName(parameters)) {
       addAllClasses(parameters, _result);
     }
   }

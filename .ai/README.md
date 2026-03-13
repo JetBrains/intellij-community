@@ -1,84 +1,166 @@
-# Templates for AGENTS.md (and CLAUDE.md in Ultimate)
+# AI Guide Renderer README
 
-This directory (community/.ai) contains the source templates used by `node community/.ai/render-guides.mjs` to generate:
-- `AGENTS.md`
-- `CLAUDE.md` (Ultimate only)
+This directory (`community/.ai`) contains the templates and documentation source used by:
 
-The same renderer also generates additional derived files outside this directory:
-- `.claude/rules/beads.md` (from `community/build/mcp-servers/task/beads-semantics.md`)
-- `.codex/skills/task/references/beads-quickref.md` (from `community/build/mcp-servers/task/beads-semantics.md`)
-- `opencode.json` (from `.mcp.json`)
-- `.opencode/skill/*` (mirrored from `.codex/skills/*`)
-
-## How it works
-
-- `guide.md` is the main template. It includes partials via `{{PARTIAL:name}}`.
-- `partials/*.md` provide reusable blocks. They are injected into `guide.md`.
-- Shared partials may also live in `.ai/partials/*.md` and override templates with the same name.
-- `compilation.md` renders the compilation rule using the target's run context.
-- `community/build/mcp-servers/task/beads-semantics.md` is used as the source for the Beads-derived outputs.
-- Tool-specific sections can be gated via `IF_TOOL` blocks (see below).
-- The renderer applies link rewrites and normalizes whitespace.
-- The renderer writes `opencode.json` from `.mcp.json` (OpenCode MCP config) and sets the default model to `openai/gpt-5.2-codex` with `reasoningEffort: "high"`.
-- The renderer mirrors Codex skills from `.codex/skills` into `.opencode/skill` (OpenCode skills).
-
-## Tool-gated blocks (`IF_TOOL`)
-
-Templates and partials can include content that is only rendered for a specific tool target.
-Wrap the content like this:
-
-```
-<!-- IF_TOOL:CODEX -->
-... content shown only in Codex outputs ...
-<!-- /IF_TOOL:CODEX -->
-
-<!-- IF_TOOL:CLAUDE -->
-... content shown only in Claude outputs ...
-<!-- /IF_TOOL:CLAUDE -->
-```
-
-## Edition-gated blocks (`IF_EDITION`)
-
-Templates and partials can include content that is only rendered for a specific edition.
-Wrap the content like this:
-
-```
-<!-- IF_EDITION:ULTIMATE -->
-... content shown only in Ultimate outputs ...
-<!-- /IF_EDITION:ULTIMATE -->
-```
-
-Rendering uses `AI_GUIDE_EDITION` (or `RENDER_EDITION`) when set; otherwise it
-defaults to `ULTIMATE` when `.ultimate.root.marker` exists, and `COMMUNITY` otherwise.
-
-## Important: template-only blocks are stripped
-
-Blocks wrapped in:
-
-```
-<!-- TEMPLATE:COMMENT --> ... <!-- /TEMPLATE:COMMENT -->
-```
-
-are removed during rendering. Put **internal notes only** inside these blocks.
-If you want instructions to appear in `AGENTS.md` or `CLAUDE.md`, place them
-outside these blocks.
-
-## Place user-facing instructions in partials
-
-- Use `partials/*.md` for content that should appear in the final outputs.
-- Keep notes that should not appear in the final outputs inside the template-only blocks.
-
-## Rendering
-
-Regenerate outputs with:
-
-```
+```bash
 node community/.ai/render-guides.mjs
 ```
 
-## Placeholders
+The renderer produces guide files (`AGENTS.md`, `CLAUDE.md`), skill stubs, and OpenCode config/skills.
 
-- `{{COMPILATION_RULE}}` must remain in `guide.md`.
-- `{{FORBIDDEN_TOOLS_SUFFIX}}` is filled per target in the renderer.
+## Quick run
 
-If a placeholder leaks into a rendered file, the renderer will throw.
+```bash
+node community/.ai/render-guides.mjs
+```
+
+Force edition when needed:
+
+```bash
+AI_GUIDE_EDITION=COMMUNITY node community/.ai/render-guides.mjs
+AI_GUIDE_EDITION=ULTIMATE  node community/.ai/render-guides.mjs
+```
+
+## What is generated
+
+- `AGENTS.md`
+- `community/AGENTS.md` (generated in ultimate workspace)
+- `CLAUDE.md` (ultimate only)
+- `opencode.json` (from `.mcp.json`)
+- `.opencode/skill/*` (mirrored from `.codex/skills/*`)
+- Skill stubs in `.agents/skills/*`, `.claude/skills/*`, `community/.claude/skills/*`
+
+## High-level render pipeline
+
+```text
+                community/.ai/guide.md
+                         |
+                         | inject partials + compilation rule
+                         v
+      +---------------------------------------------+
+      | template transforms                          |
+      | - rewrite markdown links                     |
+      | - apply IF_TOOL blocks                       |
+      | - apply IF_EDITION blocks                    |
+      | - strip TEMPLATE:COMMENT blocks              |
+      | - normalize whitespace                        |
+      +----------------------+----------------------+
+                             |
+                             +--> AGENTS.md
+                             +--> community/AGENTS.md (ultimate workspace)
+                             +--> CLAUDE.md (ultimate only)
+                             +--> opencode.json
+                             +--> .opencode/skill/*
+                             +--> skill stubs (see next section)
+```
+
+## Skill sources and stub generation
+
+The renderer has two skill sources:
+
+1. Community source skills: `community/.agents/skills/*/SKILL.md`
+2. Ultimate-only source skills: manual (non-generated) `.agents/skills/*/SKILL.md`
+
+Generated stubs are recognized by marker:
+
+```md
+<!-- Generated by community/.ai/render-guides.mjs; edit ... -->
+```
+
+Manual files in `.agents/skills/` without that marker are treated as ultimate-only sources.
+
+```text
+PASS 1 (community source skills)
+--------------------------------
+community/.agents/skills/<name>/SKILL.md
+   |--> .agents/skills/<name>/SKILL.md
+   |--> .claude/skills/<name>/SKILL.md
+   '--> community/.claude/skills/<name>/SKILL.md
+
+PASS 2 (ultimate-only manual skills)
+------------------------------------
+.agents/skills/<name>/SKILL.md   [manual, non-generated]
+   '--> .claude/skills/<name>/SKILL.md   [ULTIMATE only]
+
+Cleanup
+-------
+Generated stubs not in the expected set are pruned.
+Only generated stubs are deleted. Manual files are preserved.
+```
+
+## Edition behavior
+
+Edition resolution order:
+
+1. `AI_GUIDE_EDITION`
+2. `RENDER_EDITION`
+3. `.ultimate.root.marker` presence (`ULTIMATE` if present, else `COMMUNITY`)
+
+Accepted values: `COMMUNITY`, `ULTIMATE`.
+
+Edition impact:
+
+- `ULTIMATE`
+  - pass-2 runs (ultimate-only skills can generate `.claude/skills/*` stubs)
+- `COMMUNITY`
+  - pass-2 is skipped
+  - stale generated ultimate-only stubs are pruned from `.claude/skills/`
+
+## Template model
+
+- Main template: `community/.ai/guide.md`
+- Local partials: `community/.ai/partials/*.md`
+- Shared partial overrides: `.ai/partials/*.md`
+
+### Template directives
+
+Tool gating:
+
+```md
+<!-- IF_TOOL:CODEX -->
+... only in Codex outputs ...
+<!-- /IF_TOOL:CODEX -->
+```
+
+Edition gating:
+
+```md
+<!-- IF_EDITION:ULTIMATE -->
+... only in ultimate outputs ...
+<!-- /IF_EDITION:ULTIMATE -->
+```
+
+Template-only comments (removed in outputs):
+
+```md
+<!-- TEMPLATE:COMMENT -->
+internal notes only
+<!-- /TEMPLATE:COMMENT -->
+```
+
+## Required placeholders
+
+- `{{FORBIDDEN_TOOLS_SUFFIX}}` is filled per output target.
+
+If placeholders remain after rendering, the renderer fails fast.
+
+## Validation and tests
+
+- Renderer test: `community/.ai/render-guides.test.mjs`
+
+Run:
+
+```bash
+node --test community/.ai/render-guides.test.mjs
+```
+
+## Troubleshooting
+
+- `Unknown partial: ...`
+  - Check partial filename and `{{PARTIAL:name}}` token spelling.
+- Unexpected missing content in output
+  - Check `IF_TOOL` / `IF_EDITION` guards and selected edition.
+- Broken relative links in generated files
+  - Source links were likely moved; rerender and verify rewritten targets.
+- Stale skill directory still present
+  - If it has no generated marker, cleanup intentionally preserves it.

@@ -2,6 +2,8 @@
 package com.intellij.util.ui;
 
 import com.intellij.ui.IconManager;
+import com.intellij.ui.RetrievableIcon;
+import com.intellij.ui.icons.IconReplacer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Icon;
@@ -10,7 +12,7 @@ import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 
-public abstract class ColorizeProxyIcon implements Icon {
+public abstract class ColorizeProxyIcon implements Icon, RetrievableIcon {
   private final Icon myBaseIcon;
 
   protected ColorizeProxyIcon(@NotNull Icon baseIcon) {
@@ -49,6 +51,22 @@ public abstract class ColorizeProxyIcon implements Icon {
     @Override
     public @NotNull Color getColor() {
       return myColor;
+    }
+
+    @Override
+    public @NotNull Icon replaceBy(@NotNull IconReplacer replacer) {
+      Icon replaced = replacer.replaceIcon(getBaseIcon());
+      return new ColorizeProxyIcon.Simple(replaced, myColor);
+    }
+
+    @Override
+    public @NotNull Icon retrieveIcon() {
+      return getBaseIcon();
+    }
+
+    @Override
+    public String toString() {
+      return "ColorizeProxyIcon.Simple for " + getBaseIcon();
     }
   }
 }

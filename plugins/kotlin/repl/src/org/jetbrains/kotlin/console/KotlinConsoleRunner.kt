@@ -7,6 +7,8 @@ import com.intellij.execution.console.ConsoleExecuteAction
 import com.intellij.execution.console.LanguageConsoleBuilder
 import com.intellij.execution.console.LanguageConsoleView
 import com.intellij.execution.console.ProcessBackedConsoleExecuteActionHandler
+import com.intellij.execution.console.history.CommandHistory
+import com.intellij.execution.console.history.HistoryKeyListener
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory
 import com.intellij.execution.target.TargetEnvironment

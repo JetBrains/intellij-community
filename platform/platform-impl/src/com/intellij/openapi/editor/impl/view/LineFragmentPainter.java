@@ -16,6 +16,7 @@ interface LineFragmentPainter {
   );
 
   void paint(
+    IterationState iterationState,
     VisualLineFragmentsIterator.Fragment fragment,
     int start,
     int end,

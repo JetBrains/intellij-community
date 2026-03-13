@@ -3,10 +3,14 @@ package com.intellij.platform.workspace.storage.tests.metadata
 
 import com.intellij.platform.workspace.storage.ConnectionId.ConnectionType
 import com.intellij.platform.workspace.storage.metadata.diff.TypesMetadataComparator
-import com.intellij.platform.workspace.storage.metadata.model.*
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.metadata.model.ExtendableClassMetadata.AbstractClassMetadata
+import com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
 import com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata.ClassMetadata
 import com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata.KnownClass
+import com.intellij.platform.workspace.storage.metadata.model.OwnPropertyMetadata
+import com.intellij.platform.workspace.storage.metadata.model.StorageClassMetadata
+import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata.EntityReference
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata.SimpleType.CustomType
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata.SimpleType.PrimitiveType

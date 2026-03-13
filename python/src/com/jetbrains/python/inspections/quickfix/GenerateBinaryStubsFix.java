@@ -116,7 +116,7 @@ public final class GenerateBinaryStubsFix implements LocalQuickFix {
         indicator.setIndeterminate(true);
 
         try {
-          final PySkeletonRefresher refresher = new PySkeletonRefresher(project, null, mySdk, null, null, folder);
+          final PySkeletonRefresher refresher = new PySkeletonRefresher(project, mySdk, null, null, folder);
 
           if (isFromGiRepository(myQualifiedName)) {
             if (!generateSkeletonsForGiRepository(refresher, indicator, folder)) return;

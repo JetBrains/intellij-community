@@ -1060,9 +1060,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
         .getCachedValue(parentSourcePsiForCache, CachedValueProvider {
           val uClass = parentSourcePsiForCache.toUElement() as? UClass
           val uMethods = if (uClass != null) {
-            listOf(uClass, *uClass.innerClasses)
-              .map { it.methods.toList() }
-              .flatten()
+            listOf(uClass, *uClass.innerClasses).flatMap { it.methods.toList() }
           }
           else {
             listOf()

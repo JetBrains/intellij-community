@@ -11,11 +11,14 @@ import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.execution.filters.impl.HyperlinkInfoFactoryImpl
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.indexing.DumbModeAccessType
+import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinSourceMapCache
 import org.jetbrains.kotlin.idea.debugger.base.util.fqnToInternalName
 import org.jetbrains.kotlin.idea.debugger.base.util.isInlineFrameLineNumber
@@ -72,7 +75,9 @@ class KotlinExceptionFilter(private val searchScope: GlobalSearchScope) : Except
         val internalName = fullyQualifiedName.fqnToInternalName()
         val jvmClassName = JvmClassName.byInternalName(internalName)
 
-        val file = DebuggerUtils.findSourceFileForClassIncludeLibrarySources(project, searchScope, jvmClassName, fileName)
+        val file = FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, ThrowableComputable {
+            DebuggerUtils.findSourceFileForClassIncludeLibrarySources(project, searchScope, jvmClassName, fileName)
+        })
 
         if (file == null) {
             // File can't be found by class name and file name: this can happen when smap info is already applied.

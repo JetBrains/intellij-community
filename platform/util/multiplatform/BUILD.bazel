@@ -18,4 +18,17 @@ jvm_library(
     ":platform_multiplatformSupport_provided",
   ]
 )
+
+jvm_library(
+  name = "multiplatform_test_lib",
+  module_name = "intellij.platform.util.multiplatform",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  runtime_deps = [
+    ":multiplatform",
+    "//platform/multiplatformSupport",
+    "//platform/multiplatformSupport:multiplatformSupport_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.util.multiplatform` end

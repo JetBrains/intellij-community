@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-androidx-collections-androidx-collection"],
   runtime_deps = ["@lib//:libraries-androidx-collections-androidx-collection"]
 )
+
+jvm_library(
+  name = "androidx-collections_test_lib",
+  module_name = "intellij.libraries.androidx.collections",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-androidx-collections-androidx-collection"],
+  runtime_deps = [":androidx-collections"]
+)
 ### auto-generated section `build intellij.libraries.androidx.collections` end

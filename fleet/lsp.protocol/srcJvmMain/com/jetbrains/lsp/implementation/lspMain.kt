@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.JsonElement
+import kotlin.time.Duration.Companion.milliseconds
 
 fun main() {
   runBlocking(Dispatchers.Default) {
@@ -55,10 +56,10 @@ fun main() {
         val hangingRequestJob = launch {
           client.request(HangRequestType, Unit)
         }
-        delay(100)
+        delay(100.milliseconds)
         hangingRequestJob.cancel()
         println("request cancelled")
-        delay(100)
+        delay(100.milliseconds)
         println("quitting")
       }
     }

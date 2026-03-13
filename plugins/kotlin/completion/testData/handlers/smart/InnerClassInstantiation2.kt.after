@@ -7,5 +7,3 @@ fun A.foo(): A.XYZ {
 }
 
 // ELEMENT: XYZ
-
-// IGNORE_K2

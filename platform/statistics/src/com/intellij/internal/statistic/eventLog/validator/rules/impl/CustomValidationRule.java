@@ -1,12 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.validator.rules.impl;
 
-import com.intellij.internal.statistic.eventLog.validator.IEventContext;
+import com.jetbrains.fus.reporting.api.IEventContext;
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
-import com.intellij.internal.statistic.eventLog.validator.rules.PayloadKey;
+import com.jetbrains.fus.reporting.api.FUSRule;
+import com.jetbrains.fus.reporting.api.PayloadKey;
 import com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -127,14 +127,21 @@ public abstract class CustomValidationRule extends PerformanceCareRule implement
     return context.eventData.containsKey(name) ? context.eventData.get(name).toString() : null;
   }
 
-  protected abstract @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context);
+  /**
+   * @deprecated This method was added for compatibility with existing custom rules.
+   * Use {@link #doValidate(String, IEventContext)} instead.
+   */
+  @Deprecated(forRemoval = true)
+  protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+    return ValidationResultType.REJECTED;
+  }
 
   @Override
-  protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull IEventContext context) {
+  protected @NotNull com.jetbrains.fus.reporting.api.ValidationResultType doValidate(@NotNull String data, @NotNull IEventContext context) {
     if (context instanceof EventContext) {
-      return this.doValidate(data, (EventContext)context);
+      return ValidationResultType.toFusApiResultType(this.doValidate(data, (EventContext)context));
     } else {
-      return ValidationResultType.REJECTED;
+      return com.jetbrains.fus.reporting.api.ValidationResultType.REJECTED;
     }
   }
 }

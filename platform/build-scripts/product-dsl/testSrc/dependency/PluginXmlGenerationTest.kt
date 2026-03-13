@@ -1,13 +1,20 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.dependency
 
+import com.intellij.platform.pluginGraph.EDGE_BUNDLES
+import com.intellij.platform.pluginGraph.PluginGraph
+import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.TargetName
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.productLayout.TestFailureLogger
 import org.jetbrains.intellij.build.productLayout.config.SuppressionConfig
+import org.jetbrains.intellij.build.productLayout.discovery.FileDepInfo
 import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
+import org.jetbrains.intellij.build.productLayout.graph.PluginGraphBuilder
+import org.jetbrains.intellij.build.productLayout.stats.FileChangeStatus
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.io.TempDir
@@ -25,7 +32,7 @@ import java.nio.file.Path
 class PluginXmlGenerationTest {
   @Test
   fun `test plugin with JPS dependency on plugin module generates plugin element in plugin xml`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val setup = pluginTestSetup(tempDir) {
         // Target plugin that will be depended on
         plugin("intellij.target.plugin") {
@@ -60,10 +67,9 @@ class PluginXmlGenerationTest {
         .contains("<plugin id=\"intellij.target.plugin\"/>")
     }
   }
-
   @Test
   fun `JPS dependency on content module generates module element not plugin element`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val setup = pluginTestSetup(tempDir) {
         // Regular content module (not a plugin)
         contentModule("intellij.shared.content") {
@@ -97,8 +103,7 @@ class PluginXmlGenerationTest {
   }
 
   @Test
-  fun `JPS dependency on content module with descriptor is treated as module not plugin`(@TempDir tempDir: Path) {
-    runBlocking {
+  fun `JPS dependency on content module with descriptor is treated as module not plugin`(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
       // This tests the case where a module has BOTH a META-INF/plugin.xml AND a {moduleName}.xml descriptor.
       // Example: intellij.yaml is embedded in yaml plugin (has yaml's plugin.xml) but also has intellij.yaml.xml descriptor.
       // Such modules should be treated as content module dependencies, not plugin dependencies.
@@ -163,11 +168,9 @@ class PluginXmlGenerationTest {
         .describedAs("Should NOT have <plugin id=\"...\"/> for content module with descriptor")
         .doesNotContain("<plugin id=\"org.jetbrains.plugins.yaml\"/>")
     }
-  }
-
   @Test
   fun `production plugin with JPS dependency on plugin module generates plugin element`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val setup = pluginTestSetup(tempDir) {
         // Target plugin that will be depended on
         plugin("intellij.target.plugin") {
@@ -201,4 +204,113 @@ class PluginXmlGenerationTest {
         .contains("<plugin id=\"intellij.target.plugin\"/>")
     }
   }
+
+  @Test
+  fun `manual alias plugin dependency is preserved in plugin xml`(@TempDir tempDir: Path) {
+    runBlocking(Dispatchers.Default) {
+      val setup = pluginTestSetup(tempDir) {
+        plugin("intellij.consumer.plugin") {
+          pluginId = "com.consumer"
+          content("intellij.consumer.module")
+        }
+        contentModule("intellij.consumer.module") {
+          descriptor = """<idea-plugin package="com.intellij.consumer"/>"""
+        }
+      }
+
+      val aliasId = PluginId("com.intellij.modules.java")
+      val consumerInfo = setup.pluginContentInfos.getValue("intellij.consumer.plugin").withManualPluginDependency(aliasId)
+      val context = setup.withPluginInfoAndGraph(
+        pluginInfo = consumerInfo,
+        graph = buildPluginGraph(consumerInfo, aliasId),
+      )
+
+      val result = context.generateDependencies(listOf("intellij.consumer.plugin"))
+
+      assertThat(result.errors).isEmpty()
+      assertThat(result.files.single().status).isEqualTo(FileChangeStatus.UNCHANGED)
+      assertThat(context.strategy.getDiffs()).isEmpty()
+    }
+  }
+
+  @Test
+  fun `manual non alias plugin dependency is removed from plugin xml`(@TempDir tempDir: Path) {
+    runBlocking(Dispatchers.Default) {
+      val setup = pluginTestSetup(tempDir) {
+        plugin("intellij.consumer.plugin") {
+          pluginId = "com.consumer"
+          content("intellij.consumer.module")
+        }
+        contentModule("intellij.consumer.module") {
+          descriptor = """<idea-plugin package="com.intellij.consumer"/>"""
+        }
+      }
+
+      val manualDep = PluginId("com.example.manual")
+      val consumerInfo = setup.pluginContentInfos.getValue("intellij.consumer.plugin").withManualPluginDependency(manualDep)
+      val context = setup.withPluginInfoAndGraph(
+        pluginInfo = consumerInfo,
+        graph = buildPluginGraph(consumerInfo),
+      )
+
+      val result = context.generateDependencies(listOf("intellij.consumer.plugin"))
+
+      assertThat(result.errors).isEmpty()
+      assertThat(result.files.single().status).isEqualTo(FileChangeStatus.MODIFIED)
+      assertThat(context.strategy.getDiffs()).hasSize(1)
+      assertThat(context.strategy.getDiffs().single().expectedContent)
+        .doesNotContain("<plugin id=\"${manualDep.value}\"/>")
+    }
+  }
+}
+
+private fun PluginContentInfo.withManualPluginDependency(pluginId: PluginId): PluginContentInfo {
+  val dependencyTag = "<plugin id=\"${pluginId.value}\"/>"
+  val updatedPluginXmlContent = pluginXmlContent.replace(
+    "</idea-plugin>",
+    """
+    |  <dependencies>
+    |    $dependencyTag
+    |  </dependencies>
+    |</idea-plugin>
+    """.trimMargin()
+  )
+  return copy(
+    pluginXmlContent = updatedPluginXmlContent,
+    pluginDependencies = setOf(pluginId),
+    depsByFile = listOf(
+      FileDepInfo(
+        relativePath = "META-INF/plugin.xml",
+        moduleDependencies = emptySet(),
+        pluginDependencies = setOf(pluginId),
+      )
+    ),
+  )
+}
+
+private fun PluginTestSetupContext.withPluginInfoAndGraph(
+  pluginInfo: PluginContentInfo,
+  graph: PluginGraph,
+): PluginTestSetupContext {
+  val knownPlugins = mapOf("intellij.consumer.plugin" to pluginInfo)
+  return PluginTestSetupContext(
+    jps = jps,
+    pluginContentInfos = knownPlugins,
+    strategy = strategy,
+    pluginContentCache = StubPluginContentCache(knownPlugins),
+    products = products,
+    pluginGraph = graph,
+    contentModuleSpecs = contentModuleSpecs,
+  )
+}
+
+private fun buildPluginGraph(consumerInfo: PluginContentInfo, aliasId: PluginId? = null): PluginGraph {
+  val builder = PluginGraphBuilder()
+  val consumerPlugin = TargetName("intellij.consumer.plugin")
+  builder.addPluginWithContent(consumerPlugin, consumerInfo, emptySet())
+  if (aliasId != null) {
+    val aliasNodeId = builder.addAliasPlugin(aliasId)
+    builder.addEdge(builder.addProduct("IDEA"), aliasNodeId, EDGE_BUNDLES)
+  }
+  return builder.build()
 }

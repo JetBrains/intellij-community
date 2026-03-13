@@ -18,6 +18,7 @@ import com.intellij.grazie.ide.ui.PaddedListCellRenderer;
 import com.intellij.grazie.rule.SentenceTokenizer;
 import com.intellij.grazie.text.TextContent;
 import com.intellij.grazie.text.TextExtractor;
+import com.intellij.grazie.utils.HighlightingUtil;
 import com.intellij.grazie.utils.NaturalTextDetector;
 import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -49,8 +50,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import static com.intellij.grazie.text.TextExtractor.findAllTextContents;
 
 @SuppressWarnings("IntentionDescriptionNotFoundInspection")
 public class TranslateAction implements IntentionAction, CustomizableIntentionAction {
@@ -221,7 +220,7 @@ public class TranslateAction implements IntentionAction, CustomizableIntentionAc
     }
 
     return ContainerUtil.filter(
-      findAllTextContents(file.getViewProvider(), TextContent.TextDomain.ALL),
+      HighlightingUtil.getAllFileTexts(file.getViewProvider()),
       tc -> tc.intersectsRange(new TextRange(selStart, selEnd))
     );
   }

@@ -1,7 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui.layout.impl;
 
-import com.intellij.execution.ui.layout.*;
+import com.intellij.execution.ui.layout.CellTransform;
+import com.intellij.execution.ui.layout.Grid;
+import com.intellij.execution.ui.layout.PlaceInGrid;
+import com.intellij.execution.ui.layout.Tab;
+import com.intellij.execution.ui.layout.View;
+import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.UiDataProvider;
@@ -19,10 +24,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.*;
+import javax.swing.JComponent;
+import javax.swing.LayoutFocusTraversalPolicy;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @ApiStatus.Internal
 public final class GridImpl extends Wrapper implements Grid, Disposable, UiDataProvider {

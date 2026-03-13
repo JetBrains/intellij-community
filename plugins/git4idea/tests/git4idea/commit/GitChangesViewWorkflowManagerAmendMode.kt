@@ -7,6 +7,7 @@ import com.intellij.platform.vcs.impl.shared.commit.CommitToolWindowViewModel
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.vcs.commit.CommitToAmend
 import com.intellij.vcs.log.impl.VcsProjectLog
 import git4idea.test.GitSingleRepoTest
 import kotlinx.coroutines.flow.filter
@@ -65,7 +66,7 @@ internal class GitChangesViewWorkflowManagerAmendMode : GitSingleRepoTest() {
 
   private fun toggleAmendCommitMode(workflowManager: ChangesViewWorkflowManager, value: Boolean) {
     runInEdtAndWait {
-      workflowManager.commitWorkflowHandler!!.amendCommitHandler.isAmendCommitMode = value
+      workflowManager.commitWorkflowHandler!!.amendCommitHandler.commitToAmend = if (value) CommitToAmend.Last else CommitToAmend.None
     }
   }
 }

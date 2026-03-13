@@ -2,12 +2,16 @@
 
 package com.intellij.util.ui;
 
+import com.intellij.ui.RetrievableIcon;
+import com.intellij.ui.icons.IconReplacer;
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.Icon;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 
-public final class CenteredIcon implements Icon {
+public final class CenteredIcon implements Icon, RetrievableIcon {
   private final Icon myIcon;
 
   private final int myWidth;
@@ -56,5 +60,21 @@ public final class CenteredIcon implements Icon {
   @Override
   public int getIconHeight() {
     return myHeight;
+  }
+
+  @Override
+  public @NotNull Icon replaceBy(@NotNull IconReplacer replacer) {
+    Icon replaced = replacer.replaceIcon(myIcon);
+    return new CenteredIcon(replaced, myWidth, myHeight, myCenteredInComponent);
+  }
+
+  @Override
+  public @NotNull Icon retrieveIcon() {
+    return myIcon;
+  }
+
+  @Override
+  public String toString() {
+    return "CenteredIcon for " + myIcon;
   }
 }

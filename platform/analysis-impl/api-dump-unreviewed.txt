@@ -83,19 +83,15 @@ e:com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar$Anchor
 - s:valueOf(java.lang.String):com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar$Anchor
 - s:values():com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar$Anchor[]
 a:com.intellij.codeInsight.AutoPopupController
-- sf:ALLOW_AUTO_POPUP_FOR_SLASHES_IN_PATHS:com.intellij.openapi.util.Key
 - sf:ALWAYS_AUTO_POPUP:com.intellij.openapi.util.Key
 - sf:AUTO_POPUP_ON_FOCUS_GAINED:com.intellij.openapi.util.Key
 - sf:NO_ADS:com.intellij.openapi.util.Key
 - sf:SHOW_BOTTOM_PANEL_IN_LOOKUP_UI:com.intellij.openapi.util.Key
-- <init>():V
 - a:autoPopupMemberLookup(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.completion.CompletionType,com.intellij.openapi.util.Condition):V
 - a:autoPopupMemberLookup(com.intellij.openapi.editor.Editor,com.intellij.openapi.util.Condition):V
 - a:autoPopupParameterInfo(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement):V
-- a:cancelAllRequests():V
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.AutoPopupController
 - a:scheduleAutoPopup(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.completion.CompletionType,com.intellij.openapi.util.Condition):V
-- a:waitForDelayedActions(J,java.util.concurrent.TimeUnit):V
 a:com.intellij.codeInsight.TargetElementEvaluatorEx2
 - com.intellij.codeInsight.TargetElementEvaluator
 - <init>():V
@@ -155,8 +151,6 @@ c:com.intellij.codeInsight.completion.BaseCompletionLookupArranger
 c:com.intellij.codeInsight.completion.BaseCompletionService
 - com.intellij.codeInsight.completion.CompletionService
 - sf:FORBID_WORD_COMPLETION:com.intellij.openapi.util.Key
-- sf:LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS:com.intellij.openapi.util.Key
-- sf:LOOKUP_ELEMENT_RESULT_SET_ORDER:com.intellij.openapi.util.Key
 - p:apiCompletionProcess:com.intellij.codeInsight.completion.CompletionProcess
 - <init>():V
 - p:addWeighersBefore(com.intellij.codeInsight.completion.impl.CompletionSorterImpl):com.intellij.codeInsight.completion.impl.CompletionSorterImpl
@@ -556,7 +550,6 @@ f:com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 - readExternal(org.jdom.Element):V
 - registerSeverity(com.intellij.codeInsight.daemon.impl.SeverityRegistrar$SeverityBasedTextAttributes,java.awt.Color):V
 - s:registerStandard(com.intellij.codeInsight.daemon.impl.HighlightInfoType,com.intellij.lang.annotation.HighlightSeverity):V
-- s:registerStandard(java.util.Map):V
 - setOrder(java.util.List):V
 - s:standardSeverities():java.util.Collection
 - unregisterSeverity(com.intellij.lang.annotation.HighlightSeverity):com.intellij.codeInsight.daemon.impl.SeverityRegistrar$SeverityBasedTextAttributes
@@ -2155,7 +2148,6 @@ c:com.intellij.codeInspection.ex.InspectionProfileImpl
 - scopesChanged():V
 - setDescription(java.lang.String):V
 - setEditorAttributesKey(java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.project.Project):V
-- setEditorAttributesKey(java.util.List,com.intellij.openapi.editor.colors.TextAttributesKey,java.lang.String,com.intellij.openapi.project.Project):V
 - setErrorLevel(com.intellij.codeInsight.daemon.HighlightDisplayKey,com.intellij.codeHighlighting.HighlightDisplayLevel,com.intellij.openapi.project.Project):V
 - setErrorLevel(com.intellij.codeInsight.daemon.HighlightDisplayKey,com.intellij.codeHighlighting.HighlightDisplayLevel,java.lang.String,com.intellij.openapi.project.Project):V
 - setErrorLevel(java.util.List,com.intellij.codeHighlighting.HighlightDisplayLevel,java.lang.String,com.intellij.openapi.project.Project):V

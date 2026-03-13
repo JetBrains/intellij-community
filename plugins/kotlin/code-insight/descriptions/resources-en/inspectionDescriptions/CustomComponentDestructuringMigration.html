@@ -1,0 +1,27 @@
+<html>
+<body>
+Reports position-based destructuring declarations that use custom <code>componentN</code> functions and need to be migrated for name-based destructuring.
+<p>
+    With new name-based destructuring enabled, parentheses <code>(x, y)</code> will be used for name-based destructuring,
+    while square brackets <code>[x, y]</code> should be used for position-based destructuring.
+</p>
+<p>The inspection warns when:</p>
+<ul>
+    <li>Destructuring a non-data-class (all components are custom)</li>
+    <li>Destructuring a data class with more entries than primary constructor parameters (extra components are custom)</li>
+</ul>
+<p><b>Examples:</b></p>
+<pre><code>
+  val (x, y) = listOf(1, 2) // warning: uses custom componentN
+  for ((key, value) in mapOf(1 to "one")) { } // warning: uses custom componentN
+
+  data class Person(val name: String, val age: Int) {
+      operator fun component3(): String = name + age
+  }
+  val (name, age, rendered) = Person("John", 30) // warning: component3 is custom
+</code></pre>
+<p>
+    This inspection is part of the migration plan for name-based destructuring.
+</p>
+</body>
+</html>

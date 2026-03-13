@@ -71,9 +71,9 @@ public class JavaClassStubSerializer implements StubSerializer<PsiClassStub<PsiC
   @Override
   public void indexStub(@NotNull PsiClassStub<PsiClass> stub, @NotNull IndexSink sink) {
     if (stub.isImplicit()) {
-      StubElement<?> parent = stub.getParentStub();
-      if (parent instanceof PsiJavaFileStub) {
-        sink.occurrence(JavaStubIndexKeys.IMPLICIT_CLASSES, JavaImplicitClassUtil.getJvmName(((PsiJavaFileStub)parent).getPsi().getName()));
+      String name = stub.getName();
+      if (name != null) {
+        sink.occurrence(JavaStubIndexKeys.IMPLICIT_CLASSES, name);
       }
       return;
     }

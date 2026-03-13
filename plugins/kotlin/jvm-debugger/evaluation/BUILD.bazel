@@ -31,6 +31,7 @@ jvm_library(
     "//plugins/kotlin/jvm-debugger/eval4j",
     "//plugins/kotlin/jvm-debugger/core",
     "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-impl/shared",
     "//java/java-psi-impl:psi-impl",
     "//java/debugger/impl",
     "//plugins/kotlin/jvm-debugger/coroutines",
@@ -40,6 +41,39 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//plugins/kotlin/j2k/shared",
     "//platform/platform-api:ide",
+  ]
+)
+
+jvm_library(
+  name = "evaluation_test_lib",
+  module_name = "kotlin.jvm-debugger.evaluation",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":evaluation",
+    "//libraries/asm:asm_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/analysis:analysis_test_lib",
+    "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+    "//plugins/kotlin/base/statistics:statistics_test_lib",
+    "//plugins/kotlin/jvm-debugger/base/util:util_test_lib",
+    "//java/debugger/openapi:java-debugger_test_lib",
+    "//plugins/kotlin/jvm-debugger/eval4j:eval4j_test_lib",
+    "//plugins/kotlin/jvm-debugger/core:core_test_lib",
+    "//platform/xdebugger-impl:debugger-impl_test_lib",
+    "//platform/xdebugger-impl/shared:shared_test_lib",
+    "//java/java-psi-impl:psi-impl_test_lib",
+    "//java/debugger/impl:impl_test_lib",
+    "//plugins/kotlin/jvm-debugger/coroutines:coroutines_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//platform/xdebugger-impl/rpc:rpc_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//plugins/kotlin/j2k/shared:shared_test_lib",
+    "//platform/platform-api:ide_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.jvm-debugger.evaluation` end

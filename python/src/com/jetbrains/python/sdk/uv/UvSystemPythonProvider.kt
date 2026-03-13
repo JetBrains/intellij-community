@@ -9,18 +9,18 @@ import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
-import com.jetbrains.python.sdk.uv.impl.hasUvExecutable
+import com.jetbrains.python.sdk.uv.impl.createUvLowLevelLocal
+import com.jetbrains.python.sdk.uv.impl.hasUvExecutableLocal
 import java.nio.file.Path
 
 internal class UvSystemPythonProvider : SystemPythonProvider {
   override suspend fun findSystemPythons(eelApi: EelApi): PyResult<Set<PythonBinary>> {
-    if (eelApi != localEel || !hasUvExecutable()) {
+    if (eelApi != localEel || !hasUvExecutableLocal()) {
       // TODO: support for remote execution
       return Result.success(emptySet())
     }
 
-    val uv = createUvLowLevel(Path.of(".")).getOr { return it }
+    val uv = createUvLowLevelLocal(Path.of(".")).getOr { return it }
     return uv.listUvPythons()
   }
 

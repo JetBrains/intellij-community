@@ -7,35 +7,82 @@ package com.intellij.serviceContainer
 
 import com.intellij.codeWithMe.ClientIdContextElement
 import com.intellij.codeWithMe.ClientIdContextElementPrecursor
-import com.intellij.concurrency.*
+import com.intellij.concurrency.ExternalIntelliJContextElement
+import com.intellij.concurrency.currentTemporaryThreadContextOrNull
+import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.installThreadContext
+import com.intellij.concurrency.resetThreadContext
+import com.intellij.concurrency.withThreadLocal
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.ContainerDescriptor
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginMainDescriptor
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginUtil
+import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.idea.AppMode
 import com.intellij.idea.AppMode.isLightEdit
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.AccessToken
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.DevTimeClassLoader
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.contextModality
+import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.client.ClientKind
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseComponent
+import com.intellij.openapi.components.ComponentConfig
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.ServiceDescriptor.PreloadMode
+import com.intellij.openapi.components.TestMutableComponentManager
 import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
 import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.diagnostic.*
-import com.intellij.openapi.extensions.*
+import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.extensions.impl.ExtensionPointDeferredListenersNotification
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.impl.createExtensionPoints
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.CeProcessCanceledException
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.getLockPermitContext
+import com.intellij.openapi.progress.prepareThreadContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.platform.instanceContainer.internal.*
+import com.intellij.platform.instanceContainer.internal.ContainerDisposedException
+import com.intellij.platform.instanceContainer.internal.InstanceContainerImpl
+import com.intellij.platform.instanceContainer.internal.InstanceContainerInternal
+import com.intellij.platform.instanceContainer.internal.InstanceHolder
+import com.intellij.platform.instanceContainer.internal.ScopeHolder
+import com.intellij.platform.instanceContainer.internal.UnregisterHandle
+import com.intellij.platform.instanceContainer.internal.initializedInstances
+import com.intellij.platform.instanceContainer.internal.isStatic
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.IntelliJCoroutinesFacade
 import com.intellij.util.SystemProperties
@@ -46,10 +93,13 @@ import com.intellij.util.messages.MessageBus
 import com.intellij.util.messages.MessageBusFactory
 import com.intellij.util.messages.MessageBusOwner
 import com.intellij.util.messages.Topic
-import com.intellij.util.messages.impl.*
+import com.intellij.util.messages.impl.MessageBusEx
+import com.intellij.util.messages.impl.MessageBusImpl
+import com.intellij.util.messages.impl.MessageDeliveryListener
+import com.intellij.util.messages.impl.PluginListenerDescriptor
+import com.intellij.util.messages.impl.listenerClassName
 import com.intellij.util.runSuppressing
 import kotlinx.coroutines.*
-import kotlinx.coroutines.Job
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -316,7 +366,7 @@ abstract class ComponentManagerImpl(
   open fun registerComponents(
     modules: List<IdeaPluginDescriptorImpl>,
     app: Application?,
-    listenerCallbacks: MutableList<in Runnable>? = null,
+    listenerCallbacks: MutableList<ExtensionPointDeferredListenersNotification>? = null,
   ) {
     val activityNamePrefix = activityNamePrefix()
 
@@ -366,7 +416,7 @@ abstract class ComponentManagerImpl(
 
     for (rootModule in modules) {
       executeRegisterTask(rootModule) { module ->
-        module.registerExtensions(nameToPoint = extensionPoints, listenerCallbacks = listenerCallbacks)
+        extensionArea.registerExtensions(module.extensions, module, listenerCallbacks)
       }
     }
 

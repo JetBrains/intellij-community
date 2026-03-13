@@ -29,7 +29,11 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.PsiDocumentManager;
@@ -76,6 +80,7 @@ public final class MainPassesRunner {
       }
       Ref<Exception> exception = Ref.create();
       ProgressManager.getInstance().run(new Task.Modal(myProject, myTitle, true) {
+        @SuppressWarnings("IncorrectCancellationExceptionHandling")
         @Override
         public void run(@NotNull ProgressIndicator progress) {
           try {
@@ -118,7 +123,7 @@ public final class MainPassesRunner {
       @Override
       public void cancel() {
         super.cancel();
-        daemonIndicators.forEach(daemonIndicator -> daemonIndicator.getSecond().cancel());
+        daemonIndicators.forEach(daemonIndicator -> daemonIndicator.getSecond().cancel("main indicator was canceled: "+progress));
       }
     });
     while (true) {
@@ -127,12 +132,12 @@ public final class MainPassesRunner {
       Disposable disposable = Disposer.newDisposable();
       try {
         SensitiveProgressWrapper wrapper = new SensitiveProgressWrapper(progress);
-        ReadAction.run(() -> {
+        ReadAction.runBlocking(() -> {
           ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
             @Override
             public void beforeWriteActionStart(@NotNull Object action) {
               wrapper.cancel();
-              daemonIndicators.forEach(daemonIndicator -> daemonIndicator.getSecond().cancel());
+              daemonIndicators.forEach(daemonIndicator -> daemonIndicator.getSecond().cancel("beforeWriteActionStart: "+action));
             }
           }, disposable);
           // there is a chance we are racing with the write action, in which case just registered listener might not be called, retry.
@@ -144,7 +149,7 @@ public final class MainPassesRunner {
         AtomicInteger filesCompleted = new AtomicInteger();
         JobLauncher.getInstance().invokeConcurrentlyUnderProgress(daemonIndicators, wrapper, pair -> {
           VirtualFile file = pair.getFirst();
-          wrapper.setText(ReadAction.compute(() -> ProjectUtil.calcRelativeToProjectPath(file, myProject)));
+          wrapper.setText(ReadAction.computeBlocking(() -> ProjectUtil.calcRelativeToProjectPath(file, myProject)));
           DaemonProgressIndicator daemonIndicator = pair.getSecond();
           runMainPasses(file, result, daemonIndicator, minimumSeverity);
           int completed = filesCompleted.incrementAndGet();
@@ -170,11 +175,19 @@ public final class MainPassesRunner {
                              @NotNull Map<? super Document, ? super List<HighlightInfo>> result,
                              @NotNull DaemonProgressIndicator daemonIndicator,
                              @Nullable HighlightSeverity minimumSeverity) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ThreadingAssertions.assertBackgroundThread();
     daemonIndicator.checkCanceled();
-    PsiFile psiFile = ReadAction.compute(() -> file.isValid() ? PsiManager.getInstance(myProject).findFile(file) : null);
-    Document document = ReadAction.compute(() -> file.isValid() ? FileDocumentManager.getInstance().getDocument(file) : null);
-    if (psiFile == null || document == null || !ReadAction.compute(() -> ProblemHighlightFilter.shouldProcessFileInBatch(psiFile))) {
+
+    var psiFileAndDoc = ReadAction.computeBlocking(() -> {
+      var doc = file.isValid() ? FileDocumentManager.getInstance().getDocument(file) : null;
+      var psiFile = file.isValid() ? PsiManager.getInstance(myProject).findFile(file) : null;
+      return Pair.create(psiFile, doc);
+    });
+
+    var psiFile = psiFileAndDoc.getFirst();
+    var document = psiFileAndDoc.getSecond();
+
+    if (psiFile == null || document == null || !ReadAction.computeBlocking(() -> ProblemHighlightFilter.shouldProcessFileInBatch(psiFile))) {
       return;
     }
     ProperTextRange range = ProperTextRange.create(0, document.getTextLength());
@@ -182,7 +195,7 @@ public final class MainPassesRunner {
       // todo IJPL-339 figure out what is the correct context here
       CodeInsightContext context;
       if (CodeInsightContexts.isSharedSourceSupportEnabled(myProject)) {
-        context = ReadAction.compute(() -> {
+        context = ReadAction.computeBlocking(() -> {
           CodeInsightContextManager manager = CodeInsightContextManager.getInstance(psiFile.getProject());
           return manager.getCodeInsightContext(psiFile.getViewProvider());
         });
@@ -210,14 +223,15 @@ public final class MainPassesRunner {
     for (int i = 0; i < retries; i++) {
       try {
         InspectionProfile currentProfile = myInspectionProfile;
-        settings.forceUseZeroAutoReparseDelay(true);
         Function<InspectionProfile, InspectionProfileWrapper> profileProvider =
           p -> currentProfile == null
                ? new InspectionProfileWrapper((InspectionProfileImpl)p)
                : new InspectionProfileWrapper(currentProfile, ((InspectionProfileImpl)p).getProfileManager());
-        InspectionProfileWrapper.runWithCustomInspectionWrapper(psiFile, profileProvider, () -> {
-          List<HighlightInfo> infos = codeAnalyzer.runMainPasses(psiFile, document, daemonIndicator);
-          result.put(document, infos);
+        settings.forceUseZeroAutoReparseDelayIn(() -> {
+          InspectionProfileWrapper.runWithCustomInspectionWrapper(psiFile, profileProvider, () -> {
+            List<HighlightInfo> infos = codeAnalyzer.runMainPasses(psiFile, document, daemonIndicator);
+            result.put(document, infos);
+          });
         });
         break;
       }
@@ -229,9 +243,6 @@ public final class MainPassesRunner {
         }
 
         exception = e;
-      }
-      finally {
-        settings.forceUseZeroAutoReparseDelay(false);
       }
     }
     if (exception != null) {

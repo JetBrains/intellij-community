@@ -1,16 +1,69 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization.impl
 
-import com.intellij.java.workspace.entities.*
+import com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity
+import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
+import com.intellij.java.workspace.entities.asJavaResourceRoot
+import com.intellij.java.workspace.entities.asJavaSourceRoot
+import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
-import com.intellij.platform.workspace.jps.*
+import com.intellij.platform.workspace.jps.CustomModuleEntitySource
+import com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
+import com.intellij.platform.workspace.jps.JpsFileEntitySource
+import com.intellij.platform.workspace.jps.JpsImportedEntitySource
+import com.intellij.platform.workspace.jps.JpsMetrics
+import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
+import com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
 import com.intellij.platform.workspace.jps.bridge.impl.serialization.DefaultImlNormalizer
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ContentRootEntityBuilder
+import com.intellij.platform.workspace.jps.entities.CustomSourceRootPropertiesEntity
+import com.intellij.platform.workspace.jps.entities.DependencyScope
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntityBuilder
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlOrderEntity
+import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
+import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryEntityBuilder
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity
+import com.intellij.platform.workspace.jps.entities.ModuleDependency
+import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
+import com.intellij.platform.workspace.jps.entities.ModuleGroupPathEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
+import com.intellij.platform.workspace.jps.entities.ModuleTypeId
+import com.intellij.platform.workspace.jps.entities.SdkDependency
+import com.intellij.platform.workspace.jps.entities.SdkId
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder
+import com.intellij.platform.workspace.jps.entities.SourceRootOrderEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootOrderEntityBuilder
+import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
+import com.intellij.platform.workspace.jps.entities.TestModulePropertiesEntity
+import com.intellij.platform.workspace.jps.entities.contentRoot
+import com.intellij.platform.workspace.jps.entities.customImlData
+import com.intellij.platform.workspace.jps.entities.customSourceRootProperties
+import com.intellij.platform.workspace.jps.entities.exModuleOptions
+import com.intellij.platform.workspace.jps.entities.excludeUrlOrder
+import com.intellij.platform.workspace.jps.entities.groupPath
+import com.intellij.platform.workspace.jps.entities.sourceRootOrder
+import com.intellij.platform.workspace.jps.entities.sourceRoots
+import com.intellij.platform.workspace.jps.entities.testProperties
 import com.intellij.platform.workspace.jps.serialization.SerializationContext
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.DummyParentEntitySource
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.containers.ConcurrentFactoryMap
@@ -19,15 +72,51 @@ import io.opentelemetry.api.metrics.Meter
 import org.jdom.Attribute
 import org.jdom.Element
 import org.jdom.JDOMException
-import org.jetbrains.jps.model.serialization.*
+import org.jetbrains.jps.model.serialization.CannotLoadJpsModelException
+import org.jetbrains.jps.model.serialization.JDomSerializationUtil
+import org.jetbrains.jps.model.serialization.JpsComponentLoader
+import org.jetbrains.jps.model.serialization.JpsMacroExpander
+import org.jetbrains.jps.model.serialization.JpsProjectLoader
+import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer
-import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.*
-import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.*
+import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.EXPORTED_ATTRIBUTE
+import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.INHERIT_COMPILER_OUTPUT_ATTRIBUTE
+import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.IS_GENERATED_ATTRIBUTE
+import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID
+import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.JAVA_TEST_RESOURCE_ROOT_ID
+import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.MODULE_LANGUAGE_LEVEL_ATTRIBUTE
+import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.PRODUCTION_MODULE_NAME_ATTRIBUTE
+import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.RELATIVE_OUTPUT_PATH_ATTRIBUTE
+import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.SCOPE_ATTRIBUTE
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.CONTENT_TAG
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.EXCLUDE_FOLDER_TAG
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.EXCLUDE_PATTERN_ATTRIBUTE
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.EXCLUDE_PATTERN_TAG
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.INHERITED_JDK_TYPE
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.IS_TEST_SOURCE_ATTRIBUTE
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.JDK_NAME_ATTRIBUTE
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.JDK_TYPE
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.JDK_TYPE_ATTRIBUTE
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.LEVEL_ATTRIBUTE
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.LIBRARY_TAG
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.LIBRARY_TYPE
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.MODULE_LIBRARY_TYPE
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.MODULE_NAME_ATTRIBUTE
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.MODULE_TYPE
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.NAME_ATTRIBUTE
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.ORDER_ENTRY_TAG
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.PACKAGE_PREFIX_ATTRIBUTE
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.SOURCE_FOLDER_TAG
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.SOURCE_FOLDER_TYPE
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.SOURCE_ROOT_TYPE_ATTRIBUTE
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.TYPE_ATTRIBUTE
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.StringReader
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.*
+import java.util.TreeMap
 import kotlin.io.path.Path
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
@@ -46,6 +135,8 @@ private val MODULE_OPTIONS_TO_CHECK = setOf(
   "external.system.module.version", "external.linked.project.path", "external.linked.project.id",
   "external.root.project.path", "external.system.module.group", "external.system.module.type"
 )
+
+internal val LOG = logger<ModuleImlFileEntitiesSerializer>()
 
 internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePath,
                                                     override val fileUrl: VirtualFileUrl,
@@ -804,7 +895,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   ) {
     val externalSystemOptions = module.exModuleOptions
     val customImlData = module.customImlData
-    saveModuleOptions(externalSystemOptions, module.type?.name, customImlData, content)
+    saveModuleOptions(externalSystemOptions, module.type?.name, module.entitySource, customImlData, content)
     val moduleOptions = customImlData?.customModuleOptions
     val customSerializerId = moduleOptions?.get(JpsProjectLoader.CLASSPATH_ATTRIBUTE)
     if (customSerializerId != null) {
@@ -957,9 +1048,15 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
   protected open fun saveModuleOptions(externalSystemOptions: ExternalSystemModuleOptionsEntity?,
                                        moduleType: String?,
+                                       moduleEntitySource: EntitySource,
                                        customImlData: ModuleCustomImlDataEntity?,
                                        content: WritableJpsFileContent) {
     val optionsMap = TreeMap<String, String?>()
+    if (moduleEntitySource is JpsImportedEntitySource && moduleEntitySource.externalSystemId != externalSystemOptions?.externalSystem) {
+      LOG.error("External system ID mismatch: ModuleEntity.entitySource (${moduleEntitySource.externalSystemId}) != ExternalSystemModuleOptionsEntity.externalSystem (${externalSystemOptions?.externalSystem}). " +
+                "Module is probably misconfigured. It'll get '${externalSystemOptions?.externalSystem}' system ID after deserialization.")
+    }
+
     if (externalSystemOptions != null) {
       if (externalSystemOptions.externalSystem == SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID) {
         optionsMap[SerializationConstants.IS_MAVEN_MODULE_IML_ATTRIBUTE] = true.toString()
@@ -1059,8 +1156,6 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   override fun toString(): String = "ModuleImlFileEntitiesSerializer($fileUrl)"
 
   companion object {
-    private val LOG = logger<ModuleImlFileEntitiesSerializer>()
-
     // The comparator has reversed priority. So, the last entry of this list will be printed as a first attribute in the xml tag.
     private val orderOfKnownAttributes = listOf(
       INHERIT_COMPILER_OUTPUT_ATTRIBUTE,

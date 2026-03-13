@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +63,6 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   /**
    * Executes {@code action} inside write action.
    */
-  @RequiresEdt
   public static <E extends Throwable> void run(@NotNull ThrowableRunnable<E> action) throws E {
     ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Void, E>)() -> {
       action.run();
@@ -75,7 +73,6 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   /**
    * Executes {@code action} inside write action and returns the result.
    */
-  @RequiresEdt
   public static <T, E extends Throwable> T compute(@NotNull ThrowableComputable<T, E> action) throws E {
     return ApplicationManager.getApplication().runWriteAction(action);
   }

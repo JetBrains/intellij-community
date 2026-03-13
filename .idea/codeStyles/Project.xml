@@ -13,10 +13,7 @@
       <option name="STATIC_METHODS_ORDER_WEIGHT" value="5" />
       <option name="METHODS_ORDER_WEIGHT" value="4" />
       <option name="PACKAGES_TO_USE_IMPORT_ON_DEMAND">
-        <value>
-          <package name="java.util" withSubpackages="false" static="false" />
-          <package name="java.lang" withSubpackages="false" static="false" />
-        </value>
+        <value />
       </option>
     </GroovyCodeStyleSettings>
     <JavaCodeStyleSettings>
@@ -24,8 +21,8 @@
       <option name="STATIC_FIELD_NAME_PREFIX" value="our" />
       <option name="PREFER_LONGER_NAMES" value="false" />
       <option name="VISIBILITY" value="EscalateVisible" />
-      <option name="CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND" value="2147483647" />
-      <option name="NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND" value="2147483647" />
+      <option name="CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND" value="9999" />
+      <option name="NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND" value="9999" />
       <option name="PACKAGES_TO_USE_IMPORT_ON_DEMAND">
         <value />
       </option>
@@ -35,8 +32,8 @@
       <option name="PACKAGES_TO_USE_STAR_IMPORTS">
         <value />
       </option>
-      <option name="NAME_COUNT_TO_USE_STAR_IMPORT" value="2147483647" />
-      <option name="NAME_COUNT_TO_USE_STAR_IMPORT_FOR_MEMBERS" value="2147483647" />
+      <option name="NAME_COUNT_TO_USE_STAR_IMPORT" value="9999" />
+      <option name="NAME_COUNT_TO_USE_STAR_IMPORT_FOR_MEMBERS" value="9999" />
     </JetCodeStyleSettings>
     <Properties>
       <option name="KEEP_BLANK_LINES" value="true" />

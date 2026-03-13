@@ -12,7 +12,11 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JTextArea;
+import javax.swing.UIManager;
 import java.awt.event.ActionEvent;
 
 public final class IOExceptionDialog extends DialogWrapper {

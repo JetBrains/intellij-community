@@ -32,17 +32,27 @@ jvm_library(
   associates = [":vcs-core"],
   deps = [
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/ide-core",
     "//platform/diff-api:diff",
+    "//platform/diff-api:diff_test_lib",
     "//platform/util/diff",
+    "//platform/util/diff:diff_test_lib",
     "@lib//:kotlin-stdlib",
     "//libraries/junit5",
+    "//libraries/junit5:junit5_test_lib",
     "//libraries/junit5-params",
+    "//libraries/junit5-params:junit5-params_test_lib",
     "//libraries/assertj-core",
+    "//libraries/assertj-core:assertj-core_test_lib",
     "//libraries/kotlinx/serialization/core",
-  ]
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+  ],
+  runtime_deps = ["//platform/ide-core:ide-core_test_lib"]
 )
 ### auto-generated section `build intellij.platform.vcs.core` end
 

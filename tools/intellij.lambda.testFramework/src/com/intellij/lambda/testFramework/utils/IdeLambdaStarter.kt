@@ -57,8 +57,8 @@ internal fun IDETestContext.runIdeWithLambda(
                                                     launchName,
                                                     expectedKill,
                                                     expectedExitCode,
-                                                    collectNativeThreads,
-                                                    configure)
+                                                    collectNativeThreads = collectNativeThreads,
+                                                    configure = configure)
   monolithRdSession.awaitSessionReady()
   return IdeWithLambda(backgroundRun, monolithRdSession, null)
 }
@@ -84,8 +84,9 @@ internal fun IDERemDevTestContext.runIdeWithLambda(
                                                     launchName,
                                                     expectedKill,
                                                     expectedExitCode,
-                                                    collectNativeThreads,
-                                                    configure)
+                                                    collectNativeThreads = collectNativeThreads,
+                                                    pauseOnIndexing = null,
+                                                    configure = configure)
   listOf(backendRdSession, frontendRdSession)
     .forEach { it.awaitSessionReady(if (this.frontendIDEContext.ide.vmOptions.hasHeadlessMode()) 15.seconds else 30.seconds) }
   return IdeWithLambda(backgroundRun, rdSession = frontendRdSession, backendRdSession = backendRdSession).also {

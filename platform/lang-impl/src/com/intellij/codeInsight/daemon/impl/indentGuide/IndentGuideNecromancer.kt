@@ -1,12 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.indentGuide
 
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.IndentGuideDescriptor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.IndentsModelImpl
-import com.intellij.openapi.editor.impl.zombie.*
+import com.intellij.openapi.editor.impl.zombie.CleaverNecromancer
+import com.intellij.openapi.editor.impl.zombie.Necromancer
+import com.intellij.openapi.editor.impl.zombie.NecromancerAwaker
+import com.intellij.openapi.editor.impl.zombie.Recipe
+import com.intellij.openapi.editor.impl.zombie.SpawnRecipe
+import com.intellij.openapi.editor.impl.zombie.TurningRecipe
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
@@ -42,7 +47,7 @@ private class IndentGuideNecromancer(
     limbs: List<IndentGuideDescriptor>,
   ): (Editor) -> Unit {
     val indentGuides = IndentGuides(recipe.document, IndentGuideZombieRenderer)
-    runReadAction {
+    runReadActionBlocking {
       indentGuides.buildIndents(limbs)
     }
     return { editor ->

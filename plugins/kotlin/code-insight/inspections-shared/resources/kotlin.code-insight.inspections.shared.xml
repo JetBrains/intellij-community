@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.codeInsight.inspections.shared">
+<idea-plugin package="org.jetbrains.kotlin.idea.codeInsight.inspections.shared" visibility="internal">
   <extensions defaultExtensionNs="com.intellij">
 
     <codeInsight.blockingMethodChecker

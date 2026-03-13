@@ -21,6 +21,16 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit.NANOSECONDS
+import kotlin.Any
+import kotlin.ArithmeticException
+import kotlin.Long
+import kotlin.LongArray
+import kotlin.String
+import kotlin.Throwable
+import kotlin.collections.forEachIndexed
+import kotlin.collections.set
+import kotlin.collections.sum
+import kotlin.collections.sumOf
 
 /**
  * Reports JVM-wide metrics into OTel.Metrics.

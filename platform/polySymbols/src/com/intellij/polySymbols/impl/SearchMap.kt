@@ -2,23 +2,38 @@
 package com.intellij.polySymbols.impl
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.polySymbols.*
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolKind
+import com.intellij.polySymbols.PolySymbolKindName
+import com.intellij.polySymbols.PolySymbolNamespace
+import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.patterns.PolySymbolPattern
-import com.intellij.polySymbols.query.*
+import com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
+import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
+import com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams
+import com.intellij.polySymbols.query.PolySymbolNamesProvider
+import com.intellij.polySymbols.query.PolySymbolQueryParams
+import com.intellij.polySymbols.query.PolySymbolQueryStack
 import com.intellij.polySymbols.utils.match
 import com.intellij.polySymbols.utils.toCodeCompletionItems
 import com.intellij.polySymbols.utils.withMatchedName
 import com.intellij.util.SmartList
 import com.intellij.util.text.CharSequenceSubSequence
-import java.util.*
+import java.util.Collections
+import java.util.NavigableMap
+import java.util.TreeMap
 
 internal abstract class SearchMap<T> internal constructor(
   private val namesProvider: PolySymbolNamesProvider,
+  useSyncMap: Boolean = false,
 ) {
 
-  private val patterns: TreeMap<SearchMapEntry, MutableList<T>> = TreeMap()
-  private val statics: TreeMap<SearchMapEntry, MutableList<T>> = TreeMap()
+  private val patterns: NavigableMap<SearchMapEntry, MutableList<T>> =
+    if (useSyncMap) Collections.synchronizedNavigableMap(TreeMap()) else TreeMap()
+
+  private val statics: NavigableMap<SearchMapEntry, MutableList<T>> =
+    if (useSyncMap) Collections.synchronizedNavigableMap(TreeMap()) else TreeMap()
 
   internal abstract fun Sequence<T>.mapAndFilter(params: PolySymbolQueryParams): Sequence<PolySymbol>
 

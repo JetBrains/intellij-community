@@ -11,11 +11,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.function.Function;
 
-/**
- * Fix to add a new value to inspection option list
- * 
- * @param <T> inspection class
- */
+/// Adds one value to a list-based inspection option and keeps the list sorted.
+///
+/// @param <T> inspection type
+/// @see UpdateInspectionOptionFix
 public class AddToInspectionOptionListFix<T extends InspectionProfileEntry> extends ModCommandQuickFix implements LowPriorityAction {
   private final String myItemToAdd;
   private final @IntentionName String myFixName;
@@ -23,12 +22,14 @@ public class AddToInspectionOptionListFix<T extends InspectionProfileEntry> exte
   private final @NotNull Function<@NotNull T, @NotNull List<String>> myExtractor;
 
   /**
-   * @param inspection inspection object
-   * @param fixName name of the quick-fix
-   * @param itemToAdd item to add
+   * @param inspection    inspection object
+   * @param fixName       name of the quick-fix
+   * @param itemToAdd     item to add
    * @param listExtractor a function that retrieves the option
    */
-  public AddToInspectionOptionListFix(@NotNull T inspection, @IntentionName String fixName, @NotNull String itemToAdd, 
+  public AddToInspectionOptionListFix(@NotNull T inspection,
+                                      @IntentionName String fixName,
+                                      @NotNull String itemToAdd,
                                       @NotNull Function<@NotNull T, @NotNull List<String>> listExtractor) {
     myInspection = inspection;
     myExtractor = listExtractor;
@@ -48,11 +49,10 @@ public class AddToInspectionOptionListFix<T extends InspectionProfileEntry> exte
 
   @Override
   public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    return ModCommand.updateInspectionOption(descriptor.getStartElement(), myInspection,
-                                    inspection -> {
-                                      List<String> list = myExtractor.apply(inspection);
-                                      list.add(myItemToAdd);
-                                      list.sort(null);
-                                    });
+    return ModCommand.updateInspectionOption(descriptor.getStartElement(), myInspection, inspection -> {
+      List<String> list = myExtractor.apply(inspection);
+      list.add(myItemToAdd);
+      list.sort(null);
+    });
   }
 }

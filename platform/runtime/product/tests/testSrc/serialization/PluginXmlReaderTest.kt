@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.product.serialization
 
-import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
+import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.product.serialization.impl.loadPluginModules
 import com.intellij.platform.runtime.repository.RuntimeModuleId
+import com.intellij.platform.runtime.repository.createModuleDescriptor
 import com.intellij.platform.runtime.repository.createRepository
-import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.writePluginXml
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -22,7 +22,7 @@ class PluginXmlReaderTest {
   fun `single module`() {
     val repository = createRepository(
       tempDirectory.rootPath,
-      RawRuntimeModuleDescriptor.create("plugin.main", listOf("plugin"), emptyList()),
+      createModuleDescriptor("plugin.main", listOf("plugin"), emptyList()),
     )
     writePluginXml(tempDirectory.rootPath / "plugin", 
         """
@@ -42,12 +42,12 @@ class PluginXmlReaderTest {
   fun `multiple modules`() {
     val repository = createRepository(
       tempDirectory.rootPath,
-      RawRuntimeModuleDescriptor.create("plugin.main", listOf("plugin"), emptyList()),
-      RawRuntimeModuleDescriptor.create("plugin.optional", emptyList(), listOf("plugin.main")),
-      RawRuntimeModuleDescriptor.create("plugin.optional.explicit", emptyList(), listOf("plugin.main")),
-      RawRuntimeModuleDescriptor.create("plugin.on_demand", emptyList(), emptyList()),
-      RawRuntimeModuleDescriptor.create("plugin.required", emptyList(), emptyList()),
-      RawRuntimeModuleDescriptor.create("plugin.embedded", emptyList(), emptyList()),
+      createModuleDescriptor("plugin.main", listOf("plugin"), emptyList()),
+      createModuleDescriptor("plugin.optional", emptyList(), listOf("plugin.main")),
+      createModuleDescriptor("plugin.optional.explicit", emptyList(), listOf("plugin.main")),
+      createModuleDescriptor("plugin.on_demand", emptyList(), emptyList()),
+      createModuleDescriptor("plugin.required", emptyList(), emptyList()),
+      createModuleDescriptor("plugin.embedded", emptyList(), emptyList()),
     )
     @Suppress("XmlUnusedNamespaceDeclaration") 
     writePluginXml(tempDirectory.rootPath / "plugin", 

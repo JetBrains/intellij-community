@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.completion.kmpBasic;
 
@@ -649,9 +649,29 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
             runTest("../../completion/testData/basic/common/callableReference/ExpressionQualifier.kt");
         }
 
+        @TestMetadata("ExtensionOnNestedClasses.kt")
+        public void testExtensionOnNestedClasses() throws Exception {
+            runTest("../../completion/testData/basic/common/callableReference/ExtensionOnNestedClasses.kt");
+        }
+
         @TestMetadata("GenericConstructor.kt")
         public void testGenericConstructor() throws Exception {
             runTest("../../completion/testData/basic/common/callableReference/GenericConstructor.kt");
+        }
+
+        @TestMetadata("GenericExtensionCallableReference.kt")
+        public void testGenericExtensionCallableReference() throws Exception {
+            runTest("../../completion/testData/basic/common/callableReference/GenericExtensionCallableReference.kt");
+        }
+
+        @TestMetadata("GenericExtensionCallableReferenceWithTypeAlias.kt")
+        public void testGenericExtensionCallableReferenceWithTypeAlias() throws Exception {
+            runTest("../../completion/testData/basic/common/callableReference/GenericExtensionCallableReferenceWithTypeAlias.kt");
+        }
+
+        @TestMetadata("GenericNestedClassesExtensionReference.kt")
+        public void testGenericNestedClassesExtensionReference() throws Exception {
+            runTest("../../completion/testData/basic/common/callableReference/GenericNestedClassesExtensionReference.kt");
         }
 
         @TestMetadata("HigherOrderFunction.kt")
@@ -712,6 +732,70 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
         @TestMetadata("Unsupported.kt")
         public void testUnsupported() throws Exception {
             runTest("../../completion/testData/basic/common/callableReference/Unsupported.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../completion/testData/basic/common/companionObject")
+    public static class CompanionObject extends AbstractKotlinKmpCompletionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        @java.lang.Override
+        public KMPTestPlatform getTestPlatform() {
+            return KMPTestPlatform.CommonNativeJvm;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ForArguments.kt")
+        public void testForArguments() throws Exception {
+            runTest("../../completion/testData/basic/common/companionObject/ForArguments.kt");
+        }
+
+        @TestMetadata("FunctionsForExpectedType.kt")
+        public void testFunctionsForExpectedType() throws Exception {
+            runTest("../../completion/testData/basic/common/companionObject/FunctionsForExpectedType.kt");
+        }
+
+        @TestMetadata("NoUnrelatedValues.kt")
+        public void testNoUnrelatedValues() throws Exception {
+            runTest("../../completion/testData/basic/common/companionObject/NoUnrelatedValues.kt");
+        }
+
+        @TestMetadata("ValuesForExpectedType.kt")
+        public void testValuesForExpectedType() throws Exception {
+            runTest("../../completion/testData/basic/common/companionObject/ValuesForExpectedType.kt");
+        }
+
+        @TestMetadata("WithinCompanionObject.kt")
+        public void testWithinCompanionObject() throws Exception {
+            runTest("../../completion/testData/basic/common/companionObject/WithinCompanionObject.kt");
+        }
+
+        @TestMetadata("WithinInnerClass.kt")
+        public void testWithinInnerClass() throws Exception {
+            runTest("../../completion/testData/basic/common/companionObject/WithinInnerClass.kt");
+        }
+
+        @TestMetadata("WithinNestedClass.kt")
+        public void testWithinNestedClass() throws Exception {
+            runTest("../../completion/testData/basic/common/companionObject/WithinNestedClass.kt");
+        }
+
+        @TestMetadata("WithinNestedObject.kt")
+        public void testWithinNestedObject() throws Exception {
+            runTest("../../completion/testData/basic/common/companionObject/WithinNestedObject.kt");
+        }
+
+        @TestMetadata("WithinSameClass.kt")
+        public void testWithinSameClass() throws Exception {
+            runTest("../../completion/testData/basic/common/companionObject/WithinSameClass.kt");
         }
     }
 
@@ -791,11 +875,6 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
         @TestMetadata("SingleConstructor.kt")
         public void testSingleConstructor() throws Exception {
             runTest("../../completion/testData/basic/common/constructor/SingleConstructor.kt");
-        }
-
-        @TestMetadata("SubclassConstructor.kt")
-        public void testSubclassConstructor() throws Exception {
-            runTest("../../completion/testData/basic/common/constructor/SubclassConstructor.kt");
         }
     }
 
@@ -2355,6 +2434,11 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
         @TestMetadata("SecondConstructorParameter.kt")
         public void testSecondConstructorParameter() throws Exception {
             runTest("../../completion/testData/basic/common/override/SecondConstructorParameter.kt");
+        }
+
+        @TestMetadata("SecondConstructorParameterWithDuplicateClass.kt")
+        public void testSecondConstructorParameterWithDuplicateClass() throws Exception {
+            runTest("../../completion/testData/basic/common/override/SecondConstructorParameterWithDuplicateClass.kt");
         }
 
         @TestMetadata("Simple.kt")

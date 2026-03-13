@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighter
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
@@ -105,10 +107,14 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
         withLibrary(libraryFile) {
             val fileToOpen = openFileAction(virtualFile)
             val openedPsiFile = PsiManager.getInstance(project).findFile(fileToOpen) ?: error("unable to locate PSI for $virtualFile")
-            val highlightingSetting = HighlightingSettingsPerFile.getInstance(project).getHighlightingSettingForRoot(openedPsiFile)
-            assertEquals(expectedHighlightingSetting, highlightingSetting)
-            myFixture.openFileInEditor(fileToOpen)
-            doTest(expectedDuplicatedHighlighting)
+            if (!DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(openedPsiFile)) {
+                assertEquals(expectedHighlightingSetting, FileHighlightingSetting.SKIP_HIGHLIGHTING)
+            } else {
+                val highlightingSetting = HighlightingSettingsPerFile.getInstance(project).getHighlightingSettingForRoot(openedPsiFile)
+                assertEquals(expectedHighlightingSetting, highlightingSetting)
+                myFixture.openFileInEditor(fileToOpen)
+                doTest(expectedDuplicatedHighlighting)
+            }
         }
     }
 

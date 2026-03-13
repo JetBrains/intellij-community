@@ -5,6 +5,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.settings.McpServerSettings
+import com.intellij.mcpserver.util.parsePathForProjectLookup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModernApplicationStarter
 import com.intellij.openapi.application.writeIntentReadAction
@@ -15,7 +16,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import java.nio.file.Paths
 import kotlin.time.Duration.Companion.minutes
 
 /**
@@ -49,7 +49,11 @@ internal class McpServerHeadlessStarter : ModernApplicationStarter() {
     System.err.println("Waiting for project initialization...")
     try {
       for (projectPathStr in projectPaths) {
-        val projectPath = Paths.get(projectPathStr)
+        val projectPath = parsePathForProjectLookup(projectPathStr)
+                          ?: run {
+                            System.err.println("Warning: Invalid project path '$projectPathStr', skipping...")
+                            continue
+                          }
         val project = ProjectUtil.openOrImportAsync(
           file = projectPath,
           options = OpenProjectTask()

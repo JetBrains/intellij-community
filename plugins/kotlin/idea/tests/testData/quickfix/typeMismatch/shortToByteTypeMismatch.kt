@@ -1,4 +1,5 @@
 // "Change type of 'x' to 'Int'" "true"
+// K2_ERROR: Initializer type mismatch: expected 'Byte', actual 'Int'.
 
 fun foo() {
     val x: Byte = <caret>1000

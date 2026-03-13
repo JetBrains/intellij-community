@@ -5,9 +5,20 @@ import com.intellij.driver.client.impl.DriverCallException
 import com.intellij.driver.model.LockSemantics
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.RemoteMouseButton
-import com.intellij.driver.sdk.*
+import com.intellij.driver.sdk.DeclarativeInlayRenderer
+import com.intellij.driver.sdk.Document
+import com.intellij.driver.sdk.Editor
+import com.intellij.driver.sdk.HighlightInfo
+import com.intellij.driver.sdk.HintRenderer
+import com.intellij.driver.sdk.Inlay
+import com.intellij.driver.sdk.InlineCompletionLineRenderer
+import com.intellij.driver.sdk.ScrollType
+import com.intellij.driver.sdk.getHighlights
+import com.intellij.driver.sdk.invokeAction
+import com.intellij.driver.sdk.logicalPosition
 import com.intellij.driver.sdk.remoteDev.BeControlClass
 import com.intellij.driver.sdk.remoteDev.EditorComponentImplBeControlBuilder
+import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.DEFAULT_FIND_TIMEOUT
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.center
@@ -22,12 +33,14 @@ import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.rdTarget
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.shouldContainText
+import com.intellij.driver.sdk.wait
+import com.intellij.driver.sdk.waitFor
+import com.intellij.driver.sdk.waitNotNull
 import org.intellij.lang.annotations.Language
 import java.awt.Color
 import java.awt.Point
 import java.awt.Rectangle
 import kotlin.time.Duration
-import com.intellij.openapi.editor.markup.EffectType
 import kotlin.time.Duration.Companion.milliseconds
 
 fun Finder.editor(@Language("xpath") xpath: String? = null): JEditorUiComponent {
@@ -146,7 +159,9 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   fun getFontSize(): Int = editor.getColorsScheme().getEditorFontSize()
 
   fun clickOn(text: String, button: RemoteMouseButton = RemoteMouseButton.LEFT, times: Int = 1) {
-    val offset = this.text.indexOf(text) + text.length / 2
+    val textIndex = this.text.indexOf(text)
+    assert(textIndex >= 0) { "Text '$text' not found in editor" }
+    val offset = textIndex + text.length / 2
     val point = interact {
       val p = offsetToVisualPosition(offset)
       visualPositionToXY(p)
@@ -278,7 +293,7 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     TextAttributes(
       it.getStartOffset(),
       it.getEndOffset(),
-      EffectType.valueOf(attrs.getEffectType().toString()),
+      EffectTypeValues.valueOf(attrs.getEffectType().toString()),
       attrs.getEffectColor()?.run { Color(getRGB()) }
     )
   }
@@ -298,7 +313,21 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
 
   private fun scrollType(name: String = "CENTER") = driver.utility(ScrollType::class).valueOf(name)
 
-  data class TextAttributes(val startOffset: Int, val endOffset: Int, val effectType: EffectType, val effectColor: Color?)
+  data class TextAttributes(val startOffset: Int, val endOffset: Int, val effectType: EffectTypeValues, val effectColor: Color?)
+
+  // copy of com.intellij.openapi.editor.markup.EffectType
+  // test-sdk may not depend on platform JARs
+  enum class EffectTypeValues {
+    LINE_UNDERSCORE,
+    WAVE_UNDERSCORE,
+    BOXED,
+    STRIKEOUT,
+    BOLD_LINE_UNDERSCORE,
+    BOLD_DOTTED_LINE,
+    SEARCH_MATCH,
+    ROUNDED_BOX,
+    SLIGHTLY_WIDER_BOX;
+  }
 }
 
 @Remote("com.jetbrains.performancePlugin.utils.IntentionActionUtils", plugin = "com.jetbrains.performancePlugin")
@@ -340,7 +369,7 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
         .map { GutterIcon(it) }
     }
 
-  val iconAreaOffset
+  val iconAreaOffset: Int
     get() = gutter.getIconAreaOffset()
 
   fun icon(timeout: Duration = DEFAULT_FIND_TIMEOUT, errorMessage: String = "icon not found", predicate: (GutterIcon) -> Boolean): GutterIcon =
@@ -351,7 +380,7 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
     return this.icons
   }
 
-  fun getIconName(line: Int) =
+  fun getIconName(line: Int): String =
     icons.firstOrNull { it.line == line - 1 }?.mark?.getIcon().toString().substringAfterLast("/")
 
   fun hoverOverIcon(line: Int) {
@@ -465,7 +494,7 @@ class EditorSearchReplaceComponent(data: ComponentData) : UiComponent(data) {
   val searchHistoryButton: ActionButtonUi = actionButton { byAccessibleName("Search History") }
 
   // The components below are available in "find in large file" only
-  val matchCaseCheckBox: JCheckBoxUi = checkBox { byAccessibleName("Match сase") }
+  val matchCaseCheckBox: JCheckBoxUi = checkBox { byAccessibleName("Match case") }
   val wordsCheckBox: JCheckBoxUi = checkBox { byAccessibleName("Words") }
   val regexCheckBox: JCheckBoxUi = checkBox { byAccessibleName("Regex") }
   val searchAllButton: ActionButtonUi = actionButton { byAccessibleName("Search All") }

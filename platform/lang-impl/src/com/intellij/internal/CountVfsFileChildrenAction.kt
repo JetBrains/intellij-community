@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys.VIRTUAL_FILE
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -71,7 +71,7 @@ internal class CountVfsFileChildrenAction : AnAction(), DumbAware {
         var ignoredFilesCount = 0
         visitChildrenInVfsRecursively(root).forEach { file ->
           vfsFilesCount++
-          runReadAction {
+          runReadActionBlocking {
             when {
               fileIndex.isInContent(file) -> {
                 contentFilesCount++

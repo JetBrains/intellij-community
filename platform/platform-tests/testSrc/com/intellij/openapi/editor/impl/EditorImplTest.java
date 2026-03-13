@@ -2,7 +2,14 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
@@ -25,16 +32,28 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.LoggedError;
+import com.intellij.testFramework.MockFontLayoutService;
+import com.intellij.testFramework.TestLoggerFactory;
+import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JViewport;
+import java.awt.AWTEvent;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.InputMethodEvent;
 import java.awt.event.KeyEvent;
@@ -334,7 +353,7 @@ public class EditorImplTest extends AbstractEditorTest {
       }
     }, getTestRootDisposable());
     runWriteCommand(() -> DocumentUtil.executeInBulk(document, ()-> document.insertString(3, "\n\n")));
-    RangeHighlighter[] highlighters = getEditor().getMarkupModel().getAllHighlighters();
+    RangeHighlighter[] highlighters = ContainerUtil.findAllAsArray(getEditor().getMarkupModel().getAllHighlighters(), h->h.isValid());
     assertEquals(1, highlighters.length);
     assertEquals(7, highlighters[0].getStartOffset());
     assertEquals(8, highlighters[0].getEndOffset());
@@ -349,7 +368,7 @@ public class EditorImplTest extends AbstractEditorTest {
                                                        new TextAttributes(null, null, null, null, Font.BOLD),
                                                        HighlighterTargetArea.EXACT_RANGE);
     });
-    RangeHighlighter[] highlighters = getEditor().getMarkupModel().getAllHighlighters();
+    RangeHighlighter[] highlighters = ContainerUtil.findAllAsArray(getEditor().getMarkupModel().getAllHighlighters(), h->h.isValid());
     assertEquals(1, highlighters.length);
     assertEquals(7, highlighters[0].getStartOffset());
     assertEquals(8, highlighters[0].getEndOffset());

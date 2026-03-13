@@ -49,7 +49,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
-import java.nio.file.Paths
 import kotlin.io.path.exists
 
 internal class EnvironmentCreatorPoetry<P : PathHolder>(
@@ -86,9 +85,10 @@ internal class EnvironmentCreatorPoetry<P : PathHolder>(
     scope.launch(Dispatchers.IO) {
       val moduleDir = model.getBasePath(module).let { VirtualFileManager.getInstance().findFileByNioPath(it) }
 
-      val validatedInterpreters = moduleDir?.let {
-        PoetryPyProjectTomlPythonVersionsService.instance.validateInterpretersVersions(moduleDir, model.baseInterpreters)
-      } ?: model.baseInterpreters
+      val project = module?.project
+      val validatedInterpreters = if (moduleDir != null && project != null) {
+        PoetryPyProjectTomlPythonVersionsService.getInstance(project).validateInterpretersVersions(moduleDir, model.baseInterpreters)
+      } else model.baseInterpreters
 
       withContext(Dispatchers.EDT) {
         basePythonComboBox.initialize(scope, validatedInterpreters)
@@ -108,7 +108,7 @@ internal class EnvironmentCreatorPoetry<P : PathHolder>(
 
           venvExistenceValidationState.set(
             if (venvPath.exists())
-              Error(Paths.get(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME))
+              Error(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME)
             else
               Invisible
           )
@@ -124,7 +124,8 @@ internal class EnvironmentCreatorPoetry<P : PathHolder>(
       is PathHolder.Eel -> createNewPoetrySdk(
         moduleBasePath = moduleBasePath,
         basePythonBinaryPath = basePythonBinaryPath.path,
-        installPackages = false
+        installPackages = false,
+        errorSink = errorSink
       )
       else -> PyResult.localizedError(PyBundle.message("target.is.not.supported", basePythonBinaryPath))
     }
@@ -145,7 +146,7 @@ internal class EnvironmentCreatorPoetry<P : PathHolder>(
     with(panel) {
       row("") {
         checkBox(PyBundle.message("python.sdk.poetry.dialog.add.new.environment.in.project.checkbox"))
-          .bindSelected(service<PoetryConfigService>().state::isInProjectEnv)
+          .bindSelected(isInProjectEnvProp)
       }
     }
   }

@@ -38,7 +38,7 @@ import javax.swing.event.ListSelectionListener
 internal class PyPackagesSdkController(private val project: Project) : Disposable.Default {
 
   private val packagingScope: CoroutineScope = PyPackageCoroutine.getScope(project)
-    .childScope("Packages SDK Controller", TraceContext(PyBundle.message("tracecontext.packages.sdk.controller"), null)).also {
+    .childScope("Packages SDK Controller", TraceContext(PyBundle.message("trace.context.packages.sdk.controller"), null)).also {
       Disposer.register(this, it.asDisposable())
     }
 

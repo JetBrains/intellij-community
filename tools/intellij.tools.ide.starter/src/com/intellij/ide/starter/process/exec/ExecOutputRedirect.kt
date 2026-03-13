@@ -1,11 +1,15 @@
 package com.intellij.ide.starter.process.exec
 
 import com.intellij.tools.ide.util.common.logOutput
-import java.io.File
 import java.io.PrintWriter
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.createDirectories
+import kotlin.io.path.createFile
+import kotlin.io.path.exists
+import kotlin.io.path.readText
 
 /**
  * Specifies how a child process' stdout or stderr must be redirected in the current process:
@@ -42,8 +46,7 @@ sealed class ExecOutputRedirect {
     override fun toString() = "ignored"
   }
 
-  data class ToFile(val outputFile: File, private val reportDebugForAutoAttach: Boolean = true) : ExecOutputRedirect() {
-
+  data class ToFile(val outputFile: Path, private val reportDebugForAutoAttach: Boolean = true) : ExecOutputRedirect() {
     private var writer: PrintWriter? = null
 
     //Todo instead of scheduling once a second,
@@ -74,10 +77,10 @@ sealed class ExecOutputRedirect {
     private fun initializeWriterIfNotInitialized(): PrintWriter {
       return writer ?: run {
         outputFile.apply {
-          toPath().parent.createDirectories()
-          createNewFile()
+          parent.createDirectories()
+          if (!outputFile.exists()) createFile()
         }
-        outputFile.printWriter().also {
+        PrintWriter(Files.newBufferedWriter(outputFile)).also {
           writer = it
           scheduler.scheduleAtFixedRate({ it.flushPendingChanges() }, 1, 1, TimeUnit.SECONDS)
         }

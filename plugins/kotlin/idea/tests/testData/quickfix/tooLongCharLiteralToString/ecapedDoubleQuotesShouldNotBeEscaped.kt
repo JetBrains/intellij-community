@@ -1,4 +1,5 @@
 // "Convert too long character literal to string" "true"
+// K2_ERROR: Too many characters in a character literal.
 
 fun foo() {
     'foo\"bar'<caret>

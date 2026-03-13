@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -11,7 +10,6 @@ import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiPackageStatement;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -155,7 +153,7 @@ public /* sealed */ interface NullabilitySource {
       container(); // validate
     }
 
-    public @NotNull PsiModifierListOwner container() {
+    @NotNull PsiElement container() {
       PsiModifierList modifierList = (PsiModifierList)requireNonNull(myAnnotation.getOwner(), "Annotation has no owner");
       PsiElement owner = requireNonNull(modifierList.getParent(), "Modifier list has no parent");
       if (owner instanceof PsiModifierListOwner) {
@@ -170,15 +168,7 @@ public /* sealed */ interface NullabilitySource {
         if (packageStatement.getAnnotationList() != modifierList) {
           throw new IllegalStateException("Modifier list parent is incorrect");
         }
-        String packageName = packageStatement.getPackageName();
-        if (packageName == null) {
-          throw new IllegalStateException("Package name is empty");
-        }
-        PsiPackage psiPackage = JavaPsiFacade.getInstance(packageStatement.getProject()).findPackage(packageName);
-        if (psiPackage == null) {
-          throw new IllegalStateException("Package reference is not resolved");
-        }
-        return psiPackage;
+        return owner;
       }
       else {
         throw new IllegalStateException("Unsupported modifier list parent: " + owner.getClass().getName());
@@ -203,7 +193,7 @@ public /* sealed */ interface NullabilitySource {
 
     @Override
     public String toString() {
-      PsiModifierListOwner container = container();
+      PsiElement container = container();
       String containerInfo;
       if (container instanceof PsiClass) {
         containerInfo = "class " + ((PsiClass)container).getName();
@@ -214,8 +204,8 @@ public /* sealed */ interface NullabilitySource {
       else if (container instanceof PsiMethod) {
         containerInfo = "method " + ((PsiMethod)container).getName();
       }
-      else if (container instanceof PsiPackage) {
-        containerInfo = "package " + ((PsiPackage)container).getName();
+      else if (container instanceof PsiPackageStatement) {
+        containerInfo = "package " + ((PsiPackageStatement)container).getPackageName();
       }
       else if (container instanceof PsiJavaModule) {
         containerInfo = "module " + ((PsiJavaModule)container).getName();

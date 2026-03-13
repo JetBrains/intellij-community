@@ -10,7 +10,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiUtilCore;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
@@ -60,7 +64,7 @@ public final class GotoTypeDeclarationAction extends BaseCodeInsightAction imple
   }
 
   @VisibleForTesting
-  public static PsiElement @Nullable [] findSymbolTypes(@NotNull Editor editor, int offset) {
+  public static @Nullable PsiElement @Nullable [] findSymbolTypes(@NotNull Editor editor, int offset) {
     return findSymbolTypes(editor, offset, TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
                                            TargetElementUtil.ELEMENT_NAME_ACCEPTED |
                                            TargetElementUtil.LOOKUP_ITEM_ACCEPTED);
@@ -71,7 +75,7 @@ public final class GotoTypeDeclarationAction extends BaseCodeInsightAction imple
   /// This function is the highest-level way to trigger the "Go to Type Declaration" action.
   /// It's composed of a couple of lower-level functions.
   @ApiStatus.Internal
-  public static PsiElement @Nullable [] findSymbolTypes(@NotNull Editor editor,
+  public static @Nullable PsiElement @Nullable [] findSymbolTypes(@NotNull Editor editor,
                                                         int offset,
                                                         @MagicConstant(flagsFromClass = TargetElementUtil.class) int flags) {
     PsiElement targetElement = TargetElementUtil.getInstance().findTargetElement(editor, flags, offset);

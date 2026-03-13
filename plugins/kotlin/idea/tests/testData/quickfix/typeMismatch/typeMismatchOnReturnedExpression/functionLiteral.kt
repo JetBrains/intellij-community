@@ -2,6 +2,8 @@
 // WITH_STDLIB
 // ERROR: Type mismatch: inferred type is Int but Unit was expected
 // ERROR: Type mismatch: inferred type is Int but Unit was expected
+// K2_ERROR: Return type mismatch: expected 'Unit', actual 'Int'.
+// K2_ERROR: Return type mismatch: expected 'Unit', actual 'Int'.
 // K2_AFTER_ERROR: Return type mismatch: expected 'Unit', actual 'Int'.
 // K2_AFTER_ERROR: Return type mismatch: expected 'Unit', actual 'Int'.
 fun main() {

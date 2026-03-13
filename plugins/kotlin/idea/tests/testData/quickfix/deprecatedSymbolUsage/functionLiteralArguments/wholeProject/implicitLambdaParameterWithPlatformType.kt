@@ -2,6 +2,7 @@
 // K2_ACTION: "Replace usages of 'Iterable<T>.maxBy((T) -> R): T?' in whole project" "true"
 // WITH_STDLIB
 // LANGUAGE_VERSION: 1.5
+// K2_ERROR: 'fun <T, R : Comparable<R>> Iterable<T>.maxBy(selector: (T) -> R): T?' is deprecated. Use maxByOrNull instead.
 import java.util.Collections
 
 fun test() {

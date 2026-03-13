@@ -42,4 +42,27 @@ jvm_library(
     "//platform/syntax/syntax-util:util",
   ]
 )
+
+jvm_library(
+  name = "syntax_test_lib",
+  module_name = "intellij.java.syntax",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_syntax",
+  exports = [
+    "//platform/syntax/syntax-api:syntax",
+    "//platform/syntax/syntax-api:syntax_test_lib",
+    "//platform/syntax/syntax-util:util",
+    "//platform/syntax/syntax-util:util_test_lib",
+  ],
+  runtime_deps = [
+    ":syntax",
+    "//platform/syntax/syntax-api:syntax_test_lib",
+    "//platform/syntax/syntax-i18n:i18n_test_lib",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
+    "//platform/util/multiplatform:multiplatform_test_lib",
+    "//platform/syntax/syntax-util:util_test_lib",
+    "//platform/syntax/syntax-extensions:extensions_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.java.syntax` end

@@ -10,9 +10,12 @@ import com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionGroupWrapper
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionWrapper
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.ToolbarActionsUpdatedListener
@@ -27,6 +30,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
+import com.intellij.openapi.wm.ex.ProjectFrameActionExclusionService
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -77,7 +81,7 @@ open class RiderMainToolbarRootPaneManager(private val project: Project) : Simpl
       return
     }
 
-    CompletableFuture.supplyAsync(::correctedToolbarActions, AppExecutorUtil.getAppExecutorService())
+    CompletableFuture.supplyAsync({ correctedToolbarActions(panel) }, AppExecutorUtil.getAppExecutorService())
       .thenAcceptAsync(
         { placeToActionGroup ->
           val layout = panel.layout as BorderLayout
@@ -110,30 +114,40 @@ open class RiderMainToolbarRootPaneManager(private val project: Project) : Simpl
     action.templateText.equals(ActionsBundle.message("group.RightToolbarSideGroup.text"))
 
   @RequiresBackgroundThread
-  private fun correctedToolbarActions(): Map<String, ActionGroup?> {
+  private fun correctedToolbarActions(panel: JPanel): Map<String, ActionGroup?> {
     val toolbarGroup = getToolbarGroup() ?: return emptyMap()
+    val excludedActionIds = service<ProjectFrameActionExclusionService>().getExcludedActionIds(panel.projectFrameTypeId(), ActionPlaces.MAIN_TOOLBAR)
 
-    val leftGroup = object: ActionGroup(), DumbAware {
-      override fun getChildren(e: AnActionEvent?): Array<AnAction> =
-        toolbarGroup.getChildren(e).firstOrNull(::isLeftSideAction)?.let { arrayOf(it) } ?: AnAction.EMPTY_ARRAY
-    }
-
-    val rightGroup = object: ActionGroup(), DumbAware {
-      override fun getChildren(e: AnActionEvent?): Array<AnAction> =
-        toolbarGroup.getChildren(e).firstOrNull(::isRightSideAction)?.let { arrayOf(it) } ?: AnAction.EMPTY_ARRAY
-    }
+    val leftGroup = sideGroup(toolbarGroup, excludedActionIds, ::isLeftSideAction)
+    val rightGroup = sideGroup(toolbarGroup, excludedActionIds, ::isRightSideAction)
 
     val restGroup = object : ActionGroup(), DumbAware {
-      override fun getChildren(e: AnActionEvent?): Array<AnAction> =
-        toolbarGroup.getChildren(e).filter { !isLeftSideAction(it) && !isRightSideAction(it) }.toTypedArray()
+      override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+        return filteredToolbarActions(toolbarGroup, e, excludedActionIds)
+          .filter { !isLeftSideAction(it) && !isRightSideAction(it) }
+          .toTypedArray()
+      }
     }
 
     val map = mutableMapOf<String, ActionGroup?>()
-    map[BorderLayout.WEST] = leftGroup as? ActionGroup
-    map[BorderLayout.EAST] = rightGroup as? ActionGroup
+    map[BorderLayout.WEST] = leftGroup
+    map[BorderLayout.EAST] = rightGroup
     map[BorderLayout.CENTER] = restGroup
 
     return map
+  }
+
+  private fun sideGroup(
+    toolbarGroup: ActionGroup,
+    excludedActionIds: Set<String>,
+    selector: (AnAction) -> Boolean,
+  ): ActionGroup {
+    return object : ActionGroup(), DumbAware {
+      override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+        val toolbarActions = filteredToolbarActions(toolbarGroup, e, excludedActionIds)
+        return toolbarActions.firstOrNull(selector)?.let { action -> arrayOf(action) } ?: emptyArray()
+      }
+    }
   }
 
   private fun getToolbarGroup(): ActionGroup? {
@@ -185,6 +199,38 @@ open class RiderMainToolbarRootPaneManager(private val project: Project) : Simpl
   }
 }
 
+internal fun filteredToolbarActions(
+  toolbarGroup: ActionGroup,
+  event: AnActionEvent?,
+  excludedActionIds: Set<String>,
+  actionManager: ActionManager = ActionManager.getInstance(),
+): Array<AnAction> {
+  if (excludedActionIds.isEmpty()) {
+    return toolbarGroup.getChildren(event)
+  }
+
+  return toolbarGroup.getChildren(event)
+    .filterNot { action -> action.topLevelActionId(actionManager)?.let(excludedActionIds::contains) == true }
+    .toTypedArray()
+}
+
+private fun AnAction.topLevelActionId(actionManager: ActionManager): String? {
+  var current = this
+  while (true) {
+    current = when (current) {
+      is AnActionWrapper -> current.delegate
+      is ActionGroupWrapper -> current.delegate
+      else -> return actionManager.getId(current)
+    }
+  }
+}
+
+private fun JComponent.projectFrameTypeId(): String? {
+  return rootPane?.getClientProperty(PROJECT_FRAME_TYPE_ID_CLIENT_PROPERTY) as? String
+}
+
+private const val PROJECT_FRAME_TYPE_ID_CLIENT_PROPERTY = "projectFrameTypeId"
+
 internal class NewToolbarRootPaneExtension : IdeRootPaneNorthExtension {
   companion object {
     private val LOG = logger<NewToolbarRootPaneExtension>()
@@ -216,6 +262,13 @@ internal class NewToolbarRootPaneExtension : IdeRootPaneNorthExtension {
 
       if (isEnabled) {
         listenIfNeeded()
+      }
+    }
+
+    override fun addNotify() {
+      super.addNotify()
+      if (isEnabled && isVisible) {
+        RiderMainToolbarRootPaneManager.getInstance(project).startUpdateActionGroups(this)
       }
     }
 

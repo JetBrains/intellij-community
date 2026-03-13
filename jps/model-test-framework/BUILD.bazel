@@ -12,4 +12,17 @@ jvm_library(
     "//jps/model-api:model",
   ]
 )
+
+jvm_library(
+  name = "model-testFramework_test_lib",
+  module_name = "intellij.platform.jps.model.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":model-testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//jps/model-impl:model-impl_test_lib",
+    "//jps/model-api:model_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.jps.model.testFramework` end

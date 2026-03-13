@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.repository.serialization.impl;
 
+import com.intellij.platform.runtime.repository.RuntimeModuleId;
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,25 +14,25 @@ import java.util.Set;
 
 final class CachedClasspathComputation {
 
-  static @NotNull Collection<String> computeClasspath(Collection<RawRuntimeModuleDescriptor> descriptors, String moduleName) {
+  static @NotNull Collection<String> computeClasspath(Collection<RawRuntimeModuleDescriptor> descriptors, RuntimeModuleId moduleName) {
     Set<String> classpath = new LinkedHashSet<>();
-    Map<String, RawRuntimeModuleDescriptor> descriptorMap = new HashMap<>();
+    Map<RuntimeModuleId, RawRuntimeModuleDescriptor> descriptorMap = new HashMap<>();
     for (RawRuntimeModuleDescriptor descriptor : descriptors) {
-      descriptorMap.put(descriptor.getId(), descriptor);
+      descriptorMap.put(descriptor.getModuleId(), descriptor);
     }
     collectClasspathEntries(moduleName, descriptorMap, new HashSet<>(), classpath);
     return classpath;
   }
 
-  private static void collectClasspathEntries(String moduleName,
-                                              Map<String, RawRuntimeModuleDescriptor> descriptorMap,
-                                              Set<String> processedModules,
+  private static void collectClasspathEntries(RuntimeModuleId moduleId,
+                                              Map<RuntimeModuleId, RawRuntimeModuleDescriptor> descriptorMap,
+                                              Set<RuntimeModuleId> processedModules,
                                               Set<String> classpath) {
-    if (!processedModules.add(moduleName)) return;
-    RawRuntimeModuleDescriptor descriptor = descriptorMap.get(moduleName);
+    if (!processedModules.add(moduleId)) return;
+    RawRuntimeModuleDescriptor descriptor = descriptorMap.get(moduleId);
     if (descriptor == null) return;
     classpath.addAll(descriptor.getResourcePaths());
-    for (String dependency : descriptor.getDependencies()) {
+    for (RuntimeModuleId dependency : descriptor.getDependencyIds()) {
       collectClasspathEntries(dependency, descriptorMap, processedModules, classpath);
     }
   }

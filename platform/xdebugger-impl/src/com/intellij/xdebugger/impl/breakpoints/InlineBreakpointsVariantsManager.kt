@@ -150,7 +150,7 @@ class InlineBreakpointsVariantsManager(private val project: Project) {
 
   private fun allBreakpointsIn(document: Document): Collection<XLineBreakpointImpl<*>> {
     val lineBreakpointManager = (XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl).lineBreakpointManager
-    return lineBreakpointManager.getDocumentBreakpoints(document)
+    return XDebuggerUtilImpl.getDocumentBreakpoints(document, lineBreakpointManager)
   }
 
   private suspend fun <T> withSemaphorePermit(action: suspend () -> T): T {
@@ -166,7 +166,7 @@ class InlineBreakpointsVariantsManager(private val project: Project) {
 
   companion object {
     private const val LIMIT_CALCULATE_VARIANTS_JOBS_COUNT_KEY = "debugger.limit.inline.breakpoints.jobs.count"
-    internal const val SHOW_EVEN_TRIVIAL_KEY = "debugger.show.breakpoints.inline.even.trivial"
+    private const val SHOW_EVEN_TRIVIAL_KEY = "debugger.show.breakpoints.inline.even.trivial"
 
     fun getInstance(project: Project): InlineBreakpointsVariantsManager = project.service()
   }

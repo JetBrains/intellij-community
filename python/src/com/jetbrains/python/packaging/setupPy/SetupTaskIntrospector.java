@@ -40,7 +40,6 @@ import java.util.Set;
 
 
 public final class SetupTaskIntrospector {
-  private static final Logger LOG = Logger.getInstance(SetupTaskIntrospector.class);
 
   private static final Map<String, List<SetupTask>> ourDistutilsTaskCache = new HashMap<>();
   private static final Map<String, List<SetupTask>> ourSetuptoolsTaskCache = new HashMap<>();

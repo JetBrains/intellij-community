@@ -19,7 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JFrame;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;

@@ -18,13 +18,17 @@ abstract class KotlinTestCaseWithConstructorInspectionTest : TestCaseWithConstru
     setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = object : JUnitProjectDescriptor(LanguageLevel.HIGHEST) {
-    override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
-      super.configureModule(module, model, contentEntry)
-      val jar = File(PathUtil.getJarPathForClass(JvmStatic::class.java))
-      PsiTestUtil.addLibrary(model, "kotlin-stdlib", jar.parent, jar.name)
+  companion object {
+    private val descriptor = object : JUnitProjectDescriptor(LanguageLevel.HIGHEST) {
+      override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
+        super.configureModule(module, model, contentEntry)
+        val jar = File(PathUtil.getJarPathForClass(JvmStatic::class.java))
+        PsiTestUtil.addLibrary(model, "kotlin-stdlib", jar.parent, jar.name)
+      }
     }
   }
+
+  override fun getProjectDescriptor(): LightProjectDescriptor = descriptor
 
   fun `test no highlighting parameterized test case`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """

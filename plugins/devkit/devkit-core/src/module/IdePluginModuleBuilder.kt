@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.module
 
 import com.intellij.icons.AllIcons
@@ -7,6 +7,7 @@ import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.ide.starters.local.DependencyConfig
 import com.intellij.ide.starters.local.GeneratorAsset
 import com.intellij.ide.starters.local.GeneratorEmptyDirectory
+import com.intellij.ide.starters.local.GeneratorFile
 import com.intellij.ide.starters.local.GeneratorResourceFile
 import com.intellij.ide.starters.local.GeneratorTemplateFile
 import com.intellij.ide.starters.local.StandardAssetsProvider
@@ -38,6 +39,10 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.DevKitFileTemplatesFactory
+import org.jetbrains.idea.devkit.module.icons.IconGenerator
+import org.jetbrains.idea.devkit.module.icons.SvgRenderer
+import org.jetbrains.idea.devkit.module.icons.stringToSeed
+import org.jetbrains.idea.devkit.module.webstarter.IdePluginModuleWebBasedBuilder
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import java.util.function.Supplier
@@ -50,6 +55,7 @@ internal class IdePluginModuleBuilder : StarterModuleBuilder() {
 
   private val PLUGIN_TYPE_KEY: Key<PluginType> = Key.create("ide.plugin.type")
 
+  override fun isAvailable(): Boolean = !IdePluginModuleWebBasedBuilder.Util.isEnabled()
   override fun getBuilderId(): String = "idea-plugin"
   override fun getPresentableName(): String = DevKitBundle.message("module.builder.title")
   override fun getWeight(): Int = JVM_WEIGHT + 1000
@@ -127,8 +133,16 @@ internal class IdePluginModuleBuilder : StarterModuleBuilder() {
     if (getPluginType() == PluginType.PLUGIN) {
       val standardAssetsProvider = StandardAssetsProvider()
 
-      assets.add(GeneratorResourceFile("src/main/resources/META-INF/pluginIcon.svg",
-                                       javaClass.getResource("/assets/devkit-pluginIcon.svg")!!))
+      // Generate plugin icons from plugin name
+      val pluginName = starterContext.artifact
+      val seed = stringToSeed(pluginName)
+      val lightIcon = IconGenerator.generate(seed, isDark = false)
+      val darkIcon = IconGenerator.generate(seed, isDark = true)
+
+      assets.add(GeneratorFile("src/main/resources/META-INF/pluginIcon.svg",
+                               SvgRenderer.render(lightIcon)))
+      assets.add(GeneratorFile("src/main/resources/META-INF/pluginIcon_dark.svg",
+                               SvgRenderer.render(darkIcon)))
       assets.add(GeneratorTemplateFile("src/main/resources/META-INF/plugin.xml",
                                        ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.PLUGIN_XML)))
 
@@ -258,7 +272,7 @@ internal class IdePluginModuleBuilder : StarterModuleBuilder() {
         groupRow.visible(pluginType == PluginType.PLUGIN)
         artifactRow.visible(pluginType == PluginType.PLUGIN)
 
-        fireStateChanged() // refresh the next step depending on a plugin type, skip dependencies step for THEME
+        fireStateChanged() // refresh the next step depending on a plugin type, skip Dependencies step for THEME
       }
     }
 

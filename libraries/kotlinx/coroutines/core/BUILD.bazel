@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:kotlinx-coroutines-core"],
   runtime_deps = ["@lib//:kotlinx-coroutines-core"]
 )
+
+jvm_library(
+  name = "core_test_lib",
+  module_name = "intellij.libraries.kotlinx.coroutines.core",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:kotlinx-coroutines-core"],
+  runtime_deps = [":core"]
+)
 ### auto-generated section `build intellij.libraries.kotlinx.coroutines.core` end

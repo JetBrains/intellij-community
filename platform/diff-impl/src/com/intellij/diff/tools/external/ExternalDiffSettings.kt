@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.external
 
+import com.intellij.diff.merge.MergeRequestHandler
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
@@ -70,8 +71,8 @@ class ExternalDiffSettings : BaseState(), PersistentStateComponent<ExternalDiffS
     var programPath: String = "",
     var argumentPattern: String = "",
     var isMergeTrustExitCode: Boolean = false,
-    var groupName: ExternalToolGroup = ExternalToolGroup.DIFF_TOOL
-  )
+    var groupName: ExternalToolGroup = ExternalToolGroup.DIFF_TOOL,
+  ) : MergeRequestHandler.UserConfiguredExternalToolHandler.ExternalTool
 
   // OLD SETTINGS AREA
   @get:OptionTag("DIFF_ENABLED")

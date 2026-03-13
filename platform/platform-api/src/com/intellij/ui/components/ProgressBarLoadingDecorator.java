@@ -7,8 +7,11 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.AnimatedIcon;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BoxLayout;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import java.awt.BorderLayout;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ProgressBarLoadingDecorator extends LoadingDecorator {

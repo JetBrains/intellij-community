@@ -19,8 +19,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.execution.ParametersListUtil
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
 import com.jetbrains.python.PythonHelper
+import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.testing.PyTestSharedForm.create

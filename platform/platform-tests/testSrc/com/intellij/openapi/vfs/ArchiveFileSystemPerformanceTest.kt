@@ -4,8 +4,8 @@ package com.intellij.openapi.vfs
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.testFramework.PerformanceUnitTest
-import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test

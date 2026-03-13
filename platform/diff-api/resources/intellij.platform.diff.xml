@@ -6,6 +6,7 @@
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.diff"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->

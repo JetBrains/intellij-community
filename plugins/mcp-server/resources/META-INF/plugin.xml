@@ -26,6 +26,9 @@
     <module name="intellij.libraries.ktor.network.tls"/>
     <module name="intellij.libraries.ktor.server.cio"/>
     <module name="intellij.libraries.ktor.client.cio"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.vcs.impl"/>
+    <!-- endregion -->
   </dependencies>
   <!--suppress PluginXmlValidity -->
   <content namespace="jetbrains">
@@ -35,10 +38,14 @@
 
   <extensionPoints>
     <extensionPoint name="mcpToolsProvider" interface="com.intellij.mcpserver.McpToolsProvider" dynamic="true" />
+    <extensionPoint name="mcpToolFilterProvider" interface="com.intellij.mcpserver.McpToolFilterProvider" dynamic="true" />
     <extensionPoint name="mcpToolset" interface="com.intellij.mcpserver.McpToolset" dynamic="true" />
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider"/>
+    <applicationService serviceImplementation="com.intellij.mcpserver.impl.McpServerService"/>
+
     <statistics.counterUsagesCollector implementationClass="com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector"/>
     <statistics.validation.customValidationRule implementation="com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector$McpToolNameValidator"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.mcpserver.statistics.McpServerApplicationUsagesCollector"/>
@@ -50,12 +57,19 @@
       notificationIds="mcp.client.detected;mcp.client.autoconfigured;mcp.client.error.autoconfigured;mcp.client.wrong.port.detected"/>
 
     <mcpServer.mcpToolsProvider implementation="com.intellij.mcpserver.impl.ReflectionToolsProvider" />
+    <mcpServer.mcpToolFilterProvider implementation="com.intellij.mcpserver.impl.SettingsBasedMcpToolFilterProvider" />
+    <mcpServer.mcpToolFilterProvider implementation="com.intellij.mcpserver.impl.DisallowListBasedMcpToolFilterProvider" />
+    <mcpServer.mcpToolFilterProvider implementation="com.intellij.mcpserver.impl.RegistryKeyMcpToolFilterProvider" />
+    <mcpServer.mcpToolFilterProvider implementation="com.intellij.mcpserver.impl.IndividualRegistryKeyMcpToolFilterProvider" />
 
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.ExecutionToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.AnalysisToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.FileToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.FormattingToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.ReadToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.TextToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.PatchToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.SearchToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.CodeInsightToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.RefactoringToolset" />
 
@@ -71,6 +85,12 @@
     <registryKey defaultValue="true"
                  description="Enable OT tracer for MCP tool calls"
                  key="mcp.server.ot.trace"/>
+    <registryKey defaultValue=""
+                 description="Filter for MCP tools, like -*,+com.intellij.mcpserver.toolsets.general.*,-*.get_file_text_by_path"
+                 key="mcp.server.tools.filter"/>
+    <registryKey defaultValue="false"
+                 description="Show advanced filter options UI in MCP tool filter settings"
+                 key="mcp.server.show.advanced.filter.options.ui"/>
 
     <applicationConfigurable
       instance="com.intellij.mcpserver.settings.McpServerSettingsConfigurable"
@@ -80,5 +100,21 @@
       dynamic="true"
       parentId="tools"/>
 
+    <applicationConfigurable
+      instance="com.intellij.mcpserver.settings.McpToolFilterConfigurable"
+      id="com.intellij.mcpserver.settings.filter"
+      key="configurable.mcp.tool.filter"
+      bundle="messages.McpServerBundle"
+      dynamic="true"
+      parentId="com.intellij.mcpserver.settings"/>
+
   </extensions>
+
+  <resource-bundle>messages.McpServerBundle</resource-bundle>
+
+  <actions>
+    <action id="com.intellij.mcpserver.actions.ShowMcpToolsAction" class="com.intellij.mcpserver.actions.ShowMcpToolsAction">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+  </actions>
 </idea-plugin>

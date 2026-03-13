@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:netty-buffer"],
   runtime_deps = ["@lib//:netty-buffer"]
 )
+
+jvm_library(
+  name = "buffer_test_lib",
+  module_name = "intellij.libraries.netty.buffer",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:netty-buffer"],
+  runtime_deps = [":buffer"]
+)
 ### auto-generated section `build intellij.libraries.netty.buffer` end

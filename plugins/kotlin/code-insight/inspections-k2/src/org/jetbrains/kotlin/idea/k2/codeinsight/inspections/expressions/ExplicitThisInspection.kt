@@ -7,8 +7,8 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectPossibleReferenceShorteningsForIde
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -43,7 +43,7 @@ internal class ExplicitThisInspection : KotlinApplicableInspectionBase.Simple<Kt
         val shortenCommand = collectPossibleReferenceShorteningsForIde(
             el.containingKtFile,
             el.parent.textRange,
-            shortenOptions = ShortenOptions.ALL_ENABLED
+            shortenOptions = ShortenOptionsForIde.ALL_ENABLED
         )
         val hasShortening = shortenCommand.listOfQualifierToShortenInfo.any { it.qualifierToShorten.element?.receiverExpression == el }
         return hasShortening.asUnit

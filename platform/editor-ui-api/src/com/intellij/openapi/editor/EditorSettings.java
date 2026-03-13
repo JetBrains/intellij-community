@@ -126,6 +126,11 @@ public interface EditorSettings {
   int getCaretBlinkPeriod();
   void setCaretBlinkPeriod(int blinkPeriod);
 
+  @ApiStatus.Experimental
+  boolean isSmoothCaretBlinking();
+  @ApiStatus.Experimental
+  void setSmoothCaretBlinking(boolean smoothCaretBlinking);
+
   boolean isBlockCursor();
   void setBlockCursor(boolean blockCursor);
 
@@ -133,7 +138,9 @@ public interface EditorSettings {
   void setFullLineHeightCursor(boolean fullLineHeightCursor);
 
   @ApiStatus.Experimental
-  boolean isAnimatedCaret();
+  boolean isSmoothCaretMovement();
+  @ApiStatus.Experimental
+  void setSmoothCaretMovement(boolean useSmoothCaretMovement);
 
   @ApiStatus.Experimental
   EditorSettings.CaretEasing getCaretEasing();

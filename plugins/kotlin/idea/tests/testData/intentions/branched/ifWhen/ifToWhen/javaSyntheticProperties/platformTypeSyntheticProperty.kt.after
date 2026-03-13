@@ -1,0 +1,14 @@
+// WITH_STDLIB
+fun test(config: Config) {
+    when (config.value) {
+        "a" -> {
+            println("a")
+        }
+        "b" -> {
+            println("b")
+        }
+        "c" -> {
+            println("c")
+        }
+    }
+}

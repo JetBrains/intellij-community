@@ -3,7 +3,12 @@
 
 package com.intellij.execution.ui
 
-import com.intellij.execution.*
+import com.intellij.execution.AdditionalRunningOptions
+import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.Executor
+import com.intellij.execution.ExecutorActionStatus
+import com.intellij.execution.RunManager
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ExecutorAction
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction
 import com.intellij.execution.actions.StopAction
@@ -17,7 +22,20 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionButtonComponent
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CustomizedDataContext
+import com.intellij.openapi.actionSystem.DecorativeElement
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
@@ -50,11 +68,22 @@ import com.intellij.ui.icons.TextIcon
 import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.*
+import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Insets
+import java.awt.Rectangle
 import java.awt.event.InputEvent
 import java.util.function.Predicate
+import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingConstants
@@ -100,7 +129,13 @@ private fun createRunActionToolbar(): ActionToolbar {
   toolbar.setMinimumButtonSize {
     JBUI.size(JBUI.CurrentTheme.RunWidget.actionButtonWidth(), JBUI.CurrentTheme.RunWidget.toolbarHeight())
   }
-  toolbar.setActionButtonBorder(JBUI.CurrentTheme.RunWidget::toolbarBorderDirectionalGap, JBUI.CurrentTheme.RunWidget::toolbarBorderHeight)
+  val insetsSupplier: Supplier<Insets> = Supplier {
+    val horizontal = JBUI.CurrentTheme.RunWidget.toolbarBorderDirectionalGap()
+    val mainToolbarInsets = (JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets() as JBInsets).unscaled
+    @Suppress("UseDPIAwareInsets") // the supplier must provide unscaled values
+    Insets(mainToolbarInsets.top, horizontal, mainToolbarInsets.bottom, horizontal)
+  }
+  toolbar.setActionButtonBorder(JBEmptyBorder(JBInsets.create(insetsSupplier, insetsSupplier.get())))
   toolbar.setCustomButtonLook(RunWidgetButtonLook())
   return toolbar
 }

@@ -1,0 +1,38 @@
+================ Step #1 =================
+Cleaning output files:
+  A.class
+  A__APartFKt.class
+  A__APartGKt.class
+End of files
+Cleaning output files:
+  META-INF/kotlin_withJava_other_packageFacadeToClass-a.kotlin_module
+  UseAAKt.class
+  UseFKt.class
+  UseGKt.class
+End of files
+Compiling files:
+  kotlin/withJava/other/packageFacadeToClass/a/A.kt
+  kotlin/withJava/other/packageFacadeToClass/a/useAA.kt
+  kotlin/withJava/other/packageFacadeToClass/a/useF.kt
+  kotlin/withJava/other/packageFacadeToClass/a/useG.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_withJava_other_packageFacadeToClass-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/withJava/other/packageFacadeToClass/a/A.kt
+  kotlin/withJava/other/packageFacadeToClass/a/useAA.kt
+  kotlin/withJava/other/packageFacadeToClass/a/useF.kt
+  kotlin/withJava/other/packageFacadeToClass/a/useG.kt
+End of files
+Cleaning output files:
+  UseFJava.class
+End of files
+Compiling files:
+  kotlin/withJava/other/packageFacadeToClass/a/UseFJava.java
+End of files
+------------------------------------------
+Exit code: OK

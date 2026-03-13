@@ -1,4 +1,5 @@
 // "Change type of 'x' to 'Long'" "true"
+// K2_ERROR: Initializer type mismatch: expected 'Double', actual 'Long'.
 
 fun foo() {
     val x: Double = <caret>0L

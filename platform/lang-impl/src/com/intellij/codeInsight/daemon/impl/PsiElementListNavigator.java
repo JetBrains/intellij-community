@@ -29,7 +29,10 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import javax.swing.ListCellRenderer;
+import javax.swing.TransferHandler;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
@@ -246,7 +249,7 @@ public final class PsiElementListNavigator {
             for (int i = 0; i < selectedValues.length; i++) {
               copy[i] = (PsiElement)selectedValues[i];
             }
-            return ReadAction.compute(() -> PsiCopyPasteManager.newTransferable(copy));
+            return ReadAction.computeBlocking(() -> PsiCopyPasteManager.newTransferable(copy));
           }
 
           @Override

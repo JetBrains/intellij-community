@@ -30,10 +30,9 @@ abstract class AbstractSuggestVariableNameMacro : KotlinMacro() {
     private fun findAppropriateNames(context: ExpressionContext): Collection<String> {
         val project = context.project
         val documentManager = PsiDocumentManager.getInstance(project)
-        val document = context.editor?.document ?: return emptyList()
-        documentManager.commitDocument(document)
+        val psiFile = context.psiFile as? KtFile ?: return emptyList()
+        documentManager.commitDocument(psiFile.fileDocument)
 
-        val psiFile = documentManager.getPsiFile(document) as? KtFile ?: return emptyList()
         val targetElement = psiFile.findElementAt(context.startOffset) ?: return emptyList()
         val targetDeclaration = targetElement.parent as? KtCallableDeclaration ?: return emptyList()
 

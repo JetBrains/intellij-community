@@ -90,6 +90,21 @@ public class SmartStepIntoTestGenerated extends AbstractSmartStepIntoTest {
         runTest("../testData/smartStepInto/empty.kt");
     }
 
+    @TestMetadata("enumEquality.kt")
+    public void testEnumEquality() throws Exception {
+        runTest("../testData/smartStepInto/enumEquality.kt");
+    }
+
+    @TestMetadata("enumEqualityFun.kt")
+    public void testEnumEqualityFun() throws Exception {
+        runTest("../testData/smartStepInto/enumEqualityFun.kt");
+    }
+
+    @TestMetadata("enumEqualityFunNonEnum.kt")
+    public void testEnumEqualityFunNonEnum() throws Exception {
+        runTest("../testData/smartStepInto/enumEqualityFunNonEnum.kt");
+    }
+
     @TestMetadata("for.kt")
     public void testFor() throws Exception {
         runTest("../testData/smartStepInto/for.kt");

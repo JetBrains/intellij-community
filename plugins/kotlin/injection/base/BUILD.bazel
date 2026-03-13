@@ -52,4 +52,35 @@ jvm_library(
     ":plugins_IntelliLang_backend_provided",
   ]
 )
+
+jvm_library(
+  name = "kotlin-base-injection_test_lib",
+  module_name = "kotlin.base.injection",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-base-injection",
+  runtime_deps = [
+    ":kotlin-base-injection",
+    "//libraries/guava:guava_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//plugins/IntelliLang:langInjection_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//java/langInjection:langInjection_test_lib",
+    "//plugins/kotlin/base/psi:psi_test_lib",
+    "//plugins/kotlin/base/analysis:analysis_test_lib",
+    "//plugins/IntelliLang/backend",
+    "//plugins/IntelliLang/backend:backend_test_lib",
+  ]
+)
 ### auto-generated section `build kotlin.base.injection` end

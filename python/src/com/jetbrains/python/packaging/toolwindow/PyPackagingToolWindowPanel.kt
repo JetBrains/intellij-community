@@ -31,8 +31,6 @@ import com.jetbrains.python.TraceContext
 import com.jetbrains.python.inspections.interpreter.InterpreterSettingsQuickFix
 import com.jetbrains.python.packaging.toolwindow.details.PyPackageInfoPanel
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
-import com.jetbrains.python.packaging.toolwindow.model.ErrorNode
-import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.model.PyPackagesViewData
 import com.jetbrains.python.packaging.toolwindow.modules.PyPackagesSdkController
 import com.jetbrains.python.packaging.toolwindow.packages.PyPackageSearchTextField
@@ -64,7 +62,7 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
   private val moduleController = PyPackagesSdkController(project)
   private val descriptionController = PyPackageInfoPanel(project)
   private val packagingScope = PyPackageCoroutine.getScope(project)
-    .childScope("Packaging tool window", TraceContext(message("tracecontext.packaging.tool.window"), null)).also {
+    .childScope("Packaging tool window", TraceContext(message("trace.context.packaging.tool.window"), null)).also {
       Disposer.register(this, it.asDisposable())
     }
 
@@ -239,11 +237,7 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
     packageListController.showSearchResult(installed, repoData)
   }
 
-  fun showErrorResult(errorNode: ErrorNode) {
-    packageListController.showErrorResult(errorNode)
-  }
-
-  fun resetSearch(installed: List<InstalledPackage>, repos: List<PyPackagesViewData>, currentSdk: Sdk?) {
+  fun resetSearch(installed: List<DisplayablePackage>, repos: List<PyPackagesViewData>, currentSdk: Sdk?) {
     packageListController.resetSearch(installed, repos, currentSdk)
   }
 

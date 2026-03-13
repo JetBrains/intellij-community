@@ -5,7 +5,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
-import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCollisionPassType.*
+import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCollisionPassType.CANCEL
+import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCollisionPassType.DUPLICATE
+import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCollisionPassType.IGNORE
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
 import com.intellij.openapi.observable.operation.core.AtomicOperationTrace

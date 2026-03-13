@@ -4,10 +4,16 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
@@ -24,6 +30,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.platform.ide.menu.IdeJMenuBar
+import com.intellij.platform.ide.menu.MainMenuCollector
 import com.intellij.platform.ide.menu.createIdeMainMenuActionGroup
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -31,14 +38,23 @@ import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.JBUI
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Insets
 import java.awt.event.ActionEvent
 import java.awt.event.HierarchyEvent
 import java.awt.event.KeyEvent
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JRootPane
+import javax.swing.KeyStroke
+import javax.swing.SwingUtilities
 
 private val LOG = logger<MainMenuButton>()
 
@@ -152,10 +168,15 @@ class MainMenuButton(coroutineScope: CoroutineScope, icon: Icon = AllIcons.Gener
   inner class ShowMenuAction(icon: Icon, val getItemToSelect: () -> Int) : LightEditCompatible, DumbAwareAction(IdeBundle.messagePointer("main.toolbar.menu.button"), icon) {
 
     override fun actionPerformed(e: AnActionEvent) {
+      var isMenuOpening = true
       if (expandableMenu?.isEnabled() == true) {
+        isMenuOpening = !expandableMenu!!.isShowing()
         expandableMenu!!.switchState(itemInd = getItemToSelect.invoke())
       } else {
         showPopup(e.dataContext)
+      }
+      if (isMenuOpening && e.inputEvent is KeyEvent) {
+        MainMenuCollector.logOpenedByShortcut(e.inputEvent, e.place)
       }
     }
   }
@@ -193,11 +214,19 @@ class MainMenuButton(coroutineScope: CoroutineScope, icon: Icon = AllIcons.Gener
 
     override fun actionPerformed(e: ActionEvent?) {
       if (!UISettings.getInstance().disableMnemonics) {
+        var isMenuOpening = true
         if (expandableMenu?.isEnabled() == true) {
+          isMenuOpening = !expandableMenu!!.isShowing()
           expandableMenu!!.switchState(actionMenu)
         } else {
           val component = IdeFocusManager.getGlobalInstance().focusOwner ?: button
           showPopup(DataManager.getInstance().getDataContext(component), actionToShow)
+        }
+        if (isMenuOpening) {
+          // Need to use trueCurrentEvent instead of e because FusInputEvent.from(ActionEvent) uses EventQueue.getCurrentEvent()
+          // which can return a wrong event.
+          MainMenuCollector.logOpenedByMnemonic(IdeEventQueue.getInstance().trueCurrentEvent as? KeyEvent?,
+                                                ActionPlaces.KEYBOARD_SHORTCUT)
         }
       }
     }

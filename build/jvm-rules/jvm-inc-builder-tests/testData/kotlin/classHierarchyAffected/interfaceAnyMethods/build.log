@@ -1,0 +1,12 @@
+================ Step #1 =================
+Cleaning output files:
+  B.class
+  META-INF/kotlin_classHierarchyAffected_interfaceAnyMethods-a.kotlin_module
+  UseKt.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/interfaceAnyMethods/a/B.kt
+  kotlin/classHierarchyAffected/interfaceAnyMethods/a/use.kt
+End of files
+------------------------------------------
+Exit code: OK

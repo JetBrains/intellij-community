@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.refactoring
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiField
@@ -30,18 +31,19 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.getAccessorLightMethods
-import org.jetbrains.kotlin.asJava.isSyntheticValuesOrValueOfMethod
-import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.toValVar
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
+import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
+import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import java.lang.annotation.Retention
@@ -84,6 +86,39 @@ private fun <T> copyTypeParameters(
             targetTypeParamList,
             newTypeParams,
             { it!!.typeParameters.toList() },
+            BooleanArray(newTypeParams.size)
+        )
+    }
+}
+
+@OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
+private fun copyTypeParameters(
+    ktClass: KtClass,
+    psiClass: PsiClass,
+) {
+    val factory = PsiElementFactory.getInstance(ktClass.project)
+    val ktTypeParams = ktClass.typeParameterList?.parameters ?: emptyList()
+    if (ktTypeParams.isNotEmpty()) {
+        psiClass.addAfter(factory.createTypeParameterList(), psiClass.nameIdentifier)
+        val targetTypeParamList = psiClass.typeParameterList!!
+        val newTypeParams = ktTypeParams.map { ktTypeParameter ->
+            val superTypes = ktTypeParameter.extendsBound?.let { bound ->
+                val classType = allowAnalysisFromWriteAction {
+                    allowAnalysisOnEdt {
+                        analyze(ktClass) {
+                            bound.type.asPsiType(ktClass, false)
+                        }
+                    }
+                } as? PsiClassType
+                if (classType != null) arrayOf(classType) else PsiClassType.EMPTY_ARRAY
+            } ?: PsiClassType.EMPTY_ARRAY
+            factory.createTypeParameter(ktTypeParameter.name!!, superTypes)
+        }
+
+        synchronizeList(
+            targetTypeParamList,
+            newTypeParams,
+            { it.typeParameters.toList() },
             BooleanArray(newTypeParams.size)
         )
     }
@@ -169,79 +204,80 @@ fun createJavaClass(klass: KtClass, targetClass: PsiClass?, classKind: ClassKind
         else -> throw AssertionError("Unexpected class kind: ${klass.getElementTextWithContext()}")
     }
     val javaClass = (targetClass?.add(javaClassToAdd) ?: javaClassToAdd) as PsiClass
-    val template = klass.toLightClass() ?: KotlinAsJavaSupport.getInstance(klass.project).getFakeLightClass(klass)
-
-    copyModifierListItems(template.modifierList!!, javaClass.modifierList!!)
-    if (targetClass?.parent is PsiFile && classKind == ClassKind.CLASS) {
+    javaClass.modifierList?.setModifierProperty(PsiModifier.FINAL, false)
+    if (targetClass?.parent is PsiFile && classKind == ClassKind.CLASS && !klass.isInner()) {
         javaClass.modifierList!!.setModifierProperty(PsiModifier.STATIC, true)
     }
-    if (template.isInterface) {
+    if (klass.isInterface()) {
         javaClass.modifierList!!.setModifierProperty(PsiModifier.ABSTRACT, false)
     }
 
-    copyTypeParameters(template, javaClass) { clazz, typeParameterList ->
-        clazz.addAfter(typeParameterList, clazz.nameIdentifier)
-    }
+    copyTypeParameters(klass, javaClass)
 
-    // Turning interface to class
-    if (!javaClass.isInterface && template.isInterface) {
+    fun convertExtendsImplementsList(entries: List<KtSuperTypeListEntry>): Array<PsiJavaCodeReferenceElement> =
+            entries.mapNotNull {
+                val typeText = toJavaTypeText(klass, it.typeReference,)
+                if (typeText != null) factory.createReferenceFromText(typeText, javaClass) else null
+            }.toTypedArray()
+
+    if (!javaClass.isInterface && klass.isInterface()) {
+        val superTypeListEntries = klass.superTypeListEntries
         val implementsList = factory.createReferenceListWithRole(
-            template.extendsList?.referenceElements ?: PsiJavaCodeReferenceElement.EMPTY_ARRAY,
-            PsiReferenceList.Role.IMPLEMENTS_LIST
+            convertExtendsImplementsList(superTypeListEntries), PsiReferenceList.Role.IMPLEMENTS_LIST
         )
-
         implementsList?.let { javaClass.implementsList?.replace(it) }
     } else {
+        val (superClass, interfaces) = klass.superTypeListEntries.partition { it is KtSuperTypeCallEntry }
         val extendsList = factory.createReferenceListWithRole(
-            template.extendsList?.referenceElements ?: PsiJavaCodeReferenceElement.EMPTY_ARRAY,
-            PsiReferenceList.Role.EXTENDS_LIST
+            convertExtendsImplementsList(superClass), PsiReferenceList.Role.EXTENDS_LIST
         )
-
         extendsList?.let { javaClass.extendsList?.replace(it) }
 
         val implementsList = factory.createReferenceListWithRole(
-            template.implementsList?.referenceElements ?: PsiJavaCodeReferenceElement.EMPTY_ARRAY,
-            PsiReferenceList.Role.IMPLEMENTS_LIST
+            convertExtendsImplementsList(interfaces), PsiReferenceList.Role.IMPLEMENTS_LIST
         )
-
         implementsList?.let { javaClass.implementsList?.replace(it) }
     }
 
-    for (method in template.methods) {
-        if (isSyntheticValuesOrValueOfMethod(method)) continue
+    if (classKind != ClassKind.ANNOTATION_CLASS) {
+        klass.primaryConstructor?.let { primaryConstructor ->
+            val constructor = factory.createConstructor()
+            for (ktParameter in primaryConstructor.valueParameters) {
+                val name = ktParameter.name ?: continue
+                val returnType = toJavaType(klass, ktParameter.typeReference) ?: continue
+                constructor.parameterList.add(factory.createParameter(name, returnType))
+            }
 
-        val hasParams = method.parameterList.parametersCount > 0
-        val needSuperCall = !template.isEnum &&
-                (template.superClass?.constructors ?: PsiMethod.EMPTY_ARRAY).all {
-                    it.parameterList.parametersCount > 0
-                }
+            //call to super is generated with empty argument list in `generateCreateClassActions`
+            if (klass.superTypeListEntries.find { it is KtSuperTypeCallEntry } != null) {
+                constructor.body!!.add(factory.createStatementFromText("super();", constructor))
+            }
+            javaClass.add(constructor)
+        }
+    } else if (klass.declarations.filterIsInstance<KtNamedFunction>().isEmpty()) {
+        val psiElementFactory = PsiElementFactory.getInstance(klass.project)
+        for (ktParameter in klass.primaryConstructorParameters) {
+            val name = ktParameter.name ?: continue
+            val returnType = toJavaTypeText(klass, ktParameter.typeReference, isAnnotationMethod = true) ?: continue
+            javaClass.add(psiElementFactory.createMethodFromText("$returnType $name();", javaClass))
+        }
+    }
 
-        if (method.isConstructor && !(hasParams || needSuperCall)) continue
-        with(createJavaMethod(method, javaClass)) {
-            if (isConstructor && needSuperCall) {
-                body!!.add(factory.createStatementFromText("super();", this))
+    return javaClass
+}
+
+private fun toJavaTypeText(klass: KtClass, typeReference: KtTypeReference?, isAnnotationMethod: Boolean = false): String? =
+    toJavaType(klass, typeReference, isAnnotationMethod = isAnnotationMethod)?.getCanonicalText(true)
+
+@OptIn(KaExperimentalApi::class, KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
+private fun toJavaType(klass: KtClass, typeReference: KtTypeReference?, isAnnotationMethod: Boolean = false): PsiType? =
+    allowAnalysisFromWriteAction {
+        allowAnalysisOnEdt {
+            analyze(klass) {
+                typeReference?.type?.asPsiType(klass, false, isAnnotationMethod = isAnnotationMethod)
             }
         }
     }
-    if (classKind == ClassKind.ANNOTATION_CLASS && template.methods.isEmpty()) {
-        // convert kotlin annotation class ctr parameters to java getters, if "convert to light class" failed
-        val psiElementFactory = PsiElementFactory.getInstance(template.project)
-        for (ktParameter in klass.primaryConstructorParameters) {
-            val name = ktParameter.name ?: break
-            val returnType: PsiType = allowAnalysisOnEdt {
-                allowAnalysisFromWriteAction {
-                    analyze(klass) {
-                        ktParameter.typeReference?.type?.asPsiType(klass, false, isAnnotationMethod = true)
-                    }
-                }
-            } ?: break
-            val psiMethod = psiElementFactory.createMethod(name, returnType)
-            psiMethod.body?.delete()
-            javaClass.add(psiMethod)
-        }
-    }
-    return javaClass
-}
 
 @Throws(IncorrectOperationException::class)
 fun <Parent : PsiElement?, Child : PsiElement?> synchronizeList(

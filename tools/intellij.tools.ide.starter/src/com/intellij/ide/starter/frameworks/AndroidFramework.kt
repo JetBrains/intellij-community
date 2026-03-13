@@ -8,14 +8,20 @@ import com.intellij.ide.starter.project.GitProjectInfo
 import com.intellij.ide.starter.utils.FileSystem
 import com.intellij.ide.starter.utils.FileSystem.deleteRecursivelyQuietly
 import com.intellij.ide.starter.utils.HttpClient
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.io.copyRecursively
+import com.intellij.util.system.OS
 import org.gradle.internal.hash.Hashing
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.PosixFilePermission
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.appendText
 import kotlin.io.path.createDirectories
+import kotlin.io.path.createFile
 import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
+import kotlin.io.path.walk
 import kotlin.time.Duration.Companion.minutes
 
 class AndroidFramework(testContext: IDETestContext) : Framework(testContext) {
@@ -37,7 +43,7 @@ class AndroidFramework(testContext: IDETestContext) : Framework(testContext) {
       // packages are included into the SDK home path
       val packagesHash = Hashing.sha1().hashString(packages.joinToString("$"))
       val home = GlobalPaths.instance.getCacheDirectoryFor("android-sdk") / "sdk-roots" / "sdk-root-$packagesHash"
-      if (home.isDirectory() && home.toFile().walk().count() > 10) return home
+      if (home.isDirectory() && home.walk().count() > 10) return home
 
       val envVariablesWithJavaHome = System.getenv() + ("JAVA_HOME" to javaHome.toAbsolutePath().toString())
 
@@ -80,11 +86,11 @@ class AndroidFramework(testContext: IDETestContext) : Framework(testContext) {
     }
 
     private fun downloadSdkManager(): Path {
-      val url = when {
-        SystemInfo.isMac -> "https://dl.google.com/android/repository/commandlinetools-mac-6200805_latest.zip"
-        SystemInfo.isWindows -> "https://dl.google.com/android/repository/commandlinetools-win-6200805_latest.zip"
-        SystemInfo.isLinux -> "https://dl.google.com/android/repository/commandlinetools-linux-6200805_latest.zip"
-        else -> error("Unsupported OS: ${SystemInfo.OS_NAME} ${SystemInfo.OS_VERSION}")
+      val url = when (OS.CURRENT) {
+        OS.macOS -> "https://dl.google.com/android/repository/commandlinetools-mac-6200805_latest.zip"
+        OS.Windows -> "https://dl.google.com/android/repository/commandlinetools-win-6200805_latest.zip"
+        OS.Linux -> "https://dl.google.com/android/repository/commandlinetools-linux-6200805_latest.zip"
+        else -> error("Unsupported OS: ${OS.CURRENT} ${OS.CURRENT.version()}")
       }
 
       val name = url.split("/").last()
@@ -95,16 +101,18 @@ class AndroidFramework(testContext: IDETestContext) : Framework(testContext) {
 
       FileSystem.unpackIfMissing(targetArchive, targetUnpack)
 
-      val ext = if (SystemInfo.isWindows) ".bat" else ""
+      val ext = if (OS.CURRENT == OS.Windows) ".bat" else ""
 
       @Suppress("SpellCheckingInspection")
-      val sdkManager = targetUnpack.toFile().walk().first { it.endsWith("tools/bin/sdkmanager$ext") }
+      val sdkManager = targetUnpack.walk().first { it.endsWith("tools/bin/sdkmanager$ext") }
 
-      if (SystemInfo.isMac || SystemInfo.isLinux) {
-        sdkManager.setExecutable(true)
+      if (OS.CURRENT == OS.macOS || OS.CURRENT == OS.Linux) {
+        val permissions = Files.getPosixFilePermissions(sdkManager)
+        permissions.add(PosixFilePermission.OWNER_EXECUTE)
+        Files.setPosixFilePermissions(sdkManager, permissions)
       }
 
-      return sdkManager.toPath()
+      return sdkManager
     }
   }
 
@@ -125,11 +133,10 @@ class AndroidFramework(testContext: IDETestContext) : Framework(testContext) {
 
   fun setupAndroidSdkToProject(androidSdkPath: Path) {
     val localPropertiesFile = testContext.resolvedProjectHome / "local.properties"
-    val file = localPropertiesFile.toFile()
-    if (!file.exists()) {
-      file.createNewFile()
+    if (!localPropertiesFile.exists()) {
+      localPropertiesFile.createFile()
     }
-    val path = androidSdkPath.toFile().absolutePath.replace("""\""", """\\""")
-    file.appendText("${System.lineSeparator()}sdk.dir=${path}")
+    val path = androidSdkPath.absolutePathString().replace("""\""", """\\""")
+    localPropertiesFile.appendText("${System.lineSeparator()}sdk.dir=${path}")
   }
 }

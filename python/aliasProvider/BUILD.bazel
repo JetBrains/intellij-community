@@ -38,4 +38,37 @@ jvm_library(
     "//python/interpreters",
   ]
 )
+
+jvm_library(
+  name = "aliasProvider_test_lib",
+  module_name = "intellij.python.community.aliasProvider",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":aliasProvider",
+    "//python/python-parser:parser_test_lib",
+    "//python/python-ast:ast_test_lib",
+    "//python/python-syntax-core:syntax-core_test_lib",
+    "//python/python-syntax:syntax_test_lib",
+    "//python/python-psi-api:psi_test_lib",
+    "//python/python-psi-impl:psi-impl_test_lib",
+    "//python/python-sdk:sdk_test_lib",
+    "//python/python-sdk-ui:sdk-ui_test_lib",
+    "//python/python-pyproject:pyproject_test_lib",
+    "//python/python-core-impl:community-core-impl_test_lib",
+    "//python/impl.helperLocator:community-helpersLocator_test_lib",
+    "//python/openapi:community_test_lib",
+    "//python:python-community-impl_test_lib",
+    "//python/python-exec-service:community-execService_test_lib",
+    "//python/python-exec-service/execService.python:execService.python_test_lib",
+    "//python/installer:installer_test_lib",
+    "//python:python-pydev_test_lib",
+    "//python/python-venv:venv_test_lib",
+    "//python/python-hatch:hatch_test_lib",
+    "//python/services/internal-impl:python-community-services-internal-impl_test_lib",
+    "//python/services/shared:shared_test_lib",
+    "//python/services/system-python:system-python_test_lib",
+    "//python/interpreters:interpreters_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.python.community.aliasProvider` end

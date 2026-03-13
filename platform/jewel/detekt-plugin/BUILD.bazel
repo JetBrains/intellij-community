@@ -58,10 +58,12 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "@lib//:jetbrains-annotations",
     "@lib//:platform-jewel-detekt_plugin-jetbrains-kotlin-compiler-embeddable",
     "@lib//:platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-api",
     "//libraries/junit5",
+    "//libraries/junit5:junit5_test_lib",
     "@lib//:assert_j",
     "@lib//:platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-test",
     "@lib//:platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-core",

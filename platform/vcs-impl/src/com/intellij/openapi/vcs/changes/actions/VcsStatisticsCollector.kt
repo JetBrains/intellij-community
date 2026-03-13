@@ -43,7 +43,7 @@ object VcsStatisticsCollector : CounterUsagesCollector() {
   val CLONED_PROJECT_OPENED = GROUP.registerEvent("cloned.project.opened")
 
   @JvmField
-  val MORE_VCS_PLUGINS_LINK_CLICKED: EventId = GROUP.registerEvent("more.vcs.plugins.link.clicked", "User clicked 'More VCS plugins' link in VCS dialogs")
+  val MORE_VCS_PLUGINS_LINK_CLICKED: EventId = GROUP.registerEvent("more.vcs.plugins.link.clicked")
 
   private val CHANGE_LIST_EDITED_PLACE = EventFields.Enum("editingPlace", EditChangeListPlace::class.java)
   @JvmField

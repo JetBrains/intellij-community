@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
 import com.intellij.dvcs.push.PushTargetPanel;
@@ -24,10 +24,12 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.SimpleTextAttributes;
@@ -143,7 +145,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
         defaultTarget.getTargetType() == GitPushTargetType.TRACKING_BRANCH && !defaultTarget.isNewBranchCreated()
     ) {
       myUpstreamCheckbox = new SetUpstreamCheckbox(defaultTarget.getBranch());
-      myTargetEditor.addDocumentListener(new DocumentListener() {
+      addDocumentListener(myTargetEditor, new DocumentListener() {
         @Override
         public void documentChanged(@NotNull DocumentEvent event) {
           myUpstreamCheckbox.setVisible(myTargetEditor.getText(), myRemoteRenderer.getText());
@@ -177,7 +179,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   }
 
   private void setupBranchNameInputValidation(@NotNull PushTargetTextField editor) {
-    editor.addDocumentListener(new DocumentListener() {
+    addDocumentListener(editor, new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent event) {
         String targetName = myTargetEditor.getText();
@@ -189,6 +191,11 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
         }, ModalityState.stateForComponent(myTargetEditor));
       }
     });
+  }
+
+  private void addDocumentListener(@NotNull EditorTextField editorField, @NotNull DocumentListener listener) {
+    editorField.addDocumentListener(listener);
+    Disposer.register(this, () -> editorField.removeDocumentListener(listener));
   }
 
   private void updateComponents(@Nullable GitPushTarget target) {
@@ -476,7 +483,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
   @Override
   public void addTargetEditorListener(final @NotNull PushTargetEditorListener listener) {
-    myTargetEditor.addDocumentListener(new DocumentListener() {
+    addDocumentListener(myTargetEditor, new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
         processActiveUserChanges(listener);

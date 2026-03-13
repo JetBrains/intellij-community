@@ -8,7 +8,11 @@ import com.intellij.ide.wizard.GeneratorNewProjectWizardBuilderAdapter.Companion
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.events.IntEventField
+import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
+import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
@@ -33,7 +37,7 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  val GROUP: EventLogGroup = EventLogGroup("new.project.wizard.interactions", 40)
+  val GROUP: EventLogGroup = EventLogGroup("new.project.wizard.interactions", 41)
 
   private val LANGUAGES = listOf(
     NewProjectWizardConstants.Language.JAVA, NewProjectWizardConstants.Language.KOTLIN,
@@ -119,7 +123,9 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
   private val useCompactProjectStructureFinished = GROUP.registerVarargEvent("build.system.use.compact.project.structure.finished", *buildSystemFields, useCompactProjectStructureField)
   private val generateMultipleModulesChanged = GROUP.registerVarargEvent("kotlin.generate.multiple.modules.changed", *buildSystemFields, generateMultipleModulesField)
   private val generateMultipleModulesFinished = GROUP.registerVarargEvent("kotlin.generate.multiple.modules.finished", *buildSystemFields, generateMultipleModulesField)
-  private val kotlinClickKmpWizardLinkEvent = GROUP.registerVarargEvent("kotlin.kmp.wizard.link.clicked", *buildSystemFields)
+  private val kotlinClickKmpWizardWebEvent = GROUP.registerVarargEvent("kotlin.kmp.wizard.web.clicked", *buildSystemFields)
+  private val kotlinClickKmpWizardOpenKmpPluginEvent = GROUP.registerVarargEvent("kotlin.kmp.wizard.open.kmp.plugin.clicked", *buildSystemFields)
+  private val kotlinClickKmpWizardInstallKmpPluginEvent = GROUP.registerVarargEvent("kotlin.kmp.wizard.install.kmp.plugin.clicked", *buildSystemFields)
   // @formatter:on
 
   @JvmStatic
@@ -317,8 +323,14 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
     fun NewProjectWizardStep.logGenerateMultipleModulesFinished(isSelected: Boolean): Unit =
       generateMultipleModulesFinished.logBuildSystemEvent(this, generateMultipleModulesField with isSelected)
 
-    fun NewProjectWizardStep.logKmpWizardLinkClicked(): Unit =
-      kotlinClickKmpWizardLinkEvent.logBuildSystemEvent(this)
+    fun NewProjectWizardStep.logKmpWizardWebClicked(): Unit =
+      kotlinClickKmpWizardWebEvent.logBuildSystemEvent(this)
+
+    fun NewProjectWizardStep.logKmpWizardOpenKmpPluginClicked(): Unit =
+      kotlinClickKmpWizardOpenKmpPluginEvent.logBuildSystemEvent(this)
+
+    fun NewProjectWizardStep.logKmpWizardInstallKmpPluginClicked(): Unit =
+      kotlinClickKmpWizardInstallKmpPluginEvent.logBuildSystemEvent(this)
   }
 
   private class GeneratorEventField(override val name: String) : PrimitiveEventField<ModuleBuilder?>() {

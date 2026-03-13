@@ -11,11 +11,15 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.text.DateFormatUtil
-import com.intellij.util.ui.*
+import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.ListUiUtil
+import com.intellij.util.ui.NamedColorUtil
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.intellij.lang.annotations.Language
 import java.awt.Component
-import java.util.*
+import java.util.Date
 import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.JPanel

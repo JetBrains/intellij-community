@@ -19,7 +19,7 @@ import java.util.List;
  *
  * @deprecated deprecated with the removal of completion from an old clone dialog
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface RepositoryListLoader {
   /**
    * Check if this loader is configured (e.g. has necessary authentication data)

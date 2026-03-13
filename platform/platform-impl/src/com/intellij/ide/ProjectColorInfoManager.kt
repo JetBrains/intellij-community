@@ -1,7 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.SerializablePersistentStateComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.annotations.Property
 import kotlinx.serialization.Serializable
@@ -30,6 +36,14 @@ internal class ProjectColorInfoManager : SerializablePersistentStateComponent<Pr
       }
     }
 
+  var fromUser: Boolean?
+    get() = state.fromUser
+    set(value) {
+      updateState {
+        it.copy(fromUser = value)
+      }
+    }
+
   val recentProjectColorInfo: RecentProjectColorInfo get() = RecentProjectColorInfo().also {
     it.customColor = this.customColor
     it.associatedIndex = this.associatedIndex ?: -1
@@ -38,7 +52,8 @@ internal class ProjectColorInfoManager : SerializablePersistentStateComponent<Pr
 
 @Serializable
 internal data class ProjectColorInfo(var customColor: String? = null,
-                                     var associatedIndex: Int? = null)
+                                     var associatedIndex: Int? = null,
+                                     var fromUser: Boolean? = null)
 
 @Internal
 @Property(style = Property.Style.ATTRIBUTE)

@@ -4,9 +4,9 @@ package com.jetbrains.python.packaging.toolwindow.packages.tree.renderers
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.hover.TableHoverListener
 import com.intellij.ui.hover.TreeHoverListener
+import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackageVersion
-import com.jetbrains.python.packaging.toolwindow.model.ErrorNode
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.model.RequirementPackage
 import com.jetbrains.python.packaging.toolwindow.packages.tree.PyPackagesTreeTable
@@ -45,6 +45,9 @@ internal fun updatableInstalledPackageStrategy(
   @NlsSafe val updateLink = "${pkg.instance.version} -> ${version.presentableText}"
   linkLabel.text = updateLink
   linkLabel.updateUnderline(tableTree, tableTree.table, row)
+  if (!pkg.isDeclared) {
+    linkLabel.foreground = UIUtil.getInactiveTextColor()
+  }
   versionPanel.add(linkLabel, BorderLayout.WEST)
 }
 
@@ -54,18 +57,24 @@ internal fun requirementPackageStrategy(
   versionLabel: JLabel,
 ) {
   @NlsSafe val version = pkg.instance.version
-  versionLabel.text = version
+  @NlsSafe val versionWithGroup = if (pkg.group != null) "$version (group: ${pkg.group})" else version
+  versionLabel.text = versionWithGroup
   versionLabel.icon = pkg.sourceRepoIcon
+  versionLabel.foreground = if (!pkg.isDeclared) {
+    UIUtil.getInactiveTextColor()
+  } else {
+    UIUtil.getLabelForeground()
+  }
   versionPanel.add(versionLabel, BorderLayout.WEST)
 }
 
-internal fun errorNodeStrategy(
+internal fun workspaceMemberStrategy(
   versionPanel: JPanel,
-  node: ErrorNode,
-  linkLabel: JLabel,
+  versionLabel: JLabel,
 ) {
-  linkLabel.text = node.quickFix.name
-  versionPanel.add(linkLabel, BorderLayout.WEST)
+  versionLabel.text = ""
+  versionLabel.foreground = UIUtil.getLabelForeground()
+  versionPanel.add(versionLabel, BorderLayout.WEST)
 }
 
 internal fun defaultPackageStrategy(
@@ -76,6 +85,11 @@ internal fun defaultPackageStrategy(
   @NlsSafe val version = pkg.instance.version
   versionLabel.text = version
   versionLabel.icon = pkg.sourceRepoIcon
+  versionLabel.foreground = if (!pkg.isDeclared) {
+    UIUtil.getInactiveTextColor()
+  } else {
+    UIUtil.getLabelForeground()
+  }
   versionPanel.add(versionLabel, BorderLayout.WEST)
 }
 

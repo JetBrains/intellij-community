@@ -1,5 +1,6 @@
 // "Surround with null check" "true"
 // WITH_STDLIB
+// K2_ERROR: Non-nullable value required to call an 'iterator()' method in a for-loop.
 
 fun foo(list: List<String>?) {
     for (element in <caret>list) {}

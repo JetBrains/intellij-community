@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-jaxen-_jaxen"],
   runtime_deps = ["@lib//:libraries-jaxen-_jaxen"]
 )
+
+jvm_library(
+  name = "jaxen_test_lib",
+  module_name = "intellij.libraries.jaxen",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-jaxen-_jaxen"],
+  runtime_deps = [":jaxen"]
+)
 ### auto-generated section `build intellij.libraries.jaxen` end

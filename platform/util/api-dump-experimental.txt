@@ -46,6 +46,7 @@ f:com.intellij.openapi.util.io.NioFiles
 - *s:copyRecursively(java.nio.file.Path,java.nio.file.Path,java.util.function.Predicate):V
 - *s:deleteQuietly(java.nio.file.Path):V
 - *s:deleteQuietly(java.nio.file.Path,java.util.function.Consumer):V
+- *s:readCaseSensitivity(java.nio.file.Path,java.nio.file.LinkOption[]):com.intellij.openapi.util.io.FileAttributes$CaseSensitivity
 c:com.intellij.openapi.util.registry.RegistryValue
 - *f:asBooleanFlow():kotlinx.coroutines.flow.Flow
 - *f:asDoubleFlow():kotlinx.coroutines.flow.Flow

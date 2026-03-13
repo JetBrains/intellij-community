@@ -1,6 +1,7 @@
 // "Make 'method' public explicitly" "true"
 // PRIORITY: HIGH
 // COMPILER_ARGUMENTS: -Xexplicit-api=strict
+// K2_ERROR: Visibility must be specified in explicit API mode.
 
 public class Foo2() {
     fun <caret>method() {}

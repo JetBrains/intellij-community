@@ -27,19 +27,28 @@ class NotebookBelowLastCellPanel(
 
   private var isHighlighted = false
 
+  private val toolbar = JupyterAddNewCellToolbar(ActionUtil.getActionGroup("Jupyter.CreateNewCellsPanel")!!,
+                                                 toolbarTargetComponent = this@NotebookBelowLastCellPanel)
+
   init {
     if (editor.isOrdinaryNotebookEditor()) {
       cursor = Cursor.getDefaultCursor()
       isOpaque = false
       border = HighlightableTopBorder(editor.notebookAppearance.cellBorderHeight)
-
-      val actionGroup = ActionUtil.getActionGroup("Jupyter.CreateNewCellsPanel")!!
+      toolbar.background = editor.notebookAppearance.editorBackgroundColor()
 
       add(panel {
         row {
-          cell(JupyterAddNewCellToolbar(actionGroup, toolbarTargetComponent = this@NotebookBelowLastCellPanel)).align(Align.CENTER)
+          cell(toolbar).align(Align.CENTER)
         }
       }.apply { isOpaque = false }, BorderLayout.CENTER)
+    }
+  }
+
+  override fun updateUI() {
+    @Suppress("SENSELESS_COMPARISON")
+    if (editor != null) {
+      toolbar.background = editor.notebookAppearance.editorBackgroundColor()
     }
   }
 
@@ -58,7 +67,7 @@ class NotebookBelowLastCellPanel(
       super.paintBorder(c, g, x, y, width, height)
       if (isHighlighted) {
         val g2d = g as Graphics2D
-        g2d.color = editor.notebookAppearance.cellStripeSelectedColor.get()
+        g2d.color = editor.notebookAppearance.cellStripeSelectedColor()
         val lineY = y + borderHeight / 2
         g2d.fillRect(x, lineY - 1, width, 2)
       }

@@ -14,4 +14,18 @@ jvm_library(
     "//platform/statistics/uploader",
   ]
 )
+
+jvm_library(
+  name = "testFramework_test_lib",
+  module_name = "intellij.platform.statistics.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":testFramework",
+    "//platform/util:util_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/statistics/uploader:uploader_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.statistics.testFramework` end

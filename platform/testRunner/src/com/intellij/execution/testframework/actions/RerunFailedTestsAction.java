@@ -12,7 +12,7 @@ import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 final class RerunFailedTestsAction extends AnAction {
 

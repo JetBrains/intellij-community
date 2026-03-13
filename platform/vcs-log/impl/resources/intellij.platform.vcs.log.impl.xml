@@ -1,11 +1,25 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.kotlinx.coroutines.guava"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.diff"/>
     <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
     <module name="intellij.platform.vcs.log"/>
     <module name="intellij.platform.vcs.log.graph.impl"/>
-    <module name="intellij.platform.vcs.impl.shared"/>
-    <module name="intellij.libraries.kotlinx.coroutines.guava"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint name="logProvider" interface="com.intellij.vcs.log.VcsLogProvider" area="IDEA_PROJECT" dynamic="true"/>
@@ -27,6 +41,9 @@
                     dynamic="true"/>
     <extensionPoint name="vcsLogChangesTreeBuilder"
                     interface="com.intellij.vcs.log.ui.frame.VcsLogChangesTreeModifier"
+                    dynamic="true"/>
+    <extensionPoint name="vcsLogRefreshActionListener"
+                    interface="com.intellij.vcs.log.ui.actions.VcsLogRefreshActionListener"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -70,8 +87,6 @@
     <registryKey key="vcs.log.tabs.restore.without.filters" defaultValue="false"
                  description="Restore VCS Log tabs with empty filters when project is re-opened"/>
 
-    <postStartupActivity implementation="com.intellij.vcs.log.impl.VcsLogToolWindowMaximizedStateHandler"/>
-
     <cachesInvalidator implementation="com.intellij.vcs.log.impl.VcsLogCachesInvalidator"/>
 
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogFileHistoryProvider"
@@ -113,6 +128,11 @@
     <openTelemetryExporterProvider implementation="com.intellij.vcs.log.statistics.VcsLogTelemetryExporter"/>
 
     <bookmarkProvider implementation="com.intellij.vcs.log.ui.VcsLogBookmarkProvider"/>
+
+    <registryKey key="vcs.log.table.show.centered"
+                 defaultValue="true"
+                 description="Handles scrolling to the selected commit in the VCS log table. If true, the selected commit will be centered. If false, it will be on the bottom of the table."/>."
+    />
   </extensions>
 
   <projectListeners>

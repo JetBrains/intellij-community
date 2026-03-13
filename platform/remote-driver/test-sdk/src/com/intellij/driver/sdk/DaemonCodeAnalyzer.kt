@@ -21,7 +21,7 @@ interface DaemonCodeAnalyzer {
 
 @Remote("com.intellij.codeInsight.daemon.impl.HighlightInfo")
 interface HighlightInfo {
-  fun getDescription(): String
+  fun getDescription(): String?
   fun getSeverity(): HighlightSeverity
   fun getText(): String
   fun getHighlighter(): RangeHighlighterEx?

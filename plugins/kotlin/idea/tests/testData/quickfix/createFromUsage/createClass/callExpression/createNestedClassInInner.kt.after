@@ -1,4 +1,5 @@
 // "Create class 'Nested'" "true"
+// K2_ERROR: Unresolved reference 'Nested'.
 class A {
     // TARGET_PARENT:
     inner class B {

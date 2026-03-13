@@ -341,6 +341,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/changeSignature/addNothingReturnType.kt");
         }
 
+        @TestMetadata("addParameterGenericFunction.kt")
+        public void testAddParameterGenericFunction() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addParameterGenericFunction.kt");
+        }
+
         @TestMetadata("addParameterNotAvailableForBuiltins.kt")
         public void testAddParameterNotAvailableForBuiltins() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/changeSignature/addParameterNotAvailableForBuiltins.kt");
@@ -835,6 +840,40 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/suppress/expressionBody")
+        public static class ExpressionBody extends AbstractK2QuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("inExpressionBody.kt")
+            public void testInExpressionBody() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suppress/expressionBody/inExpressionBody.kt");
+            }
+
+            @TestMetadata("inExpressionBody2.kt")
+            public void testInExpressionBody2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suppress/expressionBody/inExpressionBody2.kt");
+            }
+
+            @TestMetadata("inExpressionBodyNewLine.kt")
+            public void testInExpressionBodyNewLine() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suppress/expressionBody/inExpressionBodyNewLine.kt");
+            }
+
+            @TestMetadata("inExpressionBodyReturnType.kt")
+            public void testInExpressionBodyReturnType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suppress/expressionBody/inExpressionBodyReturnType.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../idea/tests/testData/quickfix/suppress/external")
         public static class External extends AbstractK2QuickFixTest {
             @java.lang.Override
@@ -887,11 +926,6 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
                 @TestMetadata("inDefaultArgument.kt")
                 public void testInDefaultArgument() throws Exception {
                     runTest("../../../idea/tests/testData/quickfix/suppress/forStatement/unavailable/inDefaultArgument.kt");
-                }
-
-                @TestMetadata("inExpressionBody.kt")
-                public void testInExpressionBody() throws Exception {
-                    runTest("../../../idea/tests/testData/quickfix/suppress/forStatement/unavailable/inExpressionBody.kt");
                 }
 
                 @TestMetadata("inLocalValInitializer.kt")
@@ -1803,9 +1837,14 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/optIn/classUseOptIn.kt");
         }
 
-        @TestMetadata("destructuringDeclaration.kt")
-        public void testDestructuringDeclaration() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/optIn/destructuringDeclaration.kt");
+        @TestMetadata("destructuringDeclarationOnFunction.kt")
+        public void testDestructuringDeclarationOnFunction() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/destructuringDeclarationOnFunction.kt");
+        }
+
+        @TestMetadata("destructuringDeclarationOnStatement.kt")
+        public void testDestructuringDeclarationOnStatement() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/destructuringDeclarationOnStatement.kt");
         }
 
         @TestMetadata("existingFileAnnotationWithPackage.kt")
@@ -2278,6 +2317,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/AnnotationAllUseSiteTarget_2_2.kt");
         }
 
+        @TestMetadata("AnnotationAllUseSiteTarget_2_2_Increase_Version.kt")
+        public void testAnnotationAllUseSiteTarget_2_2_Increase_Version() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/AnnotationAllUseSiteTarget_2_2_Increase_Version.kt");
+        }
+
         @TestMetadata("BreakContinueInInlineLambdas_2_0.kt")
         public void testBreakContinueInInlineLambdas_2_0() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/BreakContinueInInlineLambdas_2_0.kt");
@@ -2321,6 +2365,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
         @TestMetadata("MultiDollarInterpolation_2_1.kt")
         public void testMultiDollarInterpolation_2_1() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/MultiDollarInterpolation_2_1.kt");
+        }
+
+        @TestMetadata("MultiDollarInterpolation_2_1_Increase_Version.kt")
+        public void testMultiDollarInterpolation_2_1_Increase_Version() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/MultiDollarInterpolation_2_1_Increase_Version.kt");
         }
 
         @TestMetadata("MultiDollarInterpolation_2_2.kt")

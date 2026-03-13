@@ -17,10 +17,24 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDocCommentBase;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.structuralsearch.*;
+import com.intellij.structuralsearch.MalformedPatternException;
+import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.Matcher;
+import com.intellij.structuralsearch.PatternContextInfo;
+import com.intellij.structuralsearch.ReplacementVariableDefinition;
+import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralReplaceHandler;
+import com.intellij.structuralsearch.StructuralSearchProfile;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
@@ -314,7 +328,7 @@ public class Replacer {
       final LanguageFileType fileType = options.getMatchOptions().getFileType();
       final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
       if (profile != null) {
-        ReadAction.run(() -> profile.checkReplacementPattern(project, options));
+        ReadAction.runBlocking(() -> profile.checkReplacementPattern(project, options));
       }
     } catch (IncorrectOperationException ex) {
       throw new MalformedPatternException(SSRBundle.message("incorrect.pattern.message"));

@@ -3,8 +3,8 @@ package com.intellij.platform.tests.eelHelpers;
 
 import org.jetbrains.annotations.TestOnly;
 
-import static com.intellij.platform.tests.eelHelpers.network.NetworkHelperKt.startNetworkServer;
 import static com.intellij.platform.tests.eelHelpers.network.NetworkHelperKt.startNetworkClient;
+import static com.intellij.platform.tests.eelHelpers.network.NetworkHelperKt.startNetworkServer;
 import static com.intellij.platform.tests.eelHelpers.ttyAndExit.TtyAndExitHelperKt.startTtyAndExitHelper;
 
 /**

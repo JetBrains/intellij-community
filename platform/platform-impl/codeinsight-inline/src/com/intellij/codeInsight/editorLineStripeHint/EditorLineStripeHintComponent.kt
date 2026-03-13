@@ -14,7 +14,13 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.ui.components.JBPanel
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.GradientPaint
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.util.concurrent.atomic.AtomicBoolean

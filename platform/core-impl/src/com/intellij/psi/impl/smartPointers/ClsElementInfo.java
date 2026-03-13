@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.util.Segment;
@@ -9,6 +9,10 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Tracks a compiled ({@code .class}) PSI element via a {@link com.intellij.psi.PsiAnchor.StubIndexReference}.
+ * Has no text range since bytecode elements have no source offsets.
+ */
 class ClsElementInfo extends SmartPointerElementInfo {
   private final @NotNull PsiAnchor.StubIndexReference myStubIndexReference;
 

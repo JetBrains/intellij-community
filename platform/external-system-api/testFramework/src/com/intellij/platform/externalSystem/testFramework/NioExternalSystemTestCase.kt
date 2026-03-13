@@ -14,7 +14,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getExternalConfigurationDir
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.util.io.*
+import com.intellij.openapi.util.io.ByteArraySequence
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.NioFiles
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -118,7 +122,7 @@ abstract class NioExternalSystemTestCase : UsefulTestCase() {
 
   @Throws(Exception::class)
   protected open fun setUpFixtures() {
-    myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name, useDirectoryBasedStorageFormat()).getFixture()
+    myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder("test", useDirectoryBasedStorageFormat()).getFixture()
     myTestFixture.setUp()
   }
 

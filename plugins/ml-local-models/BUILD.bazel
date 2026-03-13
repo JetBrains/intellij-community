@@ -26,4 +26,23 @@ jvm_library(
     "//platform/lang-impl",
   ]
 )
+
+jvm_library(
+  name = "ml-models-local_test_lib",
+  module_name = "intellij.ml.models.local",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":ml-models-local",
+    "//libraries/gson:gson_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.ml.models.local` end

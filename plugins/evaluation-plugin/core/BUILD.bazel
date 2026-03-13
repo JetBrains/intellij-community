@@ -36,4 +36,32 @@ jvm_library(
   ],
   runtime_deps = ["//platform/backend"]
 )
+
+jvm_library(
+  name = "core_test_lib",
+  module_name = "intellij.evaluationPlugin.core",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":core",
+    "//libraries/gson:gson_test_lib",
+    "//libraries/commons/compress:compress_test_lib",
+    "//libraries/kotlinx/html:html_test_lib",
+    "//libraries/commons/lang3:lang3_test_lib",
+    "//libraries/commons/text:text_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector_test_lib",
+    "//libraries/jackson/databind:databind_test_lib",
+    "//platform/backend:backend_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/extensions:extensions_test_lib",
+    "//platform/statistics/uploader:uploader_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
+    "//platform/diagnostic/telemetry-impl:telemetry-impl_test_lib",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.evaluationPlugin.core` end

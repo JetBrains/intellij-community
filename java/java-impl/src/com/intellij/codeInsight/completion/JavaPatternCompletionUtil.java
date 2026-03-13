@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailTypes;
@@ -115,7 +115,7 @@ public final class JavaPatternCompletionUtil {
     }
     if (type instanceof PsiPrimitiveType) {
       LookupElement lookupItem = BasicExpressionCompletionContributor.createKeywordLookupItem(currentPosition, type.getCanonicalText());
-      result.accept(new JavaKeywordCompletion.OverridableSpace(lookupItem, TailTypes.spaceType()));
+      result.accept(OverridableSpace.create(lookupItem, TailTypes.spaceType()));
     }
   }
 
@@ -145,7 +145,7 @@ public final class JavaPatternCompletionUtil {
       indexOfPattern = components.length;
     }
     PsiRecordComponent[] recordComponents = psiRecord.getRecordComponents();
-    if (recordComponents.length < indexOfPattern) return null;
+    if (recordComponents.length <= indexOfPattern) return null;
     return recordComponents[indexOfPattern];
   }
 
@@ -158,7 +158,7 @@ public final class JavaPatternCompletionUtil {
       if (TypeConversionUtil.areTypesConvertible(fromType, primitiveType)) {
         LookupElement lookupItem =
           BasicExpressionCompletionContributor.createKeywordLookupItem(currentPosition, primitiveType.getCanonicalText());
-        result.accept(new JavaKeywordCompletion.OverridableSpace(lookupItem, TailTypes.spaceType()));
+        result.accept(OverridableSpace.create(lookupItem, TailTypes.spaceType()));
       }
     }
   }
@@ -187,7 +187,6 @@ public final class JavaPatternCompletionUtil {
                               @NotNull List<PsiType> types,
                               boolean onlyDeconstructionList) {
     static PatternModel create(@NotNull PsiClass record, @NotNull PsiElement context, boolean onlyDeconstructionList) {
-      JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(record.getProject());
       PsiDeconstructionPattern deconstructionPattern = PsiTreeUtil.getParentOfType(context, PsiDeconstructionPattern.class);
       List<String> names = new ArrayList<>();
       for (PsiRecordComponent component : record.getRecordComponents()) {

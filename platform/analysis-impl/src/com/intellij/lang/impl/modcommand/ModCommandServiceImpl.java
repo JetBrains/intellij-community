@@ -2,12 +2,24 @@
 package com.intellij.lang.impl.modcommand;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.GlobalInspectionTool;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.options.OptControl;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandService;
+import com.intellij.modcommand.ModCommandWithContext;
+import com.intellij.modcommand.ModNavigate;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.ModUpdateFileText;
+import com.intellij.modcommand.ModUpdateSystemOptions;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -20,6 +32,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
+import com.intellij.psi.util.ReadActionCache;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -124,6 +137,8 @@ public final class ModCommandServiceImpl implements ModCommandService {
     Project project = hostFile.getProject();
     ThrowableComputable<ModCommandWithContext, RuntimeException> computable =
       () -> ReadAction.nonBlocking(() -> {
+          ReadActionCache.getInstance().disable(); // this read action in fact modifies Document, do not try to cache its results
+
           ActionContext context = chooseContextForAction(hostFile, hostEditor, commandAction, fixOffset);
           if (context == null) {
             return new ModCommandWithContext(ActionContext.from(null, hostFile), ModCommand.nop());

@@ -2,7 +2,11 @@
 
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.*;
+import com.intellij.codeInsight.intention.CustomizableIntentionAction;
+import com.intellij.codeInsight.intention.CustomizableIntentionActionDelegate;
+import com.intellij.codeInsight.intention.EventTrackingIntentionAction;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
@@ -23,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;

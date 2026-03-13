@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.components.service
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.python.externalIndex.PyExternalFilesIndexService
 import com.jetbrains.python.PyBundle
@@ -23,9 +24,10 @@ class InstallAllPackagesQuickFix(private val packageNames: List<String>) : Local
               ?: return
 
     val normalizedPackageNames = packageNames.map { moduleToPackageName(it) }
+    val module = ModuleUtilCore.findModuleForPsiElement(element)
 
     PyPackageCoroutine.launch(project) {
-      PythonPackageManagerUI.forSdk(project, sdk).installWithConfirmation(normalizedPackageNames)
+      PythonPackageManagerUI.forSdk(project, sdk).installWithConfirmation(normalizedPackageNames, module)
     }
   }
 

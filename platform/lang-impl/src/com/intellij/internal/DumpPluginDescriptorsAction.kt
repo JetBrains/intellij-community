@@ -3,13 +3,13 @@
 
 package com.intellij.internal
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.util.DefaultIndenter
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.intellij.ide.ApplicationActivity
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.ClassLoaderConfigurator
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginMainDescriptor
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.ide.plugins.contentModuleName
 import com.intellij.internal.PluginDescriptionDumper.Companion.getDumpFileLocation
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
@@ -24,11 +24,16 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.util.io.jackson.createGenerator
 import com.intellij.util.lang.UrlClassLoader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.json.JsonFactory
+import tools.jackson.core.util.DefaultIndenter
+import tools.jackson.core.util.DefaultPrettyPrinter
 import java.nio.file.Path
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -69,7 +74,8 @@ private class PluginDescriptionDumper(val coroutineScope: CoroutineScope) {
     coroutineScope.launch {
       withContext(Dispatchers.IO) {
         dumpPath.bufferedWriter().use { out ->
-          val writer = JsonFactory().createGenerator(out).setPrettyPrinter(DefaultPrettyPrinter().withArrayIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE))
+          val prettyPrinter = DefaultPrettyPrinter().withArrayIndenter(DefaultIndenter())
+          val writer = JsonFactory().createGenerator(out, prettyPrinter)
           writer.writeStartArray()
           writer.writePlugins()
           writer.writeEndArray()
@@ -90,21 +96,24 @@ private class PluginDescriptionDumper(val coroutineScope: CoroutineScope) {
   }
 
   private fun JsonGenerator.writePlugins() {
-    val allPlugins = PluginManager.getPlugins()
+    val allPlugins = PluginManagerCore.getPluginSet().allPlugins
+    val allModules = allPlugins.asSequence().flatMap { sequenceOf(it) + it.contentModules }
 
-    val pluginClassLoaders = allPlugins.mapNotNullTo(HashSet()) { it.pluginClassLoader }
-    allPlugins.flatMapTo(pluginClassLoaders) {
-      (it as? IdeaPluginDescriptorImpl)?.contentModules?.mapNotNull { it.pluginClassLoader } ?: emptyList()
-    }
-    @Suppress("TestOnlyProblems")
-    val parentClassLoaders = pluginClassLoaders.filterIsInstance<PluginClassLoader>()
-      .flatMapTo(HashSet()) { classLoader -> classLoader._getParents().mapNotNull { it.pluginClassLoader } }
+    val moduleClassLoadersToCount =
+      allModules.groupBy { it.pluginClassLoader }.mapValues { it.value.size }
+    val allReferencedClassLoaders = LinkedHashSet<ClassLoader>()
+    moduleClassLoadersToCount.entries.filter { it.value > 1 }.mapNotNullTo(allReferencedClassLoaders) { it.key }
+    moduleClassLoadersToCount.keys.filterIsInstance<PluginClassLoader>()
+      .flatMapTo(allReferencedClassLoaders) { classLoader ->
+        @Suppress("TestOnlyProblems")
+        classLoader._getParents().mapNotNull { it.pluginClassLoader }
+      }
     val coreClassLoader = ClassLoaderConfigurator::class.java.classLoader
-    parentClassLoaders.add(coreClassLoader)
-    parentClassLoaders.add(ClassLoader.getSystemClassLoader())
-    parentClassLoaders.add(ClassLoader.getPlatformClassLoader())
-    val nonPluginClassLoaders = parentClassLoaders.filterNot { it is PluginClassLoader }.withIndex().associateBy({ it.value }, { it.index })
-    val classLoaderIds = parentClassLoaders.associateWith { classLoader ->
+    allReferencedClassLoaders.add(coreClassLoader)
+    allReferencedClassLoaders.add(ClassLoader.getSystemClassLoader())
+    allReferencedClassLoaders.add(ClassLoader.getPlatformClassLoader())
+    val nonPluginClassLoaders = allReferencedClassLoaders.filterNot { it is PluginClassLoader }.withIndex().associateBy({ it.value }, { it.index })
+    val classLoaderIds = allReferencedClassLoaders.associateWith { classLoader ->
       when (classLoader) {
         is PluginClassLoader -> {
           val moduleSuffix = (classLoader.pluginDescriptor as? IdeaPluginDescriptorImpl)?.contentModuleName?.let { ":$it" } ?: ""
@@ -118,74 +127,75 @@ private class PluginDescriptionDumper(val coroutineScope: CoroutineScope) {
     }
 
     val printedClassLoaders = HashSet<ClassLoader>()
-    PluginManager.getLoadedPlugins().forEach { plugin ->
-      writePluginData(plugin, classLoaderIds, printedClassLoaders)
+    val enabledPlugins = PluginManagerCore.getPluginSet().enabledPlugins
+    enabledPlugins.forEach { plugin ->
+      writePluginData(plugin, enabled = true, classLoaderIds, printedClassLoaders)
     }
-    allPlugins.filterNot { it.isEnabled }.sortedBy { it.pluginId.idString }.forEach { plugin ->
-      writePluginData(plugin, classLoaderIds, printedClassLoaders)
+    (allPlugins - enabledPlugins.toSet()).sortedBy { it.pluginId.idString }.forEach { plugin ->
+      writePluginData(plugin, enabled = false, classLoaderIds, printedClassLoaders)
     }
   }
 
-  private fun JsonGenerator.writePluginData(plugin: IdeaPluginDescriptor,
+  private fun JsonGenerator.writePluginData(plugin: PluginMainDescriptor,
+                                            enabled: Boolean,
                                             classLoaderIds: Map<ClassLoader, String>,
                                             printedClassLoaders: MutableSet<ClassLoader>) {
     writeStartObject()
-    writeStringField("id", plugin.pluginId.idString)
-    writeBooleanField("enabled", plugin.isEnabled)
-    writeBooleanField("bundled", plugin.isBundled)
-    if (plugin.isEnabled) {
-      writeClassLoaderData(plugin.classLoader, classLoaderIds, printedClassLoaders)
+    writeStringProperty("id", plugin.pluginId.idString)
+    writeBooleanProperty("enabled", enabled)
+    writeBooleanProperty("bundled", plugin.isBundled)
+    if (enabled) {
+      writeClassLoaderData(plugin.pluginClassLoader, classLoaderIds, printedClassLoaders)
     }
     writePluginModulesData(plugin, classLoaderIds, printedClassLoaders)
     writeEndObject()
   }
 
-  private fun JsonGenerator.writePluginModulesData(plugin: IdeaPluginDescriptor,
+  private fun JsonGenerator.writePluginModulesData(plugin: PluginMainDescriptor,
                                                    classLoaderIds: Map<ClassLoader, String>,
                                                    printedClassLoaders: MutableSet<ClassLoader>) {
-    if (plugin !is IdeaPluginDescriptorImpl) return
     val modules = plugin.contentModules
     if (modules.isEmpty()) return
 
-    writeArrayFieldStart("modules")
+    writeArrayPropertyStart("modules")
     for (module in modules) {
       writeStartObject()
-      writeStringField("name", module.moduleId.name)
+      writeStringProperty("name", module.moduleId.name)
       val isEnabled = module in PluginManagerCore.getPluginSet().getEnabledModules()
-      writeBooleanField("enabled", isEnabled)
+      writeBooleanProperty("enabled", isEnabled)
       if (isEnabled) {
-        writeClassLoaderData(module.classLoader, classLoaderIds, printedClassLoaders)
+        writeClassLoaderData(module.pluginClassLoader, classLoaderIds, printedClassLoaders)
       }
       writeEndObject()
     }
     writeEndArray()
   }
 
-  private fun JsonGenerator.writeClassLoaderData(classLoader: ClassLoader,
+  private fun JsonGenerator.writeClassLoaderData(classLoader: ClassLoader?,
                                                  classLoaderIds: Map<ClassLoader, String>,
                                                  printedClassLoaders: MutableSet<ClassLoader>) {
-    writeFieldName("classLoader")
+    writeName("classLoader")
     writeStartObject()
     classLoaderIds[classLoader]?.let {
-      writeStringField("id", it)
+      writeStringProperty("id", it)
     }
-    if (printedClassLoaders.add(classLoader)) {
+    if (classLoader != null && printedClassLoaders.add(classLoader)) {
       @Suppress("TestOnlyProblems")
       val parents = when (classLoader) {
         is PluginClassLoader -> classLoader.getAllParentsClassLoaders().toList()
         else -> listOf(classLoader.parent)
       }
-      writeArrayFieldStart("parents")
+      writeArrayPropertyStart("parents")
       for (parent in parents) {
         writeString(classLoaderIds[parent] ?: parent.toString())
       }
       writeEndArray()
 
-      writeArrayFieldStart("classpath")
-      val homePath = Path.of(PathManager.getHomePath())
+      writeArrayPropertyStart("classpath")
+      val homeDir = PathManager.getHomeDir()
       if (classLoader is UrlClassLoader) {
         for (path in classLoader.baseUrls) {
-          val relativePath = if (path.startsWith(homePath)) path.relativeTo(homePath) else path
+          val relativePath = if (path.startsWith(homeDir)) path.relativeTo(homeDir) else path
           writeString(relativePath.toString())
         }
       }

@@ -37,8 +37,8 @@ class HighlightingTestUtil {
     }
 
     @JvmStatic
-    suspend fun waitForAnalysisWithNewApproach(project: Project, span: Span?, timeout: Long?, suppressErrors: Boolean?) {
-      val timeoutDuration = if (timeout == 0L || timeout == null) 5.minutes else timeout.seconds
+    suspend fun waitForAnalysisWithNewApproach(project: Project, span: Span?, timeoutSeconds: Long?, suppressErrors: Boolean?) {
+      val timeoutDuration = if (timeoutSeconds == 0L || timeoutSeconds == null) 5.minutes else timeoutSeconds.seconds
       try {
         project.service<CodeAnalysisStateListener>().waitAnalysisToFinish(timeoutDuration, !(suppressErrors ?: true))
       }

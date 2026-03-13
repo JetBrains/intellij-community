@@ -27,7 +27,10 @@ class PolySymbolMockQueryExecutorFactory : PolySymbolQueryExecutorFactory {
                                            it.getNameConversionRulesProvider(polyContext)?.getNameConversionRules()
                                          },
                                          createModificationTracker(
-                                           scopeList.filterIsInstance<WebTypesMockScopeImpl>().map { it.createPointer() })),
+                                           scopeList.filterIsInstance<WebTypesMockScopeImpl>().map { scope ->
+                                             val scopePtr = scope.createPointer()
+                                             com.intellij.model.Pointer { scopePtr.dereference()?.modificationTracker }
+                                           })),
                                        PolySymbolQueryResultsCustomizerFactory.getQueryResultsCustomizer(location,
                                                                                                          PolyContext.create(context)),
                                        PolyContext.create(context),

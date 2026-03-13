@@ -13,7 +13,7 @@ import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
 import java.awt.event.MouseEvent
-import java.util.*
+import java.util.Enumeration
 import javax.swing.JComponent
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath

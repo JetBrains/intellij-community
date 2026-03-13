@@ -22,10 +22,10 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.libraries.Library;
@@ -42,6 +42,10 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -54,6 +58,10 @@ import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.ide.legacyBridge.LibraryBridgesKt;
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridges;
+import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,6 +73,7 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -102,7 +111,7 @@ public final class AttachSourcesNotificationProvider implements EditorNotificati
       });
     }
 
-    List<? extends LibraryOrderEntry> libraries = findLibraryEntriesForFile(file, project);
+    Collection<LibraryEntity> libraries = findLibraryEntitiesForFile(file, project);
     if (libraries.isEmpty()) {
       return notificationPanelCreator;
     }
@@ -134,12 +143,12 @@ public final class AttachSourcesNotificationProvider implements EditorNotificati
 
       for (AttachSourcesProvider.AttachSourcesAction action : actions) {
         panel.createActionLabel(GuiUtils.getTextWithoutMnemonicEscaping(action.getName()), () -> {
-          findLibraryEntriesForFile(project, file, libraries, entries -> {
+          findLibraryEntitiesForFile(project, file, libraries, entries -> {
             String originalText = panel.getText();
             panel.setText(action.getBusyText());
 
             final long started = System.currentTimeMillis();
-            final ActionCallback callback = action.perform(entries);
+            final ActionCallback callback = action.perform(entries, project);
             callback.doWhenProcessed(() -> {
               panel.setText(originalText);
               if (psiFile != null) {
@@ -167,12 +176,12 @@ public final class AttachSourcesNotificationProvider implements EditorNotificati
 
   @SuppressWarnings("IncorrectParentDisposable")
   @RequiresEdt
-  private static void findLibraryEntriesForFile(@NotNull Project project,
-                                                @NotNull VirtualFile file,
-                                                @NotNull List<? extends LibraryOrderEntry> originalLibraries,
-                                                @NotNull Consumer<? super List<? extends LibraryOrderEntry>> uiThreadAction) {
+  private static void findLibraryEntitiesForFile(@NotNull Project project,
+                                                 @NotNull VirtualFile file,
+                                                 @NotNull Collection<LibraryEntity> originalLibraries,
+                                                 @NotNull Consumer<? super Collection<LibraryEntity>> uiThreadAction) {
     ReadAction.nonBlocking(() -> {
-        List<? extends LibraryOrderEntry> libraries = findLibraryEntriesForFile(file, project);
+        Collection<LibraryEntity> libraries = findLibraryEntitiesForFile(file, project);
         if (Comparing.equal(originalLibraries, libraries)) {
           return libraries;
         }
@@ -197,7 +206,7 @@ public final class AttachSourcesNotificationProvider implements EditorNotificati
       });
   }
 
-  private static @NotNull List<? extends AttachSourcesProvider.AttachSourcesAction> collectActions(@NotNull List<? extends LibraryOrderEntry> libraries,
+  private static @NotNull List<? extends AttachSourcesProvider.AttachSourcesAction> collectActions(@NotNull Collection<LibraryEntity> libraries,
                                                                                                    @NotNull PsiFile classFile) {
     List<AttachSourcesProvider.AttachSourcesAction> actions = new ArrayList<>();
 
@@ -206,7 +215,7 @@ public final class AttachSourcesNotificationProvider implements EditorNotificati
       if (!AttachSourcesProviderFilter.isProviderApplicable(provider, libraries, classFile)) {
         continue;
       }
-      for (AttachSourcesProvider.AttachSourcesAction action : provider.getActions(libraries, classFile)) {
+      for (AttachSourcesProvider.AttachSourcesAction action : provider.getLibrariesActions(libraries, classFile)) {
         if (hasNonLightAction) {
           if (action instanceof AttachSourcesProvider.LightAttachSourcesAction) {
             continue; // Don't add LightAttachSourcesAction if non-light action exists.
@@ -268,17 +277,10 @@ public final class AttachSourcesNotificationProvider implements EditorNotificati
   }
 
   @RequiresReadLock
-  private static @NotNull List<? extends LibraryOrderEntry> findLibraryEntriesForFile(@NotNull VirtualFile file,
-                                                                                      @NotNull Project project) {
-    List<LibraryOrderEntry> entries = new ArrayList<>();
+  private static @NotNull Collection<LibraryEntity> findLibraryEntitiesForFile(@NotNull VirtualFile file,
+                                                                               @NotNull Project project) {
 
-    for (OrderEntry entry : ProjectFileIndex.getInstance(project).getOrderEntriesForFile(file)) {
-      if (entry instanceof LibraryOrderEntry) {
-        entries.add((LibraryOrderEntry)entry);
-      }
-    }
-
-    return entries;
+    return ProjectFileIndex.getInstance(project).findContainingLibraries(file);
   }
 
   private static boolean sourceFileIsInSameJar(@NotNull VirtualFile classFile) {
@@ -310,10 +312,20 @@ public final class AttachSourcesNotificationProvider implements EditorNotificati
 
     @Override
     public @NotNull ActionCallback perform(@NotNull List<? extends LibraryOrderEntry> orderEntriesContainingFile) {
+      List<Library> libraries = ContainerUtil.mapNotNull(orderEntriesContainingFile, orderEntry -> orderEntry.getLibrary());
+      return performInternal(libraries);
+    }
+
+    @Override
+    public @NotNull ActionCallback perform(@NotNull Collection<LibraryEntity> libraryEntities, @NotNull Project myProject) {
+      ImmutableEntityStorage currentSnapshot = WorkspaceModel.getInstance(myProject).getCurrentSnapshot();
+      List<Library> libraries = ContainerUtil.mapNotNull(libraryEntities, entity -> LibraryBridgesKt.findLibraryBridge(entity, currentSnapshot));
+      return performInternal(libraries);
+    }
+
+    private @NotNull ActionCallback performInternal(@NotNull List<Library> libraries) {
       final List<Library.ModifiableModel> modelsToCommit = new ArrayList<>();
-      for (LibraryOrderEntry orderEntry : orderEntriesContainingFile) {
-        final Library library = orderEntry.getLibrary();
-        if (library == null) continue;
+      for (Library library : libraries) {
         final VirtualFile root = findRoot(library);
         if (root == null) continue;
         final Library.ModifiableModel model = library.getModifiableModel();
@@ -362,44 +374,80 @@ public final class AttachSourcesNotificationProvider implements EditorNotificati
     }
 
     @Override
+    public @NotNull ActionCallback perform(@NotNull Collection<LibraryEntity> libraryEntities, @NotNull Project project) {
+      ImmutableEntityStorage currentSnapshot = WorkspaceModel.getInstance(project).getCurrentSnapshot();
+      List<Library> libraries = ContainerUtil.mapNotNull(libraryEntities, library -> LibraryBridgesKt.findLibraryBridge(library, currentSnapshot));
+      Library firstLibrary = ContainerUtil.getFirstItem(libraries);
+
+      Map<Library, LibraryAndModule> librariesToAppendSourcesTo = new HashMap<>();
+      for (LibraryEntity library : libraryEntities) {
+        Library lib = LibraryBridgesKt.findLibraryBridge(library, currentSnapshot);
+        ModuleEntity moduleEntity = SequencesKt.firstOrNull(currentSnapshot.referrers(library.getSymbolicId(), ModuleEntity.class));
+        if (moduleEntity != null) {
+          Module module = ModuleBridges.findModule(moduleEntity, currentSnapshot);
+          if (module != null) {
+            librariesToAppendSourcesTo.put(lib, new LibraryAndModule(lib, module));
+          }
+        }
+      }
+      return chooseFilesAndPerform(librariesToAppendSourcesTo, firstLibrary);
+    }
+
+    @Override
     public @NotNull ActionCallback perform(@NotNull List<? extends LibraryOrderEntry> libraries) {
+      Library firstLibrary = libraries.get(0).getLibrary();
+      Map<Library, LibraryAndModule> librariesToAppendSourcesTo = new HashMap<>();
+      for (LibraryOrderEntry library : libraries) {
+        librariesToAppendSourcesTo.put(library.getLibrary(), new LibraryAndModule(library.getLibrary(), library.getOwnerModule()));
+      }
+      return chooseFilesAndPerform(librariesToAppendSourcesTo, firstLibrary);
+    }
+
+    private @NotNull ActionCallback chooseFilesAndPerform(@NotNull Map<Library, LibraryAndModule> librariesToAppendSourcesTo,
+                                                           Library firstLibrary) {
+      VirtualFile[] files = chooseSourceFiles(firstLibrary);
+      if (files == null) return ActionCallback.REJECTED;
+      return performInternal(librariesToAppendSourcesTo, firstLibrary, files);
+    }
+
+    private @Nullable VirtualFile[] chooseSourceFiles(Library firstLibrary) {
       FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
       descriptor.setTitle(JavaUiBundle.message("library.attach.sources.action"));
       descriptor.setDescription(JavaUiBundle.message("library.attach.sources.description"));
-      Library firstLibrary = libraries.get(0).getLibrary();
+
       VirtualFile[] roots = firstLibrary != null ? firstLibrary.getFiles(OrderRootType.CLASSES) : VirtualFile.EMPTY_ARRAY;
       VirtualFile[] candidates = FileChooser.chooseFiles(descriptor, myProject, roots.length == 0 ? null : VfsUtil.getLocalFile(roots[0]));
-      if (candidates.length == 0) return ActionCallback.REJECTED;
+      if (candidates.length == 0) return null;
       VirtualFile[] files = LibrarySourceRootDetectorUtil.scanAndSelectDetectedJavaSourceRoots(myParentComponent, candidates);
-      if (files.length == 0) return ActionCallback.REJECTED;
+      return files.length == 0 ? null : files;
+    }
 
-      final Map<Library, LibraryOrderEntry> librariesToAppendSourcesTo = new HashMap<>();
-      for (LibraryOrderEntry library : libraries) {
-        librariesToAppendSourcesTo.put(library.getLibrary(), library);
-      }
+    private @NotNull ActionCallback performInternal(Map<Library, LibraryAndModule> librariesToAppendSourcesTo,
+                                                    Library firstLibrary,
+                                                    VirtualFile[] files) {
       if (librariesToAppendSourcesTo.size() == 1) {
         appendSources(firstLibrary, files);
       }
       else {
         librariesToAppendSourcesTo.put(null, null);
         String title = JavaUiBundle.message("library.choose.one.to.attach");
-        List<LibraryOrderEntry> entries = new ArrayList<>(librariesToAppendSourcesTo.values());
+        List<LibraryAndModule> entries = new ArrayList<>(librariesToAppendSourcesTo.values());
         JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(title, entries) {
           @Override
-          public ListSeparator getSeparatorAbove(LibraryOrderEntry value) {
+          public ListSeparator getSeparatorAbove(LibraryAndModule value) {
             return value == null ? new ListSeparator() : null;
           }
 
           @Override
-          public @NotNull String getTextFor(LibraryOrderEntry value) {
+          public @NotNull String getTextFor(LibraryAndModule value) {
             return value == null ? CommonBundle.message("action.text.all")
-                                 : value.getPresentableName() + " (" + value.getOwnerModule().getName() + ")";
+                                 : value.library.getPresentableName() + " (" + value.ownerModule.getName() + ")";
           }
 
           @Override
-          public PopupStep<?> onChosen(LibraryOrderEntry libraryOrderEntry, boolean finalChoice) {
+          public PopupStep<?> onChosen(LibraryAndModule libraryOrderEntry, boolean finalChoice) {
             if (libraryOrderEntry != null) {
-              appendSources(libraryOrderEntry.getLibrary(), files);
+              appendSources(libraryOrderEntry.library, files);
             }
             else {
               for (Library libOrderEntry : librariesToAppendSourcesTo.keySet()) {
@@ -425,5 +473,10 @@ public final class AttachSourcesNotificationProvider implements EditorNotificati
         model.commit();
       });
     }
+
+    private record LibraryAndModule(
+      Library library,
+      Module ownerModule
+    ) { }
   }
 }

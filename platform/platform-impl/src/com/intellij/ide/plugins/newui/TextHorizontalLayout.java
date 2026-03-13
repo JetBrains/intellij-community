@@ -4,8 +4,9 @@ package com.intellij.ide.plugins.newui;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import java.awt.Component;
+import java.awt.Container;
 
 /**
  * @author Alexander Lobas

@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckoutProvider
@@ -70,7 +71,9 @@ internal class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
               selectedItem = null
             }
             .component
-          cell(VcsDialogUtils.getMorePluginsLink(mainPanel))
+          cell(VcsDialogUtils.getMorePluginsLink(mainPanel) {
+            DialogWrapper.findInstance(mainPanel)?.close(DialogWrapper.CANCEL_EXIT_CODE)
+          })
         }
       }
       val insets = UIUtil.PANEL_REGULAR_INSETS

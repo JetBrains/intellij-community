@@ -1,4 +1,5 @@
 // "Add 'operator' modifier" "true"
+// K2_ERROR: 'operator' modifier is required on 'fun get(i: Int): String' defined in 'A'.
 class A {
     operator fun get(i: Int): String = ""
 }

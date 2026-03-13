@@ -30,5 +30,7 @@
     <orderEntry type="module" module-name="intellij.spellchecker" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" />
   </component>
 </module>

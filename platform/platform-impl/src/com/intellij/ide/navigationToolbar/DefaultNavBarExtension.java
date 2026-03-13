@@ -10,16 +10,27 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModuleFileIndex;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDirectoryContainer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.psi.search.GlobalSearchScope.moduleScope;
 
 /**
  * @author anna
@@ -69,9 +80,8 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
       return processChildren((Module)object, processor);
     }
     else if (object instanceof PsiDirectoryContainer psiPackage) {
-      final PsiDirectory[] psiDirectories = ReadAction.compute(() -> rootElement instanceof Module
-                                                                     ? psiPackage.getDirectories(
-        GlobalSearchScope.moduleScope((Module)rootElement))
+      final PsiDirectory[] psiDirectories = ReadAction.computeBlocking(() -> rootElement instanceof Module
+                                                                     ? psiPackage.getDirectories(moduleScope((Module)rootElement))
                                                                      : psiPackage.getDirectories());
       for (PsiDirectory psiDirectory : psiDirectories) {
         if (!processChildren(psiDirectory, rootElement, processor)) return false;
@@ -88,7 +98,7 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
   }
 
   private static boolean processChildren(final Project object, final Processor<Object> processor) {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       for (Module module : ModuleManager.getInstance(object).getModules()) {
         if (!ModuleType.isInternal(module) && !processor.process(module)) return false;
       }
@@ -101,7 +111,7 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     VirtualFile[] roots = moduleRootManager.getContentRoots();
     for (final VirtualFile root : roots) {
-      final PsiDirectory psiDirectory = ReadAction.compute(() -> psiManager.findDirectory(root));
+      PsiDirectory psiDirectory = ReadAction.computeBlocking(() -> psiManager.findDirectory(root));
       if (psiDirectory != null) {
         if (!processor.process(psiDirectory)) return false;
       }
@@ -110,7 +120,7 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
   }
 
   private static boolean processChildren(PsiDirectory directory, @Nullable Object rootElement, Processor<Object> processor) {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       Project project = directory.getProject();
       RootType scratchRootType = RootType.forFile(PsiUtilCore.getVirtualFile(directory));
       ModuleFileIndex moduleFileIndex =
@@ -125,7 +135,7 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
   }
 
   private static boolean processChildren(final PsiFileSystemItem object, final Processor<Object> processor) {
-    return ReadAction.compute(() -> object.processChildren(new PsiFileSystemItemProcessor() {
+    return ReadAction.computeBlocking(() -> object.processChildren(new PsiFileSystemItemProcessor() {
       @Override
       public boolean acceptItem(@NotNull String name, boolean isDirectory) {
         return true;

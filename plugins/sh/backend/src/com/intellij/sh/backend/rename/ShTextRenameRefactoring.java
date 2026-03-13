@@ -198,12 +198,9 @@ final class ShTextRenameRefactoring {
 
     @Override
     public Result calculateResult(ExpressionContext context) {
-      Editor editor = context.getEditor();
-      if (editor != null) {
-        TextResult insertedValue = context.getVariableValue(PRIMARY_VARIABLE_NAME);
-        if (insertedValue != null && !insertedValue.getText().isEmpty()) {
-          return insertedValue;
-        }
+      TextResult insertedValue = context.getVariableValue(PRIMARY_VARIABLE_NAME);
+      if (insertedValue != null && !insertedValue.getText().isEmpty()) {
+        return insertedValue;
       }
       return new TextResult(myInitialText);
     }

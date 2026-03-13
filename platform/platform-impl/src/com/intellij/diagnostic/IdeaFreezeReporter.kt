@@ -19,17 +19,23 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.eel.fs.EelFiles
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.util.SmartList
 import com.intellij.util.application
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.lang.management.ThreadInfo
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
+import java.util.LinkedList
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.coroutineContext
 
@@ -93,9 +99,9 @@ internal class IdeaFreezeReporter : PerformanceListener {
       dumpTask?.stop()
 
       reset()
-      val watcher = PerformanceWatcher.getInstance()
-      val maxDumpDuration = watcher.maxDumpDuration
-      if (maxDumpDuration == 0) {
+
+      val maxDumpDuration = Registry.get("freeze.reporter.maxDumpDuration.ms").asInteger()
+      if (maxDumpDuration <= 0) {
         return
       }
 
@@ -108,8 +114,8 @@ internal class IdeaFreezeReporter : PerformanceListener {
           }
         }
 
-        override suspend fun stopDumpingThreads() {
-          super.stopDumpingThreads()
+        override suspend fun stopAndWait() {
+          super.stopAndWait()
           if (stopped.compareAndSet(false, true)) {
             EP_NAME.forEachExtensionSafe { it.stop(reportDir) }
           }
@@ -126,7 +132,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
     val edtStack = dump.edtStackTrace
     if (edtStack != null) {
       stacktraceCommonPart = if (stacktraceCommonPart == null) {
-        @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "RemoveRedundantQualifierName")
+        @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
         java.util.List.of(*edtStack)
       }
       else {
@@ -143,7 +149,8 @@ internal class IdeaFreezeReporter : PerformanceListener {
       ObjectOutputStream(Files.newOutputStream(dir.resolve(THROWABLE_FILE_NAME))).use { it.writeObject(event.throwable) }
       saveAppInfo(dir.resolve(APP_INFO_FILE_NAME), false)
     }
-    catch (_: IOException) { }
+    catch (_: IOException) {
+    }
   }
 
   override fun uiFreezeFinished(durationMs: Long, reportDir: Path?) {
@@ -169,8 +176,14 @@ internal class IdeaFreezeReporter : PerformanceListener {
 
           val loggingEvent = createEvent(dumpTask, durationMs, attachments, reportDir, PerformanceWatcher.getInstance(), finished = true)
           if (loggingEvent != null && (application.isEAP || application.isInternal)) {
-            // plugins freezes reported separately via com.intellij.diagnostic.FreezeNotifier
-            report(loggingEvent)
+            if (ExceptionAutoReportUtil.isAutoReportEnabled && ExceptionAutoReportUtil.isAutoReportableException(loggingEvent)) {
+              MessagePool.getInstance().addIdeFatalMessage(loggingEvent)
+              return
+            }
+            else if (application.isEAP || application.isInternal) {
+              // plugin freezes are reported separately via com.intellij.diagnostic.FreezeNotifier
+              report(loggingEvent)
+            }
           }
 
           if (reportDir != null && loggingEvent != null && dumps.isNotEmpty()) {
@@ -187,9 +200,10 @@ internal class IdeaFreezeReporter : PerformanceListener {
   }
 
   /**
-   * In Diogen, we check that there is at least one method in report.txt which also exists in threadDumps in the thread responsible for
-   * a freeze that lasts 1+ second.
-   * And we add [SamplingTask.dumpInterval] to each method in [buildTree].
+   * In Diogen, we check that there is at least one method in 'report.txt' that lasts 1+ second,
+   * which also exists in threadDumps in the thread responsible for a freeze.
+   *
+   * So the reports shorter than one second shall not be sent.
    */
   private fun SamplingTask.isValid(): Boolean {
     return threadInfos.size > (1000 / dumpInterval)
@@ -361,7 +375,6 @@ private const val DUMP_PREFIX = "dump"
 private const val MESSAGE_FILE_NAME = ".message"
 private const val THROWABLE_FILE_NAME = ".throwable"
 
-@Suppress("SpellCheckingInspection")
 internal const val APP_INFO_FILE_NAME: String = ".appinfo"
 
 // common stack contains more than the specified % samples
@@ -372,8 +385,8 @@ private const val COMMON_SUB_STACK_WEIGHT = 0.25
  *
  * By default, freeze detection is off for IDE running from sources -- to filter out freezes during development and especially
  * during debugging.
- * Freeze detection could also be disabled with sys('idea.force.freeze.reports') variable (see [.isEnabled] for details).
- * DEBUG = true overrides all this, and enables freeze detection anyway
+ * Freeze detection could also be disabled with a sys('idea.force.freeze.reports') variable (see [.isEnabled] for details).
+ * DEBUG = true overrides all this and enables freeze detection anyway
  * -- useful, e.g., while developing/debugging freeze detection code itself.
  */
 private val DEBUG = "false".toBoolean()
@@ -418,7 +431,7 @@ private suspend fun reportDeadlocks(files: List<Path>, duration: Int, dir: Path)
 
     suspend fun readText(): String {
       return withContext(Dispatchers.IO) {
-        Files.readString(file)
+        EelFiles.readString(file)
       }
     }
 

@@ -33,7 +33,8 @@ import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.SecureRandom
-import java.util.*
+import java.util.Locale
+import java.util.UUID
 import java.util.prefs.Preferences
 
 @ApiStatus.Internal

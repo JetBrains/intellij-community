@@ -28,6 +28,22 @@ jvm_library(
   module_name = "intellij.platform.frontend.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  runtime_deps = [":frontend-main"]
+  runtime_deps = [
+    ":frontend-main",
+    "//platform/main/intellij.platform.main:main_test_lib",
+    "//platform/navbar/frontend:frontend_test_lib",
+    "//platform/xdebugger-impl/frontend:frontend_test_lib",
+    "//platform/searchEverywhere/frontend:frontend_test_lib",
+    "//platform/vcs-impl/frontend:frontend_test_lib",
+    "//platform/bookmarks/frontend:frontend_test_lib",
+    "//platform/recentFiles/frontend:frontend_test_lib",
+    "//platform/pluginManager/frontend:frontend_test_lib",
+    "//platform/execution-impl/frontend:frontend_test_lib",
+    "//platform/execution.dashboard/frontend:frontend_test_lib",
+    "//platform/execution.serviceView/frontend:frontend_test_lib",
+    "//platform/remote-topics/frontend:frontend_test_lib",
+    "//platform/buildView/frontend:frontend_test_lib",
+    "//platform/completion/frontend:frontend_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.platform.frontend.main` end

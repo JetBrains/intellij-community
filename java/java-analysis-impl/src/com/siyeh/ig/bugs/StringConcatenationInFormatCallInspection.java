@@ -1,14 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
-import com.intellij.psi.PsiArrayAccessExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiPolyadicExpression;
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -34,24 +29,16 @@ public final class StringConcatenationInFormatCallInspection extends BaseInspect
       if (FormatUtils.isFormatCall(call)) {
         PsiExpressionList argumentList = call.getArgumentList();
         PsiExpression formatArgument = FormatUtils.getFormatArgument(argumentList);
-        checkFormatString(call, formatArgument);
+        if (ExpressionUtils.isNonConstantStringConcatenation(formatArgument)) {
+          registerError(formatArgument, call.getMethodExpression().getReferenceName());
+        }
       }
-      if (FormatUtils.STRING_FORMATTED.test(call)) {
-        checkFormatString(call, call.getMethodExpression().getQualifierExpression());
+      else if (FormatUtils.STRING_FORMATTED.test(call)) {
+        PsiExpression expression = call.getMethodExpression().getQualifierExpression();
+        if (ExpressionUtils.isNonConstantStringConcatenation(expression)) {
+          registerError(expression, call.getMethodExpression().getReferenceName());
+        }
       }
-    }
-
-    private void checkFormatString(PsiMethodCallExpression call, PsiExpression formatString) {
-      formatString = PsiUtil.skipParenthesizedExprDown(formatString);
-      if (!(formatString instanceof PsiPolyadicExpression polyadicExpression)) return;
-      if (!ExpressionUtils.hasStringType(formatString)) return;
-      if (PsiUtil.isConstantExpression(formatString)) return;
-      final PsiExpression[] operands = polyadicExpression.getOperands();
-      if (!ContainerUtil.exists(operands, o -> ExpressionUtils.nonStructuralChildren(o).anyMatch(
-        c -> c instanceof PsiReferenceExpression || c instanceof PsiMethodCallExpression || c instanceof PsiArrayAccessExpression))) {
-        return;
-      }
-      registerError(formatString, call.getMethodExpression().getReferenceName());
     }
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.internal;
 
 import org.gradle.api.Project;
@@ -64,6 +50,8 @@ public class VersionMatcherTest {
 
     assertTrue(isMatching("1.1", Not_1_0.class));
     assertFalse(isMatching("1.0", Not_1_0.class));
+    assertTrue(isMatching("1.0.1", Not_1_0.class));
+    assertTrue(isMatching("0.9", Not_1_0.class));
 
     assertTrue(isMatching("4.6", v_atLeast_4_6_and_not_6_9.class));
     assertTrue(isMatching("4.7", v_atLeast_4_6_and_not_6_9.class));
@@ -71,6 +59,69 @@ public class VersionMatcherTest {
     assertFalse(isMatching("4.5", v_atLeast_4_6_and_not_6_9.class));
     assertFalse(isMatching("1.0", v_atLeast_4_6_and_not_6_9.class));
     assertFalse(isMatching("6.9", v_atLeast_4_6_and_not_6_9.class));
+    assertTrue(isMatching("6.9.0", v_atLeast_4_6_and_not_6_9.class));
+    assertTrue(isMatching("6.9.5", v_atLeast_4_6_and_not_6_9.class));
+    assertTrue(isMatching("6.8", v_atLeast_4_6_and_not_6_9.class));
+    assertTrue(isMatching("6.10", v_atLeast_4_6_and_not_6_9.class));
+  }
+
+  @Test
+  public void testPatchVersionMatching() {
+    // exact version with patch - only matches that specific patch
+    assertTrue(isMatching("1.8.0", v_1_8_0.class));
+    assertFalse(isMatching("1.8.1", v_1_8_0.class));
+    assertFalse(isMatching("1.8", v_1_8_0.class));
+    assertFalse(isMatching("1.7.0", v_1_8_0.class));
+
+    // version without patch (no .x wildcard) - exact match only
+    assertTrue(isMatching("1.8", v_1_8.class));
+    assertFalse(isMatching("1.8.0", v_1_8.class));
+    assertFalse(isMatching("1.8.5", v_1_8.class));
+    assertFalse(isMatching("1.7", v_1_8.class));
+    assertFalse(isMatching("1.9", v_1_8.class));
+
+    // negation with patch - excludes only that specific patch
+    assertTrue(isMatching("1.8.0", v_not_1_8_1.class));
+    assertFalse(isMatching("1.8.1", v_not_1_8_1.class));
+    assertTrue(isMatching("1.8.2", v_not_1_8_1.class));
+    assertTrue(isMatching("1.7", v_not_1_8_1.class));
+  }
+
+  @Test
+  public void testWildcardPatchVersionMatching() {
+    assertTrue(isMatching("1.8", v_1_8_x.class));
+    assertTrue(isMatching("1.8.0", v_1_8_x.class));
+    assertTrue(isMatching("1.8.1", v_1_8_x.class));
+    assertTrue(isMatching("1.8.99", v_1_8_x.class));
+    assertFalse(isMatching("1.7", v_1_8_x.class));
+    assertFalse(isMatching("1.7.99", v_1_8_x.class));
+    assertFalse(isMatching("1.9", v_1_8_x.class));
+    assertFalse(isMatching("1.9.0", v_1_8_x.class));
+
+    assertTrue(isMatching("1.8", v_from_1_8_x_to_1_9_x.class));
+    assertTrue(isMatching("1.8.0", v_from_1_8_x_to_1_9_x.class));
+    assertTrue(isMatching("1.8.5", v_from_1_8_x_to_1_9_x.class));
+    assertTrue(isMatching("1.9", v_from_1_8_x_to_1_9_x.class));
+    assertTrue(isMatching("1.9.5", v_from_1_8_x_to_1_9_x.class));
+    assertFalse(isMatching("1.7", v_from_1_8_x_to_1_9_x.class));
+    assertFalse(isMatching("1.7.99", v_from_1_8_x_to_1_9_x.class));
+    assertFalse(isMatching("1.10", v_from_1_8_x_to_1_9_x.class));
+    assertFalse(isMatching("1.10.0", v_from_1_8_x_to_1_9_x.class));
+
+    assertTrue(isMatching("1.7", v_less_than_or_equal_1_8_x.class));
+    assertTrue(isMatching("1.8", v_less_than_or_equal_1_8_x.class));
+    assertTrue(isMatching("1.8.0", v_less_than_or_equal_1_8_x.class));
+    assertTrue(isMatching("1.8.99", v_less_than_or_equal_1_8_x.class));
+    assertFalse(isMatching("1.9", v_less_than_or_equal_1_8_x.class));
+    assertFalse(isMatching("1.9.0", v_less_than_or_equal_1_8_x.class));
+
+    assertTrue(isMatching("1.7", v_not_1_8_x.class));
+    assertTrue(isMatching("1.7.99", v_not_1_8_x.class));
+    assertFalse(isMatching("1.8", v_not_1_8_x.class));
+    assertFalse(isMatching("1.8.0", v_not_1_8_x.class));
+    assertFalse(isMatching("1.8.99", v_not_1_8_x.class));
+    assertTrue(isMatching("1.9", v_not_1_8_x.class));
+    assertTrue(isMatching("1.9.0", v_not_1_8_x.class));
   }
 
   @TargetVersions("1.8")
@@ -183,6 +234,34 @@ public class VersionMatcherTest {
 
   @TargetVersions({"4.6+", "!6.9"})
   public static class v_atLeast_4_6_and_not_6_9 {
+  }
+
+  @TargetVersions("1.8.0")
+  public static class v_1_8_0 {
+  }
+
+  @TargetVersions("1.8")
+  public static class v_1_8 {
+  }
+
+  @TargetVersions("1.8.x")
+  public static class v_1_8_x {
+  }
+
+  @TargetVersions("!1.8.1")
+  public static class v_not_1_8_1 {
+  }
+
+  @TargetVersions("1.8.x <=> 1.9.x")
+  public static class v_from_1_8_x_to_1_9_x {
+  }
+
+  @TargetVersions("<=1.8.x")
+  public static class v_less_than_or_equal_1_8_x {
+  }
+
+  @TargetVersions("!1.8.x")
+  public static class v_not_1_8_x {
   }
 
   private static boolean isMatching(String version, Class<?> aClass) {

@@ -4,18 +4,23 @@ package org.jetbrains.plugins.terminal.block.completion.spec
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Different strategies of resolving conflicts when there are a couple of specs denoting the single shell command.
+ * Different strategies of resolving conflicts when there are a couple of specs for the single shell command.
+ * Such a conflict is a usual case - some command spec may be defined in the Terminal plugin itself,
+ * while other plugins may want to extend it.
  */
 @ApiStatus.Experimental
 enum class ShellCommandSpecConflictStrategy {
   /**
-   * Only this spec will be effective, all others will be ignored.
+   * Replaces the spec defined as [DEFAULT].
+   * But the effective spec will still be calculated by merging this one with the other specs defined with [OVERRIDE] strategy.
    * If there are two or more such specs, the result is undefined.
+   *
+   * Use this strategy if you want to completely replace the base spec defined in the Terminal plugin.
    */
   REPLACE,
 
   /**
-   * Allows overriding the base specs with the strategy [DEFAULT].
+   * Allows overriding base specs with the strategy [DEFAULT] or [REPLACE].
    * The effective spec will consist of all subcommands, options and arguments from the base spec,
    * plus all the parts from the overriding spec.
    *
@@ -37,6 +42,8 @@ enum class ShellCommandSpecConflictStrategy {
 
   /**
    * Strategy for base specs. Specs with this strategy can be overridden or replaced with other specs.
+   *
+   * Use this strategy if there is no spec for your command in the Terminal plugin and bundled IDE plugins.
    */
   DEFAULT
 }

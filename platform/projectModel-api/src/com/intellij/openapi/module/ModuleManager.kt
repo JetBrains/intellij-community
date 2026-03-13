@@ -7,6 +7,7 @@ import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.module.ModuleManager.Companion.getInstanceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.graph.Graph
 import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus
@@ -45,8 +46,10 @@ abstract class ModuleManager : SimpleModificationTracker() {
    * @param moduleTypeId the ID of the module type to create.
    * @return the module instance.
    */
+  @RequiresWriteLock
   abstract fun newModule(filePath: @NonNls String, moduleTypeId: String): Module
 
+  @RequiresWriteLock
   fun newModule(file: Path, moduleTypeId: String): Module {
     return newModule(file.toString().replace(File.separatorChar, '/'), moduleTypeId)
   }

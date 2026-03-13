@@ -12,11 +12,13 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiReference
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator.XEvaluationCallback
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.jetbrains.python.console.PyConsoleIndentUtil
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyExpression
+import org.jetbrains.annotations.ApiStatus
 
 internal class PyDebuggerEvaluator(private val myProject: Project, private val myDebugProcess: PyFrameAccessor) : XDebuggerEvaluator(), XDebuggerDocumentOffsetEvaluator {
   override fun evaluate(expression: String, callback: XEvaluationCallback, expressionPosition: XSourcePosition?): Unit =
@@ -51,35 +53,60 @@ internal class PyDebuggerEvaluator(private val myProject: Project, private val m
     })
   }
 
-  override fun getExpressionRangeAtOffset(project: Project?, document: Document?,  offset: Int, sideEffectsAllowed: Boolean): TextRange? =
+  override fun getExpressionRangeAtOffset(project: Project?, document: Document?, offset: Int, sideEffectsAllowed: Boolean): TextRange? =
     PyDebugSupportUtils.getExpressionRangeAtOffset(project, document, offset)
 
   override fun formatTextForEvaluation(text: String): String = PyConsoleIndentUtil.normalize(text)
 
   override fun evaluate(document: Document, offset: Int, hintType: ValueHintType, callback: XEvaluationCallback) {
-    if (!Registry.`is`("python.debugger.show.value.tooltip")) {
-      callback.errorOccurred("")
-      return
+    evaluateWithOffset(myProject, document, offset, hintType, callback) { expression ->
+      doEvaluate(expression, callback, false)
     }
+  }
+}
 
-    val ref = ReadAction.compute<PsiReference?, RuntimeException?>(ThrowableComputable {
-      PsiDocumentManager.getInstance(myProject).getPsiFile(document)?.findReferenceAt(offset)
-    })
-    if (ref == null) {
-      callback.errorOccurred("")
-      return
-    }
+/**
+ * Common implementation for evaluating expressions at a given document offset (for value tooltips).
+ *
+ * @param project the project
+ * @param document the document
+ * @param offset the offset in the document
+ * @param hintType the hint type
+ * @param callback the evaluation callback
+ * @param evaluateExpression the function to evaluate the expression text
+ */
+@ApiStatus.Internal
+fun evaluateWithOffset(
+  project: Project,
+  document: Document,
+  offset: Int,
+  hintType: ValueHintType,
+  callback: XEvaluationCallback,
+  evaluateExpression: (String) -> Unit,
+) {
+  if (!Registry.`is`("python.debugger.show.value.tooltip")) {
+    callback.errorOccurred("")
+    return
+  }
 
-    val element = ref.getElement()
-    when(element) {
-      is PyExpression -> {
-        if (element.getParent() is PyCallExpression) {
-          callback.errorOccurred("")
-        } else {
-          doEvaluate(element.getText(), callback, false)
-        }
+  val ref = ReadAction.compute<PsiReference?, RuntimeException?>(ThrowableComputable {
+    PsiDocumentManager.getInstance(project).getPsiFile(document)?.findReferenceAt(offset)
+  })
+  if (ref == null) {
+    callback.errorOccurred("")
+    return
+  }
+
+  val element = ref.element
+  when (element) {
+    is PyExpression -> {
+      if (element.parent is PyCallExpression) {
+        callback.errorOccurred("")
       }
-      else -> callback.errorOccurred("")
+      else {
+        evaluateExpression(element.text)
+      }
     }
+    else -> callback.errorOccurred("")
   }
 }

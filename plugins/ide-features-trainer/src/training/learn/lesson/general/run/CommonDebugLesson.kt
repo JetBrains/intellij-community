@@ -28,7 +28,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog
-import com.intellij.xdebugger.impl.messages.XDebuggerImplBundle
+import com.intellij.platform.debugger.impl.ui.XDebuggerUiBundle
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl
@@ -236,7 +236,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
                                  icon(AllIcons.Debugger.AddToWatch)))
       text(LessonsBundle.message("debug.workflow.use.watches.shortcut", action(it),
                                  strong(LessonsBundle.message("debug.workflow.debugger.watches")), shortcut))
-      val addToWatchActionText = XDebuggerImplBundle.message("action.Debugger.AddToWatch.text")
+      val addToWatchActionText = XDebuggerUiBundle.message("action.Debugger.AddToWatch.text")
       triggerAndFullHighlight { usePulsation = true }.component { ui: ActionButton ->
         ui.action.templatePresentation.text == addToWatchActionText
       }

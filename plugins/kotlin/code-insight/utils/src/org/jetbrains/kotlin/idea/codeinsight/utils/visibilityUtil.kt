@@ -142,6 +142,7 @@ fun KtModifierListOwner.canBePrivate(): Boolean {
     if (modifierList?.hasModifier(KtTokens.ABSTRACT_KEYWORD) == true) return false
     if (this.isAnnotationClassPrimaryConstructor()) return false
     if (this is KtProperty && KotlinPsiHeuristics.hasJvmFieldAnnotation(this)) return false
+    if (this is KtProperty && this.hasExplicitBackingField()) return false
 
     if (this is KtDeclaration) {
         if (hasActualModifier() || isExpectDeclaration()) return false

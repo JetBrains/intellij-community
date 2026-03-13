@@ -291,8 +291,6 @@ f:com.intellij.history.core.tree.RootEntry
 - write(java.io.DataOutput):V
 c:com.intellij.history.integration.IdeaGateway
 - <init>():V
-- acquireAndClearCurrentContent(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document):com.intellij.openapi.util.Pair
-- acquireAndUpdateActualContent(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document):com.intellij.openapi.util.Pair
 - areContentChangesVersioned(com.intellij.openapi.vfs.VirtualFile):Z
 - areContentChangesVersioned(java.lang.String):Z
 - createEntryForDeletion(com.intellij.openapi.vfs.VirtualFile):com.intellij.history.core.tree.Entry
@@ -311,7 +309,6 @@ c:com.intellij.history.integration.IdeaGateway
 - getPathOrUrl(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - ps:getVersionedFilterData():com.intellij.history.integration.IdeaGateway$VersionedFilterData
 - isVersioned(com.intellij.openapi.vfs.VirtualFile):Z
-- isVersioned(com.intellij.openapi.vfs.VirtualFile,Z):Z
 - s:iterateDBChildren(com.intellij.openapi.vfs.VirtualFile):java.lang.Iterable
 - s:loadAndIterateChildren(com.intellij.openapi.vfs.VirtualFile):java.lang.Iterable
 - registerUnsavedDocuments(com.intellij.history.core.LocalHistoryFacade):V

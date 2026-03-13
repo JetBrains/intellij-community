@@ -25,4 +25,21 @@ jvm_library(
     "//platform/eel-provider",
   ]
 )
+
+jvm_library(
+  name = "ide-util-io_test_lib",
+  module_name = "intellij.platform.ide.util.io",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":ide-util-io",
+    "//platform/core-api:core_test_lib",
+    "//libraries/guava:guava_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/util/base:base_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/diagnostic:diagnostic_test_lib",
+    "//platform/eel-provider:eel-provider_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.ide.util.io` end

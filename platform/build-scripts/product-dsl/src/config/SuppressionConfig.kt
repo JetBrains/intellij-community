@@ -70,9 +70,11 @@ data class ValidationException(
  *
  * **Unified structure:** All suppressions for a module/plugin are grouped together.
  *
- * **Usage:** Loaded at pipeline startup, used by generators to filter dependencies.
+ * **Usage:** Loaded at pipeline startup; generators use it as the sole mechanism to
+ * omit JPS-derived deps or preserve XML-only deps.
  *
- * **Updates:** Automatically updated when running `bazel run //platform/buildScripts:plugin-model-tool`.
+ * **Updates:** `--update-suppressions` captures the current XML state into suppressions.json
+ * (suppresses missing JPS deps and preserves XML-only deps) and performs no XML writes.
  * When running packaging tests (commitChanges=false), stale entries cause "file out of sync" errors.
  */
 @Serializable

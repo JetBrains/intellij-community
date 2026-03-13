@@ -23,4 +23,22 @@ jvm_library(
     "//java/execution/shared",
   ]
 )
+
+jvm_library(
+  name = "plugin_test_lib",
+  module_name = "intellij.java.plugin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":plugin",
+    "//java/java-syntax:syntax_test_lib",
+    "//java/java-frontback-psi-api:frontback-psi_test_lib",
+    "//java/java-frontback-psi-impl:frontback-psi-impl_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//java/java-psi-impl:psi-impl_test_lib",
+    "//java/java-frontback-impl:frontback-impl_test_lib",
+    "//java/debugger/shared:shared_test_lib",
+    "//java/execution/shared:shared_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.java.plugin` end

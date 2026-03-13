@@ -4,7 +4,7 @@ package com.intellij.openapi.actionSystem;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.KeyStroke;
 import java.util.Arrays;
 import java.util.Collection;
 

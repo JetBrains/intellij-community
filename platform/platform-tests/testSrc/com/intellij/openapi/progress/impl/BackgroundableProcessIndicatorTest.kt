@@ -4,7 +4,11 @@ package com.intellij.openapi.progress.impl
 import com.intellij.idea.IJIgnore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManagerEx
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.ProgressModel
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.progress.util.ProgressWindowTestCase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.use
@@ -12,7 +16,11 @@ import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.SkipInHeadlessEnvironment
 import com.intellij.util.concurrency.Semaphore
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assume.assumeFalse
 

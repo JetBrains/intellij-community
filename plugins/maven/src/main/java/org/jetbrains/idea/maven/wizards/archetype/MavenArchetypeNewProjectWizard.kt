@@ -52,6 +52,7 @@ import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.update.UiNotifyConnector
 import icons.OpenapiIcons
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.indices.archetype.MavenCatalog
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.wizards.MavenJavaModuleBuilder
@@ -61,7 +62,8 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JList
 
-internal class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
+@ApiStatus.Internal
+class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
   override val id: String = "MavenArchetype"
 
   override val name: String = MavenWizardBundle.message("maven.new.project.wizard.archetype.generator.name")

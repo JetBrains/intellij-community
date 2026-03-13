@@ -1,5 +1,7 @@
 package com.intellij.grazie.utils
 
+import ai.grazie.detector.ChainLanguageDetector
+import ai.grazie.detector.DefaultLanguageDetectors
 import ai.grazie.gec.model.problem.Problem
 import ai.grazie.gec.model.problem.ProblemHighlighting
 import ai.grazie.gec.model.problem.SentenceWithProblems
@@ -9,9 +11,10 @@ import ai.grazie.rules.Rule
 import ai.grazie.rules.settings.RuleSetting
 import ai.grazie.rules.settings.Setting
 import ai.grazie.rules.toolkit.LanguageToolkit
+import ai.grazie.utils.mpp.FromResourcesDataLoader
 import com.intellij.grazie.GrazieConfig
+import com.intellij.grazie.detection.BatchLangDetector
 import com.intellij.grazie.detection.LangDetector
-import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.ide.ui.configurable.StyleConfigurable.Companion.ruleEngineLanguages
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.mlec.LanguageHolder
@@ -24,8 +27,11 @@ import com.intellij.grazie.spellcheck.SpellingTextChecker
 import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.text.TextChecker.ProofreadingContext
 import com.intellij.grazie.text.TextContent
-import com.intellij.grazie.utils.NaturalTextDetector.seemsNatural
+import com.intellij.grazie.text.TextContentImpl
+import com.intellij.grazie.utils.HighlightingUtil.findInstalledLang
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.containers.CollectionFactory.createConcurrentSoftValueMap
 import java.util.concurrent.ConcurrentHashMap
 import ai.grazie.text.TextRange as GrazieTextRange
@@ -67,8 +73,20 @@ fun featuredSettings(language: Language): List<Setting> =
       }
     }
 
+@JvmOverloads
+fun getLanguageIfAvailable(text: TextContent, strippedOffset: Int? = null): Language? {
+  val offset = strippedOffset ?: HighlightingUtil.stripPrefix(text)
+  // Rider `ExternalTextContent` doesn't support view providers, hence batch detection is not available
+  if (text is TextContentImpl && Registry.`is`("grazie.batch.language.detector", false)) {
+    return BatchLangDetector.getLanguage(text, offset)?.takeIf { findInstalledLang(it) != null }
+  } else {
+    return getLanguageIfAvailable(text.toString().substring(offset))
+  }
+}
+
+@Deprecated("Use getLanguageIfAvailable(TextContent) instead")
 fun getLanguageIfAvailable(text: String): Language? {
-  return LangDetector.getLanguage(text)?.takeIf { HighlightingUtil.findInstalledLang(it) != null }
+  return LangDetector.getLanguage(text)?.takeIf { findInstalledLang(it) != null }
 }
 
 fun GrazieTextRange.Companion.coveringIde(ranges: Array<GrazieTextRange>): TextRange? {
@@ -78,24 +96,16 @@ fun GrazieTextRange.Companion.coveringIde(ranges: Array<GrazieTextRange>): TextR
 
 fun TextContent.toProofreadingContext(languageDetectionRequired: Boolean = true): ProofreadingContext {
   val content = this
-  val stripPrefixLength = HighlightingUtil.stripPrefix(content)
-  val language = if (languageDetectionRequired) {
-    LangDetector.getLanguage(content.toString().substring(stripPrefixLength)) ?: UNKNOWN
-  } else {
-    UNKNOWN
-  }
+  val prefix = HighlightingUtil.stripPrefix(content)
+  val language = if (languageDetectionRequired) getLanguageIfAvailable(content, prefix) ?: UNKNOWN else UNKNOWN
   return object : ProofreadingContext {
     override fun getText(): TextContent = content
     override fun getLanguage(): Language = language
-    override fun getStripPrefix(): String = content.toString().substring(0, stripPrefixLength)
+    override fun getStripPrefix(): String = content.toString().substring(0, prefix)
   }
 }
 
-fun ProofreadingContext.shouldCheckGrammarStyle(): Boolean =
-  this.text.domain in GrazieInspection.checkedDomains()
-  && seemsNatural(this.text)
-  && this.language != UNKNOWN
-  && HighlightingUtil.findInstalledLang(this.language) != null
+fun ProofreadingContext.shouldCheckGrammarStyle(): Boolean = this.language != UNKNOWN && findInstalledLang(this.language) != null
 
 internal fun TextChecker.isSpelling(): Boolean = this is SpellingTextChecker
 internal fun TextChecker.isGrammar(): Boolean = this !is SpellingTextChecker
@@ -144,5 +154,27 @@ fun Rule.isEnabledInState(state: GrazieConfig.State, domain: TextStyleDomain): B
   }
   else {
     state.isRuleEnabled(this.globalId(), domain)
+  }
+}
+
+
+object LanguageDetectorHolder {
+  const val LIMIT: Int = 1_000
+  
+  @Volatile
+  private var INSTANCE: ChainLanguageDetector<String>? = null
+  private val lock = Any()
+
+  fun get(): ChainLanguageDetector<String> {
+    if (INSTANCE == null) {
+      synchronized(lock) {
+        if (INSTANCE == null) {
+          INSTANCE = runBlockingCancellable {
+            DefaultLanguageDetectors.standardForLanguages(Language.all.toLinkedSet(), FromResourcesDataLoader)
+          }
+        }
+      }
+    }
+    return INSTANCE!!
   }
 }

@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":onboarding-promoter_resources"],
   deps = [
+    "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/platform-impl:ide-impl",
@@ -21,6 +22,23 @@ jvm_library(
     "//java/java-features-trainer:featuresTrainer",
     "//plugins/kotlin/features-trainer",
     "//platform/statistics",
+  ]
+)
+
+jvm_library(
+  name = "onboarding-promoter_test_lib",
+  module_name = "intellij.kotlin.onboarding.promoter",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":onboarding-promoter",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//plugins/ide-features-trainer:featuresTrainer_test_lib",
+    "//java/java-features-trainer:featuresTrainer_test_lib",
+    "//plugins/kotlin/features-trainer:features-trainer_test_lib",
+    "//platform/statistics:statistics_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.onboarding.promoter` end

@@ -65,7 +65,6 @@ import com.intellij.psi.PsiTypes;
 import com.intellij.psi.SmartTypePointer;
 import com.intellij.psi.SmartTypePointerManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.FileTypeUtils;
@@ -276,7 +275,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         modifierList.addAfter(annotation, null);
       }
     }
-    JavaCodeStyleManager.getInstance(field.getProject()).shortenClassReferences(field);
   }
 
   public static PsiElement getPhysicalElement(final PsiExpression selectedExpr) {
@@ -432,7 +430,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
   private static PsiField createField(String fieldName,
                                       PsiType type,
-                                      PsiExpression initializerExpr,
                                       boolean includeInitializer, final PsiClass parentClass) {
     @NonNls StringBuilder pattern = new StringBuilder();
     pattern.append("private int ");
@@ -448,9 +445,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       final PsiTypeElement typeElement = factory.createTypeElement(type);
       field.getTypeElement().replace(typeElement);
       field = (PsiField)CodeStyleManager.getInstance(psiManager.getProject()).reformat(field);
-      if (includeInitializer) {
-        field.getInitializer().replace(initializerExpr);
-      }
       return field;
     }
     catch (IncorrectOperationException e) {
@@ -758,11 +752,10 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, destClass.getContainingFile())) return;
 
         ChangeContextUtil.encodeContextInfo(destClass, true);
-
-        myField = mySettings.isIntroduceEnumConstant() ? EnumConstantsUtil.createEnumConstant(destClass, myFieldName, initializer) :
-                  createField(myFieldName, type.getType(), initializer,
-                              initializerPlace == InitializationPlace.IN_FIELD_DECLARATION && initializer != null,
-                              myParentClass);
+        boolean includeInitializer = initializerPlace == InitializationPlace.IN_FIELD_DECLARATION && initializer != null;
+        myField = mySettings.isIntroduceEnumConstant()
+                  ? EnumConstantsUtil.createEnumConstant(destClass, myFieldName, initializer)
+                  : createField(myFieldName, type.getType(), includeInitializer, myParentClass);
 
         setModifiers(myField, mySettings);
         PsiElement finalAnchorElement = null;
@@ -796,6 +789,12 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           anchorMember = null;
         }
         myField = appendField(initializer, initializerPlace, destClass, myParentClass, myField, anchorMember);
+        if (includeInitializer) {
+          // It's important that we append field before adding the initializer to make sure that the replacement takes into account the
+          // context of the file
+          LOG.assertTrue(myField.getInitializer() != null);
+          myField.getInitializer().replace(initializer);
+        }
         if (!mySettings.isIntroduceEnumConstant()) {
           VisibilityUtil.fixVisibility(myOccurrences, myField, mySettings.getFieldVisibility());
         }

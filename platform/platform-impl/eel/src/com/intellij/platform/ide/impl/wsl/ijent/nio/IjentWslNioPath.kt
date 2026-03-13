@@ -6,7 +6,11 @@ import com.intellij.platform.eel.provider.utils.EelPathUtils.getActualPath
 import com.intellij.platform.ijent.community.impl.nio.fs.IjentNioPosixFileAttributesWithDosAdapter
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
-import java.nio.file.*
+import java.nio.file.LinkOption
+import java.nio.file.Path
+import java.nio.file.WatchEvent
+import java.nio.file.WatchKey
+import java.nio.file.WatchService
 
 @ApiStatus.Internal
 class IjentWslNioPath(

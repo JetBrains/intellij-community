@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.starters.remote
 
 import com.fasterxml.jackson.databind.JsonNode
@@ -48,6 +48,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -71,6 +72,7 @@ import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.HttpRequests.RequestProcessor
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
 import java.net.URLConnection
@@ -393,6 +395,48 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
   internal fun downloadResultInternal(progressIndicator: ProgressIndicator): DownloadResult {
     val tempFile = FileUtil.createTempFile(builderId, ".tmp", true)
     return downloadResult(progressIndicator, tempFile)
+  }
+
+  /**
+   * Downloads the project template from the web service with progress indication.
+   * Sets [starterContext.result] on success.
+   *
+   * @param project progress indicator context project
+   * @param validateWithServer function to validate the request with the server before starting the project download
+   */
+  @ApiStatus.Internal
+  fun validateAndDownloadProject(
+    project: Project?,
+    @RequiresBackgroundThread validateWithServer: (ProgressIndicator) -> Boolean = { true }
+  ) {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      {
+        val progressIndicator = ProgressManager.getInstance().progressIndicator
+
+        if (!validateWithServer(progressIndicator)) {
+          return@runProcessWithProgressSynchronously
+        }
+
+        progressIndicator.checkCanceled()
+
+        progressIndicator.text = JavaStartersBundle.message("message.state.downloading.template", presentableName)
+
+        val downloadResult: DownloadResult? = try {
+          downloadResultInternal(progressIndicator)
+        }
+        catch (e: Exception) {
+          thisLogger().info(e)
+          EdtExecutorService.getScheduledExecutorInstance().schedule(
+            {
+              var message = JavaStartersBundle.message("error.text.with.error.content", e.message)
+              message = StringUtil.shortenTextWithEllipsis(message, 1024, 0) // exactly 1024 because why not
+              Messages.showErrorDialog(message, presentableName)
+            }, 3, TimeUnit.SECONDS)
+          null
+        }
+
+        starterContext.result = downloadResult
+      }, JavaStartersBundle.message("message.state.preparing.template"), true, project)
   }
 
   @RequiresBackgroundThread

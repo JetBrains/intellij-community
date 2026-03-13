@@ -11,23 +11,15 @@
   </projectListeners>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.debugger.codeFragmentFactory"
-                    interface="com.intellij.debugger.engine.evaluation.CodeFragmentFactory" dynamic="true"/>
-
     <extensionPoint qualifiedName="com.intellij.debugger.nodeRenderer"
                     interface="com.intellij.debugger.ui.tree.render.NodeRenderer" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.debugger.compoundRendererProvider"
                     interface="com.intellij.debugger.ui.tree.render.CompoundRendererProvider" dynamic="true"/>
 
-    <extensionPoint qualifiedName="com.intellij.debugger.javaDebugAware"
-                    interface="com.intellij.debugger.engine.JavaDebugAware" dynamic="true"/>
-
     <extensionPoint qualifiedName="com.intellij.debugger.javaBreakpointHandlerFactory"
                     interface="com.intellij.debugger.engine.JavaBreakpointHandlerFactory" dynamic="true"/>
 
-    <extensionPoint qualifiedName="com.intellij.debugger.positionManagerFactory"
-                    interface="com.intellij.debugger.PositionManagerFactory" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.debugger.jvmSmartStepIntoHandler"
                     interface="com.intellij.debugger.actions.JvmSmartStepIntoHandler" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.debugger.jvmSteppingCommandProvider"
@@ -47,25 +39,21 @@
     <extensionPoint qualifiedName="com.intellij.debugger.sourcePositionProvider"
                     interface="com.intellij.debugger.engine.SourcePositionProvider" dynamic="true"/>
 
-    <extensionPoint qualifiedName="com.intellij.debugger.simplePropertyGetterProvider"
-                    interface="com.intellij.debugger.engine.SimplePropertyGetterProvider" dynamic="true"/>
-
-    <extensionPoint qualifiedName="com.intellij.debugger.syntheticProvider"
-                    interface="com.intellij.debugger.engine.SyntheticTypeComponentProvider" dynamic="true"/>
-
     <extensionPoint qualifiedName="com.intellij.debugger.fieldVisibilityProvider"
                     interface="com.intellij.debugger.engine.FieldVisibilityProvider" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.debugger.extraSteppingFilter"
                     interface="com.intellij.debugger.engine.ExtraSteppingFilter" dynamic="true"/>
 
-    <extensionPoint qualifiedName="com.intellij.debugger.sourcePositionHighlighter"
-                    interface="com.intellij.debugger.engine.SourcePositionHighlighter" dynamic="true"/>
-
-    <extensionPoint qualifiedName="com.intellij.debugger.nodeNameAdjuster"
-                    interface="com.intellij.debugger.ui.tree.NodeDescriptorNameAdjuster" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.debugger.additionalContextProvider"
                     interface="com.intellij.debugger.engine.evaluation.AdditionalContextProvider" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.debugger.evaluationExpressionConverter"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass"
+            implements="com.intellij.debugger.engine.evaluation.DebuggerEvaluationExpressionConverter"/>
+    </extensionPoint>
 
     <extensionPoint qualifiedName="com.intellij.debuggerEditorTextProvider" beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
@@ -84,6 +72,8 @@
                     interface="com.intellij.debugger.impl.ThreadDumpItemsProviderFactory" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.debugger.agentParametersModifier"
                     interface="com.intellij.debugger.engine.DebuggerAgentParametersModifier" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.debugger.hotSwapSourceFileFilterProvider"
+                    interface="com.intellij.debugger.impl.hotswap.HotSwapSourceFileFilterProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -98,6 +88,9 @@
     <xdebugger.hotSwapInDebugSessionEnabler implementation="com.intellij.debugger.impl.hotswap.JvmHotSwapInDebugSessionEnabler"/>
     <projectService serviceInterface="com.intellij.debugger.DebuggerManager"
                     serviceImplementation="com.intellij.debugger.impl.DebuggerManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.debugger.ui.breakpoints.MethodBreakpointProgressSupport"
+                        serviceImplementation="com.intellij.debugger.ui.breakpoints.DefaultMethodBreakpointProgressSupport"
+                        open="true"/>
     <debugger.additionalContextProvider implementation="com.intellij.debugger.engine.evaluation.MarkedObjectAdditionalContextProvider"/>
     <debugger.jdiHelperClassLoader implementation="com.intellij.debugger.impl.JdiHelperClassLoaderImpl"/>
     <debuggerEditorTextProvider language="JAVA" implementationClass="com.intellij.debugger.impl.JavaEditorTextProviderImpl"/>
@@ -252,7 +245,7 @@
                  description="The allowed overhead of the async stacktraces collection in percents. When exceeded, a user will be suggested to disable or throttle."/>
     <registryKey key="debugger.stepping.current.thread.check.timeout.ms" defaultValue="100"
                  description="In the 'Resume only the current thread mode': Check timeout (in ms) for the stepping thread is running."/>
-    <registryKey key="debugger.evaluation.runtime.type" defaultValue="500"
+    <registryKey key="debugger.evaluation.runtime.type" defaultValue="2000"
                  description="Timeout (in ms) to evaluate runtime type of a given expression"/>
     <registryKey key="debugger.run.to.cursor.any.hit.timeout.ms" defaultValue="1000"
                  description="The timeout between the hit run-to-cursor breakpoint in another thread/coroutine and pause the debugger"/>
@@ -333,7 +326,7 @@
                  description="Enable collection watchpoints support"/>
     <registryKey key="debugger.async.stacks.via.breakpoints" defaultValue="false"
                  description="Enable async stack traces implementation via breakpoints"/>
-    <registryKey key="debugger.breakpoint.instrumentation" defaultValue="false"
+    <registryKey key="debugger.breakpoint.instrumentation" defaultValue="true"
                  description="Use instrumentation conditional and logging breakpoints if possible"/>
     <registryKey key="debugger.async.stacks.coroutines" defaultValue="true"
                  description="Enable async stack traces for coroutines"/>

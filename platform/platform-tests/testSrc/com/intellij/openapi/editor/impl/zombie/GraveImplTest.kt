@@ -2,7 +2,11 @@
 package com.intellij.openapi.editor.impl.zombie
 
 import com.intellij.testFramework.LightPlatformTestCase
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.io.DataInput
 import java.io.DataOutput
 import kotlin.coroutines.EmptyCoroutineContext

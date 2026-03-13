@@ -21,7 +21,7 @@ import com.intellij.openapi.editor.SoftWrapModel;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Graphics;
 import java.util.Collections;
 import java.util.List;
 

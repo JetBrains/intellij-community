@@ -26,7 +26,23 @@ f1(__x=3)  # E
 def f2(x: int, __y: int) -> None: ...  # E
 
 
-def f3(x: int, *args: int, __y: int) -> None: ...  # OK
+# `x` is a positional-or-keyword parameter, so,
+# according to a literal reading of the above rule, `__y`
+# should be flagged as an error since it uses the historical
+# convention for positional-only parameters but appears after
+# a positional-or-keyword parameter that does not. We therefore
+# permit type checkers to emit an error on this definition.
+#
+# Note that `x` can only be passed with a keyword argument if
+# no arguments are passed positionally:
+#
+# ```pycon
+# >>> def f3(x: int, *args: int, __y: int) -> None: ...
+# ...
+# >>> f3(x=1, __y=2)
+# >>>
+# ```
+def f3(x: int, *args: int, __y: int) -> None: ...  # E?
 
 
 f3(3, __y=3)  # OK

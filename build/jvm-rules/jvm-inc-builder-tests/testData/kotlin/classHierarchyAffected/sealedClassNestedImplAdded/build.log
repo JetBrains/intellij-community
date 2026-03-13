@@ -1,0 +1,28 @@
+================ Step #1 =================
+Cleaning output files:
+  Base$A.class
+  Base$B.class
+  Base.class
+  META-INF/kotlin_classHierarchyAffected_sealedClassNestedImplAdded-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/sealedClassNestedImplAdded/a/Base.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_sealedClassNestedImplAdded-a.kotlin_module
+  UseKt.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/sealedClassNestedImplAdded/a/use.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_sealedClassNestedImplAdded-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/sealedClassNestedImplAdded/a/use.kt
+End of files
+------------------------------------------
+Exit code: OK

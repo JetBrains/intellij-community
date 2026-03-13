@@ -46,16 +46,16 @@ abstract class KotlinFileStructureTestBase : KotlinLightCodeInsightFixtureTestCa
     @Suppress("unused")
     protected fun checkTree(filter: String) {
         configureDefault()
-        popupFixture.update()
+        popupFixture.updateAndSelectCurrent()
         popupFixture.popup.setSearchFilterForTests(filter)
-        PlatformTestUtil.waitForPromise(popupFixture.popup.rebuildAndUpdate())
-        popupFixture.speedSearch.findAndSelectElement(filter)
+        popupFixture.update()
+        popupFixture.speedSearch?.findAndSelectElement(filter)
         checkResult()
     }
 
     protected fun checkTree() {
         configureDefault()
-        popupFixture.update()
+        popupFixture.updateAndSelectCurrent()
         checkResult()
     }
 

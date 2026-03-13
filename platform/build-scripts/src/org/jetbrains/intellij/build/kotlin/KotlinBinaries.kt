@@ -4,9 +4,9 @@ package org.jetbrains.intellij.build.kotlin
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.bazelEnvironment.BazelRunfiles
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.addToClasspathAgent.AddToClasspathUtil
-import org.jetbrains.intellij.bazelEnvironment.BazelRunfiles
 import java.nio.file.Files
 import java.nio.file.Path
 

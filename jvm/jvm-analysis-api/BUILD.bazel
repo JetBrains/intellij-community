@@ -30,4 +30,30 @@ jvm_library(
   ],
   runtime_deps = ["//platform/backend"]
 )
+
+jvm_library(
+  name = "analysis_test_lib",
+  module_name = "intellij.jvm.analysis",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//uast/uast-common:uast",
+    "//uast/uast-common:uast_test_lib",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-api:psi_test_lib",
+    "//uast/uast-common-ide:ide",
+    "//uast/uast-common-ide:ide_test_lib",
+  ],
+  runtime_deps = [
+    ":analysis",
+    "//platform/core-api:core_test_lib",
+    "//uast/uast-common:uast_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/util:util_test_lib",
+    "//java/java-analysis-api:analysis_test_lib",
+    "//uast/uast-common-ide:ide_test_lib",
+    "//platform/backend:backend_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.jvm.analysis` end

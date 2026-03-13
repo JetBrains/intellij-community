@@ -19,4 +19,15 @@ jvm_library(
     "//platform/util-rt",
   ]
 )
+
+jvm_library(
+  name = "vcs-log-graph_test_lib",
+  module_name = "intellij.platform.vcs.log.graph",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":vcs-log-graph",
+    "//platform/util-rt:util-rt_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.vcs.log.graph` end

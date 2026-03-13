@@ -1,4 +1,5 @@
 // "Make 'Foo' 'abstract'" "true"
+// K2_ERROR: Class 'Foo' is not abstract and does not implement abstract members:<br>fun contains(element: E): Boolean<br>fun containsAll(elements: Collection<E>): Boolean<br>fun get(index: Int): E<br>fun indexOf(element: E): Int<br>fun isEmpty(): Boolean<br>fun iterator(): Iterator<E><br>fun lastIndexOf(element: E): Int<br>fun listIterator(): ListIterator<E><br>fun listIterator(index: Int): ListIterator<E><br>fun subList(fromIndex: Int, toIndex: Int): List<E><br>val size: Int
 
 class <caret>Foo : List<String> {}
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddModifierFixMpp

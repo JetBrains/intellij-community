@@ -1,4 +1,5 @@
 // "Create parameter 'foo'" "true"
+// K2_ERROR: Unresolved reference 'foo'.
 
 fun test(n: Int) {
     val f: () -> Int = {

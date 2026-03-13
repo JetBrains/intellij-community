@@ -13,15 +13,18 @@ import com.intellij.polySymbols.html.NAMESPACE_HTML
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolNameConverter
 import com.intellij.polySymbols.query.PolySymbolNamesProvider
-import com.intellij.polySymbols.query.PolySymbolNamesProvider.Target.*
+import com.intellij.polySymbols.query.PolySymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS
+import com.intellij.polySymbols.query.PolySymbolNamesProvider.Target.NAMES_MAP_STORAGE
+import com.intellij.polySymbols.query.PolySymbolNamesProvider.Target.NAMES_QUERY
+import com.intellij.polySymbols.query.PolySymbolNamesProvider.Target.RENAME_QUERY
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Locale
 
 @ApiStatus.Internal
 class PolySymbolNamesProviderImpl(
   private val context: PolyContext,
   private val configuration: List<PolySymbolNameConversionRules>,
-  private val modificationTracker: ModificationTracker,
+  override val modificationTracker: ModificationTracker,
 ) : PolySymbolNamesProvider {
 
   private val canonicalNamesProviders: Map<PolySymbolKind, PolySymbolNameConverter>
@@ -61,9 +64,6 @@ class PolySymbolNamesProviderImpl(
     other is PolySymbolNamesProviderImpl
     && other.context == context
     && other.configuration == configuration
-
-  override fun getModificationCount(): Long =
-    modificationTracker.modificationCount
 
   override fun withRules(rules: List<PolySymbolNameConversionRules>): PolySymbolNamesProvider =
     PolySymbolNamesProviderImpl(context, rules + configuration, modificationTracker)

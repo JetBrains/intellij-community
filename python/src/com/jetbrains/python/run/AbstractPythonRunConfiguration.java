@@ -64,6 +64,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   private boolean myUseModuleSdk;
   private boolean myAddContentRoots = true;
   private boolean myAddSourceRoots = true;
+  private boolean myDebugJustMyCode = false;
 
   protected PathMappingSettings myMappingSettings;
   /**
@@ -286,6 +287,9 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     myAddContentRoots = addContentRoots == null || Boolean.parseBoolean(addContentRoots);
     final String addSourceRoots = JDOMExternalizerUtil.readField(element, "ADD_SOURCE_ROOTS");
     myAddSourceRoots = addSourceRoots == null || Boolean.parseBoolean(addSourceRoots);
+    final String debugJustMyCode = JDOMExternalizerUtil.readField(element, "DEBUG_JUST_MY_CODE");
+    myDebugJustMyCode = debugJustMyCode == null || Boolean.parseBoolean(debugJustMyCode);
+
     if (!mySkipModuleSerialization) {
       getConfigurationModule().readExternal(element);
     }
@@ -319,6 +323,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     JDOMExternalizerUtil.writeField(element, "IS_MODULE_SDK", Boolean.toString(myUseModuleSdk));
     JDOMExternalizerUtil.writeField(element, "ADD_CONTENT_ROOTS", Boolean.toString(myAddContentRoots));
     JDOMExternalizerUtil.writeField(element, "ADD_SOURCE_ROOTS", Boolean.toString(myAddSourceRoots));
+    JDOMExternalizerUtil.writeField(element, "DEBUG_JUST_MY_CODE", Boolean.toString(myDebugJustMyCode));
     if (!mySkipModuleSerialization) {
       getConfigurationModule().writeExternal(element);
     }
@@ -416,6 +421,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     target.setAddContentRoots(source.shouldAddContentRoots());
     target.setAddSourceRoots(source.shouldAddSourceRoots());
     target.setUseRunTool(source.getUseRunTool());
+    target.setDebugJustMyCode(source.shouldDebugJustMyCode());
   }
 
   /**
@@ -425,13 +431,13 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
    * @param commandLine what to patch
    */
   @Override
+  @ApiStatus.Internal
   public void patchCommandLine(GeneralCommandLine commandLine) {
     final String interpreterPath = getInterpreterPath();
     Sdk sdk = getSdk();
     if (sdk != null && interpreterPath != null) {
       patchCommandLineFirst(commandLine, interpreterPath);
       patchCommandLineForVirtualenv(commandLine, sdk);
-      patchCommandLineLast(commandLine, interpreterPath);
     }
   }
 
@@ -439,15 +445,8 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
    * Patches command line before virtualenv patchers.
    * Default implementation does nothing.
    */
+  @ApiStatus.Internal
   protected void patchCommandLineFirst(GeneralCommandLine commandLine, String sdkHome) {
-    // override
-  }
-
-  /**
-   * Patches command line after virtualenv patchers.
-   * Default implementation does nothing.
-   */
-  protected void patchCommandLineLast(GeneralCommandLine commandLine, String sdkHome) {
     // override
   }
 
@@ -526,6 +525,19 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   public boolean isBuildBeforeLaunchAddedByDefault() {
     return false;
   }
+
+  @Override
+  @ApiStatus.Internal
+  public boolean shouldDebugJustMyCode() {
+    return myDebugJustMyCode;
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public void setDebugJustMyCode(boolean debugJustMyCode) {
+    myDebugJustMyCode = debugJustMyCode;
+  }
+
 
   /**
    * Adds test specs (like method, class, script, etc) to list of runner parameters.

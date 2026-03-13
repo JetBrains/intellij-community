@@ -51,25 +51,36 @@ class GHPRReviewDataProviderImplTest {
   @Test
   fun testCachingReviewLoad() = runTest {
     coEvery { reviewService.loadPendingReview(eq(PR_ID)) } returns createPendingReview("", listOf(mockk()))
+    coEvery { reviewService.getReviewParticipantsBatchesFlow(eq(PR_ID)) } returns mockk()
 
     val prv = createProvider()
     val result = prv.loadPendingReview()
     assertEquals(prv.loadPendingReview(), result)
 
-    coVerifyAll { reviewService.loadPendingReview(PR_ID) }
+    coVerifyAll {
+      reviewService.loadPendingReview(PR_ID)
+      @Suppress("UnusedFlow")
+      reviewService.getReviewParticipantsBatchesFlow(eq(PR_ID))
+    }
   }
 
   @Test
   fun testCreateAndSubmitReview() = runTest {
     coEvery { reviewService.loadPendingReview(eq(PR_ID)) } returns null
     coEvery { reviewService.createReview(eq(PR_ID), any(), any(), any(), any()) } returns createPendingReview("", listOf(mockk()))
+    coEvery { reviewService.getReviewParticipantsBatchesFlow(eq(PR_ID)) } returns mockk()
 
     val prv = createProvider()
     prv.createReview(mockk(), "test")
     coVerify { reviewService.createReview(eq(PR_ID), any(), any(), any(), any()) }
 
     assertEquals(prv.loadPendingReview(), null)
-    coVerify { reviewService.loadPendingReview(PR_ID) }
+    coVerifyAll {
+      reviewService.createReview(eq(PR_ID), any(), any(), any(), any())
+      reviewService.loadPendingReview(PR_ID)
+      @Suppress("UnusedFlow")
+      reviewService.getReviewParticipantsBatchesFlow(eq(PR_ID))
+    }
     confirmVerified(reviewService)
   }
 
@@ -77,12 +88,16 @@ class GHPRReviewDataProviderImplTest {
   fun testCreatePendingReviewImmediateUpdate() = runTest {
     val result = createPendingReview("", listOf(mockk()))
     coEvery { reviewService.createReview(eq(PR_ID), any(), any(), any(), any()) } returns result
+    coEvery { reviewService.getReviewParticipantsBatchesFlow(eq(PR_ID)) } returns mockk()
 
     val prv = createProvider()
     prv.createReview(null, "test")
+
     coVerifyAll {
       reviewService.createReview(eq(PR_ID), any(), any(), any(), any())
       listener.onReviewsChanged()
+      @Suppress("UnusedFlow")
+      reviewService.getReviewParticipantsBatchesFlow(eq(PR_ID))
     }
 
     assertEquals(result.toModel(), prv.loadPendingReview())
@@ -94,6 +109,7 @@ class GHPRReviewDataProviderImplTest {
     val reviewDto = createPendingReview("REVIEW", listOf(mockk()))
 
     coEvery { reviewService.loadPendingReview(eq(PR_ID)) } returns reviewDto
+    coEvery { reviewService.getReviewParticipantsBatchesFlow(eq(PR_ID)) } returns mockk()
 
     val prv = createProvider()
     // fill cache
@@ -102,6 +118,8 @@ class GHPRReviewDataProviderImplTest {
     assertEquals(null, prv.loadPendingReview())
 
     coVerifySequence {
+      @Suppress("UnusedFlow")
+      reviewService.getReviewParticipantsBatchesFlow(eq(PR_ID))
       reviewService.loadPendingReview(eq(PR_ID))
       reviewService.deleteReview(eq(PR_ID), eq(reviewDto.id))
       listener.onReviewsChanged()
@@ -114,11 +132,14 @@ class GHPRReviewDataProviderImplTest {
     val text = "test"
 
     coEvery { reviewService.updateReviewBody(eq(reviewId), eq(text)) } returns mockk(relaxed = true)
+    coEvery { reviewService.getReviewParticipantsBatchesFlow(eq(PR_ID)) } returns mockk()
 
     val prv = createProvider()
     prv.updateReviewBody(reviewId, text)
 
     coVerifySequence {
+      @Suppress("UnusedFlow")
+      reviewService.getReviewParticipantsBatchesFlow(eq(PR_ID))
       reviewService.updateReviewBody(eq(reviewId), eq(text))
       listener.onReviewUpdated(eq(reviewId), eq(text))
     }
@@ -128,11 +149,16 @@ class GHPRReviewDataProviderImplTest {
   fun testCachingThreadsLoad() = runTest {
     val result = mockk<List<GHPullRequestReviewThread>>()
     coEvery { reviewService.loadReviewThreads(PR_ID) } returns result
+    coEvery { reviewService.getReviewParticipantsBatchesFlow(eq(PR_ID)) } returns mockk()
 
     val prv = createProvider()
     assertEquals(prv.loadThreads(), result)
     assertEquals(prv.loadThreads(), result)
 
-    coVerifyAll { reviewService.loadReviewThreads(PR_ID) }
+    coVerifyAll {
+      reviewService.loadReviewThreads(PR_ID)
+      @Suppress("UnusedFlow")
+      reviewService.getReviewParticipantsBatchesFlow(eq(PR_ID))
+    }
   }
 }

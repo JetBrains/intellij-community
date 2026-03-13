@@ -56,7 +56,8 @@ internal class ExecServiceImpl private constructor() : ExecService {
 
   private suspend fun create(binary: BinaryToExec, args: Args, options: ExecOptionsBase, scopeToBind: CoroutineScope? = null): Result<ProcessLauncher, ExecuteGetProcessError.EnvironmentError> {
     val scope = scopeToBind ?: ApplicationManager.getApplication().service<MyService>().scope
-    val request = LaunchRequest(scope, args, options.env, options.tty)
+    val downloadConfig = (options as? ExecOptions)?.downloadAfterExecution
+    val request = LaunchRequest(scope, args, options.env, options.tty, downloadConfig)
     return Result.success(
       when (binary) {
         is BinOnEel -> createProcessLauncherOnEel(binary, request)
@@ -89,7 +90,7 @@ internal class ExecServiceImpl private constructor() : ExecService {
   ): Result<T, ExecError> {
     val description = options.processDescription
                       ?: PyExecBundle.message("py.exec.defaultName.process", (listOf(processLauncher.exeForError.toString()) + processLauncher.args).joinToString(" "))
-    val process = processLauncher.start().getOr {
+    val process = processLauncher.start(options.weight).getOr {
       val message = PyExecBundle.message("py.exec.start.error", description, it.error.cantExecProcessError, it.error.errNo
                                                                                                             ?: "unknown")
       return processLauncher.createExecError(

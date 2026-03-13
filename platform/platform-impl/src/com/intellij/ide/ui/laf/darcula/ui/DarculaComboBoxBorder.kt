@@ -8,7 +8,12 @@ import com.intellij.openapi.ui.ErrorBorderCapable
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Insets
+import java.awt.Rectangle
 import javax.swing.JComboBox
 import javax.swing.border.Border
 import javax.swing.plaf.UIResource

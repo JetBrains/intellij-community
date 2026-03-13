@@ -26,4 +26,21 @@ jvm_library(
     "//libraries/lucene.common",
   ]
 )
+
+jvm_library(
+  name = "ai.grazie.spell.gec.engine.local_test_lib",
+  module_name = "intellij.libraries.ai.grazie.spell.gec.engine.local",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-spell-gec-engine-local",
+    "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-spell-hunspell-en",
+    "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-nlp-detect",
+    "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-model-swagger-annotations-jvm",
+  ],
+  runtime_deps = [
+    ":ai.grazie.spell.gec.engine.local",
+    "//libraries/lucene.common:lucene.common_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.libraries.ai.grazie.spell.gec.engine.local` end

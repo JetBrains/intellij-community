@@ -20,9 +20,9 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Corrected
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.CorrectionType
+import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters
+import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters.Corrected
+import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters.CorrectionType
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.withChainedInsertHandler
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext

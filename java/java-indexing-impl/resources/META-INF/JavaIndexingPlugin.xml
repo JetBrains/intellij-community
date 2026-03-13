@@ -41,6 +41,7 @@
     <fileBasedIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.search.JavaNullMethodArgumentIndex"/>
+    <fileBasedIndex implementation="com.intellij.psi.impl.java.stubs.index.ExternalAnnotationsIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.java.JavaFunctionalExpressionIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaMethodParameterTypesIndex"/>
@@ -75,6 +76,7 @@
     <implicitClassSearch implementation="com.intellij.psi.impl.search.ImplicitClassesSearcher"/>
     <javaModuleSearch implementation="com.intellij.psi.impl.search.JavaModuleSearcher"/>
     <annotatedElementsSearch implementation="com.intellij.psi.impl.search.AnnotatedElementsSearcher"/>
+    <annotatedElementsSearch implementation="com.intellij.psi.impl.search.ExternalAnnotatedElementsSearcher"/>
     <allClassesSearch implementation="com.intellij.psi.impl.search.AllClassesSearchExecutor"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.VariableInIncompleteCodeSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.SimpleAccessorReferenceSearcher"/>

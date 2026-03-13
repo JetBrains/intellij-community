@@ -49,7 +49,7 @@ internal data class DelegationContract(internal val expression: ExpressionRange,
     val call : PsiMethodCallExpression = expression.restoreExpression(body())
 
     val result = call.resolveMethodGenerics()
-    val targetMethod = result.element as PsiMethod? ?: return emptyList()
+    val targetMethod = result.element as? PsiMethod? ?: return emptyList()
     if (targetMethod == method) return emptyList()
 
     val parameters = targetMethod.parameterList.parameters
@@ -154,10 +154,6 @@ internal data class DelegationContract(internal val expression: ExpressionRange,
 
   private fun emptyConstraints(method: PsiMethod) = StandardMethodContract.createConstraintArray(
     method.parameterList.parametersCount)
-
-  private fun returnNotNull(mc: StandardMethodContract): StandardMethodContract {
-    return if (mc.returnValue.isFail) mc else mc.withReturnValue(ContractReturnValue.returnNotNull())
-  }
 
   private fun getLiteralConstraint(argument: PsiExpression) = when (argument) {
     is PsiLiteralExpression -> ContractInferenceInterpreter.getLiteralConstraint(

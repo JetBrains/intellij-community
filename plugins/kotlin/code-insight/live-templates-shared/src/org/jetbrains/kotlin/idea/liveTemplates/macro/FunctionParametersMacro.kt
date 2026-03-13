@@ -21,7 +21,7 @@ class FunctionParametersMacro : KotlinMacro() {
 
         PsiDocumentManager.getInstance(project).commitAllDocuments()
 
-        val file = PsiDocumentManager.getInstance(project).getPsiFile(context.editor!!.document) ?: return null
+        val file = context.psiFile ?: return null
         var place = file.findElementAt(offset)
         while (place != null) {
             if (place is KtFunction) {

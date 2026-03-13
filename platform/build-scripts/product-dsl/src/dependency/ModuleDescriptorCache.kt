@@ -3,10 +3,11 @@
 
 package org.jetbrains.intellij.build.productLayout.dependency
 
+import com.fasterxml.aalto.WFCException
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.baseModuleName
 import com.intellij.platform.pluginGraph.toDescriptorFileName
-import com.intellij.platform.plugins.parser.impl.parseContentAndXIncludes
+import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -102,7 +103,12 @@ internal class ModuleDescriptorCache(
     val skipDependencyGeneration = content.contains("@skip-dependency-generation")
 
     // Use platform parser to extract existing dependencies (xi:include aware)
-    val parseResult = parseContentAndXIncludes(input = content.toByteArray(), locationSource = null)
+    val parseResult = try {
+      parseContentAndXIncludes(input = content.toByteArray(), locationSource = null)
+    }
+    catch (e: WFCException) {
+      throw IllegalStateException("Failed to parse descriptor for module $moduleName", e)
+    }
 
     // Detect non-standard XML root: parser returns empty but file has dependency elements.
     // This indicates <dependencies> root instead of <idea-plugin> - parser can't extract from such files.

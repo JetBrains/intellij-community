@@ -1,4 +1,6 @@
 // "Change function signature to 'fun foo(a: Int, b: String): Any?'" "true"
+// K2_ERROR: 'foo' overrides nothing. Potential signatures for overriding:<br>fun foo(a: Int = ..., b: String = ...): Any?
+// K2_ERROR: Class 'B' is not abstract and does not implement abstract member:<br>fun foo(a: Int = ..., b: String = ...): Any?
 interface  A {
     public fun foo(a: Int = 1, b: String = "str"): Any?
 }

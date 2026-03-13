@@ -4,5 +4,8 @@
     <module name="intellij.libraries.junit5.jupiter"/>
     <module name="intellij.libraries.junit5.launcher"/>
     <module name="intellij.libraries.junit5.vintage"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.junit5"/>
+    <!-- endregion -->
   </dependencies>
 </idea-plugin>

@@ -43,4 +43,38 @@ jvm_library(
     "//libraries/gson",
   ]
 )
+
+jvm_library(
+  name = "facet_test_lib",
+  module_name = "intellij.kotlin.base.facet",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":facet",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//jps/model-serialization:model-serialization_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/platforms:platforms_test_lib",
+    "//plugins/kotlin/base/project-model:project-model_test_lib",
+    "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/external-system-api:externalSystem_test_lib",
+    "//platform/external-system-impl:externalSystem-impl_test_lib",
+    "//java/openapi:java_test_lib",
+    "//java/java-impl:impl_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//libraries/gson:gson_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.kotlin.base.facet` end

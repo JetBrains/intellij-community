@@ -4,12 +4,13 @@
 
 package org.jetbrains.intellij.build.productLayout.validator
 
-import com.intellij.platform.pluginGraph.PluginId
+import com.intellij.platform.pluginGraph.TargetName
 import org.jetbrains.intellij.build.productLayout.model.error.DuplicatePluginDependencyDeclarationError
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
 import org.jetbrains.intellij.build.productLayout.pipeline.DataSlot
 import org.jetbrains.intellij.build.productLayout.pipeline.NodeIds
 import org.jetbrains.intellij.build.productLayout.pipeline.PipelineNode
+import org.jetbrains.intellij.build.productLayout.pipeline.Slots
 
 /**
  * Plugin dependency declaration duplicate validation.
@@ -25,31 +26,20 @@ import org.jetbrains.intellij.build.productLayout.pipeline.PipelineNode
 internal object PluginDependencyDeclarationValidator : PipelineNode {
   override val id get() = NodeIds.PLUGIN_DEPENDENCY_DECLARATION_VALIDATION
 
-  override val requires: Set<DataSlot<*>> get() = emptySet()
+  override val requires: Set<DataSlot<*>> get() = setOf(Slots.PLUGIN_DEPENDENCY_PLAN)
 
   override suspend fun execute(ctx: ComputeContext) {
-    ctx.model.pluginGraph.query {
-      plugins { plugin ->
-        val pluginName = plugin.name()
-        val duplicates = LinkedHashSet<PluginId>()
-
-        plugin.dependsOnPlugin { dep ->
-          if (!dep.hasLegacyFormat || !dep.hasModernFormat) return@dependsOnPlugin
-
-          val targetId = dep.target().pluginIdOrNull ?: return@dependsOnPlugin
-          duplicates.add(targetId)
-        }
-
-        if (duplicates.isNotEmpty()) {
-          ctx.emitError(
-            DuplicatePluginDependencyDeclarationError(
-              context = pluginName.value,
-              pluginName = pluginName,
-              duplicatePluginIds = duplicates,
-            )
-          )
-        }
-      }
+    val plans = ctx.get(Slots.PLUGIN_DEPENDENCY_PLAN).plans
+    for (plan in plans) {
+      if (plan.duplicateDeclarationPluginIds.isEmpty()) continue
+      val pluginName = TargetName(plan.pluginContentModuleName.value)
+      ctx.emitError(
+        DuplicatePluginDependencyDeclarationError(
+          context = pluginName.value,
+          pluginName = pluginName,
+          duplicatePluginIds = plan.duplicateDeclarationPluginIds,
+        )
+      )
     }
   }
 }

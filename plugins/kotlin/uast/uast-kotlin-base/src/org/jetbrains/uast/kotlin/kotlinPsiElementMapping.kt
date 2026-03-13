@@ -8,14 +8,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.FakeFileForLightClass
-import org.jetbrains.kotlin.asJava.elements.KtLightAnnotationForSourceEntry
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
+import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightElementBase
 import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.asJava.elements.KtLightFieldForSourceDeclarationSupport
 import org.jetbrains.kotlin.asJava.elements.KtLightParameter
-import org.jetbrains.kotlin.asJava.elements.KtLightPsiArrayInitializerMemberValue
-import org.jetbrains.kotlin.asJava.elements.KtLightPsiLiteral
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.KtAnnotatedExpression
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
@@ -192,7 +190,7 @@ fun canConvert(element: PsiElement, targets: Array<out Class<out UElement>>): Bo
         }
     }
 
-    val ktOriginalCls = (element as? KtLightElementBase)?.kotlinOrigin?.javaClass ?: return false
+    val ktOriginalCls = ((element as? KtLightElementBase)?.kotlinOrigin ?: (element as? KtLightElement<*, *>)?.kotlinOrigin)?.javaClass ?: return false
     return targets.any { getPossibleSourceTypes(it).let { ktOriginalCls in it } }
 }
 
@@ -213,7 +211,6 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
       KtDestructuringDeclarationEntry::class.java,
       KtEnumEntry::class.java,
       KtFile::class.java,
-      KtLightAnnotationForSourceEntry::class.java,
       KtLightClass::class.java,
       KtLightDeclaration::class.java,
       KtLightField::class.java,
@@ -271,14 +268,11 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
       KtLabeledExpression::class.java,
       KtLambdaArgument::class.java,
       KtLambdaExpression::class.java,
-      KtLightAnnotationForSourceEntry::class.java,
       KtLightClass::class.java,
       KtLightDeclaration::class.java,
       KtLightField::class.java,
       KtLightFieldForSourceDeclarationSupport::class.java,
       KtLightParameter::class.java,
-      KtLightPsiArrayInitializerMemberValue::class.java,
-      KtLightPsiLiteral::class.java,
       KtLiteralStringTemplateEntry::class.java,
       KtNameReferenceExpression::class.java,
       KtNamedFunction::class.java,
@@ -323,12 +317,10 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
     UAnnotation::class.java to classSetOf<PsiElement>(
         KtAnnotationEntry::class.java,
         KtCallExpression::class.java,
-        KtLightAnnotationForSourceEntry::class.java
     ),
     UAnnotationEx::class.java to classSetOf<PsiElement>(
         KtAnnotationEntry::class.java,
         KtCallExpression::class.java,
-        KtLightAnnotationForSourceEntry::class.java
     ),
     UAnnotationMethod::class.java to classSetOf<PsiElement>(
         KtLightDeclaration::class.java,
@@ -370,13 +362,11 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
         KtCollectionLiteralExpression::class.java,
         KtConstructorDelegationCall::class.java,
         KtEnumEntry::class.java,
-        KtLightAnnotationForSourceEntry::class.java,
         KtLightField::class.java,
         KtObjectLiteralExpression::class.java,
         KtStringTemplateExpression::class.java,
         KtSuperTypeCallEntry::class.java,
         KtWhenConditionWithExpression::class.java,
-        KtLightPsiArrayInitializerMemberValue::class.java
     ),
     UCallExpressionEx::class.java to classSetOf<PsiElement>(
         KtAnnotatedExpression::class.java,
@@ -385,13 +375,11 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
         KtCollectionLiteralExpression::class.java,
         KtConstructorDelegationCall::class.java,
         KtEnumEntry::class.java,
-        KtLightAnnotationForSourceEntry::class.java,
         KtLightField::class.java,
         KtObjectLiteralExpression::class.java,
         KtStringTemplateExpression::class.java,
         KtSuperTypeCallEntry::class.java,
         KtWhenConditionWithExpression::class.java,
-        KtLightPsiArrayInitializerMemberValue::class.java
     ),
     UCallableReferenceExpression::class.java to classSetOf<PsiElement>(
         KtCallableReferenceExpression::class.java
@@ -513,14 +501,11 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
       KtLabeledExpression::class.java,
       KtLambdaArgument::class.java,
       KtLambdaExpression::class.java,
-      KtLightAnnotationForSourceEntry::class.java,
       KtLightClass::class.java,
       KtLightDeclaration::class.java,
       KtLightField::class.java,
       KtLightFieldForSourceDeclarationSupport::class.java,
       KtLightParameter::class.java,
-      KtLightPsiArrayInitializerMemberValue::class.java,
-      KtLightPsiLiteral::class.java,
       KtLiteralStringTemplateEntry::class.java,
       KtNameReferenceExpression::class.java,
       KtNamedFunction::class.java,
@@ -610,11 +595,8 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
         KtLabeledExpression::class.java,
         KtLambdaArgument::class.java,
         KtLambdaExpression::class.java,
-        KtLightAnnotationForSourceEntry::class.java,
         KtLightDeclaration::class.java,
         KtLightField::class.java,
-        KtLightPsiArrayInitializerMemberValue::class.java,
-        KtLightPsiLiteral::class.java,
         KtLiteralStringTemplateEntry::class.java,
         KtNameReferenceExpression::class.java,
         KtNamedFunction::class.java,
@@ -694,8 +676,6 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
     UInjectionHost::class.java to classSetOf<PsiElement>(
         KtAnnotatedExpression::class.java,
         KtBlockStringTemplateEntry::class.java,
-        KtLightPsiArrayInitializerMemberValue::class.java,
-        KtLightPsiLiteral::class.java,
         KtStringTemplateExpression::class.java,
         KtWhenConditionWithExpression::class.java
     ),
@@ -734,8 +714,6 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
         KtBlockStringTemplateEntry::class.java,
         KtConstantExpression::class.java,
         KtEscapeStringTemplateEntry::class.java,
-        KtLightPsiArrayInitializerMemberValue::class.java,
-        KtLightPsiLiteral::class.java,
         KtLiteralStringTemplateEntry::class.java,
         KtStringTemplateExpression::class.java,
         KtWhenConditionWithExpression::class.java
@@ -782,7 +760,6 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
         KtDotQualifiedExpression::class.java,
         KtEnumEntry::class.java,
         KtImportDirective::class.java,
-        KtLightAnnotationForSourceEntry::class.java,
         KtLightField::class.java,
         KtObjectLiteralExpression::class.java,
         KtPostfixExpression::class.java,
@@ -823,8 +800,6 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
         KtAnnotatedExpression::class.java,
         KtBinaryExpression::class.java,
         KtBlockStringTemplateEntry::class.java,
-        KtLightPsiArrayInitializerMemberValue::class.java,
-        KtLightPsiLiteral::class.java,
         KtStringTemplateExpression::class.java,
         KtWhenConditionInRange::class.java,
         KtWhenConditionWithExpression::class.java
@@ -877,7 +852,6 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
         KtEnumEntrySuperclassReferenceExpression::class.java,
         KtImportDirective::class.java,
         KtLabelReferenceExpression::class.java,
-        KtLightAnnotationForSourceEntry::class.java,
         KtLightField::class.java,
         KtNameReferenceExpression::class.java,
         KtObjectLiteralExpression::class.java,
@@ -980,7 +954,6 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
         KtBlockStringTemplateEntry::class.java,
         KtClass::class.java,
         KtEnumEntry::class.java,
-        KtLightAnnotationForSourceEntry::class.java,
         KtObjectDeclaration::class.java,
         KtStringTemplateExpression::class.java
     ),

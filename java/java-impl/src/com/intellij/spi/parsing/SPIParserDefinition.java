@@ -8,13 +8,11 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.lang.spi.SPILanguage;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -26,10 +24,8 @@ import com.intellij.spi.psi.SPIPackageOrClassReferenceElement;
 import org.jetbrains.annotations.NotNull;
 
 public final class SPIParserDefinition implements ParserDefinition {
-  public static final IFileElementType SPI_FILE_ELEMENT_TYPE = new IFileElementType(SPILanguage.INSTANCE);
 
-  private static final TokenSet WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE);
-  private static final Logger LOG = Logger.getInstance(SPIParserDefinition.class);
+  public static final IFileElementType SPI_FILE_ELEMENT_TYPE = new IFileElementType(SPILanguage.INSTANCE);
 
   @Override
   public @NotNull Lexer createLexer(Project project) {
@@ -40,7 +36,7 @@ public final class SPIParserDefinition implements ParserDefinition {
   public @NotNull PsiParser createParser(Project project) {
     return new PsiParser() {
       @Override
-      public @NotNull ASTNode parse(IElementType root, PsiBuilder builder) {
+      public @NotNull ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
         final PsiBuilder.Marker rootMarker = builder.mark();
         final PsiBuilder.Marker propertiesList = builder.mark();
         while (!builder.eof()) {
@@ -56,11 +52,6 @@ public final class SPIParserDefinition implements ParserDefinition {
   @Override
   public @NotNull IFileElementType getFileNodeType() {
     return SPI_FILE_ELEMENT_TYPE;
-  }
-
-  @Override
-  public @NotNull TokenSet getWhitespaceTokens() {
-    return WHITE_SPACES;
   }
 
   @Override
@@ -111,7 +102,7 @@ public final class SPIParserDefinition implements ParserDefinition {
     }
   }
 
-  private static void parseProviderChar(final PsiBuilder builder, PsiBuilder.Marker pack) {
+  public static void parseProviderChar(final PsiBuilder builder, PsiBuilder.Marker pack) {
     builder.advanceLexer();
     final IElementType tokenType = builder.getTokenType();
     if (tokenType == JavaTokenType.DOT || tokenType == SPITokenType.DOLLAR) {

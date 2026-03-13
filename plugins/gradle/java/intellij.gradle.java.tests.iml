@@ -29,6 +29,7 @@
     <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.properties" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.java" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.java.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.compiler.impl" scope="TEST" />
@@ -65,5 +66,9 @@
     <orderEntry type="module" module-name="intellij.platform.statistics.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.java.toml" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.java.groovy" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.java.groovy.toml" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.java.properties" scope="TEST" />
   </component>
 </module>

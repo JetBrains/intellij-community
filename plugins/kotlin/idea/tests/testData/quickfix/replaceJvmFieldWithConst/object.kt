@@ -1,5 +1,6 @@
 // "Replace '@JvmField' with 'const'" "true"
 // WITH_STDLIB
+// K2_ERROR: JvmField has no effect on a private property.
 object Foo {
     <caret>@JvmField private val a = "Lorem ipsum"
 }

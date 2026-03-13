@@ -1,4 +1,5 @@
 // "Change to 'val'" "true"
+// K2_ERROR: Property must be initialized.
 class Test {
     var foo: Int<caret>
         get() {

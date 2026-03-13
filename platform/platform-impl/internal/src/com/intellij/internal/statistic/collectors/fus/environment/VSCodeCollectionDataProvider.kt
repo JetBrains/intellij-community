@@ -17,7 +17,11 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.Duration
 import java.time.Instant
-import kotlin.io.path.*
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isReadable
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.readText
 
 private const val VSCODE_PLUGINS_IDENTIFICATION_TAG = "identifier"
 private const val VSCODE_PLUGINS_ID_TAG = "id"

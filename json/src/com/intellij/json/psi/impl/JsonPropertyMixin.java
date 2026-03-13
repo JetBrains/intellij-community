@@ -8,11 +8,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.util.CachedValueProvider.Result;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.model.psi.impl.Declarations.allDeclarationsInElement;
 
 @ApiStatus.Internal
 public abstract class JsonPropertyMixin extends JsonElementImpl implements JsonProperty {
@@ -30,12 +35,23 @@ public abstract class JsonPropertyMixin extends JsonElementImpl implements JsonP
 
   @Override
   public PsiReference getReference() {
+    if (hasSymbolDeclarations()) return null;
+
     return new JsonPropertyNameReference(this);
   }
 
   @Override
   public PsiReference @NotNull [] getReferences() {
+    // yield to Symbol declarations provided by plugins
+    if (hasSymbolDeclarations()) return PsiReference.EMPTY_ARRAY;
+
     final PsiReference[] fromProviders = ReferenceProvidersRegistry.getReferencesFromProviders(this);
     return ArrayUtil.prepend(new JsonPropertyNameReference(this), fromProviders);
+  }
+
+  public boolean hasSymbolDeclarations() {
+    return CachedValuesManager.getCachedValue(this, () -> {
+      return Result.create(!allDeclarationsInElement(this).isEmpty(), PsiModificationTracker.MODIFICATION_COUNT);
+    });
   }
 }

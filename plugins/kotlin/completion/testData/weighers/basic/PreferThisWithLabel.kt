@@ -10,4 +10,6 @@ class Test {
 }
 
 // ORDER: this@Test
+// ORDER: thisOther
 // ORDER: this
+// IGNORE_K1

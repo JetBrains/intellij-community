@@ -7,8 +7,8 @@ publish = false
 build = "build.rs"
 
 [features]
-default = ["cef"]
-cef = []
+default = []
+cef = ["dep:curl", "dep:sha1"]
 
 [profile.release]
 strip = "debuginfo"
@@ -17,37 +17,36 @@ lto = true
 codegen-units = 1
 
 [dependencies]
-log = { version = "0.4.27", features = ["std"] }
-serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.140"
-jni = "0.21.1"
-libloading = "0.8.6"
-anyhow = { version = "1.0.98", features = ["std", "backtrace"] }
-va_list = { version = "0.2.0"}
+anyhow = "1.0.102"
+log = { version = "0.4.29", features = ["std"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+shell-words = "1.1.1"
+jni = "0.22.3"
+libloading = "0.9.0"
+va_list = "0.2.1"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-windows = { version = "0.61.1", features = [
-    "Win32_Foundation", "Win32_Globalization", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging",
-    "Win32_System_Console", "Win32_System_LibraryLoader", "Win32_System_Services"
+windows = { version = "0.62.2", features = [
+  "Win32_Foundation", "Win32_Globalization", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging",
+  "Win32_System_Console", "Win32_System_LibraryLoader", "Win32_System_Services"
 ] }
+winreg = "0.55.0"
 
 [target.'cfg(target_family = "unix")'.dependencies]
-libc = "0.2.169"
+libc = "0.2.182"
 
 [target.'cfg(target_os = "macos")'.dependencies]
-core-foundation = "0.10.0"
+core-foundation = "0.10.1"
 
 [target.'cfg(not(any(target_os = "windows", target_os = "macos")))'.dependencies]
-native-dialog = "0.7.0"
+native-dialog = "0.9.6"
 
 [build-dependencies]
-anyhow = { version = "1.0.98", features = ["std", "backtrace"] }
-curl = { version = "0.4.47", features = ["static-curl"] }
-sha1 = "0.10.6"
-winresource = "0.1.20"
-# these crates are used in separate build steps; uncomment them from time to time to check for updates
-#cargo-deny = "0.17.0"
-#cargo-about = "0.6.6"
+anyhow = "1.0.102"
+curl = { version = "0.4.49", features = ["static-curl"], optional = true }
+sha1 = { version = "0.10.6", optional = true }
+winresource = "0.1.30"
 
 [package.metadata.winresource]
 CompanyName = "JetBrains s.r.o."
@@ -58,4 +57,4 @@ OriginalFilename = "WinLauncher.exe"
 ProductName = "IntelliJ Platform"
 
 [dev-dependencies]
-tempfile = "3.19.1"
+tempfile = "3.25.0"

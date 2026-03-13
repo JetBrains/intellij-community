@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
@@ -16,8 +16,8 @@ repositories {
 }
 
 dependencies {
-  implementation("com.google.code.gson", "gson", "2.9.1")
-  implementation("org.jetbrains.intellij.deps", "async-profiler", "2.9-15")
+  implementation("com.google.code.gson:gson:2.9.1")
+  implementation("org.jetbrains.intellij.deps:async-profiler:2.9-15")
 }
 
 tasks.compileJava {
@@ -25,7 +25,7 @@ tasks.compileJava {
   options.compilerArgs = listOf("-source", "17", "-target", "17", "--add-modules=jdk.jcmd", "--add-exports=jdk.jcmd/sun.tools.jps=ALL-UNNAMED")
 }
 
-task("fatJar", type = Jar::class) {
+tasks.register<Jar>("fatJar") {
   dependsOn.addAll(listOf("compileJava", "processResources")) // We need this for Gradle optimization to work
 
   archiveFileName.set("app.jar")
@@ -41,7 +41,7 @@ task("fatJar", type = Jar::class) {
 val jbrSdkVersion: String by project
 val jbrSdkBuildNumber: String by project
 
-task("downloadJbr") {
+tasks.register<Task>("downloadJbr") {
   val (os, arch) = getOsAndArch()
   val buildDir = project.layout.buildDirectory.asFile.get().toPath()
   val output = buildDir.resolve("jbr")

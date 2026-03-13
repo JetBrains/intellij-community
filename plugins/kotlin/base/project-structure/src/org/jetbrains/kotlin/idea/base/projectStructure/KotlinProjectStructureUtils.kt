@@ -36,76 +36,12 @@ import org.jetbrains.kotlin.config.TestResourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.facet.kotlinSourceRootType
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleProductionSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfoWithExpectedBy
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
-import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.runWithAlternativeResolveEnabled
 import org.jetbrains.kotlin.psi.UserDataProperty
-
-@K1ModeProjectStructureApi
-val KaModule.moduleInfo: IdeaModuleInfo
-    get() {
-        require(this is KtModuleByModuleInfoBase)
-        return ideaModuleInfo
-    }
-
-
-@K1ModeProjectStructureApi
-val ModuleInfo.kotlinSourceRootType: KotlinSourceRootType?
-    get() = when (this) {
-        is ModuleProductionSourceInfo -> SourceKotlinRootType
-        is ModuleTestSourceInfo -> TestSourceKotlinRootType
-        else -> null
-    }
-
-@K1ModeProjectStructureApi
-val Module.productionSourceInfo: ModuleProductionSourceInfo?
-    get() {
-        val hasProductionRoots = hasRootsOfType(setOf(JavaSourceRootType.SOURCE, SourceKotlinRootType))
-                || (isNewMultiPlatformModule && kotlinSourceRootType == SourceKotlinRootType)
-
-        return if (hasProductionRoots) ModuleProductionSourceInfo(this) else null
-    }
-
-@K1ModeProjectStructureApi
-val Module.testSourceInfo: ModuleTestSourceInfo?
-    get() {
-        val hasTestRoots = hasRootsOfType(setOf(JavaSourceRootType.TEST_SOURCE, TestSourceKotlinRootType))
-                || (isNewMultiPlatformModule && kotlinSourceRootType == TestSourceKotlinRootType)
-
-        return if (hasTestRoots) ModuleTestSourceInfo(this) else null
-    }
-
-@K1ModeProjectStructureApi
-fun Module.asSourceInfo(sourceRootType: KotlinSourceRootType?): ModuleSourceInfoWithExpectedBy? =
-    when (sourceRootType) {
-        SourceKotlinRootType -> ModuleProductionSourceInfo(this)
-        TestSourceKotlinRootType -> ModuleTestSourceInfo(this)
-        else -> null
-    }
-
-@K1ModeProjectStructureApi
-val Module.sourceModuleInfos: List<ModuleSourceInfo>
-    get() = listOfNotNull(testSourceInfo, productionSourceInfo)
 
 private fun Module.hasRootsOfType(rootTypes: Set<JpsModuleSourceRootType<*>>): Boolean {
     return rootManager.contentEntries.any { it.getSourceFolders(rootTypes).isNotEmpty() }
 }
-
-/**
- * [forcedModuleInfo] provides a [ModuleInfo] instance for a dummy file. It must not be changed after the first assignment because
- * [ModuleInfoProvider] might cache the module info.
- */
-@Suppress("UnusedReceiverParameter")
-@K1ModeProjectStructureApi
-var PsiFile.forcedModuleInfo: ModuleInfo? by UserDataProperty(Key.create("FORCED_MODULE_INFO"))
-    @ApiStatus.Internal get
-    @ApiStatus.Internal set
 
 private val testRootTypes: Set<JpsModuleSourceRootType<*>> = setOf(
     JavaSourceRootType.TEST_SOURCE,
@@ -173,25 +109,6 @@ fun GlobalSearchScope.hasKotlinJvmRuntime(project: Project): Boolean {
     }
 }
 
-@K1ModeProjectStructureApi
-fun ModuleInfo.findSdkAcrossDependencies(): SdkInfo? {
-    val project = (this as? IdeaModuleInfo)?.project ?: return null
-    return SdkInfoCache.getInstance(project).findOrGetCachedSdk(this)
-}
-
-@K1ModeProjectStructureApi
-fun IdeaModuleInfo.findJvmStdlibAcrossDependencies(): LibraryInfo? {
-    val project = project
-    return KotlinStdlibCache.getInstance(project).findStdlibInModuleDependencies(this)
-}
-
-@K1ModeProjectStructureApi
-fun IdeaModuleInfo.supportsFeature(project: Project, feature: LanguageFeature): Boolean {
-    return project.service<LanguageSettingsProvider>()
-        .getLanguageVersionSettings(this, project)
-        .supportsFeature(feature)
-}
-
 @ApiStatus.Internal
 fun JpsModuleSourceRoot.getMigratedSourceRootTypeWithProperties(): Pair<JpsModuleSourceRootType<JpsElement>, JpsElement>? {
     val currentRootType = rootType
@@ -210,3 +127,26 @@ fun JpsModuleSourceRoot.getMigratedSourceRootTypeWithProperties(): Pair<JpsModul
 
     return newSourceRootType to properties
 }
+
+val Module.hasProductionSource: Boolean
+    get() {
+        return hasRootsOfType(
+            setOf(
+                JavaSourceRootType.SOURCE,
+                SourceKotlinRootType
+            )
+        ) || (isNewMultiPlatformModule && kotlinSourceRootType == SourceKotlinRootType)
+
+    }
+
+
+val Module.hasTestSource: Boolean
+    get() {
+        return hasRootsOfType(
+            setOf(
+                JavaSourceRootType.TEST_SOURCE,
+                TestSourceKotlinRootType
+            )
+        ) || (isNewMultiPlatformModule && kotlinSourceRootType == TestSourceKotlinRootType)
+
+    }

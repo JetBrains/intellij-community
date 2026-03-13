@@ -1,8 +1,10 @@
+import org.jetbrains.annotations.NotNull;
+
 class J {
 
     public static @interface foo {
         int i();
 
-        String s();
+        @NotNull String s();
     }
 }

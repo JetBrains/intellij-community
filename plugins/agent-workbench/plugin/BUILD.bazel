@@ -1,0 +1,68 @@
+### auto-generated section `build intellij.agent.workbench.plugin` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "plugin_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "plugin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":plugin_resources"],
+  runtime_deps = [
+    "//plugins/agent-workbench/common",
+    "//plugins/agent-workbench/chat",
+    "//plugins/agent-workbench/claude/common",
+    "//plugins/agent-workbench/codex/common",
+    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
+    "//plugins/agent-workbench/prompt",
+    "//plugins/agent-workbench/prompt-vcs:agent-workbench-prompt-vcs",
+    "//plugins/agent-workbench/prompt-testrunner:agent-workbench-prompt-testrunner",
+    "//plugins/agent-workbench/sessions",
+    "//plugins/agent-workbench/sessions-actions:agent-workbench-sessions-actions",
+    "//plugins/agent-workbench/sessions-toolwindow:agent-workbench-sessions-toolwindow",
+    "//plugins/agent-workbench/codex/sessions",
+    "//plugins/agent-workbench/claude/sessions",
+  ]
+)
+
+jvm_library(
+  name = "plugin_test_lib",
+  module_name = "intellij.agent.workbench.plugin",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:junit5",
+    "@lib//:junit5Suites",
+  ],
+  runtime_deps = [
+    ":plugin",
+    "//plugins/agent-workbench/common:common_test_lib",
+    "//plugins/agent-workbench/chat:chat_test_lib",
+    "//plugins/agent-workbench/claude/common:common_test_lib",
+    "//plugins/agent-workbench/codex/common:common_test_lib",
+    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core_test_lib",
+    "//plugins/agent-workbench/prompt:prompt_test_lib",
+    "//plugins/agent-workbench/prompt-vcs:agent-workbench-prompt-vcs_test_lib",
+    "//plugins/agent-workbench/prompt-testrunner:agent-workbench-prompt-testrunner_test_lib",
+    "//plugins/agent-workbench/sessions:sessions_test_lib",
+    "//plugins/agent-workbench/sessions-actions:agent-workbench-sessions-actions_test_lib",
+    "//plugins/agent-workbench/sessions-toolwindow:agent-workbench-sessions-toolwindow_test_lib",
+    "//plugins/agent-workbench/codex/sessions:sessions_test_lib",
+    "//plugins/agent-workbench/claude/sessions:sessions_test_lib",
+  ]
+)
+### auto-generated section `build intellij.agent.workbench.plugin` end
+
+### auto-generated section `test intellij.agent.workbench.plugin` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "plugin_test",
+  runtime_deps = [":plugin_test_lib"]
+)
+### auto-generated section `test intellij.agent.workbench.plugin` end

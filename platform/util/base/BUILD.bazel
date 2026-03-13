@@ -18,4 +18,24 @@ jvm_library(
   ],
   exports = ["//platform/util/base/multiplatform"]
 )
+
+jvm_library(
+  name = "base_test_lib",
+  module_name = "intellij.platform.util.base",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = [
+    "//platform/util/base/multiplatform",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
+  ],
+  runtime_deps = [
+    ":base",
+    "//platform/util-rt:util-rt_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/kotlinx/coroutines/debug:debug_test_lib",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.util.base` end

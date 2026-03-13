@@ -86,7 +86,7 @@ UFile (package = ) [import java.lang.Thread...]
                                     UReturnExpression [return println("hello1")]
                                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("hello1")] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                             UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                                            UPolyadicExpression (operator = +) ["hello1"] : java.lang.String
+                                            UPolyadicExpression (operator = +) ["hello1"] : @org.jetbrains.annotations.NotNull() java.lang.String
                                                 ULiteralExpression (value = "hello1") ["hello1"] : java.lang.String
         UMethod (name = test2) [public static final fun test2() : void {...}]
             UBlockExpression [{...}] : void
@@ -103,29 +103,29 @@ UFile (package = ) [import java.lang.Thread...]
                                         UReturnExpression [return println("hello2")]
                                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("hello2")] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                                 UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                                                UPolyadicExpression (operator = +) ["hello2"] : java.lang.String
+                                                UPolyadicExpression (operator = +) ["hello2"] : @org.jetbrains.annotations.NotNull() java.lang.String
                                                     ULiteralExpression (value = "hello2") ["hello2"] : java.lang.String
         UMethod (name = test3) [public static final fun test3() : void {...}]
-            UBlockExpression [{...}] : java.lang.String
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [ambiguousSamAcceptor(Supplier({ ...}))] : java.lang.String
+            UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.String
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [ambiguousSamAcceptor(Supplier({ ...}))] : @org.jetbrains.annotations.NotNull() java.lang.String
                     UIdentifier (Identifier (ambiguousSamAcceptor)) [UIdentifier (Identifier (ambiguousSamAcceptor))]
                     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Supplier({ ...})] : @org.jetbrains.annotations.NotNull() java.util.function.Supplier<@org.jetbrains.annotations.NotNull() java.lang.String>
                         UIdentifier (Identifier (Supplier)) [UIdentifier (Identifier (Supplier))]
                         USimpleNameReferenceExpression (identifier = Supplier, resolvesTo = PsiClass: Supplier) [Supplier]
                         ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends @org.jetbrains.annotations.NotNull() java.lang.String>
-                            UBlockExpression [{...}] : java.lang.String
+                            UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.String
                                 UReturnExpression [return "Supplier"]
-                                    UPolyadicExpression (operator = +) ["Supplier"] : java.lang.String
+                                    UPolyadicExpression (operator = +) ["Supplier"] : @org.jetbrains.annotations.NotNull() java.lang.String
                                         ULiteralExpression (value = "Supplier") ["Supplier"] : java.lang.String
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [ambiguousSamAcceptor(Callable({ ...}))] : java.lang.String
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [ambiguousSamAcceptor(Callable({ ...}))] : @org.jetbrains.annotations.NotNull() java.lang.String
                     UIdentifier (Identifier (ambiguousSamAcceptor)) [UIdentifier (Identifier (ambiguousSamAcceptor))]
                     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Callable({ ...})] : @org.jetbrains.annotations.NotNull() java.util.concurrent.Callable<@org.jetbrains.annotations.NotNull() java.lang.String>
                         UIdentifier (Identifier (Callable)) [UIdentifier (Identifier (Callable))]
                         USimpleNameReferenceExpression (identifier = Callable, resolvesTo = PsiClass: Callable) [Callable]
                         ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends java.lang.String>
-                            UBlockExpression [{...}] : java.lang.String
+                            UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.String
                                 UReturnExpression [return "Callable"]
-                                    UPolyadicExpression (operator = +) ["Callable"] : java.lang.String
+                                    UPolyadicExpression (operator = +) ["Callable"] : @org.jetbrains.annotations.NotNull() java.lang.String
                                         ULiteralExpression (value = "Callable") ["Callable"] : java.lang.String
         UMethod (name = ambiguousSamAcceptor) [public static final fun ambiguousSamAcceptor(@org.jetbrains.annotations.NotNull s: java.util.function.Supplier<java.lang.String>) : java.lang.String {...}]
             UParameter (name = s) [@org.jetbrains.annotations.NotNull var s: java.util.function.Supplier<java.lang.String>]

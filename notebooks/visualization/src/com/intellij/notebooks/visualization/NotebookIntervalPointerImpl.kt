@@ -2,7 +2,12 @@
 package com.intellij.notebooks.visualization
 
 import com.intellij.notebooks.visualization.NotebookIntervalPointerFactory.Companion.compareIntervals
-import com.intellij.notebooks.visualization.NotebookIntervalPointersEvent.*
+import com.intellij.notebooks.visualization.NotebookIntervalPointersEvent.Change
+import com.intellij.notebooks.visualization.NotebookIntervalPointersEvent.OnEdited
+import com.intellij.notebooks.visualization.NotebookIntervalPointersEvent.OnInserted
+import com.intellij.notebooks.visualization.NotebookIntervalPointersEvent.OnRemoved
+import com.intellij.notebooks.visualization.NotebookIntervalPointersEvent.OnSwapped
+import com.intellij.notebooks.visualization.NotebookIntervalPointersEvent.PointerSnapshot
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.undo.BasicUndoableAction
 import com.intellij.openapi.command.undo.UndoManager
@@ -12,7 +17,11 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.removeUserData
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.TestOnly

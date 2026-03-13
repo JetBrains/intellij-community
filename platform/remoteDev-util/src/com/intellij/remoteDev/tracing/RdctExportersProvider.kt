@@ -2,7 +2,11 @@
 package com.intellij.remoteDev.tracing
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.diagnostic.telemetry.*
+import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
+import com.intellij.platform.diagnostic.telemetry.FilteredMetricsExporter
+import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils
+import com.intellij.platform.diagnostic.telemetry.OtlpConfiguration
+import com.intellij.platform.diagnostic.telemetry.belongsToScope
 import com.intellij.platform.diagnostic.telemetry.exporters.meters.CsvGzippedMetricsExporter
 import com.intellij.platform.diagnostic.telemetry.impl.MessageBusSpanExporter
 import com.intellij.platform.diagnostic.telemetry.impl.OpenTelemetryExporterProvider

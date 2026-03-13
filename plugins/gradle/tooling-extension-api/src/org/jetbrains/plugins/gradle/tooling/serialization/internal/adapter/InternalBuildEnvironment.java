@@ -18,15 +18,18 @@ public final class InternalBuildEnvironment implements BuildEnvironment, Seriali
   private final Supplier<InternalBuildIdentifier> buildIdentifier;
   private final Supplier<InternalGradleEnvironment> gradle;
   private final Supplier<InternalJavaEnvironment> java;
+  private final Supplier<String> versionInfo;
 
   public InternalBuildEnvironment(
     @NotNull Supplier<InternalBuildIdentifier> buildIdentifier,
     @NotNull Supplier<InternalGradleEnvironment> gradle,
-    @NotNull Supplier<InternalJavaEnvironment> java
+    @NotNull Supplier<InternalJavaEnvironment> java,
+    @NotNull Supplier<String> versionInfo
   ) {
     this.buildIdentifier = Suppliers.wrap(buildIdentifier);
     this.gradle = Suppliers.wrap(gradle);
     this.java = Suppliers.wrap(java);
+    this.versionInfo = Suppliers.wrap(versionInfo);
   }
 
   @Override
@@ -42,6 +45,11 @@ public final class InternalBuildEnvironment implements BuildEnvironment, Seriali
   @Override
   public JavaEnvironment getJava() {
     return java.get();
+  }
+
+  @Override
+  public String getVersionInfo() {
+    return versionInfo.get();
   }
 
   @Contract("null -> null")
@@ -61,6 +69,9 @@ public final class InternalBuildEnvironment implements BuildEnvironment, Seriali
       () -> {
         JavaEnvironment java = buildEnvironment.getJava();
         return new InternalJavaEnvironment(java.getJavaHome(), java.getJvmArguments());
+      },
+      () -> {
+        return buildEnvironment.getVersionInfo();
       }
     );
   }

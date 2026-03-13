@@ -72,7 +72,6 @@ class _NamespaceInstaller(namespaces.Installer):
     installation_dir: Incomplete
     editable_name: Incomplete
     outputs: list[str]
-    dry_run: bool
     def __init__(self, distribution, installation_dir, editable_name, src_root) -> None: ...
 
 class InformationOnly(SetuptoolsWarning): ...

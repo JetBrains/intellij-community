@@ -86,7 +86,7 @@ class FixAllHighlightingProblems implements IntentionAction {
     };
     CodeInsightContext context = EditorContextManager.getEditorContext(editor, project);
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      ReadAction.run(() -> {
+      ReadAction.runBlocking(() -> {
         MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
         DaemonCodeAnalyzerEx.processHighlights(model, project, null, 0, document.getTextLength(), context, processor);
       });

@@ -15,16 +15,10 @@ public class LightPrimitivePatternsHighlightingWithTightenedDominanceTest extend
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlightingPatternsWithPrimitives";
   }
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    IdeaTestUtil.setProjectLanguageLevel(getProject(), JavaFeature.PATTERNS_WITH_TIGHTENED_DOMINANCE.getMinimumLevel());
-  }
-
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_X;
+    return JAVA_26;
   }
 
 

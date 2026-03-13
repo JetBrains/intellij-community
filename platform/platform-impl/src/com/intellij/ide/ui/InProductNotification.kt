@@ -3,7 +3,10 @@ package com.intellij.ide.ui
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.SettingsEntryPointAction.*
+import com.intellij.ide.actions.SettingsEntryPointAction.ActionProvider
+import com.intellij.ide.actions.SettingsEntryPointAction.IconCustomizer
+import com.intellij.ide.actions.SettingsEntryPointAction.LastAction
+import com.intellij.ide.actions.SettingsEntryPointAction.UpdateAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.KeepPopupOnPerform
@@ -12,7 +15,13 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.*
+import com.intellij.ui.BadgeIconSupplier
+import com.intellij.ui.BrowserHyperlinkListener
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.InlineBanner
+import com.intellij.ui.LicensingFacade
+import com.intellij.ui.NewUI
 import com.intellij.ui.components.JBHtmlPane
 import com.intellij.ui.components.JBHtmlPaneConfiguration
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration

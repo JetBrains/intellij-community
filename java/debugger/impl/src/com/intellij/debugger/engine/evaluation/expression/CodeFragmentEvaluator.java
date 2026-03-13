@@ -11,7 +11,6 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,22 +31,9 @@ public class CodeFragmentEvaluator extends BlockStatementEvaluator {
   }
 
   public Value getValue(@NotNull String localName, @NotNull EvaluationContextImpl context) throws EvaluateException {
-    return getValue(localName, context.getSuspendContext().getVirtualMachineProxy(), context);
-  }
-
-  /**
-   * @deprecated Use {@link #getValue(String, EvaluationContextImpl)} instead
-   */
-  @Deprecated
-  public Value getValue(@NotNull String localName, @NotNull VirtualMachineProxyImpl vm) throws EvaluateException {
-    return getValue(localName, vm, null);
-  }
-
-  private Value getValue(@NotNull String localName, @NotNull VirtualMachineProxyImpl vm, @Nullable EvaluationContextImpl context)
-    throws EvaluateException {
     if (!mySyntheticLocals.containsKey(localName)) {
       if (myParentFragmentEvaluator != null) {
-        return myParentFragmentEvaluator.getValue(localName, vm);
+        return myParentFragmentEvaluator.getValue(localName, context);
       }
       else {
         throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.variable.not.declared", localName));
@@ -60,7 +46,9 @@ public class CodeFragmentEvaluator extends BlockStatementEvaluator {
     else if (value == null) {
       return null;
     }
-    else if (value instanceof Boolean) {
+
+    @NotNull VirtualMachineProxyImpl vm = context.getSuspendContext().getVirtualMachineProxy();
+    if (value instanceof Boolean) {
       return vm.mirrorOf(((Boolean)value).booleanValue());
     }
     else if (value instanceof Byte) {
@@ -85,12 +73,11 @@ public class CodeFragmentEvaluator extends BlockStatementEvaluator {
       return vm.mirrorOf(((Double)value).doubleValue());
     }
     else if (value instanceof String stringValue) {
-      return context != null ? DebuggerUtilsEx.mirrorOfString(stringValue, context) : vm.getVirtualMachine().mirrorOf(stringValue);
+      return DebuggerUtilsEx.mirrorOfString(stringValue, context);
     }
-    else {
-      LOG.error("unknown default initializer type " + value.getClass().getName());
-      return null;
-    }
+
+    LOG.error("unknown default initializer type " + value.getClass().getName());
+    return null;
   }
 
   boolean hasValue(String localName) {

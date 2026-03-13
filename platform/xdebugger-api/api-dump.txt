@@ -797,6 +797,8 @@ com.intellij.xdebugger.ui.DebuggerColors
 - sf:NOT_TOP_FRAME_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:SMART_STEP_INTO_SELECTION:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:SMART_STEP_INTO_TARGET:com.intellij.openapi.editor.colors.TextAttributesKey
+com.intellij.xdebugger.ui.ExecutionPointHighlighterProvider
+- a:getHighlightRange():com.intellij.openapi.util.TextRange
 c:com.intellij.xdebugger.ui.XDebugTabLayouter
 - <init>():V
 - registerAdditionalContent(com.intellij.execution.ui.RunnerLayoutUi):V

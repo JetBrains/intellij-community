@@ -1,1 +1,2 @@
 com.intellij.lambda.sampleTestsWithPlugin.util.SetLambdaPluginCallback
+com.intellij.lambda.testFramework.junit.SetErrorIgnorerExtension

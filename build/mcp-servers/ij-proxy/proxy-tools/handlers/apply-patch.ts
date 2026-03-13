@@ -15,8 +15,11 @@ const UPDATE_PREFIX = '*** Update File: '
 const DELETE_PREFIX = '*** Delete File: '
 const MOVE_PREFIX = '*** Move to: '
 const END_OF_FILE = '*** End of File'
+const DIFF_GIT_PREFIX = 'diff --git '
+const NO_NEWLINE_MARKER = '\\ No newline at end of file'
 const HEREDOC_PREFIXES = new Set(["<<EOF", "<<'EOF'", '<<"EOF"'])
 const TRUNCATION_ERROR = 'file content truncated while reading'
+const UNIFIED_DIFF_HEADER_REGEX = /^@@+\s*-\d+(?:,\d+)?\s+\+\d+(?:,\d+)?\s*@@+$/
 
 interface ApplyPatchArgsObject {
   input?: unknown
@@ -87,7 +90,7 @@ export async function handleApplyPatchTool(
 
     if (op.type === 'update') {
       const original = await readFileTextForPatch(relative, absolute, projectPath, callUpstreamTool)
-      const updated = applyHunks(original, op.hunks)
+      const updated = op.hunks.length === 0 ? original : applyHunks(original, op.hunks)
       const resolvedTarget = op.moveTo ? resolvePathInProject(projectPath, op.moveTo, 'path') : null
       const moveTarget = resolvedTarget && resolvedTarget.relative !== relative ? resolvedTarget : null
 
@@ -189,20 +192,47 @@ function unwrapHeredocLines(lines: string[]): string[] {
   return lines.slice(1, -1)
 }
 
+function stripUnifiedDiffHeader(trimmed: string): string {
+  if (UNIFIED_DIFF_HEADER_REGEX.test(trimmed)) return ''
+  return trimmed.length > 2 ? trimmed.slice(2).trim() : ''
+}
+
 function parsePatch(text: string): PatchOperation[] {
   const lines = unwrapHeredocLines(splitLines(text.trim()))
-  const startIndex = lines.findIndex((line) => line.trim() === BEGIN_MARKER)
-  if (startIndex === -1) {
-    throw new Error('patch must include *** Begin Patch')
+  const markerRange = findPatchMarkerRange(lines)
+
+  if (markerRange) {
+    if (looksLikeGitDiff(lines, markerRange.bodyStart, markerRange.bodyEnd)) {
+      return parseGitDiffPatch(lines, markerRange.bodyStart, markerRange.bodyEnd)
+    }
+    return parseCodexPatch(lines, markerRange.bodyStart, markerRange.bodyEnd)
   }
+
+  if (looksLikeGitDiff(lines, 0, lines.length)) {
+    return parseGitDiffPatch(lines, 0, lines.length)
+  }
+
+  throw new Error('patch must include *** Begin Patch')
+}
+
+function findPatchMarkerRange(lines: string[]): {bodyStart: number; bodyEnd: number} | null {
+  const startIndex = lines.findIndex((line) => line.trim() === BEGIN_MARKER)
+  if (startIndex === -1) return null
+
   const endIndexRelative = lines.slice(startIndex + 1).findIndex((line) => line.trim() === END_MARKER)
   if (endIndexRelative === -1) {
     throw new Error('patch must include *** End Patch')
   }
-  const endIndex = startIndex + 1 + endIndexRelative
 
+  return {
+    bodyStart: startIndex + 1,
+    bodyEnd: startIndex + 1 + endIndexRelative
+  }
+}
+
+function parseCodexPatch(lines: string[], startIndex: number, endIndex: number): PatchOperation[] {
   const operations: PatchOperation[] = []
-  let i = startIndex + 1
+  let i = startIndex
   while (i < endIndex) {
     const line = lines[i]
     const headerLine = line.trimStart()
@@ -244,63 +274,23 @@ function parsePatch(text: string): PatchOperation[] {
         const moveLine = lines[i].trimStart()
         if (moveLine.startsWith(MOVE_PREFIX)) {
           moveTo = moveLine.slice(MOVE_PREFIX.length).trim()
-            if (!moveTo) {
-              throw new Error('Move to requires a path')
-            }
-            ensureSafePatchPath(moveTo, 'Move to')
-            i += 1
+          if (!moveTo) {
+            throw new Error('Move to requires a path')
           }
+          ensureSafePatchPath(moveTo, 'Move to')
+          i += 1
         }
+      }
 
-      const hunks = []
+      const hunks: Hunk[] = []
       while (i < endIndex && !isPatchHeaderLine(lines[i])) {
         if (lines[i].trim() === '') {
           i += 1
           continue
         }
-        let header: string | null = null
-        if (isHunkHeaderLine(lines[i])) {
-          const trimmed = lines[i].trim()
-          const headerText = trimmed.length > 2 ? trimmed.slice(2).trim() : ''
-          header = headerText === '' ? null : headerText
-          i += 1
-        } else if (hunks.length === 0) {
-          if (!isDiffLine(lines[i])) {
-            throw new Error('Expected @@ hunk header')
-          }
-        } else {
-          throw new Error('Expected @@ hunk header')
-        }
-        const hunkLines: HunkLine[] = []
-        let isEndOfFile = false
-        while (i < endIndex && !isHunkHeaderLine(lines[i]) && !isPatchHeaderLine(lines[i])) {
-          const hunkLine = lines[i]
-          if (hunkLine === END_OF_FILE) {
-            isEndOfFile = true
-            i += 1
-            break
-          }
-          if (hunkLine === '') {
-            hunkLines.push({prefix: ' ', text: ''})
-            i += 1
-            continue
-          }
-          if (![' ', '+', '-'].includes(hunkLine[0])) {
-            if (hunkLines.length === 0) {
-              throw new Error('Hunk lines must start with space, +, or -')
-            }
-            break
-          }
-          hunkLines.push({
-            prefix: hunkLine[0] as ' ' | '+' | '-',
-            text: hunkLine.slice(1)
-          })
-          i += 1
-        }
-        if (hunkLines.length === 0) {
-          throw new Error('Empty hunk in Update File')
-        }
-        hunks.push({header, lines: hunkLines, isEndOfFile})
+        const parsed = parseCodexHunk(lines, i, endIndex, hunks.length === 0)
+        hunks.push(parsed.hunk)
+        i = parsed.nextIndex
       }
       if (hunks.length === 0) {
         throw new Error('Update File requires at least one hunk')
@@ -320,8 +310,398 @@ function parsePatch(text: string): PatchOperation[] {
   if (operations.length === 0) {
     throw new Error('patch did not contain any operations')
   }
-
   return operations
+}
+
+function parseCodexHunk(
+  lines: string[],
+  startIndex: number,
+  endIndex: number,
+  isFirstHunk: boolean
+): {hunk: Hunk; nextIndex: number} {
+  let i = startIndex
+  let header: string | null = null
+  let allowsStrictPair = false
+
+  if (isHunkHeaderLine(lines[i])) {
+    const trimmed = lines[i].trim()
+    const headerText = stripUnifiedDiffHeader(trimmed)
+    header = headerText === '' ? null : headerText
+    allowsStrictPair = trimmed === '@@'
+    i += 1
+  } else if (isFirstHunk) {
+    if (!isDiffLine(lines[i])) {
+      throw new Error('Expected @@ hunk header')
+    }
+  } else {
+    throw new Error('Expected @@ hunk header')
+  }
+
+  if (allowsStrictPair && i < endIndex && isStrictPairBlockStart(lines[i])) {
+    return parseStrictPairHunk(lines, i, endIndex)
+  }
+
+  const hunkLines: HunkLine[] = []
+  let isEndOfFile = false
+  while (i < endIndex && !isHunkHeaderLine(lines[i]) && !isPatchHeaderLine(lines[i])) {
+    const hunkLine = lines[i]
+    if (hunkLine === END_OF_FILE) {
+      isEndOfFile = true
+      i += 1
+      break
+    }
+    if (hunkLine === '') {
+      hunkLines.push({prefix: ' ', text: ''})
+      i += 1
+      continue
+    }
+    if (![' ', '+', '-'].includes(hunkLine[0])) {
+      if (hunkLines.length === 0) {
+        throw new Error('Hunk lines must start with space, +, or -')
+      }
+      break
+    }
+    hunkLines.push({
+      prefix: hunkLine[0] as ' ' | '+' | '-',
+      text: hunkLine.slice(1)
+    })
+    i += 1
+  }
+
+  if (hunkLines.length === 0) {
+    throw new Error('Empty hunk in Update File')
+  }
+
+  return {
+    hunk: {header, lines: hunkLines, isEndOfFile},
+    nextIndex: i
+  }
+}
+
+function parseStrictPairHunk(lines: string[], startIndex: number, endIndex: number): {hunk: Hunk; nextIndex: number} {
+  let i = startIndex
+  const oldLines: string[] = []
+  let hasSecondDelimiter = false
+
+  while (i < endIndex && !isPatchHeaderLine(lines[i])) {
+    const line = lines[i]
+    if (line.trim() === '@@') {
+      hasSecondDelimiter = true
+      i += 1
+      break
+    }
+    oldLines.push(line)
+    i += 1
+  }
+
+  if (!hasSecondDelimiter) {
+    throw new Error('Strict @@ pair hunk requires second @@ delimiter')
+  }
+
+  const newLines: string[] = []
+  while (i < endIndex && !isPatchHeaderLine(lines[i]) && !isHunkHeaderLine(lines[i])) {
+    const line = lines[i]
+    newLines.push(line)
+    i += 1
+  }
+
+  if (oldLines.length === 0 && newLines.length === 0) {
+    throw new Error('Empty hunk in Update File')
+  }
+
+  const hunkLines: HunkLine[] = [
+    ...oldLines.map((text) => ({prefix: '-' as const, text})),
+    ...newLines.map((text) => ({prefix: '+' as const, text}))
+  ]
+
+  return {
+    hunk: {
+      header: null,
+      lines: hunkLines,
+      isEndOfFile: false
+    },
+    nextIndex: i
+  }
+}
+
+function parseGitDiffPatch(lines: string[], startIndex: number, endIndex: number): PatchOperation[] {
+  const operations: PatchOperation[] = []
+  let i = startIndex
+  while (i < endIndex) {
+    while (i < endIndex && lines[i].trim() === '') {
+      i += 1
+    }
+    if (i >= endIndex) break
+    const parsed = parseGitOperation(lines, i, endIndex)
+    operations.push(parsed.operation)
+    i = parsed.nextIndex
+  }
+
+  if (operations.length === 0) {
+    throw new Error('patch did not contain any operations')
+  }
+  return operations
+}
+
+function parseGitOperation(
+  lines: string[],
+  startIndex: number,
+  endIndex: number
+): {operation: PatchOperation; nextIndex: number} {
+  let i = startIndex
+  let oldPath: string | null = null
+  let newPath: string | null = null
+  let renameFrom: string | null = null
+  let renameTo: string | null = null
+  const hunks: Hunk[] = []
+  let sawGitSignal = false
+
+  while (i < endIndex) {
+    const line = lines[i]
+    const trimmed = line.trimStart()
+
+    if (trimmed === '') {
+      i += 1
+      continue
+    }
+
+    if (trimmed.startsWith(DIFF_GIT_PREFIX)) {
+      if (sawGitSignal) break
+      sawGitSignal = true
+      const parsedPaths = parseDiffGitHeaderPaths(trimmed)
+      if (parsedPaths) {
+        oldPath = parsedPaths.oldPath
+        newPath = parsedPaths.newPath
+      }
+      i += 1
+      continue
+    }
+
+    if (line.startsWith('--- ')) {
+      oldPath = parseGitMarkerPath(line.slice(4))
+      sawGitSignal = true
+      i += 1
+      continue
+    }
+
+    if (line.startsWith('+++ ')) {
+      newPath = parseGitMarkerPath(line.slice(4))
+      sawGitSignal = true
+      i += 1
+      continue
+    }
+
+    if (trimmed.startsWith('rename from ')) {
+      renameFrom = parseGitRenamePath(trimmed.slice('rename from '.length))
+      sawGitSignal = true
+      i += 1
+      continue
+    }
+
+    if (trimmed.startsWith('rename to ')) {
+      renameTo = parseGitRenamePath(trimmed.slice('rename to '.length))
+      sawGitSignal = true
+      i += 1
+      continue
+    }
+
+    if (trimmed === NO_NEWLINE_MARKER) {
+      i += 1
+      continue
+    }
+
+    if (trimmed.startsWith('Binary files ') || trimmed === 'GIT binary patch') {
+      throw new Error('Binary git patch is not supported')
+    }
+
+    if (isGitMetadataLine(trimmed)) {
+      sawGitSignal = true
+      i += 1
+      continue
+    }
+
+    if (isHunkHeaderLine(line)) {
+      sawGitSignal = true
+      const parsedHunk = parseUnifiedHunk(lines, i, endIndex)
+      hunks.push(parsedHunk.hunk)
+      i = parsedHunk.nextIndex
+      continue
+    }
+
+    if (!sawGitSignal) {
+      throw new Error(`Unexpected patch line: ${line}`)
+    }
+
+    break
+  }
+
+  if (!sawGitSignal) {
+    throw new Error('patch did not contain any operations')
+  }
+
+  const sourcePath = renameFrom ?? oldPath
+  const targetPath = renameTo ?? newPath
+  return {
+    operation: buildGitOperation(sourcePath, targetPath, hunks),
+    nextIndex: i
+  }
+}
+
+function parseUnifiedHunk(lines: string[], startIndex: number, endIndex: number): {hunk: Hunk; nextIndex: number} {
+  let i = startIndex
+  const headerText = stripUnifiedDiffHeader(lines[i].trim())
+  const header = headerText === '' ? null : headerText
+  i += 1
+
+  const hunkLines: HunkLine[] = []
+  let isEndOfFile = false
+  while (i < endIndex) {
+    const line = lines[i]
+    const trimmed = line.trimStart()
+    if (trimmed.startsWith(DIFF_GIT_PREFIX) || line.startsWith('--- ') || line.startsWith('+++ ') || isHunkHeaderLine(line)) {
+      break
+    }
+    if (trimmed === NO_NEWLINE_MARKER) {
+      i += 1
+      continue
+    }
+    if (line === END_OF_FILE) {
+      isEndOfFile = true
+      i += 1
+      break
+    }
+    if (line === '') {
+      hunkLines.push({prefix: ' ', text: ''})
+      i += 1
+      continue
+    }
+    if (![' ', '+', '-'].includes(line[0])) {
+      if (hunkLines.length === 0) {
+        throw new Error('Hunk lines must start with space, +, or -')
+      }
+      break
+    }
+    hunkLines.push({
+      prefix: line[0] as ' ' | '+' | '-',
+      text: line.slice(1)
+    })
+    i += 1
+  }
+
+  if (hunkLines.length === 0) {
+    throw new Error('Empty hunk in Update File')
+  }
+
+  return {
+    hunk: {header, lines: hunkLines, isEndOfFile},
+    nextIndex: i
+  }
+}
+
+function buildGitOperation(sourcePath: string | null, targetPath: string | null, hunks: Hunk[]): PatchOperation {
+  if (!sourcePath && !targetPath) {
+    throw new Error('Could not determine file path from git diff')
+  }
+
+  if (!sourcePath) {
+    if (!targetPath) {
+      throw new Error('Could not determine file path from git diff')
+    }
+    ensureSafePatchPath(targetPath, 'Add File')
+    const content = hunks.length === 0 ? '' : applyHunks('', hunks)
+    return {type: 'add', path: targetPath, content}
+  }
+
+  if (!targetPath) {
+    ensureSafePatchPath(sourcePath, 'Delete File')
+    return {type: 'delete', path: sourcePath}
+  }
+
+  ensureSafePatchPath(sourcePath, 'Update File')
+  ensureSafePatchPath(targetPath, 'Move to')
+  return {
+    type: 'update',
+    path: sourcePath,
+    moveTo: sourcePath === targetPath ? null : targetPath,
+    hunks
+  }
+}
+
+function looksLikeGitDiff(lines: string[], startIndex: number, endIndex: number): boolean {
+  let hasFileMarkers = false
+  for (let i = startIndex; i < endIndex; i += 1) {
+    const line = lines[i]
+    const trimmed = line.trimStart()
+    if (trimmed.startsWith(DIFF_GIT_PREFIX)) return true
+    if (line.startsWith('--- ') || line.startsWith('+++ ')) {
+      hasFileMarkers = true
+      continue
+    }
+    if (trimmed.startsWith('rename from ') || trimmed.startsWith('rename to ')) return true
+  }
+  return hasFileMarkers
+}
+
+function parseDiffGitHeaderPaths(trimmed: string): {oldPath: string | null; newPath: string | null} | null {
+  const payload = trimmed.slice(DIFF_GIT_PREFIX.length).trim()
+  if (!payload) return null
+  const tokens = payload.split(/\s+/, 3)
+  if (tokens.length < 2) return null
+  return {
+    oldPath: normalizeGitMarkerPath(tokens[0]),
+    newPath: normalizeGitMarkerPath(tokens[1])
+  }
+}
+
+function parseGitMarkerPath(rawValue: string): string | null {
+  const marker = rawValue.split('\t', 1)[0].trim()
+  return normalizeGitMarkerPath(marker)
+}
+
+function parseGitRenamePath(rawValue: string): string {
+  const value = unquoteGitPath(rawValue.trim())
+  if (!value) {
+    throw new Error('Could not determine file path from git diff')
+  }
+  return value
+}
+
+function normalizeGitMarkerPath(rawValue: string): string | null {
+  const value = unquoteGitPath(rawValue.trim())
+  if (value === '/dev/null') return null
+  if (value.startsWith('a/') || value.startsWith('b/')) {
+    return value.slice(2)
+  }
+  return value
+}
+
+function unquoteGitPath(rawValue: string): string {
+  if (rawValue.length < 2 || rawValue[0] !== '"' || rawValue[rawValue.length - 1] !== '"') {
+    return rawValue
+  }
+  return rawValue
+    .slice(1, -1)
+    .replace(/\\\\/g, '\\')
+    .replace(/\\"/g, '"')
+}
+
+function isGitMetadataLine(trimmed: string): boolean {
+  return trimmed.startsWith('index ') ||
+    trimmed.startsWith('old mode ') ||
+    trimmed.startsWith('new mode ') ||
+    trimmed.startsWith('new file mode ') ||
+    trimmed.startsWith('deleted file mode ') ||
+    trimmed.startsWith('similarity index ') ||
+    trimmed.startsWith('dissimilarity index ')
+}
+
+function isPrefixedDiffLine(line: string): boolean {
+  return line !== '' && [' ', '+', '-'].includes(line[0])
+}
+
+function isStrictPairBlockStart(line: string): boolean {
+  if (isPatchHeaderLine(line) || isHunkHeaderLine(line)) return false
+  return !isPrefixedDiffLine(line)
 }
 
 function ensureSafePatchPath(rawPath: string, label: string): void {

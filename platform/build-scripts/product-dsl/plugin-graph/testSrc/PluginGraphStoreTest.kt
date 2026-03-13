@@ -261,6 +261,37 @@ class PluginGraphStoreTest {
     }
 
     @Test
+    fun `toMutableStore creates independent copies`() {
+      val store = MutablePluginGraphStore()
+      val moduleIndex = store.mutableNameIndex(NODE_CONTENT_MODULE)
+      val firstId = store.names.size
+      store.names.add("first")
+      store.kinds.add(NODE_CONTENT_MODULE)
+      moduleIndex.put("first", firstId)
+
+      val secondId = store.names.size
+      store.names.add("second")
+      store.kinds.add(NODE_CONTENT_MODULE)
+      moduleIndex.put("second", secondId)
+
+      store.getOrCreateSuccessors(EDGE_BUNDLES, firstId).add(secondId)
+      store.getOrCreatePredecessors(EDGE_BUNDLES, secondId).add(firstId)
+
+      val frozen = store.freeze()
+      val copy = frozen.toMutableStore()
+
+      val copyIndex = copy.mutableNameIndex(NODE_CONTENT_MODULE)
+      val thirdId = copy.names.size
+      copy.names.add("third")
+      copy.kinds.add(NODE_CONTENT_MODULE)
+      copyIndex.put("third", thirdId)
+      copy.getOrCreateSuccessors(EDGE_BUNDLES, firstId).add(thirdId)
+
+      assertThat(frozen.names.size).isEqualTo(2)
+      assertThat(frozen.successors(EDGE_BUNDLES, firstId)?.asList()).containsExactly(secondId)
+    }
+
+    @Test
     fun `copyEdgesOfTypeTo copies specific edge type only`() {
       val source = MutablePluginGraphStore()
       source.getOrCreateSuccessors(EDGE_BUNDLES, 100).add(200)

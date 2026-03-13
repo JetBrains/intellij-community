@@ -4,6 +4,7 @@ import com.intellij.ui.content.ContentManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 
 /**
  * Builder for creating a new [TerminalToolWindowTab].
@@ -29,6 +30,23 @@ interface TerminalToolWindowTabBuilder {
    * ([org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider.shellPath])
    */
   fun shellCommand(command: List<String>?): TerminalToolWindowTabBuilder
+
+  /**
+   * Specifies additional environment variables to set for the shell process.
+   * These variables are added on top of the base environment determined by the [processType].
+   *
+   * If not specified, no additional environment variables will be set.
+   */
+  fun envVariables(envs: Map<String, String>): TerminalToolWindowTabBuilder
+
+  /**
+   * Specifies the type of the process that should be started in the terminal.
+   * It directly affects what base set of environment variables is used to start the process.
+   *
+   * If not specified, the default value is [TerminalProcessType.SHELL].
+   * Specify [TerminalProcessType.NON_SHELL] if you start some arbitrary PTY process that is not a shell.
+   */
+  fun processType(processType: TerminalProcessType): TerminalToolWindowTabBuilder
 
   /**
    * The title show in the tool window tab.

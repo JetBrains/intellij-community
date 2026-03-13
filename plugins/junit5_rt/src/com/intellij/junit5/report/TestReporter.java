@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5.report;
 
 import com.intellij.junit4.ExpectedPatterns;
@@ -147,9 +147,13 @@ public class TestReporter extends AbstractTestReporter {
         }
       }
 
-      ComparisonFailureData.registerSMAttributes(failureData, includeThrowable ? getTrace(ex) : "",
-                                                 ex.getMessage(), attributes, ex,
+      boolean hasComparisonData = failureData != null || ex instanceof MultipleFailuresError;
+      String trace = includeThrowable ? getTrace(ex) : "";
+      ComparisonFailureData.registerSMAttributes(failureData, hasComparisonData ? "" : trace, ex.getMessage(), attributes, ex,
                                                  "Comparison Failure: ", "expected: <");
+      if (hasComparisonData && !trace.isEmpty()) {
+        attributes.put("details", trace);
+      }
     }
 
     out.add(asString(messageType, attributes));

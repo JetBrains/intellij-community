@@ -1,6 +1,7 @@
 // "Replace usages of 'constructor A<T>(T, T = ...)' in whole project" "true"
 // K2_ACTION: "Replace usages of 'A(T, T)' in whole project" "true"
 // ERROR: Unresolved reference: T
+// K2_ERROR:
 // K2_AFTER_ERROR: Argument type mismatch: actual type is '() -> TElement (of class B<TElement>)', but '() -> uninferred T (of class A<T>)' was expected.
 // K2_AFTER_ERROR: Unresolved reference 'T'.
 

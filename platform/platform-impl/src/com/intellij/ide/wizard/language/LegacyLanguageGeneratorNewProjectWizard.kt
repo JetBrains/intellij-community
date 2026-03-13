@@ -4,10 +4,15 @@
 package com.intellij.ide.wizard.language
 
 import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.ide.wizard.*
+import com.intellij.ide.wizard.GeneratorNewProjectWizard
+import com.intellij.ide.wizard.GitNewProjectWizardStep
 import com.intellij.ide.wizard.LanguageNewProjectWizard
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
+import com.intellij.ide.wizard.NewProjectWizardLanguageStep
+import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.RootNewProjectWizardStep
 import com.intellij.ide.wizard.language.BaseLanguageGeneratorNewProjectWizard.Companion.getLanguageGeneratorId
+import com.intellij.ide.wizard.newProjectWizardBaseStepWithoutGap
 import com.intellij.util.ui.EmptyIcon
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon

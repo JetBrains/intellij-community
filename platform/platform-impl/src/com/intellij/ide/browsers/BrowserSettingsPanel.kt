@@ -25,7 +25,7 @@ import com.intellij.util.ui.table.TableModelEditor
 import com.intellij.util.ui.table.TableModelEditor.DialogItemEditor
 import com.intellij.util.ui.table.TableModelEditor.EditableColumnInfo
 import java.awt.event.ItemEvent
-import java.util.*
+import java.util.UUID
 import javax.swing.JComponent
 import javax.swing.event.TableModelEvent
 import javax.swing.table.TableCellEditor

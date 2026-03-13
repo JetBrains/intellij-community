@@ -52,6 +52,8 @@ public final class GetterDescriptor extends PsiVarDescriptor {
     CallMatcher.instanceCall(CommonClassNames.JAVA_IO_FILE, "getName", "getParent", "getPath", "getAbsolutePath", 
                              "getParentFile", "getAbsoluteFile", "toPath")
   );
+  private static final CallMatcher EXACTLY_STABLE =
+    CallMatcher.instanceCall("java.lang.LazyConstant", "get");
   private final @NotNull PsiMethod myGetter;
   private final boolean myStable;
 
@@ -139,7 +141,7 @@ public final class GetterDescriptor extends PsiVarDescriptor {
     if (!super.alwaysEqualsToItself(type)) return false;
     if (type instanceof DfPrimitiveType || type instanceof DfConstantType) return true;
     if (PropertyUtilBase.isSimplePropertyGetter(myGetter) || myGetter instanceof LightRecordMethod) return true;
-    return false;
+    return EXACTLY_STABLE.methodMatches(myGetter);
   }
 
   @Override

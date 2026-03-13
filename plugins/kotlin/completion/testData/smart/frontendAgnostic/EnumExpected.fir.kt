@@ -1,5 +1,4 @@
 // FIR_COMPARISON
-// IGNORE_K2
 // REGISTRY: kotlin.k2.smart.completion.enabled true
 package sample
 

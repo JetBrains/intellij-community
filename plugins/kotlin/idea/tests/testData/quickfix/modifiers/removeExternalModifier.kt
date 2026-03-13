@@ -1,4 +1,5 @@
 // "Remove 'external' modifier" "true"
+// K2_ERROR: Modifier 'external' is not applicable to 'property'.
 
 class B {
     <caret>external val foo: Int = 23

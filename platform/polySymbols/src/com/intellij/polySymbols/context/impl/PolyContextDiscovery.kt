@@ -48,6 +48,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.lazyUnsafe
@@ -90,6 +91,7 @@ private fun findPolyContext(kind: PolyContextKind, locationInfo: LocationInfo): 
   ?: withContextChangeCheck(kind, locationInfo)
 
 private fun <T> forPsiLocation(location: PsiElement, action: (LocationInfo) -> T): T? {
+  ThreadingAssertions.assertReadAccess()
   if (!location.isValid) return null
   val project = location.project
   val psiFile = location.takeIf { it !is PsiDirectory }
@@ -111,6 +113,7 @@ private fun <T> forVfsLocation(
   psiFile: PsiFile? = null,
   action: (LocationInfo) -> T,
 ): T? {
+  ThreadingAssertions.assertReadAccess()
   ProgressManager.checkCanceled()
   if (project.isDisposed) return null
   val virtualFile = findOriginalFile(location)?.takeIf { it.isInLocalFileSystem }
@@ -295,9 +298,9 @@ private class ContextRulesConfigInDir(
 
 private fun loadContextFilesConfiguration(directory: VirtualFile): ContextFileConfigInDir {
   val dependencies = mutableListOf<Any>(VFS_STRUCTURE_MODIFICATIONS)
-  val contexts = generateSequence(Pair(directory, 0)) { (dir, proximity) -> dir.parent?.let { Pair(it, proximity - 1) } }
+  val contexts = generateSequence(Pair(directory, 0)) { (dir, proximity) -> dir.parent?.takeIf { it.isValid }?.let { Pair(it, proximity - 1) } }
     .flatMap { (dir, proximity) ->
-      dir.findFile(PolyContext.POLY_SYMBOLS_CONTEXT_FILE)
+      dir.takeIf { it.isValid }?.findFile(PolyContext.POLY_SYMBOLS_CONTEXT_FILE)
         ?.let {
           dependencies.add(it)
           PolyContextFileData.getOrCreate(it)

@@ -11,7 +11,11 @@ import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
-import java.awt.*
+import java.awt.Component
+import java.awt.Font
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.GraphicsEnvironment
 import java.awt.font.TextLayout
 import javax.swing.Icon
 

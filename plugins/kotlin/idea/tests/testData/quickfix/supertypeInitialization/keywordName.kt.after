@@ -1,4 +1,7 @@
 // "Add constructor parameters from Base(Int, Int)" "true"
+// K2_ERROR: No value passed for parameter 'class'.
+// K2_ERROR: No value passed for parameter 'fun'.
+// K2_ERROR: This type has a constructor, so it must be initialized here.
 open class Base(`fun`: Int, val `class`: Int)
 
 class C(`fun`: Int, `class`: Int) : Base(`fun`, `class`)

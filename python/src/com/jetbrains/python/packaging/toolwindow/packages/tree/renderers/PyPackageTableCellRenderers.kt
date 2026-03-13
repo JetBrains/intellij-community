@@ -9,11 +9,11 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
-import com.jetbrains.python.packaging.toolwindow.model.ErrorNode
 import com.jetbrains.python.packaging.toolwindow.model.ExpandResultNode
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.model.RequirementPackage
+import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
 import com.jetbrains.python.packaging.toolwindow.packages.tree.PyPackagesTreeTable
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
 import java.awt.BorderLayout
@@ -40,7 +40,6 @@ internal class PackageNameCellRenderer : TableCellRenderer {
 
     return when (pkg) {
       is ExpandResultNode -> createExpandNodeComponent(pkg, background)
-      is ErrorNode ->  createErrorNodeComponent(pkg, background)
       else -> createNameComponent(pkg, background)
     }
   }
@@ -58,25 +57,21 @@ internal class PackageNameCellRenderer : TableCellRenderer {
     }
   }
 
-  private fun createErrorNodeComponent(
-    node: ErrorNode,
-    bg: Color,
-  ): Component {
-    val errorNodeLabel = JBLabel(node.description).apply {
-      foreground = UIUtil.getContextHelpForeground()
-    }
-    return PackageRendererUtils.createBasicPanel().apply {
-      add(errorNodeLabel)
-      background = bg
-    }
-  }
-
   private fun createNameComponent(
     pkg: DisplayablePackage,
     bg: Color,
   ): Component = namePanel.apply {
     nameLabel.text = pkg.name
-    nameLabel.icon = if (pkg is InstalledPackage && pkg.isEditMode) AllIcons.Actions.Edit else null
+    nameLabel.icon = when (pkg) {
+      is WorkspaceMember -> AllIcons.Nodes.Module
+      is InstalledPackage -> if (pkg.isEditMode) AllIcons.Actions.Edit else null
+      is RequirementPackage, is InstallablePackage, is ExpandResultNode -> null
+    }
+    nameLabel.foreground = when (pkg) {
+      is InstalledPackage -> if (!pkg.isDeclared) UIUtil.getInactiveTextColor() else UIUtil.getTreeForeground()
+      is RequirementPackage -> if (!pkg.isDeclared) UIUtil.getInactiveTextColor() else UIUtil.getTreeForeground()
+      is WorkspaceMember, is InstallablePackage, is ExpandResultNode -> UIUtil.getTreeForeground()
+    }
     background = bg
   }
 }
@@ -119,8 +114,8 @@ internal class PackageVersionCellRenderer : TableCellRenderer {
         defaultPackageStrategy(versionPanel, pkg, versionLabel)
       }
       is RequirementPackage -> requirementPackageStrategy(versionPanel, pkg, versionLabel)
+      is WorkspaceMember -> workspaceMemberStrategy(versionPanel, versionLabel)
       is ExpandResultNode -> JLabel()
-      is ErrorNode -> errorNodeStrategy(versionPanel, pkg, linkLabel)
     }
 
     return versionPanel

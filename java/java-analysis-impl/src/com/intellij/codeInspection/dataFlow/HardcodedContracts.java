@@ -222,6 +222,26 @@ public final class HardcodedContracts {
                     staticCall(JAVA_LANG_INTEGER, "min").parameterTypes("int", "int"),
                     staticCall(JAVA_LANG_LONG, "min").parameterTypes("long", "long")),
               (call, paramCount) -> mathMinMax(false))
+    .register(staticCall(JAVA_LANG_MATH, "clamp").parameterTypes("long", "long", "long"),
+              ContractProvider.of(
+                singleConditionContract(ContractValue.argument(1), RelationType.GT, ContractValue.argument(2), fail()),
+                singleConditionContract(ContractValue.argument(0), RelationType.LT, ContractValue.argument(1), returnParameter(1)),
+                singleConditionContract(ContractValue.argument(0), RelationType.GT, ContractValue.argument(2), returnParameter(2)),
+                trivialContract(returnParameter(0))
+              ))
+    .register(anyOf(
+                staticCall(JAVA_LANG_MATH, "clamp").parameterTypes("float", "float", "float"),
+                staticCall(JAVA_LANG_MATH, "clamp").parameterTypes("double", "double", "double")
+              ),
+              ContractProvider.of(
+                failIfParameterIsNaN(1),
+                failIfParameterIsNaN(2),
+                /* Note that this does not cover the +0.0f -0.0f case */
+                singleConditionContract(ContractValue.argument(1), RelationType.GT, ContractValue.argument(2), fail()),
+                singleConditionContract(ContractValue.argument(0), RelationType.LT, ContractValue.argument(1), returnParameter(1)),
+                singleConditionContract(ContractValue.argument(0), RelationType.GT, ContractValue.argument(2), returnParameter(2)),
+                trivialContract(returnParameter(0))
+              ))
     .register(instanceCall(JAVA_LANG_STRING, "startsWith", "endsWith", "contains"),
               ContractProvider.of(
                 singleConditionContract(
@@ -615,6 +635,11 @@ public final class HardcodedContracts {
       return Arrays.asList(failContract, StandardMethodContract.trivialContract(argCount, returnParameter(argIndex)));
     }
     return Collections.singletonList(failContract);
+  }
+
+  /// @return A single contract that fails if the parameter is NaN. Only makes sense for floating point parameters
+  private static @NotNull MethodContract failIfParameterIsNaN(int argIndex) {
+    return singleConditionContract(ContractValue.argument(argIndex), RelationType.NE, ContractValue.argument(argIndex), fail());
   }
 
   /**

@@ -1,4 +1,5 @@
 // "Create class 'A'" "true"
+// K2_ERROR: Unresolved reference 'A'.
 package p
 
 class Foo: p.<caret>A(1, "2") {

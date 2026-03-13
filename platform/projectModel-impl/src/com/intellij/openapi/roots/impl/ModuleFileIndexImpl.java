@@ -5,7 +5,11 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.ModuleFileIndex;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.platform.workspace.storage.EntityPointer;
@@ -17,14 +21,24 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
-import com.intellij.workspaceModel.core.fileIndex.impl.*;
+import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData;
+import com.intellij.workspaceModel.core.fileIndex.impl.ModuleSourceRootData;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetImpl;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetVisitor;
 import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * This is an internal class, {@link ModuleFileIndex} must be used instead.

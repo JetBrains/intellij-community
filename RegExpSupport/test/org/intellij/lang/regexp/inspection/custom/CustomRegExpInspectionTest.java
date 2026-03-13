@@ -22,16 +22,30 @@ import java.util.List;
  * @author Bas Leijdekkers
  */
 public class CustomRegExpInspectionTest extends BasePlatformTestCase {
+  
+  public void testFixAllIntention() {
+    configureCustomRegExpInspection("override->overwrite", "override", "overwrite");
+    
+    myFixture.configureByText("dummy.txt","""
+                                <warning descr="override->overwrite">override</warning>
+                                <warning descr="override->overwrite">override</warning>
+                                <warning descr="override->overwrite"><caret>override</warning>
+                                overbite
+                                """);
+    myFixture.testHighlighting(true, true, true);
+
+    myFixture.checkPreviewAndLaunchAction(myFixture.findSingleIntention("Fix all 'override->overwrite' problems in file"));
+    myFixture.checkResult("""
+                            overwrite
+                            overwrite
+                            overwrite
+                            overbite
+                            """);
+  }
 
   public void testMultipleCustomInspections() {
-    myFixture.enableInspections(CustomRegExpInspection.class);
-    Project project = myFixture.getProject();
-    InspectionProfileImpl profile = InspectionProfileManager.getInstance(project).getCurrentProfile();
-    CustomRegExpInspection inspection = CustomRegExpInspection.getCustomRegExpInspection(profile);
-    RegExpInspectionConfiguration one = new RegExpInspectionConfiguration("one");
-    one.addPattern(new RegExpInspectionConfiguration.InspectionPattern("one", null, 0, SearchContext.ANY, null));
-    inspection.addConfiguration(one);
-    CustomRegExpInspection.addInspectionToProfile(project, profile, one);
+    CustomRegExpInspection inspection = configureCustomRegExpInspection("one", "one", null);
+
     RegExpInspectionConfiguration two = new RegExpInspectionConfiguration("two");
     two.addPattern(new RegExpInspectionConfiguration.InspectionPattern("two", null, 0, SearchContext.ANY, null));
     inspection.addConfiguration(two);
@@ -43,6 +57,8 @@ public class CustomRegExpInspectionTest extends BasePlatformTestCase {
       """);
     myFixture.testHighlighting(true, true, true);
 
+    Project project = myFixture.getProject();
+    InspectionProfileImpl profile = InspectionProfileManager.getInstance(project).getCurrentProfile();
     CustomRegExpInspection.addInspectionToProfile(project, profile, two);
     myFixture.configureByText("dummy.txt", """
       <warning descr="one">one</warning>
@@ -53,20 +69,8 @@ public class CustomRegExpInspectionTest extends BasePlatformTestCase {
   }
 
   public void testBatchInspectionTree() {
-    myFixture.enableInspections(CustomRegExpInspection.class);
-    Project project = myFixture.getProject();
-    InspectionProfileImpl profile = InspectionProfileManager.getInstance(project).getCurrentProfile();
-    CustomRegExpInspection inspection = CustomRegExpInspection.getCustomRegExpInspection(profile);
-    
-    RegExpInspectionConfiguration one = new RegExpInspectionConfiguration("one");
-    one.addPattern(new RegExpInspectionConfiguration.InspectionPattern("one", null, 0, SearchContext.ANY, null));
-    inspection.addConfiguration(one);
-    CustomRegExpInspection.addInspectionToProfile(project, profile, one);
-    
-    RegExpInspectionConfiguration two = new RegExpInspectionConfiguration("two");
-    two.addPattern(new RegExpInspectionConfiguration.InspectionPattern("two", null, 0, SearchContext.ANY, null));
-    inspection.addConfiguration(two);
-    CustomRegExpInspection.addInspectionToProfile(project, profile, two);
+    configureCustomRegExpInspection("one", "one", null);
+    CustomRegExpInspection inspection = configureCustomRegExpInspection("two", "two", null);
 
     @NotNull InspectionToolWrapper<?, ?> toolWrapper = new LocalInspectionToolWrapper(inspection);
     List<LocalInspectionToolWrapper> children = inspection.getChildren();
@@ -77,6 +81,24 @@ public class CustomRegExpInspectionTest extends BasePlatformTestCase {
     InspectionTestUtil.runTool(toolWrapper, scope, context);
     InspectionTestUtil.compareToolResults(context, false, new File(myFixture.getTestDataPath(), path).getPath(), 
                                           List.of(children.get(0), children.get(1))); // check results come from children
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.enableInspections(CustomRegExpInspection.class);
+  }
+
+  private CustomRegExpInspection configureCustomRegExpInspection(String name, String pattern, String replacement) {
+    Project project = myFixture.getProject();
+    InspectionProfileImpl profile = InspectionProfileManager.getInstance(project).getCurrentProfile();
+    CustomRegExpInspection inspection = CustomRegExpInspection.getCustomRegExpInspection(profile);
+
+    RegExpInspectionConfiguration one = new RegExpInspectionConfiguration(name);
+    one.addPattern(new RegExpInspectionConfiguration.InspectionPattern(pattern, null, 0, SearchContext.ANY, replacement));
+    inspection.addConfiguration(one);
+    CustomRegExpInspection.addInspectionToProfile(project, profile, one);
+    return inspection;
   }
 
   @Override

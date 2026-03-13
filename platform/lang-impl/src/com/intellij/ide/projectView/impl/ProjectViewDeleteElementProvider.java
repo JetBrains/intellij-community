@@ -19,12 +19,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
+import com.intellij.psi.impl.file.PsiDirectoryImpl;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.openapi.vfs.newvfs.NewVirtualFile.asCacheAvoiding;
 
 @ApiStatus.Internal
 public abstract class ProjectViewDeleteElementProvider implements DeleteProvider {
@@ -74,7 +78,7 @@ public abstract class ProjectViewDeleteElementProvider implements DeleteProvider
       if (element instanceof PsiDirectory directory) {
         final ProjectViewDirectoryHelper directoryHelper = ProjectViewDirectoryHelper.getInstance(project);
         if (hideEmptyMiddlePackages(dataContext) &&
-            directory.getChildren().length == 0 &&
+            getChildrenCount(directory) == 0 &&
             !directoryHelper.skipDirectory(directory)) {
           while (true) {
             PsiDirectory parent = directory.getParentDirectory();
@@ -83,8 +87,8 @@ public abstract class ProjectViewDeleteElementProvider implements DeleteProvider
                 PsiDirectoryFactory.getInstance(project).getQualifiedName(parent, false).isEmpty()) {
               break;
             }
-            PsiElement[] children = parent.getChildren();
-            if (children.length == 0 || children.length == 1 && children[0] == directory) {
+            int childrenCount = getChildrenCount(parent);
+            if (childrenCount == 0 || childrenCount == 1 && parent.getChildren()[0] == directory) {
               directory = parent;
             }
             else {
@@ -108,5 +112,11 @@ public abstract class ProjectViewDeleteElementProvider implements DeleteProvider
       }
     }
     return elements;
+  }
+
+  private static int getChildrenCount(@NotNull PsiDirectory directory) {
+    return directory instanceof PsiDirectoryImpl
+           ? ContainerUtil.filter(asCacheAvoiding(directory.getVirtualFile()).getChildren(), child -> child.isValid()).size()
+           : directory.getChildren().length;
   }
 }

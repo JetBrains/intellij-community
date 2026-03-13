@@ -21,27 +21,10 @@ object StructureViewEventsCollector: CounterUsagesCollector() {
   private val TAB = EventFields.Enum<StructureViewTab>("tab")
   private val MODEL_CLASS = EventFields.Class("model_class")
 
-
-  private val BUILD_STRUCTURE = GROUP.registerEvent(
-    "toolwindow.shown",
-    TAB, MODEL_CLASS,
-    "Toolwindow is opened, first time or after changing a file"
-  )
-  private val TAB_SELECTED = GROUP.registerEvent(
-    "tab.selected",
-    TAB, MODEL_CLASS,
-    "User selected another tab"
-  )
-  private val NAVIGATE = GROUP.registerEvent(
-    "navigate",
-    MODEL_CLASS,
-    "Navigate to psiElement"
-  )
-  private val CUSTOM_CLICK_HANDLED = GROUP.registerEvent(
-    "custom.click.handled",
-    MODEL_CLASS,
-    "Click event was handled by custom handler"
-  )
+  private val BUILD_STRUCTURE = GROUP.registerEvent("toolwindow.shown", TAB, MODEL_CLASS)
+  private val TAB_SELECTED = GROUP.registerEvent("tab.selected", TAB, MODEL_CLASS)
+  private val NAVIGATE = GROUP.registerEvent("navigate", MODEL_CLASS)
+  private val CUSTOM_CLICK_HANDLED = GROUP.registerEvent("custom.click.handled", MODEL_CLASS)
 
   fun logBuildStructure(viewDescriptor: StructureViewDescriptor) {
     val tab = viewDescriptor.title?.let { StructureViewTab.ofTitle(it) } ?: return
@@ -74,11 +57,11 @@ object StructureViewEventsCollector: CounterUsagesCollector() {
   }
 
   private fun getModelClass(viewDescriptor: StructureViewDescriptor): Class<*>? {
-    var model: Any = viewDescriptor.structureModel
+    val model: Any = viewDescriptor.structureModel
     if (model is LogicalStructureViewModel) {
       val root = model.root
       if (root is LogicalStructureViewTreeElement<*>) {
-        var assembledModel = root.getLogicalAssembledModel()
+        val assembledModel = root.getLogicalAssembledModel()
         val children = assembledModel.getChildren()
         if (children.size == 1)
           return children[0].model?.javaClass
@@ -91,5 +74,4 @@ object StructureViewEventsCollector: CounterUsagesCollector() {
     }
     return null
   }
-
 }

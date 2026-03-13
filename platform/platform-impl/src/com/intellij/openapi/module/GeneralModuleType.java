@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class GeneralModuleType extends ModuleType<ModuleBuilder>{
   public static final String TYPE_ID = "GENERAL_MODULE";

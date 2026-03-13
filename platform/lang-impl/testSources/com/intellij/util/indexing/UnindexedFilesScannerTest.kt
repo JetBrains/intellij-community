@@ -4,8 +4,9 @@ package com.intellij.util.indexing
 import com.google.common.util.concurrent.SettableFuture
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ReadWriteActionSupport
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
 import com.intellij.openapi.fileTypes.FileType
@@ -23,24 +24,37 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.testFramework.*
+import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.registerExtension
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.indexing.events.FileIndexingRequest
-import com.intellij.util.indexing.mocks.*
+import com.intellij.util.indexing.mocks.ConfigurableFileIndexerBase
+import com.intellij.util.indexing.mocks.ConfigurableFiletypeSpecificFileIndexer
+import com.intellij.util.indexing.mocks.ConfigurableNoFiletypeFileIndexer
+import com.intellij.util.indexing.mocks.ConfigurableTextFileIndexer
+import com.intellij.util.indexing.mocks.FakeFileType
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
-import org.junit.*
+import org.junit.After
+import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.nio.file.Files
@@ -137,20 +151,23 @@ class UnindexedFilesScannerTest {
     runBlocking {
       assertThat(application.isWriteIntentLockAcquired).isFalse
 
-      val latch = CountDownLatch(1)
-      async {
-        edtWriteAction {
-          latch.await()
+      val scannerQueuedLatch = CountDownLatch(1)
+      val writeActionStartedLatch = CountDownLatch(1)
+      runInEdt {
+        runWriteAction {
+          writeActionStartedLatch.countDown()
+          scannerQueuedLatch.await()
         }
       }
 
       try {
+        writeActionStartedLatch.await()
         assertThat(UnindexedFilesScannerExecutorImpl.getInstance(project).isRunning.value).isFalse
         UnindexedFilesScanner(project).queue()
         assertThat(UnindexedFilesScannerExecutorImpl.getInstance(project).isRunning.value).isFalse
       }
       finally {
-        latch.countDown()
+        scannerQueuedLatch.countDown()
       }
     }
   }

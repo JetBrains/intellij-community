@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.builtInWebServer.ssi
 
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
@@ -48,10 +48,10 @@ internal class SsiExternalResolver(private val project: Project,
 
   fun findFileInProject(originalPath: String, virtual: Boolean): Path? {
     val path = findFile(originalPath, virtual)
-    val underProjectRoot = runReadAction { ModuleManager.getInstance(project).modules }
+    val underProjectRoot = runReadActionBlocking { ModuleManager.getInstance(project).modules }
       .filter { !it.isDisposed }
       .any { module ->
-        RootProvider.values().asSequence()
+        RootProvider.entries.asSequence()
           .flatMap { rootProvider -> rootProvider.getRoots(module.rootManager).asSequence() }
           .any { root -> FileUtil.isAncestor(root.path, path.toString(), false) }
       }

@@ -5,7 +5,7 @@ import com.intellij.openapi.util.text.MarkupText;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Objects;
 import java.util.function.Supplier;
 

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 
 /**

@@ -16,7 +16,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.issue.ConfigurableGradleBuildIssue
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionContext
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import java.nio.file.Path
@@ -24,12 +23,12 @@ import java.util.concurrent.CompletableFuture
 
 @ApiStatus.Internal
 class OutdatedGradleVersionIssue(
-    context: GradleExecutionContext,
+    projectPath: String,
     private val currentVersion: GradleVersion,
 ) : ConfigurableGradleBuildIssue() {
 
   init {
-    val latestVersion = GradleJvmSupportMatrix.Companion.getLatestMinorGradleVersion(currentVersion.majorVersion)
+    val latestVersion = GradleJvmSupportMatrix.getLatestMinorGradleVersion(currentVersion.majorVersion)
     setTitle(GradleBundle.message("gradle.build.issue.gradle.outdated.minor.version.title"))
     addDescription(
         GradleBundle.message(
@@ -42,7 +41,7 @@ class OutdatedGradleVersionIssue(
       latestVersion.version
     ))
 
-    addGradleVersionQuickFix(context.projectPath, latestVersion)
+    addGradleVersionQuickFix(projectPath, latestVersion)
   }
 
   /**
@@ -71,11 +70,8 @@ class OutdatedGradleVersionIssue(
     }
   }
 
-  fun addOpenInspectionSettingsQuickFix(
-      context: GradleExecutionContext,
-      inspectionShortName: String,
-  ) {
-    val hyperlinkReference = addQuickFix(OpenInspectionSettingsFix(context, inspectionShortName))
+  fun addOpenInspectionSettingsQuickFix(inspectionShortName: String) {
+    val hyperlinkReference = addQuickFix(OpenInspectionSettingsFix(inspectionShortName))
     addQuickFixPrompt(
         GradleBundle.message(
       "gradle.build.quick.fix.edit.inspection.settings",
@@ -83,16 +79,13 @@ class OutdatedGradleVersionIssue(
     ))
   }
 
-  private class OpenInspectionSettingsFix(
-      private val context: GradleExecutionContext,
-      private val inspectionShortName: String,
-  ) : BuildIssueQuickFix {
+  private class OpenInspectionSettingsFix(private val inspectionShortName: String) : BuildIssueQuickFix {
     override val id = "open_inspection_settings"
 
     override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
-      val projectProfileManager = InspectionProjectProfileManager.getInstance(context.project)
+      val projectProfileManager = InspectionProjectProfileManager.getInstance(project)
       val inspectionProfile = projectProfileManager.getCurrentProfile()
-      EditInspectionToolsSettingsAction.editToolSettings(context.project, inspectionProfile, inspectionShortName)
+      EditInspectionToolsSettingsAction.editToolSettings(project, inspectionProfile, inspectionShortName)
       return CompletableFuture.completedFuture(null)
     }
   }

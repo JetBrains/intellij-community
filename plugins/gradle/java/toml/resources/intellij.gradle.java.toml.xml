@@ -1,0 +1,37 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.gradle.java"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.toml.core"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <elementDescriptionProvider implementation="com.intellij.gradle.java.toml.navigation.VersionCatalogDescriptionProvider"/>
+    <useScopeEnlarger implementation="com.intellij.gradle.java.toml.service.GradleTomlUseScopeEnlarger"/>
+    <findUsagesHandlerFactory implementation="com.intellij.gradle.java.toml.findUsages.GradleVersionCatalogFindUsagesFactory"/>
+    <psi.referenceContributor language="TOML"
+                              implementation="com.intellij.gradle.java.toml.navigation.VersionCatalogReferenceContributor"/>
+    <renameInputValidator implementation="com.intellij.gradle.java.toml.navigation.VersionCatalogRenameInputValidator"/>
+
+    <completion.contributor language="TOML"
+                            implementationClass="com.intellij.gradle.java.toml.completion.TomlVersionCatalogCompletionContributor" />
+    <completion.confidence language="TOML"
+                           id="EnableAutoPopupInTomlVersionCatalogCompletion"
+                           implementationClass="com.intellij.gradle.java.toml.completion.EnableAutoPopupInTomlVersionCatalogCompletion" />
+
+    <localInspection language="TOML" groupPath="Gradle" shortName="UnusedVersionCatalogEntry"
+                     bundle="messages.GradleInspectionBundle" key="inspection.display.name.unused.version.catalog.entry"
+                     groupBundle="messages.GradleInspectionBundle" groupKey="inspection.style"
+                     enabledByDefault="true"
+                     implementationClass="com.intellij.gradle.java.toml.codeInspection.UnusedVersionCatalogEntryInspection"/>
+    <lang.inspectionSuppressor language="TOML"
+                               implementationClass="com.intellij.gradle.java.toml.codeInspection.GradleTomlInspectionSuppressor"/>
+
+
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <versionCatalogPsiResolver implementation="com.intellij.gradle.java.toml.GradleVersionCatalogPsiResolverImpl"/>
+  </extensions>
+</idea-plugin>

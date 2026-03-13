@@ -32,6 +32,30 @@ jvm_library(
     "//platform/core-ui",
   ]
 )
+
+jvm_library(
+  name = "stats-collector_test_lib",
+  module_name = "intellij.statsCollector",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":stats-collector",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//plugins/completion-ml-ranking:completion-ml-ranking_test_lib",
+    "//libraries/http-client:http-client_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//libraries/guava:guava_test_lib",
+    "//libraries/gson:gson_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.statsCollector` end
 
 ### auto-generated section `build intellij.statsCollector.tests` start
@@ -49,17 +73,25 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
     "//libraries/mockito",
+    "//libraries/mockito:mockito_test_lib",
     "@lib//:assert_j",
     "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
     "//plugins/stats-collector",
+    "//plugins/stats-collector:stats-collector_test_lib",
     "//plugins/completion-ml-ranking",
+    "//plugins/completion-ml-ranking:completion-ml-ranking_test_lib",
     "@lib//:stats_collector-tests-completion-log-events",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
   ],
   runtime_deps = [":statsCollector-tests"]
 )

@@ -290,16 +290,21 @@ public class PyEvaluator {
   }
 
   private @Nullable Object evaluatePrefix(@NotNull PyPrefixExpression expression) {
-    if (expression.getOperator() == PyTokenTypes.NOT_KEYWORD) {
+    PyElementType operator = expression.getOperator();
+    if (operator == PyTokenTypes.NOT_KEYWORD) {
       final Boolean value = PyUtil.as(evaluate(expression.getOperand()), Boolean.class);
       if (value != null) {
         return !value;
       }
     }
-    else if (expression.getOperator() == PyTokenTypes.MINUS) {
+    else if (operator == PyTokenTypes.MINUS || operator == PyTokenTypes.PLUS) {
       final Number number = PyUtil.as(evaluate(expression.getOperand()), Number.class);
       if (number != null) {
-        return fromBigInteger(toBigInteger(number).negate());
+        var bigInt = toBigInteger(number);
+        if (operator == PyTokenTypes.MINUS) {
+          bigInt = bigInt.negate();
+        }
+        return fromBigInteger(bigInt);
       }
     }
 

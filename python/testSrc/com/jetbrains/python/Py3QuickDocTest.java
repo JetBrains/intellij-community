@@ -843,6 +843,71 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
     checkHTMLOnly();
   }
 
+  // PY-87075
+  public void testTypeParameter_variance_with_default() {
+    checkHTMLOnly();
+  }
+
+  // PY-87075
+  public void testTypeParameter_variance_inv() {
+    checkHTMLOnly();
+  }
+
+  // PY-87075
+  public void testTypeParameter_variance_co() {
+    checkHTMLOnly();
+  }
+
+  // PY-87075
+  public void testTypeParameter_variance_contra() {
+    checkHTMLOnly();
+  }
+
+  // PY-87075
+  public void testTypeParameter_variance_not_affected_1() {
+    checkHTMLOnly();
+  }
+
+  // PY-87075
+  public void testTypeParameter_variance_not_affected_2() {
+    checkHTMLOnly();
+  }
+
+  // PY-87075
+  public void testTypeParameter_variance_on_its_declaration() {
+    checkHTMLOnly();
+  }
+
+  // PY-87075
+  public void testTypeVar_variance_co() {
+    checkHTMLOnly();
+  }
+
+  // PY-87075
+  public void testTypeVar_variance_contra() {
+    checkHTMLOnly();
+  }
+
+  // PY-87075
+  public void testTypeVar_variance_inv() {
+    checkHTMLOnly();
+  }
+
+  // PY-87075
+  public void testTypeVar_variance_in_init() {
+    checkHTMLOnly();
+  }
+
+  // PY-87075
+  public void testTypeVar_variance_not_affected_1() {
+    checkHTMLOnly();
+  }
+
+  // PY-87075
+  public void testTypeVar_variance_not_affected_2() {
+    checkHTMLOnly();
+  }
+
   // PY-64074
   public void testTypeKeyword() {
     checkHTMLOnly();
@@ -852,7 +917,7 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
   public void testTypeAliasStatement() {
     checkHTMLOnly();
   }
-  
+
   // PY-78119
   public void testNeverType() {
     checkHTMLOnly();

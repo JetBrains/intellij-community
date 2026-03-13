@@ -1,4 +1,4 @@
-// "Create parameter 'foo'" "true"
-// ERROR: Unresolved reference: foo
+// "Create parameter 'foo1'" "true"
+// ERROR: Unresolved reference: foo1
 
-class B(foo: String?) : A(foo)
+class B(foo1: String?) : A(foo1<selection><caret></selection>)

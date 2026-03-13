@@ -37,7 +37,19 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiAnchor;
+import com.intellij.psi.PsiBinaryFile;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ConcurrencyUtil;
@@ -51,8 +63,22 @@ import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -150,7 +176,7 @@ public class RefManagerImpl extends RefManager {
       refElement.accept(visitor);
     }
     List<RefModule> filteredModules =
-      ContainerUtil.filter(myModules.values(), refModule -> ReadAction.compute(() -> myScope.containsModule(refModule.getModule())));
+      ContainerUtil.filter(myModules.values(), refModule -> ReadAction.computeBlocking(() -> myScope.containsModule(refModule.getModule())));
     for (RefModule refModule : filteredModules) {
       refModule.accept(visitor);
     }
@@ -568,7 +594,7 @@ public class RefManagerImpl extends RefManager {
     }
     for (List<RefElement> elementsInFile : map.values()) {
       if (elementsInFile.size() > 1) {
-        ReadAction.run(() -> {
+        ReadAction.runBlocking(() -> {
           elementsInFile.sort(
             Comparator.comparing(o -> ObjectUtils.notNull(o.getPointer().getRange(), TextRange.EMPTY_RANGE),
                                  Segment.BY_START_OFFSET_THEN_END_OFFSET));
@@ -628,7 +654,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   private static @NotNull PsiAnchor createAnchor(@NotNull PsiElement element) {
-    return ReadAction.compute(() -> PsiAnchor.create(element));
+    return ReadAction.computeBlocking(() -> PsiAnchor.create(element));
   }
 
   public void initializeAnnotators() {
@@ -765,14 +791,14 @@ public class RefManagerImpl extends RefManager {
   }
 
   public @Nullable RefElement getReference(PsiElement elem, boolean ignoreScope) {
-    if (ReadAction.compute(() -> elem == null || !elem.isValid() ||
-                                 elem instanceof LightElement || !(elem instanceof PsiDirectory) && !belongsToScope(elem, ignoreScope))) {
+    if (ReadAction.computeBlocking(() -> elem == null || !elem.isValid() ||
+                                         elem instanceof LightElement || !(elem instanceof PsiDirectory) && !belongsToScope(elem, ignoreScope))) {
       return null;
     }
 
     return getFromRefTableOrCache(
       elem,
-      () -> ReadAction.compute(() -> {
+      () -> ReadAction.computeBlocking(() -> {
         final RefManagerExtension<?> extension = getExtension(elem.getLanguage());
         if (extension != null) {
           final RefElement refElement = extension.createRefElement(elem);
@@ -786,7 +812,7 @@ public class RefManagerImpl extends RefManager {
         }
         return null;
       }),
-      element -> ReadAction.run(() -> element.initializeIfNeeded()));
+      element -> ReadAction.runBlocking(() -> element.initializeIfNeeded()));
   }
 
   private RefManagerExtension<?> getExtension(Language language) {
@@ -873,14 +899,14 @@ public class RefManagerImpl extends RefManager {
   private boolean belongsToScope(PsiElement psiElement, boolean ignoreScope) {
     if (psiElement == null || !psiElement.isValid()) return false;
     if (psiElement instanceof PsiCompiledElement) return false;
-    final PsiFile containingFile = ReadAction.compute(psiElement::getContainingFile);
+    PsiFile containingFile = ReadAction.computeBlocking(psiElement::getContainingFile);
     if (containingFile == null) {
       return false;
     }
     for (RefManagerExtension<?> extension : myExtensions.values()) {
       if (!extension.belongsToScope(psiElement)) return false;
     }
-    final Boolean inProject = ReadAction.compute(() -> psiElement.getManager().isInProject(psiElement));
+    Boolean inProject = ReadAction.computeBlocking(() -> psiElement.getManager().isInProject(psiElement));
     return (inProject.booleanValue() || ScratchUtil.isScratch(containingFile.getVirtualFile())) &&
            (ignoreScope || getScope() == null || getScope().contains(psiElement));
   }

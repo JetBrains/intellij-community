@@ -2,6 +2,7 @@
 // K2_ACTION: "Replace usages of 'Iterable<T>.minBy((T) -> R): T?' in whole project" "true"
 // WITH_STDLIB
 // LANGUAGE_VERSION: 1.5
+// K2_ERROR: 'fun <T, R : Comparable<R>> Iterable<T>.minBy(selector: (T) -> R): T?' is deprecated. Use minByOrNull instead.
 fun test() {
     listOf<Int>().minBy<caret> { it + 1 }
 }

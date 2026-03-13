@@ -1,4 +1,5 @@
 // "Make 'foo' public" "true"
+// K2_ERROR: Public-API inline function cannot access non-public-API property.
 class C {
     private var foo = false
 

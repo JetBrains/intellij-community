@@ -5,7 +5,6 @@ import com.google.gson.GsonBuilder;
 import com.intellij.build.FileNavigatable;
 import com.intellij.build.FilePosition;
 import com.intellij.build.events.BuildEvent;
-import com.intellij.build.events.BuildIssueEvent;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.impl.BuildIssueEventImpl;
 import com.intellij.build.events.impl.FileDownloadEventImpl;
@@ -170,10 +169,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
 
   private void reportModelBuilderMessageToListener(@NotNull Message message) {
     if (!message.isInternal()) {
-      BuildEvent messageEvent = getModelBuilderErrorMessage(message);
-      if (messageEvent == null) {
-        messageEvent = getModelBuilderMessage(message);
-      }
+      BuildEvent messageEvent = getModelBuilderIssueOrMessage(message);
       myListener.onStatusChange(new ExternalSystemBuildEvent(myTaskId, messageEvent));
     }
   }
@@ -202,22 +198,23 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   }
 
   /**
-   * Attempts to transform a model builder error message into a BuildIssue by delegating to known Gradle issue checkers.
-   * Returns a BuildIssueEvent created by a GradleIssueChecker if a matching issue is found, null otherwise.
+   * Transforms a model builder message into a BuildIssue by delegating to known Gradle issue checkers.
+   * This allows issue checkers to provide quick fixes and internationalized descriptions for messages of any severity.
    */
-  @Nullable
-  private BuildIssueEvent getModelBuilderErrorMessage(@NotNull Message message) {
-    if (message.getKind() != Message.Kind.ERROR) return null;
+  private @NotNull BuildEvent getModelBuilderIssueOrMessage(@NotNull Message message) {
     // Build a synthetic GradleIssueData from the message
     GradleIssueData issueData = getGradleIssueData(message);
 
     for (var checker : GradleIssueChecker.getKnownIssuesCheckList()) {
       BuildIssue buildIssue = checker.check(issueData);
       if (buildIssue != null) {
-        return new BuildIssueEventImpl(myTaskId, buildIssue, MessageEvent.Kind.ERROR);
+        MessageEvent.Kind kind = MessageEvent.Kind.valueOf(message.getKind().name());
+        return new BuildIssueEventImpl(myTaskId, buildIssue, kind);
       }
     }
-    return null;
+    
+    // Fallback to a regular message event if no issue checker matched
+    return getModelBuilderMessage(message);
   }
 
   private @NotNull GradleIssueData getGradleIssueData(@NotNull Message message) {

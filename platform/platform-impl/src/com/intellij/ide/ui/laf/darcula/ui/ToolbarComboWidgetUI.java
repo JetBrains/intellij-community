@@ -20,14 +20,27 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.swing.SwingUtilities2;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.View;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -37,7 +50,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes.*;
+import static com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes.getGapAfterLeftIcons;
+import static com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes.getGapBeforeExpandIcon;
+import static com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes.getGapBeforeRightIcons;
+import static com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes.getSeparatorGap;
 
 @ApiStatus.Internal
 public final class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeListener {

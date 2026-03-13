@@ -28,7 +28,13 @@ import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.DosFileAttributeView
-import java.nio.file.attribute.PosixFilePermission.*
+import java.nio.file.attribute.PosixFilePermission.GROUP_EXECUTE
+import java.nio.file.attribute.PosixFilePermission.GROUP_READ
+import java.nio.file.attribute.PosixFilePermission.OTHERS_EXECUTE
+import java.nio.file.attribute.PosixFilePermission.OTHERS_READ
+import java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE
+import java.nio.file.attribute.PosixFilePermission.OWNER_READ
+import java.nio.file.attribute.PosixFilePermission.OWNER_WRITE
 import java.util.EnumSet
 import java.util.concurrent.atomic.AtomicReference
 import java.util.zip.GZIPInputStream
@@ -203,7 +209,9 @@ class BundledRuntimeImpl(
       @Override
       override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
         if (dir != destinationDir && SystemInfoRt.isUnix) {
-          Files.setPosixFilePermissions(dir, exeOrDir)
+          if (Files.getPosixFilePermissions(dir) != exeOrDir) {
+            Files.setPosixFilePermissions(dir, exeOrDir)
+          }
         }
         return FileVisitResult.CONTINUE
       }
@@ -211,7 +219,10 @@ class BundledRuntimeImpl(
       override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
         if (SystemInfoRt.isUnix) {
           val noExec = forWin || OWNER_EXECUTE !in Files.getPosixFilePermissions(file)
-          Files.setPosixFilePermissions(file, if (noExec) regular else exeOrDir)
+          val expected = if (noExec) regular else exeOrDir
+          if (Files.getPosixFilePermissions(file) != expected) {
+            Files.setPosixFilePermissions(file, expected)
+          }
         }
         else {
           Files.getFileAttributeView(file, DosFileAttributeView::class.java).setReadOnly(false)

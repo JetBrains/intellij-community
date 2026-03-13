@@ -13,8 +13,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.java.debugger.impl.shared.JavaDebuggerSharedBundle;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
-import com.intellij.xdebugger.impl.messages.XDebuggerImplBundle;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.TextViewer;
 import com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueSplitActionBase;
@@ -46,7 +46,7 @@ public abstract class ViewTextActionBase extends XFetchValueSplitActionBase {
         String text = value; //StringUtil.unquoteString(value);
         if (dialog == null) {
           dialog = new MyDialog(project, text, node);
-          dialog.setTitle(node != null ? XDebuggerImplBundle.message("action.Debugger.ViewEditText.text")
+          dialog.setTitle(node != null ? JavaDebuggerSharedBundle.message("action.Debugger.ViewEditText.text")
                                        : ActionsBundle.message("action.Debugger.ViewText.text"));
           dialog.show();
         }
@@ -59,7 +59,7 @@ public abstract class ViewTextActionBase extends XFetchValueSplitActionBase {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     if (getStringNode(e) != null) {
-      e.getPresentation().setText(XDebuggerImplBundle.lazyMessage("action.Debugger.ViewEditText.text"));
+      e.getPresentation().setText(JavaDebuggerSharedBundle.lazyMessage("action.Debugger.ViewEditText.text"));
     }
   }
 

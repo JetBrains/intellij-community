@@ -65,5 +65,3 @@ resourcegroup(
     strip_prefix = "resources",
     visibility = ["//visibility:public"],  # used by @community//build:build-javac-rt
 )
-
-### skip generation section `build intellij.platform.jps.build.javac.rt`

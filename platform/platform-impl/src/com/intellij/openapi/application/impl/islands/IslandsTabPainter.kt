@@ -20,7 +20,13 @@ import com.intellij.ui.tabs.impl.themes.TabTheme
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Point
+import java.awt.Rectangle
+import javax.swing.JComponent
 import kotlin.math.floor
 
 internal class IslandsTabPainterAdapter(isDefault: Boolean, debugger: Boolean, var isEnabled: Boolean) : TabPainterAdapter {
@@ -42,7 +48,7 @@ internal class IslandsTabPainterAdapter(isDefault: Boolean, debugger: Boolean, v
     val info = label.info
     val selected = info == tabs.selectedInfo
     val active = tabs.isActiveTabs(info)
-    val hovered = tabs.isHoveredTab(label)
+    val hovered = tabs.isHoveredOrWithPopup(label)
 
     val tabLabelWidth = calcTabLabelWidth(label)
     val rect = Rectangle(tabLabelWidth, label.height)
@@ -51,7 +57,7 @@ internal class IslandsTabPainterAdapter(isDefault: Boolean, debugger: Boolean, v
     try {
       GraphicsUtil.setupAAPainting(g2)
 
-      tabs.setFirstTabOffset(JBUI.scale(3))
+      tabs.setFirstTabOffset(IslandsTabPainter.firstTabOffset)
       (tabPainter as IslandsTabPainter).paintTab(g2, tabs.tabsPosition, rect, info.tabColor, active, hovered, selected)
     }
     finally {
@@ -186,6 +192,29 @@ internal open class IslandsTabPainter(isDefault: Boolean, isToolWindow: Boolean)
     RectanglePainter2D.DRAW.paint(g, x, y, width, height, arc)
   }
 
+  /**
+   * Calculates the composed background color for editor tabs. The resulting color is not transparent,
+   * see [paintTab] for details.
+   */
+  fun getEditorTabComposedBgColor(
+    component: JComponent,
+    tabColor: Color?,
+    active: Boolean,
+    hovered: Boolean,
+    selected: Boolean,
+  ): Color {
+    var result = if (myFillBackground) getBackgroundColor() else UIUtil.getBgFillColor(component)
+
+    if (tabColor != null) {
+      result = ColorUtil.alphaBlending(ColorUtil.withAlpha(tabColor, 0.9), result)
+    }
+
+    val (fill, _) = getColors(active, hovered, selected)
+    result = ColorUtil.alphaBlending(fill, result)
+
+    return result
+  }
+
   private val hoverBackground = JBColor("EditorTabs.hoverBackground", JBColor(Color(0xE5, 0xEE, 0xFF, 0x80), Color(0x34, 0x3E, 0x51, 0x80)))
 
   private val inactiveBorderColor = JBColor("EditorTabs.inactiveUnderlinedTabBorderColor", JBColor(Color(0x7F, 0x99, 0xC3, 0x80), Color(0x7F, 0x99, 0xC3, 0x80)))
@@ -225,5 +254,7 @@ internal open class IslandsTabPainter(isDefault: Boolean, isToolWindow: Boolean)
         false -> if (compactMode) 2 else 4
       }
     }
+
+    internal val firstTabOffset = JBUI.scale(3)
   }
 }

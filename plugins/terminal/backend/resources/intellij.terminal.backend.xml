@@ -2,6 +2,7 @@
   <dependencies>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.ide.impl.wsl"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -15,5 +16,9 @@
                         client="remote"/>
     <applicationService serviceInterface="com.intellij.terminal.backend.TerminalActivityTracker" open="true"
                         serviceImplementation="com.intellij.terminal.backend.TerminalNoOpActivityTracker"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
+    <shellsDetector implementation="com.intellij.terminal.backend.WslProjectShellsDetector"/>
   </extensions>
 </idea-plugin>

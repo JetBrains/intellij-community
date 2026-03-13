@@ -14,4 +14,19 @@ jvm_library(
     "@lib//:opentest4j-provided",
   ]
 )
+
+jvm_library(
+  name = "spock-rt_test_lib",
+  module_name = "intellij.groovy.spock.rt",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  runtime_deps = [
+    ":spock-rt",
+    "//plugins/junit_rt:junit-rt_test_lib",
+    "@lib//:junit4-provided",
+    "@lib//:groovy-spock-rt-spockframework-spock-core-provided",
+    "@lib//:opentest4j-provided",
+  ]
+)
 ### auto-generated section `build intellij.groovy.spock.rt` end

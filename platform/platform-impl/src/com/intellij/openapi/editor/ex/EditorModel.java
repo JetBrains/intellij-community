@@ -6,7 +6,8 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.impl.*;
+import com.intellij.openapi.editor.impl.FocusModeModel;
+import com.intellij.openapi.editor.impl.FoldingModelInternal;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Experimental

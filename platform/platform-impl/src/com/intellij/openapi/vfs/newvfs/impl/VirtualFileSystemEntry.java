@@ -10,7 +10,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VFileProperty;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
@@ -22,8 +28,13 @@ import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -489,12 +500,14 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return computePath("", "");
   }
 
+  @RequiresWriteLock
   @Override
   public void delete(Object requestor) throws IOException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     owningPersistentFS().deleteFile(requestor, this);
   }
 
+  @RequiresWriteLock
   @Override
   public void rename(Object requestor, @NotNull @NonNls String newName) throws IOException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
@@ -503,6 +516,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     owningPersistentFS().renameFile(requestor, this, newName);
   }
 
+  @RequiresWriteLock
   @Override
   public @NotNull VirtualFile createChildData(Object requestor, @NotNull String name) throws IOException {
     validateName(name);
@@ -534,6 +548,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return owningPersistentFS().getLength(this);
   }
 
+  @RequiresWriteLock
   @Override
   public @NotNull VirtualFile copy(Object requestor, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException {
     if (getFileSystem() != newParent.getFileSystem()) {
@@ -547,6 +562,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return EncodingRegistry.doActionAndRestoreEncoding(this, () -> owningPersistentFS().copyFile(requestor, this, newParent, copyName));
   }
 
+  @RequiresWriteLock
   @Override
   public void move(Object requestor, @NotNull VirtualFile newParent) throws IOException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
@@ -585,6 +601,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return id;
   }
 
+  @RequiresWriteLock
   @Override
   public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull String name) throws IOException {
     validateName(name);

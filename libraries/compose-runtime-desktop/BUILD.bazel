@@ -24,4 +24,20 @@ jvm_library(
     "//libraries/jspecify",
   ]
 )
+
+jvm_library(
+  name = "compose-runtime-desktop_test_lib",
+  module_name = "intellij.libraries.compose.runtime.desktop",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-desktop",
+    "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-saveable-desktop",
+    "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-retain-desktop",
+  ],
+  runtime_deps = [
+    ":compose-runtime-desktop",
+    "//libraries/jspecify:jspecify_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.libraries.compose.runtime.desktop` end

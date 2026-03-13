@@ -62,6 +62,63 @@ class GotItTooltipService {
 }
 
 /**
+ * Got It tooltip for providing contextual guidance after user actions.
+ *
+ * ## When to Use Got It Tooltips
+ *
+ * Got It tooltips may **only** appear as a direct response to an **active user action**.
+ * If the user did not do something that makes this message directly relevant, it should not appear.
+ *
+ * ### Valid Triggers (Active User Actions)
+ * An action qualifies if it is deliberate, specific, and directly connected to the content of the Got It tooltip:
+ * - The user enables a feature in Settings
+ * - The user runs a command for the first time
+ * - The user opens a tool window and interacts with a new control
+ * - The user triggers a workflow that the Got It tooltip explains or extends
+ * - The user installs a new plugin
+ * - The user interacts with a promotion in an inline banner or What's New page
+ *
+ * ### Invalid Triggers (Do NOT Use Got It For)
+ * - Opening the IDE or a project
+ * - Switching between tabs or windows
+ * - An IDE update being applied in the background
+ * - A timer, usage counter, or any automated trigger
+ *
+ * ## What to Use Instead for Feature Promotion
+ *
+ * If you have a feature worth promoting, use these alternatives that don't interrupt active work:
+ *
+ * ### Inline Banners
+ * Inline banners appear inside a relevant tool window or panel — exactly where the feature lives.
+ * They are visible when the user is already in the right context, don't steal focus, and require no immediate action.
+ * See [InlineBanner]
+ *
+ * ## Appropriate Use Cases
+ *
+ * ### Single Got It
+ * Use a single Got It tooltip to confirm or explain the immediate result of a user action.
+ * Keep it short: one clear sentence about what happened or what is now available.
+ *
+ * ### Tours (Linked Sequence)
+ * When a user action reveals multiple new UI elements or a complex workflow, a short tour is appropriate.
+ * Tours should:
+ * - Be triggered only by a deliberate action the user took
+ * - Be completable quickly (ideally 3–5 steps, never more than 7)
+ * - Be skippable at any point
+ * - Point to specific UI elements rather than describing them abstractly
+ * - End with a clear summary or next step, not just "Done"
+ *
+ * ## Self-Check Before Adding a Got It tooltip
+ *
+ * Before adding a Got It tooltip to any flow, verify:
+ * - Did the user just do something specific that makes this message directly relevant?
+ * - Is the message explaining or confirming what the user's action produced?
+ * - Is the message short enough to read in under five seconds?
+ *
+ * If you answer "no" to any of the questions above, choose an inline banner or other less destructive approaches
+ *
+ * ## Got It Tooltip Technical Details
+ *
  * The `id` is a unique identifier for the tooltip that will be used to store the tooltip state in [PropertiesComponent].
  * Identifier has the following format: `place.where.used` (lowercase words separated with dots).
  *

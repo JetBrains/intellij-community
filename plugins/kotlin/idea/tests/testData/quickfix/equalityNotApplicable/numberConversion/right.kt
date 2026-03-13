@@ -1,4 +1,5 @@
 // "Convert right-hand side to 'Byte'" "true"
+// K2_ERROR: Operator '==' cannot be applied to 'Byte' and 'Int'.
 fun test(b: Byte, i: Int): Boolean {
     return <caret>b == i
 }

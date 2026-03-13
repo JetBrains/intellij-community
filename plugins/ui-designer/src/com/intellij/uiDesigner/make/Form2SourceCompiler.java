@@ -257,7 +257,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
   private static final class MyInstrumentationItem implements ProcessingItem {
     // increment it every time you want files to be regenerated
     // i.e. on generation logic change
-    private static final long TIMESTAMP_BASE = 1;
+    private static final long TIMESTAMP_BASE = 3;
 
     private final @NotNull VirtualFile mySourceFile;
     private final VirtualFile myFormFile;

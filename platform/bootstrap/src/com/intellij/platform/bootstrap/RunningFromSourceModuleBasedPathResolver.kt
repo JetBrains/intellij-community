@@ -5,10 +5,10 @@ import com.intellij.ide.plugins.DataLoader
 import com.intellij.ide.plugins.PathResolver
 import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.ide.plugins.createXIncludeLoader
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
-import com.intellij.platform.plugins.parser.impl.consume
+import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorBuilder
+import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorFromXmlStreamConsumer
+import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorReaderContext
+import com.intellij.platform.pluginSystem.parser.impl.consume
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import java.nio.file.Path
@@ -34,9 +34,7 @@ internal class RunningFromSourceModuleBasedPathResolver(
   }
 
   override fun resolveCustomModuleClassesRoots(moduleId: PluginModuleId): List<Path> {
-    val moduleDescriptor = moduleRepository.resolveModule(RuntimeModuleId.raw(moduleId.name)).resolvedModule
-    if (moduleDescriptor?.moduleId?.stringId?.contains(".charts") == true) {
-    }
+    val moduleDescriptor = moduleRepository.resolveModule(RuntimeModuleId.module(moduleId.name)).resolvedModule
     return moduleDescriptor?.resourceRootPaths ?: emptyList()
   }
 }

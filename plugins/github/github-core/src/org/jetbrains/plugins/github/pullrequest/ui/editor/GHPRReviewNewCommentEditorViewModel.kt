@@ -31,10 +31,11 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.changesComputation
 import org.jetbrains.plugins.github.pullrequest.data.provider.pendingReviewComputationFlow
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosition
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHViewModelWithTextCompletion
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel.SubmitAction
 import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 
-interface GHPRReviewNewCommentEditorViewModel : CodeReviewSubmittableTextViewModel {
+interface GHPRReviewNewCommentEditorViewModel : CodeReviewSubmittableTextViewModel, GHViewModelWithTextCompletion {
   val position: StateFlow<GHPRReviewCommentPosition>
   val currentUser: GHActor
   val avatarIconsProvider: GHAvatarIconsProvider
@@ -56,11 +57,12 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
   dataProvider: GHPRDataProvider,
   private val repository: GitRepository,
   override val currentUser: GHActor,
+  viewModelWithTextCompletion: GHViewModelWithTextCompletion,
   override val avatarIconsProvider: GHAvatarIconsProvider,
   pos: GHPRReviewCommentPosition,
   private val onCancel: (position: GHPRReviewCommentPosition) -> Unit,
 ) : CodeReviewSubmittableTextViewModelBase(project, parentCs, ""),
-    GHPRReviewNewCommentEditorViewModel {
+    GHPRReviewNewCommentEditorViewModel, GHViewModelWithTextCompletion by viewModelWithTextCompletion {
   private val settings = GithubPullRequestsProjectUISettings.getInstance(project)
   private val reviewDataProvider = dataProvider.reviewData
   private val changesState: StateFlow<ComputedResult<GitBranchComparisonResult>> =

@@ -5,14 +5,19 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.ToolbarDecorator
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.CCFlags
+import com.intellij.ui.layout.SpacingConfiguration
 import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.ConstraintParser
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JScrollPane
+import javax.swing.JTextArea
+import javax.swing.JTextField
 import javax.swing.text.JTextComponent
 
 @ApiStatus.ScheduledForRemoval
@@ -43,8 +48,6 @@ internal fun overrideFlags(cc: CC, flags: Array<out CCFlags>) {
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Mig Layout is going to be removed, IDEA-306719")
 internal class DefaultComponentConstraintCreator(spacing: SpacingConfiguration) {
-  private val shortTextSizeSpec = ConstraintParser.parseBoundSize("${spacing.shortTextWidth}px!", false, true)
-  private val mediumTextSizeSpec = ConstraintParser.parseBoundSize("${spacing.shortTextWidth}px::${spacing.maxShortTextWidth}px", false, true)
 
   val vertical1pxGap: BoundSize = ConstraintParser.parseBoundSize("${JBUI.scale(1)}px!", true, false)
 
@@ -79,13 +82,6 @@ internal class DefaultComponentConstraintCreator(spacing: SpacingConfiguration) 
           view.rows = 3
         }
       }
-    }
-  }
-
-  fun applyGrowPolicy(cc: CC, growPolicy: GrowPolicy) {
-    cc.horizontal.size = when (growPolicy) {
-      GrowPolicy.SHORT_TEXT -> shortTextSizeSpec
-      GrowPolicy.MEDIUM_TEXT -> mediumTextSizeSpec
     }
   }
 }

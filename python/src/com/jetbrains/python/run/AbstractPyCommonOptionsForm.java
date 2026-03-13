@@ -5,7 +5,6 @@ import com.intellij.ui.PanelWithAnchor;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.JComponent;
-import java.awt.event.ActionListener;
 import java.util.function.Consumer;
 
 
@@ -15,10 +14,6 @@ public interface AbstractPyCommonOptionsForm extends AbstractPythonRunConfigurat
   JComponent getMainPanel();
 
   void subscribe();
-
-  void addInterpreterComboBoxActionListener(ActionListener listener);
-
-  void removeInterpreterComboBoxActionListener(ActionListener listener);
 
   void addInterpreterModeListener(Consumer<Boolean> listener);
 }

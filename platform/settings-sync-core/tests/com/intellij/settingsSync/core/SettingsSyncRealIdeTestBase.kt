@@ -4,7 +4,12 @@ import com.intellij.configurationStore.ApplicationStoreImpl
 import com.intellij.configurationStore.StateLoadPolicy
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.util.Disposer
@@ -14,7 +19,6 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.replaceService
 import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -120,9 +124,7 @@ internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
   protected suspend fun <State, Component : PersistentStateComponent<State>> initModifyAndSave(component: Component, modifier: State.() -> Unit): Component {
     init(component)
     component.state!!.modifier()
-    runBlocking {
-      componentStore.save()
-    }
+    componentStore.save()
     return component
   }
 

@@ -1,17 +1,30 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.ClientEditorManager;
+import com.intellij.openapi.editor.CustomFoldRegion;
+import com.intellij.openapi.editor.CustomFoldRegionRenderer;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorThreading;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.FoldingGroup;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.InlayModel;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -30,12 +43,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.awt.*;
-import java.util.*;
+import java.awt.Point;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
+@SuppressWarnings("SuspiciousPackagePrivateAccess")
 public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   implements FoldingModelEx, FoldingModelInternal, PrioritizedDocumentListener, Dumpable, ModificationTracker {
 
@@ -55,6 +73,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   private static final HashingStrategy<FoldRegion> OFFSET_BASED_HASHING_STRATEGY = new FoldRegionHashingStrategy();
 
   private final EditorImpl myEditor;
+  private final DocumentEx myDocument;
   private final RangeMarkerTree<FoldRegionImpl> myRegionTree;
   private final FoldRegionsTree myFoldTree;
   private final MultiMap<FoldingGroup, FoldRegion> myGroups = new MultiMap<>();
@@ -77,10 +96,11 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
   FoldingModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
-    myRegionTree = new MyMarkerTree(editor.getDocument());
+    myDocument = editor.getUiDocument();
+    myRegionTree = new MyMarkerTree(myDocument);
     myFoldTree = new MyFoldRegionsTree(myRegionTree);
     myScrollingPositionKeeper = new EditorScrollingPositionKeeper(editor);
-    Disposer.register(editor.getDisposable(), myScrollingPositionKeeper);
+    EditorUtil.disposeWithEditor(editor, myScrollingPositionKeeper);
     updateTextAttributes();
   }
 
@@ -106,8 +126,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     if (!isFoldingEnabled() ||
         startOffset >= endOffset ||
         neverExpands && group != null ||
-        DocumentUtil.isInsideCharacterPair(myEditor.getDocument(), startOffset) ||
-        DocumentUtil.isInsideCharacterPair(myEditor.getDocument(), endOffset) ||
+        DocumentUtil.isInsideCharacterPair(myDocument, startOffset) ||
+        DocumentUtil.isInsideCharacterPair(myDocument, endOffset) ||
         !myFoldTree.checkIfValidToCreate(startOffset, endOffset, false, null)) {
       return null;
     }
@@ -139,10 +159,10 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
       LOG.error("Fold regions must be added or removed inside batchFoldProcessing() only.");
       return null;
     }
-    Document document = myEditor.getDocument();
+    Document document = myDocument;
     int maxLineNumber = Math.max(0, document.getLineCount() - 1);
-    startLine = Math.max(0, Math.min(maxLineNumber, startLine));
-    endLine = Math.max(startLine, Math.min(maxLineNumber, endLine));
+    startLine = Math.clamp(startLine, 0, maxLineNumber);
+    endLine = Math.clamp(endLine, startLine, maxLineNumber);
     int startOffset = document.getLineStartOffset(startLine);
     int endOffset = document.getLineEndOffset(endLine);
 
@@ -296,7 +316,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
   @Override
   public void rebuild() {
-    if (!myEditor.getDocument().isInBulkUpdate()) {
+    if (!myDocument.isInBulkUpdate()) {
       myFoldTree.rebuild();
     }
   }
@@ -361,7 +381,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   @ApiStatus.Internal
   @Override
   public int getFoldedLinesCountBefore(int offset) {
-    if (!myDocumentChangeProcessed && myEditor.getDocument().isInEventsHandling()) {
+    if (!myDocumentChangeProcessed && myDocument.isInEventsHandling()) {
       // There is a possible case that this method is called on document update before fold regions are recalculated.
       // We return zero in such situations then.
       return 0;
@@ -372,7 +392,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   @ApiStatus.Internal
   @Override
   public int getTotalNumberOfFoldedLines() {
-    if (!myDocumentChangeProcessed && myEditor.getDocument().isInEventsHandling()) {
+    if (!myDocumentChangeProcessed && myDocument.isInEventsHandling()) {
       // There is a possible case that this method is called on document update before fold regions are recalculated.
       // We return zero in such situations then.
       return 0;
@@ -495,7 +515,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
   void dispose() {
     doClearFoldRegions();
-    myRegionTree.dispose(myEditor.getDocument());
+    myRegionTree.dispose(myDocument);
   }
 
   @RequiresEdt
@@ -614,7 +634,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
   @TestOnly
   void validateState() {
-    Document document = myEditor.getDocument();
+    Document document = myDocument;
     if (document.isInBulkUpdate()) return;
 
     FoldRegion[] allFoldRegions = getAllFoldRegions();
@@ -771,7 +791,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
         if (isOffsetInsideCollapsedRegion(selectionStart) || isOffsetInsideCollapsedRegion(selectionEnd)) {
           caret.removeSelection();
         }
-        else if (caret.hasSelection() && selectionEnd <= myEditor.getDocument().getTextLength()) {
+        else if (caret.hasSelection() && selectionEnd <= myDocument.getTextLength()) {
           caret.setSelection(selectionStart, selectionEnd);
         }
       }
@@ -929,7 +949,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
     private static @NotNull FoldRegionImpl getRegion(@NotNull IntervalNode<FoldRegionImpl> node) {
       assert node.intervals.size() == 1;
-      FoldRegionImpl region = node.intervals.get(0).get();
+      FoldRegionImpl region = node.intervals.getFirst().get();
       assert region != null;
       return region;
     }
@@ -1006,11 +1026,11 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   private record SavedCaretPosition(LogicalPosition position, long docStamp) {
 
     SavedCaretPosition(@NotNull Caret caret) {
-      this(caret.getLogicalPosition(), caret.getEditor().getDocument().getModificationStamp());
+      this(caret.getLogicalPosition(), caret.getEditor().getUiDocument().getModificationStamp());
     }
 
     private boolean isUpToDate(@NotNull Editor editor) {
-      return docStamp == editor.getDocument().getModificationStamp();
+      return docStamp == editor.getUiDocument().getModificationStamp();
     }
   }
 

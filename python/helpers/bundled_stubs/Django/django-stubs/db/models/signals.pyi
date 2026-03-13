@@ -3,6 +3,7 @@ from collections.abc import Callable
 from django.apps.registry import Apps
 from django.db.models.base import Model
 from django.dispatch import Signal
+from django.dispatch.dispatcher import _AnyHashable
 
 class_prepared: Signal
 
@@ -12,14 +13,14 @@ class ModelSignal(Signal):
         receiver: Callable,
         sender: type[Model] | str | None = None,
         weak: bool = True,
-        dispatch_uid: str | None = None,
+        dispatch_uid: _AnyHashable | None = None,
         apps: Apps | None = None,
     ) -> None: ...
     def disconnect(  # type: ignore[override]
         self,
         receiver: Callable | None = None,
         sender: type[Model] | str | None = None,
-        dispatch_uid: str | None = None,
+        dispatch_uid: _AnyHashable | None = None,
         apps: Apps | None = None,
     ) -> bool | None: ...
 

@@ -45,8 +45,23 @@ import kotlin.coroutines.coroutineContext
  *
  * Create an instance of this class and use [.queue] method to add new tasks.
  *
- * Sometimes [MergingUpdateQueue] can be used for control flow operations. **This kind of usage is discouraged**, in favor of
- * [kotlinx.coroutines.flow.Flow] and [kotlinx.coroutines.flow.FlowKt.debounce].
+ * ## Alternatives to MergingUpdateQueue
+ *
+ * **For new code, always use [DebouncedUpdates] instead.** It provides a simpler, coroutine-based API with better lifecycle management.
+ *
+ * **Use [DebouncedUpdates] for:**
+ * - Queuing single updates that don't need identity-based merging (use [DebouncedUpdates.Builder.runLatest])
+ * - Collecting updates over time for batch processing (use [DebouncedUpdates.Builder.runBatched]; you can handle priorities, deduplication, and other merging logic in the batch handler)
+ * - Component lifecycle integration (use [DebouncedUpdates.forComponent])
+ * - Almost all debouncing/throttling use cases
+ *
+ * **Note:** You can also use [kotlinx.coroutines.flow.Flow] with [kotlinx.coroutines.flow.debounce].
+ *
+ * **Only keep using [MergingUpdateQueue] if you have a rare, specific need for:**
+ * - Manual activation/suspension control via [activate]/[suspend]/[resume] (think twice: can you use coroutine scope cancellation/restart instead?)
+ * - Waiting for all queued updates to complete with [waitForAllExecuted] (think twice: typically only needed in tests; can you restructure your code?)
+ * - Flushing updates immediately with [sendFlush] (think twice: can you use a shorter delay or trigger the update directly?)
+ *
  * If you are still using [MergingUpdateQueue], you can consider queuing via [MergingQueueUtil.queueTracked]
  * in order to notify the platform about scheduled updates.
  *

@@ -1,10 +1,19 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <plugin id="com.intellij.modules.lang"/>
     <plugin id="Git4Idea"/>
     <module name="intellij.platform.collaborationTools"/>
     <module name="intellij.platform.collaborationTools.auth"/>
+    <module name="intellij.platform.collaborationTools.auth.base"/>
+    <module name="intellij.platform.vcs.dvcs"/>
+    <module name="intellij.platform.vcs.dvcs.impl"/>
+    <module name="intellij.platform.vcs.dvcs.impl.shared"/>
+    <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
+    <module name="intellij.platform.vcs.log"/>
+    <module name="intellij.platform.vcs.log.impl"/>
   </dependencies>
+  <!-- endregion -->
 
   <resource-bundle>messages.GithubBundle</resource-bundle>
 
@@ -81,6 +90,9 @@
 
     <fileTypeUsageSchemaDescriptor schema="github"
                                    implementationClass="org.jetbrains.plugins.github.extensions.GithubFileTypeSchemaProvider"/>
+
+    <completion.contributor language="any" implementationClass="org.jetbrains.plugins.github.ui.GithubMarkdownCompletionContributor"/>
+    <typedHandler implementation="org.jetbrains.plugins.github.ui.GithubMarkdownTypedHandler"/>
 
     <registryKey defaultValue="true" description="Applying suggested changes" key="github.suggested.changes.apply"/>
 

@@ -1,4 +1,5 @@
 // "Change to 'val'" "true"
+// K2_ERROR: An annotation parameter cannot be 'var'.
 annotation class Ann(
     val a: Int,
     val b: Int

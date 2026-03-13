@@ -13,7 +13,6 @@ import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -102,9 +101,9 @@ public class ChooseTypeExpression extends Expression {
 
   @Override
   public Result calculateResult(ExpressionContext context) {
-    Editor editor = context.getEditor();
-    if (editor != null) {
-      PsiDocumentManager.getInstance(context.getProject()).commitDocument(editor.getDocument());
+    PsiFile file = context.getPsiFile();
+    if (file != null) {
+      PsiDocumentManager.getInstance(context.getProject()).commitDocument(file.getFileDocument());
     }
     PsiType type = myTypePointer.getType();
     if (type != null) {
@@ -153,7 +152,7 @@ public class ChooseTypeExpression extends Expression {
     if (myAddDefType) {
       LookupElementBuilder def = LookupElementBuilder.create(GrModifier.DEF).bold();
       if (mySelectDef) {
-        result.add(0, def);
+        result.addFirst(def);
       }
       else {
         result.add(def);

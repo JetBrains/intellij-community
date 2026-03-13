@@ -11,7 +11,7 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.kotlin.idea.core.script.k2.asEntity
+import org.jetbrains.kotlin.idea.core.script.k2.getOrCreateScriptConfigurationId
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
@@ -77,7 +77,7 @@ class DefaultKotlinScriptEntityProvider(
             storage addEntity KotlinScriptEntity(
                 scriptUrl, libraryIds.map { it.first }, DefaultScriptEntitySource
             ) {
-                this.configuration = configuration.asEntity()
+                this.configurationId = configuration.getOrCreateScriptConfigurationId(storage, DefaultScriptEntitySource)
                 this.sdkId = configuration.sdkId
             }
         }

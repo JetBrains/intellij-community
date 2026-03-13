@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.inspections
 
 import com.intellij.openapi.project.Project
@@ -96,7 +96,7 @@ class GradleLatestMinorVersionBuildIssueTaskExecutionTest : GradleExecutionTestC
           We recommend upgrading to Gradle version $newVersion.
           
           Possible solutions:
-           - Upgrade to Gradle $newVersion and re-sync
+           - Switch to Gradle $newVersion and re-sync
            - Edit inspection settings
           """.trimIndent()
         )

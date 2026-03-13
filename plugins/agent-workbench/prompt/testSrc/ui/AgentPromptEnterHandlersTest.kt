@@ -1,0 +1,191 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.agent.workbench.prompt.ui
+
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.EditorTextField
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
+import javax.swing.KeyStroke
+
+@TestApplication
+class AgentPromptEnterHandlersTest {
+  @Test
+  fun enterSubmitsWhenNewTaskCanSubmit() {
+    runInEdtAndWait {
+      var submitCalls = 0
+      withEditorTextField({ promptArea ->
+        installPromptEnterHandlers(
+          promptArea = promptArea,
+          canSubmit = { true },
+          onSubmit = { submitCalls++ },
+        )
+      }) { promptArea ->
+        invokeKeyAction(promptArea, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0))
+        assertThat(submitCalls).isEqualTo(1)
+      }
+    }
+  }
+
+  @Test
+  fun enterSubmitsWhenExistingTaskCannotSubmit() {
+    runInEdtAndWait {
+      var submitCalls = 0
+      withEditorTextField({ promptArea ->
+        installPromptEnterHandlers(
+          promptArea = promptArea,
+          canSubmit = { false },
+          onSubmit = { submitCalls++ },
+        )
+      }) { promptArea ->
+        invokeKeyAction(promptArea, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0))
+        assertThat(submitCalls).isEqualTo(1)
+      }
+    }
+  }
+
+  @Test
+  fun enterSubmitsWhenNewTaskCannotSubmit() {
+    runInEdtAndWait {
+      var submitCalls = 0
+      withEditorTextField({ promptArea ->
+        installPromptEnterHandlers(
+          promptArea = promptArea,
+          canSubmit = { false },
+          onSubmit = { submitCalls++ },
+        )
+      }) { promptArea ->
+        invokeKeyAction(promptArea, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0))
+        assertThat(submitCalls).isEqualTo(1)
+      }
+    }
+  }
+
+  @Test
+  fun shiftEnterInsertsLineBreakWithoutSubmitCallbacks() {
+    runInEdtAndWait {
+      var submitCalls = 0
+      withEditorTextField({ promptArea ->
+        installPromptEnterHandlers(
+          promptArea = promptArea,
+          canSubmit = { true },
+          onSubmit = { submitCalls++ },
+        )
+      }) { promptArea ->
+        promptArea.text = "prompt"
+        promptArea.editor!!.caretModel.moveToOffset(promptArea.text.length)
+        invokeKeyAction(promptArea, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK))
+        assertThat(promptArea.text).isEqualTo("prompt\n")
+        assertThat(submitCalls).isZero()
+      }
+    }
+  }
+
+  @Test
+  fun tabSubmitsWhenTabQueueShortcutEnabled() {
+    runInEdtAndWait {
+      var submitCalls = 0
+      var forwardFocusCalls = 0
+      withEditorTextField({ promptArea ->
+        installPromptEnterHandlers(
+          promptArea = promptArea,
+          canSubmit = { false },
+          isTabQueueEnabled = { true },
+          onSubmit = { submitCalls++ },
+          onTabFocusTransfer = { forwardFocusCalls++ },
+        )
+      }) { promptArea ->
+        invokeKeyAction(promptArea, KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0))
+        assertThat(submitCalls).isEqualTo(1)
+        assertThat(forwardFocusCalls).isZero()
+      }
+    }
+  }
+
+  @Test
+  fun tabTransfersFocusWhenTabQueueShortcutDisabled() {
+    runInEdtAndWait {
+      var submitCalls = 0
+      var forwardFocusCalls = 0
+      withEditorTextField({ promptArea ->
+        installPromptEnterHandlers(
+          promptArea = promptArea,
+          canSubmit = { true },
+          isTabQueueEnabled = { false },
+          onSubmit = { submitCalls++ },
+          onTabFocusTransfer = { forwardFocusCalls++ },
+        )
+      }) { promptArea ->
+        invokeKeyAction(promptArea, KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0))
+        assertThat(submitCalls).isZero()
+        assertThat(forwardFocusCalls).isEqualTo(1)
+      }
+    }
+  }
+
+  @Test
+  fun shiftTabTransfersFocusBackwardWithoutSubmitCallbacks() {
+    runInEdtAndWait {
+      var submitCalls = 0
+      var backwardFocusCalls = 0
+      withEditorTextField({ promptArea ->
+        installPromptEnterHandlers(
+          promptArea = promptArea,
+          canSubmit = { true },
+          isTabQueueEnabled = { true },
+          onSubmit = { submitCalls++ },
+          onTabBackwardFocusTransfer = { backwardFocusCalls++ },
+        )
+      }) { promptArea ->
+        invokeKeyAction(promptArea, KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK))
+        assertThat(submitCalls).isZero()
+        assertThat(backwardFocusCalls).isEqualTo(1)
+      }
+    }
+  }
+
+  /**
+   * Creates an [EditorTextField], calls [configure] to register settings providers,
+   * then initializes the editor, runs [block], and cleans up the editor instance.
+   */
+  private inline fun withEditorTextField(
+    configure: (EditorTextField) -> Unit,
+    block: (EditorTextField) -> Unit,
+  ) {
+    val field = EditorTextField()
+    configure(field)
+    field.addNotify()
+    try {
+      block(field)
+    }
+    finally {
+      field.removeNotify()
+    }
+  }
+
+  private fun invokeKeyAction(promptArea: EditorTextField, keyStroke: KeyStroke) {
+    val matchingAction = findMatchingAction(promptArea, keyStroke)
+    checkNotNull(matchingAction) { "No action registered for keystroke: $keyStroke" }
+    val dataContext = SimpleDataContext.builder().build()
+    val event = AnActionEvent.createEvent(matchingAction, dataContext, null, "", ActionUiKind.NONE, null)
+    matchingAction.actionPerformed(event)
+  }
+
+  private fun findMatchingAction(promptArea: EditorTextField, keyStroke: KeyStroke): AnAction? {
+    val editor = checkNotNull(promptArea.editor) { "Editor was not initialized" }
+    val contentComponent = editor.contentComponent
+    val actions: List<AnAction> = ClientProperty.get(contentComponent, AnAction.ACTIONS_KEY) ?: emptyList()
+    val targetShortcut = KeyboardShortcut(keyStroke, null)
+    return actions.firstOrNull { action ->
+      action.shortcutSet.shortcuts.any { shortcut -> shortcut == targetShortcut }
+    }
+  }
+}

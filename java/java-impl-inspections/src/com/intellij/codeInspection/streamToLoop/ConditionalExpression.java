@@ -21,8 +21,6 @@ import com.intellij.psi.PsiType;
 
 /**
  * An interface representing the conditional expression to be generated in the resulting code
- *
- * @author Tagir Valeev
  */
 interface ConditionalExpression {
   String getType();

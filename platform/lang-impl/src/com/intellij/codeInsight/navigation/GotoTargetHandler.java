@@ -37,7 +37,11 @@ import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.platform.ide.navigation.NavigationOptions;
 import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ExperimentalUI;
@@ -47,10 +51,21 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import javax.swing.JScrollPane;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -379,13 +394,13 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       if (ArrayUtil.find(targets, element) > -1) return null;
 
       if (!hasDifferentNames && element instanceof PsiNamedElement) {
-        final String name = ReadAction.compute(() -> ((PsiNamedElement)element).getName());
+        String name = ReadAction.computeBlocking(() -> ((PsiNamedElement)element).getName());
         myNames.add(name);
         hasDifferentNames = myNames.size() > 1;
         if (hasDifferentNames) {
           for (ItemWithPresentation item : myItems) {
             if (item.getItem() instanceof Pointer<?>) {
-              ReadAction.run(() -> {
+              ReadAction.runBlocking(() -> {
                 Object o = ((Pointer<?>)item.getItem()).dereference();
                 if (o instanceof PsiElement) {
                   item.setPresentation(computePresentation((PsiElement)o, hasDifferentNames));
@@ -401,9 +416,11 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     }
 
     private static ItemWithPresentation initPresentation(PsiElement target, boolean hasDifferentNames) {
-      Pointer<PsiElement> pointer = ReadAction.compute(() -> SmartPointerManager.createPointer(target));
-      TargetPresentation presentation = ReadAction.compute(() -> computePresentation(target, hasDifferentNames));
-      return new ItemWithPresentation(pointer, presentation);
+      return ReadAction.computeBlocking(() -> {
+        Pointer<PsiElement> pointer = SmartPointerManager.createPointer(target);
+        TargetPresentation presentation = computePresentation(target, hasDifferentNames);
+        return new ItemWithPresentation(pointer, presentation);
+      });
     }
 
     public @NotNull String getComparingObject(ItemWithPresentation value) {

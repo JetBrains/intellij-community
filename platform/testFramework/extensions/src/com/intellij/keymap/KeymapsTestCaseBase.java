@@ -2,7 +2,12 @@
 package com.intellij.keymap;
 
 import com.intellij.execution.ExecutorRegistry;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.MouseShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.keymap.Keymap;
@@ -12,25 +17,36 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.MacOSDefaultKeymap;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.testFramework.ApplicationExtension;
+import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.testFramework.junit5.DynamicTests;
 import com.intellij.testFramework.junit5.NamedFailure;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
-import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.swing.*;
+import javax.swing.KeyStroke;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public abstract class KeymapsTestCaseBase {
   private static final int KEY_LENGTH = 24;
@@ -52,8 +68,12 @@ public abstract class KeymapsTestCaseBase {
 
   protected abstract String getGroupForUnknownAction(@NotNull String actionId);
 
-  @RegisterExtension
-  static ApplicationExtension ourApplicationExtension = new ApplicationExtension();
+  @BeforeAll
+  static void initializeApplication() {
+    // This module doesn't depend on intellij.platform.testFramework.junit5,
+    // so @TestApplication isn't available on this classpath.
+    TestApplicationManager.getInstance();
+  }
 
   protected static Map<String, Map<String, List<String>>> parseDuplicates(Map<String, String[][]> duplicates) {
     Map<String, Map<String, List<String>>> result = new HashMap<>();
@@ -144,7 +164,8 @@ public abstract class KeymapsTestCaseBase {
         AnAction action = ActionManager.getInstance().getAction(cid);
         if (action == null) {
           failures.add(new NamedFailure("unknown action in keymap " + keymap.getName() + ": " + cid,
-                                        "Fix them or add them to the unknown actions list"));
+                                        "Unknown action id '" + cid + "' in keymap '" + keymap.getName() +
+                                        "'. Fix it or add it to the unknown actions list."));
         }
       }
     }
@@ -153,7 +174,7 @@ public abstract class KeymapsTestCaseBase {
       AnAction action = ActionManager.getInstance().getAction(id);
       if (action != null) {
         failures.add(new NamedFailure("reappeared action: " + id,
-                                      "The following actions have reappeared, remove them from unknown action list."));
+                                      "Action '" + id + "' has reappeared, remove it from the unknown actions list."));
       }
     }
 

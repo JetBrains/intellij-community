@@ -14,13 +14,21 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "//java/openapi:java",
+    "//java/openapi:java_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
     "//plugins/groovy/groovy-psi:psi",
+    "//plugins/groovy/groovy-psi:psi_test_lib",
     "//uast/testFramework",
+    "//uast/testFramework:testFramework_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "//plugins/groovy",
+    "//plugins/groovy:groovy_test_lib",
   ],
   runtime_deps = [":uast-tests"]
 )

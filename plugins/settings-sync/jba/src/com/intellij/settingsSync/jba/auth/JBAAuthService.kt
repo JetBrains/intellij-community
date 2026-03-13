@@ -79,7 +79,7 @@ private val LOG = logger<JBAAuthService>()
 private const val JBA_USER_ID = "jba"
 private const val JBA_PROVIDER_CODE = "jba"
 
-internal class JBAAuthService(private val cs: CoroutineScope) : SettingsSyncAuthService {
+class JBAAuthService(private val cs: CoroutineScope) : SettingsSyncAuthService {
   @Volatile
   private var invalidatedIdToken: String? = null
 

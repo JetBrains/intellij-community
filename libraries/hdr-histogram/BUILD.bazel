@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-hdr-histogram-_hdr_histogram"],
   runtime_deps = ["@lib//:libraries-hdr-histogram-_hdr_histogram"]
 )
+
+jvm_library(
+  name = "hdr-histogram_test_lib",
+  module_name = "intellij.libraries.hdr.histogram",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-hdr-histogram-_hdr_histogram"],
+  runtime_deps = [":hdr-histogram"]
+)
 ### auto-generated section `build intellij.libraries.hdr.histogram` end

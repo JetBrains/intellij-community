@@ -31,6 +31,8 @@ import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
+import com.intellij.python.community.impl.conda.icons.PythonCommunityImplCondaIcons
+import com.intellij.python.community.impl.pipenv.PIPENV_ICON
 import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.community.impl.poetry.common.icons.PythonCommunityImplPoetryCommonIcons
 import com.intellij.python.community.impl.uv.common.UV_TOOL_ID
@@ -44,7 +46,6 @@ import com.intellij.ui.dsl.builder.Row
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.parser.icons.PythonParserIcons
 import com.jetbrains.python.psi.LanguageLevel
@@ -62,7 +63,6 @@ import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.installSdkIfNeeded
 import com.jetbrains.python.sdk.moduleIfExists
 import com.jetbrains.python.sdk.persist
-import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.sdk.suggestAssociatedSdkName
 import com.jetbrains.python.statistics.InterpreterTarget
@@ -176,10 +176,10 @@ enum class PythonSupportedEnvironmentManagers(
   val isFSSupported: (FileSystem<*>) -> Boolean = { (it as? FileSystem.Eel)?.eelApi == localEel },
 ) {
   VIRTUALENV(VENV_TOOL_ID, "sdk.create.custom.virtualenv", PythonVenvIcons.VirtualEnv, { true }),
-  CONDA(CONDA_TOOL_ID, "sdk.create.custom.conda", PythonIcons.Python.Anaconda, { true }),
+  CONDA(CONDA_TOOL_ID, "sdk.create.custom.conda", PythonCommunityImplCondaIcons.Anaconda, { true }),
   POETRY(POETRY_TOOL_ID, "sdk.create.custom.poetry", PythonCommunityImplPoetryCommonIcons.Poetry),
   PIPENV(PIPENV_TOOL_ID, "sdk.create.custom.pipenv", PIPENV_ICON),
-  UV(UV_TOOL_ID, "sdk.create.custom.uv", PythonCommunityImplUVCommonIcons.UV),
+  UV(UV_TOOL_ID, "sdk.create.custom.uv", PythonCommunityImplUVCommonIcons.UV, { true }),
   HATCH(HATCH_TOOL_ID, "sdk.create.custom.hatch", PythonHatchIcons.Logo, { it is FileSystem.Eel }),
   PYTHON(VENV_TOOL_ID, "sdk.create.custom.python", PythonParserIcons.PythonFile, { true })
 }

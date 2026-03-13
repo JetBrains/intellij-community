@@ -29,4 +29,21 @@ jvm_library(
     ":plugins_kotlin_completion_kotlin-completion-impl-k1_provided",
   ]
 )
+
+jvm_library(
+  name = "k1_test_lib",
+  module_name = "intellij.turboComplete.languages.kotlin.k1",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":k1",
+    "//platform/core-api:core_test_lib",
+    "//plugins/kotlin/completion/impl-k1:kotlin-completion-impl-k1",
+    "//plugins/kotlin/completion/impl-k1:kotlin-completion-impl-k1_test_lib",
+    "//platform/ml-impl:ml-impl_test_lib",
+    "//plugins/turboComplete:turboComplete_test_lib",
+    "//platform/platform-impl/internal:internal_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.turboComplete.languages.kotlin.k1` end

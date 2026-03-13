@@ -2,12 +2,21 @@ package com.intellij.notebooks.visualization
 
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.notebooks.ui.bind
-import com.intellij.notebooks.visualization.ui.*
-import com.intellij.notebooks.visualization.ui.EditorCellEventListener.*
+import com.intellij.notebooks.visualization.ui.EditorCell
+import com.intellij.notebooks.visualization.ui.EditorCellEventListener
+import com.intellij.notebooks.visualization.ui.EditorCellEventListener.CellCreated
+import com.intellij.notebooks.visualization.ui.EditorCellEventListener.CellRemoved
+import com.intellij.notebooks.visualization.ui.EditorCellEventListener.EditorCellEvent
+import com.intellij.notebooks.visualization.ui.EditorCellView
+import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener
 import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener.CellViewCreated
 import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener.CellViewRemoved
+import com.intellij.notebooks.visualization.ui.EditorEmbeddedComponentContainer
+import com.intellij.notebooks.visualization.ui.EditorNotebook
+import com.intellij.notebooks.visualization.ui.JupyterCellSelectionNotifier
 import com.intellij.notebooks.visualization.ui.endInlay.EditorNotebookEndInlay
 import com.intellij.notebooks.visualization.ui.endInlay.EditorNotebookEndInlayProvider
+import com.intellij.notebooks.visualization.ui.notebookViewUpdater
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
@@ -19,6 +28,7 @@ import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FoldingListener
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
@@ -28,6 +38,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.ThreadingAssertions
 import java.awt.Point
+import java.util.concurrent.atomic.AtomicBoolean
 
 class NotebookCellInlayManager private constructor(
   val editor: EditorImpl,
@@ -36,7 +47,7 @@ class NotebookCellInlayManager private constructor(
 
   private val notebookCellLines = NotebookCellLines.get(editor)
 
-  private var initialized = false
+  val initialized: AtomicBoolean = AtomicBoolean(false)
 
   val cells: List<EditorCell>
     get() = notebook.cells
@@ -58,7 +69,7 @@ class NotebookCellInlayManager private constructor(
   private val cellViewEventListeners = EventDispatcher.create(EditorCellViewEventListener::class.java)
 
   private fun update(force: Boolean = false, keepScrollingPosition: Boolean = false, block: (UpdateContext) -> Unit) {
-    editor.updateManager.update(force = force, keepScrollingPositon = keepScrollingPosition, block = block)
+    editor.notebookViewUpdater.update(force = force, keepScrollingPositon = keepScrollingPosition, block = block)
   }
 
   override fun dispose() {
@@ -78,13 +89,13 @@ class NotebookCellInlayManager private constructor(
   }
 
   private fun updateAll() {
-    if (initialized) {
+    if (initialized.get()) {
       updateCells(cells, force = false)
     }
   }
 
   fun forceUpdateAll(): Unit = runInEdt {
-    if (initialized) {
+    if (initialized.get()) {
       updateCells(cells, force = true)
     }
   }
@@ -131,7 +142,6 @@ class NotebookCellInlayManager private constructor(
 
     addViewportChangeListener()
 
-    initialized = true
 
     setupFoldingListener()
     setupSelectionUI()
@@ -139,6 +149,7 @@ class NotebookCellInlayManager private constructor(
     notebook.addCellEventsListener(this) { events -> updateUI(events) }
 
     handleRefreshedDocument()
+    initialized.set(true)
   }
 
   fun getCellByPoint(point: Point): EditorCell? {
@@ -325,14 +336,24 @@ class NotebookCellInlayManager private constructor(
       editorNotebookPostprocessors: List<EditorNotebookPostprocessor> = listOf(),
     ): NotebookCellInlayManager {
       EditorEmbeddedComponentContainer(editor as EditorEx)
-      val updateManager = UpdateManager(editor)
-      Disposer.register(editor.disposable, updateManager)
       val notebook = createNotebook(editor, editorNotebookPostprocessors)
+
+      //We use here BEFORE editor because inlays will not be disposed after editor because thay have check editor is not disposed.
+      //To prevent it we dispose before Editor dispose
+      val beforeEditorDisposable = JupyterBeforeEditorDisposable.get(editor)
+
+      Disposer.register(beforeEditorDisposable, notebook)
       val notebookCellInlayManager = NotebookCellInlayManager(
         editor,
         notebook
-      ).also { Disposer.register(editor.disposable, it) }
+      ).also { Disposer.register(beforeEditorDisposable, it) }
 
+
+      EditorUtil.disposeWithEditor(editor) {
+        //Some external plugin keep editor even if it is disposed, and inlays with it too
+        //So we forced clear all inlays AFTER editor dispose
+        editor.contentComponent.removeAll()
+      }
       NotebookIntervalPointerFactory.get(editor).changeListeners.addListener(notebookCellInlayManager, notebookCellInlayManager)
       return notebookCellInlayManager
     }
@@ -345,7 +366,7 @@ class NotebookCellInlayManager private constructor(
       editorNotebookPostprocessors.forEach {
         it.postprocess(notebook)
       }
-      Disposer.register(editor.disposable, notebook)
+      EditorUtil.disposeWithEditor(editor, notebook)
       return notebook
     }
 
@@ -398,7 +419,7 @@ class NotebookCellInlayManager private constructor(
               val index = it.interval.ordinal
               removeCell(index)
               // Next cell becomes first and needs to update the AboveCellDelimiterPanel size.
-              if(index == 0) {
+              if (index == 0) {
                 getCellOrNull(0)?.checkAndRebuildInlays()
               }
             }

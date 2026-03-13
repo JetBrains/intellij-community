@@ -84,7 +84,6 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.getCalleeType;
 import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
 
 /**
@@ -270,7 +269,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   private @Nullable PyType getCallableType(@NotNull TypeEvalContext context) {
     PyCallExpression callExpression = PyCallExpressionNavigator.getPyCallExpressionByCallee(this);
     if (callExpression != null) {
-      return getCalleeType(callExpression, PyResolveContext.defaultContext(context));
+      return PyCallExpressionHelper.getCalleeType(callExpression, PyResolveContext.defaultContext(context));
     }
     return null;
   }

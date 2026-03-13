@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.syncAction.impl.contributors
 
 import com.intellij.openapi.progress.checkCanceled
@@ -20,10 +20,13 @@ import org.jetbrains.plugins.gradle.model.GradleLightBuild
 import org.jetbrains.plugins.gradle.model.GradleLightProject
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntity
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityBuilder
+import org.jetbrains.plugins.gradle.model.projectModel.GradleExternalProjectEntity
+import org.jetbrains.plugins.gradle.model.projectModel.GradleExternalProjectEntityBuilder
 import org.jetbrains.plugins.gradle.model.projectModel.GradleModuleEntity
 import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntity
 import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntityBuilder
 import org.jetbrains.plugins.gradle.model.projectModel.gradleBuilds
+import org.jetbrains.plugins.gradle.model.projectModel.gradleInfo
 import org.jetbrains.plugins.gradle.model.projectModel.gradleModuleEntity
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
@@ -68,6 +71,14 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
 
     return builder.toSnapshot()
   }
+
+  private fun createGradleExternalProjectEntity(
+    context: ProjectResolverContext,
+    entitySource: EntitySource,
+  ): GradleExternalProjectEntityBuilder = GradleExternalProjectEntity(
+    gradleVersion = context.gradleVersion.version,
+    entitySource = entitySource
+  )
 
   private fun createModuleEntity(
     context: ProjectResolverContext,
@@ -138,6 +149,7 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
       gradleBuilds = context.allBuilds.map { buildModel ->
         createGradleBuildEntity(buildModel, context, entitySource)
       }
+      gradleInfo = createGradleExternalProjectEntity(context, entitySource)
     }
   }
 

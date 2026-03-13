@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp;
 
 import com.intellij.lexer.Lexer;
@@ -7,7 +7,26 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
 
-import static org.intellij.lang.regexp.RegExpCapability.*;
+import static org.intellij.lang.regexp.RegExpCapability.ALLOW_EMPTY_CHARACTER_CLASS;
+import static org.intellij.lang.regexp.RegExpCapability.COMMENT_MODE;
+import static org.intellij.lang.regexp.RegExpCapability.DANGLING_METACHARACTERS;
+import static org.intellij.lang.regexp.RegExpCapability.EXTENDED_UNICODE_CHARACTER;
+import static org.intellij.lang.regexp.RegExpCapability.MAX_OCTAL_177;
+import static org.intellij.lang.regexp.RegExpCapability.MAX_OCTAL_377;
+import static org.intellij.lang.regexp.RegExpCapability.MIN_OCTAL_2_DIGITS;
+import static org.intellij.lang.regexp.RegExpCapability.MIN_OCTAL_3_DIGITS;
+import static org.intellij.lang.regexp.RegExpCapability.MYSQL_BRACKET_EXPRESSIONS;
+import static org.intellij.lang.regexp.RegExpCapability.NESTED_CHARACTER_CLASSES;
+import static org.intellij.lang.regexp.RegExpCapability.OCTAL_NO_LEADING_ZERO;
+import static org.intellij.lang.regexp.RegExpCapability.OMIT_BOTH_NUMBERS_IN_QUANTIFIERS;
+import static org.intellij.lang.regexp.RegExpCapability.OMIT_NUMBERS_IN_QUANTIFIERS;
+import static org.intellij.lang.regexp.RegExpCapability.ONE_HEX_CHAR_ESCAPE;
+import static org.intellij.lang.regexp.RegExpCapability.PCRE_BACK_REFERENCES;
+import static org.intellij.lang.regexp.RegExpCapability.PCRE_CONDITIONS;
+import static org.intellij.lang.regexp.RegExpCapability.PCRE_NUMBERED_GROUP_REF;
+import static org.intellij.lang.regexp.RegExpCapability.POSIX_BRACKET_EXPRESSIONS;
+import static org.intellij.lang.regexp.RegExpCapability.TRANSFORMATION_ESCAPES;
+import static org.intellij.lang.regexp.RegExpCapability.WHITESPACE_IN_CLASS;
 
 /**
  * @author Bas Leijdekkers
@@ -766,10 +785,7 @@ public class RegExpLexerTest extends LexerTestCase {
       UNICODE_CHAR ('\\u{FF}')
       HEX_CHAR ('\\x{fff}')
       UNICODE_CHAR ('\\u1234')
-      INVALID_UNICODE_ESCAPE_TOKEN ('\\u')
-      CHARACTER ('1')
-      CHARACTER ('2')
-      CHARACTER ('3')
+      INVALID_UNICODE_ESCAPE_TOKEN ('\\u123')
       INVALID_UNICODE_ESCAPE_TOKEN ('\\u')""", lexer);
     final RegExpLexer lexer2 = new RegExpLexer(EnumSet.of(DANGLING_METACHARACTERS));
     doTest("\\u{1F680}", """

@@ -4,6 +4,7 @@ package com.intellij.application.options.editor
 import com.intellij.codeInsight.actions.ReaderModeSettingsListener
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.documentation.render.DocRenderManager
+import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
@@ -19,7 +20,16 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.asRange
+import com.intellij.ui.dsl.builder.bindIntText
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
@@ -30,9 +40,10 @@ private val model:EditorSettingsExternalizable
   get() = EditorSettingsExternalizable.getInstance()
 
 private val myCbBlinkCaret                            get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.caret.blinking.ms"), model::isBlinkCaret, model::setBlinkCaret)
+private val myCbSmoothBlinkCaret                      get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.smooth.caret.blinking"), model::isSmoothBlinkCaret, model::setSmoothBlinkCaret)
 private val myCbBlockCursor                           get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.block.caret"), model::isBlockCursor, model::setBlockCursor)
 private val myCbFullLineHeightCursor                  get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.full.line.height.caret"), model::isFullLineHeightCursor, model::setFullLineHeightCursor)
-private val myCbAnimatedCaret                         get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.animated.caret"), model::isAnimatedCaret, model::setAnimatedCaret)
+private val myCbSmoothCaretMovement                   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.animated.caret"), model::isSmoothCaretMovement, model::setSmoothCaretMovement)
 private val myCbHighlightSelectionOccurrences         get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.highlight.selection.occurrences"), model::isHighlightSelectionOccurrences, model::setHighlightSelectionOccurrences)
 private val myCbRightMargin                           get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.right.margin"), model::isRightMarginShown, model::setRightMarginShown)
 private val myCbShowLineNumbers                       get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.line.numbers"), model::isLineNumbersShown, model::setLineNumbersShown)
@@ -60,8 +71,9 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
   override fun createPanel(): DialogPanel {
     val model = EditorSettingsExternalizable.getInstance()
     return panel {
+      var cbBlinkCaret: Cell<JBCheckBox>? = null
       row {
-        val cbBlinkCaret = checkBox(myCbBlinkCaret)
+        cbBlinkCaret = checkBox(myCbBlinkCaret)
           .gap(RightGap.SMALL)
         intTextField(range = EditorSettingsExternalizable.BLINKING_RANGE.asRange(), keyboardStep = 100)
           .bindIntText(model::getBlinkPeriod, model::setBlinkPeriod)
@@ -69,13 +81,17 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
           .enabledIf(cbBlinkCaret.selected)
       }
       row {
+        checkBox(myCbSmoothBlinkCaret)
+        icon(AllIcons.General.New_badge)
+      }.enabledIf(cbBlinkCaret!!.selected)
+      row {
         checkBox(myCbBlockCursor)
       }
       row {
         checkBox(myCbFullLineHeightCursor)
       }
       row {
-        checkBox(myCbAnimatedCaret)
+        checkBox(myCbSmoothCaretMovement)
         comboBox(
           DefaultComboBoxModel(EditorSettings.CaretEasing.entries.toTypedArray()),
           renderer = textListCellRenderer {
@@ -86,6 +102,8 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
             }
           }
         ).bindItem(model::getCaretEasing, model::setCaretEasing)
+          .customize(UnscaledGaps(right = 20))
+        icon(AllIcons.General.New_badge)
       }
       row {
         checkBox(myCbHighlightSelectionOccurrences)
@@ -145,12 +163,9 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
       row {
         checkBox(myShowIntentionPreviewCheckBox)
       }
-      row {
-        checkBox(myRenderedDocCheckBox)
-          .commentRight(IdeBundle.message("checkbox.also.in.reader.mode")) {
-            ReaderModeSettingsListener.goToEditorReaderMode()
-          }
-      }
+      assert(lazyInlineDocAdditionalConfigurable.isNotEmpty())
+      val bestInlineDocAdditionalConfigurable = lazyInlineDocAdditionalConfigurable.first()
+      appendDslConfigurable(bestInlineDocAdditionalConfigurable)
       row {
         checkBox(myCodeLensCheckBox)
       }
@@ -174,7 +189,7 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
 
   override fun apply() {
     val showEditorTooltip = UISettings.getInstance().showEditorToolTip
-    val docRenderingEnabled = EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled
+    val participatingSettingsBefore = lazyInlineDocAdditionalConfigurable.first().getParticipatingSettingsFlags()
 
     super.apply()
 
@@ -183,7 +198,8 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
       LafManager.getInstance().repaintUI()
       UISettings.getInstance().fireUISettingsChanged()
     }
-    if (docRenderingEnabled != EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled) {
+    val participatingSettingsAfter = lazyInlineDocAdditionalConfigurable.first().getParticipatingSettingsFlags()
+    if (!participatingSettingsBefore.contentEquals(participatingSettingsAfter)) {
       DocRenderManager.resetAllEditorsToDefaultState()
     }
 
@@ -191,6 +207,24 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
     ApplicationManager.getApplication().messageBus.syncPublisher(EditorOptionsListener.APPEARANCE_CONFIGURABLE_TOPIC).changesApplied()
   }
 
+  private val INLINE_DOC_EP_NAME = ExtensionPointName.create<InlineDocAdditionalHandlerEP>("com.intellij.editorAppearanceInlineDocHandler")
   private val EP_NAME = ExtensionPointName.create<EditorAppearanceConfigurableEP>("com.intellij.editorAppearanceConfigurable")
 
+  private val lazyInlineDocAdditionalConfigurable by lazy { ConfigurableWrapper.createConfigurables(INLINE_DOC_EP_NAME) }
+
+  class DefaultInlineDocAdditionalConfigurable : InlineDocsAdditionalConfigurable() {
+    override fun getParticipatingSettingsFlags(): Array<Boolean> {
+      return arrayOf(EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled)
+    }
+
+    override fun Panel.createContent() {
+      row {
+        checkBox(myRenderedDocCheckBox)
+          .commentRight(IdeBundle.message("checkbox.also.in.reader.mode")) {
+            ReaderModeSettingsListener.goToEditorReaderMode()
+          }
+      }
+    }
+
+  }
 }

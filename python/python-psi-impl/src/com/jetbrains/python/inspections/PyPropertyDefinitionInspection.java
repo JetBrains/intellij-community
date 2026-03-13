@@ -78,34 +78,9 @@ public final class PyPropertyDefinitionInspection extends PyInspection {
 
   public static class Visitor extends PyInspectionVisitor {
 
-    private final LanguageLevel myLevel;
-    private final List<PyClass> myStringClasses;
-    private PyFunction myOneParamFunction;
-    private PyFunction myTwoParamFunction; // arglist with two args, 'self' and 'value'
-
-    public Visitor(final ProblemsHolder holder, @NotNull TypeEvalContext context) {
+    public Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
-      PsiFile psiFile = holder.getFile();
-      // save us continuous checks for level, module, stc
-      myLevel = LanguageLevel.forElement(psiFile);
-      // string classes
-      final List<PyClass> stringClasses = new ArrayList<>(2);
-      final PyBuiltinCache builtins = PyBuiltinCache.getInstance(psiFile);
-      PyClass cls = builtins.getClass("str");
-      if (cls != null) stringClasses.add(cls);
-      cls = builtins.getClass("unicode");
-      if (cls != null) stringClasses.add(cls);
-      myStringClasses = stringClasses;
-      // reference signatures
-      PyClass objectClass = builtins.getClass("object");
-      if (objectClass != null) {
-        final PyFunction methodRepr = objectClass.findMethodByName("__repr__", false, null);
-        if (methodRepr != null) myOneParamFunction = methodRepr;
-        final PyFunction methodDelattr = objectClass.findMethodByName("__delattr__", false, null);
-        if (methodDelattr != null) myTwoParamFunction = methodDelattr;
-      }
     }
-
 
     @Override
     public void visitPyClass(final @NotNull PyClass node) {
@@ -176,7 +151,7 @@ public final class PyPropertyDefinitionInspection extends PyInspection {
       }
       else if ("doc".equals(paramName)) {
         PyType type = myTypeEvalContext.getType(argument);
-        if (!(type instanceof PyClassType && myStringClasses.contains(((PyClassType)type).getPyClass()))) {
+        if (!PyTypeChecker.match(type, PyBuiltinCache.getInstance(argument).getStrType(), myTypeEvalContext)) {
           registerProblem(argument, PyPsiBundle.message("INSP.doc.param.should.be.str"));
         }
       }
@@ -255,7 +230,8 @@ public final class PyPropertyDefinitionInspection extends PyInspection {
       if (callable != null) {
         // signature: at least two params, more optionals ok; first arg 'self'
         final PyParameterList paramList = callable.getParameterList();
-        if (myTwoParamFunction != null && !PyUtil.isSignatureCompatibleTo(callable, myTwoParamFunction, myTypeEvalContext)) {
+        List<PyCallableParameter> parameters = callable.getParameters(myTypeEvalContext);
+        if (parameters.size() != 2 || !parameters.getFirst().isSelf()) {
           registerProblem(beingChecked, PyPsiBundle.message("INSP.setter.signature.advice"), new PyUpdatePropertySignatureQuickFix(true));
         }
         checkForSelf(paramList);
@@ -273,7 +249,8 @@ public final class PyPropertyDefinitionInspection extends PyInspection {
 
     private void checkOneParameter(PyCallable callable, PsiElement beingChecked, boolean isGetter) {
       final PyParameterList parameterList = callable.getParameterList();
-      if (myOneParamFunction != null && !PyUtil.isSignatureCompatibleTo(callable, myOneParamFunction, myTypeEvalContext)) {
+      final List<PyCallableParameter> parameters = callable.getParameters(myTypeEvalContext);
+      if (parameters.size() != 1 || !parameters.getFirst().isSelf()) {
         if (isGetter) {
           registerProblem(beingChecked, PyPsiBundle.message("INSP.getter.signature.advice"),
                           new PyUpdatePropertySignatureQuickFix(false));

@@ -8,7 +8,7 @@ import java.awt.Graphics
 import java.awt.Insets
 import javax.swing.border.Border
 
-/** Special border which could draw 'resize' line. */
+/** Special border that could draw 'resize' line. */
 class CollapsingComponentBorder(private val editor: Editor) : Border {
 
   /** True if the border is currently resized. */
@@ -20,7 +20,7 @@ class CollapsingComponentBorder(private val editor: Editor) : Border {
 
     val g2 = g.create()
     try {
-      g2.color = editor.notebookAppearance.codeCellBackgroundColor.get()
+      g2.color = editor.notebookAppearance.codeCellBackgroundColor()
       val insets = getBorderInsets(c)
       assert(insets.top + insets.left + insets.right == 0)
       val yDraw = y + height - insets.bottom / 2

@@ -6,19 +6,34 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.*
+import com.intellij.openapi.projectRoots.AdditionalDataConfigurable
+import com.intellij.openapi.projectRoots.JavaSdkType
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkAdditionalData
+import com.intellij.openapi.projectRoots.SdkModel
+import com.intellij.openapi.projectRoots.SdkModificator
+import com.intellij.openapi.projectRoots.SdkType
+import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.projectRoots.impl.DependentSdkType
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.util.system.OS
+import com.intellij.util.system.OS.CURRENT
 import org.jdom.Element
 import java.io.File
-import java.util.*
+import java.nio.file.Path
+import java.util.Properties
 import java.util.function.Consumer
+import java.util.function.Predicate
 import javax.swing.JComponent
 
 abstract class SdkTestCase : LightPlatformTestCase() {
@@ -135,7 +150,9 @@ abstract class SdkTestCase : LightPlatformTestCase() {
     override fun pickSdk(sdkTypeId: SdkTypeId,
                          sdkModel: SdkModel,
                          parentComponent: JComponent,
-                         selectedSdk: Sdk?): SdkDownloadTask? = null
+                         selectedSdk: Sdk?,
+                         sdkFilter: Predicate<JdkItem>?
+    ): SdkDownloadTask? = null
   }
 
   object TestSdkGenerator {
@@ -182,7 +199,7 @@ abstract class SdkTestCase : LightPlatformTestCase() {
     fun createNextDependentSdk(parentSdk: Sdk): Sdk {
       val name = "dependent-test-name (${createdSdkCounter++})"
       val versionString = "11"
-      val homePath = FileUtil.getTempDirectory() + "/jdk-$name"
+      val homePath = Path.of(FileUtilRt.getTempDirectory(), "jdk-$name").toCanonicalPath()
 
       val sdk = ProjectJdkTable.getInstance().createSdk(name, DependentTestSdkType)
       val sdkModificator = sdk.sdkModificator
@@ -198,8 +215,13 @@ abstract class SdkTestCase : LightPlatformTestCase() {
       val homePath = sdkInfo.homePath
       createFile("$homePath/release")
       createFile("$homePath/jre/lib/rt.jar")
-      createFile("$homePath/bin/javac")
-      createFile("$homePath/bin/java")
+      if (CURRENT == OS.Windows) {
+        createFile("$homePath/bin/javac.exe")
+        createFile("$homePath/bin/java.exe")
+      } else {
+        createFile("$homePath/bin/javac")
+        createFile("$homePath/bin/java")
+      }
       val properties = Properties()
       properties.setProperty("JAVA_FULL_VERSION", sdkInfo.versionString)
       File("$homePath/release").outputStream().use {

@@ -1,4 +1,5 @@
 // "Replace with safe (?.) call" "true"
+// K2_ERROR: Operator call is prohibited on a nullable receiver of type 'A?'. Use '?.'-qualified call instead.
 class A {
     operator fun plus(other: A) = this
 }

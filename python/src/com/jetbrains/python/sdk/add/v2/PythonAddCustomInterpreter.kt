@@ -207,7 +207,7 @@ internal class PythonAddCustomInterpreter<P : PathHolder>(
 
   private fun selectBestTool(createSdkInfoWithTool: CreateSdkInfoWithTool) {
     val (manager, configurators) = when (createSdkInfoWithTool.createSdkInfo) {
-      is CreateSdkInfo.WillCreateEnv -> {
+      is CreateSdkInfo.WillCreateEnv, is CreateSdkInfo.WillInstallTool -> {
         selectionMethod.set(PythonInterpreterSelectionMethod.CREATE_NEW)
         newInterpreterManager to newInterpreterCreators
       }

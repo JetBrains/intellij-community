@@ -1,4 +1,5 @@
 // "Add non-null asserted (s!!) call" "true"
+// K2_ERROR: Initializer type mismatch: expected 'String', actual 'String?'.
 class C {
     val s: String? = null
 }

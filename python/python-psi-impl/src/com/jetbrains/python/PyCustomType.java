@@ -328,7 +328,7 @@ public final class PyCustomType implements PyClassLikeType {
   @Override
   public @NotNull List<@NotNull PyTypeMember> findMember(@NotNull String name, @NotNull PyResolveContext resolveContext) {
     for (PyClassLikeType type : myTypesToMimic) {
-      List<PyTypeMember> members = type.findMember(name, resolveContext);
+      var members = type.findMember(name, resolveContext);
       if (!members.isEmpty()) {
         return members;
       }

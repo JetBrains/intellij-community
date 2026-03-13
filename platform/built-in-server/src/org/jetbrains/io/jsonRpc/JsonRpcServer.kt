@@ -16,7 +16,11 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.Consumer
 import com.intellij.util.SmartList
 import com.intellij.util.io.releaseIfError
-import io.netty.buffer.*
+import io.netty.buffer.ByteBuf
+import io.netty.buffer.ByteBufAllocator
+import io.netty.buffer.ByteBufUtf8Writer
+import io.netty.buffer.ByteBufUtil
+import io.netty.buffer.CompositeByteBuf
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntList
 import org.jetbrains.annotations.NonNls

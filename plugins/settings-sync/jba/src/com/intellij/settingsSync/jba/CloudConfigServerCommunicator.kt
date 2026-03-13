@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.PluginManagerCore.isRunningFromSources
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.settingsSync.core.AbstractServerCommunicator
+import com.intellij.settingsSync.core.InvalidVersionIdException
 import com.intellij.settingsSync.core.SettingsSyncBundle
 import com.intellij.settingsSync.core.SettingsSyncEventListener
 import com.intellij.settingsSync.core.SettingsSyncEvents
@@ -26,7 +27,7 @@ import java.net.URI
 import java.net.http.HttpResponse
 import java.util.concurrent.atomic.AtomicReference
 
-internal open class CloudConfigServerCommunicator(private val serverUrl: String?, private val jbaAuthService: JBAAuthService)
+open class CloudConfigServerCommunicator(private val serverUrl: String?, private val jbaAuthService: JBAAuthService)
   : AbstractServerCommunicator()
 {
   private val clientVersionContext = CloudConfigVersionContext()
@@ -102,7 +103,7 @@ internal open class CloudConfigServerCommunicator(private val serverUrl: String?
     else {
       LOG.error(e)
     }
-    return e.message ?: defaultMessage
+    return customizeErrorMessage(e) ?: defaultMessage
   }
 
   fun downloadSnapshot(filePath: String, version: FileVersionInfo): InputStream? {
@@ -128,7 +129,13 @@ internal open class CloudConfigServerCommunicator(private val serverUrl: String?
 
   override fun writeFileInternal(filePath: String, versionId: String?, content: InputStream) : String? {
     return clientVersionContext.doWithVersion(filePath, versionId) { filePath ->
-      client.write(filePath, content)
+      try {
+        client.write(filePath, content)
+      }
+      catch (e: com.jetbrains.cloudconfig.exception.InvalidVersionIdException) {
+        throw InvalidVersionIdException(e.message ?: "Invalid version id exception from server", e)
+      }
+
 
       val actualVersion: String? = clientVersionContext.get(filePath)
       if (actualVersion == null) {
@@ -213,8 +220,8 @@ internal open class CloudConfigServerCommunicator(private val serverUrl: String?
         val regionalUrl = RegionUrlMapper.tryMapUrlBlocking(URL_PROVIDER)
         val request = PlatformHttpClient.request(URI(regionalUrl))
         PlatformHttpClient.client().use { client ->
-          val response = PlatformHttpClient.checkResponse(client.send(request, HttpResponse.BodyHandlers.ofByteArray()))
-          val configUrl = JDOMUtil.load(response.body()).getAttributeValue("baseUrl")
+          val bytes = PlatformHttpClient.send(client, request, HttpResponse.BodyHandlers.ofByteArray())
+          val configUrl = JDOMUtil.load(bytes).getAttributeValue("baseUrl")
           LOG.info("Using SettingSync server URL: ${configUrl}")
           configUrl
         }

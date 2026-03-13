@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:jvm-native-trusted-roots"],
   runtime_deps = ["@lib//:jvm-native-trusted-roots"]
 )
+
+jvm_library(
+  name = "jvm-native-trusted-roots_test_lib",
+  module_name = "intellij.libraries.jvm.native.trusted.roots",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:jvm-native-trusted-roots"],
+  runtime_deps = [":jvm-native-trusted-roots"]
+)
 ### auto-generated section `build intellij.libraries.jvm.native.trusted.roots` end

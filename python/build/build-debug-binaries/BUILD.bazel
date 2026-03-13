@@ -6,4 +6,12 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )
+
+jvm_library(
+  name = "pycharm-community-build-debugBinaries_test_lib",
+  module_name = "intellij.pycharm.community.build.debugBinaries",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":pycharm-community-build-debugBinaries"]
+)
 ### auto-generated section `build intellij.pycharm.community.build.debugBinaries` end

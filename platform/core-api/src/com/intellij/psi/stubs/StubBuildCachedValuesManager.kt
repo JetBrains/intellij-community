@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.stubs.StubBuildCachedValuesManager.finishBuildingStubs
 import com.intellij.psi.stubs.StubBuildCachedValuesManager.getCachedValueIfBuildingStubs
 import com.intellij.psi.stubs.StubBuildCachedValuesManager.getCachedValueStubBuildOptimized
@@ -41,7 +42,6 @@ import kotlin.contracts.contract
  * as using a regular [com.intellij.psi.util.CachedValue] would be overkill; i.e., it would be more expensive to check if a CachedValue
  * is up to date than to compute the value.
  */
-@ApiStatus.Experimental
 object StubBuildCachedValuesManager {
 
   private val myStubBuildId = ThreadLocal<Long?>()
@@ -112,7 +112,7 @@ object StubBuildCachedValuesManager {
     provider: StubBuildCachedValueProvider<T, P>,
   ): T =
     computeCachedValue(
-      { psiElement.getNode() ?: psiElement },
+      { psiElement.takeIf { it !is PsiFile }?.getNode() ?: psiElement },
       provider.stubCacheKey,
       { provider.parametrizedCachedValueProvider.compute(psiElement).getValue() },
       {
@@ -133,12 +133,12 @@ object StubBuildCachedValuesManager {
    */
   @JvmStatic
   fun <T> getCachedValueStubBuildOptimized(
-    dataHolder: PsiElement,
+    psiElement: PsiElement,
     stubBuildingKey: Key<StubBuildCachedValue<T>>,
     provider: CachedValueProvider<T>,
   ): T =
     computeCachedValue(
-      { dataHolder.getNode() ?: dataHolder },
+      { psiElement.takeIf { it !is PsiFile }?.getNode() ?: psiElement },
       stubBuildingKey,
       {
         provider.compute().apply {
@@ -146,7 +146,7 @@ object StubBuildCachedValuesManager {
             throw IllegalStateException("Cached value provider returned null result. It is not allowed when using getCachedValueStubBuildOptimized.")
         }!!.value
       },
-      { CachedValuesManager.getCachedValue(dataHolder, provider) }
+      { CachedValuesManager.getCachedValue(psiElement, provider) }
     )
 
   class StubBuildCachedValueProvider<ResultType, ParameterType>(

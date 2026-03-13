@@ -1,6 +1,6 @@
 ### auto-generated section `build fleet.build.http` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_http",
@@ -14,11 +14,18 @@ create_kotlinc_options(
   x_lambdas = "class"
 )
 
+resourcegroup(
+  name = "http_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
 jvm_library(
   name = "http",
   module_name = "fleet.build.http",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True),
+  resources = [":http_resources"],
   kotlinc_opts = ":custom_http",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -38,23 +45,26 @@ jvm_library(
 jvm_library(
   name = "http_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcJvmTest/**/*.kt", "srcJvmTest/**/*.java", "srcJvmTest/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcJvmTest/**/*.kt", "srcJvmTest/**/*.java", "srcJvmTest/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_http",
   associates = [":http"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "//fleet/ktor/client/core",
+    "//fleet/ktor/client/core:core_test_lib",
     "//fleet/build/fs",
     "//fleet/build/fs:fs_test_lib",
     "@lib//:fleet-io-ktor-client-logging",
     "@lib//:slf4j-api",
     "//fleet/test-runtime",
+    "//fleet/test-runtime:test-runtime_test_lib",
     "@lib//:fleet-io-ktor-client-mock",
   ],
   exports = [
     "@lib//:kotlinx-coroutines-core",
     "//fleet/ktor/client/core",
+    "//fleet/ktor/client/core:core_test_lib",
   ]
 )
 ### auto-generated section `build fleet.build.http` end

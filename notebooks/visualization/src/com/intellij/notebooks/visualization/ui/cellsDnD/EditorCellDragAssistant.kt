@@ -261,7 +261,6 @@ class EditorCellDragAssistant(
     it.removeDropHighlight()
   }
 
-
   private fun deleteDropIndicatorForTargetCell(cell: EditorCell) = try {
     cell.view?.removeDropHighlightIfPresent()
   }

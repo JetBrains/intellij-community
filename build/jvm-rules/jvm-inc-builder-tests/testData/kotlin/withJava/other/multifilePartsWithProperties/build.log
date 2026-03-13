@@ -1,0 +1,13 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_withJava_other_multifilePartsWithProperties-a.kotlin_module
+  Utils.class
+  Utils__PartAKt.class
+  Utils__PartBKt.class
+End of files
+Compiling files:
+  kotlin/withJava/other/multifilePartsWithProperties/a/partA.kt
+  kotlin/withJava/other/multifilePartsWithProperties/a/partB.kt
+End of files
+------------------------------------------
+Exit code: OK

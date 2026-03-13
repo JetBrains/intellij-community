@@ -88,7 +88,6 @@ class KotlinFirStructureViewElement(
             info["icon"] = with(getIcon(false)) {
                 (this as? RowIcon)?.allIcons?.joinToString(transform = Icon::toString) ?: this?.toString()
             }
-            info["visibility"] = visibility.name ?: "none"
         }
     }
 

@@ -22,7 +22,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "//libraries/androidx-collections",
-    "//platform/plugins/parser/impl",
+    "//platform/pluginSystem/parser/impl",
   ]
 )
 
@@ -35,12 +35,17 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
     "//libraries/junit5",
+    "//libraries/junit5:junit5_test_lib",
     "//libraries/assertj-core",
+    "//libraries/assertj-core:assertj-core_test_lib",
     "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
     "//libraries/androidx-collections",
-    "//platform/plugins/parser/impl",
-    "//platform/plugins/parser/impl:impl_test_lib",
+    "//libraries/androidx-collections:androidx-collections_test_lib",
+    "//platform/pluginSystem/parser/impl",
+    "//platform/pluginSystem/parser/impl:impl_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.pluginGraph` end

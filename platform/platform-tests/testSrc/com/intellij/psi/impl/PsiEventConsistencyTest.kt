@@ -13,7 +13,13 @@ import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.impl.source.CharTableImpl
 import com.intellij.psi.impl.source.DummyHolder
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
-import com.intellij.psi.impl.source.tree.*
+import com.intellij.psi.impl.source.tree.ChangeUtil
+import com.intellij.psi.impl.source.tree.CompositeElement
+import com.intellij.psi.impl.source.tree.CompositePsiElement
+import com.intellij.psi.impl.source.tree.FileElement
+import com.intellij.psi.impl.source.tree.LeafElement
+import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.psi.impl.source.tree.TreeElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture

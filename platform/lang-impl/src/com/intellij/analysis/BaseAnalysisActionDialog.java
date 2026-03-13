@@ -21,7 +21,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.ScrollPaneConstants;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -110,7 +114,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     final var scrollPane = new JBScrollPane(panel);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.setBorder(null);
-    scrollPane.setPreferredSize(panel.getMinimumSize());
+    scrollPane.setPreferredSize(panel.getPreferredSize());
     return scrollPane;
   }
 

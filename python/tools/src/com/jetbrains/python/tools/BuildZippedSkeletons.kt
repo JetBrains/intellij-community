@@ -36,7 +36,7 @@ fun main() {
       val skeletonsDir = File(workingDir, "skeletons-${sdk.versionString!!.replace(" ", "_")}_" + abs(sdk.homePath!!.hashCode()))
       println("Generating skeletons in ${skeletonsDir.absolutePath}")
 
-      val refresher = PySkeletonRefresher(null, null, sdk, skeletonsDir.absolutePath, null, null)
+      val refresher = PySkeletonRefresher(null, sdk, skeletonsDir.absolutePath, null, null)
       refresher.generator
         .commandBuilder()
         .inPrebuildingMode()

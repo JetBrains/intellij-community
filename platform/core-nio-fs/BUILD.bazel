@@ -24,6 +24,15 @@ jvm_library(
   javac_opts = ":custom-javac-options",
   deps = ["@lib//:jetbrains-annotations"]
 )
+
+jvm_library(
+  name = "core-nio-fs_test_lib",
+  module_name = "intellij.platform.core.nio.fs",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  javac_opts = ":custom-javac-options",
+  runtime_deps = [":core-nio-fs"]
+)
 ### auto-generated section `build intellij.platform.core.nio.fs` end
 
 ### auto-generated section `build intellij.platform.core.nio.fs.tests` start
@@ -44,14 +53,18 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-nio-fs",
+    "//platform/core-nio-fs:core-nio-fs_test_lib",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "@lib//:io-mockk",
     "@lib//:io-mockk-jvm",
     "@lib//:junit5",
     "//libraries/kotlin/reflect",
+    "//libraries/kotlin/reflect:reflect_test_lib",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-test-assertions-core-jvm",
     "//libraries/mockito",
+    "//libraries/mockito:mockito_test_lib",
   ],
   runtime_deps = [":core-nio-fs-tests"]
 )

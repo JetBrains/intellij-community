@@ -27,4 +27,27 @@ jvm_library(
   ],
   exports = ["//platform/bookmarks"]
 )
+
+jvm_library(
+  name = "frontend_test_lib",
+  module_name = "intellij.platform.bookmarks.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//platform/bookmarks",
+    "//platform/bookmarks:bookmarks_test_lib",
+  ],
+  runtime_deps = [
+    ":frontend",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/bookmarks:bookmarks_test_lib",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/project/shared:project_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.bookmarks.frontend` end

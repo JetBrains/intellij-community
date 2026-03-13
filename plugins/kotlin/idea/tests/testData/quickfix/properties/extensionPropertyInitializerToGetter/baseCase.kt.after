@@ -1,4 +1,5 @@
 // "Convert extension property initializer to getter" "true"
+// K2_ERROR: Extension property cannot be initialized because it has no backing field.
 val String.foo: Int
     get() = 0
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertExtensionPropertyInitializerToGetterFix

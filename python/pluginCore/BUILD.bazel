@@ -22,4 +22,21 @@ jvm_library(
     "//python/impl.helperLocator:community-helpersLocator",
   ]
 )
+
+jvm_library(
+  name = "community-plugin_test_lib",
+  module_name = "intellij.python.community.plugin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":community-plugin",
+    "//platform/lang-api:lang_test_lib",
+    "//python/intellij.python.community.communityOnly:community-communityOnly_test_lib",
+    "//python/services/system-python:system-python_test_lib",
+    "//python/services/shared:shared_test_lib",
+    "//json/backend:backend_test_lib",
+    "//python/aliasProvider:aliasProvider_test_lib",
+    "//python/impl.helperLocator:community-helpersLocator_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.python.community.plugin` end

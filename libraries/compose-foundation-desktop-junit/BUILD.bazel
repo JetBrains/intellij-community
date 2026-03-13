@@ -20,4 +20,38 @@ jvm_library(
     "//libraries/hamcrest",
   ]
 )
+
+jvm_library(
+  name = "compose-foundation-desktop-junit_test_lib",
+  module_name = "intellij.libraries.compose.foundation.desktop.junit",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//libraries/compose-foundation-desktop",
+    "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
+    "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-junit4-desktop",
+    "//libraries/kotlinx/coroutines/test",
+    "//libraries/kotlinx/coroutines/test:test_test_lib",
+    "//libraries/junit4",
+    "//libraries/junit4:junit4_test_lib",
+    "//libraries/hamcrest",
+    "//libraries/hamcrest:hamcrest_test_lib",
+  ],
+  runtime_deps = [
+    ":compose-foundation-desktop-junit",
+    "//libraries/compose-foundation-desktop",
+    "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
+    "//libraries/skiko",
+    "//libraries/skiko:skiko_test_lib",
+    "//libraries/jbr",
+    "//libraries/jbr:jbr_test_lib",
+    "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-junit4-desktop",
+    "//libraries/kotlinx/coroutines/test",
+    "//libraries/kotlinx/coroutines/test:test_test_lib",
+    "//libraries/junit4",
+    "//libraries/junit4:junit4_test_lib",
+    "//libraries/hamcrest",
+    "//libraries/hamcrest:hamcrest_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.libraries.compose.foundation.desktop.junit` end

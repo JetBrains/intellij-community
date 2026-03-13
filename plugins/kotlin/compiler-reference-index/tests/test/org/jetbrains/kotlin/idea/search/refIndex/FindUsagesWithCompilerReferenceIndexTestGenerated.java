@@ -837,6 +837,82 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
+            public static class TestGetOperatorNonNullableImplicitType extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("getOperatorNonNullableImplicitType.0.kt")
+                public void testGetOperatorNonNullableImplicitType() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/conventions/getOperatorNonNullableImplicitType.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
+            public static class TestGetOperatorNullableExplicitType extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("getOperatorNullableExplicitType.0.kt")
+                public void testGetOperatorNullableExplicitType() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/conventions/getOperatorNullableExplicitType.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
+            public static class TestGetOperatorNullableFunctionCall extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("getOperatorNullableFunctionCall.0.kt")
+                public void testGetOperatorNullableFunctionCall() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/conventions/getOperatorNullableFunctionCall.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
+            public static class TestGetOperatorNullableImplicitType extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("getOperatorNullableImplicitType.0.kt")
+                public void testGetOperatorNullableImplicitType() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/conventions/getOperatorNullableImplicitType.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
             public static class TestInc extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull

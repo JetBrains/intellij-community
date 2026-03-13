@@ -9,7 +9,6 @@ import com.intellij.codeInsight.template.PsiTypeResult;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -42,9 +41,9 @@ public class TypeExpression extends Expression {
   @Override
   public Result calculateResult(ExpressionContext context) {
     final Project project = context.getProject();
-    Editor editor = context.getEditor();
-    if (editor != null) {
-      Document document = editor.getDocument();
+    PsiFile file = context.getPsiFile();
+    if (file != null) {
+      Document document = file.getFileDocument();
       PsiDocumentManager.getInstance(project).commitDocument(document);
     }
     if (myItems.isEmpty()) return null;
@@ -66,9 +65,9 @@ public class TypeExpression extends Expression {
   @Override
   public LookupElement[] calculateLookupItems(ExpressionContext context) {
     if (myItems.size() <= 1) return null;
-    Editor editor = context.getEditor();
-    if (editor != null) {
-      Document document = editor.getDocument();
+    PsiFile file = context.getPsiFile();
+    if (file != null) {
+      Document document = file.getFileDocument();
       PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
     }
 

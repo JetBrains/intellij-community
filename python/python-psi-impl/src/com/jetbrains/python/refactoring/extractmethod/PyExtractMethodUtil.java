@@ -95,7 +95,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.jetbrains.python.psi.types.PyTypeUtil.collectTypeComponentsFromType;
+import static com.jetbrains.python.psi.types.PyTypeUtil.collectTypeComponents;
 
 public final class PyExtractMethodUtil {
   public static final String NAME = "extract.method.name";
@@ -460,7 +460,7 @@ public final class PyExtractMethodUtil {
       TypeEvalContext context = TypeEvalContext.userInitiated(project, file);
       Set<String> allTypesAsStrings = new HashSet<>();
       for (PyType type : methodSettings.getAllTypes()) {
-        for (PyType type2 : collectTypeComponentsFromType(type, context)) {
+        for (PyType type2 : collectTypeComponents(type, context)) {
           if (type2 == null || type2.getDeclarationElement() == null || type2.getDeclarationElement().isValid()) {
             String typeFqn = PythonDocumentationProvider.getFullyQualifiedTypeHint(type2, context);
             if (Strings.isNotEmpty(typeFqn)) {

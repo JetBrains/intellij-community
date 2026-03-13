@@ -19,7 +19,6 @@ import com.jetbrains.python.sdk.InvalidSdkException;
 
 
 public interface PyPregeneratedSkeletons {
-  boolean copyPregeneratedSkeleton(String moduleName, String skeletonDir) throws InvalidSdkException;
 
   void unpackPreGeneratedSkeletons(String skeletonDir) throws InvalidSdkException;
 }

@@ -44,17 +44,17 @@ class EditorCellInput(val cell: EditorCell) : EditorCellViewComponent() {
     return bounds.y + delimiterPanelSize to bounds.height - delimiterPanelSize
   }
 
-  private fun toggleFolding() = editor.updateManager.update { ctx ->
+  private fun toggleFolding() = editor.notebookViewUpdater.update { ctx ->
     folded = !folded
     (component as? InputComponent)?.updateFolding(ctx, folded)
   }
 
-  private fun fold() = editor.updateManager.update { ctx ->
+  private fun fold() = editor.notebookViewUpdater.update { ctx ->
     folded = true
     (component as? InputComponent)?.updateFolding(ctx, true)
   }
 
-  private fun unfold() = editor.updateManager.update { ctx ->
+  private fun unfold() = editor.notebookViewUpdater.update { ctx ->
     folded = false
     (component as? InputComponent)?.updateFolding(ctx, false)
   }
@@ -77,7 +77,7 @@ class EditorCellInput(val cell: EditorCell) : EditorCellViewComponent() {
   }
 
   fun updateInput(): Unit = runInEdt {
-    editor.updateManager.update { ctx ->
+    editor.notebookViewUpdater.update { ctx ->
       (component as? InputComponent)?.updateInput(ctx)
       (component as? CustomFoldingEditorCellViewComponent)?.updateCustomComponent()
     }

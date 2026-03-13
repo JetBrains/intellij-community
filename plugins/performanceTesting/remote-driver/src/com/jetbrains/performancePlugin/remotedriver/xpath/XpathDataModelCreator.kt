@@ -2,6 +2,7 @@
 
 package com.jetbrains.performancePlugin.remotedriver.xpath
 
+import com.intellij.util.createDocumentBuilder
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextParser
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextToKeyCache
 import org.assertj.swing.edt.GuiActionRunner
@@ -21,7 +22,6 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.function.Supplier
 import javax.swing.JComponent
-import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.math.absoluteValue
 
 class XpathDataModelCreator(val onlyVisibleComponents: Boolean = true) {
@@ -293,7 +293,7 @@ class XpathDataModelCreator(val onlyVisibleComponents: Boolean = true) {
 
   fun create(rootComponent: Component?, includeRoot: Boolean = false, targetComponent: Component? = null): Document {
 
-    val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument()
+    val doc = createDocumentBuilder().newDocument()
 
     GuiActionRunner.execute(object : GuiTask() {
       override fun executeInEDT() {

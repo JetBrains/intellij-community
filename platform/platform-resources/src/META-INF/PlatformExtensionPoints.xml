@@ -178,7 +178,7 @@
                     dynamic="true"/>
 
     <extensionPoint name="openInBrowserFloatingToolbarSuppressor"
-                    interface="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserFloatingToolbarSuppressor"
+                    interface="com.intellij.ide.browsers.actions.OpenInBrowserFloatingToolbarSuppressor"
                     dynamic="true"/>
 
     <extensionPoint name="actionPromoter" interface="com.intellij.openapi.actionSystem.ActionPromoter" dynamic="true"/>
@@ -216,6 +216,7 @@
     </extensionPoint>
 
     <extensionPoint name="defaultToolWindowLayout" interface="com.intellij.toolWindow.DefaultToolWindowLayoutExtension" dynamic="true"/>
+    <extensionPoint name="toolWindowLayoutProfileProvider" interface="com.intellij.toolWindow.ToolWindowLayoutProfileProvider" dynamic="true"/>
     <extensionPoint name="toolWindow.splitContentProvider" beanClass="com.intellij.toolWindow.ToolWindowSplitContentProviderBean" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.toolWindow.ToolWindowSplitContentProvider"/>
     </extensionPoint>
@@ -601,15 +602,13 @@
 
     <extensionPoint name="idePerformanceListener" interface="com.intellij.diagnostic.PerformanceListener" dynamic="true"/>
 
-    <extensionPoint name="mac.dockMenuActions" interface="com.intellij.ui.mac.MacDockMenuActions" dynamic="false"/>
+    <extensionPoint name="mac.dockMenuActions" interface="com.intellij.ui.mac.MacDockMenuActions" dynamic="true"/>
 
     <extensionPoint name="textEditorNecromancerAwaker" interface="com.intellij.openapi.editor.impl.zombie.NecromancerAwaker" dynamic="true"/>
 
     <extensionPoint name="toolbarQuickAction" beanClass="com.intellij.ide.ui.customization.ToolbarAddQuickActionInfoBean" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.ide.ui.customization.ToolbarAddQuickActionInfo"/>
     </extensionPoint>
-
-    <extensionPoint name="meetNewUiCustomization" interface="com.intellij.ide.ui.experimental.meetNewUi.MeetNewUiCustomization" dynamic="true"/>
 
     <extensionPoint name="notificationRouter" interface="com.intellij.notification.NotificationRouter" dynamic="true"/>
     <extensionPoint name="usageFilteringRuleCustomizer" interface="com.intellij.usages.rules.UsageFilteringRuleCustomizer" dynamic="true"/>
@@ -715,6 +714,15 @@
     <extensionPoint name="projectStorePathCustomizer"
                     interface="com.intellij.configurationStore.ProjectStorePathCustomizer"
                     dynamic="true"/>
+
+    <extensionPoint name="pluginCategoryPromotionProvider"
+                    interface="com.intellij.ide.plugins.PluginCategoryPromotionProvider"
+                    dynamic="false"/>
+
+    <extensionPoint name="fileChooserCustomizer"
+                    interface="com.intellij.openapi.fileChooser.FileChooserCustomizer"
+                    dynamic="true"/>
+
 
     <extensionPoint name="openAnotherToolHandler" interface="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.OpenAnotherToolHandler" dynamic="true"/>
   </extensionPoints>

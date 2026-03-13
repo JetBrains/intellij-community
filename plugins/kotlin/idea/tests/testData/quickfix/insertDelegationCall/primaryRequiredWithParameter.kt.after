@@ -1,5 +1,6 @@
 // "Insert 'this()' call" "true"
 // ERROR: None of the following functions can be called with the arguments supplied: <br>public constructor A(x: Int) defined in A<br>public constructor A(x: String) defined in A
+// K2_ERROR: Primary constructor call expected.
 // K2_AFTER_ERROR: No value passed for parameter 'x'.
 // K2_AFTER_ERROR: None of the following candidates is applicable:<br><br>constructor(x: Int): A<br>constructor(x: String): A
 

@@ -1,5 +1,6 @@
 // "Replace 'emptyList<Int>()' with 'mutableListOf<Int>()'" "true"
 // PRIORITY: HIGH
+// K2_ERROR: Return type mismatch: expected 'MutableList<Int>', actual 'List<Int>'.
 
 fun foo(): MutableList<Int> {
     return mutableListOf<Int>()<caret>

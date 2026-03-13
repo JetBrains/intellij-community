@@ -13,7 +13,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.platform.pasta.common.DocumentEntity
 import com.intellij.util.Processor
 import java.beans.PropertyChangeListener
-import java.util.*
+import java.util.Collections
 
 
 internal class AdDocument(private val entity: DocumentEntity) : DocumentEx {

@@ -1,4 +1,6 @@
 // "Change to 'return@foo'" "true"
+// K2_ERROR: 'return' is prohibited here.
+// K2_ERROR: Return type mismatch: expected 'Unit', actual 'Int'.
 
 fun foo(f:()->Int){}
 

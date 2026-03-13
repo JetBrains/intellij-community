@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.productLayout.validator
 
 import com.intellij.platform.pluginGraph.ContentModuleName
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.productLayout.TestFailureLogger
@@ -15,7 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 @ExtendWith(TestFailureLogger::class)
 class PluginContentDuplicatesValidatorTest {
   @Test
-  fun `reports duplicate between production and test plugin`() {
+  fun `reports duplicate between production and test plugin`(): Unit = runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
       product("IDEA") {
         bundlesPlugin("prod.plugin")
@@ -26,7 +27,7 @@ class PluginContentDuplicatesValidatorTest {
     }
 
     val model = testGenerationModel(graph)
-    val errors = runBlocking { runValidationRule(PluginContentDuplicatesValidator, model) }
+    val errors = runValidationRule(PluginContentDuplicatesValidator, model)
 
     assertThat(errors).hasSize(1)
     val error = errors[0] as DuplicatePluginContentModulesError
@@ -38,7 +39,7 @@ class PluginContentDuplicatesValidatorTest {
   }
 
   @Test
-  fun `ignores duplicate between production plugins`() {
+  fun `ignores duplicate between production plugins`(): Unit = runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
       product("IDEA") {
         bundlesPlugin("plugin.a")
@@ -49,13 +50,13 @@ class PluginContentDuplicatesValidatorTest {
     }
 
     val model = testGenerationModel(graph)
-    val errors = runBlocking { runValidationRule(PluginContentDuplicatesValidator, model) }
+    val errors = runValidationRule(PluginContentDuplicatesValidator, model)
 
     assertThat(errors).isEmpty()
   }
 
   @Test
-  fun `ignores duplicates between test plugins`() {
+  fun `ignores duplicates between test plugins`(): Unit = runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
       product("IDEA") {
         bundlesTestPlugin("test.a")
@@ -66,7 +67,7 @@ class PluginContentDuplicatesValidatorTest {
     }
 
     val model = testGenerationModel(graph)
-    val errors = runBlocking { runValidationRule(PluginContentDuplicatesValidator, model) }
+    val errors = runValidationRule(PluginContentDuplicatesValidator, model)
 
     assertThat(errors).isEmpty()
   }

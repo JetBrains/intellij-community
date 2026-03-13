@@ -140,7 +140,6 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
         new Pair<>("OutOfBoundsTypeVariable.java", 21),  // see: IDEA-377707 (also see the commented case in warning matchers)
         new Pair<>("TypeParameterBounds.java", 40), // see: IDEA-377707
 
-        new Pair<>("AugmentedInferenceAgreesWithBaseInference.java", 33), // see: IDEA-377683
         new Pair<>("NullnessUnspecifiedTypeParameter.java", 33), // see: IDEA-377683
         new Pair<>("TypeVariableMinusNullVsTypeVariable.java", 28), // see: IDEA-377683
         new Pair<>("TypeVariableMinusNullVsTypeVariable.java", 30), // see: IDEA-377683
@@ -206,9 +205,7 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
       Set.of(
         new Pair<>("NotNullMarkedUseOfWildcardAsTypeArgument.java", 30), //IDEA-380248
         new Pair<>("SameTypeTypeVariable.java", 31), //IDEA-380143
-        new Pair<>("SameTypeTypeVariable.java", 51), //IDEA-380143
-        new Pair<>("SuperVsObject.java", 24), // see: IDEA-379303
-        new Pair<>("SuperNullableForNonNullableTypeParameter.java", 27) // see: IDEA-379303
+        new Pair<>("SameTypeTypeVariable.java", 51) //IDEA-380143
       )
     )
   );
@@ -415,10 +412,12 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
   private static class SkipIndividuallyFilter implements ErrorFilter {
     private final Set<Pair<String, Integer>> places;
     private final Set<Pair<String, Integer>> unusedPlaces;
+    private final Map<Pair<String, Integer>, Integer> bothUsedPlaces;
 
     private SkipIndividuallyFilter(Set<Pair<String, Integer>> places) {
       this.places = places;
       this.unusedPlaces = new HashSet<>(places);
+      this.bothUsedPlaces = StreamEx.of(places).toMap(t -> t, t -> 2);
     }
 
     @Override
@@ -443,6 +442,7 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
     private boolean filter(Pair<@NotNull @NlsSafe String, Integer> pair) {
       if (places.contains(pair)) {
         unusedPlaces.remove(pair);
+        bothUsedPlaces.merge(pair, -1, Integer::sum);
         return true;
       }
       return false;
@@ -450,6 +450,11 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
 
     @Override
     public void reportUnused() {
+      for (Map.Entry<Pair<String, Integer>, Integer> entry : bothUsedPlaces.entrySet()) {
+        if(entry.getValue() == 0) {
+          unusedPlaces.add(entry.getKey());
+        }
+      }
       if (unusedPlaces.isEmpty()) return;
       System.out.println("Some filters were unused; probably they are not actual anymore and should be excluded:\n"
                          + StringUtil.join(unusedPlaces, "\n"));

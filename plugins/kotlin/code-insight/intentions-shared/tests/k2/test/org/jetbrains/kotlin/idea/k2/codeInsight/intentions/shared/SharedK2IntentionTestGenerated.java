@@ -1392,6 +1392,11 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
             runTest("../testData/intentions/introduceBackingProperty/expectClass.kt");
         }
 
+        @TestMetadata("explicitBackingField.kt")
+        public void testExplicitBackingField() throws Exception {
+            runTest("../testData/intentions/introduceBackingProperty/explicitBackingField.kt");
+        }
+
         @TestMetadata("inapplicableAbstractProperty.kt")
         public void testInapplicableAbstractProperty() throws Exception {
             runTest("../testData/intentions/introduceBackingProperty/inapplicableAbstractProperty.kt");

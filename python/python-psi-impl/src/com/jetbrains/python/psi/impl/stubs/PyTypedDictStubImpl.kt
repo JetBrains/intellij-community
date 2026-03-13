@@ -59,7 +59,7 @@ class PyTypedDictStubImpl private constructor(
       return if (assignedValue is PyCallExpression) create(assignedValue) else null
     }
 
-    fun create(expression: PyCallExpression): PyTypedDictStub? {
+    private fun create(expression: PyCallExpression): PyTypedDictStub? {
       val calleeReference = expression.callee as? PyReferenceExpression ?: return null
       val calleeName = getCalleeName(calleeReference) ?: return null
 
@@ -92,7 +92,7 @@ class PyTypedDictStubImpl private constructor(
       val calleeName = PyPsiUtils.asQualifiedName(referenceExpression) ?: return null
 
       for (name in PyResolveUtil.resolveImportedElementQNameLocally(referenceExpression).map { it.toString() }) {
-        if (PyTypedDictTypeProvider.nameIsTypedDict(name)) {
+        if (PyTypedDictTypeProvider.Helper.nameIsTypedDict(name)) {
           return calleeName
         }
       }

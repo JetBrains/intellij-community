@@ -397,6 +397,12 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       .orElse(null);
   }
 
+  @Override
+  public @Nullable PyCallableParameterVariadicType getParametersType(@NotNull TypeEvalContext context) {
+    List<PyCallableParameter> parameters = getParameters(context);
+    return parameters != null ? new PyCallableParameterListTypeImpl(parameters) : null;
+  }
+
   private static boolean isMethodType(@NotNull PyClassType type) {
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(type.getPyClass());
     return type.equals(builtinCache.getClassMethodType()) ||

@@ -6,6 +6,7 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.ProjectUtil.FolderOpeningMode.AS_FOLDER
 import com.intellij.ide.impl.ProjectUtil.FolderOpeningMode.AS_PROJECT
 import com.intellij.ide.impl.SelectProjectOpenProcessorDialog
+import com.intellij.openapi.project.TestOpenMode.ModeFileOrFolderDefault
 import com.intellij.openapi.project.TestOpenMode.ModeFolderAsFolder
 import com.intellij.openapi.project.TestOpenMode.ModeFolderAsProject
 import com.intellij.openapi.project.TestProjectSource.SourceCLI
@@ -15,10 +16,15 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.checkDefaultProjectAsTemplate
+import com.intellij.testFramework.useProject
 import com.intellij.util.io.createDirectories
+import com.intellij.util.io.createParentDirectories
 import com.intellij.workspaceModel.ide.ProjectRootEntity
 import com.intellij.workspaceModel.ide.toPath
 import kotlinx.coroutines.Dispatchers
@@ -37,15 +43,15 @@ import kotlin.io.path.writeText
 // clean: .idea doesn't exists
 // existing: project directory exists
 // nested: .idea exists and ../.idea exists too
-// multibuild: does not exist, and there are 2 marker build files (pom.xml and build.gradle)
-// TODO: open regular file
+// multibuild: .idea does not exist, and there are 2 marker build files (pom.xml and build.gradle)
+// regular file: regular file that is not a folder
 
 // with ability to attach - there is some defined ProjectAttachProcessor extension (e.g. WS, PS).
 // with inability to attach - there is no any defined ProjectAttachProcessor extension (e.g. IU, IC).
 
 
 enum class TestProjectSource { SourceOpenFileAction, SourceCLI }
-enum class TestOpenMode { ModeFolderAsProject, ModeFolderAsFolder }
+enum class TestOpenMode { ModeFileOrFolderDefault, ModeFolderAsProject, ModeFolderAsFolder }
 
 @RunWith(Parameterized::class)
 internal class OpenProjectTest(private val opener: Opener) {
@@ -75,7 +81,7 @@ internal class OpenProjectTest(private val opener: Opener) {
         // I don't have strong opinion about defaultProjectTemplateShouldBeAppliedOverride.
         // Weak opinion: a folder is not a project => we don't need default project settings.
         // Feel free to change the test if you have strong opinion about desired behavior.
-        Opener(SourceCLI, ModeFolderAsFolder, expectedModules = emptyList(), expectedRoots = listOf($$"$ROOT$"), defaultProjectTemplateShouldBeAppliedOverride = false) {
+        Opener(SourceCLI, ModeFileOrFolderDefault, expectedModules = emptyList(), expectedRoots = listOf($$"$ROOT$"), defaultProjectTemplateShouldBeAppliedOverride = false) {
           runBlocking { CommandLineProcessor.doOpenFileOrProject(it, createOrOpenExistingProject = false, false) }.project!!
         },
       )
@@ -148,9 +154,9 @@ internal class OpenProjectTest(private val opener: Opener) {
   @Test
   fun `open multibuild existing project dir with inability to attach`() = runBlocking(Dispatchers.Default) {
     Assume.assumeTrue(
-      "This test does not handle ProjectAsProject mode yet, because `null` from SelectProjectOpenProcessorDialog" +
+      "This test does not handle ModeFolderAsProject mode yet, because `null` from SelectProjectOpenProcessorDialog" +
       " has different behavior when opening folder from CLI and from open action, and we don't want to cement this behavior in tests.",
-      opener.mode == ModeFolderAsFolder,
+      opener.mode != ModeFolderAsProject,
     )
 
     val processorNames = ProjectOpenProcessor.EXTENSION_POINT_NAME.extensionList.map(ProjectOpenProcessor::name)
@@ -165,6 +171,53 @@ internal class OpenProjectTest(private val opener: Opener) {
     openWithOpenerAndAssertProjectState(projectDir, opener.defaultProjectTemplateShouldBeAppliedOverride ?: false) {
       assertThat(suggestedProcessors).`as`("SelectProjectOpenProcessorDialog should not be shown").isNull()
     }
+  }
+
+  @Test
+  fun `open project then open regular file with inability to attach`() = runBlocking(Dispatchers.Default) {
+    Assume.assumeTrue(
+      "Ignore ModeFolderAsProject/ModeFolderAsFolder, because we are checking open of regular files here, not folders",
+      opener.mode != ModeFolderAsProject && opener.mode != ModeFolderAsFolder,
+    )
+
+    val projectDir = tempDir.newPath("project/project")
+    projectDir.resolve(".idea").createDirectories()
+    val javaFileNextToDotIdea = projectDir.resolve("MyClassInProjectDir.java")
+    javaFileNextToDotIdea.writeText("public class MyClassInProjectDir {}")
+    val javaFileInSubdirectory = projectDir.resolve("subdir/MyClassInSubdir.java")
+    javaFileInSubdirectory.createParentDirectories()
+    javaFileInSubdirectory.writeText("public class MyClassInSubdir {}")
+
+    val javaFileAboveProjectDirectory = projectDir.parent.resolve("MyClassAboveProjectDirectory.java")
+    javaFileAboveProjectDirectory.writeText("public class MyClassAboveProjectDirectory {}")
+
+    ExtensionTestUtil.maskExtensions(ProjectAttachProcessor.EP_NAME, listOf(), disposableRule.disposable)
+    opener.opener(projectDir)!!.useProject { openedProject ->
+      var project = opener.opener(javaFileNextToDotIdea)
+      // the file should be opened in the already opened project
+      assertThat(project).isSameAs(openedProject)
+
+      project = opener.opener(javaFileInSubdirectory)
+      assertThat(project).isSameAs(openedProject)
+
+      project = opener.opener(javaFileAboveProjectDirectory)
+      assertThat(project).isSameAs(openedProject)
+    }
+    Unit
+  }
+
+  @Test
+  fun `open project then open the the same valid existing project dir with inability to attach`() = runBlocking(Dispatchers.Default) {
+    val projectDir = tempDir.newPath("project")
+    projectDir.resolve(".idea").createDirectories()
+
+    ExtensionTestUtil.maskExtensions(ProjectAttachProcessor.EP_NAME, listOf(), disposableRule.disposable)
+    opener.opener(projectDir)!!.useProject { openedProject ->
+      val project = opener.opener(projectDir)
+      // this should bring already opened project to foreground
+      assertThat(project).isSameAs(openedProject)
+    }
+    Unit
   }
 
   private fun setupMultibuildProject(): Path {

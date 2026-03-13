@@ -66,11 +66,6 @@ public class AssignmentEvaluator implements ModifiableEvaluator {
   }
 
   @Override
-  public Modifier getModifier() {
-    return myLeftEvaluator.getModifier();
-  }
-
-  @Override
   public String toString() {
     return myLeftEvaluator + " = " + myRightEvaluator;
   }

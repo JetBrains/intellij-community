@@ -1,11 +1,18 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors;
 
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.AppMode;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.events.*;
+import com.intellij.internal.statistic.eventLog.events.BooleanEventField;
+import com.intellij.internal.statistic.eventLog.events.EnumEventField;
+import com.intellij.internal.statistic.eventLog.events.EventField;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId1;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.internal.statistic.eventLog.events.StringEventField;
+import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -13,7 +20,11 @@ import com.intellij.ui.LicensingFacade;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -84,7 +95,7 @@ public final class EAPUsageCollector extends ApplicationUsagesCollector {
     if (isJBTeam()) {
       data.add(IS_JB_TEAM.with(true));
     }
-    String metadata = licensingFacade.metadata;
+    String metadata = licensingFacade.fusMetadata;
     if (StringUtil.isNotEmpty(metadata)) {
       data.add(METADATA.with(metadata));
     }

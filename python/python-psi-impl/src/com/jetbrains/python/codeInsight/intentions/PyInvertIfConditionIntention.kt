@@ -53,7 +53,6 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
  */
 class PyInvertIfConditionIntention : PsiUpdateModCommandAction<PsiElement>(PsiElement::class.java) {
   private companion object {
-    val insignificantTokenSet = TokenSet.create(TokenType.WHITE_SPACE, PyTokenTypes.END_OF_LINE_COMMENT)
     const val PYLINT_COMMENT_PREFIX = "# pylint:"
   }
 
@@ -400,3 +399,5 @@ class PyInvertIfConditionIntention : PsiUpdateModCommandAction<PsiElement>(PsiEl
   }
 
 }
+
+private val insignificantTokenSet = TokenSet.create(TokenType.WHITE_SPACE, PyTokenTypes.END_OF_LINE_COMMENT)

@@ -3,7 +3,11 @@ package com.intellij.codeInsight.hints.settings
 
 import com.intellij.codeInsight.codeVision.CodeVisionProvider
 import com.intellij.codeInsight.codeVision.settings.CodeVisionGroupSettingProvider
-import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.InlayGroup
+import com.intellij.codeInsight.hints.InlayHintsProviderFactory
+import com.intellij.codeInsight.hints.InlayHintsSettings
+import com.intellij.codeInsight.hints.InlayParameterHintsExtension
+import com.intellij.codeInsight.hints.withSettings
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.ui.search.SearchableOptionContributor
 import com.intellij.ide.ui.search.SearchableOptionProcessor

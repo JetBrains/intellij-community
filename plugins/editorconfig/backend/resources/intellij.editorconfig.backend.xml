@@ -2,7 +2,6 @@
 <idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.platform.backend"/>
-    <module name="intellij.spellchecker"/>
     <module name="intellij.editorconfig.common"/>
   </dependencies>
   <actions resource-bundle="messages.EditorConfigBundle">
@@ -43,9 +42,7 @@
         order="last"
         implementationClass="org.editorconfig.configmanagement.completion.EditorConfigUnsetCompletionContributor"/>
     <langCodeStyleSettingsProvider implementation="org.editorconfig.language.codestyle.EditorConfigLanguageCodeStyleSettingsProvider"/>
-    <spellchecker.support
-        language="EditorConfig"
-        implementationClass="org.editorconfig.language.spellchecker.EditorConfigSpellcheckerStrategy"/>
+
     <findUsagesHandlerFactory implementation="org.editorconfig.language.codeinsight.findusages.EditorConfigFindUsagesHandlerFactory"/>
     <breadcrumbsInfoProvider implementation="org.editorconfig.language.breadcrumbs.EditorConfigBreadcrumbsProvider"/>
     <renameHandler implementation="org.editorconfig.language.codeinsight.refactoring.EditorConfigRenameHandler"/>

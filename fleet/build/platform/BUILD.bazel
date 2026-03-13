@@ -1,6 +1,6 @@
 ### auto-generated section `build fleet.build.platform` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_platform",
@@ -14,11 +14,18 @@ create_kotlinc_options(
   x_lambdas = "class"
 )
 
+resourcegroup(
+  name = "platform_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
 jvm_library(
   name = "platform",
   module_name = "fleet.build.platform",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True),
+  resources = [":platform_resources"],
   kotlinc_opts = ":custom_platform",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -26,5 +33,14 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinx-coroutines-core",
   ]
+)
+
+jvm_library(
+  name = "platform_test_lib",
+  module_name = "fleet.build.platform",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_platform",
+  runtime_deps = [":platform"]
 )
 ### auto-generated section `build fleet.build.platform` end

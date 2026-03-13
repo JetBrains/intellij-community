@@ -14,6 +14,20 @@ jvm_library(
     "//platform/util/coroutines",
   ]
 )
+
+jvm_library(
+  name = "instanceContainer_test_lib",
+  module_name = "intellij.platform.instanceContainer",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":instanceContainer",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.instanceContainer` end
 
 ### auto-generated section `build intellij.platform.instanceContainer.tests` start
@@ -31,11 +45,15 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "@lib//:kotlin-test",
     "@lib//:junit5",
     "//platform/instanceContainer",
+    "//platform/instanceContainer:instanceContainer_test_lib",
     "//platform/testFramework/common",
+    "//platform/testFramework/common:common_test_lib",
     "//platform/testFramework/core",
+    "//platform/testFramework/core:core_test_lib",
   ],
   runtime_deps = [":instanceContainer-tests"]
 )

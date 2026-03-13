@@ -1,6 +1,12 @@
 // COMPILER_ARGUMENTS: -Xexplicit-backing-fields
 // PROBLEM: none
-class Foo {
-    private var _x = mutableListOf<Int>()
-    val x: List<Int> get() = _x<caret>
+// K2_ERROR: Property must be initialized.
+interface Parent
+class Child : Parent
+
+class Point {
+    private val _prop = Child()
+
+    var prop: Parent
+        get() = _prop<caret>
 }

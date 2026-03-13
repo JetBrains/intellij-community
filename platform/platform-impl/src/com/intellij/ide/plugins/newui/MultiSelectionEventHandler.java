@@ -1,7 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,9 +16,18 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.event.ComponentEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -91,22 +106,30 @@ public final class MultiSelectionEventHandler extends EventHandler {
             ensureMoveSingleSelection(component);
           }
 
-          DefaultActionGroup group = new DefaultActionGroup();
-          component.createPopupMenu(group, getSelection());
-          if (group.getChildrenCount() == 0) {
+          List<ListPluginComponent> selection = getSelection();
+          if (component.getCustomizer() != null) {
+            Component eventComponent = event.getComponent();
+            int eventX = event.getX();
+            int eventY = event.getY();
+            PluginModelAsyncOperationsExecutor.INSTANCE.loadPopupMenuActions(
+              component,
+              selection,
+              popupActions -> {
+                DefaultActionGroup group = new DefaultActionGroup();
+                popupActions.forEach(group::add);
+
+                showPopup(component, group, selection, eventComponent, eventX, eventY);
+              });
+            event.consume();
             return;
           }
 
-          try {
-            PluginsViewCustomizerKt.getListPluginComponentCustomizer().processCreatePopupMenu(component, group, getSelection());
+          DefaultActionGroup group = new DefaultActionGroup();
+          component.createPopupMenu(group, selection);
+          if (group.getChildrenCount() == 0) {
+            return;
           }
-          catch (Exception e) {
-            LOG.error("Error while customizing popup menu", e);
-          }
-
-          ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("PluginManagerConfigurable", group);
-          popupMenu.setTargetComponent(component);
-          popupMenu.getComponent().show(event.getComponent(), event.getX(), event.getY());
+          showPopup(component, group, selection, event.getComponent(), event.getX(), event.getY());
           event.consume();
         }
       }
@@ -572,6 +595,28 @@ public final class MultiSelectionEventHandler extends EventHandler {
         component.setSelection(SelectionType.HOVER);
       }
     }, ModalityState.any());
+  }
+
+  private static void showPopup(@NotNull ListPluginComponent component,
+                                @NotNull DefaultActionGroup group,
+                                @NotNull List<ListPluginComponent> selection,
+                                @NotNull Component eventComponent,
+                                int eventX,
+                                int eventY) {
+    try {
+      PluginsViewCustomizerKt.getListPluginComponentCustomizer().processCreatePopupMenu(component, group, selection);
+    }
+    catch (Exception e) {
+      LOG.error("Error while customizing popup menu", e);
+    }
+
+    if (group.getChildrenCount() == 0 || !component.isShowing()) {
+      return;
+    }
+
+    ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("PluginManagerConfigurable", group);
+    popupMenu.setTargetComponent(component);
+    popupMenu.getComponent().show(eventComponent, eventX, eventY);
   }
 
   private static @NotNull ListPluginComponent findParent(@NotNull ComponentEvent event) {

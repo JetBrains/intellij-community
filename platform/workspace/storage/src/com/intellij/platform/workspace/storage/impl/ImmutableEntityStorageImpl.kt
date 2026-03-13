@@ -9,7 +9,20 @@ import com.intellij.platform.diagnostic.telemetry.JPS
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.ConnectionId
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.EntityPointer
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.ExternalEntityMapping
+import com.intellij.platform.workspace.storage.ExternalMappingKey
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.MutableExternalEntityMapping
+import com.intellij.platform.workspace.storage.ReferenceChange
+import com.intellij.platform.workspace.storage.SymbolicEntityId
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.impl.cache.ChangeOnWorkspaceBuilderChangeLog
 import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCache
 import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCacheImpl
@@ -26,10 +39,10 @@ import com.intellij.platform.workspace.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.ExceptionUtil
-import com.intellij.util.containers.Java11Shim
 import com.intellij.util.ObjectUtils
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ConcurrentLongObjectMap
+import com.intellij.util.containers.Java11Shim
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
@@ -52,6 +65,14 @@ internal data class EntityPointerImpl<E : WorkspaceEntity>(internal val id: Enti
 
   override fun hashCode(): Int {
     return id.hashCode()
+  }
+
+  override fun isPointerToEntityOfSameTypeAs(other: EntityPointer<*>): Boolean {
+    return other is EntityPointerImpl && id.clazz == other.id.clazz
+  }
+
+  override fun classHashcode(): Int {
+    return id.clazz.hashCode()
   }
 }
 
@@ -182,7 +203,9 @@ internal class MutableEntityStorageImpl(
 
   override fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E> = getEntitiesTimeMs.addMeasuredTime {
     @Suppress("UNCHECKED_CAST")
-    entitiesByType[entityClass.toClassId()]?.all()?.map { it.createEntity(this) } as? Sequence<E> ?: emptySequence()
+    entitiesByType[entityClass.toClassId()]?.all()?.map {
+      it.createEntity(this) // we have to wrap entity data with the link to the entity storage to be able to resolve parent/children
+    } as? Sequence<E> ?: emptySequence()
   }
 
   override fun <E : WorkspaceEntityWithSymbolicId, R : WorkspaceEntity> referrers(

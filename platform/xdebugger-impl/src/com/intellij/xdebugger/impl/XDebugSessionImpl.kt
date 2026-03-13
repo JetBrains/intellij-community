@@ -35,6 +35,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
@@ -42,17 +43,43 @@ import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionDataId
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionPausedInfo
+import com.intellij.platform.debugger.impl.rpc.XDebugTabLayouterDto
+import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabAbstractInfo
+import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabInfo
+import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabInfoNoInit
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive
 import com.intellij.ui.AppUIUtil.invokeOnEdt
-import com.intellij.util.*
+import com.intellij.util.AwaitCancellationAndInvoke
+import com.intellij.util.EventDispatcher
+import com.intellij.util.SmartList
+import com.intellij.util.application
+import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.xdebugger.*
-import com.intellij.xdebugger.breakpoints.*
+import com.intellij.xdebugger.DapMode
+import com.intellij.xdebugger.SplitDebuggerMode
+import com.intellij.xdebugger.XAlternativeSourceHandler
+import com.intellij.xdebugger.XDebugProcess
+import com.intellij.xdebugger.XDebugProcessDebuggeeInForeground
+import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.XDebugSessionListener
+import com.intellij.xdebugger.XDebuggerBundle
+import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.XDebuggerManagerListener
+import com.intellij.xdebugger.XDebuggerUtil
+import com.intellij.xdebugger.XSourcePosition
+import com.intellij.xdebugger.breakpoints.SuspendPolicy
+import com.intellij.xdebugger.breakpoints.XBreakpoint
+import com.intellij.xdebugger.breakpoints.XBreakpointHandler
+import com.intellij.xdebugger.breakpoints.XBreakpointListener
+import com.intellij.xdebugger.breakpoints.XBreakpointType
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
@@ -70,21 +97,44 @@ import com.intellij.xdebugger.impl.inline.DebuggerInlayListener
 import com.intellij.xdebugger.impl.inline.InlineDebugRenderer
 import com.intellij.xdebugger.impl.mixedmode.XMixedModeCombinedDebugProcess
 import com.intellij.xdebugger.impl.proxy.asProxy
+import com.intellij.xdebugger.impl.rpc.models.RunnerLayoutUiBridge
+import com.intellij.xdebugger.impl.rpc.models.XDebugSessionAdditionalTabComponentManager
 import com.intellij.xdebugger.impl.rpc.models.XDebugTabLayouterModel
 import com.intellij.xdebugger.impl.rpc.models.XSuspendContextModel
 import com.intellij.xdebugger.impl.rpc.models.storeGlobally
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
-import com.intellij.xdebugger.impl.ui.*
+import com.intellij.xdebugger.impl.ui.XDebugSessionData
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab
+import com.intellij.xdebugger.impl.ui.allowFramesViewCustomization
+import com.intellij.xdebugger.impl.ui.forceShowNewDebuggerUi
+import com.intellij.xdebugger.impl.ui.getDefaultFramesViewKey
+import com.intellij.xdebugger.impl.util.createEdtDisposable
 import com.intellij.xdebugger.impl.util.start
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
 import com.intellij.xdebugger.ui.IXDebuggerSessionTab
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.getAndUpdate
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 import javax.swing.Icon
@@ -249,7 +299,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   override fun setPauseActionSupported(isSupported: Boolean) {
+    if (sessionData.isPauseSupported == isSupported) return
     sessionData.isPauseSupported = isSupported
+    myDispatcher.getMulticaster().settingsChanged()
   }
 
   var isReadOnly: Boolean
@@ -403,7 +455,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
     XDebugManagerProxy.getInstance().getDebuggerExecutionPointManager(project)?.alternativeSourceKindFlow = this.alternativeSourceKindState
 
     if (process.checkCanInitBreakpoints()) {
-      ReadAction.run<RuntimeException?>(ThrowableRunnable { initBreakpoints() })
+      runReadActionBlocking {
+        initBreakpoints()
+      }
     }
     if (process is XDebugProcessDebuggeeInForeground &&
         process.isBringingToForegroundApplicable()
@@ -553,10 +607,11 @@ class XDebugSessionImpl @JvmOverloads constructor(
       val runContentDescriptorId = CompletableDeferred<RunContentDescriptorIdImpl>()
       val tabLayouterDto = CompletableDeferred<XDebugTabLayouterDto>()
       val executionEnvironmentId = executionEnvironment?.storeGlobally(localTabScope)
+
       val tabInfo = XDebuggerSessionTabInfo(myIcon?.rpcId(), forceNewDebuggerUi, withFramesCustomization, defaultFramesViewKey,
                                             executionEnvironmentId, executionEnvironment?.toDto(localTabScope),
                                             additionalTabComponentManager.id, tabClosedChannel,
-                                            runContentDescriptorId, myShowTabDeferred, tabLayouterDto)
+                                            runContentDescriptorId, myShowTabDeferred, tabLayouterDto, contentToReuse)
       if (myTabInitDataFlow.compareAndSet(null, tabInfo)) {
         // This is a mock tab used in backend only
         // Using a RunTab as a mock component let us reuse context reusing,
@@ -575,16 +630,15 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
           val consoleManger = createLogConsoleManager(additionalTabComponentManager) { debugProcess.processHandler }
         }
-        val disposable = localTabScope.asDisposable()
+        val disposable = createEdtDisposable(localTabScope.asDisposable())
         addAdditionalTabsAndConsolesToManager(runTab.consoleManger, disposable)
 
-        val mockUi = runTab.ui
-        val layoutBridge = RunnerLayoutUiBridge(mockUi, disposable)
+        val layoutBridge = RunnerLayoutUiBridge(project, disposable)
         // This is a mock descriptor used in backend only
         val mockDescriptor = object : RunContentDescriptor(myConsoleView, debugProcess.getProcessHandler(), runTab.component,
                                                            sessionName, myIcon, null) {
           init {
-            runnerLayoutUi = if (AppMode.isRemoteDevHost()) layoutBridge else mockUi
+            runnerLayoutUi = if (AppMode.isRemoteDevHost()) layoutBridge else runTab.ui
           }
 
           override fun isHiddenContent(): Boolean = true
@@ -596,7 +650,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
         mockDescriptor.id = descriptorId
 
         val tabLayouter = debugProcess.createTabLayouter()
-        val tabLayouterId = XDebugTabLayouterModel(tabLayouter, layoutBridge, layoutBridge.events).storeGlobally(localTabScope)
+        val tabLayouterId = XDebugTabLayouterModel(tabLayouter, layoutBridge).storeGlobally(localTabScope)
         tabLayouterDto.complete(XDebugTabLayouterDto(tabLayouterId, tabLayouter))
 
         debuggerManager.coroutineScope.launch(start = CoroutineStart.ATOMIC) {
@@ -719,7 +773,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     temporary: Boolean,
   ) {
     if (register) {
-      val active = ReadAction.compute<Boolean, RuntimeException?>(ThrowableComputable { isBreakpointActive(b!!) })
+      val active = ReadAction.computeBlocking<Boolean, RuntimeException?>(ThrowableComputable { isBreakpointActive(b!!) })
       if (active) {
         synchronized(myRegisteredBreakpoints) {
           myRegisteredBreakpoints[b] = CustomizedBreakpointPresentation()

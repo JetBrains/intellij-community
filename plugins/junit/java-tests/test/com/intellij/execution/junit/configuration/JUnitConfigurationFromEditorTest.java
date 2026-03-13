@@ -4,7 +4,6 @@ package com.intellij.execution.junit.configuration;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit.JUnitConfiguration;
-import com.intellij.junit.testFramework.JUnitLibrary;
 import com.intellij.junit.testFramework.JUnitProjectDescriptor;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -16,7 +15,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
+import static com.intellij.junit.testFramework.MavenTestLib.JUNIT4;
+import static com.intellij.junit.testFramework.MavenTestLib.JUNIT5;
+
 public class JUnitConfigurationFromEditorTest extends LightJavaCodeInsightFixtureTestCase {
+  private static final LightProjectDescriptor descriptor = new JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUNIT4, JUNIT5);
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -24,7 +28,7 @@ public class JUnitConfigurationFromEditorTest extends LightJavaCodeInsightFixtur
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return new JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUnitLibrary.JUNIT4, JUnitLibrary.JUNIT5);
+    return descriptor;
   }
 
   private <T> T setupConfigurationContext(final String fileText) {

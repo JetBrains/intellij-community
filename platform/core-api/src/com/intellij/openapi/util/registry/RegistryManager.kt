@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.registry
 
 import com.intellij.openapi.application.ApplicationManager
@@ -9,11 +9,23 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * This class provides access to the **IntelliJ Registry**, a system of internal settings.
+ * 
+ * See more in the documentation on the [Registry] class.
+ */
 interface RegistryManager {
   companion object {
+
+    /**
+     * Guarantees that the registry has been initialized after the call and is safe to use.
+     */
     @JvmStatic
     fun getInstance(): RegistryManager = ApplicationManager.getApplication().service<RegistryManager>()
 
+    /**
+     * Guarantees that the registry has been initialized after the call and is safe to use.
+     */
     suspend fun getInstanceAsync(): RegistryManager = ApplicationManager.getApplication().serviceAsync()
 
     @Topic.AppLevel
@@ -34,12 +46,6 @@ interface RegistryManager {
   fun get(key: String): RegistryValue
 
   fun resetValueChangeListener()
-
-  /**
-   * Waits for the registry load. Useful in cases when there's an early startup activity that is required to access the registry.
-   */
-  @ApiStatus.Internal
-  suspend fun awaitRegistryLoad()
 }
 
 @ApiStatus.Internal

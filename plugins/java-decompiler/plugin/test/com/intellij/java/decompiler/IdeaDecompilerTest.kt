@@ -122,7 +122,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     val visitor = MyFileVisitor(psiManager)
     Registry.get("decompiler.dump.original.lines").withValue(true) {
       VfsUtilCore.visitChildrenRecursively(getTestFile("${JavaTestUtil.getJavaTestDataPath()}/psi/cls/mirror"), visitor)
-      VfsUtilCore.visitChildrenRecursively(getTestFile("${PluginPathManager.getPluginHomePath("java-decompiler")}/engine/testData/classes"),
+      VfsUtilCore.visitChildrenRecursively(getTestFile("${PluginPathManager.getPluginHomePath("java-decompiler")}/engine/testData/manual/classes"),
                                            visitor)
       VfsUtilCore.visitChildrenRecursively(getTestFile("${IdeaTestUtil.getMockJdk18Path().path}/jre/lib/rt.jar!/java/lang"), visitor)
     }
@@ -337,7 +337,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
   private fun getTestFile(name: String): VirtualFile {
     val path = if (FileUtil.isAbsolute(name)) name else "${myFixture.testDataPath}/${name}"
     val fs = if (path.contains(URLUtil.JAR_SEPARATOR)) StandardFileSystems.jar() else StandardFileSystems.local()
-    val file = fs.refreshAndFindFileByPath(path)!!
+    val file = fs.refreshAndFindFileByPath(path) ?: error("File not found: $path")
     if (file.isDirectory) file.refresh(false, true)
     return file
   }

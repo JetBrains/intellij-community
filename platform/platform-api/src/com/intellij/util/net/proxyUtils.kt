@@ -6,7 +6,12 @@ import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.isFulfilled
 import com.intellij.util.net.ProxyConfiguration.ProxyProtocol
 import com.intellij.util.proxy.JavaProxyProperty
-import java.net.*
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.Proxy
+import java.net.ProxySelector
+import java.net.URI
+import java.net.URL
 import javax.swing.JComponent
 
 fun Proxy.isRealProxy(): Boolean {

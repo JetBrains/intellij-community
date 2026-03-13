@@ -24,7 +24,7 @@
     "consentId": "ea.auto.report",
     "version": "1.0",
     "text": "These reports may include exception details, code fragments, and system info.<br/><br/>I acknowledge that JetBrains s.r.o. may process my personal data (if contained in the error reports), and may engage <a href=\"https://www.jetbrains.com/legal/privacy/third-parties.html\" target=\"_blank\">third parties</a> in such processing. More details about the processing are in <a href=\"https://www.jetbrains.com/legal/docs/privacy/privacy/\" target=\"_blank\">JetBrains Privacy Notice</a>.",
-    "printableName": "Send error reports to JetBrains automatically.",
+    "printableName": "Send error reports to JetBrains automatically",
     "accepted": "false"
   }
 ]

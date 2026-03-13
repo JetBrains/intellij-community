@@ -13,4 +13,12 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":plugin_resources"]
 )
+
+jvm_library(
+  name = "plugin_test_lib",
+  module_name = "intellij.textmate.plugin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":plugin"]
+)
 ### auto-generated section `build intellij.textmate.plugin` end

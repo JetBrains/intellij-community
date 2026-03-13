@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.maven
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -26,6 +27,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
  * so `excludeMavenChildrenModules(project, listOf(module2, module2.2, module1)` -> `listOf(module1, module2)`
  *
  */
+@RequiresReadLock
 fun excludeMavenChildrenModules(project: Project, selectedModules: List<Module>): List<Module> {
     val mavenManager = MavenProjectsManager.getInstance(project)
 

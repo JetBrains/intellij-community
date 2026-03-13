@@ -792,6 +792,7 @@ Missing comma between day of month and year
 Missing definite article in the date
 Missing definite article referring to a time period
 Missing definite article referring to a time period
+Missing dot
 Missing hyphen in 'An American born scientist'
 Missing hyphen in 'billion dollar'
 Missing hyphen in 'fund raise'

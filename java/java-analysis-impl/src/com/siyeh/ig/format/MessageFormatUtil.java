@@ -1,8 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.format;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import it.unimi.dsi.fastutil.ints.Int2IntFunction;
@@ -28,9 +29,7 @@ public final class MessageFormatUtil {
   /**
    * Matcher to match known JDK library methods that accept MessageFormat-like format string, along with an array/vararg of arguments
    */
-  public static final CallMatcher PATTERN_METHODS = anyOf(
-    staticCall("java.text.MessageFormat", "format").parameterCount(2)
-  );
+  public static final CallMatcher PATTERN_METHODS = anyOf(staticCall("java.text.MessageFormat", "format").parameterCount(2));
 
   private static final Map<String, List<String>> knownContractions = Map.ofEntries(
     Map.entry("aren", List.of("t")),
@@ -65,13 +64,15 @@ public final class MessageFormatUtil {
 
   /**
    * @param pattern MessageFormat-like formatting string
+   * @param languageLevel Language level to check which patterns are acceptable
    * @return MessageFormatResult object that contains information about placeholders and possible syntax errors inside the pattern
    */
-  public static @NotNull MessageFormatResult checkFormat(@NotNull String pattern) {
+  public static @NotNull MessageFormatResult checkFormat(@NotNull String pattern,
+                                                         @NotNull LanguageLevel languageLevel) {
     if (pattern.isEmpty()) {
       return new MessageFormatResult(true, List.of(), List.of());
     }
-    MessageHolder holder = parseMessageHolder(pattern);
+    MessageHolder holder = parseMessageHolder(pattern, languageLevel);
     List<MessageFormatError> errors = holder.getErrors();
     List<MessageFormatPart> parts = holder.getParts();
     for (MessageFormatPart part : parts) {
@@ -84,15 +85,13 @@ public final class MessageFormatUtil {
     }
     List<MessageFormatPlaceholder> placeholderIndexes = new ArrayList<>();
     for (MessageFormatPart part : parts) {
-      if (part.getParsedType() == MessageFormatParsedType.FORMAT_ELEMENT &&
-          part.getMessageFormatElement() != null &&
-          part.getMessageFormatElement().getIndex() != null) {
-        placeholderIndexes.add(new MessageFormatPlaceholder(part.getMessageFormatElement().getIndex(),
-                                                            part.getMessageFormatElement().formatType != null ?
-                              new TextRange(part.start, part.getMessageFormatElement().formatTypeSegmentStart) :
-                              new TextRange(part.start, part.start + part.text.length()),
-                                                            part.getMessageFormatElement().formatType == null &&
-                                                            part.getMessageFormatElement().currentPart == MessageFormatElementPart.ARGUMENT_INDEX));
+      MessageFormatElement element = part.getMessageFormatElement();
+      if (part.getParsedType() == MessageFormatParsedType.FORMAT_ELEMENT && element != null && element.getIndex() != null) {
+        TextRange range = element.formatType != null
+                          ? new TextRange(part.start, element.formatTypeSegmentStart)
+                          : new TextRange(part.start, part.start + part.text.length());
+        boolean isString = element.formatType == null && element.currentPart == MessageFormatElementPart.ARGUMENT_INDEX;
+        placeholderIndexes.add(new MessageFormatPlaceholder(element.getIndex(), range, isString));
       }
     }
     return new MessageFormatResult(errors.isEmpty(), errors, placeholderIndexes);
@@ -221,8 +220,9 @@ public final class MessageFormatUtil {
 
   @VisibleForTesting
   @ApiStatus.Internal
-  public static @NotNull MessageHolder parseMessageHolder(@NotNull String pattern) {
-    MessageHolder holder = new MessageHolder(pattern);
+  public static @NotNull MessageHolder parseMessageHolder(@NotNull String pattern,
+                                                          @NotNull LanguageLevel languageLevel) {
+    MessageHolder holder = new MessageHolder(pattern, languageLevel);
     while (!holder.hasRuntimeError && holder.hasNext()) {
       char ch = holder.nextPool();
       if (holder.getLastPart().getParsedType() == MessageFormatParsedType.STRING) {
@@ -238,7 +238,7 @@ public final class MessageFormatUtil {
         }
         else if (ch == '{') {
           if (holder.inQuote) {
-            int end = findEndOfQuotedPlaceholder(pattern, holder.current);
+            int end = findEndOfQuotedPlaceholder(pattern, holder.languageLevel, holder.current);
             if (end != -1) {
               holder.addError(MessageFormatErrorType.QUOTED_PLACEHOLDER, holder.current, end);
             }
@@ -318,7 +318,9 @@ public final class MessageFormatUtil {
     return holder;
   }
 
-  private static int findEndOfQuotedPlaceholder(@NotNull String pattern, int current) {
+  private static int findEndOfQuotedPlaceholder(@NotNull String pattern,
+                                                @NotNull LanguageLevel languageLevel,
+                                                int current) {
     if (!(current - 1 >= 0 && pattern.charAt(current - 1) == '\'')) {
       return -1;
     }
@@ -339,7 +341,7 @@ public final class MessageFormatUtil {
     nextPattern = nextPattern.substring(0, nextQuote);
     if (nextPattern.startsWith("{") && nextPattern.endsWith("}") &&
         nextPattern.indexOf("}") == nextPattern.length() - 1) {
-      MessageHolder holder = parseMessageHolder(nextPattern);
+      MessageHolder holder = parseMessageHolder(nextPattern, languageLevel);
       if (holder.errors.isEmpty()) {
         List<MessageFormatPart> notStrings =
           ContainerUtil.filter(holder.parts, t -> !(t.getParsedType() == MessageFormatParsedType.STRING && t.getText().isEmpty()));
@@ -351,8 +353,9 @@ public final class MessageFormatUtil {
     return -1;
   }
 
-  private static @NotNull MessageHolder parseChoice(@NotNull String patten) {
-    MessageHolder holder = new MessageHolder(patten);
+  private static @NotNull MessageHolder parseChoice(@NotNull String patten,
+                                                    @NotNull LanguageLevel languageLevel) {
+    MessageHolder holder = new MessageHolder(patten, languageLevel);
     holder.parts.clear();
     holder.startNumberElement();
     List<Double> selectors = new ArrayList<>();
@@ -414,7 +417,7 @@ public final class MessageFormatUtil {
       MessageFormatPart part = parts.get(i);
       String currentSubPattern = part.getText();
       if (part.getParsedType() == MessageFormatParsedType.STRING && currentSubPattern.indexOf('{') >= 0) {
-        holder.merge(parseMessageHolder(currentSubPattern), startIndexes.get(i));
+        holder.merge(parseMessageHolder(currentSubPattern, languageLevel), startIndexes.get(i));
       }
       else {
         holder.parts.add(part);
@@ -423,8 +426,42 @@ public final class MessageFormatUtil {
     return holder;
   }
 
-  enum MessageFormatType {
-    NUMBER, DATE, TIME, CHOICE
+  public enum MessageFormatType {
+    NUMBER,
+    DATE,
+    TIME,
+    CHOICE,
+
+    DTF_DATE(LanguageLevel.JDK_23),
+    DTF_TIME(LanguageLevel.JDK_23),
+    DTF_DATETIME(LanguageLevel.JDK_23),
+    LIST(LanguageLevel.JDK_23),
+
+    BASIC_ISO_DATE(LanguageLevel.JDK_23),
+    ISO_LOCAL_DATE(LanguageLevel.JDK_23),
+    ISO_OFFSET_DATE(LanguageLevel.JDK_23),
+    ISO_DATE(LanguageLevel.JDK_23),
+    ISO_LOCAL_TIME(LanguageLevel.JDK_23),
+    ISO_OFFSET_TIME(LanguageLevel.JDK_23),
+    ISO_TIME(LanguageLevel.JDK_23),
+    ISO_LOCAL_DATE_TIME(LanguageLevel.JDK_23),
+    ISO_OFFSET_DATE_TIME(LanguageLevel.JDK_23),
+    ISO_ZONED_DATE_TIME(LanguageLevel.JDK_23),
+    ISO_DATE_TIME(LanguageLevel.JDK_23),
+    ISO_ORDINAL_DATE(LanguageLevel.JDK_23),
+    ISO_WEEK_DATE(LanguageLevel.JDK_23),
+    ISO_INSTANT(LanguageLevel.JDK_23),
+    RFC_1123_DATE_TIME(LanguageLevel.JDK_23);
+
+    public final @Nullable LanguageLevel requiredLanguageLevel;
+
+    MessageFormatType(@Nullable LanguageLevel requiredLanguageLevel) {
+      this.requiredLanguageLevel = requiredLanguageLevel;
+    }
+
+    MessageFormatType() {
+      this.requiredLanguageLevel = null;
+    }
   }
 
   @ApiStatus.Internal
@@ -441,6 +478,7 @@ public final class MessageFormatUtil {
     UNPARSED_INDEX(ErrorSeverity.RUNTIME_EXCEPTION),
     INDEX_NEGATIVE(ErrorSeverity.RUNTIME_EXCEPTION),
     UNKNOWN_FORMAT_TYPE(ErrorSeverity.RUNTIME_EXCEPTION),
+    UNKNOWN_FORMAT_TYPE_LANGUAGE_LEVEL(ErrorSeverity.RUNTIME_EXCEPTION),
     UNCLOSED_BRACE_PLACEHOLDER(ErrorSeverity.WARNING),
     UNPAIRED_QUOTE(ErrorSeverity.WARNING),
     UNMATCHED_BRACE(ErrorSeverity.RUNTIME_EXCEPTION),
@@ -466,7 +504,7 @@ public final class MessageFormatUtil {
 
   /**
    * Information about MessageFormat-like format string
-   * 
+   *
    * @param valid if true, then the format string is valid
    * @param errors list of errors inside the format string
    * @param placeholders list of placeholders inside the format string
@@ -565,17 +603,28 @@ public final class MessageFormatUtil {
       }
       if (!formatTypeSegment.isEmpty()) {
         String typeSegment = formatTypeSegment.toString();
+        boolean incorrectLanguageLevel = false;
         for (MessageFormatType value : MessageFormatType.values()) {
           if (value.name().equals(typeSegment.trim().toUpperCase(Locale.ROOT))) {
-            formatType = value;
+            if (value.requiredLanguageLevel == null ||
+                holder.languageLevel.isAtLeast(value.requiredLanguageLevel)) {
+              formatType = value;
+            }
+            else if (!holder.languageLevel.isAtLeast(value.requiredLanguageLevel)) {
+              incorrectLanguageLevel = true;
+            }
+            break;
           }
         }
         if (formatType == null) {
+          MessageFormatErrorType type = incorrectLanguageLevel
+                                        ? MessageFormatErrorType.UNKNOWN_FORMAT_TYPE_LANGUAGE_LEVEL
+                                        : MessageFormatErrorType.UNKNOWN_FORMAT_TYPE;
           if (formatStyleSegmentStart >= formatTypeSegmentStart) {
-            holder.addError(MessageFormatErrorType.UNKNOWN_FORMAT_TYPE, formatTypeSegmentStart, formatStyleSegmentStart - 1);
+            holder.addError(type, formatTypeSegmentStart, formatStyleSegmentStart - 1);
           }
           else {
-            holder.addError(MessageFormatErrorType.UNKNOWN_FORMAT_TYPE, formatTypeSegmentStart, holder.current);
+            holder.addError(type, formatTypeSegmentStart, holder.current);
           }
         }
       }
@@ -584,28 +633,27 @@ public final class MessageFormatUtil {
     }
 
     private void tryParseStyle(@NotNull MessageHolder holder) {
-      if (formatType != null) {
-        switch (formatType) {
-          case CHOICE -> {
-            MessageHolder choiceHolder = parseChoice(formatStyleSegment.toString());
-            holder.merge(choiceHolder, formatStyleSegmentStart);
-          }
-          case NUMBER, DATE, TIME -> {
-            //skip, because it may depend on locals
-          }
-          default -> throw new IllegalArgumentException("formatType: " + formatType);
-        }
+      if (formatType == MessageFormatType.CHOICE) {
+        MessageHolder choiceHolder = parseChoice(formatStyleSegment.toString(), holder.languageLevel);
+        holder.merge(choiceHolder, formatStyleSegmentStart);
       }
+      //skip others, because it may depend on locals or even can be skipped
     }
   }
 
   public record MessageFormatError(@NotNull MessageFormatErrorType errorType, int fromIndex, int toIndex) {
   }
 
+  @VisibleForTesting
   @ApiStatus.Internal
   public static final class MessageHolder {
+    @NotNull
     private final String pattern;
+    @NotNull
+    private final LanguageLevel languageLevel;
+    @NotNull
     private final List<MessageFormatPart> parts = new ArrayList<>();
+    @NotNull
     private final List<MessageFormatError> errors = new ArrayList<>();
     private boolean hasRuntimeError = false;
     private int current = -1;
@@ -613,16 +661,18 @@ public final class MessageFormatUtil {
     private boolean inQuote = false;
     private int lastQuoteIndex = -1;
 
-    private MessageHolder(@NotNull String pattern) {
+    private MessageHolder(@NotNull String pattern,
+                          @NotNull LanguageLevel languageLevel) {
       this.pattern = pattern;
+      this.languageLevel = languageLevel;
       parts.add(new MessageFormatPart(0, MessageFormatParsedType.STRING, null));
     }
 
-    public List<MessageFormatPart> getParts() {
+    public @NotNull List<MessageFormatPart> getParts() {
       return parts;
     }
 
-    public List<MessageFormatError> getErrors() {
+    public @NotNull List<MessageFormatError> getErrors() {
       return errors;
     }
 

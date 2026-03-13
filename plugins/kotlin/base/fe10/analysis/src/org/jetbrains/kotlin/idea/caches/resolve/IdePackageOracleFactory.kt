@@ -7,12 +7,14 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.PackageOracle
 import org.jetbrains.kotlin.analyzer.PackageOracleFactory
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleOrigin
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService
 import org.jetbrains.kotlin.idea.caches.project.projectSourceModules
 import org.jetbrains.kotlin.name.FqName
@@ -51,7 +53,7 @@ class IdePackageOracleFactory(val project: Project) : PackageOracleFactory {
         private val sourceModules: List<ModuleSourceInfo> = moduleInfo.projectSourceModules()
 
         override fun packageExists(fqName: FqName): Boolean {
-            return sourceModules.any { cacheService.packageExists(fqName, it) }
+            return sourceModules.any { cacheService.packageExists(fqName, it.toKaModule() as KaSourceModule) }
         }
     }
 

@@ -74,7 +74,7 @@ class NonHmppSourceModuleDependenciesFilter(private val dependeePlatform: Target
     }
 }
 
-internal class NegatedModuleDependencyFilter(private val original: SourceModuleDependenciesFilter) : SourceModuleDependenciesFilter {
+class NegatedModuleDependencyFilter(private val original: SourceModuleDependenciesFilter) : SourceModuleDependenciesFilter {
     override fun isSupportedDependency(dependency: SourceModuleDependenciesFilterCandidate): Boolean {
         return !original.isSupportedDependency(dependency)
     }

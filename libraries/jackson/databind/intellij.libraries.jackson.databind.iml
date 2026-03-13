@@ -8,6 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="jackson-databind" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.annotations" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.jackson" scope="RUNTIME" />
   </component>
 </module>

@@ -14,16 +14,19 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
@@ -46,6 +49,7 @@ import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExceptPart;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyExpressionStatement;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyFunction;
@@ -687,23 +691,29 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   public boolean calculateImportFromFuture(FutureFeature feature) {
-    if (getText().contains(feature.toString())) {
-      final List<PyFromImportStatement> fromImports = getFromImports();
-      for (PyFromImportStatement fromImport : fromImports) {
-        if (fromImport.isFromFuture()) {
-          final PyImportElement[] pyImportElements = fromImport.getImportElements();
-          for (PyImportElement element : pyImportElements) {
-            final QualifiedName qName = element.getImportedQName();
-            if (qName != null && qName.matches(feature.toString())) {
-              return true;
-            }
+    for (PsiElement current = getFirstChild(); current != null; current = current.getNextSibling()) {
+      if (current instanceof PsiWhiteSpace || current instanceof PsiComment) {
+        continue;
+      }
+      boolean isModuleDocString = current instanceof PyExpressionStatement exprStatement &&
+                                  exprStatement.getExpression() instanceof PyStringLiteralExpression stringLiteral &&
+                                  stringLiteral.isDocString();
+      if (isModuleDocString) {
+        continue;
+      }
+      if (current instanceof PyFromImportStatement fromImport && fromImport.isFromFuture()) {
+        for (PyImportElement importElement : fromImport.getImportElements()) {
+          QualifiedName qName = importElement.getImportedQName();
+          if (qName != null && qName.matches(feature.toString())) {
+            return true;
           }
         }
+        continue;
       }
+      break;
     }
     return false;
   }
-
 
   @Override
   public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {

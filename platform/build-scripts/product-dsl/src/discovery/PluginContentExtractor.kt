@@ -5,9 +5,9 @@ package org.jetbrains.intellij.build.productLayout.discovery
 
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginId
-import com.intellij.platform.plugins.parser.impl.elements.ContentModuleElement
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
-import com.intellij.platform.plugins.parser.impl.parseContentAndXIncludes
+import com.intellij.platform.pluginSystem.parser.impl.elements.ContentModuleElement
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -15,7 +15,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
-import org.jetbrains.intellij.build.findFileInModuleDependenciesRecursiveAsync
+import org.jetbrains.intellij.build.findFileInModuleDependenciesRecursive
 import org.jetbrains.intellij.build.findFileInModuleLibraryDependencies
 import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.productLayout.ModuleSet
@@ -127,19 +127,21 @@ internal data class PluginContentInfo(
   val isTestPlugin: Boolean get() = source == PluginSource.TEST || source == PluginSource.DSL_TEST
 }
 
+/**
+ * Optional in-memory override for plugin.xml used during extraction.
+ * Allows callers to validate/parse generated descriptors before they are written to disk.
+ */
+internal data class PluginXmlOverride(
+  @JvmField val pluginXmlPath: Path,
+  @JvmField val pluginXmlContent: String,
+)
+
 private val PLUGIN_ID_PATTERN = Regex("""<id>([^<]+)</id>""")
-private val PLUGIN_NAME_PATTERN = Regex("""<name>([^<]+)</name>""")
 private val XML_COMMENT_PATTERN = Regex("<!--.*?-->", setOf(RegexOption.DOT_MATCHES_ALL))
 
 /** Extracts plugin ID from plugin.xml content */
 private fun extractPluginId(content: String): PluginId? {
   return PLUGIN_ID_PATTERN.find(content)?.groupValues?.get(1)?.trim()?.let { PluginId(it) }
-}
-
-/** Extracts plugin name from plugin.xml content */
-internal fun extractPluginName(content: String): String? {
-  val sanitized = content.replace(XML_COMMENT_PATTERN, "")
-  return PLUGIN_NAME_PATTERN.find(sanitized)?.groupValues?.get(1)?.trim()?.takeIf { it.isNotEmpty() }
 }
 
 // Pattern for <depends> elements:
@@ -180,11 +182,20 @@ internal suspend fun extractPluginContent(
   prefixFilter: (moduleName: String) -> String? = { null },
   onlyProductionSources: Boolean = true,
   source: PluginSource = PluginSource.BUNDLED,
+  pluginXmlOverride: PluginXmlOverride? = null,
   errorSink: ErrorSink,
 ): PluginContentInfo? {
   val jpsModule = outputProvider.findModule(pluginName) ?: return null
-  val pluginXmlPath = findFileInModuleSources(module = jpsModule, relativePath = PLUGIN_XML_RELATIVE_PATH, onlyProductionSources = onlyProductionSources) ?: return null
-  val content = withContext(Dispatchers.IO) { Files.readString(pluginXmlPath) }
+  val pluginXmlPath: Path
+  val content: String
+  if (pluginXmlOverride != null) {
+    pluginXmlPath = pluginXmlOverride.pluginXmlPath
+    content = pluginXmlOverride.pluginXmlContent
+  }
+  else {
+    pluginXmlPath = findFileInModuleSources(module = jpsModule, relativePath = PLUGIN_XML_RELATIVE_PATH, onlyProductionSources = onlyProductionSources) ?: return null
+    content = withContext(Dispatchers.IO) { Files.readString(pluginXmlPath) }
+  }
 
   val prefix = prefixFilter(pluginName)
 
@@ -323,19 +334,19 @@ private suspend fun resolveXInclude(
   outputProvider: ModuleOutputProvider,
   prefix: String?,
 ): XIncludeResult {
-  outputProvider.readFileContentFromModuleOutputAsync(module = jpsModule, relativePath = path)?.let {
+  outputProvider.readFileContentFromModuleOutput(module = jpsModule, relativePath = path)?.let {
     return XIncludeResult.Success(it)
   }
 
   val processedModules = ConcurrentHashMap.newKeySet<String>()
   processedModules.add(jpsModule.name)
 
-  findFileInModuleDependenciesRecursiveAsync(
+  findFileInModuleDependenciesRecursive(
     module = jpsModule,
     relativePath = path,
     provider = outputProvider,
     processedModules = processedModules,
-    prefix = prefix,
+    moduleNamePrefix = prefix,
   )?.let {
     return XIncludeResult.Success(it)
   }

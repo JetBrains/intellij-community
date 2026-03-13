@@ -28,8 +28,7 @@ class PluginPluginDependencyValidatorTest {
     builder.addPluginWithContent(pluginName, pluginInfo, emptySet())
     builder.linkProductBundlesPlugin(productName = "IDEA", pluginName = pluginName, isTest = false)
 
-    val aliasNodeName = TargetName("__alias__:${aliasId.value}")
-    val aliasNodeId = builder.addPlugin(name = aliasNodeName, isTest = false, pluginId = aliasId)
+    val aliasNodeId = builder.addAliasPlugin(aliasId)
     builder.addEdge(builder.addProduct("IDEA"), aliasNodeId, EDGE_BUNDLES)
 
     builder.addPluginDependencyEdges(mapOf(pluginName to pluginInfo))

@@ -25,7 +25,7 @@ import java.security.cert.Certificate
 import java.security.cert.CertificateFactory
 import java.security.cert.X509CRL
 import java.security.cert.X509Certificate
-import java.util.*
+import java.util.Optional
 import java.util.concurrent.TimeUnit
 
 internal object PluginSignatureChecker {

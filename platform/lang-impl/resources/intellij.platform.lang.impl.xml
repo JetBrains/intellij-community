@@ -9,9 +9,9 @@
     <module name="intellij.libraries.gson"/>
     <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.hash4j"/>
-    <module name="intellij.libraries.jackson"/>
-    <module name="intellij.libraries.jackson.databind"/>
-    <module name="intellij.libraries.jackson.module.kotlin"/>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.jackson3.databind"/>
+    <module name="intellij.libraries.jackson3.module.kotlin"/>
     <module name="intellij.libraries.jsoup"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
@@ -36,21 +36,33 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
     <module name="intellij.platform.diff"/>
     <module name="intellij.platform.diff.impl"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.ide.concurrency"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.locking.impl"/>
+    <module name="intellij.platform.projectFrame"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.diff"/>
+    <module name="intellij.platform.welcomeScreen.impl"/>
   </dependencies>
   <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.canBeSelectedInProjectPaneProvider"
                     interface="com.intellij.ide.projectView.impl.canBeSelected.CanBeSelectedInProjectPaneProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.scratchLanguageFilter"
+                    interface="com.intellij.ide.scratch.ScratchFileTypeFilter"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -73,5 +85,9 @@
     <completion.frontendFriendlyPrefixMatcher target="com.intellij.codeInsight.completion.impl.BetterPrefixMatcher$AutoRestarting"
                                               converter="com.intellij.codeInsight.completion.impl.BetterPrefixMatcher$AutoRestarting$Converter"
                                               descriptor="com.intellij.codeInsight.completion.impl.BetterPrefixMatcher$AutoRestarting$Descriptor"/>
+
+    <applicationService serviceImplementation="com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService"/>
+    <applicationSettings service="com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService"/>
+    <vetoRenameCondition implementation="com.intellij.openapi.paths.WebReferenceVetoRenameCondition"/>
   </extensions>
 </idea-plugin>

@@ -57,6 +57,8 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       isUserDefinedName = false,
       shellCommand = null,
       workingDirectory = null,
+      envVariables = null,
+      processType = null,
       sessionId = null,
       portForwardingId = null,
     )
@@ -92,6 +94,8 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       val updatedTab = tab.copy(
         shellCommand = result.configuredOptions.initialShellCommand?.command ?: options.shellCommand,
         workingDirectory = result.configuredOptions.workingDirectory,
+        envVariables = options.envVariables,  // Remember env variables requested by the client, not the resulting ones.
+        processType = result.configuredOptions.processType,
         sessionId = result.sessionId,
         portForwardingId = portForwardingId,
       )
@@ -217,6 +221,8 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       isUserDefinedName = isUserDefinedName,
       shellCommand = shellCommand,
       workingDirectory = workingDirectory,
+      envVariables = envVariables,
+      processType = processType,
     )
   }
 
@@ -227,6 +233,8 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       isUserDefinedName = isUserDefinedName,
       shellCommand = shellCommand,
       workingDirectory = workingDirectory,
+      envVariables = envVariables,
+      processType = processType,
       sessionId = null,
       portForwardingId = null,
     )

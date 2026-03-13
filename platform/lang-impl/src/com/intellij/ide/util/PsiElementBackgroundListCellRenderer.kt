@@ -84,7 +84,7 @@ internal class PsiElementBackgroundListCellRenderer(
                                                   index: Int,
                                                   isSelected: Boolean,
                                                   cellHasFocus: Boolean): Component {
-          val component= ReadAction.compute<Component, Error> { super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus) }
+          val component= ReadAction.computeBlocking<Component, Error> { super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus) }
           foreground = if (isSelected) NamedColorUtil.getListSelectionForeground(cellHasFocus) else NamedColorUtil.getInactiveTextColor()
           isOpaque = false
           icon = presentation.locationIcon

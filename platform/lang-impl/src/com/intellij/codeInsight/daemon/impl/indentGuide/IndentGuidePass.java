@@ -14,7 +14,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.List;
 
 
 public final class IndentGuidePass extends TextEditorHighlightingPass implements DumbAware {

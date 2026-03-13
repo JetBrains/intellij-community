@@ -10,7 +10,6 @@ import com.intellij.diff.util.Side
 import com.intellij.diff.util.ThreeSide
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.diff.DiffBundle
-import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -39,12 +38,6 @@ class ThreesideMergeHighlighters(
       destroyInnerHighlighters()
       installInnerHighlighters()
     }
-
-  fun updateOperations(force: Boolean) {
-    for (operation in operations) {
-      operation.update(force)
-    }
-  }
 
   @RequiresEdt
   override fun reinstallAll() {
@@ -140,14 +133,6 @@ class ThreesideMergeHighlighters(
                                  mutableListOf(change),
                                  Runnable { viewer.resolveSingleChangeAutomatically(change, ThreeSide.BASE) })
     })
-  }
-
-  fun destroyInnerHighlighters(document: DocumentEx) {
-    for (inner in innerHighlighters) {
-      if (inner.document == document) {
-        inner.dispose()
-      }
-    }
   }
 
   private enum class OperationType {

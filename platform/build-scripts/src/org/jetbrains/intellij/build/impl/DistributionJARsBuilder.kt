@@ -8,6 +8,7 @@ import com.intellij.util.io.Compressor
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -18,7 +19,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
@@ -127,7 +127,6 @@ internal suspend fun buildDistribution(
       isUpdateFromSources = isUpdateFromSources,
       buildPlatformJob = buildPlatformJob,
       searchableOptionSetDescriptor = searchableOptionSet,
-      moduleOutputPatcher = moduleOutputPatcher,
       descriptorCacheContainer = platformLayout.descriptorCacheContainer,
       context = context,
     )
@@ -161,7 +160,7 @@ internal suspend fun buildDistribution(
   contentReport
 }
 
-private fun generateCoreClassPath(
+private suspend fun generateCoreClassPath(
   platformLayout: PlatformLayout,
   context: BuildContext,
   platformDistribution: List<DistributionFileEntry>,
@@ -212,7 +211,6 @@ suspend fun testBuildBundledPluginsForAllPlatforms(
   state: DistributionBuilderState,
   pluginLayouts: Set<PluginLayout>,
   buildPlatformJob: Deferred<List<DistributionFileEntry>>,
-  moduleOutputPatcher: ModuleOutputPatcher,
   descriptorCacheContainer: DescriptorCacheContainer,
   context: BuildContext,
 ): List<DistFile> {
@@ -224,7 +222,6 @@ suspend fun testBuildBundledPluginsForAllPlatforms(
     isUpdateFromSources = false,
     searchableOptionSetDescriptor = null,
     descriptorCacheContainer = descriptorCacheContainer,
-    moduleOutputPatcher = moduleOutputPatcher,
   )
   return context.getDistFiles(os = null, arch = null, libcImpl = null).filter { it.relativePath == PLUGIN_CLASSPATH }
 }
@@ -251,7 +248,6 @@ suspend fun buildBundledPluginsAsStandaloneTask(
     isUpdateFromSources = false,
     buildPlatformJob = CompletableDeferred(platformContent),
     searchableOptionSet = searchableOptionSetDescriptor,
-    moduleOutputPatcher = ModuleOutputPatcher(),
     descriptorCacheContainer = state.platformLayout.descriptorCacheContainer,
     context = context,
   )
@@ -414,7 +410,7 @@ internal suspend fun layoutPlatformDistribution(
     }
 }
 
-private fun patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatcher: ModuleOutputPatcher, context: BuildContext) {
+private suspend fun patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatcher: ModuleOutputPatcher, context: BuildContext) {
   if (!context.productProperties.reassignAltClickToMultipleCarets) {
     return
   }

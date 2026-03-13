@@ -75,9 +75,9 @@ class EventsFlowService {
     LOG.debug("Unsubscribed $subscriber")
   }
 
-  fun getEvents(processId: String): Map<String, MutableList<SharedEventDto>> {
+  fun getEvents(processId: String): Map<String, List<SharedEventDto>> {
     return subscribersPerProcessLock.readLock().withLock {
-      subscribersPerProcess.getOrDefault(processId, HashMap()).entries.associate { it.key to it.value.events }
+      subscribersPerProcess.getOrDefault(processId, HashMap()).entries.associate { it.key to it.value.events.toList() }
     }
   }
 

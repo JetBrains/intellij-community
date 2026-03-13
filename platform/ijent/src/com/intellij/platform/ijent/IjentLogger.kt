@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
 import com.intellij.openapi.diagnostic.Logger
@@ -19,6 +19,8 @@ object IjentLogger {
     _all_loggers[name] = l
     return l
   }
+
+  val CONN_MGR_LOG: Logger = logger("#com.intellij.platform.ijent.conn_mgr")
 
   /**
    * Fetching environment variables.
@@ -54,11 +56,6 @@ object IjentLogger {
    * gRPC requests and responses.
    */
   val GRPC_LOG: Logger = logger("#com.intellij.platform.ijent.grpc")
-
-  /**
-   * Traffic dump for virtual machine sockets when IJent runs inside Hyper-V VM.
-   */
-  val HYPERV_LOG: Logger = logger("#com.intellij.platform.ijent.hyperv")
 
   /**
    * Everything that doesn't fit the other categories.

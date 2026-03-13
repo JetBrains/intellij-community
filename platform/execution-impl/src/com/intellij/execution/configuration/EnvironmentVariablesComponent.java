@@ -7,6 +7,7 @@ package com.intellij.execution.configuration;
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.EnvFilesOptions;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
@@ -16,6 +17,7 @@ import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.ChangeListener;
 import java.util.List;
@@ -32,8 +34,20 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
 
   public final EnvironmentVariablesTextFieldWithBrowseButton myEnvVars;
 
+  private final @Nullable Project myProject;
+
+  /**
+   * @deprecated Use {@link #EnvironmentVariablesComponent(Project)}. Pass {@code null} only if the component is created outside any
+   * project.
+   */
+  @Deprecated
   public EnvironmentVariablesComponent() {
+    this(null);
+  }
+
+  public EnvironmentVariablesComponent(@Nullable Project project) {
     super();
+    myProject = project;
     myEnvVars = createBrowseComponent();
     setComponent(myEnvVars);
     setText(ExecutionBundle.message("environment.variables.component.title"));
@@ -42,7 +56,7 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
   }
 
   protected @NotNull EnvironmentVariablesTextFieldWithBrowseButton createBrowseComponent() {
-    return new EnvironmentVariablesTextFieldWithBrowseButton();
+    return new EnvironmentVariablesTextFieldWithBrowseButton(myProject);
   }
 
   public void setEnvs(@NotNull Map<String, String> envs) {

@@ -8,6 +8,7 @@ import java.nio.file.Path
 import java.nio.file.WatchEvent
 import java.nio.file.WatchKey
 import java.nio.file.WatchService
+import kotlin.io.path.isSameFileAs
 
 internal class EelUnitTestPath(val fileSystem: EelUnitTestFileSystem, val delegate: Path) : Path {
 
@@ -33,6 +34,9 @@ internal class EelUnitTestPath(val fileSystem: EelUnitTestFileSystem, val delega
 
   override fun getParent(): Path? {
     val parent = delegate.parent ?: return null
+    if (!parent.startsWith(fileSystem.root.delegate)) {
+      return null
+    }
     return EelUnitTestPath(fileSystem, parent)
   }
 

@@ -10,7 +10,8 @@ import javax.swing.event.ChangeListener;
 import javax.swing.text.Caret;
 import javax.swing.text.DefaultCaret;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Graphics;
+import java.awt.Point;
 
 /**
  * {@linkplain DefaultCaret} does a lot of work we don't want (listening for focus events etc).
@@ -82,12 +83,12 @@ final class EditorAccessibilityCaret implements Caret {
 
   @Override
   public int getDot() {
-    return ReadAction.compute(() -> myEditor.getCaretModel().getOffset());
+    return ReadAction.computeBlocking(() -> myEditor.getCaretModel().getOffset());
   }
 
   @Override
   public int getMark() {
-    return ReadAction.compute(() -> myEditor.getSelectionModel().getSelectionStart());
+    return ReadAction.computeBlocking(() -> myEditor.getSelectionModel().getSelectionStart());
   }
 
   @Override

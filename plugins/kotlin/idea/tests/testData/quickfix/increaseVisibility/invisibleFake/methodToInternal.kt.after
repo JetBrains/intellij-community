@@ -1,4 +1,5 @@
 // "Make 'doSth' internal" "true"
+// K2_ERROR: Cannot access 'fun doSth(): Unit': it is private in 'A'.
 
 open class A {
     internal fun doSth() {

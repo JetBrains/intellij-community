@@ -2,7 +2,6 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.inspections.interpreter.PyInterpreterInspection;
 import com.jetbrains.python.psi.PythonVisitorFilter;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +17,6 @@ public final class PyTypeAnnotationVisitorFilter implements PythonVisitorFilter 
              visitorClass == PyByteLiteralInspection.class ||
              visitorClass == PyMandatoryEncodingInspection.class ||
              visitorClass == PyNonAsciiCharInspection.class ||
-             visitorClass == PyInterpreterInspection.class ||
              visitorClass == PyPep8Inspection.class ||
              visitorClass == PyCompatibilityInspection.class ||
              visitorClass == PyPackageRequirementsInspection.class);

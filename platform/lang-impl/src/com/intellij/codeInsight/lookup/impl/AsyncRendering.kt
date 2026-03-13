@@ -10,7 +10,12 @@ import com.intellij.codeInsight.lookup.SuspendingLookupElementRenderer
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.Key
 import com.intellij.util.indexing.DumbModeAccessType
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import org.jetbrains.annotations.ApiStatus

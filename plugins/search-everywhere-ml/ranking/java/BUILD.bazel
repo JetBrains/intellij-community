@@ -22,4 +22,19 @@ jvm_library(
     "//java/java-psi-api:psi",
   ]
 )
+
+jvm_library(
+  name = "java_test_lib",
+  module_name = "intellij.searchEverywhereMl.ranking.java",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":java",
+    "//platform/core-api:core_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//plugins/search-everywhere-ml/ranking/core:core_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.searchEverywhereMl.ranking.java` end

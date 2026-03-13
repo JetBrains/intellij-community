@@ -7,7 +7,10 @@ import com.intellij.BundleBase
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.notification.Notifications
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
@@ -35,9 +38,21 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.settingsSync.core.*
+import com.intellij.settingsSync.core.DeleteServerDataResult
+import com.intellij.settingsSync.core.SettingsSyncBridge
 import com.intellij.settingsSync.core.SettingsSyncBundle.message
-import com.intellij.settingsSync.core.UpdateResult.*
+import com.intellij.settingsSync.core.SettingsSyncEventListener
+import com.intellij.settingsSync.core.SettingsSyncEvents
+import com.intellij.settingsSync.core.SettingsSyncLocalSettings
+import com.intellij.settingsSync.core.SettingsSyncLocalStateHolder
+import com.intellij.settingsSync.core.SettingsSyncRemoteCommunicator
+import com.intellij.settingsSync.core.SettingsSyncSettings
+import com.intellij.settingsSync.core.SettingsSyncStatusTracker
+import com.intellij.settingsSync.core.SyncSettingsEvent
+import com.intellij.settingsSync.core.UpdateResult.Error
+import com.intellij.settingsSync.core.UpdateResult.FileDeletedFromServer
+import com.intellij.settingsSync.core.UpdateResult.NoFileOnServer
+import com.intellij.settingsSync.core.UpdateResult.Success
 import com.intellij.settingsSync.core.auth.SettingsSyncAuthService.PendingUserAction
 import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
 import com.intellij.settingsSync.core.communicator.SettingsSyncCommunicatorProvider
@@ -50,27 +65,51 @@ import com.intellij.ui.InlineBanner
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBRadioButton
-import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.bind
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.whenItemSelectedFromUi
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.and
 import com.intellij.ui.layout.not
 import com.intellij.ui.layout.selected
 import com.intellij.util.Consumer
-import com.intellij.util.asDisposable
 import com.intellij.util.IconUtil
+import com.intellij.util.asDisposable
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.concurrent.CancellationException
-import javax.swing.*
+import javax.swing.Action
+import javax.swing.Box
+import javax.swing.BoxLayout
+import javax.swing.ButtonGroup
+import javax.swing.JButton
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
 import javax.swing.border.Border
+import kotlin.time.Duration.Companion.seconds
 
 internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineScope) : BoundConfigurable(message("title.settings.sync")),
                                                                                       SettingsSyncEnabler.Listener,
@@ -391,6 +430,11 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(
             SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_AND_REMOVED_DATA_FROM_SERVER)
         }
+        // Don't set syncEnabled = false here - the bridge will do it via stopSyncingAndRollback
+        // when processing the DeleteServerData event
+        disableSyncOption.set(DisableSyncType.DISABLE)
+        syncStatusChanged()
+        return
       }
       DisableSyncType.DISABLE -> {
         SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_ONLY)
@@ -500,19 +544,25 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
         updateRemoveDataState(RemoteDataRemovalState.IN_PROGRESS)
         val project: Project? = ProjectManager.getInstanceIfCreated()?.openProjects?.firstOrNull()
         val result = try {
-          withBackgroundProgress(
-            currentOrDefaultProject(project),
-            message("disable.remove.data.background.progress",
-                    userAccount.toString()),
-            false,
-          ) {
-            if (shouldStopSyncing) {
-              sendRemoveRemoteDataEvent()
-            } else {
-              SettingsSyncBridge.removeRemoteData(userAccount.userData)
+          withTimeout(60.seconds) {
+            withBackgroundProgress(
+              currentOrDefaultProject(project),
+              message("disable.remove.data.background.progress",
+                      userAccount.toString()),
+              false,
+            ) {
+              if (shouldStopSyncing) {
+                sendRemoveRemoteDataEvent()
+              } else {
+                SettingsSyncBridge.removeRemoteData(userAccount.userData)
+              }
             }
           }
+        } catch (_: TimeoutCancellationException) {
+          LOG.warn("Remote data removal timed out after 60 seconds")
+          DeleteServerDataResult.Error("Remote data removal timed out after 60 seconds")
         } catch (ex : Exception) {
+          LOG.warn("Exception during remote data removal", ex)
           DeleteServerDataResult.Error(ex.toString())
         }
         when (result) {
@@ -550,13 +600,18 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   }
 
   private suspend fun sendRemoveRemoteDataEvent(): DeleteServerDataResult {
+    LOG.info("sendRemoveRemoteDataEvent: firing DeleteServerData event")
     val result = suspendCancellableCoroutine { continuation ->
+      LOG.info("sendRemoveRemoteDataEvent: creating suspendCancellableCoroutine")
       SettingsSyncEvents.getInstance().fireSettingsChanged(
         SyncSettingsEvent.DeleteServerData { deleteResult ->
+          LOG.info("sendRemoveRemoteDataEvent: callback invoked with result=$deleteResult")
           continuation.resume(deleteResult) { _, _, _ -> }
         }
       )
+      LOG.info("sendRemoveRemoteDataEvent: event fired, waiting for callback")
     }
+    LOG.info("sendRemoveRemoteDataEvent: returning result=$result")
     return result
   }
 

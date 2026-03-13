@@ -26,18 +26,6 @@ class PyExecutionException private constructor(
   val fixes: List<PyExecutionFix>,
   ioException: IOException? = null,
 ) : ExecutionException(pyError.message, ioException) {
-  companion object {
-    /**
-     * [com.jetbrains.python.packaging.PyExecutionException] for process died with timeout
-     */
-    @JvmStatic
-    fun createForTimeout(
-      additionalMessageToUser: @NlsContexts.DialogMessage String?,
-      command: String,
-      args: List<String>,
-    ): PyExecutionException = PyExecutionException(ExecErrorImpl(Exe.fromString(command), args.toTypedArray(), ExecErrorReason.Timeout, additionalMessageToUser))
-  }
-
 
   @JvmOverloads
   constructor(
@@ -55,23 +43,6 @@ class PyExecutionException private constructor(
   ) : this(
     pyError = MessageError(messageToUser),
     fixes = fixes)
-
-  /**
-   * A process failed to start, [ExecErrorReason.CantStart]
-   *
-   * @param additionalMessage a process start reason for a user
-   */
-  @JvmOverloads
-  constructor(
-    startException: IOException,
-    additionalMessage: @NlsContexts.DialogMessage String?,
-    command: String,
-    args: List<String>,
-    fixes: List<PyExecutionFix> = listOf<PyExecutionFix>(),
-  ) : this(
-    pyError = ExecErrorImpl(Exe.fromString(command), args.toTypedArray(), ExecErrorReason.CantStart(null, startException.localizedMessage), additionalMessage),
-    fixes = fixes,
-    ioException = startException)
 
 
   /**

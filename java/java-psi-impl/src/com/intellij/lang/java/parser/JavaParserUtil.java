@@ -49,6 +49,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.indexing.IndexingDataKeys;
 import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -120,6 +121,7 @@ public final class JavaParserUtil {
    * @deprecated Use the new Java syntax library instead.
    * See {@link com.intellij.java.syntax.parser.JavaParser}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static @NotNull PsiBuilder createBuilder(final LighterLazyParseableNode chameleon) {
     return createBuilder(chameleon,

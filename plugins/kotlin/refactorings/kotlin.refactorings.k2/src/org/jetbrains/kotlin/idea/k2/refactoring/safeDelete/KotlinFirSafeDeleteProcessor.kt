@@ -10,8 +10,10 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate
 import com.intellij.refactoring.safeDelete.NonCodeUsageSearchInfo
@@ -27,6 +29,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -108,8 +111,13 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                         //named argument would be deleted with argument
                         return@Processor true
                     }
-                    val importDirective = e.getNonStrictParentOfType<KtImportDirective>()
-                    result.add(SafeDeleteReferenceSimpleDeleteUsageInfo(importDirective ?: e, expected, importDirective != null))
+                    val usageInfo = if (element is KtParameter && isPassThroughParameter(e, element)) {
+                        SafeDeleteReferenceSimpleDeleteUsageInfo(e, expected, true)
+                    } else {
+                        val importDirective = e.getNonStrictParentOfType<KtImportDirective>()
+                        SafeDeleteReferenceSimpleDeleteUsageInfo(importDirective ?: e, expected, importDirective != null && importDirective.importedReference == e.parent)
+                    }
+                    result.add(usageInfo)
                 }
                 return@Processor true
             })
@@ -183,9 +191,18 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                 if (original != null && !allElementsToDelete.contains(original)) {
                     analyze(original.getKaModule(original.project, useSiteModule = null)) {
                         val elementClassSymbol = containingClass.symbol as KaClassSymbol
+                        val currentClassFqName = elementClassSymbol.classId?.asFqNameString()
 
-                        fun isMultipleInheritance(function: KaSymbol): Boolean {
-                            val superMethods = (function as? KaCallableSymbol)?.directlyOverriddenSymbols ?: return false
+                        fun isMultipleInheritance(functionSymbol: KaSymbol): Boolean {
+                            val function = functionSymbol.psi
+                            // need to process java separately as a workaround for KT-84737
+                            if (function is PsiMethod && function.findSuperMethods().any { superMethod ->
+                                    !isInside(superMethod) &&
+                                    !(currentClassFqName != null && InheritanceUtil.isInheritor(superMethod.containingClass, currentClassFqName))
+                                }) {
+                                return true
+                            }
+                            val superMethods = (functionSymbol as? KaCallableSymbol)?.directlyOverriddenSymbols ?: return false
                             return superMethods.any {
                                 val superClassSymbol = it.containingDeclaration as? KaClassSymbol ?: return@any false
                                 val superMethod = it.psi ?: return@any false
@@ -272,6 +289,29 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                 ?.createUsageInfoForParameter(it, result, element, parameterIndexAsJavaCall, element.isVarArg)
             return@Processor true
         })
+    }
+
+    private fun isPassThroughParameter(
+        refElement: PsiElement,
+        parameter: KtParameter
+    ): Boolean {
+        val function = parameter.ownerFunction ?: return false
+
+        val callExpr = refElement.getNonStrictParentOfType<KtCallExpression>() ?: return false
+        val calleeExpression = callExpr.calleeExpression
+        if (calleeExpression?.text != function.name) return false
+
+        analyze(callExpr) {
+            val resolvedCall =
+                callExpr.resolveToCall()?.successfulCallOrNull<KaFunctionCall<*>>() ?: return false
+
+            if (resolvedCall.symbol != function.symbol) {
+                return false
+            }
+
+            val variableSignature = resolvedCall.valueArgumentMapping[refElement]
+            return variableSignature?.symbol == parameter.symbol
+        }
     }
 
     private fun shouldAllowPropagationToExpected(parameter: KtParameter): Boolean {

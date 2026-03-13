@@ -12,7 +12,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class FindDependencyUtil {
   private FindDependencyUtil() {}

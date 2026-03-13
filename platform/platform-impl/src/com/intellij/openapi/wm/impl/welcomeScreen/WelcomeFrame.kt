@@ -10,7 +10,12 @@ import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -22,7 +27,12 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.DimensionService
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.WelcomeFrameProvider
+import com.intellij.openapi.wm.WelcomeScreen
+import com.intellij.openapi.wm.WelcomeScreenProvider
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.findNoProjectStateHandler
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.openapi.wm.impl.WindowManagerImpl

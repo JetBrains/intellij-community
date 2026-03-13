@@ -14,7 +14,9 @@ import com.intellij.ide.lightEdit.LightEditorListener
 import com.intellij.idea.AppMode
 import com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -221,8 +223,12 @@ class ProjectLoaded : ApplicationInitializedListener {
     // TODO: Under flag since a proper solution should be implemented in the platform later
     if (SystemProperties.getBooleanProperty("STARTER_TESTS_SUPPORT_TARGETS", false)
         || System.getenv("STARTER_TESTS_SUPPORT_TARGETS").toBoolean()) {
-      IntegrationTestApplicationLoadListener.projectPathFromCommandLine?.run {
-        EelInitialization.runEelInitialization(this)
+      IntegrationTestApplicationLoadListener.data?.let {
+        EelInitialization.runEelInitialization(it.projectPath)
+        // Re-evaluate AppMode flags: the first setFlags call in Main.kt runs before EPs are loaded,
+        // so MultiRoutingFileSystemBackend (Docker/WSL) isn't registered yet and mayHappenToBeAFile
+        // can't resolve remote paths, incorrectly setting isLightEdit=true.
+        AppMode.setFlags(it.args)
       }
     }
 
@@ -372,6 +378,10 @@ private fun reportScriptError(errorMessage: AbstractMessage) {
     }
   }
 
+  val appInfo = ApplicationInfoEx.getInstanceEx()
+  val namesInfo = ApplicationNamesInfo.getInstance()
+  val build = appInfo.build
+
   for (i in 1..999) {
     val errorDir = scriptErrorsDir.resolve("error-$i")
     if (Files.exists(errorDir)) {
@@ -382,6 +392,11 @@ private fun reportScriptError(errorMessage: AbstractMessage) {
     Files.writeString(errorDir.resolve("message.txt"), causeMessage)
     Files.writeString(errorDir.resolve("testName.txt"), (testName ?: causeMessage).take(maxTestNameLength))
     Files.writeString(errorDir.resolve("stacktrace.txt"), errorMessage.throwableText)
+    Files.writeString(errorDir.resolve("product_info.txt"), buildString {
+      appendLine("app.name=${namesInfo.productName}")
+      appendLine("app.name.full=${namesInfo.fullProductName}")
+      appendLine("app.product.code=${build.productCode}")
+    })
     val attachments = errorMessage.allAttachments
     val nameConflicts = attachments.groupBy { it.name }.filter { it.value.size > 1 }.keys
 

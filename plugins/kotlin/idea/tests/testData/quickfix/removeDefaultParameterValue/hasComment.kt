@@ -1,4 +1,5 @@
 // "Remove default parameter value" "true"
+// K2_ERROR: An overriding function is not allowed to specify default values for its parameters.
 open class A {
     open fun foo(x: Int, y: Int) {}
 }

@@ -1,0 +1,14 @@
+================ Step #1 =================
+Cleaning output files:
+  JavaClass.class
+  META-INF/kotlin_withJava_javaUsedInKotlin_javaAndKotlinChangedSimultaneously-a.kotlin_module
+  UsageKt.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/javaAndKotlinChangedSimultaneously/a/usage.kt
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/javaAndKotlinChangedSimultaneously/a/JavaClass.java
+End of files
+------------------------------------------
+Exit code: OK

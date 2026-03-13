@@ -6,7 +6,7 @@
     <module name="intellij.platform.compose.markdown"/>
     <module name="intellij.platform.jewel.markdown.extensions.images"/>
     <module name="intellij.java.backend"/>
-    <plugin id="com.intellij.gradle"/>
+    <module name="intellij.gradle" />
     <plugin id="org.jetbrains.kotlin"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.skiko"/>

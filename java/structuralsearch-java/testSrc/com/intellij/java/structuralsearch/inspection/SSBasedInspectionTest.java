@@ -1,26 +1,43 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.structuralsearch.inspection;
 
+import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionEngine;
+import com.intellij.codeInspection.RedundantSuppressInspection;
+import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.inspection.SSBasedInspection;
 import com.intellij.structuralsearch.inspection.StructuralSearchProfileActionProvider;
+import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
+import com.intellij.testFramework.InspectionTestUtil;
+import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+
+import static org.junit.Assert.assertNotNull;
 
 public class SSBasedInspectionTest extends SSBasedInspectionTestCase {
 
@@ -41,6 +58,41 @@ public class SSBasedInspectionTest extends SSBasedInspectionTestCase {
              }""");
     inspectionTest(configuration, HighlightDisplayLevel.ERROR);
     quickFixTest("Suppress for statement");
+  }
+  
+  public void testRedundantSuppress() {
+    final Configuration configuration = new ReplaceConfiguration();
+    configuration.setName("println");
+    configuration.setSuppressId("println");
+
+    final MatchOptions matchOptions = configuration.getMatchOptions();
+    matchOptions.setFileType(JavaFileType.INSTANCE);
+    matchOptions.fillSearchCriteria("System.out.println();");
+    configuration.getReplaceOptions().setReplacement("System.out.print('\\n');");
+
+    Project project = myFixture.getProject();
+    InspectionProfileImpl profile = InspectionProfileManager.getInstance(project).getCurrentProfile();
+    StructuralSearchProfileActionProvider.createNewInspection(configuration, project, profile);
+    @NotNull InspectionToolWrapper<?, ?> redundantSuppressInspection = new GlobalInspectionToolWrapper(new RedundantSuppressInspection());
+
+    VirtualFile sourceDir = myFixture.copyDirectoryToProject(new File("RedundantSuppress/", "src").getPath(), "");
+    AnalysisScope scope = new AnalysisScope(myFixture.getPsiManager().findDirectory(sourceDir));
+
+    SSBasedInspection inspection = SSBasedInspection.getStructuralSearchInspection(profile);
+    List<InspectionToolWrapper<?, ?>> wrappers = new ArrayList<>();
+    wrappers.add(redundantSuppressInspection);
+    wrappers.add(new LocalInspectionToolWrapper(inspection));
+    wrappers.addAll(inspection.getChildren());
+
+    GlobalInspectionContextForTests globalContext = InspectionsKt.createGlobalContextForTool(scope, project, wrappers);
+    InspectionTestUtil.runTool(redundantSuppressInspection, scope, globalContext);
+    InspectionTestUtil.compareToolResults(globalContext, redundantSuppressInspection, false, getTestDataPath() + "/RedundantSuppress/");
+
+    myFixture.testHighlighting(true, false, false, "FixAll.java");
+    final IntentionAction intention = myFixture.getAvailableIntention("Fix all 'println' problems in file");
+    assertNotNull("Intention not found. Did you forget a <caret>?", intention);
+    myFixture.checkPreviewAndLaunchAction(intention);
+    myFixture.checkResultByFile("FixAll.after.java");
   }
 
   public void testBrokenPattern() {

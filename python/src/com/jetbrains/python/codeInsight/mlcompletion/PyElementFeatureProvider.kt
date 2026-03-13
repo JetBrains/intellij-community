@@ -101,7 +101,7 @@ class PyElementFeatureProvider : ElementFeatureProvider {
       }}
     }
 
-    element.getUserData(PyMultipleArgumentsCompletionContributor.MULTIPLE_ARGUMENTS_VARIANT_KEY)?.let {
+    element.getUserData(PyMultipleArgumentsCompletionContributor.Helper.MULTIPLE_ARGUMENTS_VARIANT_KEY)?.let {
       result["is_multiple_arguments"] = MLFeatureValue.binary(true)
     }
 

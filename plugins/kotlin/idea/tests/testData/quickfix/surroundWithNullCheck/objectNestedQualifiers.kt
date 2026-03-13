@@ -1,4 +1,5 @@
 // "Surround with null check" "true"
+// K2_ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'String?'.
 
 fun foo(p: String?) {
     Util.f1(Util.f2(p<caret>.length), 0)

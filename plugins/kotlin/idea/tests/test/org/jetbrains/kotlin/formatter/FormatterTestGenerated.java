@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.formatter;
 
@@ -18,13 +18,13 @@ import org.junit.runner.RunWith;
 @TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class FormatterTestGenerated extends AbstractFormatterTest {
+public abstract class FormatterTestGenerated extends AbstractK1FormatterTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/formatter")
-    public abstract static class Formatter extends AbstractFormatterTest {
+    public abstract static class Formatter extends AbstractK1FormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/callChain")
-        public static class CallChain extends AbstractFormatterTest {
+        public static class CallChain extends AbstractK1FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -123,7 +123,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/fileAnnotations")
-        public static class FileAnnotations extends AbstractFormatterTest {
+        public static class FileAnnotations extends AbstractK1FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -192,7 +192,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/modifierList")
-        public static class ModifierList extends AbstractFormatterTest {
+        public static class ModifierList extends AbstractK1FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -286,7 +286,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/parameterList")
-        public static class ParameterList extends AbstractFormatterTest {
+        public static class ParameterList extends AbstractK1FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -370,10 +370,10 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma")
-        public abstract static class TrailingComma extends AbstractFormatterTest {
+        public abstract static class TrailingComma extends AbstractK1FormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/collectionLiteralExpression")
-            public static class CollectionLiteralExpression extends AbstractFormatterTest {
+            public static class CollectionLiteralExpression extends AbstractK1FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -397,7 +397,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/contextParameters")
-            public static class ContextParameters extends AbstractFormatterTest {
+            public static class ContextParameters extends AbstractK1FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -421,7 +421,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/destructuringDeclarations")
-            public static class DestructuringDeclarations extends AbstractFormatterTest {
+            public static class DestructuringDeclarations extends AbstractK1FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -450,7 +450,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/enumEntry")
-            public static class EnumEntry extends AbstractFormatterTest {
+            public static class EnumEntry extends AbstractK1FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -469,7 +469,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/indices")
-            public static class Indices extends AbstractFormatterTest {
+            public static class Indices extends AbstractK1FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -493,7 +493,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/lambdaParameters")
-            public static class LambdaParameters extends AbstractFormatterTest {
+            public static class LambdaParameters extends AbstractK1FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -517,7 +517,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/typeArguments")
-            public static class TypeArguments extends AbstractFormatterTest {
+            public static class TypeArguments extends AbstractK1FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -541,7 +541,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/typeParameters")
-            public static class TypeParameters extends AbstractFormatterTest {
+            public static class TypeParameters extends AbstractK1FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -565,7 +565,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/valueArguments")
-            public static class ValueArguments extends AbstractFormatterTest {
+            public static class ValueArguments extends AbstractK1FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -609,7 +609,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/valueParameters")
-            public static class ValueParameters extends AbstractFormatterTest {
+            public static class ValueParameters extends AbstractK1FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -653,7 +653,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/whenEntry")
-            public static class WhenEntry extends AbstractFormatterTest {
+            public static class WhenEntry extends AbstractK1FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -688,7 +688,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter")
-        public static class Uncategorized extends AbstractFormatterTest {
+        public static class Uncategorized extends AbstractK1FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1643,10 +1643,10 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/formatter/trailingComma")
-    public abstract static class FormatterCallSite extends AbstractFormatterTest {
+    public abstract static class FormatterCallSite extends AbstractK1FormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/collectionLiteralExpression")
-        public static class CollectionLiteralExpression extends AbstractFormatterTest {
+        public static class CollectionLiteralExpression extends AbstractK1FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1665,7 +1665,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/indices")
-        public static class Indices extends AbstractFormatterTest {
+        public static class Indices extends AbstractK1FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1684,7 +1684,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/lambdaParameters")
-        public static class LambdaParameters extends AbstractFormatterTest {
+        public static class LambdaParameters extends AbstractK1FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1703,7 +1703,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/typeArguments")
-        public static class TypeArguments extends AbstractFormatterTest {
+        public static class TypeArguments extends AbstractK1FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1722,7 +1722,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/typeParameters")
-        public static class TypeParameters extends AbstractFormatterTest {
+        public static class TypeParameters extends AbstractK1FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1741,7 +1741,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/valueArguments")
-        public static class ValueArguments extends AbstractFormatterTest {
+        public static class ValueArguments extends AbstractK1FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1760,7 +1760,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/valueParameters")
-        public static class ValueParameters extends AbstractFormatterTest {
+        public static class ValueParameters extends AbstractK1FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1780,10 +1780,10 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/formatter")
-    public abstract static class FormatterInverted extends AbstractFormatterTest {
+    public abstract static class FormatterInverted extends AbstractK1FormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/callChain")
-        public static class CallChain extends AbstractFormatterTest {
+        public static class CallChain extends AbstractK1FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1837,7 +1837,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/parameterList")
-        public static class ParameterList extends AbstractFormatterTest {
+        public static class ParameterList extends AbstractK1FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1871,10 +1871,10 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma")
-        public abstract static class TrailingComma extends AbstractFormatterTest {
+        public abstract static class TrailingComma extends AbstractK1FormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/collectionLiteralExpression")
-            public static class CollectionLiteralExpression extends AbstractFormatterTest {
+            public static class CollectionLiteralExpression extends AbstractK1FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1893,7 +1893,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/contextParameters")
-            public static class ContextParameters extends AbstractFormatterTest {
+            public static class ContextParameters extends AbstractK1FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1912,7 +1912,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/destructuringDeclarations")
-            public static class DestructuringDeclarations extends AbstractFormatterTest {
+            public static class DestructuringDeclarations extends AbstractK1FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1936,7 +1936,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/enumEntry")
-            public static class EnumEntry extends AbstractFormatterTest {
+            public static class EnumEntry extends AbstractK1FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1955,7 +1955,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/indices")
-            public static class Indices extends AbstractFormatterTest {
+            public static class Indices extends AbstractK1FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1974,7 +1974,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/lambdaParameters")
-            public static class LambdaParameters extends AbstractFormatterTest {
+            public static class LambdaParameters extends AbstractK1FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1993,7 +1993,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/typeArguments")
-            public static class TypeArguments extends AbstractFormatterTest {
+            public static class TypeArguments extends AbstractK1FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2012,7 +2012,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/typeParameters")
-            public static class TypeParameters extends AbstractFormatterTest {
+            public static class TypeParameters extends AbstractK1FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2031,7 +2031,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/valueArguments")
-            public static class ValueArguments extends AbstractFormatterTest {
+            public static class ValueArguments extends AbstractK1FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2070,7 +2070,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/valueParameters")
-            public static class ValueParameters extends AbstractFormatterTest {
+            public static class ValueParameters extends AbstractK1FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2114,7 +2114,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/whenEntry")
-            public static class WhenEntry extends AbstractFormatterTest {
+            public static class WhenEntry extends AbstractK1FormatterTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2144,7 +2144,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter")
-        public static class Uncategorized extends AbstractFormatterTest {
+        public static class Uncategorized extends AbstractK1FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -2449,10 +2449,10 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/formatter/trailingComma")
-    public abstract static class FormatterInvertedCallSite extends AbstractFormatterTest {
+    public abstract static class FormatterInvertedCallSite extends AbstractK1FormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/collectionLiteralExpression")
-        public static class CollectionLiteralExpression extends AbstractFormatterTest {
+        public static class CollectionLiteralExpression extends AbstractK1FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -2471,7 +2471,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/indices")
-        public static class Indices extends AbstractFormatterTest {
+        public static class Indices extends AbstractK1FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -2490,7 +2490,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/lambdaParameters")
-        public static class LambdaParameters extends AbstractFormatterTest {
+        public static class LambdaParameters extends AbstractK1FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -2509,7 +2509,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/typeArguments")
-        public static class TypeArguments extends AbstractFormatterTest {
+        public static class TypeArguments extends AbstractK1FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -2528,7 +2528,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/typeParameters")
-        public static class TypeParameters extends AbstractFormatterTest {
+        public static class TypeParameters extends AbstractK1FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -2547,7 +2547,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/valueArguments")
-        public static class ValueArguments extends AbstractFormatterTest {
+        public static class ValueArguments extends AbstractK1FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -2566,7 +2566,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/valueParameters")
-        public static class ValueParameters extends AbstractFormatterTest {
+        public static class ValueParameters extends AbstractK1FormatterTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {

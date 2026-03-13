@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.bazel
 
 import com.intellij.openapi.util.NlsSafe
@@ -278,7 +278,12 @@ internal fun generateDeps(
           }
           val targetName = camelToSnakeCase(escapeBazelLabel(name = rawTargetName.removeSuffix("-final").removeSuffix(".Final")))
 
-          var libraryContainer = context.getLibraryContainer(module.isCommunity)
+          // always use kotlinc libraries from community to reduce the noise on `kt-master` merge
+          // `kotlin.util.compiler-dependencies` module guaranties that all kotlinc libraries are used in the community part
+          val isKotlincLib = jpsLibrary.name.startsWith("kotlinc.")
+          val isCommunityOrKotlinc = module.isCommunity || isKotlincLib
+
+          var libraryContainer = context.getLibraryContainer(isCommunityOrKotlinc)
 
           // we process community modules first, so, `addOrGet` (library equality ignores `isCommunity` flag)
           libraryContainer = context.addMavenLibrary(
@@ -293,9 +298,9 @@ internal fun generateDeps(
           ).target.container
 
           val containerForLabel = if (isProvided) {
-            // provided libraries for ultimate are defined in ultimate
+            // provided libraries for ultimate are defined in ultimate, but not kotlinc.* as per ^^
             // provided libraries for community are defined in community
-            context.getLibraryContainer(module.isCommunity)
+            context.getLibraryContainer(isCommunityOrKotlinc)
           }
           else {
             // libraries (not provided) used both in ultimate & community are defined in community
@@ -477,116 +482,46 @@ private fun addDep(
   provided: MutableList<BazelLabel>,
   isExported: Boolean,
 ) {
+  // from https://jetbrains.team/p/ij/repositories/ultimate/files/84449419f2776239fb898fe350623dfe2ea074d4/community/jps/model-api/src/org/jetbrains/jps/model/java/JpsJavaDependencyScope.java?tab=source&line=27&lines-count=4:
+  // - COMPILE(PRODUCTION_COMPILE, PRODUCTION_RUNTIME, TEST_COMPILE, TEST_RUNTIME)
+  // - TEST(TEST_COMPILE, TEST_RUNTIME)
+  // - RUNTIME(PRODUCTION_RUNTIME, TEST_RUNTIME)
+  // - PROVIDED(PRODUCTION_COMPILE, TEST_COMPILE, TEST_RUNTIME)
+
   if (isTest) {
-    val hasProductionDependentModule = true  // test always depends on production, skip runtime dependencies
+    val isIncludedInProductionRuntime = scope == JpsJavaDependencyScope.COMPILE || scope == JpsJavaDependencyScope.RUNTIME  // test always depends on production, skip runtime dependencies to keep the dependency graph clean
     when (scope) {
-      JpsJavaDependencyScope.COMPILE -> {
+      JpsJavaDependencyScope.COMPILE, JpsJavaDependencyScope.PROVIDED, JpsJavaDependencyScope.TEST -> {
+        // TODO: use non-provided label for libs to include them in test runtime
         if (hasSources) {
           deps.add(dependencyLabel)
         }
-        else if (!hasProductionDependentModule) {
+        else if (!isIncludedInProductionRuntime) {
           runtimeDeps.add(dependencyLabel)
         }
         if (isExported) {  // e.g. //debugger/intellij.java.debugger.rpc.tests:java-debugger-rpc-tests_test_lib
           exports.add(dependencyLabel)
         }
 
-        if (dependencyModuleDescriptor != null && !dependencyModuleDescriptor.testSources.isEmpty()) {
-          if (needsBackwardCompatibleTestDependency(dependencyModuleDescriptor.module.name, dependentModule)) {
-            if (hasSources) {
-              deps.add(getLabelForTest(dependencyLabel))
-            }
-            else {
-              runtimeDeps.add(getLabelForTest(dependencyLabel))
-            }
-            if (isExported) {  // e.g. //CIDR-appcode/appcode-coverage:appcode-coverage_test_lib
-              exports.add(getLabelForTest(dependencyLabel))
-            }
-          }
-        }
-      }
-      JpsJavaDependencyScope.PROVIDED -> {
-        // ignore deps if no sources, as `exports` in Bazel means "compile" scope
-        if (hasSources) {
-          if (dependencyModuleDescriptor == null) {
-            // lib supports `provided`
-            deps.add(dependencyLabel)
-            if (isExported) {
-              exports.add(dependencyLabel)
-            }
+        if (dependencyModuleDescriptor != null) {
+          if (hasSources && needsBackwardCompatibleTestDependency(dependencyModuleDescriptor.module.name, dependentModule)) {
+            deps.add(getLabelForTest(dependencyLabel))
           }
           else {
-            if (dependencyModuleDescriptor.sources.isNotEmpty() || dependencyModuleDescriptor.resources.isNotEmpty()) {  // e.g. v2 module library
-              provided.add(dependencyLabel)
-              if (isExported) {
-                exports.add(dependencyLabel)
-              }
-            }
-            if (dependencyModuleDescriptor.testSources.isNotEmpty()) {
-              provided.add(getLabelForTest(dependencyLabel))
-              if (isExported) {
-                exports.add(getLabelForTest(dependencyLabel))
-              }
-            }
-          }
-        }
-      }
-      JpsJavaDependencyScope.TEST -> {
-        if (dependencyModuleDescriptor == null) {
-          if (hasSources) {
-            deps.add(dependencyLabel)
-          }
-          else {
-            runtimeDeps.add(dependencyLabel)
-          }
-          if (isExported) {  // e.g. //python/junit5Tests:junit5Tests_test_lib
-            exports.add(dependencyLabel)
-          }
-        }
-        else {
-          if (hasOnlyTestResources(dependencyModuleDescriptor)) {
-            // module with only test resources
             runtimeDeps.add(getLabelForTest(dependencyLabel))
-            if (isExported) {
-              throw RuntimeException("Do not export test dependency (module=${dependentModule.module.name}, exported=${dependencyModuleDescriptor.module.name})")
-            }
           }
-          else {
-            val hasTestSource = !dependencyModuleDescriptor.testSources.isEmpty()
-            val hasTestResources = dependencyModuleDescriptor.testResources.isNotEmpty()
-
-            if (isExported && hasTestSource) {
-              LOG.log(Level.FINE, "Do not export test dependency (module=${dependentModule.module.name}, exported=${dependencyModuleDescriptor.module.name})")
-            }
-
-            if (!dependencyModuleDescriptor.sources.isEmpty() || !hasTestSource) {
-              if (hasSources) {
-                deps.add(dependencyLabel)
-              }
-              else {
-                runtimeDeps.add(dependencyLabel)
-              }
-              if (isExported) {  // e.g. @community//python/python-venv:community-impl-venv_test_lib
-                exports.add(dependencyLabel)
-              }
-            }
-            if (hasTestSource || hasTestResources) {
-              if (hasSources) {
-                deps.add(getLabelForTest(dependencyLabel))
-              }
-              else {
-                runtimeDeps.add(getLabelForTest(dependencyLabel))
-              }
-              if (isExported) {  // e.g. //remote-dev/cwm-guest/plugins/java-frontend:java-frontend-split_test_lib
-                exports.add(getLabelForTest(dependencyLabel))
-              }
-            }
+          if (isExported) {  // e.g. //CIDR-appcode/appcode-coverage:appcode-coverage_test_lib
+            exports.add(getLabelForTest(dependencyLabel))
           }
         }
       }
       JpsJavaDependencyScope.RUNTIME -> {
-        if (!hasProductionDependentModule) {
+        if (!isIncludedInProductionRuntime) {  // always false, kept for consistency
           runtimeDeps.add(dependencyLabel)
+        }
+
+        if (dependencyModuleDescriptor != null) {
+          runtimeDeps.add(getLabelForTest(dependencyLabel))
         }
       }
     }

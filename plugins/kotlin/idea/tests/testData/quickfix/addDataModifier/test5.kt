@@ -1,4 +1,6 @@
 // "Make 'Foo' data class" "true"
+// K2_ERROR: Destructuring of type 'Foo' requires operator function 'component1()'.
+// K2_ERROR: Destructuring of type 'Foo' requires operator function 'component2()'.
 class Foo(private val bar: String, protected var baz: Int) {
     fun test() {
         var (bar, baz) = Foo("A", 1)<caret>

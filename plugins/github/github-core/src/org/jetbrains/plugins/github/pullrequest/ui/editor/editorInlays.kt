@@ -23,8 +23,8 @@ internal sealed interface GHPREditorMappedComponentModel : CodeReviewInlayModel.
     }
   }
 
-  abstract class NewComment<VM : GHPRReviewNewCommentEditorViewModel>(val vm: VM)
-    : GHPREditorMappedComponentModel, CodeReviewInlayModel.Ranged.Adjustable
+  abstract class NewComment<VM : GHPRReviewNewCommentEditorViewModel>(val vm: VM) : GHPREditorMappedComponentModel,
+                                                                                    CodeReviewInlayModel.Ranged.Adjustable
 
   abstract class AIComment(val vm: GHPRAICommentViewModel) : GHPREditorMappedComponentModel, Hideable {
     final override val key: Any = vm.key

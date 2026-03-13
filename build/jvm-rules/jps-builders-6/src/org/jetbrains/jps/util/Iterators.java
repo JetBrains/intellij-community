@@ -3,12 +3,12 @@ package org.jetbrains.jps.util;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
@@ -32,11 +32,9 @@ public final class Iterators {
     if (iterable instanceof Collection) {
       return ((Collection<?>)iterable).contains(obj);
     }
-    if (iterable != null) {
-      for (T o : iterable) {
-        if (obj.equals(o)) {
-          return true;
-        }
+    for (Iterator<? extends T> iterator = asIterator(iterable); iterator.hasNext(); ) {
+      if (obj.equals(iterator.next())) {
+        return true;
       }
     }
     return false;
@@ -47,25 +45,24 @@ public final class Iterators {
       return ((Collection<?>)iterable).size();
     }
     int count = 0;
-    for (Iterator<?> it = iterable.iterator(); it.hasNext(); it.next()) {
+    for (Iterator<?> it = asIterator(iterable); it.hasNext(); it.next()) {
       count += 1;
     }
     return count;
   }
 
   public static <T> T find(Iterable<? extends T> iterable, Predicate<? super T> cond) {
-    if (iterable != null) {
-      for (T o : iterable) {
-        if (cond.test(o)) {
-          return o;
-        }
+    for (Iterator<? extends T> iterator = asIterator(iterable); iterator.hasNext(); ) {
+      T o = iterator.next();
+      if (cond.test(o)) {
+        return o;
       }
     }
     return null;
   }
 
   public static <C extends Collection<? super T>, T> C collect(Iterable<? extends T> iterable, C acc) {
-    return collect(iterable != null? iterable.iterator() : null, acc);
+    return collect(asIterator(iterable), acc);
   }
 
   public static <C extends Collection<? super T>, T> C collect(Iterator<? extends T> it, C acc) {
@@ -77,12 +74,12 @@ public final class Iterators {
     return acc;
   }
 
-  public static <T> Iterable<T> lazyIterable(final Supplier<? extends Iterable<T>> provider) {
+  public static <T> Iterable<T> lazyIterable(Supplier<? extends Iterable<T>> provider) {
     final Supplier<? extends Iterable<T>> delegate = cachedValue(provider);
-    return () -> delegate.get().iterator();
+    return () -> asIterator(delegate.get());
   }
 
-  public static <T> Iterator<T> lazyIterator(final Supplier<? extends Iterator<T>> provider) {
+  public static <T> Iterator<T> lazyIterator(Supplier<? extends Iterator<T>> provider) {
     return new Iterator<T>() {
       private final Supplier<? extends Iterator<T>> delegate = cachedValue(provider);
       @Override
@@ -98,7 +95,7 @@ public final class Iterators {
   }
 
   @SuppressWarnings("unchecked")
-  public static <T> Iterable<T> flat(final Iterable<? extends T> first, final Iterable<? extends T> second) {
+  public static <T> Iterable<T> flat(Iterable<? extends T> first, Iterable<? extends T> second) {
     if (isEmptyCollection(first)) {
       return isEmptyCollection(second) ? Collections.emptyList() : (Iterable<T>)second;
     }
@@ -108,7 +105,7 @@ public final class Iterators {
     return () -> flat(first.iterator(), second.iterator());
   }
 
-  public static <T> Iterator<T> flat(final Iterator<? extends T> first, final Iterator<? extends T> second) {
+  public static <T> Iterator<T> flat(Iterator<? extends T> first, Iterator<? extends T> second) {
     return new Iterator<T>() {
       @Override
       public boolean hasNext() {
@@ -122,7 +119,7 @@ public final class Iterators {
     };
   }
 
-  public static <T> Iterable<T> flat(final Collection<? extends Iterable<? extends T>> parts) {
+  public static <T> Iterable<T> flat(Collection<? extends Iterable<? extends T>> parts) {
     if (parts.isEmpty()) {
       return Collections.emptyList();
     }
@@ -133,11 +130,11 @@ public final class Iterators {
     return flat((Iterable<? extends Iterable<? extends T>>)parts);
   }
 
-  public static <T> Iterable<T> flat(final Iterable<? extends Iterable<? extends T>> parts) {
-    return isEmptyCollection(parts) ? Collections.emptyList() : () -> flat(map(parts.iterator(), Iterators::asIterator));
+  public static <T> Iterable<T> flat(Iterable<? extends Iterable<? extends T>> parts) {
+    return isEmptyCollection(parts)? Collections.emptyList() : () -> flat(map(asIterator(parts), Iterators::asIterator));
   }
 
-  public static <T> Iterator<T> flat(final Iterator<? extends Iterator<T>> groupsIterator) {
+  public static <T> Iterator<T> flat(Iterator<? extends Iterator<T>> groupsIterator) {
     return new Iterator<T>() {
       private Iterator<T> currentGroup;
 
@@ -222,7 +219,7 @@ public final class Iterators {
   }
 
   public static <I,O> Iterable<O> map(final Iterable<? extends I> from, final Function<? super I, ? extends O> mapper) {
-    return isEmptyCollection(from) ? Collections.emptyList() : () -> map(from.iterator(), mapper);
+    return isEmptyCollection(from) ? Collections.emptyList() : () -> map(asIterator(from), mapper);
   }
 
   public static <I,O> Iterator<O> map(final Iterator<? extends I> it, final Function<? super I, ? extends O> mapper) {
@@ -240,7 +237,7 @@ public final class Iterators {
   }
 
   public static <T> Iterable<T> filter(final Iterable<? extends T> it, final Predicate<? super T> predicate) {
-    return isEmptyCollection(it) ? Collections.emptyList() : () -> filter(it.iterator(), predicate);
+    return isEmptyCollection(it) ? Collections.emptyList() : () -> filter(asIterator(it), predicate);
   }
 
   public static <T> Iterator<T> filter(final Iterator<? extends T> it, final Predicate<? super T> predicate) {
@@ -288,57 +285,74 @@ public final class Iterators {
     };
   }
 
+  /**
+   * Returns elements from {@code from} grouped by {@code predicates}. For each predicate, all matching
+   * elements are returned in the order they appear in {@code from}. The overall output order is defined
+   * by the predicate sequence: all matches for the first predicate, then all matches for the second, etc.
+   * Each element is consumed by the first predicate that matches it and is not available to subsequent predicates.
+   */
   public static <T> Iterable<T> filterWithOrder(final Iterable<? extends T> from, final Iterable<? extends Predicate<? super T>> predicates) {
-    return isEmptyCollection(predicates) || isEmptyCollection(from)? Collections.emptyList() : () -> filterWithOrder(from.iterator(), predicates.iterator());
+    return isEmptyCollection(predicates) || isEmptyCollection(from)? Collections.emptyList() : () -> filterWithOrder(asIterator(from), asIterator(predicates));
   }
 
+  /**
+   * Returns elements from {@code from} grouped by {@code predicates}. For each predicate, all matching
+   * elements are returned in the order they appear in {@code from}. The overall output order is defined
+   * by the predicate sequence: all matches for the first predicate, then all matches for the second, etc.
+   * Each element is consumed by the first predicate that matches it and is not available to subsequent predicates.
+   */
   public static <T> Iterator<T> filterWithOrder(final Iterator<? extends T> from, final Iterator<? extends Predicate<? super T>> predicates) {
     return flat(map(predicates, new Function<Predicate<? super T>, Iterator<T>>() {
-      final List<T> buffer = new LinkedList<>();
+      private List<T> unmatched = Collections.emptyList();
       @Override
       public Iterator<T> apply(Predicate<? super T> pred) {
-        if (!buffer.isEmpty()) {
-          for (Iterator<T> it = buffer.iterator(); it.hasNext(); ) {
-            final T elem = it.next();
-            if (pred.test(elem)) {
-              it.remove();
-              return asIterator(elem);
-            }
-          }
+        Iterator<T> available = from.hasNext()? flat(from, unmatched.iterator()) : unmatched.iterator();
+        if (!available.hasNext()) {
+          return Collections.emptyIterator();
         }
-        while(from.hasNext()) {
-          final T elem = from.next();
-          if (pred.test(elem)) {
-            return asIterator(elem);
+        unmatched = new ArrayList<>();
+        return filter(available, elem -> {
+          if (!pred.test(elem)) {
+            unmatched.add(elem);
+            return false;
           }
-          buffer.add(elem);
-        }
-        buffer.clear();
-        return Collections.emptyIterator();
+          return true;
+        });
       }
     }));
   }
 
-  public static <T> Iterable<T> unique(final Iterable<? extends T> it) {
-    return isEmptyCollection(it) ? Collections.emptyList() : () -> unique(it.iterator());
+  public static <T> Iterable<T> unique(Iterable<? extends T> it) {
+    return isEmptyCollection(it) ? Collections.emptyList() : () -> unique(asIterator(it));
   }
 
-  public static <T> Iterator<T> unique(final Iterator<? extends T> it) {
+  public static <T> Iterator<T> unique(Iterator<? extends T> it) {
     Supplier<Set<Object>> processed = cachedValue(HashSet::new);
     return filter(it, e -> processed.get().add(e));
   }
 
-  public static <T> Iterable<T> uniqueBy(final Iterable<? extends T> it, final Supplier<? extends Predicate<T>> predicateFactory) {
-    return isEmptyCollection(it) ? Collections.emptyList() : () -> filter(it.iterator(), predicateFactory.get());
+  public static <T> Iterable<T> uniqueBy(Iterable<? extends T> it, final Supplier<? extends Predicate<T>> predicateFactory) {
+    return isEmptyCollection(it) ? Collections.emptyList() : () -> filter(asIterator(it), predicateFactory.get());
   }
 
+  /**
+   * Compares two iterables element-by-element for equality. Returns {@code true} if both produce
+   * the same number of elements and corresponding elements are equal. {@code null} is treated as empty,
+   * so {@code equals(null, null)} and {@code equals(null, emptyList)} both return {@code true}.
+   */
   public static <T> boolean equals(Iterable<? extends T> s1, Iterable<? extends T> s2) {
     return equals(s1, s2, Object::equals);
   }
 
+  /**
+   * Compares two iterables element-by-element using the given comparator. Returns {@code true} if both
+   * produce the same number of elements and the comparator returns {@code true} for every corresponding pair.
+   * {@code null} is treated as empty.
+   */
   public static <T> boolean equals(Iterable<? extends T> s1, Iterable<? extends T> s2, BiFunction<? super T, ? super T, Boolean> comparator) {
-    Iterator<? extends T> it2 = s2.iterator();
-    for (T elem : s1) {
+    Iterator<? extends T> it2 = asIterator(s2);
+    for (Iterator<? extends T> it1 = asIterator(s1); it1.hasNext(); ) {
+      final T elem = it1.next();
       if (!it2.hasNext()) {
         return false;
       }
@@ -350,6 +364,9 @@ public final class Iterators {
   }
 
   public static <T> int hashCode(Iterable<? extends T> s) {
+    if (s == null) {
+      return 0;
+    }
     int result = 1;
     for (T elem : s) {
       result = 31 * result + (elem == null? 0 : elem.hashCode());
@@ -402,10 +419,10 @@ public final class Iterators {
             }
 
             if (!includeHead) {
-              return flat(map(step.apply(elem).iterator(), e -> recurse(e, true)));
+              return flat(map(asIterator(step.apply(elem)), e -> recurse(e, true)));
             }
 
-            Iterator<? extends T> tail = lazyIterator(() -> step.apply(elem).iterator());
+            Iterator<? extends T> tail = lazyIterator(() -> asIterator(step.apply(elem)));
             return flat(asIterator(elem), flat(map(tail, e -> recurse(e, true))));
           }
 

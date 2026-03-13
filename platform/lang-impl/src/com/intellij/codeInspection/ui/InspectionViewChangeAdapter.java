@@ -5,7 +5,12 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiTreeChangeAdapter;
+import com.intellij.psi.PsiTreeChangeEvent;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
@@ -148,7 +153,7 @@ final class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
             if (element != null) {
               SmartPsiElementPointer pointer = element.getPointer();
               if (pointer != null) {
-                VirtualFile vFile = ReadAction.compute(() -> pointer.getVirtualFile());
+                VirtualFile vFile = ReadAction.computeBlocking(() -> pointer.getVirtualFile());
                 if (filesToCheck.contains(vFile)) {
                   unPresentFiles.remove(vFile);
                   ((SuppressableInspectionTreeNode)node).dropCaches();

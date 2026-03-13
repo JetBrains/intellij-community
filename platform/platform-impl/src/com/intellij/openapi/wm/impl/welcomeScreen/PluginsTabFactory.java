@@ -3,14 +3,10 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.CountComponent;
-import com.intellij.ide.plugins.InstalledPluginsState;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.newui.PluginUpdatesService;
+import com.intellij.ide.plugins.newui.TabbedPaneHeaderComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.wm.WelcomeScreenTab;
@@ -18,15 +14,14 @@ import com.intellij.openapi.wm.WelcomeTabFactory;
 import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.event.AncestorEvent;
-import java.awt.*;
+import java.awt.BorderLayout;
 
 @ApiStatus.Internal
 public final class PluginsTabFactory implements WelcomeTabFactory {
@@ -84,9 +79,13 @@ public final class PluginsTabFactory implements WelcomeTabFactory {
   }
 
   public static @NotNull JComponent createPluginsPanel(PluginManagerConfigurable configurable) {
-    BorderLayoutPanel pluginsPanel = JBUI.Panels.simplePanel(configurable.createComponent()).addToTop(configurable.getTopComponent())
+    JComponent mainPanel = configurable.createComponent();
+    JComponent topComponent = configurable.getTopComponent();
+    BorderLayoutPanel pluginsPanel = JBUI.Panels.simplePanel(mainPanel).addToTop(topComponent)
       .withBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 0, 0));
-    configurable.getTopComponent().setPreferredSize(new JBDimension(configurable.getTopComponent().getPreferredSize().width, 40));
+    if (topComponent instanceof TabbedPaneHeaderComponent tabbedPanel) {
+      tabbedPanel.setWeclomeScreen(true);
+    }
     return pluginsPanel;
   }
 }

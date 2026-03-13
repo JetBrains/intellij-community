@@ -24,16 +24,20 @@ import java.util.GregorianCalendar
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 
 data class BuildOptions(
   @Internal @JvmField val jarCacheDir: Path? = null,
+  @Internal val jarCacheMaxAccessAge: Duration =
+    System.getProperty(JAR_CACHE_MAX_ACCESS_AGE_DAYS_PROPERTY)?.toLong()?.days ?: 3.days,
   @Internal @JvmField var compressZipFiles: Boolean = true,
   /** See [GlobalOptions.BUILD_DATE_IN_SECONDS]. */
   @JvmField val buildDateInSeconds: Long = computeBuildDateInSeconds(),
   @Internal @JvmField val printFreeSpace: Boolean = true,
   @Internal @JvmField val validateImplicitPlatformModule: Boolean = true,
   @JvmField var skipDependencySetup: Boolean = false,
+  @JvmField var skipCheckOutputOfPluginModules: Boolean = false,
 
   /**
    * If `true`, the build is running in the 'Development mode', i.e., its artifacts aren't supposed to be used in production.
@@ -43,6 +47,7 @@ data class BuildOptions(
    */
   @JvmField var isInDevelopmentMode: Boolean = getBooleanProperty("intellij.build.dev.mode", System.getenv("TEAMCITY_VERSION") == null && System.getenv("GITHUB_ACTIONS") == null),
   @JvmField var useCompiledClassesFromProjectOutput: Boolean = getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode),
+  @JvmField var isLanguageServer: Boolean = getBooleanProperty("intellij.build.lsp.mode", false),
 
   /**
    * In addition to production compilation sources, allow various functions to use and traverse test output.
@@ -197,6 +202,9 @@ data class BuildOptions(
 
     const val LOCALIZE_STEP: String = "localize"
 
+    /** Copy product bin dir contents */
+    const val PRODUCT_BIN_DIR_STEP: String = "product_bin_dir"
+
     @JvmField
     @Internal
     val WIN_SIGN_OPTIONS: PersistentMap<String, String> = System.getProperty("intellij.build.win.sign.options", "")
@@ -270,6 +278,11 @@ data class BuildOptions(
      * By default, if the incremental compilation fails, a clean rebuild is attempted.
      */
     const val INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY: String = "intellij.build.incremental.compilation.fallback.rebuild"
+
+    /**
+     * Maximum age in days after which unused entries in local jar cache are eligible for cleanup.
+     */
+    const val JAR_CACHE_MAX_ACCESS_AGE_DAYS_PROPERTY: String = "intellij.build.jar.cache.max.access.age.days"
 
     /**
      * If `true` then the compiled classes will be rebuilt from scratch
@@ -477,7 +490,7 @@ data class BuildOptions(
   /**
    * If this option is set to `false`, [runtime module repository][com.intellij.platform.runtime.repository.RuntimeModuleRepository] won't be included in the installation.
    * It's supposed to be used only for development to speed up the building process a bit.
-   * Production builds must always include the module repository since tools like IntelliJ Platform Gradle Plugin and Plugin Verifier relies on it.
+   * Production builds must always include the module repository since tools like IntelliJ Platform Gradle Plugin and Plugin Verifier rely on it.
    * This option doesn't make sense if [modular loader][BuildContext.useModularLoader] is used
    * (in this case, the generation is always enabled).
    */
@@ -496,6 +509,7 @@ data class BuildOptions(
   var runtimeDebug: Boolean = parseBooleanValue(System.getProperty("intellij.build.bundled.jre.debug", "false"))
 
   @Internal
+  @JvmField
   var skipCustomResourceGenerators: Boolean = false
 
   var resolveDependenciesMaxAttempts: Int = System.getProperty(RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY)?.toInt() ?: 2

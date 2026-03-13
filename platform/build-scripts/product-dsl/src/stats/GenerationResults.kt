@@ -112,6 +112,23 @@ data class ModuleSetGenerationResult(
 }
 
 /**
+ * Result of generating or deleting a single module-set plugin artifact.
+ */
+data class ModuleSetPluginFileResult(
+  /** Relative path from project root */
+  @JvmField val relativePath: String,
+  /** Change status of the file */
+  override val status: FileChangeStatus,
+) : HasFileChangeStatus
+
+/**
+ * Result of generating module-set plugin wrapper artifacts.
+ */
+data class ModuleSetPluginGenerationResult(
+  @JvmField val files: List<ModuleSetPluginFileResult>,
+)
+
+/**
  * Result of generating a single product XML file.
  */
 data class ProductFileResult(
@@ -288,6 +305,7 @@ data class SuppressionConfigStats(
  */
 data class GenerationStats(
   @JvmField val moduleSetResults: List<ModuleSetGenerationResult>,
+  @JvmField val moduleSetPluginResult: ModuleSetPluginGenerationResult? = null,
   @JvmField val dependencyResult: DependencyGenerationResult?,
   /** Content module dependency results (includes both regular and test descriptor modules) */
   @JvmField val contentModuleResult: DependencyGenerationResult?,

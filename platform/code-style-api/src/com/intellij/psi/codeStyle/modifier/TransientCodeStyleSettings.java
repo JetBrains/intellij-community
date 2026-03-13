@@ -36,7 +36,7 @@ public final class TransientCodeStyleSettings extends CodeStyleSettings {
   /**
    * @deprecated Use {@link #TransientCodeStyleSettings(VirtualFile,Project,CodeStyleSettings)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public TransientCodeStyleSettings(@NotNull PsiFile psiFile, @NotNull CodeStyleSettings settings) {
     super(true, false);
     myFileRef = new WeakReference<>(psiFile.getVirtualFile());

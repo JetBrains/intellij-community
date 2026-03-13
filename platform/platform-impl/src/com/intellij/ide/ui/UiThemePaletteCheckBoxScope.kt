@@ -3,7 +3,12 @@ package com.intellij.ide.ui
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.svg.*
+import com.intellij.ui.svg.ATTR_FILL
+import com.intellij.ui.svg.ATTR_FILL_OPACITY
+import com.intellij.ui.svg.ATTR_ID
+import com.intellij.ui.svg.ATTR_STROKE
+import com.intellij.ui.svg.ATTR_STROKE_OPACITY
+import com.intellij.ui.svg.SvgAttributePatcher
 import com.intellij.util.InsecureHashBuilder
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import org.jetbrains.annotations.ApiStatus

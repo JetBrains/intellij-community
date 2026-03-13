@@ -16,4 +16,17 @@ jvm_library(
     "@lib//:maven-server-indexer-apache-maven-archetype-catalog-no-trans-321",
   ]
 )
+
+jvm_library(
+  name = "server-indexer_test_lib",
+  module_name = "intellij.maven.server.indexer",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  runtime_deps = [
+    ":server-indexer",
+    "//plugins/maven-server-api:maven-server_test_lib",
+    "@lib//:maven-server-indexer-apache-maven-indexer-core-6-2-2-provided",
+  ]
+)
 ### auto-generated section `build intellij.maven.server.indexer` end

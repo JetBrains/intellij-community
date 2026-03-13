@@ -3,24 +3,45 @@ package com.intellij.polySymbols.webTypes.json
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.polySymbols.*
-import com.intellij.polySymbols.PolySymbol.Companion.PROP_DOC_HIDE_PATTERN
-import com.intellij.polySymbols.PolySymbol.Companion.PROP_HIDE_FROM_COMPLETION
+import com.intellij.polySymbols.PolySymbol.DocHidePatternProperty
+import com.intellij.polySymbols.PolySymbol.HideFromCompletionProperty
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolApiStatus
+import com.intellij.polySymbols.PolySymbolKind
+import com.intellij.polySymbols.PolySymbolModifier
+import com.intellij.polySymbols.PolySymbolNamespace
+import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.context.PolyContext.Companion.PKG_MANAGER_NODE_PACKAGES
 import com.intellij.polySymbols.context.PolyContext.Companion.PKG_MANAGER_RUBY_GEMS
 import com.intellij.polySymbols.context.PolyContext.Companion.PKG_MANAGER_SYMFONY_BUNDLES
 import com.intellij.polySymbols.context.PolyContextKindRules
-import com.intellij.polySymbols.css.*
+import com.intellij.polySymbols.css.CSS_CLASSES
+import com.intellij.polySymbols.css.CSS_FUNCTIONS
+import com.intellij.polySymbols.css.CSS_PARTS
+import com.intellij.polySymbols.css.CSS_PROPERTIES
+import com.intellij.polySymbols.css.CSS_PSEUDO_CLASSES
+import com.intellij.polySymbols.css.CSS_PSEUDO_ELEMENTS
+import com.intellij.polySymbols.css.NAMESPACE_CSS
+import com.intellij.polySymbols.css.PROP_CSS_ARGUMENTS
 import com.intellij.polySymbols.framework.FrameworkId
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.html.HTML_ELEMENTS
 import com.intellij.polySymbols.html.NAMESPACE_HTML
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.impl.canUnwrapSymbols
-import com.intellij.polySymbols.js.*
-import com.intellij.polySymbols.query.*
+import com.intellij.polySymbols.js.JS_EVENTS
+import com.intellij.polySymbols.js.JS_PROPERTIES
+import com.intellij.polySymbols.js.JS_SYMBOLS
+import com.intellij.polySymbols.js.JsSymbolKindProperty
+import com.intellij.polySymbols.js.JsSymbolSymbolKind
+import com.intellij.polySymbols.js.NAMESPACE_JS
+import com.intellij.polySymbols.query.PolySymbolMatch
+import com.intellij.polySymbols.query.PolySymbolNameConversionRules
+import com.intellij.polySymbols.query.PolySymbolNameConverter
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolQueryStack
 import com.intellij.polySymbols.utils.NameCaseUtils
 import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import com.intellij.polySymbols.utils.namespace
@@ -29,7 +50,7 @@ import com.intellij.polySymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.polySymbols.webTypes.filters.PolySymbolFilter
 import com.intellij.polySymbols.webTypes.json.NameConversionRulesSingle.NameConverter
 import com.intellij.util.applyIf
-import java.util.*
+import java.util.Locale
 import java.util.function.Function
 
 private fun namespaceOf(host: GenericContributionsHost): PolySymbolNamespace =
@@ -150,7 +171,7 @@ internal val GenericContributionsHost.genericProperties: Map<String, Any>
           is CssPseudoClass -> sequenceOf(Pair(PROP_CSS_ARGUMENTS.name, this.arguments ?: false))
           is CssPseudoElement -> sequenceOf(Pair(PROP_CSS_ARGUMENTS.name, this.arguments ?: false))
           is JsSymbol -> this.kind?.let { kind -> JsSymbolSymbolKind.entries.firstOrNull { it.name.equals(kind.value(), true) } }
-                           ?.let { sequenceOf(Pair(PROP_JS_SYMBOL_KIND.name, it)) }
+                           ?.let { sequenceOf(Pair(JsSymbolKindProperty.name, it)) }
                          ?: emptySequence()
           else -> emptySequence()
         }
@@ -339,7 +360,7 @@ internal fun DeprecatedHtmlAttributeVueArgument.toHtmlContribution(): BaseContri
   result.docUrl = this.docUrl
   result.pattern = this.pattern
   if (pattern.isMatchAllRegex)
-    result.additionalProperties[PROP_DOC_HIDE_PATTERN.name] = true.toGenericHtmlPropertyValue()
+    result.additionalProperties[DocHidePatternProperty.name] = true.toGenericHtmlPropertyValue()
   return result
 }
 
@@ -350,7 +371,7 @@ internal fun DeprecatedHtmlAttributeVueModifier.toHtmlContribution(): BaseContri
   result.docUrl = this.docUrl
   result.pattern = this.pattern
   if (pattern.isMatchAllRegex)
-    result.additionalProperties[PROP_DOC_HIDE_PATTERN.name] = true.toGenericHtmlPropertyValue()
+    result.additionalProperties[DocHidePatternProperty.name] = true.toGenericHtmlPropertyValue()
   return result
 }
 
@@ -440,8 +461,8 @@ private fun matchAllHtmlContribution(name: String): GenericContribution =
     contribution.pattern = NamePatternRoot().also {
       it.value = ".*"
     }
-    contribution.additionalProperties[PROP_DOC_HIDE_PATTERN.name] = true.toGenericHtmlPropertyValue()
-    contribution.additionalProperties[PROP_HIDE_FROM_COMPLETION.name] = true.toGenericHtmlPropertyValue()
+    contribution.additionalProperties[DocHidePatternProperty.name] = true.toGenericHtmlPropertyValue()
+    contribution.additionalProperties[HideFromCompletionProperty.name] = true.toGenericHtmlPropertyValue()
   }
 
 private val NamePatternRoot?.isMatchAllRegex

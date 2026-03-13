@@ -2,10 +2,10 @@
 package com.intellij.util.ui
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.application.CoroutineSupport
 import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.application.ui
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -13,20 +13,20 @@ import com.intellij.ui.ComponentUtil.forceMarkAsShowing
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JLabel
 import javax.swing.JPanel
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.future.asCompletableFuture
-import kotlinx.coroutines.job
-import kotlinx.coroutines.launch
-import org.junit.jupiter.api.Assertions
-import java.util.concurrent.atomic.AtomicBoolean
 
 @TestApplication
 class UiReadExecutorTest {

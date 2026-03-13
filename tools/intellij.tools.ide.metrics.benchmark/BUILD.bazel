@@ -32,6 +32,8 @@ jvm_library(
     "@lib//:opentelemetry",
     "//platform/boot",
     "//platform/core-impl",
+    "//.ownership/runtime-resolver:codeowners-runtime-resolver",
+    "//platform/lang-api:lang",
   ]
 )
 
@@ -44,22 +46,33 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/jackson/jackson",
+    "//libraries/jackson/jackson:jackson_test_lib",
     "//libraries/jackson/databind",
+    "//libraries/jackson/databind:databind_test_lib",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "@lib//:junit4",
     "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector",
     "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector_test_lib",
     "//tools/intellij.tools.ide.util.common:ide-util-common",
+    "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:opentelemetry",
     "//platform/boot",
+    "//platform/boot:boot_test_lib",
     "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
+    "//.ownership/runtime-resolver:codeowners-runtime-resolver",
+    "//.ownership/runtime-resolver:codeowners-runtime-resolver_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
   ]
 )
 ### auto-generated section `build intellij.tools.ide.metrics.benchmark` end

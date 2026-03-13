@@ -173,7 +173,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
                                                             final @NotNull CoverageEngine coverageEngine,
                                                             Set<? super VirtualFile> visitedDirs,
                                                             final @NotNull Map<String, String> normalizedFiles2Files) {
-    if (ReadAction.compute(() -> !index.isInContent(dir) && !index.isInLibrary(dir))) {
+    if (ReadAction.computeBlocking(() -> !index.isInContent(dir) && !index.isInLibrary(dir))) {
       return null;
     }
 
@@ -181,16 +181,15 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
       return null;
     }
 
-    if (!shouldCollectCoverageInsideLibraryDirs()) {
-      if (ReadAction.compute(() -> index.isInLibrary(dir))) {
-        return null;
-      }
+    if (!shouldCollectCoverageInsideLibraryDirs()
+        && ReadAction.computeBlocking(() -> index.isInLibrary(dir))) {
+      return null;
     }
     visitedDirs.add(dir);
 
     final String dirPath = normalizeFilePath(dir.getPath());
 
-    final boolean isInTestSrcContent = ReadAction.compute(() -> TestSourcesFilter.isTestSources(dir, getProject()));
+    boolean isInTestSrcContent = ReadAction.computeBlocking(() -> TestSourcesFilter.isTestSources(dir, getProject()));
     if (isInTestSrcContent) {
       myTestDirectories.add(dirPath);
     }

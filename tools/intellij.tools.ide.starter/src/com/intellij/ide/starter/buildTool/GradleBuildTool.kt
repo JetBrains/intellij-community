@@ -52,7 +52,7 @@ open class GradleBuildTool(testContext: IDETestContext) : BuildTool(BuildToolTyp
 
   companion object {
     private const val GRADLE_DAEMON_NAME = "GradleDaemon"
-    fun destroyGradleDaemonProcessIfExists() {
+    suspend fun destroyGradleDaemonProcessIfExists() {
       findAndKillProcesses("Killing java processes ending with $GRADLE_DAEMON_NAME",
                            { p -> p.name == "java" && p.arguments.any { it.endsWith(GRADLE_DAEMON_NAME) } })
     }

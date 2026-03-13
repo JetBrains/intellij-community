@@ -8,11 +8,11 @@ import org.jetbrains.annotations.NotNull;
 public abstract class ReadActionProcessor<T> implements Processor<T> {
   @Override
   public boolean process(final T t) {
-    return ReadAction.compute(() -> processInReadAction(t));
+    return ReadAction.computeBlocking(() -> processInReadAction(t));
   }
   public abstract boolean processInReadAction(T t);
 
   public static @NotNull <T> Processor<T> wrapInReadAction(final @NotNull Processor<? super T> processor) {
-    return t -> ReadAction.compute(() -> processor.process(t));
+    return t -> ReadAction.computeBlocking(() -> processor.process(t));
   }
 }

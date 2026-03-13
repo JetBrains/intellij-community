@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -111,8 +112,8 @@ internal object ChangeMemberFunctionSignatureFixFactory {
         matchParameters(ParameterChooser.MatchNames, superParameters, parameters, substitutedTypes, names, matched, used)
         matchParameters(ParameterChooser.MatchTypes, superParameters, parameters, substitutedTypes, names, matched, used)
 
-        val preview = getSignature(substitutedTypes, names, superFunction, KaDeclarationRendererForSource.WITH_SHORT_NAMES)
-        val sourceCode = getSignature(substitutedTypes, names, superFunction, KaDeclarationRendererForSource.WITH_QUALIFIED_NAMES)
+        val preview = getSignature(substitutor, substitutedTypes, names, superFunction, KaDeclarationRendererForSource.WITH_SHORT_NAMES)
+        val sourceCode = getSignature(substitutor, substitutedTypes, names, superFunction, KaDeclarationRendererForSource.WITH_QUALIFIED_NAMES)
 
         return Signature(preview, sourceCode)
     }
@@ -138,6 +139,7 @@ internal object ChangeMemberFunctionSignatureFixFactory {
 
     @OptIn(KaExperimentalApi::class)
     private fun KaSession.getSignature(
+        substitutor: KaSubstitutor?,
         types: List<KaType>,
         names: List<String>,
         superFunction: KaNamedFunctionSymbol,
@@ -172,9 +174,10 @@ internal object ChangeMemberFunctionSignatureFixFactory {
                 })
             }
             superFunction.receiverType?.let {
-                val needBraces = it is KaFunctionType || it is KaDefinitelyNotNullType
+                val receiverType = substitutor?.substitute(it) ?: it
+                val needBraces = receiverType is KaFunctionType || receiverType is KaDefinitelyNotNullType
                 if (needBraces) append("(")
-                append(it.render(declarationRenderer.typeRenderer, Variance.INVARIANT))
+                append(receiverType.render(declarationRenderer.typeRenderer, Variance.INVARIANT))
                 if (needBraces) append(")")
                 append(".")
             }
@@ -186,7 +189,7 @@ internal object ChangeMemberFunctionSignatureFixFactory {
             })
             superFunction.returnType.takeUnless { it.isUnitType }?.let {
                 append(": ")
-                append(it.render(declarationRenderer.typeRenderer, Variance.INVARIANT))
+                append((substitutor?.substitute(it) ?: it).render(declarationRenderer.typeRenderer, Variance.INVARIANT))
             }
         }
     }

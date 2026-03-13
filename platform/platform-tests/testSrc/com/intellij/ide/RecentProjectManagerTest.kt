@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.configurationStore.deserializeInto
@@ -660,6 +660,56 @@ class RecentProjectManagerTest {
     element.getChild("component")!!.deserializeInto(state)
     manager.loadState(state)
     assertThat(manager.getRecentPaths().joinToString(separator = "\n")).isEqualTo(Array(50) { "/home/boo/project-${it + 10}" }.reversed().joinToString(separator = "\n"))
+  }
+
+  @Test
+  fun `remove old recent projects from groups`(): Unit = test { manager ->
+    val entries = StringBuilder()
+    val openedProjectCount = 60
+    for (i in 0 until openedProjectCount) {
+      //language=XML
+      entries.append("""
+          <entry key="/home/boo/project-$i">
+            <value>
+              <RecentProjectMetaInfo>
+              </RecentProjectMetaInfo>
+            </value>
+          </entry>
+      """.trimIndent())
+    }
+
+    @Language("XML")
+    val element = JDOMUtil.load("""
+      <application>
+  <component name="RecentDirectoryProjectsManager">
+    <option name="additionalInfo">
+      <map>
+        $entries
+      </map>
+    </option>
+    <option name="groups">
+      <list>
+        <ProjectGroup>
+          <option name="name" value="TEST" />
+          <option name="projects">
+            <list>
+              <option value="/home/boo/project-0" />
+              <option value="/home/boo/project-59" />
+            </list>
+          </option>
+        </ProjectGroup>
+      </list>
+    </option>
+  </component>
+</application>
+      """.trimIndent())
+    val state = RecentProjectManagerState()
+    element.getChild("component")!!.deserializeInto(state)
+    manager.loadState(state)
+
+    manager.getRecentPaths()
+
+    assertThat(manager.groups.single().projects).containsExactly("/home/boo/project-59")
   }
 }
 

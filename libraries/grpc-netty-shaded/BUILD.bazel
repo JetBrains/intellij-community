@@ -22,4 +22,18 @@ jvm_library(
   ],
   exports = ["@lib//:grpc-netty-shaded"]
 )
+
+jvm_library(
+  name = "grpc-netty-shaded_test_lib",
+  module_name = "intellij.libraries.grpc.netty.shaded",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:grpc-netty-shaded"],
+  runtime_deps = [
+    ":grpc-netty-shaded",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//libraries/grpc:grpc_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.libraries.grpc.netty.shaded` end

@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="bouncy-castle-pgp" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.bouncycastle:bcpg-jdk18on:1.81">
+    <properties include-transitive-deps="false" maven-id="org.bouncycastle:bcpg-jdk18on:1.83">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/bouncycastle/bcpg-jdk18on/1.81/bcpg-jdk18on-1.81.jar">
-          <sha256sum>ac2ddae3a844c1e2378604616dbe7cc17c64caaf9115d8c9c3b29db8b2982411</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/bouncycastle/bcpg-jdk18on/1.83/bcpg-jdk18on-1.83.jar">
+          <sha256sum>4077fd4517761c98a81944c70a376ce73f4eb3e44c03db1eb5d699fc28ab48aa</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcpg-jdk18on/1.81/bcpg-jdk18on-1.81.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcpg-jdk18on/1.83/bcpg-jdk18on-1.83.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcpg-jdk18on/1.81/bcpg-jdk18on-1.81-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcpg-jdk18on/1.83/bcpg-jdk18on-1.83-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

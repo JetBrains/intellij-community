@@ -30,4 +30,27 @@ jvm_library(
     "//platform/util/concurrency",
   ]
 )
+
+jvm_library(
+  name = "scopes_test_lib",
+  module_name = "intellij.platform.scopes",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":scopes",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/project/shared:project_test_lib",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.scopes` end

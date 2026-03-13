@@ -265,11 +265,11 @@ public final class ExecutionUtil {
     }
 
     ExecutionEnvironment environment = ApplicationManager.getApplication().isDispatchThread() ?
-                                       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.compute(() -> builder.build()),
-                                                                                                         ExecutionBundle.message("dialog.title.preparing.execution"), true,
-                                                                                                         null) :
+                                       ProgressManager.getInstance().runProcessWithProgressSynchronously(
+                                         () -> ReadAction.computeBlocking(() -> builder.build()),
+                                         ExecutionBundle.message("dialog.title.preparing.execution"), true, null) :
                                        builder.build();
-    if(environmentCustomization != null) {
+    if (environmentCustomization != null) {
       environmentCustomization.accept(environment);
     }
 

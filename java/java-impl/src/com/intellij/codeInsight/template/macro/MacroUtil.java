@@ -7,17 +7,14 @@ import com.intellij.codeInsight.template.PsiElementResult;
 import com.intellij.codeInsight.template.PsiTypeResult;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDeclarationStatement;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
@@ -39,21 +36,19 @@ public final class MacroUtil {
   private static final Logger LOG = Logger.getInstance(MacroUtil.class);
 
   public static @Nullable PsiType resultToPsiType(Result result, ExpressionContext context){
-    if (result instanceof PsiTypeResult) {
-      return ((PsiTypeResult) result).getType();
+    if (result instanceof PsiTypeResult typeResult) {
+      return typeResult.getType();
     }
-    Project project = context.getProject();
     String text = result.toString();
     if (text == null) return null;
-    PsiManager manager = PsiManager.getInstance(project);
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
+    PsiFile file = context.getPsiFile();
     //-1: Hack to deal with stupid resolve
     PsiElement place = file != null ? file.findElementAt(context.getStartOffset()) : null;
     PsiDeclarationStatement decl = file != null ? PsiTreeUtil.getParentOfType(place, PsiDeclarationStatement.class) : null;
     if (decl != null) {
       place = file.findElementAt(decl.getTextOffset() -1);
     }
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
     try{
       return factory.createTypeFromText(text, place);
     }
@@ -69,11 +64,9 @@ public final class MacroUtil {
         return (PsiExpression)element;
       }
     }
-    Project project = context.getProject();
     String text = result.toString();
     if (text == null) return null;
-    PsiManager manager = PsiManager.getInstance(project);
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
+    PsiFile file = context.getPsiFile();
     //-1: Hack to deal with resolve algorithm
     PsiElement place = file != null ? file.findElementAt(context.getStartOffset()) : null;
     if (place != null) {
@@ -85,7 +78,7 @@ public final class MacroUtil {
         }
       }
     }
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
     try{
       return factory.createExpressionFromText(text, place);
     }

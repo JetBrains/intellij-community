@@ -40,6 +40,51 @@ public class HighlightExitPointsTestGenerated extends AbstractCustomHighlightUsa
         runTest("testData/exitPoints/anonymousFunction2.kt");
     }
 
+    @TestMetadata("buildListNested.kt")
+    public void testBuildListNested() throws Exception {
+        runTest("testData/exitPoints/buildListNested.kt");
+    }
+
+    @TestMetadata("buildListSimple.kt")
+    public void testBuildListSimple() throws Exception {
+        runTest("testData/exitPoints/buildListSimple.kt");
+    }
+
+    @TestMetadata("buildMapNested.kt")
+    public void testBuildMapNested() throws Exception {
+        runTest("testData/exitPoints/buildMapNested.kt");
+    }
+
+    @TestMetadata("buildMapSimple.kt")
+    public void testBuildMapSimple() throws Exception {
+        runTest("testData/exitPoints/buildMapSimple.kt");
+    }
+
+    @TestMetadata("buildMixedGenerators.kt")
+    public void testBuildMixedGenerators() throws Exception {
+        runTest("testData/exitPoints/buildMixedGenerators.kt");
+    }
+
+    @TestMetadata("buildSetNested.kt")
+    public void testBuildSetNested() throws Exception {
+        runTest("testData/exitPoints/buildSetNested.kt");
+    }
+
+    @TestMetadata("buildSetSimple.kt")
+    public void testBuildSetSimple() throws Exception {
+        runTest("testData/exitPoints/buildSetSimple.kt");
+    }
+
+    @TestMetadata("buildStringNested.kt")
+    public void testBuildStringNested() throws Exception {
+        runTest("testData/exitPoints/buildStringNested.kt");
+    }
+
+    @TestMetadata("buildStringSimple.kt")
+    public void testBuildStringSimple() throws Exception {
+        runTest("testData/exitPoints/buildStringSimple.kt");
+    }
+
     @TestMetadata("continueInNestedForDeclaration.kt")
     public void testContinueInNestedForDeclaration() throws Exception {
         runTest("testData/exitPoints/continueInNestedForDeclaration.kt");
@@ -63,6 +108,16 @@ public class HighlightExitPointsTestGenerated extends AbstractCustomHighlightUsa
     @TestMetadata("doWhileLoopBreak2.kt")
     public void testDoWhileLoopBreak2() throws Exception {
         runTest("testData/exitPoints/doWhileLoopBreak2.kt");
+    }
+
+    @TestMetadata("flowNested.kt")
+    public void testFlowNested() throws Exception {
+        runTest("testData/exitPoints/flowNested.kt");
+    }
+
+    @TestMetadata("flowSimple.kt")
+    public void testFlowSimple() throws Exception {
+        runTest("testData/exitPoints/flowSimple.kt");
     }
 
     @TestMetadata("forLoopBreak.kt")
@@ -353,6 +408,11 @@ public class HighlightExitPointsTestGenerated extends AbstractCustomHighlightUsa
     @TestMetadata("sequenceWithLambdaContinue.kt")
     public void testSequenceWithLambdaContinue() throws Exception {
         runTest("testData/exitPoints/sequenceWithLambdaContinue.kt");
+    }
+
+    @TestMetadata("sequenceWithMixedExitPoint.kt")
+    public void testSequenceWithMixedExitPoint() throws Exception {
+        runTest("testData/exitPoints/sequenceWithMixedExitPoint.kt");
     }
 
     @TestMetadata("sequenceWithReturn.kt")

@@ -1,13 +1,23 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.ModuleDependencies
+import com.intellij.ide.plugins.PageContainer
+import com.intellij.ide.plugins.PluginMainDescriptor
+import com.intellij.ide.plugins.PluginManagementPolicy
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.getUnfulfilledCpuArchRequirement
 import com.intellij.ide.plugins.PluginManagerCore.getUnfulfilledOsRequirement
+import com.intellij.ide.plugins.PluginNode
+import com.intellij.ide.plugins.PluginNodeVendorDetails
 import com.intellij.ide.plugins.api.ReviewsPageContainer
+import com.intellij.ide.plugins.marketplace.DependencyType
 import com.intellij.ide.plugins.marketplace.ModuleDependency
 import com.intellij.ide.plugins.marketplace.PluginContentModule
 import com.intellij.ide.plugins.marketplace.PluginModule
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.util.IntellijInternalApi
@@ -74,6 +84,8 @@ class PluginUiModelAdapter(
     get() = pluginDescriptor.displayCategory
   override val isImplementationDetail: Boolean
     get() = pluginDescriptor.isImplementationDetail
+  override val isEssential: Boolean
+    get() = ApplicationInfo.getInstance().isEssentialPlugin(pluginId)
   override var forumUrl: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.forumUrl else null
     set(value) {
@@ -269,7 +281,7 @@ class PluginUiModelAdapter(
     }
 
   override var contentModules: List<PluginContentModule>
-    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.contentModules else emptyList()
+    get() = pluginDescriptor.toPluginContentModules()
     set(value) {
       if (pluginDescriptor is PluginNode) {
         pluginDescriptor.contentModules = value
@@ -277,7 +289,7 @@ class PluginUiModelAdapter(
     }
 
   override var modules: List<PluginModule>
-    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.modules else emptyList()
+    get() = pluginDescriptor.toPluginModules()
     set(value) {
       if (pluginDescriptor is PluginNode) {
         pluginDescriptor.modules = value
@@ -285,7 +297,7 @@ class PluginUiModelAdapter(
     }
 
   override var mainModuleDependencies: List<ModuleDependency>
-    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.moduleDependencies else emptyList()
+    get() = pluginDescriptor.toMainModuleDependencies()
     set(value) {
       if (pluginDescriptor is PluginNode) {
         pluginDescriptor.moduleDependencies = value
@@ -359,4 +371,52 @@ class PluginUiModelAdapter(
   }
 
   override fun toString(): String = "PluginUiModelAdapter($pluginDescriptor)"
+}
+
+
+@ApiStatus.Internal
+@IntellijInternalApi
+fun IdeaPluginDescriptor.toPluginContentModules(): List<PluginContentModule> {
+  return when (this) {
+    is PluginNode -> contentModules
+    is PluginMainDescriptor -> contentModules.map {
+      PluginContentModule(
+        moduleName = it.moduleId.name,
+        loadingRule = it.moduleLoadingRule.name.lowercase(),
+      )
+    }
+    else -> emptyList()
+  }
+}
+
+@ApiStatus.Internal
+@IntellijInternalApi
+fun IdeaPluginDescriptor.toPluginModules(): List<PluginModule> {
+  return when (this) {
+    is PluginNode -> modules
+    is PluginMainDescriptor -> contentModules.map {
+      PluginModule(
+        moduleName = it.moduleId.name,
+        moduleDependencies = it.moduleDependencies.toMarketplaceModuleDependencies(),
+      )
+    }
+    else -> emptyList()
+  }
+}
+
+@ApiStatus.Internal
+@IntellijInternalApi
+fun IdeaPluginDescriptor.toMainModuleDependencies(): List<ModuleDependency> {
+  return when (this) {
+    is PluginNode -> moduleDependencies
+    is PluginMainDescriptor -> moduleDependencies.toMarketplaceModuleDependencies()
+    else -> emptyList()
+  }
+}
+
+private fun ModuleDependencies.toMarketplaceModuleDependencies(): List<ModuleDependency> {
+  return buildList(modules.size + plugins.size) {
+    modules.mapTo(this) { ModuleDependency(type = DependencyType.MODULE, moduleName = it.name) }
+    plugins.mapTo(this) { ModuleDependency(type = DependencyType.PLUGIN, pluginId = it.idString) }
+  }
 }

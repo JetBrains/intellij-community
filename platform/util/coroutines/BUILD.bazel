@@ -1,17 +1,37 @@
 ### auto-generated section `build intellij.platform.util.coroutines` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "coroutines_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "coroutines",
   module_name = "intellij.platform.util.coroutines",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":coroutines_resources"],
   kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:jetbrains-annotations",
     "//libraries/kotlinx/coroutines/core",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+  ]
+)
+
+jvm_library(
+  name = "coroutines_test_lib",
+  module_name = "intellij.platform.util.coroutines",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  runtime_deps = [
+    ":coroutines",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.util.coroutines` end
@@ -31,10 +51,13 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "@lib//:junit5",
     "@lib//:junit5Params",
     "//platform/testFramework/common",
+    "//platform/testFramework/common:common_test_lib",
     "//platform/util/coroutines",
+    "//platform/util/coroutines:coroutines_test_lib",
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
   ],

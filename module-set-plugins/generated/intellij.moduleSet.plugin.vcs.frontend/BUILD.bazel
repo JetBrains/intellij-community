@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.moduleSet.plugin.vcs.frontend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "moduleSet-plugin-vcs-frontend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "moduleSet-plugin-vcs-frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":moduleSet-plugin-vcs-frontend_resources"]
+)
+
+jvm_library(
+  name = "moduleSet-plugin-vcs-frontend_test_lib",
+  module_name = "intellij.moduleSet.plugin.vcs.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":moduleSet-plugin-vcs-frontend"]
+)
+### auto-generated section `build intellij.moduleSet.plugin.vcs.frontend` end

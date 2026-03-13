@@ -79,6 +79,29 @@ c:com.intellij.openapi.actionSystem.ex.ComboBoxAction$ComboBoxButton
 - *p:doShiftClick():V
 f:com.intellij.openapi.actionSystem.remoting.PermissionsKt
 - *sf:getOwner():com.intellij.platform.ide.core.permissions.Permission
+*f:com.intellij.openapi.client.ClientSystemInfo
+- *sf:Companion:com.intellij.openapi.client.ClientSystemInfo$Companion
+- sf:isMac():Z
+- sf:isWaylandToolkit():Z
+- sf:isWindows():Z
+*f:com.intellij.openapi.client.ClientSystemInfo$Companion
+- f:isMac():Z
+- f:isWaylandToolkit():Z
+- f:isWindows():Z
+c:com.intellij.openapi.diagnostic.IdeaLoggingEvent
+- *f:getProblematicPluginInfo():com.intellij.openapi.diagnostic.ProblematicPluginInfo
+*:com.intellij.openapi.diagnostic.ProblematicPluginInfo
+- a:getAllowsBundledUpdate():Z
+- a:getName():java.lang.String
+- a:getOrganization():java.lang.String
+- a:getPluginId():com.intellij.openapi.extensions.PluginId
+- a:getVendor():java.lang.String
+- a:getVendorEmail():java.lang.String
+- a:getVendorUrl():java.lang.String
+- a:getVersion():java.lang.String
+- a:isBundled():Z
+- a:isEssential():Z
+- a:isImplementationDetail():Z
 com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 - com.intellij.openapi.fileEditor.FileEditorProvider
 - com.intellij.openapi.project.DumbAware
@@ -219,21 +242,6 @@ com.intellij.openapi.wm.ToolWindowFactory
 - createQuickAccessComponent(com.intellij.openapi.Disposable):java.awt.Component
 *:com.intellij.platform.ide.navigation.NavigationHandler
 - a:navigate(com.intellij.platform.backend.navigation.NavigationRequest,com.intellij.platform.ide.navigation.NavigationOptions,com.intellij.openapi.actionSystem.DataContext):Z
-*:com.intellij.platform.ide.navigation.NavigationOptions
-- *sf:Companion:com.intellij.platform.ide.navigation.NavigationOptions$Companion
-- s:defaultOptions():com.intellij.platform.ide.navigation.NavigationOptions
-- a:preserveCaret(Z):com.intellij.platform.ide.navigation.NavigationOptions
-- s:requestFocus():com.intellij.platform.ide.navigation.NavigationOptions
-- a:requestFocus(Z):com.intellij.platform.ide.navigation.NavigationOptions
-*f:com.intellij.platform.ide.navigation.NavigationOptions$Companion
-- f:defaultOptions():com.intellij.platform.ide.navigation.NavigationOptions
-- f:requestFocus():com.intellij.platform.ide.navigation.NavigationOptions
-*:com.intellij.platform.ide.navigation.NavigationService
-- *sf:Companion:com.intellij.platform.ide.navigation.NavigationService$Companion
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.ide.navigation.NavigationService
-- a:navigate(com.intellij.openapi.actionSystem.DataContext,com.intellij.platform.ide.navigation.NavigationOptions,kotlin.coroutines.Continuation):java.lang.Object
-*f:com.intellij.platform.ide.navigation.NavigationService$Companion
-- f:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.ide.navigation.NavigationService
 *:com.intellij.platform.ide.productMode.IdeProductMode
 - *sf:Companion:com.intellij.platform.ide.productMode.IdeProductMode$Companion
 - a:getCurrentMode():com.intellij.platform.runtime.product.ProductMode
@@ -931,6 +939,7 @@ com.intellij.util.net.JdkProxyCustomizer
 - s:gzipStringBodyHandler():java.net.http.HttpResponse$BodyHandler
 - s:request(java.net.URI):java.net.http.HttpRequest
 - s:requestBuilder(java.net.URI):java.net.http.HttpRequest$Builder
+- s:send(java.net.http.HttpClient,java.net.http.HttpRequest,java.net.http.HttpResponse$BodyHandler):java.lang.Object
 - s:userAgent():java.lang.String
 com.intellij.util.net.ProxySettings
 - *a:setProxyConfiguration(com.intellij.util.net.ProxyConfiguration):V

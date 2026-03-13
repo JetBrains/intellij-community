@@ -276,12 +276,13 @@ internal object ChangeTypeQuickFixFactories {
             createRequireReturnTypeFix(diagnostic.psi)
         }
 
+    @OptIn(KaExperimentalApi::class)
     private fun KaSession.createRequireReturnTypeFix(returnExpr: KtReturnExpression): List<ModCommandAction> {
-        val psi = returnExpr.targetSymbol?.psi
+        val psi = returnExpr.resolveSymbol()?.psi
         val declaration = psi as? KtCallableDeclaration ?: (psi as? KtPropertyAccessor)?.property
             ?: return emptyList()
 
-        val expressionType = returnExpr.returnedExpression?.expressionType ?: return emptyList()
+        val expressionType = returnExpr.returnedExpression?.expressionType ?: builtinTypes.unit
         return listOf(
             UpdateTypeQuickFix(
                 declaration,
