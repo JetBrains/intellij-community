@@ -5,7 +5,6 @@ import {ResultSchema} from '@modelcontextprotocol/sdk/types.js'
 import {createProjectPathManager} from './project-path'
 import {resolveReadCapabilities, resolveSearchCapabilities} from './proxy-tools/tooling'
 import {extractTextFromResult} from './proxy-tools/shared'
-import {setIdeVersion} from './workarounds'
 import type {McpStreamTransport} from './stream-transport'
 import type {ReadCapabilities, SearchCapabilities, ToolArgs, ToolSpecLike} from './proxy-tools/types'
 
@@ -46,6 +45,7 @@ export class UpstreamConnection {
 
   searchCapabilities: SearchCapabilities = resolveSearchCapabilities([]).capabilities
   readCapabilities: ReadCapabilities = resolveReadCapabilities([]).capabilities
+  ideVersion: string | null = null
 
   /** Called when internal state (capabilities, tools) resets or refreshes. */
   onStateChange?: () => void
@@ -90,7 +90,7 @@ export class UpstreamConnection {
     this._tools = null
     this.searchCapabilities = resolveSearchCapabilities([]).capabilities
     this.readCapabilities = resolveReadCapabilities([]).capabilities
-    setIdeVersion(null)
+    this.ideVersion = null
     this.onStateChange?.()
   }
 
@@ -182,7 +182,6 @@ export class UpstreamConnection {
 
   private _updateIdeVersion(): void {
     const serverInfo = this.client.getServerVersion()
-    const version = serverInfo?.version
-    setIdeVersion(typeof version === 'string' ? version : null)
+    this.ideVersion = typeof serverInfo?.version === 'string' ? serverInfo.version : null
   }
 }

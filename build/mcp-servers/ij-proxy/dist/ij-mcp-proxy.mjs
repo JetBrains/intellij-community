@@ -23685,24 +23685,16 @@ async function handleRenameTool(args, projectPath, callUpstreamTool) {
 var FULL_VERSION_RE = /\b\d{4}\.\d+(?:\.\d+){0,2}\b/, BUILD_VERSION_RE = /\b\d{3}\.\d+(?:\.\d+)?\b/, SNAPSHOT_BUILD_RE = /\b(\d{3})\.SNAPSHOT\b/i, SNAPSHOT_BUILD_PART = Number.MAX_SAFE_INTEGER, ANY_VERSION_RE = /\d+(?:\.\d+)+/;
 var WORKAROUND_FIXED_IN = {
   ["search_in_files_by_regex_directory_scope_ignored" /* SearchInFilesByRegexDirectoryScopeIgnored */]: "261.20247"
-}, currentIdeVersion = null;
-function setIdeVersion(rawVersion) {
-  if (!rawVersion) {
-    currentIdeVersion = null;
-    return;
-  }
-  currentIdeVersion = parseIdeVersion(rawVersion);
-}
-function shouldApplyWorkaround(key) {
+};
+function shouldApplyWorkaround(key, rawVersion) {
   if (isWorkaroundDisabled(key))
     return logDebug(`Workaround ${key} not used (disabled by env)`), !1;
   let fixedInRaw = (WORKAROUND_FIXED_IN[key] ?? "").trim();
   if (!fixedInRaw)
     return !0;
-  let ideVersion = currentIdeVersion;
-  if (!ideVersion)
+  if (!rawVersion)
     return !0;
-  let fixedSpec = parseVersionSpec(fixedInRaw);
+  let ideVersion = parseIdeVersion(rawVersion), fixedSpec = parseVersionSpec(fixedInRaw);
   if (!fixedSpec)
     return !0;
   let currentParts = fixedSpec.kind === "build" ? ideVersion.build ?? deriveBuildFromFull(ideVersion.full) : ideVersion.full;
@@ -24114,7 +24106,7 @@ async function handleSearchTextTool(args, projectPath, callUpstreamTool, capabil
     throw Error("text search is not supported by this IDE version");
   return await searchTextLegacy(query, scope, limit, projectPath, callUpstreamTool);
 }
-async function handleSearchRegexTool(args, projectPath, callUpstreamTool, capabilities) {
+async function handleSearchRegexTool(args, projectPath, callUpstreamTool, capabilities, shouldApplyWorkaround2 = () => !0) {
   let query = requireString(args.q, "q").trim(), limit = normalizeLimit(args.limit), { scope, normalizedPaths } = buildPathScope(projectPath, args.paths);
   if (capabilities.hasSearchRegex) {
     let result = await callUpstreamTool("search_regex", {
@@ -24126,7 +24118,7 @@ async function handleSearchRegexTool(args, projectPath, callUpstreamTool, capabi
   }
   if (!capabilities.supportsRegex)
     throw Error("regex search is not supported by this IDE version");
-  return await searchRegexLegacy(query, scope, limit, projectPath, callUpstreamTool);
+  return await searchRegexLegacy(query, scope, limit, projectPath, callUpstreamTool, shouldApplyWorkaround2);
 }
 async function searchTextLegacy(query, scope, limit, projectPath, callUpstreamTool) {
   let requestLimit = expandLimit(limit, scope), directoryToSearch = resolveSearchRoot(projectPath, scope, null), { entries, probablyHasMoreMatchingEntries, timedOut } = await searchInFiles({
@@ -24137,14 +24129,14 @@ async function searchTextLegacy(query, scope, limit, projectPath, callUpstreamTo
   }, callUpstreamTool), filtered = scope ? filterEntriesByScope(entries, projectPath, scope) : entries, items = normalizeItemsFromEntries(filtered, projectPath, limit, !0), more = timedOut || probablyHasMoreMatchingEntries || filtered.length > limit;
   return serializeSearchResult({ items, more });
 }
-async function searchRegexLegacy(query, scope, limit, projectPath, callUpstreamTool) {
+async function searchRegexLegacy(query, scope, limit, projectPath, callUpstreamTool, shouldApplyWorkaround2) {
   let requestLimit = expandLimit(limit, scope), directoryToSearch = resolveSearchRoot(projectPath, scope, null), { entries, probablyHasMoreMatchingEntries, timedOut } = await searchInFiles({
     regexPattern: query,
     directoryToSearch: directoryToSearch ?? void 0,
     caseSensitive: !0,
     maxUsageCount: requestLimit
   }, callUpstreamTool), filtered = entries;
-  if (directoryToSearch && shouldApplyWorkaround("search_in_files_by_regex_directory_scope_ignored" /* SearchInFilesByRegexDirectoryScopeIgnored */))
+  if (directoryToSearch && shouldApplyWorkaround2("search_in_files_by_regex_directory_scope_ignored" /* SearchInFilesByRegexDirectoryScopeIgnored */))
     filtered = filterEntriesByDirectory(filtered, projectPath, directoryToSearch);
   if (scope)
     filtered = filterEntriesByScope(filtered, projectPath, scope);
@@ -24392,7 +24384,7 @@ var TOOL_VARIANTS = [
     name: "search_regex",
     description: "Search for a regular expression in project files.",
     schemaFactory: () => createSearchRegexSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchRegexTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities, shouldApplyWorkaround: shouldApplyWorkaround2 }) => (args) => handleSearchRegexTool(args, projectPath, callUpstreamTool, searchCapabilities, shouldApplyWorkaround2),
     upstreamNames: ["search_regex"],
     expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchRegex && searchCapabilities.supportsRegex
   },
@@ -24508,13 +24500,15 @@ function createProxyTooling({
   projectPath,
   callUpstreamTool,
   searchCapabilities,
-  readCapabilities
+  readCapabilities,
+  ideVersion
 }) {
-  let { proxyToolSpecs, proxyToolNames, handlers } = buildProxyToolingData({
+  let boundVersion = ideVersion ?? null, { proxyToolSpecs, proxyToolNames, handlers } = buildProxyToolingData({
     projectPath,
     callUpstreamTool,
     searchCapabilities,
-    readCapabilities
+    readCapabilities,
+    shouldApplyWorkaround: (key) => shouldApplyWorkaround(key, boundVersion)
   });
   async function runProxyToolCall(toolName, args) {
     let handler = handlers.get(toolName);
@@ -24549,6 +24543,7 @@ class UpstreamConnection {
   _tools = null;
   searchCapabilities = resolveSearchCapabilities([]).capabilities;
   readCapabilities = resolveReadCapabilities([]).capabilities;
+  ideVersion = null;
   onStateChange;
   constructor(options) {
     this._transport = options.transport, this._toolCallTimeoutMs = options.toolCallTimeoutMs, this._warn = options.warn, this._projectPathManager = createProjectPathManager({
@@ -24572,7 +24567,7 @@ class UpstreamConnection {
     }), this._connectedPromise;
   }
   reset() {
-    this._connectedPromise = null, this._tools = null, this.searchCapabilities = resolveSearchCapabilities([]).capabilities, this.readCapabilities = resolveReadCapabilities([]).capabilities, setIdeVersion(null), this.onStateChange?.();
+    this._connectedPromise = null, this._tools = null, this.searchCapabilities = resolveSearchCapabilities([]).capabilities, this.readCapabilities = resolveReadCapabilities([]).capabilities, this.ideVersion = null, this.onStateChange?.();
   }
   async withReconnect(label, fn) {
     try {
@@ -24630,8 +24625,8 @@ class UpstreamConnection {
     });
   }
   _updateIdeVersion() {
-    let version2 = this.client.getServerVersion()?.version;
-    setIdeVersion(typeof version2 === "string" ? version2 : null);
+    let serverInfo = this.client.getServerVersion();
+    this.ideVersion = typeof serverInfo?.version === "string" ? serverInfo.version : null;
   }
 }
 
@@ -24690,7 +24685,8 @@ function updateProxyTooling() {
     projectPath,
     callUpstreamTool: (name, args) => upstream.callTool(name, args),
     searchCapabilities: upstream.searchCapabilities,
-    readCapabilities: upstream.readCapabilities
+    readCapabilities: upstream.readCapabilities,
+    ideVersion: upstream.ideVersion
   });
   proxyToolSpecs = tooling.proxyToolSpecs, proxyToolNames = tooling.proxyToolNames, runProxyToolCall = tooling.runProxyToolCall;
 }

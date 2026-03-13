@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import {buildProxyToolingData} from './registry'
+import {shouldApplyWorkaround} from '../workarounds'
 import type {ReadCapabilities, SearchCapabilities, ToolArgs, ToolSpecLike, UpstreamToolCaller} from './types'
 
 const DISABLE_NEW_SEARCH_ENV = 'JETBRAINS_MCP_PROXY_DISABLE_NEW_SEARCH'
@@ -67,22 +68,26 @@ export function createProxyTooling({
   projectPath,
   callUpstreamTool,
   searchCapabilities,
-  readCapabilities
+  readCapabilities,
+  ideVersion
 }: {
   projectPath: string
   callUpstreamTool: UpstreamToolCaller
   searchCapabilities: SearchCapabilities
   readCapabilities: ReadCapabilities
+  ideVersion?: string | null
 }): {
   proxyToolSpecs: ToolSpecLike[]
   proxyToolNames: Set<string>
   runProxyToolCall: (toolName: string, args: ToolArgs) => Promise<unknown>
 } {
+  const boundVersion = ideVersion ?? null
   const {proxyToolSpecs, proxyToolNames, handlers} = buildProxyToolingData({
     projectPath,
     callUpstreamTool,
     searchCapabilities,
-    readCapabilities
+    readCapabilities,
+    shouldApplyWorkaround: (key) => shouldApplyWorkaround(key, boundVersion)
   })
 
   async function runProxyToolCall(toolName: string, args: ToolArgs): Promise<unknown> {
