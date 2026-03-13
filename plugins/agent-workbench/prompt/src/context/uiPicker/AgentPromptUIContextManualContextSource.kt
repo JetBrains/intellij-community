@@ -36,6 +36,7 @@ internal class AgentPromptUIContextManualContextSource : AgentPromptManualContex
   override fun showPicker(request: AgentPromptManualContextPickerRequest) {
     val session = UIContextPickerSession(
       project = request.sourceProject,
+      anchorComponent = request.anchorComponent,
       onPicked = { component, screenshot ->
         request.onSelected(buildUIContextItem(component, screenshot))
       },

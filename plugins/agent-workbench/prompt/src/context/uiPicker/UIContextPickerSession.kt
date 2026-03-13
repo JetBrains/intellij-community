@@ -2,9 +2,11 @@
 package com.intellij.agent.workbench.prompt.context.uiPicker
 
 import com.intellij.agent.workbench.prompt.AgentPromptBundle
+import com.intellij.agent.workbench.prompt.context.PromptWindowVisibilityController
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.StackingPopupDispatcher
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
@@ -121,15 +123,18 @@ internal class UIContextPickerHighlight(val targetComponent: Component) : JCompo
  */
 internal class UIContextPickerSession(
   private val project: Project,
+  anchorComponent: Component,
   private val onPicked: (Component, BufferedImage) -> Unit,
   private val onCanceled: () -> Unit,
 ) : Disposable {
 
+  private val promptWindowController = PromptWindowVisibilityController.fromComponent(anchorComponent)
   private val currentHighlight = AtomicReference<UIContextPickerHighlight?>(null)
   private var currentTooltip: PickerTooltip? = null
   private val active = AtomicBoolean(true)
 
   fun start() {
+    promptWindowController.hide()
     IdeEventQueue.getInstance().addPostEventListener(postEventHook, this)
     SwingUtilities.invokeLater { highlightComponentUnderCursor() }
   }
@@ -137,6 +142,8 @@ internal class UIContextPickerSession(
   private fun stop() {
     if (!active.compareAndSet(true, false)) return
     removeCurrentHighlight()
+    promptWindowController.restore()
+    IdeEventQueue.getInstance().popupManager.push(StackingPopupDispatcher.getInstance())
     Disposer.dispose(this)
   }
 
