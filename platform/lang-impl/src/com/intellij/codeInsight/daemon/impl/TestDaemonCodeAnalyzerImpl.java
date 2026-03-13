@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
 import com.intellij.psi.PsiConsistencyAssertions;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ExceptionUtil;
@@ -184,8 +185,10 @@ public final class TestDaemonCodeAnalyzerImpl {
       HighlightingSession session = daemonCodeAnalyzer.queuePassesCreation(textEditor, virtualFile, passesToIgnore, new ConcurrentHashMap<>());
       if (session == null) {
         DaemonCodeAnalyzerImpl.LOG.error("Can't create session for " + textEditor + " (" + textEditor.getClass() + ")," +
-                                         " fileEditor.getBackgroundHighlighter()=" + textEditor.getBackgroundHighlighter() +
-                                         "; virtualFile=" + virtualFile);
+          "; fileEditor.getBackgroundHighlighter()=" + textEditor.getBackgroundHighlighter() +
+          "; getCachedFileToHighlight()="+TextEditorBackgroundHighlighter.getCachedFileToHighlight(myProject, virtualFile, context)+
+          "; getRawCachedFile()="+((PsiDocumentManagerEx)PsiDocumentManager.getInstance(myProject)).getRawCachedFile(virtualFile, context)+
+          "; virtualFile=" + virtualFile+"("+virtualFile.getClass()+")");
         throw new ProcessCanceledException();
       }
       ProgressIndicator progress = session.getProgressIndicator();

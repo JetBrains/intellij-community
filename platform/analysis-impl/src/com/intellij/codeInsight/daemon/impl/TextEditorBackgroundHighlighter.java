@@ -134,12 +134,13 @@ public final class TextEditorBackgroundHighlighter implements BackgroundEditorHi
   public static @Nullable PsiFile getCachedFileToHighlight(@NotNull Project project,
                                                            @NotNull VirtualFile virtualFile,
                                                            @NotNull CodeInsightContext context) {
-    PsiDocumentManagerEx psiDocumentManager = (PsiDocumentManagerEx)PsiDocumentManager.getInstance(project);
-    PsiFile psiFile = psiDocumentManager.getRawCachedFile(virtualFile, context);
+    PsiFile psiFile = ((PsiDocumentManagerEx)PsiDocumentManager.getInstance(project)).getRawCachedFile(virtualFile, context);
     if (psiFile instanceof PsiCompiledFile compiled) {
       psiFile = (PsiFile)compiled.getCachedMirror();
     }
-    if (psiFile == null) return null;
+    if (psiFile == null) {
+      return null;
+    }
     psiFile.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, true);
     return psiFile;
   }
