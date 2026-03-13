@@ -748,6 +748,55 @@ class AgentChatEditorServiceTest {
   }
 
   @Test
+  fun testCollectSelectedChatThreadIdentityUsesSelectedChatTab(): Unit = timeoutRunBlocking {
+    openChatInModal(
+      threadIdentity = "CODEX:thread-1",
+      shellCommand = codexCommand,
+      threadId = "thread-1",
+      threadTitle = "First thread",
+      subAgentId = null,
+    )
+    openChatInModal(
+      threadIdentity = "CODEX:thread-2",
+      shellCommand = listOf("codex", "resume", "thread-2"),
+      threadId = "thread-2",
+      threadTitle = "Second thread",
+      subAgentId = null,
+    )
+
+    val firstFile = openedChatFiles().first { it.threadIdentity == "CODEX:thread-1" }
+    runInUi {
+      FileEditorManager.getInstance(project).openFile(firstFile, true)
+    }
+
+    waitForCondition {
+      collectSelectedChatThreadIdentity() == (AgentSessionProvider.CODEX to "thread-1")
+    }
+
+    assertThat(collectSelectedChatThreadIdentity()).isEqualTo(AgentSessionProvider.CODEX to "thread-1")
+  }
+
+  @Test
+  fun testVirtualFileSystemReusesOpenFileByTabKey(): Unit = timeoutRunBlocking {
+    openChatInModal(
+      threadIdentity = "CODEX:thread-reuse-path",
+      shellCommand = listOf("codex", "resume", "thread-reuse-path"),
+      threadId = "thread-reuse-path",
+      threadTitle = "Reuse path",
+      subAgentId = null,
+    )
+
+    val file = openedChatFiles().single()
+    val tabPath = AgentChatTabKey.parse(file.tabKey)!!.toPath()
+
+    val resolvedFile = runInUi {
+      agentChatVirtualFileSystem().findFileByPath(tabPath)
+    }
+
+    assertThat(resolvedFile).isSameAs(file)
+  }
+
+  @Test
   fun testCodexScopedRefreshSignalsEmitNormalizedPaths(): Unit = timeoutRunBlocking {
     val outputPath = "/work/project-terminal-output-delayed/"
     val signalWaiter = async(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {

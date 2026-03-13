@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabRebindReport
 import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabRebindRequest
 import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabRebindStatus
 import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabSnapshot
+import com.intellij.agent.workbench.chat.AgentChatOpenTabsRefreshSnapshot
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindOutcome
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindReport
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindRequest
@@ -157,6 +158,45 @@ class AgentSessionRefreshCoordinatorTest {
           ?.updatedAt == 300L
       }
 
+      assertThat(closedRefreshInvocations.get()).isEqualTo(1)
+    }
+  }
+
+  @Test
+  fun providerRefreshCollectsOpenChatSnapshotOncePerPass() = runBlocking(Dispatchers.Default) {
+    val closedRefreshInvocations = AtomicInteger(0)
+    val openChatSnapshotInvocations = AtomicInteger(0)
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = {
+        listOf(
+          ScriptedSessionSource(
+            provider = AgentSessionProvider.CODEX,
+            listFromClosedProject = { path ->
+              if (path != PROJECT_PATH) {
+                emptyList()
+              }
+              else {
+                closedRefreshInvocations.incrementAndGet()
+                listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX))
+              }
+            },
+          )
+        )
+      },
+      isRefreshGateActive = { true },
+      openAgentChatSnapshotProvider = {
+        openChatSnapshotInvocations.incrementAndGet()
+        buildOpenChatRefreshSnapshot(openProjectPaths = setOf(PROJECT_PATH))
+      },
+    ) { coordinator, _ ->
+      coordinator.refreshProviderScope(provider = AgentSessionProvider.CODEX, scopedPaths = setOf(PROJECT_PATH))
+
+      waitForCondition {
+        closedRefreshInvocations.get() == 1 && openChatSnapshotInvocations.get() == 1
+      }
+
+      assertThat(openChatSnapshotInvocations.get()).isEqualTo(1)
       assertThat(closedRefreshInvocations.get()).isEqualTo(1)
     }
   }
@@ -2158,12 +2198,14 @@ private suspend fun withLoadingCoordinator(
   projectEntriesProvider: suspend () -> List<ProjectEntry> = { emptyList() },
   isRefreshGateActive: suspend () -> Boolean,
   openChatPathsProvider: suspend () -> Set<String> = { emptySet() },
+  selectedChatThreadIdentityProvider: suspend () -> Pair<AgentSessionProvider, String>? = { null },
   codexScopedRefreshSignalsProvider: () -> kotlinx.coroutines.flow.Flow<Set<String>> = {
     kotlinx.coroutines.flow.emptyFlow()
   },
   openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingCodexTabSnapshot>> = { emptyMap() },
   openConcreteCodexTabsAwaitingNewThreadRebindProvider: suspend () -> Map<String, List<AgentChatConcreteCodexTabSnapshot>> = { emptyMap() },
   openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> = { emptyMap() },
+  openAgentChatSnapshotProvider: (suspend () -> AgentChatOpenTabsRefreshSnapshot)? = null,
   openChatTabPresentationUpdater: suspend (
     Map<Pair<String, String>, String>,
     Map<Pair<String, String>, AgentThreadActivity>,
@@ -2196,11 +2238,18 @@ private suspend fun withLoadingCoordinator(
       stateStore = stateStore,
       contentRepository = contentRepository,
       isRefreshGateActive = isRefreshGateActive,
-      openAgentChatProjectPathsProvider = openChatPathsProvider,
+      openAgentChatSnapshotProvider = openAgentChatSnapshotProvider ?: {
+        buildOpenChatRefreshSnapshot(
+          openProjectPaths = openChatPathsProvider(),
+          selectedChatThreadIdentity = selectedChatThreadIdentityProvider(),
+          pendingTabsByProvider = mapOf(AgentSessionProvider.CODEX to openPendingCodexTabsProvider()),
+          concreteTabsAwaitingNewThreadRebindByProvider = mapOf(
+            AgentSessionProvider.CODEX to openConcreteCodexTabsAwaitingNewThreadRebindProvider(),
+          ),
+          concreteThreadIdentitiesByPath = openConcreteChatThreadIdentitiesByPathProvider(),
+        )
+      },
       codexScopedRefreshSignalsProvider = { _ -> codexScopedRefreshSignalsProvider() },
-      openPendingCodexTabsProvider = { _ -> openPendingCodexTabsProvider() },
-      openConcreteCodexTabsAwaitingNewThreadRebindProvider = { _ -> openConcreteCodexTabsAwaitingNewThreadRebindProvider() },
-      openConcreteChatThreadIdentitiesByPathProvider = openConcreteChatThreadIdentitiesByPathProvider,
       openAgentChatTabPresentationUpdater = openChatTabPresentationUpdater,
       openAgentChatPendingTabsBinder = { _, requestsByPath -> openChatPendingTabsBinder(requestsByPath) },
       openAgentChatConcreteTabsBinder = { _, requestsByPath -> openChatConcreteTabsBinder(requestsByPath) },

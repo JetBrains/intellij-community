@@ -4,10 +4,6 @@ package com.intellij.agent.workbench.chat
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem
 import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -34,13 +30,13 @@ internal class AgentChatVirtualFileSystem : DeprecatedVirtualFileSystem(), NonPh
 
   suspend fun getOrCreateFile(resolution: AgentChatTabResolution): AgentChatVirtualFile {
     val stableKey = resolution.tabKey.value
-    val existing = findOpenFileByStableKey(tabKey = stableKey, projects = serviceAsync<ProjectManager>().openProjects)
+    val existing = collectOpenAgentChatTabsSnapshotOnUi().findFileByTabKey(stableKey)
     return reuseOrCreateFile(resolution = resolution, existing = existing)
   }
 
   private fun getOrCreateFileSync(resolution: AgentChatTabResolution): AgentChatVirtualFile {
     val stableKey = resolution.tabKey.value
-    val existing = findOpenFileByStableKey(tabKey = stableKey, projects = ProjectManager.getInstance().openProjects)
+    val existing = collectOpenAgentChatTabsSnapshot().findFileByTabKey(stableKey)
     return reuseOrCreateFile(resolution = resolution, existing = existing)
   }
 
@@ -54,22 +50,6 @@ internal class AgentChatVirtualFileSystem : DeprecatedVirtualFileSystem(), NonPh
     }
     return AgentChatVirtualFile(fileSystem = this, resolution = resolution)
   }
-}
-
-private fun findOpenFileByStableKey(tabKey: String, projects: Array<Project>): AgentChatVirtualFile? {
-  for (project in projects) {
-    if (project.isDisposed) {
-      continue
-    }
-    val manager = project.serviceIfCreated<FileEditorManager>() ?: continue
-    for (openFile in manager.openFiles) {
-      val chatFile = openFile as? AgentChatVirtualFile ?: continue
-      if (chatFile.tabKey == tabKey) {
-        return chatFile
-      }
-    }
-  }
-  return null
 }
 
 internal const val AGENT_CHAT_PROTOCOL: String = "agent-chat"

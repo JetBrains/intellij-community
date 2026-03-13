@@ -5,9 +5,6 @@ import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.project.ProjectManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -71,22 +68,5 @@ internal class AgentChatTabsService {
 }
 
 private fun closeMatchingOpenTabs(projectPath: String, threadIdentity: String, subAgentId: String?): Int {
-  var closedTabs = 0
-  for (project in ProjectManager.getInstance().openProjects) {
-    if (project.isDisposed) {
-      continue
-    }
-
-    val manager = project.serviceIfCreated<FileEditorManager>() ?: continue
-    val matchingFiles = manager.openFiles.filterIsInstance<AgentChatVirtualFile>().filter { chatFile ->
-      normalizeAgentWorkbenchPath(chatFile.projectPath) == projectPath &&
-      chatFile.threadIdentity == threadIdentity &&
-      (subAgentId == null || chatFile.subAgentId == subAgentId)
-    }
-    for (chatFile in matchingFiles) {
-      manager.closeFile(chatFile)
-      closedTabs++
-    }
-  }
-  return closedTabs
+  return collectOpenAgentChatTabsSnapshot().closeMatchingOpenTabs(projectPath, threadIdentity, subAgentId)
 }

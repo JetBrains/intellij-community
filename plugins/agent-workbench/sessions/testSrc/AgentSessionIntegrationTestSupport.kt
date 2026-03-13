@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabSnapshot
+import com.intellij.agent.workbench.chat.AgentChatOpenTabsRefreshSnapshot
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindReport
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindRequest
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabSnapshot
@@ -8,6 +10,7 @@ import com.intellij.agent.workbench.chat.collectOpenConcreteAgentChatThreadIdent
 import com.intellij.agent.workbench.chat.collectOpenPendingCodexTabsByPath
 import com.intellij.agent.workbench.chat.rebindOpenPendingCodexTabs
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.AgentSubAgent
@@ -45,6 +48,61 @@ import kotlin.time.Duration.Companion.milliseconds
 
 internal const val PROJECT_PATH = "/work/project-a"
 internal const val WORKTREE_PATH = "/work/project-feature"
+
+internal fun buildOpenChatRefreshSnapshot(
+  openProjectPaths: Set<String> = emptySet(),
+  selectedChatThreadIdentity: Pair<AgentSessionProvider, String>? = null,
+  pendingTabsByProvider: Map<AgentSessionProvider, Map<String, List<AgentChatPendingCodexTabSnapshot>>> = emptyMap(),
+  concreteTabsAwaitingNewThreadRebindByProvider: Map<AgentSessionProvider, Map<String, List<AgentChatConcreteCodexTabSnapshot>>> = emptyMap(),
+  concreteThreadIdentitiesByPath: Map<String, Set<String>> = emptyMap(),
+): AgentChatOpenTabsRefreshSnapshot {
+  val normalizedOpenProjectPaths = LinkedHashSet<String>()
+  openProjectPaths.asSequence().map(::normalizeAgentWorkbenchPath).forEach(normalizedOpenProjectPaths::add)
+
+  val normalizedPendingTabsByProvider = pendingTabsByProvider.mapValues { (_, tabsByPath) ->
+    normalizeSnapshotTabsByPath(tabsByPath)
+  }
+  normalizedPendingTabsByProvider.values
+    .asSequence()
+    .flatMap { tabsByPath -> tabsByPath.keys.asSequence() }
+    .forEach(normalizedOpenProjectPaths::add)
+
+  val normalizedConcreteTabsByProvider = concreteTabsAwaitingNewThreadRebindByProvider.mapValues { (_, tabsByPath) ->
+    normalizeSnapshotTabsByPath(tabsByPath)
+  }
+  normalizedConcreteTabsByProvider.values
+    .asSequence()
+    .flatMap { tabsByPath -> tabsByPath.keys.asSequence() }
+    .forEach(normalizedOpenProjectPaths::add)
+
+  val normalizedConcreteThreadIdentitiesByPath = LinkedHashMap<String, Set<String>>(concreteThreadIdentitiesByPath.size)
+  for ((path, identities) in concreteThreadIdentitiesByPath) {
+    val normalizedPath = normalizeAgentWorkbenchPath(path)
+    normalizedConcreteThreadIdentitiesByPath[normalizedPath] = LinkedHashSet(identities)
+    normalizedOpenProjectPaths.add(normalizedPath)
+  }
+
+  return AgentChatOpenTabsRefreshSnapshot(
+    openProjectPaths = normalizedOpenProjectPaths,
+    selectedChatThreadIdentity = selectedChatThreadIdentity,
+    pendingTabsByProvider = normalizedPendingTabsByProvider,
+    concreteTabsAwaitingNewThreadRebindByProvider = normalizedConcreteTabsByProvider,
+    concreteThreadIdentitiesByPath = normalizedConcreteThreadIdentitiesByPath,
+  )
+}
+
+private fun <T> normalizeSnapshotTabsByPath(
+  tabsByPath: Map<String, List<T>>,
+): Map<String, List<T>> {
+  val normalized = LinkedHashMap<String, List<T>>(tabsByPath.size)
+  for ((path, tabs) in tabsByPath) {
+    if (tabs.isEmpty()) {
+      continue
+    }
+    normalized[normalizeAgentWorkbenchPath(path)] = tabs
+  }
+  return normalized
+}
 
 internal fun registerDedicatedFrameSettingForTest(disposable: com.intellij.openapi.Disposable) {
   if (AdvancedSettingBean.EP_NAME.extensionList.none { it.id == OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID }) {
@@ -303,8 +361,12 @@ internal suspend fun withServiceAndArchiveAndLaunch(
       projectEntriesProvider = projectEntriesProvider,
       stateStore = stateStore,
       warmState = warmState,
-      openPendingCodexTabsProvider = { _ -> openPendingCodexTabsProvider() },
-      openConcreteChatThreadIdentitiesByPathProvider = openConcreteChatThreadIdentitiesByPathProvider,
+      openAgentChatSnapshotProvider = {
+        buildOpenChatRefreshSnapshot(
+          pendingTabsByProvider = mapOf(AgentSessionProvider.CODEX to openPendingCodexTabsProvider()),
+          concreteThreadIdentitiesByPath = openConcreteChatThreadIdentitiesByPathProvider(),
+        )
+      },
       openAgentChatPendingTabsBinder = { _, requestsByPath -> openAgentChatPendingTabsBinder(requestsByPath) },
       subscribeToProjectLifecycle = false,
     )
