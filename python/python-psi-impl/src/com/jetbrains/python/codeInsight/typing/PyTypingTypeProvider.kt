@@ -22,7 +22,6 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
-import com.intellij.util.Function
 import com.intellij.util.containers.Stack
 import com.jetbrains.python.PyCustomType
 import com.jetbrains.python.PyNames
@@ -141,7 +140,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.Collections
 import java.util.Objects
 import java.util.Optional
-import java.util.function.UnaryOperator
 import java.util.regex.Pattern
 
 class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
@@ -1114,26 +1112,6 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         )
       }
       )
-    }
-
-    private fun collectTypeParametersFromTypeAliasStatement(
-      typeAliasStatement: PyTypeAliasStatement,
-      context: Context,
-    ): MutableList<PyTypeParameterType?> {
-      val typeParameterList = typeAliasStatement.typeParameterList
-      if (typeParameterList != null) {
-        val typeParameters = typeParameterList.typeParameters
-        return StreamEx.of(typeParameters)
-          .map<PyTypeParameterType?> { typeParameter: PyTypeParameter? ->
-            getTypeParameterTypeFromTypeParameter(
-              typeParameter!!,
-              context
-            )
-          }
-          .nonNull()
-          .toList()
-      }
-      return mutableListOf()
     }
 
     @JvmStatic
@@ -2566,26 +2544,20 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         }
         val indexTypes = if (typeHint is PySubscriptionExpression)
           getIndexTypes(typeHint, context)
-        else mutableListOf()
+        else emptyList()
 
-        val typeAliasTypeParams: MutableList<PyTypeParameterType?> =
-          collectTypeParametersFromTypeAliasStatement(typeAliasStatement, context)
+        val typeParameters = typeAliasStatement.typeParameterList?.typeParameters ?: emptyList()
+        val typeAliasTypeParams = typeParameters.mapNotNull { getTypeParameterTypeFromTypeParameter(it, context) }
         if (!typeAliasTypeParams.isEmpty()) {
-          val substitutions =
-            PyTypeChecker.mapTypeParametersToSubstitutions(
-              typeAliasTypeParams,
-              indexTypes,
-              PyTypeParameterMapping.Option.USE_DEFAULTS,
-              PyTypeParameterMapping.Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY
-            )
-
-          return if (substitutions != null) Ref(
-            PyTypeChecker.substitute(
-              assignedType,
-              substitutions,
-              context.typeContext
-            )
+          val substitutions = PyTypeChecker.mapTypeParametersToSubstitutions(
+            typeAliasTypeParams,
+            indexTypes,
+            PyTypeParameterMapping.Option.USE_DEFAULTS,
+            PyTypeParameterMapping.Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY
           )
+
+          return if (substitutions != null)
+            Ref(PyTypeChecker.substitute(assignedType, substitutions, context.typeContext))
           else null
         }
         return assignedTypeRef
