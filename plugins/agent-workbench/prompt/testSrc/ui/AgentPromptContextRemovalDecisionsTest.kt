@@ -99,12 +99,12 @@ class AgentPromptContextRemovalDecisionsTest {
     val keepPath = "/repo/project/keep.txt"
     val removePath = "/repo/project/remove.txt"
     val manualItems = linkedMapOf(
-      MANUAL_PROJECT_PATHS_SOURCE_ID to buildManualPathsContextItem(
+      MANUAL_PROJECT_PATHS_SOURCE_ID to listOf(buildManualPathsContextItem(
         listOf(
           ManualPathSelectionEntry(path = keepPath, isDirectory = false),
           ManualPathSelectionEntry(path = removePath, isDirectory = false),
         )
-      )
+      ))
     )
     val removedEntry = materializeVisibleContextEntries(emptyList(), manualItems, null)
       .single { entry -> entry.id == manualPathContextEntryId(MANUAL_PROJECT_PATHS_SOURCE_ID, removePath) }
@@ -112,7 +112,7 @@ class AgentPromptContextRemovalDecisionsTest {
     val updatedItems = resolveManualContextItemsAfterRemoval(manualItems, removedEntry, projectPath = null)
 
     assertThat(updatedItems.keys).containsExactly(MANUAL_PROJECT_PATHS_SOURCE_ID)
-    assertThat(extractCurrentPaths(updatedItems.getValue(MANUAL_PROJECT_PATHS_SOURCE_ID))).containsExactly(
+    assertThat(extractCurrentPaths(updatedItems.getValue(MANUAL_PROJECT_PATHS_SOURCE_ID).single())).containsExactly(
       ManualPathSelectionEntry(path = keepPath, isDirectory = false),
     )
   }
@@ -122,12 +122,12 @@ class AgentPromptContextRemovalDecisionsTest {
     val projectPath = "/repo/project"
     val filePath = "/repo/project/src/Main.kt"
     val manualItems = linkedMapOf(
-      MANUAL_PROJECT_PATHS_SOURCE_ID to buildManualPathsContextItem(
+      MANUAL_PROJECT_PATHS_SOURCE_ID to listOf(buildManualPathsContextItem(
         listOf(
           ManualPathSelectionEntry(path = projectPath, isDirectory = true),
           ManualPathSelectionEntry(path = filePath, isDirectory = false),
         )
-      )
+      ))
     )
     val removedEntry = materializeVisibleContextEntries(emptyList(), manualItems, projectPath)
       .single { entry -> entry.id == manualPathContextEntryId(MANUAL_PROJECT_PATHS_SOURCE_ID, filePath) }
@@ -148,39 +148,40 @@ class AgentPromptContextRemovalDecisionsTest {
     )
     val removedEntry = ContextEntry(
       item = manualItem,
-      id = "manual:$sourceId",
+      id = manualContextEntryId(sourceId, manualItem),
       origin = ContextEntryOrigin.MANUAL,
       manualSourceId = sourceId,
     )
 
-    val updatedItems = resolveManualContextItemsAfterRemoval(mapOf(sourceId to manualItem), removedEntry, projectPath = null)
+    val updatedItems = resolveManualContextItemsAfterRemoval(mapOf(sourceId to listOf(manualItem)), removedEntry, projectPath = null)
 
     assertThat(updatedItems).isEmpty()
   }
 
   @Test
-  fun explicitlyRemovingManualScreenshotSourcesDeletesBackingImageFile() {
+  fun explicitlyRemovingManualScreenshotSourceDeletesOnlyRemovedBackingImageFile() {
     listOf("manual.ui.context", "manual.screen.capture").forEach { sourceId ->
+      val keepScreenshotFile = Files.createTempFile("agent-workbench-context-", ".png")
       val screenshotFile = Files.createTempFile("agent-workbench-context-", ".png")
       try {
+        val keepManualItem = screenshotContextItem(sourceId, keepScreenshotFile.toString())
         val manualItem = screenshotContextItem(sourceId, screenshotFile.toString())
-        val removedEntry = ContextEntry(
-          item = manualItem,
-          id = "manual:$sourceId",
-          origin = ContextEntryOrigin.MANUAL,
-          manualSourceId = sourceId,
-        )
+        val manualItems = mapOf(sourceId to listOf(keepManualItem, manualItem))
+        val removedEntry = materializeVisibleContextEntries(emptyList(), manualItems, null)
+          .single { entry -> entry.id == manualContextEntryId(sourceId, manualItem) }
 
         val updatedItems = removeManualContextItemsAfterExplicitRemoval(
-          manualItemsBySourceId = mapOf(sourceId to manualItem),
+          manualItemsBySourceId = manualItems,
           removedEntry = removedEntry,
           projectPath = null,
         )
 
-        assertThat(updatedItems).isEmpty()
+        assertThat(updatedItems[sourceId]).containsExactly(keepManualItem)
+        assertThat(Files.exists(keepScreenshotFile)).isTrue()
         assertThat(Files.exists(screenshotFile)).isFalse()
       }
       finally {
+        Files.deleteIfExists(keepScreenshotFile)
         Files.deleteIfExists(screenshotFile)
       }
     }

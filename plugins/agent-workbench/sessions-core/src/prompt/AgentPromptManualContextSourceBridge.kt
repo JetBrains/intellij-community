@@ -11,17 +11,28 @@ data class AgentPromptManualContextPickerRequest(
   @JvmField val sourceProject: Project,
   @JvmField val invocationData: AgentPromptInvocationData,
   @JvmField val workingProjectPath: String?,
-  @JvmField val currentItem: AgentPromptContextItem?,
+  @JvmField val currentItems: List<AgentPromptContextItem> = emptyList(),
   @JvmField val anchorComponent: Component,
   @JvmField val onSelected: (AgentPromptContextItem) -> Unit,
   @JvmField val onError: (@Nls String) -> Unit,
-)
+) {
+  val currentItem: AgentPromptContextItem?
+    get() = currentItems.firstOrNull()
+}
+
+enum class AgentPromptManualContextSelectionMode {
+  REPLACE,
+  APPEND,
+}
 
 interface AgentPromptManualContextSourceBridge {
   val sourceId: String
 
   val order: Int
     get() = Int.MAX_VALUE
+
+  val selectionMode: AgentPromptManualContextSelectionMode
+    get() = AgentPromptManualContextSelectionMode.REPLACE
 
   fun isAvailable(project: Project): Boolean = true
 

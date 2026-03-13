@@ -25,18 +25,29 @@ internal object AgentPromptContextRemovalDecisions {
   }
 
   internal fun resolveManualContextItemsAfterRemoval(
-    manualItemsBySourceId: Map<String, AgentPromptContextItem>,
+    manualItemsBySourceId: Map<String, List<AgentPromptContextItem>>,
     removedEntry: ContextEntry,
     projectPath: String?,
-  ): Map<String, AgentPromptContextItem> {
+  ): Map<String, List<AgentPromptContextItem>> {
     val sourceId = removedEntry.manualSourceId ?: return manualItemsBySourceId
-    val currentItem = manualItemsBySourceId[sourceId] ?: return manualItemsBySourceId
+    val currentItems = manualItemsBySourceId[sourceId] ?: return manualItemsBySourceId
 
     val updatedItems = LinkedHashMap(manualItemsBySourceId)
     if (sourceId != MANUAL_PROJECT_PATHS_SOURCE_ID) {
-      updatedItems.remove(sourceId)
+      val remainingItems = currentItems.filterNot { item -> item == removedEntry.backingItem }
+      if (remainingItems.size == currentItems.size) {
+        return manualItemsBySourceId
+      }
+      if (remainingItems.isEmpty()) {
+        updatedItems.remove(sourceId)
+      }
+      else {
+        updatedItems[sourceId] = remainingItems
+      }
       return updatedItems
     }
+
+    val currentItem = currentItems.firstOrNull() ?: return manualItemsBySourceId
 
     val currentSelection = extractCurrentPaths(currentItem)
     val remainingSelection = removeManualPathSelection(currentSelection, extractCurrentPaths(removedEntry.item))
@@ -53,23 +64,23 @@ internal object AgentPromptContextRemovalDecisions {
       updatedItems.remove(sourceId)
     }
     else {
-      updatedItems[sourceId] = updatedItem
+      updatedItems[sourceId] = listOf(updatedItem)
     }
     return updatedItems
   }
 
   internal fun removeManualContextItemsAfterExplicitRemoval(
-    manualItemsBySourceId: Map<String, AgentPromptContextItem>,
+    manualItemsBySourceId: Map<String, List<AgentPromptContextItem>>,
     removedEntry: ContextEntry,
     projectPath: String?,
-  ): Map<String, AgentPromptContextItem> {
+  ): Map<String, List<AgentPromptContextItem>> {
     val updatedItems = resolveManualContextItemsAfterRemoval(
       manualItemsBySourceId = manualItemsBySourceId,
       removedEntry = removedEntry,
       projectPath = projectPath,
     )
     if (updatedItems != manualItemsBySourceId) {
-      deleteScreenshotContextFileIfPresent(removedEntry.item)
+      deleteScreenshotContextFileIfPresent(removedEntry.backingItem)
     }
     return updatedItems
   }

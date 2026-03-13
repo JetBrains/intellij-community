@@ -24,7 +24,7 @@ class AgentPromptUiSessionStateServiceTest {
         val snapshot = AgentPromptUiContextRestoreSnapshot(
             contextFingerprint = Hashing.xxh3_128().hashCharsTo128Bits("context"),
             removedContextItemIds = listOf("editor.file"),
-            manualContextItemsBySourceId = mapOf("manual.vcs.commits" to manualContextItem()),
+            manualContextItemsBySourceId = mapOf("manual.vcs.commits" to listOf(manualContextItem())),
         )
 
         original.saveDraft(draft)
@@ -43,7 +43,7 @@ class AgentPromptUiSessionStateServiceTest {
         val snapshot = AgentPromptUiContextRestoreSnapshot(
             contextFingerprint = Hashing.xxh3_128().hashCharsTo128Bits("context"),
             removedContextItemIds = listOf("editor.file", "editor.symbol"),
-            manualContextItemsBySourceId = mapOf("manual.vcs.commits" to manualContextItem()),
+            manualContextItemsBySourceId = mapOf("manual.vcs.commits" to listOf(manualContextItem())),
         )
 
         service.saveContextRestoreSnapshot(snapshot)
@@ -70,7 +70,7 @@ class AgentPromptUiSessionStateServiceTest {
             AgentPromptUiContextRestoreSnapshot(
                 contextFingerprint = Hashing.xxh3_128().hashCharsTo128Bits("context"),
                 removedContextItemIds = listOf("editor.file"),
-                manualContextItemsBySourceId = mapOf("manual.vcs.commits" to manualContextItem()),
+                manualContextItemsBySourceId = mapOf("manual.vcs.commits" to listOf(manualContextItem())),
             )
         )
 
@@ -86,7 +86,7 @@ class AgentPromptUiSessionStateServiceTest {
         val snapshot = AgentPromptUiContextRestoreSnapshot(
             contextFingerprint = Hashing.xxh3_128().hashCharsTo128Bits("context"),
             removedContextItemIds = listOf("editor.file"),
-            manualContextItemsBySourceId = mapOf("manual.vcs.commits" to manualContextItem()),
+            manualContextItemsBySourceId = mapOf("manual.vcs.commits" to listOf(manualContextItem())),
         )
         service.saveContextRestoreSnapshot(snapshot)
 

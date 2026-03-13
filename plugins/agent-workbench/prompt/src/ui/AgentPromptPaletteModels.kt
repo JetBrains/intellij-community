@@ -30,6 +30,7 @@ internal data class ContextEntry(
   @JvmField val id: String = item.rendererId + ":" + item.title + ":" + item.body.hashCode(),
   @JvmField val origin: ContextEntryOrigin = ContextEntryOrigin.AUTO,
   @JvmField val manualSourceId: String? = null,
+  @JvmField val backingItem: AgentPromptContextItem = item,
 ) {
   val logicalItemId: String?
     get() = item.itemId
