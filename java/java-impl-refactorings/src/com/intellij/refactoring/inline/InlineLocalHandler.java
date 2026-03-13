@@ -88,15 +88,6 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
     INLINE_ALL_RENAME_INITIALIZER
   }
 
-  /**
-   * Represents parameters that specify the way local variable should be inlined.
-   *
-   * @param isUIAllowed whether the generated {@link ModCommand} could contain UI actions.
-   *
-   * @see InlineLocalHandler#doInline(ActionContext, PsiVariable, PsiReferenceExpression, Configuration)
-   */
-  public record Configuration(@NotNull InlineMode mode, @NotNull Boolean isUIAllowed) {}
-
   private static final Logger LOG = Logger.getInstance(InlineLocalHandler.class);
 
   @Override
@@ -151,44 +142,27 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
     return doInline(context, (PsiVariable)Objects.requireNonNull(context.element()), refExpr, mode);
   }
 
-  /**
-   * @see InlineLocalHandler#doInline(ActionContext, PsiVariable, PsiReferenceExpression, Configuration)
-   */
   public static @NotNull ModCommand doInline(@NotNull ActionContext context,
                                              @NotNull PsiVariable var,
                                              @Nullable PsiReferenceExpression refExpr,
                                              @NotNull InlineMode mode) {
-    return doInline(context, var, refExpr, new Configuration(mode, true));
-  }
-
-  /**
-   * @param var variable to be inlined.
-   * @param refExpr expression on which the inline action was invoked. It is null when the action invoked on variable declaration.
-   * @param configuration additional configuration for the inline operation.
-   * @return {@link ModCommand} that inlines the variable.
-   */
-  public static @NotNull ModCommand doInline(@NotNull ActionContext context,
-                                             @NotNull PsiVariable var,
-                                             @Nullable PsiReferenceExpression refExpr,
-                                             @NotNull Configuration configuration) {
     List<PsiReferenceExpression> allRefs =
-      refExpr != null && configuration.mode() == InlineMode.INLINE_ONE ? List.of(refExpr) :
+      refExpr != null && mode == InlineMode.INLINE_ONE ? List.of(refExpr) :
       VariableAccessUtils.getVariableReferences(var);
     if (allRefs.isEmpty()) {
       return ModCommand.error(RefactoringBundle.message("variable.is.never.used", var.getName()));
     }
     if (var instanceof PsiLocalVariable local) {
-      return inlineLocal(context, local, refExpr, allRefs, configuration);
+      return inlineLocal(context, local, refExpr, allRefs, mode);
     }
-    return inlinePattern(context, (PsiPatternVariable)var, refExpr, allRefs, configuration);
+    return inlinePattern(context, (PsiPatternVariable)var, refExpr, allRefs, mode);
   }
 
   private static @NotNull ModCommand inlinePattern(@NotNull ActionContext context,
                                                    @NotNull PsiPatternVariable pattern,
                                                    @Nullable PsiReferenceExpression refExpr,
                                                    @NotNull List<PsiReferenceExpression> allRefs,
-                                                   @NotNull Configuration configuration) {
-    InlineMode mode = configuration.mode();
+                                                   @NotNull InlineMode mode) {
     String initializerText = JavaPsiPatternUtil.getEffectiveInitializerText(pattern);
     if (initializerText == null) {
       return ModCommand.error(JavaRefactoringBundle.message("tooltip.cannot.inline.pattern.variable"));
@@ -198,9 +172,7 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
       if (refExpr == null || allRefs.size() == 1 || !EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog()) {
         mode = InlineMode.INLINE_ALL_AND_DELETE;
       } else {
-        return configuration.isUIAllowed() ?
-               createChooser(pattern, refExpr, allRefs) :
-               doInline(context, pattern, refExpr, new Configuration(InlineMode.INLINE_ALL_AND_DELETE, false));
+        return createChooser(pattern, refExpr, allRefs);
       }
     }
     final PsiElement[] refsToInline = PsiUtilCore.toPsiElementArray(allRefs);
@@ -247,8 +219,7 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
                                                  @NotNull PsiLocalVariable local,
                                                  @Nullable PsiReferenceExpression refExpr,
                                                  @NotNull List<PsiReferenceExpression> allRefs,
-                                                 @NotNull Configuration configuration) {
-    InlineMode mode = configuration.mode();
+                                                 @NotNull InlineMode mode) {
     final String localName = local.getName();
 
     InnerClassUsages innerClassUses = InnerClassUsages.getUsages(local, allRefs);
@@ -308,9 +279,7 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
       if (conflicts.isEmpty()) {
         mode = InlineMode.ASK;
       } else {
-        return configuration.isUIAllowed() ?
-               createConflictChooser(local, refExpr, conflicts) :
-               ModCommand.error(JavaRefactoringBundle.message("tooltip.cannot.inline.pattern.variable"));
+        return createConflictChooser(local, refExpr, conflicts);
       }
     }
 
@@ -323,9 +292,7 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
           ControlFlowUtil.isEffectivelyFinal(local, containerBlock)) {
         if (ref.resolve() instanceof PsiVariable var && PsiUtil.isJvmLocalVariable(var) &&
             var.getType().equals(local.getType())) {
-          return configuration.isUIAllowed() ?
-                 createRenameChooser(local, refsToInlineList) :
-                 doInline(context, local, null, new Configuration(InlineMode.INLINE_ALL_KEEP_OLD_NAME, false));
+          return createRenameChooser(local, refsToInlineList);
         }
       }
     }
