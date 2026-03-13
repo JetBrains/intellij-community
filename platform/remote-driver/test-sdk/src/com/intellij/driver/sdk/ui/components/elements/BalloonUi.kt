@@ -1,5 +1,6 @@
 package com.intellij.driver.sdk.ui.components.elements
 
+import com.intellij.driver.client.Remote
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.UiText.Companion.asString
 import com.intellij.driver.sdk.ui.components.ComponentData
@@ -23,9 +24,22 @@ class BalloonUiComponent(data: ComponentData) : UiComponent(data) {
   val contentText: String get() = content.getAllTexts().asString()
 
   val htmlContent: UiComponent = x { byClass("LimitedWidthJBHtmlPane") }
+  private val htmlContentComponent by lazy { driver.cast(htmlContent.component, JBHtmlPane::class) }
   val htmlContentText: String get() = htmlContent.getAllTexts().asString()
 
   val primaryButton: JButtonUiComponent = button { byClass("JButton") }
 
   val secondaryButton: UiComponent = x { byClass("ActionLink") }
+
+  fun extractLink(linkMustContain: String) : String {
+    val htmlContent = htmlContentComponent.getText()
+    val linksRegex = """href="([^"]+)"""".toRegex()
+    return linksRegex.findAll(htmlContent).map { it.groupValues[1] }.firstOrNull { linkMustContain in it }
+           ?: error("No link with $linkMustContain found in tooltip text:\n$htmlContent")
+  }
+}
+
+@Remote("com.intellij.ui.components.JBHtmlPane")
+interface JBHtmlPane {
+  fun getText(): String
 }
