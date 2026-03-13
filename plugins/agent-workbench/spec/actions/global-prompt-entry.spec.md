@@ -50,9 +50,17 @@ Prompt-context collection and rendering contracts are specified separately in `s
 ## Requirements
 - Global action id `AgentWorkbenchPrompt.OpenGlobalPalette` must be available only when a project is open.
 
+- When `AgentWorkbenchPrompt.OpenGlobalPalette` is invoked while the global prompt popup is already visible for the same project, the existing popup must be focused instead of creating a second popup instance.
+
+- Re-focusing an already visible popup must preserve its live state, including prompt text, selected tab, provider selection, and context chips.
+  [@test] ../../prompt/testSrc/ui/AgentPromptPalettePopupServiceTest.kt
+
 - When both `AgentWorkbenchPrompt.OpenGlobalPalette` and `AIAssistant.Editor.AskAiAssistantInEditor` are applicable for `Cmd+\\` / `Ctrl+\\` in an editor context, `AgentWorkbenchPrompt.OpenGlobalPalette` must be executed first.
 
 - Global action id `AgentWorkbenchPrompt.OpenGlobalPaletteAutoSelect` must be available only when a project is open. It opens the same popup but with EP-driven extension tab auto-selection (see below).
+
+- When `AgentWorkbenchPrompt.OpenGlobalPaletteAutoSelect` is invoked while the global prompt popup is already visible for the same project, it must behave the same as the standard action and only focus the existing popup.
+  [@test] ../../prompt/testSrc/ui/AgentPromptPalettePopupServiceTest.kt
 
 - Prompt target mode must support exactly:
   - `PromptTargetMode.NEW_TASK`,

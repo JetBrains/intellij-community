@@ -10,15 +10,12 @@ import com.intellij.agent.workbench.prompt.AgentPromptBundle
 import com.intellij.agent.workbench.prompt.context.AgentPromptContextResolverService
 import com.intellij.agent.workbench.prompt.context.dataContextOrNull
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
-import com.intellij.agent.workbench.sessions.core.prompt.AGENT_PROMPT_INITIAL_TEXT_DATA_KEY
 import com.intellij.agent.workbench.sessions.core.prompt.AGENT_PROMPT_INVOCATION_PREFER_EXTENSIONS_KEY
-import com.intellij.agent.workbench.sessions.core.prompt.AGENT_PROMPT_SELECTED_PROVIDER_ID_DATA_KEY
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextEnvelopeFormatter
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextEnvelopeSummary
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationData
-import com.intellij.agent.workbench.sessions.core.prompt.AGENT_PROMPT_INVOCATION_PREFER_EXTENSIONS_KEY
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchError
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLauncherBridge
@@ -50,6 +47,8 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.LanguageTextField
 import com.intellij.ui.SimpleTextAttributes
@@ -130,7 +129,8 @@ internal class AgentPromptPalettePopup(
   private val invocationData: AgentPromptInvocationData,
   private val providersProvider: () -> List<AgentSessionProviderBridge> = AgentSessionProviderBridges::allBridges,
   private val launcherProvider: () -> AgentPromptLauncherBridge? = AgentPromptLaunchers::find,
-) {
+  private val onClosed: (() -> Unit)? = null,
+) : AgentPromptPalettePopupSession {
   private val project: Project = invocationData.project
   private val contextResolverService: AgentPromptContextResolverService = project.service()
   private val uiStateService: AgentPromptUiSessionStateService = project.service()
@@ -197,7 +197,7 @@ internal class AgentPromptPalettePopup(
     return AgentPromptExtensionDraftDecisions.matchesTaskKey(entry.taskKeyPrefix, taskKey)
   }
 
-  fun show() {
+  override fun show() {
     val content = createContentPanel()
     refreshProviders()
     loadInitialContext()
@@ -243,11 +243,27 @@ internal class AgentPromptPalettePopup(
         else {
           saveDraft()
         }
+        onClosed?.invoke()
       }
     })
 
     attachHandlers()
     createdPopup.showCenteredInCurrentWindow(project)
+  }
+
+  override fun requestFocus() {
+    val currentPopup = popup ?: return
+    if (!currentPopup.isVisible) {
+      return
+    }
+
+    currentPopup.setRequestFocus(true)
+    val focusComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(currentPopup.content) ?: promptArea
+    IdeFocusManager.getInstance(project).requestFocusInProject(focusComponent, project)
+  }
+
+  override fun isVisible(): Boolean {
+    return popup?.isVisible == true
   }
 
   private fun createContentPanel(): JPanel {
