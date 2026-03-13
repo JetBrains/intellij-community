@@ -47,7 +47,7 @@ import static com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesC
 @ApiStatus.Internal
 public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCollector {
   private static final String GROUP_NAME = RunConfigurationTypeDefs.TRIGGER_USAGES_GROUP_ID;
-  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 79);
+  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 80);
 
   public static final IntEventField ALTERNATIVE_JRE_VERSION = EventFields.Int("alternative_jre_version");
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP_NAME, "started");
