@@ -13,6 +13,8 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayloadValue
 import com.intellij.agent.workbench.sessions.core.prompt.array
 import com.intellij.agent.workbench.sessions.core.prompt.objOrNull
 import com.intellij.agent.workbench.sessions.core.prompt.string
+import com.intellij.ide.scratch.RootType
+import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -216,6 +218,18 @@ internal fun resolveScopedContentRootPaths(
   return if (matchesContent) linkedSetOf(workingProjectPath) else LinkedHashSet(contentRootPaths)
 }
 
+internal fun resolvePickerRootPaths(
+  contentRootPaths: Collection<String>,
+  scratchRootPaths: Collection<String>,
+  workingProjectPath: String?,
+): Set<String> {
+  val scopedRootPaths = LinkedHashSet(resolveScopedContentRootPaths(contentRootPaths, workingProjectPath))
+  scratchRootPaths.forEach { scratchRootPath ->
+    scopedRootPaths.add(scratchRootPath)
+  }
+  return scopedRootPaths
+}
+
 internal fun filterManualPathSelectionToScopedRoots(
   selection: List<ManualPathSelectionEntry>,
   scopedRootPaths: Collection<String>,
@@ -231,27 +245,48 @@ private fun resolveScopedProjectRoots(
   return runReadActionBlocking {
     val contentRoots = ProjectRootManager.getInstance(project).contentRootsFromAllModules
       .distinctBy { it.path }
-    if (contentRoots.isEmpty()) {
+    val scratchRoots = resolveVisibleScratchRoots()
+    val availableRoots = (contentRoots + scratchRoots).distinctBy { it.path }
+    if (availableRoots.isEmpty()) {
       return@runReadActionBlocking emptyList()
     }
 
-    val scopedRootPaths = resolveScopedContentRootPaths(contentRoots.map { it.path }, workingProjectPath)
+    val scopedRootPaths = resolvePickerRootPaths(
+      contentRootPaths = contentRoots.map { it.path },
+      scratchRootPaths = scratchRoots.map { it.path },
+      workingProjectPath = workingProjectPath,
+    )
     val fileIndex = ProjectFileIndex.getInstance(project)
     val resolvedRoots = ArrayList<VirtualFile>(scopedRootPaths.size)
     scopedRootPaths.forEach { path ->
-      val root = contentRoots.firstOrNull { contentRoot -> FileUtil.pathsEqual(contentRoot.path, path) }
+      val root = availableRoots.firstOrNull { candidateRoot -> FileUtil.pathsEqual(candidateRoot.path, path) }
                  ?: LocalFileSystem.getInstance().findFileByPath(path)
       val scopedRoot = when {
         root == null -> null
         root.isDirectory -> root
         else -> root.parent
       }
-      if (scopedRoot != null && scopedRoot.isInLocalFileSystem && fileIndex.isInContent(scopedRoot)) {
+      if (scopedRoot != null && scopedRoot.isInLocalFileSystem && isAttachableManualContextRoot(scopedRoot, fileIndex)) {
         resolvedRoots += scopedRoot
       }
     }
-    resolvedRoots.ifEmpty { contentRoots.toList() }
+    resolvedRoots.ifEmpty { availableRoots.filter { root -> isAttachableManualContextRoot(root, fileIndex) } }
   }
+}
+
+private fun resolveVisibleScratchRoots(): List<VirtualFile> {
+  val scratchFileService = ScratchFileService.getInstance()
+  return RootType.getAllRootTypes()
+    .filterNot { it.isHidden }
+    .mapNotNull(scratchFileService::getVirtualFile)
+    .distinctBy { it.path }
+}
+
+private fun isAttachableManualContextRoot(
+  root: VirtualFile,
+  fileIndex: ProjectFileIndex,
+): Boolean {
+  return fileIndex.isInContent(root) || RootType.forFile(root)?.isHidden == false
 }
 
 internal fun isUnderAnyRoot(path: String, rootPaths: Collection<String>): Boolean {

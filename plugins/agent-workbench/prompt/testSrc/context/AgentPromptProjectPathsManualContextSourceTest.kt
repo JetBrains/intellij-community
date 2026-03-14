@@ -33,6 +33,28 @@ class AgentPromptProjectPathsManualContextSourceTest {
   }
 
   @Test
+  fun resolvePickerRootPathsAlwaysIncludesScratchAndExtensionRoots() {
+    val scopedRoots = resolvePickerRootPaths(
+      contentRootPaths = listOf("/repo", "/other"),
+      scratchRootPaths = listOf("/scratches", "/extensions"),
+      workingProjectPath = "/repo/project-a",
+    )
+
+    assertThat(scopedRoots).containsExactly("/repo/project-a", "/scratches", "/extensions")
+  }
+
+  @Test
+  fun resolvePickerRootPathsSupportsScratchOnlyProjects() {
+    val scopedRoots = resolvePickerRootPaths(
+      contentRootPaths = emptyList(),
+      scratchRootPaths = listOf("/scratches", "/extensions"),
+      workingProjectPath = "/repo/project-a",
+    )
+
+    assertThat(scopedRoots).containsExactly("/scratches", "/extensions")
+  }
+
+  @Test
   fun filterManualPathSelectionToScopedRootsDropsEntriesOutsideScope() {
     val filtered = filterManualPathSelectionToScopedRoots(
       selection = listOf(
@@ -46,6 +68,25 @@ class AgentPromptProjectPathsManualContextSourceTest {
     assertThat(filtered).containsExactly(
       ManualPathSelectionEntry(path = "/repo/project/src/Main.kt", isDirectory = false),
       ManualPathSelectionEntry(path = "/repo/project/src", isDirectory = true),
+    )
+  }
+
+  @Test
+  fun filterManualPathSelectionToScopedRootsKeepsScratchAndExtensionEntriesWithinScope() {
+    val filtered = filterManualPathSelectionToScopedRoots(
+      selection = listOf(
+        ManualPathSelectionEntry(path = "/repo/project/src/Main.kt", isDirectory = false),
+        ManualPathSelectionEntry(path = "/scratches/notes.http", isDirectory = false),
+        ManualPathSelectionEntry(path = "/extensions/com.intellij.agent.workbench/rules", isDirectory = true),
+        ManualPathSelectionEntry(path = "/outside/file.txt", isDirectory = false),
+      ),
+      scopedRootPaths = listOf("/repo/project", "/scratches", "/extensions"),
+    )
+
+    assertThat(filtered).containsExactly(
+      ManualPathSelectionEntry(path = "/repo/project/src/Main.kt", isDirectory = false),
+      ManualPathSelectionEntry(path = "/scratches/notes.http", isDirectory = false),
+      ManualPathSelectionEntry(path = "/extensions/com.intellij.agent.workbench/rules", isDirectory = true),
     )
   }
 
