@@ -42,6 +42,7 @@ Define the manual `Files…` prompt context source: registration, project-scoped
 - Picker sourcing contract:
   - prefer the resolved `workingProjectPath` subtree when it is under project content,
   - otherwise fall back to all project content roots,
+  - always include visible `Scratches and Consoles` roots, such as `Scratches` and `Extensions`, alongside the project-scoped roots,
   - open a lightweight non-modal popup with a scoped project tree that allows selecting files and folders,
   - support multi-select and speed search in the tree,
   - provide a search-by-name tab (using `GotoFileModel`) scoped to the same roots for fast filename lookup,
