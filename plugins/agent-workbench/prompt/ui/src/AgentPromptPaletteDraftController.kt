@@ -101,6 +101,13 @@ internal class AgentPromptPaletteDraftController(
     }
   }
 
+  fun overrideInitialTextIfProvided(initialText: String?) {
+    if (!initialText.isNullOrBlank()) {
+      val newTaskKey = PromptTargetMode.NEW_TASK.name
+      draftState.taskPromptStates[newTaskKey] = restoredTaskPromptDraftState(initialText)
+    }
+  }
+
   fun saveProviderPreferences() {
     launcherProvider()?.saveProviderPreferences(
       AgentPromptLauncherBridge.ProviderPreferences(

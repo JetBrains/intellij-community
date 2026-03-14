@@ -5,11 +5,13 @@ package com.intellij.agent.workbench.prompt.ui
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-suggestions.spec.md
 // @spec community/plugins/agent-workbench/spec/agent-workbench-telemetry.spec.md
 
+import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_INITIAL_TEXT_DATA_KEY
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextResolverService
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptSuggestionCandidate
 import com.intellij.agent.workbench.prompt.core.AgentPromptSuggestionRequest
+import com.intellij.agent.workbench.prompt.ui.context.dataContextOrNull
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.Project
@@ -116,6 +118,8 @@ internal class AgentPromptPaletteSessionController(
       contextController.selectAutoSelectExtensionTab()
     }
     contextController.syncActiveExtensionTab(view.tabbedPane.selectedComponent as? JPanel)
+    val initialText = invocationData.dataContextOrNull()?.getData(AGENT_PROMPT_INITIAL_TEXT_DATA_KEY)
+    draftController.overrideInitialTextIfProvided(initialText)
     draftController.loadPromptTextForSelectedTab()
     clearStatus()
     updateTargetModeUi()
