@@ -8,6 +8,7 @@ import com.intellij.markdown.utils.convertMarkdownToHtml
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.WindowMoveListener
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
@@ -16,10 +17,12 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.tabbedPaneHeader
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.util.ui.DialogUtil
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.CardLayout
 import java.awt.Cursor
@@ -40,20 +43,35 @@ private val EXISTING_TASK_PANEL_PREFERRED_SIZE = JBUI.size(0, 140)
 private val EXISTING_TASK_PANEL_MINIMUM_SIZE = JBUI.size(0, 90)
 private const val EXISTING_TASK_VISIBLE_ROWS = 4
 private val PROMPT_PANEL_MINIMUM_SIZE = JBUI.size(0, 72)
-
 private const val CARD_EDITOR = "editor"
 private const val CARD_PREVIEW = "preview"
 
 internal data class AgentPromptPaletteView(
-  val rootPanel: JPanel,
-  val tabbedPane: JBTabbedPane,
-  val providerIconLabel: JBLabel,
-  val existingTaskListModel: DefaultListModel<ThreadEntry>,
-  val existingTaskList: JBList<ThreadEntry>,
-  val existingTaskScrollPane: JBScrollPane,
-  val footerLabel: JBLabel,
-  val providerOptionsPanel: JPanel?,
+  @JvmField val rootPanel: JPanel,
+  @JvmField val promptPanel: JPanel,
+  @JvmField val composerContextPanel: JPanel,
+  @JvmField val bottomPanel: JPanel,
+  @JvmField val tabbedPane: JBTabbedPane,
+  @JvmField val providerIconLabel: JBLabel,
+  @JvmField val addContextButton: ActionLink,
+  @JvmField val existingTaskListModel: DefaultListModel<ThreadEntry>,
+  @JvmField val existingTaskList: JBList<ThreadEntry>,
+  @JvmField val existingTaskScrollPane: JBScrollPane,
+  @JvmField val footerLabel: JBLabel,
+  @JvmField val providerOptionsPanel: JPanel?,
 )
+
+private class ComposerContextActionLink(text: @Nls String) : ActionLink(text) {
+  var onVisibilityChanged: (() -> Unit)? = null
+
+  override fun setVisible(aFlag: Boolean) {
+    val visibilityChanged = isVisible != aFlag
+    super.setVisible(aFlag)
+    if (visibilityChanged) {
+      onVisibilityChanged?.invoke()
+    }
+  }
+}
 
 internal fun createAgentPromptPaletteView(
   promptArea: EditorTextField,
@@ -187,16 +205,36 @@ internal fun createAgentPromptPaletteView(
     minimumSize = EXISTING_TASK_PANEL_MINIMUM_SIZE
   }
 
-  val promptPanel = JPanel(BorderLayout()).apply {
-    border = JBUI.Borders.empty(8, 12)
-    add(promptCardPanel, BorderLayout.CENTER)
-    minimumSize = PROMPT_PANEL_MINIMUM_SIZE
+  val addContextButton = ComposerContextActionLink(AgentPromptBundle.message("popup.context.add")).apply {
+    autoHideOnDisable = false
+    isFocusable = false
+    setDropDownLinkIcon()
+    border = JBUI.Borders.empty()
+    DialogUtil.registerMnemonic(this)
   }
 
-  val contextRow = JPanel(BorderLayout()).apply {
+  val contextChipsContainer = JPanel(BorderLayout()).apply {
     isOpaque = false
-    border = JBUI.Borders.empty(2, 12, 0, 12)
     add(contextChipsPanel, BorderLayout.CENTER)
+  }
+  val promptActionsBar = JPanel(BorderLayout()).apply {
+    isOpaque = false
+    border = JBUI.Borders.emptyTop(4)
+    add(addContextButton, BorderLayout.WEST)
+  }
+  val composerContextPanel = BorderLayoutPanel().apply {
+    isOpaque = false
+    border = JBUI.Borders.emptyTop(6)
+    addToTop(contextChipsContainer)
+    addToBottom(promptActionsBar)
+  }
+
+  val promptPanel = JPanel(BorderLayout()).apply {
+    isOpaque = false
+    border = JBUI.Borders.empty(8, 12)
+    add(promptCardPanel, BorderLayout.CENTER)
+    add(composerContextPanel, BorderLayout.SOUTH)
+    minimumSize = PROMPT_PANEL_MINIMUM_SIZE
   }
 
   val footerLabel = JBLabel("").apply {
@@ -210,14 +248,15 @@ internal fun createAgentPromptPaletteView(
   val bottomPanel = BorderLayoutPanel().apply {
     background = JBUI.CurrentTheme.Popup.BACKGROUND
     border = JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 1, 0, 0, 0)
-    addToTop(contextRow)
     addToCenter(existingTaskScrollPane)
     addToBottom(footerLabel)
   }
-  installContextRowVisibilitySync(
+  installComposerContextVisibilitySync(
     contextChipsPanel = contextChipsPanel,
-    contextRow = contextRow,
-    layoutParent = bottomPanel,
+    contextChipsContainer = contextChipsContainer,
+    addContextControl = addContextButton,
+    composerContextPanel = composerContextPanel,
+    layoutParent = promptPanel,
   )
 
   val rootPanel = BorderLayoutPanel().apply {
@@ -233,8 +272,12 @@ internal fun createAgentPromptPaletteView(
 
   return AgentPromptPaletteView(
     rootPanel = rootPanel,
+    promptPanel = promptPanel,
+    composerContextPanel = composerContextPanel,
+    bottomPanel = bottomPanel,
     tabbedPane = tabbedPane,
     providerIconLabel = providerIconLabel,
+    addContextButton = addContextButton,
     existingTaskListModel = existingTaskListModel,
     existingTaskList = existingTaskList,
     existingTaskScrollPane = existingTaskScrollPane,
@@ -243,18 +286,24 @@ internal fun createAgentPromptPaletteView(
   )
 }
 
-private fun installContextRowVisibilitySync(
+private fun installComposerContextVisibilitySync(
   contextChipsPanel: JPanel,
-  contextRow: JPanel,
+  contextChipsContainer: JPanel,
+  addContextControl: ComposerContextActionLink,
+  composerContextPanel: JPanel,
   layoutParent: JPanel,
 ) {
   fun syncVisibility() {
     val hasContextChips = contextChipsPanel.componentCount > 0
-    if (contextRow.isVisible == hasContextChips) {
+    val shouldShowComposerContext = hasContextChips || addContextControl.isVisible
+    val chipsVisibilityChanged = contextChipsContainer.isVisible != hasContextChips
+    val panelVisibilityChanged = composerContextPanel.isVisible != shouldShowComposerContext
+    if (!chipsVisibilityChanged && !panelVisibilityChanged) {
       return
     }
 
-    contextRow.isVisible = hasContextChips
+    contextChipsContainer.isVisible = hasContextChips
+    composerContextPanel.isVisible = shouldShowComposerContext
     layoutParent.revalidate()
     layoutParent.repaint()
   }
@@ -268,6 +317,7 @@ private fun installContextRowVisibilitySync(
       syncVisibility()
     }
   })
+  addContextControl.onVisibilityChanged = ::syncVisibility
 
   syncVisibility()
 }
