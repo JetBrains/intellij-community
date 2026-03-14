@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/test">
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" scope="TEST" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="JUnit6" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit6Params" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit6Launcher" level="project" />
+    <orderEntry type="library" scope="TEST" name="Eclipse" level="project" />
+    <orderEntry type="library" scope="TEST" name="org.codehaus.groovy:groovy" level="project" />
+    <orderEntry type="module" module-name="intellij.java.decompiler.engine" scope="TEST" />
+  </component>
+  <component name="TestModuleProperties" production-module="intellij.java.decompiler.engine" />
+</module>

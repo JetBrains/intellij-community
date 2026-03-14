@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/testSrc">
+      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.guava" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.protobuf" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.execution.process.mediator.daemon" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.execution.process.mediator.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
+    <orderEntry type="library" scope="TEST" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module-library" scope="TEST">
+      <library name="grpc-inprocess" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.grpc:grpc-inprocess:1.65.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-inprocess/1.65.1/grpc-inprocess-1.65.1.jar">
+              <sha256sum>6e3b197f5668e26fec19a831d2dd1f6d53b6eb9d4d3978b8ffd4ff68f1aae020</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-inprocess/1.65.1/grpc-inprocess-1.65.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-inprocess/1.65.1/grpc-inprocess-1.65.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.grpc" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.grpc.netty.shaded" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.execution.process.mediator.client" scope="TEST" />
+  </component>
+  <component name="TestModuleProperties" production-module="intellij.execution.process.mediator.client" />
+</module>
