@@ -16,9 +16,9 @@ internal object AddToStringFixFactories {
         if (element !is KtExpression || element is KtReturnExpression) return emptyList()
         return buildList {
             if (expectedType.isStringType || expectedType.isCharSequenceType) {
-                add(AddToStringFix(element, false))
+                add(AddToStringFix(element, useSafeCallOperator = false))
                 if (expectedType.isMarkedNullable && actualType.isMarkedNullable) {
-                    add(AddToStringFix(element, true))
+                    add(AddToStringFix(element, useSafeCallOperator = true))
                 }
             }
         }
