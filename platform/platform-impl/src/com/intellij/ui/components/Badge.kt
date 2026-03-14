@@ -15,6 +15,12 @@ import java.awt.Graphics2D
 import java.awt.Rectangle
 import javax.swing.Icon
 
+/**
+ * Defines the color variant for a [Badge].
+ *
+ * Each type maps to a pair of background/foreground theme colors
+ * resolved via `Badge.*` UI keys (e.g. `Badge.blueBackground`).
+ */
 @ApiStatus.Experimental
 enum class BadgeColorType {
   BLUE_SECONDARY,
@@ -25,6 +31,20 @@ enum class BadgeColorType {
   GRAY_SECONDARY,
 }
 
+/**
+ * A pill-shaped badge [Icon] that renders [text] over a colored background.
+ *
+ * Use the predefined factory methods ([newBadge], [betaBadge], [freeBadge], [trialBadge])
+ * for common badge types, or construct directly with a custom [text] and [colorType].
+ *
+ * Colors are resolved from `Badge.*` theme keys (see `IntelliJPlatform.themeMetadata.json`).
+ * When [disabled] is `true`, the badge uses `Badge.disabledBackground` / `Badge.disabledForeground`
+ * regardless of [colorType].
+ *
+ * @param text the localized label displayed inside the badge
+ * @param colorType the color variant to use (default: [BadgeColorType.BLUE_SECONDARY])
+ * @param disabled whether to render the badge in its disabled (gray) appearance
+ */
 @ApiStatus.Experimental
 class Badge(
   val text: @Nls String,
@@ -33,15 +53,19 @@ class Badge(
 ) : Icon {
 
   companion object {
+    /** Creates a blue primary badge labeled "New". */
     @JvmStatic
     fun newBadge(): Badge = Badge(IdeBundle.message("badge.text.new"), BadgeColorType.BLUE)
 
+    /** Creates a purple secondary badge labeled "Beta". */
     @JvmStatic
     fun betaBadge(): Badge = Badge(IdeBundle.message("badge.text.beta"), BadgeColorType.PURPLE_SECONDARY)
 
+    /** Creates a green primary badge labeled "Free". */
     @JvmStatic
     fun freeBadge(): Badge = Badge(IdeBundle.message("badge.text.free"), BadgeColorType.GREEN)
 
+    /** Creates a green secondary badge labeled "Trial". */
     @JvmStatic
     fun trialBadge(): Badge = Badge(IdeBundle.message("badge.text.trial"), BadgeColorType.GREEN_SECONDARY)
   }
