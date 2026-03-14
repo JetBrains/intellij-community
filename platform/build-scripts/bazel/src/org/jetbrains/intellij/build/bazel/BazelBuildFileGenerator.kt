@@ -843,7 +843,8 @@ internal class BazelBuildFileGenerator(
       .removePrefix("intellij.")
 
     val parentDirDirName = when {
-      baseBuildDir == ultimateRoot -> null
+      // In a community-only checkout, root-level module names still keep the `main.` segment.
+      baseBuildDir == communityRoot || baseBuildDir == ultimateRoot -> null
       baseBuildDir.parent == ultimateRoot -> "idea"
       else -> baseBuildDir.parent?.fileName.toString()
     }

@@ -93,6 +93,48 @@ class BazelGeneratorIntegrationTests {
     }
   }
 
+  @Test
+  fun `MRI-4103 generator produces a diff if checkout directory is named main`() {
+    val testName = "MRI-4103"
+
+    val testDataPath = getTestDataPath(testName)
+
+    val projectDataPath = testDataPath.resolve("project")
+    assertTrue("$projectDataPath is not a directory", projectDataPath.isDirectory())
+
+    val normalizedProjectDir = Files.createTempDirectory("project-$testName")
+    projectDataPath.copyToRecursively(normalizedProjectDir, followLinks = true, overwrite = false)
+    restoreBuildFileNames(normalizedProjectDir)
+
+    val tempWorkspaceBaseDir = Files.createTempDirectory("test-$testName")
+    val tempWorkspaceDir = tempWorkspaceBaseDir.resolve("main")
+    Files.createDirectories(tempWorkspaceDir)
+    val tempCommunityDir = tempWorkspaceDir.resolve("community")
+    normalizedProjectDir.copyToRecursively(tempCommunityDir, followLinks = true, overwrite = false)
+
+    JpsModuleToBazel.main(
+      arrayOf(
+        "--workspace_directory=$tempWorkspaceDir",
+        "--run_without_ultimate_root=true",
+        "--default-custom-modules=false",
+        "--m2-repo=${testDataPath.resolve("m2-repo")}",
+      )
+    )
+
+    softly.assertThatCharSequence(tempCommunityDir.resolve("BUILD.bazel").readText().trimEnd())
+      .withFailMessage {
+        "Actual file ${tempCommunityDir.resolve("BUILD.bazel")} is different from initial project file at " +
+        "${normalizedProjectDir.resolve("BUILD.bazel")}. Generator should not modify existing project model files"
+      }
+      .isEqualTo(normalizedProjectDir.resolve("BUILD.bazel").readText().trimEnd())
+
+    normalizedProjectDir.deleteRecursively()
+    if (!softly.wasSuccess()) {
+      // do not delete tempDir on tests failure, it is used in IDE to update expected file
+      tempWorkspaceBaseDir.deleteRecursively()
+    }
+  }
+
   private fun getTestDataPath(testName: String): Path {
     return Path.of(requireEnv("TEST_SRCDIR"), requireEnv(TEST_DATA_MARKER_ENV)).parent.resolve(testName).normalize()
   }
@@ -101,6 +143,15 @@ class BazelGeneratorIntegrationTests {
     val value = System.getenv(name)
     assertTrue("Missing $name env variable in bazel test environment", !value.isNullOrBlank())
     return value.orEmpty()
+  }
+
+  private fun restoreBuildFileNames(dir: Path) {
+    val buildFilesToRestore = dir.walk()
+      .filter { it.name == "${TILDE_BUILD_PREFIX}BUILD.bazel" }
+      .toList()
+    for (path in buildFilesToRestore) {
+      path.moveTo(path.resolveSibling(path.name.removePrefix(TILDE_BUILD_PREFIX)))
+    }
   }
 
   private fun assertAndRemoveSameFiles(initialProjectDir: Path, testOutputDir: Path) {
