@@ -27,19 +27,12 @@ internal class AgentPromptContextChipsComponent(
     isOpaque = false
   }
 
-  var trailingComponent: JComponent? = null
-    set(value) {
-      field = value
-      render(renderedEntries)
-    }
-
   fun render(entries: List<ContextEntry>) {
     renderedEntries = entries
     component.removeAll()
     entries.forEach { entry ->
       component.add(wrapRowComponent(createContextChip(entry)))
     }
-    trailingComponent?.let { component.add(wrapRowComponent(it)) }
     component.revalidate()
     component.repaint()
   }

@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.codex.sessions.backend.appserver
 
 import com.intellij.agent.workbench.codex.common.CodexAppServerClient
 import com.intellij.agent.workbench.codex.common.CodexAppServerNotification
+import com.intellij.agent.workbench.codex.common.CodexAppServerNotificationRouting
 import com.intellij.agent.workbench.codex.common.CodexThread
 import com.intellij.agent.workbench.codex.common.CodexThreadActivitySnapshot
 import com.intellij.agent.workbench.codex.common.normalizeRootPath
@@ -15,7 +16,10 @@ import kotlin.io.path.invariantSeparatorsPathString
 
 @Service(Service.Level.APP)
 class SharedCodexAppServerService(serviceScope: CoroutineScope) {
-  private val client = CodexAppServerClient(coroutineScope = serviceScope)
+  private val client = CodexAppServerClient(
+    coroutineScope = serviceScope,
+    notificationRouting = CodexAppServerNotificationRouting.PUBLIC_ONLY,
+  )
 
   internal val notifications: Flow<CodexAppServerNotification>
     get() = client.notifications

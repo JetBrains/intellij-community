@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptSuggestionCandidate
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.EditorTextField
@@ -178,6 +179,72 @@ class AgentPromptPaletteViewLayoutTest {
     }
   }
 
+  @Test
+  fun enteringPromptTextKeepsSuggestionRowVisibleWithoutChangingPromptHeight() {
+    runInEdtAndWait {
+      val promptArea = EditorTextField()
+      val suggestions = AgentPromptSuggestionsComponent {}
+      suggestions.render(
+        listOf(
+          AgentPromptSuggestionCandidate(
+            id = "tests.fix",
+            label = "Fix failing tests",
+            promptText = "Fix the failing tests.",
+          )
+        )
+      )
+      val view = createPaletteView(promptArea = promptArea, suggestionsPanel = suggestions.component)
+      val foundPromptArea = checkNotNull(findPromptArea(view.rootPanel, promptArea))
+
+      layoutPopupRoot(view.rootPanel)
+      val promptHeightWithSuggestions = foundPromptArea.height
+
+      assertThat(view.suggestionsPanel.isVisible).isTrue()
+      assertThat(view.suggestionsPanel.height).isGreaterThan(0)
+      assertThat(promptHeightWithSuggestions).isGreaterThan(0)
+
+      promptArea.text = "Draft prompt"
+      layoutPopupRoot(view.rootPanel)
+
+      assertThat(view.suggestionsPanel.isVisible).isTrue()
+      assertThat(view.suggestionsPanel.height).isGreaterThan(0)
+      assertThat(foundPromptArea.height).isEqualTo(promptHeightWithSuggestions)
+    }
+  }
+
+  @Test
+  fun suggestionStripStaysAbovePromptAreaAndAwayFromComposerContext() {
+    runInEdtAndWait {
+      val promptArea = EditorTextField()
+      val suggestions = AgentPromptSuggestionsComponent {}
+      suggestions.render(
+        listOf(
+          AgentPromptSuggestionCandidate(
+            id = "tests.fix",
+            label = "Fix failing tests",
+            promptText = "Fix the failing tests.",
+          )
+        )
+      )
+      val contextChips = AgentPromptContextChipsComponent {}
+      contextChips.render(listOf(createContextEntry(title = "File", body = "src/Main.java")))
+      val view = createPaletteView(
+        promptArea = promptArea,
+        suggestionsPanel = suggestions.component,
+        contextChipsPanel = contextChips.component,
+      )
+
+      layoutPopupRoot(view.rootPanel)
+
+      val promptAreaLocation = locationInRoot(checkNotNull(findPromptArea(view.rootPanel, promptArea)), view.rootPanel)
+      val suggestionsLocation = locationInRoot(view.suggestionsPanel, view.rootPanel)
+      val composerContextLocation = locationInRoot(view.composerContextPanel, view.rootPanel)
+
+      assertThat(suggestionsLocation.y + view.suggestionsPanel.height).isLessThanOrEqualTo(promptAreaLocation.y)
+      assertThat(promptAreaLocation.y + promptArea.height).isLessThanOrEqualTo(composerContextLocation.y)
+    }
+  }
+
   private fun createContextEntry(title: String, body: String): ContextEntry {
     return ContextEntry(
       item = AgentPromptContextItem(
@@ -190,11 +257,13 @@ class AgentPromptPaletteViewLayoutTest {
 
   private fun createPaletteView(
     promptArea: EditorTextField,
+    suggestionsPanel: JPanel = JPanel(),
     contextChipsPanel: JPanel = JPanel(),
     addContextVisible: Boolean = true,
   ): AgentPromptPaletteView {
     return createAgentPromptPaletteView(
       promptArea = promptArea,
+      suggestionsPanel = suggestionsPanel,
       contextChipsPanel = contextChipsPanel,
       onProviderIconClicked = {},
       onExistingTaskSelected = {},

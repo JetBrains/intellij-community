@@ -10,7 +10,7 @@ targets:
 # Agent Threads Testing
 
 Status: Draft
-Date: 2026-03-05
+Date: 2026-03-15
 
 ## Summary
 Define required coverage ownership for Agent Workbench specs after the hard Swing cutover.
@@ -66,25 +66,12 @@ This file does not redefine runtime behavior; it maps each contract area to requ
   [@test] ../sessions/testSrc/AgentSessionsClaudeQuotaWidgetActionRegistrationTest.kt
 
 - Chat-editor lifecycle coverage must include protocol v2 restore, state round-trip, lazy initialization, tab title refresh, icon mapping fallback, and archive-triggered close+forget.
-  [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
-  [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
-  [@test] ../chat/testSrc/AgentChatTabSelectionServiceTest.kt
-
-- Codex rollout coverage must include parser/title/activity behavior, watcher behavior (path-scoped + overflow/full-rescan), backend selection defaults/override, and paging no-progress guard behavior.
-  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
-  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendFileWatchIntegrationTest.kt
-  [@test] ../codex/sessions/testSrc/CodexRolloutSessionsWatcherTest.kt
-  [@test] ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
-  [@test] ../codex/sessions/testSrc/CodexSessionsPagingLogicTest.kt
-
+- Codex backend coverage must include raw status-kind parsing, rollout parser/title/activity behavior, watcher behavior (path-scoped + overflow/full-rescan), app-server sub-agent hierarchy/orphan handling, app-server-only backend selection, app-server `thread/read` status-and-flag normalization, response-required/read-tracker behavior, started-thread fallback mapping, app-server-first refresh-hints merge with rollout unread fallback, real-TUI rollout ingestion through the production rollout path, prompt-suggestion streamed turn handling, and prompt-suggestion interrupt cleanup.
 - Codex app-server contract tests must run against mock backend in all environments and real backend when CLI is available.
   [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
 
 - Real-backend contract assertions must be invariant-based (ordering and archived consistency) and must not depend on user-specific thread IDs.
-  [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
-
-- Mock-backend contract assertions must additionally validate deterministic fixture IDs, archive mutation behavior, and idle-timeout lazy restart.
-  [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
+- Mock-backend contract assertions must additionally validate deterministic fixture IDs, archive/unarchive mutation behavior, idle-timeout lazy restart, prompt-suggestion transport shape, streamed pre-completion notifications, unrelated-notification filtering, `turn/interrupt` cleanup on timeout or cancellation, interrupted or failed prompt-turn outcomes, and dedicated prompt-suggestion client reset when cleanup cannot confirm terminal completion.
 
 ## Requirement Ownership Matrix
 - Core contracts: `AgentSessionCliTest`, `AgentSessionsEditorTabActionsTest`, `AgentSessionArchiveServiceIntegrationTest`, `AgentSessionRefreshOnDemandIntegrationTest`
@@ -100,11 +87,15 @@ This file does not redefine runtime behavior; it maps each contract area to requ
 - Chat tab lifecycle: `AgentChatEditorServiceTest`, `AgentChatFileEditorProviderTest`, `AgentChatTabSelectionServiceTest`
 - Codex rollout/app-server selection + hint wiring: `CodexRolloutSessionBackendTest`, `CodexRolloutSessionBackendFileWatchIntegrationTest`, `CodexRolloutSessionsWatcherTest`, `CodexAppServerSessionBackendTest`, `CodexAppServerRefreshHintsProviderTest`, `CodexSessionSourceRefreshHintsTest`, `CodexSessionBackendSelectorTest`, `CodexSessionsPagingLogicTest`, `AgentSessionRefreshCoordinatorTest`
 - Codex app-server contract: `CodexAppServerClientTest`
+- Prompt-suggestion AI mapping: `CodexAppServerPromptSuggestionBackendTest`
 
 ## Contract Suite
 - `CodexAppServerClientTest` is parameterized for mock backend and optional real `codex app-server` backend.
 - Both modes must assert invariant behavior: descending `updatedAt` ordering and archive flag consistency.
-- Mock mode additionally asserts deterministic IDs, archive mutation, and idle-timeout restart semantics.
+- Mock mode additionally asserts deterministic IDs, archive/unarchive mutation, idle-timeout restart semantics, prompt-suggestion `thread/start` + `turn/start` transport, streamed pre-completion notifications, unrelated-notification filtering, `turn/interrupt` cleanup on timeout or cancellation, interrupted or failed prompt-turn outcomes, and dedicated prompt-suggestion client reset when cleanup cannot confirm terminal completion.
+- `CodexAppServerPromptSuggestionBackendTest` owns `AI_POLISHED` versus `AI_GENERATED` mapping, fallback-slot id and order validation, invalid or duplicate candidate filtering, and fallback preservation when Codex output is unusable.
+- `CodexSessionSourceRealTuiIntegrationTest` runs the real `codex` TUI against a local mock Responses provider and asserts rollout ingestion only through production Workbench components (`CodexRolloutSessionBackend`, `CodexRolloutRefreshHintsProvider`, `CodexSessionSource`), including the real limited-rollout `request_user_input` tool-call shape and passive-unread read-tracking suppression.
+- Deterministic rollout parser/source tests remain the mandatory CI owner for event-shape matrices and review-mode normalization; the real TUI suite is a local-gated integration layer.
 
 ## Integration Gating
 - Real backend runs only when `codex` CLI is resolvable.
@@ -123,6 +114,10 @@ This file does not redefine runtime behavior; it maps each contract area to requ
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsToolWindowFactorySwingTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChat*Test'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexRollout*Test'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.backend.appserver.CodexAppServerRefreshHintsProviderTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.backend.appserver.CodexAppServerPromptSuggestionBackendTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexSessionSourceRefreshHintsTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexSessionSourceRealTuiIntegrationTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.CodexAppServerClientTest -Dintellij.build.test.main.module=intellij.agent.workbench.sessions'`
 
 Optional real-backend override:

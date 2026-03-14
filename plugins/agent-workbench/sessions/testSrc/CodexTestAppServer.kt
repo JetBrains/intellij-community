@@ -12,6 +12,7 @@ import java.io.BufferedReader
 import java.io.BufferedWriter
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
+import java.io.StringWriter
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
@@ -56,12 +57,27 @@ private data class Request(
 
 private data class RequestParams(
   @JvmField val id: String? = null,
+  @JvmField val turnId: String? = null,
   @JvmField val archived: Boolean? = null,
   @JvmField val cursor: String? = null,
   @JvmField val limit: Int? = null,
   @JvmField val includeTurns: Boolean? = null,
   @JvmField val cwd: String? = null,
   @JvmField val sourceKinds: Set<String>? = null,
+  @JvmField val model: String? = null,
+  @JvmField val effort: String? = null,
+  @JvmField val approvalPolicy: String? = null,
+  @JvmField val sandbox: String? = null,
+  @JvmField val ephemeral: Boolean? = null,
+  @JvmField val inputText: String? = null,
+  @JvmField val outputSchemaPresent: Boolean = false,
+)
+
+private data class PendingPromptSuggestionTurn(
+  @JvmField val threadId: String,
+  @JvmField val turnId: String,
+  @JvmField val sendInterruptResponse: Boolean = true,
+  @JvmField val emitTerminalOnInterrupt: Boolean = true,
 )
 
 private val DEFAULT_THREAD_LIST_SOURCE_KINDS = linkedSetOf("cli", "vscode", "appServer")
@@ -72,6 +88,11 @@ internal object CodexTestAppServer {
   private const val ERROR_METHOD_ENV = "CODEX_TEST_ERROR_METHOD"
   private const val ERROR_MESSAGE_ENV = "CODEX_TEST_ERROR_MESSAGE"
   private const val REQUEST_LOG_ENV = "CODEX_TEST_REQUEST_LOG"
+  private const val REQUEST_PAYLOAD_LOG_ENV = "CODEX_TEST_REQUEST_PAYLOAD_LOG"
+  private const val PROMPT_SUGGEST_KIND_ENV = "CODEX_TEST_PROMPT_SUGGEST_KIND"
+  private const val PROMPT_SUGGEST_LIFECYCLE_ENV = "CODEX_TEST_PROMPT_SUGGEST_LIFECYCLE"
+  private const val PROMPT_SUGGEST_LIFECYCLE_STATE_FILE_ENV = "CODEX_TEST_PROMPT_SUGGEST_LIFECYCLE_STATE_FILE"
+  private const val PROMPT_SUGGEST_ERROR_MESSAGE_ENV = "CODEX_TEST_PROMPT_SUGGEST_ERROR_MESSAGE"
   private const val NOTIFY_METHOD_ENV = "CODEX_TEST_NOTIFY_METHOD"
   private const val NOTIFY_ON_METHOD_ENV = "CODEX_TEST_NOTIFY_ON_METHOD"
   private const val NOTIFY_THREAD_ID_ENV = "CODEX_TEST_NOTIFY_THREAD_ID"
@@ -86,11 +107,22 @@ internal object CodexTestAppServer {
     val errorMethod = readEnv(ERROR_METHOD_ENV)
     val errorMessage = readEnv(ERROR_MESSAGE_ENV)
     val requestLogPath = readEnv(REQUEST_LOG_ENV)?.let(Path::of)
+    val requestPayloadLogPath = readEnv(REQUEST_PAYLOAD_LOG_ENV)?.let(Path::of)
+    val promptSuggestKind = readEnv(PROMPT_SUGGEST_KIND_ENV)
+    val promptSuggestLifecycleValues = readEnv(PROMPT_SUGGEST_LIFECYCLE_ENV)
+      ?.split(',')
+      ?.map(String::trim)
+      ?.filter(String::isNotEmpty)
+      ?.toMutableList()
+      ?: mutableListOf()
+    val promptSuggestLifecycleStateFile = readEnv(PROMPT_SUGGEST_LIFECYCLE_STATE_FILE_ENV)?.let(Path::of)
+    val promptSuggestErrorMessage = readEnv(PROMPT_SUGGEST_ERROR_MESSAGE_ENV)
     val notifyMethod = readEnv(NOTIFY_METHOD_ENV)
     val notifyOnMethod = readEnv(NOTIFY_ON_METHOD_ENV)
     val notifyThreadId = readEnv(NOTIFY_THREAD_ID_ENV)
     val notifyThreadIdStyle = readEnv(NOTIFY_THREAD_ID_STYLE_ENV)
     val notifyId = readEnv(NOTIFY_ID_ENV)
+    val pendingPromptSuggestionTurns = LinkedHashMap<String, PendingPromptSuggestionTurn>()
     readEnv(CWD_MARKER_ENV)?.let(::writeWorkingDirectoryMarker)
     val reader = BufferedReader(InputStreamReader(System.`in`, StandardCharsets.UTF_8))
     val writer = BufferedWriter(OutputStreamWriter(System.out, StandardCharsets.UTF_8))
@@ -98,6 +130,7 @@ internal object CodexTestAppServer {
       val line = reader.readLine() ?: break
       val payload = line.trim()
       if (payload.isEmpty()) continue
+      requestPayloadLogPath?.let { appendRequestLog(it, payload) }
       val request = try {
         parseRequest(payload)
       }
@@ -113,7 +146,7 @@ internal object CodexTestAppServer {
       when (request.method) {
         "initialize" -> writeResponse(writer, request.id, ::writeEmptyObject)
         "thread/start" -> {
-          val startedThread = startThread(threads)
+          val startedThread = startThread(threads, request.params.cwd)
           writeResponse(writer, request.id, resultWriter = { generator ->
             generator.writeStartObject()
             generator.writeFieldName("thread")
@@ -158,16 +191,56 @@ internal object CodexTestAppServer {
           updateArchive(request.params.id, threads, archive = false)
           writeResponse(writer, request.id, ::writeEmptyObject)
         }
-        "turn/start" -> writeResponse(writer, request.id, resultWriter = { generator ->
-          generator.writeStartObject()
-          generator.writeFieldName("turn")
-          generator.writeStartObject()
-          generator.writeStringField("id", "turn-${System.currentTimeMillis()}")
-          generator.writeStringField("status", "completed")
-          generator.writeEndObject()
-          generator.writeEndObject()
-        })
-        "turn/interrupt" -> writeResponse(writer, request.id, ::writeEmptyObject)
+        "turn/start" -> {
+          val turnId = "turn-${System.currentTimeMillis()}"
+          val threadId = request.params.id ?: "thread-missing"
+          writeResponse(writer, request.id, resultWriter = { generator ->
+            generator.writeStartObject()
+            generator.writeFieldName("turn")
+            generator.writeStartObject()
+            generator.writeStringField("id", turnId)
+            generator.writeStringField("status", "inProgress")
+            generator.writeFieldName("items")
+            generator.writeStartArray()
+            generator.writeEndArray()
+            generator.writeNullField("error")
+            generator.writeEndObject()
+            generator.writeEndObject()
+          })
+          if (request.params.outputSchemaPresent) {
+            val promptSuggestLifecycle = nextPromptSuggestionLifecycle(
+              values = promptSuggestLifecycleValues,
+              stateFile = promptSuggestLifecycleStateFile,
+            )
+            val pendingTurn = writePromptSuggestionTurnNotifications(
+              writer = writer,
+              threadId = threadId,
+              turnId = turnId,
+              promptSuggestKind = promptSuggestKind,
+              lifecycle = promptSuggestLifecycle,
+              errorMessage = promptSuggestErrorMessage,
+            )
+            if (pendingTurn != null) {
+              pendingPromptSuggestionTurns[pendingTurn.turnId] = pendingTurn
+            }
+          }
+        }
+        "turn/interrupt" -> {
+          val interruptedTurn = request.params.turnId
+            ?.let(pendingPromptSuggestionTurns::remove)
+            ?.takeIf { pendingTurn -> pendingTurn.threadId == request.params.id }
+          if (interruptedTurn?.sendInterruptResponse != false) {
+            writeResponse(writer, request.id, ::writeEmptyObject)
+          }
+          if (interruptedTurn?.emitTerminalOnInterrupt == true) {
+            writePromptSuggestionTurnCompletedNotification(
+              writer = writer,
+              threadId = interruptedTurn.threadId,
+              turnId = interruptedTurn.turnId,
+              status = "interrupted",
+            )
+          }
+        }
         else -> writeResponse(writer, request.id, ::writeEmptyObject, errorMessage = "Unknown method: ${request.method}")
       }
 
@@ -182,6 +255,285 @@ internal object CodexTestAppServer {
         notifyId = notifyId,
       )
     }
+  }
+
+  private fun writePromptSuggestionResult(generator: JsonGenerator, promptSuggestKind: String?) {
+    when (promptSuggestKind?.lowercase()) {
+      "polished" -> {
+        generator.writeStartObject()
+        generator.writeStringField("kind", "polishedSeeds")
+        generator.writeFieldName("candidates")
+        generator.writeStartArray()
+        generator.writeStartObject()
+        generator.writeStringField("id", "tests.fix")
+        generator.writeStringField("label", "AI: Fix the ParserTest failure")
+        generator.writeStringField("promptText", "Investigate ParserTest, identify the root cause, and implement the minimal fix.")
+        generator.writeEndObject()
+        generator.writeStartObject()
+        generator.writeStringField("id", "tests.explain")
+        generator.writeStringField("label", "AI: Explain the ParserTest failure")
+        generator.writeStringField("promptText", "Explain why ParserTest is failing and point out the relevant code path.")
+        generator.writeEndObject()
+        generator.writeStartObject()
+        generator.writeStringField("id", "tests.stabilize")
+        generator.writeStringField("label", "AI: Stabilize the ParserTest coverage")
+        generator.writeStringField("promptText", "Stabilize the ParserTest scenario and call out any missing assertions or cleanup.")
+        generator.writeEndObject()
+        generator.writeEndArray()
+        generator.writeEndObject()
+      }
+
+      else -> {
+        generator.writeStartObject()
+        generator.writeStringField("kind", "generatedCandidates")
+        generator.writeFieldName("candidates")
+        generator.writeStartArray()
+        generator.writeStartObject()
+        generator.writeNullField("id")
+        generator.writeStringField("label", "AI: Investigate provided context")
+        generator.writeStringField("promptText", "Investigate the provided context and explain the next steps.")
+        generator.writeEndObject()
+        generator.writeStartObject()
+        generator.writeNullField("id")
+        generator.writeStringField("label", "AI: Summarize provided context")
+        generator.writeStringField("promptText", "Summarize the relevant context before making changes.")
+        generator.writeEndObject()
+        generator.writeEndArray()
+        generator.writeEndObject()
+      }
+    }
+  }
+
+  private fun writePromptSuggestionTurnNotifications(
+    writer: BufferedWriter,
+    threadId: String,
+    turnId: String,
+    promptSuggestKind: String?,
+    lifecycle: String?,
+    errorMessage: String?,
+  ): PendingPromptSuggestionTurn? {
+    writePromptSuggestionTurnStartedNotification(
+      writer = writer,
+      threadId = threadId,
+      turnId = turnId,
+    )
+    writePromptSuggestionItemStartedNotification(
+      writer = writer,
+      threadId = threadId,
+      turnId = turnId,
+    )
+    writePromptSuggestionOutputDeltaNotification(
+      writer = writer,
+      threadId = threadId,
+      turnId = turnId,
+    )
+    writePromptSuggestionTurnStartedNotification(
+      writer = writer,
+      threadId = "$threadId-unrelated",
+      turnId = "$turnId-unrelated",
+    )
+    writePromptSuggestionItemCompletedNotification(
+      writer = writer,
+      threadId = "$threadId-unrelated",
+      turnId = "$turnId-unrelated",
+      promptSuggestKind = promptSuggestKind,
+    )
+    return when (lifecycle?.lowercase()) {
+      "interrupted" -> {
+        writePromptSuggestionTurnCompletedNotification(
+          writer = writer,
+          threadId = threadId,
+          turnId = turnId,
+          status = "interrupted",
+        )
+        null
+      }
+
+      "failed" -> {
+        writePromptSuggestionTurnCompletedNotification(
+          writer = writer,
+          threadId = threadId,
+          turnId = turnId,
+          status = "failed",
+          errorMessage = errorMessage ?: "Codex prompt suggestion turn failed",
+        )
+        null
+      }
+
+      "wait_for_interrupt" -> PendingPromptSuggestionTurn(
+        threadId = threadId,
+        turnId = turnId,
+      )
+
+      "wait_for_interrupt_without_response" -> PendingPromptSuggestionTurn(
+        threadId = threadId,
+        turnId = turnId,
+        sendInterruptResponse = false,
+      )
+
+      "wait_for_interrupt_without_terminal" -> PendingPromptSuggestionTurn(
+        threadId = threadId,
+        turnId = turnId,
+        emitTerminalOnInterrupt = false,
+      )
+
+      else -> {
+        writePromptSuggestionItemCompletedNotification(
+          writer = writer,
+          threadId = threadId,
+          turnId = turnId,
+          promptSuggestKind = promptSuggestKind,
+        )
+        writePromptSuggestionTurnCompletedNotification(
+          writer = writer,
+          threadId = threadId,
+          turnId = turnId,
+          status = "completed",
+        )
+        null
+      }
+    }
+  }
+
+  private fun writePromptSuggestionTurnStartedNotification(
+    writer: BufferedWriter,
+    threadId: String,
+    turnId: String,
+  ) {
+    val generator = jsonFactory.createGenerator(writer)
+    generator.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
+    generator.writeStartObject()
+    generator.writeStringField("method", "turn/started")
+    generator.writeFieldName("params")
+    generator.writeStartObject()
+    generator.writeStringField("threadId", threadId)
+    generator.writeFieldName("turn")
+    generator.writeStartObject()
+    generator.writeStringField("id", turnId)
+    generator.writeStringField("status", "in_progress")
+    generator.writeEndObject()
+    generator.writeEndObject()
+    generator.writeEndObject()
+    generator.close()
+    writer.newLine()
+    writer.flush()
+  }
+
+  private fun writePromptSuggestionItemStartedNotification(
+    writer: BufferedWriter,
+    threadId: String,
+    turnId: String,
+  ) {
+    val generator = jsonFactory.createGenerator(writer)
+    generator.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
+    generator.writeStartObject()
+    generator.writeStringField("method", "item/started")
+    generator.writeFieldName("params")
+    generator.writeStartObject()
+    generator.writeStringField("threadId", threadId)
+    generator.writeStringField("turnId", turnId)
+    generator.writeFieldName("item")
+    generator.writeStartObject()
+    generator.writeStringField("type", "agentMessage")
+    generator.writeStringField("id", "item-$turnId")
+    generator.writeNullField("phase")
+    generator.writeEndObject()
+    generator.writeEndObject()
+    generator.writeEndObject()
+    generator.close()
+    writer.newLine()
+    writer.flush()
+  }
+
+  private fun writePromptSuggestionOutputDeltaNotification(
+    writer: BufferedWriter,
+    threadId: String,
+    turnId: String,
+  ) {
+    val generator = jsonFactory.createGenerator(writer)
+    generator.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
+    generator.writeStartObject()
+    generator.writeStringField("method", "item/commandExecution/outputDelta")
+    generator.writeFieldName("params")
+    generator.writeStartObject()
+    generator.writeStringField("threadId", threadId)
+    generator.writeStringField("turnId", turnId)
+    generator.writeStringField("delta", "ignored output")
+    generator.writeEndObject()
+    generator.writeEndObject()
+    generator.close()
+    writer.newLine()
+    writer.flush()
+  }
+
+  private fun writePromptSuggestionItemCompletedNotification(
+    writer: BufferedWriter,
+    threadId: String,
+    turnId: String,
+    promptSuggestKind: String?,
+  ) {
+    val generator = jsonFactory.createGenerator(writer)
+    generator.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
+    generator.writeStartObject()
+    generator.writeStringField("method", "item/completed")
+    generator.writeFieldName("params")
+    generator.writeStartObject()
+    generator.writeStringField("threadId", threadId)
+    generator.writeStringField("turnId", turnId)
+    generator.writeFieldName("item")
+    generator.writeStartObject()
+    generator.writeStringField("type", "agentMessage")
+    generator.writeStringField("id", "item-$turnId")
+    val resultWriter = StringWriter()
+    val stringGenerator = jsonFactory.createGenerator(resultWriter)
+    writePromptSuggestionResult(stringGenerator, promptSuggestKind)
+    stringGenerator.close()
+    generator.writeStringField("text", resultWriter.toString())
+    generator.writeNullField("phase")
+    generator.writeEndObject()
+    generator.writeEndObject()
+    generator.writeEndObject()
+    generator.close()
+    writer.newLine()
+    writer.flush()
+  }
+
+  private fun writePromptSuggestionTurnCompletedNotification(
+    writer: BufferedWriter,
+    threadId: String,
+    turnId: String,
+    status: String,
+    errorMessage: String? = null,
+  ) {
+    val generator = jsonFactory.createGenerator(writer)
+    generator.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
+    generator.writeStartObject()
+    generator.writeStringField("method", "turn/completed")
+    generator.writeFieldName("params")
+    generator.writeStartObject()
+    generator.writeStringField("threadId", threadId)
+    generator.writeFieldName("turn")
+    generator.writeStartObject()
+    generator.writeStringField("id", turnId)
+    generator.writeFieldName("items")
+    generator.writeStartArray()
+    generator.writeEndArray()
+    generator.writeStringField("status", status)
+    if (errorMessage == null) {
+      generator.writeNullField("error")
+    }
+    else {
+      generator.writeFieldName("error")
+      generator.writeStartObject()
+      generator.writeStringField("message", errorMessage)
+      generator.writeEndObject()
+    }
+    generator.writeEndObject()
+    generator.writeEndObject()
+    generator.writeEndObject()
+    generator.close()
+    writer.newLine()
+    writer.flush()
   }
 
   private fun maybeWriteNotification(
@@ -217,12 +569,20 @@ internal object CodexTestAppServer {
       var id: String? = null
       var method: String? = null
       var paramsId: String? = null
+      var paramsTurnId: String? = null
       var paramsArchived: Boolean? = null
       var paramsCursor: String? = null
       var paramsLimit: Int? = null
       var paramsIncludeTurns: Boolean? = null
       var paramsCwd: String? = null
       var paramsSourceKinds: MutableSet<String>? = null
+      var paramsModel: String? = null
+      var paramsEffort: String? = null
+      var paramsApprovalPolicy: String? = null
+      var paramsSandbox: String? = null
+      var paramsEphemeral: Boolean? = null
+      var paramsInputText: String? = null
+      var paramsOutputSchemaPresent = false
       forEachObjectField(parser) { fieldName ->
         when (fieldName) {
           "id" -> id = readStringOrNull(parser)
@@ -233,11 +593,29 @@ internal object CodexTestAppServer {
                 when (paramName) {
                   "id" -> paramsId = readStringOrNull(parser)
                   "threadId" -> paramsId = readStringOrNull(parser)
+                  "turnId" -> paramsTurnId = readStringOrNull(parser)
                   "archived" -> paramsArchived = readBooleanOrNull(parser)
                   "cursor" -> paramsCursor = readStringOrNull(parser)
                   "limit" -> paramsLimit = readLongOrNull(parser)?.toInt()
                   "includeTurns", "include_turns" -> paramsIncludeTurns = readBooleanOrNull(parser)
                   "cwd" -> paramsCwd = readStringOrNull(parser)
+                  "approvalPolicy" -> paramsApprovalPolicy = readStringOrNull(parser)
+                  "sandbox", "sandboxPolicy" -> paramsSandbox = readStringOrNull(parser)
+                  "ephemeral" -> paramsEphemeral = readBooleanOrNull(parser)
+                  "model" -> paramsModel = readStringOrNull(parser)
+                  "effort" -> paramsEffort = readStringOrNull(parser)
+                  "input" -> {
+                    if (parser.currentToken == JsonToken.START_ARRAY) {
+                      paramsInputText = parseInputTextArray(parser)
+                    }
+                    else {
+                      parser.skipChildren()
+                    }
+                  }
+                  "outputSchema" -> {
+                    paramsOutputSchemaPresent = true
+                    parser.skipChildren()
+                  }
                   "sourceKinds", "source_kinds" -> {
                     if (parser.currentToken == JsonToken.START_ARRAY) {
                       val kinds = paramsSourceKinds ?: LinkedHashSet<String>().also { paramsSourceKinds = it }
@@ -267,14 +645,50 @@ internal object CodexTestAppServer {
         requestMethod,
         RequestParams(
           id = paramsId,
+            turnId = paramsTurnId,
             archived = paramsArchived,
             cursor = paramsCursor,
             limit = paramsLimit,
             includeTurns = paramsIncludeTurns,
             cwd = paramsCwd,
             sourceKinds = paramsSourceKinds,
+            model = paramsModel,
+            effort = paramsEffort,
+            approvalPolicy = paramsApprovalPolicy,
+            sandbox = paramsSandbox,
+            ephemeral = paramsEphemeral,
+            inputText = paramsInputText,
+            outputSchemaPresent = paramsOutputSchemaPresent,
           )
       )
+    }
+  }
+
+  private fun parseInputTextArray(parser: JsonParser): String? {
+    var inputText: String? = null
+    while (true) {
+      val token = parser.nextToken() ?: return inputText
+      if (token == JsonToken.END_ARRAY) {
+        return inputText
+      }
+      if (token != JsonToken.START_OBJECT) {
+        parser.skipChildren()
+        continue
+      }
+
+      var inputType: String? = null
+      var text: String? = null
+      forEachObjectField(parser) { fieldName ->
+        when (fieldName) {
+          "type" -> inputType = readStringOrNull(parser)
+          "text" -> text = readStringOrNull(parser)
+          else -> parser.skipChildren()
+        }
+        true
+      }
+      if (inputType == "text" && inputText == null) {
+        inputText = text
+      }
     }
   }
 
@@ -296,6 +710,46 @@ internal object CodexTestAppServer {
         return result
       }
     }
+  }
+
+  private fun nextPromptSuggestionLifecycle(values: MutableList<String>, stateFile: Path?): String? {
+    if (values.isEmpty()) {
+      return null
+    }
+    if (stateFile == null) {
+      return values.removeAt(0)
+    }
+
+    val index = readPromptSuggestionLifecycleIndex(stateFile)
+    if (index >= values.size) {
+      return null
+    }
+
+    writePromptSuggestionLifecycleIndex(stateFile, index + 1)
+    return values[index]
+  }
+
+  private fun readPromptSuggestionLifecycleIndex(path: Path): Int {
+    if (!Files.exists(path)) {
+      return 0
+    }
+
+    return Files.readString(path, StandardCharsets.UTF_8)
+      .trim()
+      .toIntOrNull()
+      ?: 0
+  }
+
+  private fun writePromptSuggestionLifecycleIndex(path: Path, index: Int) {
+    path.parent?.let(Files::createDirectories)
+    Files.writeString(
+      path,
+      index.toString(),
+      StandardCharsets.UTF_8,
+      StandardOpenOption.CREATE,
+      StandardOpenOption.TRUNCATE_EXISTING,
+      StandardOpenOption.WRITE,
+    )
   }
 
   private fun parseThreadsArray(parser: JsonParser, result: MutableList<ThreadEntry>) {
@@ -675,10 +1129,10 @@ private fun writeThreadReadObject(generator: JsonGenerator, thread: ThreadEntry,
   generator.writeEndObject()
 }
 
-private fun startThread(threads: MutableList<ThreadEntry>): ThreadEntry {
+private fun startThread(threads: MutableList<ThreadEntry>, cwdOverride: String?): ThreadEntry {
   val now = System.currentTimeMillis()
   val id = "thread-start-$now"
-  val cwd = threads.firstOrNull { !it.cwd.isNullOrBlank() }?.cwd ?: System.getProperty("user.dir")
+  val cwd = cwdOverride ?: threads.firstOrNull { !it.cwd.isNullOrBlank() }?.cwd ?: System.getProperty("user.dir")
   val thread = ThreadEntry(
     id = id,
     title = "Thread ${id.takeLast(8)}",
