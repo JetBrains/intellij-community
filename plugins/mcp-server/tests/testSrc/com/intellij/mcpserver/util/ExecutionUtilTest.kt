@@ -9,13 +9,13 @@ import kotlin.test.assertTrue
 
 class ExecutionUtilTest {
   @Test
-  fun buildExecutionSessionId_returns_plain_name_for_unique_session() {
-    assertEquals("run", buildExecutionSessionId("run", 42, listOf("run")))
+  fun buildSessionId_returns_plain_name_for_unique_session() {
+    assertEquals("run", buildSessionId("run", 42, listOf("run")))
   }
 
   @Test
-  fun buildExecutionSessionId_appends_execution_id_for_duplicate_sessions() {
-    assertEquals("run#42", buildExecutionSessionId("run", 42, listOf("run", "run")))
+  fun buildSessionId_appends_execution_id_for_duplicate_sessions() {
+    assertEquals("run#42", buildSessionId("run", 42, listOf("run", "run")))
   }
 
   @Test

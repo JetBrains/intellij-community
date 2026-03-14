@@ -14,12 +14,9 @@ import com.intellij.mcpserver.project
 import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.util.RunPoint
-import com.intellij.mcpserver.util.checkUserConfirmationIfNeeded
 import com.intellij.mcpserver.util.collectRunPoints
-import com.intellij.mcpserver.util.executeResolvedRunConfiguration
+import com.intellij.mcpserver.util.executeRunConfiguration
 import com.intellij.mcpserver.util.resolveInProject
-import com.intellij.mcpserver.util.resolveRunConfigurationExecutionTarget
-import com.intellij.mcpserver.util.resolveRunConfigurationForExecution
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -149,60 +146,14 @@ class ExecutionToolset : McpToolset {
       workingDirectory = workingDirectory,
       envs = envs,
       isDebug = false,
-    ).copy(sessionId = null) // reset sessionId because at the moment it's unnecessary for execution (not tools can use it)
-  }
-
-  // for start_debug_session
-  suspend fun executeRunConfiguration(
-    configurationName: String? = null,
-    filePath: String? = null,
-    line: Int? = null,
-    timeout: Int,
-    waitForExit: Boolean,
-    programArguments: String?,
-    workingDirectory: String?,
-    envs: Map<String, String>?,
-    isDebug: Boolean,
-  ): RunConfigurationResult {
-    val executionTarget = resolveRunConfigurationExecutionTarget(configurationName = configurationName, filePath = filePath, line = line)
-    currentCoroutineContext().reportToolActivity(
-      McpServerBundle.message(
-        if (isDebug) "tool.activity.starting.debug.run.configuration" else "tool.activity.executing.run.configuration",
-        executionTarget.presentableName,
+    ).let { executionOutput ->
+      RunConfigurationResult(
+        exitCode = executionOutput.exitCode,
+        output = executionOutput.output,
+        fullOutputPath = executionOutput.outputPath?.pathString,
+        sessionId = null, // reset sessionId because at the moment it's unnecessary for execution (not tools can use it)
       )
-    )
-    val project = currentCoroutineContext().project
-
-    val resolvedConfiguration = resolveRunConfigurationForExecution(
-      project = project,
-      executionTarget = executionTarget,
-      programArguments = programArguments,
-      workingDirectory = workingDirectory,
-      envs = envs,
-    )
-
-    val effectiveName = resolvedConfiguration.settings.name
-    val runConfigurationParameters = (resolvedConfiguration.runConfiguration as? CommonProgramRunConfigurationParameters)?.programParameters
-    val notificationText = if (runConfigurationParameters != null) {
-      McpServerBundle.message("label.do.you.want.to.execute.run.configuration.with.command", effectiveName)
     }
-    else {
-      McpServerBundle.message("label.do.you.want.to.execute.run.configuration", effectiveName)
-    }
-    checkUserConfirmationIfNeeded(notificationText, command = runConfigurationParameters, project)
-    val executionOutput = executeResolvedRunConfiguration(
-      project = project,
-      resolvedConfiguration = resolvedConfiguration,
-      timeout = timeout,
-      waitForExit = waitForExit,
-      isDebug = isDebug,
-    )
-    return RunConfigurationResult(
-      sessionId = executionOutput.sessionId,
-      exitCode = executionOutput.exitCode,
-      output = executionOutput.output,
-      fullOutputPath = executionOutput.outputPath?.pathString,
-    )
   }
 
   @Serializable

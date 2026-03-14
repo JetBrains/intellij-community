@@ -24,6 +24,8 @@ import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.mcpCallInfo
 import com.intellij.mcpserver.mcpFail
+import com.intellij.mcpserver.project
+import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.openapi.application.EDT
@@ -59,6 +61,8 @@ import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.sanitizeFileName
+import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.XDebuggerManager
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
@@ -205,7 +209,7 @@ internal data class ResolvedRunConfiguration(
   val useOriginalSettings: Boolean,
 )
 
-internal data class RunConfigurationExecutionOutput(
+data class RunConfigurationExecutionOutput(
   val sessionId: String,
   val exitCode: Int?,
   val output: String,
@@ -269,6 +273,52 @@ internal suspend fun resolveRunConfigurationForExecution(
   )
   val useOriginalSettings = runConfiguration === settings.configuration
   return ResolvedRunConfiguration(settings, runConfiguration, useOriginalSettings)
+}
+
+suspend fun executeRunConfiguration(
+  configurationName: String? = null,
+  filePath: String? = null,
+  line: Int? = null,
+  timeout: Int,
+  waitForExit: Boolean,
+  programArguments: String?,
+  workingDirectory: String?,
+  envs: Map<String, String>?,
+  isDebug: Boolean,
+): RunConfigurationExecutionOutput {
+  val executionTarget = resolveRunConfigurationExecutionTarget(configurationName = configurationName, filePath = filePath, line = line)
+  currentCoroutineContext().reportToolActivity(
+    McpServerBundle.message(
+      if (isDebug) "tool.activity.starting.debug.run.configuration" else "tool.activity.executing.run.configuration",
+      executionTarget.presentableName,
+    )
+  )
+  val project = currentCoroutineContext().project
+
+  val resolvedConfiguration = resolveRunConfigurationForExecution(
+    project = project,
+    executionTarget = executionTarget,
+    programArguments = programArguments,
+    workingDirectory = workingDirectory,
+    envs = envs,
+  )
+
+  val effectiveName = resolvedConfiguration.settings.name
+  val runConfigurationParameters = (resolvedConfiguration.runConfiguration as? CommonProgramRunConfigurationParameters)?.programParameters
+  val notificationText = if (runConfigurationParameters != null) {
+    McpServerBundle.message("label.do.you.want.to.execute.run.configuration.with.command", effectiveName)
+  }
+  else {
+    McpServerBundle.message("label.do.you.want.to.execute.run.configuration", effectiveName)
+  }
+  checkUserConfirmationIfNeeded(notificationText, command = runConfigurationParameters, project)
+  return executeResolvedRunConfiguration(
+    project = project,
+    resolvedConfiguration = resolvedConfiguration,
+    timeout = timeout,
+    waitForExit = waitForExit,
+    isDebug = isDebug,
+  )
 }
 
 internal suspend fun executeResolvedRunConfiguration(
@@ -416,7 +466,7 @@ private fun createProcessCallback(
           IllegalStateException("Process explicitly reported as not started."))
       }
     })
-    val sessionId = buildExecutionSessionId(
+    val sessionId = buildSessionId(
       project = project,
       executorId = executorId,
       sessionName = sessionName,
@@ -458,7 +508,7 @@ private fun createRunConfigurationOutputFile(runConfigName: String): Path {
   }
 }
 
-internal fun buildExecutionSessionId(
+fun buildSessionId(
   sessionName: String,
   executionId: Long?,
   activeSessionNames: List<String>,
@@ -470,12 +520,18 @@ internal fun buildExecutionSessionId(
   return if (executionId != null && executionId > 0) "$sessionName#$executionId" else sessionName
 }
 
-private fun buildExecutionSessionId(
+fun buildSessionId(
   project: Project,
   executorId: String,
   sessionName: String,
   descriptor: RunContentDescriptor,
 ): String {
+  if (executorId == DefaultDebugExecutor.EXECUTOR_ID) {
+    val debugSession = XDebuggerManager.getInstance(project).getDebugSession(descriptor.executionConsole)
+    if (debugSession != null) {
+      return buildDebugSessionId(project, debugSession)
+    }
+  }
   val executionManager = ExecutionManager.getInstance(project)
   val activeSessionNames = executionManager.getRunningDescriptors(Conditions.alwaysTrue())
     .asSequence()
@@ -485,7 +541,22 @@ private fun buildExecutionSessionId(
   if (!activeSessionNames.contains(sessionName)) {
     activeSessionNames.add(sessionName)
   }
-  return buildExecutionSessionId(sessionName, descriptor.executionId, activeSessionNames)
+  return buildSessionId(sessionName, descriptor.executionId, activeSessionNames)
+}
+
+private fun buildDebugSessionId(project: Project, session: XDebugSession): String {
+  val activeSessionNames = XDebuggerManager.getInstance(project).debugSessions
+    .asSequence()
+    .map { it.sessionName }
+    .toMutableList()
+  if (!activeSessionNames.contains(session.sessionName)) {
+    activeSessionNames.add(session.sessionName)
+  }
+  return buildSessionId(
+    sessionName = session.sessionName,
+    executionId = session.executionEnvironment?.executionId,
+    activeSessionNames = activeSessionNames,
+  )
 }
 
 private fun extractExecutionSessionName(descriptor: RunContentDescriptor): String? {
