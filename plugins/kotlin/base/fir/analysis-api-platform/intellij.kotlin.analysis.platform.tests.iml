@@ -90,6 +90,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.indices.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.analysis.platform" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.projectStructure.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin.tests" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.kotlin.analysis.platform" />
 </module>

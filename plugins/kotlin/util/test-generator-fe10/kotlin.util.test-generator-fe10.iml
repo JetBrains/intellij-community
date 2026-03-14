@@ -44,5 +44,7 @@
     <orderEntry type="module" module-name="kotlin.base.scripting.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm.k1.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.scripting.k1.tests" scope="TEST" />
   </component>
 </module>

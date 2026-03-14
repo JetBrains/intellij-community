@@ -49,5 +49,7 @@
     <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.vcs.git.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.vcs.hg.tests" scope="TEST" />
   </component>
 </module>

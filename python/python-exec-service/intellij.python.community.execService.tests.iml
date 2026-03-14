@@ -55,6 +55,7 @@
     <orderEntry type="module" module-name="intellij.libraries.guava" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.processOutput.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.execService" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.eel.tests" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.python.community.execService" />
 </module>

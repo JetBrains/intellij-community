@@ -31,6 +31,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.git.featuresTrainer" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.featuresTrainer.tests" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.vcs.git.featuresTrainer" />
 </module>

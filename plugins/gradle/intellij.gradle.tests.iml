@@ -75,5 +75,6 @@
     <orderEntry type="module" module-name="intellij.gradle.completion" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.groovy.tests" scope="TEST" />
   </component>
 </module>

@@ -569,7 +569,7 @@ private fun needsBackwardCompatibleTestDependency(
   if (name.startsWith("intellij.platform.ide.")) {
     /// Newly extracted modules from platform-impl are not test-framework modules for sure, and no one should depend on their test targets.
     // todo - move ToolWindowManagerTest from platform-lang to platform-impl tests
-    return name == "intellij.platform.ide.impl" && dependentModule.module.name == "intellij.platform.lang.tests"
+    return name == "intellij.platform.ide.impl.tests" && dependentModule.module.name == "intellij.platform.lang.tests"
   }
   else {
     // If we depend on module A and A includes test sources, we must add a dependency not only on A’s production library target but also on its test library target.

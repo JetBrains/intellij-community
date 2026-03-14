@@ -139,6 +139,8 @@
     <orderEntry type="module" module-name="intellij.platform.lang" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.github" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.vcs.git.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.collaborationTools.tests" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.vcs.github" />
 </module>

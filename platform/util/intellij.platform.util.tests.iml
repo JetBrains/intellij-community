@@ -56,5 +56,6 @@
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.eel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.eel.tests" scope="TEST" />
   </component>
 </module>

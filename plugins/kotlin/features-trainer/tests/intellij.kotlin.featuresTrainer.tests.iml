@@ -20,5 +20,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.formatter" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.featuresTrainer" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.featuresTrainer.tests" scope="TEST" />
   </component>
 </module>

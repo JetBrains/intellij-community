@@ -45,6 +45,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.ide" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.k1" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight.tests" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="kotlin.code-insight.k1" />
 </module>

@@ -34,5 +34,6 @@
     <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.scripting" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.highlighting.minimal" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.groovy.tests" scope="TEST" />
   </component>
 </module>

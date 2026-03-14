@@ -104,5 +104,6 @@
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.platform.projectFrame" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl.tests" scope="TEST" />
   </component>
 </module>

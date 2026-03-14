@@ -94,6 +94,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight.tests" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.kotlin.codeInsight" />
 </module>

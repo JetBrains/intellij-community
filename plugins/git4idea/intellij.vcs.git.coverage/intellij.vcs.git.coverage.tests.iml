@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.git.coverage" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.log.graph.impl.tests" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.vcs.git.coverage" />
 </module>

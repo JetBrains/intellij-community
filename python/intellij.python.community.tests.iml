@@ -114,5 +114,7 @@
     <orderEntry type="module" module-name="intellij.python.community.interpreters" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.eel.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.smRunner.tests" scope="TEST" />
   </component>
 </module>

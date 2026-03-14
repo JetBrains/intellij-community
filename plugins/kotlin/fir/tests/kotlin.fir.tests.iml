@@ -108,5 +108,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.highlighting.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.refactorings.move.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.refactorings.rename.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin.tests" scope="TEST" />
   </component>
 </module>

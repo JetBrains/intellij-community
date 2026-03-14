@@ -32,6 +32,7 @@
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
     <orderEntry type="module" module-name="intellij.javaFX.community" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.javaFX.tests" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.javaFX.community" />
 </module>

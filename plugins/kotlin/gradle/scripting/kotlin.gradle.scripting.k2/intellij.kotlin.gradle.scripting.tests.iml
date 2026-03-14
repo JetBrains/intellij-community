@@ -93,6 +93,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.projectStructure.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.scripting" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit5Pioneer" level="project" />
+    <orderEntry type="module" module-name="intellij.groovy.tests" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.kotlin.gradle.scripting" />
 </module>

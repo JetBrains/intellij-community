@@ -43,6 +43,7 @@
     <orderEntry type="module" module-name="intellij.python.test.env.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.test.env.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.featuresTrainer" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.featuresTrainer.tests" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.python.featuresTrainer" />
 </module>

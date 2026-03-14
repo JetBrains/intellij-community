@@ -44,6 +44,8 @@
     <orderEntry type="module" module-name="intellij.jvm.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.devkit.themes.tests" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.kotlin.devkit" />
 </module>

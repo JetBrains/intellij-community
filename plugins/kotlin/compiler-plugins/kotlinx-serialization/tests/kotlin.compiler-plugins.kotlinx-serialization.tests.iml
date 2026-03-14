@@ -44,5 +44,6 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" />
     <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin.tests" scope="TEST" />
   </component>
 </module>
