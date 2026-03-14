@@ -6,13 +6,19 @@ import com.intellij.history.FileRevisionTimestampComparator
 import com.intellij.history.Label
 import com.intellij.history.LocalHistory
 import com.intellij.history.LocalHistoryAction
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.xdebugger.hotswap.SourceFileChangesCollector
 import com.intellij.xdebugger.hotswap.SourceFileChangesListener
 import kotlinx.coroutines.CoroutineScope
@@ -21,24 +27,55 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 private val CONTENT = """
       line 1
       line 2
     """.trimIndent()
 
-class SourceFileChangesCollectorImplTest : LightPlatformCodeInsightTestCase() {
-  override fun runInDispatchThread(): Boolean = false
-  override fun isRunInCommand(): Boolean = false
+@TestApplication
+class SourceFileChangesCollectorImplTest {
+  companion object {
+    private val projectFixture = projectFixture()
+    private val moduleFixture = projectFixture.moduleFixture()
+    private val sourceRootFixture = moduleFixture.sourceRootFixture()
+  }
+
+  private val project get() = projectFixture.get()
+  private val sourceRoot get() = sourceRootFixture.get().virtualFile
+
+  @BeforeEach
+  fun setUp() {
+    SourceFileChangesCollectorImpl.customLocalHistory = null
+    deleteTestFileIfExists()
+  }
+
+  @AfterEach
+  fun tearDown() {
+    SourceFileChangesCollectorImpl.customLocalHistory = null
+    deleteTestFileIfExists()
+  }
 
   private fun doTest(content: String = CONTENT, fileName: String = "a.txt", test: suspend (CoroutineScope, Document) -> Unit) {
-    configureFromFileText(fileName, content)
-    runBlocking {
-      val document = getDocument(file)!!
-      test(this, document)
+    val file = createTestFile(fileName, content)
+    try {
+      runBlocking {
+        val document = requireNotNull(ReadAction.computeBlocking<Document?, RuntimeException> { FileDocumentManager.getInstance().getDocument(file) })
+        test(this, document)
+      }
+    }
+    finally {
+      deleteTestFileIfExists(fileName)
     }
   }
 
+  @Test
   fun testChangesDetection() {
     doTest { scope, document ->
       scope.withCollector { collector, channel ->
@@ -55,6 +92,7 @@ class SourceFileChangesCollectorImplTest : LightPlatformCodeInsightTestCase() {
     }
   }
 
+  @Test
   fun testResetChanges() {
     doTest { scope, document ->
       scope.withCollector { collector, channel ->
@@ -75,6 +113,7 @@ class SourceFileChangesCollectorImplTest : LightPlatformCodeInsightTestCase() {
     }
   }
 
+  @Test
   fun testFiltering() {
     doTest { scope, document ->
       val filter = SourceFileChangeFilter<VirtualFile> { false }
@@ -88,8 +127,8 @@ class SourceFileChangesCollectorImplTest : LightPlatformCodeInsightTestCase() {
     }
   }
 
+  @Test
   fun testRevertChanges() {
-    val disposable = Disposer.newDisposable(testRootDisposable)
     doTest { scope, document ->
       scope.withCollector { collector, channel ->
         SourceFileChangesCollectorImpl.customLocalHistory = MockLocalHistory(document.text.toByteArray())
@@ -104,7 +143,27 @@ class SourceFileChangesCollectorImplTest : LightPlatformCodeInsightTestCase() {
         assertTrue(collector.getChanges().isEmpty())
       }
     }
-    Disposer.dispose(disposable)
+  }
+
+  private fun createTestFile(fileName: String, content: String): VirtualFile =
+    WriteCommandAction.writeCommandAction(project).compute<VirtualFile, RuntimeException> {
+      sourceRoot.findChild(fileName)?.let { existingFile ->
+        if (existingFile.isValid) {
+          existingFile.delete(this@SourceFileChangesCollectorImplTest)
+        }
+      }
+      sourceRoot.createChildData(this@SourceFileChangesCollectorImplTest, fileName).also {
+        it.setBinaryContent(content.toByteArray())
+      }
+  }
+
+  private fun deleteTestFileIfExists(fileName: String = "a.txt") {
+    val file = ReadAction.computeBlocking<VirtualFile?, RuntimeException> { sourceRoot.findChild(fileName) } ?: return
+    WriteCommandAction.writeCommandAction(project).run<RuntimeException> {
+      if (file.isValid) {
+        file.delete(this@SourceFileChangesCollectorImplTest)
+      }
+    }
   }
 }
 
