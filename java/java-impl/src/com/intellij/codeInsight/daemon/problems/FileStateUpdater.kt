@@ -1,6 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.problems
 
+import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.JavaElementVisitor
 import com.intellij.psi.PsiClass
@@ -57,12 +59,15 @@ internal class FileStateUpdater(private val prevState: FileState?) : JavaElement
      */
     @JvmStatic
     @JvmName("getState")
-    internal fun getState(psiFile: PsiFile): FileState? {
-      if (DumbService.isDumb(psiFile.project)) return null
-      val storedState = FileStateCache.getInstance(psiFile.project).getState(psiFile)
+    internal fun getState(file: PsiFile): FileState? {
+      if (DumbService.isDumb(file.project)) return null
+      val highlightingSettingForRoot = HighlightingSettingsPerFile.getInstance(file.project).getHighlightingSettingForRoot(file)
+      if (highlightingSettingForRoot != FileHighlightingSetting.FORCE_HIGHLIGHTING) return null
+
+      val storedState = FileStateCache.getInstance(file.project).getState(file)
       if (storedState != null) return storedState
       val updater = FileStateUpdater(null)
-      publicApi(psiFile).forEach { it.accept(updater) }
+      publicApi(file).forEach { it.accept(updater) }
       val snapshot = updater.snapshot
       return FileState(snapshot, emptyMap())
     }
