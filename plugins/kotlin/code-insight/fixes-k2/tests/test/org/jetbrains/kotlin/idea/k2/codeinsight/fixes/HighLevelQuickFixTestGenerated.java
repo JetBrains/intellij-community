@@ -14887,6 +14887,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/toString/callArgument.kt");
         }
 
+        @TestMetadata("emptyReturn.kt")
+        public void testEmptyReturn() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/toString/emptyReturn.kt");
+        }
+
+        @TestMetadata("emptyReturnExpectedNullable.kt")
+        public void testEmptyReturnExpectedNullable() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/toString/emptyReturnExpectedNullable.kt");
+        }
+
         @TestMetadata("notNullableExpectedNullable.kt")
         public void testNotNullableExpectedNullable() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/toString/notNullableExpectedNullable.kt");

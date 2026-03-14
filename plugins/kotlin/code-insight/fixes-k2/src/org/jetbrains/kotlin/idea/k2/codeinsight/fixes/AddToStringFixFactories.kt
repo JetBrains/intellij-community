@@ -8,11 +8,12 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddToStringFix
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtReturnExpression
 
 internal object AddToStringFixFactories {
 
     private fun KaSession.getFixes(element: PsiElement?, expectedType: KaType, actualType: KaType): List<AddToStringFix> {
-        if (element !is KtExpression) return emptyList()
+        if (element !is KtExpression || element is KtReturnExpression) return emptyList()
         return buildList {
             if (expectedType.isStringType || expectedType.isCharSequenceType) {
                 add(AddToStringFix(element, false))

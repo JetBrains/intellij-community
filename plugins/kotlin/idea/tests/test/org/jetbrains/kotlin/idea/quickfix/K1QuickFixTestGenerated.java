@@ -18753,6 +18753,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/toString/callArgument.kt");
         }
 
+        @TestMetadata("emptyReturn.kt")
+        public void testEmptyReturn() throws Exception {
+            runTest("testData/quickfix/toString/emptyReturn.kt");
+        }
+
+        @TestMetadata("emptyReturnExpectedNullable.kt")
+        public void testEmptyReturnExpectedNullable() throws Exception {
+            runTest("testData/quickfix/toString/emptyReturnExpectedNullable.kt");
+        }
+
         @TestMetadata("notNullableExpectedNullable.kt")
         public void testNotNullableExpectedNullable() throws Exception {
             runTest("testData/quickfix/toString/notNullableExpectedNullable.kt");
