@@ -1,12 +1,16 @@
 ---
 name: Agent Threads Visibility and More Row
-description: Deterministic rendering and persisted visibility rules for thread rows and More-row behavior in Swing Agent Threads tree.
+description: Deterministic rendering and runtime visibility rules for thread rows and More-row behavior in Swing Agent Threads tree.
 targets:
-  - ../sessions/src/AgentSessionModels.kt
-  - ../sessions/src/SessionTree.kt
-  - ../sessions/src/AgentSessionsToolWindow.kt
-  - ../sessions/src/AgentSessionsStateStore.kt
-  - ../sessions/src/AgentSessionsTreeUiStateService.kt
+  - ../sessions/src/state/AgentSessionsVisibilityDefaults.kt
+  - ../sessions/src/model/AgentSessionModels.kt
+  - ../sessions/src/tree/SessionTree.kt
+  - ../sessions/src/ui/AgentSessionsToolWindow.kt
+  - ../sessions/src/ui/AgentSessionsTreeCellRenderer.kt
+  - ../sessions/src/ui/AgentSessionsTreeRowActionsOverlay.kt
+  - ../sessions/src/ui/SessionTreeThreadLayout.kt
+  - ../sessions/src/ui/SessionTreeThreadPresentation.kt
+  - ../sessions/src/state/AgentSessionsStateStore.kt
   - ../sessions/resources/messages/AgentSessionsBundle.properties
   - ../sessions/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
   - ../sessions/testSrc/AgentSessionsSwingTreeRenderingTest.kt
@@ -19,7 +23,7 @@ targets:
 # Agent Threads Visibility and More Row
 
 Status: Draft
-Date: 2026-02-24
+Date: 2026-03-01
 
 ## Summary
 Define deterministic visibility rules for project/worktree thread rows so empty state, warning/error rows, and `More` rows never conflict. Shared visibility primitive semantics are canonical in `spec/agent-core-contracts.spec.md`; this spec owns rendering and precedence behavior.
@@ -40,10 +44,8 @@ Define deterministic visibility rules for project/worktree thread rows so empty 
 
 - Visible-thread count lookup order per normalized path must be:
   - in-memory runtime entry,
-  - persisted tree UI state entry,
   - default value.
   [@test] ../sessions/testSrc/AgentSessionRefreshServiceIntegrationTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsTreeUiStateServiceTest.kt
 
 - For project rows, render `More` only when `project.threads.size > visibleCount`.
   [@test] ../sessions/testSrc/AgentSessionsTreeSnapshotTest.kt
@@ -72,14 +74,15 @@ Define deterministic visibility rules for project/worktree thread rows so empty 
   [@test] ../sessions/testSrc/AgentSessionRefreshOnDemandIntegrationTest.kt
   [@test] ../sessions/testSrc/AgentSessionsSwingTreeInteractionTest.kt
 
-- Refresh bootstrap must keep runtime visible-thread counts above default for known project/worktree paths and must ignore persisted UI-state visible-thread counts.
+- Refresh bootstrap must keep runtime visible-thread counts above default for known project/worktree paths.
   [@test] ../sessions/testSrc/AgentSessionRefreshServiceIntegrationTest.kt
-
-- Persisted visibility key normalization must follow `spec/agent-core-contracts.spec.md`.
-  [@test] ../sessions/testSrc/AgentSessionsTreeUiStateServiceTest.kt
 
 - Tree-side `More` click handling must not trigger backend loads directly; it only updates local visibility state.
   [@test] ../sessions/testSrc/AgentSessionRefreshOnDemandIntegrationTest.kt
+
+## Architecture Decision — Renderer Purity
+- Thread-row layout/padding/clip decisions must remain pure helper functions in the UI layer; renderer customization must not query tree viewport APIs during cell rendering.
+  [@test] ../sessions/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
 
 ## User Experience
 - Exact-count case renders `More (N)`.

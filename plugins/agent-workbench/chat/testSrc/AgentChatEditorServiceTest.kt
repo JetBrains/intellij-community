@@ -574,6 +574,8 @@ class AgentChatEditorServiceTest {
 
   @Test
   fun testCollectSelectedChatThreadIdentityUsesSelectedChatTab(): Unit = timeoutRunBlocking {
+    val selectionService = project.service<AgentChatTabSelectionService>()
+
     openChatInModal(
       threadIdentity = "CODEX:thread-1",
       shellCommand = codexCommand,
@@ -595,9 +597,22 @@ class AgentChatEditorServiceTest {
     }
 
     waitForCondition {
-      collectSelectedChatThreadIdentity() == (AgentSessionProvider.CODEX to "thread-1")
+      selectionService.selectedChatTab.value == AgentChatTabSelection(
+        projectPath = projectPath,
+        threadIdentity = "CODEX:thread-1",
+        threadId = "thread-1",
+        subAgentId = null,
+      )
     }
 
+    assertThat(selectionService.selectedChatTab.value).isEqualTo(
+      AgentChatTabSelection(
+        projectPath = projectPath,
+        threadIdentity = "CODEX:thread-1",
+        threadId = "thread-1",
+        subAgentId = null,
+      )
+    )
     assertThat(collectSelectedChatThreadIdentity()).isEqualTo(AgentSessionProvider.CODEX to "thread-1")
   }
 

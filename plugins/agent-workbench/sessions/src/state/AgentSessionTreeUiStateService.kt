@@ -13,20 +13,10 @@ interface SessionTreeUiState {
   fun isProjectCollapsed(path: String): Boolean
 
   fun setProjectCollapsed(path: String, collapsed: Boolean): Boolean
-
-  fun getVisibleThreadCount(path: String): Int
-
-  fun incrementVisibleThreadCount(path: String, delta: Int): Boolean
-
-  fun resetVisibleThreadCount(path: String): Boolean
 }
-
-const val DEFAULT_VISIBLE_CLOSED_PROJECT_COUNT: Int = 3
-const val DEFAULT_VISIBLE_THREAD_COUNT: Int = 3
 
 class InMemorySessionTreeUiState : SessionTreeUiState {
   private val collapsedProjectPaths = LinkedHashSet<String>()
-  private val visibleThreadCountByProject = LinkedHashMap<String, Int>()
 
   override fun isProjectCollapsed(path: String): Boolean {
     return normalizeAgentWorkbenchPath(path) in collapsedProjectPaths
@@ -41,29 +31,6 @@ class InMemorySessionTreeUiState : SessionTreeUiState {
       collapsedProjectPaths.remove(normalized)
     }
   }
-
-  override fun getVisibleThreadCount(path: String): Int {
-    val normalized = normalizeAgentWorkbenchPath(path)
-    return visibleThreadCountByProject[normalized] ?: DEFAULT_VISIBLE_THREAD_COUNT
-  }
-
-  override fun incrementVisibleThreadCount(path: String, delta: Int): Boolean {
-    if (delta <= 0) return false
-    val normalized = normalizeAgentWorkbenchPath(path)
-    val current = visibleThreadCountByProject[normalized] ?: DEFAULT_VISIBLE_THREAD_COUNT
-    val updated = normalizeVisibleThreadCount(current + delta)
-    if (updated == current) return false
-    return if (updated == DEFAULT_VISIBLE_THREAD_COUNT) {
-      visibleThreadCountByProject.remove(normalized) != null
-    }
-    else {
-      visibleThreadCountByProject.put(normalized, updated) != updated
-    }
-  }
-
-  override fun resetVisibleThreadCount(path: String): Boolean {
-    return visibleThreadCountByProject.remove(normalizeAgentWorkbenchPath(path)) != null
-  }
 }
 
 @Service(Service.Level.APP)
@@ -77,70 +44,19 @@ class AgentSessionTreeUiStateService
   }
 
   override fun setProjectCollapsed(path: String, collapsed: Boolean): Boolean {
-    return updateNormalizedPathSet(
-      path = path,
-      includePath = collapsed,
-      currentSet = { it.collapsedProjectPaths },
-      setUpdated = { current, updated -> current.copy(collapsedProjectPaths = updated) },
-    )
-  }
-
-  override fun getVisibleThreadCount(path: String): Int {
-    val normalized = normalizeAgentWorkbenchPath(path)
-    return state.visibleThreadCountByProject[normalized] ?: DEFAULT_VISIBLE_THREAD_COUNT
-  }
-
-  override fun incrementVisibleThreadCount(path: String, delta: Int): Boolean {
-    if (delta <= 0) return false
     val normalizedPath = normalizeAgentWorkbenchPath(path)
-    val current = state.visibleThreadCountByProject[normalizedPath] ?: DEFAULT_VISIBLE_THREAD_COUNT
-    val updated = normalizeVisibleThreadCount(current + delta)
-    return setVisibleThreadCountInternal(normalizedPath, updated)
-  }
-
-  override fun resetVisibleThreadCount(path: String): Boolean {
-    val normalizedPath = normalizeAgentWorkbenchPath(path)
-    return setVisibleThreadCountInternal(normalizedPath, DEFAULT_VISIBLE_THREAD_COUNT)
-  }
-
-  private fun updateNormalizedPathSet(
-    path: String,
-    includePath: Boolean,
-    currentSet: (SessionTreeUiStateState) -> Set<String>,
-    setUpdated: (SessionTreeUiStateState, Set<String>) -> SessionTreeUiStateState,
-  ): Boolean {
-    val normalized = normalizeAgentWorkbenchPath(path)
-    if ((normalized in currentSet(state)) == includePath) {
+    if ((normalizedPath in state.collapsedProjectPaths) == collapsed) {
       return false
     }
     updateState { current ->
-      val updated = currentSet(current).toMutableSet()
-      if (includePath) {
-        updated.add(normalized)
+      val updated = current.collapsedProjectPaths.toMutableSet()
+      if (collapsed) {
+        updated.add(normalizedPath)
       }
       else {
-        updated.remove(normalized)
-      }
-      setUpdated(current, updated)
-    }
-    return true
-  }
-
-  private fun setVisibleThreadCountInternal(normalizedPath: String, visibleCount: Int): Boolean {
-    val normalizedCount = normalizeVisibleThreadCount(visibleCount)
-    val currentCount = state.visibleThreadCountByProject[normalizedPath] ?: DEFAULT_VISIBLE_THREAD_COUNT
-    if (currentCount == normalizedCount) {
-      return false
-    }
-    updateState { current ->
-      val updated = current.visibleThreadCountByProject.toMutableMap()
-      if (normalizedCount == DEFAULT_VISIBLE_THREAD_COUNT) {
         updated.remove(normalizedPath)
       }
-      else {
-        updated[normalizedPath] = normalizedCount
-      }
-      current.copy(visibleThreadCountByProject = updated)
+      current.copy(collapsedProjectPaths = updated)
     }
     return true
   }
@@ -148,10 +64,5 @@ class AgentSessionTreeUiStateService
   @Serializable
   data class SessionTreeUiStateState(
     @JvmField val collapsedProjectPaths: Set<String> = emptySet(),
-    @JvmField val visibleThreadCountByProject: Map<String, Int> = emptyMap(),
   )
-}
-
-private fun normalizeVisibleThreadCount(value: Int): Int {
-  return value.coerceAtLeast(DEFAULT_VISIBLE_THREAD_COUNT)
 }

@@ -2,7 +2,6 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.common.parseAgentThreadIdentity
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.serviceIfCreated
@@ -61,10 +60,10 @@ internal fun collectOpenAgentChatTabsSnapshot(
 
     if (selectedChatThreadIdentity == null) {
       val selection = project.serviceIfCreated<AgentChatTabSelectionService>()?.selectedChatTab?.value
-      val identity = selection?.let { parseAgentThreadIdentity(it.threadIdentity) }
-      val provider = identity?.let { AgentSessionProvider.fromOrNull(it.providerId) }
+      val identity = selection?.let { splitAgentThreadIdentity(it.threadIdentity) }
+      val provider = identity?.let { AgentSessionProvider.fromOrNull(it.first.lowercase(Locale.ROOT)) }
       if (provider != null) {
-        selectedChatThreadIdentity = provider to identity.threadId
+        selectedChatThreadIdentity = provider to identity.second
       }
     }
 
