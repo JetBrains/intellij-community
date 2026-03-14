@@ -1,7 +1,8 @@
 ---
 name: Agent Threads Visibility and More Row
-description: Deterministic rendering and persisted visibility rules for thread rows and More-row behavior in Swing Agent Threads tree.
+description: Deterministic rendering and runtime visibility rules for thread rows and More-row behavior in Swing Agent Threads tree.
 targets:
+  - ../sessions/src/state/AgentSessionsVisibilityDefaults.kt
   - ../sessions/src/model/AgentSessionModels.kt
   - ../sessions/src/tree/SessionTree.kt
   - ../sessions/src/ui/AgentSessionsToolWindow.kt
@@ -10,7 +11,6 @@ targets:
   - ../sessions/src/ui/SessionTreeThreadLayout.kt
   - ../sessions/src/ui/SessionTreeThreadPresentation.kt
   - ../sessions/src/state/AgentSessionsStateStore.kt
-  - ../sessions/src/state/AgentSessionTreeUiStateService.kt
   - ../sessions/resources/messages/AgentSessionsBundle.properties
   - ../sessions/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
   - ../sessions/testSrc/AgentSessionsSwingTreeRenderingTest.kt
@@ -44,10 +44,8 @@ Define deterministic visibility rules for project/worktree thread rows so empty 
 
 - Visible-thread count lookup order per normalized path must be:
   - in-memory runtime entry,
-  - persisted tree UI state entry,
   - default value.
   [@test] ../sessions/testSrc/AgentSessionRefreshServiceIntegrationTest.kt
-  [@test] ../sessions/testSrc/AgentSessionTreeUiStateServiceTest.kt
 
 - For project rows, render `More` only when `project.threads.size > visibleCount`.
   [@test] ../sessions/testSrc/AgentSessionsTreeSnapshotTest.kt
@@ -76,11 +74,8 @@ Define deterministic visibility rules for project/worktree thread rows so empty 
   [@test] ../sessions/testSrc/AgentSessionRefreshOnDemandIntegrationTest.kt
   [@test] ../sessions/testSrc/AgentSessionsSwingTreeInteractionTest.kt
 
-- Refresh bootstrap must keep runtime visible-thread counts above default for known project/worktree paths and must ignore persisted UI-state visible-thread counts.
+- Refresh bootstrap must keep runtime visible-thread counts above default for known project/worktree paths.
   [@test] ../sessions/testSrc/AgentSessionRefreshServiceIntegrationTest.kt
-
-- Persisted visibility key normalization must follow `spec/agent-core-contracts.spec.md`.
-  [@test] ../sessions/testSrc/AgentSessionTreeUiStateServiceTest.kt
 
 - Tree-side `More` click handling must not trigger backend loads directly; it only updates local visibility state.
   [@test] ../sessions/testSrc/AgentSessionRefreshOnDemandIntegrationTest.kt

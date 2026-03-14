@@ -48,7 +48,7 @@ This file is the single inventory for where Agent Workbench state is persisted a
   It must not store blocking errors, provider warnings, loading flags, or pending `new-*` thread identities.
   [@test] ../sessions/testSrc/AgentSessionWarmStateServiceTest.kt
 
-- `AgentSessionTreeUiState` persistence must remain cache-scoped app state and must store only tree UI preferences (collapsed paths and visible counts).
+- `AgentSessionTreeUiState` persistence must remain cache-scoped app state and must store only collapsed project paths.
   [@test] ../sessions/testSrc/AgentSessionTreeUiStateServiceTest.kt
 
 - `AgentSessionUiPreferencesState` persistence must remain non-roamable app state and must store shared UI preferences (`lastUsedProvider`, `launchMode: AgentSessionLaunchMode`, `providerOptionsByProviderId`, Claude quota hint eligibility/acknowledgement).
