@@ -28,7 +28,7 @@ class AgentPromptContextEntryPathRenderingTest {
       projectBasePath = projectBasePath,
     )
 
-    assertThat(entry.displayText).isEqualTo("File: src${File.separator}Main.kt")
+    assertThat(entry.displayText).isEqualTo("src${File.separator}Main.kt")
     assertThat(entry.tooltipText).isEqualTo("file: $filePath")
     assertThat(entry.tooltipText).doesNotContain("source=")
   }
@@ -45,7 +45,7 @@ class AgentPromptContextEntryPathRenderingTest {
       projectBasePath = projectBasePath,
     )
 
-    assertThat(entry.displayText).isEqualTo("File: .")
+    assertThat(entry.displayText).isEqualTo(".")
   }
 
   @Test
@@ -61,7 +61,7 @@ class AgentPromptContextEntryPathRenderingTest {
       projectBasePath = systemPath("$home/other-project"),
     )
 
-    assertThat(entry.displayText).isEqualTo("File: $expected")
+    assertThat(entry.displayText).isEqualTo(expected)
   }
 
   @Test
@@ -86,7 +86,7 @@ class AgentPromptContextEntryPathRenderingTest {
     )
 
     assertThat(expected).contains("…")
-    assertThat(entry.displayText).isEqualTo("File: $expected")
+    assertThat(entry.displayText).isEqualTo(expected)
     assertThat(entry.displayText).doesNotEndWith("…")
   }
 

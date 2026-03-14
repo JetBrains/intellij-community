@@ -63,7 +63,8 @@ class AgentPromptFileContextRendererBridge : AgentPromptContextRendererBridge {
     val payload = input.item.payload.objOrNull()
     val pathText = payload?.string("path") ?: input.item.body
     val shortened = shortenPathForChip(pathText, input.projectBasePath)
-    return AgentPromptChipRender(text = composePathChipText(input.item.title, shortened))
+    val text = if (shortened.isBlank()) composePathChipText(input.item.title, shortened) else composePathChipText(title = null, preview = shortened)
+    return AgentPromptChipRender(text = text)
   }
 }
 
