@@ -6,10 +6,14 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase
 import com.intellij.ide.projectView.impl.nodes.AbstractProjectNode
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode
+import com.intellij.ide.scratch.RootType
+import com.intellij.ide.scratch.ScratchTreeStructureProvider
+import com.intellij.ide.scratch.ScratchesNamedScope
 import com.intellij.ide.util.TreeFileChooserSupport
 import com.intellij.ide.util.gotoByName.ChooseByNamePanel
 import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent
@@ -29,12 +33,12 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.TabbedPaneWrapper
 import com.intellij.ui.TreeUIHelper
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.StructureTreeModel
+import com.intellij.ui.tree.TreeVisitor
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
@@ -48,6 +52,7 @@ import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
+import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 
@@ -114,7 +119,6 @@ internal fun showProjectPathsChooserPopup(
     restoreTreeSelection(
       project = project,
       tree = tree,
-      treeModel = treeModel,
       selection = selectionState.snapshot(),
       scopedRootPaths = scopedRootPaths,
       popup = popup,
@@ -144,12 +148,6 @@ internal fun showProjectPathsChooserPopup(
     selectionState.addTreeSelection(collectTreeSelection(tree, treeSupport, scopedRootPaths))
   }
 
-  tree.addTreeSelectionListener {
-    if (!restoringTreeSelection) {
-      syncTreeSelection()
-    }
-  }
-
   confirmSelection = fun(): Boolean {
     val normalized = collectConfirmedSelection(
       isSearchTabSelected = tabbedPane.selectedIndex == SEARCH_TAB_INDEX,
@@ -170,28 +168,58 @@ internal fun showProjectPathsChooserPopup(
 
   installConfirmSelectionOnEnter(tree, confirmSelection)
 
+  var selectedTabIndex = tabbedPane.selectedIndex
   tabbedPane.addChangeListener {
-    if (tabbedPane.selectedIndex == SEARCH_TAB_INDEX) {
-      ensureSearchPanelInitialized()
-      searchPanel.restoreVisibleSelectionFromState()
-    }
-    else {
-      restoreTreeSelectionFromState()
-      tree.requestFocusInWindow()
-    }
-  }
-
-  if (selectionState.size() > 0) {
-    restoreTreeSelectionFromState()
+    val previousSelectedIndex = selectedTabIndex
+    selectedTabIndex = tabbedPane.selectedIndex
+    handleChooserTabSelectionChanged(
+      previousSelectedIndex = previousSelectedIndex,
+      selectedIndex = selectedTabIndex,
+      syncTreeSelection = {
+        if (!restoringTreeSelection) {
+          syncTreeSelection()
+        }
+      },
+      ensureSearchPanelInitialized = { ensureSearchPanelInitialized() },
+      restoreSearchSelection = { searchPanel.restoreVisibleSelectionFromState() },
+      restoreTreeSelection = { restoreTreeSelectionFromState() },
+      requestTreeFocus = { tree.requestFocusInWindow() },
+    )
   }
 
   popup.showUnderneathOf(anchorComponent)
 
   SwingUtilities.invokeLater {
     if (project.isDisposed || popup.isDisposed) return@invokeLater
+    if (selectionState.size() > 0 && tabbedPane.selectedIndex != SEARCH_TAB_INDEX) {
+      restoreTreeSelectionFromState()
+    }
     if (tabbedPane.selectedIndex != SEARCH_TAB_INDEX) {
       tree.requestFocusInWindow()
     }
+  }
+}
+
+internal fun handleChooserTabSelectionChanged(
+  previousSelectedIndex: Int,
+  selectedIndex: Int,
+  syncTreeSelection: () -> Unit,
+  ensureSearchPanelInitialized: () -> Unit,
+  restoreSearchSelection: () -> Unit,
+  restoreTreeSelection: () -> Unit,
+  requestTreeFocus: () -> Unit,
+) {
+  if (previousSelectedIndex != SEARCH_TAB_INDEX && selectedIndex == SEARCH_TAB_INDEX) {
+    syncTreeSelection()
+  }
+
+  if (selectedIndex == SEARCH_TAB_INDEX) {
+    ensureSearchPanelInitialized()
+    restoreSearchSelection()
+  }
+  else {
+    restoreTreeSelection()
+    requestTreeFocus()
   }
 }
 
@@ -238,7 +266,6 @@ private fun collectTreeSelection(
 private fun restoreTreeSelection(
   project: Project,
   tree: Tree,
-  treeModel: StructureTreeModel<ProjectAbstractTreeStructureBase>,
   selection: List<ManualPathSelectionEntry>,
   scopedRootPaths: List<String>,
   popup: JBPopup,
@@ -257,21 +284,15 @@ private fun restoreTreeSelection(
   }
 
   beforeRestore()
-  val selectionNodes = runReadActionBlocking {
-    val psiManager = PsiManager.getInstance(project)
+  val selectionVisitors = runReadActionBlocking {
     selection.mapNotNull { entry ->
-      val virtualFile = LocalFileSystem.getInstance().findFileByPath(entry.path) ?: return@mapNotNull null
+      val virtualFile = findRestorableVirtualFile(entry.path) ?: return@mapNotNull null
       if (!isSelectableVirtualFile(virtualFile, scopedRootPaths)) return@mapNotNull null
-      if (virtualFile.isDirectory) {
-        psiManager.findDirectory(virtualFile)?.let { PsiDirectoryNode(project, it, null) }
-      }
-      else {
-        psiManager.findFile(virtualFile)?.let { PsiFileNode(project, it, null) }
-      }
+      createRestorableSelectionVisitor(virtualFile)
     }
   }
 
-  if (selectionNodes.isEmpty()) {
+  if (selectionVisitors.isEmpty()) {
     try {
       tree.clearSelection()
     }
@@ -281,12 +302,12 @@ private fun restoreTreeSelection(
     return
   }
 
-  selectionNodes.map(treeModel::promiseVisitor)
+  selectionVisitors.map { visitor -> TreeUtil.promiseMakeVisible(tree, visitor) }
     .collectResults(ignoreErrors = true)
-    .onSuccess { visitors ->
+    .onSuccess { paths ->
       ApplicationManager.getApplication().invokeLater({
                                                         if (project.isDisposed || popup.isDisposed) return@invokeLater
-                                                        applyTreeSelection(tree, visitors, afterRestore)
+                                                        applyTreeSelection(tree, paths, afterRestore)
                                                       }, ModalityState.stateForComponent(tree))
     }
     .onError {
@@ -294,12 +315,98 @@ private fun restoreTreeSelection(
     }
 }
 
+internal fun findRestorableVirtualFile(path: String): VirtualFile? {
+  val fileSystem = LocalFileSystem.getInstance()
+  return fileSystem.findFileByPath(path) ?: fileSystem.refreshAndFindFileByPath(path)
+}
+
+internal fun createRestorableSelectionVisitor(virtualFile: VirtualFile): TreeVisitor {
+  val rootType = RootType.forFile(virtualFile)
+  if (rootType != null) {
+    val scratchVisitor = createScratchSelectionVisitor(virtualFile, rootType)
+    if (scratchVisitor != null) {
+      return scratchVisitor
+    }
+  }
+  return AbstractProjectViewPane.createVisitor(virtualFile)
+}
+
+private fun createScratchSelectionVisitor(virtualFile: VirtualFile, rootType: RootType): TreeVisitor? {
+  val scratchRoot = ScratchTreeStructureProvider.getVirtualFile(rootType) ?: return null
+  val targetSegments = buildScratchSelectionSegments(virtualFile, scratchRoot, rootType) ?: return null
+  return ScratchSelectionTreeVisitor(targetSegments)
+}
+
+private fun buildScratchSelectionSegments(
+  virtualFile: VirtualFile,
+  scratchRoot: VirtualFile,
+  rootType: RootType,
+): List<ScratchSelectionSegment>? {
+  val pathSegments = ArrayDeque<String>()
+  var current: VirtualFile? = virtualFile
+  while (current != null && current != scratchRoot) {
+    pathSegments.addFirst(current.path)
+    current = current.parent
+  }
+  if (current != scratchRoot) {
+    return null
+  }
+
+  return buildList {
+    add(ScratchSelectionSegment.ScratchesContainer)
+    add(ScratchSelectionSegment.RootType(rootType.id))
+    pathSegments.forEach { add(ScratchSelectionSegment.Path(it)) }
+  }
+}
+
+private sealed interface ScratchSelectionSegment {
+  data object ScratchesContainer : ScratchSelectionSegment
+
+  data class RootType(val id: String) : ScratchSelectionSegment
+
+  data class Path(val path: String) : ScratchSelectionSegment
+}
+
+private class ScratchSelectionTreeVisitor(
+  private val targetSegments: List<ScratchSelectionSegment>,
+) : TreeVisitor {
+  override fun visit(path: TreePath): TreeVisitor.Action {
+    val currentSegments = path.path.mapNotNull(::scratchSelectionSegmentFor)
+    if (!targetSegments.hasPrefix(currentSegments)) {
+      return TreeVisitor.Action.SKIP_CHILDREN
+    }
+    return if (currentSegments.size == targetSegments.size) TreeVisitor.Action.INTERRUPT else TreeVisitor.Action.CONTINUE
+  }
+}
+
+private fun scratchSelectionSegmentFor(component: Any?): ScratchSelectionSegment? {
+  val userObject = (component as? DefaultMutableTreeNode)?.userObject ?: component
+  val node = userObject as? ProjectViewNode<*> ?: return null
+  val value = node.value
+  return when (value) {
+    ScratchesNamedScope.scratchesAndConsoles(), ScratchesNamedScope.ID -> ScratchSelectionSegment.ScratchesContainer
+    is RootType -> ScratchSelectionSegment.RootType(value.id)
+    else -> {
+      val virtualFile = node.virtualFile ?: return null
+      if (RootType.forFile(virtualFile) == null) return null
+      ScratchSelectionSegment.Path(virtualFile.path)
+    }
+  }
+}
+
+private fun <T> List<T>.hasPrefix(prefix: List<T>): Boolean {
+  if (prefix.size > size) {
+    return false
+  }
+  return prefix.indices.all { index -> this[index] == prefix[index] }
+}
+
 private fun applyTreeSelection(
   tree: Tree,
-  visitors: List<com.intellij.ui.tree.TreeVisitor>,
+  paths: List<TreePath>,
   afterApply: () -> Unit = {},
 ) {
-  if (visitors.isEmpty()) {
+  if (paths.isEmpty()) {
     try {
       tree.clearSelection()
     }
@@ -309,33 +416,15 @@ private fun applyTreeSelection(
     return
   }
 
-  val paths = ArrayList<TreePath>(visitors.size)
-
-  fun selectNext(index: Int) {
-    if (index >= visitors.size) {
-      try {
-        tree.selectionPaths = paths.toTypedArray()
-        paths.firstOrNull()?.let { path ->
-          TreeUtil.scrollToVisible(tree, path, false)
-        }
-      }
-      finally {
-        afterApply()
-      }
-      return
+  try {
+    tree.selectionPaths = paths.toTypedArray()
+    paths.firstOrNull()?.let { path ->
+      TreeUtil.scrollToVisible(tree, path, false)
     }
-
-    TreeUtil.promiseMakeVisible(tree, visitors[index])
-      .onSuccess { path ->
-        paths += path
-        selectNext(index + 1)
-      }
-      .onError {
-        selectNext(index + 1)
-      }
   }
-
-  selectNext(0)
+  finally {
+    afterApply()
+  }
 }
 
 private fun createTreeStructure(
