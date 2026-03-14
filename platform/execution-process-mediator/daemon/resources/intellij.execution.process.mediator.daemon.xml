@@ -1,7 +1,10 @@
 <idea-plugin package="com.intellij.execution.process.mediator.daemon">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.execution.process.mediator.common"/>
     <module name="intellij.libraries.grpc"/>
     <module name="intellij.libraries.grpc.netty.shaded"/>
-    <module name="intellij.execution.process.mediator.common"/>
+    <module name="intellij.libraries.guava"/>
+    <!-- endregion -->
   </dependencies>
 </idea-plugin>

@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.python.sdk"/>
     <module name="intellij.libraries.junit5"/>
+    <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.junit4"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>

@@ -2,6 +2,9 @@
   <!-- This module shouldn't declare services or extensions to allow using it outside the IDE process. 
        This descriptor is added to allow loading it as a separate content module inside the IDE. -->
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.guava"/>
     <module name="intellij.platform.vcs.log.graph"/>
+    <!-- endregion -->
   </dependencies>
 </idea-plugin>

@@ -1,5 +1,8 @@
 <idea-plugin>
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.grpc"/>
+    <module name="intellij.libraries.guava"/>
+    <!-- endregion -->
   </dependencies>
 </idea-plugin>

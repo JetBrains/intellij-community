@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.pycharm.community.ide.impl"/>
+    <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.junit5"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
