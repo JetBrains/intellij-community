@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision
 
 import com.intellij.codeInsight.codeVision.settings.CodeVisionGroupDefaultSettingModel
@@ -17,6 +17,7 @@ import com.intellij.codeInsight.hints.settings.showInlaySettings
 import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.multiverse.isSharedSourceSupportEnabled
 import com.intellij.codeWithMe.ClientId
+import com.intellij.ide.PowerSaveMode
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.lang.Language
@@ -506,7 +507,8 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
     // dropping all lenses if CV disabled
     if (context == null
         || !lifeSettingModel.isEnabled.value
-        || !CodeVisionProjectSettings.getInstance(project).isEnabledForProject()) {
+        || !CodeVisionProjectSettings.getInstance(project).isEnabledForProject()
+        || PowerSaveMode.isEnabled()) {
       consumer(emptyList(), providers.map { it.id })
       return
     }
